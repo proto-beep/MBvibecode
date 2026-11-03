@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.6, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.15, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,100 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.15 · 2026-11-03
+
+Block BF, part 9 – the findings of the independent check of the block (eight), each with a test that fails on 3.41.14.
+
+- **Z-SUB:** a position of a split index stands for all its tracks – **`positionGroups(tracks)`** (new; the `group` of each sub-track: the index's position and the base of its sub-tracks), used by DISCOGS `parseTrackSpec` (a credit for "3" or "1 to 3") and by `tracksInText` ("track 3" in the notes). Until 3.41.14 such a credit went to the first sub-track only, or was not resolved at all. **`gapDiscogs(dId, ws)`:** the line of the release page reads Discogs with MusicBrainz's tracks too (it read the index as one track).
+- **Z-SUM:** `addSuite` refuses tracks that are in another suite or split as a medley (`suite.addTaken`); `acceptSuite` leaves the parts of a track that belongs to another suite or medley as they are (until 3.41.14 they were taken over, and undoing the new suite left the track without a work).
+- **Z-EN:** choosing an option of "Edit note" rewrites a block written before at once (`clearEditNote` for "None", `writeEditNote` otherwise) – until 3.41.14 only the next staging did, and "Enter edit" in between sent the old block.
+- **Q-cn:** "skip the role" leaves the row without a type; `remapRow` keeps a row skipped by an answer on "Skip" without a type; `levelOf` asks the question again when such a row gets a level (until 3.41.14 it kept an earlier answer's type while "skip" showed as chosen).
+- **Statistics:** the works of a record from the links it holds (`statExtras(rels)`: linked, created in MusicBrainz's form, new in the editor), the gaps from the supplemented relationships it holds (`statFill(…, kind)` – credits, dates, attrs –, the relationship's `f`), the decisions once a row (`x.decisions`: `statAnswers` of every row, also of one an answer put on "Skip"); a part linked with its suite counts as `noteStats.suiteParts` (the edit note: "linked n parts with their suites"), no longer as a work linked with a recording.
+- **Z-YT:** `jsonAfter` finds the data at its assignment ("ytInitialPlayerResponse = {"), not at the first mention of the name.
+- **Texts (English):** `suite.addTaken`.
+- **Tests:** `t_works_more.py` `subtracks` (a credit for the index), `suiteadd` (overlap), `suiteparts` (the edit note); `t_ui_settings.py` `editnote` (at once), `statsmore2` (decisions once a row; the works of a real record); `t_text_basics.py` `hostask` (skip, then back); `t_sources_bandcamp.py` `youtube` (the name before its assignment); `t_works_matrix.py` new case `statgaps`; `t_start.py` new case `gapsplit`.
+
+## Import 3.41.14 · 2026-11-03
+
+Block BF, part 8 – the statistics of collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC (Q-cv: all proposals; Q-cw: for everyone).
+
+- **Records v 2** (`statSnapshot`): per relationship `a` (its attributes other than instruments and voices); per import `x` from **`statExtras()`** (new): suites (`n`, `created`, `found`, `manual`, `parts`, `medleys`), works (`linked`, `created`, `pending` – of `S.noteStats`), genres (Discogs's genres and styles, at most 12), live (`comments`: the items of the live job), gaps (`credits`, `dates`, `attrs` – of `S.noteStats`).
+- **DISCOGS `toRelease`:** `styles` too.
+- **`statMore`:** counts `x` (records with it: `m.x`), the attributes, "parts" relationships, live links (attribute live on a work link), the answers `q` (since 3.38.2), the genres once a release, the people of each release (all its submissions) and the pairs of them (at most 40 people a release).
+- **`statsMore2Html`** (new, after "Own rules"): the cards Suites and medleys, Attributes, Works, Genres and styles, Decisions, Live, Gaps closed, Worked together (pairs from two releases); "Counted from 3.41.14 on" (`stats.since`) on the cards that need `x` or `a` while older records are there.
+- **Texts (English):** `stats.more.suites`, `.attrs`, `.works2`, `.genres`, `.decisions`, `.live`, `.gaps`, `.together`; `stats.suites.*`, `stats.works2.*`, `stats.live.*`, `stats.gaps.*`, `stats.decisionsN`, `stats.since`.
+- **Tests:** `t_ui_settings.py` new case `statsmore2` (fails on 3.41.13).
+
+## Import 3.41.13 · 2026-11-03
+
+Block BF, part 7 – collected item Z-YT: the description of a YouTube video as a source.
+
+- **Source adapter `YOUTUBE`** (new; `SOURCES.youtube`): `videoId(text)` (watch?v=, youtu.be/, shorts/, live/, embed/, m. and music.), `videoUrl(id)`, `pageData(html)` (the JSON "ytInitialPlayerResponse" of the page, found by counting its braces outside strings: `videoDetails` title, author, shortDescription), `toRelease(data, id, ctx)` (the description through `TEXT.toRelease`, the video as source, `noteSource` its address), `release(id, ctx)` (the page by `ctx.httpGet`; `err.youtubeData` without a description). `usesMbTracks`, `nameSearch`, no companion, no linked releases (only by address for now).
+- **"another source"** (`discogs-load`) and **"+ Supplement"** (`supp-url`): a YouTube address picks `YOUTUBE`.
+- **Header:** `@connect youtube.com`; **CONNECTIONS:** X017 YouTube (`conn.X017`).
+- **Statistics:** `stats.src.youtube` ("YouTube") in the sources; `statSuppKinds` knows "YT".
+- **Texts:** new `err.youtubeData`, `conn.X017`, `stats.src.youtube` (English); `source.other`, `supp.urlPh`, `msg.badDiscogsId` name YouTube videos (in all four languages).
+- **Tests:** `smoke/harness.py` `YT_PAGES`, `yt_page()` and the route of www.youtube.com; `t_sources_bandcamp.py` new case `youtube` (fails on 3.41.12); `t_ui_settings.py` `settabs`: 17 connections.
+
+## Import 3.41.12 · 2026-11-03
+
+Block BF, part 6 – collected item Z-SUB (Q-cm): sub-tracks of Discogs that are tracks of their own in MusicBrainz.
+
+- **DISCOGS `subTrackSplit(d, mb)`** (new, exported): the index tracks (of the parts of one track) whose sub-tracks are tracks of their own in MusicBrainz – read alongside MusicBrainz's titles (`titlesFit`): split when the first sub-track and most of them fit the next tracks; without titles that fit, all of them when that gives MusicBrainz's number of tracks.
+- **DISCOGS `toRelease(d, id, { split })`:** an index of `split` gives a track per sub-track (the index's credits on all of them, the sub-track's on its own, the index's title as `work`, the index's position as an alias of the first).
+- **DISCOGS `release(id, ctx)`:** when MusicBrainz (`ctx.tracks`) has more tracks, reads the release split if that gives MusicBrainz's number (`subTracksSplit` on the release); **`loadRelease`** logs it (`log.subTracksSplit`).
+- **Tests:** `t_works_more.py` new case `subtracks` (fails on 3.41.11).
+
+## Import 3.41.11 · 2026-11-03
+
+Block BF, part 5 – collected item Z-SUM (Q-ck, Q-cq): a suite added by hand.
+
+- **State:** `S.suiteManual` (key → `{ key, name, from: 'manual', tracks }`; cleared by `dropWorkChoices`) and `S.suiteAdd` (the box open: from, to, name, error).
+- **`suiteAddHtml()`** (new; below the questions in `[data-el=suites]`): "＋ Suite …" (`data-act=suite-add-open`), open the yellow box `[data-el=suite-add]` with `mx-suite-from`, `mx-suite-to` (the tracks of the works matrix), `mx-suite-name`, ✓ Yes (`suite-add-yes`), Cancel (`suite-add-cancel`) and an error line; `matrixChange` keeps the fields in `S.suiteAdd` without drawing anew.
+- **`addSuite(from, to, name)`** (new): the tracks of the matrix between them; a name is needed; the offer (key `manual|name|tracks`) goes into `S.suiteManual` and is accepted with `acceptSuite`. **`suiteAsks`** lists the suites added by hand; **`undoSuite`** removes one from `S.suiteManual` (it is not asked again).
+- **Texts (English):** `suite.add`, `suite.addTitle`, `suite.addAsk`, `suite.addFrom`, `suite.addTo`, `suite.addName`, `suite.addCancel`, `suite.addNoName`, `suite.addNoTracks`, `suite.from.manual`, `log.suiteAdded`.
+- **Tests:** `t_works_more.py` new case `suiteadd` (fails on 3.41.10); `suiteask` reads only the questions (not the line "＋ Suite …").
+
+## Import 3.41.10 · 2026-11-03
+
+Block BF, part 4 – collected item Z-SB2 (the user's screenshot: "44 new relationships · Preview · ⚙ Options · Stage in the relationship editor · ⓘ" cut off at the bottom).
+
+- **`viewW()`, `viewH()`** (new): the room of the windows – `document.documentElement.clientWidth/clientHeight`, the browser window without its scroll bars; `defaultGeom` and `placeWindow` use them instead of `window.innerWidth/innerHeight`, which count the scroll bars (a window at the bottom edge ended under the page's horizontal bar).
+- **A scroll bar that comes later** (the page grows wider, no "resize"): an invisible box fixed to the room (`#dci-room`, `position: fixed; inset: 0`) is watched by a ResizeObserver; when the room changes, the windows are moved into view (`clampWindow`).
+- **CSS:** `.dci-panel` `max-width` / `max-height` 100 % (of the room) instead of 100vw / 100vh.
+- **Tests:** `t_ui_view.py` new case `footbar` (a browser of its own with classic scroll bars; fails on 3.41.9).
+
+## Import 3.41.9 · 2026-11-03
+
+Block BF, part 3 – collected item Z-EN (Q-cp): the edit note is set in ⚙ Settings only.
+
+- **`S.editNoteMode`** ('full' | 'simple' | 'none', `EDIT_NOTE_KEY` 'dci-edit-note', only "simple" and "none" stored; in `TOPIC_KEYS.staging`, its reset and "reset all") replaces `S.editNote` (a session switch of the footer).
+- **⚙ Settings → Staging:** a segment "Edit note: Full | Simple | None" (`data-act=edit-note-mode`); the tooltip of each option lists the lines it writes (`settings.editNote.*Title`).
+- **The footer:** the checkbox "edit note" (`data-f=editnote`) and its handler are gone; `footer.editNote`, `footer.editNoteShort` removed (all languages), `footer.optionsTitle` without "Edit note".
+- **`editNoteBlock`:** "simple" ends after "Source", "Also from" and "Script". **Staging:** "none" writes nothing and takes the block written before out again (**`clearEditNote`**, new); the job of live comments gets the block unless "none".
+- **`formEditNote(sources, prefilled)`** (new): the edit note of the forms of artists, labels, places, series, works and suites – "full" as before, "simple" "Source: …" and "Script: … v…", "none" none (the parameter left out).
+- **`roleCreditHint`:** "goes into the edit note only" only with "full".
+- **Tests:** `t_ui_settings.py` new case `editnote` (fails on 3.41.8); `t_ui_view.py` `foot` (two checkboxes, "fill role credits" toggled), `t_works_matrix.py` `wattrs` (no checkbox to tick).
+
+## Import 3.41.8 · 2026-11-03
+
+Block BF, part 2 – collected item Q-cn ("Host: Cheryl Waters").
+
+- **Mapping file:** new rule **R108** `^(host|hosts|hosted by)$` (no type, `askType`; before R012, which no longer has "host" and "hosted by") and question **Q012** (`typeAsk.askHost`): spoken vocals credited "host" (`instrument`, `credit: "host"`), miscellaneous support (`task: "host"`), skip the role (`level: "skip"`).
+- **`roleRules`:** R108 as R097 (no type, the note `askType`).
+- **`pickType`:** an answer with the level "skip" puts the row on "Skip" (its type kept, `levelTouched`), logged as the others.
+- **Texts (English):** `typeAsk.askHost`.
+- **Tests:** `t_text_basics.py` new case `hostask` (fails on 3.41.7); `register_golden.json` renewed (R012, R108, Q012).
+
+## Import 3.41.7 · 2026-11-03
+
+Block BF, part 1 – collected items Z-AM, Z-CAM, Q-co, Z-LG (the credits of a YouTube video description).
+
+- **The text adapter, `shareTail(parts)`** (new, used by `listRoles`): the last word of a role of a list is given to each part before it that is no role by itself while the joined words are one ("Audio & Mixing Engineer" → "Audio Engineer", "Mixing Engineer"; "Mixed & Mastered By" → "Mixed By", "Mastered By").
+- **Mapping file, R095:** also "camera", "cameras", "camera crew", "camera operators" (miscellaneous support, the role as task); "cinematographer" and "editor" were there already.
+- **Languages file:** `settings.entries.legacy` is "Legacy" in de, es, fr (was Klassisch, Clásica, Classique), and so in `ms.3.35.0`.
+- **Tests:** `t_text_basics.py` new case `ytroles` (fails on 3.41.6); `t_static.py` new case `legacy` (fails on 3.41.6); `register_golden.json` renewed (R095).
 
 ## Import 3.41.6 · 2026-11-03
 

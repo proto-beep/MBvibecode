@@ -160,6 +160,10 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   initialsmemo: 3.39.8 (K-8, review): "JR" → Jane Roe chosen, remembered: after a reload and the same text at once
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
+                                #   hostask: 3.41.8 (Q-cn): "Host" / "Hosted By" asked (Q012): spoken vocals "host", misc "host", skip the role;
+                                #     "Presenter" stays spoken vocals
+                                #   ytroles: 3.41.7 (Z-AM, Z-CAM, Q-co): "Audio & Mixing Engineer" → audio, mix; "Mixed & Mastered By" → mix,
+                                #     mastering; "Cameras" misc "cameras", "Camera Operator", "Cinematographer" each their own; "Editor" misc "editor"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -303,6 +307,8 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #   remember (3.36.4, 146): with ⚙ Settings → Cache on, the choices of the works matrix after the page is
                                 #     loaded again: an attribute set on a link, a new work planned, a column taken out (and brought back:
                                 #     its rows no longer skipped), a column date, the type of new works
+                                #   statgaps: 3.41.15 (review, Z-STV): "co" on a link MusicBrainz has, staged, "Enter edit" – the record holds it as
+                                #     supplemented with "attrs", gaps.attrs 1
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
@@ -345,6 +351,10 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     MB's form (name, type 6, the writer of all tracks), then from the work of MB
                                 #   medley: 3.41.3: "Alpha / Beta" – ✕ No, the offer "Split into 2 works (medley)"; split: Beta found in MB; staged with
                                 #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
+                                #   suiteadd: 3.41.11 (Z-SUM): "＋ Suite …" – the yellow box (tracks from – to, name), without a name an error,
+                                #     "Trisect" for tracks 2–4 accepted as a found suite (parts, create button, log); ↺ undo: gone; Cancel
+                                #   subtracks: 3.41.12 (Z-SUB): an index "Suite X" with 3a, 3b on two MB tracks – four tracks (log, no message),
+                                #     Bass Man on track 4, the suite offered for tracks 3–4; Node: subTrackSplit by titles, by count, not
                                 #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
@@ -515,6 +525,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     3.40.14: no switch in the statistics
                                 #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
+                                #   statsmore2: 3.41.14 (Z-STS … Z-STC): the new cards from four records (one v 1) – suites, attributes, works,
+                                #     genres, decisions, live, gaps, worked together, "Counted from 3.41.14 on"; a real record v 2 with x and a
+                                #   editnote: 3.41.9 (Z-EN): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple | None (tooltips list
+                                #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -551,6 +565,8 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   entryskipkeep: 3.40.15: remembered with the release (Cache on), loaded again still skipped, ↺ back
                                 #   entryskipmodes: 3.40.17 (review): scope "only work" and ⊘ Skip both ways (stays skipped; ↺ inside the scope:
                                 #     stays on Skip, "all": back); "Level for all rows" Recording, then Skip: "⊘ Skip", no stale "↺"
+                                #   footbar: 3.41.10 (Z-SB2): classic scroll bars of a page wider and longer than the window – the dashboard at the
+                                #     bottom edge ends above / left of them (its footer wholly visible), also when the page grows wider later
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
@@ -664,6 +680,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     "Pacific coast" – United States first among the suggestions, not set; chosen: "as “Pacific Coast”";
                                 #     3.40.8 (review): the explanation the tooltip, no disambiguation once chosen; another area by hand (✎): the
                                 #     credit goes; S036 off: credited all the same, another area: it goes
+                                #   youtube: 3.41.13 (Z-YT): a youtu.be address in "another source" – the video page read, its description as
+                                #     credits (audio, mix, cameras, editor, Host asked), the edit note's Source; no description, no video; statistics
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
@@ -696,6 +714,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     more credits, the others under ▸, ✕ holds; 3.40.3: "Import credits …" imports Bandcamp, Discogs 404 → Bandcamp
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
+                                #   gapsplit: 3.41.15 (review, Z-SUB): the release page reads an index whose sub-tracks are MB tracks as them –
+                                #     Bass Man on track 4 is there: "the credits of its list seem to be on MusicBrainz"
 
 python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
                                 #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only
@@ -810,6 +830,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 ```
                                 #   round6: 3.41.5 (BE): translation round F-6 – a sample of the blocks AL – BD in de, es, fr (not English, symbols,
                                 #     the French no-break space)
+                                #   legacy: 3.41.7 (Z-LG): the view "Legacy" named "Legacy" in de, es, fr too (and in the note of 3.35.0)
 
 ### Former test → file and case (3.31.1)
 

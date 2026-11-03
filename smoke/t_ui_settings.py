@@ -77,7 +77,8 @@ def case_settabs():
       return [rows.length, h ? [...h.cells].map(c => c.textContent.trim().slice(0, 40)) : null, h ? h.querySelector('a').href : '',
         [...{SET}.querySelectorAll('.dci-set-tab')].filter(b => b.getAttribute('aria-selected') === 'true').map(b => b.dataset.topic)]; }})()""")
         print('D) Verbindungen:', d1)
-        results.append(d1[0] == 16 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
+        # (3.41.13: X017 YouTube)
+        results.append(d1[0] == 17 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
                        and d1[1][3].startswith('@match harmony.pulsewidth.org.uk') and d1[1][4] == '3.19.1' and d1[2] == 'https://harmony.pulsewidth.org.uk/'
                        and d1[3] == ['connections'])
         # E) reset all, in the settings
@@ -1268,6 +1269,101 @@ def case_statsmore():
 
 
 
+def case_statsmore2():
+    """Credits Importer 3.41.14 (collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC; Q-cv, Q-cw): the cards of
+    3.41.14, for everyone (not only in "Developer mode"), from four stored submissions – one of 3.41.13 (v 1) and three of 3.41.14:
+    A) "Suites and medleys": suites 2, created in MusicBrainz 1, found in MusicBrainz 1, added by hand 1, their parts 5, medleys split 1,
+       "parts" relationships 3 · "Attributes": live 2, additional 1, medley 1, movement 3 · "Works": linked 4, created 1, new in the
+       editor 2 · "Genres and styles": Jazz 2 (once a release), Free Jazz 1 · "Decisions": 3 answers – Q012: spoken vocals …, Q002:
+       electric guitar 2 · "Live": 2 links, 3 comments · "Gaps closed": 4 role credits, 2 dates, 1 attribute · "Worked together":
+       Ann & Bob (2 releases; a pair on one release only is not listed). The cards that need 3.41.14 say "Counted from 3.41.14 on".
+       (3.41.15, review) A record with the import's own list of answers counts them once a row (Q002 once, not three times; Q012 "skip
+       the role" – a row without a relationship – too): 5 answers.
+    B) A real submission (the release of the harness, staged, "Enter edit"): its record is v 2, with x (suites, works, genres, live,
+       gaps, (3.41.15) decisions) and the attributes of each relationship (a) – until 3.41.13 none of them; (3.41.15, review) its works
+       are the links with recordings it holds (until 3.41.14 the stagings counted)."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, rels, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None, 'x': x, 'rels': rels}
+
+        def rl(tn, tg, a=(), q=(), et='artist', lt='instrument'):
+            d = stat_rel('n', lt, 'recording', et, tg, tn)
+            d['a'] = list(a)
+            d['q'] = [{'q': k, 'a': v} for k, v in q]
+            return d
+        X = lambda **kw: {'suites': kw.get('suites', {}), 'works': kw.get('works', {}), 'genres': kw.get('genres', []), 'live': kw.get('live', {}), 'gaps': kw.get('gaps', {})}
+        recs = [
+            {'v': 1, 'id': 'old:1', 'mbid': 'm0', 'at': now - 9000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g9', 'Zed')]},
+            r2(1, 'm1', [rl('Ann', 'g1', ['additional'], [('Q002', 'electric guitar')]), rl('Bob', 'g2'), rl('Cy', 'g3'),
+                         rl('Song', 'w1', ['live'], et='work', lt='performance'), rl('Suite', 'w2', ['movement'], et='work', lt='parts'), rl('Suite', 'w2', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'created': 1, 'parts': 3}, works={'linked': 3, 'created': 1, 'pending': 2}, genres=['jazz', 'free jazz'], live={'comments': 2}, gaps={'credits': 3, 'dates': 2})),
+            r2(2, 'm2', [rl('Ann', 'g1', q=[('Q002', 'electric guitar')]), rl('Bob', 'g2', q=[('Q012', 'spoken vocals (credited “host”)')]),
+                         rl('Song', 'w3', ['live', 'medley'], et='work', lt='performance'), rl('Suite', 'w4', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'found': 1, 'manual': 1, 'parts': 2, 'medleys': 1}, works={'linked': 1}, genres=['jazz'], live={'comments': 1}, gaps={'credits': 1, 'attrs': 1})),
+            # the same release again (a supplement): its genres not counted twice
+            r2(3, 'm2', [rl('Dee', 'g4')], X(genres=['jazz'])),
+            # (3.41.15, review) the import's own list of answers, once a row: one answer of a row of three relationships, one that skipped
+            r2(4, 'm3', [rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')])],
+               dict(X(), decisions=[{'q': 'Q002', 'a': 'electric guitar'}, {'q': 'Q012', 'a': 'skip the role'}])),
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k in ('suites', 'attrs', 'works2', 'genres', 'decisions', 'live', 'gaps', 'together'):
+            print(f'   {k}:', c.get(k))
+        since = 'Counted from 3.41.14 on – the imports before do not hold it.'
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('suites', 'suites 2', 'created in MusicBrainz 1', 'found in MusicBrainz 1', 'added by hand 1', 'their parts 5', 'medleys split 1', '“parts” relationships 3', since)
+                       and ok('attrs', 'movement 3', 'live 2', 'additional 1', 'medley 1', since))
+        results.append(ok('works2', 'linked with recordings 4', 'of them created in MusicBrainz’s form 1', 'new works in the relationship editor 2', since)
+                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '5 answers to the questions of the script', 'Q002: electric guitar 3', 'Q012: spoken vocals (credited “host”) 1', 'Q012: skip the role 1')
+                       and since not in c.get('decisions', []))
+        results.append(ok('live', 'recordings linked live with their works 2', 'live comments set 3', since)
+                       and ok('gaps', 'role credits added 4', 'dates added 2', 'attributes added to links of recordings and works 1', since)
+                       and c.get('together') == ['Ann & Bob 2'])
+        # B) a real submission
+        H.open_stats(pg)
+        pg.evaluate(STAT_SEED, [])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs2 = pg.evaluate(STAT_COUNT) or []
+        r = recs2[0] if recs2 else {}
+        print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
+        perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps', 'decisions'}
+                       and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
+                       # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
+                       and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
+                       and isinstance((r.get('x') or {}).get('decisions'), list))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsdev():
     """Credits Importer 3.38.2 (E8): the developer statistics.
     A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
@@ -1360,5 +1456,101 @@ def case_statsdev():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_editnote():
+    """Credits Importer 3.41.9 (collected item Z-EN; Q-cp): the edit note in ⚙ Settings → Staging only.
+    A) The footer has no checkbox "edit note" any more (until 3.41.8 "⚙ Options": edit note · fill role credits · ≤ 500 per
+       staging); ⚙ Settings → Staging: "Edit note: Full | Simple | None", Full pressed; each option's tooltip lists what it writes.
+    B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note; (3.41.15, review) Simple
+       chosen then: the block is the simple one at once (until 3.41.14 only at the next staging – "Enter edit" before it sent the full one).
+    C) Simple (stored "simple"; the page opened anew), staged: the block of the script is only "Source: …" and "Script: … v…" – no
+       "Done:"; the form of a new work: "Source: …" and "Script: …" (no "writers from Discogs credits").
+    D) None (stored "none"): (3.41.15, review) the block gone at once; an entry skipped before (Bass Man) taken again and staged: still nothing
+       written; the form of a new work (the page opened anew) has no edit note. ↺ of the topic: Full again (nothing stored)."""
+    import urllib.parse
+    results = []
+    NOTE = "document.getElementById('edit-note-text').value"
+
+    def stage(pg):
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+
+    def work_form(pg):
+        # (the first track without a work that offers one: what is staged is remembered for the next page)
+        pg.locator('tr[data-work] [data-act=work-create]').first.evaluate('b => b.click()')
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        pg.click('[data-act=sub-close]'); pg.wait_for_timeout(200)
+        return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+
+    def mode(pg, m):
+        H.open_settings(pg, 'staging')
+        pg.click(f'[data-el=settings] [data-act=edit-note-mode][data-mode={m}]'); pg.wait_for_timeout(200)
+        stored = pg.evaluate("localStorage.getItem('dci-edit-note')")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        return stored
+
+    def page(ctx):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        return pg, errs
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = page(ctx)
+        foot = pg.evaluate("[...document.querySelectorAll('.dci-foot-optlist label')].map(l => l.textContent.trim())")
+        H.open_settings(pg, 'staging')
+        seg = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.textContent.trim(), b.getAttribute('aria-pressed'), b.title])""")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        print('A) Fuß:', foot, '| Einstellung:', [x[:3] for x in seg])
+        print('   Tooltips:', [x[3].split('\n') for x in seg])
+        results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false'], ['none', 'None', 'false']]
+                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3]
+                       and seg[2][3].startswith('Nothing is written'))
+        stage(pg)
+        b0 = pg.evaluate(NOTE).splitlines()
+        print('B)', b0[:4])
+        results.append(b0[0] == 'Source: https://www.discogs.com/release/1234' and b0[1].startswith('Script: MB x Vibecode: Credits Importer v') and any(l.startswith('Done: added ') for l in b0))
+        st1 = mode(pg, 'simple')
+        # (3.41.15, review) the block written follows the setting at once (no new staging needed)
+        b1 = pg.evaluate(NOTE).splitlines()
+        print('B2) gleich danach:', b1)
+        results.append(len(b1) == 2 and b1[0] == 'Source: https://www.discogs.com/release/1234' and b1[1].startswith('Script: '))
+        pg.close()
+        pg, errs2 = page(ctx)
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').querySelector('[data-act=entry-skip]').dataset.skipkey")
+        pg.locator(f'[data-act=entry-skip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        q1 = work_form(pg)
+        stage(pg)
+        c0 = pg.evaluate(NOTE).splitlines()
+        n1 = q1.get('edit-work.edit_note') or ''
+        print('C)', st1, c0, '| Werk:', repr(n1))
+        results.append(st1 == '"simple"' and len(c0) == 2 and c0[0] == 'Source: https://www.discogs.com/release/1234' and c0[1].startswith('Script: MB x Vibecode')
+                       and n1.split('\n')[0] == 'Source: https://www.discogs.com/release/1234' and n1.split('\n')[1:2] and n1.split('\n')[1].startswith('Script: MB x Vibecode')
+                       and 'writers' not in n1)
+        st2 = mode(pg, 'none')
+        d2 = pg.evaluate(NOTE)
+        print('D2) gleich danach:', repr(d2))
+        results.append(d2 == '')
+        pg.locator(f'[data-act=entry-unskip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        stage(pg)
+        d0 = pg.evaluate(NOTE)
+        pg.close()
+        pg, errs3 = page(ctx)
+        q2 = work_form(pg)
+        H.open_settings(pg, 'staging')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=staging]'); pg.wait_for_timeout(300)
+        d1 = [pg.evaluate("localStorage.getItem('dci-edit-note')"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=edit-note-mode][aria-pressed=true]').dataset.mode")]
+        print('D)', st2, repr(d0), '| Werk mit Notiz:', 'edit-work.edit_note' in q2, '| ↺:', d1)
+        results.append(st2 == '"none"' and d0 == '' and 'edit-work.edit_note' not in q2 and d1 == [None, 'full'])
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

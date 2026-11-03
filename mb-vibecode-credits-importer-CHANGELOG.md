@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.41.6 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.41.15 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,70 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.41.15
+
+#### Fixed (after a check of the block)
+
+- A credit for the position of a split index track ("tracks: 3") goes to all of its tracks; the line of the release page reads such releases the same way.
+- "＋ Suite …" no longer takes tracks that are in another suite or split as a medley.
+- Changing "Edit note" rewrites the note already written at once.
+- "Skip the role" for "Host" leaves no type behind; taken off "Skip", the row is asked again.
+- Statistics: works and gaps closed count what was submitted; decisions count once a row; parts linked with their suite are no longer counted as works linked with recordings (also in the edit note).
+- YouTube: the video's data is found even when the page names it earlier.
+
+### Import 3.41.14
+
+#### Added
+
+- **More statistics, for everyone:** suites and medleys, attributes, works, genres and styles, the decisions you made on the script's questions, live recordings and comments, gaps closed in existing relationships, and who you credited together most often. New imports count everything; the cards say so while older records are there.
+
+### Import 3.41.13
+
+#### Added
+
+- **YouTube video descriptions as a source:** paste a video address into "Source ▾ → another source" (or "+ Supplement"); its description is read as a text of credits. The statistics count YouTube as a source.
+
+### Import 3.41.12
+
+#### Fixed
+
+- **Sub-tracks that are tracks of their own in MusicBrainz:** an index track of Discogs whose sub-tracks ("3a", "3b") are separate tracks in MusicBrainz is read as these tracks – their credits go to the right recordings, and the index is offered as a suite.
+
+### Import 3.41.11
+
+#### Added
+
+- **"＋ Suite …"** in the works matrix: tracks from – to and a name make a suite the source does not show, with the same yellow box as a suite that was found.
+
+### Import 3.41.10
+
+#### Fixed
+
+- **The footer of the dashboard is no longer covered by the page's scroll bar:** the windows stay inside the browser window without its scroll bars, also when a scroll bar appears later.
+
+### Import 3.41.9
+
+#### Changed
+
+- **The edit note is set in ⚙ Settings → Staging only:** Full (as before), Simple (only the sources and the script with its version) or None. The tooltip of each option lists what it writes; the checkbox in the footer is gone.
+
+### Import 3.41.8
+
+#### Changed
+
+- **"Host" is asked:** spoken vocals credited "host", miscellaneous support "host", or skip the role (until now spoken vocals credited "Host" at once).
+
+### Import 3.41.7
+
+#### Added
+
+- **Shared role words in texts:** "Audio & Mixing Engineer: Julian Martlew" gives audio engineer and mix, "Mixed & Mastered By: X" mix and mastering (until now such lines were not recognized).
+- **Camera crews:** "Cameras", "Camera Crew", "Camera Operators" are miscellaneous support with the role as task ("cameras"), as "Camera Operator" was; "Cinematographer" stays a role of its own.
+
+#### Changed
+
+- **"Legacy"** (⚙ Settings → Appearance → Entries) is named "Legacy" in German, Spanish and French too.
 
 ### Import 3.41.6
 

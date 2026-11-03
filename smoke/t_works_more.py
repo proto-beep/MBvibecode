@@ -1154,7 +1154,8 @@ def case_suiteask():
         return d
 
     H.discogs_release = rel
-    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].map(x => [x.className,
+    # ((3.41.11) the line "＋ Suite …" below the questions is not one of them)
+    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].filter(x => x.dataset.suite).map(x => [x.className,
       x.querySelector('strong') ? x.querySelector('strong').textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.textContent.trim()),
       (x.querySelector('[data-f=suite-name]') || {}).value || null, getComputedStyle(x).backgroundColor]); })()"""
     PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
@@ -1223,7 +1224,8 @@ def case_suiteparts():
        says so.
     C) Staged again: "parts" from the work "Trisect" of MusicBrainz to each part, in the order of the parts – the work of track 1 in
        MusicBrainz ("Introduction") first, then "Trisect: Phase 1", "Trisect: Phase 2", … (order 1–7), each with "movement"; no
-       recording is linked with it; the preview names them ("part 1 of the suite “Trisect” (movement)").
+       recording is linked with it; the preview names them ("part 1 of the suite “Trisect” (movement)"); (3.41.15, review) the edit note
+       says "linked 6 works to recordings; … linked 7 parts with their suites" (until 3.41.14 the parts counted as works linked).
     D) ↺ undo of the suite (before staging): nothing of it is planned."""
     H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
     H.attr(1105, 'movement', 1105)
@@ -1301,6 +1303,10 @@ def case_suiteparts():
         stage()
         c0 = pg.evaluate(PARTS)
         rec = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity1 && r.entity1.name === 'Trisect').length")
+        note = [l for l in pg.evaluate("document.getElementById('edit-note-text').value").splitlines() if l.startswith('Done:')]
+        print('   Notiz:', note)
+        # (3.41.15, review) the parts with their suite are no works linked with recordings
+        results.append(note and 'linked 7 parts with their suites' in note[0] and 'linked 6 works to recordings' in note[0])
         print('C)', c0, '| Aufnahme mit der Suite:', rec, '| Vorschau:', c1[:2], len(c1))
         print('D) nach ↺:', d0)
         want = ['Introduction', 'Trisect: Phase 1', 'Trisect: Phase 2', 'Trisect: Phase 3', 'Trisect: Transition', 'Trisect: Phase 4', 'Trisect: Coda']
@@ -1374,6 +1380,145 @@ def case_medley():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiteadd():
+    """Credits Importer 3.41.11 (collected item Z-SUM; Q-ck, Q-cq): a suite the source does not show, added by hand.
+    The release of the harness (no headings, no index track, no " / "): no suite asked.
+    A) "＋ Suite …" below the questions (none here); clicked: the yellow box "Parts of a suite: tracks [1.1 …] to [1.4 …] name: [ ]
+       ✓ Yes · Cancel"; ✓ Yes without a name: "Please type the name of the suite." (nothing added).
+    B) Tracks 1.2 – 1.4, "Trisect", ✓ Yes: as a suite found in the source – "tracks 2–4: parts of the suite “Trisect” – 3 works" with
+       "＋ Create the suite in MusicBrainz …"; the parts "Trisect: …" (a track each); the log says it was added by hand.
+    B2) (3.41.15, review) tracks 3–4 again as "Trisekt": "Some of these tracks are in another suite …" – nothing added, the parts of
+       "Trisect" stay (until 3.41.14 the new suite took them, and undoing it left the tracks without a work).
+    C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
+    (Until 3.41.10 a suite could only come from the source.)"""
+    H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    BOX = """(() => { const b = document.querySelector('[data-el=suites]'); return b ? [...b.children].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim(),
+      [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select')].map(s => [...s.options].map(o => o.textContent))[0] || null]) : null; })()"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim())"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] [data-act=suite-add-open]')", 60)
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(BOX)
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(300)
+        a1 = pg.evaluate(BOX)
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
+        a2 = pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null")
+        print('A)', a0, '\n  ', a1, '| ohne Namen:', a2)
+        results.append(a0 == [['dci-sub dci-mx-suite-add', '＋ Suite …', ['suite-add-open'], None]] and a1 and 'dci-mx-suite' in a1[0][0]
+                       and a1[0][1].startswith('Parts of a suite: tracks') and a1[0][2] == ['suite-add-yes', 'suite-add-cancel'] and len(a1[0][3]) == 4
+                       and a1[0][3][0].startswith('1.1 ') and a2 == 'Please type the name of the suite.' and pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length") == 0)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=1)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
+        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisect')
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(500)
+        b0 = [pg.evaluate(BOX), [pg.evaluate(PARTS, i) for i in range(4)], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “Trisect”' in x]]
+        print('B)', b0)
+        results.append(b0[0] and b0[0][0][1].startswith('tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …')
+                       and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
+                       and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
+        # (3.41.15, review) tracks of that suite again, under another name: not added (its parts would be lost)
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=2)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
+        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisekt')
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
+        b1 = [pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null"), pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length"),
+              pg.evaluate(PARTS, 2)]
+        pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
+        print('B2) überlappend:', b1)
+        results.append(b1 == ['Some of these tracks are in another suite or split as a medley – undo that first.', 1, ['Trisect: ' + H.TITLES[2]]])
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        c0 = [pg.evaluate(BOX), pg.evaluate(PARTS, 1)]
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
+        c1 = pg.evaluate(BOX)
+        print('C)', c0, '|', c1)
+        results.append(c0[0] == a0 and c0[1] and not c0[1][0].startswith('Trisect') and c1 == a0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_subtracks():
+    """Credits Importer 3.41.12 (collected item Z-SUB; Q-cm): an index track of Discogs whose sub-tracks are tracks of their own in
+    MusicBrainz. Discogs: 1 Song One · 2 Song Two · the index "Suite X" with 3a "Song Three" (Writer Z) and 3b "Song Four" (Bass
+    Man, bass) – three tracks; MusicBrainz has four.
+    A) Read as four tracks (the log says so: "1 index track of Discogs: its sub-tracks are tracks of their own …"); no message that
+       the tracks differ (until 3.41.11 "3 tracks instead of 4", Bass Man's bass on track 3 with Song Three).
+    B) Bass Man's bass on track 4 only; Writer Z writes track 3 (the works matrix); (3.41.15, review) a credit of the release for
+       "tracks: 3" (the index) on both of its tracks (until 3.41.14 not resolved: the index has no position, its sub-tracks one base).
+    C) The index is offered as a suite of tracks 3–4 ("tracks 3–4: parts of the suite “Suite X”?").
+    D) In Node: titles that do not fit, but splitting gives MusicBrainz's number of tracks: split; a number that does not fit: not."""
+    import json
+    import subprocess
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        t3, t4 = d['tracklist'][2], d['tracklist'][3]
+        t3 = dict(t3, position='3a')
+        t4 = dict(t4, position='3b', extraartists=[{'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': '', 'id': 3001, 'join': ''}])
+        d['tracklist'] = d['tracklist'][:2] + [{'position': '', 'type_': 'index', 'title': 'Suite X', 'duration': '', 'sub_tracks': [t3, t4]}]
+        d['extraartists'] = [x for x in d['extraartists'] if x.get('name') != 'Bass Man']
+        # (3.41.15, review) a credit for the index's position: both of its tracks
+        d['extraartists'].append({'name': 'Con Duct', 'anv': '', 'role': 'Conductor', 'tracks': '3', 'id': 3083, 'join': ''})
+        return d
+
+    H.ARTISTS[3083] = (H.uid('dddddddd', 83), 'Con Duct')
+    H.discogs_release = rel
+    TRACKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-cline, .dci-c-tracks') ? (tr.querySelector('.dci-c-tracks') || tr).textContent.replace(/\\s+/g, ' ').trim().slice(0, 80) : '') : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'index track' in x or 'Tracks differ' in x]
+        msgs = pg.evaluate("[...document.querySelectorAll('[data-el=messages] *')].map(x => x.textContent).join(' ')")
+        print('A)', logs, '| Meldung:', 'tracks instead of' in msgs)
+        results.append(logs == ['1 index track of Discogs: its sub-tracks are tracks of their own in MusicBrainz – read as such'] and 'tracks instead of' not in msgs)
+        rows = pg.evaluate("""(() => { const out = {}; for (const g of document.querySelectorAll('section.dci-group')) { const n = (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim());
+          out[n] = [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i))]); } return out; })()""")
+        wz = pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => [Number(tr.dataset.work), [...tr.querySelectorAll('td')].map(td => td.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /composer|writer/i.test(t))])")
+        print('B)', rows.get('Bass Man'), '| Matrix:', wz)
+        print('   Con Duct (tracks: 3):', rows.get('Con Duct'))
+        results.append(rows.get('Bass Man') == [['Bass', [3]]] and wz[2][1] and 'composer' in wz[2][1][0] and wz[3][1] == []
+                       and rows.get('Con Duct') == [['Conductor', [2, 3]]])
+        suites = pg.evaluate("[...document.querySelectorAll('[data-el=suites] [data-suite] strong')].map(x => x.textContent.trim())")
+        print('C)', suites)
+        results.append(suites == ['tracks 3–4: parts of the suite “Suite X”?'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const sub = (pos, title) => ({ position: pos, type_: 'track', title, duration: '', extraartists: [] });
+const d = { id: 7, title: 'X', tracklist: [sub('1', 'Opening'), { position: '', type_: 'index', title: 'Suite', sub_tracks: [sub('2a', 'Prelude'), sub('2b', 'Quartet')] }] };
+const t = (xs) => xs.map((title) => ({ title }));
+console.log(JSON.stringify([[...m.DISCOGS.subTrackSplit(d, t(['Alpha', 'Beta', 'Gamma']))], [...m.DISCOGS.subTrackSplit(d, t(['Alpha', 'Beta', 'Gamma', 'Delta']))],
+  [...m.DISCOGS.subTrackSplit(d, t(['Opening', 'Prelude', 'Quartet']))]]));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-400:]}
+    print('D)', got)
+    results.append(got == [[1], [], [1]])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

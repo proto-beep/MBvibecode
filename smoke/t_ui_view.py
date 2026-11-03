@@ -2,7 +2,7 @@
 
 Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4), addrolebtn (3.40.13), entryskip, entryskipkeep (3.40.15), entryskipmodes (3.40.17); `python3 t_ui_view.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
-from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
+from caserun import launch_own, run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 
 def case_compact():
@@ -702,25 +702,25 @@ def case_foot():
         ok_a = a['h'] <= 60 and spread <= 6 and a['sum'] == '25 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
             and a['chips'] == [['2 tracks without a work', '2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.']] \
             and a_open == ['2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.'] and a_shut == [] \
-            and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['edit note', True], ['fill role credits', True], ['≤ 500 per staging', True]] \
-            and a['boxes'][0][2].startswith('Write source and summary') and a['boxes'][1][2].startswith('add role credits') and a['boxes'][2][2].startswith('at most 500 per staging') \
+            and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['fill role credits', True], ['≤ 500 per staging', True]] \
+            and a['boxes'][0][2].startswith('add role credits') and a['boxes'][1][2].startswith('at most 500 per staging') \
             and a['infoTitle'].startswith('Nothing is submitted.') and a['stage'][2] < a['info'][0] and a['foot'][2] - a['info'][2] <= 30
         # B) medium
         pg.set_viewport_size({'width': 900, 'height': 1000}); pg.wait_for_timeout(500)
         b1 = pg.evaluate(M)
-        note0 = pg.locator('[data-f=editnote]').is_checked()
+        note0 = pg.locator('[data-f=fill-credits]').is_checked()
         pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
         lst = pg.evaluate(LIST)
-        pg.click('.dci-foot-optlist [data-f=editnote]'); pg.wait_for_timeout(200)
-        note1 = pg.locator('[data-f=editnote]').is_checked()
+        pg.click('.dci-foot-optlist [data-f=fill-credits]'); pg.wait_for_timeout(200)
+        note1 = pg.locator('[data-f=fill-credits]').is_checked()
         still = pg.evaluate(LIST)
         pg.click('.dci-foot [data-el=sum] strong'); pg.wait_for_timeout(200)
         shut1 = pg.evaluate(LIST)
         pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
         shut2, open_dash = pg.evaluate(LIST), pg.evaluate("!document.getElementById('dci-overlay').hidden")
-        pg.click('[data-act=foot-opts]'); pg.click('.dci-foot-optlist [data-f=editnote]'); pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
-        print('B) 900:', b1, '\n   Menü:', lst, '| edit note:', note0, '→', note1, '| bleibt:', bool(still), '| Klick daneben:', shut1, '| Esc:', shut2, open_dash)
+        pg.click('[data-act=foot-opts]'); pg.click('.dci-foot-optlist [data-f=fill-credits]'); pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        print('B) 900:', b1, '\n   Menü:', lst, '| fill role credits:', note0, '→', note1, '| bleibt:', bool(still), '| Klick daneben:', shut1, '| Esc:', shut2, open_dash)
         ok_b = b1['h'] <= 90 and len(b1['tops']) == 2 and b1['optbtn'] and all(not x[1] for x in b1['boxes']) and lst is not None \
             and lst[3] <= b1['stage'][1] and lst[0] >= b1['panel'][0] and lst[2] <= b1['panel'][2] and note1 is (not note0) and still is not None \
             and shut1 is None and shut2 is None and open_dash
@@ -1007,6 +1007,55 @@ def case_entryskipmodes():
         results.append(c0 == ['entry-skip', False, ['skip']])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_footbar():
+    """Credits Importer 3.41.10 (collected item Z-SB2; the user's screenshot of 2026-11-03): the scroll bars of the page never cover
+    the dashboard window. The page wider and longer than the browser window (both scroll bars, 1500 × 1000 px):
+    A) The dashboard as it was left at the bottom edge (y 200, height 800): it ends above the horizontal scroll bar and left of the
+       vertical one – its footer ("Stage in the relationship editor", ⓘ) wholly visible (until 3.41.9 the window counted the scroll
+       bars: 15 px of the footer under the bar).
+    B) The page becomes wider only later (the dashboard open, no "resize"): the window is moved into view again."""
+    results = []
+    VIEW = "[document.documentElement.clientWidth, document.documentElement.clientHeight, window.innerWidth, window.innerHeight]"
+    BOX = """(() => { const r = (e) => { const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
+      return { panel: r(document.querySelector('.dci-panel')), foot: r(document.querySelector('.dci-foot')), stage: r(document.querySelector('.dci-foot [data-act=apply]')),
+        info: r(document.querySelector('.dci-foot-info')) }; })()"""
+    # (scroll bars as on Windows, that take room: a browser of its own without "--hide-scrollbars")
+    b = launch_own(args=list(H.LAUNCH_ARGS), ignore_default_args=['--hide-scrollbars'])
+    try:
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate("localStorage.setItem('dci-geom:panel', JSON.stringify({ x: 100, y: 200, w: 1400, h: 800 }))")
+        # the page wider and longer than the window: both scroll bars
+        pg.evaluate("(() => { const d = document.createElement('div'); d.id = 'wide'; d.style.cssText = 'width: 2600px; height: 3000px'; document.body.appendChild(d); })()")
+        pg.wait_for_timeout(200)
+        v0 = pg.evaluate(VIEW)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        a0 = pg.evaluate(BOX)
+        print('A) Fenster ohne / mit Bildlaufleisten:', v0, '| Dashboard:', a0)
+        results.append(v0[1] < v0[3] and v0[0] < v0[2] and a0['panel'][3] <= v0[1] and a0['foot'][3] <= v0[1] and a0['stage'][3] <= v0[1]
+                       and a0['panel'][2] <= v0[0] and a0['info'][2] <= v0[0])
+        # B) the page made narrow again, the window put at the bottom, then the page wider (no resize event)
+        pg.evaluate("document.getElementById('wide').style.width = '100px'"); pg.wait_for_timeout(300)
+        v1 = pg.evaluate(VIEW)
+        pg.evaluate("(() => { const p = document.querySelector('.dci-panel'); p.style.top = `${document.documentElement.clientHeight - p.offsetHeight}px`; })()")
+        pg.wait_for_timeout(100)
+        b0 = pg.evaluate(BOX)
+        pg.evaluate("document.getElementById('wide').style.width = '2600px'"); pg.wait_for_timeout(500)
+        v2 = pg.evaluate(VIEW)
+        b1 = pg.evaluate(BOX)
+        print('B) ohne Leiste:', v1, b0['panel'], '| mit Leiste:', v2, b1['panel'], b1['foot'])
+        results.append(v1[1] > v2[1] and b0['panel'][3] == v1[1] and b1['panel'][3] <= v2[1] and b1['foot'][3] <= v2[1])
+        print('Fehler:', errs)
+        results.append(not errs)
+    finally:
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
