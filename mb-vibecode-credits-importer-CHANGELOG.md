@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.11 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.40.17 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,54 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.17
+
+#### Changed
+
+- **"cover" ticked by itself** (collected item Z-CV): in the works matrix, at the link to a work of MusicBrainz by the track's composer, when that composer has only writing credits on the release and the release is not of the genre "Classical". Shown yellow; a click takes it off. Otherwise "co?" is offered as before.
+
+#### Fixed (after a check of the block)
+
+- **⊘ Skip (3.40.15)** holds with the other ways of skipping: "Stage: all relationships", "Take works matrix again" or showing the about text again no longer bring back rows of a skipped entry, and "↺ Take again" respects them. "Level for all rows" ends the skip of an entry cleanly.
+- **↻ Repeat import (3.40.16):** "Start afresh" also drops the choices of the works matrix; its choice no longer reaches another import started meanwhile.
+
+### Import 3.40.16
+
+#### New
+
+- **↻ Repeat import** next to "Source ▾" (collected item Z-RI): reads the source again and looks up its entries in MusicBrainz anew, so changed mapping rules apply. It asks first – **Keep my changes** (preselected) or **Start afresh**.
+
+### Import 3.40.15
+
+#### New
+
+- **⊘ Skip for a whole entry** (collected item Z-SK): in the head of every entry. All its rows go to "Skip" and the entry turns grey; **↺ Take again** brings back the levels they had.
+- **⚙ Settings → Appearance → Remove skipped entries from the dashboard** (off): skipped entries are hidden; a line "n skipped entries ▸" at the bottom lists them to take them again.
+
+### Import 3.40.14
+
+#### Changed
+
+- **"Collect statistics" moved to ⚙ Settings → Cache** (collected item Z-SC). A grey line at the top of the statistics says whether they are collected and leads there.
+- **Log | Statistics · ⚙ next to "Import credits …"** (collected item Z-LS): symbols in the order of the dashboard's head, the word "Log" replaced. Statistics and ⚙ open the dashboard without starting the import, also without the companion.
+
+### Import 3.40.13
+
+#### Changed
+
+- **"Fold bar after Apply" counts for this import only** (collected item Z-PF2): the next import with dates shows "Dates & tracks" open again. Only "▲ fold" by hand is remembered.
+- **＋ Another role for …** is a button in the full view too (as in the compact entries).
+
+#### New
+
+- **One box for all live disambiguation comments** (collected item Z-LC): the first line "All" of the list ticks or unticks all of them at once; it shows a dash when only some are ticked.
+
+### Import 3.40.12
+
+#### Fixed
+
+- **Places and areas from the notes** (collected item Z-AP, Discogs 3749161 "Assist"): "in Tokyo, Meguro Fukushi Center" is the place Meguro Fukushi Center in Tokyo, no longer the area "Tokyo (Meguro Fukushi Center)" – "center", "centre" and "kaikan" count as words of places, and a place Discogs lists under "Companies, etc." counts without one. **The date of an area** ("Tracks A1 and A2 recorded on 9 November 1985 in Hiroshima") now goes onto its row with "Apply", as for places.
 
 ### Import 3.40.11
 

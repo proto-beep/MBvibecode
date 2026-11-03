@@ -194,6 +194,8 @@ lt(711, '7387c5a2-9abe-4515-b667-9eb5ed4dd4ce', 'phonographic copyright', 'label
 lt(708, '2ed5b5e5-1a2b-4c8b-9b5b-1c2d3e4f5a6b', 'copyright', 'label', 'release', ())
 lt(693, 'ad462279-14b0-4180-9b58-571d0eef7c51', 'recorded at', 'place', 'recording', ())
 lt(694, '11d74801-1493-4a5d-bc0f-4ddc537acddb', 'mixed at', 'place', 'recording', ())
+# [3.40.12] an area of a recording ("Recorded in Hiroshima"), as on MusicBrainz (Z-AP: its date from the matrix)
+lt(698, '37ef3a0c-cac3-4172-b09b-4ca98d2857fc', 'recorded in', 'area', 'recording', ())
 lt(278, 'a3005666-a872-32c3-ad06-98af558e99b0', 'performance', 'recording', 'work', ())
 lt(180, '04a5b104-a4c2-4bac-99a1-7b837c37d9e4', 'discogs', 'artist', 'url', (), False)
 lt(217, '5b987f87-25bc-4a2d-b3f1-3618795b8207', 'discogs', 'label', 'url', (), False)

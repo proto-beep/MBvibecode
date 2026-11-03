@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.11
+// @version      3.40.17
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.17
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.17
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.17';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -125,6 +125,17 @@
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
       "srcorder.toggle": "Order of the sources",
       "forget.button": "Delete stored import …",
+      "repeat.button": "Repeat import",
+      "repeat.title": "Read the source again and look up its entries in MusicBrainz anew – for example after a change of the mapping rules",
+      "repeat.ask": "Repeat the import?",
+      "repeat.what": "The source is read again and every entry is looked up in MusicBrainz anew, so changed mapping rules apply.",
+      "repeat.keep": "Keep my changes",
+      "repeat.keepTitle": "What you changed in this import – levels, roles, credits, rows added or taken out, the entries chosen, the works – is put onto the new one, as “Remember per release” does",
+      "repeat.fresh": "Start afresh",
+      "repeat.freshTitle": "The rows as the source and the mapping rules give them now: the changes of this import are dropped",
+      "repeat.do": "↻ Repeat import",
+      "log.repeatKeep": "Import repeated – your changes are kept",
+      "log.repeatFresh": "Import repeated afresh – your changes are dropped",
       "about.off": "Leave out the “about” text",
       "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
       "notes.credit": "From the Discogs notes",
@@ -371,6 +382,17 @@
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
       "group.addRoleBtn": "＋ Another role for {name}",
+      "group.skip": "⊘ Skip",
+      "group.skipTitle": "All rows of this entry on “Skip”: nothing of it is staged (“↺ Take again” brings their levels back)",
+      "group.unskip": "↺ Take again",
+      "group.unskipTitle": "All rows of this entry back on the levels they had before “⊘ Skip”",
+      "group.skippedN.one": "{n} skipped entry",
+      "group.skippedN.other": "{n} skipped entries",
+      "group.skippedTitle": "Entries skipped with “⊘ Skip” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "log.entrySkipped.one": "{name} skipped: {n} row on “Skip”",
+      "log.entrySkipped.other": "{name} skipped: {n} rows on “Skip”",
+      "log.entryTaken.one": "{name} taken again: {n} row back on its level",
+      "log.entryTaken.other": "{name} taken again: {n} rows back on their levels",
       "group.addRoleShort": "＋ role",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
@@ -503,6 +525,8 @@
       "livecom.groupN.other": "{n} tracks",
       "livecom.groupOnAria": "Comment for {list}",
       "livecom.groupTextAria": "The comment of {list}",
+      "livecom.all": "All",
+      "livecom.allAria": "All live disambiguation comments",
       "livecom.hint": "Entered as edits of the recordings after “Enter edit” in the relationship editor, once the relationships are saved (⚙ Settings → Staging). Tick, or change a comment; a comment MusicBrainz has already is not overwritten.",
       "livecom.onAria": "Comment for track {pos}",
       "livecom.textAria": "The comment of track {pos}",
@@ -817,6 +841,8 @@
       "settings.emSide.besideTitle": "The relationships to stage, the notes and “＋ Another role” in a column beside the lines of a compact entry (default).",
       "settings.emSide.lines": "in the lines",
       "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
+      "settings.skipHide": "Remove skipped entries from the dashboard",
+      "settings.skipHideTitle": "Entries skipped with “⊘ Skip” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
       "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
@@ -829,6 +855,7 @@
       "settings.t.sources": "Sources",
       "settings.t.discogs": "Source pages",
       "settingsOnly.hint": "Only the settings are open – the import of this release has not started.",
+      "statsOnly.hint": "Only the statistics are open – the import of this release has not started.",
       "settingsOnly.start": "Start import",
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
@@ -1098,6 +1125,7 @@
       "matrix.attrsNone": "none",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
       "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
+      "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers of this track and has only writing credits on this release (not classical music). A click takes it off.",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -1579,6 +1607,9 @@
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
       "stats.on": "Collect statistics",
       "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
+      "stats.whereOn": "Statistics are being collected – switched on and off in",
+      "stats.whereOff": "Collecting statistics is off – nothing new is counted. Switched on and off in",
+      "stats.whereBtn": "⚙ Settings → Cache",
       "stats.loading": "Reading the statistics …",
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
       "stats.title": "Statistics",
@@ -3518,7 +3549,7 @@
       show: () => ({ pattern: PLACE_DATE_TAIL }) },
     { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
-    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine)',
+    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine). [3.40.12] Also center, centre, kaikan; and a place the source lists itself (Discogs "Recorded At – Meguro Fukushi Center") without such a word: "in Tokyo, Meguro Fukushi Center" is that place in Tokyo, not the area Tokyo',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
@@ -3961,13 +3992,14 @@
    * overwritten; those rows are named in the warning. [T016]
    */
   const DATE_GROUPS = [
-    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at'] },
-    { key: 'mix', label: 'Mix', types: ['mix', 'mixed at'] },
+    // [Z-AP] (3.40.12) the areas too ("recorded in", "mixed in", "mastered in": a date of the notes for "… in Hiroshima" went nowhere)
+    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at', 'recorded in'] },
+    { key: 'mix', label: 'Mix', types: ['mix', 'mixed at', 'mixed in'] },
     // [3.15.1] releaseOnly: MusicBrainz has mastering on the release only (on recordings it is deprecated, "mastered at"
     // does not exist there) – every date of the column is for the release level, a track group only says which row
-    { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at'], onlyNote: 'mastering with "re", or a role "Remastered …"',
-      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')), releaseOnly: true },
-    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'], releaseOnly: true },
+    { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at', 'mastered in'], onlyNote: 'mastering with "re", or a role "Remastered …"',
+      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || ((n === 'mastered at' || n === 'mastered in') && /^remastered/i.test(row.raw || '')), releaseOnly: true },
+    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at', 'mastered in'], releaseOnly: true },
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
     // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159);
     // photographs are not in it (their date is the concert's, see rowDateSugg)
@@ -4727,6 +4759,7 @@
   //   source     the adapter's id ("discogs"); id and url: the release at the source
   //   notes      free text about the release (liner notes): dates, live, track lists are read from it
   //   tags       words describing the release, in lower case ("cd", "album", "live" …)
+  //   genres     [Z-CV] (3.40.17) the source's genres, in lower case ("jazz", "classical"); none: [] or left out
   //   tracks     [{ position, title, aliases }] in the order of the source, without headings
   //   credits    one per person and role, in the order of the source:
   //              { who, role, base, details, credited, tracks }
@@ -4893,6 +4926,8 @@
         country: d.country || '',
         notes: String(d.notes || ''),
         tags: (d.formats || []).flatMap((f) => [f.name, ...(f.descriptions || []), f.text || '']).map(norm).filter(Boolean),
+        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself)
+        genres: (d.genres || []).map(norm).filter(Boolean),
         tracks,
         credits,
         companies,
@@ -5260,7 +5295,7 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -5618,7 +5653,9 @@
           // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
-            const isPlace = (x) => TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''));
+            // [Z-AP] (3.40.12) also a place the source lists itself ("Recorded At – Meguro Fukushi Center" of Discogs; placeNames)
+            const isPlace = (x) => (TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), '')))
+              || placeNames.some((n) => norm(n) === norm(x));
             const parts = String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/).map((x) => clean(x).replace(/^the\s+/i, ''));
             if (isPlace(parts[0])) return place(verb, placeOf(text));
             // [3.37.7] the place after its city: "in Tokyo, Zojoji Hall" → Zojoji Hall, its area Tokyo (collected item 157)
@@ -14826,8 +14863,11 @@
    * 147a).
    */
   function syncLogBtn() {
-    if (!S.overlay) return;
     const on = !!(S.logEl && !S.logEl.hidden);
+    // [Z-LS] (3.40.14) and the one next to "Import credits …"
+    const bar = document.getElementById('dci-log-open');
+    if (bar) bar.setAttribute('aria-pressed', String(on));
+    if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-head [data-act="log"]').forEach((b) => b.setAttribute('aria-pressed', String(on)));
   }
 
@@ -15562,6 +15602,7 @@
    */
   async function forgetImport() {
     S.forgetOpen = false;
+    S.repeatOpen = false;
     const dropEntry = (key) => {
       const all = readJson('localStorage', key, {}) || {};
       delete all[releaseMbid];
@@ -16518,7 +16559,9 @@
     try {
       // [S053] (3.36.7) the positions of the notes are Discogs's ("A1 to B2", "C1 to D" – vinyl sides), not MusicBrainz's numbers
       const own = rel.tracks || [];
-      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles) => tracksByTitles(titles, own) });
+      // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
+      const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
+      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles) => tracksByTitles(titles, own), placeNames });
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
       return;
@@ -16686,7 +16729,8 @@
         o[k] = encField(v);
       } catch (e) { /* not storable */ }
     }
-    const level = r.scopeLevel || (r.existingAll && !r.levelTouched && r.levelBeforeSkip) || r.level;
+    // [Z-SK] (3.40.17, review) a row skipped with its entry stays on "Skip" (its level before in entrySkip)
+    const level = r.entrySkip ? 'skip' : r.scopeLevel || (r.existingAll && !r.levelTouched && r.levelBeforeSkip) || r.level;
     o.level = encField(level);
     return o;
   }
@@ -16858,7 +16902,7 @@
   }
 
   /** [146] (3.36.1) At the end of an import (the last one started): what is remembered taken over, then this one remembered. */
-  function finishRemember(seq) {
+  function finishRemember(seq, repeat = null) {
     if (seq !== importSeq) return;
     // what the lookups of the entries made of the rows counts as the source's; a row changed by hand meanwhile (a level, an
     // instrument, a credit or a role credit set) keeps the first state, so that its change is one
@@ -16870,12 +16914,16 @@
       const cur = rowFieldsOf(r);
       if (TOUCH.every((k) => cur[k] === f.f[k])) f.f = cur;
     });
-    if (remembering() && !S.rememberHold) {
+    // [Z-RI] (3.40.16) "↻ Repeat import": the changes of the import before (kept), or nothing remembered (afresh); (3.40.17, review)
+    // given with this import only (an import started meanwhile does not take them)
+    const snapIn = repeat && repeat.snap;
+    const fresh = !!(repeat && repeat.fresh);
+    if (snapIn || (remembering() && !S.rememberHold && !fresh)) {
       // what is remembered never stops an import: taken over or not at all
       const before = S.rows;
       const entries = new Map(S.artists);
       try {
-        restoreRemembered();
+        restoreRemembered(snapIn);
       } catch (e) {
         console.warn('[Credits-Importer] remembered', e);
         S.rows = before;
@@ -16922,9 +16970,10 @@
     return !!(snap && snap.stackUp === true);
   }
 
-  function restoreRemembered() {
-    const stored = relRead(REMEMBER_ROWS_KEY, null);
-    const snap = stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null;
+  function restoreRemembered(snapIn = null) {
+    const stored = snapIn ? null : relRead(REMEMBER_ROWS_KEY, null);
+    // [Z-RI] (3.40.16) or the snapshot of "↻ Repeat import"
+    const snap = snapIn || (stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null);
     if (!snap || snap.v !== 1 || !Array.isArray(snap.rows) || snap.src !== (S.importSrc || '')) return;
     // [3.36.1] other media chosen than then: the tracks stay as the source gives them now
     const sameMedia = (snap.media || '') === mediaSig();
@@ -17202,7 +17251,7 @@
     }
   }
 
-  async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
+  async function loadRelease(id, { confirmed = false, source = S.source, repeat = null } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
       return;
@@ -17219,10 +17268,13 @@
     }
     // [3.21.1] the chosen media are opened in MB's editor at once, while the source is read (before: once it was read)
     if (choice.load) loadMediaInEditor([...choice.media], { quiet: true });
+    S.repeatOpen = false; // (3.40.17, review) its question belongs to the import before
     try {
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      // [Z-RI] (3.40.17, review) "↻ Repeat import" afresh: the choices of the works matrix go too (once the source was read)
+      if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
       if (source === DISCOGS) addNotesCompanies(rel);
       applyMediaChoice(choice);
@@ -17364,6 +17416,8 @@
       // [3.32.1] suggestions waiting for "Apply" (collected item 109): the dashboard opens (if it is closed) and "Dates & tracks" with
       // both pools – once for this import; what is remembered stays and counts again from the next import
       S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
+      // [Z-PF2] (3.40.13) a fold after "Apply" counts for one import only
+      S.poolsFoldApply = false;
       if (S.poolsForce) log('info', 'poolsOpened');
       if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
@@ -17420,7 +17474,7 @@
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
-        finishRemember(seq);
+        finishRemember(seq, repeat);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
@@ -17441,7 +17495,7 @@
         runArtistWorks();
       } else {
         // [3.36.1] also a release without credits at the source (rows added by hand)
-        finishRemember(seq);
+        finishRemember(seq, repeat);
         findFestivals(seq);
         // [AY] (3.40.0, review) nothing to import from Discogs or Bandcamp: none new for the line of the release page
         if ((source === DISCOGS || source === BANDCAMP) && releaseMbid) {
@@ -18611,19 +18665,56 @@
     const suppOpen = suppIsOpen();
     const suppBtn = rel && S.rows.length ? `<button type="button" class="dci-headbtn dci-ibtn dci-supp-open${S.supp ? ' dci-on' : ''}" data-act="supp-open" aria-expanded="${suppOpen}"
       title="${esc(tr('supp.openTitle'))}">${ico('plus')}<span>${esc(tr('supp.open'))}</span>${S.supp ? ` <span class="dci-supp-mark">${esc(S.supp.source.short)} ✓</span>` : ''}</button>` : '';
+    // [Z-RI] (3.40.16) "↻ Repeat import" next to "Source ▾" (collected item Z-RI; Q-bw)
+    const repeatBtn = rel ? `<button type="button" class="dci-headbtn dci-ibtn dci-repeat-btn" data-act="repeat-open" aria-expanded="${!!S.repeatOpen}"
+      title="${esc(tr('repeat.title'))}"><span aria-hidden="true">↻</span><span>${esc(tr('repeat.button'))}</span></button>` : '';
     el.innerHTML = `${current}${bcPage}
       <span class="dci-srcwrap"><button type="button" class="dci-headbtn dci-ibtn dci-srcmenu-btn" data-act="srcmenu" aria-expanded="${!!S.srcMenuOpen}" aria-controls="dci-srcmenu"
         title="${esc(tr('srcmenu.title'))}"><span>${esc(tr('srcmenu.button'))}</span>${ico('down')}</button>${menu}</span>
-      ${suppBtn}`;
+      ${repeatBtn}${suppBtn}`;
     const panels = $('srcpanels');
     if (!panels) return;
-    panels.innerHTML = `${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
+    panels.innerHTML = `${S.repeatOpen && rel ? repeatAskHtml() : ''}${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
         <p class="dci-sub">${esc(tr('forget.what'))}</p><p class="dci-sub">${esc(tr('forget.keeps'))}</p>
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
       ${suppOpen ? suppBarHtml() : ''}${festHtml}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
+  }
+
+  /**
+   * [Z-RI] (3.40.16) The question of "↻ Repeat import": the source read again and its entries looked up in MusicBrainz anew (so that
+   * changed mapping rules apply) – keeping what was changed in this import (preselected) or afresh.
+   */
+  function repeatAskHtml() {
+    const keep = S.repeatKeep !== false;
+    return `<div class="dci-forget dci-repeat" data-el="repeat" role="group" aria-label="${esc(tr('repeat.ask'))}"><strong>${esc(tr('repeat.ask'))}</strong>
+      <p class="dci-sub">${esc(tr('repeat.what'))}</p>
+      <div class="dci-repeat-opts"><label class="dci-check" title="${esc(tr('repeat.keepTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="keep" ${keep ? 'checked' : ''}> ${esc(tr('repeat.keep'))}</label>
+        <label class="dci-check" title="${esc(tr('repeat.freshTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="fresh" ${keep ? '' : 'checked'}> ${esc(tr('repeat.fresh'))}</label></div>
+      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="repeat-do">${esc(tr('repeat.do'))}</button>
+        <button type="button" class="dci-textbtn" data-act="repeat-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+  }
+
+  /**
+   * [Z-RI] (3.40.16) The import again: the source read, the entities of MusicBrainz fetched anew (entityCache), the entries looked
+   * up. "Keep my changes": a snapshot as "Remember per release" makes, put onto the new import (also with ⚙ Settings → Cache off);
+   * afresh: nothing remembered is taken over for this import.
+   */
+  async function repeatImport(keep) {
+    if (!S.release) return;
+    const repeat = keep ? { snap: S.freshRows ? rememberSnapshot() : null } : { fresh: true };
+    entityCache.clear();
+    log('info', keep ? 'repeatKeep' : 'repeatFresh');
+    await loadRelease(S.release.id, { source: S.source, confirmed: true, repeat });
+  }
+
+  /** (3.40.17, review) "Start afresh": the works chosen, their attributes, dates and options, the columns taken out or folded, the live comments. */
+  function dropWorkChoices() {
+    for (const [i, p] of [...S.workPlan]) if (!p || p.origin !== 'created') S.workPlan.delete(i);
+    [S.linkAttrOn, S.linkAttrOff, S.mxRemoved, S.workRowOpts, S.mxColDate, S.liveComChoice].forEach((m) => { if (m && m.clear) m.clear(); });
+    if (S.mxCollapsed) S.mxCollapsed.clear();
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -20171,6 +20262,110 @@
     }, 0);
   }
 
+  /**
+   * [Z-SK] (3.40.15) "⊘ Skip" in the head of an entry (collected item Z-SK; Q-bx, Q-ce): all its rows on "Skip", the entry grey;
+   * "↺ Take again" puts each row back on the level it had (also a row skipped with the works matrix or the scope stays so).
+   * Skipped so while every row is on "Skip" and one of them was set there by it; a level chosen for a row ends it for that row.
+   */
+  function entrySkipped(a) {
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    return rows.length > 0 && rows.every((r) => r.level === 'skip') && rows.some((r) => r.entrySkip);
+  }
+
+  function entrySkipHtml(a, rows) {
+    if (!rows.length) return '';
+    return entrySkipped(a)
+      ? `<button type="button" class="dci-textbtn dci-gskip dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button>`
+      : `<button type="button" class="dci-textbtn dci-gskip" data-act="entry-skip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.skipTitle'))}">${esc(tr('group.skip'))}</button>`;
+  }
+
+  function skipEntry(a) {
+    let n = 0;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      if (r.entrySkip && r.level === 'skip') continue;
+      const prev = { level: r.level, touched: !!r.levelTouched, mx: !!r.mxSkipped, scope: r.scopeLevel || null };
+      if (r.level !== 'skip') {
+        levelOf(r, 'skip');
+        n += 1;
+      }
+      r.entrySkip = prev;
+    }
+    log('info', 'entrySkipped', { name: a.name || a.rawName || '', n });
+    afterEntrySkip(a);
+  }
+
+  function unskipEntry(a) {
+    let n = 0;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      const p = r.entrySkip;
+      if (!p) continue;
+      // (3.40.17, review) the level it had – skipped then with the scope or the works matrix: the level before those – placed by
+      // what holds now: a credit switched off at the source, the text or notes left out, the works matrix skipped, the scope
+      let lv = p.level;
+      if (lv === 'skip' && p.scope) lv = p.scope;
+      if (lv === 'skip' && p.mx) lv = 'work';
+      const touched = p.touched;
+      if (lv === 'skip') {
+        delete r.entrySkip;
+      } else {
+        if (r.srcOff) r.srcOffLevel = lv;
+        else if (r.aboutHidden) r.aboutLevel = lv;
+        else if (r.notesHidden) r.notesLevel = lv;
+        else if (S.worksSkip && lv === 'work') {
+          levelOf(r, 'skip');
+          r.mxSkipped = true;
+        } else if (S.scope !== 'all' && (S.scope === 'work') !== (lv === 'work')) {
+          levelOf(r, 'skip');
+          r.scopeLevel = lv;
+        } else {
+          levelOf(r, lv);
+          n += 1;
+        }
+        delete r.entrySkip;
+      }
+      r.levelTouched = touched;
+    }
+    log('info', 'entryTaken', { name: a.name || a.rawName || '', n });
+    afterEntrySkip(a);
+  }
+
+  /** (3.40.17, review) A level that comes back from another kind of "Skip" while the row is skipped with its entry. */
+  function entrySkipLevel(r, level) {
+    if (r.entrySkip && level && level !== 'skip') r.entrySkip.level = level;
+  }
+
+  /** (3.40.17, review) A row put on a level some other way (all rows at once, a mode switched): no longer skipped with its entry. */
+  function dropStaleEntrySkip() {
+    for (const r of S.rows) if (r.entrySkip && r.level !== 'skip') delete r.entrySkip;
+  }
+
+  /** The entry, the works matrix (its rows on works) and the counts drawn anew; the focus on the other button of the entry. */
+  function afterEntrySkip(a) {
+    renderGroups();
+    renderWorks();
+    refresh();
+    const b = S.overlay && S.overlay.querySelector(`[data-group="${a.key}"] .dci-gskip`);
+    if (b) b.focus({ preventScroll: true });
+    else {
+      const line = S.overlay && S.overlay.querySelector('[data-el="skipped"] .dci-skipped-toggle');
+      if (line) line.focus({ preventScroll: true });
+    }
+  }
+
+  /** [Z-SK] (3.40.15) The entries skipped and taken out of the dashboard: "n skipped entries ▸", each with "↺ Take again". */
+  function renderSkippedList(list) {
+    const el = S.overlay && $('skipped');
+    if (!el) return;
+    el.hidden = !list.length;
+    if (!list.length) {
+      el.innerHTML = '';
+      return;
+    }
+    const open = !!S.skippedOpen;
+    el.innerHTML = `<button type="button" class="dci-textbtn dci-skipped-toggle" data-act="skipped-toggle" aria-expanded="${open}" title="${esc(tr('group.skippedTitle'))}">${esc(tr('group.skippedN', { n: list.length }))} ${open ? '▾' : '▸'}</button>${open
+      ? `<ul class="dci-skipped-list">${list.map((a) => `<li>${kindTagHtml(a)}<strong>${esc(a.name || a.rawName || '')}</strong> <button type="button" class="dci-textbtn dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button></li>`).join('')}</ul>` : ''}`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -20195,11 +20390,11 @@
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
-          ${worksLink}${compact ? `<div class="dci-ghead-r">${emBySegHtml(a)}</div>` : ''}
+          ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -20212,7 +20407,7 @@
           </table>
         </div>`}
         ${compact ? '' : `${notes}
-        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>`}
+        <button type="button" class="dci-addrole-btn dci-addrole-full" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button>`}
       </section>`;
   }
 
@@ -21170,7 +21365,9 @@
         Object.assign(r, { aboutHidden: true, aboutLevel: r.level, level: 'skip' });
         n++;
       } else if (!hide && r.aboutHidden) {
-        r.level = r.aboutLevel || r.level;
+        // [Z-SK] (3.40.17, review) skipped with its entry: the level for "↺ Take again"
+        if (r.entrySkip) entrySkipLevel(r, r.aboutLevel);
+        else r.level = r.aboutLevel || r.level;
         delete r.aboutHidden;
         delete r.aboutLevel;
         // [3.18.0] the works matrix skipped: a work row stays on "Skip" with it
@@ -21193,7 +21390,8 @@
         Object.assign(r, { notesHidden: true, notesLevel: r.level, level: 'skip' });
         n++;
       } else if (!hide && r.notesHidden) {
-        r.level = r.notesLevel || r.level;
+        if (r.entrySkip) entrySkipLevel(r, r.notesLevel);
+        else r.level = r.notesLevel || r.level;
         delete r.notesHidden;
         delete r.notesLevel;
         if (S.worksSkip && r.level === 'work') Object.assign(r, { level: 'skip', mxSkipped: true });
@@ -21663,9 +21861,10 @@
     if (!S.dmFold || !poolsOpen() || S.poolForm || S.trackForm || S.poolClear) return;
     // (3.40.11, review) nor while cells of the matrix wait for a choice (single days or a period) or one is being edited
     if (S.dmEdit || dm().cells.some((c) => c.alt)) return;
-    S.poolsOpen = false;
+    // [Z-PF2] (3.40.13, Q-br) folded for this import only: the next import with dates shows the bar open again; only "▲ fold" by hand
+    // is remembered
+    S.poolsFoldApply = true;
     S.poolsForce = null;
-    writeJson('localStorage', 'dci-pools-open', false);
     log('info', 'poolsFolded');
     renderDates();
     const again = focus && S.overlay && S.overlay.querySelector('.dci-pools-fold');
@@ -22091,6 +22290,8 @@
     if (S.poolForm || S.trackForm || S.poolClear) return true;
     // [3.32.1] suggestions of this import wait for "Apply" (item 109): open, without changing what is remembered
     if (S.poolsForce) return true;
+    // [Z-PF2] (3.40.13) folded after "Apply" (for this import)
+    if (S.poolsFoldApply) return false;
     if (S.poolsOpen != null) return !!S.poolsOpen;
     return !!(S.datePool.length || dateFinds().notes.length);
   }
@@ -23148,7 +23349,12 @@
   }
 
   function renderGroups() {
-    const withRows = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
+    dropStaleEntrySkip();
+    const all = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
+    // [Z-SK] (3.40.15) with "Remove skipped entries from the dashboard": those skipped with "⊘ Skip" in a line at the bottom
+    const skipped = S.skipHide ? all.filter(entrySkipped) : [];
+    const withRows = all.filter((a) => !skipped.includes(a));
+    renderSkippedList(skipped);
     $('groups').innerHTML = withRows.filter((a) => !a.company && !a.other).map(groupHtml).join('');
     const others = withRows.filter((a) => a.other);
     const oel = $('others');
@@ -23195,7 +23401,9 @@
     if (!S.overlay) return;
     const section = S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
-    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}`;
+    // (3.40.15) the classes that do not follow the match kept (folded, text hidden, skipped)
+    const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
+    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${keep}`;
     const tag = section.querySelector('.dci-kind-tag');
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
@@ -23337,6 +23545,8 @@
 
   function refresh() {
     if (!S.overlay) return;
+    dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
+    S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review)
     // [146] (3.36.0) the rows remembered soon after a change
     scheduleRemember();
     scheduleWorkRecheck();
@@ -23463,6 +23673,18 @@
       // [3.28.0] the credit at the head follows the rows
       const chip = section.querySelector('.dci-gcredit');
       const a = S.artists.get(section.dataset.group);
+      // [Z-SK] (3.40.15) skipped with its entry or not (a level chosen for one of its rows ends it)
+      if (a) {
+        const skipped = entrySkipped(a);
+        section.classList.toggle('dci-gskipped', skipped);
+        const sk = section.querySelector('.dci-ghead-r .dci-gskip');
+        if (sk && sk.dataset.act !== (skipped ? 'entry-unskip' : 'entry-skip')) {
+          const had = document.activeElement === sk;
+          sk.outerHTML = entrySkipHtml(a, rows);
+          const now = had && section.querySelector('.dci-ghead-r .dci-gskip');
+          if (now) now.focus({ preventScroll: true });
+        }
+      }
       if (chip && a) {
         const html = creditChipHtml(a);
         if (chip.outerHTML !== html) chip.outerHTML = html;
@@ -24216,6 +24438,8 @@
     const plan = work.planned ? S.workPlan.get(i) : null;
     if (plan) plan.flags.forEach((f) => out.add(f));
     if (work.planned && liveReason(i) && !off.has('live')) out.add('live');
+    // [Z-CV] (3.40.17) "cover" set by itself (taken off by a click)
+    if (work.planned && !off.has('cover') && !out.has('cover') && coverAuto(i, work)) out.add('cover');
     off.forEach((f) => { if (!mbLinkAttrs(work).has(f)) out.delete(f); });
     return out;
   }
@@ -24263,6 +24487,7 @@
         } catch {
           S.bandOf.set(id, { failAt: Date.now() });
         }
+        S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) an answer that may set "cover" by itself
         // (3.39.9, review) drawn again as other results of the background (not while typing in the matrix or dragging)
         if (!S.bandQueue.length) renderWorksBackground();
       }
@@ -24275,7 +24500,12 @@
    * for a new work, nor for the works found otherwise (a songwriter's own song is no cover).
    */
   function coverComposers(i, work) {
-    if (!work || !work.planned || work.origin === 'pending' || linkAttrsOf(i, work).has('cover')) return [];
+    if (!work || linkAttrsOf(i, work).has('cover')) return [];
+    return coverCandidates(i, work);
+  }
+  /** [Z-CV] (3.40.17) Who wrote the work and performs nothing on the track – whether "cover" is set or not (see coverComposers). */
+  function coverCandidates(i, work) {
+    if (!work || !work.planned || work.origin === 'pending') return [];
     const plan = S.workPlan.get(i);
     if (!plan || !plan.composer || !linkAttrTypes().some((a) => norm(a.name) === 'cover')) return [];
     const perf = performersOf(i);
@@ -24301,6 +24531,32 @@
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;
+  /**
+   * [Z-CV] (3.40.17) "cover" set by itself (collected item Z-CV; Q-by): a work of MusicBrainz chosen among those of the track's
+   * composer (as for "co?"), the composer an entry of the source whose credits on the release are all writing credits (composer,
+   * lyricist, writer, librettist) – not on a release of the genre "Classical". Shown yellow; a click takes it off ("co?" again).
+   */
+  // (3.40.17, review) worked out once per drawing or check (linkAttrsOf is asked many times): S.coverPass counts them
+  const coverMemo = { pass: -1, m: new Map() };
+  function coverAuto(i, work) {
+    if (!work || !work.planned) return false;
+    if (coverMemo.pass !== S.coverPass) {
+      coverMemo.pass = S.coverPass;
+      coverMemo.m.clear();
+    }
+    const k = `${i}|${work.gid}`;
+    if (!coverMemo.m.has(k)) coverMemo.m.set(k, coverAutoNow(i, work));
+    return coverMemo.m.get(k);
+  }
+  function coverAutoNow(i, work) {
+    if (((S.release && S.release.genres) || []).includes('classical')) return false;
+    const plan = S.workPlan.get(i);
+    if (!plan || !plan.composer || !coverCandidates(i, work).length) return false;
+    const a = [...S.artists.values()].find((x) => x.mbid === plan.composer && !x.company && !x.manual);
+    if (!a) return false;
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.manual && !r.supp);
+    return rows.length > 0 && rows.every((r) => WRITER_TYPES.includes(norm(rowTypeName(r))));
+  }
   /** Switches an attribute of one link on or off (MusicBrainz's own stay). */
   function setLinkAttr(i, work, name, on) {
     const key = linkKey(i, work.gid);
@@ -24348,6 +24604,11 @@
     const pills = types.map((a) => {
       const n = norm(a.name);
       if (inMb.has(n)) return attrPillHtml(a, { state: 'mb', act: 'mx-wattr', title: `${a.name} – ${tr('matrix.attrInMb')}` });
+      // [Z-CV] (3.40.17) "cover" set by itself: yellow, ticked
+      const onByHand = (S.linkAttrOn.get(linkKey(mrow.i, mrow.work.gid)) || new Set()).has(n) || ((S.workPlan.get(mrow.i) || {}).flags || new Set()).has(n);
+      if (have.has(n) && n === 'cover' && mrow.work.planned && !onByHand && coverAuto(mrow.i, mrow.work)) {
+        return attrPillHtml(a, { state: 'auto', act: 'mx-wattr', title: tr('matrix.coverAuto', { names: coverCandidates(mrow.i, mrow.work).join(', ') }) });
+      }
       if (have.has(n)) {
         const auto = n === 'live' && reason && mrow.work.planned && !(S.linkAttrOn.get(linkKey(mrow.i, mrow.work.gid)) || new Set()).has('live');
         const edit = !mrow.work.planned;
@@ -24743,17 +25004,29 @@
         <td><input type="text" data-f="livecom-text" data-recs="${esc(recs)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.groupTextAria', { list: label }))}"></td>
         <td>${notes.map((x) => `<div class="dci-sub">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
     }).join('');
+    // [Z-LC] (3.40.13) one box for all of them (those MusicBrainz has another comment for cannot be ticked): mixed – neither ticked nor not
+    const free = list.filter((p) => !p.other);
+    const freeOn = free.filter((p) => liveChoice(p).on).length;
+    const allRow = free.length > 1 ? `<tr class="dci-livecom-all"><td><input type="checkbox" data-f="livecom-on" data-all="1" data-recs="${esc(free.map((p) => p.rec).join(','))}" ${freeOn === free.length ? 'checked' : ''} data-mixed="${freeOn && freeOn < free.length ? 1 : 0}" aria-label="${esc(tr('livecom.allAria'))}"></td>
+        <td colspan="4">${esc(tr('livecom.all'))}</td></tr>` : '';
     // at most a third of the dashboard's height
     const h = S.overlay.getBoundingClientRect().height;
     const max = h ? `${Math.max(120, Math.round(h / 3))}px` : '33vh';
     const head = `<button type="button" class="dci-livecom-head" data-act="livecom-toggle" aria-expanded="${open}" aria-controls="dci-livecom-body">${open ? '▾' : '▸'} ${esc(tr('livecom.title', { n, m: list.length }))}</button>`;
     const html = `<div class="dci-livecom-box${open ? ' dci-livecom-boxopen' : ''}">${open ? `<div class="dci-livecom-body" id="dci-livecom-body" style="max-height:${max}">
       <p class="dci-sub">${esc(tr('livecom.hint'))}</p>
-      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></div>` : ''}
+      <div class="dci-tablewrap"><table class="dci-livecom-table">${allRow ? `<thead>${allRow}</thead>` : ''}<tbody>${rows}</tbody></table></div></div>` : ''}
       <div class="dci-livecom-headrow">${head}</div></div>`;
     if (el.dataset.html === html) return;
+    // (3.40.17, review) the box focused (a tick or "All") keeps the focus when the list is drawn anew
+    const had = el.contains(document.activeElement) ? document.activeElement : null;
+    const again = had && had.dataset.f === 'livecom-on' ? (had.dataset.all ? '[data-f="livecom-on"][data-all]' : had.dataset.rec ? `[data-f="livecom-on"][data-rec="${had.dataset.rec}"]` : '') : '';
     el.innerHTML = html;
     el.dataset.html = html;
+    // [Z-LC] (3.40.13) "mixed" is a property, not an attribute
+    el.querySelectorAll('input[data-mixed="1"]').forEach((x) => { x.indeterminate = true; });
+    const back = again && el.querySelector(again);
+    if (back) back.focus({ preventScroll: true });
   }
 
   function applyLiveDefault() {
@@ -25894,6 +26167,8 @@
         if (r.srcOff) r.srcOffLevel = 'work';
         else if (r.aboutHidden) r.aboutLevel = 'work';
         else if (r.notesHidden) r.notesLevel = 'work';
+        // [Z-SK] (3.40.17, review) skipped with its entry: back on "work" with "↺ Take again"
+        else if (r.entrySkip) Object.assign(r.entrySkip, { level: 'work', mx: false });
         else if (r.level === 'skip') {
           r.level = 'work';
           resolveRowType(r);
@@ -26389,6 +26664,7 @@
   }
 
   function renderWorks() {
+    S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) "cover" set by itself worked out anew
     // [3.36.4] the choices of the works matrix remembered too (soon after a change)
     scheduleRemember();
     // Keep the scroll position of the matrix (and of the dashboard) while it is drawn again
@@ -26809,6 +27085,11 @@
         if (!rm) return true;
         S.mxRemoved.delete(rm.key);
         S.rows.filter((r) => rm.rowIds.includes(r.id) && r.level === 'skip').forEach((r) => {
+          // [Z-SK] (3.40.17, review) skipped with its entry: on "work" with "↺ Take again"
+          if (r.entrySkip) {
+            if (r.entrySkip.level === 'skip') r.entrySkip.level = 'work';
+            return;
+          }
           r.level = 'work';
           resolveRowType(r);
           refreshRowDetails(r);
@@ -27574,7 +27855,9 @@
   function setScope(mode) {
     for (const r of S.rows) {
       if (r.scopeLevel) {
-        r.level = r.scopeLevel;
+        // [Z-SK] (3.40.17, review) a row of an entry skipped with "⊘ Skip": its level back for "↺ Take again"
+        if (r.entrySkip) Object.assign(r.entrySkip, { level: r.scopeLevel, scope: null });
+        else r.level = r.scopeLevel;
         delete r.scopeLevel;
         resolveRowType(r);
       }
@@ -27600,6 +27883,8 @@
   function levelOf(row, level) {
     delete row.scopeLevel;
     delete row.mxSkipped;
+    // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
+    delete row.entrySkip;
     const toOrFromWork = level === 'work' || row.level === 'work';
     row.level = level;
     row.levelTouched = true;
@@ -28425,6 +28710,23 @@
         // [E4] (3.34.29) the entries as a matrix or as before
         if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
         break;
+      // [Z-SK] (3.40.15) an entry on "Skip" and back
+      case 'entry-skip':
+      case 'entry-unskip': {
+        const a = S.artists.get(btn.dataset.skipkey);
+        if (!a) break;
+        if (act === 'entry-skip') skipEntry(a);
+        else unskipEntry(a);
+        break;
+      }
+      case 'skipped-toggle':
+        S.skippedOpen = !S.skippedOpen;
+        renderGroups();
+        {
+          const again = S.overlay.querySelector('[data-el="skipped"] .dci-skipped-toggle');
+          if (again) again.focus({ preventScroll: true });
+        }
+        break;
       case 'em-side': {
         // [Z-KH] (3.40.11) the notes of compact entries beside their lines or in them
         const side = btn.dataset.side === 'lines' ? 'lines' : 'beside';
@@ -28984,6 +29286,7 @@
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolsForce = null;
+        S.poolsFoldApply = false; // [Z-PF2] (3.40.13) by hand: remembered instead
         S.dmFoldWait = false; // [Z-PF] (3.40.11, review) folded or opened by hand: no folding left to do
         S.poolForm = null;
         S.trackForm = null;
@@ -29271,6 +29574,7 @@
         }
         renderSettings();
         if (S.settingsOpen) $('settings').scrollIntoView({ block: 'nearest' });
+        if (S.settingsOpen) onlyHint('settings');
         break;
       case 'settings-topic': {
         // [3.25.0] a tab: its topic (remembered)
@@ -29294,12 +29598,17 @@
         if (S.statsOpen && rulesDocked() && rulesShown()) closeRules();
         renderStats();
         if (S.statsOpen) $('stats').scrollIntoView({ block: 'nearest' });
+        if (S.statsOpen) onlyHint('stats');
         break;
       case 'stats-fold':
         // [189] (3.39.3) the heading folds the statistics in, as the one of ⚙ Settings does
         S.statsOpen = false;
         renderStats();
         S.overlay.querySelector('.dci-head [data-act="stats-open"]').focus();
+        break;
+      case 'stats-where':
+        // [Z-SC] (3.40.14) to "Collect statistics" in ⚙ Settings → Cache
+        openSettingsAt('cache', '[data-set="stats-on"]');
         break;
       case 'keys-open':
         // [3.36.3] the keyboard shortcuts below the head
@@ -29536,6 +29845,7 @@
         break;
       case 'forget-open':
         S.forgetOpen = !S.forgetOpen;
+        if (S.forgetOpen) S.repeatOpen = false; // (3.40.17, review) one question at a time
         renderSource();
         if (S.forgetOpen) S.overlay.querySelector('[data-act="forget-cancel"]').focus();
         break;
@@ -29546,6 +29856,33 @@
       case 'forget-do':
         forgetImport();
         break;
+      // [Z-RI] (3.40.16)
+      case 'repeat-open':
+        S.repeatOpen = !S.repeatOpen;
+        if (S.repeatOpen) S.forgetOpen = false;
+        renderSource();
+        if (S.repeatOpen) {
+          const x = S.overlay.querySelector('[data-el="repeat"] input[data-f="repeat-keep"]:checked');
+          if (x) x.focus();
+        }
+        break;
+      case 'repeat-cancel':
+        S.repeatOpen = false;
+        renderSource();
+        S.overlay.querySelector('[data-act="repeat-open"]').focus();
+        break;
+      case 'repeat-do': {
+        const fresh = S.overlay.querySelector('[data-el="repeat"] input[data-f="repeat-keep"][value="fresh"]');
+        const keep = !(fresh && fresh.checked);
+        S.repeatOpen = false;
+        S.repeatKeep = true; // (asked with "keep" preselected each time)
+        renderSource();
+        // (3.40.17, review) the focus back on the button
+        const again = S.overlay.querySelector('[data-act="repeat-open"]');
+        if (again) again.focus();
+        repeatImport(keep);
+        break;
+      }
       case 'text-open':
         S.textForm = S.textForm ? null : { text: (S.textInput && S.textInput.text) || '', origin: (S.textInput && S.textInput.origin) || '' };
         renderSource();
@@ -29951,6 +30288,10 @@
       case 'editnote':
         S.editNote = el.checked;
         S.rows.forEach(updateHint);
+        break;
+      // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
+      case 'repeat-keep':
+        S.repeatKeep = el.value !== 'fresh';
         break;
       // [3.32.9] a live recording ticked or not for its comment (item 113)
       case 'livecom-on': {
@@ -30578,6 +30919,7 @@
           <div data-el="groups"></div>
           <section class="dci-companies" data-el="companies" hidden></section>
           <section class="dci-companies dci-others" data-el="others" hidden></section>
+          <div class="dci-skipped" data-el="skipped" hidden></div>
           <section class="dci-works" data-el="works" hidden></section>
           <div data-el="datalists"></div>
         </div>
@@ -30850,6 +31192,8 @@
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   // [Z-KH] (3.40.11) compact entries: the notes beside the lines (default) or in them ("lines": stored)
   const EM_SIDE_KEY = 'dci-em-side';
+  // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard (off by default; on: stored true)
+  const SKIP_HIDE_KEY = 'dci-skip-hide';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
   const WORK_GROUPS_KEY = 'dci-work-groups';
@@ -30875,7 +31219,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -30884,10 +31228,11 @@
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
-    // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
-    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
-    // [E8] (3.38.0) the switch and the period (the statistics stay: "Delete statistics …")
-    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY],
+    // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
+    // collecting the statistics
+    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY],
+    // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
+    statistics: [STATS_PERIOD_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -30907,6 +31252,7 @@
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
+  S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -31241,9 +31587,10 @@
   function statsHtml() {
     const row = (html) => `<div class="dci-set-row">${html}</div>`;
     const on = statsOn();
+    // [Z-SC] (3.40.14) "Collect statistics" is in ⚙ Settings → Cache: here a grey line that says so and leads there
     const head = [
+      `<p class="dci-sub dci-stats-where" data-el="stats-where">${esc(tr(on ? 'stats.whereOn' : 'stats.whereOff'))} <button type="button" class="dci-textbtn" data-act="stats-where">${esc(tr('stats.whereBtn'))}</button></p>`,
       `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
-      row(`<label class="dci-check" title="${esc(tr('stats.onTitle'))}"><input type="checkbox" data-set="stats-on" ${on ? 'checked' : ''}> ${esc(tr('stats.on'))}</label>`),
     ];
     if (S.statsData == null) {
       statsLoad();
@@ -31593,6 +31940,8 @@
         // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
         row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
           data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
+        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
+        row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
@@ -31691,6 +32040,8 @@
             value="${S.rememberMax}"></label> <span class="dci-sub">${esc(tr('settings.rememberMaxHint'))}</span>`),
           row(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
+          // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
+          row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
         ];
       },
     };
@@ -31930,6 +32281,12 @@
       // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
       writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
       log('info', 'settingValue', { what: tr('settings.gapNone'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'skip-hide') {
+      // [Z-SK] (3.40.15)
+      S.skipHide = el.checked;
+      writeJson('localStorage', SKIP_HIDE_KEY, el.checked || null);
+      log('info', 'settingValue', { what: tr('settings.skipHide'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -32121,6 +32478,11 @@
         renderGroups();
         refresh();
       }
+      // [Z-SK] (3.40.15) skipped entries in their place again
+      if (S.skipHide) {
+        S.skipHide = false;
+        renderGroups();
+      }
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -32153,7 +32515,7 @@
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
-      // [E8] (3.38.0) collecting on, months – the statistics stay
+      // [E8] (3.38.0) months – the statistics stay
       S.statsPeriod = 'month';
     } else if (t === 'cache') {
       // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
@@ -32190,7 +32552,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -32217,6 +32579,8 @@
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
+      // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
+      skipHide: false, poolsFoldApply: false,
     });
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
@@ -32297,7 +32661,9 @@
       return;
     }
     if (settingsOnly) {
-      if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      // [Z-LS] (3.40.14) opened for the statistics: says so
+      const key = opts.only === 'stats' ? 'statsOnly.hint' : 'settingsOnly.hint';
+      if (!S.messages.some((m) => m.key === 'settingsOnly.hint' || m.key === 'statsOnly.hint')) showMessage('info', key, {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
       return;
     }
     await initOnce();
@@ -32556,7 +32922,13 @@
       ocrBtn.innerHTML = `${esc(tr('launcher.ocr'))}<span class="dci-beta-tag">beta</span>`;
       ocrBtn.title = tr('launcher.ocrTitle');
     }
-    bar.querySelector('#dci-log-open').textContent = tr('log.title');
+    // [Z-LS] (3.40.14) symbols: the words as tooltip and label
+    [['#dci-log-open', 'log.title', 'log.title'], ['#dci-stats-open', 'stats.title', 'stats.buttonTitle'], ['#dci-set-open', 'settings.title', 'settings.buttonTitle']].forEach(([sel, label, title]) => {
+      const b = bar.querySelector(sel);
+      b.setAttribute('aria-label', tr(label));
+      b.title = tr(title);
+    });
+    syncLogBtn();
     bar.querySelector('#dci-launch-status').textContent = S.launchStatus ? tr(S.launchStatus.key, S.launchStatus.params) : '';
     renderNotice();
     renderLangAsk();
@@ -32571,6 +32943,75 @@
     }
   }
 
+  /**
+   * [Z-SC] (3.40.14) ⚙ Settings open at a topic (remembered as a click on its tab), the statistics and the rules in the dashboard
+   * closed; `focusSel` focused in it (else its tab).
+   */
+  function openSettingsAt(topic, focusSel = '') {
+    S.settingsOpen = true;
+    S.resetOpen = false;
+    if (topic && SETTING_TOPICS.includes(topic)) {
+      S.settingsTab = topic;
+      writeJson('localStorage', SETTINGS_TAB_KEY, topic === 'general' ? null : topic);
+    }
+    if (S.statsOpen) {
+      S.statsOpen = false;
+      renderStats();
+    }
+    if (rulesDocked() && rulesShown()) closeRules();
+    renderSettings();
+    // (3.40.17, review) as ⚙ of the head: the message before the import, the number of works kept
+    onlyHint('settings');
+    awCount().then((n) => {
+      S.awStoreCount = n || 0;
+      if (S.settingsOpen) renderSettings();
+    });
+    const el = S.overlay && $('settings');
+    if (!el) return;
+    const target = (focusSel && el.querySelector(focusSel)) || el.querySelector(`.dci-set-tab[data-topic="${S.settingsTab}"]`);
+    if (target) target.focus({ preventScroll: true });
+    el.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** [Z-LS] (3.40.14) Before the import: the message names what is open – the statistics or the settings. */
+  function onlyHint(what) {
+    if (S.initialized || S.importStarting) return;
+    const m = S.messages.find((x) => x.key === 'settingsOnly.hint' || x.key === 'statsOnly.hint');
+    const key = what === 'stats' ? 'statsOnly.hint' : 'settingsOnly.hint';
+    if (m && m.key !== key) {
+      m.key = key;
+      renderMessages();
+    }
+  }
+
+  /**
+   * [Z-LS] (3.40.14) "Statistics" and "⚙" next to "Import credits …" (collected item Z-LS; Q-bz): the dashboard without the import
+   * (as ⚙ of the navigation), the statistics or the settings open in it.
+   */
+  async function openFromBar(what) {
+    if (!S.overlay || S.overlay.hidden) await openDashboard({ settingsOnly: true, only: what });
+    onlyHint(what);
+    if (what === 'settings') {
+      openSettingsAt(SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general');
+      return;
+    }
+    S.statsOpen = true;
+    S.statsData = null;
+    if (S.settingsOpen || S.resetOpen) {
+      S.settingsOpen = false;
+      S.resetOpen = false;
+      renderSettings();
+    }
+    if (rulesDocked() && rulesShown()) closeRules();
+    renderStats();
+    const el = $('stats');
+    if (el) {
+      el.scrollIntoView({ block: 'nearest' });
+      const head = el.querySelector('[data-act="stats-fold"]');
+      if (head) head.focus({ preventScroll: true });
+    }
+  }
+
   function insertLauncher() {
     if (document.getElementById('dci-launcher')) return;
     const controls = document.createElement('div');
@@ -32582,7 +33023,7 @@
     bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
-      <button type="button" id="dci-log-open" class="dci-textbtn"></button>
+      <span class="dci-launch-tools">${'' /* [Z-LS] (3.40.14) symbols in the order of the dashboard's head: Log | Statistics · ⚙ */}<button type="button" id="dci-log-open" class="dci-launch-ico" aria-pressed="false">${ico('log')}</button><span class="dci-launch-sep" aria-hidden="true"></span><button type="button" id="dci-stats-open" class="dci-launch-ico">${ico('stats')}</button><button type="button" id="dci-set-open" class="dci-launch-ico">${ico('gear')}</button></span>
       <span id="dci-launch-status" aria-live="polite"></span>`;
     const anchor = document.querySelector('div.tabs');
     // The main button first, the navigation below it; together in one block with room below it,
@@ -32595,6 +33036,8 @@
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
+    bar.querySelector('#dci-stats-open').addEventListener('click', () => openFromBar('stats'));
+    bar.querySelector('#dci-set-open').addEventListener('click', () => openFromBar('settings'));
     renderLauncher();
     renderControls();
     // Ask the companion (if installed) for its status, so the bar shows it before the dashboard is opened.
@@ -32803,6 +33246,13 @@
       #dci-launcher .dci-place-seg button { border: 0; background: #fff; color: #262430; cursor: pointer; font: inherit; padding: 2px 8px; }
       #dci-launcher .dci-place-seg button + button { border-left: 1px solid #c8c5d6; }
       #dci-launcher .dci-place-seg button[aria-pressed="true"] { background: #3d3a4f; color: #fff; }
+      /* [Z-LS] (3.40.14) Log | Statistics · ⚙ as symbols */
+      #dci-launcher .dci-launch-tools { display: inline-flex; align-items: center; gap: 4px; }
+      #dci-launcher .dci-launch-ico { display: inline-flex; align-items: center; justify-content: center; padding: 3px 6px; border: 1px solid #c8c5d6; border-radius: 3px;
+        background: #fff; color: #4b4585; cursor: pointer; }
+      #dci-launcher .dci-launch-ico:hover { background: #f1f0f8; }
+      #dci-launcher .dci-launch-ico[aria-pressed="true"] { background: #ecebf6; border-color: #736dab; }
+      #dci-launcher .dci-launch-sep { width: 1px; height: 16px; margin: 0 4px; background: #c8c5d6; }
       #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
       /* [3.28.0] only the status, as a badge, and ⚙ (item 66) */
@@ -33393,6 +33843,8 @@
       .dci-wpill-mixed { border: 1px solid var(--role); background: linear-gradient(135deg, #cddbf6 50%, #fff 50%); color: #2c4a80; }
       .dci-wpill-mb, .dci-wpill-mb:disabled { border-color: var(--ok); background: #e6f3ea; color: #1f5a36; opacity: 1; cursor: default; }
       .dci-wpill-hint { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [Z-CV] (3.40.17) set by itself: ticked, in the colours of a suggestion */
+      .dci-wpill-auto { border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); font-weight: 600; }
       .dci-mxchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 1px calc(var(--u, 1px) * 7); border: 1px solid; border-left-width: 4px; border-radius: 4px; font-size: calc(var(--u, 1px) * 12); font-weight: 600; line-height: 1.4; white-space: nowrap; }
       .dci-mxchip-mb { border-color: #b9dcc5; border-left-color: var(--ok); background: #e6f3ea; color: #1f5a36; }
       .dci-mxchip-on { border-color: #c7d5f0; border-left-color: var(--role); background: #eef4ff; color: #2c4a80; }
@@ -33548,6 +34000,7 @@
       .dci-livecom-head:hover { background: var(--purple-d); }
       .dci-livecom-head:focus-visible { outline: 2px solid var(--purple-d); outline-offset: 2px; }
       .dci-livecom-sub td:first-child { padding-left: calc(var(--u, 1px) * 18); }
+      .dci-livecom-all td { border-bottom: 1px solid #e3e1ea; font-weight: 600; }
       .dci-livecom-gbtn { white-space: nowrap; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
       .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }
@@ -33979,7 +34432,21 @@
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
-      .dci-ghead-r { margin-left: auto; align-self: center; }
+      .dci-ghead-r { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
+      /* [Z-SK] (3.40.15) "⊘ Skip" and "↺ Take again" in the head of an entry; a skipped entry grey */
+      /* [Z-RI] (3.40.16) */
+      .dci-repeat-btn span[aria-hidden] { margin-right: calc(var(--u, 1px) * 4); }
+      .dci-repeat-opts { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-gskip { white-space: nowrap; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #6d6a7c;
+        text-decoration: none; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; }
+      .dci-gskip:hover, .dci-gskip:focus-visible { border-color: var(--err); color: var(--err); }
+      .dci-gskip.dci-gskip-back, .dci-skipped-list .dci-gskip-back { border-color: var(--purple); color: var(--purple-d); }
+      .dci-gskip.dci-gskip-back:hover, .dci-gskip.dci-gskip-back:focus-visible { background: var(--date-bg); color: var(--purple-d); }
+      .dci-group.dci-gskipped > :not(.dci-ghead), .dci-group.dci-gskipped .dci-ghead > :not(.dci-ghead-r) { opacity: 0.45; }
+      .dci-skipped { margin: calc(var(--u, 1px) * 8) 0; }
+      .dci-skipped-list { list-style: none; margin: calc(var(--u, 1px) * 4) 0 0; padding: 0; }
+      .dci-skipped-list li { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 2) 0; }
+      .dci-skipped-list .dci-gskip-back { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid; border-radius: 3px; background: #fff; text-decoration: none; font-size: calc(var(--u, 1px) * 12); }
       .dci-em-cwrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 calc(var(--u, 1px) * 16); }
       .dci-em-cwrap > .dci-em-compact { flex: 1 1 calc(var(--u, 1px) * 420); min-width: 0; }
       .dci-em-side { flex: 0 0 calc(var(--u, 1px) * 230); display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 3);

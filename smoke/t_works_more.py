@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -360,7 +360,8 @@ def case_livecom():
        [3.38.3] Tracks 2 and 3 are one line "2–3 · ▸ 2 tracks" (the same comment, item 168), ▸ shows them; the heading "▾ Live
        disambiguation comments: 2 of 3" (item 170).
     C) The place credited as "Iridium" and the matrix applied (the date 2001-03 on the place): "live, 2001‐03: Iridium, New
-       York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked."""
+       York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked.
+       [Z-LC] (3.40.13) The box "All" is for tracks 2 and 3 only (track 4 cannot be ticked)."""
     PLACE = H.COMPANIES[1002][1]
     NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
     H.PLACE_AREAS[PLACE] = NYC
@@ -416,7 +417,8 @@ def case_livecom():
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
             and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
             and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')") \
-            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3'
+            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3' \
+            and pg.evaluate("document.querySelector('[data-el=livecom] thead [data-all]').dataset.recs.split(',').length") == 2
         # C)
         rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
           return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
@@ -725,6 +727,58 @@ def case_livegroup():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_liveall():
+    """Credits Importer 3.40.13 (collected item Z-LC): one box for all live disambiguation comments.
+    A) Two media of two tracks, the release group Live, ✓ proposed: a first line "All" above the list – ticked (all three are),
+       its label "All live disambiguation comments".
+    B) The group opened, track 2.1 unticked: "All" mixed (neither ticked nor not), "2 of 3".
+    C) "All" clicked: all three ticked ("3 of 3"), not mixed; again: none ("0 of 3").
+    D) (case livecom's release) a recording MusicBrainz has another comment for cannot be ticked: not among those of "All"."""
+    H.MEDIA = [2, 2]
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        return d
+
+    H.ws_release = ws
+    ALL = """(() => { const x = document.querySelector('[data-el=livecom] thead tr.dci-livecom-all [data-f=livecom-on]'); if (!x) return null;
+      return [x.checked, x.indeterminate, x.closest('tr').textContent.trim(), x.getAttribute('aria-label'), x.dataset.recs.split(',').length]; })()"""
+    ONS = "[...document.querySelectorAll('[data-el=livecom] tbody [data-f=livecom-on]')].map(x => x.checked)"
+    HEAD = "(document.querySelector('[data-el=livecom] .dci-livecom-head') || {textContent: ''}).textContent.trim()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+        a0 = pg.evaluate(ALL)
+        print('A)', a0)
+        results.append(a0 == [True, False, 'All', 'All live disambiguation comments', 3])
+        pg.click('[data-el=livecom] [data-act=livecom-group]'); pg.wait_for_timeout(200)
+        pg.locator('tr.dci-livecom-sub [data-f=livecom-on] >> nth=1').evaluate('x => x.click()')
+        pg.wait_for_timeout(300)
+        b0 = [pg.evaluate(ALL), pg.evaluate(HEAD)]
+        print('B)', b0)
+        results.append(b0[0] is not None and b0[0][:2] == [False, True] and b0[1].startswith('▾ Live disambiguation comments: 2 of 3'))
+        pg.click('[data-el=livecom] thead [data-f=livecom-on]'); pg.wait_for_timeout(300)
+        c0 = [pg.evaluate(ALL), pg.evaluate(HEAD), pg.evaluate(ONS)]
+        pg.click('[data-el=livecom] thead [data-f=livecom-on]'); pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(ALL), pg.evaluate(HEAD), pg.evaluate(ONS)]
+        print('C) an:', c0, '\n   aus:', c1)
+        results.append(c0[0][:2] == [True, False] and c0[1].startswith('▾ Live disambiguation comments: 3 of 3') and all(c0[2])
+                       and c1[0][:2] == [False, False] and c1[1].startswith('▾ Live disambiguation comments: 0 of 3') and not any(c1[2]))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_workpick():
     """Credits Importer 3.38.15 (collected item 180, F-180): the works found for a track are a choice "n works ▾" in its line.
     A) Track 1.4 (two works of the release artist with its title): "2 works ▾" in the line of "no work yet" (same line), its list hidden;
@@ -810,9 +864,13 @@ def case_coverworks():
        surname matches an artist of the release – "Epistrophy" offered. The log names the three titles (1.4: "By Monk" too).
     B) "Link" of Monk's work for track 1.4: the link offers "co?" (dashed; Monk is none of the performers), a click sets "cover";
        the credited writer's own work of the same title ("Epistrophy By Monk" by Writer W) gets no "co?"; the works of the artists are
-       compared once (the name in the title looked up within the same run).
+       compared once (the name in the title looked up within the same run). [Z-CV] (3.40.17) Monk has only writing credits on the
+       release (not classical): "cover" is set by itself – "co" yellow, ticked; a click takes it off ("co?" again), another sets it.
     D) (3.39.9, collected item K-9) no "co?" when Monk performs the track: a member of the release's band ("member of band" in
-       MusicBrainz), the pianist of the recording in MusicBrainz, or the track's artist.
+       MusicBrainz), the pianist of the recording in MusicBrainz, or the track's artist. (3.40.17: where it was "co?", "cover" set by
+       itself; neither when he performs.)
+    E) [Z-CV] (3.40.17) Not set by itself – "co?" only: the release of the genre "Classical" at Discogs; Monk with another credit
+       on the release (Liner Notes).
     C) In Node: titleComposerNames – "(Thelonious Monk cover)" → Thelonious Monk (full), "By Monk" → Monk (surname), "(Live)",
        "(Theme)", "Stand By Me", "(Part 2)" → none; (3.38.16, review) "(Prod. By Metro Boomin)", "(Main Title)", "(Dub)", "Stand By Your
        Man", "(Act II)" → none, "Theme By Monk For Piano" → Monk, "(Ludwig van Beethoven cover)" → the full name, "BY MONK" → MONK; similarWorkTitle – the composer's names and brackets left out, a work's title
@@ -824,6 +882,8 @@ def case_coverworks():
     W6, W7, W8, W9, W10, W11 = (H.uid('cccccccc', n) for n in (86, 87, 88, 89, 90, 91))
     WW = H.ARTISTS[3007][0]
     H.ARTISTS[3410] = (MONK, 'Thelonious Monk')
+    # [Z-CV] (3.40.17) Monk's work known to /ws/js/entity (it is staged)
+    H.COMPANIES[7086] = ('work', H.uid('cccccccc', 86), 'Variants on a Theme of Thelonious Monk (Criss-Cross)')
     H.TITLES[1:4] = ['Epistrophy By Monk', 'Round Midnight (Thelonious Monk cover)', 'Variants On A Theme By Monk']
     H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
     for i, n in [(567, 'cover'), (578, 'live')]:
@@ -877,15 +937,25 @@ def case_coverworks():
         # [3.39.9] "co?" once MusicBrainz said who is a member of whom (looked up in the background; (3.40.3) 45 s under load)
         H.wait_for(pg, f"!!({PILL})(3)", 45)
         b0 = pg.evaluate(f"({PILL})(3)")
+        # [Z-CV] (3.40.17) staged with "cover" (567)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        staged = pg.evaluate(f"""(() => {{ const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
+          return MB.relationshipEditor.state.added.filter(x => x.linkTypeID === 278 && x.entity1 && x.entity1.gid === '{W6}').map(ids); }})()""")
+        pg.wait_for_timeout(300)
         pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
         b1 = pg.evaluate(f"({PILL})(3)")
         # the credited writer's own work of the same title: no "co?" (a songwriter's song is no cover)
         pg.locator('tr[data-work="1"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         pg.locator(f'tr[data-work="1"] .dci-mx-wlist [data-act=work-pick][data-gid="{W11}"]').click(); pg.wait_for_timeout(500)
         b2 = pg.evaluate(f"({PILL})(1)")
-        print('B) co:', b0, '→', b1, '| eigenes Werk von Writer W:', b2)
-        results.append(b0 and b0[0] == 'hint' and b0[1] == 'co?' and b0[2].startswith('Cover? The composer (Thelonious Monk) is none of the performers')
-                       and b1 and b1[0] == 'on' and (b2 is None or b2[0] != 'hint'))
+        pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
+        b1b = pg.evaluate(f"({PILL})(3)")
+        print('B) co:', b0, '| gestaged:', staged, '→', b1, '→', b1b, '| eigenes Werk von Writer W:', b2)
+        # [Z-CV] (3.40.17) set by itself (until 3.40.16 offered: "co?", a click set it)
+        results.append(b0 and b0[0] == 'auto' and b0[1] == 'co' and staged == [[567]] and b0[2].startswith('Cover – set by itself: the composer (Thelonious Monk) is none of the performers')
+                       and b1 and b1[0] == 'hint' and b1[1] == 'co?' and b1[2].startswith('Cover? The composer (Thelonious Monk) is none of the performers')
+                       and b1b and b1b[0] == 'on' and (b2 is None or b2[0] not in ('hint', 'auto')))
         print('Fehler:', errs)
         results.append(not errs)
 
@@ -924,7 +994,7 @@ def case_coverworks():
             out = p2.evaluate(f"({PILL})(3)")
             c2.close()
             return out, e2 + ([] if looked == (look or [MONK]) else [f'lookups: {looked}'])
-        d0, e0 = pill_with(lambda: None)  # the same page without any of them: "co?" (so the three below say something)
+        d0, e0 = pill_with(lambda: None)  # the same page without any of them: "cover" (so the three below say something)
         d1, e1 = pill_with(lambda: H.BAND_MEMBERS.update({TB: [MONK]}))
         H.BAND_MEMBERS.clear()
         # (review) the other direction: the band of the composer, the release's artist a member of it
@@ -947,7 +1017,7 @@ def case_coverworks():
         d6, e6 = pill_with(lambda: (H.IS_PERSON.update({MONK: [ALIAS]}), H.BAND_MEMBERS.update({TB: [ALIAS]})), look=[MONK, ALIAS])
         H.IS_PERSON.clear()
         H.BAND_MEMBERS.clear()
-        # the control: the other name in no band of the release – "co?" (after both lookups)
+        # the control: the other name in no band of the release – "cover" (after both lookups)
         d7, e7 = pill_with(lambda: H.IS_PERSON.update({MONK: [ALIAS]}), look=[MONK, ALIAS])
         H.IS_PERSON.clear()
         H.BAND_MEMBERS.clear()
@@ -958,11 +1028,26 @@ def case_coverworks():
         H.IS_PERSON.clear()
         print('   is person:', d5, '| anderer Name in der Band:', d6, '| anderer Name, keine Band (Gegenprobe):', d7, '| zwei Künstlernamen:', d8, '| Fehler:', e5, e6, e7, e8)
         print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e4)
-        no_co = lambda x: x is None or x[0] != 'hint'
+        no_co = lambda x: x is None or x[0] not in ('hint', 'auto')
         # d2, d3: performers known without a lookup – none asked then (the lookups list says [MONK] only where one is made)
-        results.append(d0 is not None and d0[0] == 'hint' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
+        results.append(d0 is not None and d0[0] == 'auto' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
                        and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e4)))
-        results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'hint' and no_co(d8) and not (e5 or e6 or e7 or e8))
+        results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'auto' and no_co(d8) and not (e5 or e6 or e7 or e8))
+
+        # E) [Z-CV] (3.40.17) "co?" only: classical; another credit of Monk
+        def with_rel(change):
+            def setup():
+                def r2():
+                    d = rel()
+                    change(d)
+                    return d
+                H.discogs_release = r2
+            return setup
+        f0, f0e = pill_with(with_rel(lambda d: d.update({'genres': ['Classical']})))
+        f1, f1e = pill_with(with_rel(lambda d: d.update({'extraartists': d['extraartists'] + [{'name': 'Thelonious Monk', 'anv': '', 'role': 'Liner Notes', 'tracks': '', 'id': 3410, 'join': ''}]})))
+        H.discogs_release = rel
+        print('E) Classical:', f0, '| Liner Notes:', f1, '| Fehler:', f0e, f1e)
+        results.append(f0 is not None and f0[0] == 'hint' and f1 is not None and f1[0] == 'hint' and not (f0e or f1e))
         b.close()
     TITLES = ['Round Midnight (Thelonious Monk cover)', 'Epistrophy By Monk', 'Song (Live)', 'Song (Theme)', 'Stand By Me', 'Song (Part 2)',
               'Money (Prod. By Metro Boomin)', 'Song (Main Title)', 'Song (Dub)', 'Theme By Monk For Piano', 'Ode (Ludwig van Beethoven cover)',

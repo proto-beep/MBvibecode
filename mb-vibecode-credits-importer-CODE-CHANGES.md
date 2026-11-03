@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.11, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.17, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,78 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.17 · 2026-11-03
+
+"cover" set by itself for a composer with only writing credits (collected item Z-CV; Q-by).
+
+- **DISCOGS `toRelease`:** `genres` (Discogs's genres in lower case); the neutral release names the field (none: [] or left out).
+- **`coverComposers`** split: **`coverCandidates(i, work)`** (the composer of a work chosen among his works who performs nothing on the track – without the check whether "cover" is set) and `coverComposers` (only while "cover" is not set). **New `coverAuto(i, work)`:** a planned link to a work of MusicBrainz with such a composer, the composer an entry of the source (not added by hand) whose rows of the source are all `WRITER_TYPES`, the release not of the genre "classical".
+- **`linkAttrsOf`:** "cover" in the set while `coverAuto` and not taken off (`S.linkAttrOff`) – so the link is staged with it. **`linkAttrsHtml`:** such a "cover" (not set by hand) as the new pill state `auto` (`.dci-wpill-auto`, yellow, ticked) with `matrix.coverAuto`; a click takes it off as any attribute ("co?" again).
+- **Texts (English):** `matrix.coverAuto`.
+- **Tests:** `t_works_more.py` `coverworks` B (set by itself, staged with "cover" 567, a click: "co?", another: on), D (where it was "co?": set by itself), new E (classical; Monk with a credit Liner Notes: "co?" only); the work of Monk known to `/ws/js/entity` (harness `COMPANIES`). Fails on 3.40.16.
+
+**After the check of Block BC (an independent review):**
+
+- **Entry skip and the other kinds of "Skip"** (Z-SK): `setScope`, `setWorksRowsSkipped(false)`, `setAboutRowsHidden(false)`, `setNotesRowsHidden(false)` and "mx-col-restore" put the level that comes back into `entrySkip` (new `entrySkipLevel`) instead of onto a row skipped with its entry – "all relationships" brought such rows back. **`unskipEntry`** places the level by what holds now (a credit switched off, text or notes left out, the works matrix skipped, the scope; a level skipped then by the scope or the works matrix: the level before those). New **`dropStaleEntrySkip`** (in `renderGroups`, `refresh`): a row put on a level another way (`bulk-level` …) loses `entrySkip`. **`rowFieldsOf`:** a row skipped with its entry is remembered on "Skip".
+- **Repeat import** (Z-RI): the snapshot or "afresh" goes with its import – `loadRelease(…, { repeat })` → `finishRemember(seq, repeat)` (until now `S.repeatSnap`/`S.repeatFresh`, which an import started meanwhile could take); "afresh" also drops the choices of the works matrix (new `dropWorkChoices`, after the source was read; the works created through the dashboard stay); the focus back on "↻ Repeat import"; "Delete stored import …" closes its question, an import and `forgetImport` too.
+- **`coverAuto`** worked out once per drawing (`coverMemo`, `S.coverPass` counted up in `refresh`, `renderWorks` and with each answer of `bandLinks`).
+- **`resetSettings`:** `skipHide`, `poolsFoldApply` back. **`openSettingsAt`:** `onlyHint('settings')` and the number of works kept, as ⚙ of the head. **`renderLiveComments`:** the box focused keeps the focus when the list is drawn anew.
+- **Tests:** `t_ui_view.py` new case `entryskipmodes` (scope and entry skip both ways; all rows on a level and back on "Skip"); `t_sources.py` `repeat` (a new work kept or dropped; one question at a time). Both fail before these fixes.
+
+## Import 3.40.16 · 2026-11-03
+
+"↻ Repeat import" in the head (collected item Z-RI; Q-bw).
+
+- **`renderSource`:** `button.dci-repeat-btn[data-act=repeat-open]` after "Source ▾" (with a release); its question `repeatAskHtml()` (`[data-el=repeat]`, radios `data-f=repeat-keep` "keep" preselected / "fresh", `repeat-do`, `repeat-cancel`) first among the panels below the head. The choice is kept in `S.repeatKeep` while the head is drawn anew (change handler `repeat-keep`), "keep" again for the next question.
+- **New `repeatImport(keep)`:** `S.repeatSnap = rememberSnapshot()` (keep) or `S.repeatFresh` (afresh), `entityCache.clear()` (the entities of MusicBrainz fetched anew), `loadRelease(S.release.id, { source: S.source, confirmed: true })`; both cleared afterwards.
+- **`finishRemember`:** takes `S.repeatSnap` (also with ⚙ Settings → Cache off) or, with `S.repeatFresh`, nothing remembered; **`restoreRemembered(snapIn)`** takes a snapshot given to it instead of the stored one.
+- CSS `.dci-repeat-btn`, `.dci-repeat-opts`.
+- **Texts (English):** `repeat.button`, `repeat.title`, `repeat.ask`, `repeat.what`, `repeat.keep`, `repeat.keepTitle`, `repeat.fresh`, `repeat.freshTitle`, `repeat.do`, `log.repeatKeep`, `log.repeatFresh`.
+- **Tests:** `t_sources.py` new case `repeat` (the button after "Source ▾", the question, Cancel; kept: the source read again with a new credit, the changes kept, "Dates & tracks" open again after a fold by "Apply" – Z-PF2 within the page; afresh: the changes gone, the choice kept while the head is drawn anew); fails on 3.40.15.
+
+## Import 3.40.15 · 2026-11-03
+
+"⊘ Skip" for a whole entry, and a setting to take skipped entries out of the dashboard (collected item Z-SK; Q-bx, Q-ce).
+
+- **New `entrySkipped(a)`, `entrySkipHtml(a, rows)`, `skipEntry(a)`, `unskipEntry(a)`, `afterEntrySkip(a)`, `renderSkippedList(list)`:** "⊘ Skip" (`data-act=entry-skip`, `data-skipkey`) puts every row of the entry (`artistKey`) on "Skip" through `levelOf` and keeps on it `entrySkip = { level, touched, mx, scope }`; "↺ Take again" (`entry-unskip`) restores the level, `levelTouched`, `mxSkipped`, `scopeLevel`. Skipped while every row is on "Skip" and one has `entrySkip`. **`levelOf`** deletes `entrySkip` (a level chosen ends it for that row). `entrySkip` is a field of the row, so "Remember per release" keeps it.
+- **`groupHtml`:** `.dci-ghead-r` in every entry (until 3.40.14 only compact, with "by event | by role"), the button in it; the class `dci-gskipped`. **`refresh`** toggles the class and swaps the button when the state changed (a level chosen for a row). **`updateGroupHeader`** keeps `dci-gcompact`, `dci-about-hidden`, `dci-gskipped` (it dropped them before).
+- **`renderGroups`:** with `S.skipHide` the skipped entries are left out and listed in the new `[data-el=skipped]` (below "Other entries"): "n skipped entries ▸" (`skipped-toggle`, `S.skippedOpen`), each with `entry-unskip`.
+- **Setting:** `SKIP_HIDE_KEY = 'dci-skip-hide'` (only on stored), ⚙ Appearance `data-set=skip-hide`, in `TOPIC_KEYS.appearance`, `SETTINGS_KEYS`, its ↺.
+- CSS `.dci-ghead-r` inline-flex with a gap; `.dci-gskip`, `.dci-gskip-back`, `.dci-gskipped`, `.dci-skipped`, `.dci-skipped-list`.
+- **Texts (English):** `group.skip`, `group.skipTitle`, `group.unskip`, `group.unskipTitle`, `group.skippedN.one/other`, `group.skippedTitle`, `log.entrySkipped.one/other`, `log.entryTaken.one/other`, `settings.skipHide`, `settings.skipHideTitle`.
+- **Tests:** `t_ui_view.py` new cases `entryskip` (the button in every head; skipped and back; a level chosen by hand before kept; a level chosen while skipped ends it; the setting and the line at the bottom; matrix, compact) and `entryskipkeep` (remembered); both fail on 3.40.14.
+
+## Import 3.40.14 · 2026-11-03
+
+"Collect statistics" in ⚙ Settings → Cache, Log | Statistics · ⚙ next to "Import credits …" (collected items Z-SC, Z-LS; Q-bz).
+
+- **`statsHtml`:** no box any more; at the top `p.dci-sub.dci-stats-where[data-el=stats-where]` (`stats.whereOn` / `stats.whereOff`) with `button[data-act=stats-where]` (`stats.whereBtn`). The handler **`stats-where`** calls the new **`openSettingsAt(topic, focusSel)`** (⚙ Settings open at a topic, stored as a click on its tab, the statistics and the docked rules closed, the focus on `focusSel` or the tab).
+- **⚙ Settings → Cache:** the box `data-set=stats-on` (handler `settingsChange` unchanged). **`TOPIC_KEYS`:** `STATS_ON_KEY` from `statistics` to `cache` (its ↺).
+- **`insertLauncher`:** `span.dci-launch-tools` – `#dci-log-open` (now `.dci-launch-ico` with `ico('log')`, `aria-pressed`), `.dci-launch-sep`, `#dci-stats-open` (`ico('stats')`), `#dci-set-open` (`ico('gear')`); **`renderLauncher`** sets their `aria-label` and `title` (`log.title`; `stats.title`, `stats.buttonTitle`; `settings.title`, `settings.buttonTitle`) and calls `syncLogBtn`. **`syncLogBtn`** also presses `#dci-log-open` (before the check for the dashboard).
+- **`openFromBar(what)`:** `openDashboard({ settingsOnly: true, only: what })` when it is closed, then the statistics (read anew, ⚙ and the docked rules closed, the focus on their heading) or `openSettingsAt` at the remembered tab. **`openDashboard`:** with `only: 'stats'` the message `statsOnly.hint`; one of the two messages at most. **`onlyHint(what)`** (before the import): the message names what is open – also from `stats-open` and `settings-open` of the head.
+- CSS `#dci-launcher .dci-launch-tools`, `.dci-launch-ico`, `.dci-launch-sep`.
+- **Texts (English):** `stats.whereOn`, `stats.whereOff`, `stats.whereBtn`, `statsOnly.hint`.
+- **Tests:** `t_ui_settings.py` new case `statswhere`; `stats` A/E and `statsbutton` B with the box in ⚙ → Cache; `t_ui_head.py` new case `launchtools` (without the companion: the three symbols; Log pressed; Statistics and ⚙ without the import, the message; "Start import"). Both new cases fail on 3.40.13.
+
+## Import 3.40.13 · 2026-11-03
+
+The fold after "Apply" for one import only, "＋ Another role" a button in the full view, one box for all live comments (collected items Z-PF2, Z-AB, Z-LC; Q-br, Q-bs).
+
+- **`foldPoolsAfterApply`:** sets `S.poolsFoldApply` instead of `S.poolsOpen = false` and no longer writes `dci-pools-open`; **`poolsOpen`** false while it is set (after the forms and the waiting suggestions); **`loadRelease`** clears it (a new import with dates shows "Dates & tracks" open again), **`pools-toggle`** too ("▲ fold" / "▼ show" by hand is remembered as before).
+- **`groupHtml`:** in the full view `button.dci-addrole-btn.dci-addrole-full` with `group.addRoleBtn` ("＋ Another role for {name}") instead of the text button with `group.addRole` (still the tooltip of "＋ role").
+- **`renderLiveComments`:** a `thead` row `tr.dci-livecom-all` with a box `data-f=livecom-on data-all=1 data-recs=…` for all proposals that can be ticked (not those with another comment in MusicBrainz), from two of them; ticked when all are, `indeterminate` (set after `innerHTML`, `data-mixed`) when some are. The handler `livecom-on` unchanged (it takes `data-recs`). CSS `.dci-livecom-all td`.
+- **Texts (English):** `livecom.all`, `livecom.allAria`.
+- **Tests:** `t_dates_matrix.py` `foldapply` B nothing stored, new G (folded by "Apply", loaded again: open; "▲ fold" by hand, loaded again: folded); `t_ui_view.py` new case `addrolebtn`; `t_works_more.py` new case `liveall` (all ticked, mixed, all on and off), `livecom` "All" without the track MusicBrainz has another comment for. Each fails on 3.40.12.
+
+## Import 3.40.12 · 2026-11-03
+
+The notes of "Assist" (Discogs 3749161): a place instead of the area of its city, and the dates of areas (collected item Z-AP).
+
+- **`DATE_GROUPS`:** `recorded in` in Performance, `mixed in` in Mix, `mastered in` in Mastering and Remastering (its `only` also for `mastered in`) – the date of a row of an area ("Recorded In – Hiroshima") was in no column, "Apply" left it out.
+- **`TEXT.parse`:** context `placeNames` (the names of places the source lists itself); `placeIn`'s `isPlace` also true for such a name – "in Tokyo, Shinjuku Pit Inn" is that place in Tokyo, not the area "Tokyo (Shinjuku Pit Inn)". **`addNotesCompanies`** passes the release's companies with a role "… At".
+- **Mapping:** T051 `TEXT_PLACE_WORDS` + `cent(?:er|re)`, `kaikan`; its register note.
+- **Tests:** `t_notes_dates.py` new case `assistnotes` (A the area Hiroshima, the places Meguro Fukushi Center and Zojoji Hall, no area Tokyo; B "Apply": each row its date, the area too; C a place Discogs lists without a word of places; fails on 3.40.11); `harness.py` the type `recorded in` (area – recording, as on MusicBrainz); `register_golden.json` renewed (T051).
 
 ## Import 3.40.11 · 2026-11-03
 
