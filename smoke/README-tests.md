@@ -545,6 +545,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   statsdelete: 3.42.0 (Z-DS): "Delete statistics …" in ⚙ Cache with the number; none in the statistics
                                 #   editnote: 3.41.9 (Z-EN), 3.42.0 (Z-EN2: no None, a stored "none" is Simple): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple (tooltips list
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
+                                #   statsgenres: 3.42.6 (Z-STG2): Bandcamp's tags (pageTags: links or JSON-LD, without the place's tag) – "Genres and
+                                #     styles" Combined (sources in the tooltip) | Separate, remembered
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
