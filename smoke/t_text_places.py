@@ -1,6 +1,6 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4), kindcycle (3.42.5); `python3 t_text_places.py <case> …` runs only those."""
+Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4), kindcycle (3.42.5), unaremember, kindrace, ownrulekind (3.42.8); `python3 t_text_places.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -774,5 +774,180 @@ Recorded in Elsewhere Town"""
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_unaremember():
+    """Credits Importer 3.42.8 (review of Block BG): what was done with "Remember changes …" (⚙ Cache) on, the page loaded again and
+    the same text pasted again:
+    A) The words given an entry come back – Fable Hall recorded at on the tracks of its line (2, 3; track 3 taken out before: so
+       again, track 2), the series Quiet Rooms (until 3.42.7 both were lost, "remembered changes left out"); their words struck through.
+    B) A row added by hand with the role of a row of the source ("＋ Another role" at Bob Mix: "Mixed By" a second time) stays (from
+       3.42.4 until the review it was taken as the same and left out).
+    C) Nothing "left out" in the log."""
+    H.REMEMBER = True
+    H.lt(9996, H.uid('1a1a1a1a', 9996), 'part of', 'release', 'series', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['series'] = [{'id': H.uid('eeeeeeee', 72), 'name': 'Quiet Rooms', 'disambiguation': '', 'score': 100}]
+    TEXT = """Tracks 2–3: Fable Hall
+Part of the Quiet Rooms series
+Mixed by Bob Mix"""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+      kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '',
+      rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '', (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '',
+        [...document.querySelectorAll(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i) + 1).join(',')]) }])))()"""
+
+    def word(pg, li, text, shift=False):
+        pg.evaluate("""([li, text, shift]) => { const w = [...document.querySelectorAll('.dci-unrec li')][li].querySelectorAll('.dci-una-w');
+          [...w].find(x => x.textContent === text).dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: shift })); }""", [li, text, shift])
+        pg.wait_for_timeout(300)
+
+    def paste(pg, n):
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 90)
+        pg.wait_for_timeout(1500)
+        pg.evaluate("document.querySelector('.dci-unrec') && (document.querySelector('.dci-unrec').open = true)")
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => { if (b.getAttribute('aria-expanded') !== 'true') b.click(); })")
+        pg.wait_for_timeout(500)
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def start():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        start()
+        paste(pg, 2)
+        word(pg, 0, 'Fable')
+        word(pg, 0, 'Hall', shift=True)
+        pg.select_option('.dci-una-form [data-f=una-kind]', 'place')
+        pg.wait_for_timeout(300)
+        pg.select_option('.dci-una-form [data-f=una-role]', 'Recorded At')
+        pg.check('.dci-una-form [data-f=una-tracks][value=line]')
+        pg.click('.dci-una-form [data-act=una-apply]')
+        pg.wait_for_timeout(1500)
+        word(pg, 1, 'Quiet')
+        word(pg, 1, 'Rooms', shift=True)
+        pg.select_option('.dci-una-form [data-f=una-kind]', 'series')
+        pg.wait_for_timeout(300)
+        pg.click('.dci-una-form [data-act=una-apply]')
+        pg.wait_for_timeout(1500)
+        # Fable Hall's row without track 3 (a change of it)
+        pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Fable Hall');
+          const r = g && g.querySelector('tr.dci-row'); const c = r && document.querySelector(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track][data-i="2"]`); if (c) c.click(); })()""")
+        pg.wait_for_timeout(400)
+        # B) "＋ Another role" at Bob Mix: "Mixed By" once more
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bob Mix').dataset.group")
+        pg.click(f'section.dci-group[data-group="{key}"] [data-act=add-role]')
+        pg.wait_for_timeout(400)
+        pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.fill('Mixed By')
+        pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.press('Tab')
+        pg.wait_for_timeout(800)
+        a0 = pg.evaluate(ROWS)
+        pg.wait_for_timeout(2000)
+        print('vorher:', {k: v for k, v in a0.items() if k in ('Fable Hall', 'Quiet Rooms', 'Bob Mix')})
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        start()
+        paste(pg, 2)
+        a1 = pg.evaluate(ROWS)
+        done = pg.evaluate("[...document.querySelectorAll('.dci-unrec .dci-una-done')].map(x => x.textContent)")
+        lost = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'left out' in x]
+        print('nachher:', {k: v for k, v in a1.items() if k in ('Fable Hall', 'Quiet Rooms', 'Bob Mix')}, '| erledigt:', done, '| ausgelassen:', lost)
+        fh, qr, bm = a1.get('Fable Hall') or {}, a1.get('Quiet Rooms') or {}, a1.get('Bob Mix') or {}
+        results.append(fh.get('rows') == [['recorded at', 'recording', '2']] and (a0.get('Fable Hall') or {}).get('rows') == [['recorded at', 'recording', '2']])
+        results.append(qr.get('kind') == 'other' and [r[0] for r in qr.get('rows', [])] == ['part of'] and done == ['Fable', 'Hall', 'Quiet', 'Rooms'])
+        results.append([r[0] for r in bm.get('rows', [])] == ['mix', 'mix'] and not lost)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_kindrace():
+    """Credits Importer 3.42.8 (review of Block BG): a search of the kind cycle that comes back after the kind was clicked on. "Mastered at
+    Quiet Lab" (MusicBrainz has a label and a place of that name; the places answer after 2.5 s): Label → Place (searched), → Artist,
+    → Label (found before) while the places are still on their way – then still the label offered (until the review the places were
+    shown under "Label" and kept for it), no "searching" left; Place again: the places, no new search."""
+    H.MB_SEARCH['label'] = H.MB_SEARCH.get('label', []) + [{'id': H.uid('eeeeeeee', 81), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    H.MB_SEARCH['place'] = H.MB_SEARCH.get('place', []) + [{'id': H.uid('eeeeeeee', 82), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); if (!g) return null;
+      const t = g.querySelector('.dci-kind-tag'); return { tag: t.textContent.trim(), wait: !!g.querySelector('.dci-etc-wait'), sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()) }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        searches = []
+        pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Mastered at Quiet Lab')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        # the places answer late
+        pg.evaluate("""(() => { const f = window.fetch; window.fetch = (u, o) => (/\\/ws\\/2\\/place\\?query/.test(String(u)) ? new Promise((r) => setTimeout(r, 2500)).then(() => f(u, o)) : f(u, o)); })()""")
+        a0 = pg.evaluate(HEAD, 'Quiet Lab')
+        click = lambda: pg.click('section.dci-group .dci-kind-cycle')
+        click()
+        pg.wait_for_timeout(1400)
+        click()
+        pg.wait_for_timeout(150)
+        click()
+        pg.wait_for_timeout(300)
+        a1 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.wait_for_timeout(3500)
+        a2 = pg.evaluate(HEAD, 'Quiet Lab')
+        n = len(searches)
+        click()
+        pg.wait_for_timeout(1800)
+        a3 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('A)', a0, '| gleich danach:', a1, '| nach den Orten:', a2, '| Place wieder:', a3, searches[n:])
+        results.append(a0['tag'] == 'Label' and a1['tag'] == 'Label' and a2['tag'] == 'Label' and a2['sugg'] == ['Quiet Lab – label'] and not a2['wait']
+                       and a3['tag'] == 'Place' and a3['sugg'] == ['Quiet Lab – place'] and searches[n:] == [])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ownrulekind():
+    """Credits Importer 3.42.8 (review of Block BG): an own rule of texts with its kind – "Quiet Lab" as a place, mastered at (a role a
+    label has too): the entry of a text naming it is a place (until the review the role decided: a label)."""
+    TEXT = 'Quiet Lab'
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [g.querySelector('.dci-kind-tag').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '')] : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("""localStorage.setItem('dci-user-rules', JSON.stringify([{ id: 'U001', kind: 'text', on: true, discogs: 'quiet lab', phrase: 'Quiet Lab', entity: 'place', role: 'Mastered At', tracks: 'release' }]))""")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        a = pg.evaluate(HEAD, 'Quiet Lab')
+        print('A)', a)
+        results.append(a is not None and a[0] == 'Place')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())

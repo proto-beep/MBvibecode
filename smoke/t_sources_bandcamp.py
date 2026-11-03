@@ -1233,7 +1233,8 @@ def case_ytlinks():
        loaded (first in the order); "Source ▾" lists Discogs 1234 and the two videos ("YouTube www.youtube.com/watch?v=…"); a video
        chosen: its description read (the head names the video, Julian Martlew audio and mix).
     B) A release that links only to one video: it is loaded at once; "Order of the sources": YouTube last for physical and digital media;
-       an order stored before 3.42.7 (Bandcamp, Discogs) gets YouTube at its end."""
+       an order stored before 3.42.7 (Bandcamp, Discogs) gets YouTube at its end.
+    C) (3.42.8, review) Started from the release editor with a new video only: the Discogs release is loaded (YouTube last), not the video."""
     V1, V2 = 'Cx-BhTkZf8A', 'Dy-ChUlAg9B'
     H.YT_PAGES[V1] = H.yt_page(V1, 'Test Band - Full Performance (Live on KEXP)', 'KEXP', 'Audio & Mixing Engineer: Julian Martlew')
     H.YT_PAGES[V2] = H.yt_page(V2, 'Test Band - Song Two', 'Test Band', 'Mixed By: Max Mix')
@@ -1290,6 +1291,25 @@ def case_ytlinks():
         lists = pg.evaluate("[...document.querySelectorAll('[data-srcorder]')].map(ol => [ol.dataset.srcorder, [...ol.querySelectorAll('li')].map(li => li.dataset.id)])")
         print('B) nur ein Video:', b0[:80], '| Reihenfolge:', lists)
         results.append('Live on KEXP' in b0 and lists == [['physical', ['bandcamp', 'discogs', 'youtube']], ['digital', ['bandcamp', 'discogs', 'youtube']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        ctx.close()
+        # C) (3.42.8, review) started from the release editor with a new video (still an edit there): the release's Discogs release is loaded,
+        # not the video (until the review a single new link was loaded at once, also a video)
+        mode['only'] = False
+        V3 = 'Ez-DiVmBh0C'
+        H.YT_PAGES[V3] = H.yt_page(V3, 'New video', 'New', 'Mixed By: Max Mix')
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (/edit-relationships/.test(location.pathname) && !sessionStorage.getItem('t-set')) { sessionStorage.setItem('t-set', '1');"
+                            f" sessionStorage.setItem('dci-autostart', JSON.stringify({{ release: '{H.REL}', links: [{{ source: 'youtube', id: '{V3}', url: 'https://www.youtube.com/watch?v={V3}' }}], at: Date.now() }})); }}")
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        c0 = pg.evaluate(HEAD)
+        c1 = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'release editor' in x]
+        print('C) aus dem Release-Editor:', c0[:60], '|', c1)
+        results.append('Discogs' in c0 and 'New video' not in c0 and any(V3 in x for x in c1))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

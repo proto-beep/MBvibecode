@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.42.7, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.42.8, Companion 1.6.0 – 1.11.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,39 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.42.8 · 2026-11-03
+
+Block BG, part 9 – collected item Z-YTC (Q-de), with Companion 1.11.0.
+
+- **The YouTube adapter:** `companion: 'youtube'` (until 3.42.7 none) – the companion shows it.
+- **`viewSite()`** 'youtube' for it, `VIEW_NAMES.youtube`; **`textSite(site)`** (new): Bandcamp and YouTube, whose credits are lines of a text – `sendDiscogsStatus` sends their places (`refs`: line, part, pi, n) for both, `showSourceOf` jumps to the lines for both (`bandcampPayloadForRows`).
+- **`syncSite()`:** a companion that reports no YouTube tabs (before 1.11.0) is old for YouTube (`need: '1.11.0'`); `syncStatusHtml` says so with the new text `sync.oldSiteV` ("needs the companion script {version} or later"); `COMPANION_NEEDED` stays 1.10.0.
+- **Texts:** `sync.oldSiteV` (English); the "…Site" texts of the view name YouTube.
+- **Tests:** `t_companion_bandcamp.py` new case `ytview` (fails on 3.42.7 / 1.10.1); `smoke/harness.py` `yt_desc_html` (the description drawn as YouTube does: folded, "#expanded", "…more", "Show less"), `yt_page(…, dom=True)`, `open_youtube`.
+- **The independent review of Block BG** (11 findings; 10 fixed here, 1 a question – Discogs "Horns"):
+  - **`restoreRemembered`:** the de-dup of 3.42.4 only for rows of words given an entry (`una`) – such a row added before takes the place of the row the import gives its entry now (`used`); a copy made on purpose (another event, another instrument of the same role, "＋ Another role") stays (it was left out).
+  - **Words given an entry are remembered:** `unaBuild(it, { replay })` (new, out of `unaApply`), `S.unaItems` (the words of this import: name, kind, role, line, tracks, words), the snapshot's `una`, **`unaReplay(repeat)`** (new) in `loadRelease` before `rememberFresh` – the entries come again as the source's, their changes with them (until then lost: "remembered changes left out"); not twice when the import has the entry with that role already (an own rule of texts).
+  - **`etcCycle`:** a search that comes back after another kind was clicked keeps its suggestions for its kind (the ones of the kind shown are shown), the timer's id cleared with it, the wait of a newer search kept; chosen meanwhile: no wait.
+  - **S073 `prosePart`:** a sentence only when its second or third word is a word in small letters that is no word between names (`JOIN_WORD`) – "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic" gives both guests again.
+  - **S071 `STUDIO_LINE`:** recording, studio(s), sound – not "Recordings", "Sounds" (names of labels: "Warp Recordings" below "Mastered by …" no place), nor a line of `TEXT_LABEL_LINE`.
+  - **`autoSource`:** a single new link of the release editor is loaded at once only if it is no video or the release links to nothing else (YouTube last).
+  - **`evHeadHtml`, `evDateBoxHtml(e, inline, a)`:** what was typed and its error belong to that entry's event and that box (`S.emEvDate.inline`): events of several entries share their key; an error in the fields below opens no second box in the head.
+  - **Own rules of texts:** their kind goes with the company (`entity` → `groupCompanies` → `addCompanyEntry`: `setCompanyEntityType` when a row has a type of it) – a place "mastered at" is a place, not a label.
+  - **Companion:** see 1.11.0.
+- **Tests (review):** `t_text_places.py` new cases `unaremember`, `kindrace` (the places answer late), `ownrulekind`; `t_entries.py` `evdatefields` E; `t_sources_bandcamp.py` `ytlinks` C; `t_companion_bandcamp.py` `ytview` H; `text_corpus.json` "With Oliver Lake, Kenny Wheeler and members of …" and "Mastered by Joe Lambert / Warp Recordings" – each fails before the fix.
+
+## Companion 1.11.0 · 2026-11-03
+
+YouTube (collected item Z-YTC; Q-de: everything the other sources have).
+
+- **`@match` `*://www.youtube.com/*`, `*://m.youtube.com/*`**; `isYoutube`; `SITES` with `youtube`; `mayOpen` opens YouTube videos (`/watch?`) too; `@description` names YouTube.
+- **New `YOUTUBE_SIDE`:** `releaseId` = the video id of the page (`ytVideoId`, '' elsewhere), `pageFor` the video's page, `locate` (`youtubeLocate`, six tries – the description comes later), `renderStatus` (`renderYoutubeStatus`: marks before each part of a line, the part greyed when all its credits are off; `ytPlaced`), `stale` (the marks drawn before are gone: YouTube drew the description anew) and `onNavigate` (`yt-navigate-finish`: another video without loading).
+- **New `ytDescription()`** (the unfolded description – `#description-inline-expander #expanded yt-attributed-string`, else the folded one and older forms) and **`ytExpand()`** (a click on "…more", `#expand`).
+- **`bcStream(root, { nl })`:** with `nl` a "\n" of the text ends a line (YouTube has no `<br>`); `textRoots` gives YouTube's description as the part `notes`; `renderTextMarks` unfolds it.
+- **`initSourceSide`:** every 3 s `showMap(side.stale(shownMap))` (drawn again when stale), `side.onNavigate` → beat and marks at once.
+- **Review:** `stale` also while nothing was placed yet (a few tries, `ytTries` – the description comes after the page or another video); `onNavigate` takes the line marked by a jump away (`bcUnwrap(BC_HL)`); a description folded by the user ("Show less", `ytFolded`) is not unfolded again when the marks are drawn anew (a jump still unfolds it); the video id without `URLSearchParams` (lint).
+- **Version:** `@version` and `COMPANION_VERSION` 1.11.0.
 
 ## Import 3.42.7 · 2026-11-03
 

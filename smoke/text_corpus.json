@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals.",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio).",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -2268,6 +2268,45 @@
         "companies": [],
         "unrecognized": [
           "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals."
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Oliver Lake",
+            "Guest"
+          ],
+          [
+            "Kenny Wheeler",
+            "Guest"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic → ? “members of the Berlin Philharmonic”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by Joe Lambert\nWarp Recordings",
+      "expect": {
+        "credits": [
+          [
+            "Joe Lambert",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Warp Recordings"
         ],
         "ignored": []
       }

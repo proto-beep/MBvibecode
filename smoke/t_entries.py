@@ -832,7 +832,9 @@ def case_evdatefields():
        pool); opened again: the fields hold it.
     C) Month 13: "Apply" says what is wrong, nothing changes. "2004-05-06 – 2004-05-09" pasted into the year of Begin: the fields of
        begin and end filled. ✕ closes the fields.
-    D) "no date": the event without a date again."""
+    D) "no date": the event without a date again.
+    E) (3.42.8, review) Another entry's event below (its fields there) shows nothing typed in Solo Man's head – the events share their
+       key; an error in the fields below opens no second box in the head."""
     orig, rel = join_release()
     H.discogs_release = rel
     BOX = """(sel) => { const b = document.querySelector(sel + ' th.dci-em-ev [data-evdate]'); if (!b) return null; const v = (k) => (b.querySelector('[data-f=ed-' + k + ']') || {}).value;
@@ -887,6 +889,22 @@ def case_evdatefields():
             d0 = pg.evaluate(H.EV_DATES, solo)
             print('D)', d0)
             results.append(d0 == [''])
+            # E) (3.42.8, review) what was typed in one entry's box is no other entry's: Multi Man's ① opened below (its fields there), an
+            # error in Solo Man's head; an error in the fields below opens no second box in the head
+            multi = sec_sel(pg, 'Multi Man')
+            pg.click(f'{multi} th.dci-em-ev >> nth=0 >> [data-act=em-evopen]'); pg.wait_for_timeout(300)
+            pg.click(btn); pg.wait_for_timeout(250)
+            pg.fill(f'{box} [data-f=ed-by]', '2001')
+            pg.fill(f'{box} [data-f=ed-bm]', '13')
+            pg.click(f'{box} [data-act=em-evdate-apply]'); pg.wait_for_timeout(300)
+            INL = """(sel) => { const b = document.querySelector(sel + ' .dci-em-evdatebox-inline'); return b ? { by: b.querySelector('[data-f=ed-by]').value, err: (b.querySelector('[data-el=evdate-error]') || {}).textContent || '' } : null; }"""
+            e0 = [pg.evaluate(BOX, solo), pg.evaluate(INL, multi)]
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-by]', '2001')
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-bm]', '14')
+            pg.click(f'{multi} .dci-em-evdatebox-inline [data-act=em-evdate-apply]'); pg.wait_for_timeout(300)
+            e1 = [pg.evaluate(INL, multi), pg.evaluate("(sel) => document.querySelectorAll(sel + ' [data-evdate]').length", multi), pg.evaluate(BOX, multi)]
+            print('E) Solo Man (Kopf):', e0[0] and e0[0]['err'], '| Multi Man unten:', e0[1], '| Fehler unten:', e1)
+            results.append(e0[0] and e0[0]['err'] and e0[1] == {'by': '', 'err': ''} and e1[0] and e1[0]['err'] and e1[0]['by'] == '2001' and e1[1] == 1 and e1[2] is None)
             print('Fehler:', errs)
             results.append(not errs)
         finally:

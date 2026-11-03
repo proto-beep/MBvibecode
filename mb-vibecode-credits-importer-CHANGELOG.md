@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.42.7 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,28 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.42.8
+
+#### Added
+
+- **YouTube in the companion's view:** with a YouTube video as the source, the companion (1.11.0) shows the status marks in the video's description, jumps to the line of a row, switches credits off and on with a click on a mark, and opens the video in a background tab – as for Discogs and Bandcamp. An older companion is named ("needs the companion script 1.11.0").
+
+#### Fixed (the review of 3.42.0 – 3.42.7)
+
+- **Words given an entry are remembered** ("Remember changes …"): their entries come back with the release (they were lost), and a row you copied on purpose with the role of a row of the source stays (3.42.4 left it out).
+- **"With A, B and members of …"** gives its guests again (3.42.3 took it for prose); a label below a "by" line ("Warp Recordings") is no studio.
+- **Trying another kind** while a search was on its way no longer shows the found ones under the wrong kind.
+- **An own rule of texts** keeps its kind (a place stays a place).
+- **The date fields of an event** keep what was typed to their own entry and box.
+- **Started from the release editor** with a new YouTube link only: the release's Discogs or Bandcamp source is loaded, not the video.
+
+### COMPANION 1.11.0
+
+#### Added
+
+- **YouTube:** a tab on a YouTube video (`www.youtube.com/watch?v=…`) follows the dashboard like a Bandcamp tab – marks before each part of a line of the description (unfolded first), jump to source, credits off and on, dates and track groups underlined, the check on the MusicBrainz release page, "open in background" and "Load the release there". Another video without loading the page, and a description YouTube draws anew, are followed. The script manager asks once whether the script may run on `www.youtube.com`.
+- (Review) The marks come also when the description appears later; a line marked by a jump goes with another video; a description you folded stays folded.
 
 ### Import 3.42.7
 
