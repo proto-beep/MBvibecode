@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.1
+// @version      3.42.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5841,7 +5841,9 @@
             if (who0 && looksLikeName(who0)) {
               const [y1, y2] = [t[2], t[3] || t[2]].sort();
               const date = t[2] ? { ...emptyDateFields(), by: y1, ey: y2 } : null;
-              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, date ? { date } : {})) found++; });
+              // [Z-FRD] (3.42.2) the period a date of the pool of its own, one a line ("Ambisonic recordings 2022 – 2025")
+              const dateOf = date ? { date, dateName: `${cap(m[1])} recordings`, dateKey: `fr:${norm(clause)}` } : {};
+              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, dateOf)) found++; });
               // what follows: an area ("Big Sur, California"; [T059] 3.39.2 "Pacific coast" → Pacific Coast) recorded in, else not
               // recognized
               const where = t[4] ? areaOf(clean(t[4])) : null;
@@ -7124,7 +7126,7 @@
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
         // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
-        if (c.date && !entry.date) entry.date = c.date;
+        if (c.date && !entry.date) Object.assign(entry, { date: c.date, ...(c.dateName ? { dateName: c.dateName, dateKey: c.dateKey } : {}) }); // [Z-FRD] (3.42.2)
         if (c.roleCredit && !entry.roleCredit) entry.roleCredit = c.roleCredit;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
@@ -17616,8 +17618,14 @@
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
       if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
       if (c.anvFrom) row.anvFrom = c.anvFrom; // [S060] (3.38.12) the spelling in capitals at the source
-      // [S062] (3.38.18) the period the text gives; [S064] its role credit
-      if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      // [S062] (3.38.18) the period the text gives; [S064] its role credit; [Z-FRD] (3.42.2; Q-df) a period with a name of its own
+      // (field recordings) is a date of the pool, one a line of the text
+      if (c.date && c.dateName) {
+        const v = validateDateFields({ ...emptyDate(), ...c.date }).value;
+        const entry = v ? poolDateFor(v, null, c.dateKey, c.dateName) : null;
+        if (entry) Object.assign(row, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true });
+        else Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;

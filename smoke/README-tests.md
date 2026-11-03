@@ -162,6 +162,7 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
                                 #   hostask: 3.41.8 (Q-cn): "Host" / "Hosted By" asked (Q012): spoken vocals "host", misc "host", skip the role;
                                 #     "Presenter" stays spoken vocals
+                                #   fieldpool: 3.42.2 (Z-FRD): the periods of field recordings in the date pool, one a line, named after the kind
                                 #   ytroles: 3.41.7 (Z-AM, Z-CAM, Q-co): "Audio & Mixing Engineer" → audio, mix; "Mixed & Mastered By" → mix,
                                 #     mastering; "Cameras" misc "cameras", "Camera Operator", "Cinematographer" each their own; "Editor" misc "editor"
 
