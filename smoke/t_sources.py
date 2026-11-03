@@ -1,6 +1,6 @@
 """Sources: the adapter, several linked releases, supplementing, the tracks of a source (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: adapter, links, supp, tracksfit, indextracks (3.35.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
+Cases: adapter, links, supp, tracksfit, indextracks (3.35.1), repeat (3.40.16) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -774,6 +774,89 @@ console.log(JSON.stringify(out));
             b.close()
     finally:
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_repeat():
+    """Credits Importer 3.40.16 (collected item Z-RI; Q-bw): "↻ Repeat import" next to "Source ▾".
+    A) In the head right after "Source ▾" ("↻ Repeat import", a tooltip); a click: the question below the head – "Keep my changes"
+       preselected and focused, "Start afresh"; Cancel closes it (the focus back on the button).
+    B) Bass Man credited "fretless", Photo Guy's row taken out (✕), "Apply" in the date matrix (the bar folds); a new credit at the
+       source meanwhile (Jane Roe – Tambourine): ↻ with "Keep my changes" – the source read again (one more request to Discogs), Jane
+       Roe there, Bass Man still "fretless", Photo Guy without a row, "Dates & tracks" open again (Z-PF2); the log says so.
+    C) ↻ with "Start afresh" (the choice kept while the head is drawn anew): Bass Man without credit, Photo Guy's row back."""
+    H.DM_FOLD = True
+    orig = H.discogs_release
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value) : null; }"""
+    row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
+    HEAD = "[...document.querySelector('[data-el=source]').children].map(e => e.classList.contains('dci-srcwrap') ? 'srcmenu' : (e.dataset.act || e.className.split(' ')[0]))"
+    ASK = """(() => { const q = document.querySelector('[data-el=repeat]'); if (!q) return null;
+      return [q.querySelector('strong').textContent, [...q.querySelectorAll('label')].map(l => [l.textContent.trim(), l.querySelector('input').checked]), document.activeElement && document.activeElement.value]; })()"""
+    OPEN = "document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg = []
+        ctx.on('request', lambda r: dg.append(r.url) if 'api.discogs.com/releases' in r.url else None)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        head = pg.evaluate(HEAD)
+        btn = pg.locator('[data-el=source] [data-act=repeat-open]')
+        a0 = [' '.join(btn.inner_text().split()), btn.get_attribute('title').startswith('Read the source again and look up its entries in MusicBrainz anew')]
+        btn.click(); pg.wait_for_timeout(300)
+        a1 = pg.evaluate(ASK)
+        pg.click('[data-el=repeat] [data-act=repeat-cancel]'); pg.wait_for_timeout(200)
+        a2 = [pg.evaluate(ASK), pg.evaluate("document.activeElement && document.activeElement.dataset.act")]
+        print('A) Kopf:', head, a0, '| Frage:', a1, '| Abbrechen:', a2)
+        i = head.index('srcmenu') if 'srcmenu' in head else -9
+        results.append(head[i + 1:i + 2] == ['repeat-open'] and a0 == ['↻ Repeat import', True])
+        results.append(a1 == ['Repeat the import?', [['Keep my changes', True], ['Start afresh', False]], 'keep'] and a2 == [None, 'repeat-open'])
+        # B)
+        r = pg.evaluate(row_of, 'Bass Man')
+        pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'fretless')
+        pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
+        photo = pg.evaluate(row_of, 'Photo Guy')
+        pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=remove-row]')
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
+        b0 = pg.evaluate(OPEN)
+
+        def rel():
+            d = orig()
+            d['extraartists'] = d['extraartists'] + [{'name': 'Jane Roe', 'anv': '', 'role': 'Tambourine', 'tracks': '', 'id': 3099, 'join': ''}]
+            return d
+        H.discogs_release = rel
+        n0 = len(dg)
+        pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=repeat] [data-act=repeat-do]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+        pg.wait_for_timeout(1200)
+        b1 = [len(dg) - n0, pg.evaluate(ROWS, 'Jane Roe'), pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), pg.evaluate(OPEN),
+              [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x]]
+        print('B) gefaltet:', b0, '| ↻ behalten:', b1)
+        results.append(b0 == 'false' and b1[0] == 1 and b1[1] is not None and len(b1[1]) == 1 and b1[2] == ['fretless'] and b1[3] is None
+                       and b1[4] == 'true' and b1[5] == ['Import repeated – your changes are kept'])
+        # C)
+        pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
+        pg.check('[data-el=repeat] input[value=fresh]')
+        pg.click('[data-el=source] [data-act=srcmenu]'); pg.wait_for_timeout(150)
+        pg.click('[data-el=source] [data-act=srcmenu]'); pg.wait_for_timeout(150)
+        kept = pg.locator('[data-el=repeat] input[value=fresh]').is_checked()
+        pg.click('[data-el=repeat] [data-act=repeat-do]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 60)
+        pg.wait_for_timeout(1200)
+        c1 = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x][-1:]]
+        print('C) Wahl nach „Source ▾“:', kept, '| ↻ neu:', c1)
+        results.append(kept and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
