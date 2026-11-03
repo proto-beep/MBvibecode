@@ -555,8 +555,9 @@ def discogs_page():
     credits = [('Bass', 3001, 'Bass Man'), ('Guitar', 3002, 'Guitar Guy'), ('Synth', 3003, 'Keys Guy'), ('Drums', 3004, 'Drum Guy'),
                ('Produced By', 3005, 'Bob Producer'), ('Photography By', 3006, 'Photo Guy'), ('A&amp;R Consultant', 3008, 'Ann Rep')]
     lis = ''.join(f'<li><span>{r}</span> – <a href="/artist/{i}-{n.replace(" ", "-")}">{n}</a></li>' for r, i, n in credits)
+    # [Companion 1.10.1] the page writes "Phonographic Copyright ℗" (Discogs's data "(p)"), as the real page does (collected item Z-CR)
     comp = ''.join(f'<li><span>{r}</span> – <a href="/label/{i}-x">{n}</a></li>' for r, i, n in
-                   [('Phonographic Copyright (p)', 1001, 'Sony'), ('Recorded At', 1002, 'Abbey Road Studios'), ('Published By', 1003, 'Pub Co')])
+                   [('Phonographic Copyright ℗', 1001, 'Sony'), ('Recorded At', 1002, 'Abbey Road Studios'), ('Published By', 1003, 'Pub Co')])
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>Discogs</title>'
             f'<meta property="og:image" content="https://i.discogs.com/cover-{DISCOGS_ID}.png"></head><body><h1>Test Band – Testalbum</h1>'
             f'<div class="gallery"><a href="/release/{DISCOGS_ID}-Test-Band-Testalbum/image/1"><img src="https://i.discogs.com/cover-{DISCOGS_ID}.png" width="40"></a></div>'
