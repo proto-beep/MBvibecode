@@ -1682,4 +1682,57 @@ Mixed & Mastered By: Max Mix"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_hostask():
+    """Credits Importer 3.41.8 (collected item Q-cn): "Host: Cheryl Waters" (a YouTube video description) – asked (Q012), nothing assumed:
+    A) The row of each host: "Choose type …", the question "“Host”: spoken vocals credited “host” …, miscellaneous support “host”,
+       or no relationship?" with three answers – spoken vocals (credited “host”) · miscellaneous support (task “host”) · skip the role
+       (until 3.41.7 spoken vocals credited "Host" at once, R012); "Presenter" stays spoken vocals (R012).
+    B) Answered: spoken vocals → vocal, spoken vocals, credited "host"; miscellaneous support → misc, task "host"; skip the role →
+       the row on "Skip" (nothing of it staged); the log names each answer."""
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
+    H.attr(9126, 'spoken vocals', 3, 3)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = "Host: Cheryl Waters\nHosted By: Pat Two\nHost: Sam Three\nPresenter: Pre Sent"
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
+      const tr = g && g.querySelector('tr.dci-row'); if (!tr) return null; const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
+      const c = tr.querySelector('[data-f=role-credit]'); const q = tr.querySelector('.dci-type-ask');
+      return { type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : null, credit: c ? c.value : null, level: tr.className.match(/dci-lv-(\\w+)/)[1],
+        ask: q ? q.textContent.replace(/\\s+/g, ' ').trim() : null, opts: q ? [...q.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : [] }; }"""
+    PICK = """([name, n]) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
+      g.querySelector(`tr.dci-row [data-act=type-pick][data-opt="${n}"]`).click(); }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        a0 = [pg.evaluate(ROW, n) for n in ('Cheryl Waters', 'Pat Two', 'Pre Sent')]
+        print('A)', a0)
+        results.append(a0[0] is not None and a0[0]['type'] == 'Choose type …' and a0[0]['opts'] == ['spoken vocals (credited “host”)', 'miscellaneous support (task “host”)', 'skip the role']
+                       and a0[0]['ask'].startswith('“Host”: spoken vocals credited “host”') and a0[1] and a0[1]['opts'] == a0[0]['opts']
+                       and a0[2] and a0[2]['type'] == 'vocal' and a0[2]['primary'] == 'spoken vocals' and not a0[2]['opts'])
+        for n, k in (('Cheryl Waters', 0), ('Pat Two', 1), ('Sam Three', 2)):
+            pg.evaluate(PICK, [n, k])
+            pg.wait_for_timeout(400)
+        b0 = [pg.evaluate(ROW, n) for n in ('Cheryl Waters', 'Pat Two', 'Sam Three')]
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if '“Host”' in x or '“Hosted By”' in x]
+        print('B)', b0, '\n  ', logs)
+        results.append([b0[0]['type'], b0[0]['primary'], b0[0]['credit'], b0[0]['level']] == ['vocal', 'spoken vocals', 'host', 'recording']
+                       and [b0[1]['type'], b0[1]['credit'], b0[1]['level']] == ['misc', 'host', 'recording'] and b0[2]['level'] == 'skip' and len(logs) == 3)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
