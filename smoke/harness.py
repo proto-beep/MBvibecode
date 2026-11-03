@@ -227,7 +227,7 @@ def ws_release(full=False):
         tracks.append({'position': i + 1, 'number': str(i + 1), 'title': TITLES[i],
                        'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])},
                        **({'artist-credit': [{'name': n, 'joinphrase': '', 'artist': {'id': g, 'name': n}} for g, n in TRACK_AC[i]]} if i in TRACK_AC else {})})
-    return {'id': REL, 'title': 'Testalbum', 'date': '2001', 'text-representation': {'language': 'eng'},
+    return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
@@ -254,6 +254,8 @@ PERSONAL_PUBLISHERS = [
 
 # Track counts per medium (None: one medium with all tracks)
 MEDIA = None
+# [3.42.3] the release's title in MusicBrainz (S073: a name of a text equal to it is no person)
+REL_TITLE = 'Testalbum'
 
 # Answers of the Discogs API for a test: path ("/artists/3030") → JSON (None: 404)
 DG_API = {}

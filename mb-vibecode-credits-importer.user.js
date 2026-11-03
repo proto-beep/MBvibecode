@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.2
+// @version      3.42.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -267,6 +267,8 @@
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
       "ignored.why.permission": "a permission – no credit",
       "ignored.why.releaseArtist": "the release’s artist – a title line, no credit",
+      "ignored.why.website": "a website – no relationship of MusicBrainz",
+      "ignored.why.nowhere": "no place named",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -2267,6 +2269,7 @@
       "pools.reloadAny": "↻ load again from the source ({src})",
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
+      "instrAsk.preset": "“{name}” is set as {set} (credited “{credit}”) – or as:",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "log.instrTypo": "“{word}” is probably a typo of {instrument}: no role credit.",
       "log.instrOwn": "“{word}” as a spelling of its own: {instrument}, role credit “{credit}”.",
@@ -3332,6 +3335,12 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    // [3.42.3] collected items Z-GON, Z-BZ
+    { id: 'S073', where: 'TEXT.parse (readClause, addCredit; titleNames)', note: 'Texts (3.42.3): "With X, <sentence>" – "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" – is prose, no credit (a part after a comma of five words or more, no roles); and a name that is the title of the release or of one of its tracks ("Black Zenith") is never a person, unless it is the release\'s artist too. Before: "With …" gave the name a guest performer' },
+    { id: 'S072', where: 'TEXT.parse (readLine; WEBSITE_BY, NOWHERE)', note: 'Texts (3.42.3): left out on purpose, not named as not recognized – "Website by X" (also "Web design by", "Site by"; MusicBrainz has no relationship for a website: "a website") and a place that is none, "Recorded all over the place" ("everywhere", "in various places": "no place named")' },
+    { id: 'S071', where: 'TEXT.parse (readLine; prevBy, STUDIO_LINE)', note: 'Texts (3.42.3): a line that goes on the "by" line above it – a studio ("All songs mixed by Dylan Alledridge," / "Skinny Elephant recording": a name in capitals and recording(s), studio(s) or sound(s)) is the place of its verb (mixed at), a suggestion searched by its name; "and Name" one more name of its roles (left out with a website, S072); an empty line ends it' },
+    { id: 'S070', where: 'TEXT.parse (readLine; BULLET, contWho, lineLead)', note: 'Texts (3.42.3): the tracks after a bullet – "Matt Glassmeyer — saxophones • 1, 8" (tracks 1 and 8) – and lines only of roles below "Name — roles" ("Wurlitzer • 1, 8", "organ • 1"): more roles of that name with their tracks, until an empty line (an en dash like an em dash). Before: such lines were not recognized' },
+    { id: 'S069', where: 'TEXT.parse (STATUS_MARKS)', note: 'Texts (3.42.3): the companion\'s status marks (✓ ● ○ ✗, "!" first) in a text copied from a page it marked – "○ Chris Lippincott — pedal steel • 3" – are no part of a line' },
     { id: 'S068', where: 'TEXT.parse (readLine)', note: 'Texts (3.39.8): a line that is only the name of the release\'s artist (the title line of a booklet, "Nordlicht Quartett") is left out ("the release\'s artist") – no credit, not named as not recognized' },
     { id: 'S067', where: 'TEXT.parse (headingLists, readHeading)', note: 'Texts (3.39.8): a heading with several names below it – "VIOLIN / Anna Berg / Clara Stein / Ben Holt" (instruments or voices; a role ending in "by" or with a colon: "RECORDED BY / Jonas Kerr", "Strings:") – each name gets the heading\'s roles; empty lines between the names allowed (as text read from a booklet has them); one name below an instrument stays a pair of lines (S058)' },
     { id: 'S066', where: 'mapRole (PERSON_AT_ROLE, PERSON_COMPANY_SKIP)', note: 'Roles (3.39.6): a role of "Companies, etc." Discogs gives a person – "Recorded At", "Mixed At", "Mastered At", "Engineered At", "Produced At", "Remixed At": what the person did ("Mixed By"; a person linked on Discogs is always a person, no place); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To": no relationship of MusicBrainz for a person – left out (Skip), the row says so ("Licensed From" stays licensor, R093)' },
@@ -4208,6 +4217,12 @@
     const used = new Set([...(row.consumed || []), ...(row.flagMods || [])].map(norm));
     return (row.mods || []).filter((m) => !used.has(norm(m)));
   }
+
+  /**
+   * [Q013] (3.42.3) Whether a row's instrument question asks: its instrument is still the family word – or, for a question whose
+   * first answer is set at once (`preset`: "Horns" → horn, or brass), one of its answers.
+   */
+  const questionAsks = (q, row) => norm(row.primaryText) === q.base || (!!q.preset && q.options.some((o) => norm(o) === norm(row.primaryText)));
 
   /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
   function questionRuleFor(row) {
@@ -5273,6 +5288,17 @@
     const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*[:–—-]\\s*(.+)$`, 'i');
     const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
+    // [S070] (3.42.3) … or after a bullet: "Matt Glassmeyer — saxophones • 1, 8" (collected item Z-GON a)
+    const BULLET = new RegExp(`^(.*?\\S)\\s*[•·]\\s*(${SPEC})\\s*\\.?$`);
+    // [S069] (3.42.3) the companion's status marks, copied with a line of its page ("○ Chris Lippincott — pedal steel • 3"; Z-GON i)
+    const STATUS_MARKS = /(^|\s)[✓●○✗](?=\s|$)\s*/gu;
+    const STATUS_BANG = /^\s*!\s+/;
+    // [S071] (3.42.3) a line below a "by" line that names a studio ("All songs mixed by X," / "Skinny Elephant recording"; Z-GON e)
+    const STUDIO_LINE = /^(?:\p{Lu}[\p{L}\p{N}'’.&-]*\s+){1,4}(?:[Rr]ecordings?|[Ss]tudios?|[Ss]ounds?)$/u;
+    // [S072] (3.42.3) left out on purpose: a website (MusicBrainz has no relationship for it; Z-GON g) and a place that is none
+    // ("Recorded all over the place"; Z-GON f)
+    const WEBSITE_BY = /^(?:the\s+)?(?:web\s*(?:site|page)s?|web\s*design|homepage|site)(?:\s+(?:design(?:ed)?|built|made|programmed))?\s+by\s+\S/i;
+    const NOWHERE = /^\p{L}+ed\s+(?:all\s+over\s+(?:the\s+)?(?:place|world|map|town)|everywhere|here\s+and\s+there|in\s+(?:many|several|various|different|countless)\s+(?:places|locations|rooms|spaces))$/iu;
     // [S053] (3.36.7) positions in front of a sentence, without "Tracks" and a colon, before its verb ("A1 to B2 recorded 22nd May
     // 1981 in live concert at Goldsmith's College, London", "C1 to D recorded …" – D a whole side; collected item 150)
     const LEAD_POS_ONE = '(?:[A-Z]{1,2}\\d{0,3}|\\d{1,3}(?:\\.\\d{1,3})?)';
@@ -5509,7 +5535,7 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [] } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -5570,6 +5596,9 @@
         if (!p || !looksLikeName(name)) return false;
         if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
         else {
+          // [S073] (3.42.3) the title of the release or of a track is no person ("With Black Zenith, …" on "Black Zenith"; Z-BZ) –
+          // unless it is the name of the release's artist too (a release named after its artist)
+          if (ruleOn('S073') && titleKeys.has(norm(name)) && !bandNames.has(norm(name))) return false;
           // [S060] (3.38.12) as written kept for "↺ in capitals" in the head
           const nc = ruleOn('S059') ? normalCaseName(name) : name;
           credits.push({ who: { ...who(nc), ...(nc !== name ? { caseFrom: name } : {}) }, role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
@@ -5578,6 +5607,8 @@
       };
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
       const bandNames = new Set(artistNames.map((n) => norm(n)).filter(Boolean));
+      // [S073] (3.42.3) the titles of the release and its tracks (no person)
+      const titleKeys = new Set((titleNames || []).map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
       const addPlaceholder = (said, role0, scope) => {
@@ -6051,6 +6082,15 @@
               } else cur += ch;
             }
             chunks.push(clean(cur));
+            // [S073] (3.42.3) "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" (Bandcamp; collected item
+            // Z-BZ): a sentence after the comma – five words or more, no roles – makes the line prose, no credit (until 3.42.2 the words
+            // after "With" were a guest)
+            const prosePart = (x) => {
+              const on = x.match(/^(.+?)\s+on\s+(.+)$/i) || x.match(/^(.+?)\s*\(([^)]+)\)$/);
+              return x.split(' ').length >= 5 && !listRoles(x) && !playList(x) && !(on && listRoles(clean(on[2])))
+                && x.split(' ').filter((w) => /^\p{Ll}/u.test(w)).length >= 3;
+            };
+            if (ruleOn('S073') && chunks.slice(1).some(prosePart)) return;
             const makeWord = (n) => PROPER_WORDS.some((w) => norm(w) === norm(n.split(' ')[0]));
             const soft = [];
             const band = [];
@@ -6163,6 +6203,8 @@
           const rolesLeft = listRoles(left);
           if (rolesRight && !rolesLeft) {
             rolesRight.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
+            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too
+            if (found) lineLead = left;
           } else if (rolesLeft && !rolesRight) {
             for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
@@ -6182,6 +6224,7 @@
                 }
               });
               if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
+              if (found) lineLead = left;
             }
           }
         };
@@ -6248,6 +6291,12 @@
       // society and its tracks; outside a block a line with a society after the name does too. The society is the release's rights
       // society (T045), once each.
       let pubBlock = null;
+      // [S070] (3.42.3) the name of the line above ("Name — roles") whose roles go on in lines of roles only, until an empty line;
+      // [S071] the "by" credits of the line above ({ verb, roles, scope, line, ignored }) a line may go on (a studio, "and Name");
+      // lineLead: the name such a line gives (readClause)
+      let contWho = null;
+      let prevBy = null;
+      let lineLead = null;
       const societiesIn = (t) => uniq([...String(t || '').matchAll(SOCIETY_WORD)].map((x) => societyName(x[1])));
       const addSociety = (name) => {
         if (!isCompanyRole('Rights Society')) return false;
@@ -6350,9 +6399,16 @@
         if (!line) {
           // [S043] an empty line after its publishers ends a block
           if (pubBlock && pubBlock.n) pubBlock = null;
+          // [S070] [S071] (3.42.3) … and the roles of a name above, and a credit lines below may go on
+          contWho = null;
+          prevBy = null;
           return;
         }
         startLine(raw);
+        const cont = contWho;
+        const before = prevBy;
+        contWho = null;
+        prevBy = null;
         // [S068] (3.39.8) a line only of the name of the release's artist (a booklet's title): no credit, left out as such
         if (ruleOn('S068') && !pubBlock && artistNames.some((n) => norm(n) === norm(line.replace(/[.:]$/, '')))) {
           ignored.push({ text: line, why: 'releaseArtist' });
@@ -6370,12 +6426,42 @@
         };
         if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
           if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
-            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1])) && ruleOn('S053')
+            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1]))
+              && !(ruleOn('S070') && (m = line.match(BULLET)) && useScope(m[2], m[1])) && ruleOn('S053')
               && ((m = line.match(LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(LEAD_POS)))) useScope(m[1], m[2]);
           }
         }
         part0 = line;
         pi0 = 0;
+        // [S070] (3.42.3) a line only of roles below "Name — roles" (no name, colon, dash or "by"): more roles of that name, until an
+        // empty line ("Matt Glassmeyer — saxophones • 1, 8" / "Wurlitzer • 1, 8" / "organ • 1"; collected item Z-GON b)
+        if (ruleOn('S070') && cont && !/:|\s[–—-]\s/.test(line) && !/\sby\s/i.test(` ${line} `)) {
+          const roles = listRoles(line);
+          const list = roles ? null : playList(line);
+          if (roles || list) {
+            // a word that may be an instrument asks like those of a list (137d)
+            (roles || list.parts).forEach((r) => addCredit(cont.name, r, scope, roles || playable(r) ? {} : { guess: true }));
+            contWho = cont;
+            return;
+          }
+        }
+        // [S071] (3.42.3) a line that goes on the "by" line above it: a studio – "All songs mixed by Dylan Alledridge," / "Skinny Elephant
+        // recording" – the place of its verb (mixed at; Z-GON e); "and Name" – one more name of its roles ("Website by Max Helgemo" / "and
+        // Jacob Dawson-Daley": left out with it, Z-GON g)
+        if (ruleOn('S071') && before) {
+          if (before.verb && STUDIO_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
+            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: before.scope ? tracksOf(before.scope) : null, ...at() });
+            return;
+          }
+          const and = line.match(/^(?:and|&|und|et|y)\s+(.+)$/i);
+          const more = and ? names(and[1]) : [];
+          if (more.length && more.every((n) => looksLikeName(n) && /^\p{Lu}/u.test(n) && !TEXT_NOT_NAME.test(n) && !isRole(cap(n)))) {
+            if (before.ignored) ignored.push({ text: line0, why: before.ignored });
+            else more.forEach((n) => before.roles.forEach((r) => addCredit(n, r, before.scope)));
+            prevBy = before;
+            return;
+          }
+        }
         // [S043] (3.31.0) the heading of a block of publishers ("[Publishers & Rights Societies]", "Publishers (all BMI):"),
         // a line of rights societies only ("BIEM/GEMA"), a publisher below the heading or with its society ("X-BMI : tracks 2, 4")
         if (ruleOn('S043')) {
@@ -6403,11 +6489,24 @@
         let pi = 0;
         const unknownParts = [];
         const missed = [];
+        const c00 = credits.length;
+        lineLead = null;
+        let webBy = false;
         for (const unit of units) {
           const whole = units.length === 1 ? line0 : unit;
           // [3.21.4] with the reason (shown in the list)
           if (TEXT_IGNORE_LINE.test(unit)) {
             ignored.push({ text: whole, why: TEXT_THANKS.test(unit) ? 'thanks' : TEXT_COURTESY_LINE.test(unit) ? 'courtesy' : 'endorsement' });
+            continue;
+          }
+          // [S072] (3.42.3) a website (no relationship of MusicBrainz) and "Recorded all over the place" (no place): left out as such
+          if (ruleOn('S072') && WEBSITE_BY.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'website' });
+            webBy = units.length === 1;
+            continue;
+          }
+          if (ruleOn('S072') && NOWHERE.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'nowhere' });
             continue;
           }
           // [3.30.8] about the package ("Including a 52 p. booklet.")
@@ -6436,6 +6535,18 @@
         } else {
           missed.forEach((u) => unrecognized.push(u));
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
+        }
+        // [S070] (3.42.3) one name with its roles ("Name — roles", one part): lines of roles below it go on
+        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { name: lineLead };
+        // [S071] (3.42.3) one sentence of "by" credits (one verb: its place may follow) or a website left out: the next line may go on
+        if (ruleOn('S071') && units.length === 1) {
+          const added = credits.slice(c00);
+          const roles = uniq(added.map((c) => c.role));
+          const verbs = uniq(roles.map((r) => (String(r).match(/^(\p{L}+ed) By$/iu) || [])[1]).filter(Boolean).map(cap));
+          if (webBy) prevBy = { ignored: 'website', roles: [], verb: '', scope: null };
+          else if (added.length && !missed.length && /\sby\s/i.test(` ${line} `) && uniq(added.map((c) => norm(c.who.name))).length === 1) {
+            prevBy = { verb: verbs.length === 1 && roles.length === 1 ? verbs[0] : '', roles, scope };
+          }
         }
       };
 
@@ -6573,19 +6684,25 @@
         roleBlock = [];
         held.forEach(readLine);
       };
-      const allLines = String(text || '').split(/\r?\n/);
+      // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
+      const allLines = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
       // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
       const heads = headingLists(allLines);
       const stacks = stackPairs(allLines.map((l, i) => (heads.has(i) ? '' : l)));
       for (const [li, raw] of allLines.entries()) {
         if (heads.has(li)) {
           flushBlock();
+          // [S070] [S071] (3.42.3) no line above goes on across a heading or a pair
+          contWho = null;
+          prevBy = null;
           if (heads.get(li)) readHeading(heads.get(li));
           continue;
         }
         // [S058] (3.38.7) a line of a pair: read with the other one
         if (stacks.has(li)) {
           flushBlock();
+          contWho = null;
+          prevBy = null;
           if (stacks.get(li)) readStacked(stacks.get(li));
           continue;
         }
@@ -6600,6 +6717,8 @@
           }
           if (roleBlock.length && readBlock(roleBlock, raw)) {
             roleBlock = [];
+            contWho = null;
+            prevBy = null;
             continue;
           }
           flushBlock();
@@ -6800,7 +6919,9 @@
       // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
       const bandName = String(data.artist || '').trim();
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
+      // [S073] (3.42.3) the album's title and its tracks' are no persons (Z-BZ)
+      const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -6808,7 +6929,7 @@
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
       // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
       // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
@@ -6824,7 +6945,7 @@
       const trackAltUnrec = new Map();
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
-        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles });
+        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles, titleNames });
         const on = { indexes: [i], position: tracks[i].position };
         // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
         const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
@@ -15799,6 +15920,8 @@
       }
       renderMediumFilter();
       S.releaseDateMb = parseDate(ws.date);
+      // [S073] (3.42.3) its title (a name of a text equal to it is no person)
+      S.releaseTitleMb = ws.title || '';
       S.releaseGroup = ws['release-group'] || null;
       if (S.releaseGroup) {
         try {
@@ -16939,6 +17062,8 @@
       resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
       // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
+      // [S073] (3.42.3) the titles of the release and its tracks in MusicBrainz: no persons (Z-BZ)
+      titleNames: uniq([S.releaseTitleMb || '', ...tracks.map((t) => t.title)].filter(Boolean)),
       // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
       stackUp: !!S.stackUp,
     };
@@ -20324,6 +20449,8 @@
     const q = questionRuleFor(r);
     const instr = (x, text = x) => ({ act: 'instr-pick', attr: 'instr', value: x, text });
     if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base) return q.options.map((x) => instr(x));
+    // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?")
+    if (q && q.preset && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
     const g = r.instrGuess;
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
       return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
@@ -20388,7 +20515,7 @@
     const lt = ltOf(r);
     const root = lt && primaryRootOf(lt);
     const answers = chipAnswers(r);
-    const ask = !!answers.length || chipNotesOpen(l);
+    const ask = (!!answers.length && !answers.preset) || chipNotesOpen(l);
     // a word MusicBrainz does not know: as written ("? Chaims")
     // [177] (3.38.10) not an instrument: MusicBrainz's name of the relationship
     const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || rowPhrase(r) || r.raw : rowPhrase(r) || r.raw) || '–';
@@ -23397,8 +23524,13 @@
   function instrumentAskHtml(row) {
     const lt = currentLinkType(row);
     const q = questionRuleFor(row);
-    if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || norm(row.primaryText) !== q.base) return '';
+    if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || !questionAsks(q, row)) return '';
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
+    // [Q013] (3.42.3) an answer set at once: the others to choose ("Horns" is set as horn – or as: brass)
+    if (q.preset && norm(row.primaryText) !== q.base) {
+      const others = q.options.filter((o) => norm(o) !== norm(row.primaryText));
+      return `<div class="dci-bass-ask" data-question="${q.id}" data-preset="1">${esc(tr('instrAsk.preset', { name: row.base, set: row.primaryText, credit: q.credit }))} ${others.map(pick).join(' · ')}</div>`;
+    }
     return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
