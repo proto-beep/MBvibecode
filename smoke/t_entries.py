@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14), chipinfo (3.38.6), barroom (3.40.8) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14), chipinfo (3.38.6), barroom (3.40.8), compactside (3.40.10), compactlines (3.40.11) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import launch_own, run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1255,6 +1255,217 @@ def case_barroom():
                 results.append(not errs)
             finally:
                 b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_compactside():
+    """Credits Importer 3.40.10 (collected item Z-KH, mockup C; Q-bi, Q-bk, Q-bf): a compact entry lower – "by event | by role" at
+    the right of its head; the relationships to stage, "Writing credits: in the works matrix" (its tooltip the whole sentence) and
+    the button "＋ Another role for …" in a column beside its lines (until 3.40.9 three lines below them and the toggle a line of
+    its own).
+    A) Barry Guy (double bass, composer): the toggle in the head, no line of its own; the column right of the lines, at their
+       height; no link "+ Another role" below.
+    B) by role: the lines per role, the column the same.
+    C) "＋ Another role for Barry Guy": a new row, his full matrix opened with its line (double bass and the new one; as the link did).
+    D) The full view: the matrix of the entry, the link below it as before, no column, no toggle in the head; (3.40.11, review) the
+       entry folded there (▾, compact lines): the column and the toggle as in the compact view."""
+    CRED = [('Barry Guy', 'Double Bass', 3101, ''), ('Barry Guy', 'Composed By', 3101, ''), ('Evan Parker', 'Tenor Saxophone', 3102, '')]
+    for n, _r, i, _t in CRED:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CRED]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const side = g.querySelector('.dci-em-side'); const lines = g.querySelector('.dci-em-compact');
+      const r = (e) => e ? e.getBoundingClientRect() : null; const sr = r(side), lr = r(lines && lines.querySelector('.dci-em-cl'));
+      const btn = side && side.querySelector('[data-act=add-role]'); const note = side && side.querySelector('.dci-work-note');
+      return { headBy: !!g.querySelector('.dci-ghead [data-act=em-by]'), chead: !!g.querySelector('.dci-em-chead'),
+        by: (g.querySelector('[data-act=em-by][aria-pressed=true]') || {}).dataset ? g.querySelector('[data-act=em-by][aria-pressed=true]').dataset.by : null,
+        side: side ? [...side.children].map(c => c.textContent.trim()) : null, btnCls: btn ? btn.className : '', note: note ? [note.textContent.trim(), note.title] : null,
+        beside: !!(sr && lr && sr.left >= lr.right && Math.abs(sr.top - lr.top) < 12), linkBelow: !!g.querySelector(':scope > [data-act=add-role]'),
+        roleLines: g.querySelectorAll('.dci-em-clrole').length, wide: !!g.querySelector('.dci-em:not(.dci-em-compact)') }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(800)
+            a = pg.evaluate(INFO, 'Barry Guy')
+            ep = pg.evaluate(INFO, 'Evan Parker')
+            print('A) Barry Guy:', a, '\n   Evan Parker:', ep['side'])
+            results.append(a['headBy'] and not a['chead'] and a['by'] == 'event' and a['beside'] and not a['linkBelow']
+                           and len(a['side']) == 3 and a['side'][0].endswith('relationships to stage') and a['side'][2] == '＋ Another role for Barry Guy'
+                           and a['note'] == ['Writing credits: in the works matrix', 'The writing credits of this entry are in the works matrix.'] and 'dci-addrole-btn' in a['btnCls']
+                           and ep['side'] is not None and len(ep['side']) == 2 and ep['side'][1] == '＋ Another role for Evan Parker')
+            sec = sec_sel(pg, 'Barry Guy')
+            pg.click(f'{sec} [data-act=em-by][data-by=role]')
+            pg.wait_for_timeout(500)
+            bb = pg.evaluate(INFO, 'Barry Guy')
+            print('B) by role:', bb)
+            results.append(bb['by'] == 'role' and bb['roleLines'] >= 1 and bb['headBy'] and bb['side'] == a['side'] and bb['beside'])
+            LINES = "[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Barry Guy').querySelectorAll('tr.dci-em-line').length"
+            pg.click(f'{sec} .dci-em-side [data-act=add-role]')
+            pg.wait_for_timeout(600)
+            c = pg.evaluate(INFO, 'Barry Guy')
+            n1 = pg.evaluate(LINES)
+            print('C) ＋:', c['wide'], c['side'], '| Zeilen der Matrix:', n1)
+            results.append(c['wide'] and c['side'] is None and n1 == 2)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(800)
+            d = pg.evaluate(INFO, 'Evan Parker')
+            pg.click(f"{sec_sel(pg, 'Evan Parker')} [data-act=group-fold]")
+            pg.wait_for_timeout(500)
+            d2 = pg.evaluate(INFO, 'Evan Parker')
+            print('D) volle Ansicht:', d, '\n   eingeklappt:', d2['side'], d2['headBy'], d2['linkBelow'])
+            results.append(d['side'] is None and not d['headBy'] and d['linkBelow'] and d['wide'] and d2['side'] and d2['headBy'] and not d2['linkBelow'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_compactlines():
+    """Credits Importer 3.40.11 (collected item Z-KH, mockup B; Q-bi, Q-bo, Q-bp, Q-bg): ⚙ Settings → Appearance "Compact entries:
+    notes beside the lines | in the lines".
+    A) "notes beside the lines" chosen by default.
+    B) "in the lines" (stored): no column; the end of the last line "5 to stage" and "＋ role" (its tooltip "+ Another role for Barry
+       Guy"); in the head "✓ link" (its tooltip "found via Discogs link") and "✎ works ↓" (its tooltip the whole sentence).
+    C) by role: the same at the end of the last line.
+    D) "✎ works ↓": the works matrix in view, lit up.
+    E) "＋ role": the full matrix with a new line.
+    F) The full view: "found via Discogs link" as before, no "✎ works ↓".
+    G) ↺ of Appearance: "notes beside the lines" again (the column back).
+    H) (3.40.11, review) "Joey Bada$$" (piano, vocals): "＋ role" and its tooltip with the name as it is; vocal taken out (✕): the line "Taken out"
+       gets no tail – it stays at the end of the line of the event."""
+    CRED = [('Barry Guy', 'Double Bass', 3101, ''), ('Barry Guy', 'Composed By', 3101, ''), ('Evan Parker', 'Tenor Saxophone', 3102, ''),
+            ('Joey Bada$$', 'Piano', 3103, ''), ('Joey Bada$$', 'Vocals', 3103, '')]
+    for n, _r, i, _t in CRED:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CRED]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const lines = [...g.querySelectorAll('.dci-em-compact .dci-em-cl')]; const last = lines[lines.length - 1];
+      const tail = last && last.querySelector('.dci-em-tail'); const btn = tail && tail.querySelector('[data-act=add-role]');
+      const badge = g.querySelector('.dci-gmatch .dci-badge-ok'); const works = g.querySelector('.dci-ghead [data-act=works-goto]');
+      return { side: !!g.querySelector('.dci-em-side'), tails: g.querySelectorAll('.dci-em-tail').length, tail: tail ? tail.textContent.replace(/\\s+/g, ' ').trim() : null,
+        btn: btn ? [btn.textContent.trim(), btn.title] : null, badge: badge ? [badge.textContent.trim(), badge.title] : null,
+        works: works ? [works.textContent.trim(), works.title] : null, headBy: !!g.querySelector('.dci-ghead [data-act=em-by]'), roleLines: g.querySelectorAll('.dci-em-clrole').length,
+        lastIsRole: !!(last && last.classList.contains('dci-em-clrole')) }; }"""
+    SEG = "[...document.querySelectorAll('[data-el=settings] [data-act=em-side]')].map(b => [b.dataset.side, b.textContent.trim(), b.getAttribute('aria-pressed')])"
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            H.open_settings(pg, 'appearance')
+            a = [pg.evaluate(SEG), pg.evaluate("(r => r ? r.textContent.replace(/\\s+/g, ' ').trim() : '')(document.querySelector('[data-el=settings] [data-act=em-side]').closest('.dci-set-row, label, div'))")]
+            print('A) Einstellung:', a)
+            results.append(a[0] == [['beside', 'notes beside the lines', 'true'], ['lines', 'in the lines', 'false']] and a[1].startswith('Compact entries'))
+            pg.click('[data-el=settings] [data-act=em-side][data-side=lines]')
+            pg.wait_for_timeout(600)
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            bg = pg.evaluate(INFO, 'Barry Guy')
+            ep = pg.evaluate(INFO, 'Evan Parker')
+            stored = pg.evaluate("localStorage.getItem('dci-em-side')")
+            print('B) Barry Guy:', bg, '\n   Evan Parker:', ep, '| gespeichert:', stored)
+            results.append(stored == '"lines"' and not bg['side'] and bg['tails'] == 1 and bg['tail'] == '5 to stage ＋ role' and bg['btn'] == ['＋ role', '+ Another role for Barry Guy']
+                           and bg['badge'] == ['✓ link', 'found via Discogs link'] and bg['works'] == ['✎ works ↓', 'The writing credits of this entry are in the works matrix.']
+                           and bg['headBy'] and ep['works'] is None and ep['tail'] == '4 to stage ＋ role')
+            sec = sec_sel(pg, 'Barry Guy')
+            pg.click(f'{sec} [data-act=em-by][data-by=role]')
+            pg.wait_for_timeout(500)
+            c = pg.evaluate(INFO, 'Barry Guy')
+            print('C) by role:', c)
+            results.append(c['roleLines'] >= 1 and c['lastIsRole'] and c['tails'] == 1 and c['tail'] == '5 to stage ＋ role')
+            pg.click(f'{sec} [data-act=works-goto]')
+            pg.wait_for_timeout(400)
+            # the top of the works matrix right below the part of the dashboard that stays in view (Add entry manually, the pools)
+            d = pg.evaluate("""(w => { if (!w) return null; const body = document.querySelector('[data-el=body]').getBoundingClientRect();
+              const stick = document.querySelector('[data-el=stick]').getBoundingClientRect(); const t = w.getBoundingClientRect().top;
+              return [w.classList.contains('dci-flash'), t >= stick.bottom - 2 && t <= stick.bottom + 40 && t < body.bottom]; })(document.querySelector('[data-el=works]'))""")
+            print('D) Werke:', d)
+            results.append(d == [True, True])
+            pg.click(f'{sec} .dci-em-tail [data-act=add-role]')
+            pg.wait_for_timeout(600)
+            e = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Barry Guy').querySelectorAll('tr.dci-em-line').length")
+            print('E) ＋ role: Zeilen der Matrix', e)
+            results.append(e == 2)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            f = pg.evaluate(INFO, 'Evan Parker')
+            print('F) volle Ansicht:', f['badge'], f['works'], f['tails'])
+            results.append(f['badge'] == ['found via Discogs link', ''] and f['works'] is None and f['tails'] == 0)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            H.open_settings(pg, 'appearance')
+            pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
+            pg.wait_for_timeout(800)
+            g = [pg.evaluate("localStorage.getItem('dci-em-side')"), pg.evaluate(SEG)]
+            # (the reset of Appearance sets the full view too: back to compact to see the column)
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            if pg.evaluate("!document.querySelector('#dci-overlay.dci-compact')"):
+                pg.click('.dci-head [data-act=view-toggle]')
+                pg.wait_for_timeout(600)
+            g2 = pg.evaluate(INFO, 'Evan Parker')
+            print('G) ↺:', g, '| Evan Parker:', g2['side'], g2['tails'], g2['badge'])
+            results.append(g[0] is None and g[1][0][2] == 'true' and g2['side'] and g2['tails'] == 0 and g2['badge'] == ['found via Discogs link', ''])
+            # H) a name with "$", a line "Taken out"
+            H.open_settings(pg, 'appearance')
+            pg.click('[data-el=settings] [data-act=em-side][data-side=lines]')
+            pg.wait_for_timeout(500)
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            h0 = pg.evaluate(INFO, 'Joey Bada$$')
+            jb = sec_sel(pg, 'Joey Bada$$')
+            pg.locator(f'{jb} .dci-em-chip', has_text='vocal').locator('[data-act=em-chipout]').click()
+            pg.wait_for_timeout(500)
+            h1 = pg.evaluate("""(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+              return [...g.querySelectorAll('.dci-em-compact .dci-em-cl')].map(l => [l.classList.contains('dci-em-skip'), !!l.querySelector('.dci-em-tail')]); }""", 'Joey Bada$$')
+            print('H) Joey Bada$$:', h0['btn'], '| Zeilen (Taken out, Ende):', h1)
+            results.append(h0['btn'] == ['＋ role', '+ Another role for Joey Bada$$'] and h1 == [[False, True], [True, False]])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
     finally:
         H.ENTRIES_VIEW = 'legacy'
         H.discogs_release = orig

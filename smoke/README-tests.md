@@ -26,6 +26,8 @@ MBvibecode/ (this repository)
   smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.38.10] link phrases: the
                                       type's name, instrument and vocal with MusicBrainz's phrase ("{additional} {guest} {solo}
                                       {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
+                                      [Companion 1.10.1] the Discogs page writes "Phonographic Copyright ℗" as the real one (the
+                                      data "(p)")
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -34,6 +36,8 @@ MBvibecode/ (this repository)
                                       [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
                                       script starts (the files written before expect the stores of a release kept); False in
                                       t_ui_settings.py cache and t_entries.py order (the script's default: off)
+                                      [3.40.9] DM_FOLD: False – "Fold bar after Apply" stored off before the script starts (the files
+                                      written before work on in the open bar after "Apply"); True in t_dates_matrix.py foldapply
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -274,6 +278,11 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #   workgroups: 3.35.6 (item 145b): the works of index tracks as track groups (suggestions), one on a date of the
                                 #     matrix, the box of the track pool off / on (the date leaves and comes back), the setting off / on, a new
                                 #     import ticks the box again, the setting stored
+                                #   foldapply: 3.40.9 (Z-PF): "Fold bar after Apply" below the matrix and in ⚙ (on); "Apply" folds (stored,
+                                #     focus on "▼ show", log); off: stays open; with "apply automatically": open while the pointer is in the
+                                #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again;
+                                #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
+                                #     ⚙ – open; stored only when off
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -557,6 +566,15 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   barroom: 3.40.8 (Z-SB): overlay scroll bars (Chromium's FluentOverlayScrollbar, a browser of its own –
                                 #     caserun.launch_own): a wide dashboard no room; 700 px: 16 px below the last line, "written “Drums”" above
                                 #     the bar, only boxes that scroll (review); wide again (⤢): none; a classic bar (it takes room): no room
+                                #   compactside: 3.40.10 (Z-KH, mockup C): compact – "by event | by role" in the head, count, "Writing
+                                #     credits: in the works matrix" (tooltip) and the button "＋ Another role for …" beside the lines, no link
+                                #     below; by role the same; the button opens the full matrix with a new line; full view as before;
+                                #     (review) an entry folded in the full view: the column and the toggle
+                                #   compactlines: 3.40.11 (Z-KH, mockup B): ⚙ Appearance "Compact entries: notes beside the lines | in the
+                                #     lines" – in the lines: no column, "n to stage" and "＋ role" at the end of the last line (by event, by
+                                #     role), "✓ link" and "✎ works ↓" in the head (tooltips), "✎ works ↓" brings the works matrix into view,
+                                #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
+                                #     without the tail
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
@@ -724,6 +742,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     the dashboard opened late: no "older companion"; the same release in another import used later: its marks
                                 #     and the note "2 imports …", a click there does not reach the first; the first used again: its marks, a
                                 #     click reaches it; closed: no note
+                                #   copymarks: companion 1.10.1 (Z-CR): the page writes "Copyright ©" / "Phonographic Copyright ℗" (the data
+                                #     "(c)" / "(p)") – a mark on each line, a click on the row "Copyright (c)" highlights its line
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →

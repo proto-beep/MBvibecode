@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.8
+// @version      3.40.11
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.11
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.11
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.11';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -370,8 +370,11 @@
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
+      "group.addRoleBtn": "＋ Another role for {name}",
+      "group.addRoleShort": "＋ role",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
+      "match.linkedShort": "✓ link",
       "match.manual": "set manually",
       "match.created": "newly created",
       "match.change": "change",
@@ -809,6 +812,11 @@
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
       "settings.entries": "Entries",
+      "settings.emSide": "Compact entries",
+      "settings.emSide.beside": "notes beside the lines",
+      "settings.emSide.besideTitle": "The relationships to stage, the notes and “＋ Another role” in a column beside the lines of a compact entry (default).",
+      "settings.emSide.lines": "in the lines",
+      "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
       "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
@@ -1215,6 +1223,8 @@
       "matrix.langAdd": "add a language …",
       "matrix.empty": "No writing credits yet. They appear here once Discogs is loaded, or add them with “Add entry manually” and a work-level role such as composer.",
       "group.workNote": "The writing credits of this entry are in the works matrix.",
+      "group.workNoteShort": "Writing credits: in the works matrix",
+      "group.worksGoto": "✎ works ↓",
       "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
       "settings.mxSkipRows": "Show the rows skipped with the works matrix with their entries",
       "group.mxHidden.one": "{n} row skipped with the works matrix is not shown (setting)",
@@ -2063,6 +2073,7 @@
       "em.fold": "Fold this block",
       "em.unfold": "Show this block",
       "em.count": "{n} relationships to stage",
+      "em.countShort": "{n} to stage",
       "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
       "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
@@ -2293,6 +2304,7 @@
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
       "log.poolsOpened": "Suggestions in the date matrix wait for “Apply”: “Dates & tracks” is open for this import",
+      "log.poolsFolded": "“Dates & tracks” folded after “Apply”",
       "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
       "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
       "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
@@ -2307,6 +2319,8 @@
       "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
       "dm.auto": "apply automatically",
       "dm.autoTitle": "When on, every change in the matrix goes onto the rows at once; when off (default), only with “Apply”.",
+      "dm.fold": "Fold bar after Apply",
+      "dm.foldTitle": "When on (default), “Dates & tracks” folds after “Apply” – with “apply automatically” once the pointer or the focus leaves the bar after a change.",
       "dm.autoCell": "Found automatically – not applied yet. Click the date to check, change or confirm it.",
       "dm.editTitle": "Change this date in the matrix: column, track groups, studios",
       "dm.removeTitle": "Take this date out of this column",
@@ -2424,7 +2438,7 @@
       "trackpool.allMedia": "all media (one group each, {n})",
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
-      "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
+      "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically” and “Fold bar after Apply”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
       "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
       "reset.keepStats": "keep statistics",
@@ -2434,6 +2448,8 @@
       "log.dmApplied": "Matrix applied: {n} rows with a date, {cells} dates, {split} rows split",
       "log.dmAuto": "{n} dates from the notes placed in the matrix as suggestions",
       "log.dmAutoSwitch": "Apply matrix automatically: {state}",
+      "log.dmFoldSwitch": "Fold bar after Apply: {state}",
+      "log.emSideSet": "Compact entries: {side}",
       "log.poolCleared": "Date pool cleared ({n} dates)",
       "log.trackPoolCleared": "Track pool cleared ({n} groups)",
       "log.settingsReset": "Settings reset (own rules: {rules}, pools: {pools})",
@@ -10292,6 +10308,9 @@
   };
   // "Apply automatically" below the matrix (off: rows change only with "Apply")
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
+  // [Z-PF] (3.40.9) "Fold bar after Apply" next to it (default on: stored false when off)
+  const DM_FOLD_KEY = 'dci-dm-fold';
+  S.dmFold = readJson('localStorage', DM_FOLD_KEY, true) !== false;
   // Dates & tracks open or folded; null until switched once: open when there are dates
   S.poolsOpen = readJson('localStorage', 'dci-pools-open', null);
   // [3.30.3] the date pool and the track pool fold on their own (item 93): { dates: true } while folded
@@ -18776,7 +18795,10 @@
     if (a.status === 'linked' || a.status === 'manual' || a.status === 'created') {
       const path = entityPath(a.company || a.other ? a.entityType : 'artist');
       // [3.39.1] (review) "found via Bandcamp link" for an entry of a Bandcamp supplement too
-      return `<span class="dci-badge dci-badge-ok">${esc(a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) }))}</span>
+      // [Z-KH] (3.40.11) compact "in the lines" (Q-bg): "✓ link", the whole text as its tooltip
+      const okText = a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) });
+      const short = a.status === 'linked' && !a.viaAlias && S.emSide === 'lines' && mxCompact(a) && !mxEntry(a);
+      return `<span class="dci-badge dci-badge-ok"${short ? ` title="${esc(okText)}"` : ''}>${esc(short ? tr('match.linkedShort') : okText)}</span>
         ${a.company || a.other ? `<span class="dci-sub">${esc(tr(`entity.${a.entityType}`))}</span>` : ''}
         <a class="dci-mblink" href="/${esc(path)}/${esc(a.mbid)}" target="_blank" rel="noopener" title="${esc(tr('link.mbTitle'))}"><span class="dci-src dci-src-mb">MB</span>${esc(a.mbName)}</a>
         ${a.mbComment ? `<span class="dci-disamb">(${esc(a.mbComment)})</span>` : ''}
@@ -19853,25 +19875,51 @@
    * line per role with its events. A chip opens the entry's full matrix (▸ in the head too), ✕ takes it out of the event, dragged
    * onto another event's line it moves there (⇧ Shift: it stays in both).
    */
-  function entryCompactHtml(a, all) {
+  /** [E4] (3.35.0) "by event | by role" of a compact entry; [Z-KH] (3.40.10) at the right of the entry's head. */
+  function emBySegHtml(a) {
+    const by = S.emBy.get(a.key) || S.emByDefault;
+    return `<span class="dci-seg dci-seg-small dci-em-by" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
+      data-act="em-by" data-by="${v}" aria-pressed="${by === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`;
+  }
+
+  /**
+   * [Z-KH] (3.40.10) Beside the lines of a compact entry (collected item Z-KH, mockup C; Q-bi): the relationships to stage, the
+   * notes of the entry (writing credits in the works matrix, rows skipped there) and "＋ Another role for …" as a button – in the
+   * column the lines leave free, instead of three lines below them.
+   */
+  function emSideHtml(a, notes) {
+    return `<div class="dci-em-side"><span class="dci-sub" data-emcount="${esc(a.key)}"></span>${notes}
+      <button type="button" class="dci-addrole-btn" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button></div>`;
+  }
+
+  /** [Z-KH] (3.40.11) "in the lines" (B): the count and "＋ role" at the end of the entry's last line. */
+  const emTailHtml = (a) => `<span class="dci-em-tail"><span class="dci-sub" data-emcount="${esc(a.key)}" data-emshort="1"></span>
+    <button type="button" class="dci-addrole-btn dci-addrole-short" data-act="add-role" title="${esc(tr('group.addRole', { name: a.name }))}" aria-label="${esc(tr('group.addRole', { name: a.name }))}">${esc(tr('group.addRoleShort'))}</button></span>`;
+
+  function entryCompactHtml(a, all, notes = '', inLines = false) {
     const rows = all.filter((r) => r.level !== 'work');
     const works = all.filter((r) => r.level === 'work');
     const m = entryModel(a, rows);
     const by = S.emBy.get(a.key) || S.emByDefault;
-    const seg = `<span class="dci-seg dci-seg-small dci-em-by" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
-      data-act="em-by" data-by="${v}" aria-pressed="${by === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`;
     let body;
+    // [Z-KH] (3.40.11) "in the lines": the count and "＋ role" at the end of the last line (of the events, not of "Taken out")
+    const withTail = (lines) => {
+      if (!inLines) return lines.join('');
+      if (!lines.length) return `<div class="dci-em-cl">${emTailHtml(a)}</div>`;
+      // (review) a function: a name with "$" ("Joey Bada$$") stays as it is
+      return [...lines.slice(0, -1), lines[lines.length - 1].replace(/<\/div>\s*$/, () => `${emTailHtml(a)}</div>`)].join('');
+    };
     if (by === 'role') {
-      body = m.lines.map((l) => {
+      body = withTail(m.lines.map((l) => {
         const evs = m.events.filter((e) => l.ev.has(e.key));
         // [177] (3.38.10) the chip names the relationship as MusicBrainz does: "→ type" only without one
         return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null, a)}
           ${ltOf(l.rows[0]) ? '' : `<span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}
           ${evs.map((e) => `<span class="dci-em-evchip">${evShortHtml(e)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
           <span class="dci-status" data-emrows="${l.rows.map((x) => x.id).join(',')}"></span></div>`;
-      }).join('');
+      }));
     } else {
-      body = m.events.map((e) => {
+      body = withTail(m.events.map((e) => {
         const ls = m.lines.filter((l) => l.ev.has(e.key));
         const k = `${a.key}|e:${e.key}`;
         const max = Math.max(1, S.emShow);
@@ -19883,13 +19931,15 @@
           ${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
           : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
-      }).join('');
+      }));
       const out = m.lines.filter((l) => !l.ev.size);
       if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null, a)).join('')}</div>`;
     }
-    return `<div class="dci-em dci-em-compact" data-em="${esc(a.key)}"><div class="dci-em-chead">${seg}</div>${body}
-      ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
-      <div class="dci-em-foot"><span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
+    const worksRows = works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : '';
+    if (inLines) return `<div class="dci-em dci-em-compact dci-em-inlines" data-em="${esc(a.key)}">${body}${worksRows}${notes}</div>`;
+    return `<div class="dci-em-cwrap"><div class="dci-em dci-em-compact" data-em="${esc(a.key)}">${body}
+      ${worksRows}</div>
+      ${emSideHtml(a, notes)}</div>`;
   }
 
   /** [E4] (3.35.0) A chip dragged onto another event's line: its rows there (moved; ⇧ Shift: in both). */
@@ -20101,7 +20151,7 @@
     });
     S.overlay.querySelectorAll('[data-emcount]').forEach((el) => {
       const n = items.filter((it) => it.artist && it.artist.key === el.dataset.emcount && it.kind === 'credit').length;
-      el.textContent = n ? tr('em.count', { n }) : '';
+      el.textContent = n ? tr(el.dataset.emshort ? 'em.countShort' : 'em.count', { n }) : '';
     });
   }
 
@@ -20130,6 +20180,14 @@
     const hidden = rows.length && rows.every((r) => r.aboutHidden || r.notesHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again); [3.39.1] the tag in the
     // colours of its source, the tooltip names it (collected item 185)
+    // [Z-KH] (3.40.10) a compact entry: "by event | by role" in its head, its notes and "＋ Another role" beside its lines
+    const compact = !mxEntry(a) && mxCompact(a);
+    // [Z-KH] (3.40.11) "in the lines" (B): "✎ works ↓" in the head, the count and "＋ role" at the end of the last line
+    const inLines = compact && S.emSide === 'lines';
+    const workNote = allRows.some((r) => r.level === 'work' && !isPublishingRow(r));
+    const worksLink = inLines && workNote ? `<button type="button" class="dci-textbtn dci-works-goto" data-act="works-goto" title="${esc(tr('group.workNote'))}">${esc(tr('group.worksGoto'))}</button>` : '';
+    const notes = `${workNote && !inLines ? (compact ? `<p class="dci-sub dci-work-note" title="${esc(tr('group.workNote'))}">${esc(tr('group.workNoteShort'))}</p>`
+      : `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>`) : ''}${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}`;
     const aSrc = entrySource(a);
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
@@ -20141,20 +20199,20 @@
         <div class="dci-ghead">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
+          ${worksLink}${compact ? `<div class="dci-ghead-r">${emBySegHtml(a)}</div>` : ''}
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
         ${a.company ? `<div class="dci-variants dci-variants-co" data-variants="${a.key}">${creditAllHtml(a)}</div>` : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
-        ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
+        ${mxEntry(a) ? entryMatrixHtml(a, rows) : compact ? entryCompactHtml(a, rows, notes, inLines) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
         </div>`}
-        ${allRows.some((r) => r.level === 'work' && !isPublishingRow(r)) ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
-        ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
-        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
+        ${compact ? '' : `${notes}
+        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>`}
       </section>`;
   }
 
@@ -21584,8 +21642,50 @@
     const m = dm();
     m.dirty = true;
     saveMatrix();
-    if (S.dmAuto) applyMatrix();
-    else renderDates();
+    if (S.dmAuto) {
+      // [Z-PF] (3.40.9) applied at once: the bar folds once the pointer or the focus leaves it (not after each change);
+      // (3.40.11, review) only for a change made in the bar (not from ⚙ Settings or the source menu)
+      const bar = S.overlay && S.overlay.querySelector('[data-el="dates"]');
+      const inBar = !!bar && (bar.matches(':hover') || bar.contains(document.activeElement));
+      applyMatrix();
+      if (S.dmFold && inBar) S.dmFoldWait = true;
+    } else renderDates();
+  }
+
+  /**
+   * [Z-PF] (3.40.9) "Fold bar after Apply" (collected item Z-PF; Q-bl, Q-bn): "Dates & tracks" folds as with "▲ fold" – after a click
+   * on "Apply" (focus: true, the focus onto "▼ show"), with "apply automatically" once the pointer or the focus has left the bar after
+   * a change (watchPoolsLeave). Not while a form of the pools is open (a new date, a track group, "clear"), (3.40.11, review) nor
+   * while cells of the matrix wait for a choice or one is being edited.
+   */
+  function foldPoolsAfterApply(focus = false) {
+    S.dmFoldWait = false;
+    if (!S.dmFold || !poolsOpen() || S.poolForm || S.trackForm || S.poolClear) return;
+    // (3.40.11, review) nor while cells of the matrix wait for a choice (single days or a period) or one is being edited
+    if (S.dmEdit || dm().cells.some((c) => c.alt)) return;
+    S.poolsOpen = false;
+    S.poolsForce = null;
+    writeJson('localStorage', 'dci-pools-open', false);
+    log('info', 'poolsFolded');
+    renderDates();
+    const again = focus && S.overlay && S.overlay.querySelector('.dci-pools-fold');
+    if (again) again.focus({ preventScroll: true });
+  }
+
+  /**
+   * [Z-PF] (3.40.9) The bar left (pointer or focus) after a change applied at once: it folds. The focus may have gone with the
+   * field (the bar is drawn anew after each change): then the next field focused outside the bar counts.
+   */
+  function watchPoolsLeave(el, overlay) {
+    // (3.40.11, review) only while "apply automatically" is on and everything is applied (no change waiting for "Apply")
+    const left = () => {
+      if (!S.dmFoldWait) return;
+      if (S.dmAuto && !dm().dirty) foldPoolsAfterApply();
+      else S.dmFoldWait = false;
+    };
+    el.addEventListener('mouseleave', left);
+    el.addEventListener('focusout', (e) => { if (e.relatedTarget && !el.contains(e.relatedTarget)) left(); });
+    overlay.addEventListener('focusin', (e) => { if (!el.contains(e.target)) left(); });
   }
 
   /** Messages of the matrix replace the ones of its previous run. */
@@ -22185,6 +22285,7 @@
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
         <label class="dci-check" title="${esc(tr('dm.autoTitle'))}"><input type="checkbox" data-f="dm-auto" ${S.dmAuto ? 'checked' : ''}> ${esc(tr('dm.auto'))}</label>
+        <label class="dci-check" title="${esc(tr('dm.foldTitle'))}"><input type="checkbox" data-f="dm-fold" ${S.dmFold ? 'checked' : ''}> ${esc(tr('dm.fold'))}</label>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${m.cells.some((c) => c.alt) ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: m.cells.filter((c) => c.alt).length }))}</span>` : ''}
       </div></div>`;
@@ -27281,7 +27382,8 @@
     return { refs, positions: [], role: rows.length === 1 ? rows[0].raw : '', artistId: 0, artistName: '' };
   }
 
-  const sourceElOf = (target) => (target && target.closest ? target.closest('tr.dci-row, tr[data-work], .dci-ghead') : null);
+  // (3.40.11, review) not the toggle "by event | by role" nor "✎ works ↓" in the head of a compact entry
+  const sourceElOf = (target) => (target && target.closest && !target.closest('.dci-ghead-r, .dci-works-goto') ? target.closest('tr.dci-row, tr[data-work], .dci-ghead') : null);
 
   function onFocusSource(e) {
     const el = sourceElOf(e.target);
@@ -28323,6 +28425,33 @@
         // [E4] (3.34.29) the entries as a matrix or as before
         if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
         break;
+      case 'em-side': {
+        // [Z-KH] (3.40.11) the notes of compact entries beside their lines or in them
+        const side = btn.dataset.side === 'lines' ? 'lines' : 'beside';
+        if (side === S.emSide) break;
+        S.emSide = side;
+        writeJson('localStorage', EM_SIDE_KEY, side === 'lines' ? 'lines' : null);
+        log('info', 'emSideSet', { side: tr(`settings.emSide.${side}`) });
+        renderGroups();
+        renderSettings();
+        refresh();
+        break;
+      }
+      case 'works-goto': {
+        // [Z-KH] (3.40.11) "✎ works ↓" of a compact entry: the works matrix in view, lit up briefly (as "To the date matrix")
+        // (review) a folded works matrix unfolds first
+        if (S.worksFolded) {
+          S.worksFolded = false;
+          renderWorks();
+        }
+        const w = S.overlay && S.overlay.querySelector('[data-el=works]');
+        if (w && !w.hidden) {
+          w.scrollIntoView({ block: 'start' });
+          w.classList.add('dci-flash');
+          setTimeout(() => w.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
       // [E4] (3.34.30) the matrix of an entry: the rows of a line with all their fields, a line taken out, more lines, a block
       // folded, the instruments joined in one block or each apart
       case 'em-detail': {
@@ -28855,6 +28984,7 @@
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolsForce = null;
+        S.dmFoldWait = false; // [Z-PF] (3.40.11, review) folded or opened by hand: no folding left to do
         S.poolForm = null;
         S.trackForm = null;
         S.poolClear = null;
@@ -29029,6 +29159,8 @@
       case 'dm-apply':
         S.dmPick = null;
         applyMatrix();
+        // [Z-PF] (3.40.9) "Fold bar after Apply"
+        foldPoolsAfterApply(true);
         break;
       case 'tg-new':
         S.trackForm = { id: null, name: '', tracks: new Set(), error: '' };
@@ -29630,8 +29762,19 @@
       if (v) newTrackGroupFrom(v);
       return;
     }
+    if (f === 'dm-fold') {
+      // [Z-PF] (3.40.9)
+      S.dmFold = el.checked;
+      writeJson('localStorage', DM_FOLD_KEY, el.checked ? null : false);
+      if (!el.checked) S.dmFoldWait = false;
+      log('info', 'dmFoldSwitch', { state: tr(el.checked ? 'common.on' : 'common.off') });
+      // switched in ⚙ Settings: the box below the matrix follows
+      if (!el.closest('[data-el="dates"]')) renderDates();
+      return;
+    }
     if (f === 'dm-auto') {
       S.dmAuto = el.checked;
+      if (!el.checked) S.dmFoldWait = false; // [Z-PF] (3.40.11, review)
       writeJson('localStorage', 'dci-dm-auto', el.checked);
       log('info', 'dmAutoSwitch', { state: tr(el.checked ? 'common.on' : 'common.off') });
       if (el.checked && dm().dirty) applyMatrix();
@@ -30508,6 +30651,8 @@
     // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
     const stick = overlay.querySelector('[data-el="stick"]');
+    // [Z-PF] (3.40.9) "Fold bar after Apply" with "apply automatically": when the bar is left
+    watchPoolsLeave(overlay.querySelector('[data-el="dates"]'), overlay);
     // [3.34.3] the content of the settings follows its tab when the dashboard or the settings change in size (collected item 127)
     let paneFrame = 0;
     const panesLater = () => {
@@ -30703,6 +30848,8 @@
   // [E4] (3.34.29) the entries as a matrix (default) or as before, a row per role ("legacy"); the instruments and voices
   // of an entry joined in one relationship per recording and event (default on; off: stored false)
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
+  // [Z-KH] (3.40.11) compact entries: the notes beside the lines (default) or in them ("lines": stored)
+  const EM_SIDE_KEY = 'dci-em-side';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
   const WORK_GROUPS_KEY = 'dci-work-groups';
@@ -30728,14 +30875,14 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
-    dates: ['dci-dm-auto', 'dci-pools-keep', WORK_GROUPS_KEY],
+    dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
@@ -30759,6 +30906,7 @@
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
+  S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -31442,6 +31590,9 @@
         // [E4] (3.34.29) the entries as a matrix (default) or as before
         row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
           data-act="entries-view" data-view="${v}" aria-pressed="${S.entriesView === v}" title="${esc(tr(`settings.entries.${v}Title`))}">${esc(tr(`settings.entries.${v}`))}</button>`).join('')}</span>`),
+        // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
+        row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
+          data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
@@ -31512,6 +31663,8 @@
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
+        // [Z-PF] (3.40.9)
+        row(check('data-f="dm-fold"', S.dmFold, tr('dm.fold'), tr('dm.foldTitle'))),
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
         // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
         row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
@@ -31962,6 +32115,12 @@
       renderCompactHint();
       // [E4] (3.34.29) the entries as a matrix again
       if (S.entriesView !== 'matrix') setEntriesView('matrix');
+      // [Z-KH] (3.40.11) the notes of compact entries beside their lines again
+      if (S.emSide !== 'beside') {
+        S.emSide = 'beside';
+        renderGroups();
+        refresh();
+      }
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -31990,7 +32149,7 @@
       renderGroups();
       refresh();
     } else if (t === 'dates') {
-      Object.assign(S, { dmAuto: false, poolsKeep: true, workGroupsOn: true });
+      Object.assign(S, { dmAuto: false, dmFold: true, dmFoldWait: false, poolsKeep: true, workGroupsOn: true });
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
@@ -32016,7 +32175,7 @@
 
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
-    'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
+    'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
@@ -32031,7 +32190,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -32052,12 +32211,12 @@
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
-      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
+      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
-      workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false,
+      workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
     });
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
@@ -33819,6 +33978,22 @@
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over > td { background: none; box-shadow: inset 0 2px 0 var(--purple); }
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
+      .dci-ghead-r { margin-left: auto; align-self: center; }
+      .dci-em-cwrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 calc(var(--u, 1px) * 16); }
+      .dci-em-cwrap > .dci-em-compact { flex: 1 1 calc(var(--u, 1px) * 420); min-width: 0; }
+      .dci-em-side { flex: 0 0 calc(var(--u, 1px) * 230); display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 3);
+        padding: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 6); }
+      .dci-em-side .dci-work-note { margin: 0; }
+      .dci-addrole-btn { margin-top: calc(var(--u, 1px) * 2); padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #9d97c9; border-radius: 3px; background: #fff;
+        color: var(--purple-d); font-size: calc(var(--u, 1px) * 12); line-height: 1.6; text-align: left; }
+      .dci-addrole-btn:hover, .dci-addrole-btn:focus-visible { background: var(--date-bg); border-color: var(--purple); }
+      /* [Z-KH] (3.40.11) "in the lines": the count and "＋ role" at the end of the last line, "✎ works ↓" in the head */
+      .dci-em-tail { margin-left: auto; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
+      .dci-em-cl:has(.dci-em-tail) .dci-status { margin-left: 0; }
+      .dci-em-tail .dci-addrole-btn { margin-top: 0; }
+      .dci-em-inlines .dci-work-note { margin: 0; }
+      .dci-works-goto { color: var(--muted); font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
