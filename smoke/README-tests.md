@@ -527,7 +527,9 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
                                 #   statsmore2: 3.41.14 (Z-STS … Z-STC): the new cards from four records (one v 1) – suites, attributes, works,
                                 #     genres, decisions, live, gaps, worked together, "Counted from 3.41.14 on"; a real record v 2 with x and a
-                                #   editnote: 3.41.9 (Z-EN): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple | None (tooltips list
+                                #   conngroups: 3.42.0 (Z-CONS): ⓘ Connections in groups (Sources, Websites, Tools & scripts, Resources, managers, Links)
+                                #   statsdelete: 3.42.0 (Z-DS): "Delete statistics …" in ⚙ Cache with the number; none in the statistics
+                                #   editnote: 3.41.9 (Z-EN), 3.42.0 (Z-EN2: no None, a stored "none" is Simple): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple (tooltips list
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
