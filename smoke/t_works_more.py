@@ -1154,7 +1154,8 @@ def case_suiteask():
         return d
 
     H.discogs_release = rel
-    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].map(x => [x.className,
+    # ((3.41.11) the line "＋ Suite …" below the questions is not one of them)
+    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].filter(x => x.dataset.suite).map(x => [x.className,
       x.querySelector('strong') ? x.querySelector('strong').textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.textContent.trim()),
       (x.querySelector('[data-f=suite-name]') || {}).value || null, getComputedStyle(x).backgroundColor]); })()"""
     PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
@@ -1371,6 +1372,60 @@ def case_medley():
         d0 = pg.evaluate(ROWS)
         print('D)', d0)
         results.append(d0 == [['', '', ['Split into 2 works (medley)']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiteadd():
+    """Credits Importer 3.41.11 (collected item Z-SUM; Q-ck, Q-cq): a suite the source does not show, added by hand.
+    The release of the harness (no headings, no index track, no " / "): no suite asked.
+    A) "＋ Suite …" below the questions (none here); clicked: the yellow box "Parts of a suite: tracks [1.1 …] to [1.4 …] name: [ ]
+       ✓ Yes · Cancel"; ✓ Yes without a name: "Please type the name of the suite." (nothing added).
+    B) Tracks 1.2 – 1.4, "Trisect", ✓ Yes: as a suite found in the source – "tracks 2–4: parts of the suite “Trisect” – 3 works" with
+       "＋ Create the suite in MusicBrainz …"; the parts "Trisect: …" (a track each); the log says it was added by hand.
+    C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
+    (Until 3.41.10 a suite could only come from the source.)"""
+    H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    BOX = """(() => { const b = document.querySelector('[data-el=suites]'); return b ? [...b.children].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim(),
+      [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select')].map(s => [...s.options].map(o => o.textContent))[0] || null]) : null; })()"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim())"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] [data-act=suite-add-open]')", 60)
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(BOX)
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(300)
+        a1 = pg.evaluate(BOX)
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
+        a2 = pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null")
+        print('A)', a0, '\n  ', a1, '| ohne Namen:', a2)
+        results.append(a0 == [['dci-sub dci-mx-suite-add', '＋ Suite …', ['suite-add-open'], None]] and a1 and 'dci-mx-suite' in a1[0][0]
+                       and a1[0][1].startswith('Parts of a suite: tracks') and a1[0][2] == ['suite-add-yes', 'suite-add-cancel'] and len(a1[0][3]) == 4
+                       and a1[0][3][0].startswith('1.1 ') and a2 == 'Please type the name of the suite.' and pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length") == 0)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=1)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
+        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisect')
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(500)
+        b0 = [pg.evaluate(BOX), [pg.evaluate(PARTS, i) for i in range(4)], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “Trisect”' in x]]
+        print('B)', b0)
+        results.append(b0[0] and b0[0][0][1].startswith('tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …')
+                       and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
+                       and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        c0 = [pg.evaluate(BOX), pg.evaluate(PARTS, 1)]
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
+        c1 = pg.evaluate(BOX)
+        print('C)', c0, '|', c1)
+        results.append(c0[0] == a0 and c0[1] and not c0[1][0].startswith('Trisect') and c1 == a0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

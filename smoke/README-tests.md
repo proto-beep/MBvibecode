@@ -349,6 +349,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     MB's form (name, type 6, the writer of all tracks), then from the work of MB
                                 #   medley: 3.41.3: "Alpha / Beta" – ✕ No, the offer "Split into 2 works (medley)"; split: Beta found in MB; staged with
                                 #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
+                                #   suiteadd: 3.41.11 (Z-SUM): "＋ Suite …" – the yellow box (tracks from – to, name), without a name an error,
+                                #     "Trisect" for tracks 2–4 accepted as a found suite (parts, create button, log); ↺ undo: gone; Cancel
                                 #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
