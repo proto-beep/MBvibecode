@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.5
+// @version      3.41.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1146,6 +1146,19 @@
       "suite.partTitle": "A part of the suite “{name}”: a work of its own",
       "suite.partPick": "Link “{title}”",
       "suite.partPickTitle": "MusicBrainz has a work of this title by the track's writers – a click links it instead of a new work",
+      "suite.createBtn": "Create the suite in MusicBrainz …",
+      "suite.createBtnTitle": "Opens MusicBrainz's form for a new work in the dashboard, prefilled with the name, the type “Suite” and the writers credited for all of its tracks. Its “parts” are staged only once it exists: MusicBrainz does not create a new work that is linked by “parts” only.",
+      "suite.wait": "Its “parts” wait until the suite exists in MusicBrainz – the parts can be staged with their recordings already.",
+      "suite.pickTitle": "MusicBrainz has a work of this name by the writers of all its tracks – a click takes it as the suite instead of creating a new one",
+      "suite.inMb": "Suite in MusicBrainz: {name}",
+      "suite.createTitle": "Create suite: {name}",
+      "suite.createNoWriters": "No writer is credited for all of its tracks in the dashboard. You can add them in the form.",
+      "suite.createAfter": "After you submit, the parts of tracks {tracks} are linked with the suite by “parts” (staged with the next staging, not submitted).",
+      "suite.created": "Suite “{name}” has been created. Its “parts” (tracks {tracks}) are staged with the next staging.",
+      "log.suiteFound": "Suite “{name}” found in MusicBrainz – offered instead of creating it",
+      "log.suiteForm": "Form for the suite “{name}” opened",
+      "log.suiteCreated": "Suite created: {name} ({mbid})",
+      "log.suitePicked": "Suite “{name}” of MusicBrainz taken",
       "log.partPicked": "Track {track}: “{title}” of MusicBrainz linked as its part",
       "medley.split": "Split into {n} works (medley)",
       "medley.splitTitle": "Each part a work of its own, linked as a medley in the order of the title: {list}",
@@ -9797,6 +9810,9 @@
     if (partsLt && !S.worksSkip) {
       const mv = allowedRoots(partsLt).filter((r) => !r.hasChildren && !r.attr.free_text && norm(r.attr.name) === 'movement').map((r) => ({ type: r.attr }));
       for (const sw of S.suiteWorks.values()) {
+        // [Z-SUW] (3.41.6) only once the suite is a work of MusicBrainz (created in its form, or one found): the relationship editor
+        // does not create a new work that is linked by "parts" only ("unknown Work id")
+        if (isPending(sw.gid)) continue;
         // its parts: those planned, and the one work in MusicBrainz of a track of the suite that has it (it is a part too)
         const parts = [...(sw.tracks || [])].sort((a, b) => a - b).flatMap((i) => {
           const ps = (S.workParts.get(i) || []).filter((p) => p.suite === sw.key);
@@ -18518,7 +18534,7 @@
         }
         try {
           const partEntity = isPending(it.partGid) ? pendingWorkEntity(it.partGid) : await fetchJsEntity(it.partGid);
-          const suiteEntity = isPending(it.suiteGid) ? pendingWorkEntity(it.suiteGid) : await fetchJsEntity(it.suiteGid);
+          const suiteEntity = await fetchJsEntity(it.suiteGid); // [Z-SUW] (3.41.6) always a work of MusicBrainz by now
           const st = dispatchAddRelationship(partEntity, suiteEntity, it.lt.id, it.attrs, '', null, true, it.linkOrder);
           if (st) {
             S.staged.set(it.key, { state: st, source: partEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true });
@@ -26852,15 +26868,12 @@
   function pendingWorkEntity(ref) {
     // [Z-SU] (3.41.1) by the work's key: "pending:4" (the work of track 4), "pending:4.2" (its second part)
     const m = /^pending:(\d+)((?:\.\d+)*)$/.exec(String(ref));
-    // [Z-SU] (3.41.2) a suite ("pending:s1"): the type "Suite", no lyrics language
-    const suite = /^pending:s\d+$/.test(String(ref)) ? [...S.suiteWorks.values()].find((w) => w.gid === String(ref)) : null;
     const i = m ? Number(m[1]) : Number(ref);
-    const plan = suite || (m && m[2] ? planOf(i, String(ref)) : S.workPlan.get(i));
+    const plan = m && m[2] ? planOf(i, String(ref)) : S.workPlan.get(i);
     if (plan.entity) return plan.entity;
     const re = getMB().relationshipEditor;
-    // (the parts of a suite: no type of their own – Q-bv)
-    const suiteType = (S.workOptions.types || []).find((t) => norm(t.name) === 'suite');
-    const opts = suite ? { typeId: suiteType ? suiteType.id : '', languageIds: [] } : plan.part != null ? { ...rowOpts(i), typeId: '' } : rowOpts(i);
+    // (the parts of a suite: no type of their own – Q-bv; [Z-SUW] (3.41.6) the suite itself is created in MusicBrainz's form first)
+    const opts = plan.part != null ? { ...rowOpts(i), typeId: '' } : rowOpts(i);
     const known = (getMB().linkedEntities || {}).language || {};
     const language = (id) => known[id] || {
       entityType: 'language', id: Number(id), name: (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || '',
@@ -26965,8 +26978,90 @@
     S.suiteSeq += 1;
     S.suiteWorks.set(o.key, { gid: `pending:s${S.suiteSeq}`, title: nm, key: o.key, tracks: [...o.tracks], origin: 'pending', flags: new Set(), suite: true });
     log('info', 'suiteYes', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }), n });
-    // [Z-SU] (3.41.3) the parts looked up in MusicBrainz
+    // [Z-SU] (3.41.3) the parts looked up in MusicBrainz; [Z-SUW] (3.41.6) the suite too
     o.tracks.forEach((i) => { if (S.workParts.has(i)) searchParts(i); });
+    searchSuite(S.suiteWorks.get(o.key));
+  }
+
+  /** [Z-SUW] (3.41.6) The writers credited for every track of a suite (composer, lyricist …): the writers of the suite. */
+  function suiteWriters(sw) {
+    const lists = (sw.tracks || []).map((i) => writersForTrack(i).filter((w) => WRITER_TYPES.includes(norm(w.typeName))));
+    if (!lists.length) return [];
+    return lists[0].filter((w) => lists.every((l) => l.some((x) => x.mbid === w.mbid && x.linkTypeId === w.linkTypeId)));
+  }
+
+  /**
+   * [Z-SUW] (3.41.6) The suite looked up in MusicBrainz among the works of its writers: one work of exactly its name is offered
+   * ("Link “Trisect”") instead of creating it (as for its parts, not taken by itself).
+   */
+  async function searchSuite(sw) {
+    const writers = sw ? suiteWriters(sw).map((w) => w.mbid) : [];
+    if (!writers.length) return;
+    let hits = [];
+    try {
+      hits = await searchWorks(sw.title, writers);
+    } catch {
+      return; // (not answered: created in the form, as without a hit)
+    }
+    const same = hits.filter((w) => norm(w.title) === norm(sw.title) || (w.aliases || []).some((x) => norm(x) === norm(sw.title)));
+    if (same.length !== 1 || S.suiteWorks.get(sw.key) !== sw || !isPending(sw.gid)) return;
+    sw.offer = { gid: same[0].gid, title: same[0].title };
+    log('info', 'suiteFound', { name: sw.title });
+    renderWorksBackground();
+    refresh();
+  }
+
+  /**
+   * [Z-SUW] (3.41.6) "＋ Create the suite in MusicBrainz …" (user report: the relationship editor does not create a new work linked by
+   * "parts" only – "unknown Work id"): MusicBrainz's form in the dashboard, prefilled with the name, the type "Suite" and its
+   * writers; once it is created, its "parts" are planned (the parts themselves can be staged before).
+   */
+  function startSuiteCreate(sw) {
+    const suiteType = (S.workOptions.types || []).find((t) => norm(t.name) === 'suite');
+    const writers = suiteWriters(sw);
+    const sourceUrl = noteSourceUrl();
+    const params = buildWorkSeed({
+      title: sw.title,
+      typeId: suiteType ? suiteType.id : 6, // (6: "Suite" in MusicBrainz)
+      languageIds: [],
+      writers,
+      editNote: [
+        sourceUrl ? `Source: ${sourceUrl}` : '',
+        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`,
+      ].filter(Boolean).join('\n'),
+    });
+    const tracks = tracksShort({ level: 'recording', tracks: new Set(sw.tracks) });
+    const prefilled = [tr('part.title', { title: sw.title }), tr('part.workType', { name: suiteType ? suiteType.name : 'Suite' })];
+    writers.forEach((w) => prefilled.push(`${w.typeName}: ${w.name}`));
+    const info = [
+      `<p>${esc(tr('workDlg.prefilled', { list: prefilled.join(', ') }))}</p>`,
+      writers.length ? '' : `<p class="dci-muted">${esc(tr('suite.createNoWriters'))}</p>`,
+      `<p>${esc(tr('suite.createAfter', { tracks }))}</p>`,
+    ].join('');
+    log('info', 'suiteForm', { name: sw.title });
+    openCreateDialog({
+      title: tr('suite.createTitle', { name: sw.title }),
+      url: `/work/create?${toQuery(params)}`,
+      entityType: 'work',
+      infoHtml: info,
+      onCreated: async (mbid) => {
+        let title = sw.title;
+        try {
+          const w = await mbWs(`work/${mbid}`);
+          if (w && w.title) title = w.title;
+        } catch (e) {
+          console.warn('[Discogs-Credits]', e);
+        }
+        if (S.suiteWorks.get(sw.key) !== sw) return; // (taken back meanwhile)
+        Object.assign(sw, { gid: mbid, title, origin: 'created' });
+        delete sw.offer;
+        showMessage('ok', 'suite.created', { name: title, tracks });
+        log('ok', 'suiteCreated', { name: title, mbid });
+        renderWorks();
+        refresh();
+      },
+      onCancel: () => log('info', 'formCancelled'),
+    });
   }
 
   /** [Z-SU] (3.41.1) "↺": the parts of the suite go (a work planned before for a track comes back); asked again. */
@@ -27056,7 +27151,15 @@
     const from = tr(`suite.from.${o.from}`);
     if (a && a.yes) {
       const n = o.tracks.reduce((k, i) => k + (S.workParts.get(i) || []).filter((p) => p.suite === o.key).length, 0);
+      // [Z-SUW] (3.41.6) the suite created in MusicBrainz first (or the one found there linked); its "parts" wait until then
+      const sw = S.suiteWorks.get(o.key);
+      const suite = !sw ? '' : isPending(sw.gid)
+        ? `<button type="button" class="dci-primary dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createBtn'))}</button>
+          ${sw.offer ? `<button type="button" class="dci-small" data-act="suite-pick" title="${esc(tr('suite.pickTitle'))}">${esc(tr('suite.partPick', { title: sw.offer.title }))}</button>` : ''}
+          <span class="dci-suite-wait">${esc(tr('suite.wait'))}</span>`
+        : `<a class="dci-suite-mb" href="/work/${esc(sw.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: sw.title }))}</a>`;
       return `<p class="dci-sub dci-mx-suite-done" data-suite="${esc(o.key)}">${esc(tr('suite.done', { tracks, name: a.name, n }))}
+        ${suite}
         <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.undoTitle'))}">↺ ${esc(tr('suite.undo'))}</button></p>`;
     }
     if (a && !a.yes) {
@@ -29155,11 +29258,24 @@
       case 'suite-yes':
       case 'suite-yes-name':
       case 'suite-no':
+      case 'suite-create':
+      case 'suite-pick':
       case 'suite-undo': {
         const box = btn.closest('[data-suite]');
         const o = box && suiteAsks().find((x) => x.key === box.dataset.suite);
         if (!o) break;
-        if (act === 'suite-undo') undoSuite(o);
+        // [Z-SUW] (3.41.6) the suite created in MusicBrainz's form, or the one found there taken
+        const sw = S.suiteWorks.get(o.key);
+        if (act === 'suite-create') {
+          if (sw && isPending(sw.gid)) startSuiteCreate(sw);
+          break;
+        }
+        if (act === 'suite-pick') {
+          if (!sw || !sw.offer || !isPending(sw.gid)) break;
+          Object.assign(sw, { gid: sw.offer.gid, title: sw.offer.title, origin: 'search' });
+          delete sw.offer;
+          log('info', 'suitePicked', { name: sw.title });
+        } else if (act === 'suite-undo') undoSuite(o);
         else if (act === 'suite-no') {
           S.suiteAnswers.set(o.key, { yes: false });
           log('info', 'suiteNo', { name: o.name });

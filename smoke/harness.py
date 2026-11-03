@@ -389,13 +389,17 @@ WORK_RELS_DIRECT_ONLY = False
 WORK_LOOKUPS = []
 
 
+# [3.41.6] the titles of other works of MusicBrainz a test knows (gid → title; a work created in its form, say)
+WORK_TITLES = {}
+
+
 def ws_work(gid):
     WORK_LOOKUPS.append(gid)
     rels = list(MB_EXTRA.get(gid, []))
     if gid == WORK1:
         rels = [{'target-type': 'artist', 'type': 'composer', 'type-id': LTS[168]['gid'], 'attributes': [],
                  'artist': {'id': ARTISTS[3007][0], 'name': 'Writer W'}}] + rels
-    return {'id': gid, 'title': TITLES[0] if gid == WORK1 else 'x', 'relations': rels}
+    return {'id': gid, 'title': TITLES[0] if gid == WORK1 else WORK_TITLES.get(gid, 'x'), 'relations': rels}
 
 
 # MB search answers beyond ARTISTS / COMPANIES for a test: kind → [{'id', 'name', 'disambiguation', 'aliases'}]
