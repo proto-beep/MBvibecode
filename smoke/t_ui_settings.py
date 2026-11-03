@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -926,14 +926,15 @@ def js_release_of(added):
 def case_stats():
     """Credits Importer 3.38.0 (E8, milestone "Statistics").
     A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet. [189] (3.39.3) the statistics' own
-       button next to ⚙, no tab "Statistics" any more.
+       button next to ⚙, no tab "Statistics" any more. [Z-SC] (3.40.14) "Collect statistics" in ⚙ Settings → Cache, the statistics
+       say it is on.
     B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
        relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
        the first import).
     C) The tab: 1 release, n relationships, 100 % new, the release had relationships before or was empty, the times; over months
        (this month), over days (today); the most frequent artists, instruments, types.
     D) "Reset all settings" with "keep statistics" (ticked): kept; unticked: deleted.
-    E) Switched off: "Enter edit" makes no job.
+    E) Switched off (from 3.40.14 in ⚙ Settings → Cache): "Enter edit" makes no job.
     F) The release page MusicBrainz shows after "Enter edit": a job waiting there is counted – a relationship not in MusicBrainz is
        left out, and so is one MusicBrainz had before ("n0": no more of its kind than before); the time until the page began to load.
        F2) A job with nothing to look up there (a supplement): counted at once on the release page shown right after "Enter edit"."""
@@ -953,7 +954,8 @@ def case_stats():
         tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
         H.open_stats(pg)
         pg.wait_for_timeout(400)
-        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-set=stats-on]') || {}).checked]")
+        # [Z-SC] (3.40.14) "Collect statistics" in ⚙ Settings → Cache
+        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {textContent: ''}).textContent.startsWith('Statistics are being collected')]")
         print('A) Reiter:', tabs, '| leer, an:', a)
         results.append(tabs[-2:] == ['cache', 'connections'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
@@ -1011,9 +1013,9 @@ def case_stats():
         print('D) behalten angehakt:', keep, '| danach:', d1, '| ohne Haken:', d2)
         results.append(keep and d1 == 1 and d2 == 0)
         # E) off: no job
-        H.open_stats(pg)
+        H.open_settings(pg, 'cache')
         pg.wait_for_timeout(300)
-        pg.uncheck('[data-set=stats-on]')
+        pg.uncheck('[data-el=settings] [data-set=stats-on]')
         pg.wait_for_timeout(200)
         off = pg.evaluate("localStorage.getItem('dci-stats-on')")
         pg.evaluate("document.getElementById('test-enter-edit').click()")
@@ -1071,8 +1073,8 @@ def case_statsbutton():
     """Credits Importer 3.39.3 (collected item 189): the statistics with their own button in the head.
     A) The button (a bar chart, "Statistics") right after ⚙ Settings, not pressed; no tab "Statistics" in ⚙ Settings any more – a tab
        "statistics" remembered from before shows "General".
-    B) A click: the statistics below the head (their heading, "Collect statistics" – no switch of the developer mode there), the button
-       pressed (tinted).
+    B) A click: the statistics below the head (their heading, "Collect statistics" – no switch of the developer mode there; [Z-SC]
+       (3.40.14) no switch at all: "Collect statistics" in ⚙ Settings → Cache), the button pressed (tinted).
     C) ⚙ Settings opened: the statistics close; the statistics opened again: ⚙ closes. The mapping rules in the dashboard opened: the
        statistics close; the statistics opened: the rules close.
     D) The heading folds them in, the focus on the button.
@@ -1114,7 +1116,7 @@ def case_statsbutton():
         print('B) offen:', b1)
         # (3.40.6, Z-ST) "this browser only" in the head of the statistics (Q-au)
         results.append(b1['stats'] and not b1['settings'] and b1['pressed'] == 'true' and b1['bg'] == TINT and b1['heading'] == 'Statistics'
-                       and b1['switches'] == ['stats-on'] and b1['local'] == 'this browser only' and b1['localTitle'].startswith('These statistics are kept only in this browser'))
+                       and b1['switches'] == [] and b1['local'] == 'this browser only' and b1['localTitle'].startswith('These statistics are kept only in this browser'))
         pg.click('.dci-head [data-act=settings-open]')
         pg.wait_for_timeout(300)
         c1 = pg.evaluate(STATE)
@@ -1140,6 +1142,61 @@ def case_statsbutton():
         focus = pg.evaluate("document.activeElement && document.activeElement.dataset.act")
         print('D) gefaltet:', d1['stats'], d1['pressed'], '| Fokus:', focus)
         results.append(not d1['stats'] and d1['pressed'] == 'false' and focus == 'stats-open')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statswhere():
+    """Credits Importer 3.40.14 (collected item Z-SC): "Collect statistics" in ⚙ Settings → Cache (until 3.40.13 at the top of the
+    statistics).
+    A) The statistics: no switch; at their top a grey line "Statistics are being collected – switched on and off in ⚙ Settings →
+       Cache"; ⚙ Settings → Cache has the box, ticked.
+    B) "⚙ Settings → Cache" in that line clicked: the statistics closed, ⚙ Settings open at Cache (remembered), the focus on the box.
+    C) Unticked there (stored false, the log says so); the statistics opened again: "Collecting statistics is off – nothing new is
+       counted. …".
+    D) ↺ of the topic Cache: ticked again (nothing stored)."""
+    WHERE = "(x => x ? [x.className, x.textContent.replace(/\\s+/g, ' ').trim()] : null)(document.querySelector('[data-el=stats] [data-el=stats-where]'))"
+    BOX = "(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-set=stats-on]'))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
+        a0 = [pg.evaluate(WHERE), pg.evaluate("document.querySelectorAll('[data-el=stats] [data-set]').length"),
+              pg.evaluate("getComputedStyle(document.querySelector('[data-el=stats-where]')).color")]
+        print('A)', a0)
+        results.append(a0[0] is not None and 'dci-sub' in a0[0][0] and a0[0][1] == 'Statistics are being collected – switched on and off in ⚙ Settings → Cache'
+                       and a0[1] == 0)
+        pg.click('[data-el=stats] [data-act=stats-where]')
+        pg.wait_for_timeout(400)
+        b0 = [pg.evaluate("!document.querySelector('[data-el=stats]').hidden"), pg.evaluate("!document.querySelector('[data-el=settings]').hidden"),
+              pg.evaluate("(document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]') || {dataset: {}}).dataset.topic"),
+              pg.evaluate("localStorage.getItem('dci-settings-tab')"), pg.evaluate("document.activeElement && document.activeElement.dataset.set"), pg.evaluate(BOX)]
+        print('B)', b0)
+        results.append(b0 == [False, True, 'cache', '"cache"', 'stats-on', True])
+        pg.uncheck('[data-el=settings] [data-set=stats-on]')
+        pg.wait_for_timeout(300)
+        c0 = [pg.evaluate("localStorage.getItem('dci-stats-on')"), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Collect statistics' in x][-1:]]
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(WHERE)
+        print('C)', c0, c1)
+        results.append(c0[0] == 'false' and c0[1] == ['Setting “Collect statistics”: off'] and c1 is not None
+                       and c1[1] == 'Collecting statistics is off – nothing new is counted. Switched on and off in ⚙ Settings → Cache')
+        H.open_settings(pg, 'cache')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=cache]')
+        pg.wait_for_timeout(400)
+        d0 = [pg.evaluate("localStorage.getItem('dci-stats-on')"), pg.evaluate(BOX)]
+        print('D)', d0)
+        results.append(d0 == [None, True])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

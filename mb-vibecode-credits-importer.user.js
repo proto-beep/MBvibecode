@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.13
+// @version      3.40.14
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.13
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.13
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.14
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.14
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.13';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.14';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -831,6 +831,7 @@
       "settings.t.sources": "Sources",
       "settings.t.discogs": "Source pages",
       "settingsOnly.hint": "Only the settings are open – the import of this release has not started.",
+      "statsOnly.hint": "Only the statistics are open – the import of this release has not started.",
       "settingsOnly.start": "Start import",
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
@@ -1581,6 +1582,9 @@
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
       "stats.on": "Collect statistics",
       "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
+      "stats.whereOn": "Statistics are being collected – switched on and off in",
+      "stats.whereOff": "Collecting statistics is off – nothing new is counted. Switched on and off in",
+      "stats.whereBtn": "⚙ Settings → Cache",
       "stats.loading": "Reading the statistics …",
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
       "stats.title": "Statistics",
@@ -14831,8 +14835,11 @@
    * 147a).
    */
   function syncLogBtn() {
-    if (!S.overlay) return;
     const on = !!(S.logEl && !S.logEl.hidden);
+    // [Z-LS] (3.40.14) and the one next to "Import credits …"
+    const bar = document.getElementById('dci-log-open');
+    if (bar) bar.setAttribute('aria-pressed', String(on));
+    if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-head [data-act="log"]').forEach((b) => b.setAttribute('aria-pressed', String(on)));
   }
 
@@ -29291,6 +29298,7 @@
         }
         renderSettings();
         if (S.settingsOpen) $('settings').scrollIntoView({ block: 'nearest' });
+        if (S.settingsOpen) onlyHint('settings');
         break;
       case 'settings-topic': {
         // [3.25.0] a tab: its topic (remembered)
@@ -29314,12 +29322,17 @@
         if (S.statsOpen && rulesDocked() && rulesShown()) closeRules();
         renderStats();
         if (S.statsOpen) $('stats').scrollIntoView({ block: 'nearest' });
+        if (S.statsOpen) onlyHint('stats');
         break;
       case 'stats-fold':
         // [189] (3.39.3) the heading folds the statistics in, as the one of ⚙ Settings does
         S.statsOpen = false;
         renderStats();
         S.overlay.querySelector('.dci-head [data-act="stats-open"]').focus();
+        break;
+      case 'stats-where':
+        // [Z-SC] (3.40.14) to "Collect statistics" in ⚙ Settings → Cache
+        openSettingsAt('cache', '[data-set="stats-on"]');
         break;
       case 'keys-open':
         // [3.36.3] the keyboard shortcuts below the head
@@ -30904,10 +30917,11 @@
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
-    // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
-    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
-    // [E8] (3.38.0) the switch and the period (the statistics stay: "Delete statistics …")
-    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY],
+    // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
+    // collecting the statistics
+    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY],
+    // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
+    statistics: [STATS_PERIOD_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -31261,9 +31275,10 @@
   function statsHtml() {
     const row = (html) => `<div class="dci-set-row">${html}</div>`;
     const on = statsOn();
+    // [Z-SC] (3.40.14) "Collect statistics" is in ⚙ Settings → Cache: here a grey line that says so and leads there
     const head = [
+      `<p class="dci-sub dci-stats-where" data-el="stats-where">${esc(tr(on ? 'stats.whereOn' : 'stats.whereOff'))} <button type="button" class="dci-textbtn" data-act="stats-where">${esc(tr('stats.whereBtn'))}</button></p>`,
       `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
-      row(`<label class="dci-check" title="${esc(tr('stats.onTitle'))}"><input type="checkbox" data-set="stats-on" ${on ? 'checked' : ''}> ${esc(tr('stats.on'))}</label>`),
     ];
     if (S.statsData == null) {
       statsLoad();
@@ -31711,6 +31726,8 @@
             value="${S.rememberMax}"></label> <span class="dci-sub">${esc(tr('settings.rememberMaxHint'))}</span>`),
           row(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
+          // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
+          row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
         ];
       },
     };
@@ -32173,7 +32190,7 @@
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
-      // [E8] (3.38.0) collecting on, months – the statistics stay
+      // [E8] (3.38.0) months – the statistics stay
       S.statsPeriod = 'month';
     } else if (t === 'cache') {
       // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
@@ -32317,7 +32334,9 @@
       return;
     }
     if (settingsOnly) {
-      if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      // [Z-LS] (3.40.14) opened for the statistics: says so
+      const key = opts.only === 'stats' ? 'statsOnly.hint' : 'settingsOnly.hint';
+      if (!S.messages.some((m) => m.key === 'settingsOnly.hint' || m.key === 'statsOnly.hint')) showMessage('info', key, {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
       return;
     }
     await initOnce();
@@ -32576,7 +32595,13 @@
       ocrBtn.innerHTML = `${esc(tr('launcher.ocr'))}<span class="dci-beta-tag">beta</span>`;
       ocrBtn.title = tr('launcher.ocrTitle');
     }
-    bar.querySelector('#dci-log-open').textContent = tr('log.title');
+    // [Z-LS] (3.40.14) symbols: the words as tooltip and label
+    [['#dci-log-open', 'log.title', 'log.title'], ['#dci-stats-open', 'stats.title', 'stats.buttonTitle'], ['#dci-set-open', 'settings.title', 'settings.buttonTitle']].forEach(([sel, label, title]) => {
+      const b = bar.querySelector(sel);
+      b.setAttribute('aria-label', tr(label));
+      b.title = tr(title);
+    });
+    syncLogBtn();
     bar.querySelector('#dci-launch-status').textContent = S.launchStatus ? tr(S.launchStatus.key, S.launchStatus.params) : '';
     renderNotice();
     renderLangAsk();
@@ -32591,6 +32616,69 @@
     }
   }
 
+  /**
+   * [Z-SC] (3.40.14) ⚙ Settings open at a topic (remembered as a click on its tab), the statistics and the rules in the dashboard
+   * closed; `focusSel` focused in it (else its tab).
+   */
+  function openSettingsAt(topic, focusSel = '') {
+    S.settingsOpen = true;
+    S.resetOpen = false;
+    if (topic && SETTING_TOPICS.includes(topic)) {
+      S.settingsTab = topic;
+      writeJson('localStorage', SETTINGS_TAB_KEY, topic === 'general' ? null : topic);
+    }
+    if (S.statsOpen) {
+      S.statsOpen = false;
+      renderStats();
+    }
+    if (rulesDocked() && rulesShown()) closeRules();
+    renderSettings();
+    const el = S.overlay && $('settings');
+    if (!el) return;
+    const target = (focusSel && el.querySelector(focusSel)) || el.querySelector(`.dci-set-tab[data-topic="${S.settingsTab}"]`);
+    if (target) target.focus({ preventScroll: true });
+    el.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** [Z-LS] (3.40.14) Before the import: the message names what is open – the statistics or the settings. */
+  function onlyHint(what) {
+    if (S.initialized || S.importStarting) return;
+    const m = S.messages.find((x) => x.key === 'settingsOnly.hint' || x.key === 'statsOnly.hint');
+    const key = what === 'stats' ? 'statsOnly.hint' : 'settingsOnly.hint';
+    if (m && m.key !== key) {
+      m.key = key;
+      renderMessages();
+    }
+  }
+
+  /**
+   * [Z-LS] (3.40.14) "Statistics" and "⚙" next to "Import credits …" (collected item Z-LS; Q-bz): the dashboard without the import
+   * (as ⚙ of the navigation), the statistics or the settings open in it.
+   */
+  async function openFromBar(what) {
+    if (!S.overlay || S.overlay.hidden) await openDashboard({ settingsOnly: true, only: what });
+    onlyHint(what);
+    if (what === 'settings') {
+      openSettingsAt(SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general');
+      return;
+    }
+    S.statsOpen = true;
+    S.statsData = null;
+    if (S.settingsOpen || S.resetOpen) {
+      S.settingsOpen = false;
+      S.resetOpen = false;
+      renderSettings();
+    }
+    if (rulesDocked() && rulesShown()) closeRules();
+    renderStats();
+    const el = $('stats');
+    if (el) {
+      el.scrollIntoView({ block: 'nearest' });
+      const head = el.querySelector('[data-act="stats-fold"]');
+      if (head) head.focus({ preventScroll: true });
+    }
+  }
+
   function insertLauncher() {
     if (document.getElementById('dci-launcher')) return;
     const controls = document.createElement('div');
@@ -32602,7 +32690,7 @@
     bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
-      <button type="button" id="dci-log-open" class="dci-textbtn"></button>
+      <span class="dci-launch-tools">${'' /* [Z-LS] (3.40.14) symbols in the order of the dashboard's head: Log | Statistics · ⚙ */}<button type="button" id="dci-log-open" class="dci-launch-ico" aria-pressed="false">${ico('log')}</button><span class="dci-launch-sep" aria-hidden="true"></span><button type="button" id="dci-stats-open" class="dci-launch-ico">${ico('stats')}</button><button type="button" id="dci-set-open" class="dci-launch-ico">${ico('gear')}</button></span>
       <span id="dci-launch-status" aria-live="polite"></span>`;
     const anchor = document.querySelector('div.tabs');
     // The main button first, the navigation below it; together in one block with room below it,
@@ -32615,6 +32703,8 @@
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
+    bar.querySelector('#dci-stats-open').addEventListener('click', () => openFromBar('stats'));
+    bar.querySelector('#dci-set-open').addEventListener('click', () => openFromBar('settings'));
     renderLauncher();
     renderControls();
     // Ask the companion (if installed) for its status, so the bar shows it before the dashboard is opened.
@@ -32823,6 +32913,13 @@
       #dci-launcher .dci-place-seg button { border: 0; background: #fff; color: #262430; cursor: pointer; font: inherit; padding: 2px 8px; }
       #dci-launcher .dci-place-seg button + button { border-left: 1px solid #c8c5d6; }
       #dci-launcher .dci-place-seg button[aria-pressed="true"] { background: #3d3a4f; color: #fff; }
+      /* [Z-LS] (3.40.14) Log | Statistics · ⚙ as symbols */
+      #dci-launcher .dci-launch-tools { display: inline-flex; align-items: center; gap: 4px; }
+      #dci-launcher .dci-launch-ico { display: inline-flex; align-items: center; justify-content: center; padding: 3px 6px; border: 1px solid #c8c5d6; border-radius: 3px;
+        background: #fff; color: #4b4585; cursor: pointer; }
+      #dci-launcher .dci-launch-ico:hover { background: #f1f0f8; }
+      #dci-launcher .dci-launch-ico[aria-pressed="true"] { background: #ecebf6; border-color: #736dab; }
+      #dci-launcher .dci-launch-sep { width: 1px; height: 16px; margin: 0 4px; background: #c8c5d6; }
       #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
       /* [3.28.0] only the status, as a badge, and ⚙ (item 66) */

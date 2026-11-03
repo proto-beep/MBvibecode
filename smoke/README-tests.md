@@ -446,6 +446,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     suggestion, gone once the suggestion is chosen; 3.40.8 (review): the clipboard refuses – through a
                                 #     selected text ✓; refused too: ⚠, tooltip and label
                                 #   headnarrow: 3.40.8 (review, Z-HB): one line at 1500 and 600 px; at 400 px two lines, ✕ inside the dashboard
+                                #   launchtools: 3.40.14 (Z-LS): Log | Statistics · ⚙ as symbols next to "Import credits …" (no companion);
+                                #     Log pressed while shown; Statistics and ⚙ open the dashboard without the import (its message names what
+                                #     is open, one only); "Start import"
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -487,7 +490,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     /ws/js/release: counted once (log, job gone, one record in IndexedDB dci-stats with the time); the tiles, months
                                 #     and days, the top lists; "Reset all" keeps them with "keep statistics", unticked deletes; off: no job; the
                                 #     release page counts a waiting job (a relationship not in MusicBrainz left out, and one it had before – n0);
-                                #     F2: a job with nothing to look up counts at once on the release page
+                                #     F2: a job with nothing to look up counts at once on the release page; 3.40.14: switched off in ⚙ → Cache
                                 #   statsmore: 3.38.1: three stored submissions → the boxes: sources, how found, dates and places, levels and
                                 #     works, the releases, when (7 + 24 bars, days in a row, records), instruments, text from cover art, own rules
                                 #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
@@ -495,7 +498,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
                                 #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
                                 #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
-                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip
+                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip;
+                                #     3.40.14: no switch in the statistics
+                                #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
+                                #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
