@@ -1311,7 +1311,8 @@ def case_oldfile():
     """Credits Importer 3.39.2 (review of block AU): a mapping file of an older version – without the lists T058 (INSTRUMENT_ASK)
     and T059 (TEXT_REGIONS), as when the script is installed before its file – with changes of your own to lists (also to T058 and
     T059): the script loads (the lists empty), "Ambisonic recordings by RR 2022-2025 Pacific coast" reads the field recordist and
-    names "Pacific coast" as not recognized (no region); a change to T059 brings the region back. In Node, with the files copied."""
+    names "Pacific coast" as not recognized (no region); a change to T059 brings the region back. (3.40.5) A file whose T059 is a list
+    of words (3.40.4): the region read. In Node, with the files copied."""
     import shutil
     import subprocess
     import tempfile
@@ -1343,6 +1344,13 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
         rb = json.loads(b.stdout) if b.returncode == 0 else {}
         print('B) T059 selbst ergänzt:', b.returncode, b.stdout.strip()[:300], b.stderr.strip()[-300:])
         results.append(rb.get('companies') == [['Pacific Coast', 'Recorded In']] and not rb.get('unrec'))
+        # (3.40.5, Z-RG) a mapping file of 3.40.4 – T059 a list of words: the region read as before
+        mp['TEXT_REGIONS'] = ['Pacific Coast', 'West Coast']
+        json.dump(mp, open(os.path.join(d, 'mb-vibecode-credits-importer-mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
+        c = run({'rules': {}, 'lists': {}})
+        rc = json.loads(c.stdout) if c.returncode == 0 else {}
+        print('C) T059 als Wortliste (3.40.4):', c.returncode, c.stdout.strip()[:300], c.stderr.strip()[-300:])
+        results.append(rc.get('companies') == [['Pacific Coast', 'Recorded In']] and not rc.get('unrec'))
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

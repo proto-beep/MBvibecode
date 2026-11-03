@@ -14,6 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
+| 2026-11-03 | 3.40.4 – 3.40.8 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -96,6 +97,42 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-03
+
+### Import 3.40.8
+
+#### Fixed
+
+- **The scroll bar no longer covers the last line of a table** (collected item Z-SB): with scroll bars drawn over the content (macOS, Windows 11) the bar of a matrix wider than the dashboard lay over its last line – "written “Recorded By”" below the role field. Such a table now has room for the bar below its last line, as long as it scrolls sideways; the rows of an entry and the date matrix too. Classic scroll bars take room of their own – nothing changes there.
+- **Regions (T059, from 3.40.5)** after a check of the block: the area chosen for a region is credited as the region also with S036 off and whatever the source wrote; another area chosen later – that credit goes; the explanation of the suggestion is its tooltip (it no longer shows as the area's disambiguation once chosen). ✎ T059 takes a region alone ("Gulf Coast" or "Gulf Coast =", its own hint), and a file of your changes or a whole register of 3.40.4 (T059 as words) is read again – a built-in region keeps its area.
+- **⧉ (from 3.40.7):** the text of the entry's head stays its name; when the browser refuses its clipboard, the name is copied another way, and ⚠ says so if that fails too.
+- **The head (from 3.40.6)** in a very narrow dashboard: the symbols take a second line instead of pushing ✕ out of it; the thin lines between the groups take less room.
+
+### Import 3.40.7
+
+#### New
+
+- **⧉ copies the name of an entry without a MusicBrainz entry** (collected item Z-CP): right of the name of every entry not yet assigned – also when it has suggestions only, also companies and places – to search for it in MusicBrainz or to create it there. A click puts the name of the entry at the source into the clipboard (at Discogs its artist name, not the spelling of the release, without its number) and shows ✓ for a moment; once an entry is chosen, ⧉ goes.
+
+### Import 3.40.6
+
+#### Changed
+
+- **The symbols of the dashboard's head in groups** (collected item Z-HB): the view (☰, A− A+, ⤢) | Mapping rules, Log | Statistics, ⌨, ⚙ Settings | ✕, a thin line between the groups.
+- **The statistics say "this browser only"** (Z-ST): in their head, with a tooltip – another browser or computer keeps statistics of its own.
+
+### Import 3.40.5
+
+#### Changed
+
+- **Pacific Coast, West Coast, East Coast suggest the United States** (collected item Z-RG): the area MusicBrainz has for the region (list T059, now with the area of each region, ✎) is offered first – only offered, the coast of another country can be meant –, credited as the region once chosen.
+
+### Import 3.40.4
+
+#### Fixed
+
+- **"Looking up MB artist …" no longer stays** (collected item Z-LU): two entries with the same link – a person and the "© Year" of the same name on the artist's own Bandcamp page (Robert Rich, "Cloud Pond Sky River") – are both looked up; until now the person stayed waiting and its rows had no type.
 
 ## 2026-11-02
 

@@ -1,6 +1,6 @@
 """Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
+Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1), cloudpondbc (3.40.4) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1013,5 +1013,109 @@ def case_bcspell():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_cloudpondbc():
+    """Credits Importer 3.40.4 (collected item Z-LU): Robert Rich's "Cloud Pond Sky River" from his own Bandcamp page (its credits
+    as on the page): two entries "Robert Rich" with the same link – the person (RR, "With …") and "©2026 Robert Rich" (Copyright (c),
+    as an artist): both found through the link (until 3.40.3 the second took the place of the first, which stayed "Looking up MB
+    artist …"); no entry left waiting.
+    B) (3.40.5, collected item Z-RG) "Pacific coast" (T059): the area Pacific Coast, MusicBrainz's area United States its first
+       suggestion ("the area the region “Pacific Coast” lies in (T059) …"), not set by itself; chosen: the row credited "Pacific Coast"
+       (as in the list). (3.40.8, review) The explanation is the tooltip of the suggestion, not its disambiguation (chosen: no
+       disambiguation in the head).
+    C) (3.40.8, review) Another area chosen by hand (✎, its MBID) – "Pacific Coast" (Nicaragua): the credit of the region goes.
+    D) (3.40.8, review) S036 off (no credits from the source): the United States chosen – credited "Pacific Coast" all the same
+       (T059); the other area chosen – the credit goes (until 3.40.7 it stayed)."""
+    BAND = 'https://robertrich.bandcamp.com'
+    ALBUM = f'{BAND}/album/cloud-pond-sky-river'
+    RR = H.uid('dddddddd', 777)
+    H.ARTISTS[777] = (RR, 'Robert Rich')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[777]
+    H.RELEASE_AC[:] = [(RR, 'Robert Rich', 'Robert Rich', '')]
+    H.TITLES[:] = ['Cloud Pond Sky River'] + H.TITLES[1:]
+    US = H.uid('eeeeeeee', 840)
+    # areas MusicBrainz knows (also by their MBID: ✎)
+    NI = H.uid('eeeeeeee', 558)
+    H.COMPANIES[9840] = ('area', US, 'United States')
+    H.COMPANIES[9558] = ('area', NI, 'Pacific Coast')
+    tracks = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/t{i + 1}', 'duration': 3600.0} for i, t in enumerate(H.TITLES)]
+    credits = ('released October 30, 2026\n©2026 Robert Rich\nRecorded Mixed and Mastered by RR at Soundscape, Carmel CA\n'
+               'With Apple Logic, Sequential PX, flutes, lap steel, bells and objects\nAmbisonic recordings by RR 2022-2025 Pacific coast\n'
+               'Cover © Maksimillian Novak-Zemplinski, detail used with permission.')
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Robert Rich', 'current': {'title': 'Cloud Pond Sky River', 'credits': credits, 'about': ''}, 'trackinfo': tracks}, ALBUM)
+    for t in tracks:
+        H.BC_PAGES[f'{BAND}{t["title_link"]}'] = H.bc_html({'artist': 'Robert Rich', 'current': {'title': t['title'], 'credits': ''}}, f'{BAND}{t["title_link"]}')
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['relations'] = [r for r in d['relations'] if not (r.get('url') and 'discogs.com' in r['url']['resource'])]
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+    H.ws_release = ws
+    ENTRIES = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      (g.className.match(/dci-st-(\\w+)/) || [])[1], (g.querySelector('.dci-badge') || {}).textContent || ''])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        e = pg.evaluate(ENTRIES)
+        rr = [x for x in e if x[0] == 'Robert Rich']
+        logs = [x for x in pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))") if x.startswith('Robert Rich: found via Bandcamp link')]
+        print('A) Einträge:', e, '\n   Protokoll:', logs)
+        results.append(len(rr) == 2 and all(x[1] == 'linked' for x in rr) and not [x for x in e if x[1] == 'pending'] and len(logs) == 2)
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Pacific Coast'))"
+        G = "[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Pacific Coast')"
+        sugg = pg.evaluate(f"[...({G}).querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => [b.dataset.mbid, b.closest('.dci-suggitem').textContent.replace(/\\s+/g, ' ').trim(), b.title])")
+        st0 = pg.evaluate(f"(({G}).className.match(/dci-st-(\\w+)/) || [])[1]")
+        pg.locator(f'{sec} .dci-suggbtn[data-act=name-use][data-mbid="{US}"]').first.click()
+        pg.wait_for_timeout(800)
+        st1 = pg.evaluate(f"(({G}).className.match(/dci-st-(\\w+)/) || [])[1]")
+        # the credit of its rows: the chip in the head of the entry ("as “…”")
+        ac = pg.evaluate(f"(c => c && !c.hidden ? c.textContent.trim() : '')(({G}).querySelector('.dci-gcredit'))")
+        disamb = pg.evaluate(f"(d => d ? d.textContent : '')(({G}).querySelector('.dci-ghead .dci-disamb'))")
+        rlog = [x for x in pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))") if 'region' in x]
+        print('B) Pacific Coast:', st0, sugg[:2], '→', st1, '| credited as:', ac, '| Begriffsklärung:', repr(disamb), '| Protokoll:', rlog)
+        results.append(bool(sugg) and sugg[0][0] == US and 'the area the region “Pacific Coast” lies in (T059)' in sugg[0][2] and 'lies in' not in sugg[0][1]
+                       and sugg[0][1].startswith('United States – area region (T059)') and st0 == 'missing' and disamb == ''
+                       and st1 in ('linked', 'manual', 'chosen') and ac.startswith('as “Pacific Coast”') and rlog == ['Pacific Coast: a region – United States suggested (T059)'])
+        CHIP = f"(c => c && !c.hidden ? c.textContent.trim() : '')(({G}).querySelector('.dci-gcredit'))"
+
+        def choose(page, mbid, by_hand=False):
+            if by_hand:
+                page.locator(f'{sec} [data-act=artist-edit]').first.click()
+                page.wait_for_timeout(200)
+                page.locator(f'{sec} [data-f=artist-input]').fill(mbid)
+                page.locator(f'{sec} [data-act=artist-set]').first.click()
+            else:
+                page.locator(f'{sec} .dci-suggbtn[data-act=name-use][data-mbid="{mbid}"]').first.click()
+            page.wait_for_timeout(800)
+            return page.evaluate(CHIP), page.evaluate(f"(a => a ? a.href : '')(({G}).querySelector('.dci-mblink'))")
+        c1 = choose(pg, NI, True)
+        print('C) Nicaragua von Hand:', c1)
+        results.append(not c1[0] and c1[1].endswith(NI))
+        # D) S036 off
+        ctx2 = H.new_context(b)
+        ctx2.add_init_script("if (location.host === 'musicbrainz.org') localStorage.setItem('dci-rules-off', JSON.stringify(['S036']))")
+        pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg2.wait_for_timeout(1500)
+        d1 = choose(pg2, US)
+        d2 = choose(pg2, NI, True)
+        print('D) S036 aus – United States:', d1, '| Nicaragua von Hand:', d2)
+        results.append(d1[0].startswith('as “Pacific Coast”') and d1[1].endswith(US) and not d2[0] and d2[1].endswith(NI))
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    H.ws_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

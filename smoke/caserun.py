@@ -33,6 +33,12 @@ def _browser():
     return _STATE['browser']
 
 
+def launch_own(**kw):
+    """[3.40.8] A browser of its own for a case that needs other launch options (overlay scroll bars, say); the case closes it."""
+    _browser()
+    return _STATE['pw'].chromium.launch(**kw)
+
+
 class _BrowserProxy:
     """The shared browser as one case sees it: the contexts it opens are closed with `close()`."""
 

@@ -37,6 +37,8 @@ MBvibecode/ (this repository)
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
+                                      [3.40.8] launch_own(**kw): a browser of its own (other launch options, e.g. overlay
+                                      scroll bars); the case closes it
   smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and seven
                                       files of their own (golden tests, comparisons with older logs); each ends with
                                       "Ergebnis: OK/FEHLER"; [3.38.10] a row's role as the source wrote it is `data-raw` of
@@ -356,7 +358,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   listkeys: 3.39.6 (K-13): T001 changed with "Lap Steel2" (as an imported file writes it) is found (Node)
                                 #   toys: 3.39.7 (T058): "Toys" asks percussion · electronic instruments · other instruments “toys”; "Found Objects"
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
-                                #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
+                                #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again;
+                                #     3.40.5 (Z-RG): a file whose T059 is a list of words (3.40.4) – the region read
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -385,9 +388,13 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     mine"; an old rules file chosen and dropped onto the window; a whole register replacing my changes
                                 #   mappingconflict: 3.33.1: a stored change whose built-in value changed with an update – the log warns, "changed
                                 #     · ⚠", built-in value then and now, Keep mine / Discard; a rule no longer in the file; reset with own rules
+                                #   regionlist: 3.40.8 (review, Z-RG): T059 – a file of changes with words ("Gulf Coast" alone, "West Coast" keeps
+                                #     United States), ✎ T059 "Lake Region" and "Delta =" saved without an area, its own hint; a whole register
+                                #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
-                                #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
+                                #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
+                                #     Mapping rules, Log | Statistics, ⌨, ⚙ | ✕): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
                                 #     3.36.5: no ⓘ among the symbols
@@ -418,6 +425,11 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   blockac: 3.40.3 (Z-AK): "Credited as" in the head of a block of several roles – "several", "Lake" + Enter (the
                                 #     flutes join, the message with ↶ Undo), Undo, a line by hand keeps its own (also against the older ↶), emptied
                                 #     with Enter: MusicBrainz's name, the focus back; blocks of one role: none; compact: no field, the chips' "as …"
+                                #   copyname: 3.40.7 (Z-CP): ⧉ at the entry not linked, none at the linked; a click: the name in the clipboard,
+                                #     ✓, ⧉ again (drawn by CSS: the head's text stays the name); a pasted text: ⧉ also at a name with a
+                                #     suggestion, gone once the suggestion is chosen; 3.40.8 (review): the clipboard refuses – through a
+                                #     selected text ✓; refused too: ⚠, tooltip and label
+                                #   headnarrow: 3.40.8 (review, Z-HB): one line at 1500 and 600 px; at 400 px two lines, ✕ inside the dashboard
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -467,6 +479,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
                                 #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
                                 #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
+                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -541,6 +554,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   chipinfo: 3.38.6 (163b): ⓘ after a chip's name with its applied notes as tooltip – none while "?"; "Buddha
                                 #     Machine" (none is like it); taishōgoto chosen (chosen, a spelling of its own, written small); double bass
                                 #     none; "Directed By" – chosen: conductor
+                                #   barroom: 3.40.8 (Z-SB): overlay scroll bars (Chromium's FluentOverlayScrollbar, a browser of its own –
+                                #     caserun.launch_own): a wide dashboard no room; 700 px: 16 px below the last line, "written “Drums”" above
+                                #     the bar, only boxes that scroll (review); wide again (⤢): none; a classic bar (it takes room): no room
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
@@ -588,6 +604,11 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   bcspell: 3.39.1 (185): Robert Rich credited "RR" from Bandcamp – "(the Bandcamp spelling *)", the tooltips
                                 #     and the log name Bandcamp, no "Discogs" in the head; the tag "Bandcamp" in Bandcamp's blue (#629aa9);
                                 #     3.39.2 (187): the line "With …" from Bandcamp – the release's artist's, "objects" asked, nothing not recognized
+                                #   cloudpondbc: 3.40.4 (Z-LU): "Cloud Pond Sky River" from Robert Rich's own page – two entries "Robert Rich" with
+                                #     the same link (the person, "©2026 Robert Rich"): both found, none "Looking up MB artist …"; 3.40.5 (Z-RG):
+                                #     "Pacific coast" – United States first among the suggestions, not set; chosen: "as “Pacific Coast”";
+                                #     3.40.8 (review): the explanation the tooltip, no disambiguation once chosen; another area by hand (✎): the
+                                #     credit goes; S036 off: credited all the same, another area: it goes
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium

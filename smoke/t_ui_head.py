@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -23,8 +23,10 @@ def case_head():
     HEAD = """(() => { const h = document.querySelector('.dci-head'); const kids = [...h.children].filter(k => k.offsetParent !== null);
   const tops = kids.map(k => Math.round(k.getBoundingClientRect().top + k.getBoundingClientRect().height / 2));
   const btns = [...h.querySelectorAll('.dci-head-tools .dci-ibtn')].map(b => [b.dataset.act, !!b.querySelector('svg.dci-ico'), b.getAttribute('aria-label'), b.title]);
+  // (3.40.6) the groups: what stands between the separators
+  const groups = [...h.querySelector('.dci-head-tools').children].reduce((g, k) => { if (k.classList.contains('dci-head-sep')) g.push([]); else g[g.length - 1].push(k.dataset.act || k.className); return g; }, [[]]);
   const label = h.querySelector('.dci-hlabel');
-  return { spread: Math.max(...tops) - Math.min(...tops), btns, zoom: h.querySelector('[data-el=zoom]').textContent.trim(),
+  return { spread: Math.max(...tops) - Math.min(...tops), btns, groups, zoom: h.querySelector('[data-el=zoom]').textContent.trim(),
     lang: h.querySelectorAll('[data-f=lang]').length, place: h.querySelectorAll('[data-act=place-toggle]').length,
     switches: h.querySelectorAll('[data-sync-mode], [data-dg-status], [data-click-toggle]').length, status: !!h.querySelector('.dci-syncstatus'),
     label: getComputedStyle(label).display }; })()"""
@@ -68,9 +70,12 @@ def case_head():
         a2 = pg.evaluate(HEAD)
         print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
         # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts;
-        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'stats-open', 'rules', 'log', 'keys-open', 'window-reset', 'close']
-                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
+        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙; [Z-HB] (3.40.6) in groups:
+        # the view | the work | help and settings | ✕ (Q-ay)
+        print('   Gruppen:', a1['groups'])
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'window-reset', 'rules', 'log', 'stats-open', 'keys-open', 'settings-open', 'close']
+                       and a1['groups'] == [['view-toggle', 'dci-zoom', 'window-reset'], ['rules', 'log'], ['stats-open', 'keys-open', 'settings-open'], ['close']]
+                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][6][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
         pg.set_viewport_size({'width': 1500, 'height': 1000})
@@ -861,6 +866,110 @@ def case_blockac():
                        and focus == 'em-bac')
         results.append(e and e[0] == 0 and 'flute as “Lake”' in e[1] and 'soprano saxophone as “Ollie”' in e[1])
         print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_copyname():
+    """Credits Importer 3.40.7 (collected item Z-CP; Q-av, Q-aw): ⧉ next to the name of an entry without a MusicBrainz entry chosen.
+    A) After the import: ⧉ at every entry not linked (also companies and places), none shown at those linked; its tooltip names it.
+    B) A click: the name of the source in the clipboard (without Discogs's number), "✓" for a moment; the symbols drawn by CSS –
+       the text of the head stays the name (the other test files read it).
+    C) A pasted text: its names only suggested – ⧉ still shown (a suggestion is not a chosen entry); one suggestion chosen: its ⧉ goes.
+    D) (3.40.8, review) The browser's clipboard refuses: copied through a selected text (as "Copy" of the log) – ✓; that refused
+       too: ⚠, the tooltip and the label say so, then ⧉ again."""
+    results = []
+    STATE = """(() => [...document.querySelectorAll('section.dci-group')].map(g => { const b = g.querySelector('.dci-gname .dci-copyname');
+      return [g.querySelector('.dci-gname strong').textContent.trim(), (g.className.match(/dci-st-(\\w+)/) || [])[1], b ? !b.hidden : null, b ? b.dataset.name : '', b ? b.title : '']; }))()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin='https://musicbrainz.org')
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        a = pg.evaluate(STATE)
+        linked = [x for x in a if x[1] in ('linked', 'manual')]
+        open_ = [x for x in a if x[1] not in ('linked', 'manual')]
+        print('A) verknüpft:', [(x[0], x[2]) for x in linked], '\n   ohne:', [(x[0], x[1], x[2], x[3]) for x in open_])
+        results.append(bool(linked) and bool(open_) and all(x[2] is False for x in linked) and all(x[2] is True and x[3] == x[0].rstrip('*') for x in open_)
+                       and all(x[4].startswith(f'Copy “{x[3]}”') for x in open_))
+        name = open_[0][0]
+        sec = f"section.dci-group:has(.dci-gname strong:text-is('{name}'))"
+        pg.locator(f'{sec} .dci-gname .dci-copyname').click()
+        pg.wait_for_timeout(200)
+        clip = pg.evaluate("navigator.clipboard.readText()")
+        mark = pg.locator(f'{sec} .dci-gname .dci-copyname').evaluate("b => getComputedStyle(b, '::before').content.replace(/\"/g, '')")
+        pg.wait_for_timeout(1800)
+        back = pg.locator(f'{sec} .dci-gname .dci-copyname').evaluate("b => getComputedStyle(b, '::before').content.replace(/\"/g, '')")
+        head = pg.locator(f'{sec} .dci-gname').evaluate("g => g.textContent.replace(/\\s+/g, ' ').trim()")
+        print('B) kopiert:', name, '→', repr(clip), '| Zeichen:', mark, '→', back, '| Text des Kopfs:', repr(head))
+        results.append(clip == open_[0][3] and mark == '✓' and back == '⧉' and '⧉' not in head and '✓' not in head)
+        # C) a pasted text: names are only suggested, a suggestion is not a chosen entry; once chosen, its ⧉ goes
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Bass Man: bass\nNobody Known: guitar')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        c0 = {x[0]: x for x in pg.evaluate(STATE)}
+        bm = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').dataset.group")
+        pg.click(f'section[data-group="{bm}"] [data-act=name-use]')
+        pg.wait_for_timeout(500)
+        c1 = {x[0]: x for x in pg.evaluate(STATE)}
+        print('C) vorher:', {k: c0[k][1:3] for k in ('Bass Man', 'Nobody Known') if k in c0}, '| nach der Wahl:', {k: c1[k][1:3] for k in ('Bass Man', 'Nobody Known') if k in c1})
+        results.append('Bass Man' in c0 and c0['Bass Man'][2] is True and c0.get('Nobody Known', [0, 0, None])[2] is True
+                       and c1['Bass Man'][1] == 'manual' and c1['Bass Man'][2] is False and c1['Nobody Known'][2] is True)
+        # D) the clipboard refuses
+        nk = "section.dci-group:has(.dci-gname strong:text-is('Nobody Known')) .dci-gname .dci-copyname"
+        SYMS = "b => [getComputedStyle(b, '::before').content.replace(/\"/g, ''), b.title, b.getAttribute('aria-label')]"
+        pg.evaluate("""() => { navigator.clipboard.writeText = () => Promise.reject(new Error('no'));
+          window.__copied = []; document.execCommand = (c) => { window.__copied.push(document.activeElement && document.activeElement.value); return window.__copyOk; }; window.__copyOk = true; }""")
+        pg.locator(nk).click()
+        pg.wait_for_timeout(200)
+        d1 = pg.locator(nk).evaluate(SYMS) + [pg.evaluate('window.__copied')]
+        pg.wait_for_timeout(1700)
+        pg.evaluate('window.__copyOk = false')
+        pg.locator(nk).click()
+        pg.wait_for_timeout(200)
+        d2 = pg.locator(nk).evaluate(SYMS)
+        pg.wait_for_timeout(3200)
+        d3 = pg.locator(nk).evaluate(SYMS)
+        print('D) über markierten Text:', d1, '\n   abgelehnt:', d2, '\n   danach:', d3)
+        results.append(d1[0] == '✓' and d1[3] == ['Nobody Known'] and d1[1] == 'Copied: “Nobody Known”' and d1[2] == d1[1]
+                       and d2[0] == '⚠' and d2[1] == 'The browser did not allow copying “Nobody Known”' and d2[2] == d2[1]
+                       and d3[0] == '⧉' and d3[1].startswith('Copy “Nobody Known”') and d3[2] == d3[1])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_headnarrow():
+    """Credits Importer 3.40.8 (review of block BA, Z-HB): the symbols of the head in a narrow dashboard – one line while they fit
+    (1500 and 600 px), two lines at 400 px with ✕ inside the dashboard (until 3.40.7 it was pushed out of it)."""
+    results = []
+    HEAD = """(() => { const panel = document.querySelector('#dci-overlay .dci-panel').getBoundingClientRect();
+      const x = document.querySelector('.dci-head [data-act=close]').getBoundingClientRect();
+      const lines = new Set([...document.querySelectorAll('.dci-head-tools > button')].map(b => Math.round(b.getBoundingClientRect().top))).size;
+      return { inside: x.right <= panel.right + 0.5 && x.left >= panel.left, lines }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        out = {}
+        for w in (1500, 600, 400):
+            pg.set_viewport_size({'width': w, 'height': 900})
+            pg.wait_for_timeout(500)
+            out[w] = pg.evaluate(HEAD)
+        print('Kopf:', out, '| Fehler:', errs)
+        results.append(out[1500] == {'inside': True, 'lines': 1} and out[600] == {'inside': True, 'lines': 1} and out[400]['inside'] and out[400]['lines'] == 2)
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
