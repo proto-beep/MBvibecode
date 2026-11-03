@@ -1,6 +1,6 @@
 """The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎ at built-in rules, export and import (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, [3.34.4] wqedit, [3.34.21] wqnew, [3.33.1] mappingio, mappingconflict; `python3 t_rules_window.py <case> …` runs only those."""
+Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, [3.34.4] wqedit, [3.34.21] wqnew, [3.33.1] mappingio, mappingconflict, [3.40.8] regionlist; `python3 t_rules_window.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -915,6 +915,65 @@ def case_mappingconflict():
         dd = pg.evaluate("localStorage.getItem('dci-mapping-changes')")
         print('D) Text:', label, '| danach:', dd)
         results.append('your changes of built-in rules (1)' in label and dd is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_regionlist():
+    """Credits Importer 3.40.8 (review of block BA, Z-RG): T059 – regions with the area they lie in – also with a region alone.
+    A) A file of my changes with words for T059 (as written until 3.40.4): "Gulf Coast" (new) and "West Coast" (built in with
+       United States): not skipped; taken over – ✎ T059 shows "Gulf Coast" alone and "West Coast = United States" (the word kept
+       the area of the file).
+    B) ✎ T059: "Lake Region" and "Delta =" added – saved without an error, both without an area; the hint of the field names
+       regions and areas (not abbreviations).
+    C) A whole register of 3.40.4 (T059 its three words): T059 not skipped and no change (the words are the regions of the file)."""
+    import json
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        open_rules(pg)
+        PREV = "Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rf=preview] li')].map(li => [li.dataset.mprev, [li.className.replace('dci-mprev-', ''), li.innerText.replace(/\\s+/g, ' ').trim()]]))"
+        paste = {'format': 'mb-vibecode-credits-importer-mapping-changes', 'version': 2, 'script': '3.40.4', 'mapping': '3.40.4', 'own': [], 'off': [], 'rules': {},
+                 'lists': {'T059': {'add': ['Gulf Coast', 'West Coast'], 'remove': []}}}
+        pg.click('#dci-rules .dci-mio-paste > summary')
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(paste))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(PREV)
+        pg.click('#dci-rules [data-mimport-apply]')
+        pg.wait_for_timeout(700)
+        pg.click('#dci-rules [data-ledit-open=T059]')
+        pg.wait_for_timeout(200)
+        text = pg.input_value('#dci-rules [data-ledit-text]')
+        lines = text.split('\n')
+        print('A) Vorschau:', a0.get('T059'), '| ✎ T059:', lines)
+        results.append(a0.get('T059', [''])[0] == 'changed' and 'Gulf Coast' in lines and 'West Coast = United States' in lines and 'Pacific Coast = United States' in lines)
+        hint = pg.evaluate("document.querySelector('#dci-rules [data-ledit=T059] .dci-sub').textContent")
+        pg.fill('#dci-rules [data-ledit-text]', text + '\nLake Region\nDelta =')
+        pg.click('#dci-rules [data-ledit-save]')
+        pg.wait_for_timeout(500)
+        err = pg.evaluate("(e => e ? e.textContent : '')(document.querySelector('#dci-rules .dci-redit-err'))")
+        stored = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).lists.T059")
+        print('B) Hinweis:', hint, '| Fehler:', repr(err), '| gespeichert:', stored)
+        adds = [x if isinstance(x, list) else [x, ''] for x in (stored or {}).get('add', [])]
+        results.append(not err and ['Lake Region', ''] in adds and ['Delta', ''] in adds and 'region = the area it lies in' in hint and 'abbreviation' not in hint)
+        # C) a whole register of 3.40.4
+        reg = json.loads(H.MAPPING_TEXT)
+        reg['TEXT_REGIONS'] = [x[0] for x in reg['TEXT_REGIONS']]
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(reg))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        c0 = pg.evaluate(PREV)
+        print('C) ganzes Register 3.40.4:', c0)
+        results.append('T059' not in c0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

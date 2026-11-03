@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.7 | – |
+| 2026-11-03 | 3.40.4 – 3.40.8 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.8
+
+#### Fixed
+
+- **The scroll bar no longer covers the last line of a table** (collected item Z-SB): with scroll bars drawn over the content (macOS, Windows 11) the bar of a matrix wider than the dashboard lay over its last line – "written “Recorded By”" below the role field. Such a table now has room for the bar below its last line, as long as it scrolls sideways; the rows of an entry and the date matrix too. Classic scroll bars take room of their own – nothing changes there.
+- **Regions (T059, from 3.40.5)** after a check of the block: the area chosen for a region is credited as the region also with S036 off and whatever the source wrote; another area chosen later – that credit goes; the explanation of the suggestion is its tooltip (it no longer shows as the area's disambiguation once chosen). ✎ T059 takes a region alone ("Gulf Coast" or "Gulf Coast =", its own hint), and a file of your changes or a whole register of 3.40.4 (T059 as words) is read again – a built-in region keeps its area.
+- **⧉ (from 3.40.7):** the text of the entry's head stays its name; when the browser refuses its clipboard, the name is copied another way, and ⚠ says so if that fails too.
+- **The head (from 3.40.6)** in a very narrow dashboard: the symbols take a second line instead of pushing ✕ out of it; the thin lines between the groups take less room.
 
 ### Import 3.40.7
 
