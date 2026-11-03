@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.6
+// @version      3.42.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -7221,7 +7221,18 @@
       /** The tracks are MusicBrainz's own (a video has no track list). */
       usesMbTracks: true,
       urlKey: () => '',
-      releaseLinks: () => [],
+      /**
+       * [Z-YTL] (3.42.7; Q-da) The YouTube videos a MusicBrainz release links to (every link to a video – streaming, free streaming …):
+       * a source like Discogs and Bandcamp, the last of the order of the sources.
+       */
+      releaseLinks(relations) {
+        const links = new Map();
+        for (const r of relations || []) {
+          const id = r['target-type'] === 'url' && r.url ? videoId(r.url.resource) : '';
+          if (id && !links.has(id)) links.set(id, { id, url: videoUrl(id) });
+        }
+        return [...links.values()];
+      },
       parseReleaseId: videoId,
       videoId,
       videoUrl,
@@ -7237,7 +7248,8 @@
   })();
 
   const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE };
-  const LINKED_SOURCES = ['discogs', 'bandcamp'];
+  // [Z-YTL] (3.42.7) YouTube too: the videos the release links to
+  const LINKED_SOURCES = ['discogs', 'bandcamp', 'youtube'];
 
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
 
@@ -15747,7 +15759,8 @@
   const SOURCE_ORDER_KEY = 'dci-source-order';
   const SOURCE_PICK_KEY = 'dci-source-pick';
   /** Default preference: physical media from Discogs first, digital media from Bandcamp first. */
-  const SOURCE_ORDER_DEFAULT = { physical: ['discogs', 'bandcamp'], digital: ['bandcamp', 'discogs'] };
+  // [Z-YTL] (3.42.7; Q-da) YouTube last (an order stored before gets it at its end)
+  const SOURCE_ORDER_DEFAULT = { physical: ['discogs', 'bandcamp', 'youtube'], digital: ['bandcamp', 'discogs', 'youtube'] };
   function readSourceOrder() {
     const stored = readJson('localStorage', SOURCE_ORDER_KEY, null) || {};
     const fix = (list, def) => {
@@ -19446,7 +19459,7 @@
   }
 
   /** A linked source in words: "Discogs 1234", "Bandcamp band.bandcamp.com/album/name". */
-  const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : l.id.replace(/^https?:\/\//, '')}`;
+  const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
 
   function renderSource() {
     if (!S.overlay) return;

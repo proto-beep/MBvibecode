@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.42.6 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.42.7 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.42.7
+
+#### Added
+
+- **The YouTube videos a release links to are sources:** listed in "Source ▾" and last in "Order of the sources" – loaded by themselves only when the release links to no Discogs release and no Bandcamp album.
 
 ### Import 3.42.6
 
