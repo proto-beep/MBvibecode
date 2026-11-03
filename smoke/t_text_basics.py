@@ -1103,11 +1103,54 @@ With Apple Logic Pro"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_fieldpool():
+    """Credits Importer 3.42.2 (collected item Z-FRD; Q-df): the periods of field recordings come into the date pool – one entry a
+    line, named after its kind. Text: "Ambisonic recordings by Rob Rich 2022-2025 Pacific coast", "Hydrophone recordings by Kim Lowe
+    2019", "Ambisonic recordings by Ann Jones 2022-2025".
+    A) The date pool: "Ambisonic recordings · 2022 – 2025" twice (one a line, until 3.42.1 none – the period only at the row) and
+       "Hydrophone recordings · 2019"; each row of a field recordist has the date of its line (the pool's: it changes with it)."""
+    H.lt(698, '37ef3a0c-cac3-4172-b09a-4ca98d2857fc', 'recorded in', 'area', 'recording', ())
+    H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """Ambisonic recordings by Rob Rich 2022-2025 Pacific coast
+Hydrophone recordings by Kim Lowe 2019
+Ambisonic recordings by Ann Jones 2022-2025"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        if pg.evaluate("!!document.querySelector('.dci-pools-toggle') && document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded') !== 'true'"):
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(300)
+        chips = pg.evaluate("[...document.querySelectorAll('[data-el=pool-col-dates] .dci-pchip-date')].map(c => [c.dataset.id, c.querySelector('.dci-chip-main').childNodes[0].textContent.replace(/\\s+/g, ' ').trim()])")
+        rows = pg.evaluate("""(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+          [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '', (r.querySelector('.dci-datechip-text') || {}).textContent || '',
+            (r.querySelector('.dci-datechip') || { dataset: {} }).dataset.date || ''])])))()""")
+        print('A) Pool:', chips, '\n   Zeilen:', {k: v for k, v in rows.items() if k in ('Rob Rich', 'Kim Lowe', 'Ann Jones')})
+        names = [c[1] for c in chips]
+        results.append(names.count('Ambisonic recordings · 2022 – 2025') == 2 and 'Hydrophone recordings · 2019' in names
+                       and [rows.get(n, [['']])[0][:2] for n in ('Rob Rich', 'Kim Lowe', 'Ann Jones')] == [['field recordist', 'Ambisonic recordings · 2022 – 2025'],
+                                                                                         ['field recordist', 'Hydrophone recordings · 2019'], ['field recordist', 'Ambisonic recordings · 2022 – 2025']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_cloudpond():
     """Credits Importer 3.38.18 (collected items 182 – 184, F-182a, F-182b, F-183, F-184; rules S062 – S064, list T057): all lines of
     Robert Rich "Cloud Pond Sky River" (Bandcamp) as a pasted text, Robert Rich the release's artist.
     A) "Ambisonic recordings by RR 2022-2025 Pacific coast": Robert Rich (initials RR) field recordist, credited "RR", the period
-       2022 – 2025 at the row; "Pacific coast" (no area of MusicBrainz) named as not recognized. "Recorded by Jane Roe" stays recording
+       2022 – 2025 at the row (from 3.42.2 a date of the pool, "Ambisonic recordings"); "Pacific coast" (no area of MusicBrainz) named as not recognized. "Recorded by Jane Roe" stays recording
        engineer. 3.39.2 (collected item 188, list T059): "Pacific coast" the area Pacific Coast (recorded in), not found in MusicBrainz
        – nothing not recognized.
     B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
@@ -1145,7 +1188,7 @@ Layout by R.R."""
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim() + (g.querySelector('.dci-gname').textContent.includes('Label') ? ' (label)' : ''),
   { hint: (g.querySelector('.dci-initials') || { textContent: '' }).textContent.trim(), ac: [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value).filter(Boolean),
     rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
-    (r.querySelector('[data-f=role-credit]') || {}).value || '', [...r.querySelectorAll('[data-f$=by], [data-f$=ey]')].map(x => x.value).join('-')])}])))()"""
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', r.querySelector('.dci-datechip') ? r.querySelector('.dci-datechip').dataset.date : [...r.querySelectorAll('[data-f$=by], [data-f$=ey]')].map(x => x.value).join('-')])}])))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1172,7 +1215,8 @@ Layout by R.R."""
         rows = {r[1]: r for r in rr['rows']}
         fr = rows.get('field recordist')
         pc = g.get('Pacific Coast') or {'rows': []}
-        results.append(fr is not None and fr[3] == '2022-2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
+        # ((3.42.2, Z-FRD) the period a date of the pool: its chip at the row)
+        results.append(fr is not None and fr[3] == '2022 – 2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
                        and 'Ambisonic' not in ''.join(g) and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
         results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR, R.R. = Robert Rich (initials)' and 'RR' not in g
                        and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
