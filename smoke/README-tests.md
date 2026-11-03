@@ -292,6 +292,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
                                 #     ⚙ – open; stored only when off; 3.40.13 (Z-PF2): nothing stored by "Apply", loaded again: open; "▲ fold"
                                 #     by hand, loaded again: folded
+                                #   poolside: 3.42.1 (Z-TP): date pool and track pool side by side at 1500 px, below each other at 600 px or when
+                                #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -626,6 +628,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     role), "✓ link" and "✎ works ↓" in the head (tooltips), "✎ works ↓" brings the works matrix into view,
                                 #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
                                 #     without the tail
+                                #   evdatefields: 3.42.1 (Z-EDM): the date of an event a button; MB's fields below it (begin, end, ended, ⇣),
+                                #     Apply, a wrong month, a period pasted, ✕, no date
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

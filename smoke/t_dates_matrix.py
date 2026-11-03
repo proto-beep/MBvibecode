@@ -258,6 +258,65 @@ def case_pools():
         b.close()
 
 
+def case_poolside():
+    """Credits Importer 3.42.1 (collected item Z-TP): the track pool to the right of the date pool; one below the other only when
+    they do not fit in one line. The pools of the release: one date ("Session" 2001-03-02) and one track group ("Tracks 1–2").
+    A) 1500 px wide: the date pool and the track pool side by side (the same top, the track pool to the right; until 3.42.0 always
+       one below the other).
+    B) 600 px wide: the track pool below the date pool.
+    C) The Zooid notes (three dates, two groups) at 1500 px: too long for one line – one below the other again."""
+    import zooid
+    POS = """(() => { const r = (s) => { const e = document.querySelector(s); if (!e) return null; const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
+      return { d: r('[data-el=pool-col-dates] .dci-pool-dates'), t: r('[data-el=pool-col-tracks] .dci-tracks-bar') }; })()"""
+    results = []
+
+    def opened(pg):
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(300)
+        H.wait_for(pg, "!!document.querySelector('[data-el=pool-col-tracks] .dci-tracks-bar')", 30)
+        pg.wait_for_timeout(300)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = ''  # (no dates from the notes: only the pools below)
+        return d
+    H.discogs_release = rel
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.evaluate(f"""() => {{ localStorage.setItem('dci-date-pool:{H.REL}', JSON.stringify([{{ id: 'd1', name: 'Session', begin: {{ year: 2001, month: 3, day: 2 }}, end: {{ year: 2001, month: 3, day: 2 }}, ended: true }}]));
+          localStorage.setItem('dci-track-pool:{H.REL}', JSON.stringify([{{ id: 't1', name: 'Tracks 1–2', tracks: [0, 1] }}])); }}""")
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN) if not pg.evaluate("!!document.getElementById('dci-open')") else None
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        opened(pg)
+        a0 = pg.evaluate(POS)
+        pg.set_viewport_size({'width': 600, 'height': 1000}); pg.wait_for_timeout(600)
+        b0 = pg.evaluate(POS)
+        print('A) 1500:', a0, '| B) 600:', b0)
+        results.append(a0['d'] and a0['t'] and abs(a0['d'][1] - a0['t'][1]) <= 4 and a0['t'][0] >= a0['d'][2])
+        results.append(b0['d'] and b0['t'] and b0['t'][1] >= b0['d'][3] - 2)
+        b.close()
+        H.discogs_release = orig
+        zooid.setup(zooid.NOTES_TWO_DAYS)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        opened(pg)
+        c0 = pg.evaluate(POS)
+        print('C) Zooid 1500:', c0)
+        results.append(c0['d'] and c0['t'] and c0['t'][1] >= c0['d'][3] - 2)
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_poolsmx():
     """Credits Importer 3.30.3: the date pool and the track pool fold on their own, scroll bars of the works matrix
     (collected items 93, 94; 2026-10-25).
