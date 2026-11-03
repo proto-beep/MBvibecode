@@ -1,6 +1,6 @@
 """Dates & tracks: the date matrix, dragging dates and track groups, the pools (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8), workgroups (3.35.6) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
+Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8), workgroups (3.35.6), foldapply (3.40.9) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -784,6 +784,89 @@ def case_workgroups():
             b.close()
     finally:
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_foldapply():
+    """Credits Importer 3.40.9 (collected item Z-PF; Q-bl, Q-bn): "Fold bar after Apply" next to "apply automatically".
+    A) The box below the matrix and in ⚙ Settings → Dates and tracks, on by default.
+    B) The notes' dates wait as suggestions ("Dates & tracks" open): "Apply" – the bar folds (remembered), the focus on "▼ show",
+       the log says so.
+    C) The box off (remembered): open again, "Apply" – the bar stays open.
+    D) On, with "apply automatically": a change in the matrix is applied at once – the bar stays open while the pointer is in it;
+       the pointer leaves it: folded. Open again, a change by keyboard (Space on a box), then a field outside the bar focused: folded.
+    E) ↺ of the topic Dates and tracks: on again."""
+    H.DM_FOLD = True
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        OPEN = "document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')"
+        BOX = "(b => b ? [b.checked, b.closest('label').textContent.trim()] : null)(document.querySelector('[data-el=dm] [data-f=dm-fold]'))"
+        a0 = [pg.evaluate(OPEN), pg.evaluate(BOX), pg.evaluate("localStorage.getItem('dci-dm-fold')")]
+        H.open_settings(pg, 'dates')
+        a1 = pg.evaluate("(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-f=dm-fold]'))")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        print('A) Leiste:', a0, '| in ⚙:', a1)
+        results.append(a0[0] == 'true' and a0[1] == [True, 'Fold bar after Apply'] and a0[2] is None and a1 is True)
+        # B) Apply
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(600)
+        b0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')"), pg.evaluate("document.activeElement && document.activeElement.className"),
+              [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'folded after' in x]]
+        print('B) nach „Apply“:', b0)
+        results.append(b0[0] == 'false' and b0[1] == 'false' and 'dci-pools-fold' in (b0[2] or '') and b0[3] == ['“Dates & tracks” folded after “Apply”'])
+        # C) off
+        pg.click('.dci-pools-toggle')
+        pg.wait_for_timeout(300)
+        pg.uncheck('[data-el=dm] [data-f=dm-fold]')
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(600)
+        c0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-dm-fold')")]
+        print('C) aus:', c0)
+        results.append(c0 == ['true', 'false'])
+        # D) apply automatically
+        pg.check('[data-el=dm] [data-f=dm-fold]')
+        pg.check('[data-el=dm] [data-f=dm-auto]')
+        pg.wait_for_timeout(300)
+        rel = pg.locator('[data-el=dm] [data-f=dm-rel]').first
+        rel.click()
+        pg.wait_for_timeout(600)
+        d0 = pg.evaluate(OPEN)
+        box = pg.evaluate("(r => [r.left, r.bottom])(document.querySelector('[data-el=dates]').getBoundingClientRect())")
+        pg.mouse.move(box[0] + 200, box[1] + 120)
+        pg.wait_for_timeout(500)
+        d1 = pg.evaluate(OPEN)
+        pg.click('.dci-pools-toggle')
+        pg.wait_for_timeout(300)
+        pg.locator('[data-el=dm] [data-f=dm-rel]').first.focus()
+        pg.keyboard.press('Space')
+        pg.wait_for_timeout(500)
+        d2 = pg.evaluate(OPEN)
+        pg.evaluate("document.querySelector('[data-el=body] section.dci-group button').focus()")
+        pg.wait_for_timeout(400)
+        d3 = pg.evaluate(OPEN)
+        print('D) automatisch – Zeiger in der Leiste:', d0, '| verlassen:', d1, '| Tastatur:', d2, '| Fokus draußen:', d3)
+        results.append(d0 == 'true' and d1 == 'false' and d2 == 'true' and d3 == 'false')
+        # E) reset of the topic
+        H.open_settings(pg, 'dates')
+        pg.locator('[data-el=settings] [data-f=dm-fold]').uncheck()
+        pg.wait_for_timeout(200)
+        e0 = pg.evaluate("localStorage.getItem('dci-dm-fold')")
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=dates]')
+        pg.wait_for_timeout(400)
+        e1 = [pg.evaluate("localStorage.getItem('dci-dm-fold')"), pg.evaluate("(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-f=dm-fold]'))")]
+        print('E) in ⚙ aus:', e0, '| ↺:', e1)
+        results.append(e0 == 'false' and e1 == [None, True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

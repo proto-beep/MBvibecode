@@ -36,6 +36,8 @@ MBvibecode/ (this repository)
                                       [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
                                       script starts (the files written before expect the stores of a release kept); False in
                                       t_ui_settings.py cache and t_entries.py order (the script's default: off)
+                                      [3.40.9] DM_FOLD: False – "Fold bar after Apply" stored off before the script starts (the files
+                                      written before work on in the open bar after "Apply"); True in t_dates_matrix.py foldapply
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -276,6 +278,9 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #   workgroups: 3.35.6 (item 145b): the works of index tracks as track groups (suggestions), one on a date of the
                                 #     matrix, the box of the track pool off / on (the date leaves and comes back), the setting off / on, a new
                                 #     import ticks the box again, the setting stored
+                                #   foldapply: 3.40.9 (Z-PF): "Fold bar after Apply" below the matrix and in ⚙ (on); "Apply" folds (stored,
+                                #     focus on "▼ show", log); off: stays open; with "apply automatically": open while the pointer is in the
+                                #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;

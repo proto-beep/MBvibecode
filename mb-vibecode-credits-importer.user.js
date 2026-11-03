@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.8
+// @version      3.40.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2293,6 +2293,7 @@
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
       "log.poolsOpened": "Suggestions in the date matrix wait for “Apply”: “Dates & tracks” is open for this import",
+      "log.poolsFolded": "“Dates & tracks” folded after “Apply”",
       "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
       "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
       "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
@@ -2307,6 +2308,8 @@
       "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
       "dm.auto": "apply automatically",
       "dm.autoTitle": "When on, every change in the matrix goes onto the rows at once; when off (default), only with “Apply”.",
+      "dm.fold": "Fold bar after Apply",
+      "dm.foldTitle": "When on (default), “Dates & tracks” folds after “Apply” – with “apply automatically” once the pointer or the focus leaves the bar after a change.",
       "dm.autoCell": "Found automatically – not applied yet. Click the date to check, change or confirm it.",
       "dm.editTitle": "Change this date in the matrix: column, track groups, studios",
       "dm.removeTitle": "Take this date out of this column",
@@ -2424,7 +2427,7 @@
       "trackpool.allMedia": "all media (one group each, {n})",
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
-      "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
+      "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically” and “Fold bar after Apply”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
       "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
       "reset.keepStats": "keep statistics",
@@ -2434,6 +2437,7 @@
       "log.dmApplied": "Matrix applied: {n} rows with a date, {cells} dates, {split} rows split",
       "log.dmAuto": "{n} dates from the notes placed in the matrix as suggestions",
       "log.dmAutoSwitch": "Apply matrix automatically: {state}",
+      "log.dmFoldSwitch": "Fold bar after Apply: {state}",
       "log.poolCleared": "Date pool cleared ({n} dates)",
       "log.trackPoolCleared": "Track pool cleared ({n} groups)",
       "log.settingsReset": "Settings reset (own rules: {rules}, pools: {pools})",
@@ -10292,6 +10296,9 @@
   };
   // "Apply automatically" below the matrix (off: rows change only with "Apply")
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
+  // [Z-PF] (3.40.9) "Fold bar after Apply" next to it (default on: stored false when off)
+  const DM_FOLD_KEY = 'dci-dm-fold';
+  S.dmFold = readJson('localStorage', DM_FOLD_KEY, true) !== false;
   // Dates & tracks open or folded; null until switched once: open when there are dates
   S.poolsOpen = readJson('localStorage', 'dci-pools-open', null);
   // [3.30.3] the date pool and the track pool fold on their own (item 93): { dates: true } while folded
@@ -21584,8 +21591,38 @@
     const m = dm();
     m.dirty = true;
     saveMatrix();
-    if (S.dmAuto) applyMatrix();
-    else renderDates();
+    if (S.dmAuto) {
+      applyMatrix();
+      // [Z-PF] (3.40.9) applied at once: the bar folds once the pointer or the focus leaves it (not after each change)
+      if (S.dmFold) S.dmFoldWait = true;
+    } else renderDates();
+  }
+
+  /**
+   * [Z-PF] (3.40.9) "Fold bar after Apply" (collected item Z-PF; Q-bl, Q-bn): "Dates & tracks" folds as with "▲ fold" – after a click
+   * on "Apply" (focus: true, the focus onto "▼ show"), with "apply automatically" once the pointer or the focus has left the bar after
+   * a change (watchPoolsLeave). Not while a form of the pools is open (a new date, a track group, "clear").
+   */
+  function foldPoolsAfterApply(focus = false) {
+    S.dmFoldWait = false;
+    if (!S.dmFold || !poolsOpen() || S.poolForm || S.trackForm || S.poolClear) return;
+    S.poolsOpen = false;
+    S.poolsForce = null;
+    writeJson('localStorage', 'dci-pools-open', false);
+    log('info', 'poolsFolded');
+    renderDates();
+    const again = focus && S.overlay && S.overlay.querySelector('.dci-pools-fold');
+    if (again) again.focus({ preventScroll: true });
+  }
+
+  /**
+   * [Z-PF] (3.40.9) The bar left (pointer or focus) after a change applied at once: it folds. The focus may have gone with the
+   * field (the bar is drawn anew after each change): then the next field focused outside the bar counts.
+   */
+  function watchPoolsLeave(el, overlay) {
+    el.addEventListener('mouseleave', () => { if (S.dmFoldWait) foldPoolsAfterApply(); });
+    el.addEventListener('focusout', (e) => { if (S.dmFoldWait && e.relatedTarget && !el.contains(e.relatedTarget)) foldPoolsAfterApply(); });
+    overlay.addEventListener('focusin', (e) => { if (S.dmFoldWait && !el.contains(e.target)) foldPoolsAfterApply(); });
   }
 
   /** Messages of the matrix replace the ones of its previous run. */
@@ -22185,6 +22222,7 @@
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
         <label class="dci-check" title="${esc(tr('dm.autoTitle'))}"><input type="checkbox" data-f="dm-auto" ${S.dmAuto ? 'checked' : ''}> ${esc(tr('dm.auto'))}</label>
+        <label class="dci-check" title="${esc(tr('dm.foldTitle'))}"><input type="checkbox" data-f="dm-fold" ${S.dmFold ? 'checked' : ''}> ${esc(tr('dm.fold'))}</label>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${m.cells.some((c) => c.alt) ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: m.cells.filter((c) => c.alt).length }))}</span>` : ''}
       </div></div>`;
@@ -29029,6 +29067,8 @@
       case 'dm-apply':
         S.dmPick = null;
         applyMatrix();
+        // [Z-PF] (3.40.9) "Fold bar after Apply"
+        foldPoolsAfterApply(true);
         break;
       case 'tg-new':
         S.trackForm = { id: null, name: '', tracks: new Set(), error: '' };
@@ -29628,6 +29668,16 @@
       const v = el.value;
       el.value = '';
       if (v) newTrackGroupFrom(v);
+      return;
+    }
+    if (f === 'dm-fold') {
+      // [Z-PF] (3.40.9)
+      S.dmFold = el.checked;
+      writeJson('localStorage', DM_FOLD_KEY, el.checked);
+      if (!el.checked) S.dmFoldWait = false;
+      log('info', 'dmFoldSwitch', { state: tr(el.checked ? 'common.on' : 'common.off') });
+      // switched in ⚙ Settings: the box below the matrix follows
+      if (!el.closest('[data-el="dates"]')) renderDates();
       return;
     }
     if (f === 'dm-auto') {
@@ -30508,6 +30558,8 @@
     // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
     const stick = overlay.querySelector('[data-el="stick"]');
+    // [Z-PF] (3.40.9) "Fold bar after Apply" with "apply automatically": when the bar is left
+    watchPoolsLeave(overlay.querySelector('[data-el="dates"]'), overlay);
     // [3.34.3] the content of the settings follows its tab when the dashboard or the settings change in size (collected item 127)
     let paneFrame = 0;
     const panesLater = () => {
@@ -30735,7 +30787,7 @@
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
-    dates: ['dci-dm-auto', 'dci-pools-keep', WORK_GROUPS_KEY],
+    dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
@@ -31512,6 +31564,8 @@
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
+        // [Z-PF] (3.40.9)
+        row(check('data-f="dm-fold"', S.dmFold, tr('dm.fold'), tr('dm.foldTitle'))),
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
         // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
         row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
@@ -31990,7 +32044,7 @@
       renderGroups();
       refresh();
     } else if (t === 'dates') {
-      Object.assign(S, { dmAuto: false, poolsKeep: true, workGroupsOn: true });
+      Object.assign(S, { dmAuto: false, dmFold: true, dmFoldWait: false, poolsKeep: true, workGroupsOn: true });
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
@@ -32016,7 +32070,7 @@
 
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
-    'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
+    'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
@@ -32052,7 +32106,7 @@
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
-      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
+      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},

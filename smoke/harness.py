@@ -658,7 +658,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER))
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1017,6 +1017,11 @@ REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') 
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
 # (e.g. ['D022'] for the cases about periods and "choose", written before D022 placed what the days have in common)
+# [3.40.9] "Fold bar after Apply" (Z-PF, on in the script) off for the cases written before it: they work on in the open bar
+# after "Apply"; a case of the folding sets DM_FOLD = True
+DM_FOLD = False
+DM_FOLD_PRESET = "(on) => { if (on || localStorage.getItem('dci-dm-fold') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-dm-fold', 'false'); }"
+
 RULES_OFF = []
 RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
 
@@ -1029,6 +1034,7 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
         pg.evaluate(VIEW_PRESET, view)
     pg.evaluate(ENTRIES_PRESET, ENTRIES_VIEW)
     pg.evaluate(REMEMBER_PRESET, REMEMBER)
+    pg.evaluate(DM_FOLD_PRESET, DM_FOLD)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:
