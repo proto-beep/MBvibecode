@@ -160,6 +160,8 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   initialsmemo: 3.39.8 (K-8, review): "JR" → Jane Roe chosen, remembered: after a reload and the same text at once
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
+                                #   hostask: 3.41.8 (Q-cn): "Host" / "Hosted By" asked (Q012): spoken vocals "host", misc "host", skip the role;
+                                #     "Presenter" stays spoken vocals
                                 #   ytroles: 3.41.7 (Z-AM, Z-CAM, Q-co): "Audio & Mixing Engineer" → audio, mix; "Mixed & Mastered By" → mix,
                                 #     mastering; "Cameras" misc "cameras", "Camera Operator", "Cinematographer" each their own; "Editor" misc "editor"
 

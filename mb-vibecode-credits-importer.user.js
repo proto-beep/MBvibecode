@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.7
+// @version      3.41.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2559,6 +2559,7 @@
       "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
+      "typeAsk.askHost": "“{role}”: spoken vocals credited “host” (the host speaks on the recording), miscellaneous support “host”, or no relationship? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -3446,6 +3447,8 @@
       return out(['arranger'], { flags: arrFlags });
     } },
       R097: { run: () => out([], { notes: ['askType'] }) },
+      // [Q-cn] (3.41.8) "Host": spoken vocals credited "host", miscellaneous support "host" or skipped – asked (Q012)
+      R108: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
       // [3.31.4] the word of the poet in lower case is the role credit ("Poems By" → "poems")
@@ -23257,6 +23260,16 @@
     const o = q && q.options[i];
     if (!o) return;
     row.typeAnswer = i;
+    // [Q-cn] (3.41.8) an answer that skips the role ("Host": skip the role, Q012): the row on "Skip", its type kept
+    if (o.level === 'skip') {
+      row.level = 'skip';
+      row.levelTouched = true;
+      delete row.scopeLevel;
+      log('info', 'typePicked', { role: row.raw || row.base, type: o.label || tr('level.skip') });
+      rerenderRow(row);
+      refresh();
+      return;
+    }
     row.types = [o.type];
     row.creditFromRole = optionCredit(o, row);
     // [3.32.7] poems on the release: the answer is kept for the next time the row comes to the release (item 104b)
