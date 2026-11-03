@@ -286,7 +286,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     focus on "▼ show", log); off: stays open; with "apply automatically": open while the pointer is in the
                                 #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again;
                                 #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
-                                #     ⚙ – open; stored only when off
+                                #     ⚙ – open; stored only when off; 3.40.13 (Z-PF2): nothing stored by "Apply", loaded again: open; "▲ fold"
+                                #     by hand, loaded again: folded
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -323,6 +324,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
                                 #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
                                 #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
+                                #   liveall: 3.40.13 (Z-LC): "All" above the list – ticked, mixed (a track of the group unticked), all on and off;
+                                #     in livecom without the track MB has another comment for
                                 #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
@@ -522,6 +525,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom;
                                 #     3.38.13 (F-3): the green chip flashes once (not again when its text is opened and closed or the
                                 #     dashboard closed and opened again: one animationstart; the class gone after the flash)
+                                #   addrolebtn: 3.40.13 (Z-AB): "＋ Another role for Bass Man" a framed button below his rows (full view), a new row
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

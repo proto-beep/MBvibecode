@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.12
+// @version      3.40.13
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.12
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.12
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.13
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.13
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.12';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.13';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -503,6 +503,8 @@
       "livecom.groupN.other": "{n} tracks",
       "livecom.groupOnAria": "Comment for {list}",
       "livecom.groupTextAria": "The comment of {list}",
+      "livecom.all": "All",
+      "livecom.allAria": "All live disambiguation comments",
       "livecom.hint": "Entered as edits of the recordings after “Enter edit” in the relationship editor, once the relationships are saved (⚙ Settings → Staging). Tick, or change a comment; a comment MusicBrainz has already is not overwritten.",
       "livecom.onAria": "Comment for track {pos}",
       "livecom.textAria": "The comment of track {pos}",
@@ -17369,6 +17371,8 @@
       // [3.32.1] suggestions waiting for "Apply" (collected item 109): the dashboard opens (if it is closed) and "Dates & tracks" with
       // both pools – once for this import; what is remembered stays and counts again from the next import
       S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
+      // [Z-PF2] (3.40.13) a fold after "Apply" counts for one import only
+      S.poolsFoldApply = false;
       if (S.poolsForce) log('info', 'poolsOpened');
       if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
@@ -20217,7 +20221,7 @@
           </table>
         </div>`}
         ${compact ? '' : `${notes}
-        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>`}
+        <button type="button" class="dci-addrole-btn dci-addrole-full" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button>`}
       </section>`;
   }
 
@@ -21668,9 +21672,10 @@
     if (!S.dmFold || !poolsOpen() || S.poolForm || S.trackForm || S.poolClear) return;
     // (3.40.11, review) nor while cells of the matrix wait for a choice (single days or a period) or one is being edited
     if (S.dmEdit || dm().cells.some((c) => c.alt)) return;
-    S.poolsOpen = false;
+    // [Z-PF2] (3.40.13, Q-br) folded for this import only: the next import with dates shows the bar open again; only "▲ fold" by hand
+    // is remembered
+    S.poolsFoldApply = true;
     S.poolsForce = null;
-    writeJson('localStorage', 'dci-pools-open', false);
     log('info', 'poolsFolded');
     renderDates();
     const again = focus && S.overlay && S.overlay.querySelector('.dci-pools-fold');
@@ -22096,6 +22101,8 @@
     if (S.poolForm || S.trackForm || S.poolClear) return true;
     // [3.32.1] suggestions of this import wait for "Apply" (item 109): open, without changing what is remembered
     if (S.poolsForce) return true;
+    // [Z-PF2] (3.40.13) folded after "Apply" (for this import)
+    if (S.poolsFoldApply) return false;
     if (S.poolsOpen != null) return !!S.poolsOpen;
     return !!(S.datePool.length || dateFinds().notes.length);
   }
@@ -24748,17 +24755,24 @@
         <td><input type="text" data-f="livecom-text" data-recs="${esc(recs)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.groupTextAria', { list: label }))}"></td>
         <td>${notes.map((x) => `<div class="dci-sub">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
     }).join('');
+    // [Z-LC] (3.40.13) one box for all of them (those MusicBrainz has another comment for cannot be ticked): mixed – neither ticked nor not
+    const free = list.filter((p) => !p.other);
+    const freeOn = free.filter((p) => liveChoice(p).on).length;
+    const allRow = free.length > 1 ? `<tr class="dci-livecom-all"><td><input type="checkbox" data-f="livecom-on" data-all="1" data-recs="${esc(free.map((p) => p.rec).join(','))}" ${freeOn === free.length ? 'checked' : ''} data-mixed="${freeOn && freeOn < free.length ? 1 : 0}" aria-label="${esc(tr('livecom.allAria'))}"></td>
+        <td colspan="4">${esc(tr('livecom.all'))}</td></tr>` : '';
     // at most a third of the dashboard's height
     const h = S.overlay.getBoundingClientRect().height;
     const max = h ? `${Math.max(120, Math.round(h / 3))}px` : '33vh';
     const head = `<button type="button" class="dci-livecom-head" data-act="livecom-toggle" aria-expanded="${open}" aria-controls="dci-livecom-body">${open ? '▾' : '▸'} ${esc(tr('livecom.title', { n, m: list.length }))}</button>`;
     const html = `<div class="dci-livecom-box${open ? ' dci-livecom-boxopen' : ''}">${open ? `<div class="dci-livecom-body" id="dci-livecom-body" style="max-height:${max}">
       <p class="dci-sub">${esc(tr('livecom.hint'))}</p>
-      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></div>` : ''}
+      <div class="dci-tablewrap"><table class="dci-livecom-table">${allRow ? `<thead>${allRow}</thead>` : ''}<tbody>${rows}</tbody></table></div></div>` : ''}
       <div class="dci-livecom-headrow">${head}</div></div>`;
     if (el.dataset.html === html) return;
     el.innerHTML = html;
     el.dataset.html = html;
+    // [Z-LC] (3.40.13) "mixed" is a property, not an attribute
+    el.querySelectorAll('input[data-mixed="1"]').forEach((x) => { x.indeterminate = true; });
   }
 
   function applyLiveDefault() {
@@ -28989,6 +29003,7 @@
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolsForce = null;
+        S.poolsFoldApply = false; // [Z-PF2] (3.40.13) by hand: remembered instead
         S.dmFoldWait = false; // [Z-PF] (3.40.11, review) folded or opened by hand: no folding left to do
         S.poolForm = null;
         S.trackForm = null;
@@ -33553,6 +33568,7 @@
       .dci-livecom-head:hover { background: var(--purple-d); }
       .dci-livecom-head:focus-visible { outline: 2px solid var(--purple-d); outline-offset: 2px; }
       .dci-livecom-sub td:first-child { padding-left: calc(var(--u, 1px) * 18); }
+      .dci-livecom-all td { border-bottom: 1px solid #e3e1ea; font-weight: 600; }
       .dci-livecom-gbtn { white-space: nowrap; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
       .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }

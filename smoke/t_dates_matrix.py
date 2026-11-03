@@ -798,7 +798,9 @@ def case_foldapply():
     E) ↺ of the topic Dates and tracks: on again.
     F) (3.40.11, review) With "apply automatically": the bar left without a change – open; a change, then "apply automatically" off and
        another change (not applied yet), the bar left – open (the change waits for "Apply"); a change made from ⚙ Settings (track
-       groups of the works off and on) – open; the box stored only when off."""
+       groups of the works off and on) – open; the box stored only when off.
+    G) (3.40.13, collected item Z-PF2; Q-br) The fold after "Apply" is for this import only (B: nothing stored): folded by "Apply",
+       the page loaded again – the bar open; "▲ fold" by hand is remembered – loaded again: folded."""
     H.DM_FOLD = True
     results = []
     with sync_playwright() as p:
@@ -824,7 +826,7 @@ def case_foldapply():
         b0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')"), pg.evaluate("document.activeElement && document.activeElement.className"),
               [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'folded after' in x]]
         print('B) nach „Apply“:', b0)
-        results.append(b0[0] == 'false' and b0[1] == 'false' and 'dci-pools-fold' in (b0[2] or '') and b0[3] == ['“Dates & tracks” folded after “Apply”'])
+        results.append(b0[0] == 'false' and b0[1] is None and 'dci-pools-fold' in (b0[2] or '') and b0[3] == ['“Dates & tracks” folded after “Apply”'])
         # C) off
         pg.click('.dci-pools-toggle')
         pg.wait_for_timeout(300)
@@ -911,6 +913,32 @@ def case_foldapply():
         f3 = pg.evaluate("localStorage.getItem('dci-dm-fold')")
         print('F) ohne Änderung verlassen:', f0, '| automatisch aus, Änderung wartet:', f1, '| Änderung aus ⚙:', f2, '| wieder an, gespeichert:', f3)
         results.append(f0 == 'true' and f1 == ['true', True] and f2 == 'true' and f3 is None)
+        # G) (3.40.13) for this import only
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        if pg.evaluate(OPEN) != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        if pg.locator('[data-el=dm] [data-f=dm-auto]').is_checked():
+            pg.uncheck('[data-el=dm] [data-f=dm-auto]')
+        pg.locator('[data-el=dm] [data-f=dm-rel]').first.click()
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(600)
+        g0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')")]
+        pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        g1 = pg.evaluate(OPEN)
+        pg.click('.dci-pools-toggle')
+        pg.wait_for_timeout(300)
+        g2 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')")]
+        pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        g3 = pg.evaluate(OPEN)
+        print('G) „Apply“:', g0, '| neu geladen:', g1, '| ▲ von Hand:', g2, '| neu geladen:', g3)
+        results.append(g0[0] == 'false' and g0[1] != 'false' and g1 == 'true' and g2 == ['false', 'false'] and g3 == 'false')
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -360,7 +360,8 @@ def case_livecom():
        [3.38.3] Tracks 2 and 3 are one line "2–3 · ▸ 2 tracks" (the same comment, item 168), ▸ shows them; the heading "▾ Live
        disambiguation comments: 2 of 3" (item 170).
     C) The place credited as "Iridium" and the matrix applied (the date 2001-03 on the place): "live, 2001‐03: Iridium, New
-       York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked."""
+       York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked.
+       [Z-LC] (3.40.13) The box "All" is for tracks 2 and 3 only (track 4 cannot be ticked)."""
     PLACE = H.COMPANIES[1002][1]
     NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
     H.PLACE_AREAS[PLACE] = NYC
@@ -416,7 +417,8 @@ def case_livecom():
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
             and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
             and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')") \
-            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3'
+            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3' \
+            and pg.evaluate("document.querySelector('[data-el=livecom] thead [data-all]').dataset.recs.split(',').length") == 2
         # C)
         rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
           return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
@@ -719,6 +721,58 @@ def case_livegroup():
             and c1['bg'] == 'rgb(115, 109, 171)' and c1['color'] == 'rgb(255, 255, 255)' and c2['bg'] in ('rgb(115, 109, 171)', 'rgb(75, 69, 133)')
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_liveall():
+    """Credits Importer 3.40.13 (collected item Z-LC): one box for all live disambiguation comments.
+    A) Two media of two tracks, the release group Live, ✓ proposed: a first line "All" above the list – ticked (all three are),
+       its label "All live disambiguation comments".
+    B) The group opened, track 2.1 unticked: "All" mixed (neither ticked nor not), "2 of 3".
+    C) "All" clicked: all three ticked ("3 of 3"), not mixed; again: none ("0 of 3").
+    D) (case livecom's release) a recording MusicBrainz has another comment for cannot be ticked: not among those of "All"."""
+    H.MEDIA = [2, 2]
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        return d
+
+    H.ws_release = ws
+    ALL = """(() => { const x = document.querySelector('[data-el=livecom] thead tr.dci-livecom-all [data-f=livecom-on]'); if (!x) return null;
+      return [x.checked, x.indeterminate, x.closest('tr').textContent.trim(), x.getAttribute('aria-label'), x.dataset.recs.split(',').length]; })()"""
+    ONS = "[...document.querySelectorAll('[data-el=livecom] tbody [data-f=livecom-on]')].map(x => x.checked)"
+    HEAD = "(document.querySelector('[data-el=livecom] .dci-livecom-head') || {textContent: ''}).textContent.trim()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+        a0 = pg.evaluate(ALL)
+        print('A)', a0)
+        results.append(a0 == [True, False, 'All', 'All live disambiguation comments', 3])
+        pg.click('[data-el=livecom] [data-act=livecom-group]'); pg.wait_for_timeout(200)
+        pg.locator('tr.dci-livecom-sub [data-f=livecom-on] >> nth=1').evaluate('x => x.click()')
+        pg.wait_for_timeout(300)
+        b0 = [pg.evaluate(ALL), pg.evaluate(HEAD)]
+        print('B)', b0)
+        results.append(b0[0] is not None and b0[0][:2] == [False, True] and b0[1].startswith('▾ Live disambiguation comments: 2 of 3'))
+        pg.click('[data-el=livecom] thead [data-f=livecom-on]'); pg.wait_for_timeout(300)
+        c0 = [pg.evaluate(ALL), pg.evaluate(HEAD), pg.evaluate(ONS)]
+        pg.click('[data-el=livecom] thead [data-f=livecom-on]'); pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(ALL), pg.evaluate(HEAD), pg.evaluate(ONS)]
+        print('C) an:', c0, '\n   aus:', c1)
+        results.append(c0[0][:2] == [True, False] and c0[1].startswith('▾ Live disambiguation comments: 3 of 3') and all(c0[2])
+                       and c1[0][:2] == [False, False] and c1[1].startswith('▾ Live disambiguation comments: 0 of 3') and not any(c1[2]))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
