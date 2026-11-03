@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.3, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.8, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,65 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.8 · 2026-11-03
+
+Room for a scroll bar drawn over the content (collected item Z-SB): an overlay scroll bar (macOS, Windows 11) covered the last line of a table that scrolls sideways – "written “Recorded By”" below the role field of the matrix.
+
+- **New `barRoomNeeded(el)`:** whether a box needs `.dci-barroom` – it scrolls sideways (`overflow-x` `auto` / `scroll`), its content is wider than it (`scrollWidth > clientWidth + 1`) and its bar takes no room (`offsetHeight − clientHeight − borders < 1`); a classic bar takes room of its own – nothing changes there.
+- **New `watchBarRoom(root)`:** a `ResizeObserver` on each box that scrolls sideways (`.dci-em-scroll`, `.dci-tablewrap`, `.dci-dm-grid`) and on its first child (its content) – each box once, all read before any is changed –, a `MutationObserver` on `root` for the boxes drawn later; a box no longer in the page is no longer observed. Called once in `buildOverlay`.
+- **CSS:** `.dci-barroom` – `padding-bottom: 16px` (in px: the size of a scroll bar does not follow A− A+).
+- **Tests:** `t_entries.py` new case `barroom` (FluentOverlayScrollbar of Chromium: a wide dashboard no room, 700 px the room and "written “Drums”" above the bar, only boxes that scroll, wide again none; a classic bar: no room); `caserun.py` new `launch_own(**kw)` – a browser of its own for a case that needs other launch options.
+
+**After the review of block BA** (an independent agent; fixed here):
+
+- **Scroll bars (3.40.8):** `overflow-x` checked (a `.dci-rowswrap` does not scroll); each box once, all read before any is changed (no layout per box) – both in the bullets above.
+- **T059 (3.40.5):** `EDITABLE_LISTS.T059` `emptyValue: true`, `hint: 'mapping.linesRegions'`. **`asPair(x, tid)`**: a word takes the area of the same region in the file (a word "West Coast" added in 3.39.x, a whole register of 3.40.4); `rawListItems`, `effectiveRaw`, the register's `show` pass the list. **`checkListChange`**: for T059 a word or `[region, '']` too (a file of changes of 3.40.4 was skipped). **`listFromLines`**: "region" and "region =" (a region without an area; saving ✎ T059 failed). **`showItem`**: a pair without a value shows the key alone. `listEditHtml`: `L.hint` before the hint of the shape.
+- **Region credit (3.40.5):** the suggestion keeps MusicBrainz's disambiguation (`disambiguation: hit.disambiguation`; until now the explanation, which became `mbComment` once chosen); the explanation is the tooltip (`titleOf`). `name-use` sets **`a.regionPick`** `{ mbid, region }`; **`sourceCreditFor`** returns the region while `regionPick.mbid === a.mbid` (until now `syncSourceCredits` put the source's spelling back with S008 / S036); new **`dropRegionCredit(a)`** (in `name-use` and `setArtistManually`): another entry chosen – the region's credit goes from the rows not credited by hand (with S036 off it stayed). `regionPick` remembered with the entry (`x.match.region`).
+- **⧉ (3.40.7):** the symbol drawn by CSS (`::before`), the button without text and without the space before it – the text of the entry's head stays its name (four test files read it); if `navigator.clipboard.writeText` refuses, a selected text and `execCommand('copy')` (as `copyLog`); refused too: `.dci-copyfail` (⚠) for 3 s; `aria-label` follows the title.
+- **Head (3.40.6):** `.dci-head-sep` with a negative margin (each separator takes 3 instead of 11 px); `.dci-head-tools` `flex-wrap: wrap` – at 400 px a second line instead of ✕ outside the dashboard.
+- **Texts (English):** `mapping.linesRegions`.
+- **Tests:** `t_sources_bandcamp.py` `cloudpondbc` B (the explanation in the tooltip, no disambiguation in the head), C (another area chosen by hand: the credit goes), D (S036 off: credited all the same; another area: it goes – fails on 3.40.7); `t_rules_window.py` new case `regionlist` (a file of changes with words, ✎ T059 with "Lake Region" and "Delta =", a whole register of 3.40.4); `t_ui_head.py` `copyname` D (the clipboard refuses: through a selected text ✓, refused too ⚠), new case `headnarrow`.
+
+## Import 3.40.7 · 2026-11-03
+
+⧉ next to the name of an entry without a MusicBrainz entry chosen: copies the name of the source (collected item Z-CP; Q-av, Q-aw).
+
+- **New `copyNameHtml(a)`** in `entryNameHtml` (both returns, after the name): `.dci-copyname` (`data-act="name-copy"`, `data-name` `a.name`, the name of the entry at the source – at Discogs the artist name without its number, not the spelling of the release shown in the head), `hidden` while `a.mbid` is set; none for a placeholder entry. Every kind of entry: people, companies, places, also those with suggestions only (a suggestion is not a chosen entry).
+- **`updateGroupHeader`:** shows or hides the ⧉ of the entry when an MB entry is chosen or dropped (`hidden = !!a.mbid`).
+- **Handler `name-copy`:** `navigator.clipboard.writeText(name)`; the button gets `.dci-copied` (✓) and the title `group.copiedName` for 1.5 s, then ⧉ and its title again; if the browser refuses, the title `group.copyFailed` (nothing else changes).
+- **CSS:** `.dci-copyname`, its symbol `::before` (⧉; ✓ with `.dci-copied`) – the button has no text, so the text of the entry's head stays its name (code and tests that read it).
+- **Texts (English):** `group.copyName`, `group.copiedName`, `group.copyFailed`.
+- **Tests:** `t_ui_head.py` new case `copyname` (⧉ at the one entry of the release not linked, not at the linked ones; a click: the name in the clipboard, ✓, ⧉ again; a pasted text: ⧉ also at a name with a suggestion, gone once it is chosen).
+
+## Import 3.40.6 · 2026-11-03
+
+The head of the dashboard in groups, "this browser only" at the statistics (collected items Z-HB, Z-ST; Q-ay, Q-au).
+
+- **`buildOverlay`:** the buttons of `.dci-head-tools` in groups with `.dci-head-sep` between them – ☰, A− A+, ⤢ | Mapping rules, Log | Statistics, ⌨, ⚙ | ✕ (until 3.40.5: ☰, A− A+, ⚙, Statistics, Mapping rules, Log, ⌨, ⤢, ✕).
+- **`renderStats`:** `.dci-stats-local` after the heading – `stats.local`, its tooltip `stats.localTitle`.
+- **CSS:** `.dci-head-sep`, `.dci-stats-local`.
+- **Texts (English):** `stats.local`, `stats.localTitle`.
+- **Tests:** `t_ui_head.py` `head` (the order and the groups); `t_ui_settings.py` `statsbutton` (Statistics · ⌨ · ⚙; "this browser only" and its tooltip).
+
+## Import 3.40.5 · 2026-11-03
+
+Regions suggest the area they lie in (collected item Z-RG; Q-az, Q-ba).
+
+- **Mapping:** `TEXT_REGIONS` (T059) pairs `[region, area]` – Pacific Coast, West Coast, East Coast → United States (until 3.40.4 words); `EDITABLE_LISTS.T059` shape `pairs`.
+- **New `regionOf(name)`** (the region of T059 however written, `[region, area]`, also from a list of words of an older file) and **`asPair(x)`** (`rawListItems` and `effectiveRaw`: a word of a list become pairs – your changes to T059 of 3.39.x – gets an empty area). **`areaOf`** uses `regionOf`.
+- **`suggestByName`:** an area entry that is a region of T059 – MusicBrainz's area of its area's name (`area:(…) OR alias:(…)`, the same name) first among `nameHits` (`region`, `similar`, disambiguation `area.regionHit`), log `regionSuggested`; the log `nameSuggested` without it. Only suggested (Q-az).
+- **`name-use`:** a hit with `region` credits the entry's rows as the region of the list (a credit typed by hand stays; Q-ba). The mark of the suggestion `match.markRegion`.
+- **Register:** T059 – its note and its pairs shown.
+- **Texts (English):** `area.regionHit`, `log.regionSuggested`, `match.markRegion`.
+- **Tests:** `t_sources_bandcamp.py` `cloudpondbc` B ("Pacific coast": United States first among the suggestions, not set; chosen: "as “Pacific Coast”"); `t_mapping.py` `oldfile` C (a file whose T059 is a list of words: the region read); `register_golden.json` anew.
+
+## Import 3.40.4 · 2026-11-03
+
+Entries that share a link are all looked up (collected item Z-LU; Q-ax).
+
+- **`resolveArtists`:** `byUrl` holds a list of entries per address (until 3.40.3 one: a second entry of the same address – the person Robert Rich and "©2026 Robert Rich" of his own Bandcamp page – took the place of the first, which was never looked up and stayed "Looking up MB artist …" with its rows on "Choose type …"); `found` per kind (`artist`, `label`) and address (until then one map: the answer of the label lookup could replace the artist's).
+- **Tests:** `t_sources_bandcamp.py` new case `cloudpondbc` (the credits of Robert Rich's "Cloud Pond Sky River" from his own page: both entries "Robert Rich" found through the link, none waiting; fails on 3.40.3).
 
 ## Import 3.40.3 · 2026-11-02
 

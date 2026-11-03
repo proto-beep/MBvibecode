@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.3
+// @version      3.40.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -295,10 +295,12 @@
       "log.nameSuggested": "{name}: same name in MusicBrainz (only a suggestion): {list}",
       "log.linkedSuggested": "{name}: in this release in MusicBrainz already – {list} (first among the suggestions, marked)",
       "log.webSuggested": "{name}: MusicBrainz artist with the web link from the text (only a suggestion): {list}",
+      "log.regionSuggested": "{name}: a region – {area} suggested (T059)",
       "match.nameSuggest": "Same name in MusicBrainz (a suggestion – check before assigning):",
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
+      "match.markRegion": "region (T059)",
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
       "match.markLinked": "in this release: {where}",
@@ -910,6 +912,10 @@
       "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsFor": "as {name} for {roles}",
+      "group.copyName": "Copy “{name}” (to search for it or create it in MusicBrainz)",
+      "group.copiedName": "Copied: “{name}”",
+      "group.copyFailed": "The browser did not allow copying “{name}”",
+      "area.regionHit": "the area the region “{region}” lies in (T059) – a suggestion; credited as “{region}”",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
       "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
@@ -1566,6 +1572,8 @@
       "stats.loading": "Reading the statistics …",
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
       "stats.title": "Statistics",
+      "stats.local": "this browser only",
+      "stats.localTitle": "These statistics are kept only in this browser (its storage for musicbrainz.org): another browser or computer has statistics of its own, and nothing is sent anywhere.",
       "stats.buttonTitle": "Statistics: what you entered into MusicBrainz with the dashboard",
       "stats.foldTitle": "Fold the statistics in (as their button does)",
       "stats.t.releases": "releases",
@@ -1899,6 +1907,7 @@
       "mapping.toBuiltin": "back to the built-in rule",
       "mapping.linesWords": "One word per line.",
       "mapping.linesPairs": "One entry per line: abbreviation = what it stands for.",
+      "mapping.linesRegions": "One region per line: region = the area it lies in (e.g. Pacific Coast = United States); a region alone: no area suggested.",
       "mapping.linesMap": "One spelling per line: spelling = MusicBrainz instrument (several separated by /).",
       "mapping.reloadHint": "takes full effect after loading the page again",
       "mapping.codeTag": "code",
@@ -2734,8 +2743,10 @@
     T057: { key: 'TEXT_FIELD_KINDS', shape: 'words' },
     // [137d] (3.39.2) the instruments a word MusicBrainz does not know is offered as first ("objects" → percussion)
     T058: { key: 'INSTRUMENT_ASK', shape: 'map' },
-    // [3.39.2] regions read as an area in any case, also those MusicBrainz does not know ("Pacific coast" → Pacific Coast)
-    T059: { key: 'TEXT_REGIONS', shape: 'words' },
+    // [3.39.2] regions read as an area in any case, also those MusicBrainz does not know ("Pacific coast" → Pacific Coast);
+    // [Z-RG] (3.40.5) with the area each one lies in, offered as a suggestion ("Pacific Coast = United States")
+    // (3.40.8, review) a region without an area allowed ("Gulf Coast", "Gulf Coast ="); its own hint in the editor
+    T059: { key: 'TEXT_REGIONS', shape: 'pairs', emptyValue: true, hint: 'mapping.linesRegions' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -2805,7 +2816,21 @@
     if (v == null) return []; // [3.39.2] (review) not in a mapping file of an older version
     if (L.shape === 'set') return [...v.$set];
     if (L.shape === 'map') return Object.entries(v);
+    // [Z-RG] (3.40.5) a list of words become pairs (T059): its words of an older file with an empty value
+    if (L.shape === 'pairs') return v.map((x) => asPair(x, tid));
     return [...v];
+  }
+  /**
+   * [Z-RG] (3.40.5) An entry of a list of pairs – also a word of a list that was one of words before (T059 until 3.40.4):
+   * (3.40.8, review) with the area of the same region in the file when it has one (a word "West Coast" added by hand in
+   * 3.39.x, or a whole register of 3.40.4, keeps "United States"), else without one.
+   */
+  function asPair(x, tid) {
+    if (Array.isArray(x)) return x;
+    const L = tid && EDITABLE_LISTS[tid];
+    const file = L && MAPPING.raw && Array.isArray(MAPPING.raw[L.key]) ? MAPPING.raw[L.key] : [];
+    const same = file.find((p) => Array.isArray(p) && norm(p[0]) === norm(x));
+    return [String(x), same ? same[1] : ''];
   }
 
   /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
@@ -2848,7 +2873,9 @@
       if (!L || !c) continue;
       const out = new Set((c.remove || []).map((x) => listKey(L.shape === 'pairs' || L.shape === 'map' ? 'words' : L.shape, x)));
       let items = rawListItems(raw, tid).filter((x) => !out.has(listKey(L.shape, x)));
-      for (const a of c.add || []) {
+      for (const a0 of c.add || []) {
+        // [Z-RG] (3.40.5) a word added to T059 before it had pairs
+        const a = L.shape === 'pairs' ? asPair(a0, tid) : a0;
         const k = listKey(L.shape, a);
         items = items.filter((x) => listKey(L.shape, x) !== k);
         items.push(a);
@@ -3483,8 +3510,8 @@
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
     { id: 'T060', where: 'PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole', note: 'Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out',
       show: () => ({ pairs: [['… At → … By', PERSON_AT_ROLE], ['left out', PERSON_COMPANY_SKIP]] }) },
-    { id: 'T059', where: 'TEXT_REGIONS, areaOf', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area (the entry then stays to be linked by hand); first only "Pacific Coast"',
-      show: () => ({ pairs: [['words', TEXT_REGIONS.join(' · ')]] }) },
+    { id: 'T059', where: 'TEXT_REGIONS, areaOf, regionOf, suggestByName', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area; first only "Pacific Coast". (3.40.5) Each with the area it lies in ("Pacific Coast = United States"): MusicBrainz\'s area of that name is offered first – only a suggestion, the coast of another country can be meant –, credited as the region of the list',
+      show: () => ({ pairs: (TEXT_REGIONS || []).map((x) => asPair(x, 'T059')).map(([r, area]) => [r, area || '–']) }) },
     { id: 'T058', where: 'INSTRUMENT_ASK, guessInstrument', note: 'Words that are no instrument of MusicBrainz and the instruments they are offered as first (137d), each credited as written – "objects": percussion “objects” · other instruments “objects”',
       show: () => ({ pairs: Object.entries(INSTRUMENT_ASK).map(([k, v]) => [k, v.join(' / ')]) }) },
     { id: 'T057', where: 'TEXT_FIELD_KINDS, readClause', note: 'Texts (3.38.18): the kinds of recordings of a field recordist (S062) – ambisonic, binaural, field, hydrophone, location, nature, environmental',
@@ -3652,6 +3679,8 @@
   const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
   // [T059] (3.39.2) regions read as an area in any case (✎)
   const TEXT_REGIONS = MAP.TEXT_REGIONS;
+  /** [Z-RG] (3.40.5) The region of T059 of a name, however written: [region, the area it lies in ('' unknown)], or null. */
+  const regionOf = (name) => (TEXT_REGIONS || []).map((x) => (Array.isArray(x) ? x : [String(x), ''])).find(([r]) => norm(r) === norm(name)) || null;
   const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
@@ -5026,8 +5055,8 @@
       // [T059] (3.39.2) a region of the list however it is written – "Pacific coast", "the Pacific coast" → the area Pacific Coast
       // (collected item 188); before the words that are no area (review: a region "Mid-Atlantic" or with "the")
       const head = parts[0].replace(/^the\s+/i, '');
-      const region = TEXT_REGIONS.find((r) => norm(r) === norm(head));
-      if (region && parts.slice(1).every(placeLike)) return { name: region, area: parts.slice(1).join(', ') };
+      const region = regionOf(head);
+      if (region && parts.slice(1).every(placeLike)) return { name: region[0], area: parts.slice(1).join(', ') };
       if (TEXT_NOT_AREA.test(parts[0])) return null;
       return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
     }
@@ -10558,7 +10587,8 @@
   const ruleFieldsOf = (id) => RULE_FIELDS[ruleKindOf(id)] || [];
   const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
-  const showItem = (x) => (Array.isArray(x) ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x));
+  // (3.40.8, review) a region of T059 without an area: the region alone
+  const showItem = (x) => (Array.isArray(x) ? ([].concat(x[1]).join('') ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x[0])) : String(x));
 
   /** A pattern for the form: role words ("a | b") where it is a plain list of words, else the regular expression. */
   function patternForm(v) {
@@ -10712,7 +10742,10 @@
       if (L.shape === 'words' || L.shape === 'set') {
         if (!str(a)) return bad;
       } else if (L.shape === 'pairs') {
-        if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !str(a[1], LIMITS.value)) return bad;
+        // (3.40.8, review) T059: a region alone (a word of a file of 3.40.4) or with an empty area
+        const empty = (v) => L.emptyValue && (v === '' || v == null);
+        if (L.emptyValue && str(a)) continue;
+        if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !(str(a[1], LIMITS.value) || empty(a[1]))) return bad;
       } else if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !Array.isArray(a[1]) || !a[1].length || a[1].some((x) => !str(x))) return bad;
     }
     return { change: { add, remove } };
@@ -10733,7 +10766,8 @@
         if (line.length > LIMITS.text) return { error: tr('mapping.badLine', { line }) };
         item = L.shape === 'set' || L.key === 'ART_TYPES' ? norm(line) : line;
       } else {
-        const m = line.match(/^(.+?)\s*=\s*(.+)$/);
+        // (3.40.8, review) T059: "region", "region =" – a region without an area
+        const m = line.match(/^(.+?)\s*=\s*(.+)$/) || (L.emptyValue ? line.match(/^([^=]+?)\s*=?\s*()$/) : null);
         if (!m || m[1].length > LIMITS.text || m[2].length > LIMITS.value) return { error: tr('mapping.badLine', { line }) };
         item = L.shape === 'map' ? [norm(m[1]), m[2].split(/\s*\/\s*/).filter(Boolean)] : [m[1].trim(), m[2].trim()];
       }
@@ -11029,7 +11063,7 @@
     const e = S.listEdit;
     return `<fieldset class="dci-redit dci-redit-list" data-ledit="${tid}"><legend>${esc(tr('mapping.editList', { id: tid }))}</legend>
       <textarea data-ledit-text rows="8" spellcheck="false">${esc(e.text)}</textarea>
-      <p class="dci-sub">${esc(tr(L.shape === 'map' ? 'mapping.linesMap' : L.shape === 'pairs' ? 'mapping.linesPairs' : 'mapping.linesWords'))}${L.reload ? ` · ${esc(tr('mapping.reloadHint'))}` : ''}</p>
+      <p class="dci-sub">${esc(tr(L.hint || (L.shape === 'map' ? 'mapping.linesMap' : L.shape === 'pairs' ? 'mapping.linesPairs' : 'mapping.linesWords')))}${L.reload ? ` · ${esc(tr('mapping.reloadHint'))}` : ''}</p>
       ${e.error ? `<p class="dci-redit-err" role="alert">${esc(e.error)}</p>` : ''}
       <div class="dci-urule-actions"><button type="button" data-ledit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-ledit-cancel>${esc(tr('common.cancel'))}</button>
         ${mappingChanges.lists[tid] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${tid}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
@@ -16705,7 +16739,10 @@
       const x = { e: entryIdOf(a) };
       if (a.join !== undefined) x.join = a.join;
       if (S.emBy.has(a.key)) x.by = S.emBy.get(a.key);
-      if (a.matchTouched) x.match = { mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '', status: a.status, entityType: a.entityType || null };
+      if (a.matchTouched) {
+        x.match = { mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '', status: a.status, entityType: a.entityType || null };
+        if (a.regionPick && a.regionPick.mbid === a.mbid) x.match.region = a.regionPick.region; // [Z-RG] (3.40.8, review)
+      }
       if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
       return x;
     }).filter((x) => Object.keys(x).length > 1);
@@ -16987,6 +17024,7 @@
       if (e.caseUp && caseSpellingOf(a) && !a.caseUp) setCaseUp(a, true, false);
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
+        if (typeof e.match.region === 'string' && e.match.region) a.regionPick = { mbid: e.match.mbid, region: e.match.region }; // [Z-RG] (3.40.8, review)
         // [3.36.1] the entity type only: its rows came back with their types (setCompanyEntityType would set them anew)
         if (a.company && e.match.entityType) a.entityType = e.match.entityType;
       }
@@ -17637,6 +17675,21 @@
             if (parent && !h.disambiguation.split(', ').includes(parent)) h.disambiguation = [h.disambiguation, parent].filter(Boolean).join(', ');
           }
         }
+        // [Z-RG] (3.40.5) a region of T059 ("Pacific Coast"): the area it lies in (United States) first – only a suggestion (the coast
+        // of another country is one too; Q-az), credited as the region of the list once chosen (S036; Q-ba)
+        const region = type === 'area' ? regionOf(a.name) : null;
+        if (region && region[1]) {
+          const cw = luceneWords(region[1]);
+          const dataR = cw ? await mbWs(`area?query=${encodeURIComponent(`area:(${cw}) OR alias:(${cw})`)}&limit=10`) : null;
+          const hit = ((dataR && dataR.areas) || []).find((x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, region[1]) === 'same'));
+          if (hit) {
+            // (3.40.8, review) MusicBrainz's disambiguation of the area stays its own (it becomes mbComment once chosen); why it is
+            // suggested is the tooltip and the mark "region (T059)"
+            a.nameHits = [{ mbid: hit.id, name: hit.name, entityType: 'area', similar: true, region: region[0],
+              disambiguation: hit.disambiguation || '' }, ...a.nameHits.filter((h) => h.mbid !== hit.id)];
+            log('info', 'regionSuggested', { name: a.name, area: hit.name });
+          }
+        }
         // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
         if (!a.company) {
           // [3.32.6] also one at most two letters off ("j4vavaman" signing for j4vaman, collected item 115b): first, marked similar
@@ -17670,9 +17723,11 @@
           a.nameHits = [...inRel, ...a.nameHits.filter((h) => !inRel.some((x) => x.mbid === h.mbid))];
           log('info', 'linkedSuggested', { name: a.name, list: inRel.map((h) => `${h.name} (${h.linked.join(', ')})`).join('; ') });
         }
-        if (a.nameHits.length) {
-          const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
-          log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
+        // [Z-RG] (3.40.5) the area of a region has its own line in the log
+        const named = a.nameHits.filter((h) => !h.region);
+        if (named.length) {
+          const listed = named.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
+          log('info', 'nameSuggested', { name: a.name, list: listed + (named.length > 5 ? ` … (+${named.length - 5})` : '') });
         }
       } catch (e) {
         console.warn('[Credits-Importer] name search', a.name, e);
@@ -17701,19 +17756,25 @@
     }
     // Each entry by the URL of its page at the source (people: MB artists; companies: labels, places …)
     const urlOf = (a) => (a.links || [])[0] || '';
-    const byUrl = new Map(pending.filter((a) => a.dId && urlOf(a)).map((a) => [urlOf(a), a]));
-    const found = new Map();
+    // [Z-LU] (3.40.4) the entries of each address – several can share one (Robert Rich and "©2026 Robert Rich" of his own Bandcamp
+    // page: until 3.40.3 the second took the place of the first, which stayed "Looking up MB artist …"); what is found, by kind
+    const byUrl = new Map();
+    pending.filter((a) => a.dId && urlOf(a)).forEach((a) => {
+      if (!byUrl.has(urlOf(a))) byUrl.set(urlOf(a), []);
+      byUrl.get(urlOf(a)).push(a);
+    });
+    const found = { artist: new Map(), label: new Map() };
     for (const kind of ['artist', 'label']) {
-      const urls = [...byUrl.entries()].filter(([, a]) => (kind === 'label') === !!a.company).map(([u]) => u);
+      const urls = [...byUrl.entries()].filter(([, list]) => list.some((a) => (kind === 'label') === !!a.company)).map(([u]) => u);
       for (let i = 0; i < urls.length; i += 50) {
         const chunk = urls.slice(i, i + 50);
         try {
-          (await lookupUrls(chunk, kind, source.urlKey)).forEach((v, k) => found.set(k, v));
+          (await lookupUrls(chunk, kind, source.urlKey)).forEach((v, k) => found[kind].set(k, v));
         } catch (e) {
           // If the batch lookup fails, look up URLs one by one
           for (const u of chunk) {
             try {
-              (await lookupUrls([u], kind, source.urlKey)).forEach((v, k) => found.set(k, v));
+              (await lookupUrls([u], kind, source.urlKey)).forEach((v, k) => found[kind].set(k, v));
             } catch (e2) {
               console.warn('[Discogs-Credits]', u, e2);
             }
@@ -17721,8 +17782,8 @@
         }
       }
     }
-    for (const [url, a] of byUrl) {
-      a.candidates = found.get(url) || [];
+    for (const [url, a] of [...byUrl].flatMap(([u, list]) => list.map((x) => [u, x]))) {
+      a.candidates = found[a.company ? 'label' : 'artist'].get(url) || [];
       if (a.company) {
         // Only MB labels or places that fit at least one of this company's roles
         const usable = new Set(S.rows.filter((r) => r.artistKey === a.key).flatMap((r) => Object.keys(r.typeOptions || {})));
@@ -17780,6 +17841,17 @@
     refresh();
   }
 
+  /**
+   * [Z-RG] (3.40.8, review) Another MusicBrainz entry chosen for a region than the area of T059: the credit of the region goes
+   * from its rows (one typed by hand stays); with S008 / S036 the credit of the source follows (syncSourceCredits).
+   */
+  function dropRegionCredit(a) {
+    const was = a.regionPick;
+    if (!was || was.mbid === a.mbid) return;
+    a.regionPick = null;
+    S.rows.filter((r) => r.artistKey === a.key && !r.creditTouched && r.credit === was.region).forEach((r) => { r.credit = ''; });
+  }
+
   async function setArtistManually(artist, value) {
     const mbid = (String(value || '').match(MBID_RE) || [])[0];
     if (!mbid) {
@@ -17799,6 +17871,7 @@
       }
       Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '', matchTouched: true });
       if (artist.company) setCompanyEntityType(artist, e.entityType);
+      dropRegionCredit(artist);
       log('ok', 'artistManual', { name: artist.name, mb: e.name });
     } catch (err) {
       artist.error = err.message;
@@ -18593,6 +18666,8 @@
   }
 
   function sourceCreditFor(row, a) {
+    // [Z-RG] (3.40.8, review) the area of a region chosen (T059): credited as the region of the list, whatever the source wrote
+    if (a.regionPick && a.regionPick.mbid === a.mbid) return a.regionPick.region;
     const mb = String(a.mbName || '').trim();
     // [S060] (3.38.12) MusicBrainz's name in capitals too: the source's capitals ("DOOM" for MF DOOM, not "Doom")
     const caps = !!mb && !/\p{Ll}/u.test(mb);
@@ -18655,10 +18730,11 @@
       heads.push(head);
       const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
       // [3.21.0] found through a web profile next to the name in the text (T032): first, still only a suggestion
-      const titleOf = (h) => (h.linked ? tr('match.linkedTitle', { where: h.linked.join(', ') }) : h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
+      const titleOf = (h) => (h.linked ? tr('match.linkedTitle', { where: h.linked.join(', ') }) : h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb })
+        : h.region ? `${head} ${tr('area.regionHit', { region: h.region })}` : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       // [E5a] (3.37.1) linked in this release: highlighted, with where (the mark "release artist" is part of it then)
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn${h.linked ? ' dci-sugg-linked' : ''}" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -18939,14 +19015,22 @@
       });
     }
   }
+  /**
+   * [Z-CP] (3.40.7) ⧉ next to the name of an entry without a MusicBrainz entry chosen (Q-av): copies the name of the entry at the
+   * source (Q-aw; at Discogs the artist name without its number "(2)", not the release's spelling of the head) – to search or
+   * create it in MusicBrainz; hidden once one is chosen. The symbol is drawn by CSS: the text of the head stays the name.
+   */
+  const copyNameHtml = (a) => (a.placeholder ? '' : `<button type="button" class="dci-textbtn dci-copyname" data-act="name-copy" data-name="${esc(a.name)}"${a.mbid ? ' hidden' : ''}
+    title="${esc(tr('group.copyName', { name: a.name }))}" aria-label="${esc(tr('group.copyName', { name: a.name }))}"></button>`);
+
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
+    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161); [3.39.1] in the words of the entry's source (collected item 185)
     const src = entrySource(a);
     const title = [trSrcOf(src, 'group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [trSrcOf(src, 'group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
   function creditChipHtml(a) {
@@ -23016,6 +23100,8 @@
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
     const spell = section.querySelector(`[data-spell="${a.key}"]`);
     if (spell) spell.innerHTML = spellHtml(a);
+    // [Z-CP] (3.40.7) ⧉ only while no MusicBrainz entry is chosen
+    section.querySelectorAll('.dci-gname .dci-copyname').forEach((b) => { b.hidden = !!a.mbid; });
     const list = section.querySelector(`#dci-ac-${a.key}`);
     if (list) list.innerHTML = artistVariants(a).map((v) => `<option value="${esc(v)}"></option>`).join('');
   }
@@ -26217,6 +26303,49 @@
   }
 
   /**
+   * [Z-SB] (3.40.8) Room for a scroll bar drawn over the content: overlay scroll bars (macOS, Windows 11 – they take no room
+   * and show while scrolling) covered the last line of a table that scrolls sideways, e.g. "written …" below the role field of
+   * the matrix. While the content of such a box is wider than the box and its bar takes no room of its own, the box gets
+   * .dci-barroom (room below its last line; watchBarRoom); with a classic bar (it takes room of its own) nothing changes.
+   * Whether a box needs it.
+   */
+  function barRoomNeeded(el) {
+    const cs = getComputedStyle(el);
+    // (3.40.8, review) only a box that scrolls sideways has a bar (.dci-rowswrap is a .dci-tablewrap that does not)
+    if (!/auto|scroll/.test(cs.overflowX)) return false;
+    const own = el.offsetHeight - el.clientHeight - (parseFloat(cs.borderTopWidth) || 0) - (parseFloat(cs.borderBottomWidth) || 0);
+    return el.scrollWidth > el.clientWidth + 1 && own < 1;
+  }
+
+  /** [Z-SB] (3.40.8) Watches the boxes that scroll sideways in root, also those drawn later (each box and its content). */
+  function watchBarRoom(root) {
+    if (typeof ResizeObserver === 'undefined' || typeof MutationObserver === 'undefined') return;
+    const SEL = '.dci-em-scroll, .dci-tablewrap, .dci-dm-grid';
+    const ro = new ResizeObserver((list) => {
+      // (3.40.8, review) each box once, all read before any is changed (no layout per box)
+      const boxes = new Set();
+      list.forEach((e) => {
+        const t = e.target;
+        if (!t.isConnected) { ro.unobserve(t); return; }
+        const box = t.matches(SEL) ? t : t.parentElement;
+        if (box && box.matches(SEL)) boxes.add(box);
+      });
+      const want = [...boxes].map((box) => [box, barRoomNeeded(box)]);
+      want.forEach(([box, need]) => box.classList.toggle('dci-barroom', need));
+    });
+    const add = (el) => {
+      ro.observe(el);
+      if (el.firstElementChild) ro.observe(el.firstElementChild);
+    };
+    root.querySelectorAll(SEL).forEach(add);
+    new MutationObserver((recs) => recs.forEach((r) => r.addedNodes.forEach((n) => {
+      if (n.nodeType !== 1) return;
+      if (n.matches(SEL)) add(n);
+      n.querySelectorAll(SEL).forEach(add);
+    }))).observe(root, { childList: true, subtree: true });
+  }
+
+  /**
    * [3.30.3] Scroll bars of the works matrix to the right and left (item 94): one above the matrix, one at the bottom of the visible area
    * while the lower edge of the matrix (with its own bar) is out of view; all three move together.
    */
@@ -28552,11 +28681,45 @@
         // [3.39.7] initials of several names: the one they stand for (collected item K-8)
         if (artist) initialsUse(artist, btn.dataset.name);
         break;
+      case 'name-copy': {
+        // [Z-CP] (3.40.7) the name into the clipboard; "✓" for a moment
+        const name = btn.dataset.name || '';
+        const label = (key) => { btn.title = tr(key, { name }); btn.setAttribute('aria-label', btn.title); };
+        const shown = (ok) => {
+          // the symbol is drawn by CSS (⧉; ✓ while .dci-copied, ⚠ while .dci-copyfail), so the text of the entry's head stays its name
+          btn.classList.toggle('dci-copied', ok);
+          btn.classList.toggle('dci-copyfail', !ok);
+          label(ok ? 'group.copiedName' : 'group.copyFailed');
+          setTimeout(() => { btn.classList.remove('dci-copied', 'dci-copyfail'); label('group.copyName'); }, ok ? 1500 : 3000);
+        };
+        // (3.40.8, review) as "Copy" of the log: without the clipboard of the browser through a selected text
+        const fallback = () => {
+          const area = document.createElement('textarea');
+          area.value = name;
+          document.body.appendChild(area);
+          area.select();
+          let ok = false;
+          try { ok = document.execCommand('copy'); } catch { ok = false; }
+          area.remove();
+          btn.focus({ preventScroll: true });
+          shown(ok);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(name).then(() => shown(true), fallback);
+        else fallback();
+        break;
+      }
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
         Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '', matchTouched: true });
         if (artist.company) setCompanyEntityType(artist, h.entityType);
+        dropRegionCredit(artist);
+        // [Z-RG] (3.40.5) the area of a region (T059): credited as the region of the list (Q-ba) – a credit typed by hand stays;
+        // (3.40.8, review) remembered with the area (sourceCreditFor keeps it)
+        if (h.region) {
+          artist.regionPick = { mbid: h.mbid, region: h.region };
+          S.rows.filter((r) => r.artistKey === artist.key && !r.creditTouched).forEach((r) => { r.credit = h.region; });
+        }
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
         // [3.31.5] a publisher matched with an artist (S048): its column in the works matrix follows
@@ -30201,18 +30364,22 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
+            ${'' /* [Z-HB] (3.40.6) in groups (Q-ay): the view (☰, A− A+, ⤢) | the work (Mapping rules, Log) | help and settings (Statistics, ⌨, ⚙) | ✕ */}
             ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
             <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
               <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
               <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
-            ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
-            ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
+            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
+            <span class="dci-head-sep" aria-hidden="true"></span>
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
+            <span class="dci-head-sep" aria-hidden="true"></span>
+            ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
-            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
+            ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
+            <span class="dci-head-sep" aria-hidden="true"></span>
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
           </div>
         </header>
@@ -30356,6 +30523,8 @@
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
     }).observe(stick);
+    // [Z-SB] (3.40.8) room for a scroll bar drawn over the last line of a table that scrolls sideways
+    watchBarRoom(overlay);
     overlay.addEventListener('focusin', onFocusSource);
     overlay.addEventListener('click', onFocusSource);
     overlay.addEventListener('mouseover', onHover);
@@ -31508,7 +31677,8 @@
     const active = document.activeElement;
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
       : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}` : '') : '';
-    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button></div>
+    // [Z-ST] (3.40.6) "this browser only" in the head (Q-au)
+    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button><span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span></div>
       <div class="dci-stats-pane">${statsHtml().join('')}</div>`;
     const again = key && el.querySelector(key);
     if (again) again.focus();
@@ -32791,6 +32961,12 @@
       }
       .dci-head, #dci-log .dci-log-head { cursor: move; touch-action: none; }
       .dci-moving { user-select: none; opacity: 0.97; }
+      .dci-copyname { margin-left: calc(var(--u, 1px) * 4); color: var(--muted); font-size: 0.95em; text-decoration: none; }
+      .dci-copyname::before { content: "⧉"; }
+      .dci-copyname.dci-copied::before { content: "✓"; color: var(--ok); }
+      .dci-copyname.dci-copyfail::before { content: "⚠"; color: var(--err); }
+      .dci-head-sep { width: 1px; align-self: stretch; margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * -2); background: var(--line); }
+      .dci-stats-local { margin-left: calc(var(--u, 1px) * 6); font-weight: normal; }
       .dci-zoom { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }
       .dci-zoom [data-el="zoom"] { min-width: 3.4em; text-align: center; }
       /* [3.26.0] the head in one line (collected item 30): title · source · Source ▾ · + Supplement · status · tools */
@@ -32900,7 +33076,7 @@
       .dci-spell-val { font-weight: 600; }
       .dci-spell-val.dci-spell-x { text-decoration: underline wavy var(--sugg-line); text-underline-offset: 3px; }
       .dci-close, .dci-headbtn { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
-      .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: auto; }
+      .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
       /* [143] (3.34.23) the arrow at "Compact | Full": below the symbol, the pointer goes through it (only ✕ is a button) */
       .dci-head:has(.dci-hint-compact) { position: relative; z-index: 6; }
       .dci-hint-compact { position: relative; width: 0; height: 0; align-self: flex-end; pointer-events: none; }
@@ -33560,6 +33736,8 @@
       .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
+      /* [Z-SB] (3.40.8) room below the last line for a scroll bar drawn over the content (macOS, Windows 11) */
+      .dci-em-scroll.dci-barroom, .dci-tablewrap.dci-barroom, .dci-dm-grid.dci-barroom { padding-bottom: 16px; }
       .dci-em-grid { border-collapse: collapse; min-width: 100%; font-size: calc(var(--u, 1px) * 13); }
       .dci-em-grid th, .dci-em-grid td { padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--row); text-align: left; vertical-align: middle; }
       .dci-em-grid thead th { font-size: calc(var(--u, 1px) * 12); font-weight: 600; border-bottom: 2px solid var(--line); vertical-align: bottom; }
