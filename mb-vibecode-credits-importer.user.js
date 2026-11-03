@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.0
+// @version      3.42.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2210,7 +2210,8 @@
       "em.countShort": "{n} to stage",
       "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
-      "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
+      "em.evDateOpenTitle": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended) – a date of the pool can be dropped here too",
+      "em.evDateApply": "Apply",
       "remember.full": "The browser’s storage for musicbrainz.org is full: releases used longest ago were forgotten, and this one could not be stored completely.",
       "remember.hold": "This release was remembered before, but this tab did not read it (it was opened while nothing was remembered). Load the page again to get it back – until then nothing of this release is stored, so it is not written over.",
       "remember.reload": "Load the page again",
@@ -19767,17 +19768,33 @@
    * rows get it – one date of the pool for all of them, the pool's own date changed when they had one; a date of the pool
    * dropped onto the head gives it to the event.
    */
-  function evHeadHtml(e, open = false) {
+  function evHeadHtml(e, open = false, a = null) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    // [Z-EDM] (3.42.1; Q-db) the date a button: a click opens MusicBrainz's fields below it (begin, end, ended)
+    const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}`);
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
     return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
       data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
-      <input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}" value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}"
-        aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}"> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+      <button type="button" class="dci-textbtn dci-em-evdate${date ? ' dci-cl-has' : ''}" data-act="em-evdate-open" data-ev="${esc(e.key)}" aria-expanded="${dOpen}"
+        title="${esc(tr('em.evDateOpenTitle'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">${esc(date || tr('cl.noDate'))}</button>${dOpen ? evDateBoxHtml(e) : ''}
+        ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+  }
+
+  /** [Z-EDM] (3.42.1) The fields of an event's date as MusicBrainz has them (begin, end, ended), with "Apply", "No date" and ✕. */
+  function evDateBoxHtml(e, inline = false) {
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    const st = S.emEvDate && S.emEvDate.ev === e.key ? S.emEvDate : null;
+    const f = (st && st.f) || (pool ? fieldsFromDate(pool) : e.date ? { ...e.date } : {});
+    return `<div class="dci-em-evdatebox${inline ? ' dci-em-evdatebox-inline' : ''}" data-evdate="${esc(e.key)}" role="group" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+      ${mbDateFields('ed', f, true)}
+      <span class="dci-em-evdatebtns"><button type="button" class="dci-small dci-primary" data-act="em-evdate-apply" data-ev="${esc(e.key)}">${esc(tr('em.evDateApply'))}</button>
+        <button type="button" class="dci-small" data-act="em-evdate-clear" data-ev="${esc(e.key)}">${esc(tr('cl.noDate'))}</button>
+        ${inline ? '' : `<button type="button" class="dci-iconbtn" data-act="em-evdate-open" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button>`}</span>
+      ${st && st.error ? `<span class="dci-err" data-el="evdate-error">${esc(st.error)}</span>` : ''}</div>`;
   }
 
   /** [E4] (3.34.31) The rows of an entry in an event. */
@@ -19794,7 +19811,6 @@
     const levelSeg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.evLevel'))}">${levels.map((lv) => `<button type="button" data-act="em-evlevel"
       data-ev="${esc(e.key)}" data-level="${lv}" aria-pressed="${lv === e.level}">${esc(tr(`level.${lv}`))}</button>`).join('')}</span>`;
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
-    const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const dated = hasDateInput(e.date) || !!pool;
     const poolBtns = S.datePool.map((d) => `<button type="button" class="dci-small dci-em-evpool" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="${esc(d.id)}"
       aria-pressed="${!!pool && pool.id === d.id}">${esc(poolLabel(d))}</button>`).join(' ');
@@ -19818,8 +19834,7 @@
       <div class="dci-em-evrow dci-em-evtop"><strong>${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}</strong>
         <button type="button" class="dci-iconbtn" data-act="em-evopen" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
       <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evLevel'))}</span>${levelSeg}</div>
-      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span><input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}"
-        value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span>${evDateBoxHtml(e, true)}
         ${S.datePool.length ? `<span class="dci-sub">${esc(tr('em.evPool'))}</span> ${poolBtns}` : ''}
         ${dated ? ` <button type="button" class="dci-textbtn" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="">${esc(tr('cl.noDate'))}</button>` : ''}</div>
       ${tracks}
@@ -19924,24 +19939,17 @@
   }
 
   /** [E4] (3.34.31) The date typed in the head of an event: its rows get it (as a date of the pool); empty – no date. */
-  function emEventDate(a, evKey, text) {
+  /** [Z-EDM] (3.42.1) The date of an event set ({ begin, end, ended }; null: no date) – from its fields or from a text. */
+  function emEventDateValue(a, evKey, value) {
     const rows = rowsInEvent(a, evKey).filter((r) => {
       const lt = currentLinkType(r);
       return !(lt && lt.has_dates === false);
     });
     if (!rows.length) return;
-    const t = String(text || '').trim();
-    if (!t) {
+    if (!value) {
       rows.forEach((r) => Object.assign(r, { date: null, dateOpen: false }));
       log('info', 'emEvDate', { n: rows.length, date: tr('cl.noDate') });
     } else {
-      const p = parseDatePeriod(t);
-      const value = p && (p.single ? single(p.single) : p.period);
-      if (!value) {
-        showMessage('warn', 'em.badDate', { text: t });
-        rerenderGroup(a);
-        return;
-      }
       const ids = uniq(rows.map((r) => r.date && r.date.poolId).filter(Boolean));
       let entry = ids.length === 1 && rows.every((r) => r.date && r.date.poolId === ids[0]) ? S.datePool.find((d) => d.id === ids[0]) : null;
       if (entry) {
@@ -20217,7 +20225,7 @@
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
-          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
+          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key, a)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
       </table></div>${openEv ? emEventHtml(a, openEv) : ''}
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
@@ -20573,10 +20581,6 @@
   function entryMatrixChange(f, el) {
     const a = artistOf(el);
     if (!a) return false;
-    if (f === 'em-evdate') {
-      emEventDate(a, el.dataset.ev, el.value);
-      return true;
-    }
     // [AE-3] (3.35.4) a track of an opened event
     if (f === 'em-evtrack') {
       const e = rowsInEvent(a, el.dataset.ev)[0];
@@ -22778,18 +22782,19 @@
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
         </span>` : ''}</span>
       </div>`;
+    // [Z-TP] (3.42.1) the date pool and the track pool side by side, one below the other only when they do not fit in one line
     el.innerHTML = `${open ? `<div class="dci-pools-body">
-        ${datePoolHtml()}
-        ${S.poolForm ? poolFormHtml() : ''}
-        ${trackPoolHtml()}
-        ${S.trackForm ? trackFormHtml() : ''}
+        <div class="dci-pools-pair" data-el="pools-pair">
+          <div class="dci-pools-col" data-el="pool-col-dates">${datePoolHtml()}${S.poolForm ? poolFormHtml() : ''}</div>
+          <div class="dci-pools-col" data-el="pool-col-tracks">${trackPoolHtml()}${S.trackForm ? trackFormHtml() : ''}</div>
+        </div>
         ${matrixHtml()}
         ${dateFinderHtml()}
       </div>
       <div class="dci-pools-foot">
         <label class="dci-check" title="${esc(tr('pools.keepTitle'))}"><input type="checkbox" data-f="pools-keep" ${S.poolsKeep ? 'checked' : ''}> ${esc(tr('pools.keep'))}</label>
       </div>` : S.poolsKeep && (S.datePool.length || S.trackPool.length)
-        ? `<div class="dci-pools-kept">${datePoolHtml(true)}${trackPoolHtml(true)}</div>` : ''}
+        ? `<div class="dci-pools-kept dci-pools-pair"><div class="dci-pools-col">${datePoolHtml(true)}</div><div class="dci-pools-col">${trackPoolHtml(true)}</div></div>` : ''}
       ${S.poolClear ? poolClearHtml() : ''}
       ${head}`;
     refreshPoolSelects();
@@ -29818,6 +29823,53 @@
         if (again && S.emEvOpen.has(artist.key)) again.scrollIntoView({ block: 'nearest' });
         break;
       }
+      // [Z-EDM] (3.42.1) the date of an event: its fields opened (or closed), applied, taken away
+      case 'em-evdate-open': {
+        if (!artist) break;
+        const key = `${artist.key}|${btn.dataset.ev}`;
+        S.emEvDate = S.emEvDate && S.emEvDate.key === key ? null : { key, ev: btn.dataset.ev, f: null, error: '' };
+        rerenderGroup(artist);
+        const first = S.emEvDate && S.overlay.querySelector(`[data-group="${artist.key}"] th[data-evhead="${CSS.escape(btn.dataset.ev)}"] [data-f="ed-by"]`);
+        if (first) first.focus({ preventScroll: true });
+        else {
+          const b2 = S.overlay.querySelector(`[data-group="${artist.key}"] th[data-evhead="${CSS.escape(btn.dataset.ev)}"] [data-act="em-evdate-open"]`);
+          if (b2) b2.focus({ preventScroll: true });
+        }
+        break;
+      }
+      // [Z-EDM] (3.42.1) "⇣": the begin copied into the end (as in the other date fields)
+      case 'ed-copy': {
+        const box = btn.closest('[data-evdate]');
+        if (!box) break;
+        ['y', 'm', 'd'].forEach((k) => {
+          const from = box.querySelector(`[data-f="ed-b${k}"]`);
+          const to = box.querySelector(`[data-f="ed-e${k}"]`);
+          if (from && to) to.value = from.value;
+        });
+        break;
+      }
+      case 'em-evdate-apply':
+      case 'em-evdate-clear': {
+        if (!artist) break;
+        const box = btn.closest('[data-evdate]');
+        if (act === 'em-evdate-clear') {
+          S.emEvDate = null;
+          emEventDateValue(artist, btn.dataset.ev, null);
+          break;
+        }
+        const f = {};
+        ['by', 'bm', 'bd', 'ey', 'em', 'ed'].forEach((k) => { f[k] = ((box && box.querySelector(`[data-f="ed-${k}"]`)) || { value: '' }).value.trim(); });
+        f.ended = !!(box && box.querySelector('[data-f="ed-ended"]') && box.querySelector('[data-f="ed-ended"]').checked);
+        const res = validateDateFields(f);
+        if (res.error) {
+          S.emEvDate = { key: `${artist.key}|${btn.dataset.ev}`, ev: btn.dataset.ev, f, error: dateErrorText(res.error) };
+          rerenderGroup(artist);
+          break;
+        }
+        S.emEvDate = null;
+        emEventDateValue(artist, btn.dataset.ev, res.value);
+        break;
+      }
       case 'em-evlevel':
         if (artist) emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
         break;
@@ -31350,13 +31402,26 @@
     const el = e.target;
     const act = el.dataset && el.dataset.act;
     const f = (el.dataset && el.dataset.f) || (act === 'date-open' ? 'rd-by' : act === 'wdate-open' ? 'wd-by' : '');
-    const m = f && f.match(/^(rd|pf|wd|cd|xd)-([be])[ymd]$/);
+    const m = f && f.match(/^(rd|pf|wd|cd|xd|ed)-([be])[ymd]$/);
     if (!m) return;
     const text = (e.clipboardData || window.clipboardData).getData('text');
     const parsed = parseDatePeriod(text);
     // A bare year is pasted normally, so month and day already typed stay.
     if (!parsed || (parsed.single && /^\s*\d{4}\s*$/.test(text))) return;
     e.preventDefault();
+    // [Z-EDM] (3.42.1) the fields of an event's date: filled where they are ("Apply" sets them)
+    if (m[1] === 'ed') {
+      const box = el.closest('[data-evdate]');
+      const fields = parsed.period ? fieldsFromDate(parsed.period) : (() => {
+        const one = fieldsFromDate({ begin: parsed.single });
+        return m[2] === 'b' ? { by: one.by, bm: one.bm, bd: one.bd } : { ey: one.by, em: one.bm, ed: one.bd };
+      })();
+      Object.entries(fields).forEach(([k, v]) => {
+        const inp = box && box.querySelector(`[data-f="ed-${k}"]`);
+        if (inp && k !== 'ended') inp.value = v;
+      });
+      return;
+    }
     const target = m[1] === 'pf' ? S.poolForm : null;
     const row = m[1] === 'rd' ? rowOf(el) : null;
     const workIndex = m[1] === 'wd' ? workIndexOf(el) : null;
@@ -35182,6 +35247,10 @@
       .dci-tg-tag.dci-tag-date { background: var(--date-bg); color: var(--date-d); }
       .dci-tg-tag.dci-tag-track { background: var(--track-bg); color: var(--track-d); }
       .dci-tracks-bar { margin-top: calc(var(--u, 1px) * 4); }
+      /* [Z-TP] (3.42.1) the two pools side by side: each as wide as its line; when both do not fit, the track pool goes below */
+      .dci-pools-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 28); }
+      .dci-pools-col { flex: 1 1 auto; min-width: 0; }
+      .dci-pools-pair .dci-tracks-bar { margin-top: 0; }
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
       /* [3.15.2, 3.15.3] the suggestions: a block of their own below the head line, side by side, wrapping into more lines */
       .dci-sugg-stack { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 6); }
@@ -35536,6 +35605,14 @@
       .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
+      /* [Z-EDM] (3.42.1) the date of an event: a button, and MusicBrainz's fields below it */
+      .dci-em-ev { position: relative; }
+      .dci-em-ev .dci-em-evdate { display: inline-block; font-size: calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 2) 0; }
+      .dci-em-ev .dci-em-evdate:not(.dci-cl-has) { color: var(--muted); }
+      .dci-em-evdatebox { position: absolute; left: 0; top: 100%; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6);
+        padding: calc(var(--u, 1px) * 8); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); font-weight: normal; white-space: nowrap; }
+      .dci-em-evdatebox.dci-em-evdatebox-inline { position: static; box-shadow: none; border: 0; padding: 0; }
+      .dci-em-evdatebtns { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-items: center; }
       /* [AE-3] (3.35.4) ▸ of an event, the event opened below its block */
       .dci-em-ev .dci-em-evtoggle { padding: 0 calc(var(--u, 1px) * 3) 0 0; }
       .dci-em-ev.dci-em-evopen { background: var(--date-bg); box-shadow: inset 0 -2px 0 var(--purple); }

@@ -142,7 +142,7 @@ BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-gro
   if (!g) return null;
   return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: (h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-bac').forEach(x => x.remove()); return c.textContent; })(b.querySelector('.dci-em-bhead')).replace(/\\s+/g, ' ').trim(),
     tip: b.querySelector('.dci-em-bhead strong').title,
-    ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+    ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
     add: [...b.querySelectorAll('[data-f=em-addev] option')].filter(o => o.value).map(o => o.textContent.trim()),
     lines: [...b.querySelectorAll('tr.dci-em-line')].map(t => ({ line: t.dataset.line, n: t.dataset.rows.split(',').length, skip: t.classList.contains('dci-em-skip'),
       role: ((t.querySelector('[data-f=em-primary]') || {}).value) || t.querySelector('.dci-em-c-role').textContent.replace(/\\s+/g, ' ').trim(),
@@ -347,22 +347,20 @@ def case_dates():
             pg.evaluate(DROP, [f'.dci-pchip-date[data-id="{d1}"]', f'{multi} th.dci-em-ev', False])
             pg.wait_for_timeout(500)
             a3 = pg.evaluate(BLOCKS, 'Multi Man')
-            v3 = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            v3 = pg.evaluate(H.EV_DATES, multi)
             print('C) Kopf:', a3[0]['ev'], v3, [(l['role'], l['ticks']) for l in a3[0]['lines']])
             results.append(len(a3[0]['ev']) == 1 and v3 and v3[0] != '' and all(l['ticks'] == [True] for l in a3[0]['lines']))
             # D) dates typed into the heads
             solo = sec_sel(pg, 'Solo Man')
             n_pool = len(chips)
-            pg.fill(f'{solo} th.dci-em-ev [data-f=em-evdate]', '2001-06-05')
-            pg.press(f'{solo} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            H.ev_date(pg, solo, '2001-06-05')
             pg.wait_for_timeout(500)
-            sv = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", solo)
+            sv = pg.evaluate(H.EV_DATES, solo)
             chips2 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
-            pg.fill(f'{multi} th.dci-em-ev [data-f=em-evdate]', '2001-03-02')
-            pg.press(f'{multi} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            H.ev_date(pg, multi, '2001-03-02')
             pg.wait_for_timeout(500)
             chips3 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
-            mv = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            mv = pg.evaluate(H.EV_DATES, multi)
             changed = [c for c in chips3 if c[0] == d1]
             print('D) Solo Man:', sv, '| Pool:', len(chips2), '| Multi Man:', mv, '| der Pool-Eintrag:', changed)
             results.append(sv == ['2001-06-05'] and len(chips2) == n_pool + 1 and mv == ['2001-03-02'] and changed and '2001-03-02' in changed[0][1])
@@ -397,7 +395,7 @@ def case_dates():
             pg.press('[data-set=em-show]', 'Tab')
             pg.wait_for_timeout(400)
             e2 = pg.evaluate(BLOCKS, 'Multi Man')
-            ev2 = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            ev2 = pg.evaluate(H.EV_DATES, multi)
             print('E2) Kopf des Blocks, 1 Zeile gezeigt:', hidden, '| danach:', ev2, [(l['role'], l['ticks']) for l in e2[0]['lines']])
             results.append(hidden == 1 and ev2 == ['2001-05'] and all(l['ticks'] == [True] for l in e2[0]['lines']) and len(e2[0]['lines']) == 3)
             # F) staged
@@ -700,9 +698,11 @@ def case_order():
 EVEDIT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
   const ed = g && g.querySelector('.dci-em-evedit'); if (!ed) return null;
   return { title: ed.querySelector('strong').textContent.trim(), levels: [...ed.querySelectorAll('[data-act=em-evlevel]')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
-    date: (ed.querySelector('[data-f=em-evdate]') || {}).value, pool: [...ed.querySelectorAll('.dci-em-evpool')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+    date: (b => (b ? (() => { const v = (k) => (b.querySelector('[data-f=ed-' + k + ']') || {}).value || ''; const bb = [v('by'), v('bm'), v('bd')].filter(Boolean).join('-');
+      const ee = [v('ey'), v('em'), v('ed')].filter(Boolean).join('-'); return bb + (ee && ee !== bb ? ' – ' + ee : ''); })() : undefined))(ed.querySelector('[data-evdate]')), pool: [...ed.querySelectorAll('.dci-em-evpool')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
     tracks: [...ed.querySelectorAll('[data-f=em-evtrack]')].filter(c => c.checked).map(c => Number(c.dataset.i)), n: ed.querySelectorAll('[data-f=em-evtrack]').length,
-    open: [...g.querySelectorAll('th.dci-em-ev.dci-em-evopen')].map(h => h.textContent.replace(/\\s+/g, ' ').replace('▾', '').trim()) }; }"""
+    open: [...g.querySelectorAll('th.dci-em-ev.dci-em-evopen')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove());
+      return c.textContent.replace(/\\s+/g, ' ').replace('▾', '').trim(); }) }; }"""
 
 
 def case_evhead():
@@ -767,8 +767,7 @@ def case_evhead():
             c1b = pg.evaluate(BLOCKS, 'Part Man')
             print('C) alle:', c1, '| Ereignisse:', c1b[0]['ev'] if c1b else None)
             results.append(bool(c1) and c1['title'].endswith('(2)') and c1['tracks'] == [0, 1, 2, 3] and c1b[0]['ev'] == ['① Recording all 4 tracks'])
-            pg.fill(f'{part} .dci-em-evedit [data-f=em-evdate]', '2024-03')
-            pg.press(f'{part} .dci-em-evedit [data-f=em-evdate]', 'Tab')
+            H.ev_date(pg, part, '2024-03', inline=True)
             pg.wait_for_timeout(500)
             d1 = pg.evaluate(EVEDIT, 'Part Man')
             pg.click(f'{part} .dci-em-evedit [data-act=em-evpool][data-id=""]')
@@ -819,6 +818,78 @@ def case_evhead():
             ctx.close()
         finally:
             H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_evdatefields():
+    """Credits Importer 3.42.1 (collected item Z-EDM; Q-db): the date in the head of an event of an entry's matrix as MusicBrainz
+    has it. Solo Man's ① (no date):
+    A) The head shows "no date" as a button (until 3.42.0 a text field); clicked: below it the fields Begin and End (year, month,
+       day) and "ended", "⇣" (the begin into the end), "Apply", "no date", ✕.
+    B) Begin 2001-03-02, End 2001-03-20, Apply: the head shows "2001-03-02 – 2001-03-20", the rows have the date (a new date of the
+       pool); opened again: the fields hold it.
+    C) Month 13: "Apply" says what is wrong, nothing changes. "2004-05-06 – 2004-05-09" pasted into the year of Begin: the fields of
+       begin and end filled. ✕ closes the fields.
+    D) "no date": the event without a date again."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    BOX = """(sel) => { const b = document.querySelector(sel + ' th.dci-em-ev [data-evdate]'); if (!b) return null; const v = (k) => (b.querySelector('[data-f=ed-' + k + ']') || {}).value;
+      return { f: ['by', 'bm', 'bd', 'ey', 'em', 'ed'].map(v), ended: !!b.querySelector('[data-f=ed-ended]'), btns: [...b.querySelectorAll('button')].map(x => x.dataset.act),
+        err: (b.querySelector('[data-el=evdate-error]') || {}).textContent || '' }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            solo = sec_sel(pg, 'Solo Man')
+            btn = f'{solo} th.dci-em-ev button.dci-em-evdate'
+            a0 = [pg.evaluate("(s) => document.querySelector(s).textContent.trim()", btn), pg.evaluate(BOX, solo)]
+            pg.click(btn); pg.wait_for_timeout(250)
+            a1 = [pg.evaluate("(s) => document.querySelector(s).getAttribute('aria-expanded')", btn), pg.evaluate(BOX, solo)]
+            print('A)', a0, a1)
+            results.append(a0 == ['no date', None] and a1[0] == 'true' and a1[1] and a1[1]['f'] == [''] * 6 and a1[1]['ended']
+                           and a1[1]['btns'] == ['ed-copy', 'em-evdate-apply', 'em-evdate-clear', 'em-evdate-open'])
+            # "⇣" copies the begin into the end
+            pg.fill(f'{solo} th.dci-em-ev [data-evdate] [data-f=ed-by]', '1999')
+            pg.click(f'{solo} th.dci-em-ev [data-evdate] [data-act=ed-copy]'); pg.wait_for_timeout(150)
+            results.append(pg.evaluate(BOX, solo)['f'][3] == '1999')
+            box = f'{solo} th.dci-em-ev [data-evdate]'
+            for k, v in (('by', '2001'), ('bm', '03'), ('bd', '02'), ('ey', '2001'), ('em', '03'), ('ed', '20')):
+                pg.fill(f'{box} [data-f=ed-{k}]', v)
+            pg.click(f'{box} [data-act=em-evdate-apply]'); pg.wait_for_timeout(400)
+            b0 = [pg.evaluate(H.EV_DATES, solo), pg.evaluate(BOX, solo), pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /2001-03-02 – 2001-03-20/.test(t)).length")]
+            pg.click(btn); pg.wait_for_timeout(250)
+            b1 = pg.evaluate(BOX, solo)
+            print('B)', b0, b1)
+            results.append(b0[0] == ['2001-03-02 – 2001-03-20'] and b0[1] is None and b0[2] == 1 and b1 and b1['f'] == ['2001', '03', '02', '2001', '03', '20'])
+            pg.fill(f'{box} [data-f=ed-bm]', '13')
+            pg.click(f'{box} [data-act=em-evdate-apply]'); pg.wait_for_timeout(300)
+            c0 = [pg.evaluate(BOX, solo), pg.evaluate(H.EV_DATES, solo)]
+            pg.evaluate("""([sel, text]) => { const el = document.querySelector(sel); const dt = new DataTransfer(); dt.setData('text', text);
+              el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", [f'{box} [data-f=ed-by]', '2004-05-06 – 2004-05-09'])
+            pg.wait_for_timeout(200)
+            c1 = pg.evaluate(BOX, solo)
+            pg.click(f'{box} [data-act=em-evdate-open]'); pg.wait_for_timeout(250)
+            c2 = pg.evaluate(BOX, solo)
+            print('C)', c0, '| eingefügt:', c1 and c1['f'], '| ✕:', c2)
+            results.append(c0[0] and c0[0]['err'] and c0[1] == ['2001-03-02 – 2001-03-20'] and c1 and c1['f'] == ['2004', '05', '06', '2004', '05', '09'] and c2 is None)
+            pg.click(btn); pg.wait_for_timeout(250)
+            pg.click(f'{box} [data-act=em-evdate-clear]'); pg.wait_for_timeout(400)
+            d0 = pg.evaluate(H.EV_DATES, solo)
+            print('D)', d0)
+            results.append(d0 == [''])
+            print('Fehler:', errs)
+            results.append(not errs)
+        finally:
             H.discogs_release = orig
             b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
@@ -881,8 +952,7 @@ def case_companies():
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1500)
             sec = sec_sel(pg, 'Abbey Road Studios')
-            pg.fill(f'{sec} th.dci-em-ev [data-f=em-evdate]', '2001-03')
-            pg.press(f'{sec} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            H.ev_date(pg, sec, '2001-03')
             pg.wait_for_timeout(600)
             pg.click('[data-act=apply]')
             pg.wait_for_timeout(1500)

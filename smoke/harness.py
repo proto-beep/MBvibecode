@@ -1182,6 +1182,27 @@ def open_settings(pg, tab=None):
         pg.wait_for_timeout(150)
 
 
+# [3.42.1] the date of an event in the head of an entry's matrix (a button since Z-EDM): its text, '' without a date
+EV_DATES = """(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev button.dci-em-evdate')].map(x => x.classList.contains('dci-cl-has') ? x.textContent.trim() : '')"""
+
+
+def ev_date(pg, scope, text, inline=False):
+    """[3.42.1] The date of an event set (Z-EDM): MusicBrainz's fields (begin, end) filled from "2001-06-05", "2001-03" (begin and
+    end alike) or "2001-03-02 – 2001-03-20" and applied – in the head of the event (scope: the entry's section; its fields opened first) or,
+    inline, in an opened event."""
+    if not inline:
+        pg.click(f'{scope} th.dci-em-ev button.dci-em-evdate')
+        pg.wait_for_timeout(200)
+    box = f'{scope} .dci-em-evedit [data-evdate]' if inline else f'{scope} th.dci-em-ev [data-evdate]'
+    # (one date: begin and end the same, as a date typed into the field was read until 3.42.0)
+    parts = text.split(' – ') if ' – ' in text else [text, text]
+    for pre, val in (('b', parts[0]), ('e', parts[1])):
+        y, m, d = (val.split('-') + ['', '', ''])[:3]
+        for k, v in (('y', y), ('m', m), ('d', d)):
+            pg.fill(f'{box} [data-f=ed-{pre}{k}]', v)
+    pg.click(f'{box} [data-act=em-evdate-apply]')
+
+
 def open_stats(pg):
     """[189] (3.39.3) The statistics opened below the head (their own button next to ⚙; until 3.39.2 a tab of ⚙ Settings)."""
     if pg.evaluate("!document.querySelector('[data-el=stats]') || document.querySelector('[data-el=stats]').hidden"):
