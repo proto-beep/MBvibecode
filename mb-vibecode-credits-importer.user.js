@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.3
+// @version      3.42.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -256,6 +256,25 @@
       "unrec.title.one": "{n} line not recognized",
       "unrec.title.other": "{n} lines not recognized",
       "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
+      "una.hint": "Click a word to give it an entry (⇧-click: the words up to it).",
+      "una.wordTitle": "Click: give this word an entry · ⇧-click: the words up to it",
+      "una.title": "An entry for the words chosen",
+      "una.name": "Name",
+      "una.kind": "Kind",
+      "una.role": "Role",
+      "una.rolePh": "e.g. Mixed By, guitar, Producer",
+      "una.tracksLine": "the tracks of the line ({list})",
+      "una.tracksAll": "the whole release",
+      "una.tracksNone": "the whole release (the line names no tracks)",
+      "una.tracksAllShort": "all tracks",
+      "una.remember": "Remember as a rule of my own",
+      "una.add": "Add entry",
+      "una.noName": "A name is needed.",
+      "una.noRole": "A role is needed.",
+      "log.unaAdded": "{name}: added from a line not recognized ({kind}, {role}; {tracks})",
+      "log.unaRule": "Own rule {id}: “{phrase}” as {kind}, {role} – read so in every text",
+      "rules.kindText": "Text phrase → entry",
+      "rules.textTracksLine": "tracks of the line",
       "ignored.title.one": "{n} line left out on purpose",
       "ignored.title.other": "{n} lines left out on purpose",
       "ignored.hint": "Thanks, endorsements (“plays … strings”) and web addresses give no credit and are left out. If there is a credit after all, add it by hand (“Add entry manually”).",
@@ -5535,7 +5554,8 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [] } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [],
+        ownTexts = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -6297,6 +6317,27 @@
       let contWho = null;
       let prevBy = null;
       let lineLead = null;
+      /**
+       * [Z-UNA] (3.42.4) The own rules of texts whose phrase is in a text (words whole, any case): each its entry – a person with its
+       * role, a label, place or area with its company role; the tracks of the line when the rule says so (`tracks: 'line'`). → how many.
+       */
+      const phraseRe = (x) => String(x).trim().split(/\s+/).map((w) => w.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')).join('\\s+');
+      const ownRes = ownTexts.filter((u) => u && u.phrase && u.role).map((u) => [u, new RegExp(`(?<![\\p{L}\\p{N}])${phraseRe(u.phrase)}(?![\\p{L}\\p{N}])`, 'iu')]);
+      const readOwnTexts = (t, scope) => {
+        let n = 0;
+        for (const [u, re] of ownRes) {
+          const m = String(t || '').match(re);
+          if (!m) continue;
+          const sc = u.tracks === 'line' ? scope : null;
+          if (u.entity === 'artist') {
+            if (addCredit(m[0], u.role, sc, { own: u.id })) n++;
+          } else if (isCompanyRole(u.role)) {
+            companies.push({ who: who(m[0]), role: u.role, catno: '', tracks: sc ? tracksOf(sc) : null, ...at(), own: u.id });
+            n++;
+          }
+        }
+        return n;
+      };
       const societiesIn = (t) => uniq([...String(t || '').matchAll(SOCIETY_WORD)].map((x) => societyName(x[1])));
       const addSociety = (name) => {
         if (!isCompanyRole('Rights Society')) return false;
@@ -6530,6 +6571,12 @@
           // [3.21.3] also to labels and places ("℗ 2023 X Records instagram.com/x": "Create label …" fills it in, 37c)
           else if (web.links.length) giveLinks(web.links, [...credits.slice(c0), ...companies.slice(k0)]);
         }
+        // [Z-UNA] (3.42.4) own rules of texts (U…, kind "text"): a phrase of a part not recognized gives its entry – the line, or
+        // the words not recognized, then are no more
+        if (ownTexts.length) {
+          for (let k = missed.length - 1; k >= 0; k--) if (readOwnTexts(missed[k], scope)) { missed.splice(k, 1); found++; }
+          for (let k = unknownParts.length - 1; k >= 0; k--) if (readOwnTexts(unknownParts[k], scope)) unknownParts.splice(k, 1);
+        }
         if (!found) {
           if (missed.length) unrecognized.push(line0);
         } else {
@@ -6737,6 +6784,27 @@
       return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null };
     }
 
+    /**
+     * [Z-UNA] (3.42.4) The tracks a line names, as readLine finds them – "Tracks 3–5: …", "… (tracks 1, 4)", "… (1, 3)", "… • 1, 8",
+     * "2: …" (a line of a track page as listed) – → { set, spec } (track indexes), null if none; a line listed with its words not
+     * recognized ("… → ? “x”") without them.
+     */
+    function lineTracks(raw, resolveTracks) {
+      const line = clean(String(raw || '').replace(/\s+→\s+\?\s.*$/, ''));
+      const tries = [];
+      let m;
+      if ((m = line.match(/^([A-Za-z]?\d+(?:\.\d+)?):\s+\S/))) tries.push(m[1]);
+      if ((m = line.match(PREFIX))) tries.push(m[1]);
+      if ((m = line.match(SUFFIX)) && m[1]) tries.push(m[2]);
+      if ((m = line.match(NUMBERS)) && m[1]) tries.push(m[2]);
+      if ((m = line.match(BULLET))) tries.push(m[2]);
+      for (const spec of tries) {
+        const set = resolveTracks ? resolveTracks(spec) : null;
+        if (set && set.size) return { set, spec: spec.trim() };
+      }
+      return null;
+    }
+
     /** The neutral release of a pasted text (ctx: the MB tracks and the core's helpers, see sourceContext). */
     function toRelease(input, ctx) {
       const text = String((input && input.text) || '');
@@ -6781,6 +6849,7 @@
       parseReleaseId: () => '',
       parse,
       toRelease,
+      lineTracks,
       async release(id, ctx) {
         return toRelease(ctx.input, ctx);
       },
@@ -9417,6 +9486,11 @@
     // [E1] A pasted text (the source "text") and its form while open
     textInput: null,
     textForm: null,
+    // [Z-UNA] (3.42.4) words of a line not recognized chosen for an entry ({ li, line, a, b, name, kind, role, tracks, remember,
+    // error }), the words given one (line → word indexes) and whether the list stays open
+    una: null,
+    unaDone: new Map(),
+    unaOpen: false,
     // [stage 2] The second source supplementing the loaded one (its list of suggestions), and the sources that did
     supp: null,
     suppSources: new Map(),
@@ -11884,8 +11958,10 @@
       Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES', 'WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].includes(k) && !editable.has(k))
         .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
     } else return { error: tr('rules.importBad') };
-    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
-    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+    // [Z-UNA] (3.42.4) and rules of texts (phrase, entity, role, tracks)
+    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit', 'phrase', 'entity', 'role', 'tracks'];
+    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument', 'text'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+      && (r.kind !== 'text' || (typeof r.phrase === 'string' && r.phrase.trim() && ['artist', 'label', 'place', 'area'].includes(r.entity) && typeof r.role === 'string' && r.role.trim()))
       && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
       .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
     out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
@@ -11974,7 +12050,8 @@
       li('changed', tid, `${added.length ? `+ ${esc(added.map(showItem).join(', '))}` : ''} ${removed.length ? `− ${esc(removed.map(showItem).join(', '))}` : ''}${L.reload ? ` <span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}`);
     }
     const ownNow = new Map(userRules().map((u) => [u.id, u]));
-    const ownText = (u) => esc(`${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
+    const ownText = (u) => esc(u.kind === 'text' ? `“${u.phrase || u.discogs}” → ${u.entity || ''} · ${u.role || ''}`
+      : `${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
     plan.own.forEach((u) => {
       const w = ownNow.get(u.id);
       if (!w || encJson(w) !== encJson(u)) li(w ? 'changed' : 'new', u.id, ownText(u));
@@ -12068,10 +12145,15 @@
     const f = S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' };
     const opt = (v, label) => `<option value="${esc(v)}" ${String(f[label.k] || '') === v ? 'selected' : ''}>${esc(label.t)}</option>`;
     const list = userRules();
-    const rowsHtml = list.map((u) => `<tr data-rid="${esc(u.id)}"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
+    // [Z-UNA] (3.42.4) a rule of texts (words of a line not recognized given an entry): its phrase, kind and role – on, off, delete
+    const rowsHtml = list.map((u) => (u.kind === 'text' ? `<tr data-rid="${esc(u.id)}" data-urule-kind="text"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
+      <td>${esc(u.id)}</td><td>${esc(tr('rules.kindText'))}</td><td>${esc(tr('common.quoted', { text: u.phrase || u.discogs }))}</td>
+      <td>${esc(`${tr(`entity.${u.entity}`)} · ${u.role}${u.tracks === 'line' ? ` · ${tr('rules.textTracksLine')}` : ''}`)}</td><td></td><td></td>
+      <td><button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`
+      : `<tr data-rid="${esc(u.id)}"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
       <td>${esc(u.id)}</td><td>${esc(trRules(u.kind === 'role' ? 'rules.kindRole' : 'rules.kindInstrument'))}</td><td>${esc(u.discogs)}${u.details ? ` [${esc(u.details)}]${u.detailsMode === 'exact' ? ' =' : ''}` : (u.detailsMode === 'exact' ? ' []' : '')}</td>
       <td>${esc(u.kind === 'role' ? `${u.type} · ${u.level}` : '')}</td><td>${esc(u.instrument || '')}</td><td>${esc(u.credit || '')}</td>
-      <td><button type="button" class="dci-textbtn" data-urule-edit="${esc(u.id)}">${esc(tr('rules.edit'))}</button> <button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`).join('');
+      <td><button type="button" class="dci-textbtn" data-urule-edit="${esc(u.id)}">${esc(tr('rules.edit'))}</button> <button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`)).join('');
     const role = (f.kind || 'role') === 'role';
     return `<section data-rsect="own"><h3>${esc(tr('rules.own'))} (U001 … · ${esc(tr('rules.ownWhere'))})</h3>
       ${list.length ? `<div class="dci-rules-wrap"><table><thead><tr><th>${esc(tr('rules.on'))}</th><th>${esc(tr('rules.id'))}</th><th>${esc(tr('rules.kind'))}</th><th>${esc(trRules('rules.discogs'))}</th><th>${esc(tr('rules.mb'))}</th><th>${esc(tr('rules.instrument'))}</th><th>${esc(tr('rules.credit'))}</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>` : `<p class="dci-sub">${esc(tr('rules.ownEmpty'))}</p>`}
@@ -17064,6 +17146,8 @@
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
       // [S073] (3.42.3) the titles of the release and its tracks in MusicBrainz: no persons (Z-BZ)
       titleNames: uniq([S.releaseTitleMb || '', ...tracks.map((t) => t.title)].filter(Boolean)),
+      // [Z-UNA] (3.42.4) your own rules of texts (a phrase, its kind and role)
+      ownTexts: userRules().filter((u) => u.kind === 'text' && u.on !== false),
       // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
       stackUp: !!S.stackUp,
     };
@@ -17580,6 +17664,11 @@
         lost++;
         continue;
       }
+      // [Z-UNA] (3.42.4) a row added then that the source gives now itself (an own rule of texts made of the words given an entry):
+      // once
+      const same = (y) => y.artistKey === a.key && norm(y.raw || '') === norm(r.raw || '') && y.level === r.level && y.tracks.size === r.tracks.size
+        && [...r.tracks].every((i) => y.tracks.has(i));
+      if (x.f && S.rows.some((y) => S.freshRows.has(y.id) && same(y))) continue;
       ids.set(x.i, r.id);
       out.push(r);
       changed++;
@@ -17783,6 +17872,56 @@
     }
   }
 
+  /**
+   * A company of the source (label, place, area – a group of groupCompanies) as an entry with its rows, as the import makes it (moved
+   * out of loadRelease in 3.42.4 for Z-UNA, which adds one from words of a line not recognized): null when it is left out (S007).
+   */
+  function addCompanyEntry(g, rel, leftOutKeys) {
+    // [S007]
+    if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
+      log('info', 'festivalSkipped', { name: g.name });
+      return null;
+    }
+    const company = {
+      key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
+      entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
+      ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
+    };
+    S.artists.set(company.key, company);
+    for (const r of g.roles) {
+      const row = makeRow(company.key, { raw: r.role, company });
+      if (r.fromAbout) row.fromAbout = true;
+      // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
+      if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
+      if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
+      row.srcRefs = r.refs || []; // [3.17.0]
+      // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
+      if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
+        leftOutKeys.add(company.key);
+        continue;
+      }
+      // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
+      const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
+      row.dAllTracks = !some;
+      row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
+      // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
+      if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
+      if (some && !row.tracks.size) continue;
+      row.suggested = new Set(row.tracks);
+      // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
+      // item 97c)
+      if (r.notesLine && some) {
+        row.notesTracks = new Set(row.tracks);
+        row.notesFrom = r.notesLine;
+      }
+      if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
+      if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
+      suggestCommissioned(row);
+      S.rows.push(row);
+    }
+    return company;
+  }
+
   async function loadRelease(id, { confirmed = false, source = S.source, repeat = null } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
@@ -17833,6 +17972,7 @@
       S.artists = new Map();
       S.rows = [];
       S.festivals = []; // [3.37.8] (S056)
+      Object.assign(S, { una: null, unaDone: new Map(), unaOpen: false }); // [Z-UNA] (3.42.4)
       S.rowOpen.clear();
     S.groupCompact.clear();
       S.supp = null;
@@ -17870,50 +18010,7 @@
       S.stackCur = (rel.credits || []).filter((c) => c.stackAmbig);
       S.stackAlt = rel.stackAlt || [];
       S.stackAltUnrec = rel.stackAltUnrec || null;
-      for (const g of groupCompanies(rel.companies)) {
-        // [S007]
-        if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
-          log('info', 'festivalSkipped', { name: g.name });
-          continue;
-        }
-        const company = {
-          key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
-          entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
-          ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
-        };
-        S.artists.set(company.key, company);
-        for (const r of g.roles) {
-          const row = makeRow(company.key, { raw: r.role, company });
-          if (r.fromAbout) row.fromAbout = true;
-          // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
-          if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
-          if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
-          row.srcRefs = r.refs || []; // [3.17.0]
-          // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
-          if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
-            leftOutKeys.add(company.key);
-            continue;
-          }
-          // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
-          const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
-          row.dAllTracks = !some;
-          row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
-          // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
-          if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
-          if (some && !row.tracks.size) continue;
-          row.suggested = new Set(row.tracks);
-          // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
-          // item 97c)
-          if (r.notesLine && some) {
-            row.notesTracks = new Set(row.tracks);
-            row.notesFrom = r.notesLine;
-          }
-          if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
-          if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
-          suggestCommissioned(row);
-          S.rows.push(row);
-        }
-      }
+      for (const g of groupCompanies(rel.companies)) addCompanyEntry(g, rel, leftOutKeys);
       // [3.7.0] A company with an area ("Loft, Cologne") is a place, when its roles allow one
       for (const c of S.artists.values()) {
         if (c.company && c.area && !c.entityType && companyTypes(c).includes('place')) setCompanyEntityType(c, 'place');
@@ -18174,7 +18271,8 @@
         log('info', 'placeholderSuggested', { name: a.name, said: a.placeholder });
         continue;
       }
-      const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
+      // [Z-UNA] (3.42.4) a series named in a text (words not recognized given an entry): MusicBrainz's series of that name
+      const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : a.entityType === 'series' ? 'series' : 'artist';
       try {
         const words = luceneWords(a.name);
         // [3.7.0] A place with the area the source names ("Loft, Cologne"): only places in that area; [3.31.2] only its first
@@ -18185,7 +18283,7 @@
         const query = area && words ? `place:(${words}) AND area:(${area})`
           : words && (!a.company || type === 'area') ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
-        const items = (data && data[`${type}s`]) || [];
+        const items = (data && (type === 'series' ? data.series : data[`${type}s`])) || [];
         // [3.31.2] a place: without a hit in that area, by its name (and other names) alone – the area of each hit is shown,
         // those in an area the source names first (item 98b)
         let placeArea = '';
@@ -19164,6 +19262,157 @@
     }).join('');
   }
 
+  // --- [Z-UNA] (3.42.4) Words of a line not recognized given an entry (collected item Z-UNA; Q-dn, Q-dr) ----------------------
+  // A click on a word of "… lines not recognized" selects it (⇧-click: the words up to it); the form below the line names its kind
+  // (artist, label, place, area, series), a role for that kind and the tracks (those the line names, or the whole release) – the
+  // entry then is one like a recognized one (looked up by its name). "Remember as a rule of my own" stores it as an own rule of
+  // texts (U…, kind "text"): read so in every text from then on.
+
+  /** The roles offered for a kind (a person: any role as a source writes it). */
+  const UNA_ROLES = {
+    label: ['Phonographic Copyright (p)', 'Copyright (c)', 'Published By', 'Distributed By', 'Licensed From', 'Licensed To', 'Marketed By', 'Manufactured By', 'Printed By', 'Pressed By'],
+    place: ['Recorded At', 'Mixed At', 'Mastered At', 'Remixed At', 'Engineered At', 'Pressed At', 'Manufactured At', 'Lacquer Cut At'],
+    area: ['Recorded In', 'Mixed In', 'Mastered In', 'Produced In', 'Remixed In', 'Engineered In'],
+    series: ['part of'],
+  };
+  const UNA_KINDS = ['artist', 'label', 'place', 'area', 'series'];
+  const unaRoles = (kind) => (UNA_ROLES[kind] || []).filter((r) => kind === 'series' || !!mapCompanyRole(r).rule);
+  /** The words of a line as they are clicked (the spaces between them left out). */
+  const unaWords = (line) => String(line || '').split(/\s+/).filter(Boolean);
+  /** A selection as a name: the words without the signs around them ("“Skinny", "recording,"). */
+  const unaName = (line, a, b) => unaWords(line).slice(Math.min(a, b), Math.max(a, b) + 1).join(' ')
+    .replace(/^[\s“”"‘’'(\[«»•·,;:–—-]+/, '').replace(/[\s“”"‘’')\]«»•·,;:.!?–—-]+$/, '').trim();
+
+  function unaWordsHtml(line, li) {
+    const sel = S.una && S.una.li === li && S.una.line === line ? [Math.min(S.una.a, S.una.b), Math.max(S.una.a, S.una.b)] : null;
+    const done = (S.unaDone && S.unaDone.get(line)) || new Set();
+    let w = -1;
+    return String(line).split(/(\s+)/).map((t) => {
+      if (!t || /^\s+$/.test(t)) return esc(t);
+      w++;
+      const on = sel && w >= sel[0] && w <= sel[1];
+      return `<span class="dci-una-w${on ? ' dci-una-sel' : ''}${done.has(w) ? ' dci-una-done' : ''}" data-act="una-word" data-li="${li}" data-w="${w}" title="${esc(tr('una.wordTitle'))}">${esc(t)}</span>`;
+    }).join('');
+  }
+
+  /** The tracks the line names (the text adapter's reading), or null. */
+  const unaScope = (line) => (TEXT.lineTracks ? TEXT.lineTracks(line, (spec) => tracksInText(`tracks ${spec}`, mbTracksAsSource())) : null);
+
+  function unaFormHtml(line) {
+    const u = S.una;
+    const roles = u.kind === 'artist' ? null : unaRoles(u.kind);
+    const sc = unaScope(line);
+    const trackList = sc ? [...sc.set].sort((x, y) => x - y).map((i) => (S.mbTracks[i] ? S.mbTracks[i].number : i + 1)).join(', ') : '';
+    const radio = (v, label) => `<label><input type="radio" name="dci-una-tracks" data-f="una-tracks" value="${v}" ${u.tracks === v ? 'checked' : ''}> ${esc(label)}</label>`;
+    return `<div class="dci-una-form" role="group" aria-label="${esc(tr('una.title'))}">
+      <label>${esc(tr('una.name'))} <input type="text" data-f="una-name" value="${esc(u.name)}"></label>
+      <label>${esc(tr('una.kind'))} <select data-f="una-kind">${UNA_KINDS.map((k) => `<option value="${k}" ${u.kind === k ? 'selected' : ''}>${esc(tr(`entity.${k}`))}</option>`).join('')}</select></label>
+      <label>${esc(tr('una.role'))} ${roles ? `<select data-f="una-role">${roles.map((r) => `<option value="${esc(r)}" ${norm(u.role) === norm(r) ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>`
+        : `<input type="text" data-f="una-role" value="${esc(u.role)}" placeholder="${esc(tr('una.rolePh'))}">`}</label>
+      <span class="dci-una-tracks">${sc ? `${radio('line', tr('una.tracksLine', { list: trackList }))} ${radio('release', tr('una.tracksAll'))}` : esc(tr('una.tracksNone'))}</span>
+      ${u.kind !== 'series' ? `<label class="dci-una-rule"><input type="checkbox" data-f="una-rule" ${u.remember ? 'checked' : ''}> ${esc(tr('una.remember'))}</label>` : ''}
+      <span class="dci-una-btns"><button type="button" class="dci-apply dci-small" data-act="una-apply">${esc(tr('una.add'))}</button>
+        <button type="button" class="dci-textbtn" data-act="una-close">${esc(tr('common.cancel'))}</button></span>
+      ${u.error ? `<span class="dci-warn" role="alert">${esc(u.error)}</span>` : ''}</div>`;
+  }
+
+  /** A click on a word: it alone, or with ⇧ the words from the one chosen first up to it (in the same line). */
+  function unaPick(btn, extend) {
+    const li = Number(btn.dataset.li);
+    const w = Number(btn.dataset.w);
+    const line = (((S.release && S.release.unrecognized) || [])[li]) || '';
+    if (!line) return;
+    if (extend && S.una && S.una.li === li && S.una.line === line) S.una.b = w;
+    else S.una = { li, line, a: w, b: w, kind: S.una ? S.una.kind : 'artist', role: '', tracks: 'line', remember: false, error: '' };
+    if (S.una.kind !== 'artist' && !S.una.role) S.una.role = unaRoles(S.una.kind)[0] || '';
+    S.una.name = unaName(line, S.una.a, S.una.b);
+    S.unaOpen = true;
+    renderSource();
+    const input = S.overlay.querySelector('.dci-una-form [data-f="una-name"]');
+    if (input) input.focus({ preventScroll: true });
+  }
+
+  /**
+   * "Add entry": the words as an entry of their kind with the role – a person through the register (like a credit of the text), a
+   * label, place or area with its company role, a series "part of" the release – looked up by its name; with "Remember …" an own
+   * rule of texts.
+   */
+  async function unaApply() {
+    const u = S.una;
+    if (!u) return;
+    const form = S.overlay.querySelector('.dci-una-form');
+    const val = (f) => ((form && form.querySelector(`[data-f="${f}"]`)) || { value: '' }).value;
+    const name = String(val('una-name') || u.name).trim();
+    const role = String(u.kind === 'artist' ? val('una-role') : (val('una-role') || u.role) || '').trim();
+    const pick = form && form.querySelector('[data-f="una-tracks"]:checked');
+    const tracks = pick ? pick.value : u.tracks;
+    const remember = !!(form && form.querySelector('[data-f="una-rule"]') && form.querySelector('[data-f="una-rule"]').checked);
+    Object.assign(u, { name, role, tracks, remember });
+    if (!name || !role || (u.kind === 'artist' && !parseRoleNotation(role)[0])) {
+      u.error = tr(!name ? 'una.noName' : 'una.noRole');
+      renderSource();
+      return;
+    }
+    const sc = tracks === 'line' ? unaScope(u.line) : null;
+    const rel = S.release;
+    const at = { line: u.line, part: name, pi: 0, n: 0, una: true };
+    let entry = null;
+    if (u.kind === 'artist') {
+      const p = parseRoleNotation(role)[0];
+      const credit = { who: { id: 0, name, rawName: name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
+        tracks: sc ? { indexes: [...sc.set], spec: sc.spec, unresolved: [] } : { all: true }, ...at };
+      for (const g of groupCredits([credit])) {
+        entry = [...S.artists.values()].find((a) => !a.company && !a.other && norm(a.name) === norm(g.name)) || null;
+        const fresh = !entry;
+        if (fresh) {
+          entry = newPersonEntry(g);
+          S.artists.set(entry.key, entry);
+        }
+        addCreditRows(entry, g, rel, S.source, new Set());
+        if (!fresh) entry = null; // looked up already
+      }
+    } else if (u.kind === 'series') {
+      entry = { key: nextId('o'), dId: 0, links: [], name, rawName: name, status: 'missing', other: true, entityType: 'series', mbid: null, mbName: '', mbComment: '',
+        candidates: [], editing: false, error: '', anvs: [] };
+      S.artists.set(entry.key, entry);
+      const row = makeRow(entry.key, { manual: true, company: null });
+      Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [], una: true });
+      applyRoleText(row, 'part of');
+      row.level = 'release';
+      row.tracks = new Set(selIdx());
+      row.suggested = new Set(row.tracks);
+      S.rows.push(row);
+    } else {
+      for (const g of groupCompanies([{ who: { id: 0, name, rawName: name, links: [] }, role, catno: '', tracks: sc ? { indexes: [...sc.set], spec: sc.spec } : null, ...at }])) {
+        entry = addCompanyEntry(g, rel, new Set());
+        if (entry) setCompanyEntityType(entry, u.kind);
+      }
+    }
+    S.rows.filter((r) => entry && r.artistKey === entry.key).forEach((r) => { r.una = true; });
+    // the words given an entry: marked in the line
+    const done = S.unaDone.get(u.line) || new Set();
+    for (let k = Math.min(u.a, u.b); k <= Math.max(u.a, u.b); k++) done.add(k);
+    S.unaDone.set(u.line, done);
+    if (remember && u.kind !== 'series') {
+      const id = nextUserRuleId();
+      userRules().push({ id, kind: 'text', on: true, discogs: norm(name), phrase: name, entity: u.kind, role, tracks: sc && tracks === 'line' ? 'line' : 'release' });
+      saveRules();
+      refreshRulesWindow();
+      log('info', 'unaRule', { id, phrase: name, kind: tr(`entity.${u.kind}`), role });
+    }
+    log('info', 'unaAdded', { name, kind: tr(`entity.${u.kind}`), role, tracks: sc && tracks === 'line' ? sc.spec : tr('una.tracksAllShort') });
+    S.una = null;
+    $('toolbar').hidden = false;
+    renderGroups();
+    renderSource();
+    refresh();
+    if (entry && entry.status === 'pending') await resolveArtists({ only: [entry] });
+    // (a source whose names have links – Discogs – looks up only those of its notes by their names)
+    if (entry && entry.status === 'missing' && !(entry.nameHits || []).length) await suggestByName([entry]);
+    renderGroups();
+    refresh();
+  }
+
   /** A linked source in words: "Discogs 1234", "Bandcamp band.bandcamp.com/album/name". */
   const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : l.id.replace(/^https?:\/\//, '')}`;
 
@@ -19180,8 +19429,10 @@
     const unrec = (rel && rel.unrecognized) || [];
     // [3.37.4] a line of the cover art: its place in the image while the mouse rests on it (item 154)
     const peekHint = (lines) => (lines.some((l) => linePeekHits(l).length) ? `<p class="dci-sub dci-linepeek-hint">${esc(tr('cover.linePeekHint'))}</p>` : '');
-    const unrecHtml = unrec.length ? `<details class="dci-unrec"><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
-      <ol>${unrec.map((l) => `<li${linePeekAttrs(l)}>${esc(l)}</li>`).join('')}</ol>${peekHint(unrec)}<p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
+    // [Z-UNA] (3.42.4) each word to click (⇧: the words up to it), a form below the line gives them an entry
+    const unrecHtml = unrec.length ? `<details class="dci-unrec"${S.una || S.unaOpen ? ' open' : ''}><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
+      <ol>${unrec.map((l, i) => `<li${linePeekAttrs(l)}>${unaWordsHtml(l, i)}${S.una && S.una.li === i && S.una.line === l ? unaFormHtml(l) : ''}</li>`).join('')}</ol>${peekHint(unrec)}
+      <p class="dci-sub">${esc(tr('unrec.hint'))} ${esc(tr('una.hint'))}</p></details>` : '';
     // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
     const ign = (rel && rel.ignored) || [];
     const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
@@ -31075,6 +31326,17 @@
         S.textForm = null;
         renderSource();
         break;
+      // [Z-UNA] (3.42.4) words of a line not recognized: chosen (⇧: up to this one), given an entry, or the form closed
+      case 'una-word':
+        unaPick(btn, !!e.shiftKey);
+        break;
+      case 'una-apply':
+        unaApply();
+        break;
+      case 'una-close':
+        S.una = null;
+        renderSource();
+        break;
       // [3.34.1] text from cover art (beta, item E3)
       case 'ocr-open':
         openOcr();
@@ -31251,6 +31513,19 @@
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     if (!f) return;
+    // [Z-UNA] (3.42.4) the form of words not recognized: another kind offers its roles
+    if (/^una-/.test(f)) {
+      if (!S.una) return;
+      if (f === 'una-kind') {
+        const name = S.overlay.querySelector('.dci-una-form [data-f="una-name"]');
+        Object.assign(S.una, { kind: el.value, role: unaRoles(el.value)[0] || '', error: '', ...(name ? { name: name.value } : {}) });
+        renderSource();
+      } else if (f === 'una-role') S.una.role = el.value;
+      else if (f === 'una-tracks') S.una.tracks = el.value;
+      else if (f === 'una-rule') S.una.remember = el.checked;
+      else if (f === 'una-name') S.una.name = el.value;
+      return;
+    }
     if (f === 'tg-track' && S.trackForm) {
       if (el.checked) S.trackForm.tracks.add(Number(el.dataset.i));
       else S.trackForm.tracks.delete(Number(el.dataset.i));
@@ -34988,6 +35263,14 @@
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
       .dci-unrec li[data-line-peek], .dci-ignored li[data-line-peek] { cursor: zoom-in; text-decoration: underline dotted #9f9bc0; text-underline-offset: 3px; }
+      /* [Z-UNA] (3.42.4) the words of a line not recognized to click, the ones chosen, those given an entry; the form below */
+      .dci-unrec .dci-una-w { cursor: pointer; border-radius: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 1); }
+      .dci-unrec .dci-una-w:hover { background: var(--row); color: var(--ink); }
+      .dci-unrec .dci-una-sel, .dci-unrec .dci-una-sel:hover { background: var(--purple); color: #fff; }
+      .dci-unrec .dci-una-done { text-decoration: line-through; color: var(--ok); }
+      .dci-una-form { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 6) 0;
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line); border-radius: calc(var(--u, 1px) * 6); color: var(--ink); background: var(--soft); }
+      .dci-una-form input[type=text] { min-width: calc(var(--u, 1px) * 140); }
       .dci-ignored { width: 100%; margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
       .dci-ignored summary { cursor: pointer; color: var(--muted); }
       .dci-ignored ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }

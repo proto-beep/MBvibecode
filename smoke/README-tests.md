@@ -212,6 +212,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     "2024 March 3–5", "2024 March 30 – April 2"; "© 2019 March Records" the year only); "Recorded in Guruguru
                                 #     Brain studio, Rotterdam, 2024 January - July" – the place (Rotterdam), recorded at (T051), 2024-01 –
                                 #     2024-07 in the pool; "Mixed at Studio Sol, Marseille 2023 March" keeps its area; "Recorded in Berlin" an area
+                                #   unawords: 3.42.4 (Z-UNA): words of lines not recognized clicked (⇧) – a place mixed at (with an own rule of texts,
+                                #     in the rules window), a place on the tracks of the line, a person (a role needed), a series; read again: the rule
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
