@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.41.14 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.41.15 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.41.15
+
+#### Fixed (after a check of the block)
+
+- A credit for the position of a split index track ("tracks: 3") goes to all of its tracks; the line of the release page reads such releases the same way.
+- "＋ Suite …" no longer takes tracks that are in another suite or split as a medley.
+- Changing "Edit note" rewrites the note already written at once.
+- "Skip the role" for "Host" leaves no type behind; taken off "Skip", the row is asked again.
+- Statistics: works and gaps closed count what was submitted; decisions count once a row; parts linked with their suite are no longer counted as works linked with recordings (also in the edit note).
+- YouTube: the video's data is found even when the page names it earlier.
 
 ### Import 3.41.14
 

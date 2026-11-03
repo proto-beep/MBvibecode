@@ -679,6 +679,45 @@ def case_gapline():
 
 
 
+def case_gapsplit():
+    """Credits Importer 3.41.15 (the check of Block BF, Z-SUB): the line of the release page reads an index of Discogs whose sub-tracks
+    are tracks of their own in MusicBrainz as these tracks, as the dashboard does. Discogs: 1, 2 and the index "Suite X" with 3a
+    "Song Three" and 3b "Song Four" (Bass Man, bass – the only credit); MusicBrainz has Bass Man's bass on its track 4.
+    A) The line (with "Also when nothing seems to be missing"): "the credits of its list seem to be on MusicBrainz" – until 3.41.14 the release
+       page read three tracks, Bass Man's bass on track 3, and said one relationship was missing."""
+    REL = H.REL
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        t3, t4 = d['tracklist'][2], d['tracklist'][3]
+        t3 = dict(t3, position='3a', extraartists=[])
+        t4 = dict(t4, position='3b', extraartists=[{'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': '', 'id': 3001, 'join': ''}])
+        d['tracklist'] = [dict(t, extraartists=[]) for t in d['tracklist'][:2]] + [{'position': '', 'type_': 'index', 'title': 'Suite X', 'duration': '', 'sub_tracks': [t3, t4]}]
+        d['extraartists'] = []
+        d['companies'] = []
+        return d
+
+    H.discogs_release = rel
+    H.MB_EXTRA.setdefault(H.REC[3], []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': ['bass'],
+                                                'attribute-values': {}, 'artist': {'id': H.ARTISTS[3001][0], 'name': 'Bass Man'}})
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        pr.evaluate("localStorage.setItem('dci-gap-none', 'true')")
+        pr.reload(); pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 30)
+        a = pr.evaluate("document.querySelector('.dci-gapline [data-gap-text]').textContent")
+        print('A)', a)
+        results.append(a.startswith('Discogs: the credits of its list seem to be on MusicBrainz'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_gapmore():
     """Credits Importer 3.40.0 (block AY: Q-g, Q-n, Q-o, Q-x): the line of the release page, more.
     A) No credits in the source: no line (nothing asked of Discogs again).

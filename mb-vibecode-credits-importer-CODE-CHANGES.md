@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.14, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.15, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.15 · 2026-11-03
+
+Block BF, part 9 – the findings of the independent check of the block (eight), each with a test that fails on 3.41.14.
+
+- **Z-SUB:** a position of a split index stands for all its tracks – **`positionGroups(tracks)`** (new; the `group` of each sub-track: the index's position and the base of its sub-tracks), used by DISCOGS `parseTrackSpec` (a credit for "3" or "1 to 3") and by `tracksInText` ("track 3" in the notes). Until 3.41.14 such a credit went to the first sub-track only, or was not resolved at all. **`gapDiscogs(dId, ws)`:** the line of the release page reads Discogs with MusicBrainz's tracks too (it read the index as one track).
+- **Z-SUM:** `addSuite` refuses tracks that are in another suite or split as a medley (`suite.addTaken`); `acceptSuite` leaves the parts of a track that belongs to another suite or medley as they are (until 3.41.14 they were taken over, and undoing the new suite left the track without a work).
+- **Z-EN:** choosing an option of "Edit note" rewrites a block written before at once (`clearEditNote` for "None", `writeEditNote` otherwise) – until 3.41.14 only the next staging did, and "Enter edit" in between sent the old block.
+- **Q-cn:** "skip the role" leaves the row without a type; `remapRow` keeps a row skipped by an answer on "Skip" without a type; `levelOf` asks the question again when such a row gets a level (until 3.41.14 it kept an earlier answer's type while "skip" showed as chosen).
+- **Statistics:** the works of a record from the links it holds (`statExtras(rels)`: linked, created in MusicBrainz's form, new in the editor), the gaps from the supplemented relationships it holds (`statFill(…, kind)` – credits, dates, attrs –, the relationship's `f`), the decisions once a row (`x.decisions`: `statAnswers` of every row, also of one an answer put on "Skip"); a part linked with its suite counts as `noteStats.suiteParts` (the edit note: "linked n parts with their suites"), no longer as a work linked with a recording.
+- **Z-YT:** `jsonAfter` finds the data at its assignment ("ytInitialPlayerResponse = {"), not at the first mention of the name.
+- **Texts (English):** `suite.addTaken`.
+- **Tests:** `t_works_more.py` `subtracks` (a credit for the index), `suiteadd` (overlap), `suiteparts` (the edit note); `t_ui_settings.py` `editnote` (at once), `statsmore2` (decisions once a row; the works of a real record); `t_text_basics.py` `hostask` (skip, then back); `t_sources_bandcamp.py` `youtube` (the name before its assignment); `t_works_matrix.py` new case `statgaps`; `t_start.py` new case `gapsplit`.
 
 ## Import 3.41.14 · 2026-11-03
 

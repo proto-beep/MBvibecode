@@ -307,6 +307,8 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #   remember (3.36.4, 146): with ⚙ Settings → Cache on, the choices of the works matrix after the page is
                                 #     loaded again: an attribute set on a link, a new work planned, a column taken out (and brought back:
                                 #     its rows no longer skipped), a column date, the type of new works
+                                #   statgaps: 3.41.15 (review, Z-STV): "co" on a link MusicBrainz has, staged, "Enter edit" – the record holds it as
+                                #     supplemented with "attrs", gaps.attrs 1
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
@@ -712,6 +714,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     more credits, the others under ▸, ✕ holds; 3.40.3: "Import credits …" imports Bandcamp, Discogs 404 → Bandcamp
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
+                                #   gapsplit: 3.41.15 (review, Z-SUB): the release page reads an index whose sub-tracks are MB tracks as them –
+                                #     Bass Man on track 4 is there: "the credits of its list seem to be on MusicBrainz"
 
 python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
                                 #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only

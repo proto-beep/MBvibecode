@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.14
+// @version      3.41.15
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.14
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.14
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.15
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.15
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.14';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.15';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1149,6 +1149,7 @@
       "suite.addCancel": "Cancel",
       "suite.addNoName": "Please type the name of the suite.",
       "suite.addNoTracks": "No track of the works matrix between these.",
+      "suite.addTaken": "Some of these tracks are in another suite or split as a medley – undo that first.",
       "suite.from.manual": "added by hand",
       "log.suiteAdded": "Suite “{name}” added by hand ({tracks})",
       "suite.done": "{tracks}: parts of the suite “{name}” – {n} works",
@@ -4892,6 +4893,21 @@
   const normPos = (p) => String(p || '').toUpperCase().replace(/\s+/g, '');
 
   /** Positions of the source's tracks (and their aliases) → index into its track list. */
+  /**
+   * [Z-SUB] (3.41.15, review) The positions that stand for several tracks: an index of Discogs read as its sub-tracks ("3" for 3a, 3b,
+   * 3c) – its position and their base on each of them (`group`); position → the indexes, in order.
+   */
+  function positionGroups(tracks) {
+    const map = new Map();
+    (tracks || []).forEach((t, i) => (t.group || []).forEach((p) => {
+      const key = normPos(p);
+      if (!key) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(i);
+    }));
+    return map;
+  }
+
   function positionIndex(tracks) {
     const map = new Map();
     tracks.forEach((t, i) => {
@@ -4924,22 +4940,27 @@
     }
 
     /** "A1 to A3, B2" → indexes into the track list. */
-    function parseTrackSpec(spec, posMap) {
+    function parseTrackSpec(spec, posMap, groups = null) {
       const indexes = new Set();
       const unresolved = [];
+      // [Z-SUB] (3.41.15, review) a position of a split index stands for all its tracks ("3", "1 to 3")
+      const group = (p) => (groups && groups.get(normPos(p))) || null;
       for (const part of String(spec || '').split(',').map((s) => s.trim()).filter(Boolean)) {
         const range = part.split(/\s+to\s+/i);
         if (range.length === 2) {
-          const a = posMap.get(normPos(range[0]));
-          const b = posMap.get(normPos(range[1]));
+          const ga = group(range[0]);
+          const gb = group(range[1]);
+          const a = ga ? ga[0] : posMap.get(normPos(range[0]));
+          const b = gb ? gb[gb.length - 1] : posMap.get(normPos(range[1]));
           if (a !== undefined && b !== undefined) {
             for (let i = Math.min(a, b); i <= Math.max(a, b); i++) indexes.add(i);
             continue;
           }
         } else {
+          const g = group(part);
           const a = posMap.get(normPos(part));
-          if (a !== undefined) {
-            indexes.add(a);
+          if (g || a !== undefined) {
+            (g || [a]).forEach((i) => indexes.add(i));
             continue;
           }
         }
@@ -5039,9 +5060,12 @@
         // [Z-SUB] (3.41.12) an index whose sub-tracks are tracks of their own in MusicBrainz ("C1a", "C1b", "C1c" three recordings):
         // each sub-track a track – the index's credits on all of them, its title as their work (a suite can be one)
         if (split && split.has(d.tracklist.indexOf(t))) {
+          // (3.41.15, review) the index's position and the base of its sub-tracks stand for all of them (positionGroups)
+          const group = uniq([String(t.position || '').trim(), ...subs.map((x) => partOf(x.position))].filter(Boolean))
+            .filter((p) => !subs.some((x) => normPos(x.position) === normPos(p)));
           subs.forEach((x, k) => {
             const aliases = k === 0 && String(t.position || '').trim() ? [String(t.position).trim()] : [];
-            tracks.push({ position: String(x.position || '').trim() || (k === 0 ? String(t.position || '').trim() : ''), title: String(x.title || '').trim(), aliases, work: t.title || '' });
+            tracks.push({ position: String(x.position || '').trim() || (k === 0 ? String(t.position || '').trim() : ''), title: String(x.title || '').trim(), aliases, work: t.title || '', group });
             onTracks.push([...(t.extraartists || []), ...(x.extraartists || [])]);
           });
           continue;
@@ -5062,6 +5086,7 @@
         onTracks.push(people);
       }
       const posMap = positionIndex(tracks);
+      const groups = positionGroups(tracks); // [Z-SUB] (3.41.15, review)
       const credits = [];
       const add = (ea, where) => {
         const who = whoOfArtist(ea);
@@ -5075,7 +5100,7 @@
       for (const ea of d.extraartists || []) {
         const spec = String(ea.tracks || '').trim();
         if (spec) {
-          const { indexes, unresolved } = parseTrackSpec(spec, posMap);
+          const { indexes, unresolved } = parseTrackSpec(spec, posMap, groups);
           add(ea, { indexes: [...indexes], spec, unresolved });
         } else {
           add(ea, { all: true });
@@ -6919,8 +6944,9 @@
     const videoUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
     /** The JSON object after `name` in a page (its braces counted outside strings); null without. */
     function jsonAfter(html, name) {
-      const at = html.indexOf(name);
-      const start = at < 0 ? -1 : html.indexOf('{', at);
+      // (3.41.15, review) at its assignment ("ytInitialPlayerResponse = {"), not at the first mention of the name
+      const m = new RegExp(`${name}\\s*=\\s*\\{`).exec(html);
+      const start = m ? m.index + m[0].length - 1 : -1;
       if (start < 0) return null;
       let depth = 0;
       let inStr = false;
@@ -7831,11 +7857,12 @@
   const gapExactKey = (mbid, kind) => `${GAP_EXACT_PREFIX}${String(mbid).toLowerCase()}${kind && kind !== 'discogs' ? `:${kind}` : ''}`;
 
   /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
-  async function gapDiscogs(dId) {
+  async function gapDiscogs(dId, ws) {
     const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     writeJson('localStorage', 'dci-gap-last', Date.now());
-    return DISCOGS.release(dId);
+    // [Z-SUB] (3.41.15, review) with MusicBrainz's tracks: an index whose sub-tracks are tracks there is read as them
+    return DISCOGS.release(dId, { tracks: ((ws && ws.media) || []).flatMap((m) => (m.tracks || []).map((t) => ({ title: t.title || '' }))) });
   }
 
   /**
@@ -7923,7 +7950,7 @@
     if (prev && prev.credits && !prev.failAt && Date.now() - (prev.at || 0) <= GAP_KEEP_MS) return { kept: prev };
     let rel;
     try {
-      rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
+      rel = src.kind === 'discogs' ? await gapDiscogs(src.id, ws) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
     } catch (e) {
       // an answer that says no (429, 404, 5xx) is kept; a request broken off is not
       if (!e || e.name === 'TypeError' || e.name === 'AbortError') return null;
@@ -9816,7 +9843,11 @@
     // [Q003] A type chosen in the question stays
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
-    if (o) {
+    if (o && o.level === 'skip') {
+      // [Q-cn] (3.41.15, review) an answer that skips the row: it stays on "Skip", without a type
+      Object.assign(row, { types: [], creditFromRole: '' });
+      resolveRowType(row);
+    } else if (o) {
       Object.assign(row, { types: [o.type], creditFromRole: optionCredit(o, row) });
       resolveRowType(row);
       // [Q006] with its instrument or voice
@@ -15348,6 +15379,7 @@
       done.push(`linked ${st.workLinks} work${st.workLinks === 1 ? '' : 's'} to recordings${st.newWorkLinks ? ` (${st.newWorkLinks} newly created)` : ''}`);
       if (st.pendingWorks) done.push(`created ${st.pendingWorks} new work${st.pendingWorks === 1 ? '' : 's'} in the relationship editor, together with their relationships`);
     }
+    if (st.suiteParts) done.push(`linked ${st.suiteParts} part${st.suiteParts === 1 ? '' : 's'} with ${st.suiteParts === 1 ? 'its suite' : 'their suites'}`);
     if (st.filled) done.push(`added role credits to ${st.filled} existing relationship${st.filled === 1 ? '' : 's'}`);
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
     if (st.linkAttrs) done.push(`added attributes (live, cover …) to ${st.linkAttrs} existing link${st.linkAttrs === 1 ? '' : 's'} between recording and work`);
@@ -18604,7 +18636,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.linkAttrStaged.set(it.attrFill, it.attrSig);
-          statFill(newState, null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, null, sourceEntity, 'attrs'); // [E8] (3.38.0)
           S.noteStats.linkAttrs = (S.noteStats.linkAttrs || 0) + 1;
           linkAttrN++;
           log('ok', 'linkAttrsAdded', { text, list: it.attrs.map((a) => a.type.name).join(', ') });
@@ -18637,7 +18669,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filledDates.add(it.fillDate);
-          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, it.row || null, sourceEntity, 'dates'); // [E8] (3.38.0)
           dateFillIds.push(newState.id);
           stagedDates.push({ id: newState.id, date: it.date, text });
           const fd = S.dateFills.get(it.fillDate);
@@ -18685,7 +18717,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filled.add(it.key);
-          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, it.row || null, sourceEntity, 'credits'); // [E8] (3.38.0)
           fillIds.push(newState.id);
           log('ok', 'creditFilled', { text });
         } catch (e) {
@@ -18766,7 +18798,8 @@
             S.staged.set(it.key, { state: st, source: partEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true });
             S.appliedKeys.add(it.key);
           }
-          S.noteStats.workLinks++;
+          // (3.41.15, review) a part with its suite is no link of a work with a recording (the edit note, the statistics)
+          S.noteStats.suiteParts = (S.noteStats.suiteParts || 0) + 1;
           added++;
           log('ok', 'staged', { text });
         } catch (e) {
@@ -21480,6 +21513,7 @@
     let named = false;
     const disc = (String(text).match(/\b(?:cd|disc|disk|lp|platte)\s*(\d+)/i) || [])[1];
     const posMap = positionIndex(srcTracks || []);
+    const groups = positionGroups(srcTracks || []); // [Z-SUB] (3.41.15, review) "track 3" of a split index: all its tracks
     const firstMedium = S.mbTracks.length ? S.mbTracks[0].medium : null;
     const resolve = (tok) => {
       const t = plainNo(tok);
@@ -21493,7 +21527,12 @@
       return hit ? hit.idx : undefined;
     };
     const addRange = (ends) => {
-      const idx = ends.map(resolve);
+      const gs = disc ? [] : ends.map((e) => groups.get(normPos(plainNo(e))) || null);
+      if (ends.length === 1 && gs[0]) {
+        gs[0].filter((i) => i < S.mbTracks.length).forEach((i) => out.add(i));
+        return;
+      }
+      const idx = ends.map((e, k) => (gs[k] ? gs[k][k === 0 ? 0 : gs[k].length - 1] : resolve(e)));
       if (idx.some((x) => x === undefined)) return;
       if (idx.length === 2) for (let i = Math.min(...idx); i <= Math.max(...idx); i++) out.add(i);
       else out.add(idx[0]);
@@ -23472,8 +23511,10 @@
     row.typeAnswer = i;
     // [Q-cn] (3.41.8) an answer that skips the role ("Host": skip the role, Q012): the row on "Skip", its type kept
     if (o.level === 'skip') {
-      row.level = 'skip';
-      row.levelTouched = true;
+      // (3.41.15, review) no type either (an answer before is gone): taken again, the row is asked again
+      Object.assign(row, { level: 'skip', levelTouched: true, types: [], creditFromRole: '' });
+      if (row.primaryTouched) Object.assign(row, { primaryText: '', primaryTouched: false });
+      resolveRowType(row);
       delete row.scopeLevel;
       log('info', 'typePicked', { role: row.raw || row.base, type: o.label || tr('level.skip') });
       rerenderRow(row);
@@ -27194,6 +27235,9 @@
     for (const i of o.tracks) {
       const t = S.mbTracks[i];
       if (!t || t.works.length) continue;
+      // (3.41.15, review) a track in another suite, or split as a medley, keeps its parts
+      const had = S.workParts.get(i);
+      if (had && had.length && had[0].suite !== o.key) continue;
       const src = (S.srcTracks || [])[i] || null;
       const parts = trackPartsOf(src && src.title ? src : { title: t.title });
       const titles = parts.length ? parts : [workTitleOf((src && src.title) || t.title)];
@@ -27443,8 +27487,11 @@
     const [a, b] = [Number(fromIdx), Number(toIdx)].sort((x, y) => x - y);
     const tracks = S.mbTracks.filter((t) => matrixTrack(t) && t.idx >= a && t.idx <= b).map((t) => t.idx);
     S.suiteAdd = { ...S.suiteAdd, from: Number(fromIdx), to: Number(toIdx), name: nm, error: '' };
+    // (3.41.15, review) a track in another suite or split as a medley: that one is undone first
+    const taken = tracks.filter((i) => (S.workParts.get(i) || []).length || [...S.suiteWorks.values()].some((sw) => (sw.tracks || []).includes(i)));
     if (!nm) S.suiteAdd.error = 'suite.addNoName';
     else if (tracks.length < 1) S.suiteAdd.error = 'suite.addNoTracks';
+    else if (taken.length) S.suiteAdd.error = 'suite.addTaken';
     if (S.suiteAdd.error) return false;
     const o = { key: `manual|${nm}|${tracks.join(',')}`, name: nm, from: 'manual', tracks };
     if (S.suiteAnswers.has(o.key)) undoSuite(o);
@@ -28707,6 +28754,11 @@
     // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
     delete row.entrySkip;
     const toOrFromWork = level === 'work' || row.level === 'work';
+    // [Q-cn] (3.41.15, review) taken off "Skip" that a question's answer set: the question is asked again
+    if (level !== 'skip' && row.typeAnswer != null) {
+      const tq = typeQuestionFor(row);
+      if (tq && tq.options[row.typeAnswer] && tq.options[row.typeAnswer].level === 'skip') delete row.typeAnswer;
+    }
     row.level = level;
     row.levelTouched = true;
     // [3.32.7] a row of poems: the type of this level (item 104b)
@@ -29630,6 +29682,11 @@
       case 'edit-note-mode': {
         S.editNoteMode = ['simple', 'none'].includes(btn.dataset.mode) ? btn.dataset.mode : 'full';
         writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
+        // (3.41.15, review) a block written before follows at once ("None": out; else in the new form)
+        if (S.lastNoteBlock) {
+          if (S.editNoteMode === 'none') clearEditNote();
+          else writeEditNote();
+        }
         S.rows.forEach(updateHint);
         renderSettings();
         const again = S.overlay.querySelector(`[data-act="edit-note-mode"][data-mode="${S.editNoteMode}"]`);
@@ -32360,9 +32417,11 @@
   }
 
   /** [E8] A relationship the dashboard supplemented in the editor (a credit, a date, attributes of a work link). */
-  function statFill(state, row, source) {
+  function statFill(state, row, source, kind = '') {
     if (!state || typeof state.id !== 'number') return;
-    S.statFills.set(state.id, { rowId: row ? row.id : null, source: source ? { gid: source.gid, entityType: source.entityType } : null });
+    // [Z-STV] (3.41.15, review) what was added to it (credits, dates, attrs): the "Gaps closed" of the statistics, from what is submitted
+    const kinds = new Set([...((S.statFills.get(state.id) || {}).kinds || []), ...(kind ? [kind] : [])]);
+    S.statFills.set(state.id, { rowId: row ? row.id : null, source: source ? { gid: source.gid, entityType: source.entityType } : null, kinds });
   }
 
   /**
@@ -32381,7 +32440,7 @@
       if (!byId.has(id)) byId.set(id, { k: 'n', source: st.source, rows: [] });
       if (st.rowId) byId.get(id).rows.push(st.rowId);
     }
-    for (const [id, f] of S.statFills) if (!byId.has(id)) byId.set(id, { k: 's', source: f.source, rows: f.rowId ? [f.rowId] : [] });
+    for (const [id, f] of S.statFills) if (!byId.has(id)) byId.set(id, { k: 's', source: f.source, rows: f.rowId ? [f.rowId] : [], kinds: [...(f.kinds || [])] });
     if (!byId.size) return null;
     const cur = findRelationshipStates(re.state, new Set(byId.keys()));
     const had = statExisting(re.state);
@@ -32413,6 +32472,8 @@
         h: statHand(row), q: row ? statAnswers(row) : [],
         // [Z-STA] (3.41.14) the other attributes (additional, guest, solo, live, cover, medley, movement …)
         a: attrs.filter((a) => a.root !== 'instrument' && a.root !== 'vocal').map((a) => a.name).filter(Boolean),
+        // [Z-STV] (3.41.15, review) a relationship MusicBrainz had: what was added to it
+        ...(x.k === 's' ? { f: x.kinds || [] } : {}),
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -32422,17 +32483,20 @@
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
     // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
     return { v: 2, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
-      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(), rels };
+      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
   /**
    * [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14) What an import did beyond its relationships, for the statistics: the suites and
    * medleys, the works, the genres and styles of the source, the live comments, the gaps closed in relationships MusicBrainz had.
    */
-  function statExtras() {
+  function statExtras(rels = []) {
     const suites = [...S.suiteWorks.values()].filter((sw) => !isPending(sw.gid));
+    // (3.41.15, review) the works and the gaps from what is submitted (not from the stagings): a link taken out is not counted
+    const links = rels.filter((it) => it.k === 'n' && it.lt === 'performance' && it.et === 'work');
+    const created = new Set([...S.workPlan.values(), ...[...S.workParts.values()].flat()].filter((p) => p && p.origin === 'created').map((p) => p.gid));
+    const fills = (k) => rels.filter((it) => it.k === 's' && (it.f || []).includes(k)).length;
     const parts = [...S.workParts.values()].flat();
-    const st = S.noteStats || {};
     let liveCom = 0;
     try {
       const job = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
@@ -32446,10 +32510,12 @@
         manual: suites.filter((sw) => S.suiteManual.has(sw.key)).length, parts: parts.filter((p) => p.suite && suites.some((sw) => sw.key === p.suite)).length,
         medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
       },
-      works: { linked: st.workLinks || 0, created: st.newWorkLinks || 0, pending: st.pendingWorks || 0 },
+      works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
       genres: uniq([...((S.release && S.release.genres) || []), ...((S.release && S.release.styles) || []).map(norm)]).slice(0, 12),
       live: { comments: liveCom },
-      gaps: { credits: st.filled || 0, dates: st.datesFilled || 0, attrs: st.linkAttrs || 0 },
+      gaps: { credits: fills('credits'), dates: fills('dates'), attrs: fills('attrs') },
+      // [Z-STQ] (3.41.15, review) the answers of the rows, once a row – also of a row an answer put on "Skip"
+      decisions: S.rows.flatMap((r) => statAnswers(r)),
     };
   }
 
@@ -32687,6 +32753,10 @@
         Object.keys(m.works2).forEach((k) => { if (x.works && x.works[k]) m.works2[k] += x.works[k]; });
         Object.keys(m.gaps).forEach((k) => { if (x.gaps && x.gaps[k]) m.gaps[k] += x.gaps[k]; });
         if (x.live) m.live.comments += x.live.comments || 0;
+        for (const q of x.decisions || []) {
+          m.nAnswers++;
+          inc(m.answers, `${q.q}\t${q.a}`);
+        }
         if (!seenGenre.has(r.mbid)) {
           seenGenre.add(r.mbid);
           (x.genres || []).forEach((g) => inc(m.genres, g));
@@ -32700,9 +32770,12 @@
         (it.a || []).forEach((n) => inc(m.attrs, n));
         if ((it.a || []).includes('live') && it.et === 'work') m.live.links++;
         if (it.lt === 'parts') m.suites.partsRels++;
-        for (const q of it.q || []) {
-          m.nAnswers++;
-          inc(m.answers, `${q.q}\t${q.a}`);
+        // (until 3.41.14 once a relationship; from 3.41.15 the import's own list, once a row)
+        if (!(r.x && r.x.decisions)) {
+          for (const q of it.q || []) {
+            m.nAnswers++;
+            inc(m.answers, `${q.q}\t${q.a}`);
+          }
         }
         m.rels++;
         if (it.tg && !m.seenEnt.has(it.tg) && it.lk) {

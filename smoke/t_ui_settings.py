@@ -1277,8 +1277,11 @@ def case_statsmore2():
        editor 2 · "Genres and styles": Jazz 2 (once a release), Free Jazz 1 · "Decisions": 3 answers – Q012: spoken vocals …, Q002:
        electric guitar 2 · "Live": 2 links, 3 comments · "Gaps closed": 4 role credits, 2 dates, 1 attribute · "Worked together":
        Ann & Bob (2 releases; a pair on one release only is not listed). The cards that need 3.41.14 say "Counted from 3.41.14 on".
+       (3.41.15, review) A record with the import's own list of answers counts them once a row (Q002 once, not three times; Q012 "skip
+       the role" – a row without a relationship – too): 5 answers.
     B) A real submission (the release of the harness, staged, "Enter edit"): its record is v 2, with x (suites, works, genres, live,
-       gaps) and the attributes of each relationship (a) – until 3.41.13 none of them."""
+       gaps, (3.41.15) decisions) and the attributes of each relationship (a) – until 3.41.13 none of them; (3.41.15, review) its works
+       are the links with recordings it holds (until 3.41.14 the stagings counted)."""
     import re
     results = []
     with sync_playwright() as p:
@@ -1310,6 +1313,9 @@ def case_statsmore2():
                X(suites={'n': 1, 'found': 1, 'manual': 1, 'parts': 2, 'medleys': 1}, works={'linked': 1}, genres=['jazz'], live={'comments': 1}, gaps={'credits': 1, 'attrs': 1})),
             # the same release again (a supplement): its genres not counted twice
             r2(3, 'm2', [rl('Dee', 'g4')], X(genres=['jazz'])),
+            # (3.41.15, review) the import's own list of answers, once a row: one answer of a row of three relationships, one that skipped
+            r2(4, 'm3', [rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')])],
+               dict(X(), decisions=[{'q': 'Q002', 'a': 'electric guitar'}, {'q': 'Q012', 'a': 'skip the role'}])),
         ]
         seeded = pg.evaluate(STAT_SEED, recs)
         H.open_dashboard(pg)
@@ -1326,7 +1332,7 @@ def case_statsmore2():
         results.append(seeded and ok('suites', 'suites 2', 'created in MusicBrainz 1', 'found in MusicBrainz 1', 'added by hand 1', 'their parts 5', 'medleys split 1', '“parts” relationships 3', since)
                        and ok('attrs', 'movement 3', 'live 2', 'additional 1', 'medley 1', since))
         results.append(ok('works2', 'linked with recordings 4', 'of them created in MusicBrainz’s form 1', 'new works in the relationship editor 2', since)
-                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '3 answers to the questions of the script', 'Q002: electric guitar 2', 'Q012: spoken vocals (credited “host”) 1')
+                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '5 answers to the questions of the script', 'Q002: electric guitar 3', 'Q012: spoken vocals (credited “host”) 1', 'Q012: skip the role 1')
                        and since not in c.get('decisions', []))
         results.append(ok('live', 'recordings linked live with their works 2', 'live comments set 3', since)
                        and ok('gaps', 'role credits added 4', 'dates added 2', 'attributes added to links of recordings and works 1', since)
@@ -1346,8 +1352,12 @@ def case_statsmore2():
         recs2 = pg.evaluate(STAT_COUNT) or []
         r = recs2[0] if recs2 else {}
         print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
-        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps'}
-                       and all(isinstance(it.get('a'), list) for it in r.get('rels', [])) and (r.get('x') or {}).get('works', {}).get('linked', 0) >= 1)
+        perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps', 'decisions'}
+                       and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
+                       # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
+                       and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
+                       and isinstance((r.get('x') or {}).get('decisions'), list))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1451,10 +1461,11 @@ def case_editnote():
     """Credits Importer 3.41.9 (collected item Z-EN; Q-cp): the edit note in ⚙ Settings → Staging only.
     A) The footer has no checkbox "edit note" any more (until 3.41.8 "⚙ Options": edit note · fill role credits · ≤ 500 per
        staging); ⚙ Settings → Staging: "Edit note: Full | Simple | None", Full pressed; each option's tooltip lists what it writes.
-    B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note.
+    B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note; (3.41.15, review) Simple
+       chosen then: the block is the simple one at once (until 3.41.14 only at the next staging – "Enter edit" before it sent the full one).
     C) Simple (stored "simple"; the page opened anew), staged: the block of the script is only "Source: …" and "Script: … v…" – no
        "Done:"; the form of a new work: "Source: …" and "Script: …" (no "writers from Discogs credits").
-    D) None (stored "none"), an entry skipped before (Bass Man) taken again and staged: the block written before is gone, nothing else is
+    D) None (stored "none"): (3.41.15, review) the block gone at once; an entry skipped before (Bass Man) taken again and staged: still nothing
        written; the form of a new work (the page opened anew) has no edit note. ↺ of the topic: Full again (nothing stored)."""
     import urllib.parse
     results = []
@@ -1506,6 +1517,10 @@ def case_editnote():
         print('B)', b0[:4])
         results.append(b0[0] == 'Source: https://www.discogs.com/release/1234' and b0[1].startswith('Script: MB x Vibecode: Credits Importer v') and any(l.startswith('Done: added ') for l in b0))
         st1 = mode(pg, 'simple')
+        # (3.41.15, review) the block written follows the setting at once (no new staging needed)
+        b1 = pg.evaluate(NOTE).splitlines()
+        print('B2) gleich danach:', b1)
+        results.append(len(b1) == 2 and b1[0] == 'Source: https://www.discogs.com/release/1234' and b1[1].startswith('Script: '))
         pg.close()
         pg, errs2 = page(ctx)
         key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').querySelector('[data-act=entry-skip]').dataset.skipkey")
@@ -1519,6 +1534,9 @@ def case_editnote():
                        and n1.split('\n')[0] == 'Source: https://www.discogs.com/release/1234' and n1.split('\n')[1:2] and n1.split('\n')[1].startswith('Script: MB x Vibecode')
                        and 'writers' not in n1)
         st2 = mode(pg, 'none')
+        d2 = pg.evaluate(NOTE)
+        print('D2) gleich danach:', repr(d2))
+        results.append(d2 == '')
         pg.locator(f'[data-act=entry-unskip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
         stage(pg)
         d0 = pg.evaluate(NOTE)
