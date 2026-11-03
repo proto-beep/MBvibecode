@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.1
+// @version      3.41.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -566,6 +566,7 @@
       "preview.release": "Release",
       "preview.work": "Work: {title}",
       "preview.linkWork": "Link work: {title}",
+      "preview.suitePart": "part {n} of the suite “{suite}”",
       "preview.attrCredit": "{name} as “{credit}”",
       "preview.artistCredit": "artist credit “{credit}”",
       "preview.noteOnly": "edit note only: “{text}”",
@@ -8761,6 +8762,8 @@
     IDX = {
       ltById, atById, children, byLevel, relatableTypes,
       performanceLt: findLt('recording', 'work', 'performance'),
+      // [Z-SU] (3.41.2) a work and its parts (a suite and its movements)
+      partsLt: findLt('work', 'work', 'parts'),
       // Fallback IDs are the values currently used on musicbrainz.org.
       memberLtId: (findLt('artist', 'artist', 'member of band') || { id: 103 }).id,
       // URL relationship types by name, e.g. "discogs" for the links of a source (sourceUrlLtId)
@@ -9062,6 +9065,9 @@
     // [Z-SU] (3.41.1) the parts of a track as works of their own (track → [part plan]), the answers to the suites offered
     workParts: new Map(),
     suiteAnswers: new Map(),
+    // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
+    suiteWorks: new Map(),
+    suiteSeq: 0,
     // [3.39.9] "member of band" of the artists looked up for "co?" (mbid → Set of artists, or 'wait')
     bandOf: new Map(),
     // (3.39.9, review) the artists still to look up, and whether the loop runs
@@ -9772,6 +9778,36 @@
       };
       if (stagedLink && stagedLink.sig === itemSig(linkItem)) continue;
       items.push(linkItem);
+    }
+    // [Z-SU] (3.41.2) the suites accepted: "parts" from the suite to each of its parts, with "movement", in the order of the parts
+    // (tracks, within a track its parts; Q-bv) – the suite only holds them together, no recording is linked with it
+    const partsLt = idx().partsLt;
+    if (partsLt && !S.worksSkip) {
+      const mv = allowedRoots(partsLt).filter((r) => !r.hasChildren && !r.attr.free_text && norm(r.attr.name) === 'movement').map((r) => ({ type: r.attr }));
+      for (const sw of S.suiteWorks.values()) {
+        // its parts: those planned, and the one work in MusicBrainz of a track of the suite that has it (it is a part too)
+        const parts = [...(sw.tracks || [])].sort((a, b) => a - b).flatMap((i) => {
+          const ps = (S.workParts.get(i) || []).filter((p) => p.suite === sw.key);
+          if (ps.length) return ps.map((p) => [i, p]);
+          const t = S.mbTracks[i];
+          return t && t.works.length === 1 ? [[i, { gid: t.works[0].gid, title: t.works[0].title, origin: 'mb' }]] : [];
+        });
+        parts.forEach(([i, p], n) => {
+          const key = `suite|${sw.gid}|${p.gid}`;
+          planned.add(key);
+          if (S.scope === 'nonwork' || !inMedium(i)) return;
+          const stagedLink = S.staged.get(key);
+          if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) return;
+          seen.add(key);
+          const item = {
+            kind: 'suite-part', lt: partsLt, attrs: mv, noteText: '', key, credit: '', suiteGid: sw.gid, suiteTitle: sw.title, partGid: p.gid, partTitle: p.title,
+            linkOrder: n + 1, origin: p.origin, plan: p, date: null, update: stagedLink || null,
+            target: { kind: 'work', gid: p.gid, label: p.title, order: 20000 + i, track: S.mbTracks[i], work: { gid: p.gid, title: p.title } },
+          };
+          if (stagedLink && stagedLink.sig === itemSig(item)) return;
+          items.push(item);
+        });
+      }
     }
 
     for (const row of S.rows) {
@@ -18174,6 +18210,8 @@
     const date = it.date ? ` [${formatDateValue(it.date) || tr('date.endedOnly')}]` : '';
     // [177] (3.38.10) the relationship as MusicBrainz names it ("recording of", "guest piano", "co-producer")
     if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${mbPhraseOf(it.lt, { level: it.target.kind }, it.attrs || []) || it.lt.name})${date}`;
+    // [Z-SU] (3.41.2) a part of a suite
+    if (it.kind === 'suite-part') return `${it.suiteTitle} → ${it.partTitle} (${it.lt.name} ${it.linkOrder})`;
     // [E4] (3.34.29) a joined relationship names its instruments or voices: its attributes are those of all of them ("piano
     // and organ")
     return `${it.artist.mbName || it.artist.name}: ${mbPhraseOf(it.lt, it.row, it.attrs || []) || it.lt.name} → ${it.target.label}${date}`;
@@ -18451,6 +18489,25 @@
         } catch (e) {
           errors.push(`${text}: ${e.message}`);
           log('error', 'stageFailed', { text, error: e.message });
+        }
+        continue;
+      }
+      // [Z-SU] (3.41.2) "parts" of a suite: from the part (in the editor with its recording) to the suite – the suite is entity0
+      if (it.kind === 'suite-part') {
+        try {
+          const partEntity = isPending(it.partGid) ? pendingWorkEntity(it.partGid) : await fetchJsEntity(it.partGid);
+          const suiteEntity = isPending(it.suiteGid) ? pendingWorkEntity(it.suiteGid) : await fetchJsEntity(it.suiteGid);
+          const st = dispatchAddRelationship(partEntity, suiteEntity, it.lt.id, it.attrs, '', null, true, it.linkOrder);
+          if (st) {
+            S.staged.set(it.key, { state: st, source: partEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true });
+            S.appliedKeys.add(it.key);
+          }
+          S.noteStats.workLinks++;
+          added++;
+          log('ok', 'staged', { text });
+        } catch (e) {
+          errors.push(`${text}: ${e.message}`);
+          log('error', 'error', { text: `${text}: ${e.message}` });
         }
         continue;
       }
@@ -18784,6 +18841,7 @@
     if (S.mxCollapsed) S.mxCollapsed.clear();
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
+    S.suiteWorks.clear();
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -23789,11 +23847,13 @@
         return a.type.name;
       }).join(', ');
       // (the phrase names the attributes already: in brackets only credited names and texts it does not have – a task "cover")
-      const phrase = it.kind === 'work-link' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
+      const phrase = it.kind === 'work-link' || it.kind === 'suite-part' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
       const credText = [...it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })),
         ...it.attrs.filter((a) => a.text_value != null && !norm(phrase).includes(norm(a.text_value))).map((a) => `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`)].join(', ');
       const line = it.kind === 'work-link'
         ? [tr('preview.linkWork', { title: it.workTitle }) + (attrText ? ` (${attrText})` : '')]
+        // [Z-SU] (3.41.2) a part of a suite
+        : it.kind === 'suite-part' ? [tr('preview.suitePart', { suite: it.suiteTitle, n: it.linkOrder }) + (attrText ? ` (${attrText})` : '')]
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
           // [177] (3.38.10) as MusicBrainz names it, with its attributes; credited names and texts in brackets
@@ -26754,12 +26814,15 @@
   function pendingWorkEntity(ref) {
     // [Z-SU] (3.41.1) by the work's key: "pending:4" (the work of track 4), "pending:4.2" (its second part)
     const m = /^pending:(\d+)(?:\.(\d+))?$/.exec(String(ref));
+    // [Z-SU] (3.41.2) a suite ("pending:s1"): the type "Suite", no lyrics language
+    const suite = /^pending:s\d+$/.test(String(ref)) ? [...S.suiteWorks.values()].find((w) => w.gid === String(ref)) : null;
     const i = m ? Number(m[1]) : Number(ref);
-    const plan = m && m[2] ? planOf(i, String(ref)) : S.workPlan.get(i);
+    const plan = suite || (m && m[2] ? planOf(i, String(ref)) : S.workPlan.get(i));
     if (plan.entity) return plan.entity;
     const re = getMB().relationshipEditor;
     // (the parts of a suite: no type of their own – Q-bv)
-    const opts = plan.part != null ? { ...rowOpts(i), typeId: '' } : rowOpts(i);
+    const suiteType = (S.workOptions.types || []).find((t) => norm(t.name) === 'suite');
+    const opts = suite ? { typeId: suiteType ? suiteType.id : '', languageIds: [] } : plan.part != null ? { ...rowOpts(i), typeId: '' } : rowOpts(i);
     const known = (getMB().linkedEntities || {}).language || {};
     const language = (id) => known[id] || {
       entityType: 'language', id: Number(id), name: (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || '',
@@ -26832,6 +26895,9 @@
       n += titles.length;
     }
     S.suiteAnswers.set(o.key, { yes: true, name: nm });
+    // [Z-SU] (3.41.2) the suite itself: a new work of the type "Suite", with "parts" to each part (Q-bv)
+    S.suiteSeq += 1;
+    S.suiteWorks.set(o.key, { gid: `pending:s${S.suiteSeq}`, title: nm, key: o.key, tracks: [...o.tracks], origin: 'pending', flags: new Set(), suite: true });
     log('info', 'suiteYes', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }), n });
   }
 
@@ -26843,6 +26909,7 @@
       if (ps[0].before) S.workPlan.set(i, ps[0].before);
     }
     S.suiteAnswers.delete(o.key);
+    S.suiteWorks.delete(o.key);
     log('info', 'suiteUndone', { name: o.name });
   }
 
