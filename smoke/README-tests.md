@@ -564,6 +564,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   barroom: 3.40.8 (Z-SB): overlay scroll bars (Chromium's FluentOverlayScrollbar, a browser of its own –
                                 #     caserun.launch_own): a wide dashboard no room; 700 px: 16 px below the last line, "written “Drums”" above
                                 #     the bar, only boxes that scroll (review); wide again (⤢): none; a classic bar (it takes room): no room
+                                #   compactside: 3.40.10 (Z-KH, mockup C): compact – "by event | by role" in the head, count, "Writing
+                                #     credits: in the works matrix" (tooltip) and the button "＋ Another role for …" beside the lines, no link
+                                #     below; by role the same; the button opens the full matrix with a new line; full view as before
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
