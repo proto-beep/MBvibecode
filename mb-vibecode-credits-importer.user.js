@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.9
+// @version      3.40.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.10
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.10
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -370,6 +370,7 @@
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
+      "group.addRoleBtn": "＋ Another role for {name}",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
       "match.manual": "set manually",
@@ -1215,6 +1216,7 @@
       "matrix.langAdd": "add a language …",
       "matrix.empty": "No writing credits yet. They appear here once Discogs is loaded, or add them with “Add entry manually” and a work-level role such as composer.",
       "group.workNote": "The writing credits of this entry are in the works matrix.",
+      "group.workNoteShort": "Writing credits: in the works matrix",
       "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
       "settings.mxSkipRows": "Show the rows skipped with the works matrix with their entries",
       "group.mxHidden.one": "{n} row skipped with the works matrix is not shown (setting)",
@@ -19860,13 +19862,28 @@
    * line per role with its events. A chip opens the entry's full matrix (▸ in the head too), ✕ takes it out of the event, dragged
    * onto another event's line it moves there (⇧ Shift: it stays in both).
    */
-  function entryCompactHtml(a, all) {
+  /** [E4] (3.35.0) "by event | by role" of a compact entry; [Z-KH] (3.40.10) at the right of the entry's head. */
+  function emBySegHtml(a) {
+    const by = S.emBy.get(a.key) || S.emByDefault;
+    return `<span class="dci-seg dci-seg-small dci-em-by" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
+      data-act="em-by" data-by="${v}" aria-pressed="${by === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`;
+  }
+
+  /**
+   * [Z-KH] (3.40.10) Beside the lines of a compact entry (collected item Z-KH, mockup C; Q-bi): the relationships to stage, the
+   * notes of the entry (writing credits in the works matrix, rows skipped there) and "＋ Another role for …" as a button – in the
+   * column the lines leave free, instead of three lines below them.
+   */
+  function emSideHtml(a, notes) {
+    return `<div class="dci-em-side"><span class="dci-sub" data-emcount="${esc(a.key)}"></span>${notes}
+      <button type="button" class="dci-addrole-btn" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button></div>`;
+  }
+
+  function entryCompactHtml(a, all, notes = '') {
     const rows = all.filter((r) => r.level !== 'work');
     const works = all.filter((r) => r.level === 'work');
     const m = entryModel(a, rows);
     const by = S.emBy.get(a.key) || S.emByDefault;
-    const seg = `<span class="dci-seg dci-seg-small dci-em-by" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
-      data-act="em-by" data-by="${v}" aria-pressed="${by === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`;
     let body;
     if (by === 'role') {
       body = m.lines.map((l) => {
@@ -19894,9 +19911,9 @@
       const out = m.lines.filter((l) => !l.ev.size);
       if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null, a)).join('')}</div>`;
     }
-    return `<div class="dci-em dci-em-compact" data-em="${esc(a.key)}"><div class="dci-em-chead">${seg}</div>${body}
-      ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
-      <div class="dci-em-foot"><span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
+    return `<div class="dci-em-cwrap"><div class="dci-em dci-em-compact" data-em="${esc(a.key)}">${body}
+      ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}</div>
+      ${emSideHtml(a, notes)}</div>`;
   }
 
   /** [E4] (3.35.0) A chip dragged onto another event's line: its rows there (moved; ⇧ Shift: in both). */
@@ -20137,6 +20154,11 @@
     const hidden = rows.length && rows.every((r) => r.aboutHidden || r.notesHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again); [3.39.1] the tag in the
     // colours of its source, the tooltip names it (collected item 185)
+    // [Z-KH] (3.40.10) a compact entry: "by event | by role" in its head, its notes and "＋ Another role" beside its lines
+    const compact = !mxEntry(a) && mxCompact(a);
+    const workNote = allRows.some((r) => r.level === 'work' && !isPublishingRow(r));
+    const notes = `${workNote ? (compact ? `<p class="dci-sub dci-work-note" title="${esc(tr('group.workNote'))}">${esc(tr('group.workNoteShort'))}</p>`
+      : `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>`) : ''}${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}`;
     const aSrc = entrySource(a);
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
@@ -20148,20 +20170,20 @@
         <div class="dci-ghead">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
+          ${compact ? `<div class="dci-ghead-r">${emBySegHtml(a)}</div>` : ''}
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
         ${a.company ? `<div class="dci-variants dci-variants-co" data-variants="${a.key}">${creditAllHtml(a)}</div>` : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
-        ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
+        ${mxEntry(a) ? entryMatrixHtml(a, rows) : compact ? entryCompactHtml(a, rows, notes) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
         </div>`}
-        ${allRows.some((r) => r.level === 'work' && !isPublishingRow(r)) ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
-        ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
-        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
+        ${compact ? '' : `${notes}
+        <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>`}
       </section>`;
   }
 
@@ -33873,6 +33895,16 @@
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over > td { background: none; box-shadow: inset 0 2px 0 var(--purple); }
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
+      .dci-ghead-r { margin-left: auto; align-self: center; }
+      .dci-em-cwrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 calc(var(--u, 1px) * 16); }
+      .dci-em-cwrap > .dci-em-compact { flex: 1 1 calc(var(--u, 1px) * 420); min-width: 0; }
+      .dci-em-side { flex: 0 0 calc(var(--u, 1px) * 230); display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 3);
+        padding: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 6); }
+      .dci-em-side .dci-work-note { margin: 0; }
+      .dci-addrole-btn { margin-top: calc(var(--u, 1px) * 2); padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #9d97c9; border-radius: 3px; background: #fff;
+        color: var(--purple-d); font-size: calc(var(--u, 1px) * 12); line-height: 1.6; text-align: left; }
+      .dci-addrole-btn:hover, .dci-addrole-btn:focus-visible { background: var(--date-bg); border-color: var(--purple); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
