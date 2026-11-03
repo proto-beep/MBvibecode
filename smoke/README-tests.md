@@ -28,6 +28,7 @@ MBvibecode/ (this repository)
                                       {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
                                       [Companion 1.10.1] the Discogs page writes "Phonographic Copyright ℗" as the real one (the
                                       data "(p)")
+                                      [3.40.12] the type "recorded in" (area – recording)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -254,6 +255,9 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackside: 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (A1, A2, A3, B) – the date on
                                 #     track B only, Zojoji Hall (Tokyo) from the notes on B; listed by Discogs: its entry with B; a pasted
                                 #     "Tracks A2 & B:" on tracks 2 and 4
+                                #   assistnotes: 3.40.12 (Z-AP): the three lines of "Assist" – the area Hiroshima, the places Meguro Fukushi
+                                #     Center (Tokyo) and Zojoji Hall (Tokyo), no area Tokyo; "Apply": each its date, the area too; a place
+                                #     Discogs lists without a word of places ("Shinjuku Pit Inn"): that place, no area Tokyo
                                 #   artwork: 3.37.9: "Cover Painting: “View at Nice” (1992)" – the column Artwork, applied to Mary Vernon's
                                 #     illustration (R078), not to the photographer; "Photography By [Live Photos]": the concert's date suggested, ✓
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
@@ -282,7 +286,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     focus on "▼ show", log); off: stays open; with "apply automatically": open while the pointer is in the
                                 #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again;
                                 #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
-                                #     ⚙ – open; stored only when off
+                                #     ⚙ – open; stored only when off; 3.40.13 (Z-PF2): nothing stored by "Apply", loaded again: open; "▲ fold"
+                                #     by hand, loaded again: folded
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -319,6 +324,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
                                 #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
                                 #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
+                                #   liveall: 3.40.13 (Z-LC): "All" above the list – ticked, mixed (a track of the group unticked), all on and off;
+                                #     in livecom without the track MB has another comment for
                                 #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
@@ -327,6 +334,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
                                 #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
                                 #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
+                                #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
+                                #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -439,6 +448,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     suggestion, gone once the suggestion is chosen; 3.40.8 (review): the clipboard refuses – through a
                                 #     selected text ✓; refused too: ⚠, tooltip and label
                                 #   headnarrow: 3.40.8 (review, Z-HB): one line at 1500 and 600 px; at 400 px two lines, ✕ inside the dashboard
+                                #   launchtools: 3.40.14 (Z-LS): Log | Statistics · ⚙ as symbols next to "Import credits …" (no companion);
+                                #     Log pressed while shown; Statistics and ⚙ open the dashboard without the import (its message names what
+                                #     is open, one only); "Start import"
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -480,7 +492,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     /ws/js/release: counted once (log, job gone, one record in IndexedDB dci-stats with the time); the tiles, months
                                 #     and days, the top lists; "Reset all" keeps them with "keep statistics", unticked deletes; off: no job; the
                                 #     release page counts a waiting job (a relationship not in MusicBrainz left out, and one it had before – n0);
-                                #     F2: a job with nothing to look up counts at once on the release page
+                                #     F2: a job with nothing to look up counts at once on the release page; 3.40.14: switched off in ⚙ → Cache
                                 #   statsmore: 3.38.1: three stored submissions → the boxes: sources, how found, dates and places, levels and
                                 #     works, the releases, when (7 + 24 bars, days in a row, records), instruments, text from cover art, own rules
                                 #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
@@ -488,7 +500,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
                                 #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
                                 #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
-                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip
+                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip;
+                                #     3.40.14: no switch in the statistics
+                                #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
+                                #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -518,6 +533,13 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom;
                                 #     3.38.13 (F-3): the green chip flashes once (not again when its text is opened and closed or the
                                 #     dashboard closed and opened again: one animationstart; the class gone after the flash)
+                                #   addrolebtn: 3.40.13 (Z-AB): "＋ Another role for Bass Man" a framed button below his rows (full view), a new row
+                                #   entryskip: 3.40.15 (Z-SK): "⊘ Skip" in every head; all rows on Skip, grey, "↺ Take again" (the level chosen
+                                #     before back); a level chosen while skipped ends it; "Remove skipped entries …": "1 skipped entry ▸" at
+                                #     the bottom, ↺ there; matrix, compact: beside "by event | by role"
+                                #   entryskipkeep: 3.40.15: remembered with the release (Cache on), loaded again still skipped, ↺ back
+                                #   entryskipmodes: 3.40.17 (review): scope "only work" and ⊘ Skip both ways (stays skipped; ↺ inside the scope:
+                                #     stays on Skip, "all": back); "Level for all rows" Recording, then Skip: "⊘ Skip", no stale "↺"
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
@@ -594,6 +616,10 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   indextracks: 3.35.1: index tracks of Discogs whose parts are tracks of their own (Discogs 3139201: 13 tracks,
                                 #     not 3; the work's credit on its parts, "C1 to D, F2"), parts of one track ("C1a", "C1b") one track "C1",
                                 #     "AA"/"AB", in the dashboard a credit on "B1" on the third recording, no message about the tracks
+                                #   repeat: 3.40.16 (Z-RI): "↻ Repeat import" after "Source ▾", the question ("Keep my changes" preselected),
+                                #     Cancel; kept: the source read again (a new credit there), "fretless" and the row taken out kept, "Dates &
+                                #     tracks" open again after a fold by "Apply" (Z-PF2); afresh: the changes gone, the choice kept on a redraw;
+                                #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and

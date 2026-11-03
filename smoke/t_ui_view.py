@@ -1,6 +1,6 @@
 """View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4); `python3 t_ui_view.py <case> …` runs only those."""
+Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4), addrolebtn (3.40.13), entryskip, entryskipkeep (3.40.15), entryskipmodes (3.40.17); `python3 t_ui_view.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -529,12 +529,12 @@ def case_rows():
         # 2) remove a staged row: it is taken out of the editor at the next "Stage"
         pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
-        n_before = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Keys Guy').length")
-        grp('Keys Guy').locator('[data-act=remove-row]').click(); pg.wait_for_timeout(300)
+        n_before = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Bob Producer').length")
+        grp('Bob Producer').locator('[data-act=remove-row]').click(); pg.wait_for_timeout(300)
         pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
         removed = pg.evaluate("window.__removed.map(r => r.entity0.name)")
-        n_after = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Keys Guy').length")
-        print('2) Keys Guy im Editor vorher/nachher:', n_before, n_after, '| herausgenommen:', removed)
+        n_after = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Bob Producer').length")
+        print('2) Bob Producer im Editor vorher/nachher:', n_before, n_after, '| herausgenommen:', removed)
         # 3) "Skip" all, then "only works": work relationships come back, all else stays skipped
         pg.click('[data-act=bulk-level][data-level=skip]'); pg.wait_for_timeout(300)
         pg.click('[data-act=bulk-level][data-level=only-works]'); pg.wait_for_timeout(500)
@@ -775,6 +775,238 @@ def case_foot():
         results.append(ok_e)
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_addrolebtn():
+    """Credits Importer 3.40.13 (collected item Z-AB; Q-bs): "＋ Another role for …" a button in the full view too (until 3.40.12 a
+    link "+ Another role for …" there; a button in the compact entries from 3.40.10).
+    A) Full view: below the rows of Bass Man the button "＋ Another role for Bass Man" (framed, not a text link).
+    B) Clicked: a new row for him."""
+    BTN = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent === 'Bass Man');
+      const x = g && g.querySelector(':scope > [data-act=add-role]'); if (!x) return null; const st = getComputedStyle(x);
+      return [x.textContent.trim(), x.classList.contains('dci-addrole-btn'), x.classList.contains('dci-textbtn'), st.borderTopStyle, g.querySelectorAll('tr.dci-row').length]; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        a0 = pg.evaluate(BTN)
+        print('A)', a0)
+        results.append(a0 is not None and a0[:4] == ['＋ Another role for Bass Man', True, False, 'solid'])
+        pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) > [data-act=add-role]')
+        pg.wait_for_timeout(300)
+        b0 = pg.evaluate(BTN)
+        print('B)', b0)
+        results.append(b0 is not None and a0 is not None and b0[4] == a0[4] + 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entryskip():
+    """Credits Importer 3.40.15 (collected item Z-SK; Q-bx, Q-ce): "⊘ Skip" in the head of each entry.
+    A) Full view: every entry has "⊘ Skip" at the right of its head (also a writer, whose rows are in the works matrix). Bass Man: a
+       click – his row on "Skip", the entry grey, "↺ Take again" instead (focused), fewer new relationships, the log says so.
+    B) Bob Producer's row on "Release" by hand, then "⊘ Skip" and "↺ Take again": "Release" again (the level he had), the summary as before.
+    C) Bass Man skipped, then a level chosen for his row ("Recording"): no longer skipped – not grey, "⊘ Skip" again.
+    D) ⚙ Settings → Appearance → "Remove skipped entries from the dashboard" (off; on: stored): Bass Man skipped – not in the list;
+       at the bottom "1 skipped entry ▸"; ▸ lists him with "↺ Take again"; clicked: he is back in his place, the line gone.
+    E) Entries as a matrix, compact: "⊘ Skip" in the head beside "by event | by role"; clicked: the entry grey, its lines'
+       rows on "Skip"."""
+    SEC = "section.dci-group:has(.dci-gname strong:text-is(\"{}\"))"
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-ghead-r .dci-gskip'); const head = g.querySelector('.dci-ghead').getBoundingClientRect();
+      return { btn: b ? b.textContent.trim() : null, act: b ? b.dataset.act : null, grey: g.classList.contains('dci-gskipped'), focus: document.activeElement === b,
+        right: b ? Math.round(head.right - b.getBoundingClientRect().right) : null,
+        levels: [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level),
+        op: b ? getComputedStyle(g.querySelector('.dci-gname')).opacity : null }; }"""
+    SUM = "(document.querySelector('.dci-foot [data-el=sum] strong') || {textContent: ''}).textContent.trim()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        counts = pg.evaluate("""[[...document.querySelectorAll('section.dci-group')].length,
+          [...document.querySelectorAll('section.dci-group .dci-ghead-r [data-act=entry-skip]')].length]""")
+        sum0 = pg.evaluate(SUM)
+        a0 = pg.evaluate(INFO, 'Bass Man')
+        pg.click(SEC.format('Bass Man') + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(400)
+        a1 = pg.evaluate(INFO, 'Bass Man')
+        sum1 = pg.evaluate(SUM)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'skipped:' in x]
+        print('A) Köpfe/Knöpfe:', counts, '| vorher:', a0, sum0, '\n   ⊘:', a1, sum1, logs)
+        results.append(counts[0] == counts[1] and counts[0] > 3 and a0['btn'] == '⊘ Skip' and a0['right'] < 40 and a0['levels'] == ['recording']
+                       and a1['btn'] == '↺ Take again' and a1['grey'] and a1['focus'] and a1['levels'] == ['skip'] and float(a1['op']) < 0.6
+                       and int(sum1.split()[0]) < int(sum0.split()[0]) and logs == ['Bass Man skipped: 1 row on “Skip”'])
+        pg.click(SEC.format('Bass Man') + ' [data-act=entry-unskip]')
+        pg.wait_for_timeout(400)
+        # B)
+        pg.click(SEC.format('Bob Producer') + ' tr.dci-row [data-act=level][data-level=release]')
+        pg.wait_for_timeout(300)
+        sumb = pg.evaluate(SUM)
+        pg.click(SEC.format('Bob Producer') + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(INFO, 'Bob Producer')
+        pg.click(SEC.format('Bob Producer') + ' [data-act=entry-unskip]')
+        pg.wait_for_timeout(300)
+        b2 = [pg.evaluate(INFO, 'Bob Producer'), pg.evaluate(INFO, 'Bass Man'), pg.evaluate(SUM)]
+        print('B) ⊘:', b1, '| ↺:', b2, sumb)
+        results.append(b1['levels'] == ['skip'] and b2[0]['levels'] == ['release'] and not b2[0]['grey'] and b2[0]['btn'] == '⊘ Skip'
+                       and b2[1]['levels'] == ['recording'] and b2[2] == sumb)
+        # C)
+        pg.click(SEC.format('Bass Man') + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(300)
+        pg.click(SEC.format('Bass Man') + ' tr.dci-row [data-act=level][data-level=recording]')
+        pg.wait_for_timeout(300)
+        c0 = pg.evaluate(INFO, 'Bass Man')
+        print('C)', c0)
+        results.append(c0['levels'] == ['recording'] and not c0['grey'] and c0['btn'] == '⊘ Skip')
+        # D)
+        H.open_settings(pg, 'appearance')
+        box = pg.locator('[data-el=settings] [data-set=skip-hide]')
+        d0 = [box.is_checked(), box.evaluate("b => b.closest('label').textContent.trim()")]
+        box.check()
+        pg.wait_for_timeout(300)
+        stored = pg.evaluate("localStorage.getItem('dci-skip-hide')")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        pg.click(SEC.format('Bass Man') + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(400)
+        LINE = "(el => el && !el.hidden ? [el.querySelector('.dci-skipped-toggle').textContent.trim(), [...el.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())] : null)(document.querySelector('[data-el=skipped]'))"
+        d1 = [pg.evaluate(INFO, 'Bass Man'), pg.evaluate(LINE), pg.evaluate("document.activeElement && document.activeElement.className")]
+        pg.click('[data-el=skipped] [data-act=skipped-toggle]')
+        pg.wait_for_timeout(200)
+        d2 = pg.evaluate(LINE)
+        pg.click('[data-el=skipped] [data-act=entry-unskip]')
+        pg.wait_for_timeout(400)
+        d3 = [pg.evaluate(INFO, 'Bass Man'), pg.evaluate(LINE)]
+        print('D) Box:', d0, stored, '| ⊘:', d1, '| ▸:', d2, '| ↺:', d3)
+        results.append(d0 == [False, 'Remove skipped entries from the dashboard'] and stored == 'true' and d1[0] is None and d1[1] == ['1 skipped entry ▸', []]
+                       and 'dci-skipped-toggle' in (d1[2] or '') and d2 == ['1 skipped entry ▾', ['ArtistBass Man ↺ Take again']]
+                       and d3[0] is not None and d3[0]['levels'] == ['recording'] and d3[1] is None)
+        # E) as a matrix, compact
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-el=settings] [data-act=entries-view][data-view=matrix]')
+        pg.wait_for_timeout(300)
+        pg.locator('[data-el=settings] [data-set=skip-hide]').uncheck()
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        if pg.evaluate("!document.getElementById('dci-overlay').classList.contains('dci-compact')"):
+            pg.locator('.dci-head [data-act=view-toggle]').evaluate('b => b.click()')
+            pg.wait_for_timeout(400)
+        ES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent.trim() === name);
+          if (!g) return null; const r = g.querySelector('.dci-ghead-r'); return { centry: g.classList.contains('dci-em-centry'), parts: r ? [...r.children].map(x => x.className.split(' ')[0] === 'dci-seg' ? 'seg' : x.textContent.trim()) : null,
+            grey: g.classList.contains('dci-gskipped') }; }"""
+        e0 = pg.evaluate(ES, 'Guitar Guy')
+        pg.click(SEC.format('Guitar Guy') + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(400)
+        e1 = [pg.evaluate(ES, 'Guitar Guy'), pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(x => x.textContent).filter(t => /Guitar Guy skipped/.test(t)).length")]
+        print('E)', e0, e1)
+        results.append(e0 is not None and e0['centry'] and e0['parts'] == ['seg', '⊘ Skip'] and e1[0]['grey'] and e1[0]['parts'] == ['seg', '↺ Take again'] and e1[1] == 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entryskipkeep():
+    """Credits Importer 3.40.15 (collected item Z-SK): an entry skipped is remembered with the release (⚙ Settings → Cache on):
+    loaded again, Bass Man is still skipped (grey, "↺ Take again"), and "↺ Take again" brings his row back on "Recording"."""
+    H.REMEMBER = True
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-ghead-r .dci-gskip');
+      return [b ? b.textContent.trim() : null, g.classList.contains('dci-gskipped'), [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level)]; }"""
+    SEC = 'section.dci-group:has(.dci-gname strong:text-is("Bass Man"))'
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+        load()
+        pg.click(SEC + ' [data-act=entry-skip]')
+        pg.wait_for_timeout(1600)
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        load()
+        a0 = pg.evaluate(INFO, 'Bass Man')
+        pg.click(SEC + ' [data-act=entry-unskip]')
+        pg.wait_for_timeout(400)
+        a1 = pg.evaluate(INFO, 'Bass Man')
+        print('neu geladen:', a0, '| ↺:', a1)
+        results.append(a0 == ['↺ Take again', True, ['skip']] and a1 == ['⊘ Skip', False, ['recording']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entryskipmodes():
+    """Credits Importer 3.40.17 (the check of Block BC): "⊘ Skip" of an entry with the other ways of skipping.
+    A) "Stage: only work relationships", then Bass Man "⊘ Skip", then "all relationships": he stays skipped (until 3.40.16 his row
+       came back); "↺ Take again": "Recording".
+    B) Bass Man skipped, "only work relationships", "↺ Take again": his row stays on "Skip" (it is no work relationship); "all
+       relationships": "Recording".
+    C) Bass Man skipped, "Level for all rows: Recording", then "Skip": "⊘ Skip" in his head, not "↺ Take again" (until 3.40.16 the
+       skip of before came back with it)."""
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-ghead-r .dci-gskip');
+      return [b ? b.dataset.act : null, g.classList.contains('dci-gskipped'), [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level)]; }"""
+    SEC = 'section.dci-group:has(.dci-gname strong:text-is("Bass Man"))'
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        scope = lambda v: (pg.click(f'[data-act=scope][data-scope={v}]'), pg.wait_for_timeout(400))
+        # A)
+        scope('work')
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        scope('all')
+        a0 = pg.evaluate(INFO, 'Bass Man')
+        pg.click(SEC + ' [data-act=entry-unskip]'); pg.wait_for_timeout(300)
+        a1 = pg.evaluate(INFO, 'Bass Man')
+        print('A) Bereich wieder alle:', a0, '| ↺:', a1)
+        results.append(a0 == ['entry-unskip', True, ['skip']] and a1 == ['entry-skip', False, ['recording']])
+        # B)
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        scope('work')
+        pg.click(SEC + ' [data-act=entry-unskip]'); pg.wait_for_timeout(300)
+        b0 = pg.evaluate(INFO, 'Bass Man')
+        scope('all')
+        b1 = pg.evaluate(INFO, 'Bass Man')
+        print('B) ↺ im Bereich „work“:', b0, '| alle:', b1)
+        results.append(b0 is not None and b0[2] == ['skip'] and not b0[1] and b1 == ['entry-skip', False, ['recording']])
+        # C)
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=bulk-level][data-level=recording]'); pg.wait_for_timeout(400)
+        pg.click('[data-act=bulk-level][data-level=skip]'); pg.wait_for_timeout(400)
+        c0 = pg.evaluate(INFO, 'Bass Man')
+        print('C) alle Recording, dann Skip:', c0)
+        results.append(c0 == ['entry-skip', False, ['skip']])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

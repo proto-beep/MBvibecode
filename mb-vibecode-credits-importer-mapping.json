@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.40.11",
+  "version": "3.40.17",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -451,7 +451,7 @@
   "NOT_A_PLACE": {"$re":"^(?:(?:the\\s+)?same\\s+time\\b|the\\s+time\\b|(?:that|this|the)\\s+(?:point|stage|moment)\\b|(?:the\\s+)?(?:end|beginning|start)(?:$|\\s+of\\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\\b)","$flags":"i"},
   "TEXT_TIME_AFTER_NAME": {"$re":"\\s+(?:in|on|during|between|from|since|throughout|around)\\s+(?=[^,]*(?:\\b\\d{4}\\b|\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\b|\\b(?:spring|summer|autumn|fall|winter)\\b)).*$","$flags":"i"},
   "PLACE_DATE_TAIL": {"$re":"(?:\\s+(?:on|in|during|between|from|since|throughout|around|over)\\s+(?:the\\s+)?(?:(?:early|late|mid)[\\s-]+)?(?=\\d|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\b|(?:spring|summer|autumn|fall|winter)\\b)|\\s+(?=\\d{4},?\\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\b)).*$","$flags":"i"},
-  "TEXT_PLACE_WORDS": {"$re":"(?<![\\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge)(?![\\p{L}])","$flags":"iu"},
+  "TEXT_PLACE_WORDS": {"$re":"(?<![\\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge|cent(?:er|re)|kaikan)(?![\\p{L}])","$flags":"iu"},
   "TEXT_PLAY_VERBS": {"$re":"(?:played|performed|sung|plays|performs|sings|sang)","$flags":"i"},
   "TEXT_AUX_WORDS": {"$re":"(?:are|is|were|was|been|all|both)","$flags":"i"},
   "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},

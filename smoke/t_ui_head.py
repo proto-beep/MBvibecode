@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1171,6 +1171,70 @@ def case_poolbar():
         print('C) Leiste:', c0, '| + New date:', c1, '| Cancel:', c2)
         results.append(dates(c0).get('add') == ['pool-new'] and tracks(c0).get('add') in (['tg-new'], ['tg-new-pick'])
                        and c1 == [True, 1, 'pf-by'] and c2 == [False, True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_launchtools():
+    """Credits Importer 3.40.14 (collected item Z-LS; Q-bz): Log | Statistics · ⚙ as symbols next to "Import credits …".
+    A) Without the companion: after "Import credits …" and "Window | Page" three buttons with a symbol and no word – Log (until 3.40.13
+       the word "Log"), a line, Statistics, ⚙ – their names as label and tooltip; the bar below (navigation) hidden.
+    B) Log: the log shown and hidden, the button pressed while it is shown (as the one of the dashboard's head).
+    C) Statistics: the dashboard opens with the statistics, the import not started ("Only the statistics are open – …", "Start
+       import"), the focus on their heading.
+    D) ⚙ (the dashboard open): ⚙ Settings open, the statistics closed, the message "Only the settings are open – …"; the dashboard
+       closed, ⚙ again: open with the settings, one message only.
+    E) "Start import": the import runs."""
+    BAR = """(() => { const t = document.querySelector('#dci-launcher .dci-launch-tools'); if (!t) return null;
+      const kids = [...t.children].map(e => e.id || e.className); const btns = [...t.querySelectorAll('button')];
+      const all = [...document.querySelectorAll('#dci-launcher > *')].map(e => e.id || e.className.split(' ').slice(-1)[0]);
+      return { kids, all, svg: btns.map(b => !!b.querySelector('svg.dci-ico')), text: btns.map(b => b.textContent.trim()), label: btns.map(b => b.getAttribute('aria-label')),
+        title: btns.map(b => b.title.slice(0, 24)), controls: document.getElementById('dci-controls').hidden }; })()"""
+    STATE = """(() => { const o = document.getElementById('dci-overlay'); const st = document.querySelector('[data-el=stats]'), se = document.querySelector('[data-el=settings]');
+      return { open: !!o && !o.hidden, stats: !!st && !st.hidden, settings: !!se && !se.hidden, msgs: [...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim().slice(0, 60)),
+        focus: document.activeElement && (document.activeElement.dataset.act || document.activeElement.id), rows: document.querySelectorAll('tr.dci-row').length }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(BAR)
+        print('A)', a0)
+        results.append(a0 is not None and a0['kids'] == ['dci-log-open', 'dci-launch-sep', 'dci-stats-open', 'dci-set-open'] and a0['all'][:4] == ['dci-open', 'dci-open-ocr', 'dci-place-seg', 'dci-launch-tools']
+                       and a0['svg'] == [True, True, True] and a0['text'] == ['', '', ''] and a0['label'] == ['Log', 'Statistics', 'Settings']
+                       and a0['title'][1].startswith('Statistics:') and a0['title'][2].startswith('All settings') and a0['controls'] is True)
+        PRESSED = "document.getElementById('dci-log-open').getAttribute('aria-pressed')"
+        LOGVIS = "(l => !!l && !l.hidden)(document.getElementById('dci-log'))"
+        pg.click('#dci-log-open'); pg.wait_for_timeout(300)
+        b0 = [pg.evaluate(LOGVIS), pg.evaluate(PRESSED)]
+        pg.click('#dci-log-open'); pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(LOGVIS), pg.evaluate(PRESSED)]
+        print('B) an:', b0, '| aus:', b1)
+        results.append(b0 == [True, 'true'] and b1 == [False, 'false'])
+        pg.click('#dci-stats-open'); pg.wait_for_timeout(800)
+        c0 = pg.evaluate(STATE)
+        print('C)', c0)
+        results.append(c0['open'] and c0['stats'] and not c0['settings'] and c0['msgs'] and c0['msgs'][0].startswith('Only the statistics are open')
+                       and c0['focus'] == 'stats-fold' and c0['rows'] == 0)
+        # (the window of the dashboard over the bar)
+        pg.locator('#dci-set-open').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+        d0 = pg.evaluate(STATE)
+        pg.locator('#dci-overlay .dci-head [data-act=close]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('#dci-set-open').evaluate('b => b.click()'); pg.wait_for_timeout(600)
+        d1 = pg.evaluate(STATE)
+        print('D) ⚙:', d0, '\n   zu, ⚙:', d1)
+        results.append(d0['open'] and d0['settings'] and not d0['stats'] and d0['msgs'] and d0['msgs'][0].startswith('Only the settings are open')
+                       and d1['open'] and d1['settings'] and len(d1['msgs']) == 1 and d1['rows'] == 0)
+        pg.click('[data-el=msgs] [data-act=start-import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+        e0 = pg.evaluate(STATE)
+        print('E) Zeilen:', e0['rows'])
+        results.append(e0['rows'] > 0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
