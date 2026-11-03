@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.17 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.41.4 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,40 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.41.4
+
+#### Fixed (after a check of the block)
+
+- **Suites staged, undone and accepted again** (or named anew after staging) no longer leave a second new work behind; a part links its suite only together with its own link and while its medium is loaded.
+- **A work of MusicBrainz chosen for a track stays its part** when the suite is accepted.
+- **The works found for the parts are offered** ("Link “Beta”"), not taken by themselves.
+- **Fewer questions:** the release's title is offered as a suite only when at least half of the tracks have parts; tracks that all have their works are not asked about; "Japan Bonus Tracks", DVD, Blu-ray, Remixes … name no suite.
+
+### Import 3.41.3
+
+#### New
+
+- **Medleys** (collected item Z-SU): a track "Alpha / Beta" in no suite offers **Split into 2 works (medley)** in the works matrix – each part a work of its own, linked with "medley" in the order of the title; "↺ one work" takes it back.
+- **The parts are looked up in MusicBrainz** among the works of the track's writers: a work of exactly that title is linked instead of a new one.
+
+### Import 3.41.2
+
+#### New
+
+- **The suite as a work** (collected item Z-SU): after ✓ Yes the suite ("Trisect") is staged as a new work of the type Suite with "parts" (attribute movement) to each of its parts, in their order. No recording is linked with the suite itself.
+
+### Import 3.41.1
+
+#### New
+
+- **Suites: the question and the parts as works** (collected item Z-SU): a yellow line at the top of the works matrix asks "all 4 tracks: parts of the suite “Trisect”?" – **✓ Yes**, **✕ No** or another name. Yes makes each part of these tracks ("Phase 2 / Phase 3", or the sub-tracks at Discogs) a new work of its own, "Trisect: Phase 2", linked to the recording in its order. ⚙ Settings → Works → **Parts of a suite: Suite: Part | Suite, Part**.
+
+### Import 3.41.0
+
+#### New
+
+- **Suites and medleys, the first step** (collected item Z-SU): the headings of the Discogs track list and the sub-tracks of a track are read (as were the titles with " / "), to suggest suites in the next versions. Headings of sides, media and bonus tracks name no suite (list T061 in the mapping rules, editable).
 
 ### Import 3.40.17
 

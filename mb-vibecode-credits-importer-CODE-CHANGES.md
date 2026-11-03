@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.17, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.4, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,64 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.4 · 2026-11-03
+
+Fixes after the check of Block BD (an independent review; collected item Z-SU).
+
+- **Keys of parts:** "pending:<track>.<k>.<n>" – each acceptance, split and renaming of a staged part its own (`S.suiteSeq`); `pendingWorkEntity` reads the track from any such key. Until 3.41.3 a part staged, undone and accepted again kept the old link and its entity, and the suite's "parts" pointed to a second new work. **`renameSuiteParts`** (from `setSuiteNaming` and `resetSettings`): a part already in the editor gets a new key instead of a name changed in the editor's entity.
+- **`suite-part`:** planned only with the part's own link (planned, staged or in MusicBrainz) – a link held back by an invalid date holds it back too; staged only while the recording's medium is loaded (as the links).
+- **`acceptSuite`:** a work of MusicBrainz chosen or created for a track is its part (`kept`), no new work instead of it.
+- **`suiteAsks`:** the key from the offer before the tracks are filtered (a medium filter does not ask again); offers whose tracks all have works in MusicBrainz are not asked; answered ones stay; a suite of another source of the release keeps its line with "↺".
+- **`suiteOffers`:** the release's title only when at least half of the tracks have parts; of two headings before the same track the one next to the tracks. **`headingKind`:** "bonus" anywhere. **T061** + DVD, Blu-ray, SACD, Digital, Remixes (register renewed).
+- **`searchParts`:** offers the work found (`p.offer`; button `part-pick` "Link “…”" with its MB link at the part) instead of taking it – as every work found for a track (180), and no plan changes while staging.
+- **`allWorkGids`** with the parts; the summary's count of work relationships without `suite-part`; the focus after "Suite: Part | Suite, Part"; the hint of the question visible in it.
+- **Texts (English):** `suite.partPick`, `suite.partPickTitle`, `log.partPicked`; `log.partsFound` changed ("MusicBrainz has works for {n} of its parts – offered at them").
+- **Tests:** `t_works_more.py` new case `suiterestage` (undone and accepted again, named anew after staging: one link per part, no "parts" to a work without its recording); `medley` (no suite asked for one "A / B" among four; the work found offered, then linked); `suitedata` D (bonus anywhere, DVD, the release's title only from half the tracks, two headings before one track). They fail on 3.41.3.
+
+## Import 3.41.3 · 2026-11-03
+
+Medleys, and the parts looked up in MusicBrainz (collected item Z-SU; Q-cb, Q-cd, Q-cg).
+
+- **New `medleyParts(i)`** (the parts of a track without a work in MusicBrainz), **`splitMedley(i)`** (each part a part plan with the flag "medley" and `medley: true`, a work planned before kept in `before`), **`joinMedley(i)`**. Handlers `medley-split`, `medley-join`.
+- **`workFrontCell`:** "Split into n works (medley)" (`.dci-mx-split`) in the line of a track without a work and next to one new work, when its title has parts; a part of a medley "medley k of n", the first with "↺ one work". The flag "medley" goes onto the link through `linkAttrsOf` (the plan's flags), the order through `linkOrder` (3.41.1).
+- **New `searchParts(i)`:** each new part looked up with `searchWorks` among the works of the track's writers (`writerMbidsOfTrack`) – for a part of a suite also "Suite: Part", "Suite, Part" and the part alone; one work of exactly that title or alias: taken (`origin: 'search'`). After `acceptSuite` and `splitMedley`.
+- **Texts (English):** `medley.split`, `medley.splitTitle`, `medley.join`, `medley.joinTitle`, `medley.partOf`, `medley.partTitle`, `log.medleySplit`, `log.medleyJoined`, `log.partsFound`.
+- **Tests:** `t_works_more.py` new case `medley` (✕ No, the offer; split – a part found in MusicBrainz; staged with "medley" in the order of the title; one work again); fails on 3.41.2.
+
+## Import 3.41.2 · 2026-11-03
+
+The suite itself: a new work of the type "Suite" with "parts" to its parts, in their order (collected item Z-SU; Q-bv).
+
+- **State:** `S.suiteWorks` (key of the suite → { gid "pending:s<n>", title, key, tracks }), `S.suiteSeq`; `acceptSuite` adds it, `undoSuite` and `dropWorkChoices` take it away.
+- **`idx().partsLt`** (work – work "parts"). **The plan:** after the links of the works, an item `suite-part` per part (key `suite|<suite>|<part>`): the parts planned of the suite's tracks and the one work in MusicBrainz of a track of the suite, in their order (`linkOrder` 1 … n), with "movement" where the type allows it; target `{ kind: 'work', work }`.
+- **Staging:** `suite-part` dispatched from the part (in the editor with its recording) to the suite (`enteredFirst`: the suite is entity0), with its `linkOrder`. **`pendingWorkEntity`** also for "pending:s<n>": the type "Suite" (from the work form's types), no language. `describeItem`, the preview ("part n of the suite “…”") know the kind.
+- **Texts (English):** `preview.suitePart`.
+- **Tests:** `t_works_more.py` new case `suiteparts` (the suite with "parts" to 7 parts in their order, type Suite, movement, entity0, no recording with it; the preview; nothing after ↺); the harness types "parts" (281), "movement", the work type "Suite" there only. Fails on 3.41.1.
+
+## Import 3.41.1 · 2026-11-03
+
+The question of a suite and its parts as works of their own (collected item Z-SU; Q-bt, Q-bu, Q-bv, Q-cc, Q-ci).
+
+- **State:** `S.workParts` (track → [part plan { gid "pending:<track>.<k>", title, part, k, origin, flags, suite, suiteName, before }]), `S.suiteAnswers` (key → { yes, name }).
+- **`worksForTrack`:** the parts of a track instead of its one planned work. New **`planOf(i, gid)`** (the plan of a planned work: a part or the one work) – used by `linkAttrsOf`, `setLinkAttr`, the "cover" pill, `coverCandidates`, `coverAutoNow`, `workFrontCell`; new **`planEntries()`** (every planned work) for the links staged.
+- **New `suiteAsks()`** (the suites offered for the tracks of the matrix, each with a key), **`suitePartName`**, **`setSuiteNaming`**, **`acceptSuite(o, name)`** (each track without a work in MusicBrainz: its parts – `trackPartsOf` of the source track, else the track – as new works; a work planned before kept in `before`), **`undoSuite(o)`**, **`suiteAskHtml(o)`** (the yellow question at the top of the matrix, `[data-el=suites]`; answered: a line with "↺"). Handlers `suite-yes`, `suite-yes-name`, `suite-no`, `suite-undo`, `suite-naming`.
+- **`workFrontCell`:** a part: "part k of n" (from two parts), its name; the track's head only on its first line. `matrixRows` passes `k`; `matrixTrack` counts tracks with parts.
+- **Staging:** the link of each part with `linkOrder` k (from two parts of a track); **`dispatchAddRelationship(…, linkOrder)`** (until 3.41.0 always 0); **`pendingWorkEntity(ref)`** by the work's key ("pending:4", "pending:4.2"), a part without a work type.
+- **Setting:** `SUITE_NAMING_KEY = 'dci-suite-naming'` (only "comma" stored), ⚙ Works, in `TOPIC_KEYS.works`, `SETTINGS_KEYS`, its ↺, `resetSettings`. `dropWorkChoices` ("Start afresh") clears the parts and answers too.
+- CSS `.dci-mx-suite` (yellow), `.dci-mx-part`.
+- **Texts (English):** `suite.ask`, `suite.yes`, `suite.noBtn`, `suite.other`, `suite.yesName`, `suite.hint`, `suite.from.heading/index/release`, `suite.done`, `suite.undo`, `suite.undoTitle`, `suite.no`, `suite.askAgain`, `suite.askAgainTitle`, `suite.partOf`, `suite.partTitle`, `log.suiteYes`, `log.suiteUndone`, `log.suiteNo`, `log.suiteNaming`, `settings.suiteNaming`, `settings.suiteNaming.colon/comma`, `settings.suiteNamingTitle`.
+- **Tests:** `t_works_more.py` new case `suiteask` (the question; ✓ Yes – the parts in the matrix; staged in their order without a type; ⚙ "Suite, Part" and its ↺; undo, ✕ No, another name); fails on 3.41.0.
+
+## Import 3.41.0 · 2026-11-03
+
+Block BD, suites and medleys (collected item Z-SU) – first what they are made of (Q-bt, Q-ca, Q-ch).
+
+- **The neutral release:** `headings` ([{ title, at }], the headings of the track list, `at` the track that follows); a track's `parts` (the titles of its sub-tracks) and `indexTitle`.
+- **DISCOGS `toRelease`:** keeps the headings (until 3.40.17 `continue`), and for an index of the parts of one track the titles of its sub-tracks as `parts`.
+- **New `titleParts(title)`** (" / " with spaces), **`trackPartsOf(t)`**, **`headingKind(title)`** ("medium" by T061, "recording" by `HEADING_RECORDING`, "name"), **`suiteOffers(rel)`** ([{ name, from: heading | index | release, tracks }]); exported for Node.
+- **Mapping:** list `SUITE_SKIP_HEADINGS` (T061, ✎ as words): Side, CD, Disc, Disk, LP, Record, Vinyl, Tape, Cassette, Medium, Bonus, Bonus Tracks, Bonus Track, Bonus Disc, Bonus CD, Hidden Track, Volume, Vol., Encore, Extras; its register entry; `register_golden.json` renewed.
+- **Tests:** `t_works_more.py` new case `suitedata` (Node: headings and parts from Discogs, the kinds of headings, the suites offered); fails on 3.40.17. `t_rules_window.py` `ruleedit`: T061 among the lists with ✎.
 
 ## Import 3.40.17 · 2026-11-03
 

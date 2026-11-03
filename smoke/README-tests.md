@@ -336,6 +336,16 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
                                 #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
+                                #   suitedata: 3.41.0 (Z-SU): in Node – Discogs headings and sub-tracks as parts, " / " parts, the kinds of headings
+                                #     (T061, a recording, a name), the suites offered (heading, index, the release's title, none)
+                                #   suiteask: 3.41.1 (Z-SU): "Trisect" – the yellow question, ✓ Yes: the parts as new works (part k of n), staged in
+                                #     their order without a type; ⚙ "Suite, Part" and ↺; undo, ✕ No, another name
+                                #   suiteparts: 3.41.2: the suite "Trisect" (type Suite) with "parts" (movement) to 7 parts in their order, entity0,
+                                #     no recording with it; the preview; nothing after ↺
+                                #   medley: 3.41.3: "Alpha / Beta" – ✕ No, the offer "Split into 2 works (medley)"; split: Beta found in MB; staged with
+                                #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
+                                #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
+                                #     new work without its recording
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
