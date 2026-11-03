@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.15, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.42.8, Companion 1.6.0 – 1.11.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,120 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.42.8 · 2026-11-03
+
+Block BG, part 9 – collected item Z-YTC (Q-de), with Companion 1.11.0.
+
+- **The YouTube adapter:** `companion: 'youtube'` (until 3.42.7 none) – the companion shows it.
+- **`viewSite()`** 'youtube' for it, `VIEW_NAMES.youtube`; **`textSite(site)`** (new): Bandcamp and YouTube, whose credits are lines of a text – `sendDiscogsStatus` sends their places (`refs`: line, part, pi, n) for both, `showSourceOf` jumps to the lines for both (`bandcampPayloadForRows`).
+- **`syncSite()`:** a companion that reports no YouTube tabs (before 1.11.0) is old for YouTube (`need: '1.11.0'`); `syncStatusHtml` says so with the new text `sync.oldSiteV` ("needs the companion script {version} or later"); `COMPANION_NEEDED` stays 1.10.0.
+- **Texts:** `sync.oldSiteV` (English); the "…Site" texts of the view name YouTube.
+- **Tests:** `t_companion_bandcamp.py` new case `ytview` (fails on 3.42.7 / 1.10.1); `smoke/harness.py` `yt_desc_html` (the description drawn as YouTube does: folded, "#expanded", "…more", "Show less"), `yt_page(…, dom=True)`, `open_youtube`.
+- **The independent review of Block BG** (11 findings; 10 fixed here, 1 a question – Discogs "Horns"):
+  - **`restoreRemembered`:** the de-dup of 3.42.4 only for rows of words given an entry (`una`) – such a row added before takes the place of the row the import gives its entry now (`used`); a copy made on purpose (another event, another instrument of the same role, "＋ Another role") stays (it was left out).
+  - **Words given an entry are remembered:** `unaBuild(it, { replay })` (new, out of `unaApply`), `S.unaItems` (the words of this import: name, kind, role, line, tracks, words), the snapshot's `una`, **`unaReplay(repeat)`** (new) in `loadRelease` before `rememberFresh` – the entries come again as the source's, their changes with them (until then lost: "remembered changes left out"); not twice when the import has the entry with that role already (an own rule of texts).
+  - **`etcCycle`:** a search that comes back after another kind was clicked keeps its suggestions for its kind (the ones of the kind shown are shown), the timer's id cleared with it, the wait of a newer search kept; chosen meanwhile: no wait.
+  - **S073 `prosePart`:** a sentence only when its second or third word is a word in small letters that is no word between names (`JOIN_WORD`) – "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic" gives both guests again.
+  - **S071 `STUDIO_LINE`:** recording, studio(s), sound – not "Recordings", "Sounds" (names of labels: "Warp Recordings" below "Mastered by …" no place), nor a line of `TEXT_LABEL_LINE`.
+  - **`autoSource`:** a single new link of the release editor is loaded at once only if it is no video or the release links to nothing else (YouTube last).
+  - **`evHeadHtml`, `evDateBoxHtml(e, inline, a)`:** what was typed and its error belong to that entry's event and that box (`S.emEvDate.inline`): events of several entries share their key; an error in the fields below opens no second box in the head.
+  - **Own rules of texts:** their kind goes with the company (`entity` → `groupCompanies` → `addCompanyEntry`: `setCompanyEntityType` when a row has a type of it) – a place "mastered at" is a place, not a label.
+  - **Companion:** see 1.11.0.
+- **Tests (review):** `t_text_places.py` new cases `unaremember`, `kindrace` (the places answer late), `ownrulekind`; `t_entries.py` `evdatefields` E; `t_sources_bandcamp.py` `ytlinks` C; `t_companion_bandcamp.py` `ytview` H; `text_corpus.json` "With Oliver Lake, Kenny Wheeler and members of …" and "Mastered by Joe Lambert / Warp Recordings" – each fails before the fix.
+
+## Companion 1.11.0 · 2026-11-03
+
+YouTube (collected item Z-YTC; Q-de: everything the other sources have).
+
+- **`@match` `*://www.youtube.com/*`, `*://m.youtube.com/*`**; `isYoutube`; `SITES` with `youtube`; `mayOpen` opens YouTube videos (`/watch?`) too; `@description` names YouTube.
+- **New `YOUTUBE_SIDE`:** `releaseId` = the video id of the page (`ytVideoId`, '' elsewhere), `pageFor` the video's page, `locate` (`youtubeLocate`, six tries – the description comes later), `renderStatus` (`renderYoutubeStatus`: marks before each part of a line, the part greyed when all its credits are off; `ytPlaced`), `stale` (the marks drawn before are gone: YouTube drew the description anew) and `onNavigate` (`yt-navigate-finish`: another video without loading).
+- **New `ytDescription()`** (the unfolded description – `#description-inline-expander #expanded yt-attributed-string`, else the folded one and older forms) and **`ytExpand()`** (a click on "…more", `#expand`).
+- **`bcStream(root, { nl })`:** with `nl` a "\n" of the text ends a line (YouTube has no `<br>`); `textRoots` gives YouTube's description as the part `notes`; `renderTextMarks` unfolds it.
+- **`initSourceSide`:** every 3 s `showMap(side.stale(shownMap))` (drawn again when stale), `side.onNavigate` → beat and marks at once.
+- **Review:** `stale` also while nothing was placed yet (a few tries, `ytTries` – the description comes after the page or another video); `onNavigate` takes the line marked by a jump away (`bcUnwrap(BC_HL)`); a description folded by the user ("Show less", `ytFolded`) is not unfolded again when the marks are drawn anew (a jump still unfolds it); the video id without `URLSearchParams` (lint).
+- **Version:** `@version` and `COMPANION_VERSION` 1.11.0.
+
+## Import 3.42.7 · 2026-11-03
+
+Block BG, part 8 – collected item Z-YTL (Q-da).
+
+- **The YouTube adapter:** `releaseLinks(relations)` (until 3.42.6 none) – every link of the release to a video (`videoId`: www.youtube.com/watch?v=…, youtu.be/…, shorts …), each video once, as `{ id: <video id>, url: videoUrl(id) }`.
+- **`LINKED_SOURCES`** with `youtube`; **`SOURCE_ORDER_DEFAULT`** with YouTube last for physical and digital media (`readSourceOrder` adds it to the end of an order stored before). So the videos are linked sources: `S.sourceLinks`, the picker of **Source ▾**, a pick remembered for the release (`keepSourcePick`), the links of the release editor and of Harmony.
+- **`sourceLinkLabel`:** a link named by its address (`url`), as `afterEditLinkLabel` (a video: "YouTube www.youtube.com/watch?v=…").
+- **Tests:** `t_sources_bandcamp.py` new case `ytlinks` (fails on 3.42.6); `bandcamp` C: the lists with YouTube last.
+
+## Import 3.42.6 · 2026-11-03
+
+Block BG, part 7 – collected item Z-STG2 (Q-dj, Q-do).
+
+- **The Bandcamp adapter:** `pageTags(html)` (new, exported for the tests) – the album's tag links (`a.tag`), else the `keywords` of its JSON-LD, without the tag of the artist's place (the page's `span.location`, also its first part: "Nashville" of "Nashville, Tennessee"), each once; `release()` passes them to `toRelease`, the neutral release has them as **`bcTags`** (Discogs's `tags` – words of the format – unchanged).
+- **The statistics:** `statExtras` stores `genres` (Discogs's genres and styles) and `bcTags` (Bandcamp's tags), each from the source read and the one supplementing it (`statRels`, new); `statsData` counts `m.bcTags` and `m.genresAll` (both, the same word once a release, any case).
+- **`statGenresHtml(m, …)`** (new; the card "Genres and styles"): "Combined | Separate" (`data-act=stats-genres-view`; stored in `dci-stats-genres`, `STATS_GENRES_KEY` – only "separate", Combined is the default; a setting of the statistics, reset with the others) – one list, its sources in each item's tooltip ("Discogs 3 · Bandcamp 1"), or a list for each source.
+- **Texts:** `stats.genresView`, `stats.genres.combined`, `stats.genres.separate` (English). **CSS:** `.dci-stats-gview`, `h5.dci-stats-gsrc`.
+- **Tests:** `t_ui_settings.py` new case `statsgenres` (fails on 3.42.5); `statsmore2` B: the record's `x` has `bcTags` too.
+
+## Import 3.42.5 · 2026-11-03
+
+Block BG, part 6 – collected item Z-ETC (Q-dd).
+
+- **`kindTagHtml(a)`:** an entry not linked (a company without `mbid`) whose rows have relationships for more than one kind (`etcKinds`: of `ETC_KINDS` – label, place, area, artist – those with a type in `typeOptions`) shows its kind as a button (`button.dci-kind-tag.dci-kind-cycle`, `data-act=kind-cycle`, "Label ↻" – ↻ drawn by `::after`, so the tag's text stays the kind's name, as the readers of the heads and the register's golden file read it; its title names the next kind and the order), with "searching in a second …" (`.dci-etc-wait`) while a search waits.
+- **`etcCycle(a)`** (new): the next kind – `setCompanyEntityType`; the suggestions of each kind kept in `a.etcHits` (those of the import too): a kind found before shows them again without a request, else `suggestByName([a])` runs once no click followed for a second (`a.etcTimer`; MusicBrainz's limit of one request a second as for every search, `mbWs`); log `etcSearched`.
+- **`updateGroupHeader`:** the note of the wait replaced with the tag.
+- **Texts:** `etc.title`, `etc.wait`, `log.etcSearched` (English). **CSS:** `button.dci-kind-tag.dci-kind-cycle`.
+- **Tests:** `t_text_places.py` new case `kindcycle` (the requests counted; fails on 3.42.4).
+
+## Import 3.42.4 · 2026-11-03
+
+Block BG, part 5 – collected item Z-UNA (Q-dn, Q-dr).
+
+- **The list "… lines not recognized"** (`renderSource`): each word a `span.dci-una-w` (`data-act=una-word`, `unaWordsHtml`), the words chosen `.dci-una-sel`, those given an entry `.dci-una-done` (`S.unaDone`: line → word indexes); the list stays open once a word was clicked (`S.unaOpen`).
+- **New:** `unaPick(btn, extend)` (a click; ⇧ extends `S.una` to the word clicked in the same line), `unaName` (the words without the signs around them), `unaFormHtml(line)` (name, kind – artist, label, place, area, series –, role: free text for a person, `UNA_ROLES` filtered by `mapCompanyRole` for the others, "part of" for a series; the tracks of the line – `unaScope` with the text adapter's new `TEXT.lineTracks(line, resolveTracks)` – or the whole release; "Remember as a rule of my own", not ticked), `unaApply()` (a person: `groupCredits` → `newPersonEntry`/the entry of that name → `addCreditRows`; a label, place or area: `groupCompanies` → **`addCompanyEntry(g, rel, leftOutKeys)`** – moved out of `loadRelease`, unchanged – → `setCompanyEntityType`; a series: an entry of its own with "part of" on the release; then `resolveArtists({ only })` and, without suggestions, `suggestByName`). Click cases `una-word`, `una-apply`, `una-close`; change `una-*` in `onChangeInner`.
+- **Own rules of texts** (kind `text`: `phrase`, `entity`, `role`, `tracks`): stored with the own rules (`dci-user-rules`), listed in "Mapping rules" (on/off, delete; `data-urule-kind=text`), taken by the import/export of your changes (`OWN_FIELDS`); `sourceContext()` passes them (`ownTexts`), `TEXT.parse` reads a phrase of a part not recognized as its entry (`readOwnTexts`, after the units of a line: the part or the words not recognized are gone).
+- **`suggestByName`:** a series looked up by its name (`series?query=series:(…) OR alias:(…)`; the web service's list `series`).
+- **`restoreRemembered`:** a row added by hand then that the source gives now itself (the same entry, role, level and tracks) is not added again.
+- **Texts:** `una.*` (15), `log.unaAdded`, `log.unaRule`, `rules.kindText`, `rules.textTracksLine` (English). **CSS:** `.dci-una-w`, `.dci-una-sel`, `.dci-una-done`, `.dci-una-form`.
+- **Tests:** `t_text_places.py` new case `unawords` (fails on 3.42.3); `smoke/harness.py` searches series (`/ws/2/series`).
+
+## Import 3.42.3 · 2026-11-03
+
+Block BG, part 4 – collected items Z-GON (a – i; Q-dg, Q-dh, Q-di, Q-dm) and Z-BZ.
+
+- **The text adapter (`TEXT.parse`), new rules S069 – S073:**
+  - **S069** `STATUS_MARKS`, `STATUS_BANG`: the companion's status marks (✓ ● ○ ✗, "!" first) are taken out of each line before it is read (a text copied from a page the companion marked).
+  - **S070** `BULLET`: the tracks after "•" / "·" at the end of a line ("— saxophones • 1, 8"), after `NUMBERS` and before `LEAD_POS` in `readLine`; `lineLead` (set in `readClause` by "Name – roles" and by the branch of some known roles) gives `contWho` – a line below it only of roles (`listRoles`, else `playList` with words to ask, 137d), without colon, dash or "by", gives that name its roles with the line's tracks; an empty line, a heading (S067), a pair (S058) or a block (S051) ends it.
+  - **S071** `prevBy` (`{ verb, roles, scope }`, or `{ ignored }`): after one sentence of "by" credits of one name, the next line may go on – `STUDIO_LINE` (capitals, then recording(s) / studio(s) / sound(s)) is the place of its verb (`<Verb> At`, a company of the line), "and Name" one more name of its roles (or left out with a website).
+  - **S072** `WEBSITE_BY`, `NOWHERE`: "Website by …" and "Recorded all over the place" are left out (`ignored`, why `website` / `nowhere`).
+  - **S073:** in the "With …" branch (S061) a part after a comma that is prose (`prosePart`: five words or more, three in small letters, no roles) gives no credit; `addCredit` gives no person whose name is in `titleNames` (the release's and the tracks' titles; not when it is a name of the release's artist too). `sourceContext()` passes `titleNames` (`S.releaseTitleMb`, new, from the web service, and MB's track titles), the Bandcamp adapter adds the album's title and its tracks'.
+- **Mapping:** T021 `TEXT_WHAT_WORDS` with "all (of) (the)" in front ("All songs mixed by X": mixed by, no detail "All songs"); T001 `INSTRUMENT_ALIASES` "horns" → horn, brass (was brass), "sampling" → sampler; new question **Q013** ("horns": horn · brass, credited "horns", `preset: 'horn'`).
+- **Instrument questions:** `questionAsks(q, row)` (new) – a question with `preset` asks also while one of its answers is set; `instrumentAskHtml` shows it then as "“horns” is set as horn (credited “horns”) – or as: brass" (the other answers only); `chipAnswers` gives the other answers marked `preset` – the chip's ▾ offers them, without "?" (`emChipHtml`).
+- **Texts:** `ignored.why.website`, `ignored.why.nowhere`, `instrAsk.preset` (English).
+- **Tests:** `t_text_languages.py` new cases `gondola` (the text as on the page and with ○; the horns) and `blackzenith` (pasted, and as Bandcamp's "about" text) – both fail on 3.42.2; `text_corpus.json` the two Gondola texts and Black Zenith (the instruments of `t_textcorpus.py` with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling, synthesizer and plurals); `register_golden.json` renewed (S069 – S073, Q013, T001, T021; Discogs "Horns" → horn, "Arranged By [Horns]" → horn arranger); `smoke/harness.py` `REL_TITLE`.
+
+## Import 3.42.2 · 2026-11-03
+
+Block BG, part 3 – collected item Z-FRD (Q-df: one entry a line).
+
+- **The text adapter (S062):** a field recording with a period gives its credit `dateName` ("Ambisonic recordings", the kind of T057) and `dateKey` (the line); `groupCredits` keeps them with the date.
+- **`addCreditRows`:** a date with a name of its own goes into the date pool (`poolDateFor(value, null, dateKey, dateName)` – one entry a line) and the row takes it (`poolId`); until 3.42.1 the period stood only at the row.
+- **Tests:** `t_text_basics.py` new case `fieldpool` (fails on 3.42.1); `cloudpond` reads the row's date from its chip of the pool.
+
+## Import 3.42.1 · 2026-11-03
+
+Block BG, part 2 – collected items Z-TP and Z-EDM (Q-db).
+
+- **Z-TP:** `renderDates` puts the date pool (with its form) and the track pool (with its form) into `.dci-pools-pair` – two columns (`.dci-pools-col`, `flex: 1 1 auto`) that wrap: side by side when both lines fit, one below the other otherwise; the bar kept while the block is folded likewise.
+- **Z-EDM:** the head of an event (`evHeadHtml(e, open, a)`) shows its date as a button (`data-act=em-evdate-open`); **`evDateBoxHtml(e, inline)`** (new) holds MusicBrainz's fields (`mbDateFields('ed', …, true)`: begin, end, ended, ⇣), "Apply" (`em-evdate-apply`, checked by `validateDateFields`, the error shown in the box), "no date" (`em-evdate-clear`) and ✕ – below the head (`S.emEvDate`), and inline in the opened event (`emEventHtml`); **`emEventDateValue(a, ev, value)`** (new, from `emEventDate`, which read the text field and is gone with it, as is `em.badDate`); `ed-copy` copies the begin into the end; `onPaste` fills the fields of `ed-…` in their box.
+- **Tests:** `smoke/harness.py` `EV_DATES`, `ev_date()`; `t_entries.py` new case `evdatefields`, and `dates`, `evhead`, `companies` with the fields (the readers of the heads leave the date button out); `t_dates_matrix.py` new case `poolside`. Both new cases fail on 3.42.0.
+
+## Import 3.42.0 · 2026-11-03
+
+Block BG, part 1 – collected items Z-EN2 (Q-dk), Z-CONS (Q-dl), Z-DS.
+
+- **Z-EN2 – no "None" for the edit note:** the segment in ⚙ Settings → Staging is "Full | Simple"; a "none" stored by 3.41.9 – 3.41.15 is read as "simple" (`S.editNoteMode`); `clearEditNote` and the branches for "none" (staging, the live job, `formEditNote`) are gone; texts `settings.editNote.none`, `settings.editNote.noneTitle` removed.
+- **Z-CONS – the connections in groups:** **`CONN_GROUPS`** (new; Sources – also X015, images by their address –, Websites, Tools & scripts, Resources, Userscript managers, Links); `connectionsHtml` draws a `<tbody data-conn-group>` per group with a heading row (`.dci-conn-group`, texts `conn.group.*`), by number within; the README table likewise.
+- **Z-DS – "Delete statistics …" in ⚙ Settings → Cache:** next to "Collect statistics", with the number of submissions counted (`[data-el=stats-stored]`; `statsLoad` when not loaded yet, the settings drawn anew when it is); deleted: the settings drawn anew. The statistics themselves have no button any more.
+- **Tests:** `t_ui_settings.py` new cases `conngroups`, `statsdelete`; `editnote` (Full | Simple, a stored "none" is Simple); `settabs` counts the rows of connections (`tr[data-conn]`). All three new or changed cases fail on 3.41.15.
 
 ## Import 3.41.15 · 2026-11-03
 

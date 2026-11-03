@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.10.1
-// @date         2026-11-01
-// @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
-// @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
-// @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs o Bandcamp (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
-// @description:fr Complément de « MB x Vibecode: Credits Importer » : relie le tableau d'import à un onglet Discogs ou Bandcamp (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
+// @version      1.11.0
+// @date         2026-11-03
+// @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
+// @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
+// @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs, Bandcamp o YouTube (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
+// @description:fr Complément de « MB x Vibecode: Credits Importer » : relie le tableau d'import à un onglet Discogs, Bandcamp ou YouTube (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
 // @author       proto-beep
 // @license      CC0-1.0
 // @homepageURL  https://github.com/proto-beep/MBvibecode
@@ -20,6 +20,8 @@
 // @match        *://www.discogs.com/*
 // @match        *://discogs.com/*
 // @match        *://*.bandcamp.com/*
+// @match        *://www.youtube.com/*
+// @match        *://m.youtube.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -44,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.10.1';
+  const COMPANION_VERSION = '1.11.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -66,8 +68,10 @@
   const roleNorm = (s) => norm(s).replace(/©/g, '(c)').replace(/℗/g, '(p)').replace(/™/g, '(tm)');
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
   const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
+  // [1.11.0] (Credits Importer 3.42.8, collected item Z-YTC) the pages of a YouTube video
+  const isYoutube = /(^|\.)youtube\.com$/i.test(location.hostname);
   /** [1.8.0] The sites the companion shows; a tab without a site (before 1.8.0) is a Discogs tab. */
-  const SITES = ['discogs', 'bandcamp'];
+  const SITES = ['discogs', 'bandcamp', 'youtube'];
   const siteOf = (x) => (x && SITES.includes(x.site) ? x.site : 'discogs');
 
   // Stored data of the companion has a generation; an update that raises it clears it once
@@ -207,8 +211,9 @@
     };
 
     // Other scripts on the page could send these events too, so only MusicBrainz, Discogs and Bandcamp pages are opened.
+    // [1.11.0] and YouTube's videos
     const mayOpen = (url) => /^https:\/\/((beta|test)\.)?musicbrainz\.org\//.test(String(url)) || /^https:\/\/(www\.)?discogs\.com\//.test(String(url))
-      || /^https:\/\/([a-z0-9-]+\.)?bandcamp\.com\//i.test(String(url));
+      || /^https:\/\/([a-z0-9-]+\.)?bandcamp\.com\//i.test(String(url)) || /^https:\/\/(www\.|m\.)?youtube\.com\/watch\?/i.test(String(url));
 
     document.addEventListener('dci:to-discogs', (e) => {
       let msg;
@@ -449,8 +454,16 @@
     // Discogs renders parts of the page later: mark again once the credits are there
     setTimeout(() => showMap(true), 4000);
     // The edit page was closed (or crashed): remove the marks; they come back when it reports again ([1.8.3] or the kept
-    // ones are shown); [1.10.0] another import of this release in front: its marks
-    setInterval(() => showMap(), 3000);
+    // ones are shown); [1.10.0] another import of this release in front: its marks; [1.11.0] (YouTube) drawn again when the page
+    // drew its text anew
+    setInterval(() => showMap(!!(side.stale && side.stale(shownMap))), 3000);
+    // [1.11.0] YouTube: another video without loading a page – the beat and the marks at once
+    if (side.onNavigate) {
+      side.onNavigate(() => {
+        beat();
+        setTimeout(() => showMap(true), 800);
+      });
+    }
     document.addEventListener('click', (e) => {
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
       if (!mark) return;
@@ -979,7 +992,7 @@
    * The text of an element as it reads: lines (at <br>) of single-spaced words in lower case, and for each character
    * its text node and offset (to put a mark there or to mark a stretch).
    */
-  function bcStream(root) {
+  function bcStream(root, { nl = false } = {}) {
     const st = { s: '', at: [] };
     const add = (ch, node, off) => {
       st.s += ch;
@@ -990,7 +1003,14 @@
         if (n.nodeType === 3) {
           const t = n.nodeValue;
           for (let i = 0; i < t.length; i++) {
-            if (/\s/.test(t[i])) {
+            // [1.11.0] YouTube's description: its lines end in "\n" of the text (no <br>)
+            if (nl && t[i] === '\n') {
+              if (st.s.endsWith(' ')) {
+                st.s = st.s.slice(0, -1);
+                st.at.pop();
+              }
+              if (st.s && !st.s.endsWith('\n')) add('\n', n, i);
+            } else if (/\s/.test(t[i])) {
               if (st.s && !/[ \n]$/.test(st.s)) add(' ', n, i);
             } else {
               for (const c of t[i].toLowerCase()) add(c, n, i);
@@ -1097,6 +1117,8 @@
   /** The texts of the page by the parts the dashboard names: the notes of a Discogs release, Bandcamp's credits and "about". */
   function textRoots(side) {
     if (side.id === 'bandcamp') return { credits: bcCredits(), about: bcAbout() };
+    // [1.11.0] YouTube: the video's description (the dashboard's "notes")
+    if (side.id === 'youtube') return { notes: ytDescription() };
     const notes = document.querySelector('#release-notes')
       || [...document.querySelectorAll('section')].find((x) => /^notes$/i.test(((x.querySelector('h2, h3') || {}).textContent || '').trim()));
     return { notes: notes || null };
@@ -1116,7 +1138,8 @@
       const marks = map.texts.filter((t) => t.part === part && TXT_MARK[t.kind]);
       if (!root || !marks.length) continue;
       if (side.id === 'bandcamp') bcExpand();
-      const st = bcStream(root);
+      if (side.id === 'youtube') ytExpand();
+      const st = bcStream(root, { nl: side.id === 'youtube' });
       const places = [];
       for (const t of marks) {
         const needle = bcNeedle(t.text);
@@ -1287,6 +1310,155 @@
       const row = target.closest && target.closest('tr.track_row_view');
       return row ? (String(row.getAttribute('rel') || '').match(/tracknum=(\d+)/) || [])[1] || '' : '';
     },
+  };
+
+  // --- [1.11.0] YouTube: the page of a video (www.youtube.com/watch?v=…; Credits Importer 3.42.8, collected item Z-YTC) ------------
+  // The video's description is the dashboard's text: a credit is found by its line (and the part of the line) as on Bandcamp – the
+  // lines end in "\n" of the text. YouTube shows the description folded ("…more"): it is unfolded first. YouTube is a page that
+  // changes without loading (another video): the tab says which video it shows with each beat, and the marks are drawn again when
+  // YouTube draws the description anew.
+
+  /** The id of the video shown ('' on any other page of YouTube). */
+  const ytVideoId = () => {
+    if (!/^\/watch\/?$/.test(location.pathname)) return '';
+    const v = (location.search.match(/[?&]v=([^&#]*)/) || [])[1] || '';
+    return /^[A-Za-z0-9_-]{11}$/.test(v) ? v : '';
+  };
+  /** The description as YouTube shows it unfolded (its text, with the "\n" of its lines), else the one folded; null without. */
+  function ytDescription() {
+    const sels = ['ytd-watch-metadata #description-inline-expander #expanded yt-attributed-string', '#description-inline-expander #expanded yt-attributed-string',
+      'ytd-text-inline-expander #expanded yt-attributed-string', '#description-inline-expander yt-attributed-string', 'ytd-watch-metadata #description yt-attributed-string',
+      '#description yt-formatted-string', '#description-inner'];
+    for (const sel of sels) {
+      const el = document.querySelector(sel);
+      if (el && el.textContent.trim()) return el;
+    }
+    return null;
+  }
+  // (review) the user folded the description ("Show less"): drawing the marks again does not unfold it (a jump still does)
+  let ytFolded = false;
+  document.addEventListener('click', (e) => {
+    if (isYoutube && e.target.closest && e.target.closest('#description-inline-expander #collapse, ytd-text-inline-expander #collapse')) ytFolded = true;
+  }, true);
+  /** Unfolds the description ("…more"), so that its marks and the lines marked can be seen. */
+  function ytExpand() {
+    const box = document.querySelector('ytd-watch-metadata #description-inline-expander, #description-inline-expander, ytd-text-inline-expander');
+    if (!box) return;
+    const expanded = box.querySelector('#expanded');
+    if (expanded && !expanded.hidden && expanded.offsetParent !== null) return;
+    const btn = box.querySelector('#expand, tp-yt-paper-button#expand, [aria-label="Show more"]');
+    if (btn) btn.click();
+  }
+
+  // how many places the last drawing marked (none: nothing to draw again); (review) how often a drawing that placed none is tried
+  // again (the description comes later than the page: after loading or another video)
+  let ytPlaced = 0;
+  let ytTries = 5;
+  function renderYoutubeStatus(map) {
+    ensureStyle();
+    ytPlaced = 0;
+    const old = document.querySelectorAll('.dci-yt-mark');
+    old.forEach((m) => m.remove());
+    document.querySelectorAll(`.${BC_OFF}`).forEach((x) => x.replaceWith(...x.childNodes));
+    if (!map || !map.enabled) return;
+    const todo = [];
+    (map.items || []).forEach((item, order) => (item.refs || []).forEach((r, k) => { if (!r.about && !(r.page || '')) todo.push({ item, r, order: order * 1000 + k }); }));
+    if (!todo.length) return;
+    if (!ytFolded) ytExpand();
+    const root = ytDescription();
+    if (!root) return;
+    root.normalize();
+    const st = bcStream(root, { nl: true });
+    const places = [];
+    for (const t of todo) {
+      const at = bcFindLine(st, t.r.line, t.r.n);
+      if (at >= 0) places.push({ ...t, range: bcPartRange(st, at, t.r) });
+    }
+    places.forEach((x) => { x.pos = x.range[0]; });
+    places.sort((a, b) => b.pos - a.pos || a.order - b.order);
+    const atPos = new Map();
+    for (const { item, r, pos, range } of places) {
+      const status = item.unmapped ? 'unmapped' : (r.status || item.status);
+      const mark = document.createElement('button');
+      mark.type = 'button';
+      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark dci-yt-mark${item.off ? ' dci-mark-off' : ''}`;
+      mark.dataset.row = item.row;
+      mark.textContent = MARK_SYMBOL[status] || '?';
+      mark.title = markTitle(map, item, status, r.note || item.note || '', item.role);
+      if (!atPos.has(pos)) atPos.set(pos, { frag: document.createDocumentFragment(), range, allOff: true });
+      const at = atPos.get(pos);
+      at.frag.appendChild(mark);
+      if (!item.off) at.allOff = false;
+    }
+    atPos.forEach(({ frag, range, allOff }, pos) => {
+      if (allOff && range[1] > range[0]) bcWrap(st, range[0], range[1], BC_OFF);
+      if (bcInsert(st, pos, frag)) ytPlaced++;
+    });
+  }
+
+  /** Shows a credit: its lines (or the part of the line) in the description, unfolded. */
+  function youtubeLocate(cmd) {
+    ensureStyle();
+    bcUnwrap(BC_HL);
+    const refs = (cmd.refs || []).filter((r) => !(r.page || ''));
+    if (!refs.length) return 'none';
+    ytFolded = false;
+    ytExpand();
+    const root = ytDescription();
+    if (!root) return 'none';
+    const spans = [];
+    for (const r of refs) {
+      const st = bcStream(root, { nl: true });
+      const at = bcFindLine(st, r.line, r.n);
+      if (at < 0) continue;
+      const [a, b] = bcPartRange(st, at, r);
+      spans.push(...bcWrap(st, a, b, BC_HL));
+    }
+    if (!spans.length) return 'none';
+    spans[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return 'credit';
+  }
+
+  const YOUTUBE_SIDE = {
+    id: 'youtube',
+    artwork: false,
+    releaseId: ytVideoId,
+    /** The video of the command (its page), '' when it is this one, null for a command that is no video. */
+    pageFor(cmd) {
+      const want = String(cmd.releaseId || '');
+      if (!/^[A-Za-z0-9_-]{11}$/.test(want)) return null;
+      return want === ytVideoId() ? '' : `https://www.youtube.com/watch?v=${want}`;
+    },
+    async locate(cmd) {
+      let result = 'none';
+      // the description may still be coming (YouTube draws it later)
+      for (let attempt = 0; attempt < 6; attempt++) {
+        result = youtubeLocate(cmd);
+        if (result !== 'none') return result;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      return result;
+    },
+    renderStatus: (map) => renderYoutubeStatus(map),
+    trackAt: () => '',
+    /** YouTube drew the description anew (another video, or the same again): the marks are drawn again. */
+    stale: (map) => {
+      if (!map || !map.enabled || !ytDescription()) return false;
+      if (ytPlaced) return !document.querySelector('.dci-yt-mark');
+      // (review) none placed yet although the map has places: a few more tries, then not again (lines the text no longer has)
+      if (ytTries > 0 && (map.items || []).some((it) => (it.refs || []).some((r) => !r.about && !(r.page || '')))) {
+        ytTries--;
+        return true;
+      }
+      return false;
+    },
+    /** Another video without loading a page (YouTube's "yt-navigate-finish"): no line marked of the video before, tries anew. */
+    onNavigate: (fn) => document.addEventListener('yt-navigate-finish', () => {
+      bcUnwrap(BC_HL);
+      ytFolded = false;
+      ytTries = 5;
+      fn();
+    }),
   };
 
   // Start only after all declarations above are initialized.
@@ -1472,5 +1644,6 @@
   if (isMusicBrainz && /\/edit-relationships/.test(location.pathname)) initMusicBrainzSide();
   else if (isMusicBrainz) initReleasePage();
   else if (isBandcamp) initSourceSide(BANDCAMP_SIDE);
+  else if (isYoutube) initSourceSide(YOUTUBE_SIDE);
   else initSourceSide(DISCOGS_SIDE);
 })();

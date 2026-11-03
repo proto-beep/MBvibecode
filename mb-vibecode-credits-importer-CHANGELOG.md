@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.41.15 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,84 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.42.8
+
+#### Added
+
+- **YouTube in the companion's view:** with a YouTube video as the source, the companion (1.11.0) shows the status marks in the video's description, jumps to the line of a row, switches credits off and on with a click on a mark, and opens the video in a background tab – as for Discogs and Bandcamp. An older companion is named ("needs the companion script 1.11.0").
+
+#### Fixed (the review of 3.42.0 – 3.42.7)
+
+- **Words given an entry are remembered** ("Remember changes …"): their entries come back with the release (they were lost), and a row you copied on purpose with the role of a row of the source stays (3.42.4 left it out).
+- **"With A, B and members of …"** gives its guests again (3.42.3 took it for prose); a label below a "by" line ("Warp Recordings") is no studio.
+- **Trying another kind** while a search was on its way no longer shows the found ones under the wrong kind.
+- **An own rule of texts** keeps its kind (a place stays a place).
+- **The date fields of an event** keep what was typed to their own entry and box.
+- **Started from the release editor** with a new YouTube link only: the release's Discogs or Bandcamp source is loaded, not the video.
+
+### COMPANION 1.11.0
+
+#### Added
+
+- **YouTube:** a tab on a YouTube video (`www.youtube.com/watch?v=…`) follows the dashboard like a Bandcamp tab – marks before each part of a line of the description (unfolded first), jump to source, credits off and on, dates and track groups underlined, the check on the MusicBrainz release page, "open in background" and "Load the release there". Another video without loading the page, and a description YouTube draws anew, are followed. The script manager asks once whether the script may run on `www.youtube.com`.
+- (Review) The marks come also when the description appears later; a line marked by a jump goes with another video; a description you folded stays folded.
+
+### Import 3.42.7
+
+#### Added
+
+- **The YouTube videos a release links to are sources:** listed in "Source ▾" and last in "Order of the sources" – loaded by themselves only when the release links to no Discogs release and no Bandcamp album.
+
+### Import 3.42.6
+
+#### Added
+
+- **Bandcamp's tags in the statistics:** "Genres and styles" counts the tags of Bandcamp albums (without the tag of the artist's place) besides Discogs's genres and styles – "Combined" (one list, the same word once; the sources in its tooltip) or "Separate" (a list for each source); the choice is remembered. Counted for imports from 3.42.6 on.
+
+### Import 3.42.5
+
+#### Added
+
+- **The kind of an entry not found can be tried in turn:** a label, place or area not linked shows its kind as a button ("Label ↻"); each click tries the next kind its roles allow (label → place → area → artist), and MusicBrainz is searched by the name once you stop clicking for a second – what was found for a kind is shown again without a new search.
+
+### Import 3.42.4
+
+#### Added
+
+- **Words of a line not recognized become an entry:** in "… lines not recognized" each word can be clicked (⇧-click: the words up to it); a form below the line names the kind (artist, label, place, area, series), the role (a place: recorded at, mixed at, mastered at …) and the tracks – those the line names, or the whole release. "Add entry" makes an entry like a recognized one, looked up by its name.
+- **"Remember as a rule of my own"** (not ticked at first): the words are read so in every text from then on – an own rule in "Mapping rules" (switch off or delete it there).
+
+### Import 3.42.3
+
+#### Changed
+
+- **Credits texts like those of Bandcamp's "Gondola"** are read in full: the tracks after "•" ("Matt Glassmeyer — saxophones • 1, 8"), lines of roles below a name as his ("Wurlitzer • 1, 8", until the next empty line), "All songs mixed by X" without the role credit "All songs", a studio on the line below ("Skinny Elephant recording": mixed at), "and Name" on the line below as one more name.
+- **Left out on purpose:** "Website by …" (MusicBrainz has no relationship for a website) and "Recorded all over the place".
+- **The companion's status marks** (○ ● ✓ ✗) copied with a text are no part of its lines.
+- **"Horns"** is horn credited "horns", brass is offered as the other choice; "sampling" is the sampler.
+- **"With Black Zenith, Stellarium turns toward …"** is prose: no guest performer; a name that is the title of the release or a track is never a person.
+
+### Import 3.42.2
+
+#### Changed
+
+- **Field recordings with a period** ("Ambisonic recordings by RR 2022-2025") put their dates into the date pool, one entry a line.
+
+### Import 3.42.1
+
+#### Changed
+
+- **Track pool next to the date pool:** side by side, one below the other only when they do not fit in one line.
+- **The date of an event in an entry's matrix** is set in MusicBrainz's fields (begin, end, ended): a click on the date in the event's head opens them.
+
+### Import 3.42.0
+
+#### Changed
+
+- **Edit note:** only "Full" and "Simple" (⚙ Settings → Staging); "None" is gone – a stored "None" becomes "Simple".
+- **Connections** (⚙ Settings → ⓘ Connections) in groups: Sources, Websites, Tools & scripts, Resources, Userscript managers, Links.
+- **"Delete statistics …"** is in ⚙ Settings → Cache, next to "Collect statistics", with the number of submissions counted.
 
 ### Import 3.41.15
 

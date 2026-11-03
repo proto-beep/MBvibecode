@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.41.15",
+  "version": "3.42.8",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -22,7 +22,8 @@
   "QUESTION_RULES": [
     {"id":"Q001","base":"bass","credit":"bass","options":["electric bass guitar","double bass","acoustic bass guitar"],"note":"Plain \"Bass\": which bass?"},
     {"id":"Q002","base":"guitar","credit":"guitar","options":["electric guitar","acoustic guitar"],"note":"Plain \"Guitar\": which guitar?"},
-    {"id":"Q004","base":"bass guitar","credit":"bass guitar","options":["bass guitar","electric bass guitar","acoustic bass guitar"],"note":"Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar"}
+    {"id":"Q004","base":"bass guitar","credit":"bass guitar","options":["bass guitar","electric bass guitar","acoustic bass guitar"],"note":"Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar"},
+    {"id":"Q013","base":"horns","credit":"horns","options":["horn","brass"],"preset":"horn","note":"\"Horns\" (3.42.3, Q-dh, Q-dm): horn credited \"horns\" – set at once – or brass credited \"horns\" (a horn section)"}
   ],
   "TYPE_QUESTIONS": [
     {"id":"Q003","base":"directed by","rule":"R097","note":"\"Directed By\": conductor, chorus master, creative direction or miscellaneous support (task \"director\")? Nothing is assumed","options":[{"type":"conductor","level":"recording"},{"type":"chorus master","level":"recording"},{"type":"creative direction","level":"release_group"},{"type":"misc","level":"recording","task":"director","label":"miscellaneous support (task “director”)"}]},
@@ -237,7 +238,8 @@
     "wood blocks": ["wood block"],
     "turntables": ["turntable(s)","turntables","turntable"],
     "scratches": ["turntable(s)","turntables","turntable"],
-    "horns": ["brass"],
+    "horns": ["horn","brass"],
+    "sampling": ["sampler"],
     "french horn": ["french horn","horn"],
     "horn french": ["french horn","horn"],
     "flugel horn": ["flugelhorn"],
@@ -528,7 +530,7 @@
     "Remixes"
   ],
   "TEXT_FESTIVAL_WORDS": {"$re":"(?<![\\p{L}])\\p{L}*(?:festival|festspiele|jazzfest)\\p{L}*(?![\\p{L}])","$flags":"iu"},
-  "TEXT_WHAT_WORDS": {"$re":"^(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\\s+(?=\\p{L}+ed$)","$flags":"iu"},
+  "TEXT_WHAT_WORDS": {"$re":"^(?:all\\s+(?:of\\s+)?)?(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\\s+(?=\\p{L}+ed$)","$flags":"iu"},
   "TEXT_WHAT_PREFIX": {"$re":"^(?:all\\s+)?(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|material|pieces?|compositions?|everything|all)\\s+(?:(?:was|were|is|are)\\s+)?(?=\\p{L}+ed\\b)","$flags":"iu"},
   "TEXT_PACKAGE": {"$re":"^(?:including|includes|incl\\.?|comes\\s+with|with)\\s+(?:an?\\s+|the\\s+)?(?:\\d+[\\s-]*(?:p\\.?|pp\\.?|pages?|seiten|s\\.)\\s+)?(?:(?:full[\\s-]colou?r|colou?r|printed|illustrated|extensive|deluxe|\\d+[\\s-]?panel)\\s+)*(?:booklet|poster|insert|inlay|obi|sticker|postcard|print|download\\s+(?:code|card)|liner\\s+notes)\\b","$flags":"i"},
   "TEXT_MADE_BY": {"$re":"^(.+?)\\s+(?:(?:of|on|for)\\s+(?:this|the)\\s+(?:release|album|record|ep|single|recording)\\s+)?(?:(?:was|were|is|are|has\\s+been|have\\s+been)\\s+)?(?:(?:entirely|all|completely|fully|solely|exclusively)\\s+)?(?:created|made|written|composed|produced|done|performed|designed)$","$flags":"i"},

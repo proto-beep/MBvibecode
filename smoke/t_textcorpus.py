@@ -36,7 +36,9 @@ const m = require(process.argv[1]);
 const corpus = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 // roles as the dashboard knows them (the register; a few instruments as MusicBrainz has them)
 const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
-  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base); };
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base)
+  // [3.42.3] the instruments of "Gondola" (Z-GON): MusicBrainz has them (pedal steel guitar, Wurlitzer electric piano, horn, sampler …)
+  || /^(organ|percussion|zither|pedal steel|wurlitzer|horns|sampling|synthesizers?|guitars|saxophones)$/i.test(p.base); };
 const isCompanyRole = (role) => /copyright|phonographic|published|rights society|distributed|recorded at|mixed at|mastered at|engineered at|recorded in|mixed in|mastered in|produced in|remixed in|engineered in|pressed|manufactured|printed|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
 // [3.31.1] a line may name the release's artists ("artists": S041) and its number of tracks ("tracks": "1, 3" or "2–4"
 // are tracks then – the publishers of a block, S043)

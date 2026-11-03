@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -72,7 +72,7 @@ def case_settabs():
         # D) the connections ([3.36.5] the ⓘ in the head is gone, collected item 147c: ⚙ → ⓘ Connections)
         H.open_settings(pg, 'connections')
         pg.wait_for_timeout(300)
-        d1 = pg.evaluate(f"""(() => {{ const rows = [...{SET}.querySelectorAll('.dci-conn tbody tr')];
+        d1 = pg.evaluate(f"""(() => {{ const rows = [...{SET}.querySelectorAll('.dci-conn tbody tr[data-conn]')];
       const h = rows.find(r => r.dataset.conn === 'X005');
       return [rows.length, h ? [...h.cells].map(c => c.textContent.trim().slice(0, 40)) : null, h ? h.querySelector('a').href : '',
         [...{SET}.querySelectorAll('.dci-set-tab')].filter(b => b.getAttribute('aria-selected') === 'true').map(b => b.dataset.topic)]; }})()""")
@@ -1353,11 +1353,145 @@ def case_statsmore2():
         r = recs2[0] if recs2 else {}
         print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
-        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps', 'decisions'}
+        # ((3.42.6, Z-STG2) and the tags of Bandcamp)
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
                        and isinstance((r.get('x') or {}).get('decisions'), list))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsgenres():
+    """Credits Importer 3.42.6 (collected item Z-STG2; Q-dj, Q-do): "Genres and styles" with Bandcamp's tags.
+    A) In Node: the tags of a Bandcamp album page – its tag links without the tag of the artist's place ("Nashville" of "Nashville,
+       Tennessee"); without links the "keywords" of its JSON-LD (also without the place).
+    B) Three stored submissions – Discogs jazz, free jazz with Bandcamp jazz, ambient; Discogs jazz with Bandcamp ambient, drone; one of
+       3.41.14 (genres only): "Combined" first – Jazz 3 (its tooltip "Discogs 3 · Bandcamp 1"; once a release, also when both name it),
+       Ambient 2, Drone 1, Free jazz 1; "Separate": Discogs (Jazz 3, Free jazz 1) and Bandcamp (Ambient 2, Drone 1, Jazz 1) – remembered
+       (dci-stats-genres) when the statistics are shown again; "Combined" again: forgotten (the default)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const links = '<div id="band-name-location"><span class="title">Ross McReynolds</span><span class="location secondaryText">Nashville, Tennessee</span></div>'
+  + '<div class="tralbumData tralbum-tags tralbum-tags-nu"><span class="tags-inline-label">tags:</span> <a class="tag" href="https://bandcamp.com/discover/ambient">ambient</a>'
+  + '<a class="tag" href="https://bandcamp.com/discover/jazz">jazz</a> <a class="tag" href="https://bandcamp.com/discover/nashville">Nashville</a> <a class="tag" href="https://bandcamp.com/discover/new-age">new age</a></div>';
+const ld = '<span class="location secondaryText">Berlin, Germany</span><script type="application/ld+json">{"@type":"MusicAlbum","keywords":["drone","Berlin","field recordings","drone"]}</script>';
+console.log(JSON.stringify([m.SOURCES.bandcamp.pageTags(links), m.SOURCES.bandcamp.pageTags(ld), m.SOURCES.bandcamp.pageTags('<p>none</p>')]));
+"""
+    a = json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True, check=True).stdout)
+    print('A) Node:', a)
+    results = [a == [['ambient', 'jazz', 'new age'], ['drone', 'field recordings'], []]]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': rel, 'own': 0, 'ocr': None,
+                    'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}, **x}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}', 'Ann')]}
+        recs = [r2(1, 'm1', {'genres': ['jazz', 'free jazz'], 'bcTags': ['jazz', 'ambient']}), r2(2, 'm2', {'genres': ['jazz'], 'bcTags': ['ambient', 'drone']}),
+                r2(3, 'm3', {'genres': ['jazz']})]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARD = """(() => { const c = document.querySelector('[data-el=stats-genres]'); return { seg: [...c.querySelectorAll('[data-act=stats-genres-view]')].map(x => x.textContent.trim() + (x.getAttribute('aria-pressed') === 'true' ? ' ✓' : '')),
+          heads: [...c.querySelectorAll('h5')].map(x => x.textContent.trim()), items: [...c.querySelectorAll('li')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim(), x.title || '']) }; })()"""
+        b1 = pg.evaluate(CARD)
+        print('B) Combined:', b1)
+        results.append(seeded and b1['seg'] == ['Combined ✓', 'Separate'] and not b1['heads']
+                       and b1['items'] == [['Jazz 3', 'Discogs 3 · Bandcamp 1'], ['Ambient 2', 'Bandcamp 2'], ['Drone 1', 'Bandcamp 1'], ['Free jazz 1', 'Discogs 1']])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=separate]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(CARD)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        # the statistics closed and shown again
+        pg.locator('.dci-head [data-act=stats-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        b3 = pg.evaluate(CARD)
+        print('   Separate:', b2, '| gespeichert:', stored, '| wieder:', b3['seg'])
+        results.append(b2['seg'] == ['Combined', 'Separate ✓'] and b2['heads'] == ['Discogs', 'Bandcamp']
+                       and [x[0] for x in b2['items']] == ['Jazz 3', 'Free jazz 1', 'Ambient 2', 'Drone 1', 'Jazz 1'] and stored == '"separate"' and b3['seg'] == ['Combined', 'Separate ✓'])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=combined]')
+        pg.wait_for_timeout(500)
+        b4 = pg.evaluate(CARD)
+        stored2 = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        print('   Combined wieder:', b4['seg'], stored2)
+        results.append(b4['seg'] == ['Combined ✓', 'Separate'] and stored2 is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_conngroups():
+    """Credits Importer 3.42.0 (collected item Z-CONS; Q-dl): ⚙ Settings → ⓘ Connections in groups, each with its heading – Sources
+    (Discogs, Bandcamp, pasted text, images by their address, YouTube) · Websites (MusicBrainz, GitHub, Cover Art Archive) · Tools &
+    scripts (Harmony, the companion, the old name, the two scripts of the live comments) · Resources (Tesseract.js, pdf.js) ·
+    Userscript managers · Links; by number within a group (until 3.41.15 one list by number)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(400)
+        H.open_settings(pg, 'connections')
+        pg.wait_for_timeout(300)
+        g = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] .dci-conn tbody')].map(t => [t.dataset.connGroup, t.querySelector('.dci-conn-group th').textContent.trim(),
+          [...t.querySelectorAll('tr[data-conn]')].map(r => r.dataset.conn)])""")
+        print('A)', g)
+        results.append(g == [['sources', 'Sources', ['X002', 'X003', 'X004', 'X015', 'X017']], ['sites', 'Websites', ['X001', 'X010', 'X013']],
+                             ['tools', 'Tools & scripts', ['X005', 'X006', 'X007', 'X011', 'X012']], ['resources', 'Resources', ['X014', 'X016']],
+                             ['managers', 'Userscript managers', ['X008']], ['links', 'Links', ['X009']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsdelete():
+    """Credits Importer 3.42.0 (collected item Z-DS): "Delete statistics …" in ⚙ Settings → Cache, next to "Collect statistics", with
+    the number of submissions counted; the statistics themselves have no button and no word about deleting (until 3.41.15 the button
+    was at their bottom). Clicked (asked first): deleted, the number 0 and the button off."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rec = {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+               'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane', ['piano'])]}
+        pg.evaluate(STAT_SEED, [rec, dict(rec, id='a:2')])
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        H.open_stats(pg)
+        pg.wait_for_timeout(500)
+        a0 = [pg.evaluate("!!document.querySelector('[data-el=stats] [data-act=stats-delete]')"), pg.evaluate("/[Dd]elet/.test(document.querySelector('[data-el=stats]').textContent)")]
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(500)
+        a1 = pg.evaluate("[(document.querySelector('[data-el=settings] [data-act=stats-delete]') || {}).textContent || null, (document.querySelector('[data-el=stats-stored]') || {}).textContent || null]")
+        pg.click('[data-el=settings] [data-act=stats-delete]'); pg.wait_for_timeout(600)
+        a2 = [pg.evaluate("(document.querySelector('[data-el=stats-stored]') || {}).textContent || null"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=stats-delete]').disabled"),
+              (lambda x: -1 if x is None else len(x))(pg.evaluate(STAT_COUNT))]
+        print('A) in der Statistik:', a0, '| ⚙ Cache:', a1, '| gelöscht:', a2)
+        results.append(a0 == [False, False] and a1 == ['Delete statistics …', 'Submissions counted: 2'] and a2 == ['Submissions counted: 0', True, 0])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1458,15 +1592,16 @@ def case_statsdev():
 
 
 def case_editnote():
-    """Credits Importer 3.41.9 (collected item Z-EN; Q-cp): the edit note in ⚙ Settings → Staging only.
+    """Credits Importer 3.41.9 (collected item Z-EN; Q-cp), 3.42.0 (Z-EN2, Q-dk: no "None"): the edit note in ⚙ Settings → Staging only.
     A) The footer has no checkbox "edit note" any more (until 3.41.8 "⚙ Options": edit note · fill role credits · ≤ 500 per
-       staging); ⚙ Settings → Staging: "Edit note: Full | Simple | None", Full pressed; each option's tooltip lists what it writes.
+       staging); ⚙ Settings → Staging: "Edit note: Full | Simple" (until 3.41.15 also "None"), Full pressed; each option's tooltip
+       lists what it writes.
     B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note; (3.41.15, review) Simple
        chosen then: the block is the simple one at once (until 3.41.14 only at the next staging – "Enter edit" before it sent the full one).
     C) Simple (stored "simple"; the page opened anew), staged: the block of the script is only "Source: …" and "Script: … v…" – no
        "Done:"; the form of a new work: "Source: …" and "Script: …" (no "writers from Discogs credits").
-    D) None (stored "none"): (3.41.15, review) the block gone at once; an entry skipped before (Bass Man) taken again and staged: still nothing
-       written; the form of a new work (the page opened anew) has no edit note. ↺ of the topic: Full again (nothing stored)."""
+    D) (3.42.0) "none" stored by 3.41.9 – 3.41.15: read as Simple (Simple pressed, the form of a new work with Source and Script); the
+       entry skipped before (Bass Man) taken again and staged: the simple block. ↺ of the topic: Full again (nothing stored)."""
     import urllib.parse
     results = []
     NOTE = "document.getElementById('edit-note-text').value"
@@ -1509,9 +1644,8 @@ def case_editnote():
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
         print('A) Fuß:', foot, '| Einstellung:', [x[:3] for x in seg])
         print('   Tooltips:', [x[3].split('\n') for x in seg])
-        results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false'], ['none', 'None', 'false']]
-                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3]
-                       and seg[2][3].startswith('Nothing is written'))
+        results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false']]
+                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3])
         stage(pg)
         b0 = pg.evaluate(NOTE).splitlines()
         print('B)', b0[:4])
@@ -1533,21 +1667,23 @@ def case_editnote():
         results.append(st1 == '"simple"' and len(c0) == 2 and c0[0] == 'Source: https://www.discogs.com/release/1234' and c0[1].startswith('Script: MB x Vibecode')
                        and n1.split('\n')[0] == 'Source: https://www.discogs.com/release/1234' and n1.split('\n')[1:2] and n1.split('\n')[1].startswith('Script: MB x Vibecode')
                        and 'writers' not in n1)
-        st2 = mode(pg, 'none')
-        d2 = pg.evaluate(NOTE)
-        print('D2) gleich danach:', repr(d2))
-        results.append(d2 == '')
-        pg.locator(f'[data-act=entry-unskip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
-        stage(pg)
-        d0 = pg.evaluate(NOTE)
+        # D) "none" of 3.41.9 – 3.41.15 stored: Simple
+        pg.evaluate("localStorage.setItem('dci-edit-note', JSON.stringify('none'))")
         pg.close()
         pg, errs3 = page(ctx)
+        H.open_settings(pg, 'staging')
+        d3 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.getAttribute('aria-pressed')])")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
         q2 = work_form(pg)
+        stage(pg)
+        d0 = pg.evaluate(NOTE).splitlines()
         H.open_settings(pg, 'staging')
         pg.click('[data-el=settings] [data-act=settings-reset][data-topic=staging]'); pg.wait_for_timeout(300)
         d1 = [pg.evaluate("localStorage.getItem('dci-edit-note')"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=edit-note-mode][aria-pressed=true]').dataset.mode")]
-        print('D)', st2, repr(d0), '| Werk mit Notiz:', 'edit-work.edit_note' in q2, '| ↺:', d1)
-        results.append(st2 == '"none"' and d0 == '' and 'edit-work.edit_note' not in q2 and d1 == [None, 'full'])
+        n2 = q2.get('edit-work.edit_note') or ''
+        print('D)', d3, d0, '| Werk:', repr(n2), '| ↺:', d1)
+        results.append(d3 == [['full', 'false'], ['simple', 'true']] and len(d0) == 2 and d0[1].startswith('Script: ')
+                       and n2.split('\n')[1:2] and n2.split('\n')[1].startswith('Script: ') and d1 == [None, 'full'])
         print('Fehler:', errs, errs2, errs3)
         results.append(not errs and not errs2 and not errs3)
         b.close()

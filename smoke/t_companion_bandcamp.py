@@ -1,6 +1,6 @@
 """Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bcview, bcoff, textmarks – each the former smoke/t_<case>.py, unchanged; `python3 t_companion_bandcamp.py <case> …` runs only those."""
+Cases: bcview, bcoff, textmarks – each the former smoke/t_<case>.py, unchanged; multibc (3.38.9), ytview (3.42.8, companion 1.11.0); `python3 t_companion_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -621,6 +621,185 @@ def case_multibc():
         real = lambda es: [e for e in es if 'Synchronous XHR in page dismissal' not in e]
         print('Fehler:', real(errs), real(bcerr), real(dgerr))
         results.append(not real(errs) and not real(bcerr) and not real(dgerr))
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ytview():
+    """Credits Importer 3.42.8 / Companion 1.11.0 (collected item Z-YTC; Q-de): the YouTube view – a release that links only to a video
+    (loaded at once, Z-YTL), its description as YouTube draws it (folded, "…more"):
+    A) No YouTube tab: the view names YouTube ("no YouTube tab"), "open in background" opens the video.
+    B) A YouTube tab on another video: "a YouTube tab is open, but on another page" – "Load the release there" loads the video; then
+       "connected".
+    C) The description unfolded, status marks before each part of a line: "Audio & Mixing Engineer: Julian Martlew" two (audio, mix),
+       "Editor: Jim Beckmann" one, "Host: Cheryl Waters" one (asked: no type yet); none before "Live at KEXP." or the link.
+    D) With "Click switches" off, a click on a mark shows its row ("From YouTube: Jim Beckmann – Editor"); a row jumps to its line
+       (marked in the description).
+    E) "Click switches" on: a click switches the credit off – its row "Skip", the mark greyed and the line too; again: on.
+    F) Another video without loading a page (YouTube's "yt-navigate-finish"): no marks; back to the video: the marks again; YouTube
+       draws the description anew: the marks come back by themselves.
+    G) An old companion (one without YouTube tabs): "needs the companion script 1.11.0".
+    H) (3.42.8, review) A line marked by a jump goes with another video; back to the video, its description later: the marks come by
+       themselves (until the review only one try); folded by the user while YouTube draws it anew: it stays folded."""
+    V1, V2 = 'Cx-BhTkZf8A', 'Dy-ChUlAg9B'
+    DESC = """Live at KEXP.
+Host: Cheryl Waters
+Audio & Mixing Engineer: Julian Martlew
+Editor: Jim Beckmann
+https://kexp.org"""
+    H.YT_PAGES[V1] = H.yt_page(V1, 'Test Band - Full Performance (Live on KEXP)', 'KEXP', DESC, dom=True)
+    H.YT_PAGES[V2] = H.yt_page(V2, 'Other video', 'Other', 'Nothing here\nat all', dom=True)
+    H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'free streaming', 'url': {'resource': f'https://www.youtube.com/watch?v={V1}'}}]
+        return d
+    H.ws_release = ws
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SYNC = "document.querySelector('[data-el=sync] .dci-syncstatus').textContent.replace(/\\s+/g, ' ').trim()"
+    MARKS = """(() => { const root = document.querySelector('#description-inline-expander #expanded yt-attributed-string'); if (!root) return null;
+      return [...root.querySelectorAll('.dci-dg-mark')].map(m => { const r = document.createRange(); r.setStartAfter(m); r.setEnd(root, root.childNodes.length);
+        const f = r.cloneContents(); f.querySelectorAll('.dci-dg-mark').forEach(x => x.remove());
+        return [m.textContent, f.textContent.replace(/\\s+/g, ' ').trim().slice(0, 14), m.title.split(':')[0], m.classList.contains('dci-mark-off')]; }); })()"""
+    HL = "[...document.querySelectorAll('.dci-bc-hl')].map(x => x.textContent).join('').replace(/\\s+/g, ' ').trim()"
+    GREY = "[...document.querySelectorAll('.dci-bc-offtext')].map(x => x.textContent).join('|').replace(/\\s+/g, ' ')"
+    results = []
+
+    def poll(pg, js, timeout=20):
+        for _ in range(timeout * 5):
+            try:
+                if pg.evaluate(js):
+                    return True
+            except Exception:
+                pass
+            pg.wait_for_timeout(200)
+        raise TimeoutError(js)
+
+    def row(pg, name, role):
+        return pg.evaluate("""([n, r]) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === r);
+      if (!tr) return null; const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); return [tr.dataset.row, lv ? lv.dataset.level : '']; }""", [name, role])
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        pg.wait_for_timeout(3500)
+        # A)
+        a1 = pg.evaluate(SYNC)
+        pg.locator('[data-el=sync] [data-act=sync-open]').click()
+        pg.wait_for_timeout(300)
+        opened = pg.evaluate("window.__opened || []")
+        print('A) Ansicht:', a1, '| geöffnet:', opened)
+        results.append(a1.startswith('YouTube view: no YouTube tab') and f'https://www.youtube.com/watch?v={V1}' in opened)
+        # B)
+        yt, yterr = H.open_youtube(ctx, f'https://www.youtube.com/watch?v={V2}')
+        H.wait_for(pg, f"{SYNC}.includes('on another page')", 20)
+        b1 = pg.evaluate(SYNC)
+        pg.locator('[data-el=sync] [data-act=sync-load]').click()
+        poll(yt, f"location.search === '?v={V1}'")
+        H.wait_for(pg, f"{SYNC}.includes('connected')", 20)
+        b2 = pg.evaluate(SYNC)
+        print('B) anderes Video:', b1, '| danach:', b2)
+        results.append(b1.startswith('YouTube view: a YouTube tab is open, but on another page') and b2.startswith('YouTube view: connected'))
+        # C) the marks
+        poll(yt, "document.querySelectorAll('#expanded .dci-dg-mark').length >= 4")
+        yt.wait_for_timeout(500)
+        c1 = yt.evaluate(MARKS)
+        unfolded = yt.evaluate("!document.querySelector('#expanded').hidden")
+        print('C) Marken:', c1, '| aufgeklappt:', unfolded)
+        results.append(unfolded and [m[1:3] for m in c1] == [['Host: Cheryl W', 'Host'], ['Audio & Mixing', 'Audio Engineer'], ['Audio & Mixing', 'Mixing Engineer'],
+                                                             ['Editor: Jim Be', 'Editor']] and all(m[0] in '○!' for m in c1))
+        # D) a click shows the row ("Click switches" off), a jump marks the line
+        H.nav_switch(pg, 'data-click-toggle')
+        poll(yt, "document.querySelector('#expanded .dci-dg-mark').title.includes('click to show it')")
+        yt.locator('#expanded .dci-dg-mark').nth(3).click()
+        H.wait_for(pg, f"{LOGS}.some(x => /From YouTube: Jim Beckmann/.test(x))", 15)
+        d1 = [x for x in pg.evaluate(LOGS) if 'From YouTube' in x]
+        rid = row(pg, 'Julian Martlew', 'Mixing Engineer')[0]
+        pg.locator(f'tr[data-row="{rid}"] .dci-drole').click()
+        poll(yt, "!!document.querySelector('.dci-bc-hl')")
+        yt.wait_for_timeout(300)
+        d2 = yt.evaluate(HL)
+        print('D) Protokoll:', d1, '| Sprung:', d2)
+        results.append(d1 == ['From YouTube: Jim Beckmann – Editor'] and d2 == 'Audio & Mixing Engineer: Julian Martlew')
+        H.nav_switch(pg, 'data-click-toggle')
+        # E) on and off
+        poll(yt, "document.querySelector('#expanded .dci-dg-mark').title.includes('skip this credit')")
+        yt.locator('#expanded .dci-dg-mark').nth(3).click()
+        poll(yt, "[...document.querySelectorAll('#expanded .dci-dg-mark')].some(m => m.classList.contains('dci-mark-off'))")
+        e1 = row(pg, 'Jim Beckmann', 'Editor')
+        e2 = yt.evaluate(GREY)
+        yt.locator('#expanded .dci-dg-mark.dci-mark-off').first.click()
+        poll(yt, "![...document.querySelectorAll('#expanded .dci-dg-mark')].some(m => m.classList.contains('dci-mark-off'))")
+        e3 = row(pg, 'Jim Beckmann', 'Editor')
+        print('E) aus:', e1, e2, '| wieder an:', e3)
+        results.append(e1[1] == 'skip' and e2 == 'Editor: Jim Beckmann' and e3[1] != 'skip')
+        # F) another video without loading, back; the description drawn anew
+        SWAP = """([vid, html]) => { history.pushState({}, '', '/watch?v=' + vid); document.querySelector('#description').innerHTML = html;
+          document.dispatchEvent(new CustomEvent('yt-navigate-finish')); }"""
+        yt.evaluate(SWAP, [V2, H.yt_desc_html('Nothing here\nat all')])
+        poll(yt, "document.querySelectorAll('.dci-dg-mark').length === 0 && true", 10)
+        yt.wait_for_timeout(1500)
+        f1 = yt.evaluate("document.querySelectorAll('.dci-dg-mark').length")
+        yt.evaluate(SWAP, [V1, H.yt_desc_html(DESC)])
+        poll(yt, "document.querySelectorAll('#expanded .dci-dg-mark').length >= 4", 15)
+        f2 = len(yt.evaluate(MARKS) or [])
+        yt.evaluate("""(html) => { document.querySelector('#description').innerHTML = html; document.querySelector('#expand').click(); }""", H.yt_desc_html(DESC))
+        poll(yt, "document.querySelectorAll('#expanded .dci-dg-mark').length >= 4", 15)
+        f3 = len(yt.evaluate(MARKS) or [])
+        print('F) anderes Video:', f1, '| zurück:', f2, '| neu gezeichnet:', f3)
+        results.append(f1 == 0 and f2 == 4 and f3 == 4)
+        # H) (3.42.8, review) a line marked by a jump goes with another video (YouTube keeps its page); back to the video with its
+        # description coming later: the marks come by themselves; folded by the user ("Show less") while YouTube draws it anew: it
+        # stays folded
+        rid = row(pg, 'Jim Beckmann', 'Editor')[0]
+        pg.locator(f'tr[data-row="{rid}"] .dci-drole').click()
+        poll(yt, "!!document.querySelector('.dci-bc-hl')")
+        yt.evaluate("""(vid) => { history.pushState({}, '', '/watch?v=' + vid); document.dispatchEvent(new CustomEvent('yt-navigate-finish')); }""", V2)
+        yt.wait_for_timeout(600)
+        h1 = yt.evaluate("document.querySelectorAll('.dci-bc-hl').length")
+        yt.evaluate("""(vid) => { history.pushState({}, '', '/watch?v=' + vid); document.querySelector('#description').innerHTML = '';
+          document.dispatchEvent(new CustomEvent('yt-navigate-finish')); }""", V1)
+        yt.wait_for_timeout(2000)
+        yt.evaluate("(html) => { document.querySelector('#description').innerHTML = html; }", H.yt_desc_html(DESC))
+        poll(yt, "document.querySelectorAll('#expanded .dci-dg-mark').length >= 4", 15)
+        h2 = len(yt.evaluate(MARKS) or [])
+        yt.click('#collapse')
+        yt.evaluate("""(html) => { const t = document.createElement('div'); t.innerHTML = html; document.querySelector('#expanded').replaceWith(t.querySelector('#expanded')); }""", H.yt_desc_html(DESC))
+        yt.wait_for_timeout(4500)
+        h3 = yt.evaluate("document.querySelector('#expanded').hidden")
+        print('H) Markierung nach anderem Video:', h1, '| Beschreibung später:', h2, '| zugeklappt bleibt zu:', h3)
+        results.append(h1 == 0 and h2 == 4 and h3)
+        real = lambda es: [e for e in es if 'Synchronous XHR in page dismissal' not in e]
+        print('Fehler:', real(errs), real(yterr))
+        results.append(not real(errs) and not real(yterr))
+        b.close()
+
+        # G) an old companion
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        pg.evaluate("""document.dispatchEvent(new CustomEvent('dci:from-discogs', { detail: JSON.stringify({ type: 'status', tabs: 0, target: null, releases: [],
+          sites: { discogs: { tabs: 0, target: null, releases: [] }, bandcamp: { tabs: 0, target: null, releases: [] } }, version: '1.10.1' }) }))""")
+        pg.wait_for_timeout(300)
+        g1 = pg.evaluate(SYNC)
+        print('G) alter Companion:', g1)
+        results.append(g1.startswith('YouTube view: needs the companion script 1.11.0'))
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
