@@ -655,4 +655,70 @@ def case_remember():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_statgaps():
+    """Credits Importer 3.41.15 (the check of Block BF, Z-STV): "Gaps closed" of the statistics from what is submitted. The link of
+    track 1 with its work exists in MusicBrainz; "co" (cover) clicked, staged, "Enter edit": the record holds that relationship as
+    supplemented ("s") with what was added ("attrs"), and gaps.attrs 1 (until 3.41.14 the stagings were counted – a supplement taken
+    out in the editor counted all the same)."""
+    for i, n in [(567, 'cover'), (578, 'live')]:
+        H.attr(i, n, i)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ENTER_EDIT = """(() => { if (document.getElementById('test-enter-edit')) return; const ta = document.getElementById('edit-note-text'); const f = document.createElement('form');
+  f.addEventListener('submit', (e) => e.preventDefault()); ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'submit positive'; btn.textContent = 'Enter edit'; btn.id = 'test-enter-edit'; f.appendChild(btn); })()"""
+    STAT_COUNT = """() => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readonly'); const g = tx.objectStore('subs').getAll(); g.onsuccess = () => res(g.result); g.onerror = () => res(null); };
+  q.onerror = () => res(null); })"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(500)
+        w1 = 'tr[data-work="0"][data-mrow^="w:0"]'
+        if not pg.locator(f'{w1} .dci-wpill[data-attr=cover]').count():
+            pg.click(f'{w1} [data-act=mx-wattr-open]'); pg.wait_for_timeout(200)
+        pg.click(f'{w1} .dci-wpill[data-attr=cover]'); pg.wait_for_timeout(200)
+        pg.evaluate(f"""() => {{ const re = MB.relationshipEditor;
+      re.state = {{ ...re.state, existingRels: [{{ id: 9101, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'Song One' }},
+        entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
+        attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(500)
+        # MusicBrainz's /ws/js/release after "Enter edit": the relationships staged (as t_ui_settings.py does)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        recs0 = {g: [] for g in H.REC}
+        rel0 = []
+        for x in added:
+            for e, f in ((x['e0'], x['e1']), (x['e1'], x['e0'])):
+                if e in recs0:
+                    recs0[e].append({'linkTypeID': x['lt'], 'target': {'gid': f}})
+                    break
+                if e == H.REL:
+                    rel0.append({'linkTypeID': x['lt'], 'target': {'gid': f}})
+                    break
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update({'gid': H.REL, 'relationships': rel0, 'releaseGroup': {'secondaryTypeIDs': []},
+                                'mediums': [{'position': 1, 'tracks': [{'number': str(i + 1), 'recording': {'gid': g, 'comment': '', 'relationships': recs0[g]}} for i, g in enumerate(H.REC)]}]})
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        r = recs[0] if recs else {}
+        sup = [[it.get('lt'), it.get('f')] for it in r.get('rels', []) if it.get('k') == 's']
+        print('A) Datensätze:', len(recs), '| ergänzt:', sup, '| gaps:', (r.get('x') or {}).get('gaps'))
+        results.append(len(recs) == 1 and sup == [['performance', ['attrs']]] and (r.get('x') or {}).get('gaps') == {'credits': 0, 'dates': 0, 'attrs': 1})
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

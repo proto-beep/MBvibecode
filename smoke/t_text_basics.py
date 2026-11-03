@@ -1688,7 +1688,9 @@ def case_hostask():
        or no relationship?" with three answers – spoken vocals (credited “host”) · miscellaneous support (task “host”) · skip the role
        (until 3.41.7 spoken vocals credited "Host" at once, R012); "Presenter" stays spoken vocals (R012).
     B) Answered: spoken vocals → vocal, spoken vocals, credited "host"; miscellaneous support → misc, task "host"; skip the role →
-       the row on "Skip" (nothing of it staged); the log names each answer."""
+       the row on "Skip" (nothing of it staged); the log names each answer.
+    C) (3.41.15, review) Spoken vocals, then "skip the role", then the level Recording again: the question is asked again and the row
+       has no type (until 3.41.14 it kept spoken vocals "host" while "skip the role" showed as chosen)."""
     H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
     H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
     H.attr(9126, 'spoken vocals', 3, 3)
@@ -1729,6 +1731,14 @@ def case_hostask():
         print('B)', b0, '\n  ', logs)
         results.append([b0[0]['type'], b0[0]['primary'], b0[0]['credit'], b0[0]['level']] == ['vocal', 'spoken vocals', 'host', 'recording']
                        and [b0[1]['type'], b0[1]['credit'], b0[1]['level']] == ['misc', 'host', 'recording'] and b0[2]['level'] == 'skip' and len(logs) == 3)
+        # C) (3.41.15, review) spoken vocals, then "skip the role", then back on Recording: asked again, no type kept
+        pg.evaluate(PICK, ['Cheryl Waters', 2]); pg.wait_for_timeout(300)
+        pg.evaluate("""(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
+          g.querySelector('tr.dci-row [data-act=level][data-level=recording]').click(); }""", 'Cheryl Waters')
+        pg.wait_for_timeout(400)
+        c0 = pg.evaluate(ROW, 'Cheryl Waters')
+        print('C)', c0)
+        results.append(c0 and c0['level'] == 'recording' and c0['type'] == 'Choose type …' and c0['ask'].startswith('“Host”: spoken vocals credited') and len(c0['opts']) == 3)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

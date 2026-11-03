@@ -1224,7 +1224,8 @@ def case_suiteparts():
        says so.
     C) Staged again: "parts" from the work "Trisect" of MusicBrainz to each part, in the order of the parts – the work of track 1 in
        MusicBrainz ("Introduction") first, then "Trisect: Phase 1", "Trisect: Phase 2", … (order 1–7), each with "movement"; no
-       recording is linked with it; the preview names them ("part 1 of the suite “Trisect” (movement)").
+       recording is linked with it; the preview names them ("part 1 of the suite “Trisect” (movement)"); (3.41.15, review) the edit note
+       says "linked 6 works to recordings; … linked 7 parts with their suites" (until 3.41.14 the parts counted as works linked).
     D) ↺ undo of the suite (before staging): nothing of it is planned."""
     H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
     H.attr(1105, 'movement', 1105)
@@ -1302,6 +1303,10 @@ def case_suiteparts():
         stage()
         c0 = pg.evaluate(PARTS)
         rec = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity1 && r.entity1.name === 'Trisect').length")
+        note = [l for l in pg.evaluate("document.getElementById('edit-note-text').value").splitlines() if l.startswith('Done:')]
+        print('   Notiz:', note)
+        # (3.41.15, review) the parts with their suite are no works linked with recordings
+        results.append(note and 'linked 7 parts with their suites' in note[0] and 'linked 6 works to recordings' in note[0])
         print('C)', c0, '| Aufnahme mit der Suite:', rec, '| Vorschau:', c1[:2], len(c1))
         print('D) nach ↺:', d0)
         want = ['Introduction', 'Trisect: Phase 1', 'Trisect: Phase 2', 'Trisect: Phase 3', 'Trisect: Transition', 'Trisect: Phase 4', 'Trisect: Coda']
@@ -1385,6 +1390,8 @@ def case_suiteadd():
        ✓ Yes · Cancel"; ✓ Yes without a name: "Please type the name of the suite." (nothing added).
     B) Tracks 1.2 – 1.4, "Trisect", ✓ Yes: as a suite found in the source – "tracks 2–4: parts of the suite “Trisect” – 3 works" with
        "＋ Create the suite in MusicBrainz …"; the parts "Trisect: …" (a track each); the log says it was added by hand.
+    B2) (3.41.15, review) tracks 3–4 again as "Trisekt": "Some of these tracks are in another suite …" – nothing added, the parts of
+       "Trisect" stay (until 3.41.14 the new suite took them, and undoing it left the tracks without a work).
     C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
     (Until 3.41.10 a suite could only come from the source.)"""
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
@@ -1419,6 +1426,17 @@ def case_suiteadd():
         results.append(b0[0] and b0[0][0][1].startswith('tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …')
                        and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
                        and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
+        # (3.41.15, review) tracks of that suite again, under another name: not added (its parts would be lost)
+        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=2)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
+        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisekt')
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
+        b1 = [pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null"), pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length"),
+              pg.evaluate(PARTS, 2)]
+        pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
+        print('B2) überlappend:', b1)
+        results.append(b1 == ['Some of these tracks are in another suite or split as a medley – undo that first.', 1, ['Trisect: ' + H.TITLES[2]]])
         pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
         c0 = [pg.evaluate(BOX), pg.evaluate(PARTS, 1)]
         pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
@@ -1438,7 +1456,8 @@ def case_subtracks():
     Man, bass) – three tracks; MusicBrainz has four.
     A) Read as four tracks (the log says so: "1 index track of Discogs: its sub-tracks are tracks of their own …"); no message that
        the tracks differ (until 3.41.11 "3 tracks instead of 4", Bass Man's bass on track 3 with Song Three).
-    B) Bass Man's bass on track 4 only; Writer Z writes track 3 (the works matrix).
+    B) Bass Man's bass on track 4 only; Writer Z writes track 3 (the works matrix); (3.41.15, review) a credit of the release for
+       "tracks: 3" (the index) on both of its tracks (until 3.41.14 not resolved: the index has no position, its sub-tracks one base).
     C) The index is offered as a suite of tracks 3–4 ("tracks 3–4: parts of the suite “Suite X”?").
     D) In Node: titles that do not fit, but splitting gives MusicBrainz's number of tracks: split; a number that does not fit: not."""
     import json
@@ -1452,8 +1471,11 @@ def case_subtracks():
         t4 = dict(t4, position='3b', extraartists=[{'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': '', 'id': 3001, 'join': ''}])
         d['tracklist'] = d['tracklist'][:2] + [{'position': '', 'type_': 'index', 'title': 'Suite X', 'duration': '', 'sub_tracks': [t3, t4]}]
         d['extraartists'] = [x for x in d['extraartists'] if x.get('name') != 'Bass Man']
+        # (3.41.15, review) a credit for the index's position: both of its tracks
+        d['extraartists'].append({'name': 'Con Duct', 'anv': '', 'role': 'Conductor', 'tracks': '3', 'id': 3083, 'join': ''})
         return d
 
+    H.ARTISTS[3083] = (H.uid('dddddddd', 83), 'Con Duct')
     H.discogs_release = rel
     TRACKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
       return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-cline, .dci-c-tracks') ? (tr.querySelector('.dci-c-tracks') || tr).textContent.replace(/\\s+/g, ' ').trim().slice(0, 80) : '') : null; }"""
@@ -1475,7 +1497,9 @@ def case_subtracks():
           out[n] = [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i))]); } return out; })()""")
         wz = pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => [Number(tr.dataset.work), [...tr.querySelectorAll('td')].map(td => td.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /composer|writer/i.test(t))])")
         print('B)', rows.get('Bass Man'), '| Matrix:', wz)
-        results.append(rows.get('Bass Man') == [['Bass', [3]]] and wz[2][1] and 'composer' in wz[2][1][0] and wz[3][1] == [])
+        print('   Con Duct (tracks: 3):', rows.get('Con Duct'))
+        results.append(rows.get('Bass Man') == [['Bass', [3]]] and wz[2][1] and 'composer' in wz[2][1][0] and wz[3][1] == []
+                       and rows.get('Con Duct') == [['Conductor', [2, 3]]])
         suites = pg.evaluate("[...document.querySelectorAll('[data-el=suites] [data-suite] strong')].map(x => x.textContent.trim())")
         print('C)', suites)
         results.append(suites == ['tracks 3–4: parts of the suite “Suite X”?'])

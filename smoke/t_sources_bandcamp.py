@@ -1127,8 +1127,8 @@ def case_youtube():
        Jim Beckmann cameras and editor, Cheryl Waters asked (Q012); the tracks are MusicBrainz's own (no message that they differ).
     B) Julian Martlew linked (a name of a text is only suggested), staged: the edit note's "Source:" is the video, "from a YouTube
        video description".
-    C) A video without a description: "No video description found on …"; a URL that is no video: the message names YouTube videos
-       too.
+    C) A video without a description: "No video description found on …"; (3.41.15, review) a page that names the data before it
+       assigns it: read all the same; a URL that is no video: the message names YouTube videos too.
     D) The statistics name YouTube as a source (a record of a YouTube import and of a supplement from YouTube)."""
     # (as in t_ui_settings.py: the records of the statistics put into their database)
     STAT_SEED = """(recs) => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
@@ -1145,6 +1145,9 @@ Cameras: Jim Beckmann, Carlos Cruz, Luke Knecht & Kendall Rock
 Editor: Jim Beckmann"""
     H.YT_PAGES[VID] = H.yt_page(VID, 'Test Band - Full Performance (Live on KEXP)', 'KEXP', DESC)
     H.YT_PAGES['AAAAAAAAAAA'] = H.yt_page('AAAAAAAAAAA', 'Empty', 'X', '')
+    # (3.41.15, review) the name mentioned before its assignment (a script that asks for it)
+    H.YT_PAGES['BBBBBBBBBBB'] = H.yt_page('BBBBBBBBBBB', 'Second', 'Y', 'Mixed By: Max Mix').replace(
+        '<body>', '<body><script>if (window.ytInitialPlayerResponse) { window.x = {}; }</script>', 1)
     H.lt(138, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
     H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
     H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
@@ -1191,6 +1194,14 @@ Editor: Jim Beckmann"""
         pg.fill('[data-f=discogs-input]', 'https://www.youtube.com/watch?v=AAAAAAAAAAA')
         pg.click('[data-act=discogs-load]'); pg.wait_for_timeout(1500)
         c0 = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'description' in m]
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'https://www.youtube.com/watch?v=BBBBBBBBBBB')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 60)
+        pg.wait_for_timeout(500)
+        c2 = pg.evaluate("document.querySelector('[data-el=source]').textContent.replace(/\\s+/g, ' ').trim()")
+        print('C2) Name vor der Zuweisung:', c2[:60])
+        results.append('Second' in c2)
         H.src_menu(pg)
         pg.fill('[data-f=discogs-input]', 'no video here')
         pg.click('[data-act=discogs-load]'); pg.wait_for_timeout(500)
