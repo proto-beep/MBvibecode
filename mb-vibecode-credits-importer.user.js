@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.10
+// @version      3.41.11
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.10
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.10
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.11
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.11
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.10';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.11';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1134,6 +1134,17 @@
       "suite.from.heading": "from a heading of the track list",
       "suite.from.index": "from an index track",
       "suite.from.release": "from the title of the release",
+      "suite.add": "Suite …",
+      "suite.addTitle": "Tracks that are parts of a suite the source does not show (no heading, no index track): choose them and the name",
+      "suite.addAsk": "Parts of a suite:",
+      "suite.addFrom": "tracks",
+      "suite.addTo": "to",
+      "suite.addName": "name:",
+      "suite.addCancel": "Cancel",
+      "suite.addNoName": "Please type the name of the suite.",
+      "suite.addNoTracks": "No track of the works matrix between these.",
+      "suite.from.manual": "added by hand",
+      "log.suiteAdded": "Suite “{name}” added by hand ({tracks})",
       "suite.done": "{tracks}: parts of the suite “{name}” – {n} works",
       "suite.undo": "undo",
       "suite.undoTitle": "The parts go again (a work planned for a track before comes back), and the question is asked again",
@@ -9114,6 +9125,9 @@
     suiteAnswers: new Map(),
     // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
     suiteWorks: new Map(),
+    // [Z-SUM] (3.41.11) the suites added by hand ("＋ Suite …"): key → { key, name, from: 'manual', tracks }; the box open
+    suiteManual: new Map(),
+    suiteAdd: null,
     suiteSeq: 0,
     // [3.39.9] "member of band" of the artists looked up for "co?" (mbid → Set of artists, or 'wait')
     bandOf: new Map(),
@@ -18914,6 +18928,7 @@
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
     S.suiteWorks.clear();
+    S.suiteManual.clear(); // [Z-SUM] (3.41.11)
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -26952,6 +26967,8 @@
     const out = suiteOffers(S.release).map((o) => ({ ...o, key: `${o.from}|${o.name}|${o.tracks.join(',')}` }))
       .map((o) => ({ ...o, tracks: o.tracks.filter((i) => S.mbTracks[i] && matrixTrack(S.mbTracks[i])) }))
       .filter((o) => S.suiteAnswers.has(o.key) || (o.tracks.length && o.tracks.some((i) => !S.mbTracks[i].works.length)));
+    // [Z-SUM] (3.41.11) the suites added by hand
+    for (const o of S.suiteManual.values()) if (!out.some((x) => x.key === o.key)) out.push({ ...o, tracks: [...o.tracks] });
     for (const sw of S.suiteWorks.values()) {
       if (!out.some((o) => o.key === sw.key)) out.push({ key: sw.key, name: sw.title, from: 'release', tracks: [...(sw.tracks || [])] });
     }
@@ -27116,6 +27133,7 @@
     }
     S.suiteAnswers.delete(o.key);
     S.suiteWorks.delete(o.key);
+    S.suiteManual.delete(o.key); // [Z-SUM] (3.41.11) a suite added by hand goes (nothing to ask again)
     log('info', 'suiteUndone', { name: o.name });
   }
 
@@ -27216,6 +27234,47 @@
       <label class="dci-suite-other">${esc(tr('suite.other'))} <input type="text" data-f="suite-name" value="${esc(o.name)}" size="24"></label>
       <button type="button" class="dci-small" data-act="suite-yes-name">${esc(tr('suite.yesName'))}</button>
       <span class="dci-sub">${esc(from)}</span><p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
+  }
+
+  /**
+   * [Z-SUM] (3.41.11; Q-ck, Q-cq) "＋ Suite …": a suite the source does not show (no heading, no index track) – the same yellow
+   * question, with the tracks from – to and the name; "✓ Yes" accepts it as one found in the source.
+   */
+  function suiteAddHtml() {
+    const tracks = S.mbTracks.filter((t) => matrixTrack(t));
+    if (tracks.length < 2) return '';
+    if (!S.suiteAdd) {
+      return `<p class="dci-sub dci-mx-suite-add"><button type="button" class="dci-small" data-act="suite-add-open" title="${esc(tr('suite.addTitle'))}">＋ ${esc(tr('suite.add'))}</button></p>`;
+    }
+    const a = S.suiteAdd;
+    const opt = (sel) => tracks.map((t) => `<option value="${t.idx}" ${sel === t.idx ? 'selected' : ''}>${esc(`${trackLabel(t)} ${t.title}`)}</option>`).join('');
+    return `<div class="dci-mx-ask dci-mx-suite" data-el="suite-add" role="group" aria-label="${esc(tr('suite.add'))}">
+      <strong>${esc(tr('suite.addAsk'))}</strong>
+      <label>${esc(tr('suite.addFrom'))} <select data-f="mx-suite-from">${opt(a.from)}</select></label>
+      <label>${esc(tr('suite.addTo'))} <select data-f="mx-suite-to">${opt(a.to)}</select></label>
+      <label class="dci-suite-other">${esc(tr('suite.addName'))} <input type="text" data-f="mx-suite-name" value="${esc(a.name || '')}" size="24"></label>
+      <button type="button" class="dci-primary dci-small" data-act="suite-add-yes">${esc(tr('suite.yes'))}</button>
+      <button type="button" class="dci-small" data-act="suite-add-cancel">${esc(tr('suite.addCancel'))}</button>
+      ${a.error ? `<span class="dci-err" data-el="suite-add-error">${esc(tr(a.error))}</span>` : ''}
+      <p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
+  }
+
+  /** [Z-SUM] (3.41.11) "✓ Yes" of "＋ Suite …": the tracks from – to (of the works matrix), named; false (with its error) if not. */
+  function addSuite(fromIdx, toIdx, name) {
+    const nm = String(name || '').trim();
+    const [a, b] = [Number(fromIdx), Number(toIdx)].sort((x, y) => x - y);
+    const tracks = S.mbTracks.filter((t) => matrixTrack(t) && t.idx >= a && t.idx <= b).map((t) => t.idx);
+    S.suiteAdd = { ...S.suiteAdd, from: Number(fromIdx), to: Number(toIdx), name: nm, error: '' };
+    if (!nm) S.suiteAdd.error = 'suite.addNoName';
+    else if (tracks.length < 1) S.suiteAdd.error = 'suite.addNoTracks';
+    if (S.suiteAdd.error) return false;
+    const o = { key: `manual|${nm}|${tracks.join(',')}`, name: nm, from: 'manual', tracks };
+    if (S.suiteAnswers.has(o.key)) undoSuite(o);
+    S.suiteManual.set(o.key, o);
+    S.suiteAdd = null;
+    log('info', 'suiteAdded', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(tracks) }) });
+    acceptSuite(o, nm);
+    return o;
   }
 
   /** "Add column": any entry already in the dashboard (artist or label) with a work-level role of your choice. */
@@ -27374,7 +27433,7 @@
         <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
       ${!skipped && S.worksLookups === 'no' && tracksWithoutWork().length ? `<p class="dci-sub" data-el="works-lookups-off">${esc(tr('matrix.lookupsOff'))}
         <button type="button" class="dci-textbtn" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsNow'))}</button></p>` : ''}
-      ${skipped || folded ? '' : `<div data-el="suites">${suiteAsks().map(suiteAskHtml).join('')}</div>`}`;
+      ${skipped || folded ? '' : `<div data-el="suites">${suiteAsks().map(suiteAskHtml).join('')}${suiteAddHtml()}</div>`}`;
     if (folded) {
       el.innerHTML = head;
       return;
@@ -27731,6 +27790,12 @@
     const col = cellEl && matrixColumns().find((c) => c.key === cellEl.dataset.col);
     const mrow = cellEl && matrixRows().find((m) => m.key === cellEl.dataset.mrow);
     switch (f) {
+      // [Z-SUM] (3.41.11) the box "＋ Suite …" keeps what was chosen while the matrix is drawn again
+      case 'mx-suite-from':
+      case 'mx-suite-to':
+      case 'mx-suite-name':
+        if (S.suiteAdd) S.suiteAdd[f === 'mx-suite-name' ? 'name' : f === 'mx-suite-from' ? 'from' : 'to'] = f === 'mx-suite-name' ? el.value : Number(el.value);
+        return true; // (not drawn again: a click on "✓ Yes" right after typing the name lands)
       case 'mx-codes':
         S.roleCodes = el.value;
         writeJson('localStorage', 'dci-role-codes', el.value);
@@ -29295,6 +29360,29 @@
         if (!a) break;
         if (act === 'entry-skip') skipEntry(a);
         else unskipEntry(a);
+        break;
+      }
+      // [Z-SUM] (3.41.11) "＋ Suite …": its box opened, a suite added, closed
+      case 'suite-add-open': {
+        const ts = S.mbTracks.filter((t) => matrixTrack(t));
+        S.suiteAdd = { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '' };
+        renderWorks();
+        const f = S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-from"]');
+        if (f) f.focus({ preventScroll: true });
+        break;
+      }
+      case 'suite-add-cancel':
+        S.suiteAdd = null;
+        renderWorks();
+        break;
+      case 'suite-add-yes': {
+        const box = btn.closest('[data-el="suite-add"]');
+        const val = (f) => (box.querySelector(`[data-f="${f}"]`) || {}).value;
+        const o = addSuite(val('mx-suite-from'), val('mx-suite-to'), val('mx-suite-name'));
+        renderWorks();
+        refresh();
+        const again = o ? S.overlay.querySelector(`[data-el="suites"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
+        if (again) again.focus({ preventScroll: true });
         break;
       }
       // [Z-SU] (3.41.1) the question of a suite at the top of the works matrix
