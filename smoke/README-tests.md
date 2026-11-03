@@ -96,6 +96,7 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
+                                # 3.42.3: "Gondola" (as on the page and with "○") and "Black Zenith" in the corpus (Z-GON, Z-BZ)
                                 # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
                                 # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
                                 # release's artists ("artists") and its number of tracks ("tracks")
@@ -182,6 +183,12 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     effects chosen gives the role credit "sounds"
                                 #   members: 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
                                 #     and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
+                                #   gondola: 3.42.3 (Z-GON, S069 – S072, Q013): Ross McReynolds "Gondola" – "• 1, 8" the tracks, lines of roles below a
+                                #     name his, en dash, "All songs mixed by" (no "All songs"), "Skinny Elephant recording" mixed at, website and "all
+                                #     over the place" left out, plurals/sampling/pedal steel/Wurlitzer; the same with "○" before each line; horns →
+                                #     horn "horns", brass chosen
+                                #   blackzenith: 3.42.3 (Z-BZ, S073): "With Black Zenith, Stellarium turns toward …" no guest (pasted and as
+                                #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
                                 #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,

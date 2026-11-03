@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.42.2 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.42.3 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.42.3
+
+#### Changed
+
+- **Credits texts like those of Bandcamp's "Gondola"** are read in full: the tracks after "•" ("Matt Glassmeyer — saxophones • 1, 8"), lines of roles below a name as his ("Wurlitzer • 1, 8", until the next empty line), "All songs mixed by X" without the role credit "All songs", a studio on the line below ("Skinny Elephant recording": mixed at), "and Name" on the line below as one more name.
+- **Left out on purpose:** "Website by …" (MusicBrainz has no relationship for a website) and "Recorded all over the place".
+- **The companion's status marks** (○ ● ✓ ✗) copied with a text are no part of its lines.
+- **"Horns"** is horn credited "horns", brass is offered as the other choice; "sampling" is the sampler.
+- **"With Black Zenith, Stellarium turns toward …"** is prose: no guest performer; a name that is the title of the release or a track is never a person.
 
 ### Import 3.42.2
 

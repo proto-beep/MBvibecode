@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.42.2, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.42.3, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.42.3 · 2026-11-03
+
+Block BG, part 4 – collected items Z-GON (a – i; Q-dg, Q-dh, Q-di, Q-dm) and Z-BZ.
+
+- **The text adapter (`TEXT.parse`), new rules S069 – S073:**
+  - **S069** `STATUS_MARKS`, `STATUS_BANG`: the companion's status marks (✓ ● ○ ✗, "!" first) are taken out of each line before it is read (a text copied from a page the companion marked).
+  - **S070** `BULLET`: the tracks after "•" / "·" at the end of a line ("— saxophones • 1, 8"), after `NUMBERS` and before `LEAD_POS` in `readLine`; `lineLead` (set in `readClause` by "Name – roles" and by the branch of some known roles) gives `contWho` – a line below it only of roles (`listRoles`, else `playList` with words to ask, 137d), without colon, dash or "by", gives that name its roles with the line's tracks; an empty line, a heading (S067), a pair (S058) or a block (S051) ends it.
+  - **S071** `prevBy` (`{ verb, roles, scope }`, or `{ ignored }`): after one sentence of "by" credits of one name, the next line may go on – `STUDIO_LINE` (capitals, then recording(s) / studio(s) / sound(s)) is the place of its verb (`<Verb> At`, a company of the line), "and Name" one more name of its roles (or left out with a website).
+  - **S072** `WEBSITE_BY`, `NOWHERE`: "Website by …" and "Recorded all over the place" are left out (`ignored`, why `website` / `nowhere`).
+  - **S073:** in the "With …" branch (S061) a part after a comma that is prose (`prosePart`: five words or more, three in small letters, no roles) gives no credit; `addCredit` gives no person whose name is in `titleNames` (the release's and the tracks' titles; not when it is a name of the release's artist too). `sourceContext()` passes `titleNames` (`S.releaseTitleMb`, new, from the web service, and MB's track titles), the Bandcamp adapter adds the album's title and its tracks'.
+- **Mapping:** T021 `TEXT_WHAT_WORDS` with "all (of) (the)" in front ("All songs mixed by X": mixed by, no detail "All songs"); T001 `INSTRUMENT_ALIASES` "horns" → horn, brass (was brass), "sampling" → sampler; new question **Q013** ("horns": horn · brass, credited "horns", `preset: 'horn'`).
+- **Instrument questions:** `questionAsks(q, row)` (new) – a question with `preset` asks also while one of its answers is set; `instrumentAskHtml` shows it then as "“horns” is set as horn (credited “horns”) – or as: brass" (the other answers only); `chipAnswers` gives the other answers marked `preset` – the chip's ▾ offers them, without "?" (`emChipHtml`).
+- **Texts:** `ignored.why.website`, `ignored.why.nowhere`, `instrAsk.preset` (English).
+- **Tests:** `t_text_languages.py` new cases `gondola` (the text as on the page and with ○; the horns) and `blackzenith` (pasted, and as Bandcamp's "about" text) – both fail on 3.42.2; `text_corpus.json` the two Gondola texts and Black Zenith (the instruments of `t_textcorpus.py` with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling, synthesizer and plurals); `register_golden.json` renewed (S069 – S073, Q013, T001, T021; Discogs "Horns" → horn, "Arranged By [Horns]" → horn arranger); `smoke/harness.py` `REL_TITLE`.
 
 ## Import 3.42.2 · 2026-11-03
 
