@@ -702,6 +702,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     credit goes; S036 off: credited all the same, another area: it goes
                                 #   youtube: 3.41.13 (Z-YT): a youtu.be address in "another source" – the video page read, its description as
                                 #     credits (audio, mix, cameras, editor, Host asked), the edit note's Source; no description, no video; statistics
+                                #   ytlinks: 3.42.7 (Z-YTL): the videos a release links to as sources (each once, after Discogs), one alone loaded
+                                #     at once; the order with YouTube last (also an order stored before)
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
