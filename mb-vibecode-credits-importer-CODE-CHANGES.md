@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.8, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.11, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,59 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.11 · 2026-11-03
+
+⚙ Settings → Appearance "Compact entries: notes beside the lines | in the lines" – B, lower still (collected item Z-KH, mockup B; Q-bi, Q-bo, Q-bp, Q-bg).
+
+- **State and storage:** `S.emSide` (`EM_SIDE_KEY` `dci-em-side`, `beside` by default, only `lines` stored); in `TOPIC_KEYS.appearance`, `SETTINGS_KEYS`, `resetTopic('appearance')` (the entries drawn anew) and `resetSettings`.
+- **Settings:** the toggle `data-act="em-side"` after "Entries: Matrix | Legacy" (`settings.emSide`, `settings.emSide.beside`, `settings.emSide.lines` and their titles); handler `em-side`: stored, logged (`emSideSet`), `renderGroups`, `renderSettings`, `refresh`.
+- **`groupHtml`:** `inLines` (compact and `S.emSide === 'lines'`): "✎ works ↓" (`button.dci-works-goto[data-act=works-goto]`, `group.worksGoto`, its title `group.workNote`) after the match in the head instead of the note; `entryCompactHtml(a, rows, notes, inLines)`.
+- **`entryCompactHtml`:** `withTail` puts **new `emTailHtml(a)`** – the count (`data-emcount` with `data-emshort`: `em.countShort` "n to stage") and `button.dci-addrole-btn.dci-addrole-short[data-act=add-role]` ("＋ role", title and label `group.addRole`) – at the end of the last line (by event: of the events, not of "Taken out"; by role: the last role line; no line: a line of its own); no `.dci-em-side`; other notes (rows skipped with the works matrix) below the lines.
+- **`refresh`:** `data-emshort` → `em.countShort`. **`matchHtml`:** a linked entry compact "in the lines": `match.linkedShort` ("✓ link"), the whole text as its title.
+- **Handler `works-goto`:** the works matrix (`[data-el=works]`) in view (below what stays in view), `dci-flash` for 2.5 s.
+- **CSS:** `.dci-em-tail`, `.dci-em-inlines .dci-work-note`, `.dci-works-goto`.
+- **Texts (English):** `settings.emSide`, `settings.emSide.beside`, `settings.emSide.besideTitle`, `settings.emSide.lines`, `settings.emSide.linesTitle`, `group.addRoleShort`, `group.worksGoto`, `em.countShort`, `match.linkedShort`, `log.emSideSet`.
+- **Tests:** `t_entries.py` new case `compactlines` (A the setting, beside by default; B in the lines: no column, the tail of the last line, "✓ link" and "✎ works ↓" with their tooltips; C by role; D "✎ works ↓" brings the works matrix into view; E "＋ role"; F full view as before; G ↺ of Appearance). README: the settings table names "Fold bar after Apply" (3.40.9) and "Compact entries".
+
+**After the review of block BB** (an independent agent; fixed here):
+
+- **"Fold bar after Apply" (3.40.9):** `dmChanged` sets `S.dmFoldWait` only for a change made in the bar (`:hover` or the focus in `[data-el="dates"]` – not from ⚙ Settings → Dates or the source menu, which folded an open bar at the next focus anywhere); `watchPoolsLeave` folds only while "apply automatically" is on and nothing waits for "Apply" (`dm().dirty`), else it drops the wait; the `dm-auto` handler (off) and `pools-toggle` drop it too (a change, "apply automatically" off and another change: the bar folded over the change not applied yet; "▲ fold" by hand and opened again: it folded at the next leave). `foldPoolsAfterApply` also not while cells wait for a choice (`c.alt`) or one is being edited (`S.dmEdit`). Only "off" stored (`el.checked ? null : false`).
+- **`withTail` (3.40.11):** a function as replacement – "Joey Bada$$" kept its "$$" (`$$`, `$&` of a replacement string).
+- **`sourceElOf`:** not the toggle (`.dci-ghead-r`) nor "✎ works ↓" (`.dci-works-goto`) in the head – a click there no longer makes the source tab jump to the entry.
+- **`works-goto`:** a folded works matrix unfolds first (`S.worksFolded`).
+- **CSS:** `.dci-em-cl:has(.dci-em-tail) .dci-status` without `margin-left: auto` (a status and the tail both pushed right: the status stood in the middle of the line).
+- **Tests:** `t_dates_matrix.py` `foldapply` F (the bar left without a change; "apply automatically" off with a change waiting; a change from ⚙ Settings; stored only when off); `t_entries.py` `compactside` D (an entry folded in the full view: the column and the toggle), `compactlines` H ("Joey Bada$$", a line "Taken out" without the tail).
+
+## Import 3.40.10 · 2026-11-03
+
+A compact entry lower: "by event | by role" in its head, its notes and "＋ Another role" beside its lines (collected item Z-KH, mockup C; Q-bi, Q-bk, Q-bf).
+
+- **New `emBySegHtml(a)`** (the toggle, until now inside `entryCompactHtml` in `.dci-em-chead`) and **`emSideHtml(a, notes)`**: `.dci-em-side` – the count `data-emcount` (filled by `refresh` as before), the notes, `button.dci-addrole-btn[data-act=add-role]` (`group.addRoleBtn`).
+- **`entryCompactHtml(a, all, notes)`:** no `.dci-em-chead` and no `.dci-em-foot`; the lines in `.dci-em-cwrap` beside `emSideHtml`.
+- **`groupHtml`:** `compact` (`mxCompact` and not `mxEntry`): the toggle in `.dci-ghead-r` at the right of the head; `notes` (the work note – compact: `group.workNoteShort`, its tooltip `group.workNote` – and `group.mxHidden`) go into the column; the link "+ Another role" below only outside the compact view (the full matrix and the rows as before).
+- **CSS:** `.dci-ghead-r`, `.dci-em-cwrap` (wraps: the column below the lines in a narrow dashboard), `.dci-em-side`, `.dci-addrole-btn`.
+- **Texts (English):** `group.addRoleBtn`, `group.workNoteShort`.
+- **Tests:** `t_entries.py` new case `compactside` (A the toggle in the head, the column beside the lines with count, note and its tooltip, the button, no link below; B by role the same; C the button: the full matrix with a new line; D full view: as before).
+
+## Import 3.40.9 · 2026-11-03
+
+"Fold bar after Apply" next to "apply automatically" (collected item Z-PF; Q-bl, Q-bn).
+
+- **State and storage:** `S.dmFold` (`DM_FOLD_KEY` `dci-dm-fold`, default on – stored `false` when off; defined before its first read), `S.dmFoldWait`; in `TOPIC_KEYS.dates`, `SETTINGS_KEYS`, `resetTopic('dates')` and `resetSettings`.
+- **`matrixHtml`:** the box `data-f="dm-fold"` after "apply automatically"; ⚙ Settings → Dates and tracks the same box. Change handler `dm-fold`: stored, logged (`dmFoldSwitch`), the bar drawn anew when switched in ⚙.
+- **New `foldPoolsAfterApply(focus)`:** folds "Dates & tracks" as `pools-toggle` does (`S.poolsOpen` false, stored; `S.poolsForce` null; log `poolsFolded`); not while a form of the pools is open (`poolForm`, `trackForm`, `poolClear`); with `focus` the focus onto "▼ show". Called by `dm-apply`.
+- **`dmChanged`:** with "apply automatically" `S.dmFoldWait` after `applyMatrix`. **New `watchPoolsLeave(el, overlay)`** (in `buildOverlay`, on `[data-el="dates"]`): `mouseleave`, `focusout` to outside the bar, and a `focusin` outside it (the bar is drawn anew after each change, so the focus may have gone with the field) fold while `dmFoldWait`.
+- **Texts (English):** `dm.fold`, `dm.foldTitle`, `log.dmFoldSwitch`, `log.poolsFolded`; `reset.what` names the box (English only until the translation round).
+- **Tests:** `t_dates_matrix.py` new case `foldapply` (A box below the matrix and in ⚙, on; B "Apply" folds, focus, log; C off: stays open; D with "apply automatically": open while the pointer is in the bar, folded when it leaves; by keyboard, a field outside focused: folded; E ↺ of the topic: on again). `harness.py` `DM_FOLD` (False: `dci-dm-fold` stored off before the script starts – the cases written before work on in the open bar after "Apply"; `foldapply` sets True).
+
+## Companion 1.10.1 · 2026-11-03
+
+Marks at "Copyright ©" and "Phonographic Copyright ℗" on Discogs, and the jump to their line (collected item Z-CR).
+
+- **New `roleNorm(s)`:** `norm` with © → (c), ℗ → (p), ™ → (tm) – Discogs's data write "Copyright (c)", "Phonographic Copyright (p)", its page the signs. Used wherever a role is looked for in a line: `lineOf`, `findCreditAt`, `findCredit` (role and full role), `locate` (until 1.10.0 `norm`: the role "(p)" was not in "Phonographic Copyright ℗ – …", `findCredit` scored below 3 – no mark; `locate` highlighted only the name).
+- **Version:** `@version` and `COMPANION_VERSION` 1.10.1 (the main script still needs 1.10.0: `COMPANION_NEEDED` unchanged).
+- **Tests:** `harness.py` `discogs_page` writes "Phonographic Copyright ℗" as the real page (the data stay "(p)"); `t_companion_discogs.py` new case `copymarks` (Sony with ℗ and ©: a mark on each line; a click on the row "Copyright (c)": its line highlighted; fails with 1.10.0). `t_release`'s comparison log keeps "● Sony" / "✓ Sony" – with 1.10.0 and the new page Sony would have no mark.
 
 ## Import 3.40.8 · 2026-11-03
 

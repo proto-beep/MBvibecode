@@ -555,8 +555,9 @@ def discogs_page():
     credits = [('Bass', 3001, 'Bass Man'), ('Guitar', 3002, 'Guitar Guy'), ('Synth', 3003, 'Keys Guy'), ('Drums', 3004, 'Drum Guy'),
                ('Produced By', 3005, 'Bob Producer'), ('Photography By', 3006, 'Photo Guy'), ('A&amp;R Consultant', 3008, 'Ann Rep')]
     lis = ''.join(f'<li><span>{r}</span> – <a href="/artist/{i}-{n.replace(" ", "-")}">{n}</a></li>' for r, i, n in credits)
+    # [Companion 1.10.1] the page writes "Phonographic Copyright ℗" (Discogs's data "(p)"), as the real page does (collected item Z-CR)
     comp = ''.join(f'<li><span>{r}</span> – <a href="/label/{i}-x">{n}</a></li>' for r, i, n in
-                   [('Phonographic Copyright (p)', 1001, 'Sony'), ('Recorded At', 1002, 'Abbey Road Studios'), ('Published By', 1003, 'Pub Co')])
+                   [('Phonographic Copyright ℗', 1001, 'Sony'), ('Recorded At', 1002, 'Abbey Road Studios'), ('Published By', 1003, 'Pub Co')])
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>Discogs</title>'
             f'<meta property="og:image" content="https://i.discogs.com/cover-{DISCOGS_ID}.png"></head><body><h1>Test Band – Testalbum</h1>'
             f'<div class="gallery"><a href="/release/{DISCOGS_ID}-Test-Band-Testalbum/image/1"><img src="https://i.discogs.com/cover-{DISCOGS_ID}.png" width="40"></a></div>'
@@ -657,7 +658,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER))
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1016,6 +1017,11 @@ REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') 
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
 # (e.g. ['D022'] for the cases about periods and "choose", written before D022 placed what the days have in common)
+# [3.40.9] "Fold bar after Apply" (Z-PF, on in the script) off for the cases written before it: they work on in the open bar
+# after "Apply"; a case of the folding sets DM_FOLD = True
+DM_FOLD = False
+DM_FOLD_PRESET = "(on) => { if (on || localStorage.getItem('dci-dm-fold') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-dm-fold', 'false'); }"
+
 RULES_OFF = []
 RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
 
@@ -1028,6 +1034,7 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
         pg.evaluate(VIEW_PRESET, view)
     pg.evaluate(ENTRIES_PRESET, ENTRIES_VIEW)
     pg.evaluate(REMEMBER_PRESET, REMEMBER)
+    pg.evaluate(DM_FOLD_PRESET, DM_FOLD)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:

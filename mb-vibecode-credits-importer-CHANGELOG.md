@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.8 | – |
+| 2026-11-03 | 3.40.4 – 3.40.11 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,35 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.11
+
+#### New
+
+- **Compact entries lower still, if you like** (collected item Z-KH, mockup B): ⚙ Settings → Appearance → **Compact entries: notes beside the lines | in the lines**. "In the lines": no column beside them – "n to stage" and a small **＋ role** at the end of the last line, **✎ works ↓** in the head (it brings the works matrix into view) and **✓ link** instead of "found via Discogs link" (the whole text as tooltip). "Notes beside the lines" (3.40.10) stays the default.
+
+#### Fixed (after a check of the block)
+
+- **Fold bar after Apply (3.40.9)** folds only after a change made in the bar and only when everything is applied: switching "apply automatically" off with a change waiting, folding by hand, or a change from ⚙ Settings no longer folds it later; nor does "Apply" while dates wait for a choice or a date is being edited.
+- **Compact entries:** a name with "$" ("Joey Bada$$") is kept in "＋ role"; "by event | by role" and "✎ works ↓" no longer make the source tab jump; "✎ works ↓" unfolds a folded works matrix; a red note at the end of a line stands next to its chips again.
+
+### Import 3.40.10
+
+#### Changed
+
+- **Compact entries lower** (collected item Z-KH, mockup C): "by event | by role" sits at the right of the entry's head instead of a line of its own; "n relationships to stage", "Writing credits: in the works matrix" and **＋ Another role for …** – now a button – stand in a column beside the lines instead of three lines below them. An entry with one event is about a third lower. Both views (by event, by role) alike; the full view unchanged.
+
+### Import 3.40.9
+
+#### New
+
+- **Fold bar after Apply** (collected item Z-PF): a box next to "apply automatically" below the date matrix, on by default (also in ⚙ Settings → Dates and tracks). "Apply" folds "Dates & tracks"; with "apply automatically" the bar folds once you leave it with the pointer or the keyboard after a change – not after each change. An open form of the pools (a new date, a track group) keeps it open.
+
+### COMPANION 1.10.1
+
+#### Fixed
+
+- **Marks at the copyrights on Discogs** (collected item Z-CR): "Copyright ©" and "Phonographic Copyright ℗" get their marks like the other lines of "Companies, etc.", and a click on such a row in the dashboard shows its line there, not only the name. Discogs's data write these roles "Copyright (c)" and "Phonographic Copyright (p)", its page with the signs; until 1.10.0 the role was not found in the line.
 
 ### Import 3.40.8
 
