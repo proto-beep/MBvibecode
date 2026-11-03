@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.12, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.13, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.13 · 2026-11-03
+
+The fold after "Apply" for one import only, "＋ Another role" a button in the full view, one box for all live comments (collected items Z-PF2, Z-AB, Z-LC; Q-br, Q-bs).
+
+- **`foldPoolsAfterApply`:** sets `S.poolsFoldApply` instead of `S.poolsOpen = false` and no longer writes `dci-pools-open`; **`poolsOpen`** false while it is set (after the forms and the waiting suggestions); **`loadRelease`** clears it (a new import with dates shows "Dates & tracks" open again), **`pools-toggle`** too ("▲ fold" / "▼ show" by hand is remembered as before).
+- **`groupHtml`:** in the full view `button.dci-addrole-btn.dci-addrole-full` with `group.addRoleBtn` ("＋ Another role for {name}") instead of the text button with `group.addRole` (still the tooltip of "＋ role").
+- **`renderLiveComments`:** a `thead` row `tr.dci-livecom-all` with a box `data-f=livecom-on data-all=1 data-recs=…` for all proposals that can be ticked (not those with another comment in MusicBrainz), from two of them; ticked when all are, `indeterminate` (set after `innerHTML`, `data-mixed`) when some are. The handler `livecom-on` unchanged (it takes `data-recs`). CSS `.dci-livecom-all td`.
+- **Texts (English):** `livecom.all`, `livecom.allAria`.
+- **Tests:** `t_dates_matrix.py` `foldapply` B nothing stored, new G (folded by "Apply", loaded again: open; "▲ fold" by hand, loaded again: folded); `t_ui_view.py` new case `addrolebtn`; `t_works_more.py` new case `liveall` (all ticked, mixed, all on and off), `livecom` "All" without the track MusicBrainz has another comment for. Each fails on 3.40.12.
 
 ## Import 3.40.12 · 2026-11-03
 

@@ -1,6 +1,6 @@
 """View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4); `python3 t_ui_view.py <case> …` runs only those."""
+Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4), addrolebtn (3.40.13); `python3 t_ui_view.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -775,6 +775,37 @@ def case_foot():
         results.append(ok_e)
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_addrolebtn():
+    """Credits Importer 3.40.13 (collected item Z-AB; Q-bs): "＋ Another role for …" a button in the full view too (until 3.40.12 a
+    link "+ Another role for …" there; a button in the compact entries from 3.40.10).
+    A) Full view: below the rows of Bass Man the button "＋ Another role for Bass Man" (framed, not a text link).
+    B) Clicked: a new row for him."""
+    BTN = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent === 'Bass Man');
+      const x = g && g.querySelector(':scope > [data-act=add-role]'); if (!x) return null; const st = getComputedStyle(x);
+      return [x.textContent.trim(), x.classList.contains('dci-addrole-btn'), x.classList.contains('dci-textbtn'), st.borderTopStyle, g.querySelectorAll('tr.dci-row').length]; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        a0 = pg.evaluate(BTN)
+        print('A)', a0)
+        results.append(a0 is not None and a0[:4] == ['＋ Another role for Bass Man', True, False, 'solid'])
+        pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) > [data-act=add-role]')
+        pg.wait_for_timeout(300)
+        b0 = pg.evaluate(BTN)
+        print('B)', b0)
+        results.append(b0 is not None and a0 is not None and b0[4] == a0[4] + 1)
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
