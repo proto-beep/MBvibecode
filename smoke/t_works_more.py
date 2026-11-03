@@ -864,9 +864,13 @@ def case_coverworks():
        surname matches an artist of the release – "Epistrophy" offered. The log names the three titles (1.4: "By Monk" too).
     B) "Link" of Monk's work for track 1.4: the link offers "co?" (dashed; Monk is none of the performers), a click sets "cover";
        the credited writer's own work of the same title ("Epistrophy By Monk" by Writer W) gets no "co?"; the works of the artists are
-       compared once (the name in the title looked up within the same run).
+       compared once (the name in the title looked up within the same run). [Z-CV] (3.40.17) Monk has only writing credits on the
+       release (not classical): "cover" is set by itself – "co" yellow, ticked; a click takes it off ("co?" again), another sets it.
     D) (3.39.9, collected item K-9) no "co?" when Monk performs the track: a member of the release's band ("member of band" in
-       MusicBrainz), the pianist of the recording in MusicBrainz, or the track's artist.
+       MusicBrainz), the pianist of the recording in MusicBrainz, or the track's artist. (3.40.17: where it was "co?", "cover" set by
+       itself; neither when he performs.)
+    E) [Z-CV] (3.40.17) Not set by itself – "co?" only: the release of the genre "Classical" at Discogs; Monk with another credit
+       on the release (Liner Notes).
     C) In Node: titleComposerNames – "(Thelonious Monk cover)" → Thelonious Monk (full), "By Monk" → Monk (surname), "(Live)",
        "(Theme)", "Stand By Me", "(Part 2)" → none; (3.38.16, review) "(Prod. By Metro Boomin)", "(Main Title)", "(Dub)", "Stand By Your
        Man", "(Act II)" → none, "Theme By Monk For Piano" → Monk, "(Ludwig van Beethoven cover)" → the full name, "BY MONK" → MONK; similarWorkTitle – the composer's names and brackets left out, a work's title
@@ -878,6 +882,8 @@ def case_coverworks():
     W6, W7, W8, W9, W10, W11 = (H.uid('cccccccc', n) for n in (86, 87, 88, 89, 90, 91))
     WW = H.ARTISTS[3007][0]
     H.ARTISTS[3410] = (MONK, 'Thelonious Monk')
+    # [Z-CV] (3.40.17) Monk's work known to /ws/js/entity (it is staged)
+    H.COMPANIES[7086] = ('work', H.uid('cccccccc', 86), 'Variants on a Theme of Thelonious Monk (Criss-Cross)')
     H.TITLES[1:4] = ['Epistrophy By Monk', 'Round Midnight (Thelonious Monk cover)', 'Variants On A Theme By Monk']
     H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
     for i, n in [(567, 'cover'), (578, 'live')]:
@@ -931,15 +937,25 @@ def case_coverworks():
         # [3.39.9] "co?" once MusicBrainz said who is a member of whom (looked up in the background; (3.40.3) 45 s under load)
         H.wait_for(pg, f"!!({PILL})(3)", 45)
         b0 = pg.evaluate(f"({PILL})(3)")
+        # [Z-CV] (3.40.17) staged with "cover" (567)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        staged = pg.evaluate(f"""(() => {{ const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
+          return MB.relationshipEditor.state.added.filter(x => x.linkTypeID === 278 && x.entity1 && x.entity1.gid === '{W6}').map(ids); }})()""")
+        pg.wait_for_timeout(300)
         pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
         b1 = pg.evaluate(f"({PILL})(3)")
         # the credited writer's own work of the same title: no "co?" (a songwriter's song is no cover)
         pg.locator('tr[data-work="1"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         pg.locator(f'tr[data-work="1"] .dci-mx-wlist [data-act=work-pick][data-gid="{W11}"]').click(); pg.wait_for_timeout(500)
         b2 = pg.evaluate(f"({PILL})(1)")
-        print('B) co:', b0, '→', b1, '| eigenes Werk von Writer W:', b2)
-        results.append(b0 and b0[0] == 'hint' and b0[1] == 'co?' and b0[2].startswith('Cover? The composer (Thelonious Monk) is none of the performers')
-                       and b1 and b1[0] == 'on' and (b2 is None or b2[0] != 'hint'))
+        pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
+        b1b = pg.evaluate(f"({PILL})(3)")
+        print('B) co:', b0, '| gestaged:', staged, '→', b1, '→', b1b, '| eigenes Werk von Writer W:', b2)
+        # [Z-CV] (3.40.17) set by itself (until 3.40.16 offered: "co?", a click set it)
+        results.append(b0 and b0[0] == 'auto' and b0[1] == 'co' and staged == [[567]] and b0[2].startswith('Cover – set by itself: the composer (Thelonious Monk) is none of the performers')
+                       and b1 and b1[0] == 'hint' and b1[1] == 'co?' and b1[2].startswith('Cover? The composer (Thelonious Monk) is none of the performers')
+                       and b1b and b1b[0] == 'on' and (b2 is None or b2[0] not in ('hint', 'auto')))
         print('Fehler:', errs)
         results.append(not errs)
 
@@ -978,7 +994,7 @@ def case_coverworks():
             out = p2.evaluate(f"({PILL})(3)")
             c2.close()
             return out, e2 + ([] if looked == (look or [MONK]) else [f'lookups: {looked}'])
-        d0, e0 = pill_with(lambda: None)  # the same page without any of them: "co?" (so the three below say something)
+        d0, e0 = pill_with(lambda: None)  # the same page without any of them: "cover" (so the three below say something)
         d1, e1 = pill_with(lambda: H.BAND_MEMBERS.update({TB: [MONK]}))
         H.BAND_MEMBERS.clear()
         # (review) the other direction: the band of the composer, the release's artist a member of it
@@ -1001,7 +1017,7 @@ def case_coverworks():
         d6, e6 = pill_with(lambda: (H.IS_PERSON.update({MONK: [ALIAS]}), H.BAND_MEMBERS.update({TB: [ALIAS]})), look=[MONK, ALIAS])
         H.IS_PERSON.clear()
         H.BAND_MEMBERS.clear()
-        # the control: the other name in no band of the release – "co?" (after both lookups)
+        # the control: the other name in no band of the release – "cover" (after both lookups)
         d7, e7 = pill_with(lambda: H.IS_PERSON.update({MONK: [ALIAS]}), look=[MONK, ALIAS])
         H.IS_PERSON.clear()
         H.BAND_MEMBERS.clear()
@@ -1012,11 +1028,26 @@ def case_coverworks():
         H.IS_PERSON.clear()
         print('   is person:', d5, '| anderer Name in der Band:', d6, '| anderer Name, keine Band (Gegenprobe):', d7, '| zwei Künstlernamen:', d8, '| Fehler:', e5, e6, e7, e8)
         print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e4)
-        no_co = lambda x: x is None or x[0] != 'hint'
+        no_co = lambda x: x is None or x[0] not in ('hint', 'auto')
         # d2, d3: performers known without a lookup – none asked then (the lookups list says [MONK] only where one is made)
-        results.append(d0 is not None and d0[0] == 'hint' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
+        results.append(d0 is not None and d0[0] == 'auto' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
                        and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e4)))
-        results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'hint' and no_co(d8) and not (e5 or e6 or e7 or e8))
+        results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'auto' and no_co(d8) and not (e5 or e6 or e7 or e8))
+
+        # E) [Z-CV] (3.40.17) "co?" only: classical; another credit of Monk
+        def with_rel(change):
+            def setup():
+                def r2():
+                    d = rel()
+                    change(d)
+                    return d
+                H.discogs_release = r2
+            return setup
+        f0, f0e = pill_with(with_rel(lambda d: d.update({'genres': ['Classical']})))
+        f1, f1e = pill_with(with_rel(lambda d: d.update({'extraartists': d['extraartists'] + [{'name': 'Thelonious Monk', 'anv': '', 'role': 'Liner Notes', 'tracks': '', 'id': 3410, 'join': ''}]})))
+        H.discogs_release = rel
+        print('E) Classical:', f0, '| Liner Notes:', f1, '| Fehler:', f0e, f1e)
+        results.append(f0 is not None and f0[0] == 'hint' and f1 is not None and f1[0] == 'hint' and not (f0e or f1e))
         b.close()
     TITLES = ['Round Midnight (Thelonious Monk cover)', 'Epistrophy By Monk', 'Song (Live)', 'Song (Theme)', 'Stand By Me', 'Song (Part 2)',
               'Money (Prod. By Metro Boomin)', 'Song (Main Title)', 'Song (Dub)', 'Theme By Monk For Piano', 'Ode (Ludwig van Beethoven cover)',

@@ -334,6 +334,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
                                 #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
                                 #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
+                                #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
+                                #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -536,6 +538,8 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     before back); a level chosen while skipped ends it; "Remove skipped entries …": "1 skipped entry ▸" at
                                 #     the bottom, ↺ there; matrix, compact: beside "by event | by role"
                                 #   entryskipkeep: 3.40.15: remembered with the release (Cache on), loaded again still skipped, ↺ back
+                                #   entryskipmodes: 3.40.17 (review): scope "only work" and ⊘ Skip both ways (stays skipped; ↺ inside the scope:
+                                #     stays on Skip, "all": back); "Level for all rows" Recording, then Skip: "⊘ Skip", no stale "↺"
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
@@ -614,7 +618,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     "AA"/"AB", in the dashboard a credit on "B1" on the third recording, no message about the tracks
                                 #   repeat: 3.40.16 (Z-RI): "↻ Repeat import" after "Source ▾", the question ("Keep my changes" preselected),
                                 #     Cancel; kept: the source read again (a new credit there), "fretless" and the row taken out kept, "Dates &
-                                #     tracks" open again after a fold by "Apply" (Z-PF2); afresh: the changes gone, the choice kept on a redraw
+                                #     tracks" open again after a fold by "Apply" (Z-PF2); afresh: the changes gone, the choice kept on a redraw;
+                                #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
