@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.41.5 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.41.6 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.41.6
+
+#### Fixed
+
+- **Suites: "An error occurred: unknown Work id:" on "Enter edit"** – MusicBrainz does not create a new work that is linked by "parts" only. The suite is now created in MusicBrainz first: its line in the works matrix has **"＋ Create the suite in MusicBrainz …"**, which opens MusicBrainz's form in the dashboard, prefilled with the name, the type Suite and the writers credited for all of its tracks. Its "parts" are staged once it exists; the parts and their links with the recordings can be staged before. A suite of that name by the same writers in MusicBrainz is offered instead ("Link “Trisect”").
 
 ### Import 3.41.5
 
