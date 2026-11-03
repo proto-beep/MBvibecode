@@ -1361,4 +1361,92 @@ def case_statsdev():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_editnote():
+    """Credits Importer 3.41.9 (collected item Z-EN; Q-cp): the edit note in ⚙ Settings → Staging only.
+    A) The footer has no checkbox "edit note" any more (until 3.41.8 "⚙ Options": edit note · fill role credits · ≤ 500 per
+       staging); ⚙ Settings → Staging: "Edit note: Full | Simple | None", Full pressed; each option's tooltip lists what it writes.
+    B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note.
+    C) Simple (stored "simple"; the page opened anew), staged: the block of the script is only "Source: …" and "Script: … v…" – no
+       "Done:"; the form of a new work: "Source: …" and "Script: …" (no "writers from Discogs credits").
+    D) None (stored "none"), an entry skipped before (Bass Man) taken again and staged: the block written before is gone, nothing else is
+       written; the form of a new work (the page opened anew) has no edit note. ↺ of the topic: Full again (nothing stored)."""
+    import urllib.parse
+    results = []
+    NOTE = "document.getElementById('edit-note-text').value"
+
+    def stage(pg):
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+
+    def work_form(pg):
+        # (the first track without a work that offers one: what is staged is remembered for the next page)
+        pg.locator('tr[data-work] [data-act=work-create]').first.evaluate('b => b.click()')
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        pg.click('[data-act=sub-close]'); pg.wait_for_timeout(200)
+        return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+
+    def mode(pg, m):
+        H.open_settings(pg, 'staging')
+        pg.click(f'[data-el=settings] [data-act=edit-note-mode][data-mode={m}]'); pg.wait_for_timeout(200)
+        stored = pg.evaluate("localStorage.getItem('dci-edit-note')")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        return stored
+
+    def page(ctx):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        return pg, errs
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = page(ctx)
+        foot = pg.evaluate("[...document.querySelectorAll('.dci-foot-optlist label')].map(l => l.textContent.trim())")
+        H.open_settings(pg, 'staging')
+        seg = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.textContent.trim(), b.getAttribute('aria-pressed'), b.title])""")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        print('A) Fuß:', foot, '| Einstellung:', [x[:3] for x in seg])
+        print('   Tooltips:', [x[3].split('\n') for x in seg])
+        results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false'], ['none', 'None', 'false']]
+                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3]
+                       and seg[2][3].startswith('Nothing is written'))
+        stage(pg)
+        b0 = pg.evaluate(NOTE).splitlines()
+        print('B)', b0[:4])
+        results.append(b0[0] == 'Source: https://www.discogs.com/release/1234' and b0[1].startswith('Script: MB x Vibecode: Credits Importer v') and any(l.startswith('Done: added ') for l in b0))
+        st1 = mode(pg, 'simple')
+        pg.close()
+        pg, errs2 = page(ctx)
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').querySelector('[data-act=entry-skip]').dataset.skipkey")
+        pg.locator(f'[data-act=entry-skip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        q1 = work_form(pg)
+        stage(pg)
+        c0 = pg.evaluate(NOTE).splitlines()
+        n1 = q1.get('edit-work.edit_note') or ''
+        print('C)', st1, c0, '| Werk:', repr(n1))
+        results.append(st1 == '"simple"' and len(c0) == 2 and c0[0] == 'Source: https://www.discogs.com/release/1234' and c0[1].startswith('Script: MB x Vibecode')
+                       and n1.split('\n')[0] == 'Source: https://www.discogs.com/release/1234' and n1.split('\n')[1:2] and n1.split('\n')[1].startswith('Script: MB x Vibecode')
+                       and 'writers' not in n1)
+        st2 = mode(pg, 'none')
+        pg.locator(f'[data-act=entry-unskip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        stage(pg)
+        d0 = pg.evaluate(NOTE)
+        pg.close()
+        pg, errs3 = page(ctx)
+        q2 = work_form(pg)
+        H.open_settings(pg, 'staging')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=staging]'); pg.wait_for_timeout(300)
+        d1 = [pg.evaluate("localStorage.getItem('dci-edit-note')"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=edit-note-mode][aria-pressed=true]').dataset.mode")]
+        print('D)', st2, repr(d0), '| Werk mit Notiz:', 'edit-work.edit_note' in q2, '| ↺:', d1)
+        results.append(st2 == '"none"' and d0 == '' and 'edit-work.edit_note' not in q2 and d1 == [None, 'full'])
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

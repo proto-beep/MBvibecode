@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.8
+// @version      3.41.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -503,14 +503,12 @@
       "footer.jump": "Move in the dashboard",
       "footer.top": "To the top of the dashboard",
       "footer.bottom": "To the bottom of the dashboard",
-      "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
       "footer.previewShort": "Preview",
-      "footer.editNoteShort": "edit note",
       "footer.fillShort": "fill role credits",
       "footer.capShort": "≤ {n} per staging",
       "footer.options": "⚙ Options",
-      "footer.optionsTitle": "Edit note, role credits of existing relationships, rounds of staging",
+      "footer.optionsTitle": "Role credits of existing relationships, rounds of staging",
       "footer.chipRounds": "round {k} of {x}",
       "footer.chipWaiting.one": "{n} track without a work",
       "footer.chipWaiting.other": "{n} tracks without a work",
@@ -1177,6 +1175,13 @@
       "settings.suiteNaming.colon": "Suite: Part",
       "settings.suiteNaming.comma": "Suite, Part",
       "settings.suiteNamingTitle": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
+      "settings.editNote": "Edit note",
+      "settings.editNote.full": "Full",
+      "settings.editNote.simple": "Simple",
+      "settings.editNote.none": "None",
+      "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
+      "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
+      "settings.editNote.noneTitle": "Nothing is written into the edit note – neither at staging nor in the forms of new artists, works, labels …",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -9155,7 +9160,6 @@
     noteDiscogsId: '',
     lastNoteBlock: '',
     panicMode: false,
-    editNote: true,
     previewOpen: false,
     lastFocus: null,
   };
@@ -15141,6 +15145,8 @@
     const supp = suppNoteLines();
     supp.filter((l) => l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     lines.push(`Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})`);
+    // [Z-EN] (3.41.9) "simple": only the sources and the script
+    if (S.editNoteMode === 'simple') return lines.join('\n');
     const done = [];
     const credits = st.recording + st.release + st.release_group + st.work;
     if (credits) {
@@ -15181,6 +15187,17 @@
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     return true;
+  }
+
+  /** [Z-EN] (3.41.9) "None": the block this script wrote into the edit note before is taken out again (the rest stays). */
+  function clearEditNote() {
+    const el = document.getElementById('edit-note-text') || document.querySelector('textarea[name$="edit_note"]');
+    if (!el || !S.lastNoteBlock || !el.value.includes(S.lastNoteBlock)) return;
+    const next = el.value.replace(S.lastNoteBlock, '').replace(/\n{3,}/g, '\n\n').trim();
+    S.lastNoteBlock = '';
+    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set; // (as writeEditNote: React sees the change)
+    setter.call(el, next);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   // --- Works created in this browser but not yet linked in MB ------------------------------
@@ -18716,10 +18733,10 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNote) {
+    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNoteMode !== 'none') {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
-    }
+    } else if (S.editNoteMode === 'none') clearEditNote(); // [Z-EN] (3.41.9) the block written before goes
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
     saveLiveJob();
     log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
@@ -20901,7 +20918,7 @@
     if (!target) return '';
     if (target.kind === 'credit') return tr('dest.credit', { name: target.attr.name });
     if (target.kind === 'text') return tr('dest.text', { name: target.attr.name });
-    return tr(S.editNote ? 'dest.note' : 'dest.none');
+    return tr(S.editNoteMode === 'full' ? 'dest.note' : 'dest.none');
   }
 
   function updateHint(row) {
@@ -24059,6 +24076,15 @@
   /** The page of an entry at the source ('' if none). */
   const srcUrlOf = (a) => (a && a.dId && (a.links || [])[0]) || '';
   const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
+  /**
+   * [Z-EN] (3.41.9) The edit note of a form the script fills in, by ⚙ Settings → Staging → Edit note: "full" its sources and the line
+   * of the script as before, "simple" the sources and the script with its version, "none" nothing.
+   */
+  function formEditNote(sources, prefilled) {
+    if (S.editNoteMode === 'none') return '';
+    const src = uniq((sources || []).filter(Boolean)).map((u) => `Source: ${u}`);
+    return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
+  }
 
   async function startArtistCreate(artist) {
     const x = idx();
@@ -24104,7 +24130,7 @@
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
       sourceLinkTypeId: sourceUrlLtId('artist'),
       rels,
-      editNote: srcUrlOf(artist) ? `Source: ${srcUrlOf(artist)}\n${prefilledBy(true)}` : '',
+      editNote: srcUrlOf(artist) ? formEditNote([srcUrlOf(artist)], prefilledBy(true)) : '',
     });
     const urlCount = params.filter(([k]) => /^edit-artist\.url\.\d+\.text$/.test(k)).length;
     const displayName = (person && person.name) || artist.name;
@@ -24161,10 +24187,8 @@
       if (lt) params.push([`edit-${path}.url.0.link_type_id`, String(lt)]);
     }
     if (owner.srcSeries) params.push(...seriesLabelParams(owner));
-    params.push([`edit-${path}.edit_note`, [
-      owner.srcSeries && srcUrlOf(owner) ? `Source: ${srcUrlOf(owner)}` : '',
-      prefilledBy(!!owner.dId),
-    ].filter(Boolean).join('\n')]);
+    const otherNote = formEditNote([owner.srcSeries && srcUrlOf(owner)], prefilledBy(!!owner.dId));
+    if (otherNote) params.push([`edit-${path}.edit_note`, otherNote]);
     const type = tr(`entity.${et}`);
     log('info', 'otherForm', { name: owner.name, type });
     openCreateDialog({
@@ -24207,10 +24231,8 @@
     // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
     const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
     web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) && !person ? 1 : 0)}.text`, u]));
-    params.push([`edit-${entityType}.edit_note`, [
-      srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
-      prefilledBy(true),
-    ].filter(Boolean).join('\n')]);
+    const companyNote = formEditNote([srcUrlOf(company)], prefilledBy(true));
+    if (companyNote) params.push([`edit-${entityType}.edit_note`, companyNote]);
     // [3.21.3] without a link of the source (a text): the name and the web links found next to it
     const what = srcUrlOf(company) && !person ? tr('companyDlg.prefilled')
       : tr('artistDlg.prefilled', { list: [tr('part.name'), ...(web.length ? [tr('part.webUrls', { n: web.length })] : [])].join(', ') });
@@ -24274,10 +24296,7 @@
       typeId: opts.typeId,
       languageIds: opts.languageIds,
       writers,
-      editNote: [
-        sourceUrl ? `Source: ${sourceUrl}` : '',
-        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? `; writers from ${S.source.creditsName} credits` : ''}.`,
-      ].filter(Boolean).join('\n'),
+      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? `; writers from ${S.source.creditsName} credits` : ''}.`),
     });
     const prefilled = [tr('part.title', { title: track.title })];
     if (typeName) prefilled.push(tr('part.workType', { name: typeName }));
@@ -25046,7 +25065,7 @@
       if (had) writeJson('localStorage', key, null);
       return;
     }
-    const note = [S.editNote ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
+    const note = [S.editNoteMode !== 'none' ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
     writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
     if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
@@ -27052,10 +27071,7 @@
       typeId: suiteType ? suiteType.id : 6, // (6: "Suite" in MusicBrainz)
       languageIds: [],
       writers,
-      editNote: [
-        sourceUrl ? `Source: ${sourceUrl}` : '',
-        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`,
-      ].filter(Boolean).join('\n'),
+      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`),
     });
     const tracks = tracksShort({ level: 'recording', tracks: new Set(sw.tracks) });
     const prefilled = [tr('part.title', { title: sw.title }), tr('part.workType', { name: suiteType ? suiteType.name : 'Suite' })];
@@ -29344,6 +29360,16 @@
         if (again) again.focus({ preventScroll: true });
         break;
       }
+      // [Z-EN] (3.41.9) ⚙ Settings → Staging → Edit note
+      case 'edit-note-mode': {
+        S.editNoteMode = ['simple', 'none'].includes(btn.dataset.mode) ? btn.dataset.mode : 'full';
+        writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
+        S.rows.forEach(updateHint);
+        renderSettings();
+        const again = S.overlay.querySelector(`[data-act="edit-note-mode"][data-mode="${S.editNoteMode}"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       case 'suite-naming': {
         setSuiteNaming(btn.dataset.naming);
         renderSettings();
@@ -30920,10 +30946,6 @@
         S.onlyMissing = el.checked;
         S.overlay.classList.toggle('dci-only-missing', el.checked);
         break;
-      case 'editnote':
-        S.editNote = el.checked;
-        S.rows.forEach(updateHint);
-        break;
       // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
       case 'repeat-keep':
         S.repeatKeep = el.value !== 'fresh';
@@ -31574,7 +31596,6 @@
               <span class="dci-foot-opts" data-el="foot-opts">
                 <button type="button" class="dci-textbtn dci-foot-optbtn" data-act="foot-opts" aria-expanded="false" aria-controls="dci-foot-optlist" title="${esc(tr('footer.optionsTitle'))}">${esc(tr('footer.options'))} ▾</button>
                 <span class="dci-foot-optlist" id="dci-foot-optlist">
-                  <label class="dci-check" title="${esc(tr('footer.editNote'))}"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNoteShort'))}</label>
                   <label class="dci-check" title="${esc(`${tr('footer.fill')} – ${tr('footer.fillTitle')}`)}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fillShort'))}</label>
                   <label class="dci-check" data-el="cap-check" title="${esc(`${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`)}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.capShort', { n: S.capLimit }))}</span></label>
                 </span>
@@ -31831,6 +31852,8 @@
   const SKIP_HIDE_KEY = 'dci-skip-hide';
   // [Z-SU] (3.41.1) the parts of a suite named "Suite: Part" (default) or "Suite, Part" ("comma": stored)
   const SUITE_NAMING_KEY = 'dci-suite-naming';
+  // [Z-EN] (3.41.9) the edit note the script writes: "simple" or "none" stored (full: nothing)
+  const EDIT_NOTE_KEY = 'dci-edit-note';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
   const WORK_GROUPS_KEY = 'dci-work-groups';
@@ -31862,7 +31885,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
@@ -31891,6 +31914,7 @@
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
+  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? readJson('localStorage', EDIT_NOTE_KEY, 'full') : 'full';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -32650,6 +32674,9 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script), none – each option's tooltip lists what it writes
+        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple', 'none'].map((v) => `<button type="button"
+          data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -33149,7 +33176,8 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event' });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', editNoteMode: 'full' });
+      S.rows.forEach(updateHint);
       renderGroups();
       refresh();
     } else if (t === 'dates') {
@@ -33222,7 +33250,7 @@
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
-      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon',
+      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full',
     });
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
