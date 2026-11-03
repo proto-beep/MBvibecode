@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.15
+// @version      3.42.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -877,6 +877,12 @@
       "conn.kind.script": "Userscript",
       "conn.kind.manager": "Userscript manager",
       "conn.kind.links": "Links only",
+      "conn.group.sources": "Sources",
+      "conn.group.sites": "Websites",
+      "conn.group.tools": "Tools & scripts",
+      "conn.group.resources": "Resources",
+      "conn.group.managers": "Userscript managers",
+      "conn.group.links": "Links",
       "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
       "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
       "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them.",
@@ -1196,10 +1202,8 @@
       "settings.editNote": "Edit note",
       "settings.editNote.full": "Full",
       "settings.editNote.simple": "Simple",
-      "settings.editNote.none": "None",
       "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
       "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
-      "settings.editNote.noneTitle": "Nothing is written into the edit note – neither at staging nor in the forms of new artists, works, labels …",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -7442,6 +7446,20 @@
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
     // [Z-YT] (3.41.13) the description of a video
     { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
+  ];
+
+  /**
+   * [Z-CONS] (3.42.0) The groups of the connections, in this order (each connection in the first group it fits): the sources (and
+   * images by their address, a source of the text from cover art), websites, tools and other scripts, resources (libraries),
+   * userscript managers, links.
+   */
+  const CONN_GROUPS = [
+    ['sources', (c) => c.kind === 'source' || c.id === 'X015'],
+    ['sites', (c) => c.kind === 'site' && c.id !== 'X015'],
+    ['tools', (c) => c.kind === 'tool' || c.kind === 'script'],
+    ['resources', (c) => c.kind === 'library'],
+    ['managers', (c) => c.kind === 'manager'],
+    ['links', (c) => c.kind === 'links'],
   ];
 
   /**
@@ -15411,17 +15429,6 @@
     return true;
   }
 
-  /** [Z-EN] (3.41.9) "None": the block this script wrote into the edit note before is taken out again (the rest stays). */
-  function clearEditNote() {
-    const el = document.getElementById('edit-note-text') || document.querySelector('textarea[name$="edit_note"]');
-    if (!el || !S.lastNoteBlock || !el.value.includes(S.lastNoteBlock)) return;
-    const next = el.value.replace(S.lastNoteBlock, '').replace(/\n{3,}/g, '\n\n').trim();
-    S.lastNoteBlock = '';
-    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set; // (as writeEditNote: React sees the change)
-    setter.call(el, next);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-
   // --- Works created in this browser but not yet linked in MB ------------------------------
   // New works exist in MB right after their form is submitted. Until the link to the recording
   // is submitted too, they are kept here (per release), so they cannot be forgotten.
@@ -18958,10 +18965,10 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNoteMode !== 'none') {
+    if (added || fillIds.length || dateFillIds.length || linkAttrN) {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
-    } else if (S.editNoteMode === 'none') clearEditNote(); // [Z-EN] (3.41.9) the block written before goes
+    }
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
     saveLiveJob();
     log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
@@ -24312,10 +24319,9 @@
   const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
   /**
    * [Z-EN] (3.41.9) The edit note of a form the script fills in, by ⚙ Settings → Staging → Edit note: "full" its sources and the line
-   * of the script as before, "simple" the sources and the script with its version, "none" nothing.
+   * of the script as before, "simple" the sources and the script with its version.
    */
   function formEditNote(sources, prefilled) {
-    if (S.editNoteMode === 'none') return '';
     const src = uniq((sources || []).filter(Boolean)).map((u) => `Source: ${u}`);
     return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
   }
@@ -25299,7 +25305,7 @@
       if (had) writeJson('localStorage', key, null);
       return;
     }
-    const note = [S.editNoteMode !== 'none' ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
+    const note = [editNoteBlock(), SEED_NOTE].filter(Boolean).join('\n\n');
     writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
     if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
@@ -29680,13 +29686,10 @@
       }
       // [Z-EN] (3.41.9) ⚙ Settings → Staging → Edit note
       case 'edit-note-mode': {
-        S.editNoteMode = ['simple', 'none'].includes(btn.dataset.mode) ? btn.dataset.mode : 'full';
+        S.editNoteMode = btn.dataset.mode === 'simple' ? 'simple' : 'full';
         writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
-        // (3.41.15, review) a block written before follows at once ("None": out; else in the new form)
-        if (S.lastNoteBlock) {
-          if (S.editNoteMode === 'none') clearEditNote();
-          else writeEditNote();
-        }
+        // (3.41.15, review) a block written before follows at once
+        if (S.lastNoteBlock) writeEditNote();
         S.rows.forEach(updateHint);
         renderSettings();
         const again = S.overlay.querySelector(`[data-act="edit-note-mode"][data-mode="${S.editNoteMode}"]`);
@@ -30619,6 +30622,7 @@
           S.statsData = [];
           log('info', 'statsDeleted', {});
           renderStats();
+          renderSettings(); // [Z-DS] (3.42.0) the button is in ⚙ Settings → Cache
         });
         break;
       case 'remember-forget': {
@@ -32205,7 +32209,7 @@
   const SKIP_HIDE_KEY = 'dci-skip-hide';
   // [Z-SU] (3.41.1) the parts of a suite named "Suite: Part" (default) or "Suite, Part" ("comma": stored)
   const SUITE_NAMING_KEY = 'dci-suite-naming';
-  // [Z-EN] (3.41.9) the edit note the script writes: "simple" or "none" stored (full: nothing)
+  // [Z-EN] (3.41.9) the edit note the script writes: "simple" stored (full: nothing); [Z-EN2] (3.42.0) "none" is gone (read as "simple")
   const EDIT_NOTE_KEY = 'dci-edit-note';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
@@ -32267,7 +32271,7 @@
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
-  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? readJson('localStorage', EDIT_NOTE_KEY, 'full') : 'full';
+  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -32633,6 +32637,9 @@
     S.statsData = Array.isArray(all) ? all : [];
     S.statsLoading = false;
     if (S.statsOpen) renderStats();
+    // [Z-DS] (3.42.0) the number next to "Delete statistics …" in ⚙ Settings → Cache
+    const st = S.overlay && S.overlay.querySelector('[data-el="stats-stored"]');
+    if (st) renderSettings();
   }
 
   /**
@@ -32640,7 +32647,6 @@
    * on or off, the sums, over days / weeks / months / years, the most frequent artists, instruments and types.
    */
   function statsHtml() {
-    const row = (html) => `<div class="dci-set-row">${html}</div>`;
     const on = statsOn();
     // [Z-SC] (3.40.14) "Collect statistics" is in ⚙ Settings → Cache: here a grey line that says so and leads there
     const head = [
@@ -32692,8 +32698,8 @@
     return [...head, tiles,
       `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
       // [E8] (3.38.2) the developer statistics – [171] (3.38.5) in "Developer mode"
-      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : '',
-      row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
+      // [Z-DS] (3.42.0) deleting them is in ⚙ Settings → Cache (until 3.41.15 here)
+      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : ''];
   }
 
   /**
@@ -33133,8 +33139,9 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
-        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script), none – each option's tooltip lists what it writes
-        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple', 'none'].map((v) => `<button type="button"
+        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
+        // (3.42.0) no "none"
+        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
           data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
       ],
       dates: () => [
@@ -33169,6 +33176,13 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
           row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
+          // [Z-DS] (3.42.0) and deleting them (until 3.41.15 at the bottom of the statistics)
+          (() => {
+            if (S.statsData == null) statsLoad();
+            const n = S.statsData == null ? null : S.statsData.length;
+            return row(`<button type="button" class="dci-small" data-act="stats-delete"${n === 0 ? ' disabled' : ''}>${esc(tr('stats.delete'))}</button>
+              <span class="dci-sub" data-el="stats-stored">${n == null ? esc(tr('stats.loading')) : esc(tr('stats.stored', { n }))}</span>`);
+          })(),
         ];
       },
     };
@@ -33209,11 +33223,15 @@
   /** [3.25.0] The tab "ⓘ Connections" (item 40): every site, tool and script the script works with (CONNECTIONS). */
   function connectionsHtml() {
     const link = (c) => (c.home ? `<a href="${esc(c.home)}" target="_blank" rel="noopener">${esc(c.name || tr(`conn.${c.id}.name`))}</a>` : esc(c.name || tr(`conn.${c.id}.name`)));
+    const row = (c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
+          <td>${esc(tr(`conn.kind.${c.kind}`))}</td><td>${esc(tr(`conn.${c.id}`))}</td><td><code>${esc(c.perms)}</code></td><td>${esc(c.since)}</td></tr>`;
+    // [Z-CONS] (3.42.0) in groups: sources, websites, tools and scripts, resources, userscript managers, links (by number within)
+    const groups = CONN_GROUPS.map(([key, test]) => [key, CONNECTIONS.filter(test)]).filter(([, cs]) => cs.length);
     return `<p class="dci-sub">${esc(tr('conn.intro'))}</p>
       <div class="dci-tablewrap"><table class="dci-conn">
         <thead><tr><th>${esc(tr('conn.th.name'))}</th><th>${esc(tr('conn.th.kind'))}</th><th>${esc(tr('conn.th.what'))}</th><th>${esc(tr('conn.th.perms'))}</th><th>${esc(tr('conn.th.since'))}</th></tr></thead>
-        <tbody>${CONNECTIONS.map((c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
-          <td>${esc(tr(`conn.kind.${c.kind}`))}</td><td>${esc(tr(`conn.${c.id}`))}</td><td><code>${esc(c.perms)}</code></td><td>${esc(c.since)}</td></tr>`).join('')}</tbody>
+        ${groups.map(([key, cs]) => `<tbody data-conn-group="${key}"><tr class="dci-conn-group"><th colspan="5" scope="colgroup">${esc(tr(`conn.group.${key}`))}</th></tr>
+          ${cs.map(row).join('')}</tbody>`).join('')}
       </table></div>`;
   }
 
@@ -35333,6 +35351,8 @@
       .dci-conn { border-collapse: collapse; font-size: calc(var(--u, 1px) * 12); }
       .dci-conn th, .dci-conn td { text-align: left; vertical-align: top; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); }
       .dci-conn code { font-size: calc(var(--u, 1px) * 11); white-space: normal; }
+      /* [Z-CONS] (3.42.0) the heading of a group of connections */
+      .dci-conn .dci-conn-group th { padding-top: calc(var(--u, 1px) * 10); background: var(--soft); color: var(--purple-d); font-weight: 600; font-size: calc(var(--u, 1px) * 12.5); }
       .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
       /* [E8] (3.38.0) the statistics */
