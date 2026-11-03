@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.1, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.2, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.2 · 2026-11-03
+
+The suite itself: a new work of the type "Suite" with "parts" to its parts, in their order (collected item Z-SU; Q-bv).
+
+- **State:** `S.suiteWorks` (key of the suite → { gid "pending:s<n>", title, key, tracks }), `S.suiteSeq`; `acceptSuite` adds it, `undoSuite` and `dropWorkChoices` take it away.
+- **`idx().partsLt`** (work – work "parts"). **The plan:** after the links of the works, an item `suite-part` per part (key `suite|<suite>|<part>`): the parts planned of the suite's tracks and the one work in MusicBrainz of a track of the suite, in their order (`linkOrder` 1 … n), with "movement" where the type allows it; target `{ kind: 'work', work }`.
+- **Staging:** `suite-part` dispatched from the part (in the editor with its recording) to the suite (`enteredFirst`: the suite is entity0), with its `linkOrder`. **`pendingWorkEntity`** also for "pending:s<n>": the type "Suite" (from the work form's types), no language. `describeItem`, the preview ("part n of the suite “…”") know the kind.
+- **Texts (English):** `preview.suitePart`.
+- **Tests:** `t_works_more.py` new case `suiteparts` (the suite with "parts" to 7 parts in their order, type Suite, movement, entity0, no recording with it; the preview; nothing after ↺); the harness types "parts" (281), "movement", the work type "Suite" there only. Fails on 3.41.1.
 
 ## Import 3.41.1 · 2026-11-03
 

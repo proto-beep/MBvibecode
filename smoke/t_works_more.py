@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1197,6 +1197,68 @@ def case_suiteask():
         print('E) ↺:', e0, '| ✕:', e1, '| anderer Name:', e2)
         results.append('dci-mx-suite' in e0[0] and len(e0[1]) == 1 and e0[1][0][0] == '' and e1 == ['all 4 tracks: no suite “Trisect” ↺ ask again', ['↺ ask again']]
                        and e2[1] == [['', 'Trisect Suite: Phase 1']] and not any('Trisect Suite' in x[1] for x in e2[0]))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiteparts():
+    """Credits Importer 3.41.2 (collected item Z-SU; Q-bv): the suite itself – a new work of the type "Suite" with "parts".
+    The release "Trisect" (as in suiteask), ✓ Yes, staged:
+    A) The work "Trisect" (type Suite) with "parts" to each part, in the order of the parts – the work of track 1 in MusicBrainz
+       ("Introduction") first, then "Trisect: Phase 1", "Trisect: Phase 2", "Trisect: Phase 3", "Trisect: Transition", … (order 1–7),
+       each with "movement"; the suite is entity0 (it has the parts); no recording is linked with it.
+    B) The preview names them ("part 1 of the suite “Trisect” (movement)").
+    C) ↺ undo of the suite (before staging): nothing of it is planned."""
+    H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
+    H.attr(1105, 'movement', 1105)
+    H.lt(281, 'ca8d3642-ce5f-49f8-91f2-125d72524e6a', 'parts', 'work', 'work', (1105,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['title'] = 'Trisect'
+        return d
+
+    H.discogs_release = rel
+    PARTS = """(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
+      return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 281).map(r => [r.entity0.name, r.entity0.typeID, r.entity1.name, r.linkOrder, ids(r)])
+        .sort((a, b) => a[3] - b[3]); })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        pg.wait_for_timeout(500)
+        # C) first: undone, nothing planned
+        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
+        c0 = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(li => li.textContent).filter(t => /suite/.test(t)).length")
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(500)
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
+        b0 = pg.evaluate("[...document.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /of the suite/.test(t))")
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        a0 = pg.evaluate(PARTS)
+        rec = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity1 && r.entity1.name === 'Trisect').length")
+        print('A)', a0, '| Aufnahme mit der Suite:', rec)
+        print('B)', b0[:3], len(b0))
+        print('C) nach ↺:', c0)
+        want = ['Introduction', 'Trisect: Phase 1', 'Trisect: Phase 2', 'Trisect: Phase 3', 'Trisect: Transition', 'Trisect: Phase 4', 'Trisect: Coda']
+        results.append(len(a0) == 7 and [x[2] for x in a0] == want and [x[3] for x in a0] == [1, 2, 3, 4, 5, 6, 7] and all(x[0] == 'Trisect' and x[1] == 6 and x[4] == [1105] for x in a0) and rec == 0)
+        results.append(len(b0) == 7 and any('part 1 of the suite “Trisect”' in t and 'movement' in t for t in b0))
+        results.append(c0 == 0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
