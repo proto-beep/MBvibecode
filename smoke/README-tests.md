@@ -338,6 +338,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
                                 #   suitedata: 3.41.0 (Z-SU): in Node – Discogs headings and sub-tracks as parts, " / " parts, the kinds of headings
                                 #     (T061, a recording, a name), the suites offered (heading, index, the release's title, none)
+                                #   suiteask: 3.41.1 (Z-SU): "Trisect" – the yellow question, ✓ Yes: the parts as new works (part k of n), staged in
+                                #     their order without a type; ⚙ "Suite, Part" and ↺; undo, ✕ No, another name
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
