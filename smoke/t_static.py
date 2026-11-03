@@ -1,6 +1,6 @@
 """Without a browser: the texts of the script, the list of connections (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: i18n, connections, mappingfile (3.33.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_static.py <case> …` runs only those."""
+Cases: i18n, connections, mappingfile (3.33.0), round6 (3.41.5) – each the former smoke/t_<case>.py, unchanged; `python3 t_static.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -260,6 +260,35 @@ def case_languagesfile():
     d = json.loads(node.stdout or 'null')
     ok_d = bool(d) and d[0] == data['de']['source.load'] and d[0] != 'Load' and d[1] == 'on' and d[2] == ['de', 'en', 'es', 'fr']
     print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c and ok_d else 'FEHLER', [ok_a, ok_b, ok_c, ok_d])
+
+
+def case_round6():
+    """Credits Importer 3.41.5 (Block BE, translation round F-6): the texts added in English since Block AL are in German, Spanish
+    and French – a sample of each block (AL – BD) shown in each language differs from the English, keeps its placeholders and
+    symbols; the French with a no-break space before ":" (until 3.41.4: English in all three)."""
+    import json
+    import subprocess
+    KEYS = ['notes.off', 'gap.count', 'group.copyName', 'dm.fold', 'settings.emSide', 'group.addRoleBtn', 'livecom.all', 'stats.whereOn',
+            'statsOnly.hint', 'group.skip', 'settings.skipHide', 'repeat.button', 'repeat.ask', 'matrix.coverAuto', 'suite.ask', 'suite.yes',
+            'settings.suiteNaming', 'medley.split', 'suite.partPick', 'log.partsFound']
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const keys = JSON.parse(process.argv[2]);
+const out = {};
+for (const l of ['en', 'de', 'es', 'fr']) { m.setLang(l); out[l] = keys.map((k) => m.tr(k, { tracks: 'T', name: 'N', n: 2, title: 'X', track: '1.3', names: 'M', list: 'L' })); }
+console.log(JSON.stringify(out));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(KEYS)], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-400:]}
+    same = {l: [k for k, a, b in zip(KEYS, got.get('en', []), got.get(l, [])) if a == b] for l in ('de', 'es', 'fr')}
+    print('A) wie Englisch:', same)
+    print('B) Beispiele:', [got.get(l, [None] * 15)[14] for l in ('de', 'es', 'fr')], [got.get(l, [None] * 10)[9] for l in ('de', 'es', 'fr')])
+    sym = [k for i, k in enumerate(KEYS) for l in ('de', 'es', 'fr') if any(c in got['en'][i] and c not in got[l][i] for c in '✓⊘↻＋')] if 'en' in got else ['?']
+    fr_colon = 'fr' in got and '\u00a0:' in got['fr'][KEYS.index('suite.partPick') + 1]
+    print('C) Zeichen fehlen:', sym, '| fr „\u00a0:“:', fr_colon)
+    results = ['error' not in got, not any(same.values()), not sym, fr_colon]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())

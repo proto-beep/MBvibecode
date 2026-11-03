@@ -807,6 +807,8 @@ python3 t_static.py             # Without a browser: the texts of the script, th
                                 #   languagesfile: 3.34.0: mb-vibecode-credits-importer-languages.json – format, version, de / es / fr, its layout
                                 #     (that of i18n_add.py), only English in the script, @resource languages, read in Node (German, else English)
 ```
+                                #   round6: 3.41.5 (BE): translation round F-6 – a sample of the blocks AL – BD in de, es, fr (not English, symbols,
+                                #     the French no-break space)
 
 ### Former test → file and case (3.31.1)
 
