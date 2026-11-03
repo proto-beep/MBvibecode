@@ -1625,4 +1625,61 @@ def case_stackflip():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_ytroles():
+    """Credits Importer 3.41.7 (collected items Z-AM, Z-CAM, Q-co; the credits of a YouTube video description pasted as a text):
+    A) "Audio & Mixing Engineer: Julian Martlew": two rows, audio (engineer) and mix (until 3.41.6 the line was not recognized);
+       "Mixed & Mastered By: Max Mix" likewise mix and mastering (the shared last word given to the part before it).
+    B) "Cameras: Jim Beckmann, Carlos Cruz, Luke Knecht & Kendall Rock": each miscellaneous support with the task "cameras"
+       (until 3.41.6 not recognized); "Camera Operator: Ann Op" miscellaneous support "camera operator"; "Cinematographer: Cin Ema"
+       stays a role of its own (miscellaneous support "cinematographer" – not "cameras").
+    C) "Editor: Jim Beckmann" (the video's editing): miscellaneous support "editor", not MusicBrainz's "editor" (audio editing)."""
+    H.lt(138, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
+    H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
+    H.lt(144, '40dff87a-e475-4aa6-b615-9935b564d756', 'editor', 'artist', 'recording', (1, 526))
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """Audio & Mixing Engineer: Julian Martlew
+Cameras: Jim Beckmann, Carlos Cruz, Luke Knecht & Kendall Rock
+Camera Operator: Ann Op
+Cinematographer: Cin Ema
+Editor: Jim Beckmann
+Mixed & Mastered By: Max Mix"""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
+        return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-']; })])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        g = pg.evaluate(ROWS)
+        for k, v in g.items():
+            print('   ', k, v)
+        unrec = pg.evaluate("[...document.querySelectorAll('[data-el=unrecognized] li, .dci-unrec li')].map(li => li.textContent.trim())")
+        a0 = [g.get('Julian Martlew'), g.get('Max Mix')]
+        print('A)', a0)
+        results.append(a0[0] and sorted(x[1] for x in a0[0]) == ['audio', 'mix'] and a0[1] and sorted(x[1] for x in a0[1]) == ['mastering', 'mix'])
+        b0 = [[x[1:] for x in (g.get(n) or []) if x[0].startswith('Camera')] for n in ('Jim Beckmann', 'Carlos Cruz', 'Luke Knecht', 'Kendall Rock', 'Ann Op')] + [[x[1:] for x in (g.get('Cin Ema') or [])]]
+        print('B)', b0)
+        results.append(b0[:4] == [[['misc', 'cameras']]] * 4 and b0[4] == [['misc', 'camera operator']]
+                       and b0[5] == [['misc', 'cinematographer']])
+        c0 = [x[1:] for x in (g.get('Jim Beckmann') or []) if x[0] == 'Editor']
+        print('C)', c0, '| nicht erkannt:', unrec)
+        results.append(c0 == [['misc', 'editor']] and not any('Audio & Mixing' in x or 'Cameras' in x for x in unrec))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
