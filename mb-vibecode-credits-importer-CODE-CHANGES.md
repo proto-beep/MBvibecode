@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.42.3, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.42.4, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.42.4 · 2026-11-03
+
+Block BG, part 5 – collected item Z-UNA (Q-dn, Q-dr).
+
+- **The list "… lines not recognized"** (`renderSource`): each word a `span.dci-una-w` (`data-act=una-word`, `unaWordsHtml`), the words chosen `.dci-una-sel`, those given an entry `.dci-una-done` (`S.unaDone`: line → word indexes); the list stays open once a word was clicked (`S.unaOpen`).
+- **New:** `unaPick(btn, extend)` (a click; ⇧ extends `S.una` to the word clicked in the same line), `unaName` (the words without the signs around them), `unaFormHtml(line)` (name, kind – artist, label, place, area, series –, role: free text for a person, `UNA_ROLES` filtered by `mapCompanyRole` for the others, "part of" for a series; the tracks of the line – `unaScope` with the text adapter's new `TEXT.lineTracks(line, resolveTracks)` – or the whole release; "Remember as a rule of my own", not ticked), `unaApply()` (a person: `groupCredits` → `newPersonEntry`/the entry of that name → `addCreditRows`; a label, place or area: `groupCompanies` → **`addCompanyEntry(g, rel, leftOutKeys)`** – moved out of `loadRelease`, unchanged – → `setCompanyEntityType`; a series: an entry of its own with "part of" on the release; then `resolveArtists({ only })` and, without suggestions, `suggestByName`). Click cases `una-word`, `una-apply`, `una-close`; change `una-*` in `onChangeInner`.
+- **Own rules of texts** (kind `text`: `phrase`, `entity`, `role`, `tracks`): stored with the own rules (`dci-user-rules`), listed in "Mapping rules" (on/off, delete; `data-urule-kind=text`), taken by the import/export of your changes (`OWN_FIELDS`); `sourceContext()` passes them (`ownTexts`), `TEXT.parse` reads a phrase of a part not recognized as its entry (`readOwnTexts`, after the units of a line: the part or the words not recognized are gone).
+- **`suggestByName`:** a series looked up by its name (`series?query=series:(…) OR alias:(…)`; the web service's list `series`).
+- **`restoreRemembered`:** a row added by hand then that the source gives now itself (the same entry, role, level and tracks) is not added again.
+- **Texts:** `una.*` (15), `log.unaAdded`, `log.unaRule`, `rules.kindText`, `rules.textTracksLine` (English). **CSS:** `.dci-una-w`, `.dci-una-sel`, `.dci-una-done`, `.dci-una-form`.
+- **Tests:** `t_text_places.py` new case `unawords` (fails on 3.42.3); `smoke/harness.py` searches series (`/ws/2/series`).
 
 ## Import 3.42.3 · 2026-11-03
 

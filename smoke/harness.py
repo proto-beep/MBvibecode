@@ -488,7 +488,8 @@ def ws_search(kind, query):
             hits = [x for x in hits if all(w in fold((x.get('area') or {}).get('name', '')).split() for w in want)]
     else:
         hits = [x for x in items if x['name'].lower() == name or any(a['name'].lower() == name for a in x.get('aliases', []))]
-    return {kind + 's': hits, 'count': len(hits)}
+    # [3.42.4] the web service names the list of series "series"
+    return {('series' if kind == 'series' else kind + 's'): hits, 'count': len(hits)}
 
 
 # [3.21.0] web profiles MusicBrainz has for artists: url → (gid, name)
@@ -862,7 +863,7 @@ def install_routes(ctx):
             parent = AREA_PARENTS.get(m.group(1))
             return json_route(route, {'id': m.group(1), 'relations': [{'type': 'part of', 'direction': 'backward', 'target-type': 'area',
                                                                        'area': {'id': uid('aaaaaaaa', 1), 'name': parent}}] if parent else []})
-        m = re.match(r'/ws/2/(artist|label|place|area|event)$', p)
+        m = re.match(r'/ws/2/(artist|label|place|area|event|series)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))
         if p == '/ws/2/url':
