@@ -519,6 +519,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     3.40.14: no switch in the statistics
                                 #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
+                                #   editnote: 3.41.9 (Z-EN): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple | None (tooltips list
+                                #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):

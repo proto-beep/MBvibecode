@@ -702,25 +702,25 @@ def case_foot():
         ok_a = a['h'] <= 60 and spread <= 6 and a['sum'] == '25 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
             and a['chips'] == [['2 tracks without a work', '2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.']] \
             and a_open == ['2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.'] and a_shut == [] \
-            and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['edit note', True], ['fill role credits', True], ['≤ 500 per staging', True]] \
-            and a['boxes'][0][2].startswith('Write source and summary') and a['boxes'][1][2].startswith('add role credits') and a['boxes'][2][2].startswith('at most 500 per staging') \
+            and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['fill role credits', True], ['≤ 500 per staging', True]] \
+            and a['boxes'][0][2].startswith('add role credits') and a['boxes'][1][2].startswith('at most 500 per staging') \
             and a['infoTitle'].startswith('Nothing is submitted.') and a['stage'][2] < a['info'][0] and a['foot'][2] - a['info'][2] <= 30
         # B) medium
         pg.set_viewport_size({'width': 900, 'height': 1000}); pg.wait_for_timeout(500)
         b1 = pg.evaluate(M)
-        note0 = pg.locator('[data-f=editnote]').is_checked()
+        note0 = pg.locator('[data-f=fill-credits]').is_checked()
         pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
         lst = pg.evaluate(LIST)
-        pg.click('.dci-foot-optlist [data-f=editnote]'); pg.wait_for_timeout(200)
-        note1 = pg.locator('[data-f=editnote]').is_checked()
+        pg.click('.dci-foot-optlist [data-f=fill-credits]'); pg.wait_for_timeout(200)
+        note1 = pg.locator('[data-f=fill-credits]').is_checked()
         still = pg.evaluate(LIST)
         pg.click('.dci-foot [data-el=sum] strong'); pg.wait_for_timeout(200)
         shut1 = pg.evaluate(LIST)
         pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
         shut2, open_dash = pg.evaluate(LIST), pg.evaluate("!document.getElementById('dci-overlay').hidden")
-        pg.click('[data-act=foot-opts]'); pg.click('.dci-foot-optlist [data-f=editnote]'); pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
-        print('B) 900:', b1, '\n   Menü:', lst, '| edit note:', note0, '→', note1, '| bleibt:', bool(still), '| Klick daneben:', shut1, '| Esc:', shut2, open_dash)
+        pg.click('[data-act=foot-opts]'); pg.click('.dci-foot-optlist [data-f=fill-credits]'); pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        print('B) 900:', b1, '\n   Menü:', lst, '| fill role credits:', note0, '→', note1, '| bleibt:', bool(still), '| Klick daneben:', shut1, '| Esc:', shut2, open_dash)
         ok_b = b1['h'] <= 90 and len(b1['tops']) == 2 and b1['optbtn'] and all(not x[1] for x in b1['boxes']) and lst is not None \
             and lst[3] <= b1['stage'][1] and lst[0] >= b1['panel'][0] and lst[2] <= b1['panel'][2] and note1 is (not note0) and still is not None \
             and shut1 is None and shut2 is None and open_dash

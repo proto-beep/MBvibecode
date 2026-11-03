@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.8, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.9, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.9 · 2026-11-03
+
+Block BF, part 3 – collected item Z-EN (Q-cp): the edit note is set in ⚙ Settings only.
+
+- **`S.editNoteMode`** ('full' | 'simple' | 'none', `EDIT_NOTE_KEY` 'dci-edit-note', only "simple" and "none" stored; in `TOPIC_KEYS.staging`, its reset and "reset all") replaces `S.editNote` (a session switch of the footer).
+- **⚙ Settings → Staging:** a segment "Edit note: Full | Simple | None" (`data-act=edit-note-mode`); the tooltip of each option lists the lines it writes (`settings.editNote.*Title`).
+- **The footer:** the checkbox "edit note" (`data-f=editnote`) and its handler are gone; `footer.editNote`, `footer.editNoteShort` removed (all languages), `footer.optionsTitle` without "Edit note".
+- **`editNoteBlock`:** "simple" ends after "Source", "Also from" and "Script". **Staging:** "none" writes nothing and takes the block written before out again (**`clearEditNote`**, new); the job of live comments gets the block unless "none".
+- **`formEditNote(sources, prefilled)`** (new): the edit note of the forms of artists, labels, places, series, works and suites – "full" as before, "simple" "Source: …" and "Script: … v…", "none" none (the parameter left out).
+- **`roleCreditHint`:** "goes into the edit note only" only with "full".
+- **Tests:** `t_ui_settings.py` new case `editnote` (fails on 3.41.8); `t_ui_view.py` `foot` (two checkboxes, "fill role credits" toggled), `t_works_matrix.py` `wattrs` (no checkbox to tick).
 
 ## Import 3.41.8 · 2026-11-03
 

@@ -498,8 +498,6 @@ def case_wattrs():
       re.state = {{ ...re.state, existingRels: [{{ id: 9101, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'Song One' }},
         entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
         attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
-        if not pg.locator('[data-f=editnote]').is_checked():
-            pg.check('[data-f=editnote]')
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         st = pg.evaluate("""(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
