@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9); `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks; `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -390,6 +390,62 @@ def case_multi():
         print('Fehler:', errs, dgerr)
         results.append(not errs and not dgerr)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_copymarks():
+    """Companion 1.10.1 (collected item Z-CR): Discogs's data write "Copyright (c)" and "Phonographic Copyright (p)", its page
+    "Copyright ©" and "Phonographic Copyright ℗" – the lines of the copyrights get their marks too (until 1.10.0 none), and a
+    click on such a row in the dashboard shows its line on Discogs (not only the name).
+    A) Sony with "Phonographic Copyright ℗" and "Copyright ©" on the page: a mark on each line, before the role.
+    B) A click on the role of Sony's row "Copyright (c)": the line "Copyright © – Sony" highlighted."""
+    MARK = """(r) => { const li = [...document.querySelectorAll('#release-credits li')].find(l => l.textContent.includes(r));
+  const m = li && li.querySelector('.dci-dg-mark'); return m ? [m.textContent, li.firstChild === m] : null; }"""
+    orig_page, orig_rel = H.discogs_page, H.discogs_release
+
+    def page():
+        return orig_page().replace('<li><span>Recorded At</span>', '<li><span>Copyright ©</span> – <a href="/label/1001-x">Sony</a></li><li><span>Recorded At</span>', 1)
+
+    def rel():
+        d = orig_rel()
+        d['companies'].insert(1, {'name': 'Sony', 'entity_type_name': 'Copyright (c)', 'id': 1001, 'catno': ''})
+        return d
+    H.discogs_page, H.discogs_release = page, rel
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            dg, dgerr = H.open_discogs(ctx)
+            pg, errs = H.open_mb_edit(ctx)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            for _ in range(100):
+                if dg.evaluate(f"({MARK})('Bass Man')"):
+                    break
+                dg.wait_for_timeout(200)
+            dg.wait_for_timeout(1200)
+            a = {r: dg.evaluate(f"({MARK})('{r}')") for r in ('Phonographic Copyright ℗', 'Copyright © –', 'Recorded At')}
+            print('A) Marken:', a)
+            results.append(all(v and v[1] for v in a.values()))
+            rid = pg.evaluate("""() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Sony');
+              const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === 'Copyright (c)'); return tr ? tr.dataset.row : null; }""")
+            pg.locator(f'tr[data-row="{rid}"] .dci-drole').click()
+            for _ in range(60):
+                if dg.evaluate("!!document.querySelector('.dci-discogs-highlight')"):
+                    break
+                dg.wait_for_timeout(200)
+            hl = dg.evaluate("(h => h ? [h.tagName, h.textContent.replace(/\\s+/g, ' ').trim()] : null)(document.querySelector('.dci-discogs-highlight'))")
+            print('B) Zeile:', rid, hl)
+            results.append(bool(hl) and hl[0] == 'LI' and 'Copyright © – Sony' in hl[1] and 'Phonographic' not in hl[1])
+            real = [e for e in errs + dgerr if 'Synchronous XHR in page dismissal' not in e]
+            print('Fehler:', real)
+            results.append(not real)
+            b.close()
+    finally:
+        H.discogs_page, H.discogs_release = orig_page, orig_rel
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

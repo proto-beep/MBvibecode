@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.10.0
+// @version      1.10.1
 // @date         2026-11-01
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -44,7 +44,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.10.0';
+  const COMPANION_VERSION = '1.10.1';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -59,6 +59,11 @@
   // [1.8.3] how long the pointer rests on a mark before the dashboard shows its row
   const MARK_HOVER_MS = 450;
   const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
+  /**
+   * [1.10.1] A role (or the text of a credit line) for comparing: Discogs's data write "Copyright (c)" and "Phonographic
+   * Copyright (p)", its page "Copyright ©" and "Phonographic Copyright ℗" (collected item Z-CR) – the signs as the letters.
+   */
+  const roleNorm = (s) => norm(s).replace(/©/g, '(c)').replace(/℗/g, '(p)').replace(/™/g, '(tm)');
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
   const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
   /** [1.8.0] The sites the companion shows; a tab without a site (before 1.8.0) is a Discogs tab. */
@@ -590,7 +595,7 @@
     for (let i = 0; i < 5 && cur && cur !== document.body; i++) {
       // [1.10.0] nor the cell itself: its text has every credit of the track ("Flute – Oliver Lake" and "Written-By – Lake*")
       if (cur === cell) break;
-      const text = norm(cur.textContent);
+      const text = roleNorm(cur.textContent);
       if (text.length > 400) break; // do not climb into whole sections
       if (role && text.includes(role)) return cur;
       if (cur === stop) break;
@@ -818,7 +823,7 @@
 
   /** The credit line of an artist (or label) with a role inside the Discogs line of one track. */
   function findCreditAt(cmd, position) {
-    const role = norm(cmd.base || cmd.role);
+    const role = roleNorm(cmd.base || cmd.role);
     const kind = cmd.labelId ? 'label' : 'artist';
     const entityId = cmd.labelId || cmd.artistId;
     if (!entityId) return null;
@@ -828,7 +833,7 @@
       for (const a of row.querySelectorAll(`a[href*="/${kind}/"]`)) {
         if (!re.test(a.getAttribute('href') || '')) continue;
         const line = lineOf(a, role);
-        const score = role && norm(line.textContent).includes(role) ? 3 : 1;
+        const score = role && roleNorm(line.textContent).includes(role) ? 3 : 1;
         // [1.9.2] in a track's line only the credit with the role ("Flute – Oliver Lake", not "Written-By – Lake*"); without
         // one the credit gets no mark there (its line in the credits keeps its own; collected item 174)
         if (role && score < 3) continue;
@@ -840,8 +845,8 @@
 
   /** The best matching credit line for an artist (or label) and a role, without highlighting it. */
   function findCredit(cmd) {
-    const role = norm(cmd.base || cmd.role);
-    const full = norm(cmd.role);
+    const role = roleNorm(cmd.base || cmd.role);
+    const full = roleNorm(cmd.role);
     const positions = (cmd.positions || []).filter(Boolean);
     const rowsForTrack = positions.flatMap(trackRows);
     const kind = cmd.labelId ? 'label' : 'artist';
@@ -853,9 +858,9 @@
       if (!re.test(a.getAttribute('href') || '')) continue;
       const line = lineOf(a, role);
       let score = 0;
-      if (role && norm(line.textContent).includes(role)) score += 3;
+      if (role && roleNorm(line.textContent).includes(role)) score += 3;
       // [1.9.0] two lines of one artist with the same role ("Vocals [Clean]", "Vocals [Screams]"): the one with its details
-      if (full && full !== role && norm(line.textContent).includes(full)) score += 2;
+      if (full && full !== role && roleNorm(line.textContent).includes(full)) score += 2;
       if (positions.length && rowsForTrack.some((r) => r.contains(a))) score += 1;
       if (!positions.length && !inTracklist(a)) score += 1;
       if (!best || score > best.score) best = { el: line, score };
@@ -864,7 +869,7 @@
   }
 
   function locate(cmd) {
-    const role = norm(cmd.base || cmd.role);
+    const role = roleNorm(cmd.base || cmd.role);
     const positions = (cmd.positions || []).filter(Boolean);
     const rowsForTrack = positions.flatMap(trackRows);
 
@@ -884,12 +889,12 @@
     }
 
     let best = null;
-    const full = norm(cmd.role);
+    const full = roleNorm(cmd.role);
     for (const a of anchors) {
       const line = lineOf(a, role);
       let score = 0;
-      if (role && norm(line.textContent).includes(role)) score += 3;
-      if (full && full !== role && norm(line.textContent).includes(full)) score += 2; // [1.9.0] as in findCredit
+      if (role && roleNorm(line.textContent).includes(role)) score += 3;
+      if (full && full !== role && roleNorm(line.textContent).includes(full)) score += 2; // [1.9.0] as in findCredit
       if (positions.length && rowsForTrack.some((r) => r.contains(a))) score += 3;
       if (!positions.length && !inTracklist(a)) score += 2;
       if (!best || score > best.score) best = { el: line, score };

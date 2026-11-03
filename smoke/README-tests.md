@@ -26,6 +26,8 @@ MBvibecode/ (this repository)
   smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.38.10] link phrases: the
                                       type's name, instrument and vocal with MusicBrainz's phrase ("{additional} {guest} {solo}
                                       {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
+                                      [Companion 1.10.1] the Discogs page writes "Phonographic Copyright ℗" as the real one (the
+                                      data "(p)")
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -724,6 +726,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     the dashboard opened late: no "older companion"; the same release in another import used later: its marks
                                 #     and the note "2 imports …", a click there does not reach the first; the first used again: its marks, a
                                 #     click reaches it; closed: no note
+                                #   copymarks: companion 1.10.1 (Z-CR): the page writes "Copyright ©" / "Phonographic Copyright ℗" (the data
+                                #     "(c)" / "(p)") – a mark on each line, a click on the row "Copyright (c)" highlights its line
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
