@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.13
+// @version      3.41.14
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.13
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.13
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.14
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.14
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.13';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.14';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1732,6 +1732,31 @@
       "stats.src.text": "pasted text",
       "stats.src.ocr": "text from cover art",
       "stats.src.other": "other",
+      "stats.more.suites": "Suites and medleys",
+      "stats.more.attrs": "Attributes",
+      "stats.more.works2": "Works",
+      "stats.more.genres": "Genres and styles",
+      "stats.more.decisions": "Decisions",
+      "stats.more.live": "Live",
+      "stats.more.gaps": "Gaps closed",
+      "stats.more.together": "Worked together",
+      "stats.suites.suites": "suites",
+      "stats.suites.created": "created in MusicBrainz",
+      "stats.suites.found": "found in MusicBrainz",
+      "stats.suites.manual": "added by hand",
+      "stats.suites.parts": "their parts",
+      "stats.suites.medleys": "medleys split",
+      "stats.suites.partsRels": "“parts” relationships",
+      "stats.works2.linked": "linked with recordings",
+      "stats.works2.created": "of them created in MusicBrainz’s form",
+      "stats.works2.pending": "new works in the relationship editor",
+      "stats.decisionsN": "{n} answers to the questions of the script",
+      "stats.live.links": "recordings linked live with their works",
+      "stats.live.comments": "live comments set",
+      "stats.gaps.credits": "role credits added",
+      "stats.gaps.dates": "dates added",
+      "stats.gaps.attrs": "attributes added to links of recordings and works",
+      "stats.since": "Counted from {v} on – the imports before do not hold it.",
       "stats.found.link": "through the link of the source",
       "stats.found.search": "by their name",
       "stats.found.hand": "chosen by hand",
@@ -5074,8 +5099,9 @@
         country: d.country || '',
         notes: String(d.notes || ''),
         tags: (d.formats || []).flatMap((f) => [f.name, ...(f.descriptions || []), f.text || '']).map(norm).filter(Boolean),
-        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself)
+        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself); [Z-STG] (3.41.14) its styles too (the statistics)
         genres: (d.genres || []).map(norm).filter(Boolean),
+        styles: (d.styles || []).map((x) => String(x || '').trim()).filter(Boolean),
         tracks,
         headings,
         credits,
@@ -32385,6 +32411,8 @@
         ru: (row && row.ruleId) || '', lk: statLinkOf(entry), nw: entry && entry.status === 'created' ? 1 : 0,
         // [E8] (3.38.2) for the developer statistics: what was changed by hand, the answers to the questions of the script
         h: statHand(row), q: row ? statAnswers(row) : [],
+        // [Z-STA] (3.41.14) the other attributes (additional, guest, solo, live, cover, medley, movement …)
+        a: attrs.filter((a) => a.root !== 'instrument' && a.root !== 'vocal').map((a) => a.name).filter(Boolean),
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -32392,8 +32420,37 @@
       rels.push(it);
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
-    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
-      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, rels };
+    // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
+    return { v: 2, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(), rels };
+  }
+
+  /**
+   * [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14) What an import did beyond its relationships, for the statistics: the suites and
+   * medleys, the works, the genres and styles of the source, the live comments, the gaps closed in relationships MusicBrainz had.
+   */
+  function statExtras() {
+    const suites = [...S.suiteWorks.values()].filter((sw) => !isPending(sw.gid));
+    const parts = [...S.workParts.values()].flat();
+    const st = S.noteStats || {};
+    let liveCom = 0;
+    try {
+      const job = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
+      liveCom = job && Array.isArray(job.items) ? job.items.length : 0;
+    } catch {
+      liveCom = 0;
+    }
+    return {
+      suites: {
+        n: suites.length, created: suites.filter((sw) => sw.origin === 'created').length, found: suites.filter((sw) => sw.origin === 'search').length,
+        manual: suites.filter((sw) => S.suiteManual.has(sw.key)).length, parts: parts.filter((p) => p.suite && suites.some((sw) => sw.key === p.suite)).length,
+        medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
+      },
+      works: { linked: st.workLinks || 0, created: st.newWorkLinks || 0, pending: st.pendingWorks || 0 },
+      genres: uniq([...((S.release && S.release.genres) || []), ...((S.release && S.release.styles) || []).map(norm)]).slice(0, 12),
+      live: { comments: liveCom },
+      gaps: { credits: st.filled || 0, dates: st.datesFilled || 0, attrs: st.linkAttrs || 0 },
+    };
   }
 
   /**
@@ -32582,11 +32639,15 @@
     const m = { src: new Map(), supp: 0, link: new Map(), seenEnt: new Set(), rels: 0, dated: 0, prec: new Map(), dsrc: new Map(), places: new Map(),
       lv: new Map(), works: 0, decade: new Map(), format: new Map(), country: new Map(), label: new Map(), weekday: new Array(7).fill(0), hour: new Array(24).fill(0),
       days: new Map(), relByRelease: new Map(), fastest: null, instrFirst: new Map(), instrN: new Map(), ocr: { subs: 0, images: 0, lines: 0, corrected: 0 },
-      own: 0, ownRels: new Map() };
+      own: 0, ownRels: new Map(),
+      // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
+      x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
+      genres: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
     const seenRelease = new Set();
+    const seenGenre = new Set();
     const sorted = [...recs].sort((x, y) => x.at - y.at);
     for (const r of sorted) {
       const rels = r.rels || [];
@@ -32618,7 +32679,31 @@
         m.ocr.corrected += r.ocr.corrected || 0;
       }
       if (r.own != null) m.own = r.own;
+      // [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14)
+      if (r.x) {
+        m.x++;
+        const x = r.x;
+        Object.keys(m.suites).forEach((k) => { if (x.suites && x.suites[k]) m.suites[k] += x.suites[k]; });
+        Object.keys(m.works2).forEach((k) => { if (x.works && x.works[k]) m.works2[k] += x.works[k]; });
+        Object.keys(m.gaps).forEach((k) => { if (x.gaps && x.gaps[k]) m.gaps[k] += x.gaps[k]; });
+        if (x.live) m.live.comments += x.live.comments || 0;
+        if (!seenGenre.has(r.mbid)) {
+          seenGenre.add(r.mbid);
+          (x.genres || []).forEach((g) => inc(m.genres, g));
+        }
+      }
+      // [Z-STC] (3.41.14) the people credited on a release (all its submissions; the pairs below)
+      if (!m.people.has(r.mbid)) m.people.set(r.mbid, new Set());
+      rels.filter((it) => it.et === 'artist' && it.tg && it.tn).forEach((it) => m.people.get(r.mbid).add(`${it.tg}\t${it.tn}`));
       for (const it of rels) {
+        // [Z-STA, Z-STL, Z-STS, Z-STQ] (3.41.14) attributes, live links, "parts", the answers to the questions
+        (it.a || []).forEach((n) => inc(m.attrs, n));
+        if ((it.a || []).includes('live') && it.et === 'work') m.live.links++;
+        if (it.lt === 'parts') m.suites.partsRels++;
+        for (const q of it.q || []) {
+          m.nAnswers++;
+          inc(m.answers, `${q.q}\t${q.a}`);
+        }
         m.rels++;
         if (it.tg && !m.seenEnt.has(it.tg) && it.lk) {
           m.seenEnt.add(it.tg);
@@ -32638,6 +32723,11 @@
         }
         if (/^U\d+$/.test(it.ru || '')) inc(m.ownRels, it.ru);
       }
+    }
+    // [Z-STC] (3.41.14) each pair of people once a release (at most 40 people of a release)
+    for (const set of m.people.values()) {
+      const ps = [...set].sort().slice(0, 40);
+      for (let a = 0; a < ps.length; a++) for (let b = a + 1; b < ps.length; b++) inc(m.pairs, `${ps[a]}\n${ps[b]}`);
     }
     return m;
   }
@@ -32706,7 +32796,33 @@
       ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+      ${statsMore2Html(m, recs, { top, kv, card })}
     </div>`;
+  }
+
+  /**
+   * [Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC] (3.41.14; Q-cv, Q-cw – for everyone, not only in "Developer mode") The
+   * cards of 3.41.14: suites and medleys, attributes, works, genres, decisions, live, gaps closed, worked together. What only
+   * records of 3.41.14 and later hold says so ("counted from 3.41.14") while older ones are there.
+   */
+  function statsMore2Html(m, recs, { top, kv, card }) {
+    const since = m.x < recs.length ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.41.14' }))}</p>` : '';
+    const cap = (t) => String(t || '').replace(/^\p{Ll}/u, (c) => c.toUpperCase());
+    const answer = (k) => {
+      const [q, a] = String(k).split('\t');
+      return `${q}: ${a}`;
+    };
+    const pair = (k) => String(k).split('\n').map((x) => x.split('\t')[1]).join(' & ');
+    const su = m.suites;
+    return `${card('suites', `${kv([['suites', su.n], ['created', su.created], ['found', su.found], ['manual', su.manual], ['parts', su.parts], ['medleys', su.medleys], ['partsRels', su.partsRels]]
+      .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
+      ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
+      ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
+      ${card('genres', `${kv(top(m.genres, 8), cap)}${since}`)}
+      ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
+      ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
+      ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
+      ${card('together', kv(top(new Map([...m.pairs].filter(([, n]) => n >= 2)), 5), pair))}`;
   }
 
   /**
