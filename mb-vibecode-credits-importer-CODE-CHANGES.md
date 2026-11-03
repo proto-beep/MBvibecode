@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.11, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.12, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.12 · 2026-11-03
+
+Block BF, part 6 – collected item Z-SUB (Q-cm): sub-tracks of Discogs that are tracks of their own in MusicBrainz.
+
+- **DISCOGS `subTrackSplit(d, mb)`** (new, exported): the index tracks (of the parts of one track) whose sub-tracks are tracks of their own in MusicBrainz – read alongside MusicBrainz's titles (`titlesFit`): split when the first sub-track and most of them fit the next tracks; without titles that fit, all of them when that gives MusicBrainz's number of tracks.
+- **DISCOGS `toRelease(d, id, { split })`:** an index of `split` gives a track per sub-track (the index's credits on all of them, the sub-track's on its own, the index's title as `work`, the index's position as an alias of the first).
+- **DISCOGS `release(id, ctx)`:** when MusicBrainz (`ctx.tracks`) has more tracks, reads the release split if that gives MusicBrainz's number (`subTracksSplit` on the release); **`loadRelease`** logs it (`log.subTracksSplit`).
+- **Tests:** `t_works_more.py` new case `subtracks` (fails on 3.41.11).
 
 ## Import 3.41.11 · 2026-11-03
 

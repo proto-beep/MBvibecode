@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.11
+// @version      3.41.12
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.12
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.12
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.12';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -682,6 +682,8 @@
       "log.mbLoaded.one": "MusicBrainz loaded: {n} track ({works} with a work), linked sources: {links}",
       "log.mbLoaded.other": "MusicBrainz loaded: {n} tracks ({works} with a work), linked sources: {links}",
       "log.tracksDiffer": "Tracks differ from MusicBrainz: {src} – {what}{list}",
+      "log.subTracksSplit.one": "{n} index track of {source}: its sub-tracks are tracks of their own in MusicBrainz – read as such",
+      "log.subTracksSplit.other": "{n} index tracks of {source}: their sub-tracks are tracks of their own in MusicBrainz – read as such",
       "log.linkTracksDiffer": "{link}: tracks differ from MusicBrainz – {what}",
       "log.discogsLoaded.one": "Discogs release {id} loaded: {artists} artists, {n} role",
       "log.discogsLoaded.other": "Discogs release {id} loaded: {artists} artists, {n} roles",
@@ -4929,8 +4931,52 @@
      */
     const partOf = (p) => String(p || '').trim().replace(/^(.*\d)[.-]?[a-z]$/i, '$1');
 
-    /** The JSON of a Discogs release → the neutral release. */
-    function toRelease(d, releaseId) {
+    /**
+     * [Z-SUB] (3.41.12; Q-cm "as general as can be") The index tracks whose sub-tracks are tracks of their own in MusicBrainz – its
+     * track list (mb: [{ title }]) read alongside Discogs's: an index whose sub-tracks' titles are the next tracks of MusicBrainz (the
+     * first and most of them) is split; without titles that fit, all of them when that gives MusicBrainz's number of tracks. A Set of
+     * indexes in d.tracklist ({} when nothing fits).
+     */
+    function subTrackSplit(d, mb) {
+      const list = d.tracklist || [];
+      const cands = [];
+      list.forEach((t, n) => {
+        if (t.type_ !== 'index' || (t.sub_tracks || []).length < 2) return;
+        const bases = uniq((t.sub_tracks || []).map((x) => normPos(partOf(x.position))).filter(Boolean));
+        // (an index without a position whose sub-tracks are on tracks of their own is split already, 145)
+        if (bases.length > 1 && !String(t.position || '').trim()) return;
+        cands.push(n);
+      });
+      if (!cands.length) return new Set();
+      const out = new Set();
+      let k = 0;
+      list.forEach((t, n) => {
+        if (t.type_ === 'heading') return;
+        if (cands.includes(n)) {
+          const subs = t.sub_tracks;
+          const fit = subs.filter((x, j) => mb[k + j] && titlesFit(x.title, mb[k + j].title)).length;
+          if (mb[k] && titlesFit(subs[0].title, mb[k].title) && fit * 2 > subs.length) {
+            out.add(n);
+            k += subs.length;
+            return;
+          }
+        }
+        const subs = t.type_ === 'index' ? (t.sub_tracks || []) : [];
+        const bases = uniq(subs.map((x) => normPos(partOf(x.position))).filter(Boolean));
+        k += bases.length > 1 && !String(t.position || '').trim() ? bases.length : 1;
+      });
+      if (out.size) return out;
+      // without titles that fit: all of them, when that is MusicBrainz's number of tracks
+      const one = toRelease(d, d.id).tracks.length;
+      const more = cands.reduce((x, n) => x + list[n].sub_tracks.length - 1, 0);
+      return one + more === mb.length ? new Set(cands) : new Set();
+    }
+
+    /**
+     * The JSON of a Discogs release → the neutral release. [Z-SUB] (3.41.12) `split`: the indexes (in d.tracklist) of index tracks
+     * whose sub-tracks are tracks of their own in MusicBrainz (subTrackSplit).
+     */
+    function toRelease(d, releaseId, { split = null } = {}) {
       // Tracks without headings; an index track counts as one track, its sub-tracks become aliases
       const tracks = [];
       const onTracks = [];
@@ -4959,6 +5005,16 @@
             tracks.push({ position: base, title: title || t.title || '', aliases: parts.map((x) => x.position).filter((x) => normPos(x) !== normPos(base)), work: t.title || '' });
             onTracks.push([...(t.extraartists || []), ...parts.flatMap((x) => x.extraartists || [])]);
           }
+          continue;
+        }
+        // [Z-SUB] (3.41.12) an index whose sub-tracks are tracks of their own in MusicBrainz ("C1a", "C1b", "C1c" three recordings):
+        // each sub-track a track – the index's credits on all of them, its title as their work (a suite can be one)
+        if (split && split.has(d.tracklist.indexOf(t))) {
+          subs.forEach((x, k) => {
+            const aliases = k === 0 && String(t.position || '').trim() ? [String(t.position).trim()] : [];
+            tracks.push({ position: String(x.position || '').trim() || (k === 0 ? String(t.position || '').trim() : ''), title: String(x.title || '').trim(), aliases, work: t.title || '' });
+            onTracks.push([...(t.extraartists || []), ...(x.extraartists || [])]);
+          });
           continue;
         }
         // [145] (3.35.1) an index of the parts of one track without a position of its own: that track's ("C1" for C1a, C1b)
@@ -5067,10 +5123,19 @@
         const m = String(text || '').match(/(?:release\/|^r?)(\d+)/i);
         return m ? m[1] : '';
       },
-      async release(id) {
-        return toRelease(await getJson(`releases/${id}`, { missingId: id }), id);
+      async release(id, ctx) {
+        const d = await getJson(`releases/${id}`, { missingId: id });
+        const r = toRelease(d, id);
+        // [Z-SUB] (3.41.12) MusicBrainz has more tracks: the sub-tracks of an index may be tracks of their own there
+        const mb = (ctx && ctx.tracks) || [];
+        if (!mb.length || r.tracks.length >= mb.length) return r;
+        const split = subTrackSplit(d, mb);
+        if (!split.size) return r;
+        const r2 = toRelease(d, id, { split });
+        return r2.tracks.length === mb.length ? { ...r2, subTracksSplit: split.size } : r;
       },
       toRelease,
+      subTrackSplit,
       /**
        * A person or group for MusicBrainz's "Add artist" form: name, type, its own URLs, and the members (of a
        * group) or groups (of a person) as "related" ({ id, name, links, isGroup: the new artist is the group }).
@@ -17471,6 +17536,8 @@
       await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
+      // [Z-SUB] (3.41.12) index tracks whose sub-tracks are tracks of their own in MusicBrainz
+      if (rel.subTracksSplit) log('info', 'subTracksSplit', { n: rel.subTracksSplit, source: source.name });
       // [146] (3.36.0) what is remembered of the import before is stored first; this one is remembered once it is complete
       // (an import started while another one still runs: only the last one counts)
       saveRememberNow();
