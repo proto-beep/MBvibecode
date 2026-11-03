@@ -557,6 +557,8 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   entryskipkeep: 3.40.15: remembered with the release (Cache on), loaded again still skipped, ↺ back
                                 #   entryskipmodes: 3.40.17 (review): scope "only work" and ⊘ Skip both ways (stays skipped; ↺ inside the scope:
                                 #     stays on Skip, "all": back); "Level for all rows" Recording, then Skip: "⊘ Skip", no stale "↺"
+                                #   footbar: 3.41.10 (Z-SB2): classic scroll bars of a page wider and longer than the window – the dashboard at the
+                                #     bottom edge ends above / left of them (its footer wholly visible), also when the page grows wider later
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

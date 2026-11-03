@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.9
+// @version      3.41.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.10
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.10
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -31332,9 +31332,16 @@
     if (el) el.textContent = `${Math.round(S.scale * 100)} %`;
   }
 
+  /**
+   * [Z-SB2] (3.41.10) The room the windows have: the browser window without its scroll bars (window.innerWidth/innerHeight count
+   * them – the page's horizontal scroll bar covered the footer of the dashboard).
+   */
+  const viewW = () => (document.documentElement && document.documentElement.clientWidth) || window.innerWidth;
+  const viewH = () => (document.documentElement && document.documentElement.clientHeight) || window.innerHeight;
+
   function defaultGeom(kind) {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = viewW();
+    const H = viewH();
     const unit = basePx() / 13;
     if (kind === 'panel') {
       const w = Math.min(W - 24, Math.round(1280 * unit));
@@ -31360,8 +31367,8 @@
    * with "fit" (opening, screen changes) it is moved fully into view.
    */
   function placeWindow(win, g, fit = false) {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = viewW();
+    const H = viewH();
     const w = Math.max(160, Math.min(g.w, W));
     const h = Math.max(100, Math.min(g.h, H));
     const x = fit ? Math.min(Math.max(g.x, 0), W - w) : Math.min(Math.max(g.x, 80 - w), W - 80);
@@ -31469,6 +31476,26 @@
   }
 
   window.addEventListener('resize', () => movable.forEach((m) => clampWindow(m.win)));
+  // [Z-SB2] (3.41.10) a scroll bar of the page that comes or goes (its content wider or longer than the window) narrows the room too:
+  // the windows are moved into view again then (no "resize" for it)
+  {
+    let seen = '';
+    const check = () => {
+      const now = `${viewW()}x${viewH()}`;
+      if (now === seen) return;
+      seen = now;
+      movable.forEach((m) => clampWindow(m.win));
+    };
+    // (a box fixed to the room – its size changes with the scroll bars; the page's own boxes do not)
+    if (typeof ResizeObserver !== 'undefined' && document.documentElement && !IS_NODE_TEST) {
+      const room = document.createElement('div');
+      room.id = 'dci-room';
+      room.setAttribute('aria-hidden', 'true');
+      room.style.cssText = 'position: fixed; inset: 0; visibility: hidden; pointer-events: none; z-index: -1;';
+      document.documentElement.appendChild(room);
+      new ResizeObserver(check).observe(room);
+    }
+  }
 
   /**
    * [3.26.0] Small symbols of the head (collected item 30): drawn for this script (no emoji, no icons of others),
@@ -34235,7 +34262,7 @@
 
       .dci-panel {
         position: fixed; left: 2vw; top: 2vh; width: 96vw; height: 96vh; pointer-events: auto; display: flex; flex-direction: column;
-        min-width: min(calc(var(--u, 1px) * 360), 100vw); min-height: min(calc(var(--u, 1px) * 240), 100vh); max-width: 100vw; max-height: 100vh;
+        min-width: min(calc(var(--u, 1px) * 360), 100vw); min-height: min(calc(var(--u, 1px) * 240), 100vh); max-width: 100%; max-height: 100%;
         resize: both; overflow: hidden; background: #fff; border: 1px solid #c8c5d6; border-top: 4px solid var(--purple); border-radius: 4px;
         box-shadow: 0 8px 32px rgba(38, 36, 48, 0.28);
       }
