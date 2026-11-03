@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.3, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.4, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.4 · 2026-11-03
+
+Fixes after the check of Block BD (an independent review; collected item Z-SU).
+
+- **Keys of parts:** "pending:<track>.<k>.<n>" – each acceptance, split and renaming of a staged part its own (`S.suiteSeq`); `pendingWorkEntity` reads the track from any such key. Until 3.41.3 a part staged, undone and accepted again kept the old link and its entity, and the suite's "parts" pointed to a second new work. **`renameSuiteParts`** (from `setSuiteNaming` and `resetSettings`): a part already in the editor gets a new key instead of a name changed in the editor's entity.
+- **`suite-part`:** planned only with the part's own link (planned, staged or in MusicBrainz) – a link held back by an invalid date holds it back too; staged only while the recording's medium is loaded (as the links).
+- **`acceptSuite`:** a work of MusicBrainz chosen or created for a track is its part (`kept`), no new work instead of it.
+- **`suiteAsks`:** the key from the offer before the tracks are filtered (a medium filter does not ask again); offers whose tracks all have works in MusicBrainz are not asked; answered ones stay; a suite of another source of the release keeps its line with "↺".
+- **`suiteOffers`:** the release's title only when at least half of the tracks have parts; of two headings before the same track the one next to the tracks. **`headingKind`:** "bonus" anywhere. **T061** + DVD, Blu-ray, SACD, Digital, Remixes (register renewed).
+- **`searchParts`:** offers the work found (`p.offer`; button `part-pick` "Link “…”" with its MB link at the part) instead of taking it – as every work found for a track (180), and no plan changes while staging.
+- **`allWorkGids`** with the parts; the summary's count of work relationships without `suite-part`; the focus after "Suite: Part | Suite, Part"; the hint of the question visible in it.
+- **Texts (English):** `suite.partPick`, `suite.partPickTitle`, `log.partPicked`; `log.partsFound` changed ("MusicBrainz has works for {n} of its parts – offered at them").
+- **Tests:** `t_works_more.py` new case `suiterestage` (undone and accepted again, named anew after staging: one link per part, no "parts" to a work without its recording); `medley` (no suite asked for one "A / B" among four; the work found offered, then linked); `suitedata` D (bonus anywhere, DVD, the release's title only from half the tracks, two headings before one track). They fail on 3.41.3.
 
 ## Import 3.41.3 · 2026-11-03
 

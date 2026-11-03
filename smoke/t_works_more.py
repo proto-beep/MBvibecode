@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2), medley (3.41.3); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2), medley (3.41.3), suiterestage (3.41.4); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1081,7 +1081,9 @@ def case_suitedata():
     B) The parts of a title: "Phase 2 / Phase 3" → two, "AC/DC" none; headings: "Side A", "CD 1", "Bonus Tracks", "Encore" – a side
        or medium (T061), "Recorded live at Moers, 1981" – a recording, "Trisect", "Sidewinder" – a name.
     C) The suites offered: below the heading "Trisect" tracks 3–5 (until "Recorded live …"), the index "Suite X" for track 6; a
-       release without headings whose track has parts: all tracks with the release's title; without parts: none."""
+       release without headings whose track has parts: all tracks with the release's title; without parts: none.
+    D) (3.41.4, review) "Japan Bonus Tracks", "DVD", "Remixes": no suite; one track of four with parts: no suite of the release's title
+       (a medley); a composer and the work before the same track: the work."""
     import json
     import subprocess
     sub = lambda pos, title: {'position': pos, 'type_': 'track', 'title': title, 'duration': '', 'extraartists': []}
@@ -1104,6 +1106,10 @@ console.log(JSON.stringify({
   parts: [m.titleParts('Phase 2 / Phase 3'), m.titleParts('AC/DC')],
   kinds: ['Side A', 'CD 1', 'Bonus Tracks', 'Encore', 'Recorded live at Moers, 1981', 'Trisect', 'Sidewinder'].map(m.headingKind),
   offers: [m.suiteOffers(r), m.suiteOffers(m.DISCOGS.toRelease(plain, 2)), m.suiteOffers(m.DISCOGS.toRelease(none, 3))],
+  // (3.41.4, review) bonus anywhere, DVD; one track of four with parts: no suite of the release; two headings before one track
+  more: [['Japan Bonus Tracks', 'DVD', 'Remixes'].map(m.headingKind),
+    m.suiteOffers({ title: 'Songs', tracks: [{ title: 'A / B' }, { title: 'C' }, { title: 'D' }, { title: 'E' }], headings: [] }),
+    m.suiteOffers({ title: 'X', tracks: [{ title: 'I' }, { title: 'II' }], headings: [{ title: 'Jean Sibelius', at: 0 }, { title: 'Karelia Suite', at: 0 }] })],
 }));
 """
     js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([d, plain, none])], capture_output=True, text=True)
@@ -1118,7 +1124,9 @@ console.log(JSON.stringify({
         got.get('parts') == [['Phase 2', 'Phase 3'], []] and got.get('kinds') == ['medium', 'medium', 'medium', 'medium', 'recording', 'name', 'name'],
         got.get('offers') == [[{'name': 'Trisect', 'from': 'heading', 'tracks': [2, 3, 4]}, {'name': 'Suite X', 'from': 'index', 'tracks': [5]}],
                               [{'name': 'Trisect', 'from': 'release', 'tracks': [0, 1, 2, 3]}], []],
+        got.get('more') == [['medium', 'medium', 'medium'], [], [{'name': 'Karelia Suite', 'from': 'heading', 'tracks': [0, 1]}]],
     ]
+    print('D)', got.get('more'))
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
@@ -1268,10 +1276,10 @@ def case_suiteparts():
 def case_medley():
     """Credits Importer 3.41.3 (collected item Z-SU; Q-cb, Q-cd, Q-cg): a track of several works – a medley.
     Track 3 "Alpha / Beta" (Writer Z composed it); MusicBrainz has Writer Z's work "Beta".
-    A) The suite of the release's title asked, ✕ No; track 3 (no work yet): "Split into 2 works (medley)" in its line (its tooltip
-       names the parts) – not done by itself.
-    B) Clicked: "medley 1 of 2" Alpha (a new work), "medley 2 of 2" Beta – found in MusicBrainz (Writer Z's work), "↺ one work"; the
-       log says so.
+    A) No suite asked ((3.41.4, review) one track of four with parts: a medley, not a suite of the release); track 3 (no work yet):
+       "Split into 2 works (medley)" in its line (its tooltip names the parts) – not done by itself.
+    B) Clicked: "medley 1 of 2" Alpha (a new work), "medley 2 of 2" Beta – a new work, (3.41.4, review) Writer Z's work "Beta" of
+       MusicBrainz offered at it ("Link “Beta”"; until 3.41.3 taken by itself), "↺ one work"; the log says so; "Link “Beta”" links it.
     C) Staged: the recording of track 3 with "Alpha" (order 1) and "Beta" (order 2), both with "medley".
     D) "↺ one work": the track without work again (the split offered again)."""
     H.TITLES[2] = 'Alpha / Beta'
@@ -1296,19 +1304,23 @@ def case_medley():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]')", 60)
         pg.wait_for_timeout(500)
-        pg.click('[data-el=suites] [data-act=suite-no]'); pg.wait_for_timeout(400)
-        a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]'))")]
+        a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]'))"),
+              pg.evaluate("document.querySelectorAll('[data-el=suites] .dci-mx-suite').length")]
         print('A)', a0)
-        results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Each part a work of its own, linked as a medley in the order of the title: Alpha · Beta')
+        results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Each part a work of its own, linked as a medley in the order of the title: Alpha · Beta' and a0[2] == 0)
         pg.click('.dci-matrix tr[data-work="2"] [data-act=medley-split]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /parts found/.test(li.textContent))", 30)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /MusicBrainz has works for/.test(li.textContent))", 30)
         pg.wait_for_timeout(500)
-        b0 = [pg.evaluate(ROWS), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'medley' in x or 'parts found' in x]]
-        print('B)', b0)
-        results.append(b0[0] == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'MBBeta', []]]
-                       and b0[1] == ['Track 1.3: split into 2 works (medley)', 'Track 1.3: 1 of its parts found in MusicBrainz'])
+        b0 = [pg.evaluate(ROWS), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'medley' in x or 'MusicBrainz has works' in x],
+              pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work=\"2\"] [data-act=part-pick]')].map(b => b.textContent.trim())")]
+        pg.click('.dci-matrix tr[data-work="2"] [data-act=part-pick]'); pg.wait_for_timeout(400)
+        b1 = pg.evaluate(ROWS)
+        print('B)', b0, '\n  ', b1)
+        results.append(b0[0] == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'Beta', []]] and b0[2] == ['Link “Beta”']
+                       and b0[1] == ['Track 1.3: split into 2 works (medley)', 'Track 1.3: MusicBrainz has works for 1 of its parts – offered at them']
+                       and b1 == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'MBBeta', []]])
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         c0 = pg.evaluate(STAGED)
@@ -1318,6 +1330,68 @@ def case_medley():
         d0 = pg.evaluate(ROWS)
         print('D)', d0)
         results.append(d0 == [['', '', ['Split into 2 works (medley)']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiterestage():
+    """Credits Importer 3.41.4 (the check of Block BD): a suite staged, undone and accepted again, or named anew after staging.
+    A) "Trisect": ✓ Yes, staged; ↺ undo, ✓ Yes, staged again: in the editor one link of the recording of track 3 to "Trisect: Phase 2"
+       (until 3.41.3 the link staged before was kept for the new part, and the suite's "parts" pointed to another new work – two works
+       on "Enter edit"); each "parts" of the suite to a new work points to a work a recording is linked with.
+    B) ⚙ "Suite, Part" after staging: the links with the new names are staged, those with the old names are gone; again each "parts"
+       points to a work a recording is linked with."""
+    H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
+    H.attr(1105, 'movement', 1105)
+    H.lt(281, 'ca8d3642-ce5f-49f8-91f2-125d72524e6a', 'parts', 'work', 'work', (1105,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['title'] = 'Trisect'
+        return d
+
+    H.discogs_release = rel
+    CHECK = """(() => { const add = MB.relationshipEditor.state.added; const links = add.filter(r => r.linkTypeID === 278 && r._status !== 3);
+      const parts = add.filter(r => r.linkTypeID === 281 && r._status !== 3);
+      const linked = new Set(links.map(r => r.entity1.id));
+      return { phase2: links.filter(r => /^Trisect[:,] Phase 2$/.test(r.entity1.name)).map(r => r.entity1.name), parts: parts.length,
+        orphans: parts.filter(r => !r.entity1.gid && !linked.has(r.entity1.id)).map(r => r.entity1.name) }; })()"""
+
+    def stage():
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now|^yes$|^ja$/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(500)
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        pg.wait_for_timeout(500)
+        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(400)
+        stage()
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(400)
+        stage()
+        a0 = pg.evaluate(CHECK)
+        print('A)', a0)
+        results.append(a0['phase2'] == ['Trisect: Phase 2'] and a0['parts'] == 7 and a0['orphans'] == [])
+        H.open_settings(pg, 'works')
+        pg.click('[data-el=settings] [data-act=suite-naming][data-naming=comma]'); pg.wait_for_timeout(400)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        stage()
+        b0 = pg.evaluate(CHECK)
+        print('B)', b0)
+        results.append(b0['phase2'] == ['Trisect, Phase 2'] and b0['parts'] == 7 and b0['orphans'] == [])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

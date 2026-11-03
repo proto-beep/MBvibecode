@@ -3271,7 +3271,7 @@
    "guest ^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$",
    "no guest ^(?:featuring|feat\\.?|ft\\.?|with)$",
    "T061 · Works (3.41.0): headings of a track list that name no suite (Z-SU) – a side, a medium or bonus tracks: \"Side A\", \"CD 1\", \"Disc Two\", \"Bonus Tracks\", \"Encore\" (a heading that begins with one of these words); headings with the place or date of a recording (\"Recorded at …\", \"Live at …\", a year) are no suite either. Every other heading names a suite of the tracks below it, until the next heading – asked in the works matrix (Code: SUITE_SKIP_HEADINGS, headingKind, suiteOffers)",
-   "words Side · CD · Disc · Disk · LP · Record · Vinyl · Tape · Cassette · Medium · Bonus · Bonus Tracks · Bonus Track · Bonus Disc · Bonus CD · Hidden Track · Volume · Vol. · Encore · Extras",
+   "words Side · CD · Disc · Disk · LP · Record · Vinyl · Tape · Cassette · Medium · Bonus · Bonus Tracks · Bonus Track · Bonus Disc · Bonus CD · Hidden Track · Volume · Vol. · Encore · Extras · DVD · Blu-ray · SACD · Digital · Remixes",
    "T060 · Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out (Code: PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole)",
    "… At → … By ^(recorded|mixed|mastered|engineered|produced|remixed) at$",
    "left out ^((pressed|manufactured|distributed|printed) by|licensed to)$",
