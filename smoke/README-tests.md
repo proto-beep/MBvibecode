@@ -280,7 +280,9 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     import ticks the box again, the setting stored
                                 #   foldapply: 3.40.9 (Z-PF): "Fold bar after Apply" below the matrix and in ⚙ (on); "Apply" folds (stored,
                                 #     focus on "▼ show", log); off: stays open; with "apply automatically": open while the pointer is in the
-                                #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again
+                                #     bar, folded when it leaves; by keyboard, a field outside focused: folded; ↺ of the topic: on again;
+                                #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
+                                #     ⚙ – open; stored only when off
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -566,7 +568,13 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     the bar, only boxes that scroll (review); wide again (⤢): none; a classic bar (it takes room): no room
                                 #   compactside: 3.40.10 (Z-KH, mockup C): compact – "by event | by role" in the head, count, "Writing
                                 #     credits: in the works matrix" (tooltip) and the button "＋ Another role for …" beside the lines, no link
-                                #     below; by role the same; the button opens the full matrix with a new line; full view as before
+                                #     below; by role the same; the button opens the full matrix with a new line; full view as before;
+                                #     (review) an entry folded in the full view: the column and the toggle
+                                #   compactlines: 3.40.11 (Z-KH, mockup B): ⚙ Appearance "Compact entries: notes beside the lines | in the
+                                #     lines" – in the lines: no column, "n to stage" and "＋ role" at the end of the last line (by event, by
+                                #     role), "✓ link" and "✎ works ↓" in the head (tooltips), "✎ works ↓" brings the works matrix into view,
+                                #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
+                                #     without the tail
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

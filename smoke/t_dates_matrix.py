@@ -795,7 +795,10 @@ def case_foldapply():
     C) The box off (remembered): open again, "Apply" – the bar stays open.
     D) On, with "apply automatically": a change in the matrix is applied at once – the bar stays open while the pointer is in it;
        the pointer leaves it: folded. Open again, a change by keyboard (Space on a box), then a field outside the bar focused: folded.
-    E) ↺ of the topic Dates and tracks: on again."""
+    E) ↺ of the topic Dates and tracks: on again.
+    F) (3.40.11, review) With "apply automatically": the bar left without a change – open; a change, then "apply automatically" off and
+       another change (not applied yet), the bar left – open (the change waits for "Apply"); a change made from ⚙ Settings (track
+       groups of the works off and on) – open; the box stored only when off."""
     H.DM_FOLD = True
     results = []
     with sync_playwright() as p:
@@ -864,6 +867,50 @@ def case_foldapply():
         e1 = [pg.evaluate("localStorage.getItem('dci-dm-fold')"), pg.evaluate("(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-f=dm-fold]'))")]
         print('E) in ⚙ aus:', e0, '| ↺:', e1)
         results.append(e0 == 'false' and e1 == [None, True])
+        # F) (3.40.11, review)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        if pg.evaluate(OPEN) != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        if not pg.locator('[data-el=dm] [data-f=dm-auto]').is_checked():
+            pg.check('[data-el=dm] [data-f=dm-auto]')
+        box = pg.evaluate("(r => [r.left, r.top, r.bottom])(document.querySelector('[data-el=dates]').getBoundingClientRect())")
+        pg.mouse.move(box[0] + 200, box[1] + 20)
+        pg.wait_for_timeout(200)
+        pg.mouse.move(box[0] + 200, box[2] + 120)
+        pg.wait_for_timeout(400)
+        f0 = pg.evaluate(OPEN)
+        pg.locator('[data-el=dm] [data-f=dm-rel]').first.click()
+        pg.wait_for_timeout(500)
+        pg.uncheck('[data-el=dm] [data-f=dm-auto]')
+        pg.locator('[data-el=dm] [data-f=dm-rel]').first.click()
+        pg.wait_for_timeout(500)
+        pg.mouse.move(box[0] + 200, box[2] + 120)
+        pg.wait_for_timeout(400)
+        f1 = [pg.evaluate(OPEN), pg.evaluate("!!document.querySelector('[data-el=dates] .dci-dm-pending')")]
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(500)
+        if pg.evaluate(OPEN) != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        pg.check('[data-el=dm] [data-f=dm-auto]')
+        pg.wait_for_timeout(300)
+        H.open_settings(pg, 'dates')
+        wg = pg.locator('[data-el=settings] [data-set=work-groups]')
+        wg.click()
+        pg.wait_for_timeout(400)
+        wg.click()
+        pg.wait_for_timeout(400)
+        pg.locator('[data-el=settings] [data-f=pools-keep]').focus()
+        pg.wait_for_timeout(300)
+        f2 = pg.evaluate(OPEN)
+        pg.locator('[data-el=settings] [data-f=dm-fold]').uncheck()
+        pg.locator('[data-el=settings] [data-f=dm-fold]').check()
+        pg.wait_for_timeout(200)
+        f3 = pg.evaluate("localStorage.getItem('dci-dm-fold')")
+        print('F) ohne Änderung verlassen:', f0, '| automatisch aus, Änderung wartet:', f1, '| Änderung aus ⚙:', f2, '| wieder an, gespeichert:', f3)
+        results.append(f0 == 'true' and f1 == ['true', True] and f2 == 'true' and f3 is None)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

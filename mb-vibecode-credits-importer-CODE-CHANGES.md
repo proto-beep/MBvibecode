@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.10, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.11, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,29 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.11 · 2026-11-03
+
+⚙ Settings → Appearance "Compact entries: notes beside the lines | in the lines" – B, lower still (collected item Z-KH, mockup B; Q-bi, Q-bo, Q-bp, Q-bg).
+
+- **State and storage:** `S.emSide` (`EM_SIDE_KEY` `dci-em-side`, `beside` by default, only `lines` stored); in `TOPIC_KEYS.appearance`, `SETTINGS_KEYS`, `resetTopic('appearance')` (the entries drawn anew) and `resetSettings`.
+- **Settings:** the toggle `data-act="em-side"` after "Entries: Matrix | Legacy" (`settings.emSide`, `settings.emSide.beside`, `settings.emSide.lines` and their titles); handler `em-side`: stored, logged (`emSideSet`), `renderGroups`, `renderSettings`, `refresh`.
+- **`groupHtml`:** `inLines` (compact and `S.emSide === 'lines'`): "✎ works ↓" (`button.dci-works-goto[data-act=works-goto]`, `group.worksGoto`, its title `group.workNote`) after the match in the head instead of the note; `entryCompactHtml(a, rows, notes, inLines)`.
+- **`entryCompactHtml`:** `withTail` puts **new `emTailHtml(a)`** – the count (`data-emcount` with `data-emshort`: `em.countShort` "n to stage") and `button.dci-addrole-btn.dci-addrole-short[data-act=add-role]` ("＋ role", title and label `group.addRole`) – at the end of the last line (by event: of the events, not of "Taken out"; by role: the last role line; no line: a line of its own); no `.dci-em-side`; other notes (rows skipped with the works matrix) below the lines.
+- **`refresh`:** `data-emshort` → `em.countShort`. **`matchHtml`:** a linked entry compact "in the lines": `match.linkedShort` ("✓ link"), the whole text as its title.
+- **Handler `works-goto`:** the works matrix (`[data-el=works]`) in view (below what stays in view), `dci-flash` for 2.5 s.
+- **CSS:** `.dci-em-tail`, `.dci-em-inlines .dci-work-note`, `.dci-works-goto`.
+- **Texts (English):** `settings.emSide`, `settings.emSide.beside`, `settings.emSide.besideTitle`, `settings.emSide.lines`, `settings.emSide.linesTitle`, `group.addRoleShort`, `group.worksGoto`, `em.countShort`, `match.linkedShort`, `log.emSideSet`.
+- **Tests:** `t_entries.py` new case `compactlines` (A the setting, beside by default; B in the lines: no column, the tail of the last line, "✓ link" and "✎ works ↓" with their tooltips; C by role; D "✎ works ↓" brings the works matrix into view; E "＋ role"; F full view as before; G ↺ of Appearance). README: the settings table names "Fold bar after Apply" (3.40.9) and "Compact entries".
+
+**After the review of block BB** (an independent agent; fixed here):
+
+- **"Fold bar after Apply" (3.40.9):** `dmChanged` sets `S.dmFoldWait` only for a change made in the bar (`:hover` or the focus in `[data-el="dates"]` – not from ⚙ Settings → Dates or the source menu, which folded an open bar at the next focus anywhere); `watchPoolsLeave` folds only while "apply automatically" is on and nothing waits for "Apply" (`dm().dirty`), else it drops the wait; the `dm-auto` handler (off) and `pools-toggle` drop it too (a change, "apply automatically" off and another change: the bar folded over the change not applied yet; "▲ fold" by hand and opened again: it folded at the next leave). `foldPoolsAfterApply` also not while cells wait for a choice (`c.alt`) or one is being edited (`S.dmEdit`). Only "off" stored (`el.checked ? null : false`).
+- **`withTail` (3.40.11):** a function as replacement – "Joey Bada$$" kept its "$$" (`$$`, `$&` of a replacement string).
+- **`sourceElOf`:** not the toggle (`.dci-ghead-r`) nor "✎ works ↓" (`.dci-works-goto`) in the head – a click there no longer makes the source tab jump to the entry.
+- **`works-goto`:** a folded works matrix unfolds first (`S.worksFolded`).
+- **CSS:** `.dci-em-cl:has(.dci-em-tail) .dci-status` without `margin-left: auto` (a status and the tail both pushed right: the status stood in the middle of the line).
+- **Tests:** `t_dates_matrix.py` `foldapply` F (the bar left without a change; "apply automatically" off with a change waiting; a change from ⚙ Settings; stored only when off); `t_entries.py` `compactside` D (an entry folded in the full view: the column and the toggle), `compactlines` H ("Joey Bada$$", a line "Taken out" without the tail).
 
 ## Import 3.40.10 · 2026-11-03
 
