@@ -1,0 +1,2879 @@
+{
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio). 3.43.0 (review of the text adapter, S074 – S077): track lists after each name, \"except\" lines, a second \"by\" clause, role lists, several \"Name (roles)\", names before a dash split, a release artist never split, places with their area in brackets and a second place. 3.43.5 (counter-review): name-and-place pairs after \"by\", a sentence after \"and\" no place, \"Tears for Fears\" whole, a studio with a role word, role lines below \"A & B – vocals\", a \"by\" inside brackets, a bracket after a name.",
+  "lines": [
+    {
+      "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
+      "expect": {
+        "credits": [
+          [
+            "Albert Irvin",
+            "Cover art"
+          ],
+          [
+            "Jonas Schoder",
+            "Graphic design"
+          ],
+          [
+            "Evan Parker",
+            "Text"
+          ],
+          [
+            "Maya Homburger",
+            "Produced By"
+          ],
+          [
+            "Barry Guy",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.",
+            "why": "thanks"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Barry Guy plays exclusively on Thomastik-Infeld bass strings.",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Barry Guy plays exclusively on Thomastik-Infeld bass strings.",
+            "why": "endorsement"
+          }
+        ]
+      }
+    },
+    {
+      "text": "www.maya-recordings.com P + © 2023 Maya Recordings DDD · MCD 2301",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Maya Recordings",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ & © 2023 Maya Recordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Maya Recordings",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "(P) & (C) 2019–2023 Some Label, all rights reserved",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Some Label",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Some Label",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "©© 2001 Old Label",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Old Label",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Old Label",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2023 Maya Recordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "© 2020 Add Records",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Add Records",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo by Cole Barrington instagram.com/blueeyedhorse84",
+      "expect": {
+        "credits": [
+          [
+            "Cole Barrington",
+            "Logo By",
+            [
+              "https://www.instagram.com/blueeyedhorse84/"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo: Cole Barrington",
+      "expect": {
+        "credits": [
+          [
+            "Cole Barrington",
+            "Logo"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Photography by Jane Roe https://www.instagram.com/janeroe/ and John Doe (linktr.ee/johndoe)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Photography By",
+            [
+              "https://www.instagram.com/janeroe/"
+            ]
+          ],
+          [
+            "John Doe",
+            "Photography By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe (soundcloud.com/janeroe), mastered by John Doe – www.johndoe-mastering.com",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By",
+            [
+              "https://soundcloud.com/janeroe"
+            ]
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded by J. Smith. Mixed by Vol. Tester.",
+      "expect": {
+        "credits": [
+          [
+            "J. Smith",
+            "Recorded By"
+          ],
+          [
+            "Vol. Tester",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by A. B. Cee at Studio X",
+      "expect": {
+        "credits": [
+          [
+            "A. B. Cee",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Studio X",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Cover art: Albert Irvin",
+      "expect": {
+        "credits": [
+          [
+            "Albert Irvin",
+            "Cover art"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Text: Evan Parker",
+      "expect": {
+        "credits": [
+          [
+            "Evan Parker",
+            "Text"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Liner notes: Evan Parker",
+      "expect": {
+        "credits": [
+          [
+            "Evan Parker",
+            "Liner notes"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe, mastered by John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Barry Guy. Special thanks to Z.",
+      "expect": {
+        "credits": [
+          [
+            "Barry Guy",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Special thanks to Z",
+            "why": "thanks"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Drums – Bob Drummer. He uses Zildjian cymbals.",
+      "expect": {
+        "credits": [
+          [
+            "Bob Drummer",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "He uses Zildjian cymbals",
+            "why": "endorsement"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Cover: “Stand by Me” by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Cover By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Artwork: ‘Untitled' (2019) by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Artwork By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Music and artwork of this release were entirely created by a human. No AI tools were used.",
+      "expect": {
+        "credits": [
+          [
+            "(a human)",
+            "Music"
+          ],
+          [
+            "(a human)",
+            "Artwork"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "www.example.com",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "www.example.com",
+            "why": "web"
+          }
+        ]
+      }
+    },
+    {
+      "text": "contact: info@label.com",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "contact: info@label.com",
+            "why": "web"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Follow us: instagram.com/somelabel",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Follow us: instagram.com/somelabel",
+            "why": "web"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017",
+      "expect": {
+        "credits": [
+          [
+            "Yunclas",
+            "Recorded By"
+          ]
+        ],
+        "companies": [
+          [
+            "Xixon",
+            "Recorded In",
+            "(Asturies, Spain)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller",
+      "expect": {
+        "credits": [
+          [
+            "Juanjo Infraser Haller",
+            "Piano",
+            "on “En Cualquier Lugar Del Mundo”, “Phenomenology of misery”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitarra eléctrica: Juan Pérez",
+      "expect": {
+        "credits": [
+          [
+            "Juan Pérez",
+            "Guitarra eléctrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Schlagzeug – Max Mustermann",
+      "expect": {
+        "credits": [
+          [
+            "Max Mustermann",
+            "Schlagzeug",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Marie Dupont : contrebasse, voix",
+      "expect": {
+        "credits": [
+          [
+            "Marie Dupont",
+            "contrebasse",
+            "= Double Bass"
+          ],
+          [
+            "Marie Dupont",
+            "voix",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ana López – saxo tenor y soprano",
+      "expect": {
+        "credits": [
+          [
+            "Ana López",
+            "saxo tenor",
+            "= Tenor Saxophone"
+          ],
+          [
+            "Ana López",
+            "saxo soprano",
+            "= Soprano Saxophone"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Carlos Ruiz – guitarra y voz",
+      "expect": {
+        "credits": [
+          [
+            "Carlos Ruiz",
+            "guitarra",
+            "= Guitar"
+          ],
+          [
+            "Carlos Ruiz",
+            "voz",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Coros: Lucía y Marta",
+      "expect": {
+        "credits": [
+          [
+            "Lucía",
+            "Coros",
+            "= Backing Vocals"
+          ],
+          [
+            "Marta",
+            "Coros",
+            "= Backing Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Flügel: Hans Meier",
+      "expect": {
+        "credits": [
+          [
+            "Hans Meier",
+            "Flügel",
+            "= Grand Piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Batterie : Paul Martin",
+      "expect": {
+        "credits": [
+          [
+            "Paul Martin",
+            "Batterie",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Alto: Pierre Leroux",
+      "expect": {
+        "credits": [
+          [
+            "Pierre Leroux",
+            "Alto",
+            "= ? (asked, R102)"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "José – bajo",
+      "expect": {
+        "credits": [
+          [
+            "José",
+            "bajo",
+            "= Bass"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Klavier, Orgel – Peter Weiß",
+      "expect": {
+        "credits": [
+          [
+            "Peter Weiß",
+            "Klavier",
+            "= Piano"
+          ],
+          [
+            "Peter Weiß",
+            "Orgel",
+            "= Organ"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitarra electrica: Pedro",
+      "expect": {
+        "credits": [
+          [
+            "Pedro",
+            "Guitarra electrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Kevin Y Lee – guitar",
+      "expect": {
+        "credits": [
+          [
+            "Kevin Y Lee",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Sam Stream open.spotify.com/intl-de/artist/4Z8W4fKeB5YxbusRsdQVPb?si=abc",
+      "expect": {
+        "credits": [
+          [
+            "Sam Stream",
+            "Mixed By",
+            [
+              "https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol instagram.com/studiosol",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            [
+              "https://www.instagram.com/studiosol/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2023 Maya Recordings instagram.com/mayarecordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)",
+            [
+              "https://www.instagram.com/mayarecordings/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bass – Ana Ruiz music.apple.com/es/artist/ana-ruiz/1234567 tidal.com/browse/artist/998877",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Bass",
+            [
+              "https://music.apple.com/es/artist/1234567",
+              "https://tidal.com/artist/998877"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Drums – Leo Beat www.deezer.com/de/artist/556677 linktr.ee/leobeat",
+      "expect": {
+        "credits": [
+          [
+            "Leo Beat",
+            "Drums",
+            [
+              "https://www.deezer.com/artist/556677"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering by Sean Price at Misery Loves Co.",
+      "expect": {
+        "credits": [
+          [
+            "Sean Price",
+            "Mastering [Vinyl LP]"
+          ]
+        ],
+        "companies": [
+          [
+            "Misery Loves Co",
+            "Mastered At",
+            "for Vinyl LP"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering and digital mastering by Dana Digital at Sound House",
+      "expect": {
+        "credits": [
+          [
+            "Dana Digital",
+            "Mastering [Vinyl LP]"
+          ],
+          [
+            "Dana Digital",
+            "Mastering [digital]"
+          ]
+        ],
+        "companies": [
+          [
+            "Sound House",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by Max Vinyl (vinyl)",
+      "expect": {
+        "credits": [
+          [
+            "Max Vinyl",
+            "Mastered By [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl master: Vic Master",
+      "expect": {
+        "credits": [
+          [
+            "Vic Master",
+            "Mastering [Vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered for vinyl by Ann Cut",
+      "expect": {
+        "credits": [
+          [
+            "Ann Cut",
+            "Mastering [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Lacquer cut by Lou Lacquer",
+      "expect": {
+        "credits": [
+          [
+            "Lou Lacquer",
+            "Lacquer cut By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Translated by Ana Ruiz",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Translated By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Berlin, Germany in March 2019",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Berlin",
+            "Recorded In",
+            "(Germany)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in March 2019",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Recorded in March 2019"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed live in Paris by Jean Dupont",
+      "expect": {
+        "credits": [
+          [
+            "Jean Dupont",
+            "Mixed By"
+          ]
+        ],
+        "companies": [
+          [
+            "Paris",
+            "Mixed In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Xixon, Asturies by Yunclas",
+      "expect": {
+        "credits": [
+          [
+            "Yunclas",
+            "Recorded By"
+          ]
+        ],
+        "companies": [
+          [
+            "Xixon",
+            "Recorded In",
+            "(Asturies)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered in Frankfurt am Main by Max Master",
+      "expect": {
+        "credits": [
+          [
+            "Max Master",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Frankfurt am Main",
+            "Mastered In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Pat Prod in Berlin",
+      "expect": {
+        "credits": [
+          [
+            "Pat Prod",
+            "Produced By"
+          ]
+        ],
+        "companies": [
+          [
+            "Berlin",
+            "Produced In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed in Dolby Atmos by Sam Sound",
+      "expect": {
+        "credits": [
+          [
+            "Sam Sound",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Mixed in Dolby Atmos by Sam Sound → ? “in Dolby Atmos”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitar on “Love in Vain”: Keith Richards",
+      "expect": {
+        "credits": [
+          [
+            "Keith Richards",
+            "Guitar",
+            "on “Love in Vain”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ana Ruiz – trumpet on 'Song Three' and 'Missing Song'",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "trumpet",
+            "on “Song Three”, “Missing Song”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Saxophone on 'Song Three' was played by Sam Sax",
+      "expect": {
+        "credits": [
+          [
+            "Sam Sax",
+            "Saxophone",
+            "on “Song Three”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in the living room by Ana Ruiz",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Recorded in the living room by Ana Ruiz → ? “in the living room”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "A chronicle of rabid deeds, dutifully unearthed from accursed crossroads' soil by K.M. (sounds, words) & E. (voice).",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "K.M.",
+            "Sounds"
+          ],
+          [
+            "K.M.",
+            "Lyrics By"
+          ],
+          [
+            "E.",
+            "Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Cover artwork channeled by Drahmarduk.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Drahmarduk",
+            "Cover artwork By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo carved by the guided hand of BMS Illustration.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "BMS Illustration",
+            "Logo By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed and mastered at TQA.HQ (July 2026). Thanks to EXEcentrer and Isohyet.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "TQA.HQ",
+            "Mixed At"
+          ],
+          [
+            "TQA.HQ",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Thanks to EXEcentrer and Isohyet",
+            "why": "thanks"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Mixed and mastered by Brandon Carnes in March 2026.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Brandon Carnes",
+            "Mixed By"
+          ],
+          [
+            "Brandon Carnes",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Frank Trompeter: Tenor, alto, soprano saxophones",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Frank Trompeter",
+            "alto",
+            "= ? (asked, R102)"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Frank Trompeter: Tenor, alto, soprano saxophones → ? “Tenor”, “soprano saxophones”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Richard Gilman-Opalsky: Drums, percussion, and wood flutes",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Richard Gilman-Opalsky",
+            "Drums"
+          ],
+          [
+            "Richard Gilman-Opalsky",
+            "percussion"
+          ],
+          [
+            "Richard Gilman-Opalsky",
+            "wood flutes",
+            "asked: no known instrument"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Sounds: Jane Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "Sounds"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe\nThe band is now a trio.\nVision Fortune is back with a new album.",
+      "artists": [
+        "Vision Fortune"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "AC Williams",
+            "Performer"
+          ],
+          [
+            "Alex Townend",
+            "Performer"
+          ],
+          [
+            "Andres Ayerbe",
+            "Performer"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "The band is now a trio.",
+          "Vision Fortune is back with a new album."
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2020 Solo P Records\n© Solo C Records 2019\n© & ℗ TUM Records Oy 2021",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Solo P Records",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Solo C Records",
+            "Copyright (c)"
+          ],
+          [
+            "TUM Records Oy",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "TUM Records Oy",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "All music recorded ... at Orange Music Sound Studios in West Orange, New Jersey, on May 27, 2016 (Disc 1)\nAll music mastered ... at Turtle Tone Studio in New York City\nIncluding a 52 p. booklet.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Orange Music Sound Studios",
+            "Recorded At",
+            "(West Orange, New Jersey)"
+          ],
+          [
+            "Turtle Tone Studio",
+            "Mastered At",
+            "(New York City)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Including a 52 p. booklet.",
+            "why": "package"
+          }
+        ]
+      }
+    },
+    {
+      "text": "[Publishers & Rights Societies]\n• Tomas Fujiwara-BMI : tracks 1, 3\n• FlizmoMusic-BMI : tracks 2, 4\n• 4WordSeaMusic-BMI : tracks 2, 3\n• ThobulousMusic-BMI : tracks 4",
+      "tracks": 4,
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Tomas Fujiwara",
+            "Published By",
+            "tracks 1, 3"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "FlizmoMusic",
+            "Published By",
+            "tracks 2, 4"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "4WordSeaMusic",
+            "Published By",
+            "tracks 2, 3"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "ThobulousMusic",
+            "Published By",
+            "tracks 4"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Published by Z Songs (ASCAP)\nBIEM/GEMA",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "ASCAP",
+            "Rights Society"
+          ],
+          [
+            "Z Songs",
+            "Published By"
+          ],
+          [
+            "GEMA",
+            "Rights Society"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded November 7, 8, 2016, at Loft Köln.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Loft Köln",
+            "Recorded At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Poems: Jane Doe. Poetry by John Roe. Recitation: Ann Poe.",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "Poems"
+          ],
+          [
+            "John Roe",
+            "Poetry By"
+          ],
+          [
+            "Ann Poe",
+            "Recitation"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "El Studio",
+            "Recorded At",
+            "(San Francisco)"
+          ],
+          [
+            "El Studio",
+            "Engineered At",
+            "(San Francisco)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol in Marseille in March 2019.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            "(Marseille)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Muisc and cover art by j4vaman",
+      "expect": {
+        "credits": [
+          [
+            "j4vaman",
+            "Music By",
+            "written Muisc"
+          ],
+          [
+            "j4vaman",
+            "Cover art"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Gutiar – Ann Lee",
+      "expect": {
+        "credits": [
+          [
+            "Ann Lee",
+            "Guitar",
+            "written Gutiar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recordd at Studio X.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "written Recordd"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Guruguru Brain studio",
+            "Recorded At",
+            "(Rotterdam)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Carnegie Hall, New York",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Carnegie Hall",
+            "Recorded At",
+            "(New York)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in the Church of St. Mary, Berlin",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Church of St. Mary",
+            "Recorded At",
+            "(Berlin)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol, Marseille 2023 March",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            "(Marseille)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded live in Club Volta, Cologne, 2019 May 3",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Club Volta",
+            "Recorded At",
+            "(Cologne)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in a church, Berlin",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Recorded in a church, Berlin"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Berlin, 2023",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Berlin",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "are played, mixed and produced by Go Kurosawa",
+      "expect": {
+        "credits": [
+          [
+            "Go Kurosawa",
+            "Played By"
+          ],
+          [
+            "Go Kurosawa",
+            "Mixed By"
+          ],
+          [
+            "Go Kurosawa",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Electric guitar, acoustic guitar, drums and piano are played by Go Kurosawa",
+      "expect": {
+        "credits": [
+          [
+            "Go Kurosawa",
+            "Electric guitar",
+            "asked: no known instrument"
+          ],
+          [
+            "Go Kurosawa",
+            "acoustic guitar",
+            "asked: no known instrument"
+          ],
+          [
+            "Go Kurosawa",
+            "drums"
+          ],
+          [
+            "Go Kurosawa",
+            "piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Go Kurosawa plays guitar, bass and drums",
+      "expect": {
+        "credits": [
+          [
+            "Go Kurosawa",
+            "guitar"
+          ],
+          [
+            "Go Kurosawa",
+            "bass"
+          ],
+          [
+            "Go Kurosawa",
+            "drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "All instruments played by Go Kurosawa",
+      "expect": {
+        "credits": [
+          [
+            "Go Kurosawa",
+            "All instruments"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitar played by John Doe",
+      "expect": {
+        "credits": [
+          [
+            "John Doe",
+            "Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Music played and recorded by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Played By"
+          ],
+          [
+            "Jane Roe",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe – guitar, photos",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "guitar"
+          ],
+          [
+            "Jane Roe",
+            "photos"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ann Lea: piano, kalimba",
+      "expect": {
+        "credits": [
+          [
+            "Ann Lea",
+            "piano"
+          ],
+          [
+            "Ann Lea",
+            "kalimba",
+            "asked: no known instrument"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe – guitar, chaims, buddha machine",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Jane Roe – guitar, chaims, buddha machine → ? “chaims”, “buddha machine”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ambisonic recordings by RR 2022-2025 Pacific coast",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Robert Rich",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "Pacific Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Field recordings by Kim Lowe 2021 the Pacific coast",
+      "expect": {
+        "credits": [
+          [
+            "Kim Lowe",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "Pacific Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Printed by Druckerei Fischer",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Druckerei Fischer",
+            "Printed By"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Hydrophone recordings by Kim Lowe 2020 East coast",
+      "expect": {
+        "credits": [
+          [
+            "Kim Lowe",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "East Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Anna Berg\nPIANO\nBen Holt\nClara Stein\nVIOLA",
+      "expect": {
+        "credits": [
+          [
+            "Anna Berg",
+            "PIANO"
+          ],
+          [
+            "Clara Stein",
+            "VIOLA"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Ben Holt"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "RECORDED BY\nJonas Kerr\n\nNordlicht Quartett",
+      "artists": [
+        "Nordlicht Quartett"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Jonas Kerr",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Nordlicht Quartett",
+            "why": "releaseArtist"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Produced by\nJane Roe\n\nSide A\nMorning Light",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Side A",
+          "Morning Light"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Producer:\nRobert Rich",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Robert Rich",
+            "Producer"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Publishers:\nRobert Rich\nJane Roe Music",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Robert Rich",
+            "Published By"
+          ],
+          [
+            "Jane Roe Music",
+            "Published By"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "VIOLA\nAnna Berg\n\nNordlicht Quartett\n\nPiano\nBen Holt\nClara Stein",
+      "artists": [
+        "Nordlicht Quartett"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Anna Berg",
+            "VIOLA"
+          ],
+          [
+            "Ben Holt",
+            "Piano"
+          ],
+          [
+            "Clara Stein",
+            "Piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Nordlicht Quartett",
+            "why": "releaseArtist"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Chris Lippincott — pedal steel • 3 \n\nMatt Glassmeyer — saxophones • 1, 8 \nWurlitzer • 1, 8 \norgan • 1 \nhorns • 8 \npercussion • 1, 4 \n\nRaymond Joseph — synthesizer, bass • 6 \n\nRich Ruth — synthesizer • 2 \n\nJuan Solorzano — guitars • 2, 7 \nzither • 7 \n\nRoss McReynolds – drum programming • 1, 3, 8 \ndrums • 2 \nsampling • 3 \nsynthesizers • 1, 3, 4, 6, 7, 8, 9 \npercussion • 4, 5 \npiano • 5 \nbass • 8 \nguitar • 9 \n\nAll songs mixed by Dylan Alledridge, \nSkinny Elephant recording \nAll songs mastered by Trevor Richardson \nRecorded all over the place \nArtwork by Micah Mathewson \nWebsite by Max Helgemo \nand Jacob Dawson-Daley",
+      "tracks": 9,
+      "artists": [
+        "Ross McReynolds"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Chris Lippincott",
+            "pedal steel",
+            "on 3"
+          ],
+          [
+            "Matt Glassmeyer",
+            "saxophones",
+            "on 1, 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "Wurlitzer",
+            "on 1, 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "organ",
+            "on 1"
+          ],
+          [
+            "Matt Glassmeyer",
+            "horns",
+            "on 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "percussion",
+            "on 1, 4"
+          ],
+          [
+            "Raymond Joseph",
+            "synthesizer",
+            "on 6"
+          ],
+          [
+            "Raymond Joseph",
+            "bass",
+            "on 6"
+          ],
+          [
+            "Rich Ruth",
+            "synthesizer",
+            "on 2"
+          ],
+          [
+            "Juan Solorzano",
+            "guitars",
+            "on 2, 7"
+          ],
+          [
+            "Juan Solorzano",
+            "zither",
+            "on 7"
+          ],
+          [
+            "Ross McReynolds",
+            "drum programming",
+            "on 1, 3, 8"
+          ],
+          [
+            "Ross McReynolds",
+            "drums",
+            "on 2"
+          ],
+          [
+            "Ross McReynolds",
+            "sampling",
+            "on 3"
+          ],
+          [
+            "Ross McReynolds",
+            "synthesizers",
+            "on 1, 3, 4, 6, 7, 8, 9"
+          ],
+          [
+            "Ross McReynolds",
+            "percussion",
+            "on 4, 5"
+          ],
+          [
+            "Ross McReynolds",
+            "piano",
+            "on 5"
+          ],
+          [
+            "Ross McReynolds",
+            "bass",
+            "on 8"
+          ],
+          [
+            "Ross McReynolds",
+            "guitar",
+            "on 9"
+          ],
+          [
+            "Dylan Alledridge",
+            "Mixed By"
+          ],
+          [
+            "Trevor Richardson",
+            "Mastered By"
+          ],
+          [
+            "Micah Mathewson",
+            "Artwork By"
+          ]
+        ],
+        "companies": [
+          [
+            "Skinny Elephant recording",
+            "Mixed At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Recorded all over the place",
+            "why": "nowhere"
+          },
+          {
+            "text": "Website by Max Helgemo",
+            "why": "website"
+          },
+          {
+            "text": "and Jacob Dawson-Daley",
+            "why": "website"
+          }
+        ]
+      }
+    },
+    {
+      "text": "○ Chris Lippincott — pedal steel • 3 \n\n○ Matt Glassmeyer — saxophones • 1, 8 \n○ Wurlitzer • 1, 8 \n○ organ • 1 \n○ horns • 8 \n○ percussion • 1, 4 \n\n○ Raymond Joseph — synthesizer, bass • 6 \n\n○ Rich Ruth — synthesizer • 2 \n\n○ Juan Solorzano — guitars • 2, 7 \n○ zither • 7 \n\n○ Ross McReynolds – drum programming • 1, 3, 8 \n○ drums • 2 \n○ sampling • 3 \n○ synthesizers • 1, 3, 4, 6, 7, 8, 9 \n○ percussion • 4, 5 \n○ piano • 5 \n○ bass • 8 \n○ guitar • 9 \n\n○ All songs mixed by Dylan Alledridge, \n○ Skinny Elephant recording \n○ All songs mastered by Trevor Richardson \n○ Recorded all over the place \n○ Artwork by Micah Mathewson \n○ Website by Max Helgemo \n○ and Jacob Dawson-Daley",
+      "tracks": 9,
+      "artists": [
+        "Ross McReynolds"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Chris Lippincott",
+            "pedal steel",
+            "on 3"
+          ],
+          [
+            "Matt Glassmeyer",
+            "saxophones",
+            "on 1, 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "Wurlitzer",
+            "on 1, 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "organ",
+            "on 1"
+          ],
+          [
+            "Matt Glassmeyer",
+            "horns",
+            "on 8"
+          ],
+          [
+            "Matt Glassmeyer",
+            "percussion",
+            "on 1, 4"
+          ],
+          [
+            "Raymond Joseph",
+            "synthesizer",
+            "on 6"
+          ],
+          [
+            "Raymond Joseph",
+            "bass",
+            "on 6"
+          ],
+          [
+            "Rich Ruth",
+            "synthesizer",
+            "on 2"
+          ],
+          [
+            "Juan Solorzano",
+            "guitars",
+            "on 2, 7"
+          ],
+          [
+            "Juan Solorzano",
+            "zither",
+            "on 7"
+          ],
+          [
+            "Ross McReynolds",
+            "drum programming",
+            "on 1, 3, 8"
+          ],
+          [
+            "Ross McReynolds",
+            "drums",
+            "on 2"
+          ],
+          [
+            "Ross McReynolds",
+            "sampling",
+            "on 3"
+          ],
+          [
+            "Ross McReynolds",
+            "synthesizers",
+            "on 1, 3, 4, 6, 7, 8, 9"
+          ],
+          [
+            "Ross McReynolds",
+            "percussion",
+            "on 4, 5"
+          ],
+          [
+            "Ross McReynolds",
+            "piano",
+            "on 5"
+          ],
+          [
+            "Ross McReynolds",
+            "bass",
+            "on 8"
+          ],
+          [
+            "Ross McReynolds",
+            "guitar",
+            "on 9"
+          ],
+          [
+            "Dylan Alledridge",
+            "Mixed By"
+          ],
+          [
+            "Trevor Richardson",
+            "Mastered By"
+          ],
+          [
+            "Micah Mathewson",
+            "Artwork By"
+          ]
+        ],
+        "companies": [
+          [
+            "Skinny Elephant recording",
+            "Mixed At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Recorded all over the place",
+            "why": "nowhere"
+          },
+          {
+            "text": "Website by Max Helgemo",
+            "why": "website"
+          },
+          {
+            "text": "and Jacob Dawson-Daley",
+            "why": "website"
+          }
+        ]
+      }
+    },
+    {
+      "text": "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals.",
+      "artists": [
+        "Stellarium"
+      ],
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals."
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Oliver Lake",
+            "Guest"
+          ],
+          [
+            "Kenny Wheeler",
+            "Guest"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "With Oliver Lake, Kenny Wheeler and members of the Berlin Philharmonic → ? “members of the Berlin Philharmonic”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by Joe Lambert\nWarp Recordings",
+      "expect": {
+        "credits": [
+          [
+            "Joe Lambert",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Warp Recordings"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe (tracks 1-2), John Doe (track 3)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By",
+            "on 1-2"
+          ],
+          [
+            "John Doe",
+            "Produced By",
+            "on 3"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Drums",
+            "on 1, 2"
+          ],
+          [
+            "John Doe",
+            "Drums",
+            "on 3, 4"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe (tracks 1, 2)\nand John Doe (tracks 3, 4)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By",
+            "on 1, 2"
+          ],
+          [
+            "John Doe",
+            "Mixed By",
+            "on 3, 4"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe except track 3",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Produced by Jane Roe except track 3"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bass – Jane Roe (not on track 3)",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Bass – Jane Roe (not on track 3)"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Track 3 mixed by John Doe, all other tracks mixed by Jane Roe",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Track 3 mixed by John Doe, all other tracks mixed by Jane Roe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded by Jane Roe at Studio X and mastered by John Doe at Studio Y",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Recorded By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At"
+          ],
+          [
+            "Studio Y",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe and mixed by John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ],
+          [
+            "John Doe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe in Dolby Atmos",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Mixed by Jane Roe in Dolby Atmos → ? “in Dolby Atmos”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe with John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe with John Doe",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe – bass; vocals",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "bass"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Jane Roe – bass; vocals → ? “vocals”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Photography, design and layout by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Photography By"
+          ],
+          [
+            "Jane Roe",
+            "Design By"
+          ],
+          [
+            "Jane Roe",
+            "Layout"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced, recorded and mixed by Jane Roe and John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ],
+          [
+            "Jane Roe",
+            "Recorded By"
+          ],
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Produced By"
+          ],
+          [
+            "John Doe",
+            "Recorded By"
+          ],
+          [
+            "John Doe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe (bass, vocals), John Doe (drums)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Bass"
+          ],
+          [
+            "Jane Roe",
+            "Vocals"
+          ],
+          [
+            "John Doe",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Featuring: Jane Roe (vocals), John Doe (guitar)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "vocals"
+          ],
+          [
+            "John Doe",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe & John Doe – vocals",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "vocals"
+          ],
+          [
+            "John Doe",
+            "vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vocal production: Jane Roe",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Vocal production: Jane Roe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe\nAdditional Recording\nJohn Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Additional Recording",
+          "John Doe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by\nJane Roe\nMastered by\nJohn Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Hansa Tonstudio (Berlin) in 2019",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Hansa Tonstudio",
+            "Recorded At",
+            "(Berlin)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio X (Berlin), mixed at Studio Y (Paris)",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "(Berlin)"
+          ],
+          [
+            "Studio Y",
+            "Mixed At",
+            "(Paris)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio X, Berlin and Studio Y, Paris",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "(Berlin)"
+          ],
+          [
+            "Studio Y",
+            "Recorded At",
+            "(Paris)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Simon & Garfunkel",
+      "artists": [
+        "Simon & Garfunkel"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Simon & Garfunkel",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Florence and the Machine – vocals",
+      "artists": [
+        "Florence and the Machine"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Florence and the Machine",
+            "vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe at Studio X and John Doe at Studio Y",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [
+          [
+            "Studio X",
+            "Mixed At"
+          ],
+          [
+            "Studio Y",
+            "Mixed At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio X and Dave Grohl played drums",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Recorded at Studio X and Dave Grohl played drums"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Tears for Fears",
+      "expect": {
+        "credits": [
+          [
+            "Tears for Fears",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe\nVocal Recording Studios",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [
+          [
+            "Vocal Recording Studios",
+            "Mixed At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe & John Doe – vocals\nguitar",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "vocals"
+          ],
+          [
+            "John Doe",
+            "vocals"
+          ],
+          [
+            "Jane Roe",
+            "guitar"
+          ],
+          [
+            "John Doe",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe (Walk by Faith and Stand by Me)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Photography Jane Roe (Berlin)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Photography By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    }
+  ]
+}
