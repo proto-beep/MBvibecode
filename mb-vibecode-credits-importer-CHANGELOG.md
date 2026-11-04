@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.44.1 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.45.0 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,23 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.45.0
+
+Block 2 – collected item Z-STD (Q-du, Q-el, Q-eo, Q-ep).
+
+#### Added
+
+- **The time of an import without its pauses:** a click, a key, the wheel or a touch (in the dashboard and on MusicBrainz's page) is work; a gap of at least **⚙ Settings → Cache → "Pauses not counted from (seconds)"** (300, beside "Collect statistics"; 0 = everything counts) is a pause and is not counted – a hidden tab is a pause from the moment it is hidden. The time runs from the first import of the page until "Enter edit" (until now until MusicBrainz confirmed, pauses included). For imports from 3.45.0 on; older records keep their time.
+- **The card "Sources" with its times:** per source the releases, the time per release and per relationship and the releases with a supplement (they count in their source's row too); a switch **Median | Average** (Median by default, remembered). The tiles "time per release", "time per relationship" and "fastest" use the new time too.
+
+#### Fixed (review of Block 2)
+
+- A pause right before "Enter edit" is subtracted too (it was lost when "Enter edit" was the first click after it).
+- Only the user's own input is work – the wheel, a touch, the pointer, a click, a key; the script's own scrolling (its log, jumps to an entry) and its clicks no longer break a pause.
+- A second "Enter edit" on the same page counts from the first one on (not from the first import again).
+- "Sources": the column "releases" counts releases (a release submitted twice is one); "Average per relationship" is all the time by all the relationships, as the tile "time per relationship"; "with a supplement" counts releases there and below the table.
+- The fields "Pauses not counted from (seconds)" and "Discogs aliases at most" show the stored value after a change (100000 → 86400).
 
 ### Import 3.44.1
 

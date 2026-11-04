@@ -1250,7 +1250,9 @@ def case_statsmore():
         H.open_stats(pg)
         pg.wait_for_timeout(600)
         CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
-          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())
+            .concat([...c.querySelectorAll('tbody tr')].map(t => `${t.children[0].textContent.trim()} ${t.children[1].textContent.trim()}`))]))"""
+        # ([Z-STD] 3.45.0: "Sources" a table – its source and its releases)
         c = pg.evaluate(CARDS)
         cols = pg.evaluate("[...document.querySelectorAll('[data-el=stats-when] .dci-stats-cols')].map(x => x.querySelectorAll('.dci-stats-col').length)")
         yday = pg.evaluate("(() => { const d = new Date(Date.now() - 86400000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
@@ -1710,5 +1712,108 @@ def case_editnote():
         results.append(not errs and not errs2 and not errs3)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_statstime():
+    """Credits Importer 3.45.0 (collected item Z-STD; Q-du, Q-el, Q-eo, Q-ep): the time of an import without its pauses, and the times
+    per source.
+    A) ⚙ Settings → Cache: "Pauses not counted from (seconds)" beside "Collect statistics" (here 2). Imported, 3 s without a click,
+       then a click; staged, "Enter edit": the record has the pause (idle ≥ 3 s) and its time without it (work = until "Enter edit"
+       minus the pause; ms as before).
+    B) Stored records – Discogs: 1 min (2 relationships), 2 min (4, with a Bandcamp supplement), an old one of 5 min (1; no work: its ms);
+       Bandcamp: 30 s (3): the card "Sources" per source the releases, the time per release and per relationship and the releases with a
+       supplement – Median (the default): Discogs 3 · 2 min 0 s · 30 s · 1 · 2 min 0 s; Bandcamp 1 · 30 s · 10 s; Average: Discogs
+       2 min 40 s per release, 2 min 0 s per relationship – remembered (dci-stats-time).
+    Review of 3.45.0:
+    C) The same page, a pause of 3.4 s – meanwhile the script scrolls (its log, the page) – then straight "Enter edit" (with no other click before it):
+       the pause counts (idle ≥ 3 s, the script's scrolling is no work), and the second record counts from the first "Enter edit" on
+       (start = its time, idle not the first one's again).
+    D) A second round of the first Discogs release (30 s, 1 relationship): the release counts once (Discogs 3, not 4); Median
+       2 min 0 s · 30 s; Average 2 min 50 s per release and all the time by all the relationships per relationship (510 s / 8 =
+       1 min 4 s, as the tile); "with a supplement: 1" (releases).
+    E) The field shows what was stored: 100000 → 86400."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.evaluate("localStorage.setItem('dci-stats-idle', '2')")
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'cache')
+        field = pg.evaluate("(() => { const on = document.querySelector('[data-el=settings] [data-set=stats-on]'); const f = document.querySelector('[data-el=settings] [data-set=stats-idle]'); if (!on || !f) return null; const rows = [...document.querySelectorAll('[data-el=settings] .dci-set-row, [data-el=settings] li, [data-el=settings] p')]; return [f.value, on.compareDocumentPosition(f) & 4 ? 'after' : 'before']; })()")
+        IDLE = '[data-el=settings] [data-set=stats-idle]'
+        pg.fill(IDLE, '100000'); pg.dispatch_event(IDLE, 'change'); pg.wait_for_timeout(200)
+        norm = [pg.eval_on_selector(IDLE, 'e => e.value'), pg.evaluate("localStorage.getItem('dci-stats-idle')")]
+        pg.fill(IDLE, '2'); pg.dispatch_event(IDLE, 'change'); pg.wait_for_timeout(200)
+        print('E) Feld nach 100000:', norm)
+        results.append(norm == ['86400', '86400'])
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(3200)  # a pause (no click, no key, no scrolling)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        r0 = recs[0] if recs else {}
+        print('A) Feld:', field, '| Datensatz: idle', r0.get('idle'), 'work', r0.get('work'), 'ms', r0.get('ms'))
+        results.append(field == ['2', 'after'] and r0.get('idle', 0) >= 3000 and r0.get('work') is not None and r0.get('ms') is not None and r0['work'] <= r0['ms'] - 3000)
+        # C) a pause with the script's scrolling, then straight "Enter edit"
+        pg.wait_for_timeout(1700)
+        scrolled = pg.evaluate("""(() => { let n = 0; const on = () => { n++; }; document.addEventListener('scroll', on, true);
+          document.querySelectorAll('#dci-log *, #dci-overlay *').forEach((el) => { if (el.scrollHeight > el.clientHeight + 5) { el.scrollTop = el.scrollTop > 0 ? 0 : 40; } });
+          window.scrollBy(0, window.scrollY > 0 ? -60 : 60); document.body.click();
+          return new Promise((res) => setTimeout(() => { document.removeEventListener('scroll', on, true); res(n); }, 200)); })()""")
+        pg.wait_for_timeout(1500)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = sorted(pg.evaluate(STAT_COUNT) or [], key=lambda r: r.get('at', 0))
+        r1 = recs[1] if len(recs) > 1 else {}
+        arm0 = int(str(r0.get('id', ':0')).split(':')[-1] or 0)
+        print('C) Skript-Scrolls:', scrolled, '| zweiter Datensatz: start', r1.get('start'), '(erstes Enter edit', arm0, ') idle', r1.get('idle'), 'work', r1.get('work'))
+        results.append(scrolled > 0 and r1.get('start') == arm0 and 3000 <= r1.get('idle', 0) <= int(str(r1.get('id', ':0')).split(':')[-1] or 0) - arm0 and r1.get('work') is not None and r1['work'] < 2000)
+        # B) stored records (a fresh browser context: its own database)
+        ctx2 = H.new_context(b)
+        pg, errs2 = H.open_mb_edit(ctx2, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        errs = errs + errs2
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def rec(i, src, n, work=None, ms=None, supp=(), mbid=None):
+            r = {'v': 2, 'id': f't:{i}', 'mbid': mbid or f'm{i}', 'at': now - i * 1000, 'start': now - 9999999, 'ms': ms if ms is not None else (work or 0) + 5000, 'src': src, 'supp': list(supp),
+                 'rel': rel, 'own': 0, 'ocr': None, 'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}{k}', 'Ann') for k in range(n)]}
+            if work is not None:
+                r['work'] = work
+            return r
+        recs = [rec(1, 'discogs', 2, work=60000), rec(2, 'discogs', 4, work=120000, supp=['bandcamp']), rec(3, 'discogs', 1, ms=300000), rec(4, 'bandcamp', 3, work=30000),
+                rec(5, 'discogs', 1, work=30000, mbid='m1')]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(700)
+        TABLE = "[...document.querySelectorAll('[data-el=stats-sources] .dci-stats-srct tbody tr')].map(t => [...t.children].map(c => c.textContent.replace(/\\s+/g, ' ').trim()))"
+        b1 = pg.evaluate(TABLE)
+        pg.click('[data-el=stats-sources] [data-act=stats-time-view][data-view=mean]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(TABLE)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-time')")
+        supp = pg.evaluate("(() => { const p = document.querySelector('[data-el=stats-sources] p.dci-sub'); return p ? p.textContent.trim() : null; })()")
+        print('B/D) Median:', b1, '| Durchschnitt:', b2, '| gespeichert:', stored, '|', supp, '| Fehler:', errs)
+        results.append(seeded and b1 == [['Discogs', '3', '2 min 0 s', '30 s', '1 · 2 min 0 s'], ['Bandcamp', '1', '30 s', '10 s', '–']]
+                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with a supplement: 1' and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
