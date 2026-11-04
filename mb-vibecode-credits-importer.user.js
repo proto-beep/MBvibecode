@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.44.0
+// @version      3.44.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.44.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.44.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.44.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.44.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.44.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.44.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -645,6 +645,14 @@
       "busy.mb": "Loading tracks and existing relationships from MusicBrainz …",
       "busy.discogs": "Loading Discogs release {id} …",
       "busy.artists": "Looking up MB artists via their {src} links …",
+      "busy.aliases": "Looking up Discogs aliases {i} of {n} …",
+      "msg.aliasesLater": "Discogs aliases looked up for {n} of {m} artists not found by their link – the others with “Discogs aliases …” at their entries (⚙ Settings → Sources).",
+      "log.aliasesLater": "Discogs aliases looked up for {n} of {m} artists; on demand: {list}",
+      "log.aliasesNone": "{name}: no MusicBrainz artist among its Discogs aliases",
+      "match.aliasFetch": "Discogs aliases …",
+      "match.aliasFetchTitle": "Look up this artist’s other names at Discogs (aliases) and MusicBrainz artists with them",
+      "settings.aliasMax": "Discogs aliases looked up per import",
+      "settings.aliasMaxTitle": "Artists Discogs has and MusicBrainz does not find by their link are looked up by their Discogs aliases – one request every 2.5 s; those with the most rows first, the others on demand at their entries (0: none)",
       "busy.discogsArtist": "Loading {src} data for {name} …",
       "busy.apply.one": "Staging {n} relationship in the editor …",
       "busy.apply.other": "Staging {n} relationships in the editor …",
@@ -4993,10 +5001,16 @@
     // [3.43.1] (review) one request to Discogs every 2.5 s, shared with the gap line of the release page ('dci-gap-last'): Discogs allows
     // 25 a minute without a login – a release with many unlinked artists asked for their aliases back to back ran into its 429
     const PACE_KEY = 'dci-gap-last';
-    async function pace() {
-      const wait = 2500 - (Date.now() - (Number(readJson('localStorage', PACE_KEY, 0)) || 0));
-      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-      writeJson('localStorage', PACE_KEY, Date.now());
+    // (3.44.1, review) one after another in this tab (several requests at once all waited the same and went together)
+    let paceChain = Promise.resolve();
+    function pace() {
+      const p = paceChain.then(async () => {
+        const wait = 2500 - (Date.now() - (Number(readJson('localStorage', PACE_KEY, 0)) || 0));
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+        writeJson('localStorage', PACE_KEY, Date.now());
+      });
+      paceChain = p.catch(() => {});
+      return p;
     }
     async function getJson(path, { missingId = null } = {}) {
       await pace();
@@ -8154,6 +8168,10 @@
   const GAP_EXACT_PREFIX = 'dci-gap-exact:';
   // [AY] (3.40.0) "Count exactly": { links, at } for the relationship editor opened in the background (every tab sees it)
   const GAP_COUNT_PREFIX = 'dci-gap-count:';
+  // [Z-ALC] (3.44.1; Q-ea, Q-ec) how many artists of an import are looked up by their Discogs aliases (one request every 2.5 s)
+  const ALIAS_MAX_KEY = 'dci-alias-max';
+  const ALIAS_MAX_DEFAULT = 12;
+  const aliasMax = () => clampInt(readJson('localStorage', ALIAS_MAX_KEY, ALIAS_MAX_DEFAULT), 0, 200, ALIAS_MAX_DEFAULT);
   const GAP_COUNT_HASH = 'dci-count';
   const GAP_COUNT_MAX_MS = 5 * 60 * 1000;
   const GAP_KEEP_MS = 7 * 24 * 3600 * 1000;
@@ -10266,6 +10284,12 @@
       if (row.level === 'release' && ans != null && row.typeAnswer == null) row.typeAnswer = ans;
     }
     resolveRowType(row);
+    // [Z-CLV] (3.44.1, review) a row of an event on "Skip": its type on the level it comes back to (on Skip it would have none)
+    if (row.level === 'skip' && row.emSkipEv) {
+      row.level = String(row.emSkipEv).split('|')[0];
+      resolveRowType(row);
+      row.level = 'skip';
+    }
     if (!row.primaryTouched) row.primaryText = pickPrimary(row);
     if (m.fallback && !primaryIsValid(row)) {
       // [137d] (3.34.26) a question already asked stays (with "miscellaneous support" if that was chosen), else it is asked now
@@ -18409,14 +18433,26 @@
    * A source may list pseudonyms as artists of their own (Discogs: "Aliases"); MusicBrainz often has only the
    * link of the main name. Artists not found by their own link are looked up through their aliases.
    */
-  async function resolveViaAliases(list, source = S.source) {
-    if (!source.aliases) return;
+  async function resolveViaAliases(list, source = S.source, { one = false } = {}) {
+    if (!source.aliases || !list.length) return;
     const seq = importSeq;
-    for (const a of list) {
+    // [Z-ALC] (3.44.1; Q-ek) at most ⚙ "Discogs aliases looked up per import": those with the most rows first (then in the dashboard's
+    // order); the others get "Discogs aliases …" at their entries; the busy line counts, a message says how many were left
+    const nRows = (a) => S.rows.filter((r) => r.artistKey === a.key).length;
+    const max = one ? list.length : aliasMax();
+    const order = one ? list : list.map((a, i) => [a, i]).sort((x, y) => nRows(y[0]) - nRows(x[0]) || x[1] - y[1]).map(([a]) => a);
+    const ask = order.slice(0, max);
+    const later = order.slice(max);
+    later.forEach((a) => { a.aliasLater = true; });
+    let looked = 0;
+    for (const [i, a] of ask.entries()) {
       // (3.43.5, counter-review) another import started meanwhile: no more requests for this one (each takes a 2.5 s slot)
       if (seq !== importSeq) return;
+      if (!one && ask.length > 1) setBusy('busy.aliases', { i: i + 1, n: ask.length });
       try {
         const aliases = await source.aliases(a.dId);
+        delete a.aliasLater;
+        looked++;
         a.dAliases = aliases.map((x) => x.name);
         if (!aliases.length) continue;
         const found = await lookupUrls(aliases.map((x) => x.links[0]), 'artist');
@@ -18429,9 +18465,23 @@
         console.warn('[Discogs-Credits] aliases', a.name, e);
         // [3.43.1] (review) said in the log (until 3.43.0 silent – "no aliases"); after Discogs' rate limit no more are asked
         log('warn', 'aliasFailed', { name: a.name, msg: e.message });
-        if (e && e.status === 429) break;
+        // (3.44.1, review) a failed one keeps (or gets) its button; after the limit those not asked too
+        a.aliasLater = true;
+        if (e && e.status === 429) {
+          ask.slice(i + 1).forEach((x) => { x.aliasLater = true; });
+          break;
+        }
       }
     }
+    // (3.44.1, review) another import meanwhile: nothing more of this one
+    if (seq !== importSeq) return looked;
+    if (!one && ask.length > 1) setBusy('busy.artists');
+    const open = list.filter((a) => a.aliasLater);
+    if (!one && open.length) {
+      showMessage('info', 'msg.aliasesLater', { n: looked, m: list.length });
+      log('info', 'aliasesLater', { n: looked, m: list.length, list: open.map((a) => a.name).join(', ') });
+    }
+    return looked;
   }
 
   /**
@@ -19982,6 +20032,10 @@
       title="${esc(tr('match.openNew'))}" aria-label="${esc(tr('match.openNew'))}">↗</a></span>`;
     const items = [];
     const heads = [];
+    // [Z-ALC] (3.44.1) not looked up by its Discogs aliases (over the number per import): a button does it for this entry
+    if (a.aliasLater && a.dId && !a.company) {
+      items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="aliases-fetch" title="${esc(tr('match.aliasFetchTitle'))}">${esc(tr('match.aliasFetch'))}</button>`);
+    }
     if (a.aliasHits && a.aliasHits.length) {
       heads.push(tr('match.aliasSuggest'));
       a.aliasHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}"
@@ -20487,7 +20541,7 @@
     for (const r of rows) {
       if (r.level === 'work') continue;
       // [Z-CLV] (3.44.0) an event put on "Skip" by a click on its level stays at its place ("① Skip"; a click takes it back)
-      if (r.level === 'skip' && !r.emSkipEv) continue;
+      if (r.level === 'skip' && !skippedEv(r)) continue;
       const k = r.level === 'skip' ? `skip|${r.emSkipEv}` : eventKeyOf(r);
       if (evByKey.has(k)) continue;
       const from = r.level === 'skip' ? String(r.emSkipEv).split('|')[0] : r.level;
@@ -20512,7 +20566,7 @@
     events.forEach((e, i) => { e.n = i + 1; });
     for (const l of lines) {
       for (const r of l.rows) {
-        if (r.level === 'work' || (r.level === 'skip' && !r.emSkipEv)) continue;
+        if (r.level === 'work' || (r.level === 'skip' && !skippedEv(r))) continue;
         const k = r.level === 'skip' ? `skip|${r.emSkipEv}` : eventKeyOf(r);
         if (!l.ev.has(k)) l.ev.set(k, []);
         l.ev.get(k).push(r);
@@ -20558,7 +20612,7 @@
     const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}` && !S.emEvDate.inline);
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
     // [Z-CLV] (3.44.0) an event on "Skip": its number and the level as a button (a click takes it back)
-    if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e)}</th>`;
+    if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}</th>`;
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
     return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
@@ -20585,8 +20639,10 @@
   }
 
   /** [E4] (3.34.31) The rows of an entry in an event; [Z-CLV] (3.44.0) of an event on "Skip" ("skip|<its key before>") those skipped with it. */
+  // (3.44.1, review) a row on "Skip" by its event's level only while nothing else put it there (scope, skipped works, entry skipped)
+  const skippedEv = (r) => !!(r.emSkipEv && r.level === 'skip' && !r.scopeLevel && !r.mxSkipped && !r.entrySkip);
   const rowsInEvent = (a, evKey) => (String(evKey).startsWith('skip|')
-    ? S.rows.filter((r) => r.artistKey === a.key && r.level === 'skip' && r.emSkipEv && `skip|${r.emSkipEv}` === evKey)
+    ? S.rows.filter((r) => r.artistKey === a.key && skippedEv(r) && `skip|${r.emSkipEv}` === evKey)
     : S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey));
 
   /**
@@ -20616,21 +20672,29 @@
     if (!rows.length) return;
     if (String(evKey).startsWith('skip|')) {
       // back from "Skip": onto `to` (the first level of the circle) – a row that cannot be there onto the level it had
-      const was = String(evKey).slice(5).split('|')[0];
+      // (3.44.1, review) first onto the level they had (their event as before), then – like any change of the level – onto `to`
+      const orig = String(evKey).slice(5);
+      const was = orig.split('|')[0];
       const lv = to || was;
       rows.forEach((r) => {
-        delete r.emSkipEv;
-        const on = typeOnLevel(r, lv) ? lv : was;
-        levelOf(r, on);
-        if (on === 'recording' && !r.tracks.size) r.tracks = new Set(selTracks().map((x) => x.idx));
+        levelOf(r, was);
         r.dateKeyed = true;
       });
+      emEventMoved(a, rows);
       log('info', 'emEvBack', { name: a.mbName || a.name, level: tr(`level.${lv}`), n: rows.length });
+      if (lv !== was) {
+        const k = eventKeyOf(rows[0]);
+        emEventLevel(a, k, lv);
+        return;
+      }
     } else {
       rows.forEach((r) => {
         levelOf(r, 'skip');
         r.emSkipEv = evKey;
       });
+      // (3.44.1, review) the event opened below its block: closed (it has no fields on "Skip")
+      const o = S.emEvOpen.get(a.key);
+      if (o && o.ev === evKey) S.emEvOpen.delete(a.key);
       log('info', 'emEvSkip', { name: a.mbName || a.name, n: rows.length });
     }
     renderWorks();
@@ -20833,6 +20897,7 @@
     const a = artistOf(t.el);
     if (!a) return;
     let rows;
+    if (t.kind === 'em-ev' && String(t.el.dataset.evhead).startsWith('skip|')) return;
     if (t.kind === 'em-ev') rows = rowsInEvent(a, t.el.dataset.evhead);
     else if (t.kind === 'em-line') rows = lineRows(t.el).filter((r) => r.level !== 'skip');
     else {
@@ -21241,7 +21306,7 @@
     const note = ask ? '' : chipNoteText(r);
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
-    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
+    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
       <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
@@ -21396,6 +21461,11 @@
    * staged comes from them as before.
    */
   function emTick(a, rows, evKey, on) {
+    // [Z-CLV] (3.44.1, review) a row of an event on "Skip": ✕ takes it out of that event (it stays on Skip, "taken out")
+    if (String(evKey).startsWith('skip|')) {
+      if (!on) rows.filter((r) => skippedEv(r) && `skip|${r.emSkipEv}` === evKey).forEach((r) => { delete r.emSkipEv; });
+      return;
+    }
     const inEv = rows.filter((r) => r.level !== 'skip' && eventKeyOf(r) === evKey);
     // [177] (3.38.10) the line as MusicBrainz names it
     const name = rowPhrase(rows[0]) || rows[0].primaryText || rows[0].raw;
@@ -21407,8 +21477,9 @@
     if (inEv.length) return;
     const src = S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
     if (!src) return;
-    const spare = rows.find((r) => r.level === 'skip');
+    const spare = rows.find((r) => r.level === 'skip' && !skippedEv(r));
     const row = spare || copyRowForEvent(rows[0]);
+    delete row.emSkipEv;
     const keep = row.primaryText;
     // [3.35.0] a row taken out before: as a level chosen by hand (not a level of the scope or of skipped works)
     delete row.scopeLevel;
@@ -26830,6 +26901,11 @@
       let m;
       while ((m = re.exec(seg))) {
         const name = clean(m[1]);
+        // [Z-CAT] (3.44.1) brackets right after a code are part of a catalogue number ("Music & Arts website states CD-4853(1)"), and a
+        // name with a word of a sentence ("states", "website") is none – no track group (Discogs 1565448)
+        if (/[A-Za-z]+[-\s]?\d[\w.-]*$/.test(m[1]) && /^\(/.test(m[0].slice(m[1].length))) continue;
+        // (3.44.1, review) only verbs of a sentence in small letters – names like "Jimmy Page", "Blue Note Music", "Says Who Music" stay
+        if (/\b(?:states|stated|says|said|lists|listed|reads|shows|mentions|according to|website)\b/.test(name)) continue;
         const tracks = list(m[2]);
         if (!name || name.length < 2 || !tracks) continue;
         out.push({ name, tracks, role: noteRole(seg.slice(0, m.index + m[1].length)) || noteRole(name), text: m[0].trim() });
@@ -29989,7 +30065,8 @@
     if (col) return { el: col, kind: 'place' };
     if (d.kind !== 'date') return null;
     // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
-    const em = t.closest('#dci-overlay th.dci-em-ev[data-evhead], #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
+    // (3.44.1, review) not the head of an event on "Skip"
+    const em = t.closest('#dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
     if (em) return { el: em, kind: em.matches('th') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
@@ -30763,10 +30840,15 @@
         const e = m.evByKey.get(btn.dataset.ev);
         if (!e) break;
         const next = evLevelNext(artist, e);
+        const moved = rowsInEvent(artist, e.key);
         if (e.skip || next === 'skip') emEventSkip(artist, e.key, e.skip ? next : null);
         else emEventLevel(artist, e.key, next);
-        // the focus on the level of the same event (its number stays) after the redraw
-        const again = S.overlay.querySelector(`[data-group="${artist.key}"] [data-act="em-evlevel-next"][data-n="${e.n}"]`);
+        // (3.44.1, review) the focus on the level of the same event – by its new key (the numbers may change when events sort anew);
+        // gone into the works matrix: the first level of the entry
+        const r0 = moved.find((r) => S.rows.includes(r) && r.level !== 'work');
+        const key = r0 ? (r0.level === 'skip' ? `skip|${r0.emSkipEv}` : eventKeyOf(r0)) : '';
+        const grp = S.overlay.querySelector(`[data-group="${artist.key}"]`);
+        const again = grp && ([...grp.querySelectorAll('[data-act="em-evlevel-next"]')].find((x) => x.dataset.ev === key) || grp.querySelector('[data-act="em-evlevel-next"]'));
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -31093,6 +31175,17 @@
         if (artist.company && S.rows.some((r) => r.artistKey === artist.key && r.level === 'work')) renderWorks();
         else updateGroupHeader(artist);
         refresh();
+        break;
+      }
+      // [Z-ALC] (3.44.1) the Discogs aliases of one entry (left over the number per import)
+      case 'aliases-fetch': {
+        if (!artist) break;
+        btn.disabled = true;
+        resolveViaAliases([artist], artist.src || S.source, { one: true }).then((n) => {
+          // (3.44.1, review) "none" only when Discogs answered (a failure keeps the button, the log says why)
+          if (n && (!artist.aliasHits || !artist.aliasHits.length)) log('info', 'aliasesNone', { name: artist.name });
+          rerenderGroup(artist);
+        });
         break;
       }
       case 'alias-use': {
@@ -33258,7 +33351,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -34143,6 +34236,9 @@
         // [172] (3.39.0) the line of the release page; [AY] (3.40.0) of Bandcamp too, and when nothing seems to be missing (off, Q-x)
         row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapLine'), tr('settings.gapLineTitle'))),
         row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
+        // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
+        row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
+            value="${aliasMax()}"></label>`),
       ],
       // [3.25.0] pasted texts and the credits texts of Bandcamp
       texts: () => [
@@ -34522,6 +34618,11 @@
     } else if (k === 'remember') {
       // [146] (3.36.0) remembered per release, or not
       setRemember(el.checked);
+    } else if (k === 'alias-max') {
+      // (3.44.1, review) an emptied field is the default, not 0
+      const v = String(el.value).trim() === '' ? ALIAS_MAX_DEFAULT : clampInt(el.value, 0, 200, ALIAS_MAX_DEFAULT);
+      writeJson('localStorage', ALIAS_MAX_KEY, v === ALIAS_MAX_DEFAULT ? null : v);
+      log('info', 'settingValue', { what: tr('settings.aliasMax'), value: String(v) });
     } else if (k === 'remember-max') {
       const v = clampInt(el.value, 0, 100, 50);
       S.rememberMax = v;
@@ -34754,7 +34855,9 @@
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
     DEV_KEY,
     // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload)
-    EDIT_NOTE_KEY];
+    EDIT_NOTE_KEY,
+    // [Z-ALC] (3.44.1) the number of alias lookups
+    ALIAS_MAX_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {

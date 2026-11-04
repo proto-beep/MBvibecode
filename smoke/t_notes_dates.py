@@ -740,4 +740,32 @@ def case_review43():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_catno():
+    """Credits Importer 3.44.1 (collected item Z-CAT; Discogs 1565448 "Cascades"): "Music & Arts website states CD-4853(1)" in the
+    Discogs notes is a catalogue number, no track list – no track group from it (until 3.44.0 "Music & Arts website states CD-4853 ·
+    1"); "Published by Pub Co (1, 3)" next to it still gives its group."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Music & Arts website states CD-4853(1)\nPublished by Pub Co (1, 3).'
+        return d
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        tgs = pg.evaluate("[...document.querySelectorAll('.dci-pchip-tg')].map(c => c.textContent.replace(/\\s+/g, ' ').trim())")
+        print('A) Track-Gruppen:', tgs, '| Fehler:', errs)
+        results.append(not any('Music & Arts' in t for t in tgs) and any('Pub Co' in t for t in tgs) and not errs)
+        b.close()
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
