@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.43.5 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.44.1 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,37 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.44.1
+
+Block 1, part 2 – collected items Z-CAT and Z-ALC (Q-ea, Q-ec, Q-ek).
+
+#### Added
+
+- **⚙ Settings → Sources → "Discogs aliases looked up per import"** (12; 0 = none): Discogs artists MusicBrainz does not find by their link are looked up by their Discogs aliases – one request every 2.5 s – at most that many per import, those with the most rows first. The busy line counts ("Looking up Discogs aliases 3 of 12 …"); a message says how many were looked up; the others have **"Discogs aliases …"** at their entries, a click looks up that one.
+
+#### Fixed
+
+- **A catalogue number with a bracket is no track list:** "Music & Arts website states CD-4853(1)" in the Discogs notes (Discogs 1565448) made a track group "Music & Arts website states CD-4853 · 1"; brackets right after a code, and names with words of a sentence ("states", "website" …), give none now.
+
+#### Fixed (the review of Block 1)
+
+- **An event on "Skip" keeps its rows:** ticking a line into another event took the skipped row for it (a row of its own now); ✕ at a chip of a skipped event takes the row out of it; its chips cannot be dragged, and a date of the pool cannot be dropped onto its head.
+- **Back from "Skip"** goes through the same steps as any change of the level (rows of one line in one event, the date matrix, the note for rows that cannot follow); "Skip" in an opened event closes it.
+- **The focus after a click on a level** stays on the event clicked, also when the events sort anew.
+- **A rules change** keeps the type of the rows of a skipped event (they came back without one).
+- **Alias lookups:** an artist whose lookup failed keeps "Discogs aliases …"; the message counts those really looked up and also comes when a failure left some over; "no MusicBrainz artist among its aliases" only when Discogs answered; requests of several clicks go one after another (each 2.5 s apart); an emptied number field is the default (12), not 0.
+- **The catalogue-number filter** no longer drops names like "Jimmy Page", "Blue Note Music" or "Says Who Music" (only verbs of a sentence in small letters count).
+
+### Import 3.44.0
+
+Block 1, part 1 – collected item Z-CLV (Q-eh, Q-ei, Q-ej).
+
+#### Added
+
+- **The level of an event is a button wherever it shows** – in the compact lines (by event and by role) and in the head of the event's column in the full matrix: a click puts all rows of the event on the next level MusicBrainz has for their roles – Recording → Release → Release group → Work → Skip → Recording (only the levels that exist for them; on Work the rows go into the works matrix). The tooltip names the next level. Rows that cannot be on a level stay where they are, with the note as before.
+- **An event on "Skip" stays at its place**, grey, "① Skip" – its rows keep their tracks and date; a click puts it on the first level again. Its ticks in the full matrix show what is in it and cannot be changed. The opened event offers "Skip" (and Work, where MusicBrainz has it) too.
+- Until now the level could be clicked through only in the compact line of the legacy view; the matrix (the default since 3.35.0) showed it as text.
 
 ### Import 3.43.5
 
