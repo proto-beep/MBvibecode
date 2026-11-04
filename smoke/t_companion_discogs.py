@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43; `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43, [Companion 1.12.0] sitedark; `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -504,6 +504,54 @@ def case_review43():
         c2 = [x for x in ct.evaluate(LOGS) if 'Count exactly' in x]
         print('C) Zähl-Tab – Marken im Speicher:', c1, '| Start:', c2[:1], '| Fehler:', errs, cerrs)
         results.append(not c1 and len(c2) == 1 and not errs and not cerrs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_sitedark():
+    """Companion 1.12.0 (Credits Importer 3.46.0, collected item Z-DM; Q-eg): the marks follow the dark theme of each site.
+    Discogs: a dark background of the page (as a dark-mode extension or Discogs' own theme) → html.dci-site-dark, the mark "skip"
+    dark grey with light text; back to white → light again; data-theme="dark" on html → dark. YouTube: html[dark] → dark (live).
+    Review of 1.12.0: a near-white oklch() background, a class "header-dark", data-theme="darkblue-light" – light; data-theme taken away
+    – light again."""
+    results = []
+    MARK = """(() => { let m = document.getElementById('t-mark'); if (!m) { m = document.createElement('span'); m.id = 't-mark'; m.className = 'dci-dg-mark dci-dg-skip'; m.textContent = '○'; document.body.appendChild(m); }
+      const cs = getComputedStyle(m); return [document.documentElement.classList.contains('dci-site-dark'), cs.backgroundColor, cs.color]; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        dg.wait_for_timeout(1200)
+        a = dg.evaluate(MARK)
+        dg.evaluate("document.body.style.background = '#181818'")
+        dg.wait_for_timeout(400)
+        b1 = dg.evaluate(MARK)
+        dg.evaluate("document.body.style.background = '#ffffff'")
+        dg.wait_for_timeout(400)
+        c = dg.evaluate(MARK)
+        dg.evaluate("document.body.style.background = ''; document.documentElement.setAttribute('data-theme', 'dark')")
+        dg.wait_for_timeout(400)
+        d = dg.evaluate(MARK)
+        print('Discogs: hell', a, '| dunkler Hintergrund', b1, '| weiß', c, '| data-theme', d)
+        results.append(a == [False, 'rgb(196, 196, 196)', 'rgb(51, 51, 51)'] and b1 == [True, 'rgb(92, 90, 102)', 'rgb(236, 235, 242)'] and not c[0] and d[0] and not dgerr)
+        fp = []
+        for js in ("document.documentElement.removeAttribute('data-theme')", "document.body.style.background = 'oklch(0.985 0 0)'",
+                   "document.body.style.background = ''; document.body.classList.add('header-dark')",
+                   "document.body.classList.remove('header-dark'); document.documentElement.setAttribute('data-theme', 'darkblue-light')",
+                   "document.documentElement.setAttribute('data-theme', 'theme-dark')"):
+            dg.evaluate(js)
+            dg.wait_for_timeout(400)
+            fp.append(dg.evaluate(MARK)[0])
+        print('Discogs: ohne data-theme, oklch fast weiß, header-dark, darkblue-light, theme-dark:', fp)
+        results.append(fp == [False, False, False, False, True])
+        yt, yterr = H.open_youtube(ctx, 'https://www.youtube.com/watch?v=Dy-ChUlAg9B')
+        yt.wait_for_timeout(1500)
+        y0 = yt.evaluate("document.documentElement.classList.contains('dci-site-dark')")
+        yt.evaluate("document.documentElement.setAttribute('dark', '')")
+        yt.wait_for_timeout(400)
+        y1 = yt.evaluate("document.documentElement.classList.contains('dci-site-dark')")
+        print('YouTube: hell', y0, '| html[dark]', y1, '| Fehler', yterr)
+        results.append(y0 is False and y1 is True and not yterr)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

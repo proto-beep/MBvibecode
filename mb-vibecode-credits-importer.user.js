@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.45.0
+// @version      3.46.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.45.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.45.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.46.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.46.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.45.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.46.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -854,6 +854,18 @@
       "settings.kindColors": "Colours for the kinds of entries",
       "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, event, other); off: all grey",
       "settings.kindColor": "Colour for {kind}",
+      "settings.themeWindow": "Theme as a window",
+      "settings.themeWindowTitle": "The dashboard as a window, the log and the rules as windows, the windows of cover art and the small previews. Auto: as the system is set.",
+      "settings.themePage": "Theme in the page",
+      "settings.themePageTitle": "The dashboard in the page, the bar above it with its boxes and the log beside the edit note. Auto: as the system is set.",
+      "settings.theme.auto": "Auto",
+      "settings.theme.light": "Light",
+      "settings.theme.dark": "Dark",
+      "settings.darkColors": "Colours of their own for the dark theme",
+      "settings.darkColorsTitle": "Off: the colours of the levels and kinds above, made lighter. On: chosen here – to begin with those lighter ones.",
+      "settings.levelColorDark": "Colour of the level “{level}” in the dark theme",
+      "settings.kindColorDark": "Colour of “{kind}” in the dark theme",
+      "settings.darkColorsReset": "The colours made from the light ones again",
       "kind.artist": "Artist",
       "kind.label": "Label",
       "kind.place": "Place",
@@ -12637,6 +12649,8 @@
 
   /** [3.30.0] Puts the rules where they belong now: into the dock below the head of the dashboard, or into a window. */
   function placeRules() {
+    // [Z-DM] (3.46.0) docked in the dashboard: its theme; a window: of the windows
+    applyTheme();
     const el = document.getElementById('dci-rules');
     if (!el) return;
     const dock = S.overlay && S.overlay.querySelector('[data-el="rules-dock"]');
@@ -15696,6 +15710,8 @@
 
   /** The place selector in the log's head, with a hint when the log cannot be where it was asked to be. */
   function renderLogPlace() {
+    // [Z-DM] (3.46.0) docked beside the edit note: the theme of the page; a window: of the windows
+    applyTheme();
     const sel = S.logEl && S.logEl.querySelector('[data-log-f="place"]');
     if (!sel) return;
     sel.value = S.logPlace;
@@ -30592,6 +30608,21 @@
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
+      // [Z-DM] (3.46.0) the theme as a window or in the page; the colours of the dark theme made from the light ones again
+      case 'theme-set':
+        if (btn.dataset.theme !== themeSetting(btn.dataset.where)) setTheme(btn.dataset.where, btn.dataset.theme);
+        break;
+      case 'dark-colors-reset': {
+        const what = btn.dataset.what === 'kind' ? 'kind' : 'level';
+        if (what === 'level') S.levelPaletteDark = {};
+        else S.kindPaletteDark = {};
+        saveDarkPalette(what);
+        log('info', 'settingValue', { what: tr('settings.darkColors'), value: tr('settings.darkColorsReset') });
+        if (what === 'level') applyLevelColors();
+        else applyKindColors();
+        if (S.settingsOpen) renderSettings();
+        break;
+      }
       case 'entries-view':
         // [E4] (3.34.29) the entries as a matrix or as before
         if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
@@ -32559,6 +32590,21 @@
       applyLevelColors();
       return;
     }
+    // [Z-DM] (3.46.0) a colour of the dark theme shown while it is chosen (stored on "change")
+    if (el.dataset && /^(?:level|kind)-color-dark$/.test(el.dataset.set || '') && /^#[0-9a-f]{6}$/i.test(el.value)) {
+      const what = el.dataset.set.startsWith('level') ? 'level' : 'kind';
+      const k = what === 'level' ? el.dataset.level : el.dataset.kind;
+      if ((what === 'level' ? LEVEL_PALETTE_DEFAULT : KIND_PALETTE_DEFAULT)[k]) {
+        (what === 'level' ? S.levelPaletteDark : S.kindPaletteDark)[k] = el.value.toLowerCase();
+        if (what === 'level') applyLevelColors();
+        else applyKindColors();
+        // (its tag beside it in the dark colour, also while the dashboard is light)
+        const lab = el.closest('label');
+        const chip = what === 'level' ? lab && lab.querySelector('.dci-cl-level') : lab;
+        if (chip) chip.setAttribute('style', darkChipStyle(what, k));
+      }
+      return;
+    }
     // [3.32.4] a colour of a kind shown while it is chosen (stored on "change")
     if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
       S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
@@ -33265,6 +33311,8 @@
     if (S.settingsOpen) renderSettings();
     updatePageScrollPadding();
     renderLauncher();
+    // [Z-DM] (3.46.0) the dashboard in the page or as a window: the theme of that place
+    applyTheme();
   }
 
   /**
@@ -33400,7 +33448,8 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY,
+      'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -33460,10 +33509,12 @@
   function applyKindColors() {
     if (!S.overlay) return;
     S.overlay.classList.toggle('dci-kindc', !!S.kindColors);
-    Object.entries(S.kindPalette).forEach(([kind, c0]) => {
-      const c = S.kindColors ? c0 : KIND_PALETTE_DEFAULT.other;
+    // [Z-DM] (3.46.0) dark: the colours of the dark theme, the background mixed with the dark ground
+    const dark = overlayDark();
+    Object.keys(S.kindPalette).forEach((kind) => {
+      const c = !S.kindColors ? (dark ? darkToneOf('kind', KIND_PALETTE_DEFAULT.other) : KIND_PALETTE_DEFAULT.other) : dark ? darkPaletteColor('kind', kind) : S.kindPalette[kind];
       S.overlay.style.setProperty(`--dci-kind-${kind}`, c);
-      S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, tintOf(c, 0.11));
+      S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, dark ? mixHex(c, DARK_GROUND, 0.2) : tintOf(c, 0.11));
     });
   }
 
@@ -33478,25 +33529,131 @@
     return Object.fromEntries(Object.entries(LEVEL_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
   }
 
-  /** Dark or light text on a colour (by its relative luminance). */
-  function inkOn(hex) {
+  /**
+   * Dark or light text on a colour (by its relative luminance). [Z-DM] (3.46.0) dark theme: the one of more contrast (the light
+   * theme keeps its white on the colours of the levels).
+   */
+  function inkOn(hex, dark = false) {
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.36 ? '#1f1d29' : '#ffffff';
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > (dark ? 0.21 : 0.36) ? '#1f1d29' : '#ffffff';
   }
 
   /** [3.29.2] The colours of the levels on the dashboard (CSS variables; the class "dci-lvlc" while they are on). */
   function applyLevelColors() {
     if (!S.overlay) return;
     S.overlay.classList.toggle('dci-lvlc', !!S.levelColors);
-    Object.entries({ ...S.levelPalette, skip: LEVEL_SKIP_COLOR }).forEach(([level, c]) => {
+    // [Z-DM] (3.46.0) dark: the colours of the dark theme
+    const dark = overlayDark();
+    const pal = dark ? { ...Object.fromEntries(Object.keys(S.levelPalette).map((k) => [k, darkPaletteColor('level', k)])), skip: darkTone(LEVEL_SKIP_COLOR) }
+      : { ...S.levelPalette, skip: LEVEL_SKIP_COLOR };
+    Object.entries(pal).forEach(([level, c]) => {
       S.overlay.style.setProperty(`--dci-lvl-${level}`, c);
-      S.overlay.style.setProperty(`--dci-lvl-${level}-ink`, inkOn(c));
+      S.overlay.style.setProperty(`--dci-lvl-${level}-ink`, inkOn(c, dark));
     });
   }
 
   function saveLevelPalette() {
     const own = Object.fromEntries(Object.entries(S.levelPalette).filter(([k, c]) => c !== LEVEL_PALETTE_DEFAULT[k]));
     writeJson('localStorage', LEVEL_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
+
+  // --- [Z-DM] (3.46.0; Q-eb, Q-ed, Q-ee, Q-eg, Q-em) The dark theme --------------------------------------------------------------
+  // as a window (the dashboard as a window, its log and rules as windows, the windows of cover art, the peeks; default: as the
+  // system) and in the page (the dashboard in the page, the page bar, the boxes on MusicBrainz's pages; default: light) – each
+  // Auto | Light | Dark. The rules docked in the dashboard: as the dashboard; the log docked beside the edit note: as the page.
+  const THEME_WIN_KEY = 'dci-theme-window';
+  const THEME_PAGE_KEY = 'dci-theme-page';
+  const THEMES = ['auto', 'light', 'dark'];
+  // the colours of the levels and kinds of their own in the dark theme (off: made lighter from the light ones)
+  const DARK_COLORS_KEY = 'dci-dark-colors';
+  const LEVEL_PALETTE_DARK_KEY = 'dci-level-palette-dark';
+  const KIND_PALETTE_DARK_KEY = 'dci-kind-palette-dark';
+  // (the page bar and what is in it; (3.46.0, review) the boxes on MusicBrainz's other pages have colours of their own and no
+  // stylesheet of the script: as before)
+  const DARK_PAGE_ROOTS = ['dci-pagebar', 'dci-controls', 'dci-launcher', 'dci-open', 'dci-open-ocr', 'dci-notice', 'dci-langask'];
+  const DARK_WIN_ROOTS = ['dci-ocr', 'dci-ocr-peek', 'dci-line-peek'];
+  const DARK_ROOTS = ['dci-overlay', 'dci-log', 'dci-rules', ...DARK_WIN_ROOTS, ...DARK_PAGE_ROOTS];
+  // (the parts not inside another one: enough for "in a dark part")
+  const DARK_TOP_ROOTS = ['dci-overlay', 'dci-log', 'dci-rules', ...DARK_WIN_ROOTS, 'dci-pagebar'];
+  const themeSetting = (where) => {
+    const d = where === 'page' ? 'light' : 'auto';
+    const v = readJson('localStorage', where === 'page' ? THEME_PAGE_KEY : THEME_WIN_KEY, d);
+    return THEMES.includes(v) ? v : d;
+  };
+  const systemDark = () => {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch {
+      return false;
+    }
+  };
+  const themeDark = (where) => {
+    const v = themeSetting(where);
+    return v === 'dark' || (v === 'auto' && systemDark());
+  };
+  S.darkColors = readJson('localStorage', DARK_COLORS_KEY, false) === true;
+  const paletteOwnRead = (key, defs) => {
+    const stored = readJson('localStorage', key, null) || {};
+    return Object.fromEntries(Object.keys(defs).filter((k) => /^#[0-9a-f]{6}$/i.test(stored[k] || '')).map((k) => [k, stored[k].toLowerCase()]));
+  };
+  S.levelPaletteDark = paletteOwnRead(LEVEL_PALETTE_DARK_KEY, LEVEL_PALETTE_DEFAULT);
+  S.kindPaletteDark = paletteOwnRead(KIND_PALETTE_DARK_KEY, KIND_PALETTE_DEFAULT);
+  /** [Z-DM] Whether the dashboard is shown dark now (its place and the theme of that place). */
+  const overlayDark = () => document.documentElement.classList.contains('dci-dk-overlay');
+  /** [Z-DM] The colour of a level or kind in the dark theme: its own (when switched on and chosen), else the light one made lighter. */
+  function darkPaletteColor(what, k) {
+    const own = what === 'level' ? S.levelPaletteDark : S.kindPaletteDark;
+    const light = what === 'level' ? S.levelPalette[k] : S.kindPalette[k];
+    return S.darkColors && own[k] ? own[k] : darkToneOf(what, light);
+  }
+  /** [Z-DM] (3.46.0, review) The tag beside a picker of the dark theme in its dark colour (the dashboard may be light). */
+  function darkChipStyle(what, k) {
+    const c = darkPaletteColor(what, k);
+    return what === 'level' ? `--dci-lvl-${k}: ${c}; --dci-lvl-${k}-ink: ${inkOn(c, true)}` : `--dci-kind-${k}: ${c}`;
+  }
+  function saveDarkPalette(what) {
+    const own = what === 'level' ? S.levelPaletteDark : S.kindPaletteDark;
+    writeJson('localStorage', what === 'level' ? LEVEL_PALETTE_DARK_KEY : KIND_PALETTE_DARK_KEY, Object.keys(own).length ? own : null);
+  }
+  /**
+   * [Z-DM] The theme of each part of the script: a class on <html> per part (dci-dk-overlay, dci-dk-log …) – the dark stylesheet
+   * asks for it; the colours of the levels and kinds follow the dashboard's.
+   */
+  function applyTheme() {
+    const h = document.documentElement;
+    if (!h) return;
+    const win = themeDark('window');
+    const page = themeDark('page');
+    const ov = inPage() ? page : win;
+    const st = { 'dci-overlay': ov, 'dci-log': logDocked() ? page : win, 'dci-rules': rulesDocked() ? ov : win };
+    DARK_WIN_ROOTS.forEach((id) => { st[id] = win; });
+    DARK_PAGE_ROOTS.forEach((id) => { st[id] = page; });
+    // ((3.46.0, review) the dark stylesheet made when first needed, and switched off while nothing is dark – the light theme pays nothing)
+    const any = Object.values(st).some(Boolean);
+    if (any) ensureDarkSheet();
+    const sheet = document.getElementById('dci-styles-dark');
+    if (sheet && sheet.disabled !== !any) sheet.disabled = !any;
+    let changed = false;
+    Object.entries(st).forEach(([id, on]) => {
+      const c = `dci-dk-${id.slice(4)}`;
+      if (h.classList.contains(c) !== on) {
+        h.classList.toggle(c, on);
+        changed = true;
+      }
+    });
+    if (changed && S.overlay) {
+      applyLevelColors();
+      applyKindColors();
+    }
+  }
+  function setTheme(where, v) {
+    const key = where === 'page' ? THEME_PAGE_KEY : THEME_WIN_KEY;
+    const d = where === 'page' ? 'light' : 'auto';
+    const val = THEMES.includes(v) ? v : d;
+    writeJson('localStorage', key, val === d ? null : val);
+    log('info', 'settingValue', { what: tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow'), value: tr(`settings.theme.${val}`) });
+    applyTheme();
+    if (S.settingsOpen) renderSettings();
   }
   // --- [E8] (3.38.0) Statistics: the dashboard's part (milestone "Statistics"; the maintainer's wishes of 2026-10-29 – 30) -----
 
@@ -34316,6 +34473,13 @@
         row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
+        // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
+        ...['window', 'page'].map((where) => {
+          const label = tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow');
+          return row(`<span title="${esc(tr(where === 'page' ? 'settings.themePageTitle' : 'settings.themeWindowTitle'))}">${esc(label)}</span> <span class="dci-seg dci-seg-small"
+            role="group" data-el="theme-${where}" aria-label="${esc(label)}">${THEMES.map((v) => `<button type="button" data-act="theme-set" data-where="${where}" data-theme="${v}"
+            aria-pressed="${themeSetting(where) === v}">${esc(tr(`settings.theme.${v}`))}</button>`).join('')}</span>`);
+        }),
         row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
         // [E4] (3.34.29) the entries as a matrix (default) or as before
         row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
@@ -34340,6 +34504,18 @@
         row(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
           value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
           <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`),
+        // [Z-DM] (3.46.0; Q-ee) colours of their own for the dark theme (off: the light ones made lighter; on: those to begin with)
+        row(check('data-set="dark-colors"', S.darkColors, tr('settings.darkColors'), tr('settings.darkColorsTitle'))),
+        ...(S.darkColors ? [
+          row(`<span class="dci-lvl-pick dci-dark-pick" data-el="dark-levels">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color-dark"
+            data-level="${level}" value="${darkPaletteColor('level', level)}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColorDark', { level: tr(`level.${level}`) }))}">
+            <span class="dci-cl-level" data-level="${level}" style="${darkChipStyle('level', level)}">${esc(tr(`level.${level}`))}</span></label>`).join('')}
+            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="level" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`),
+          row(`<span class="dci-lvl-pick dci-kind-pick dci-dark-pick" data-el="dark-kinds">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}" style="${darkChipStyle('kind', kind)}"><input type="color"
+            data-set="kind-color-dark" data-kind="${kind}" value="${darkPaletteColor('kind', kind)}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColorDark', { kind: tr(`kind.${kind}`) }))}">
+            <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}
+            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="kind" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`),
+        ] : []),
       ],
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
@@ -34653,6 +34829,28 @@
         applyKindColors();
       }
     }
+    // [Z-DM] (3.46.0) colours of their own for the dark theme
+    else if (k === 'dark-colors') {
+      S.darkColors = el.checked;
+      writeJson('localStorage', DARK_COLORS_KEY, el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('settings.darkColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyLevelColors();
+      applyKindColors();
+      if (S.settingsOpen) renderSettings();
+    } else if (k === 'level-color-dark' || k === 'kind-color-dark') {
+      const what = k.startsWith('level') ? 'level' : 'kind';
+      const key = what === 'level' ? el.dataset.level : el.dataset.kind;
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && (what === 'level' ? LEVEL_PALETTE_DEFAULT : KIND_PALETTE_DEFAULT)[key]) {
+        const own = what === 'level' ? S.levelPaletteDark : S.kindPaletteDark;
+        // (the colour made lighter is no colour of its own)
+        if (el.value.toLowerCase() === darkToneOf(what, what === 'level' ? S.levelPalette[key] : S.kindPalette[key])) delete own[key];
+        else own[key] = el.value.toLowerCase();
+        saveDarkPalette(what);
+        log('info', 'settingValue', { what: tr(what === 'level' ? 'settings.levelColorDark' : 'settings.kindColorDark', what === 'level' ? { level: tr(`level.${key}`) } : { kind: tr(`kind.${key}`) }), value: el.value.toLowerCase() });
+        if (what === 'level') applyLevelColors();
+        else applyKindColors();
+      }
+    }
     else if (k === 'log-place') setLogPlace(el.value);
     else if (k === 'aw-on') {
       S.awOn = el.checked;
@@ -34882,6 +35080,10 @@
       applyLevelColors();
       S.kindColors = true;
       S.kindPalette = { ...KIND_PALETTE_DEFAULT };
+      // [Z-DM] (3.46.0) the themes as by default, no colours of their own for the dark theme
+      Object.assign(S, { darkColors: false, levelPaletteDark: {}, kindPaletteDark: {} });
+      applyTheme();
+      applyLevelColors();
       applyKindColors();
       S.rulesPlace = 'dashboard';
       S.rulesRowPlace = 'window';
@@ -34962,6 +35164,7 @@
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
+    'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
@@ -35009,7 +35212,10 @@
       // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
       // cleared, the running dashboard kept them until the next reload)
       entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
+      // [Z-DM] (3.46.0, review) no colours of their own for the dark theme (the themes: their keys, read anew)
+      darkColors: false, levelPaletteDark: {}, kindPaletteDark: {},
     });
+    applyTheme();
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
@@ -35645,6 +35851,197 @@
     if (S.subDialog) S.subDialog.cancel();
     else closeDashboard();
   });
+
+  // --- [Z-DM] (3.46.0) The dark stylesheet: made from the light one when the script starts ---------------------------------------
+  const DK_COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b|rgba?\([^)]*\)|\b(?:white|black)\b/g;
+  /** [Z-DM] A colour of the stylesheet as [r, g, b, alpha] (null: not one). */
+  function dkParse(c) {
+    if (c === 'white') return [255, 255, 255, 1];
+    if (c === 'black') return [0, 0, 0, 1];
+    if (c[0] === '#') {
+      let h = c.slice(1);
+      if (h.length <= 4) h = [...h].map((x) => x + x).join('');
+      const n = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+      return [...n, h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1];
+    }
+    const m = c.match(/[\d.]+%?/g) || [];
+    if (m.length < 3) return null;
+    const num = (x, max) => (x.endsWith('%') ? (parseFloat(x) / 100) * max : Number(x));
+    return [0, 1, 2].map((i) => num(m[i], 255)).concat([m[3] != null ? num(m[3], 1) : 1]);
+  }
+  function dkHsl([r0, g0, b0]) {
+    const [r, g, b] = [r0 / 255, g0 / 255, b0 / 255];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    let h = 0;
+    let s = 0;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = (max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4) / 6;
+    }
+    return [h, s, l];
+  }
+  function dkRgb([h, s, l]) {
+    if (!s) return [l, l, l].map((x) => Math.round(x * 255));
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const f = (t0) => {
+      const t = (t0 + 1) % 1;
+      return t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p;
+    };
+    return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map((x) => Math.round(x * 255));
+  }
+  const dkOut = ([r, g, b, a]) => (a < 1 ? `rgba(${r}, ${g}, ${b}, ${Math.round(a * 1000) / 1000})` : `#${[r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('')}`);
+  // (a colour of its own – a button, a mark – not a grey or a light tint)
+  const dkAccent = ([, s, l]) => s > 0.35 && l > 0.3 && l < 0.68;
+  /**
+   * [Z-DM] A colour of the light stylesheet in the dark one: text light enough on the dark ground; grounds (backgrounds, borders) with
+   * their lightness turned round (white → the dark ground), colours of their own kept a little darker; shadows as they are.
+   */
+  function darkColor(c, kind) {
+    if (kind === 'shadow') return c;
+    const p = dkParse(c);
+    if (!p) return c;
+    const hsl = dkHsl(p);
+    const [h, s, l] = hsl;
+    const acc = dkAccent(hsl);
+    // (white text is on a colour of its own: it stays)
+    if (kind === 'text' && l >= 0.9) return c;
+    // (a dark ground of the light theme – a badge with white text – stays dark, a little lighter)
+    const L = kind === 'text' ? Math.max(acc ? l : 1 - l, 0.7) : acc ? l * 0.9 : l < 0.3 ? 0.18 + l * 0.6 : 0.11 + (1 - l) * 0.82;
+    return dkOut([...dkRgb([h, kind === 'text' ? s : Math.min(s, 0.6), Math.min(0.96, L)]), p[3]]);
+  }
+  /**
+   * [Z-DM] A colour of a level or kind on the dark ground: light enough for its bars and tags (a level's tag has its ink by its
+   * colour; a kind's white text: not as light).
+   */
+  function darkTone(hex, minL = 0.62) {
+    const p = dkParse(hex);
+    if (!p) return hex;
+    const [h, s, l] = dkHsl(p);
+    return dkOut([...dkRgb([h, Math.min(s, 0.75), Math.max(l, minL)]), 1]);
+  }
+  const darkToneOf = (what, hex) => darkTone(hex, what === 'kind' ? 0.38 : 0.62);
+  /** [Z-DM] Two "#rrggbb" mixed (share 0 … 1 of the first). */
+  function mixHex(a, b, share) {
+    return `#${[1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * share + parseInt(b.slice(i, i + 2), 16) * (1 - share)).toString(16).padStart(2, '0')).join('')}`;
+  }
+  const DARK_GROUND = darkColor('#ffffff', 'ground');
+  const DK_TEXT_PROPS = /^(?:color|caret-color|-webkit-text-fill-color|fill|outline(?:-color)?|text-decoration(?:-color)?|accent-color)$/;
+  const DK_TEXT_VARS = /^--(?:ink|muted|ok|warn|err|teal|role|[\w-]*-(?:d|ink))$/;
+  const DK_SHADOW_PROPS = /shadow$/;
+  // (all that holds a colour; copied also without one – "transparent", "inherit", a var() – so that the order of the rules stays)
+  const DK_COLOR_PROPS = /^(?:color|caret-color|-webkit-text-fill-color|fill|stroke|background(?:-color|-image)?|border(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?(?:-color)?|outline(?:-color)?|box-shadow|text-shadow|text-decoration(?:-color)?|column-rule(?:-color)?|accent-color)$/;
+  /**
+   * [Z-DM] A selector of the light stylesheet in the dark one: in a part of the script (#dci-overlay …) when the class of its theme is
+   * on <html>; one of no part: in any dark part (with :where, so that it weighs as before) or the part itself.
+   */
+  const DK_ROOT_RES = DARK_ROOTS.map((r) => [r, new RegExp(`#${r}(?![\\w-])`)]);
+  const DK_IN_ANY = `:where(${DARK_TOP_ROOTS.map((r) => `html.dci-dk-${r.slice(4)} #${r}`).join(', ')})`;
+  const DK_IS_ANY = `:where(${DARK_ROOTS.map((r) => `html.dci-dk-${r.slice(4)} #${r}`).join(', ')})`;
+  function darkSelector(x) {
+    const hit = DK_ROOT_RES.find(([, re]) => re.test(x));
+    if (hit) return `html.dci-dk-${hit[0].slice(4)} ${x}`;
+    const pe = x.search(/::|:(?:before|after)\b/);
+    const base = pe >= 0 ? x.slice(0, pe) : x;
+    const compound = base && !/[\s>+~]/.test(base.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''));
+    return compound ? `${DK_IN_ANY} ${x}, ${base}${DK_IS_ANY}${pe >= 0 ? x.slice(pe) : ''}` : `${DK_IN_ANY} ${x}`;
+  }
+  /** [Z-DM] (3.46.0, review) A list split at its commas – not at those inside brackets or quotes (":is(.a, .b)", '[title="a, b"]'). */
+  function splitTop(text, sep = ',') {
+    const out = [];
+    let depth = 0;
+    let quote = '';
+    let cur = '';
+    for (const ch of text) {
+      if (quote) {
+        if (ch === quote) quote = '';
+      } else if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === '(' || ch === '[') depth++;
+      else if (ch === ')' || ch === ']') depth--;
+      else if (ch === sep && depth === 0) {
+        out.push(cur);
+        cur = '';
+        continue;
+      }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.map((x) => x.trim()).filter(Boolean);
+  }
+  /** [Z-DM] (3.46.0, review) The dark stylesheet, made once, after the light one. */
+  function ensureDarkSheet() {
+    if (document.getElementById('dci-styles-dark')) return;
+    const light = document.getElementById('dci-styles');
+    if (!light) return;
+    const dark = document.createElement('style');
+    dark.id = 'dci-styles-dark';
+    dark.textContent = darkCss(light.textContent);
+    light.after(dark);
+  }
+  /** [Z-DM] The dark stylesheet: each rule with a colour once more, for the dark parts, its colours made dark. */
+  function darkCss(css0) {
+    const out = [];
+    // [Z-DM] (3.46.0, review) a flash with colours: a dark copy of its keyframes ("<name>-dk"), the rules that start it switch to it
+    const frames = new Set();
+    const css = css0.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g, (all, name, body) => {
+      if ((body.match(DK_COLOR_RE) || []).length) {
+        frames.add(name);
+        out.push(`@keyframes ${name}-dk { ${body.replace(/([\w-]+)\s*:\s*([^;{}]+)/g, (d, k, v) => `${k}: ${v.replace(DK_COLOR_RE, (c) => darkColor(c, DK_SHADOW_PROPS.test(k) ? 'shadow' : DK_TEXT_PROPS.test(k) ? 'text' : 'ground'))}`)} }`);
+      }
+      return '';
+    });
+    // (a text colour as the ground of a button with white text – "background: var(--ok)": the dark ground of that colour, var(--ok-dkg))
+    const textVars = new Set((css.match(/--[\w-]+(?=\s*:)/g) || []).filter((k) => DK_TEXT_VARS.test(k)));
+    const groundOf = (v) => v.replace(/var\((--[\w-]+)/g, (all, n) => (textVars.has(n) ? `var(${n}-dkg` : all));
+    const walk = (text, wrap) => {
+      const re = /(@(?:media|container|supports)[^{]+)\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}|([^{}]+)\{([^{}]*)\}/g;
+      let m = re.exec(text);
+      while (m) {
+        if (m[1]) walk(m[2], m[1].trim());
+        else {
+          const sel = m[3].trim();
+          const decls = m[4].split(';').map((d) => d.trim()).filter((d) => d.includes(':'));
+          const keyOf = (d) => d.slice(0, d.indexOf(':')).trim().toLowerCase();
+          const valOf = (d) => d.slice(d.indexOf(':') + 1).trim();
+          const has = (v) => (v.match(DK_COLOR_RE) || []).length > 0;
+          // (white text on a button of its own colour stays white)
+          const bgAccent = decls.some((d) => /^background(?:-color)?$/.test(keyOf(d)) && (valOf(d).match(DK_COLOR_RE) || []).some((c) => {
+            const p = dkParse(c);
+            return p && dkAccent(dkHsl(p));
+          }));
+          const dd = [];
+          decls.forEach((d) => {
+            const k = keyOf(d);
+            const v = valOf(d);
+            const custom = k.startsWith('--');
+            if (/^animation(?:-name)?$/.test(k)) {
+              const v2 = v.replace(/[\w-]+/g, (w) => (frames.has(w) ? `${w}-dk` : w));
+              if (v2 !== v) dd.push(`${k}: ${v2}`);
+              return;
+            }
+            if (custom ? !has(v) && !/var\(/.test(v) : !DK_COLOR_PROPS.test(k)) return;
+            const kind = DK_SHADOW_PROPS.test(k) ? 'shadow' : DK_TEXT_PROPS.test(k) || (custom && DK_TEXT_VARS.test(k)) ? 'text' : 'ground';
+            dd.push(`${k}: ${kind === 'text' && bgAccent ? v : v.replace(DK_COLOR_RE, (c) => darkColor(c, kind))}`);
+            // (a text colour: also as a ground; a ground made of one: its ground)
+            if (custom && textVars.has(k)) dd.push(`${k}-dkg: ${groundOf(v).replace(DK_COLOR_RE, (c) => darkColor(c, 'ground'))}`);
+            else if (!custom && /^background/.test(k) && groundOf(v) !== v) dd[dd.length - 1] = `${k}: ${groundOf(v).replace(DK_COLOR_RE, (c) => darkColor(c, kind))}`;
+          });
+          if (sel && !sel.startsWith('@') && dd.length) {
+            const rule = `${splitTop(sel).map(darkSelector).join(', ')} { ${dd.join('; ')}; }`;
+            out.push(wrap ? `${wrap} { ${rule} }` : rule);
+          }
+        }
+        m = re.exec(text);
+      }
+    };
+    walk(css, null);
+    // (the browser's own parts – fields, scroll bars – dark too)
+    out.push(`${DARK_ROOTS.map((r) => `html.dci-dk-${r.slice(4)} #${r}`).join(', ')} { color-scheme: dark; }`);
+    return out.join('\n');
+  }
 
   function injectStyles() {
     const style = document.createElement('style');
@@ -37118,6 +37515,14 @@
       }
     `;
     document.head.appendChild(style);
+    // [Z-DM] (3.46.0) the dark stylesheet after it, when a part is dark (ensureDarkSheet); the system's choice followed while it changes
+    applyTheme();
+    try {
+      const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq && mq.addEventListener) mq.addEventListener('change', () => applyTheme());
+    } catch {
+      /* (no matchMedia: light, or as set) */
+    }
   }
 
   // [3.3.2] The old script ("Import Discogs credits", another file) or a second copy must not run beside this one:
