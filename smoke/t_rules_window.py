@@ -980,4 +980,75 @@ def case_regionlist():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_review43():
+    """Credits Importer 3.43.2 (full review, package P3 – flow and state).
+    A) The levels of the rows (a producer named for tracks on the recordings, creative direction, an arranger) stay through a rule
+       switched in "Mapping rules" (S007 off and on). 3.43.2 keeps a level the import flow chose (`levelImport`) and a credit switched
+       off at the source (`srcOff`, about/notes text) through the remap – those paths need the companion or Bandcamp (code read).
+    B) "Remember changes … per release" on: an artist MusicBrainz does not have ("New Group", Discogs 3030) created in the form – the
+       entry shows the new artist; after a reload (the same import, remembered) it still does (until 3.43.1 the creation was not stored:
+       the entry was "missing" again).
+    C) A Discogs series ("Test Series"): one "part of" row after the reload too (until 3.43.1 the remembered rows added one more)."""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    LEVEL = """(n) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
+  const lv = g && g.querySelector('tr.dci-row [data-act=level][aria-pressed=true]'); return lv ? lv.dataset.level : null; }"""
+    GROUP = "(n) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n); return g ? [g.className, (g.querySelector('.dci-gname a') || {}).href || '', g.querySelectorAll('tr.dci-row').length] : null; }"
+    dg = H.discogs_release()
+    dg['extraartists'] = [dict(x, tracks='1') if x['name'] == 'Bob Producer' else x for x in dg['extraartists']] + [
+        {'name': 'New Group', 'anv': '', 'role': 'Mixed By', 'tracks': '', 'id': 3030, 'join': ''},
+        # creative direction named for a track: recording (meant for the release group); an arranger next to writing credits: work (S006)
+        {'name': 'Photo Guy', 'anv': '', 'role': 'Creative Director', 'tracks': '1', 'id': 3006, 'join': ''},
+        {'name': 'Bass Man', 'anv': '', 'role': 'Arranged By', 'tracks': '', 'id': 3001, 'join': ''}]
+    dg['series'] = [{'name': 'Test Series', 'id': 601, 'catno': 'Vol. 3'}]
+    H.DG_API[f'/releases/{H.DISCOGS_ID}'] = dg
+    H.DG_API['/artists/3030'] = {'id': 3030, 'name': 'New Group', 'aliases': [], 'urls': [], 'members': []}
+    NEW = H.uid('dddddddd', 3430)
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 90)
+        pg.wait_for_timeout(1500)
+        LEVELS = f"[({LEVEL})('Bob Producer'), ({LEVEL})('Photo Guy'), ({LEVEL})('Bass Man')]"
+        a0 = pg.evaluate(LEVELS)
+        pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(600)
+        a1 = pg.evaluate(LEVELS)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(600)
+        a2 = pg.evaluate(LEVELS)
+        pg.click('#dci-rules [data-rules-close]'); pg.wait_for_timeout(200)
+        print('A) Produzent, Creative Director (Track 1), Arrangeur:', a0, '| S007 aus:', a1, '| an:', a2)
+        # (the levels the import gave stay through the switch – with this mapping the producer is on the recordings by its rule
+        # C036 already; the guard of 3.43.2 is for levels the import flow chooses, `levelImport`, and credits switched off)
+        results.append(a0 == ['recording', 'release', 'recording'] and a1 == a0 and a2 == a0)
+        # B) the new artist created in the form (the frame lands on the artist's page)
+        g0 = pg.evaluate(GROUP, 'New Group')
+        pg.click(f'section[data-group="{g0 and pg.evaluate("(n) => [...document.querySelectorAll(\'section.dci-group\')].find(s => s.querySelector(\'.dci-gname strong\').textContent.trim() === n).dataset.group", "New Group")}"] [data-act=artist-create]')
+        pg.wait_for_timeout(800)
+        H.ARTISTS[3030] = (NEW, 'New Group')
+        pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/artist/{NEW}'")
+        H.wait_for(pg, f"({GROUP})('New Group') && ({GROUP})('New Group')[0].includes('dci-st-created')", 20)
+        pg.wait_for_timeout(2500)
+        b1 = pg.evaluate(GROUP, 'New Group')
+        c1 = pg.evaluate(GROUP, 'Test Series')
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 90)
+        pg.wait_for_timeout(2500)
+        b2 = pg.evaluate(GROUP, 'New Group')
+        c2 = pg.evaluate(GROUP, 'Test Series')
+        print('B) angelegt:', b1, '| nach Neuladen:', b2)
+        results.append(b1 and 'dci-st-created' in b1[0] and b2 and 'dci-st-created' in b2[0])
+        print('C) Serie:', c1, '| nach Neuladen:', c2, '| Fehler:', errs)
+        results.append(c1 and c1[2] == 1 and c2 and c2[2] == 1 and not errs)
+        H.ARTISTS.pop(3030, None)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

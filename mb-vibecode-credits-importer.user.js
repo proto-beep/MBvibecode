@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.1
+// @version      3.43.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -10221,7 +10221,16 @@
       prefix: m.prefix || null, prefixCredit: false });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
-    if (!row.levelTouched) row.level = m.level;
+    // [3.43.2] (review) a level the import chose stays (a producer named for tracks: recording; S006 arrangers: work – `levelImport`), and a
+    // credit switched off at the source or with the about/notes text stays off (its level to come back to follows the rule)
+    if (!row.levelTouched) {
+      if (row.srcOff || row.aboutHidden || row.notesHidden) {
+        const back = row.levelImport || m.level;
+        if (row.srcOff) row.srcOffLevel = back;
+        if (row.aboutHidden) row.aboutLevel = back;
+        if (row.notesHidden) row.notesLevel = back;
+      } else row.level = row.levelImport || m.level;
+    }
     // [3.32.7] a row of poems whose level was clicked: the type of its level (item 104b)
     if (row.poemLevels && isPoemRow(row) && row.level !== 'skip') {
       const ans = row.typeAnswer;
@@ -17588,6 +17597,9 @@
         continue;
       }
       const a = S.artists.get(r.artistKey);
+      // (3.43.2, review) the "part of" row of a series the source lists comes with the source (it was stored as a row of your own
+      // and added once more with every import)
+      if (a && a.srcSeries) continue;
       if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
     }
     // [3.36.1] rows of the source removed with ✕
@@ -18053,6 +18065,7 @@
       if ((row.level === 'release' || (row.level === 'release_group' && row.types.includes('creative direction'))) && !c.allTracks && suggested.length
         && (row.types.includes('producer') || row.types.includes('creative direction'))) {
         row.level = 'recording';
+        row.levelImport = 'recording'; // (3.43.2) kept through a rules change (remapRow)
         resolveRowType(row);
       }
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
@@ -18135,6 +18148,9 @@
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      // [146] (3.36.0) what is remembered of the import before is stored first – (3.43.2, review) with the media choice and the works
+      // choices that import had (until 3.43.1 after `applyMediaChoice`: the old rows were stored under the new choice and "fitted" the new import)
+      saveRememberNow();
       // [Z-RI] (3.40.17, review) "↻ Repeat import" afresh: the choices of the works matrix go too (once the source was read)
       if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
@@ -18152,9 +18168,7 @@
       S.srcTracks = rel.tracks;
       // [Z-SUB] (3.41.12) index tracks whose sub-tracks are tracks of their own in MusicBrainz
       if (rel.subTracksSplit) log('info', 'subTracksSplit', { n: rel.subTracksSplit, source: source.name });
-      // [146] (3.36.0) what is remembered of the import before is stored first; this one is remembered once it is complete
-      // (an import started while another one still runs: only the last one counts)
-      saveRememberNow();
+      // (this one is remembered once it is complete; an import started while another one still runs: only the last one counts)
       const seq = ++importSeq;
       Object.assign(S, { rememberReady: false, freshRows: null, importSrc: `${source.id}:${id}` });
       // [145b] (3.35.6) "Works as track groups" of the track pool: ticked again with each import (those left out back first)
@@ -18263,6 +18277,7 @@
         for (const r of S.rows) {
           if (!r.manual && !r.company && r.level === 'recording' && ARRANGER_TYPES.includes(norm(r.types[0] || ''))) {
             r.level = 'work';
+            r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow)
             resolveRowType(r);
           }
         }
@@ -18279,6 +18294,9 @@
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
+        // (3.43.2, review) another import started meanwhile: this one stops here (its series, notes and publishers would land in the
+        // new one – only `rememberFresh`/`finishRemember` were guarded)
+        if (seq !== importSeq) return;
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
         // [3.37.11] the artist credits taken from the Discogs spellings (item 161); [3.39.1] those of the entries' sources (item 185)
@@ -18290,6 +18308,7 @@
         }
         if (rel.series.length) {
           await loadSeries(rel.series);
+          if (seq !== importSeq) return;
           renderGroups();
         }
         const pooled = S.trackPool.length;
@@ -18297,6 +18316,7 @@
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
+        if (seq !== importSeq) return;
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
@@ -25101,9 +25121,9 @@
         try {
           const e = await fetchJsEntity(mbid);
           name = e.name;
-          Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'created', editing: false, error: '' });
+          Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'created', editing: false, error: '', matchTouched: true });
         } catch (err) {
-          Object.assign(artist, { mbid, mbName: displayName, status: 'created', editing: false, error: '' });
+          Object.assign(artist, { mbid, mbName: displayName, status: 'created', editing: false, error: '', matchTouched: true });
         }
         showMessage('ok', 'artistDlg.done', { name });
         log('ok', 'artistCreated', { name, mbid });
@@ -25147,7 +25167,7 @@
         } catch (err) {
           console.warn('[Discogs-Credits]', err);
         }
-        Object.assign(owner, { mbid: e.gid || mbid, mbName: e.name || owner.name, mbComment: e.comment || '', status: 'created', editing: false, error: '' });
+        Object.assign(owner, { mbid: e.gid || mbid, mbName: e.name || owner.name, mbComment: e.comment || '', status: 'created', editing: false, error: '', matchTouched: true });
         for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).includes('seriesMissing'))) {
           r.notes = [];
           const rgSeries = /release group/i.test(String(e.typeName || ''));
@@ -25199,7 +25219,7 @@
         } catch (err) {
           console.warn('[Discogs-Credits]', err);
         }
-        Object.assign(company, { mbid: gid, mbName: name, mbComment: comment, status: 'created', editing: false, error: '' });
+        Object.assign(company, { mbid: gid, mbName: name, mbComment: comment, status: 'created', editing: false, error: '', matchTouched: true });
         setCompanyEntityType(company, entityType);
         showMessage('ok', 'companyDlg.done', { name });
         log('ok', 'companyCreated', { name, mbid: gid });
@@ -29621,7 +29641,8 @@
         primaryCands: m.primaryCands, flags: new Set(m.flags.map(norm)), creditFromRole: m.credit || '', defaultLevel: m.level,
         translated: m.translated || '', translatedBase: m.translatedBase || '', prefix: m.prefix || null, prefixCredit: false,
       });
-      if (!row.levelTouched) row.level = m.level;
+      // (3.43.2, review) a credit switched off stays off
+      if (!row.levelTouched && !(row.srcOff || row.aboutHidden || row.notesHidden)) row.level = m.level;
     }
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
