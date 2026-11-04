@@ -92,6 +92,9 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
                                 #   hyphen, ignorelines, linernotes: 3.48.0 (Z-HYP, Z-IGN, Z-LIN); review: false positives (colon, "by" lines, credits among notes, "Björk (v)", publishers)
+                                #   rolesplit, roles, places, oldmarks, exceptread, exceptworks: 3.49.0 (Z-RTL, Z-ROL, Z-RPB, S069, Z-EXC – dashboard: covers, arrangement, quote)
+                                #   exceptlayouts, rolesplit2, exceptworks2: review of 3.49.0 (other layouts of the blocks, the parts' marks; nothing
+                                #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
