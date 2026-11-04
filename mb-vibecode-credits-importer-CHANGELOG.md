@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.47.0 | 1.11.1 – 1.12.0 |
+| 2026-11-04 | 3.43.0 – 3.48.0 | 1.11.1 – 1.13.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.48.0 · COMPANION 1.13.0
+
+Block 5 – collected items Z-MCP, Z-DMY, Z-HYP, Z-IGN, Z-LIN (Q-ex, Q-et, Q-fd); Z-NUM needed nothing (a name with digits at the start was read already – the line failed for its role, see Block 6).
+
+#### Added / changed
+
+- **Texts:** "Name -roles" (a dash with a space only before it) is read as "Name – roles". Lines without credits are left out as such instead of "not recognized": a heading of the credits alone ("credits", "Personnel:"), Bandcamp's "released / published January 13, 2022", a definition ("Intention (n.) …") with the line that explains it, a line of gratitude ("infinite gratitude to …"). **Liner notes:** after "Notes by NAME:" (liner notes of NAME) the text of the notes – its sentences – is left out as "the text of the liner notes"; credit lines among it are read as before.
+- **Dark theme:** the colours of meaning by hand – suggestions on a muted amber ground with light yellow text (also the text of the date pool's chips, the cells of the date matrix found automatically, the asking chips), dates purple, tracks orange, each a muted ground with light text of its colour.
+- **COMPANION 1.13.0:** text copied from Discogs, Bandcamp or YouTube comes without the marks ("○ ● ✓"); the marks cannot be selected.
+
+#### Fixed (review of Block 5)
+
+- After "Notes by NAME:" only what gives nothing is left out as the text of the notes – credits among it are read (before, a long credit line could be left out). The same for the line after a definition; a definition needs its part of speech with a dot ("(n.)") or as a word – "Björk (v)" of a jazz list is none. These lines end a block of publishers. "Name -role" only when a role follows, not with a colon nor in "by", "at", "in" lines ("Written by Lennon -McCartney" keeps the name). COMPANION: copying never puts a copy into the page (no hidden text, the links with their whole addresses). Dark theme: the dashed lines of meaning at least 3:1, the grips keep their colour.
 
 ### Import 3.47.0
 

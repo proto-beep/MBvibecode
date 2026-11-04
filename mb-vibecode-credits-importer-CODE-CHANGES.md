@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.47.0, Companion 1.6.0 – 1.12.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.48.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.48.0 · Companion 1.13.0 · 2026-11-04
+
+Block 5 – Z-MCP, Z-DMY, Z-HYP, Z-IGN, Z-LIN.
+
+- **`TEXT.parse` → `readLine`:** [Z-HYP] a line "Name -roles" (no " – " in it, a dash before a letter, at most 5 words before it) becomes "Name - roles". [Z-IGN] `ignored` with `why` 'heading' (`credits`, `liner notes`, `personnel`, `musicians`, `line-up`, `Besetzung`, `Mitwirkende` alone), 'releaseDate' (`released|published|veröffentlicht` + a date), 'definition' (`Word (n.)` … and, `definitionNext`, the next line without a credit sign). [Z-LIN] `linerNotes` after "Notes by NAME:" (`line0`): a line of 20 words or more, or of 6 or more ending as a sentence without a credit sign (`Role:`, ` – `, ` by `), is left out ('linerNotes').
+- **Mapping file:** `TEXT_THANKS` (and with it `TEXT_IGNORE_LINE`) – gratitude: "infinite / endless / eternal / deep(est) / much / all my / love and gratitude", "gratitude to", "(so / forever) grateful to".
+- **Dark theme:** **`DK_SEMANTIC`** (new; appended by `darkCss`): `--sugg-*`, `--date-*`, `--track-*` (and their `-dkg`) by hand on `#dci-overlay`; `color: var(--sugg-ink)` on the suggestion grounds whose text comes from elsewhere (`.dci-date-chip.dci-pchip-sugg` and its parts, `.dci-dm-cell.dci-dm-auto`, `.dci-em-chip-ask`, `.dci-mx-newworks`, `.dci-row.dci-unmapped > td`); the yellow grounds written as colours (`.dci-waiting`, `input.dci-from-dg`, `.dci-foot-chip-warn` …) as `--sugg-bg` / `--sugg-line` / `--sugg-ink`.
+- **Texts:** `ignored.why.heading`, `ignored.why.releaseDate`, `ignored.why.definition`, `ignored.why.linerNotes`.
+- **Companion 1.13.0:** `.dci-dg-mark` `user-select: none`; **`copyWithoutMarks()`** (new; from `ensureStyle`): on "copy" a selection with marks is copied without them (plain text laid out off the screen, and HTML).
+- **Tests:** `t_text_lists.py` (new: hyphen, ignorelines, linernotes), `t_ui_settings.py darkmeaning`, `t_companion_discogs.py copymarks2`.
+- **Review of Block 5:** `readLine` is now a wrapper of **`readLine0`**: after "Notes by NAME:" (`linerNotes`) and on the line after a definition (`definitionNext`, reset by an empty line) what a line gives as not recognized – and nothing else – goes to `ignored` ('linerNotes' / 'definition'); the word-count rules are gone. Definition: `(n.)`, `(v.)`, `(adj.)`, `(adv.)`, `(noun)`, `(verb)` … and an optional `/…/` to the end of the line. Heading, release date and definition set `pubBlock = null` (a heading also `linerNotes = false`); "liner notes" no heading. Hyphen: no colon, no ` by | at | in `, the first item after the dash a role (`isRole`) or in small letters. Companion `copyWithoutMarks`: the text by `sel.toString()` with `html.dci-copying .dci-dg-mark { display: none }`, the HTML of the detached copy with absolute `href` / `src`. `DK_SEMANTIC`: `--sugg-line` #b8922f, `--date-line` #8a83cc, `--track-line` #c47a4e; the suggestion text only on `.dci-chip-main` (chips, cells). `smoke/register_golden.json` written anew (T030 shows the gratitude words).
+- **Tests (review):** `t_text_lists.py` hyphen (colon, "Mary -Kate", "by" line), ignorelines (a credit after a definition, "Björk (v)", publishers), linernotes (credits among the notes); `t_companion_discogs.py copymarks2` (several lines, hidden text, a selection without marks, absolute links); `t_ui_settings.py darkmeaning` (the line, the grip).
 
 ## Import 3.47.0 · 2026-11-04
 

@@ -90,6 +90,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # 3.38.10: D) every role's name as MusicBrainz shows it – the first of its types MusicBrainz has between an
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
+python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   hyphen, ignorelines, linernotes: 3.48.0 (Z-HYP, Z-IGN, Z-LIN); review: false positives (colon, "by" lines, credits among notes, "Björk (v)", publishers)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -511,6 +513,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   statstime: 3.45.0 (Z-STD): pauses not counted (threshold in ⚙ Cache), work in the record; the times per source, Median | Average; review: the pause right before "Enter edit", the script's scrolling no work, the second record on a page, releases counted once, Average pooled, the field normalised
                                 #   theme: 3.46.0 (Z-DM): the dark theme – as a window and in the page (Auto | Light | Dark, Auto live), the light theme unchanged, contrast ≥ 3 in the dark one, colours of their own for it, ↺; review: the dark stylesheet only when needed (written = read), white text on text colours, the tags beside the dark pickers, „Reset all“
                                 #   globalstats: 3.47.0 (Z-GST): This browser | Global – the file of the workflow, once a day, "Load again", without network the copy, Reset all; review: a file with gaps, keyboard focus, a copy older than a day
+                                #   darkmeaning: 3.48.0 (Z-DMY): the colours of meaning in the dark theme by hand (variant A)
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                                 #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
                                 #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
@@ -852,6 +855,7 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   review43: 3.43.1 / companion 1.11.1 (full review P2): a Discogs tab in the background (beat 30 s old) still
                                 #     "connected"; the result of another dashboard's jump not shown; the "Count exactly" editor sends no marks
                                 #   sitedark: companion 1.12.0 (Z-DM): the marks follow the site's dark theme (Discogs: a dark background, data-theme; YouTube: html[dark]); review: oklch(), "header-dark", "darkblue-light" stay light
+                                #   copymarks2: companion 1.13.0 (Z-MCP): copied text without the marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →

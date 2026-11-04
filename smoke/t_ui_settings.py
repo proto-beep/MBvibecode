@@ -2110,4 +2110,34 @@ def case_globalstats():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_darkmeaning():
+    """Credits Importer 3.48.0 (collected item Z-DMY; Q-et, Q-fd): in the dark theme the colours of meaning by hand (variant A) – a
+    suggestion in the date pool on a muted amber ground with light yellow text (also the text of its parts), the cell of the date
+    matrix found automatically likewise; no text below a contrast of 3; the light theme as before.
+    Review of 3.48.0: the dashed line of a suggestion at least 3:1 to its ground; the grip of the chip keeps its own colour."""
+    CHIP = """(() => { const c = document.querySelector('#dci-overlay .dci-date-chip.dci-pchip-sugg'); if (!c) return null; const inner = c.querySelector('.dci-chip-main');
+      const cs = getComputedStyle(c); return [cs.backgroundColor, getComputedStyle(inner || c).color, cs.borderTopColor]; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(400)
+        light = pg.evaluate(CHIP)
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(400)
+        dark = pg.evaluate(CHIP)
+        con = pg.evaluate(f"({CONTRAST})('#dci-overlay')")
+        print('hell:', light, '| dunkel:', dark, '| unter 3:', con['bad'][:4], '| Fehler:', errs)
+        grip = pg.evaluate("(() => { const g = document.querySelector('#dci-overlay .dci-date-chip.dci-pchip-sugg .dci-chip-grip'); return g ? getComputedStyle(g).color : null; })()")
+        print('Griff:', grip)
+        ok = light == ['rgb(255, 248, 219)', light[1], 'rgb(224, 165, 38)'] and dark == ['rgb(58, 48, 23)', 'rgb(242, 217, 140)', 'rgb(184, 146, 47)'] and not con['bad'] \
+            and grip not in (None, 'rgb(242, 217, 140)') and not errs
+        b.close()
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())

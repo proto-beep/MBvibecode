@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.12.0
+// @version      1.13.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.12.0';
+  const COMPANION_VERSION = '1.13.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -557,7 +557,7 @@
         background-color: rgba(235, 116, 59, 0.14) !important;
         scroll-margin: 120px;
       }
-      .dci-dg-mark { display: inline-block; min-width: 1.4em; margin-right: 0.35em; padding: 0 0.3em; border: 0; border-radius: 3px;
+      .dci-dg-mark { -webkit-user-select: none; user-select: none; display: inline-block; min-width: 1.4em; margin-right: 0.35em; padding: 0 0.3em; border: 0; border-radius: 3px;
         font: bold 12px/1.5 sans-serif; text-align: center; color: #fff; cursor: pointer; vertical-align: 0.1em; }
       .dci-dg-mb { background: #2e7d4f; }
       .dci-dg-staged { background: #736dab; }
@@ -579,6 +579,8 @@
       .dci-dg-unmapped-line { background-color: #fff3c4 !important; }
       .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }
       .dci-dg-mark.dci-mark-off { opacity: 0.55; }
+      /* [1.13.0] (review) while copying: the marks not in the text */
+      html.dci-copying .dci-dg-mark { display: none !important; }
       .dci-dg-offline { opacity: 0.5; }
       .dci-bc-offtext { opacity: 0.45; text-decoration: line-through; }
       /* [1.9.0] a date and a track group the dashboard uses, in its colours (dates purple, tracks orange) */
@@ -599,6 +601,42 @@
     // ((1.12.0, review) a page without a head – an XML view – gets it too)
     (document.head || document.documentElement).appendChild(style);
     watchSiteDark();
+    copyWithoutMarks();
+  }
+
+  /**
+   * [1.13.0] (Credits Importer 3.48.0, collected item Z-MCP; Q-ex) Text copied from the page comes without the marks ("○ ● ✓"): the
+   * selection without them, as plain text (laid out as the page shows it) and as HTML.
+   */
+  let copyWatched = false;
+  function copyWithoutMarks() {
+    if (copyWatched) return;
+    copyWatched = true;
+    document.addEventListener('copy', (e) => {
+      const sel = window.getSelection && window.getSelection();
+      if (!sel || !sel.rangeCount || !e.clipboardData) return;
+      const box = document.createElement('div');
+      for (let i = 0; i < sel.rangeCount; i++) box.appendChild(sel.getRangeAt(i).cloneContents());
+      const marks = box.querySelectorAll('.dci-dg-mark');
+      if (!marks.length) return;
+      marks.forEach((m) => m.remove());
+      // ((1.13.0, review) the text as the page shows it – the marks hidden for a moment, the selection read; the copy never goes into
+      // the page: no hidden text, no element of the page started)
+      const html = document.documentElement;
+      html.classList.add('dci-copying');
+      let text = '';
+      try {
+        text = sel.toString();
+      } finally {
+        html.classList.remove('dci-copying');
+      }
+      // (the links and images of the copy with their whole addresses)
+      box.querySelectorAll('a[href]').forEach((a) => { a.setAttribute('href', a.href); });
+      box.querySelectorAll('img[src]').forEach((img) => { img.setAttribute('src', img.src); });
+      e.clipboardData.setData('text/plain', text);
+      e.clipboardData.setData('text/html', box.innerHTML);
+      e.preventDefault();
+    }, true);
   }
 
   /**
