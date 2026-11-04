@@ -266,7 +266,7 @@ BC_ARTISTS = {}
 YT_PAGES = {}
 # The release's artist credit (below its title): [(MB gid, MB name, name as credited, join phrase)]
 RELEASE_AC = []
-# [3.17.3] lookups to fail: {'release': n} – the next n lookups of the release answer 503
+# [3.17.3] lookups to fail: {'release': n} – the next n lookups of the release answer 503; [3.49.0] {'worksearch': n} – work searches 400
 WS_FAIL = {}
 
 
@@ -561,7 +561,13 @@ def js_entity(gid):
             return {'entityType': et, 'id': i, 'gid': g, 'name': n, 'comment': ''}
     if gid == WORK1:
         return {'entityType': 'work', 'id': 7001, 'gid': gid, 'name': TITLES[0], 'comment': ''}
+    # [3.49.0] works of MusicBrainz a test adds (gid → (id, title))
+    if gid in JS_WORKS:
+        return {'entityType': 'work', 'id': JS_WORKS[gid][0], 'gid': gid, 'name': JS_WORKS[gid][1], 'comment': ''}
     return None
+
+
+JS_WORKS = {}
 
 
 WORK_FORM = """<html><body><form>
@@ -864,9 +870,15 @@ def install_routes(ctx):
         if p == '/ws/2/work':
             q = urllib.parse.parse_qs(u.query).get('query', [''])[0]
             WORK_QUERIES.append(q)
+            # [3.49.0] (review) a search that fails (WS_FAIL['worksearch']: the next n answer 400, as a query MusicBrainz cannot read)
+            if WS_FAIL.get('worksearch', 0) > 0:
+                WS_FAIL['worksearch'] -= 1
+                return route.fulfill(status=400, body='{"error": "bad query"}', content_type='application/json')
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
+            # [3.49.0] also by the names of its artists (artist:"Sun Ra")
+            names = set(n.lower() for n in re.findall(r'artist:"([^"]+)"', q))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
-                                                if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
+                                                if any(r.get('artist', {}).get('id') in ids or r.get('artist', {}).get('name', '').lower() in names for r in w.get('relations', []))]})
         # [3.32.9] a place with its area; an area with its type, ISO codes and the area it is part of (AREA_INFO)
         m = re.match(r'/ws/2/place/([0-9a-f-]{36})$', p)
         if m and m.group(1) in PLACE_AREAS:

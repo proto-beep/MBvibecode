@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.48.0
+// @version      3.49.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.48.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.48.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.49.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.49.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.48.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.49.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -294,6 +294,23 @@
       "ignored.why.releaseDate": "the date of the release on the page",
       "ignored.why.definition": "a definition – no credit",
       "ignored.why.linerNotes": "the text of the liner notes",
+      "ignored.why.exceptTitle": "the title of a track: the lines below it are for that track",
+      "ignored.why.cover": "the original performers of a cover – no credit of this release (“cover” on the link of its work)",
+      "ignored.why.quote": "a quote of another work – its work “quotes lyrics from” it (works matrix)",
+      "wnote.cover": "Cover – originally performed by {by}: “cover” on the link of its work (the original)",
+      "wnote.arranged": "An arrangement of a song originally performed by {by}: a work of its own, “arrangement of” the original",
+      "wnote.arrangementOf": "Arrangement of “{title}” ({by}):",
+      "wnote.quotesFrom": "Quotes lyrics from “{title}” ({by}):",
+      "wnote.staged": "– staged with the work of this track",
+      "wnote.needWork": "– staged once this track has a work (a new one is fine)",
+      "wnote.notFound": "not found in MusicBrainz – the edit note says so",
+      "wnote.search": "Search …",
+      "wnote.needOwn": "– the track is linked to that work itself: give it a work of its own (the arrangement) to stage it",
+      "wnote.exists": "– MusicBrainz has this relationship already",
+      "wnote.noWriter": "no writer given – look for the original by hand",
+      "wnote.error": "the search failed – look for it by hand",
+      "preview.arrangementOf": "arrangement of “{title}”",
+      "preview.quotesFrom": "quotes lyrics from “{title}”",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -5411,7 +5428,8 @@
     // [S070] (3.42.3) … or after a bullet: "Matt Glassmeyer — saxophones • 1, 8" (collected item Z-GON a)
     const BULLET = new RegExp(`^(.*?\\S)\\s*[•·]\\s*(${SPEC})\\s*\\.?$`);
     // [S069] (3.42.3) the companion's status marks, copied with a line of its page ("○ Chris Lippincott — pedal steel • 3"; Z-GON i)
-    const STATUS_MARKS = /(^|\s)[✓●○✗](?=\s|$)\s*/gu;
+    // ((3.49.0) also several and without a space – "○○○○Telemakus", copied before the companion 1.13.0 kept them out)
+    const STATUS_MARKS = /(^|\s)[✓●○✗]+(?=[\s\p{L}\d"“(]|$)\s*/gu;
     const STATUS_BANG = /^\s*!\s+/;
     // [S071] (3.42.3) a line below a "by" line that names a studio ("All songs mixed by X," / "Skinny Elephant recording"; Z-GON e)
     // (3.42.8, review) "recording", "studio(s)", "sound" (Q-di) – not "Recordings", "Sounds": names of labels ("Warp Recordings")
@@ -5672,7 +5690,7 @@
 
     function parse(text, ctx0) {
       const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [],
-        ownTexts = [] } = ctx0;
+        ownTexts = [], trackCount = 0 } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -6148,7 +6166,8 @@
             let right = clause.slice(m[0].length - m[2].length);
             // [3.21.4] the verb after the words of a medium, "mastering" as "mastered" ("Vinyl LP mastering … at X": mastered at)
             const kc0 = companies.length;
-            const verb = ((clean(left).split(' ').find((w) => !mediumKindOf(w)) || '').match(/^\p{L}+/u) || [''])[0].replace(/ing$/i, 'ed');
+            // ([Z-RPB] 3.49.0: "Additional recording by X at Y" – the verb after a word that only qualifies it: recorded at Y)
+            const verb = ((clean(left).split(' ').find((w) => !mediumKindOf(w) && !/^(?:additional|extra|further|live|location)$/i.test(w)) || '').match(/^\p{L}+/u) || [''])[0].replace(/ing$/i, 'ed');
             // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
             const at = left.match(/^(.*?)\s+at\s+(.+)$/i);
             if (at) {
@@ -6163,6 +6182,14 @@
             if (inOther && byRoles(inOther[1]).length) {
               unknownParts.push(`in ${clean(inOther[2])}`);
               left = inOther[1];
+            }
+            // [Z-RPB] (3.49.0) "Recorded and produced by megiapa between Chicago and Los Angeles": the areas of the (first) verb
+            const btw = right.match(/^(.+?)\s+between\s+(\p{Lu}[^,]*?)\s+(?:and|&)\s+(\p{Lu}.+)$/u);
+            // ((3.49.0, review) only when both are areas – "between Takes at Studio X and Home" keeps its place)
+            const btwAreas = btw ? [btw[2], btw[3]].map((w) => areaOf(clean(w).replace(/[.]+$/, ''))) : [];
+            if (btw && btwAreas.every((a) => a && looksLikeName(a.name))) {
+              btwAreas.forEach((a) => inArea(verb, a));
+              right = btw[1];
             }
             // "Mixed by X at Studio Y"; (3.43.5, counter-review) "Mixed by X at Studio Y and Z at Studio W": pairs of name and place
             const pairs = right.split(/\s+(?:and|&)\s+(?=[^,]+\s+at\s+)/iu);
@@ -6538,6 +6565,16 @@
       // [Z-LIN] (3.48.0) after "Notes by NAME:" the text of the notes (prose, not read); [Z-IGN] after a definition its explanation
       let linerNotes = false;
       let definitionNext = false;
+      // [Z-EXC] (3.49.0; Q-ev, Q-fb, Q-ff, Q-fg, Q-fh, Q-fi) "All compositions and lyrics by X except:" and the blocks of the tracks
+      // below it (a title, its credits); covers ("Originally performed by …") and quotes ("End quote from W by N") of those tracks
+      // ((3.49.0, review) several headers – "All music by A except: …", "All lyrics by B except: …" – each with its blocks)
+      let exceptHead = null;
+      const exceptHeads = [];
+      let titleBlock = null;
+      const exceptBlocks = [];
+      const blockScope = () => (titleBlock ? titleBlock.scope : null);
+      const covers = [];
+      const quotes = [];
       let lineLead = null;
       /**
        * [Z-UNA] (3.42.4) The own rules of texts whose phrase is in a text (words whole, any case): each its entry – a person with its
@@ -6642,10 +6679,11 @@
         for (const r of body) {
           startLine(r.raw);
           // [137d] (3.34.20) a word that is no instrument MusicBrainz knows ("Chaims", "Buddha machine"): a row that asks
-          link.names.forEach((n) => r.parts.forEach((x) => addCredit(n, x, null, playable(x) ? {} : { guess: true })));
+          link.names.forEach((n) => r.parts.forEach((x) => addCredit(n, x, blockScope(), playable(x) ? {} : { guess: true })));
         }
         startLine(linkRaw);
-        link.names.forEach((n) => link.roles.forEach((x) => addCredit(n, x, null)));
+        // ([Z-EXC] 3.49.0, review: in the block of a track, its track)
+        link.names.forEach((n) => link.roles.forEach((x) => addCredit(n, x, blockScope())));
         return true;
       };
       /** The line a credit comes from, and which of the lines with the same text it is. */
@@ -6673,7 +6711,7 @@
         }
       };
       /** One line of the text. */
-      const readLine0 = (raw) => {
+      const readLine0 = (raw, sub = false) => {
         let line = clean(raw);
         // [Z-HYP] (3.48.0) "Makigami Koichi -harmonic overtone singing, jaw harp": a dash with a space only before it is the dash of
         // "Name – roles" (not in a name: "Jean-Pierre", "A -B" with more dashes)
@@ -6691,9 +6729,12 @@
           contWho = null;
           prevBy = null;
           definitionNext = false;
+          // ((3.49.0, review) a title with its credits below an empty line keeps them: "Song Two" / "" / "Written by A")
+          if (titleBlock && titleBlock.n) titleBlock = null;
           return;
         }
-        startLine(raw);
+        // ([Z-RTL] a part of a line read on its own keeps the line it comes from)
+        if (!sub) startLine(raw);
         const cont = contWho;
         const before = prevBy;
         contWho = null;
@@ -6721,6 +6762,52 @@
           return;
         }
         if (/^(?:liner\s+)?notes\s+(?:by|von|par|por)\s+.+:\s*$/i.test(line0)) linerNotes = true;
+        // [Z-EXC] (3.49.0) "All compositions and lyrics by megiapa except:" – the names write every track but those of the blocks below
+        const exm = line0.match(/^all\s+(?:the\s+)?(compositions?|music|songs|tracks|lyrics)(?:\s+(?:and|&)\s+(lyrics|music|words))?\s+(?:(?:are|were|written|composed)\s+)*by\s+(.+?)[,;]?\s+(?:except|but)(?:\s+for)?\s*:?\s*$/i);
+        if (exm) {
+          const what = [exm[1], exm[2]].filter(Boolean).map((w) => w.toLowerCase());
+          const roles = uniq(what.map((w) => (/^(?:lyrics|words)$/.test(w) ? 'Lyrics By' : /^(?:songs|tracks)$/.test(w) ? 'Written By' : 'Composed By')));
+          if (exceptHead) exceptHead.open = false;
+          exceptHead = { names: names(exm[3]).map(clean).filter(looksLikeName), roles, line: line0, part: clean(line), n: n0, open: true, blocks: [] };
+          exceptHeads.push(exceptHead);
+          titleBlock = null;
+          return;
+        }
+        // a title of a track below it: the lines up to the next empty line (or the next title) are for that track ("Open Your Eyes" /
+        // "Written by megiapa"); ((3.49.0, review) its number, quotation marks and a colon aside: "2. “Song Two”:")
+        if (exceptHead && exceptHead.open && resolveTitles) {
+          const title = clean(line.replace(/^(?:[A-Za-z]?\d{1,3}[.):]?|[-–—•*])\s+(?=\S)/u, '').replace(/:\s*$/, '')).replace(/^["“”'‘’„«»]+|["“”'‘’„«»]+$/gu, '');
+          const res = title ? resolveTitles([title]) : null;
+          if (res && res.indexes && res.indexes.size && !(res.unresolved || []).length) {
+            titleBlock = { title, scope: { set: res.indexes, spec: `“${title}”` }, n: 0 };
+            exceptBlocks.push(titleBlock);
+            exceptHead.blocks.push(titleBlock);
+            ignored.push({ text: line0, why: 'exceptTitle' });
+            return;
+          }
+          // (a line of no block after them: the list of the exceptions has ended)
+          if (!titleBlock && exceptHead.blocks.length) exceptHead.open = false;
+        }
+        if (titleBlock) {
+          titleBlock.n++;
+          // the original performers of a cover: no credit of this release (the work is the original one; "cover" on its link) –
+          // ((3.49.0, review) never read as a credit: "Originally recorded by X in 1975", "… (1975)" – the year aside)
+          const op = line.match(/^(?:(?:originally|first)\s+(?:performed|recorded|sung|played|released|done)(?:\s+by)?|original(?:ly)?\s+(?:version\s+|artist\s+)?by|original\s+(?:artist|performer|version)s?\s*:|as\s+(?:performed|recorded)\s+by)(?:\s+|$)(.*)$/i);
+          if (op) {
+            const by = clean(op[1].replace(/\s*\([^)]*\)\s*\.?$/, '').replace(/,?\s+(?:in\s+|from\s+)?(?:19|20)\d{2}\.?$/, '')).replace(/[.;,:]+$/, '');
+            if (by && looksLikeName(by)) covers.push({ scope: titleBlock.scope, title: titleBlock.title, by, line: line0 });
+            ignored.push({ text: line0, why: 'cover' });
+            return;
+          }
+          // a quote of another work: its lyrics quoted (Q-fg) – the work of this track "quotes lyrics from" it ((3.49.0, review) its name up to
+          // the last "by": "Stand by Me by Ben E. King")
+          const q = line.match(/^(?:end(?:ing)?\s+|opening\s+|closing\s+)?quotes?\s+(?:from|of)\s+(.+)\s+by\s+(.+)$/i);
+          if (q && looksLikeName(clean(q[2]).replace(/[.]+$/, ''))) {
+            quotes.push({ scope: titleBlock.scope, title: titleBlock.title, work: clean(q[1]).replace(/^["“'‘]+|["”'’]+$/g, ''), by: clean(q[2]).replace(/[.]+$/, ''), line: line0 });
+            ignored.push({ text: line0, why: 'quote' });
+            return;
+          }
+        }
         // [S068] (3.39.8) a line only of the name of the release's artist (a booklet's title): no credit, left out as such
         if (ruleOn('S068') && !pubBlock && artistNames.some((n) => norm(n) === norm(line.replace(/[.:]$/, '')))) {
           ignored.push({ text: line, why: 'releaseArtist' });
@@ -6731,6 +6818,40 @@
         if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
           unrecognized.push(line0);
           return;
+        }
+        // [Z-ROL] (3.49.0; Q-eu, Q-fe) "Mekala Session - drums / drum sample (2, 11, 13)": the sample of the instrument the same person
+        // plays is the sampler (else "… sample" is material sampled: samples from artist, R109)
+        const dsl = line.match(/^(.+?\s[–—-]\s)(.+)$/);
+        if (dsl) {
+          // (its own tracks at the end aside – their commas are no separators)
+          const tail = (dsl[2].match(/\s*\([^()]*\)\s*\.?$/) || [''])[0];
+          const body = dsl[2].slice(0, dsl[2].length - tail.length);
+          const parts = body.split(/(\s*[,/;&]\s*)/);
+          const plain = parts.filter((p, k) => k % 2 === 0).map((p) => norm(p.replace(/\s*\([^)]*\)\s*$/, '')));
+          const same = (w) => plain.some((x) => x === w || x === `${w}s` || `${x}s` === w);
+          const out = parts.map((p, k) => {
+            const mm = k % 2 === 0 && p.match(/^(\s*)(\p{L}+)\s+samples?(\s*(?:\([^)]*\))?\s*)$/iu);
+            // ((3.49.0, review) an instrument's: "vocals, vocal samples" stays material sampled)
+            return mm && same(norm(mm[2])) && !/^(?:vocal|voice|vox|choir|speech|spoken|field)s?$/i.test(mm[2]) ? `${mm[1]}sampler${mm[3]}` : p;
+          });
+          if (out.join('') !== body) line = `${dsl[1]}${out.join('')}${tail}`;
+        }
+        // [Z-RTL] (3.49.0) "ghalani of Greenwood - bass (3, 7, 8, 9), additional bass (11)", "megiapa - production (2-14), vocals (1-14)":
+        // each role with its own tracks – the parts read on their own, from the same line
+        const rtl = !sub && line.match(/^(.+?\s[–—-]\s)(.+)$/);
+        if (rtl) {
+          const segs = rtl[2].split(new RegExp(`(?<=\\((?:${SPEC})\\))\\s*[,;]\\s*`));
+          if (segs.length > 1 && segs.every((x) => new RegExp(`\\((?:${SPEC})\\)\\s*\\.?$`).test(x))) {
+            segs.forEach((x0, k) => {
+              // ((3.49.0, review) "vocals (1), and backing vocals (2)"; each part marked where it stands, and one not read named)
+              const x = x0.replace(/^(?:and|&)\s+/i, '');
+              const [c0, k0, u0] = [credits.length, companies.length, unrecognized.length];
+              readLine0(`${rtl[1]}${x}`, true);
+              [...credits.slice(c0), ...companies.slice(k0)].forEach((c) => Object.assign(c, { part: k ? clean(x0) : clean(`${rtl[1]}${x0}`), pi: k }));
+              for (let j = u0; j < unrecognized.length; j++) if (unrecognized[j] === line0) unrecognized[j] = `${line0} → ? “${clean(x0)}”`;
+            });
+            return;
+          }
         }
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
@@ -6749,6 +6870,8 @@
               && ((m = line.match(LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(LEAD_POS)))) useScope(m[1], m[2]);
           }
         }
+        // [Z-EXC] (3.49.0) in the block of a track: its track
+        if (!scope && titleBlock) scope = titleBlock.scope;
         part0 = line;
         pi0 = 0;
         // [S070] (3.42.3) a line only of roles below "Name — roles" (no name, colon, dash or "by"): more roles of that name, until an
@@ -6995,13 +7118,13 @@
       /** [S067] (3.39.8) A heading and its names: each name the heading's roles. */
       const readHeading = (h) => {
         startLine(h.lines);
-        h.names.forEach((n) => h.roles.forEach((r) => addCredit(n, r, null)));
+        h.names.forEach((n) => h.roles.forEach((r) => addCredit(n, r, blockScope())));
       };
       /** [S058] A pair of lines: each instrument of the one a credit of the name of the other. */
       const readStacked = (pr) => {
         startLine(pr.lines);
         const extra = { stacked: pr.up ? 'up' : 'down', ...(pr.ambig ? { stackAmbig: true } : {}) };
-        splitRoles(clean(pr.instr)).forEach((x) => addCredit(clean(pr.name), x, null, extra));
+        splitRoles(clean(pr.instr)).forEach((x) => addCredit(clean(pr.name), x, blockScope(), extra));
       };
 
       // [S051] (3.34.19) Lines that are only instruments or voices ("Electric guitar", "Drums", …, empty lines between them) are
@@ -7055,15 +7178,35 @@
         readLine(raw);
       }
       flushBlock();
+      // [Z-EXC] (3.49.0) the names of "All … by X except:" on every track but those of the blocks (all tracks when their number is not
+      // known); a cover or quote with an arranger of its track is an arrangement (its work a new one, "arrangement of" the original)
+      for (const head of exceptHeads) {
+        if (!head.names.length) continue;
+        const ex = new Set(head.blocks.flatMap((b) => [...b.scope.set]));
+        const rest = trackCount ? [...Array(trackCount).keys()].filter((i) => !ex.has(i)) : null;
+        // ((3.49.0, review) no block found below it (titles not of this release) or the number of tracks not known: not read – all tracks
+        // would credit the names on those they did not write too)
+        if (!head.blocks.length || !rest) {
+          unrecognized.push(head.line);
+          continue;
+        }
+        if (!rest.length) continue;
+        const sc = { set: new Set(rest), spec: `except ${head.blocks.map((b) => `“${b.title}”`).join(', ')}` };
+        [line0, part0, pi0, n0] = [head.line, head.part, 0, head.n];
+        head.names.forEach((nm) => head.roles.forEach((r) => addCredit(nm, r, sc)));
+      }
+      const arrangedOn = (set) => credits.some((c) => /arrang/i.test(c.role) && c.tracks && c.tracks.indexes && c.tracks.indexes.some((i) => set.has(i)));
+      covers.forEach((c) => { c.arranged = arrangedOn(c.scope.set); c.tracks = [...c.scope.set]; });
+      quotes.forEach((q) => { q.tracks = [...q.scope.set]; });
       // [S063] (3.38.18) initials as a name ("RR"): the one release artist or name of the text they stand for (collected item 183)
       if (ruleOn('S063')) initialsOf(credits, artistNames);
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes };
     }
 
     /**
@@ -7109,6 +7252,9 @@
         ignored: res.ignored,
         stackAlt: res.stackAlt || [], // [S058] (3.38.12)
         stackAltUnrec: res.stackAltUnrec || null,
+        // [Z-EXC] (3.49.0) covers and quotes of the tracks
+        covers: res.covers || [],
+        quotes: res.quotes || [],
       };
     }
 
@@ -7293,7 +7439,7 @@
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       // [S073] (3.42.3) the album's title and its tracks' are no persons (Z-BZ)
       const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName] });
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -7301,7 +7447,7 @@
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName] });
       // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
       // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
@@ -7312,6 +7458,9 @@
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
+      // [Z-EXC] (3.49.0) covers and quotes of the credits and of the "about" text
+      const covers = [...(album.covers || []), ...(aboutAll ? aboutRes.covers || [] : [])];
+      const quotes = [...(album.quotes || []), ...(aboutAll ? aboutRes.quotes || [] : [])];
       // [S058] (3.38.12) the lines not recognized of each track page, in both readings
       const trackUnrec = new Map();
       const trackAltUnrec = new Map();
@@ -7368,6 +7517,8 @@
         series: [],
         unrecognized,
         ignored,
+        covers,
+        quotes,
         band,
         released: cur.release_date || '',
       };
@@ -9603,6 +9754,9 @@
       performanceLt: findLt('recording', 'work', 'performance'),
       // [Z-SU] (3.41.2) a work and its parts (a suite and its movements)
       partsLt: findLt('work', 'work', 'parts'),
+      // [Z-EXC] (3.49.0) an arrangement of a work; lyrics quoted from another work
+      arrangementLt: findLt('work', 'work', 'arrangement'),
+      quoteLt: findLt('work', 'work', 'lyrical quotation'),
       // Fallback IDs are the values currently used on musicbrainz.org.
       memberLtId: (findLt('artist', 'artist', 'member of band') || { id: 103 }).id,
       // URL relationship types by name, e.g. "discogs" for the links of a source (sourceUrlLtId)
@@ -10688,6 +10842,36 @@
       }
     }
 
+    // [Z-EXC] (3.49.0) the work of a track with the work it quotes ("quotes lyrics from") or arranges ("arrangement of"): once that work
+    // is found in MusicBrainz and the track has a work (new ones too)
+    for (const [i, list] of S.worksSkip ? [] : S.workRels || []) {
+      for (const r of list) {
+        const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
+        const w = worksForTrack(i)[0];
+        if (!lt || !w || r.state !== 'found' || !r.found) continue;
+        // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
+        // nor what MusicBrainz has already)
+        if (w.gid === r.found.gid || (S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`))) continue;
+        const key = `wrel|${r.kind}|${w.gid}|${r.found.gid}`;
+        planned.add(key);
+        if (S.scope === 'nonwork' || !inMedium(i)) continue;
+        // ((3.49.0, review) a new work only with its own link – held back by an invalid date, its relationship waits too, like a suite's)
+        const t = S.mbTracks[i];
+        const own = t && `link|${t.recordingGid}|${w.gid}`;
+        if (w.origin !== 'mb' && own && !seen.has(own) && !S.staged.has(own) && !S.appliedKeys.has(own) && !S.existing.workLinks.has(`${t.recordingGid}|${w.gid}`)) continue;
+        const stagedLink = S.staged.get(key);
+        if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) continue;
+        seen.add(key);
+        const item = {
+          kind: 'work-rel', rel: r.kind, lt, attrs: [], noteText: '', key, credit: '', fromGid: w.gid, fromTitle: w.title, toGid: r.found.gid, toTitle: r.found.title,
+          date: null, update: stagedLink || null, origin: w.origin,
+          target: { kind: 'work', gid: w.gid, label: w.title, order: 30000 + i, track: S.mbTracks[i], work: { gid: w.gid, title: w.title } },
+        };
+        if (stagedLink && stagedLink.sig === itemSig(item)) continue;
+        items.push(item);
+      }
+    }
+
     for (const row of S.rows) {
       const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null };
       rowInfo.set(row.id, info);
@@ -11529,7 +11713,8 @@
       }
       if (end === t.length - 1) t = t.slice(open[0].length, -1);
     }
-    return t.replace(/\\/g, '').split('|').join(' | ');
+    // ((3.49.0, review) a space of the pattern as one: "field)\\s+samples?" was "field)s+samples?")
+    return t.replace(/\\s[*+?]?/g, ' ').replace(/\\/g, '').split('|').join(' | ');
   };
 
   /**
@@ -15999,12 +16184,25 @@
       done.push(`linked ${st.workLinks} work${st.workLinks === 1 ? '' : 's'} to recordings${st.newWorkLinks ? ` (${st.newWorkLinks} newly created)` : ''}`);
       if (st.pendingWorks) done.push(`created ${st.pendingWorks} new work${st.pendingWorks === 1 ? '' : 's'} in the relationship editor, together with their relationships`);
     }
+    // [Z-EXC] (3.49.0, review) a work with the work it arranges or quotes
+    if (st.workRels) done.push(`linked ${st.workRels} work${st.workRels === 1 ? '' : 's'} with the work${st.workRels === 1 ? '' : 's'} ${st.workRels === 1 ? 'it arranges or quotes' : 'they arrange or quote'}`);
     if (st.suiteParts) done.push(`linked ${st.suiteParts} part${st.suiteParts === 1 ? '' : 's'} with ${st.suiteParts === 1 ? 'its suite' : 'their suites'}`);
     if (st.filled) done.push(`added role credits to ${st.filled} existing relationship${st.filled === 1 ? '' : 's'}`);
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
     if (st.linkAttrs) done.push(`added attributes (live, cover …) to ${st.linkAttrs} existing link${st.linkAttrs === 1 ? '' : 's'} between recording and work`);
     if (done.length) lines.push(`Done: ${done.join('; ')}.`);
     supp.filter((l) => !l.startsWith('Also from: ')).forEach((l) => lines.push(l));
+    // [Z-EXC] (3.49.0) covers, arrangements and quotes as the source says them; a work not found in MusicBrainz is named (Q-fh)
+    // ((3.49.0, review) only for tracks chosen, with the works matrix in use; a cover while "cover" is on one of its links)
+    const noteTrack = (i) => !S.worksSkip && inSelection(i) && S.mbTracks[i];
+    (S.textCovers || new Map()).forEach((c, i) => {
+      const t = noteTrack(i);
+      if (t && (c.arranged || worksForTrack(i).some((w) => linkAttrsOf(i, w).has('cover')))) lines.push(`${c.arranged ? 'Arrangement' : 'Cover'}: “${t.title}” – originally performed by ${c.by} (${S.source.noteName}).`);
+    });
+    (S.workRels || new Map()).forEach((list, i) => list.filter((r) => r.state === 'none').forEach((r) => {
+      const t = noteTrack(i);
+      if (t) lines.push(`${r.kind === 'quote' ? 'Quotes lyrics from' : 'Arrangement of'} “${r.title}”${(r.by || []).length ? ` (${r.by.join(', ')})` : ''} – not found in MusicBrainz (“${t.title}”).`);
+    }));
     if (S.noteDates.size) lines.push(`Dates entered in the dashboard: ${[...S.noteDates.values()].join('; ')}.`);
     if (S.noteLines.size) {
       lines.push(`Not stored in MB (${S.source.noteName} wording):`);
@@ -17133,6 +17331,8 @@
       }
     }
     sp.items = sp.items.filter((it) => !chosen.includes(it));
+    // [Z-EXC] (3.49.0, review) the covers and quotes of a supplement too (once its credits are taken: the writers of an arrangement)
+    if (chosen.length && ((sp.rel.covers || []).length || (sp.rel.quotes || []).length)) addWorkNotes(sp.rel);
     // [3.18.0] the works matrix skipped: work rows taken over go to "Skip" with it
     if (S.worksSkip) setWorksRowsSkipped(true);
     log('ok', 'suppApplied', { name: sp.source.name, n: chosen.length });
@@ -17551,6 +17751,8 @@
     const tracks = mbTracksAsSource();
     return {
       tracks, input: S.textInput, sig: textSig, isRole: isKnownRole, isCompanyRole: isTextCompanyRole, httpGet,
+      // [Z-EXC] (3.49.0) how many tracks ("All … by X except:" – the others)
+      trackCount: tracks.length,
       settings: { bandcampTracks: S.bcTracks },
       resolveTracks: (spec, srcTracks = tracks) => tracksInText(`tracks ${spec}`, srcTracks),
       // [3.22.0] tracks named by their titles (S027)
@@ -18384,6 +18586,10 @@
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
+      // [Z-EXC] (3.49.0) the covers and quotes of the text (their works looked up once the rows are there)
+      S.workNotesRel = rel;
+      // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
+      setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
       await bandPageInfo(rel);
       refreshRulesWindow();
@@ -18546,6 +18752,8 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
+        setWorkNotes(S.workNotesRel);
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
         S.gapExactPending = source === DISCOGS || source === BANDCAMP ? { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) } : null;
@@ -19208,6 +19416,8 @@
 
   function describeItem(it) {
     const date = it.date ? ` [${formatDateValue(it.date) || tr('date.endedOnly')}]` : '';
+    // [Z-EXC] (3.49.0) a work with the work it arranges or quotes
+    if (it.kind === 'work-rel') return `${it.fromTitle} → ${it.toTitle} (${it.lt.name})`;
     // [177] (3.38.10) the relationship as MusicBrainz names it ("recording of", "guest piano", "co-producer")
     if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${mbPhraseOf(it.lt, { level: it.target.kind }, it.attrs || []) || it.lt.name})${date}`;
     // [Z-SU] (3.41.2) a part of a suite
@@ -19489,6 +19699,32 @@
         } catch (e) {
           errors.push(`${text}: ${e.message}`);
           log('error', 'stageFailed', { text, error: e.message });
+        }
+        continue;
+      }
+      // [Z-EXC] (3.49.0) a work and the work it arranges (the original is entity0: "has arrangement") or quotes (the quoting one is
+      // entity0: "quotes lyrics from")
+      if (it.kind === 'work-rel') {
+        if (it.target.track && !recordings.get(it.target.track.recordingGid)) {
+          notLoaded.set(it.target.track.medium, (notLoaded.get(it.target.track.medium) || 0) + 1);
+          log('warn', 'skippedNotLoaded', { text });
+          continue;
+        }
+        try {
+          const fromEntity = isPending(it.fromGid) ? pendingWorkEntity(it.fromGid) : await fetchJsEntity(it.fromGid);
+          const toEntity = await fetchJsEntity(it.toGid);
+          const st = dispatchAddRelationship(fromEntity, toEntity, it.lt.id, [], '', null, it.rel === 'arrangement');
+          if (st) {
+            S.staged.set(it.key, { state: st, source: fromEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true, noteKind: 'workRels' });
+            S.appliedKeys.add(it.key);
+            // ((3.49.0, review) counted for the edit note – taken off again when it is taken out of the editor)
+            S.noteStats.workRels = (S.noteStats.workRels || 0) + 1;
+          }
+          added++;
+          log('ok', 'staged', { text });
+        } catch (e) {
+          errors.push(`${text}: ${e.message}`);
+          log('error', 'error', { text: `${text}: ${e.message}` });
         }
         continue;
       }
@@ -25257,13 +25493,15 @@
         return a.type.name;
       }).join(', ');
       // (the phrase names the attributes already: in brackets only credited names and texts it does not have – a task "cover")
-      const phrase = it.kind === 'work-link' || it.kind === 'suite-part' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
+      const phrase = it.kind === 'work-link' || it.kind === 'suite-part' || it.kind === 'work-rel' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
       const credText = [...it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })),
         ...it.attrs.filter((a) => a.text_value != null && !norm(phrase).includes(norm(a.text_value))).map((a) => `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`)].join(', ');
       const line = it.kind === 'work-link'
         ? [tr('preview.linkWork', { title: it.workTitle }) + (attrText ? ` (${attrText})` : '')]
         // [Z-SU] (3.41.2) a part of a suite
         : it.kind === 'suite-part' ? [tr('preview.suitePart', { suite: it.suiteTitle, n: it.linkOrder }) + (attrText ? ` (${attrText})` : '')]
+        // [Z-EXC] (3.49.0)
+        : it.kind === 'work-rel' ? [tr(it.rel === 'arrangement' ? 'preview.arrangementOf' : 'preview.quotesFrom', { title: it.toTitle })]
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
           // [177] (3.38.10) as MusicBrainz names it, with its attributes; credited names and texts in brackets
@@ -26078,6 +26316,104 @@
    */
   // (3.40.17, review) worked out once per drawing or check (linkAttrsOf is asked many times): S.coverPass counts them
   const coverMemo = { pass: -1, m: new Map() };
+  /**
+   * [Z-EXC] (3.49.0; Q-ev, Q-fb, Q-ff, Q-fg, Q-fh, Q-fi) The covers and quotes of the source's text, on the MusicBrainz tracks of their
+   * titles: a cover gets "cover" on the link of its work (the original; its writers from the text find it); an arrangement (a cover
+   * with an arranger on its track) and a quote get their work in MusicBrainz looked up – found, the work of the track is staged with
+   * it ("arrangement of", "quotes lyrics from"); not found, the edit note says so.
+   */
+  function setWorkNotes(rel) {
+    S.textCovers = new Map();
+    S.textQuotes = new Map();
+    S.workRels = new Map();
+    if (rel) addWorkNotes(rel);
+  }
+  /** [Z-EXC] (3.49.0, review) The covers and quotes of a source (a supplement too: tracks that have one already keep it). */
+  function addWorkNotes(rel) {
+    if (!S.textCovers) setWorkNotes(null);
+    const covers = new Map();
+    const quotes = new Map();
+    const onTracks = (title, idxs) => {
+      const k = S.mbTracks.findIndex((t) => norm(t.title) === norm(title));
+      return k >= 0 ? [k] : (idxs || []).filter((i) => S.mbTracks[i]);
+    };
+    (rel.covers || []).forEach((c) => onTracks(c.title, c.tracks).forEach((i) => { if (!S.textCovers.has(i)) covers.set(i, { by: c.by, title: c.title, arranged: !!c.arranged }); }));
+    (rel.quotes || []).forEach((q) => onTracks(q.title, q.tracks).forEach((i) => { if (!S.textQuotes.has(i)) quotes.set(i, { work: q.work, by: q.by }); }));
+    if (!covers.size && !quotes.size) return;
+    covers.forEach((c, i) => S.textCovers.set(i, c));
+    quotes.forEach((q, i) => S.textQuotes.set(i, q));
+    const add = (i, r) => S.workRels.set(i, [...(S.workRels.get(i) || []), { ...r, state: 'search', found: null }]);
+    quotes.forEach((q, i) => add(i, { kind: 'quote', title: q.work, by: [q.by] }));
+    // ((3.49.0, review) the title of the work – without the bracket of the track title: "[live]", "[feat. X]")
+    covers.forEach((c, i) => { if (c.arranged) add(i, { kind: 'arrangement', title: workTitleOf(S.mbTracks[i].title), by: writerNamesOf(i) }); });
+    S.coverPass = (S.coverPass || 0) + 1;
+    findWorkRels();
+  }
+  /** [Z-EXC] The writers of a track in the dashboard ("Written by Kevin Toney" of its block): their names, and the ids of those linked. */
+  function writerNamesOf(i) {
+    return uniq(writerEntriesOf(i).map((a) => a.name).filter(Boolean));
+  }
+  const writerEntriesOf = (i) => S.rows.filter((r) => r.tracks && r.tracks.has(i) && WRITER_TYPES.includes(norm(rowTypeName(r))))
+    .map((r) => S.artists.get(r.artistKey)).filter(Boolean);
+  /**
+   * [Z-EXC] The works to arrange or to quote looked up in MusicBrainz: the same title by one of the names (writers of it, by their name
+   * or – linked – their id). ((3.49.0, review) never by the title alone – without a name it is left to a search by hand; a failed search
+   * is no "not found")
+   */
+  async function findWorkRels() {
+    for (const [i, list] of S.workRels || []) {
+      for (const r of list) {
+        if (r.state !== 'search') continue;
+        const names = uniq((r.by || []).filter(Boolean));
+        const ids = r.kind === 'arrangement' ? uniq(writerEntriesOf(i).map((a) => a.mbid).filter(Boolean)) : [];
+        if (!names.length && !ids.length) {
+          r.state = 'noWriter';
+          continue;
+        }
+        const who = [...ids.map((x) => `arid:${x}`), ...names.map((n) => `artist:${lucenePhrase(n)}`)];
+        const q = `work:${lucenePhrase(r.title)} AND (${who.join(' OR ')})`;
+        try {
+          const data = await mbWsIdle(`work?query=${encodeURIComponent(q)}&limit=10`);
+          const hit = ((data && data.works) || []).find((w) => norm(w.title) === norm(r.title)
+            && (w.relations || []).some((x) => x.artist && (ids.includes(x.artist.id) || names.some((n) => norm(n) === norm(x.artist.name)))));
+          r.found = hit ? { gid: hit.id, title: hit.title, writers: uniq((hit.relations || []).filter((x) => x.artist).map((x) => x.artist.name)) } : null;
+          r.state = hit ? 'found' : 'none';
+        } catch (e) {
+          r.state = 'error';
+          r.error = String(e.message || e);
+        }
+      }
+    }
+    if (S.overlay) {
+      renderWorks();
+      refresh();
+    }
+  }
+  /** [Z-EXC] Below the title of a track in the works matrix: its cover, its quote, its arrangement (and the work found for it). */
+  function workNotesHtml(i) {
+    const out = [];
+    const c = S.textCovers && S.textCovers.get(i);
+    if (c) out.push(`<div class="dci-mx-wnote" data-wnote="cover">${esc(tr(c.arranged ? 'wnote.arranged' : 'wnote.cover', { by: c.by }))}</div>`);
+    for (const r of (S.workRels && S.workRels.get(i)) || []) {
+      const label = tr(r.kind === 'arrangement' ? 'wnote.arrangementOf' : 'wnote.quotesFrom', { title: r.title, by: (r.by || []).join(', ') || '–' });
+      const searchUrl = `/search?query=${encodeURIComponent(r.title)}&type=work&method=indexed`;
+      const search = `<a href="${searchUrl}" target="_blank" rel="noopener">${esc(tr('wnote.search'))}</a>`;
+      let state;
+      if (r.state === 'search') state = `<span class="dci-sub">${esc(tr('works.searching'))}</span>`;
+      else if (r.state === 'found') {
+        // ((3.49.0, review) the track's work is that work itself (an arranged cover needs a work of its own, Q-ff), or MusicBrainz has
+        // the relationship already)
+        const w = worksForTrack(i)[0];
+        const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
+        const why = !w ? 'wnote.needWork' : w.gid === r.found.gid ? 'wnote.needOwn'
+          : lt && S.existing && S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`) ? 'wnote.exists' : 'wnote.staged';
+        state = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.found.title)}</a>
+          <span class="dci-sub">${esc(tr(why))}</span>`;
+      } else state = `<span class="dci-sub">${esc(tr(r.state === 'noWriter' ? 'wnote.noWriter' : r.state === 'error' ? 'wnote.error' : 'wnote.notFound'))}</span> ${search}`;
+      out.push(`<div class="dci-mx-wnote" data-wnote="${r.kind}" data-wstate="${r.state}">${esc(label)} ${state}</div>`);
+    }
+    return out.join('');
+  }
   function coverAuto(i, work) {
     if (!work || !work.planned) return false;
     if (coverMemo.pass !== S.coverPass) {
@@ -26089,6 +26425,9 @@
     return coverMemo.m.get(k);
   }
   function coverAutoNow(i, work) {
+    // [Z-EXC] (3.49.0) the text says so ("Originally performed by …"): a cover – not an arrangement (that is a work of its own)
+    const tc = S.textCovers && S.textCovers.get(i);
+    if (tc) return !tc.arranged;
     if (((S.release && S.release.genres) || []).includes('classical')) return false;
     const plan = planOf(i, work.gid);
     if (!plan || !plan.composer || !coverCandidates(i, work).length) return false;
@@ -27977,7 +28316,7 @@
     const { i, track, work } = mrow;
     const dPos = S.srcTracks[i] ? S.srcTracks[i].position : '';
     const head = `<div class="dci-mx-title"><span class="dci-tn">${esc(trackLabel(track))}</span> <strong>${esc(track.title)}</strong>${dPos
-      ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}</div>`;
+      ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}</div>${workNotesHtml(i)}`;
     const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>`;
     const line = (inner) => `<div class="dci-mx-line">${inner}${linkAttrsToggleHtml(mrow)}</div>`;
     const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
@@ -36204,7 +36543,8 @@
     // (the yellow grounds written as colours: as the suggestions)
     `${DK_OV} .dci-mx-newworks, ${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
     `${DK_OV} .dci-waiting, ${DK_OV} .dci-foot-chip-warn, ${DK_OV} input.dci-from-dg { color: var(--sugg-ink); }`,
-  ].join('\n');
+  // ((3.49.0) each rule on one line, as the rest of the dark sheet – its lines are its rules)
+  ].map((x) => x.replace(/\s*\n\s*/g, ' ')).join('\n');
   /** [Z-DM] (3.46.0, review) The dark stylesheet, made once, after the light one. */
   function ensureDarkSheet() {
     if (document.getElementById('dci-styles-dark')) return;
@@ -36890,6 +37230,9 @@
       .dci-mx-title { font-size: calc(var(--u, 1px) * 14); }
       .dci-mx-title strong { font-weight: 700; }
       .dci-mx-dpos { margin: calc(var(--u, 1px) * 2) 0 calc(var(--u, 1px) * 4); color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
+      /* [Z-EXC] (3.49.0) a cover, an arrangement, a quote of the track (below its title) */
+      .dci-mx-wnote { margin: calc(var(--u, 1px) * 2) 0; font-size: calc(var(--u, 1px) * 11.5); color: var(--sugg-ink); }
+      .dci-mx-wnote .dci-mblink { margin: 0 calc(var(--u, 1px) * 3); }
       .dci-mx-newworks, .dci-mx-addcol { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; }
       .dci-mx-newworks { background: #fff8db; border: 1px solid #e8c547; }
       .dci-mx-addcol { background: var(--soft); border: 1px solid var(--line); }
