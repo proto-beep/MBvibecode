@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.46.0, Companion 1.6.0 – 1.12.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.47.0, Companion 1.6.0 – 1.12.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.47.0 · 2026-11-04
+
+Block 4 – Z-GST.
+
+- **`STATS_SCOPE_KEY`** ('dci-stats-scope': 'global', else this browser; `S.statsScope`; in `TOPIC_KEYS.statistics`, `SETTINGS_KEYS`, `resetSettings`, `resetTopic('statistics')`), **`GLOBAL_STATS_URL`** (raw.githubusercontent.com, branch `stats`, `stats/mb-vibecode-credits-importer-global.json`), `GLOBAL_STATS_CACHE_KEY` ('dci-stats-global': { at, data }), `GLOBAL_STATS_MAX_AGE` (a day).
+- **`globalStatsLoad(force)`** (new; `httpGet`, the copy when younger than a day; a failure keeps the copy, `S.globalErr`), **`globalStatsHtml()`** (new: head with the date of the dump and "Load again", tiles `data-stat="g-…"`, `[data-el=stats-global-months]`, lists `stats-global-versions|sources|types|levels|edits|status`). `renderStats`: the switch `data-act="stats-scope"` in the head ("this browser only" only there); click cases `stats-scope`, `stats-global-reload`. CSS `.dci-stats-scope`.
+- **Texts:** `stats.scope`, `stats.scope.local`, `stats.scope.localTitle`, `stats.scope.global`, `stats.scope.globalTitle`, `stats.global.head`, `stats.global.privacy`, `stats.global.old`, `stats.global.none`, `stats.global.reload`, `stats.global.edits|submissions|editors|credits|works`, `stats.global.top.versions|sources|types|levels|edits|status`, `stats.global.st.open|applied|failed_vote|failed_dependency|error|failed_prerequisite|no_votes|deleted`.
+- **Repository:** `.github/workflows/global-stats.yml`, `stats/global_stats.py`, `stats/test_global_stats.py`, `stats/README.md` (pull request of their own, from the alpha #68).
+- **Tests:** `t_ui_settings.py globalstats`.
+- **Review of Block 4:** **`globalStatsClean(d)`** (new: each section an object of numbers, months and versions objects of numbers, at most 200 entries; null without totals) for the file and the copy; `globalStatsHtml` → try/catch around **`globalStatsView()`**; sources mapped to the script's names (`pasted text` → text, `cover art text` → ocr) and merged by label, status and level labels fall back to the key (`lbl`), versions compared over all their parts; `renderStats` restores focus with `data-scope`; the copy fresh only when `at <= now`; while loading anew the copy is shown; "Load again" with `?t=<now>`; files over 2 MB refused; the loading view has "Load again". `conn.X010` names the global statistics.
+- **Tests (review):** `t_ui_settings.py globalstats` E (a file with gaps), F (keyboard focus), G (a copy older than a day).
 
 ## Import 3.46.0 · Companion 1.12.0 · 2026-11-04
 

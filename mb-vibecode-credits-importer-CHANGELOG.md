@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.46.0 | 1.11.1 – 1.12.0 |
+| 2026-11-04 | 3.43.0 – 3.47.0 | 1.11.1 – 1.12.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.47.0
+
+Block 4 – collected item Z-GST (Q-eq, Q-ey, Q-ez, Q-es).
+
+#### Added
+
+- **Global statistics:** the statistics have **This browser | Global** in their head (remembered). **Global** shows all users of the script on MusicBrainz: the edits with its edit note, read from MusicBrainz's edit dump twice a week by the workflow "Global statistics" of the repository (its data branch `stats`) – edits, submissions, how many different editors, credit relationships and works linked; the months; the newest versions; sources, relationship types, credits by level, kinds of edits and their status. Only numbers. Loaded at most once a day and kept in this browser; **Load again** loads it now; without network the numbers of the last time.
+
+#### Fixed (review of Block 4)
+
+- A file with gaps or odd values no longer leaves an empty panel; the sources are named as the script names them ("pasted text", "text from cover art"), versions are in order, unknown values shown as they are; after a switch with the keyboard the focus stays on it; a copy is not kept past a day when the clock was put back; "Load again" really loads anew.
 
 ### Import 3.46.0 · COMPANION 1.12.0
 

@@ -1,6 +1,7 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); `python3 t_ui_settings.py <case> …` runs only those."""
+import json
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1975,6 +1976,137 @@ def case_theme():
         print('F) Standard:', f, '| Fehler:', errs)
         results.append(f == [[], [None, None, None, None]] and not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_globalstats():
+    """Credits Importer 3.47.0 (collected item Z-GST; Q-eq, Q-ey, Q-ez, Q-es): the statistics of all users ("Global").
+    A) Statistics → "This browser | Global": Global loads the file of the workflow (raw.githubusercontent.com, branch "stats"): the
+       date of the dump, tiles (edits, submissions, editors, credit relationships, works linked), the months (newest first; 1
+       editor as it is), versions (newest first), sources, relationship types, levels, kinds of edits, status; remembered.
+    B) Opened again (a new page): from this browser's copy – no second download within a day; "Load again" downloads it anew.
+    C) Not there (404) and no copy: says so; a copy and a failure: the copy, with a line that it is the last one.
+    D) "Reset all settings": this browser again.
+    Review of 3.47.0:
+    E) A file with gaps (a month null, a version "3.47" beside "3.47.1", status 8, the sources "pasted text", "cover art text",
+       "unknown"): the panel is shown – versions in order, the sources by their names (the others together), status 8 as it is.
+    F) Switched with the keyboard: the focus stays on "Global".
+    G) A copy older than a day: loaded anew."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261104-002222', 'since': '2026-09-01',
+            'totals': {'edits': 4911, 'submissions': 68, 'editors': 1},
+            'by_month': {'2026-10': {'edits': 4577, 'submissions': 60, 'editors': 1}, '2026-11': {'edits': 334, 'submissions': 8, 'editors': 1}},
+            'by_version': {'0.9.2': {'edits': 45, 'submissions': 1}, '3.9.0': {'edits': 5, 'submissions': 1}, '3.41.15': {'edits': 64, 'submissions': 3}, '3.21.0': {'edits': 800, 'submissions': 9}},
+            'by_edit_type': {'90 Add relationship': 4612, '41 Add work': 260}, 'by_status': {'applied': 4900, 'open': 11},
+            'by_relationship_type': {'instrument': 1454, 'composer': 414}, 'by_source': {'discogs': 55, 'bandcamp': 12, 'youtube': 1},
+            'done': {'credit relationships': 4291, 'works linked': 320}, 'done_by_level': {'recording': 3362, 'work': 513, 'release': 414, 'release group': 2}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    n_req = lambda: len([u for u in H.RAW_REQUESTS if PATH in u])
+    G = """(() => { const q = (s) => [...document.querySelectorAll(s)].map((x) => x.textContent.replace(/\\s+/g, ' ').trim());
+      return { head: q('[data-el=stats-global-head]'), tiles: q('[data-stat^=g-] .dci-stats-num'), months: [...document.querySelectorAll('[data-el=stats-global-months] tbody tr')].map((r) => [...r.children].map((c) => c.textContent.trim()).join(' ')),
+        versions: q('[data-el=stats-global-versions] li'), sources: q('[data-el=stats-global-sources] li'), status: q('[data-el=stats-global-status] li'),
+        levels: q('[data-el=stats-global-levels] li'), local: !!document.querySelector('.dci-stats-local'), none: !!document.querySelector('[data-el=stats-global-none]'),
+        old: !!document.querySelector('[data-el=stats-global-old]') }; })()"""
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.wait_for_timeout(800)
+            a = pg.evaluate(G)
+            print('A) Global:', a, '| gespeichert:', pg.evaluate("localStorage.getItem('dci-stats-scope')"), '| Abrufe:', n_req())
+            results.append('2026-11-04' in (a['head'] or [''])[0] and a['tiles'] == ['4,911', '68', '1', '4,291', '320']
+                           and a['months'] == ['2026-11 334 8 1', '2026-10 4,577 60 1'] and a['versions'] == ['3.41.15 64', '3.21.0 800', '3.9.0 5', '0.9.2 45']
+                           and a['sources'] == ['Discogs 55', 'Bandcamp 12', 'YouTube 1'] and a['status'] == ['applied 4,900', 'open 11']
+                           and a['levels'][0] == 'Recording 3,362' and not a['local'] and pg.evaluate("localStorage.getItem('dci-stats-scope')") == '"global"' and n_req() == 1)
+            # B) a new page: the copy of this browser; "Load again"
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(500)
+            b1 = [pg.evaluate(G)['tiles'][:1], n_req()]
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            b2 = n_req()
+            print('B) neue Seite:', b1, '| neu geladen:', b2)
+            results.append(b1 == [['4,911'], 1] and b2 == 2)
+            # C) not there: with the copy – the copy and the line; without it – says so
+            del H.RAW_GITHUB[PATH]
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            c1 = pg.evaluate(G)
+            pg.evaluate("localStorage.removeItem('dci-stats-global')")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(800)
+            c2 = pg.evaluate(G)
+            print('C) mit Kopie:', c1['tiles'][:1], c1['old'], '| ohne:', c2['none'], c2['tiles'])
+            results.append(c1['tiles'][:1] == ['4,911'] and c1['old'] and c2['none'] and not c2['tiles'])
+            # D) the topic's defaults
+            H.open_settings(pg, 'general')
+            pg.click('[data-el=settings] [data-act=reset-open]')
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=settings] [data-act=reset-do]')
+            pg.wait_for_timeout(1000)
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            d = [pg.evaluate("localStorage.getItem('dci-stats-scope')"), pg.evaluate("[...document.querySelectorAll('[data-act=stats-scope][aria-pressed=true]')].map(b => b.dataset.scope)")]
+            print('D) Standard:', d)
+            results.append(d == [None, ['local']])
+            # E) a file with gaps
+            bad = dict(data, by_month={'2026-10': None, '2026-11': {'edits': 3}}, by_version={'3.47': {'edits': 2}, '3.47.1': {'edits': 1}, '3.46.0': None, '3.47.0': {'edits': 4}},
+                       by_status={'applied': 5, '8': 1}, by_source={'discogs': 4, 'pasted text': 2, 'cover art text': 1, 'unknown': 1, 'other': 1})
+            H.RAW_GITHUB[PATH] = json.dumps(bad)
+            pg.evaluate("localStorage.removeItem('dci-stats-global')")
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.wait_for_timeout(300)
+            # (the last load failed – C: loaded anew by hand)
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            e = pg.evaluate(G)
+            print('E) Lücken:', e['months'], e['versions'], e['sources'], e['status'])
+            results.append(e['months'] == ['2026-11 3 0 0', '2026-10 0 0 0'] and e['versions'] == ['3.47.1 1', '3.47.0 4', '3.47 2', '3.46.0 0']
+                           and e['sources'] == ['Discogs 4', 'pasted text 2', 'other 2', 'text from cover art 1'] and e['status'] == ['applied 5', '8 1'])
+            # F) the keyboard
+            pg.focus('[data-el=stats] [data-act=stats-scope][data-scope=local]')
+            pg.keyboard.press('Enter')
+            pg.wait_for_timeout(300)
+            pg.focus('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.keyboard.press('Enter')
+            pg.wait_for_timeout(500)
+            f = [pg.evaluate("document.activeElement && document.activeElement.dataset.scope"), pg.evaluate("localStorage.getItem('dci-stats-scope')")]
+            print('F) Fokus nach Enter:', f)
+            results.append(f == ['global', '"global"'])
+            # G) a copy older than a day
+            n0 = n_req()
+            pg.evaluate("(() => { const c = JSON.parse(localStorage.getItem('dci-stats-global')); c.at = Date.now() - 25 * 3600 * 1000; localStorage.setItem('dci-stats-global', JSON.stringify(c)); })()")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(800)
+            g = n_req() - n0
+            print('G) alte Kopie → neu geladen:', g, '| Fehler:', errs)
+            results.append(g == 1 and not errs)
+            b.close()
+    finally:
+        H.RAW_GITHUB.pop(PATH, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

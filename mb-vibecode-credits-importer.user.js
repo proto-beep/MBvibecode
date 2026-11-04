@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.46.0
+// @version      3.47.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.46.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.46.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.47.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.47.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.46.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.47.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -937,7 +937,7 @@
       "conn.X008": "Run the script; their functions read Bandcamp pages (GM_xmlhttpRequest) and open background tabs (GM_openInTab).",
       "conn.X009.name": "Web profiles (Instagram, SoundCloud, Spotify …)",
       "conn.X009": "Profiles next to names in a text are kept as links: MusicBrainz is asked for an artist with them, “Create …” fills them in – the profiles themselves are never opened.",
-      "conn.X010": "Home page, issues and updates of the script (@updateURL); from 3.33.0 also its mapping file and from 3.34.0 its languages file, which the userscript manager loads with the script (@resource) – or the script itself, when the manager did not (raw.githubusercontent.com).",
+      "conn.X010": "Home page, issues and updates of the script (@updateURL); from 3.33.0 also its mapping file and from 3.34.0 its languages file, which the userscript manager loads with the script (@resource) – or the script itself, when the manager did not (raw.githubusercontent.com); from 3.47.0 the global statistics (Statistics → Global, at most once a day).",
       "conn.X011": "Its way of setting the comments of recordings – edits “edit recording” (type 72) sent to MusicBrainz's /ws/js/edit/create, with an edit note – is how the script enters the comments of live recordings after “Enter edit” (⚙ Settings → Staging, off by default); the script itself is not needed. MusicBrainz's /ws/js/release tells whether the relationships are saved.",
       "conn.X012": "The comments of live recordings follow its format – “live, 2004‐03‐23: Iridium, New York, NY, USA”: the place's credit or name with city, US or Canadian state code and country, the date –, and its line “Seed live comments” is added to their edit note; the script itself is not needed.",
       "settings.t.texts": "Texts",
@@ -1740,6 +1740,35 @@
       "stats.title": "Statistics",
       "stats.local": "this browser only",
       "stats.localTitle": "These statistics are kept only in this browser (its storage for musicbrainz.org): another browser or computer has statistics of its own, and nothing is sent anywhere.",
+      "stats.scope": "Whose statistics",
+      "stats.scope.local": "This browser",
+      "stats.scope.localTitle": "What was counted in this browser",
+      "stats.scope.global": "Global",
+      "stats.scope.globalTitle": "All users of the script on MusicBrainz: the edits with its edit note, read from MusicBrainz's edit dump twice a week",
+      "stats.global.head": "All users of the script on MusicBrainz – from MusicBrainz's edit dump of {date} (twice a week).",
+      "stats.global.privacy": "Only numbers: no names, edits or releases; “editors” is how many different ones. Counted are the edits with the script's edit note (“No note” cannot be found).",
+      "stats.global.old": "Could not be loaded just now – these are the numbers of the last time.",
+      "stats.global.none": "The global statistics are not there yet (or cannot be loaded now).",
+      "stats.global.reload": "Load again",
+      "stats.global.edits": "edits",
+      "stats.global.submissions": "submissions",
+      "stats.global.editors": "editors",
+      "stats.global.credits": "credit relationships",
+      "stats.global.works": "works linked",
+      "stats.global.top.versions": "Versions (newest)",
+      "stats.global.top.sources": "Sources (submissions)",
+      "stats.global.top.types": "Relationship types",
+      "stats.global.top.levels": "Credits by level",
+      "stats.global.top.edits": "Kinds of edits",
+      "stats.global.top.status": "Status of the edits",
+      "stats.global.st.open": "open",
+      "stats.global.st.applied": "applied",
+      "stats.global.st.failed_vote": "voted down",
+      "stats.global.st.failed_dependency": "failed (dependency)",
+      "stats.global.st.error": "error",
+      "stats.global.st.failed_prerequisite": "failed (prerequisite)",
+      "stats.global.st.no_votes": "no votes",
+      "stats.global.st.deleted": "cancelled",
       "stats.buttonTitle": "Statistics: what you entered into MusicBrainz with the dashboard",
       "stats.foldTitle": "Fold the statistics in (as their button does)",
       "stats.t.releases": "releases",
@@ -8903,6 +8932,12 @@
   // [Z-STD] (3.45.0; Q-du, Q-el, Q-eo, Q-ep) the times of the card "Sources": 'mean' (the average), else the median; pauses without a
   // click, a key or scrolling from this many seconds on are not counted (0: all counted)
   const STATS_TIME_KEY = 'dci-stats-time';
+  // [Z-GST] (3.47.0; Q-eq, Q-ey, Q-ez) the statistics of this browser or of all users ('global': from MusicBrainz's edit dump, made
+  // twice a week by the workflow "Global statistics" of the repository, on its data branch "stats"; loaded at most once a day)
+  const STATS_SCOPE_KEY = 'dci-stats-scope';
+  const GLOBAL_STATS_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json';
+  const GLOBAL_STATS_CACHE_KEY = 'dci-stats-global';
+  const GLOBAL_STATS_MAX_AGE = 24 * 3600 * 1000;
   const STATS_IDLE_KEY = 'dci-stats-idle';
   const STATS_IDLE_DEFAULT = 300;
   const statIdleMs = () => {
@@ -11248,6 +11283,7 @@
   S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
   // [E8] (3.38.0) the statistics: their period over time; the records once the tab is shown
   S.statsPeriod = readJson('localStorage', STATS_PERIOD_KEY, 'month');
+  S.statsScope = readJson('localStorage', STATS_SCOPE_KEY, 'local') === 'global' ? 'global' : 'local';
   S.statsData = null;
 
   const pad2 = (n) => String(n).padStart(2, '0');
@@ -31728,6 +31764,15 @@
         saveRememberNow();
         window.location.reload();
         break;
+      // [Z-GST] (3.47.0) this browser or all users; the global statistics loaded again
+      case 'stats-scope':
+        S.statsScope = btn.dataset.scope === 'global' ? 'global' : 'local';
+        writeJson('localStorage', STATS_SCOPE_KEY, S.statsScope === 'global' ? 'global' : null);
+        renderStats();
+        break;
+      case 'stats-global-reload':
+        globalStatsLoad(true);
+        break;
       case 'stats-period':
         // [E8] (3.38.0) the statistics over days, weeks, months or years
         S.statsPeriod = btn.dataset.period;
@@ -33462,7 +33507,7 @@
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY],
     // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
-    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY],
+    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_SCOPE_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -33971,6 +34016,119 @@
     // [Z-DS] (3.42.0) the number next to "Delete statistics …" in ⚙ Settings → Cache
     const st = S.overlay && S.overlay.querySelector('[data-el="stats-stored"]');
     if (st) renderSettings();
+  }
+
+  /**
+   * [Z-GST] (3.47.0) The global statistics: the file of the workflow (its data branch), kept in this browser for a day; `force`:
+   * loaded again now. Only numbers (no editors, edits, releases or URLs).
+   */
+  async function globalStatsLoad(force = false) {
+    if (S.globalLoading) return;
+    const cached = readJson('localStorage', GLOBAL_STATS_CACHE_KEY, null);
+    const copy = cached && globalStatsClean(cached.data);
+    const now = Date.now();
+    // ((3.47.0, review) a time in the future – a clock put back – is no fresh copy)
+    if (!force && copy && cached.at <= now && now - cached.at < GLOBAL_STATS_MAX_AGE) {
+      S.globalStats = copy;
+      return;
+    }
+    S.globalLoading = true;
+    S.globalErr = null;
+    // (while it loads anew: the copy, if any)
+    if (copy) S.globalStats = copy;
+    if (S.statsOpen) renderStats();
+    try {
+      // ((3.47.0, review) "Load again" past the browser's cache of the file; else at most once an hour a new address)
+      const raw = await httpGet(`${GLOBAL_STATS_URL}?t=${force ? now : Math.floor(now / 3600000)}`);
+      if (raw.length > 2e6) throw new Error('too large');
+      const data = globalStatsClean(JSON.parse(raw));
+      if (!data) throw new Error('no statistics');
+      S.globalStats = data;
+      writeJson('localStorage', GLOBAL_STATS_CACHE_KEY, { at: now, data });
+    } catch (e) {
+      // (not there yet, or no network: the last one kept, if any)
+      S.globalErr = String((e && e.message) || e);
+      if (copy) S.globalStats = copy;
+    }
+    S.globalLoading = false;
+    if (S.statsOpen) renderStats();
+  }
+
+  /**
+   * [Z-GST] (3.47.0, review) The file as the view needs it, whatever it holds: each section an object of numbers (the months
+   * and versions objects of numbers), at most 200 entries each; null without totals.
+   */
+  function globalStatsClean(d) {
+    const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+    if (!d || typeof d !== 'object' || Array.isArray(d) || !d.totals || typeof d.totals !== 'object') return null;
+    const nums = (o) => Object.fromEntries(Object.entries(obj(o)).slice(0, 200).map(([k, v]) => [String(k).slice(0, 80), Number(v) || 0]));
+    const rows = (o, keys) => Object.fromEntries(Object.entries(obj(o)).slice(0, 200).map(([k, v]) => [String(k).slice(0, 40), Object.fromEntries(keys.map((f) => [f, Number(obj(v)[f]) || 0]))]));
+    return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
+      by_version: rows(d.by_version, ['edits', 'submissions']), by_status: nums(d.by_status), by_source: nums(d.by_source), by_relationship_type: nums(d.by_relationship_type),
+      done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type) };
+  }
+
+  /** [Z-GST] (3.47.0) "Global": all users of the script on MusicBrainz, as the edit dump has them. */
+  function globalStatsHtml() {
+    // ((3.47.0, review) a file the view cannot show is no broken panel)
+    try {
+      return globalStatsView();
+    } catch {
+      return [`<p class="dci-sub" data-el="stats-global-none">${esc(tr('stats.global.none'))} <button type="button" class="dci-textbtn" data-act="stats-global-reload">${esc(tr('stats.global.reload'))}</button></p>`];
+    }
+  }
+  function globalStatsView() {
+    if (S.globalStats === undefined && !S.globalLoading && !S.globalErr) globalStatsLoad();
+    const d = S.globalStats;
+    const reload = `<button type="button" class="dci-textbtn" data-act="stats-global-reload">${esc(tr('stats.global.reload'))}</button>`;
+    if (!d) {
+      return [`<p class="dci-sub" data-el="stats-global-${S.globalErr ? 'none' : 'loading'}">${esc(tr(S.globalErr ? 'stats.global.none' : 'stats.loading'))} ${reload}</p>`];
+    }
+    const num = (x) => statNum(Number(x) || 0);
+    const dump = /^(\d{4})(\d{2})(\d{2})/.exec(String(d.dump || ''));
+    const head = `<p class="dci-sub" data-el="stats-global-head">${esc(tr('stats.global.head', { date: dump ? `${dump[1]}-${dump[2]}-${dump[3]}` : '–' }))} ${reload}</p>
+      <p class="dci-sub">${esc(tr('stats.global.privacy'))}</p>${S.globalErr ? `<p class="dci-sub" data-el="stats-global-old">${esc(tr('stats.global.old'))}</p>` : ''}`;
+    const t = d.totals || {};
+    const done = d.done || {};
+    const tile = (key, value) => `<div class="dci-stats-tile" data-stat="g-${key}"><span class="dci-stats-num">${esc(value)}</span><span class="dci-stats-lbl">${esc(tr(`stats.global.${key}`))}</span></div>`;
+    const tiles = `<div class="dci-stats-tiles">${tile('edits', num(t.edits))}${tile('submissions', num(t.submissions))}${tile('editors', num(t.editors))}
+      ${tile('credits', num(done['credit relationships']))}${tile('works', num(done['works linked']))}</div>`;
+    const months = Object.entries(d.by_month || {}).sort((x, y) => y[0].localeCompare(x[0])).slice(0, 12);
+    const max = Math.max(1, ...months.map(([, v]) => Number(v.edits) || 0));
+    const table = `<div class="dci-tablewrap"><table class="dci-stats-table" data-el="stats-global-months"><thead><tr><th scope="col">${esc(tr('stats.period.month'))}</th>
+      <th scope="col">${esc(tr('stats.global.edits'))}</th><th scope="col">${esc(tr('stats.global.submissions'))}</th><th scope="col">${esc(tr('stats.global.editors'))}</th></tr></thead>
+      <tbody>${months.map(([k, v]) => `<tr data-period-key="${esc(k)}"><th scope="row">${esc(k)}</th><td><span class="dci-stats-bar" style="width:${Math.max(2, Math.round((60 * (Number(v.edits) || 0)) / max))}px" aria-hidden="true"></span> ${num(v.edits)}</td>
+        <td>${num(v.submissions)}</td><td>${num(v.editors)}</td></tr>`).join('')}</tbody></table></div>`;
+    // ((3.47.0, review) the names the workflow writes; the same label once, its numbers together)
+    const SRC = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr' };
+    const srcName = (k) => tr(`stats.src.${SRC[k] || 'other'}`);
+    const lbl = (key, k) => {
+      const x = tr(key);
+      return x === key ? k : x;
+    };
+    const merged = (o, label) => {
+      const m = new Map();
+      Object.entries(o || {}).forEach(([k, n]) => { const l = label(k); m.set(l, (m.get(l) || 0) + (Number(n) || 0)); });
+      return m;
+    };
+    const list = (key, pairs, label = (k) => k) => `<div class="dci-stats-list" data-el="stats-global-${key}"><h4>${esc(tr(`stats.global.top.${key}`))}</h4>${pairs.length
+      ? `<ol>${pairs.map(([k, n]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${num(n)}</span></li>`).join('')}</ol>` : `<p class="dci-sub">–</p>`}</div>`;
+    const top = (o, n) => Object.entries(o || {}).sort((x, y) => (Number(y[1]) || 0) - (Number(x[1]) || 0)).slice(0, n);
+    const vnum = (v) => String(v).split('.').map((x) => Number(x) || 0);
+    const versions = Object.entries(d.by_version || {}).sort((x, y) => {
+      const a = vnum(x[0]);
+      const b = vnum(y[0]);
+      for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const diff = (b[i] || 0) - (a[i] || 0);
+        if (diff) return diff;
+      }
+      return String(y[0]).localeCompare(String(x[0]));
+    }).slice(0, 10).map(([k, v]) => [k, v.edits]);
+    const sources = [...merged(d.by_source, srcName).entries()].sort((x, y) => y[1] - x[1]).slice(0, 6);
+    const status = [...merged(d.by_status, (k) => lbl(`stats.global.st.${k.replace(/\s+/g, '_')}`, k)).entries()].sort((x, y) => y[1] - x[1]).slice(0, 8);
+    const lists = `<div class="dci-stats-lists">${list('versions', versions)}${list('sources', sources)}${list('types', top(d.by_relationship_type, 10))}</div>
+      <div class="dci-stats-lists">${list('levels', top(d.done_by_level, 4), (k) => lbl(`level.${k.replace(' ', '_')}`, k))}${list('edits', top(d.by_edit_type, 6), (k) => k.replace(/^\d+\s+/, ''))}${list('status', status)}</div>`;
+    return [head, tiles, `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>`, table, lists];
   }
 
   /**
@@ -34763,10 +34921,15 @@
     }
     const active = document.activeElement;
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
-      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}` : '') : '';
+      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}${active.dataset.scope ? `[data-scope="${active.dataset.scope}"]` : ''}` : '') : '';
     // [Z-ST] (3.40.6) "this browser only" in the head (Q-au)
-    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button><span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span></div>
-      <div class="dci-stats-pane">${statsHtml().join('')}</div>`;
+    // [Z-GST] (3.47.0) "This browser | Global"
+    const global = S.statsScope === 'global';
+    const scope = `<span class="dci-seg dci-seg-small dci-stats-scope" role="group" aria-label="${esc(tr('stats.scope'))}">${['local', 'global'].map((v) => `<button type="button"
+      data-act="stats-scope" data-scope="${v}" aria-pressed="${S.statsScope === v}" title="${esc(tr(`stats.scope.${v}Title`))}">${esc(tr(`stats.scope.${v}`))}</button>`).join('')}</span>`;
+    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button>${scope}${global ? ''
+      : `<span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span>`}</div>
+      <div class="dci-stats-pane">${(global ? globalStatsHtml() : statsHtml()).join('')}</div>`;
     const again = key && el.querySelector(key);
     if (again) again.focus();
   }
@@ -35138,8 +35301,9 @@
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
-      // [E8] (3.38.0) months – the statistics stay
+      // [E8] (3.38.0) months – the statistics stay; [Z-GST] (3.47.0) this browser
       S.statsPeriod = 'month';
+      S.statsScope = 'local';
     } else if (t === 'cache') {
       // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
       Object.assign(S, { rememberOn: false, rememberMax: 50 });
@@ -35168,7 +35332,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
@@ -35214,6 +35378,8 @@
       entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
       // [Z-DM] (3.46.0, review) no colours of their own for the dark theme (the themes: their keys, read anew)
       darkColors: false, levelPaletteDark: {}, kindPaletteDark: {},
+      // [Z-GST] (3.47.0) the statistics of this browser
+      statsScope: 'local',
     });
     applyTheme();
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
@@ -36410,6 +36576,8 @@
       .dci-copyname.dci-copyfail::before { content: "⚠"; color: var(--err); }
       .dci-head-sep { width: 1px; align-self: stretch; margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * -2); background: var(--line); }
       .dci-stats-local { margin-left: calc(var(--u, 1px) * 6); font-weight: normal; }
+      /* [Z-GST] (3.47.0) "This browser | Global" in the head of the statistics */
+      .dci-set-head .dci-stats-scope { margin-left: calc(var(--u, 1px) * 10); }
       .dci-zoom { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }
       .dci-zoom [data-el="zoom"] { min-width: 3.4em; text-align: center; }
       /* [3.26.0] the head in one line (collected item 30): title · source · Source ▾ · + Supplement · status · tools */
