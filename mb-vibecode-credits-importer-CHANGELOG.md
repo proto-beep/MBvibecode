@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.43.1 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.43.2 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.43.2
+
+Full review, part 3: flow and state (package P3).
+
+#### Fixed
+
+- **A rules change keeps what the import decided:** a level the import flow chose (a producer named for tracks on the recordings, arrangers next to writing credits on the works) and a credit switched off at the source or with the about/notes text stay so when a rule is switched or an own rule added – until now the remap reset every row to the rule's level, and a credit switched off came back active while its switch still said "off".
+- **"Remember changes … per release":** the snapshot of the import before is stored with the media choice that import had (it was stored under the new choice, so old rows "fitted" the new import); the "part of" row of a series the source lists is no longer stored as a row of your own (it was added once more with every import); an artist, label, place or series you created in the form is remembered as your choice (it was "missing" again after the next import).
+- **An import started while another one still looks up its entries** stops the first one: its series, notes and publishers no longer land in the new import.
 
 ### Import 3.43.1
 

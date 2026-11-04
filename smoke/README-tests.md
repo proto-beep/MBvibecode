@@ -421,6 +421,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     3.40.5 (Z-RG): a file whose T059 is a list of words (3.40.4) – the region read
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
+                                #   review43: 3.43.2 (full review P3): levels through a quick switch; an artist created in the form still the
+                                #     entry's after a reload ("Remember changes …"); one "part of" row of a Discogs series after a reload
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
                                 #   rulesdock: 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
                                 #     "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
