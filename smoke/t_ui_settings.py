@@ -1816,4 +1816,166 @@ def case_statstime():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+# [Z-DM] (3.46.0) the texts of a part with their contrast to their background (below 3: listed)
+CONTRAST = """(sel) => { const lum = (c) => (c.match(/[\\d.]+/g) || ['255', '255', '255']).slice(0, 3).map(Number).map((x) => x / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const L = (c) => { const [r, g, b] = lum(c); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; const m = b.match(/[\\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.5)) return b; } return 'rgb(255, 255, 255)'; };
+  const root = document.querySelector(sel); const bad = []; let n = 0;
+  root.querySelectorAll('*').forEach((el) => { if (!el.offsetParent) return; if (![...el.childNodes].some((t) => t.nodeType === 3 && t.textContent.trim())) return;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || Number(cs.opacity) < 0.6) return; n++;
+    const a = L(cs.color) + 0.05; const b = L(bgOf(el)) + 0.05; const r = Math.max(a, b) / Math.min(a, b);
+    if (r < 3) bad.push([Math.round(r * 100) / 100, el.className, el.textContent.trim().slice(0, 30)]); });
+  return { n, bad }; }"""
+# the computed colours of every element of the dashboard (to compare the light theme with and without the dark stylesheet)
+COLORS = """() => [...document.querySelectorAll('#dci-overlay *, #dci-pagebar *')].map((el) => { const cs = getComputedStyle(el); return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.outlineColor].join('|'); }).join(';')"""
+
+
+def case_theme():
+    """Credits Importer 3.46.0 (collected item Z-DM; Q-eb, Q-ed, Q-ee, Q-em): the dark theme.
+    A) By default (the system light): ⚙ Appearance – "Theme as a window" Auto, "Theme in the page" Light; nothing dark; the light
+       theme as before (every colour of the dashboard and the page bar the same with and without the dark stylesheet).
+    B) As a window: Dark → the dashboard (a window) dark – its ground dark, no text below a contrast of 3 –, the page bar light; the
+       colours of the levels lighter, their ink dark; stored.
+    C) In the page: the dashboard light (the page: Light); the page Dark → it and the page bar dark.
+    D) The page Auto: follows the system while it changes (dark → dark, light → light).
+    E) "Colours of their own for the dark theme": the pickers begin with the lighter colours; a colour chosen → on the dashboard and
+       stored (dci-level-palette-dark); ↺ → made from the light ones again.
+    F) "Defaults of this topic": the themes as by default, nothing dark.
+    Review of 3.46.0:
+    G) The dark stylesheet only once a part is dark (none before), switched off when none is; after dark and back every colour of the
+       dashboard as at the start; each rule of it read by the browser (as many as written); the flash of a chip has dark keyframes.
+    H) White text on a text colour as its ground (the mark of the best match, "Apply" under the pointer): contrast ≥ 3 in the dark.
+    I) The tags beside the pickers of the dark theme in their dark colours, also with the dashboard light.
+    J) "Reset all settings": no colours of their own for the dark theme any more (dark again: the lighter colours)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        DK = "[...document.documentElement.classList].filter(c => c.startsWith('dci-dk-'))"
+        PRESSED = "(w) => [...document.querySelectorAll(`[data-el=settings] [data-el=theme-${w}] button[aria-pressed=true]`)].map(b => b.dataset.theme)"
+        GROUND = "(sel) => getComputedStyle(document.querySelector(sel)).backgroundColor"
+        H.open_settings(pg, 'appearance')
+        a = [pg.evaluate(f"({PRESSED})('window')"), pg.evaluate(f"({PRESSED})('page')"), pg.evaluate(DK)]
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(200)
+        light1 = pg.evaluate(COLORS)
+        g0 = pg.evaluate("!!document.getElementById('dci-styles-dark')")
+        print('A) gedrückt:', a, '| dunkles Stylesheet vorher:', g0)
+        results.append(a == [['auto'], ['light'], []] and len(light1) > 1000)
+        # G) dark and back: the light theme as at the start; the dark stylesheet read rule by rule
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        sheet = pg.evaluate("(() => { const d = document.getElementById('dci-styles-dark'); return [d.textContent.split('\\n').length, d.sheet.cssRules.length, d.disabled, /@keyframes dci-chip-flash-dk/.test(d.textContent)]; })()")
+        # (as a window Auto again – the system light)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=auto]')
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(300)
+        light2 = pg.evaluate(COLORS)
+        g1 = [pg.evaluate("document.getElementById('dci-styles-dark').disabled"), pg.evaluate(DK)]
+        print('G) Regeln geschrieben/gelesen, aus, Blitz:', sheet, '| wieder hell:', g1, 'gleich:', light1 == light2)
+        results.append(g0 is False and sheet[0] == sheet[1] and sheet[0] > 500 and sheet[2] is False and sheet[3] and g1 == [True, []] and light1 == light2)
+        # B) as a window: dark
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        con = pg.evaluate(f"({CONTRAST})('#dci-overlay')")
+        lv = pg.evaluate("[getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim(), getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording-ink').trim()]")
+        bb = [pg.evaluate(DK)[:1], pg.evaluate(f"({GROUND})('#dci-overlay .dci-panel')"), pg.evaluate(f"({GROUND})('#dci-open')"), pg.evaluate("localStorage.getItem('dci-theme-window')"), lv, con['n'], con['bad'][:6]]
+        print('B) als Fenster dunkel:', bb)
+        results.append(bb[0] == ['dci-dk-overlay'] and bb[1] == 'rgb(28, 28, 28)' and bb[2] == 'rgb(255, 255, 255)' and bb[3] == '"dark"'
+                       and lv[0] not in ('', '#2f6db5') and lv[1] == '#1f1d29' and con['n'] > 300 and not con['bad'])
+        # H) white text on a text colour as its ground: the best match's mark; "Apply" under the pointer
+        PAIR = """(el) => { const lum = (c) => (c.match(/[\\d.]+/g) || []).slice(0, 3).map(Number).map((x) => x / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+          const L = (c) => { const [r, g, b] = lum(c); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }; const cs = getComputedStyle(el);
+          const a = L(cs.color) + 0.05; const b = L(cs.backgroundColor) + 0.05; return Math.round((Math.max(a, b) / Math.min(a, b)) * 100) / 100; }"""
+        best = pg.evaluate(f"""(() => {{ const m = document.createElement('span'); m.className = 'dci-link-bestmark'; m.textContent = 'best'; document.querySelector('#dci-overlay .dci-panel').appendChild(m);
+          const r = ({PAIR})(m); m.remove(); return r; }})()""")
+        pg.hover('[data-act=apply]')
+        pg.wait_for_timeout(300)
+        hov = pg.eval_on_selector('[data-act=apply]', PAIR)
+        pg.mouse.move(5, 5)
+        print('H) Kontrast bestmark / Apply unter dem Zeiger:', best, hov)
+        results.append(best >= 3 and hov >= 3)
+        # C) in the page
+        pg.click('[data-el=settings] [data-act=place-toggle]')
+        pg.wait_for_timeout(500)
+        c1 = ['dci-dk-overlay' in pg.evaluate(DK), pg.evaluate(f"({GROUND})('#dci-overlay .dci-panel')")]
+        H.open_settings(pg, 'appearance') if not pg.query_selector('[data-el=settings]') else None
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        c2 = ['dci-dk-overlay' in pg.evaluate(DK), 'dci-dk-open' in pg.evaluate(DK), pg.evaluate(f"({GROUND})('#dci-open')") != 'rgb(255, 255, 255)']
+        con2 = pg.evaluate(f"({CONTRAST})('#dci-pagebar')")
+        print('C) in der Seite:', c1, '→ Seite dunkel:', c2, con2['bad'][:4])
+        results.append(c1 == [False, 'rgb(255, 255, 255)'] and c2 == [True, True, True] and not con2['bad'])
+        # D) the page Auto: as the system
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=auto]')
+        pg.wait_for_timeout(300)
+        d0 = 'dci-dk-overlay' in pg.evaluate(DK)
+        pg.emulate_media(color_scheme='dark')
+        pg.wait_for_timeout(300)
+        d1 = 'dci-dk-overlay' in pg.evaluate(DK)
+        pg.emulate_media(color_scheme='light')
+        pg.wait_for_timeout(300)
+        d2 = 'dci-dk-overlay' in pg.evaluate(DK)
+        print('D) Auto:', d0, d1, d2, pg.evaluate("localStorage.getItem('dci-theme-page')"))
+        results.append([d0, d1, d2] == [False, True, False] and pg.evaluate("localStorage.getItem('dci-theme-page')") == '"auto"')
+        # E) colours of their own (the dashboard dark again: in the page, dark)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        auto = pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()")
+        pg.check('[data-el=settings] [data-set=dark-colors]')
+        pg.wait_for_timeout(300)
+        PICK = '[data-el=settings] [data-el=dark-levels] input[data-level=recording]'
+        e0 = pg.eval_on_selector(PICK, 'e => e.value')
+        pg.eval_on_selector(PICK, "e => { e.value = '#ff8800'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); }")
+        pg.wait_for_timeout(300)
+        e1 = [pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"), pg.evaluate("localStorage.getItem('dci-level-palette-dark')"),
+              pg.evaluate("localStorage.getItem('dci-dark-colors')"), pg.evaluate("localStorage.getItem('dci-level-palette')")]
+        pg.click('[data-el=settings] [data-el=dark-levels] [data-act=dark-colors-reset]')
+        pg.wait_for_timeout(300)
+        e2 = [pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"), pg.evaluate("localStorage.getItem('dci-level-palette-dark')"),
+              pg.eval_on_selector(PICK, 'e => e.value')]
+        print('E) eigene Farben:', auto, e0, e1, e2)
+        results.append(e0 == auto and e1 == ['#ff8800', '{"recording":"#ff8800"}', 'true', None] and e2 == [auto, None, auto])
+        # I) the tags beside the dark pickers in their dark colours – also with the dashboard light (the page Light)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=light]')
+        pg.wait_for_timeout(300)
+        CHIP = "getComputedStyle(document.querySelector('[data-el=settings] [data-el=dark-levels] .dci-cl-level[data-level=recording]')).backgroundColor"
+        i0 = pg.evaluate(CHIP)
+        pg.eval_on_selector(PICK, "e => { e.value = '#00aa00'; e.dispatchEvent(new Event('input', { bubbles: true })); }")
+        pg.wait_for_timeout(200)
+        i1 = pg.evaluate(CHIP)
+        pg.eval_on_selector(PICK, "e => e.dispatchEvent(new Event('change', { bubbles: true }))")
+        pg.wait_for_timeout(200)
+        rgb = lambda h: f'rgb({int(h[1:3], 16)}, {int(h[3:5], 16)}, {int(h[5:7], 16)})'
+        print('I) Marke neben der Auswahl (Dashboard hell):', i0, '→', i1, '| hell wäre', rgb('#2f6db5'))
+        results.append(i0 == rgb(auto) and i1 == 'rgb(0, 170, 0)')
+        # J) "Reset all settings": no colours of their own any more
+        pg.click('[data-el=settings] [data-act=reset-open]')
+        pg.wait_for_timeout(300)
+        rs = pg.query_selector('[data-el=settings] [data-act=reset-do]')
+        if rs:
+            rs.click()
+            pg.wait_for_timeout(1000)
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        j = [bool(rs), pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"),
+             pg.evaluate("localStorage.getItem('dci-level-palette-dark')"), pg.evaluate("!!document.querySelector('[data-el=settings] [data-set=dark-colors]:checked')")]
+        print('J) nach „Reset all“:', j, '(hell gemacht:', auto, ')')
+        results.append(j == [True, auto, None, False])
+        # F) the defaults of the topic
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
+        pg.wait_for_timeout(600)
+        f = [pg.evaluate(DK), [pg.evaluate(f"localStorage.getItem('{k}')") for k in ('dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark')]]
+        print('F) Standard:', f, '| Fehler:', errs)
+        results.append(f == [[], [None, None, None, None]] and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

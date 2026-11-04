@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.45.0 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.46.0 | 1.11.1 – 1.12.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.46.0 · COMPANION 1.12.0
+
+Block 3 – collected item Z-DM (Q-eb, Q-ed, Q-ee, Q-eg, Q-em).
+
+#### Added
+
+- **A dark theme:** ⚙ Settings → Appearance → **Theme as a window** (the dashboard as a window, the log and the mapping rules as windows, the windows of cover art; **Auto** by default – as the system is set, also while it changes) and **Theme in the page** (the dashboard in the page, the bar above it with its boxes, the log beside the edit note; **Light** by default), each **Auto | Light | Dark**. The rules docked in the dashboard look like it. The light theme stays as it was.
+- **Colours in the dark theme:** the colours of the levels and kinds are made lighter by themselves (the text on a level's colour dark or light, whichever reads better); **Colours of their own for the dark theme** (off by default) shows a second set of colours, beginning with those lighter ones, each to choose; **↺** at each set makes them from the light ones again.
+- **COMPANION 1.12.0:** the marks, the highlight and the cover box follow the dark theme of each site – YouTube's, Discogs' (a "dark" class or theme attribute) or else a dark background of the page (Bandcamp's own colours, a dark-mode extension), also when it is switched while the page is open.
+
+#### Fixed (review of Block 3)
+
+- "Reset all settings" also takes the colours of their own for the dark theme away (they stayed until the page was loaded again).
+- White text on a text colour as its ground (the mark of the best match, "Apply" and other buttons under the pointer) stays readable in the dark theme.
+- The dark stylesheet is made only once a part is dark and is switched off while none is – the light theme loads and redraws as fast as before; selectors with commas in brackets are kept whole; the flash of a chip has dark colours.
+- The tags beside the pickers of the dark theme show their dark colours, also while the dashboard is light.
+- COMPANION: colours like oklch() are read right, only whole words count as a dark class or theme ("header-dark" does not); a page without a head gets the marks too.
 
 ### Import 3.45.0
 
