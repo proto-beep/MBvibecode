@@ -1,0 +1,2143 @@
+"""Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
+
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); `python3 t_ui_settings.py <case> …` runs only those."""
+import json
+import harness as H  # noqa: F401 – used by the cases
+from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
+
+
+def case_settabs():
+    """Credits Importer 3.25.0: the settings as tabs (collected items 42, 41, 40).
+    A) "⚙ Settings" folds the settings out and in (only the gear: no "Close" inside); eight tabs, "General" chosen ([3.29.2] nine: "Appearance" after "General").
+    B) Keys: ↓ the next tab ("Appearance"; chosen, focused), End the last, Home the first.
+    C) The tab is remembered (here "Texts", with "Show the web links …" and a button to "Mapping rules"); after reloading
+       the settings open on it.
+    D) The ⓘ in the head opens the settings at "ⓘ Connections": a table of the connections ([3.32.10] twelve, [3.34.6] sixteen) (Harmony with its home page,
+       kind, what the script does, permissions, since).
+    E) "↺ Reset all settings …" below the tabs shows the question in the settings (no tab chosen); "Cancel" goes back to
+       the tab. The head has no "↺ Defaults" any more.
+    F) A narrow dashboard: the tabs stand in a row above the content.
+    G) [3.27.2] A click on the heading "Settings" (a tooltip, no link look) folds them in; the focus goes to ⚙ (item 57)."""
+    SET = "document.querySelector('[data-el=settings]')"
+    TABS = f"[...{SET}.querySelectorAll('.dci-set-tab')].map(b => [b.dataset.topic, b.getAttribute('aria-selected'), document.activeElement === b])"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        # A)
+        gear = '.dci-head [data-act=settings-open]'
+        pg.click(gear)
+        pg.wait_for_timeout(300)
+        t1 = pg.evaluate(TABS)
+        a = [pg.evaluate(f"!{SET}.hidden"), pg.evaluate(f"{SET}.querySelectorAll('[data-act=settings-open]').length"), pg.locator(gear).get_attribute('aria-expanded')]
+        pg.click(gear)
+        pg.wait_for_timeout(200)
+        a.append(pg.evaluate(f"{SET}.hidden"))
+        print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
+        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+                       and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
+        # B) keys
+        pg.click(gear)
+        pg.wait_for_timeout(200)
+        pg.focus('[data-el=settings] .dci-set-tab[data-topic=general]')
+        pg.keyboard.press('ArrowDown')
+        pg.wait_for_timeout(150)
+        k1 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
+        pg.keyboard.press('End')
+        pg.wait_for_timeout(150)
+        k2 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
+        pg.keyboard.press('Home')
+        pg.wait_for_timeout(150)
+        k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
+        print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
+        results.append(k1 == [('appearance', True)] and k2 == [('connections', True)] and k3 == [('general', True)])
+        # C) remembered
+        pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
+        pg.wait_for_timeout(200)
+        c1 = [pg.evaluate("localStorage.getItem('dci-settings-tab')"), pg.evaluate(f"!!{SET}.querySelector('.dci-set-pane [data-set=weblinks-show]')"),
+              pg.evaluate(f"!!{SET}.querySelector('.dci-set-pane [data-act=rules]')")]
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.click(gear)
+        pg.wait_for_timeout(300)
+        c2 = [t for t, s, _ in pg.evaluate(TABS) if s == 'true']
+        print('C) gespeichert, Links-Einstellung, Regeln-Knopf:', c1, '| nach Neuladen gewählt:', c2)
+        results.append(c1 == ['"texts"', True, True] and c2 == ['texts'])
+        pg.click(gear)
+        # D) the connections ([3.36.5] the ⓘ in the head is gone, collected item 147c: ⚙ → ⓘ Connections)
+        H.open_settings(pg, 'connections')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate(f"""(() => {{ const rows = [...{SET}.querySelectorAll('.dci-conn tbody tr[data-conn]')];
+      const h = rows.find(r => r.dataset.conn === 'X005');
+      return [rows.length, h ? [...h.cells].map(c => c.textContent.trim().slice(0, 40)) : null, h ? h.querySelector('a').href : '',
+        [...{SET}.querySelectorAll('.dci-set-tab')].filter(b => b.getAttribute('aria-selected') === 'true').map(b => b.dataset.topic)]; }})()""")
+        print('D) Verbindungen:', d1)
+        # (3.41.13: X017 YouTube)
+        results.append(d1[0] == 17 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
+                       and d1[1][3].startswith('@match harmony.pulsewidth.org.uk') and d1[1][4] == '3.19.1' and d1[2] == 'https://harmony.pulsewidth.org.uk/'
+                       and d1[3] == ['connections'])
+        # E) reset all, in the settings
+        pg.click('[data-el=settings] .dci-set-tab[data-topic=works]')
+        pg.click('[data-el=settings] [data-act=reset-open]')
+        pg.wait_for_timeout(200)
+        e1 = [pg.evaluate(f"!!{SET}.querySelector('.dci-set-pane [data-el=reset] [data-act=reset-do]')"),
+              [t for t, s, _ in pg.evaluate(TABS) if s == 'true'], pg.evaluate("document.activeElement.dataset.act")]
+        pg.click('[data-el=settings] [data-act=reset-cancel]')
+        pg.wait_for_timeout(200)
+        e2 = [pg.evaluate(f"!!{SET}.querySelector('[data-el=reset]')"), [t for t, s, _ in pg.evaluate(TABS) if s == 'true'],
+              pg.evaluate("document.querySelectorAll('.dci-head [data-act=reset-open]').length")]
+        print('E) Frage in den Einstellungen, gewählt, Fokus:', e1, '| nach Abbrechen:', e2)
+        results.append(e1 == [True, [], 'reset-cancel'] and e2 == [False, ['works'], 0])
+        # F) narrow
+        tops = f"[...{SET}.querySelectorAll('.dci-set-tab')].slice(0, 2).map(b => Math.round(b.getBoundingClientRect().top))"
+        wide = pg.evaluate(tops)
+        pg.evaluate("(() => { const p = document.querySelector('#dci-overlay .dci-panel'); p.style.width = '470px'; })()")
+        pg.wait_for_timeout(400)
+        narrow = pg.evaluate(tops)
+        print('F) breit (oben):', wide, '| schmal:', narrow)
+        results.append(wide[0] != wide[1] and narrow[0] == narrow[1])
+        # G) [3.27.2] the heading "Settings" folds them in (item 57)
+        if pg.evaluate(f"{SET}.hidden"):
+            pg.click(gear)
+            pg.wait_for_timeout(200)
+        title = pg.locator('[data-el=settings] .dci-set-title')
+        g1 = [title.inner_text(), title.get_attribute('title'), pg.evaluate("getComputedStyle(document.querySelector('[data-el=settings] .dci-set-title')).textDecorationLine")]
+        title.click()
+        pg.wait_for_timeout(200)
+        g2 = [pg.evaluate(f"{SET}.hidden"), pg.locator(gear).get_attribute('aria-expanded'), pg.evaluate("document.activeElement.dataset.act")]
+        print('G) Überschrift:', g1, '| danach zu, aria, Fokus:', g2)
+        results.append(g1 == ['Settings', 'Fold the settings in (as ⚙ does)', 'none'] and g2 == [True, 'false', 'settings-open'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_settings():
+    """Import 3.16.0: the menu "Settings" and the stored works of the artists.
+    A) "⚙ Settings" in the head opens the menu: [3.25.0] eight tabs, "General" chosen; "Works" shows its defaults (on, 4000 with "= 40 requests,
+       about 44 s per artist", 10 seconds, 900 entries, 7 days).
+    B) Shared switches: "apply automatically" ticked in the menu ticks the switch below the date matrix (and is stored);
+       "add role credits" ticked in the footer shows ticked in the menu.
+    C) A value: 2,000 per artist is stored (with the new cost), 2,050 becomes 2,100 (steps of 100); a topic's "↺" asks and
+       sets the topic back (the stored keys go).
+    D) The works read are kept beyond reloading the page: loaded again, the release artist is not asked again ("from the
+       store", the work is offered again); the menu says "7 artists stored" (release artist, writers, musicians); "Clear the
+       stored works" asks and empties it –
+       loaded again, the artist is asked again.
+    E) Switched off ("Compare …" unticked, stored): after loading again nothing is asked, no hit is offered.
+    F) A button of the Discogs view in the menu ("Track highlight") switches the same setting as the one in the head."""
+    TB = H.uid('dddddddd', 60)
+    W4 = H.uid('cccccccc', 94)
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    H.ARTIST_WORKS.update({TB: [{'id': W4, 'title': H.TITLES[3], 'type': 'Song', 'aliases': []}]})
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SET = "document.querySelector('[data-el=settings]')"
+    results = []
+
+
+    def open_set(pg, topic=None):
+        """[3.25.0] the settings open, the tab of a topic chosen (one at a time)."""
+        if pg.evaluate(f"{SET}.hidden"):
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        if topic and pg.locator(f'[data-act=settings-topic][data-topic={topic}]').get_attribute('aria-selected') != 'true':
+            pg.locator(f'[data-act=settings-topic][data-topic={topic}]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+
+
+    def load(pg, wait_compare=True):
+        """Loads the page again (the log of the release is kept: the lines of this load are the ones after those before)."""
+        word = 'Works of the artists compared' if wait_compare else 'Checks complete'
+        n = len([x for x in pg.evaluate(LOGS) if word in x])
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.filter(x => x.includes('{word}')).length > {n}", 90)
+        pg.wait_for_timeout(500)
+
+
+    def offered(pg):
+        return pg.evaluate("[...document.querySelectorAll('tr[data-work=\"3\"] .dci-same [data-act=work-pick]')].map(b => b.dataset.gid)")
+
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        DIALOGS = []
+        pg.on('dialog', lambda d: (DIALOGS.append(d.message), d.accept()))
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.wait_for_timeout(300)
+        # A) the menu
+        open_set(pg)
+        topics = pg.evaluate(f"[...{SET}.querySelectorAll('[data-act=settings-topic]')].map(b => [b.dataset.topic, b.getAttribute('aria-selected')])")
+        open_set(pg, 'works')
+        vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
+      return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
+        print('A) Themen:', topics, '| Werke:', vals)
+        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+                       and [t for t, e in topics if e == 'true'] == ['general']
+                       and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
+        # B) shared switches
+        open_set(pg, 'dates')
+        pg.locator('[data-el=settings] [data-f=dm-auto]').check(); pg.wait_for_timeout(400)
+        below = pg.evaluate("[...document.querySelectorAll('[data-f=dm-auto]')].filter(x => !x.closest('[data-el=settings]')).map(x => x.checked)")
+        stored = pg.evaluate("localStorage.getItem('dci-dm-auto')")
+        open_set(pg, 'staging')
+        pg.locator('footer [data-f=fill-credits]').evaluate('x => x.click()'); pg.wait_for_timeout(400)
+        menu_fill = pg.evaluate(f"{SET}.querySelector('[data-f=fill-credits]').checked")
+        print('B) „automatisch anwenden“ unter der Matrix:', below, '| gespeichert:', stored, '| „Rollen-Credits“ im Menü nach Klick unten:', menu_fill)
+        results.append(below == [True] and stored == 'true' and menu_fill is True)
+        # C) a value, steps, a topic's reset
+        open_set(pg, 'works')
+        f = pg.locator('[data-el=settings] [data-set=awMax]')
+        f.fill('2000'); f.press('Enter'); pg.wait_for_timeout(300)
+        v1 = [pg.evaluate("localStorage.getItem('dci-aw-max')"), pg.evaluate(f"{SET}.querySelector('[data-el=aw-cost]').textContent")]
+        f = pg.locator('[data-el=settings] [data-set=awMax]')
+        f.fill('2050'); f.press('Enter'); pg.wait_for_timeout(300)
+        v2 = pg.evaluate("localStorage.getItem('dci-aw-max')")
+        DIALOGS.clear()
+        pg.locator('[data-el=settings] [data-act=settings-reset][data-topic=works]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        v3 = [pg.evaluate("localStorage.getItem('dci-aw-max')"), pg.evaluate(f"{SET}.querySelector('[data-set=awMax]').value")]
+        asked = list(DIALOGS)
+        print('C) 2000:', v1, '| 2050 →', v2, '| ↺ Werke:', asked, v3)
+        results.append(v1 == ['2000', '= 20 requests, about 22 s per artist'] and v2 == '2100' and asked and '“Works”' in asked[0] and v3 == [None, '4000'])
+        # D) kept beyond reloading
+        n0 = len([1 for k, a, _ in H.BROWSES if a == TB])
+        load(pg)
+        n1 = len([1 for k, a, _ in H.BROWSES if a == TB])
+        stored_log = [x for x in pg.evaluate(LOGS) if 'Test Band' in x and 'from the store' in x]
+        hit = offered(pg)
+        open_set(pg, 'works')
+        pg.wait_for_timeout(500)
+        count = pg.evaluate(f"({SET}.querySelector('[data-act=aw-clear]').parentElement.textContent || '').replace(/\\s+/g, ' ').trim()")
+        DIALOGS.clear()
+        pg.locator('[data-el=settings] [data-act=aw-clear]').evaluate('b => b.click()'); pg.wait_for_timeout(600)
+        asked = list(DIALOGS)
+        cleared = [x for x in pg.evaluate(LOGS) if 'Stored works cleared' in x]
+        load(pg)
+        n2 = len([1 for k, a, _ in H.BROWSES if a == TB])
+        print('D) Anfragen an Test Band:', n0, '→ nach Neuladen', n1, '→ nach Leeren und Neuladen', n2, '|', stored_log, '| Treffer:', hit == [W4])
+        print('   Menü:', count, '| Frage:', asked, '|', cleared)
+        results.append(n0 == 2 and n1 == 2 and n2 == 4 and len(stored_log) == 1 and 'Test Band: 1 work from the store' in stored_log[0]
+                       and hit == [W4] and '7 artists stored' in count and asked and 'of 7 artists' in asked[0] and cleared == ['Stored works cleared (7 artists)'])
+        # E) switched off
+        open_set(pg, 'works')
+        pg.locator('[data-el=settings] [data-set=aw-on]').uncheck(); pg.wait_for_timeout(300)
+        off_stored = pg.evaluate("localStorage.getItem('dci-aw-on')")
+        nb = len(H.BROWSES)
+        load(pg, wait_compare=False)
+        pg.wait_for_timeout(2500)
+        print('E) aus – gespeichert:', off_stored, '| neue Anfragen:', len(H.BROWSES) - nb, '| Treffer Track 4:', offered(pg))
+        results.append(off_stored == 'false' and len(H.BROWSES) == nb and offered(pg) == [])
+        # F) a button of the Discogs view in the menu
+        open_set(pg, 'discogs')
+        before = pg.evaluate("localStorage.getItem('dci-dg-hover')")
+        pg.locator('[data-el=settings] [data-dg-hover]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        after = [pg.evaluate("localStorage.getItem('dci-dg-hover')"), pg.evaluate("[...document.querySelectorAll('[data-dg-hover]')].map(b => b.getAttribute('aria-pressed'))")]
+        print('F) Track-Hervorhebung:', before, '→', after)
+        results.append(after[0] == 'false' and after[1] and all(x == 'false' for x in after[1]))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_pressed():
+    """Credits Importer 3.36.5 (until 3.36.4 the case "bridge", 3.30.4): the symbols of the head show what is open, without a bridge
+    (collected items 147, 149).
+    A) ⚙ Settings open: ⚙ pressed (tinted), no bridge (until 3.36.4: a strip from the symbol to the box of the settings).
+    B) Every tab: the tab joins the side of the content and reaches into its frame – at 100 % and at 90 % text size; [3.34.3]
+       the content as high as it can be: at the top of the tabs, or (too short for that) just low enough that the tab joins it
+       with a little side below it; its upper left corner square only where the tab joins at the top.
+    C) "Mapping rules" in the dashboard: their symbol pressed, no bridge; ⚙ not pressed.
+    D) The log: its symbol pressed while it is shown, not when hidden; ⌨ pressed while the shortcuts are open; A−, A+, ⤢ and ✕
+       never.
+    E) Both closed: nothing pressed.
+    F) Switches show their choice: "Entries: Matrix | Legacy" in the settings and "by event | by role" at an entry – the chosen
+       button filled purple with white text, the other white."""
+    BR = """(act) => { const btn = document.querySelector('.dci-head [data-act=' + act + ']'); const box = act === 'rules' ? document.querySelector('[data-el=rules-dock]') : document.querySelector('[data-el=settings]');
+  return { expanded: btn.getAttribute('aria-expanded'), bg: getComputedStyle(btn).backgroundColor, after: getComputedStyle(btn, '::after').content,
+    before: box ? getComputedStyle(box, '::before').content : 'none', bridgeClass: btn.className.includes('bridge') || (!!box && box.className.includes('bridge')) }; }"""
+    TABS = """(() => { const el = document.querySelector('[data-el=settings]'); const paneEl = el.querySelector('.dci-set-pane'); const pane = paneEl.getBoundingClientRect();
+  const sel = el.querySelector('.dci-set-tab[aria-selected=true]').getBoundingClientRect(); const first = el.querySelector('.dci-set-tab').getBoundingClientRect();
+  return { above: Math.round((pane.top - sel.top) * 10) / 10, below: Math.round((pane.bottom - sel.bottom) * 10) / 10, into: Math.round(sel.right - pane.left),
+    margin: parseFloat(paneEl.style.marginTop) || 0, atTabsTop: Math.abs(pane.top - first.top) <= 1, joinedTop: paneEl.classList.contains('dci-set-joined-top'),
+    corner: getComputedStyle(paneEl).borderTopLeftRadius }; })()"""
+    HEAD = """(() => [...document.querySelectorAll('.dci-head .dci-headbtn')].map(b => [b.dataset.act || b.textContent.trim(), b.getAttribute('aria-pressed') || b.getAttribute('aria-expanded') || '',
+  getComputedStyle(b).backgroundColor]))()"""
+    SEG = """(sel) => [...document.querySelectorAll(sel)].slice(0, 2).map(b => [b.textContent.trim(), b.getAttribute('aria-pressed'), getComputedStyle(b).backgroundColor, getComputedStyle(b).color])"""
+    TINT, WHITE, PURPLE = 'rgb(236, 235, 246)', 'rgb(255, 255, 255)', 'rgb(115, 109, 171)'
+    def tab_ok(t):
+        # the tab within the side of the content, a little side below it; as high as can be; the corner square only at a join at the top
+        return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
+                and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
+    no_bridge = lambda x: x['after'] in ('none', 'normal') and x['before'] in ('none', 'normal') and not x['bridgeClass']
+    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+    results = []
+    # (the matrix of the entries, for "by event | by role")
+    H.ENTRIES_VIEW = 'matrix'
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.set_viewport_size({'width': 1400, 'height': 900})
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        # A)
+        H.open_settings(pg, 'general')
+        pg.wait_for_timeout(300)
+        a1 = pg.evaluate(BR, 'settings-open')
+        print('A) ⚙:', a1)
+        results.append(a1['expanded'] == 'true' and a1['bg'] == TINT and no_bridge(a1))
+        # B)
+        b1 = {}
+        for t in TOPICS:
+            H.open_settings(pg, t)
+            pg.wait_for_timeout(150)
+            b1[t] = pg.evaluate(TABS)
+        pg.click('[data-act=zoom-out]')
+        pg.wait_for_timeout(300)
+        b2 = {}
+        for t in ('discogs', 'staging', 'dates'):
+            H.open_settings(pg, t)
+            pg.wait_for_timeout(150)
+            b2[t] = pg.evaluate(TABS)
+        pg.click('[data-act=zoom-in]')
+        pg.wait_for_timeout(300)
+        print('B) Inhalt und Reiter (100 %):', b1, '\n   90 %:', b2)
+        results.append(all(tab_ok(t) for t in list(b1.values()) + list(b2.values()))
+                       # the list of the connections from the top, its tab in the middle; the first tab joins at the top; a short one lower
+                       and b1['connections']['margin'] == 0 and b1['connections']['above'] < -100 and b1['connections']['below'] > 100
+                       and b1['general']['joinedTop'] and b1['discogs']['margin'] > 0 and not b1['discogs']['joinedTop'])
+        # F) the switch "Entries" in the settings (Appearance)
+        H.open_settings(pg, 'appearance')
+        pg.wait_for_timeout(200)
+        f1 = pg.evaluate(SEG, '[data-el=settings] [data-act=entries-view]')
+        # C)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(400)
+        c1, c2 = pg.evaluate(BR, 'rules'), pg.evaluate(BR, 'settings-open')
+        print('C) Regeln:', c1, '| ⚙:', c2)
+        results.append(c1['expanded'] == 'true' and c1['bg'] == TINT and no_bridge(c1) and c2['expanded'] == 'false' and c2['bg'] == WHITE)
+        # D) the log (shown when the dashboard opens), ⌨ and the symbols that only do something
+        if pg.evaluate("document.getElementById('dci-log').hidden"):
+            pg.click('.dci-head [data-act=log]')
+            pg.wait_for_timeout(300)
+        d1 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        shown = pg.evaluate("!document.getElementById('dci-log').hidden")
+        pg.click('.dci-head [data-act=log]')
+        pg.wait_for_timeout(300)
+        d2 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        hidden = pg.evaluate("document.getElementById('dci-log').hidden")
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(300)
+        d3 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(200)
+        print('D) Log an:', shown, d1.get('log'), '| zu:', hidden, d2.get('log'), '| ⌨:', d3.get('keys-open'), '| A−, A+, ⤢:', [d3.get(k) for k in ('zoom-out', 'zoom-in', 'window-reset')])
+        results.append(shown and hidden and d1['log'] == ['true', TINT] and d2['log'] == ['false', WHITE] and d3['keys-open'] == ['true', TINT]
+                       and all(d3[k][0] == '' for k in ('zoom-out', 'zoom-in', 'window-reset')) and 'connections-open' not in d3)
+        # E)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(300)
+        e1, e2 = pg.evaluate(BR, 'rules'), pg.evaluate(BR, 'settings-open')
+        print('E) zu:', [e1['expanded'], e2['expanded'], e1['bg']])
+        results.append(e1['expanded'] == 'false' and e2['expanded'] == 'false' and e1['bg'] == WHITE)
+        # F) "by event | by role" at an entry of the compact matrix
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(500)
+        f2 = pg.evaluate(SEG, '.dci-em-by button')
+        print('F) Entries:', f1, '| by event / by role:', f2)
+        seg_ok = lambda f: len(f) == 2 and [x[1] for x in f].count('true') == 1 and all((x[2], x[3]) == ((PURPLE, WHITE) if x[1] == 'true' else (WHITE, 'rgb(38, 36, 48)')) for x in f)
+        results.append(seg_ok(f1) and seg_ok(f2))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_settingsscroll():
+    """Credits Importer 3.34.3: scrolling up in the dashboard with ⚙ Settings → ⓘ Connections open and "Dates & tracks"
+    expanded (collected item 122).
+    A) Scrolled down, then up in small steps with the wheel: never back down, up to the top (until 3.34.2 every scroll event took
+       the margin of the settings' content away and set it again; the browser's scroll anchoring answered by scrolling back,
+       278px, again and again).
+    B) Scrolling does not touch the margin of the content (no new value while nothing changes)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        if pg.evaluate("document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')") != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        H.open_settings(pg, 'connections')
+        pg.wait_for_timeout(500)
+        pg.evaluate("""(() => { window.__tr = []; window.__styles = 0; const body = document.querySelector('#dci-overlay [data-el=body]');
+      body.addEventListener('scroll', () => window.__tr.push(Math.round(body.scrollTop)), { passive: true });
+      new MutationObserver((ms) => { window.__styles += ms.length; }).observe(document.querySelector('.dci-set-pane'), { attributes: true, attributeFilter: ['style', 'class'] }); })()""")
+        box = pg.locator('[data-el=settings] .dci-set-pane').bounding_box()
+        pg.mouse.move(box['x'] + 50, box['y'] + 50)
+        for _ in range(12):
+            pg.mouse.wheel(0, 300)
+            pg.wait_for_timeout(50)
+        pg.wait_for_timeout(400)
+        down = pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop")
+        pg.evaluate("window.__tr = []")
+        for _ in range(int(down / 15) + 20):
+            pg.mouse.wheel(0, -15)
+            pg.wait_for_timeout(30)
+        pg.wait_for_timeout(500)
+        tr = pg.evaluate("window.__tr")
+        top = pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop")
+        back = [(tr[i - 1], tr[i]) for i in range(1, len(tr)) if tr[i] > tr[i - 1]]
+        print('A) unten:', down, '| zurück nach unten gesprungen:', back[:5], '| oben:', top)
+        results.append(down > 1500 and not back and top == 0)
+        styles = pg.evaluate("window.__styles")
+        print('B) Änderungen am Inhalt beim Scrollen:', styles)
+        results.append(styles == 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ui305():
+    """Credits Importer 3.30.5: ⚙ below "Import credits …" opens only the settings, the tab "Source pages", tracks typed into
+    a track group (collected items 88, 90; the maintainer's answers of 2026-10-25 02:28).
+    A) Before any import: ⚙ in the bar below "Import credits …" opens the dashboard with its settings at "Source pages"
+       (until 3.30.4 "Discogs and Bandcamp view"; the tab key stays "discogs") – the import does not start (no request to
+       Discogs, nothing in the log about it); a message says so and offers "Start import". German: "Quellseiten".
+    B) "Start import" in the message: the import runs, the message is gone.
+    C) A new track group: the field "Tracks:" next to "Name" – "1-2, 4" ticks tracks 1, 2 and 4; ticks changed by hand show
+       in the field ("1–3, 4" → "1–4"); "9" (no track of the release) is named in red and the group is not saved; "2-3"
+       saves a group of tracks 2 and 3. Editing a group shows its tracks in the field."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True)
+        pg.on('dialog', lambda d: d.accept())
+        reqs = []
+        pg.on('request', lambda r: reqs.append(r.url))
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.wait_for_timeout(800)
+        # A) settings only
+        pg.locator('#dci-controls [data-nav-settings]').click()
+        pg.wait_for_timeout(1500)
+        a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-overlay'); const tab = document.querySelector('.dci-set-tab[aria-selected=true]');
+      return [!!o && !o.hidden, !document.querySelector('[data-el=settings]').hidden, tab ? [tab.dataset.topic, tab.textContent.trim()] : null,
+        [...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => [m.textContent.replace(/\\s+/g, ' ').trim().slice(0, 80), !!m.querySelector('[data-act=start-import]')]),
+        document.querySelector('[data-el=toolbar]').hidden, [...document.querySelectorAll('#dci-log li')].some(li => /Import complete|Reading/.test(li.textContent))]; })()""")
+        dg = [u for u in reqs if '/releases/' in u or 'discogs' in u.lower() and '/api' in u]
+        print('A) nur Einstellungen:', a1, '| Anfragen an Discogs:', dg[:3])
+        results.append(a1[0] and a1[1] and a1[2] == ['discogs', 'Source pages'] and len(a1[3]) == 1 and a1[3][0][1]
+                       and 'has not started' in a1[3][0][0] and a1[4] and not a1[5] and not dg)
+        # B) start the import from the message
+        pg.click('[data-el=msgs] [data-act=start-import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        b1 = pg.evaluate("[[...document.querySelectorAll('[data-el=msgs] .dci-msg')].some(m => /has not started/.test(m.textContent)), document.querySelectorAll('section.dci-group').length]")
+        print('B) nach „Start import“ – Hinweis noch da, Einträge:', b1)
+        results.append(not b1[0] and b1[1] > 3)
+        # C) tracks typed into a track group
+        if pg.evaluate("document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')") != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        pg.click('[data-act=tg-new]')
+        pg.wait_for_timeout(300)
+        TICKS = "[...document.querySelectorAll('.dci-track-form input[data-f=tg-track]')].filter(c => c.checked).map(c => Number(c.dataset.i) + 1)"
+        f = pg.locator('.dci-track-form input[data-f=tg-text]')
+        f.fill('1-2, 4')
+        pg.wait_for_timeout(200)
+        c1 = [pg.evaluate(TICKS), pg.evaluate("document.activeElement.dataset.f")]
+        pg.locator('.dci-track-form input[data-f=tg-track][data-i="2"]').check()
+        pg.wait_for_timeout(200)
+        c2 = [pg.evaluate(TICKS), f.input_value()]
+        f.fill('9')
+        pg.wait_for_timeout(200)
+        c3 = [pg.evaluate(TICKS), pg.locator('.dci-track-form .dci-err').inner_text()]
+        pg.click('[data-act=tg-save]')
+        pg.wait_for_timeout(300)
+        c4 = [pg.evaluate("!!document.querySelector('.dci-track-form')"), pg.locator('.dci-track-form .dci-err').inner_text()]
+        f = pg.locator('.dci-track-form input[data-f=tg-text]')
+        f.fill('2-3')
+        pg.wait_for_timeout(200)
+        f.press('Enter')
+        pg.wait_for_timeout(400)
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-track-pool:{H.REL}') || '[]').map(g => [g.name, g.tracks])")
+        gid = pg.evaluate("(document.querySelector('[data-act=tg-edit]') || {dataset: {}}).dataset.id")
+        pg.click(f'[data-act=tg-edit][data-id="{gid}"]')
+        pg.wait_for_timeout(300)
+        c5 = pg.locator('.dci-track-form input[data-f=tg-text]').input_value()
+        print('C) „1-2, 4“:', c1, '| Häkchen 3 dazu:', c2, '| „9“:', c3, '| Speichern mit „9“:', c4, '| „2-3“ gespeichert:', pool, '| bearbeiten:', c5)
+        results.append(c1 == [[1, 2, 4], 'tg-text'] and c2 == [[1, 2, 3, 4], '1–4'] and c3[0] == [1, 2, 3, 4] and '9' in c3[1]
+                       and c4[0] and '9' in c4[1] and pool == [['Tracks 2–3', [1, 2]]] and c5 == '2–3')
+        # German name of the tab
+        pg.click('[data-act=tg-cancel]')
+        H.open_settings(pg, 'general')
+        pg.select_option('[data-el=settings] [data-f=lang]', 'de')
+        pg.wait_for_timeout(600)
+        de = pg.evaluate("document.querySelector('.dci-set-tab[data-topic=discogs]').textContent.trim()")
+        print('   Deutsch:', de)
+        results.append(de == 'Quellseiten')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_reset():
+    """“↺ Reset all settings …” (⚙ Settings; until 3.24 “↺ Defaults” in the head): all settings back to their defaults (language, text size, switches, matrix and pool options,
+    the cover box on Discogs through the companion); own rules and stored pools only when ticked; the list of
+    created works never."""
+    import re
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dg_errs = H.open_discogs(ctx)
+        dg.evaluate("localStorage.setItem('dci-art-pos', JSON.stringify({x: 5, y: 5})); localStorage.setItem('dci-art-collapsed', '1')")
+        pg, errs = H.open_mb_edit(ctx)
+        pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+      set('dci-sync-mode', 'hover'); set('dci-dg-artwork', false); set('dci-dm-auto', true); set('dci-fill-credits', true);
+      set('dci-role-codes', 'gema'); set('dci-user-rules', [{ id: 'U001', kind: 'role', on: true, discogs: 'Foo', type: 'performer', level: 'recording' }]);
+      set('dci-rules-off', ['R001']); set('dci-date-pool:other', [{ id: 'd1', name: 'X', begin: { year: 1999 }, end: { year: 1999 }, ended: true }]);
+      set('dci-created-works:other', [{ i: 0, gid: 'g' }]);
+      // (3.43.4, full review P5/P6) the edit note "Simple" (its key was left out of the reset), the entries as "Legacy" and no joining
+      // (the storage was cleared, the running dashboard kept them)
+      set('dci-edit-note', 'simple'); set('dci-entries-view', 'legacy'); set('dci-join', false); }""")
+        pg.reload(); H.with_companion(pg); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_settings(pg, 'general')  # [3.26.0] the language is only in the settings
+        pg.select_option('[data-f=lang]', 'de'); pg.wait_for_timeout(300)
+        pg.click('[data-act=zoom-in]'); pg.click('[data-act=zoom-in]')
+        pg.click('.dci-pools-toggle'); pg.wait_for_timeout(150)
+        keys = lambda: pg.evaluate("Object.keys(localStorage).filter(k => k.startsWith('dci-') && !k.startsWith('dci-geom')).sort()")
+        print('Vorher:', keys(), '| Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text())
+        # 1) settings and own rules, not the pools
+        H.open_reset(pg); pg.wait_for_timeout(150)
+        print('1) Dialog:', re.sub(r'\s+', ' ', pg.locator('[data-el=reset]').inner_text())[:260])
+        pg.check('[data-f=reset-rules]')
+        pg.click('[data-act=reset-do]'); pg.wait_for_timeout(2500)
+        after = keys()
+        art = dg.evaluate("[localStorage.getItem('dci-art-pos'), localStorage.getItem('dci-art-collapsed')]")
+        print('   Nachher:', after)
+        print('   Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text(), '| Meldung:', [m for m in pg.locator('.dci-msg').all_inner_texts() if 'defaults' in m])
+        print('   Cover auf Discogs (Position, eingeklappt):', art, '| Daten & Tracks offen:', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'),
+              '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
+        # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
+        # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last')]  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
+        # (3.43.4) the running dashboard draws the defaults at once: entries as a matrix (lines of a block), joining on, the edit note "Full"
+        live = pg.evaluate("[!!document.querySelector('.dci-em-line'), (document.querySelector('[data-f=join-auto]') || {}).checked, (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset ? (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset.mode : null]")
+        print('   im Dashboard (Matrix, Join, Edit note):', live)
+        ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
+            and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
+            and art == [None, None] and live[0] is True and live[1] in (True, None) and live[2] in ('full', None)
+        # 2) with the pools: the stored pools of all releases go, the created works stay
+        H.open_reset(pg); pg.wait_for_timeout(150)
+        pg.check('[data-f=reset-pools]')
+        pg.click('[data-act=reset-do]'); pg.wait_for_timeout(800)
+        print('2) mit Pools:', keys())
+        ok2 = 'dci-date-pool:other' not in keys() and 'dci-created-works:other' in keys()
+        print('Ergebnis:', 'OK' if ok1 and ok2 else 'FEHLER', [ok1, ok2], '| Fehler:', errs, dg_errs)
+        b.close()
+
+
+def case_notice():
+    """Update notice and the one-time reset of stored data: a first installation shows no notice; an update from a
+    version before 2.11.0 clears all settings and data once (the list of created works stays) and shows the latest
+    milestones with a note about the reset; closing it is remembered; an update from 2.9.0 shows the milestones
+    since then; the notice follows the language; an update from 2.12.0 (storage generation 2) resets once more
+    (generation 4, Credits Importer 3.5.0: a fresh start, the list of created works too). The companion clears its shared
+    storage and the cover settings once."""
+    import re
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        keys = lambda: pg.evaluate("Object.keys(localStorage).filter(k => k.startsWith('dci-')).sort()")
+        notice = lambda: re.sub(r'\s+', ' ', pg.locator('#dci-notice').inner_text()) if pg.locator('#dci-notice').count() else None
+        reload = lambda: (pg.reload(), pg.add_script_tag(content=H.MAIN), pg.wait_for_selector('#dci-open', timeout=20000), pg.wait_for_timeout(300))
+        print('1) Erstinstallation – Nachricht:', notice(), '| Speicher:', keys())
+        ok1 = notice() is None and 'dci-notice-version' in keys() and 'dci-store-epoch' in keys()
+        # 2) as if 2.10.0 ran before: old settings, own rules, pools, created works
+        pg.evaluate("""() => { localStorage.clear(); const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+      set('dci-lang', 'de'); set('dci-user-rules', [{ id: 'U001' }]); set('dci-rules-off', ['R001']); set('dci-stamp-overwrite', false);
+      set('dci-date-pool:x', [{ id: 'd1' }]); set('dci-created-works:x', [{ i: 0, gid: 'g' }]); set('dci-place', 'page'); }""")
+        pg.evaluate("sessionStorage.setItem('dci-work-options', '{}')")
+        reload()
+        print('2) Update von 2.10.0 – Speicher:', keys(), '| Sitzung:', pg.evaluate("Object.keys(sessionStorage).filter(k => k.startsWith('dci-'))"))
+        print('   Nachricht:', notice())
+        n = notice() or ''
+        ok2 = keys() == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from'] or set(keys()) == {'dci-store-epoch', 'dci-updated-from'}
+        # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0;
+        # [3.37.0] 3.37.0, 3.36.0, 3.35.0
+        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.37.0' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' not in n and 'reset once' in n
+        # 3) closing is remembered
+        pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
+        reload()
+        print('3) geschlossen, neu geladen – Nachricht:', notice(), '| gesehen:', pg.evaluate("localStorage.getItem('dci-notice-version')"))
+        ok3 = notice() is None and 'dci-updated-from' not in keys()
+        # 4) update from 2.9.0, dashboard language German: the milestones since then, in German
+        pg.evaluate("localStorage.setItem('dci-notice-version', JSON.stringify('2.9.0')); localStorage.setItem('dci-lang', JSON.stringify('de'))")
+        reload()
+        print('4) Update von 2.9.0 (Deutsch):', notice())
+        n = notice() or ''
+        ok4 = 'das ist neu' in n and 'Import 2.13.0' in n and 'Import 2.11.0' in n and 'Import 2.10.0' in n and 'Import 2.9.0' not in n and 'Daten des Skripts einmal zurückgesetzt' not in n
+        # 4b) update from 2.12.0 (generation 2): reset once more, the milestone of 2.13.0 and the note about the reset
+        pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(100)
+        pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+      set('dci-notice-version', '2.12.0'); localStorage.setItem('dci-store-epoch', '2'); set('dci-pools-keep', false); set('dci-lang', 'en'); }""")
+        reload()
+        n = notice() or ''
+        print('4b) Update von 2.12.0:', keys(), '|', n[:160])
+        ok4 = ok4 and 'Import 2.13.0' in n and 'Import 2.11.0' not in n and 'reset once' in n and 'dci-pools-keep' not in keys() \
+            and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
+        # 5) the companion: shared storage and the cover box settings on Discogs are cleared once
+        dg, dg_errs = H.open_discogs(ctx)
+        dg.wait_for_timeout(500)
+        dg.evaluate("""() => { GM_deleteValue('storeEpoch'); GM_setValue('statusMapIndex', ['x']); GM_setValue('statusMap:x', { a: 1 });
+      localStorage.setItem('dci-art-pos', '{"x":5,"y":5}'); localStorage.removeItem('dci-store-epoch'); }""")
+        dg.wait_for_timeout(300)
+        dg.reload(); H.with_companion(dg); dg.wait_for_timeout(1200)
+        gm = dg.evaluate("[GM_getValue('statusMapIndex'), GM_getValue('statusMap:x'), GM_getValue('storeEpoch'), localStorage.getItem('dci-art-pos'), localStorage.getItem('dci-store-epoch')]")
+        print('5) Companion nach Update:', gm)
+        ok5 = gm[0] is None and gm[1] is None and gm[2] == 4 and gm[3] is None and gm[4] == '4'
+        print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4, ok5]) else 'FEHLER', [ok1, ok2, ok3, ok4, ok5], '| Fehler:', errs, dg_errs)
+        b.close()
+
+
+def case_cache():
+    """Credits Importer 3.36.0 (collected item 146): remembered per release.
+    A) The script's default: ⚙ Settings → "Cache" (after Beta), "Remember changes and import settings per release" off, 50
+       releases, "Forget all …" not to click, "0 releases · 0.0 KB · all data of the script in this browser: … KB".
+    B) Off: a role credit typed (Bass Man "fretless"), Photo Guy taken out (Skip), a date in the pool – the page loaded again:
+       all as from the source, nothing of the release stored (no pool, no rows).
+    C) On: what the tab holds stored at once ("1 release · … KB"); the same changes, the page loaded again: they come back
+       (the log says so).
+    D) The source changed (Photo Guy no longer credited, Bass Man "Electric Bass"): what was changed of their lines is left out
+       ("2 remembered changes no longer fit the source"), the pool date is there.
+    E) The number 0: the switch goes off; ticked again: 50.
+    F) Another release stored before (a pool of its own, used earlier): with 1 release to remember it is forgotten – when something
+       is stored next (3.36.1; not at each step of the field).
+    G) "Forget all remembered releases …" (asked): nothing of the release stored any more, "0 releases"."""
+    import re
+    H.REMEMBER = False
+    rel_key = lambda p: f'dci-{p}:{H.REL}'
+    CACHE = """(() => { const pane = document.querySelector('.dci-set-pane'); const tabs = [...document.querySelectorAll('.dci-set-tab')].map(t => t.textContent.trim());
+      const sw = pane && pane.querySelector('[data-set=remember]'); const n = pane && pane.querySelector('[data-set=remember-max]');
+      const f = pane && pane.querySelector('[data-act=remember-forget]'); const z = pane && pane.querySelector('[data-el=remember-size]');
+      return { tabs, on: sw ? sw.checked : null, max: n ? n.value : null, forget: f ? !f.disabled : null, size: z ? z.textContent.replace(/\\s+/g, ' ').trim() : '' }; })()"""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level, (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value]) : null; }"""
+    orig = H.discogs_release
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+
+            def load():
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1200)
+
+            def again():
+                # (3.39.6) the log of the tab survives the reload: wait for one more "Import complete" (until then the old line was
+                # enough, and the rows were read before the import had taken over what was remembered)
+                n0 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+                pg.reload()
+                pg.add_script_tag(content=H.MAIN)
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n0}", 60)
+                pg.wait_for_timeout(1200)
+
+            def change():
+                bass = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man'); return g.querySelector('tr.dci-row').dataset.row; })()")
+                pg.fill(f'tr.dci-row[data-row="{bass}"] [data-f=role-credit]', 'fretless')
+                pg.press(f'tr.dci-row[data-row="{bass}"] [data-f=role-credit]', 'Tab')
+                photo = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy'); return g.querySelector('tr.dci-row').dataset.row; })()")
+                pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=level][data-level=skip]')
+                if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                    pg.click('.dci-pools-toggle')
+                pg.click('[data-act=pool-new]')
+                pg.fill('[data-f=pf-name]', 'Kept')
+                pg.fill('[data-f=pf-by]', '2019')
+                pg.click('[data-act=pool-save]')
+                pg.wait_for_timeout(1600)
+            state = lambda: (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Kept/.test(t)).length"))
+            stored = lambda: pg.evaluate("(keys) => keys.filter(k => localStorage.getItem(k) !== null)", [rel_key('date-pool'), rel_key('remember'), 'dci-remember-index'])
+            load()
+            H.open_settings(pg, 'cache')
+            a = pg.evaluate(CACHE)
+            print('A) Cache:', a)
+            # [189] (3.39.3) no tab "Statistics" any more (their own button)
+            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+                           and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
+            change()
+            b0 = state()
+            again()
+            b1 = state()
+            print('B) aus – geändert:', b0, '| neu geladen:', b1, '| gespeichert:', stored())
+            results.append(b0 == ([['recording', 'fretless']], [['skip', '-']], 1) and b1 == ([['recording', '']], [['release', '']], 0) and stored() == [])
+            H.open_settings(pg, 'cache')
+            pg.click('.dci-set-pane [data-set=remember]')
+            pg.wait_for_timeout(500)
+            c0 = pg.evaluate(CACHE)
+            change()
+            again()
+            c1 = state()
+            logl = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /remembered change/.test(t))")
+            print('C) an:', c0, '| neu geladen:', c1, '| Log:', logl, '| gespeichert:', stored())
+            results.append(c0['on'] is True and c0['size'].startswith('1 release · ') and c1 == ([['recording', 'fretless']], [['skip', '-']], 1)
+                           and bool(logl) and stored() == [rel_key('date-pool'), rel_key('remember'), 'dci-remember-index'])
+
+            def rel2():
+                d = orig()
+                d['extraartists'] = [x for x in d['extraartists'] if x['name'] != 'Photo Guy']
+                for x in d['extraartists']:
+                    if x['name'] == 'Bass Man':
+                        x['role'] = 'Electric Bass'
+                return d
+            H.discogs_release = rel2
+            again()
+            d1 = state()
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /no longer fit/.test(t))")
+            print('D) Quelle geändert:', d1, '| Meldung:', msg)
+            results.append(d1[1] is None and d1[0] and d1[0][0][1] != 'fretless' and d1[2] == 1 and bool(msg) and msg[0].startswith('2 remembered changes no longer fit the source'))
+            H.discogs_release = orig
+            H.open_settings(pg, 'cache')
+            pg.fill('.dci-set-pane [data-set=remember-max]', '0')
+            pg.press('.dci-set-pane [data-set=remember-max]', 'Tab')
+            pg.wait_for_timeout(400)
+            e0 = pg.evaluate(CACHE)
+            e0s = pg.evaluate("localStorage.getItem('dci-remember-on')")
+            pg.click('.dci-set-pane [data-set=remember]')
+            pg.wait_for_timeout(400)
+            e1 = pg.evaluate(CACHE)
+            print('E) 0:', e0['on'], e0['max'], e0s, '| wieder an:', e1['on'], e1['max'])
+            results.append(e0['on'] is False and e0['max'] == '0' and e0s is None and e1['on'] is True and e1['max'] == '50')
+            other = '11111111-2222-4333-8444-555555555555'
+            pg.evaluate("(id) => { localStorage.setItem('dci-date-pool:' + id, JSON.stringify([{ id: 'd1', name: 'Old' }]));"
+                        " localStorage.setItem('dci-remember-index', JSON.stringify([[id, 1]])); }", other)
+            pg.fill('.dci-set-pane [data-set=remember-max]', '1')
+            pg.press('.dci-set-pane [data-set=remember-max]', 'Tab')
+            pg.wait_for_timeout(400)
+            # [3.36.1] the oldest go when something is stored next (not at each step of the field)
+            f0 = pg.evaluate("(id) => localStorage.getItem('dci-date-pool:' + id) !== null", other)
+            pg.click('[data-act=pool-new]')
+            pg.fill('[data-f=pf-name]', 'Next')
+            pg.fill('[data-f=pf-by]', '2020')
+            pg.click('[data-act=pool-save]')
+            pg.wait_for_timeout(400)
+            f1 = pg.evaluate("(id) => [localStorage.getItem('dci-date-pool:' + id), JSON.parse(localStorage.getItem('dci-remember-index') || '[]').map(x => x[0])]", other)
+            print('F) anderes Release: noch da', f0, '| nach dem Speichern:', f1)
+            results.append(f0 and f1[0] is None and f1[1] == [H.REL])
+            pg.click('.dci-set-pane [data-act=remember-forget]')
+            pg.wait_for_timeout(500)
+            g1 = pg.evaluate(CACHE)
+            print('G) vergessen:', g1['size'], '| gespeichert:', stored())
+            results.append(g1['size'].startswith('0 releases · ') and stored() == [] and g1['forget'] is False)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cache2():
+    """Credits Importer 3.36.1 (the review of 3.36.0): remembered per release – removed rows, another source, a tab opened while off.
+    A) On: Bass Man credited "fretless", Photo Guy's row removed (✕) – the page loaded again: "fretless", Photo Guy without a row
+       (before: his row came back as a new line of the source).
+    B) A pasted text imported (another source of the release), the page loaded again: Bass Man still "fretless" – the text has a
+       snapshot of its own (before: it replaced the one of Discogs).
+    C) Off, the page loaded again (nothing read: Bass Man without credit); switched on: a message "This release was remembered
+       before …" with "Load the page again"; a credit typed meanwhile is not stored (what was remembered is not written over);
+       loaded again: "fretless" back."""
+    H.REMEMBER = True
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level, (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value]) : null; }"""
+    row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+
+        def again():
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+
+        def credit(text):
+            r = pg.evaluate(row_of, 'Bass Man')
+            pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', text)
+            pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
+        load()
+        credit('fretless')
+        photo = pg.evaluate(row_of, 'Photo Guy')
+        pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=remove-row]')
+        pg.wait_for_timeout(1600)
+        again()
+        a1 = (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'))
+        print('A) neu geladen:', a1)
+        results.append(a1[0] == [['recording', 'fretless']] and not a1[1])
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Jane Roe – guitar')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1600)
+        jane = pg.evaluate(ROWS, 'Jane Roe')
+        again()
+        b1 = pg.evaluate(ROWS, 'Bass Man')
+        print('B) Text:', jane, '| neu geladen:', b1)
+        results.append(bool(jane) and b1 == [['recording', 'fretless']])
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        again()
+        c0 = pg.evaluate(ROWS, 'Bass Man')
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /remembered before/.test(t))")
+        credit('typed meanwhile')
+        pg.wait_for_timeout(1600)
+        again()
+        c1 = pg.evaluate(ROWS, 'Bass Man')
+        print('C) aus, neu geladen:', c0, '| Meldung:', msg, '| an, neu geladen:', c1)
+        results.append(c0 == [['recording', '']] and bool(msg) and 'Load the page again' in msg[0] and c1 == [['recording', 'fretless']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_logdiag():
+    """Credits Importer 3.36.2: the diagnosis in the log as a setting – [171] (3.38.5) "Developer mode".
+    A) The log open: no "Start diagnosis"; ⚙ Settings → General "Developer mode" off (until 3.38.4 "Diagnosis in the log").
+    B) On: the button in the log, stored (dci-dev).
+    C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
+    D) On again, "↺ Defaults" of General: off, no button.
+    E) [3.38.5] Taken over: with "Developer statistics" (dci-stats-dev, 3.38.2) or "Diagnosis in the log" (dci-log-diag) on before,
+       "Developer mode" is on – the button in the log –, the old keys are gone; both off before: off."""
+    DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'general')
+        a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
+             pg.evaluate("document.querySelector('.dci-set-pane [data-set=dev-mode]').closest('label').textContent.trim()")]
+        pg.click('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(DIAGBTN), pg.evaluate("localStorage.getItem('dci-dev')")]
+        pg.evaluate("document.querySelector('#dci-log [data-log-act=diag]').click()")  # the log window may lie below the dashboard
+        pg.wait_for_timeout(700)
+        c0 = pg.evaluate("(document.querySelector('#dci-log [data-log-act=diag]') || {}).textContent || ''")
+        pg.click('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-dev')")]
+        pg.click('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
+        pg.wait_for_timeout(500)
+        d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(), pg.evaluate("localStorage.getItem('dci-dev')")]
+        print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
+        results.append(a == [False, False, 'Developer mode'] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # E) the old switches taken over
+    for old, want in ((('dci-stats-dev', 'true'),), True), ((('dci-log-diag', 'true'), ('dci-stats-dev', 'false')), True), ((('dci-log-diag', 'false'),), False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            ctx.add_init_script("try { if (!sessionStorage.getItem('t-seeded')) { %s sessionStorage.setItem('t-seeded', '1'); } } catch (e) {}"
+                                % ' '.join(f"localStorage.setItem('{k}', '{v}');" for k, v in old))
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.open_settings(pg, 'general')
+            e = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
+                 pg.evaluate("[localStorage.getItem('dci-dev'), localStorage.getItem('dci-log-diag'), localStorage.getItem('dci-stats-dev')]")]
+            print('E) vorher', old, '→', e)
+            results.append(e == [want, want, ['true' if want else None, None, None]] and not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# [E8] (3.38.0) the statistics: helpers
+ENTER_EDIT = """(() => { if (document.getElementById('test-enter-edit')) return; const ta = document.getElementById('edit-note-text'); const f = document.createElement('form');
+  f.addEventListener('submit', (e) => e.preventDefault()); ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'submit positive'; btn.textContent = 'Enter edit'; btn.id = 'test-enter-edit'; f.appendChild(btn); })()"""
+STAT_COUNT = """() => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readonly'); const g = tx.objectStore('subs').getAll(); g.onsuccess = () => res(g.result); g.onerror = () => res(null); };
+  q.onerror = () => res(null); })"""
+
+
+def js_release_of(added):
+    """/ws/js/release of the test release with the relationships staged in the editor (as MusicBrainz has them after "Enter edit")."""
+    recs = {g: [] for g in H.REC}
+    rel = []
+    for r in added:
+        for a, b in ((r['e0'], r['e1']), (r['e1'], r['e0'])):
+            if a in recs:
+                recs[a].append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+            if a == H.REL:
+                rel.append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+    return {'gid': H.REL, 'relationships': rel, 'releaseGroup': {'secondaryTypeIDs': []},
+            'mediums': [{'position': 1, 'tracks': [{'number': str(i + 1), 'recording': {'gid': g, 'comment': '', 'relationships': recs[g]}} for i, g in enumerate(H.REC)]}]}
+
+
+def case_stats():
+    """Credits Importer 3.38.0 (E8, milestone "Statistics").
+    A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet. [189] (3.39.3) the statistics' own
+       button next to ⚙, no tab "Statistics" any more. [Z-SC] (3.40.14) "Collect statistics" in ⚙ Settings → Cache, the statistics
+       say it is on.
+    B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
+       relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
+       the first import).
+    C) The tab: 1 release, n relationships, 100 % new, the release had relationships before or was empty, the times; over months
+       (this month), over days (today); the most frequent artists, instruments, types.
+    D) "Reset all settings" with "keep statistics" (ticked): kept; unticked: deleted.
+    E) Switched off (from 3.40.14 in ⚙ Settings → Cache): "Enter edit" makes no job.
+    F) The release page MusicBrainz shows after "Enter edit": a job waiting there is counted – a relationship not in MusicBrainz is
+       left out, and so is one MusicBrainz had before ("n0": no more of its kind than before); the time until the page began to load.
+       F2) A job with nothing to look up there (a supplement): counted at once on the release page shown right after "Enter edit"."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        # [189] (3.39.3) the statistics with their own button: no tab of ⚙ Settings any more
+        H.open_settings(pg)
+        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
+        # [Z-SC] (3.40.14) "Collect statistics" in ⚙ Settings → Cache
+        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {textContent: ''}).textContent.startsWith('Statistics are being collected')]")
+        print('A) Reiter:', tabs, '| leer, an:', a)
+        results.append(tabs[-2:] == ['cache', 'connections'] and 'statistics' not in tabs and a == [True, True])
+        # B) staged, "Enter edit"
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Statistics/.test(t))")
+        job = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        recs = pg.evaluate(STAT_COUNT)
+        n = len(added)
+        print('B) gestagt:', n, '| Protokoll:', logs, '| Auftrag:', job, '| Datensätze:', [(r['mbid'], len(r['rels']), r['ms'] is not None, r['src']) for r in recs or []])
+        results.append(n > 0 and any(f'Statistics: {n} relationships confirmed by MusicBrainz and counted' in t for t in logs) and job is None
+                       and recs is not None and len(recs) == 1 and len(recs[0]['rels']) == n and recs[0]['ms'] is not None and recs[0]['ms'] > 0 and recs[0]['src'] == 'discogs'
+                       and recs[0]['rel'] is not None and 'before' in recs[0]['rel'])
+        # C) the tab
+        H.open_settings(pg, 'cache')
+        H.open_stats(pg)
+        pg.wait_for_timeout(500)
+        TILES = "Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, t.querySelector('.dci-stats-num').textContent.trim()]))"
+        tiles = pg.evaluate(TILES)
+        month = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })()")
+        day = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        rows_m = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        pg.click('[data-act=stats-period][data-period=day]')
+        pg.wait_for_timeout(300)
+        rows_d = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
+        stored = pg.evaluate("localStorage.getItem('dci-stats-period')")
+        print('C) Kacheln:', tiles, '\n   Monate:', rows_m, '| Tage:', rows_d, stored, '\n   Top:', tops)
+        results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('before') in ('100 % / 0 %', '0 % / 100 %')
+                       and tiles.get('created') == '0' and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRelease', ''))) and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRel', '')))
+                       and len(rows_m) == 1 and rows_m[0][0] == month and rows_m[0][1] == '1' and rows_m[0][2] == str(n) and rows_m[0][3] == '100 %'
+                       and len(rows_d) == 1 and rows_d[0][0] == day and stored == '"day"'
+                       and bool(tops['artists'] and tops['instr'] and tops['types']))
+        # D) reset all settings: kept, then deleted
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        keep = pg.is_checked('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d1 = len(pg.evaluate(STAT_COUNT) or [])
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        pg.uncheck('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d2 = len(pg.evaluate(STAT_COUNT) or [])
+        print('D) behalten angehakt:', keep, '| danach:', d1, '| ohne Haken:', d2)
+        results.append(keep and d1 == 1 and d2 == 0)
+        # E) off: no job
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(300)
+        pg.uncheck('[data-el=settings] [data-set=stats-on]')
+        pg.wait_for_timeout(200)
+        off = pg.evaluate("localStorage.getItem('dci-stats-on')")
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(800)
+        job_e = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('E) aus:', off, '| Auftrag:', job_e)
+        results.append(off == 'false' and job_e is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # F) the release page
+        rec_gid = H.REC[1]
+        found = next((x for x in js_release_of(added)['mediums'][0]['tracks'] if x['recording']['gid'] == rec_gid), None)
+        tgt = found['recording']['relationships'][0] if found and found['recording']['relationships'] else {'linkTypeID': 148, 'target': {'gid': H.uid('dddddddd', 1)}}
+        job = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 0}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'X', 'i': ['guitar'], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid']}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'nope', 'tn': 'Y', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': 1, 'tgt': 'nope'}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'Z', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid'], 'n0': 1}}]}}
+        rp, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}')
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 60000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job)
+        rp.reload()
+        rp.wait_for_timeout(16000)
+        recs_f = rp.evaluate(STAT_COUNT) or []
+        job_f = rp.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('F) Release-Seite:', [(len(r['rels']), r['ms']) for r in recs_f], '| Auftrag:', job_f, '| Fehler:', errs2)
+        results.append(len(recs_f) == 1 and len(recs_f[0]['rels']) == 1 and recs_f[0]['rels'][0]['tn'] == 'X' and 'c' not in recs_f[0]['rels'][0]
+                       and 60000 <= recs_f[0]['ms'] < 75000 and job_f is None and not errs2)
+        # F2) nothing to look up: at once
+        job2 = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 1}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 's', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'S', 'i': [], 'v': [], 'd': 'year', 'ds': 'hand', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0}]}}
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 1000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job2)
+        rp.reload()
+        rp.wait_for_timeout(2500)
+        recs_f2 = rp.evaluate(STAT_COUNT) or []
+        print('F2) ohne Nachschlagbares:', [(len(r['rels']), r['rels'][0]['k']) for r in recs_f2])
+        results.append(len(recs_f2) == 2 and any(r['rels'][0]['k'] == 's' for r in recs_f2))
+        H.WS_JS_RELEASE.clear()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+STAT_SEED = """(recs) => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readwrite'); const st = tx.objectStore('subs'); st.clear(); recs.forEach((r) => st.put(r));
+    tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; q.onerror = () => res(false); })"""
+
+
+def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
+    return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': list(i), 'v': [], 'd': d, 'ds': ds, 'rc': 0, 'ac': 0, 'ru': ru, 'lk': lk, 'nw': nw}
+
+
+def case_statsbutton():
+    """Credits Importer 3.39.3 (collected item 189): the statistics with their own button in the head.
+    A) The button (a bar chart, "Statistics") right after ⚙ Settings, not pressed; no tab "Statistics" in ⚙ Settings any more – a tab
+       "statistics" remembered from before shows "General".
+    B) A click: the statistics below the head (their heading, "Collect statistics" – no switch of the developer mode there; [Z-SC]
+       (3.40.14) no switch at all: "Collect statistics" in ⚙ Settings → Cache), the button pressed (tinted).
+    C) ⚙ Settings opened: the statistics close; the statistics opened again: ⚙ closes. The mapping rules in the dashboard opened: the
+       statistics close; the statistics opened: the rules close.
+    D) The heading folds them in, the focus on the button.
+    (3.40.6) The button in the group of help and settings: Statistics · ⌨ · ⚙ (Z-HB); "this browser only" in the head of the
+    statistics, its tooltip says why (Z-ST)."""
+    HEAD = """(() => [...document.querySelectorAll('.dci-head .dci-headbtn')].map(b => b.dataset.act))()"""
+    STATE = """(() => { const st = document.querySelector('[data-el=stats]'), se = document.querySelector('[data-el=settings]'), r = document.querySelector('[data-el=rules-dock]');
+      const btn = document.querySelector('.dci-head [data-act=stats-open]');
+      return { stats: !st.hidden, settings: !se.hidden, rules: !!document.querySelector('#dci-rules.dci-rules-docked:not([hidden])'), pressed: btn.getAttribute('aria-expanded'),
+        bg: getComputedStyle(btn).backgroundColor, title: btn.title, label: btn.getAttribute('aria-label'), svg: !!btn.querySelector('svg'),
+        heading: (st.querySelector('.dci-set-title') || { textContent: '' }).textContent.trim(),
+        local: (st.querySelector('.dci-stats-local') || { textContent: '' }).textContent.trim(), localTitle: (st.querySelector('.dci-stats-local') || {}).title || '', switches: [...st.querySelectorAll('[data-set]')].map(x => x.dataset.set),
+        tabs: [...se.querySelectorAll('.dci-set-tab')].map(t => t.dataset.topic), tab: (se.querySelector('.dci-set-tab[aria-selected=true]') || { dataset: {} }).dataset.topic }; })()"""
+    TINT = 'rgb(236, 235, 246)'
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-settings-tab', JSON.stringify('statistics'))")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        head = pg.evaluate(HEAD)
+        a0 = pg.evaluate(STATE)
+        H.open_settings(pg)
+        a1 = pg.evaluate(STATE)
+        print('A) Kopf:', head, '| zu:', {k: a0[k] for k in ('stats', 'pressed', 'title', 'label', 'svg')}, '| Reiter:', a1['tabs'], a1['tab'])
+        # (3.40.6, Z-HB) with ⌨ and ⚙ in the group of help and settings: Statistics · ⌨ · ⚙
+        i = head.index('settings-open') if 'settings-open' in head else -9
+        results.append(head[i - 2:i] == ['stats-open', 'keys-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
+                       and a0['title'].startswith('Statistics:') and 'statistics' not in a1['tabs'] and a1['tab'] == 'general')
+        # B) and C) – ⚙ is open now: the statistics close it
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(500)
+        b1 = pg.evaluate(STATE)
+        print('B) offen:', b1)
+        # (3.40.6, Z-ST) "this browser only" in the head of the statistics (Q-au)
+        results.append(b1['stats'] and not b1['settings'] and b1['pressed'] == 'true' and b1['bg'] == TINT and b1['heading'] == 'Statistics'
+                       and b1['switches'] == [] and b1['local'] == 'this browser only' and b1['localTitle'].startswith('These statistics are kept only in this browser'))
+        pg.click('.dci-head [data-act=settings-open]')
+        pg.wait_for_timeout(300)
+        c1 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(400)
+        c2 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(400)
+        c3 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(400)
+        c4 = pg.evaluate(STATE)
+        print('C) ⚙:', [c1[k] for k in ('stats', 'settings', 'pressed')], '| Regeln:', [c2[k] for k in ('stats', 'settings', 'rules')],
+              '| Statistik:', [c3[k] for k in ('stats', 'rules')], '| Regeln wieder:', [c4[k] for k in ('stats', 'rules', 'pressed')])
+        results.append(not c1['stats'] and c1['settings'] and c1['pressed'] == 'false' and c2['rules'] and not c2['stats'] and not c2['settings']
+                       and c3['stats'] and not c3['rules'] and c4['rules'] and not c4['stats'] and c4['pressed'] == 'false')
+        # D)
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(300)
+        pg.click('[data-el=stats] [data-act=stats-fold]')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate(STATE)
+        focus = pg.evaluate("document.activeElement && document.activeElement.dataset.act")
+        print('D) gefaltet:', d1['stats'], d1['pressed'], '| Fokus:', focus)
+        results.append(not d1['stats'] and d1['pressed'] == 'false' and focus == 'stats-open')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statswhere():
+    """Credits Importer 3.40.14 (collected item Z-SC): "Collect statistics" in ⚙ Settings → Cache (until 3.40.13 at the top of the
+    statistics).
+    A) The statistics: no switch; at their top a grey line "Statistics are being collected – switched on and off in ⚙ Settings →
+       Cache"; ⚙ Settings → Cache has the box, ticked.
+    B) "⚙ Settings → Cache" in that line clicked: the statistics closed, ⚙ Settings open at Cache (remembered), the focus on the box.
+    C) Unticked there (stored false, the log says so); the statistics opened again: "Collecting statistics is off – nothing new is
+       counted. …".
+    D) ↺ of the topic Cache: ticked again (nothing stored)."""
+    WHERE = "(x => x ? [x.className, x.textContent.replace(/\\s+/g, ' ').trim()] : null)(document.querySelector('[data-el=stats] [data-el=stats-where]'))"
+    BOX = "(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-set=stats-on]'))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
+        a0 = [pg.evaluate(WHERE), pg.evaluate("document.querySelectorAll('[data-el=stats] [data-set]').length"),
+              pg.evaluate("getComputedStyle(document.querySelector('[data-el=stats-where]')).color")]
+        print('A)', a0)
+        results.append(a0[0] is not None and 'dci-sub' in a0[0][0] and a0[0][1] == 'Statistics are being collected – switched on and off in ⚙ Settings → Cache'
+                       and a0[1] == 0)
+        pg.click('[data-el=stats] [data-act=stats-where]')
+        pg.wait_for_timeout(400)
+        b0 = [pg.evaluate("!document.querySelector('[data-el=stats]').hidden"), pg.evaluate("!document.querySelector('[data-el=settings]').hidden"),
+              pg.evaluate("(document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]') || {dataset: {}}).dataset.topic"),
+              pg.evaluate("localStorage.getItem('dci-settings-tab')"), pg.evaluate("document.activeElement && document.activeElement.dataset.set"), pg.evaluate(BOX)]
+        print('B)', b0)
+        results.append(b0 == [False, True, 'cache', '"cache"', 'stats-on', True])
+        pg.uncheck('[data-el=settings] [data-set=stats-on]')
+        pg.wait_for_timeout(300)
+        c0 = [pg.evaluate("localStorage.getItem('dci-stats-on')"), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Collect statistics' in x][-1:]]
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(WHERE)
+        print('C)', c0, c1)
+        results.append(c0[0] == 'false' and c0[1] == ['Setting “Collect statistics”: off'] and c1 is not None
+                       and c1[1] == 'Collecting statistics is off – nothing new is counted. Switched on and off in ⚙ Settings → Cache')
+        H.open_settings(pg, 'cache')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=cache]')
+        pg.wait_for_timeout(400)
+        d0 = [pg.evaluate("localStorage.getItem('dci-stats-on')"), pg.evaluate(BOX)]
+        print('D)', d0)
+        results.append(d0 == [None, True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsmore():
+    """Credits Importer 3.38.1 (E8): the further statistics of the tab,
+    from three stored submissions of two releases (today, yesterday, three days ago).
+    Sources (Discogs, pasted text, text from cover art; with a supplement 1) · how the entries were found (unique: link 2, name 1,
+    hand 1, created 1) · dates (3 of 8 = 38 %, day / month / year 1 each, notes 2, by hand 1; the place Zojoji Hall) · levels
+    (recording 7, release 1; works linked 1) · the releases at their first submission (1980s, 1990s; CD 2, Vinyl 1; JP, CA; ECM,
+    Intakt) · when (7 weekdays, 24 hours; days in a row now 2, longest 2; most in a day 5 yesterday; most for a release 5 "A";
+    fastest 24 s per relationship) · instruments (3; first used in 30 days: all; used once: double bass, taishōgoto) · text from
+    cover art (1 submission, 2 images, 10 lines, 3 words) · own rules (2; U001: 1)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        day = 86400000
+        relA = {'title': 'A', 'year': 1985, 'country': 'JP', 'formats': ['CD'], 'labels': ['ECM'], 'before': 0}
+        relB = {'title': 'B', 'year': 1993, 'country': 'CA', 'formats': ['CD', 'Vinyl'], 'labels': ['Intakt'], 'before': 3}
+        recs = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - day, 'start': now - day - 120000, 'ms': 120000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': relA, 'own': 2, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane', ['piano'], 'day', 'notes', 'link', 'R001'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g2', 'Joe', ['taishōgoto'], 'year', 'hand', 'search', 'U001'),
+                      stat_rel('n', 'recorded at', 'recording', 'place', 'p1', 'Zojoji Hall', lk='link'),
+                      stat_rel('s', 'performance', 'recording', 'work', 'w1', 'Song'),
+                      stat_rel('n', 'producer', 'release', 'artist', 'g1', 'Jane', lk='link')]},
+            {'v': 1, 'id': 'b:2', 'mbid': 'm2', 'at': now, 'start': now - 30000, 'ms': 30000, 'src': 'ocr', 'supp': [], 'rel': relB, 'own': 2,
+             'ocr': {'supp': False, 'images': 2, 'lines': 10, 'corrected': 3},
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], 'month', 'notes', 'hand'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g4', 'Bob', ['double bass'], lk='created', nw=1)]},
+            {'v': 1, 'id': 'b:3', 'mbid': 'm2', 'at': now - 3 * day, 'start': None, 'ms': None, 'src': 'text', 'supp': [], 'rel': relB, 'own': 1, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], lk='hand')]},
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())
+            .concat([...c.querySelectorAll('tbody tr')].map(t => `${t.children[0].textContent.trim()} ${t.children[1].textContent.trim()}`))]))"""
+        # ([Z-STD] 3.45.0: "Sources" a table – its source and its releases)
+        c = pg.evaluate(CARDS)
+        cols = pg.evaluate("[...document.querySelectorAll('[data-el=stats-when] .dci-stats-cols')].map(x => x.querySelectorAll('.dci-stats-col').length)")
+        yday = pg.evaluate("(() => { const d = new Date(Date.now() - 86400000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('Gesät:', seeded, '| Balken:', cols)
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with a supplement: 1')
+                       and c.get('found') == ['through the link of the source 2', 'by their name 1', 'chosen by hand 1', 'newly created 1'])
+        results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
+                       and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
+        results.append(ok('releases', '1980s 1', '1990s 1', 'CD 2', 'Vinyl 1', 'JP 1', 'CA 1', 'ECM 1', 'Intakt 1'))
+        results.append(cols == [7, 24] and ok('when', 'Days in a row: now 2, longest 2', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
+                                             'Fastest: 24 s per relationship (A, 5 relationships)'))
+        results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
+                       and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')
+                       and ok('own', 'Own rules now: 2 – relationships from them:', 'U001 1'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_statsmore2():
+    """Credits Importer 3.41.14 (collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC; Q-cv, Q-cw): the cards of
+    3.41.14, for everyone (not only in "Developer mode"), from four stored submissions – one of 3.41.13 (v 1) and three of 3.41.14:
+    A) "Suites and medleys": suites 2, created in MusicBrainz 1, found in MusicBrainz 1, added by hand 1, their parts 5, medleys split 1,
+       "parts" relationships 3 · "Attributes": live 2, additional 1, medley 1, movement 3 · "Works": linked 4, created 1, new in the
+       editor 2 · "Genres and styles": Jazz 2 (once a release), Free Jazz 1 · "Decisions": 3 answers – Q012: spoken vocals …, Q002:
+       electric guitar 2 · "Live": 2 links, 3 comments · "Gaps closed": 4 role credits, 2 dates, 1 attribute · "Worked together":
+       Ann & Bob (2 releases; a pair on one release only is not listed). The cards that need 3.41.14 say "Counted from 3.41.14 on".
+       (3.41.15, review) A record with the import's own list of answers counts them once a row (Q002 once, not three times; Q012 "skip
+       the role" – a row without a relationship – too): 5 answers.
+    B) A real submission (the release of the harness, staged, "Enter edit"): its record is v 2, with x (suites, works, genres, live,
+       gaps, (3.41.15) decisions) and the attributes of each relationship (a) – until 3.41.13 none of them; (3.41.15, review) its works
+       are the links with recordings it holds (until 3.41.14 the stagings counted)."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, rels, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None, 'x': x, 'rels': rels}
+
+        def rl(tn, tg, a=(), q=(), et='artist', lt='instrument'):
+            d = stat_rel('n', lt, 'recording', et, tg, tn)
+            d['a'] = list(a)
+            d['q'] = [{'q': k, 'a': v} for k, v in q]
+            return d
+        X = lambda **kw: {'suites': kw.get('suites', {}), 'works': kw.get('works', {}), 'genres': kw.get('genres', []), 'live': kw.get('live', {}), 'gaps': kw.get('gaps', {})}
+        recs = [
+            {'v': 1, 'id': 'old:1', 'mbid': 'm0', 'at': now - 9000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g9', 'Zed')]},
+            r2(1, 'm1', [rl('Ann', 'g1', ['additional'], [('Q002', 'electric guitar')]), rl('Bob', 'g2'), rl('Cy', 'g3'),
+                         rl('Song', 'w1', ['live'], et='work', lt='performance'), rl('Suite', 'w2', ['movement'], et='work', lt='parts'), rl('Suite', 'w2', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'created': 1, 'parts': 3}, works={'linked': 3, 'created': 1, 'pending': 2}, genres=['jazz', 'free jazz'], live={'comments': 2}, gaps={'credits': 3, 'dates': 2})),
+            r2(2, 'm2', [rl('Ann', 'g1', q=[('Q002', 'electric guitar')]), rl('Bob', 'g2', q=[('Q012', 'spoken vocals (credited “host”)')]),
+                         rl('Song', 'w3', ['live', 'medley'], et='work', lt='performance'), rl('Suite', 'w4', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'found': 1, 'manual': 1, 'parts': 2, 'medleys': 1}, works={'linked': 1}, genres=['jazz'], live={'comments': 1}, gaps={'credits': 1, 'attrs': 1})),
+            # the same release again (a supplement): its genres not counted twice
+            r2(3, 'm2', [rl('Dee', 'g4')], X(genres=['jazz'])),
+            # (3.41.15, review) the import's own list of answers, once a row: one answer of a row of three relationships, one that skipped
+            r2(4, 'm3', [rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')]), rl('Eve', 'g5', q=[('Q002', 'electric guitar')])],
+               dict(X(), decisions=[{'q': 'Q002', 'a': 'electric guitar'}, {'q': 'Q012', 'a': 'skip the role'}])),
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k in ('suites', 'attrs', 'works2', 'genres', 'decisions', 'live', 'gaps', 'together'):
+            print(f'   {k}:', c.get(k))
+        since = 'Counted from 3.41.14 on – the imports before do not hold it.'
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('suites', 'suites 2', 'created in MusicBrainz 1', 'found in MusicBrainz 1', 'added by hand 1', 'their parts 5', 'medleys split 1', '“parts” relationships 3', since)
+                       and ok('attrs', 'movement 3', 'live 2', 'additional 1', 'medley 1', since))
+        results.append(ok('works2', 'linked with recordings 4', 'of them created in MusicBrainz’s form 1', 'new works in the relationship editor 2', since)
+                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '5 answers to the questions of the script', 'Q002: electric guitar 3', 'Q012: spoken vocals (credited “host”) 1', 'Q012: skip the role 1')
+                       and since not in c.get('decisions', []))
+        results.append(ok('live', 'recordings linked live with their works 2', 'live comments set 3', since)
+                       and ok('gaps', 'role credits added 4', 'dates added 2', 'attributes added to links of recordings and works 1', since)
+                       and c.get('together') == ['Ann & Bob 2'])
+        # B) a real submission
+        H.open_stats(pg)
+        pg.evaluate(STAT_SEED, [])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs2 = pg.evaluate(STAT_COUNT) or []
+        r = recs2[0] if recs2 else {}
+        print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
+        perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
+        # ((3.42.6, Z-STG2) and the tags of Bandcamp)
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
+                       and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
+                       # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
+                       and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
+                       and isinstance((r.get('x') or {}).get('decisions'), list))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsgenres():
+    """Credits Importer 3.42.6 (collected item Z-STG2; Q-dj, Q-do): "Genres and styles" with Bandcamp's tags.
+    A) In Node: the tags of a Bandcamp album page – its tag links without the tag of the artist's place ("Nashville" of "Nashville,
+       Tennessee"); without links the "keywords" of its JSON-LD (also without the place).
+    B) Three stored submissions – Discogs jazz, free jazz with Bandcamp jazz, ambient; Discogs jazz with Bandcamp ambient, drone; one of
+       3.41.14 (genres only): "Combined" first – Jazz 3 (its tooltip "Discogs 3 · Bandcamp 1"; once a release, also when both name it),
+       Ambient 2, Drone 1, Free jazz 1; "Separate": Discogs (Jazz 3, Free jazz 1) and Bandcamp (Ambient 2, Drone 1, Jazz 1) – remembered
+       (dci-stats-genres) when the statistics are shown again; "Combined" again: forgotten (the default)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const links = '<div id="band-name-location"><span class="title">Ross McReynolds</span><span class="location secondaryText">Nashville, Tennessee</span></div>'
+  + '<div class="tralbumData tralbum-tags tralbum-tags-nu"><span class="tags-inline-label">tags:</span> <a class="tag" href="https://bandcamp.com/discover/ambient">ambient</a>'
+  + '<a class="tag" href="https://bandcamp.com/discover/jazz">jazz</a> <a class="tag" href="https://bandcamp.com/discover/nashville">Nashville</a> <a class="tag" href="https://bandcamp.com/discover/new-age">new age</a></div>';
+const ld = '<span class="location secondaryText">Berlin, Germany</span><script type="application/ld+json">{"@type":"MusicAlbum","keywords":["drone","Berlin","field recordings","drone"]}</script>';
+console.log(JSON.stringify([m.SOURCES.bandcamp.pageTags(links), m.SOURCES.bandcamp.pageTags(ld), m.SOURCES.bandcamp.pageTags('<p>none</p>')]));
+"""
+    a = json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True, check=True).stdout)
+    print('A) Node:', a)
+    results = [a == [['ambient', 'jazz', 'new age'], ['drone', 'field recordings'], []]]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': rel, 'own': 0, 'ocr': None,
+                    'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}, **x}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}', 'Ann')]}
+        recs = [r2(1, 'm1', {'genres': ['jazz', 'free jazz'], 'bcTags': ['jazz', 'ambient']}), r2(2, 'm2', {'genres': ['jazz'], 'bcTags': ['ambient', 'drone']}),
+                r2(3, 'm3', {'genres': ['jazz']})]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARD = """(() => { const c = document.querySelector('[data-el=stats-genres]'); return { seg: [...c.querySelectorAll('[data-act=stats-genres-view]')].map(x => x.textContent.trim() + (x.getAttribute('aria-pressed') === 'true' ? ' ✓' : '')),
+          heads: [...c.querySelectorAll('h5')].map(x => x.textContent.trim()), items: [...c.querySelectorAll('li')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim(), x.title || '']) }; })()"""
+        b1 = pg.evaluate(CARD)
+        print('B) Combined:', b1)
+        results.append(seeded and b1['seg'] == ['Combined ✓', 'Separate'] and not b1['heads']
+                       and b1['items'] == [['Jazz 3', 'Discogs 3 · Bandcamp 1'], ['Ambient 2', 'Bandcamp 2'], ['Drone 1', 'Bandcamp 1'], ['Free jazz 1', 'Discogs 1']])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=separate]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(CARD)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        # the statistics closed and shown again
+        pg.locator('.dci-head [data-act=stats-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        b3 = pg.evaluate(CARD)
+        print('   Separate:', b2, '| gespeichert:', stored, '| wieder:', b3['seg'])
+        results.append(b2['seg'] == ['Combined', 'Separate ✓'] and b2['heads'] == ['Discogs', 'Bandcamp']
+                       and [x[0] for x in b2['items']] == ['Jazz 3', 'Free jazz 1', 'Ambient 2', 'Drone 1', 'Jazz 1'] and stored == '"separate"' and b3['seg'] == ['Combined', 'Separate ✓'])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=combined]')
+        pg.wait_for_timeout(500)
+        b4 = pg.evaluate(CARD)
+        stored2 = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        print('   Combined wieder:', b4['seg'], stored2)
+        results.append(b4['seg'] == ['Combined ✓', 'Separate'] and stored2 is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_conngroups():
+    """Credits Importer 3.42.0 (collected item Z-CONS; Q-dl): ⚙ Settings → ⓘ Connections in groups, each with its heading – Sources
+    (Discogs, Bandcamp, pasted text, images by their address, YouTube) · Websites (MusicBrainz, GitHub, Cover Art Archive) · Tools &
+    scripts (Harmony, the companion, the old name, the two scripts of the live comments) · Resources (Tesseract.js, pdf.js) ·
+    Userscript managers · Links; by number within a group (until 3.41.15 one list by number)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(400)
+        H.open_settings(pg, 'connections')
+        pg.wait_for_timeout(300)
+        g = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] .dci-conn tbody')].map(t => [t.dataset.connGroup, t.querySelector('.dci-conn-group th').textContent.trim(),
+          [...t.querySelectorAll('tr[data-conn]')].map(r => r.dataset.conn)])""")
+        print('A)', g)
+        results.append(g == [['sources', 'Sources', ['X002', 'X003', 'X004', 'X015', 'X017']], ['sites', 'Websites', ['X001', 'X010', 'X013']],
+                             ['tools', 'Tools & scripts', ['X005', 'X006', 'X007', 'X011', 'X012']], ['resources', 'Resources', ['X014', 'X016']],
+                             ['managers', 'Userscript managers', ['X008']], ['links', 'Links', ['X009']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsdelete():
+    """Credits Importer 3.42.0 (collected item Z-DS): "Delete statistics …" in ⚙ Settings → Cache, next to "Collect statistics", with
+    the number of submissions counted; the statistics themselves have no button and no word about deleting (until 3.41.15 the button
+    was at their bottom). Clicked (asked first): deleted, the number 0 and the button off."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rec = {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+               'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane', ['piano'])]}
+        pg.evaluate(STAT_SEED, [rec, dict(rec, id='a:2')])
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        H.open_stats(pg)
+        pg.wait_for_timeout(500)
+        a0 = [pg.evaluate("!!document.querySelector('[data-el=stats] [data-act=stats-delete]')"), pg.evaluate("/[Dd]elet/.test(document.querySelector('[data-el=stats]').textContent)")]
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(500)
+        a1 = pg.evaluate("[(document.querySelector('[data-el=settings] [data-act=stats-delete]') || {}).textContent || null, (document.querySelector('[data-el=stats-stored]') || {}).textContent || null]")
+        pg.click('[data-el=settings] [data-act=stats-delete]'); pg.wait_for_timeout(600)
+        a2 = [pg.evaluate("(document.querySelector('[data-el=stats-stored]') || {}).textContent || null"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=stats-delete]').disabled"),
+              (lambda x: -1 if x is None else len(x))(pg.evaluate(STAT_COUNT))]
+        print('A) in der Statistik:', a0, '| ⚙ Cache:', a1, '| gelöscht:', a2)
+        results.append(a0 == [False, False] and a1 == ['Delete statistics …', 'Submissions counted: 2'] and a2 == ['Submissions counted: 0', True, 0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsdev():
+    """Credits Importer 3.38.2 (E8): the developer statistics.
+    A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
+       relationship, what was changed by hand ("roleCredit" for Bass Man, none for the others – an answer is no change) and the answers;
+       and for the import what was not recognized and the duplicates avoided.
+    B) [3.38.5] "Developer mode" (⚙ Settings → General) off by default: not shown, no switch of their own; on: from stored submissions – taken over 57 % /
+       changed 43 % of 7 (role credit, tracks, date, row added by hand); the rules whose suggestion was changed most (R096 1 of 2,
+       R001 1 of 3; a row added by hand is no change of a rule); not recognized (kalimba 2 – once per release –, buddha machine 1);
+       the answers (Q002: electric guitar 2 (67 %), acoustic guitar 1 (33 %); no instrument of MusicBrainz: typo 1); duplicates
+       avoided 3 (once per release)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+          const tr = g && g.querySelector('tr.dci-row'); return tr ? tr.dataset.row : null; }"""
+        gid = pg.evaluate(ROW, 'Guitar Guy')
+        pg.locator(f'tr[data-row="{gid}"] [data-act=instr-pick][data-instr="electric guitar"]').first.click()
+        pg.wait_for_timeout(300)
+        bid = pg.evaluate(ROW, 'Bass Man')
+        pg.fill(f'tr[data-row="{bid}"] [data-f=role-credit]', 'four-string')
+        pg.press(f'tr[data-row="{bid}"] [data-f=role-credit]', 'Tab')
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        rels = recs[0]['rels'] if recs else []
+        gg = [r for r in rels if r['tn'] == 'Guitar Guy' and r['lt'] == 'instrument']
+        bm = [r for r in rels if r['tn'] == 'Bass Man' and r['lt'] == 'instrument']
+        others = [r for r in rels if r not in gg and r not in bm]
+        dev = recs[0].get('dev') if recs else None
+        print('A) Guitar Guy:', [(r['h'], r['q']) for r in gg], '| Bass Man:', [(r['h'], r['q']) for r in bm], '| andere h:', sorted({tuple(r['h']) for r in others}), '| dev:', dev)
+        results.append(bool(gg) and all(r['h'] == [] and r['q'] == [{'q': 'Q002', 'a': 'electric guitar'}] for r in gg)
+                       and bool(bm) and all('roleCredit' in r['h'] for r in bm) and all(r['h'] == [] for r in others)
+                       and dev is not None and isinstance(dev.get('unrec'), list) and isinstance(dev.get('dupes'), int))
+        # B) the switch and the display
+        rel = lambda h, ru='', q=(): {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'X', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0,
+                                       'ru': ru, 'lk': 'link', 'nw': 0, 'h': list(h), 'q': list(q)}
+        now = pg.evaluate("Date.now()")
+        seed = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - 3000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba', 'buddha machine'], 'dupes': 2},
+             'rels': [rel([], 'R001'), rel(['roleCredit'], 'R001'), rel(['added']), rel([], 'R096', [{'q': 'Q002', 'a': 'electric guitar'}]), rel([], '', [{'q': 'guess', 'a': 'typo'}])]},
+            {'v': 1, 'id': 'a:2', 'mbid': 'm1', 'at': now - 2000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 5}, 'rels': [rel(['tracks', 'date'], 'R096', [{'q': 'Q002', 'a': 'acoustic guitar'}])]},
+            {'v': 1, 'id': 'c:3', 'mbid': 'm3', 'at': now - 1000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 1}, 'rels': [rel([], 'R001', [{'q': 'Q002', 'a': 'electric guitar'}])]},
+        ]
+        pg.evaluate(STAT_SEED, seed)
+        H.open_settings(pg, 'cache')
+        H.open_stats(pg)
+        pg.wait_for_timeout(500)
+        # [171] (3.38.5) shown in "Developer mode" (⚙ Settings → General; until 3.38.4 a switch of its own here)
+        b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), !!document.querySelector('[data-set=stats-dev]')]")
+        H.open_settings(pg, 'general')
+        pg.check('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        H.open_stats(pg)
+        pg.wait_for_timeout(500)
+        stored = pg.evaluate("localStorage.getItem('dci-dev')")
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-dev .dci-stats-card')].map(c => [c.dataset.el.replace('stats-dev-', ''),
+          [...c.querySelectorAll('li, p, h5')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('B) vorher (Abschnitt, Schalter):', b0, '| gespeichert:', stored)
+        results.append(b0 == [False, False] and stored == 'true'
+                       and c.get('auto') == ['57 % as suggested, 43 % changed by hand (of 7 relationships)', 'role credit 1', 'tracks 1', 'date 1', 'row added by hand 1']
+                       and c.get('rules') == ['R096 1 of 2 changed (50 %)', 'R001 1 of 3 changed (33 %)']
+                       and c.get('unrec') == ['kalimba 2', 'buddha machine 1']
+                       and c.get('answers') == ['No instrument of MusicBrainz', 'a similar instrument (typo) 1 (100 %)', 'Q002', 'electric guitar 2 (67 %)', 'acoustic guitar 1 (33 %)']
+                       and c.get('dupes') == ['Relationships MusicBrainz had already, not staged again: 3'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        H.WS_JS_RELEASE.clear()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_editnote():
+    """Credits Importer 3.41.9 (collected item Z-EN; Q-cp), 3.42.0 (Z-EN2, Q-dk: no "None"): the edit note in ⚙ Settings → Staging only.
+    A) The footer has no checkbox "edit note" any more (until 3.41.8 "⚙ Options": edit note · fill role credits · ≤ 500 per
+       staging); ⚙ Settings → Staging: "Edit note: Full | Simple" (until 3.41.15 also "None"), Full pressed; each option's tooltip
+       lists what it writes.
+    B) Full, staged: Source, Script, "Done: added … credit relationships from Discogs …" in the edit note; (3.41.15, review) Simple
+       chosen then: the block is the simple one at once (until 3.41.14 only at the next staging – "Enter edit" before it sent the full one).
+    C) Simple (stored "simple"; the page opened anew), staged: the block of the script is only "Source: …" and "Script: … v…" – no
+       "Done:"; the form of a new work: "Source: …" and "Script: …" (no "writers from Discogs credits").
+    D) (3.42.0) "none" stored by 3.41.9 – 3.41.15: read as Simple (Simple pressed, the form of a new work with Source and Script); the
+       entry skipped before (Bass Man) taken again and staged: the simple block. ↺ of the topic: Full again (nothing stored)."""
+    import urllib.parse
+    results = []
+    NOTE = "document.getElementById('edit-note-text').value"
+
+    def stage(pg):
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+
+    def work_form(pg):
+        # (the first track without a work that offers one: what is staged is remembered for the next page)
+        pg.locator('tr[data-work] [data-act=work-create]').first.evaluate('b => b.click()')
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        pg.click('[data-act=sub-close]'); pg.wait_for_timeout(200)
+        return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+
+    def mode(pg, m):
+        H.open_settings(pg, 'staging')
+        pg.click(f'[data-el=settings] [data-act=edit-note-mode][data-mode={m}]'); pg.wait_for_timeout(200)
+        stored = pg.evaluate("localStorage.getItem('dci-edit-note')")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        return stored
+
+    def page(ctx):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        return pg, errs
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = page(ctx)
+        foot = pg.evaluate("[...document.querySelectorAll('.dci-foot-optlist label')].map(l => l.textContent.trim())")
+        H.open_settings(pg, 'staging')
+        seg = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.textContent.trim(), b.getAttribute('aria-pressed'), b.title])""")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        print('A) Fuß:', foot, '| Einstellung:', [x[:3] for x in seg])
+        print('   Tooltips:', [x[3].split('\n') for x in seg])
+        results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false']]
+                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3])
+        stage(pg)
+        b0 = pg.evaluate(NOTE).splitlines()
+        print('B)', b0[:4])
+        results.append(b0[0] == 'Source: https://www.discogs.com/release/1234' and b0[1].startswith('Script: MB x Vibecode: Credits Importer v') and any(l.startswith('Done: added ') for l in b0))
+        st1 = mode(pg, 'simple')
+        # (3.41.15, review) the block written follows the setting at once (no new staging needed)
+        b1 = pg.evaluate(NOTE).splitlines()
+        print('B2) gleich danach:', b1)
+        results.append(len(b1) == 2 and b1[0] == 'Source: https://www.discogs.com/release/1234' and b1[1].startswith('Script: '))
+        pg.close()
+        pg, errs2 = page(ctx)
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').querySelector('[data-act=entry-skip]').dataset.skipkey")
+        pg.locator(f'[data-act=entry-skip][data-skipkey="{key}"]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        q1 = work_form(pg)
+        stage(pg)
+        c0 = pg.evaluate(NOTE).splitlines()
+        n1 = q1.get('edit-work.edit_note') or ''
+        print('C)', st1, c0, '| Werk:', repr(n1))
+        results.append(st1 == '"simple"' and len(c0) == 2 and c0[0] == 'Source: https://www.discogs.com/release/1234' and c0[1].startswith('Script: MB x Vibecode')
+                       and n1.split('\n')[0] == 'Source: https://www.discogs.com/release/1234' and n1.split('\n')[1:2] and n1.split('\n')[1].startswith('Script: MB x Vibecode')
+                       and 'writers' not in n1)
+        # D) "none" of 3.41.9 – 3.41.15 stored: Simple
+        pg.evaluate("localStorage.setItem('dci-edit-note', JSON.stringify('none'))")
+        pg.close()
+        pg, errs3 = page(ctx)
+        H.open_settings(pg, 'staging')
+        d3 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.getAttribute('aria-pressed')])")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        q2 = work_form(pg)
+        stage(pg)
+        d0 = pg.evaluate(NOTE).splitlines()
+        H.open_settings(pg, 'staging')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=staging]'); pg.wait_for_timeout(300)
+        d1 = [pg.evaluate("localStorage.getItem('dci-edit-note')"), pg.evaluate("document.querySelector('[data-el=settings] [data-act=edit-note-mode][aria-pressed=true]').dataset.mode")]
+        n2 = q2.get('edit-work.edit_note') or ''
+        print('D)', d3, d0, '| Werk:', repr(n2), '| ↺:', d1)
+        results.append(d3 == [['full', 'false'], ['simple', 'true']] and len(d0) == 2 and d0[1].startswith('Script: ')
+                       and n2.split('\n')[1:2] and n2.split('\n')[1].startswith('Script: ') and d1 == [None, 'full'])
+        # E) (3.43.4, full review P5) "Done:" says what is staged now: Photo Guy's row on "Skip" and staged again (his relationship
+        # taken out of the editor) – "added n"; the row back on the release and staged – "added n+1" (until 3.43.3 the note was not
+        # written anew after a removal, and its count only ever grew: n+2 then)
+        import re as _re
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        ROWLEVEL = "(lv) => [...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy').querySelector('tr.dci-row [data-act=level][data-level=' + lv + ']').click()"
+        done = lambda: [l for l in pg.evaluate(NOTE).splitlines() if l.startswith('Done:')]
+        num = lambda e: int(_re.search(r'added (\d+) credit', e[0]).group(1)) if e and _re.search(r'added (\d+) credit', e[0]) else None
+        pg.evaluate(ROWLEVEL, 'skip'); pg.wait_for_timeout(400)
+        stage(pg)
+        e1 = done()
+        pg.evaluate(ROWLEVEL, 'release'); pg.wait_for_timeout(400)
+        stage(pg)
+        e2 = done()
+        print('E) Photo Guy ausgelassen:', e1, '| wieder dabei:', e2)
+        results.append(num(e1) is not None and num(e2) == num(e1) + 1)
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_statstime():
+    """Credits Importer 3.45.0 (collected item Z-STD; Q-du, Q-el, Q-eo, Q-ep): the time of an import without its pauses, and the times
+    per source.
+    A) ⚙ Settings → Cache: "Pauses not counted from (seconds)" beside "Collect statistics" (here 2). Imported, 3 s without a click,
+       then a click; staged, "Enter edit": the record has the pause (idle ≥ 3 s) and its time without it (work = until "Enter edit"
+       minus the pause; ms as before).
+    B) Stored records – Discogs: 1 min (2 relationships), 2 min (4, with a Bandcamp supplement), an old one of 5 min (1; no work: its ms);
+       Bandcamp: 30 s (3): the card "Sources" per source the releases, the time per release and per relationship and the releases with a
+       supplement – Median (the default): Discogs 3 · 2 min 0 s · 30 s · 1 · 2 min 0 s; Bandcamp 1 · 30 s · 10 s; Average: Discogs
+       2 min 40 s per release, 2 min 0 s per relationship – remembered (dci-stats-time).
+    Review of 3.45.0:
+    C) The same page, a pause of 3.4 s – meanwhile the script scrolls (its log, the page) – then straight "Enter edit" (with no other click before it):
+       the pause counts (idle ≥ 3 s, the script's scrolling is no work), and the second record counts from the first "Enter edit" on
+       (start = its time, idle not the first one's again).
+    D) A second round of the first Discogs release (30 s, 1 relationship): the release counts once (Discogs 3, not 4); Median
+       2 min 0 s · 30 s; Average 2 min 50 s per release and all the time by all the relationships per relationship (510 s / 8 =
+       1 min 4 s, as the tile); "with a supplement: 1" (releases).
+    E) The field shows what was stored: 100000 → 86400."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.evaluate("localStorage.setItem('dci-stats-idle', '2')")
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'cache')
+        field = pg.evaluate("(() => { const on = document.querySelector('[data-el=settings] [data-set=stats-on]'); const f = document.querySelector('[data-el=settings] [data-set=stats-idle]'); if (!on || !f) return null; const rows = [...document.querySelectorAll('[data-el=settings] .dci-set-row, [data-el=settings] li, [data-el=settings] p')]; return [f.value, on.compareDocumentPosition(f) & 4 ? 'after' : 'before']; })()")
+        IDLE = '[data-el=settings] [data-set=stats-idle]'
+        pg.fill(IDLE, '100000'); pg.dispatch_event(IDLE, 'change'); pg.wait_for_timeout(200)
+        norm = [pg.eval_on_selector(IDLE, 'e => e.value'), pg.evaluate("localStorage.getItem('dci-stats-idle')")]
+        pg.fill(IDLE, '2'); pg.dispatch_event(IDLE, 'change'); pg.wait_for_timeout(200)
+        print('E) Feld nach 100000:', norm)
+        results.append(norm == ['86400', '86400'])
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(3200)  # a pause (no click, no key, no scrolling)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        r0 = recs[0] if recs else {}
+        print('A) Feld:', field, '| Datensatz: idle', r0.get('idle'), 'work', r0.get('work'), 'ms', r0.get('ms'))
+        results.append(field == ['2', 'after'] and r0.get('idle', 0) >= 3000 and r0.get('work') is not None and r0.get('ms') is not None and r0['work'] <= r0['ms'] - 3000)
+        # C) a pause with the script's scrolling, then straight "Enter edit"
+        pg.wait_for_timeout(1700)
+        scrolled = pg.evaluate("""(() => { let n = 0; const on = () => { n++; }; document.addEventListener('scroll', on, true);
+          document.querySelectorAll('#dci-log *, #dci-overlay *').forEach((el) => { if (el.scrollHeight > el.clientHeight + 5) { el.scrollTop = el.scrollTop > 0 ? 0 : 40; } });
+          window.scrollBy(0, window.scrollY > 0 ? -60 : 60); document.body.click();
+          return new Promise((res) => setTimeout(() => { document.removeEventListener('scroll', on, true); res(n); }, 200)); })()""")
+        pg.wait_for_timeout(1500)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = sorted(pg.evaluate(STAT_COUNT) or [], key=lambda r: r.get('at', 0))
+        r1 = recs[1] if len(recs) > 1 else {}
+        arm0 = int(str(r0.get('id', ':0')).split(':')[-1] or 0)
+        print('C) Skript-Scrolls:', scrolled, '| zweiter Datensatz: start', r1.get('start'), '(erstes Enter edit', arm0, ') idle', r1.get('idle'), 'work', r1.get('work'))
+        results.append(scrolled > 0 and r1.get('start') == arm0 and 3000 <= r1.get('idle', 0) <= int(str(r1.get('id', ':0')).split(':')[-1] or 0) - arm0 and r1.get('work') is not None and r1['work'] < 2000)
+        # B) stored records (a fresh browser context: its own database)
+        ctx2 = H.new_context(b)
+        pg, errs2 = H.open_mb_edit(ctx2, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        errs = errs + errs2
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def rec(i, src, n, work=None, ms=None, supp=(), mbid=None):
+            r = {'v': 2, 'id': f't:{i}', 'mbid': mbid or f'm{i}', 'at': now - i * 1000, 'start': now - 9999999, 'ms': ms if ms is not None else (work or 0) + 5000, 'src': src, 'supp': list(supp),
+                 'rel': rel, 'own': 0, 'ocr': None, 'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}{k}', 'Ann') for k in range(n)]}
+            if work is not None:
+                r['work'] = work
+            return r
+        recs = [rec(1, 'discogs', 2, work=60000), rec(2, 'discogs', 4, work=120000, supp=['bandcamp']), rec(3, 'discogs', 1, ms=300000), rec(4, 'bandcamp', 3, work=30000),
+                rec(5, 'discogs', 1, work=30000, mbid='m1')]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(700)
+        TABLE = "[...document.querySelectorAll('[data-el=stats-sources] .dci-stats-srct tbody tr')].map(t => [...t.children].map(c => c.textContent.replace(/\\s+/g, ' ').trim()))"
+        b1 = pg.evaluate(TABLE)
+        pg.click('[data-el=stats-sources] [data-act=stats-time-view][data-view=mean]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(TABLE)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-time')")
+        supp = pg.evaluate("(() => { const p = document.querySelector('[data-el=stats-sources] p.dci-sub'); return p ? p.textContent.trim() : null; })()")
+        print('B/D) Median:', b1, '| Durchschnitt:', b2, '| gespeichert:', stored, '|', supp, '| Fehler:', errs)
+        results.append(seeded and b1 == [['Discogs', '3', '2 min 0 s', '30 s', '1 · 2 min 0 s'], ['Bandcamp', '1', '30 s', '10 s', '–']]
+                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with a supplement: 1' and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# [Z-DM] (3.46.0) the texts of a part with their contrast to their background (below 3: listed)
+CONTRAST = """(sel) => { const lum = (c) => (c.match(/[\\d.]+/g) || ['255', '255', '255']).slice(0, 3).map(Number).map((x) => x / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const L = (c) => { const [r, g, b] = lum(c); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const bgOf = (el) => { for (let e = el; e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; const m = b.match(/[\\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.5)) return b; } return 'rgb(255, 255, 255)'; };
+  const root = document.querySelector(sel); const bad = []; let n = 0;
+  root.querySelectorAll('*').forEach((el) => { if (!el.offsetParent) return; if (![...el.childNodes].some((t) => t.nodeType === 3 && t.textContent.trim())) return;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || Number(cs.opacity) < 0.6) return; n++;
+    const a = L(cs.color) + 0.05; const b = L(bgOf(el)) + 0.05; const r = Math.max(a, b) / Math.min(a, b);
+    if (r < 3) bad.push([Math.round(r * 100) / 100, el.className, el.textContent.trim().slice(0, 30)]); });
+  return { n, bad }; }"""
+# the computed colours of every element of the dashboard (to compare the light theme with and without the dark stylesheet)
+COLORS = """() => [...document.querySelectorAll('#dci-overlay *, #dci-pagebar *')].map((el) => { const cs = getComputedStyle(el); return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.outlineColor].join('|'); }).join(';')"""
+
+
+def case_theme():
+    """Credits Importer 3.46.0 (collected item Z-DM; Q-eb, Q-ed, Q-ee, Q-em): the dark theme.
+    A) By default (the system light): ⚙ Appearance – "Theme as a window" Auto, "Theme in the page" Light; nothing dark; the light
+       theme as before (every colour of the dashboard and the page bar the same with and without the dark stylesheet).
+    B) As a window: Dark → the dashboard (a window) dark – its ground dark, no text below a contrast of 3 –, the page bar light; the
+       colours of the levels lighter, their ink dark; stored.
+    C) In the page: the dashboard light (the page: Light); the page Dark → it and the page bar dark.
+    D) The page Auto: follows the system while it changes (dark → dark, light → light).
+    E) "Colours of their own for the dark theme": the pickers begin with the lighter colours; a colour chosen → on the dashboard and
+       stored (dci-level-palette-dark); ↺ → made from the light ones again.
+    F) "Defaults of this topic": the themes as by default, nothing dark.
+    Review of 3.46.0:
+    G) The dark stylesheet only once a part is dark (none before), switched off when none is; after dark and back every colour of the
+       dashboard as at the start; each rule of it read by the browser (as many as written); the flash of a chip has dark keyframes.
+    H) White text on a text colour as its ground (the mark of the best match, "Apply" under the pointer): contrast ≥ 3 in the dark.
+    I) The tags beside the pickers of the dark theme in their dark colours, also with the dashboard light.
+    J) "Reset all settings": no colours of their own for the dark theme any more (dark again: the lighter colours)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        DK = "[...document.documentElement.classList].filter(c => c.startsWith('dci-dk-'))"
+        PRESSED = "(w) => [...document.querySelectorAll(`[data-el=settings] [data-el=theme-${w}] button[aria-pressed=true]`)].map(b => b.dataset.theme)"
+        GROUND = "(sel) => getComputedStyle(document.querySelector(sel)).backgroundColor"
+        H.open_settings(pg, 'appearance')
+        a = [pg.evaluate(f"({PRESSED})('window')"), pg.evaluate(f"({PRESSED})('page')"), pg.evaluate(DK)]
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(200)
+        light1 = pg.evaluate(COLORS)
+        g0 = pg.evaluate("!!document.getElementById('dci-styles-dark')")
+        print('A) gedrückt:', a, '| dunkles Stylesheet vorher:', g0)
+        results.append(a == [['auto'], ['light'], []] and len(light1) > 1000)
+        # G) dark and back: the light theme as at the start; the dark stylesheet read rule by rule
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        sheet = pg.evaluate("(() => { const d = document.getElementById('dci-styles-dark'); return [d.textContent.split('\\n').length, d.sheet.cssRules.length, d.disabled, /@keyframes dci-chip-flash-dk/.test(d.textContent)]; })()")
+        # (as a window Auto again – the system light)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=auto]')
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(300)
+        light2 = pg.evaluate(COLORS)
+        g1 = [pg.evaluate("document.getElementById('dci-styles-dark').disabled"), pg.evaluate(DK)]
+        print('G) Regeln geschrieben/gelesen, aus, Blitz:', sheet, '| wieder hell:', g1, 'gleich:', light1 == light2)
+        results.append(g0 is False and sheet[0] == sheet[1] and sheet[0] > 500 and sheet[2] is False and sheet[3] and g1 == [True, []] and light1 == light2)
+        # B) as a window: dark
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        con = pg.evaluate(f"({CONTRAST})('#dci-overlay')")
+        lv = pg.evaluate("[getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim(), getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording-ink').trim()]")
+        bb = [pg.evaluate(DK)[:1], pg.evaluate(f"({GROUND})('#dci-overlay .dci-panel')"), pg.evaluate(f"({GROUND})('#dci-open')"), pg.evaluate("localStorage.getItem('dci-theme-window')"), lv, con['n'], con['bad'][:6]]
+        print('B) als Fenster dunkel:', bb)
+        results.append(bb[0] == ['dci-dk-overlay'] and bb[1] == 'rgb(28, 28, 28)' and bb[2] == 'rgb(255, 255, 255)' and bb[3] == '"dark"'
+                       and lv[0] not in ('', '#2f6db5') and lv[1] == '#1f1d29' and con['n'] > 300 and not con['bad'])
+        # H) white text on a text colour as its ground: the best match's mark; "Apply" under the pointer
+        PAIR = """(el) => { const lum = (c) => (c.match(/[\\d.]+/g) || []).slice(0, 3).map(Number).map((x) => x / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+          const L = (c) => { const [r, g, b] = lum(c); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }; const cs = getComputedStyle(el);
+          const a = L(cs.color) + 0.05; const b = L(cs.backgroundColor) + 0.05; return Math.round((Math.max(a, b) / Math.min(a, b)) * 100) / 100; }"""
+        best = pg.evaluate(f"""(() => {{ const m = document.createElement('span'); m.className = 'dci-link-bestmark'; m.textContent = 'best'; document.querySelector('#dci-overlay .dci-panel').appendChild(m);
+          const r = ({PAIR})(m); m.remove(); return r; }})()""")
+        pg.hover('[data-act=apply]')
+        pg.wait_for_timeout(300)
+        hov = pg.eval_on_selector('[data-act=apply]', PAIR)
+        pg.mouse.move(5, 5)
+        print('H) Kontrast bestmark / Apply unter dem Zeiger:', best, hov)
+        results.append(best >= 3 and hov >= 3)
+        # C) in the page
+        pg.click('[data-el=settings] [data-act=place-toggle]')
+        pg.wait_for_timeout(500)
+        c1 = ['dci-dk-overlay' in pg.evaluate(DK), pg.evaluate(f"({GROUND})('#dci-overlay .dci-panel')")]
+        H.open_settings(pg, 'appearance') if not pg.query_selector('[data-el=settings]') else None
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        c2 = ['dci-dk-overlay' in pg.evaluate(DK), 'dci-dk-open' in pg.evaluate(DK), pg.evaluate(f"({GROUND})('#dci-open')") != 'rgb(255, 255, 255)']
+        con2 = pg.evaluate(f"({CONTRAST})('#dci-pagebar')")
+        print('C) in der Seite:', c1, '→ Seite dunkel:', c2, con2['bad'][:4])
+        results.append(c1 == [False, 'rgb(255, 255, 255)'] and c2 == [True, True, True] and not con2['bad'])
+        # D) the page Auto: as the system
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=auto]')
+        pg.wait_for_timeout(300)
+        d0 = 'dci-dk-overlay' in pg.evaluate(DK)
+        pg.emulate_media(color_scheme='dark')
+        pg.wait_for_timeout(300)
+        d1 = 'dci-dk-overlay' in pg.evaluate(DK)
+        pg.emulate_media(color_scheme='light')
+        pg.wait_for_timeout(300)
+        d2 = 'dci-dk-overlay' in pg.evaluate(DK)
+        print('D) Auto:', d0, d1, d2, pg.evaluate("localStorage.getItem('dci-theme-page')"))
+        results.append([d0, d1, d2] == [False, True, False] and pg.evaluate("localStorage.getItem('dci-theme-page')") == '"auto"')
+        # E) colours of their own (the dashboard dark again: in the page, dark)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        auto = pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()")
+        pg.check('[data-el=settings] [data-set=dark-colors]')
+        pg.wait_for_timeout(300)
+        PICK = '[data-el=settings] [data-el=dark-levels] input[data-level=recording]'
+        e0 = pg.eval_on_selector(PICK, 'e => e.value')
+        pg.eval_on_selector(PICK, "e => { e.value = '#ff8800'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); }")
+        pg.wait_for_timeout(300)
+        e1 = [pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"), pg.evaluate("localStorage.getItem('dci-level-palette-dark')"),
+              pg.evaluate("localStorage.getItem('dci-dark-colors')"), pg.evaluate("localStorage.getItem('dci-level-palette')")]
+        pg.click('[data-el=settings] [data-el=dark-levels] [data-act=dark-colors-reset]')
+        pg.wait_for_timeout(300)
+        e2 = [pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"), pg.evaluate("localStorage.getItem('dci-level-palette-dark')"),
+              pg.eval_on_selector(PICK, 'e => e.value')]
+        print('E) eigene Farben:', auto, e0, e1, e2)
+        results.append(e0 == auto and e1 == ['#ff8800', '{"recording":"#ff8800"}', 'true', None] and e2 == [auto, None, auto])
+        # I) the tags beside the dark pickers in their dark colours – also with the dashboard light (the page Light)
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=page][data-theme=light]')
+        pg.wait_for_timeout(300)
+        CHIP = "getComputedStyle(document.querySelector('[data-el=settings] [data-el=dark-levels] .dci-cl-level[data-level=recording]')).backgroundColor"
+        i0 = pg.evaluate(CHIP)
+        pg.eval_on_selector(PICK, "e => { e.value = '#00aa00'; e.dispatchEvent(new Event('input', { bubbles: true })); }")
+        pg.wait_for_timeout(200)
+        i1 = pg.evaluate(CHIP)
+        pg.eval_on_selector(PICK, "e => e.dispatchEvent(new Event('change', { bubbles: true }))")
+        pg.wait_for_timeout(200)
+        rgb = lambda h: f'rgb({int(h[1:3], 16)}, {int(h[3:5], 16)}, {int(h[5:7], 16)})'
+        print('I) Marke neben der Auswahl (Dashboard hell):', i0, '→', i1, '| hell wäre', rgb('#2f6db5'))
+        results.append(i0 == rgb(auto) and i1 == 'rgb(0, 170, 0)')
+        # J) "Reset all settings": no colours of their own any more
+        pg.click('[data-el=settings] [data-act=reset-open]')
+        pg.wait_for_timeout(300)
+        rs = pg.query_selector('[data-el=settings] [data-act=reset-do]')
+        if rs:
+            rs.click()
+            pg.wait_for_timeout(1000)
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(300)
+        j = [bool(rs), pg.evaluate("getComputedStyle(document.getElementById('dci-overlay')).getPropertyValue('--dci-lvl-recording').trim()"),
+             pg.evaluate("localStorage.getItem('dci-level-palette-dark')"), pg.evaluate("!!document.querySelector('[data-el=settings] [data-set=dark-colors]:checked')")]
+        print('J) nach „Reset all“:', j, '(hell gemacht:', auto, ')')
+        results.append(j == [True, auto, None, False])
+        # F) the defaults of the topic
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
+        pg.wait_for_timeout(600)
+        f = [pg.evaluate(DK), [pg.evaluate(f"localStorage.getItem('{k}')") for k in ('dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark')]]
+        print('F) Standard:', f, '| Fehler:', errs)
+        results.append(f == [[], [None, None, None, None]] and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_globalstats():
+    """Credits Importer 3.47.0 (collected item Z-GST; Q-eq, Q-ey, Q-ez, Q-es): the statistics of all users ("Global").
+    A) Statistics → "This browser | Global": Global loads the file of the workflow (raw.githubusercontent.com, branch "stats"): the
+       date of the dump, tiles (edits, submissions, editors, credit relationships, works linked), the months (newest first; 1
+       editor as it is), versions (newest first), sources, relationship types, levels, kinds of edits, status; remembered.
+    B) Opened again (a new page): from this browser's copy – no second download within a day; "Load again" downloads it anew.
+    C) Not there (404) and no copy: says so; a copy and a failure: the copy, with a line that it is the last one.
+    D) "Reset all settings": this browser again.
+    Review of 3.47.0:
+    E) A file with gaps (a month null, a version "3.47" beside "3.47.1", status 8, the sources "pasted text", "cover art text",
+       "unknown"): the panel is shown – versions in order, the sources by their names (the others together), status 8 as it is.
+    F) Switched with the keyboard: the focus stays on "Global".
+    G) A copy older than a day: loaded anew."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261104-002222', 'since': '2026-09-01',
+            'totals': {'edits': 4911, 'submissions': 68, 'editors': 1},
+            'by_month': {'2026-10': {'edits': 4577, 'submissions': 60, 'editors': 1}, '2026-11': {'edits': 334, 'submissions': 8, 'editors': 1}},
+            'by_version': {'0.9.2': {'edits': 45, 'submissions': 1}, '3.9.0': {'edits': 5, 'submissions': 1}, '3.41.15': {'edits': 64, 'submissions': 3}, '3.21.0': {'edits': 800, 'submissions': 9}},
+            'by_edit_type': {'90 Add relationship': 4612, '41 Add work': 260}, 'by_status': {'applied': 4900, 'open': 11},
+            'by_relationship_type': {'instrument': 1454, 'composer': 414}, 'by_source': {'discogs': 55, 'bandcamp': 12, 'youtube': 1},
+            'done': {'credit relationships': 4291, 'works linked': 320}, 'done_by_level': {'recording': 3362, 'work': 513, 'release': 414, 'release group': 2}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    n_req = lambda: len([u for u in H.RAW_REQUESTS if PATH in u])
+    G = """(() => { const q = (s) => [...document.querySelectorAll(s)].map((x) => x.textContent.replace(/\\s+/g, ' ').trim());
+      return { head: q('[data-el=stats-global-head]'), tiles: q('[data-stat^=g-] .dci-stats-num'), months: [...document.querySelectorAll('[data-el=stats-global-months] tbody tr')].map((r) => [...r.children].map((c) => c.textContent.trim()).join(' ')),
+        versions: q('[data-el=stats-global-versions] li'), sources: q('[data-el=stats-global-sources] li'), status: q('[data-el=stats-global-status] li'),
+        levels: q('[data-el=stats-global-levels] li'), local: !!document.querySelector('.dci-stats-local'), none: !!document.querySelector('[data-el=stats-global-none]'),
+        old: !!document.querySelector('[data-el=stats-global-old]') }; })()"""
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.wait_for_timeout(800)
+            a = pg.evaluate(G)
+            print('A) Global:', a, '| gespeichert:', pg.evaluate("localStorage.getItem('dci-stats-scope')"), '| Abrufe:', n_req())
+            results.append('2026-11-04' in (a['head'] or [''])[0] and a['tiles'] == ['4,911', '68', '1', '4,291', '320']
+                           and a['months'] == ['2026-11 334 8 1', '2026-10 4,577 60 1'] and a['versions'] == ['3.41.15 64', '3.21.0 800', '3.9.0 5', '0.9.2 45']
+                           and a['sources'] == ['Discogs 55', 'Bandcamp 12', 'YouTube 1'] and a['status'] == ['applied 4,900', 'open 11']
+                           and a['levels'][0] == 'Recording 3,362' and not a['local'] and pg.evaluate("localStorage.getItem('dci-stats-scope')") == '"global"' and n_req() == 1)
+            # B) a new page: the copy of this browser; "Load again"
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(500)
+            b1 = [pg.evaluate(G)['tiles'][:1], n_req()]
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            b2 = n_req()
+            print('B) neue Seite:', b1, '| neu geladen:', b2)
+            results.append(b1 == [['4,911'], 1] and b2 == 2)
+            # C) not there: with the copy – the copy and the line; without it – says so
+            del H.RAW_GITHUB[PATH]
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            c1 = pg.evaluate(G)
+            pg.evaluate("localStorage.removeItem('dci-stats-global')")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(800)
+            c2 = pg.evaluate(G)
+            print('C) mit Kopie:', c1['tiles'][:1], c1['old'], '| ohne:', c2['none'], c2['tiles'])
+            results.append(c1['tiles'][:1] == ['4,911'] and c1['old'] and c2['none'] and not c2['tiles'])
+            # D) the topic's defaults
+            H.open_settings(pg, 'general')
+            pg.click('[data-el=settings] [data-act=reset-open]')
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=settings] [data-act=reset-do]')
+            pg.wait_for_timeout(1000)
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            d = [pg.evaluate("localStorage.getItem('dci-stats-scope')"), pg.evaluate("[...document.querySelectorAll('[data-act=stats-scope][aria-pressed=true]')].map(b => b.dataset.scope)")]
+            print('D) Standard:', d)
+            results.append(d == [None, ['local']])
+            # E) a file with gaps
+            bad = dict(data, by_month={'2026-10': None, '2026-11': {'edits': 3}}, by_version={'3.47': {'edits': 2}, '3.47.1': {'edits': 1}, '3.46.0': None, '3.47.0': {'edits': 4}},
+                       by_status={'applied': 5, '8': 1}, by_source={'discogs': 4, 'pasted text': 2, 'cover art text': 1, 'unknown': 1, 'other': 1})
+            H.RAW_GITHUB[PATH] = json.dumps(bad)
+            pg.evaluate("localStorage.removeItem('dci-stats-global')")
+            H.open_stats(pg)
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.wait_for_timeout(300)
+            # (the last load failed – C: loaded anew by hand)
+            pg.click('[data-el=stats] [data-act=stats-global-reload]')
+            pg.wait_for_timeout(800)
+            e = pg.evaluate(G)
+            print('E) Lücken:', e['months'], e['versions'], e['sources'], e['status'])
+            results.append(e['months'] == ['2026-11 3 0 0', '2026-10 0 0 0'] and e['versions'] == ['3.47.1 1', '3.47.0 4', '3.47 2', '3.46.0 0']
+                           and e['sources'] == ['Discogs 4', 'pasted text 2', 'other 2', 'text from cover art 1'] and e['status'] == ['applied 5', '8 1'])
+            # F) the keyboard
+            pg.focus('[data-el=stats] [data-act=stats-scope][data-scope=local]')
+            pg.keyboard.press('Enter')
+            pg.wait_for_timeout(300)
+            pg.focus('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.keyboard.press('Enter')
+            pg.wait_for_timeout(500)
+            f = [pg.evaluate("document.activeElement && document.activeElement.dataset.scope"), pg.evaluate("localStorage.getItem('dci-stats-scope')")]
+            print('F) Fokus nach Enter:', f)
+            results.append(f == ['global', '"global"'])
+            # G) a copy older than a day
+            n0 = n_req()
+            pg.evaluate("(() => { const c = JSON.parse(localStorage.getItem('dci-stats-global')); c.at = Date.now() - 25 * 3600 * 1000; localStorage.setItem('dci-stats-global', JSON.stringify(c)); })()")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(800)
+            g = n_req() - n0
+            print('G) alte Kopie → neu geladen:', g, '| Fehler:', errs)
+            results.append(g == 1 and not errs)
+            b.close()
+    finally:
+        H.RAW_GITHUB.pop(PATH, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_darkmeaning():
+    """Credits Importer 3.48.0 (collected item Z-DMY; Q-et, Q-fd): in the dark theme the colours of meaning by hand (variant A) – a
+    suggestion in the date pool on a muted amber ground with light yellow text (also the text of its parts), the cell of the date
+    matrix found automatically likewise; no text below a contrast of 3; the light theme as before.
+    Review of 3.48.0: the dashed line of a suggestion at least 3:1 to its ground; the grip of the chip keeps its own colour."""
+    CHIP = """(() => { const c = document.querySelector('#dci-overlay .dci-date-chip.dci-pchip-sugg'); if (!c) return null; const inner = c.querySelector('.dci-chip-main');
+      const cs = getComputedStyle(c); return [cs.backgroundColor, getComputedStyle(inner || c).color, cs.borderTopColor]; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(400)
+        light = pg.evaluate(CHIP)
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
+        pg.wait_for_timeout(400)
+        dark = pg.evaluate(CHIP)
+        con = pg.evaluate(f"({CONTRAST})('#dci-overlay')")
+        print('hell:', light, '| dunkel:', dark, '| unter 3:', con['bad'][:4], '| Fehler:', errs)
+        grip = pg.evaluate("(() => { const g = document.querySelector('#dci-overlay .dci-date-chip.dci-pchip-sugg .dci-chip-grip'); return g ? getComputedStyle(g).color : null; })()")
+        print('Griff:', grip)
+        ok = light == ['rgb(255, 248, 219)', light[1], 'rgb(224, 165, 38)'] and dark == ['rgb(58, 48, 23)', 'rgb(242, 217, 140)', 'rgb(184, 146, 47)'] and not con['bad'] \
+            and grip not in (None, 'rgb(242, 217, 140)') and not errs
+        b.close()
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+run_cases(globals())
