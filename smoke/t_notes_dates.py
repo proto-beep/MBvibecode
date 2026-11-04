@@ -708,4 +708,36 @@ def case_assistnotes():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_review43():
+    """Credits Importer 3.43.3 (full review, package P4): the date pool's entry edited, "update n rows?" declined – the rows keep
+    their date as their own (the pool entry has the new one). Until 3.43.2 the rows stayed "of the entry": the event heads showed
+    the entry's new date while the rows staged the old one."""
+    import zooid
+    from common_rows import lib
+    zooid.setup('Recorded June 16, 1980 at Scholes Street Studio, Brooklyn, New York.')
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(400)
+        a0 = lib(pg)
+        rid = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].find(c => c.textContent.includes('1980-06-16')).dataset.id")
+        pg.click(f'[data-act=pool-edit][data-id="{rid}"]'); pg.wait_for_timeout(150)
+        pg.fill('[data-f=pf-bd]', '18')
+        pg.fill('[data-f=pf-ed]', '18')
+        pg.once('dialog', lambda d: d.dismiss())
+        pg.click('[data-act=pool-save]'); pg.wait_for_timeout(500)
+        a1 = lib(pg)
+        chip = pg.evaluate(f"document.querySelector('.dci-pchip-date[data-id=\"{rid}\"]').textContent.replace(/\\s+/g, ' ').trim()")
+        print('A) Zeilen vorher:', a0, '| Eintrag geändert, nicht übernommen:', a1, '| Pool:', chip, '| Fehler:', errs)
+        # (the entry no longer counts the rows: they are their own – until 3.43.2 "4 rows" of the entry with its new date)
+        results.append(a0 == [(list(range(1, 11)), '1980-06-16')] and a1 == a0 and '1980-06-18' in chip and '0 rows' in chip and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

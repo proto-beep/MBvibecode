@@ -905,6 +905,24 @@ def case_evdatefields():
             e1 = [pg.evaluate(INL, multi), pg.evaluate("(sel) => document.querySelectorAll(sel + ' [data-evdate]').length", multi), pg.evaluate(BOX, multi)]
             print('E) Solo Man (Kopf):', e0[0] and e0[0]['err'], '| Multi Man unten:', e0[1], '| Fehler unten:', e1)
             results.append(e0[0] and e0[0]['err'] and e0[1] == {'by': '', 'err': ''} and e1[0] and e1[0]['err'] and e1[0]['by'] == '2001' and e1[1] == 1 and e1[2] is None)
+            # F) (3.43.3, full review P4) "from 2015 to ????" pasted into the year of Begin ticks "ended" (it was skipped); a begin-only date
+            # with "ended" is not the pool's entry of the same year without it (the pool entry was reused, its "ended" taken)
+            pg.evaluate("""([sel, text]) => { const el = document.querySelector(sel); const dt = new DataTransfer(); dt.setData('text', text);
+              el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", [f'{box} [data-f=ed-by]', 'from 2015 to ????'])
+            pg.wait_for_timeout(200)
+            f0 = pg.evaluate(f"(() => {{ const b = document.querySelector('{box}'); return [b.querySelector('[data-f=ed-by]').value, b.querySelector('[data-f=ed-ended]').checked]; }})()")
+            for k, v in (('by', '1998'), ('bm', ''), ('bd', ''), ('ey', ''), ('em', ''), ('ed', '')):
+                pg.fill(f'{box} [data-f=ed-{k}]', v)
+            pg.evaluate(f"document.querySelector('{box} [data-f=ed-ended]').checked = false")
+            pg.click(f'{box} [data-act=em-evdate-apply]'); pg.wait_for_timeout(400)
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-by]', '1998')
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-bm]', '')
+            pg.evaluate(f"document.querySelector('{multi} .dci-em-evdatebox-inline [data-f=ed-ended]').checked = true")
+            pg.click(f'{multi} .dci-em-evdatebox-inline [data-act=em-evdate-apply]'); pg.wait_for_timeout(400)
+            f1 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /1998/.test(t))")
+            f2 = pg.evaluate("(() => { const pool = JSON.parse(localStorage.getItem('dci-date-pool:aaaaaaaa-1111-4111-8111-000000000001') || '[]'); return pool.filter(d => d.begin && d.begin.year === 1998).map(d => !!d.ended); })()")
+            print('F) eingefügt „from 2015 to ????“:', f0, '| Pool 1998:', f1, '| ended:', f2)
+            results.append(f0 == ['2015', True] and len(f1) == 2 and sorted(f2) == [False, True])
             print('Fehler:', errs)
             results.append(not errs)
         finally:
@@ -1557,6 +1575,61 @@ def case_compactlines():
     finally:
         H.ENTRIES_VIEW = 'legacy'
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_review43():
+    """Credits Importer 3.43.5 (full review, package P6 – the UI).
+    A) An entry as a matrix: "Remove" in an opened line's row takes the line off the screen (until 3.43.4 the line with its ticks
+       stayed until a later redraw).
+    B) Text typed into "Paste text" survives a redraw of the source panel (the menu "Source ▾" opened: renderSource) – until 3.43.4
+       the textarea came back empty (the text was read only at "Load").
+    C) "Mapping rules" open, the language switched to German: the window's title follows ("Mapping-Regeln"); until 3.43.4 it kept
+       the English texts."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            # (the rules as a window of their own: open beside the settings – in the dashboard, ⚙ Settings closes them)
+            pg.evaluate("localStorage.setItem('dci-rules-place', JSON.stringify('window'))")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            solo = sec_sel(pg, 'Solo Man')
+            lines0 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line').length", solo)
+            pg.click(f'{solo} tr.dci-em-line [data-act=em-detail]'); pg.wait_for_timeout(300)
+            pg.click(f'{solo} .dci-em-detail-row tr.dci-row [data-act=remove-row]'); pg.wait_for_timeout(500)
+            lines1 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line').length", solo)
+            print('A) Zeilen der Matrix:', lines0, '→ nach „Remove“:', lines1)
+            results.append(lines0 >= 1 and lines1 == lines0 - 1)
+            # B) the pasted text through a redraw
+            H.src_menu(pg, 'text-open'); pg.wait_for_timeout(200)
+            pg.fill('[data-f=text-src]', 'Bass – Jane Roe')
+            pg.fill('[data-f=text-origin]', 'booklet')
+            H.src_menu(pg); pg.wait_for_timeout(200)
+            H.src_menu(pg); pg.wait_for_timeout(200)
+            b1 = pg.evaluate("[document.querySelector('[data-f=text-src]').value, document.querySelector('[data-f=text-origin]').value]")
+            print('B) Text nach dem Neuzeichnen:', b1)
+            results.append(b1 == ['Bass – Jane Roe', 'booklet'])
+            # C) the rules window and the language
+            pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+            c0 = pg.evaluate("document.getElementById('dci-rules-title').textContent.trim()")
+            H.open_settings(pg, 'general')
+            pg.select_option('[data-f=lang]', 'de'); pg.wait_for_timeout(600)
+            c1 = pg.evaluate("(() => { const r = document.getElementById('dci-rules'); return r ? [r.hidden, document.getElementById('dci-rules-title').textContent.trim()] : null; })()")
+            print('C) Regelfenster:', c0, '→ Deutsch:', c1, '| Fehler:', errs)
+            results.append(c0 == 'Mapping rules' and c1 and c1[0] is False and c1[1] != 'Mapping rules' and not errs)
+        finally:
+            H.discogs_release = orig
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

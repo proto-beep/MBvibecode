@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.8
+// @version      3.43.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -55,6 +55,8 @@
   const uniq = (arr) => [...new Set(arr)];
   let idCounter = 0;
   const nextId = (prefix) => `${prefix}${++idCounter}`;
+  // [3.43.1] (review) this page's id for the companion: jump results of other dashboards are not this one's
+  const syncPageId = Math.random().toString(36).slice(2, 8);
 
   /**
    * Stored data of this script (browser storage of musicbrainz.org) has a generation. An update that raises it
@@ -1677,6 +1679,7 @@
       "match.aliasSuggest": "Suggestion from a Discogs alias:",
       "match.aliasUseTitle": "Assign this MusicBrainz artist (Discogs lists “{alias}” as an alias)",
       "log.artistAliasSuggested": "{name}: not found by its Discogs link; suggested via Discogs aliases: {list}",
+      "log.aliasFailed": "{name}: the Discogs aliases could not be read – {msg}",
       "rules.title": "Mapping rules",
       "rules.close": "Close the mapping rules",
       "rules.toWindow": "⧉ As window",
@@ -3361,6 +3364,11 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    // [3.43.0] review of the text adapter (package P1 of the full review)
+    { id: 'S077', where: 'TEXT.parse (namesScoped, readClause; bandNames)', note: 'Texts (3.43.0): names before a dash or colon are split like names after "by" – "Jane Roe & John Doe – vocals" gives two credits (before: one artist "Jane Roe & John Doe"); and a name of the release\'s artists is never cut at its "&", "and" or comma, on either side ("Produced by Simon & Garfunkel", "Florence and the Machine" – before: "Simon" and "Garfunkel")' },
+    { id: 'S076', where: 'TEXT.parse (readClause, namesWithRoles; S055 items)', note: 'Texts (3.43.0): several names with their roles in brackets in one clause – "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit of its own (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)' },
+    { id: 'S075', where: 'TEXT.parse (clauses, splitBy, readUnit, by-path)', note: 'Texts (3.43.0): a second "<verb> by" joined with "and", "&" or "/" is a credit of its own – "Recorded by A at Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" (before: B lost, or "mixed by B" a name); a name with "in", "for" or "with" after "by" ("Mixed by X in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y") is listed as not recognized, not credited as written; a clause of a line that gives nothing is listed ("Jane Roe – bass; vocals": “vocals”)' },
+    { id: 'S074', where: 'TEXT.parse (NAME_TRACKS, EXCEPT_TRACKS, namesScoped, readLine)', note: 'Texts (3.43.0): a track list in brackets after a name is that name\'s – "Produced by Jane Roe (tracks 1-2), John Doe (track 3)", "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)", also on an "and Name (tracks …)" line below a "by" line (S071) – before, the last list of the line counted for every name and the others were dropped; tracks named by what they are not ("except track 3", "(not on track 3)", "all other tracks") are not read: the line is listed as not recognized (before: the tracks named were taken as the credit\'s)' },
     // [3.42.3] collected items Z-GON, Z-BZ
     { id: 'S073', where: 'TEXT.parse (readClause, addCredit; titleNames)', note: 'Texts (3.42.3): "With X, <sentence>" – "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" – is prose, no credit (a part after a comma of five words or more, no roles); and a name that is the title of the release or of one of its tracks ("Black Zenith") is never a person, unless it is the release\'s artist too. Before: "With …" gave the name a guest performer' },
     { id: 'S072', where: 'TEXT.parse (readLine; WEBSITE_BY, NOWHERE)', note: 'Texts (3.42.3): left out on purpose, not named as not recognized – "Website by X" (also "Web design by", "Site by"; MusicBrainz has no relationship for a website: "a website") and a place that is none, "Recorded all over the place" ("everywhere", "in various places": "no place named")' },
@@ -4977,9 +4985,18 @@
     const artistUrl = (id) => `${WEB}/artist/${id}`;
     const labelUrl = (id) => `${WEB}/label/${id}`;
 
+    // [3.43.1] (review) one request to Discogs every 2.5 s, shared with the gap line of the release page ('dci-gap-last'): Discogs allows
+    // 25 a minute without a login – a release with many unlinked artists asked for their aliases back to back ran into its 429
+    const PACE_KEY = 'dci-gap-last';
+    async function pace() {
+      const wait = 2500 - (Date.now() - (Number(readJson('localStorage', PACE_KEY, 0)) || 0));
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      writeJson('localStorage', PACE_KEY, Date.now());
+    }
     async function getJson(path, { missingId = null } = {}) {
+      await pace();
       const res = await fetch(`${API}/${path}`);
-      if (res.status === 429) throw new Error(tr('err.discogsLimit'));
+      if (res.status === 429) throw Object.assign(new Error(tr('err.discogsLimit')), { status: 429 });
       if (res.status === 404 && missingId != null) throw new Error(tr('err.discogsMissing', { id: missingId }));
       if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
       return res.json();
@@ -5251,8 +5268,8 @@
       },
       /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
       async aliases(id) {
-        const res = await fetch(`${API}/artists/${id}`);
-        const data = res.ok ? await res.json() : null;
+        // (3.43.1, review) paced like the other requests; an error (429 …) is thrown, not read as "no aliases"
+        const data = await getJson(`artists/${id}`);
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
       },
       // [3.34.7] Discogs images for the text from cover art (beta), only on request: the API gives their addresses only to a
@@ -5314,6 +5331,10 @@
     const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*[:–—-]\\s*(.+)$`, 'i');
     const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
+    // [S074] (3.43.0, review) a track list in brackets right after a name ("Jane Roe (tracks 1-2), John Doe (track 3)")
+    const NAME_TRACKS = new RegExp(`\\s*\\(\\s*(?:on\\s+|auf\\s+)?(?:${TEXT_TRACK_WORDS}\\s*)?(${SPEC})\\s*\\)$`, 'i');
+    // [S074] … and tracks named by what they are not ("except track 3", "(not on track 3)", "all other tracks"): not read, listed
+    const EXCEPT_TRACKS = /\b(?:except|excluding|excl\.|but\s+not|not\s+on|all\s+(?:the\s+)?other|other\s+(?:tracks|titles|songs)|außer|sauf|excepto|salvo)\b/iu;
     // [S070] (3.42.3) … or after a bullet: "Matt Glassmeyer — saxophones • 1, 8" (collected item Z-GON a)
     const BULLET = new RegExp(`^(.*?\\S)\\s*[•·]\\s*(${SPEC})\\s*\\.?$`);
     // [S069] (3.42.3) the companion's status marks, copied with a line of its page ("○ Chris Lippincott — pedal steel • 3"; Z-GON i)
@@ -5345,7 +5366,8 @@
     function placeOf(text) {
       // [S039] (3.29.0) a date in brackets after the place ("TQA.HQ (July 2026)") is no part of it; [T047] (3.32.5) nor a
       // date right after it ("El Studio in San Francisco on September 3rd and 4th 2016": before, the whole part was left out)
-      const parts = String(text || '').replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
+      // [3.43.0] (review) an area in brackets after the place ("Hansa Tonstudio (Berlin)") is its area
+      const parts = String(text || '').replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/\s*\(([^()]+)\)/, ', $1').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
       if (!parts.length) return null;
       let name = parts[0];
       let area = parts[1] || '';
@@ -5404,7 +5426,21 @@
         }
         if (cur) out.push(cur);
       }
-      return out.map(clean).filter(Boolean);
+      return out.flatMap(splitBy).map(clean).filter(Boolean);
+    }
+    /**
+     * [S075] (3.43.0, review) A second "<verb> by" clause joined with "and", "&" or "/" is a clause of its own: "Recorded by A at
+     * Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" (before: B was lost, or part of A's name).
+     */
+    function splitBy(c) {
+      const i = c.search(/\sby\s/i);
+      if (i < 0 || !ruleOn('S075')) return [c];
+      // (3.43.5, counter-review) a "by" inside brackets ("(Walk by Faith and Stand by Me)") does not count
+      const masked = c.replace(/\([^)]*\)/g, (b) => b.replace(/\S/g, '_'));
+      const m = masked.slice(i + 4).match(/\s+(?:and|&|\/)\s+(?=\p{L}+(?:\s+\p{L}+){0,2}\s+by\s)/iu);
+      if (!m) return [c];
+      const k = i + 4 + m.index;
+      return [c.slice(0, k), ...splitBy(c.slice(k + m[0].length))];
     }
     /**
      * [S063] (3.38.18) A name of two to four capitals ("RR", "R.R.", "HRG") that are the initials of exactly one release artist or one
@@ -5697,9 +5733,11 @@
         const l = noDates(left);
         if (!l) return [];
         if (distribution(l)) return distribution(l);
-        if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
+        // [3.43.0] (review) a list of roles ("Photography, design and layout by", "Produced, recorded and mixed by") is read part by
+        // part first – the whole phrase counted as the role of its first part and the others were lost
+        const whole = () => (isRole(`${cap(l)} By`) ? [`${cap(l)} By`] : isRole(cap(l)) ? [cap(l)] : []);
         // [3.14.0] "Layout by X": the role is "Layout"
-        if (isRole(cap(l))) return [cap(l)];
+        if (!TEXT_ROLE_SEP.test(l) && whole().length) return whole();
         // [183] (3.38.18) verbs one after another are each a role ("Recorded Mixed and Mastered by RR"; until 3.38.17 "Mixed By [Recorded]")
         const verbs = (x) => {
           const w = x.split(' ');
@@ -5709,7 +5747,9 @@
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] roles with their medium ("Vinyl LP mastering and digital mastering by X")
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
-        return withM.length && withM.every(Boolean) ? withM : [];
+        if (withM.length && withM.every(Boolean)) return withM;
+        // a role with "and" or a comma of its own ("Drum and Bass Programming")
+        return whole();
       };
       /**
        * [Z-AM] (3.41.7) The last word the roles of a list share ("Audio & Mixing Engineer" → Audio Engineer, Mixing Engineer;
@@ -5846,7 +5886,42 @@
         }
         return out.length && !clean(t.slice(end)) ? out : [];
       };
-      const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      /**
+       * The names of a list ("A, B & C"), each with the track list in brackets after it, if any ([S074]: "A (tracks 1-2), B (track 3)" –
+       * before, a comma inside the brackets cut the name and the brackets were dropped); [S077] (3.43.0, review) a name of the release's
+       * artists is never cut at its "&" or "and" ("Simon & Garfunkel", "Florence and the Machine"), nor is a part joined back to one.
+       */
+      const namesScoped = (side) => {
+        const whole = clean(side).replace(/\s*\([^)]*\)$/, '');
+        if (ruleOn('S077') && whole && bandNames.has(norm(whole))) return [{ name: whole, scope: null }];
+        // commas, "&" and "and" inside brackets do not separate names
+        const masked = String(side || '').replace(/\([^)]*\)/g, (b) => b.replace(/,/g, '\u0001').replace(/&/g, '\u0002').replace(/\band\b/gi, '\u0003'));
+        const raw = masked.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n.replace(/\u0001/g, ',').replace(/\u0002/g, '&').replace(/\u0003/g, 'and'))).filter(Boolean);
+        // parts that make up a release artist's name are joined back ("Simon", "Garfunkel")
+        const parts = [];
+        for (let i = 0; i < raw.length; i++) {
+          let took = 0;
+          if (ruleOn('S077')) {
+            for (let j = raw.length - 1; j > i; j--) {
+              const seg = raw.slice(i, j + 1).map((x) => x.replace(/\s*\([^)]*\)$/, ''));
+              const sep = [' & ', ' and ', ', ', ' und ', ' et ', ' y '].find((s) => bandNames.has(norm(seg.join(s))));
+              if (sep) {
+                took = j - i;
+                parts.push(seg.join(sep));
+                break;
+              }
+            }
+          }
+          if (!took) parts.push(raw[i]);
+          i += took;
+        }
+        return parts.map((n) => {
+          const m = ruleOn('S074') ? n.match(NAME_TRACKS) : null;
+          const set = m ? resolveTracks(m[1]) : null;
+          return { name: clean(n.replace(/\s*\([^)]*\)$/, '')), scope: set && set.size ? { set, spec: clean(m[1]) } : null };
+        }).filter((x) => x.name);
+      };
+      const names = (side) => namesScoped(side).map((x) => x.name);
       // [S051] (3.34.19) "X plays guitar, bass and drums"
       const PLAYS_LIST = new RegExp(`^(.+?)\\s+${TEXT_PLAY_VERBS.source}\\s+(?:the\\s+)?(.+)$`, 'i');
 
@@ -5939,6 +6014,23 @@
             found++;
             return true;
           };
+          /**
+           * [3.43.0] (review) The places after "at": "Studio X and Studio Y" are two of the verb; "Studio X (Berlin), mixed at Studio Y
+           * (Paris)" the second one of its own verb (before: one place "Studio X and Studio Y", or the mix place lost in the area).
+           */
+          const places = (verb, tail) => {
+            const own = String(tail || '').split(/,\s*(?=\p{L}+(?:ed|ing)\s+at\s)/iu);
+            let any = false;
+            own.forEach((part, k) => {
+              const v = k === 0 ? verb : part.match(/^(\p{L}+)\s+at\s+/iu);
+              const text = k === 0 ? part : part.replace(/^\p{L}+\s+at\s+/iu, '');
+              const vb = k === 0 ? v : (v && v[1].replace(/ing$/i, 'ed')) || verb;
+              // (3.43.5, counter-review) not at "and" when a sentence follows ("… and John Doe at Studio Y", "… and Dave played drums")
+              const pieces = text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u);
+              (pieces.slice(1).some((w) => /\sat\s|\s\p{Ll}+ed\b/u.test(w)) ? [text] : pieces).forEach((w) => { if (place(vb, placeOf(w))) any = true; });
+            });
+            return any;
+          };
           // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
@@ -5987,7 +6079,7 @@
             // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
             const at = left.match(/^(.*?)\s+at\s+(.+)$/i);
             if (at) {
-              place(verb, placeOf(at[2]));
+              places(verb, at[2]);
               left = at[1];
             }
             // [3.22.0] "Recorded in Xixon, Asturies by X"
@@ -5999,11 +6091,22 @@
               unknownParts.push(`in ${clean(inOther[2])}`);
               left = inOther[1];
             }
-            // "Mixed by X at Studio Y"
-            const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
-            if (at2) {
-              place(verb, placeOf(at2[2]));
-              right = at2[1];
+            // "Mixed by X at Studio Y"; (3.43.5, counter-review) "Mixed by X at Studio Y and Z at Studio W": pairs of name and place
+            const pairs = right.split(/\s+(?:and|&)\s+(?=[^,]+\s+at\s+)/iu);
+            if (pairs.length > 1 && pairs.every((x) => /\sat\s/i.test(x))) {
+              const names2 = [];
+              pairs.forEach((x) => {
+                const m2 = x.match(/^(.+?)\s+at\s+(.+)$/i);
+                places(verb, m2[2]);
+                names2.push(m2[1]);
+              });
+              right = names2.join(' and ');
+            } else {
+              const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
+              if (at2) {
+                places(verb, at2[2]);
+                right = at2[1];
+              }
             }
             // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
             const courtesy = right.search(TEXT_COURTESY);
@@ -6064,7 +6167,19 @@
             // the place of roles that are all for one medium is for that medium too
             const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
             if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
-            for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+            for (const x of rolesM.length ? namesScoped(right) : []) {
+              // [S075] "Mixed by Jane Roe in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": no name – listed
+              let nm = x.name;
+              const prep = ruleOn('S075') && !bandNames.has(norm(nm)) ? nm.match(/^(.+?)\s+((?:in|for|with)\s+\S.*)$/iu) : null;
+              // (3.43.5, counter-review) a name like "Tears for Fears", "Cat in the Hat" stays whole: cut only before a word in lower case
+              // or a format ("in Dolby Atmos", "for Vinyl")
+              const tail = prep ? prep[2].replace(/^\S+\s+/, '') : '';
+              if (prep && looksLikeName(prep[1]) && (/^\p{Ll}/u.test(tail) || /^(?:vinyl|cd|cassette|digital|dolby|atmos|stereo|mono|surround|pro\s+tools|logic|ableton|lp|tape)\b/i.test(tail))) {
+                unknownParts.push(prep[2]);
+                nm = prep[1];
+              }
+              rolesM.forEach((r) => { if (addCredit(nm, r, x.scope || cScope)) found++; });
+            }
             return;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
@@ -6072,9 +6187,8 @@
           // [3.30.8] "All music recorded ... at X" (Discogs notes): the words for the music and the dots before the verb are no role
           const clauseV = clause.replace(TEXT_WHAT_PREFIX, '').replace(/\s*(?:\.{3}|…)\s*/g, ' ');
           if ((m = clauseV.match(/^(\p{L}+(?:\s*(?:,|\band\b|&|\+)\s*\p{L}+)*)\b.*?\s+at\s+(.+)$/iu))) {
-            const where = placeOf(m[2]);
             const verbs = ruleOn('S039') ? m[1].split(/\s*(?:,|\band\b|&|\+)\s*/i).filter(Boolean) : [m[1].split(/[\s,&+]/)[0]];
-            verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => place(v, where));
+            verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => places(v, m[2]));
             return;
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
@@ -6193,7 +6307,8 @@
               const p = parseRoleNotation(r)[0];
               return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
             };
-            const items = m[2].split(/\s*;\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u).map(clean).filter(Boolean);
+            // [S076] (3.43.0) "Featuring: Jane Roe (vocals), John Doe (guitar)": a comma after the brackets ends the item
+            const items = m[2].split(ruleOn('S076') ? /\s*;\s*|(?<=\))\s*,\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u : /\s*;\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u).map(clean).filter(Boolean);
             for (const item of items) {
               const it = item.match(/^(.+?)\s+on\s+(.+)$/i) || item.match(/^(.+?)\s+[–—-]\s+(.+)$/) || item.match(/^(.+?)\s*\(([^)]+)\)$/);
               const roles = it ? listRoles(clean(it[2])) : null;
@@ -6215,6 +6330,15 @@
               return;
             }
           }
+          // [S076] (3.43.0, review) several "Name (roles)" in one clause – "Jane Roe (bass, vocals), John Doe (drums)" – each a credit
+          // (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)
+          if (ruleOn('S076') && (clause.match(/\([^)]+\)/g) || []).length >= 2) {
+            const groups = namesWithRoles(clause);
+            if (groups.length) {
+              groups.forEach((x) => x.roles.forEach((r) => { if (addCredit(x.name, r, cScope)) found++; }));
+              return;
+            }
+          }
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -6233,12 +6357,14 @@
           }
           const rolesRight = listRoles(right);
           const rolesLeft = listRoles(left);
+          // [S077] (3.43.0, review) "Jane Roe & John Doe – vocals": two names, like after "by" (a release artist stays whole)
+          const lefts = ruleOn('S077') ? names(left) : [left];
           if (rolesRight && !rolesLeft) {
-            rolesRight.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
-            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too
-            if (found) lineLead = left;
+            for (const n of lefts) rolesRight.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too – (3.43.5) of all the names ("A & B – vocals")
+            if (found) lineLead = lefts;
           } else if (rolesLeft && !rolesRight) {
-            for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+            for (const x of namesScoped(right)) rolesLeft.forEach((r) => { if (addCredit(x.name, r, x.scope || cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
             // [3.6.0] Some roles known, some not: the known ones are taken, the rest is listed as not recognized
             const rp = roleParts(right);
@@ -6249,14 +6375,16 @@
               const maybe = ruleOn('S051') ? rp.unknown.filter(maybePlayable) : [];
               const guess = maybe.length && rp.known.filter(playable).length >= maybe.length ? new Set(maybe) : new Set();
               rp.parts.forEach((r) => {
-                if (isRole(r)) {
-                  if (addCredit(left, r, cScope)) found++;
-                } else if (guess.has(r)) {
-                  if (addCredit(left, r, cScope, { guess: true })) found++;
+                for (const n of lefts) {
+                  if (isRole(r)) {
+                    if (addCredit(n, r, cScope)) found++;
+                  } else if (guess.has(r)) {
+                    if (addCredit(n, r, cScope, { guess: true })) found++;
+                  }
                 }
               });
               if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
-              if (found) lineLead = left;
+              if (found) lineLead = lefts;
             }
           }
         };
@@ -6273,6 +6401,9 @@
               typoMode = false;
             }
           }
+          // [3.43.0] (review) a clause of a line that gives nothing is listed ("Jane Roe – bass; vocals": "vocals") – before, only a
+          // whole line was
+          if (found === f0 && unknownParts.length === u0 && parts.length > 1 && ruleOn('S075')) unknownParts.push(clause);
         }
         // [3.14.0] "Photography Tom Barrett", "mastering john doe": a known role at the start, then a name of two to four
         // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
@@ -6283,8 +6414,11 @@
             const name = words.slice(k).join(' ');
             const n = name.split(' ');
             if (n.length > 4 || TEXT_NOT_NAME.test(name) || n.every((w) => isRole(cap(w)))) continue;
+            // [3.43.0] (review) a name has no colon or dash ("Vocal production: Jane Roe" is no vocal credit of "production: Jane Roe");
+            // (3.43.5) a bracket at its end is left off ("Photography Jane Roe (Berlin)")
+            if (/[:–—]|\s-\s/.test(name) || /\(/.test(name.replace(/\s*\([^)]*\)$/, ''))) continue;
             if (!isRole(cap(role)) && !isRole(`${cap(role)} By`)) continue;
-            if (addCredit(name, roleOf(role), scope)) found++;
+            if (addCredit(name.replace(/\s*\([^)]*\)$/, ''), roleOf(role), scope)) found++;
           }
         };
         if (!found) {
@@ -6468,6 +6602,12 @@
           ignored.push({ text: line, why: 'releaseArtist' });
           return;
         }
+        // [S074] (3.43.0, review) tracks named by what they are not ("Produced by X except track 3", "Bass – X (not on track 3)",
+        // "all other tracks mixed by Y"): not read – before, the tracks named were taken as the credit's
+        if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
+          unrecognized.push(line0);
+          return;
+        }
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -6494,7 +6634,7 @@
           const list = roles ? null : playList(line);
           if (roles || list) {
             // a word that may be an instrument asks like those of a list (137d)
-            (roles || list.parts).forEach((r) => addCredit(cont.name, r, scope, roles || playable(r) ? {} : { guess: true }));
+            for (const nm of cont.names) (roles || list.parts).forEach((r) => addCredit(nm, r, scope, roles || playable(r) ? {} : { guess: true }));
             contWho = cont;
             return;
           }
@@ -6503,15 +6643,19 @@
         // recording" – the place of its verb (mixed at; Z-GON e); "and Name" – one more name of its roles ("Website by Max Helgemo" / "and
         // Jacob Dawson-Daley": left out with it, Z-GON g)
         if (ruleOn('S071') && before) {
-          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
-            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: before.scope ? tracksOf(before.scope) : null, ...at() });
+          // (3.43.0, review) a role heading is no studio ("Additional Recording", "Live Recording"); the line's own track list counts
+          // ("and John Doe (tracks 3, 4)" – before, the tracks of the line above)
+          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && !isRole(cap(line)) && !isRole(`${cap(line)} By`)
+            && !(/^(?:additional|live|field|string|vocal|drum|surround|binaural|location)\b/i.test(line) && !/\b(?:studios?|sound|lab|room|house|hall)\b/i.test(line)) && isCompanyRole(`${before.verb} At`)) {
+            const sc = scope || before.scope;
+            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: sc ? tracksOf(sc) : null, ...at() });
             return;
           }
           const and = line.match(/^(?:and|&|und|et|y)\s+(.+)$/i);
-          const more = and ? names(and[1]) : [];
-          if (more.length && more.every((n) => looksLikeName(n) && /^\p{Lu}/u.test(n) && !TEXT_NOT_NAME.test(n) && !isRole(cap(n)))) {
+          const more = and ? namesScoped(and[1]) : [];
+          if (more.length && more.every((x) => looksLikeName(x.name) && /^\p{Lu}/u.test(x.name) && !TEXT_NOT_NAME.test(x.name) && !isRole(cap(x.name)))) {
             if (before.ignored) ignored.push({ text: line0, why: before.ignored });
-            else more.forEach((n) => before.roles.forEach((r) => addCredit(n, r, before.scope)));
+            else more.forEach((x) => before.roles.forEach((r) => addCredit(x.name, r, x.scope || scope || before.scope)));
             prevBy = before;
             return;
           }
@@ -6597,7 +6741,7 @@
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
         }
         // [S070] (3.42.3) one name with its roles ("Name — roles", one part): lines of roles below it go on
-        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { name: lineLead };
+        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { names: Array.isArray(lineLead) ? lineLead : [lineLead] };
         // [S071] (3.42.3) one sentence of "by" credits (one verb: its place may follow) or a website left out: the next line may go on
         if (ruleOn('S071') && units.length === 1) {
           const added = credits.slice(c00);
@@ -6702,8 +6846,9 @@
         for (let i = 0; i < lines.length; i++) {
           const h = headingOf(lines[i]);
           if (!h) continue;
-          // (3.39.8, review) a name right above the heading: names above their instruments (S058), no heading
-          if (i > 0 && stackName(lines[i - 1])) continue;
+          // (3.39.8, review) a name right above the heading: names above their instruments (S058), no heading – (3.43.0, review) only
+          // an instrument's: a role heading below a name ("Mixed by / Jane Roe / Mastered by / John Doe") is one
+          if (i > 0 && !h.role && stackName(lines[i - 1])) continue;
           const names = [];
           let empties = 0;
           for (let j = i + 1; j < lines.length; j++) {
@@ -8121,9 +8266,7 @@
 
   /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
   async function gapDiscogs(dId, ws) {
-    const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    writeJson('localStorage', 'dci-gap-last', Date.now());
+    // (3.43.1) the pace – one request every 2.5 s – is kept by the adapter itself now ('dci-gap-last', shared with the dashboard)
     // [Z-SUB] (3.41.15, review) with MusicBrainz's tracks: an index whose sub-tracks are tracks there is read as them
     return DISCOGS.release(dId, { tracks: ((ws && ws.media) || []).flatMap((m) => (m.tracks || []).map((t) => ({ title: t.title || '' }))) });
   }
@@ -9629,7 +9772,7 @@
     workDefaults: { typeId: '', languageIds: [] },
     workQueue: [],
     // Connection to the companion script for the Discogs tab
-    sync: { installed: false, tabs: 0, target: null, last: '' },
+    sync: { installed: false, tabs: 0, target: null, last: '', sent: new Set() },
     // How the Discogs tab follows the dashboard: 'click' or 'hover'
     syncMode: 'click',
     // Date pool: [{ id, name, begin, end, ended }] and the pool form
@@ -10097,7 +10240,20 @@
       prefix: m.prefix || null, prefixCredit: false });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
-    if (!row.levelTouched) row.level = m.level;
+    // [3.43.2] (review) a level the import chose stays (a producer named for tracks: recording; S006 arrangers: work – `levelImport`), and a
+    // credit switched off at the source or with the about/notes text stays off (its level to come back to follows the rule)
+    if (!row.levelTouched) {
+      // (3.43.5, counter-review) the import's choice counts only while the rule still gives the level it was derived from (an own
+      // rule "producer → skip/release" wins); rows skipped by "Skip works" (mxSkipped) or S046 stay skipped too
+      const lv = row.levelImport && m.level === row.levelImportFrom ? row.levelImport : m.level;
+      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out) {
+        if (row.srcOff) row.srcOffLevel = lv;
+        if (row.aboutHidden) row.aboutLevel = lv;
+        if (row.notesHidden) row.notesLevel = lv;
+        if (row.s046Out) row.s046Out.level = lv;
+        row.level = 'skip';
+      } else row.level = lv;
+    }
     // [3.32.7] a row of poems whose level was clicked: the type of its level (item 104b)
     if (row.poemLevels && isPoemRow(row) && row.level !== 'skip') {
       const ans = row.typeAnswer;
@@ -12018,7 +12174,10 @@
     const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit', 'phrase', 'entity', 'role', 'tracks'];
     out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument', 'text'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
       && (r.kind !== 'text' || (typeof r.phrase === 'string' && r.phrase.trim() && ['artist', 'label', 'place', 'area'].includes(r.entity) && typeof r.role === 'string' && r.role.trim()))
-      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
+      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value))
+      // (3.43.4, review) the values the rule editor allows: a level of the register or "skip", "on" a boolean, the details mode any|exact
+      && (r.level == null || [...RULE_LEVELS, 'skip'].includes(r.level)) && (r.on == null || typeof r.on === 'boolean')
+      && (r.detailsMode == null || ['any', 'exact'].includes(r.detailsMode)) && (r.kind !== 'role' || (typeof r.type === 'string' && r.type.trim())) && (r.kind !== 'instrument' || (typeof r.instrument === 'string' && r.instrument.trim())))
       .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
     out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
     return out;
@@ -15706,18 +15865,30 @@
 
   /** Drops works that are linked in MB by now and restores the others as planned links. */
   function syncCreatedWorks() {
-    const list = readCreatedWorks().filter((x) => {
-      const track = S.mbTracks[x.i];
-      return track && track.recordingGid === x.rec && !S.existing.workLinks.has(`${x.rec}|${x.gid}`);
+    // (3.43.3, review) a work is matched by its recording (the stored index is refreshed – the tracklist may have changed); a
+    // recording not among the tracks read (a medium that could not be read) is kept, not dropped; only a link MusicBrainz has takes
+    // a work off the list (until 3.43.2 a changed index or a medium read failed purged the list for good)
+    const all = readCreatedWorks();
+    let changed = false;
+    const list = all.filter((x) => {
+      const at = S.mbTracks[x.i];
+      const track = at && at.recordingGid === x.rec ? at : S.mbTracks.find((t) => t.recordingGid === x.rec);
+      if (track && track.idx !== x.i) {
+        x.i = track.idx;
+        changed = true;
+      }
+      return !S.existing.workLinks.has(`${x.rec}|${x.gid}`);
     });
-    writeJson('localStorage', CREATED_KEY, list);
+    if (changed || list.length !== all.length) writeJson('localStorage', CREATED_KEY, list);
     for (const x of list) {
+      if (!S.mbTracks.some((t) => t.recordingGid === x.rec)) continue;
       if (!S.workPlan.has(x.i)) {
         S.workPlan.set(x.i, { gid: x.gid, title: x.title, origin: 'created', flags: new Set(), date: x.date || null, dateOpen: !!x.date });
       }
     }
     if (!S.noteDiscogsId) S.noteDiscogsId = (list.find((x) => x.discogsId) || {}).discogsId || '';
-    return list;
+    // (the works planned here: those whose recording is among the tracks read)
+    return list.filter((x) => S.mbTracks.some((t) => t.recordingGid === x.rec));
   }
 
   // --- Emergency reset --------------------------------------------------------------------
@@ -15963,6 +16134,9 @@
         const { tracks, linked } = await fetchMediumTracks(p.id);
         m.tracks = tracks.filter((t) => t && t.recording && !t.isDataTrack).sort((a, b) => a.position - b.position).map((t) => ({
           position: t.position, number: t.number || String(t.position), title: t.name,
+          // [3.43.1] (review) the track's artists as the web service gives them (`trackArtists`: "cover" is not set by itself for a
+          // track performed by its writer – until 3.43.0 these tracks had none, so it was)
+          'artist-credit': (((t.artistCredit || {}).names) || []).map((n) => ({ name: n.name || (n.artist && n.artist.name) || '', joinphrase: n.joinPhrase || '', artist: { id: n.artist && n.artist.gid, name: n.artist && n.artist.name } })),
           recording: { id: t.recording.gid, title: t.recording.name, disambiguation: t.recording.comment || '', relations: (t.recording.relationships || []).map((r) => wsRelOf(r, linked)) },
         }));
         log('info', 'mbMediumRead', { m: m.position, n: m.tracks.length });
@@ -16817,7 +16991,7 @@
     const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id })) : '';
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
       ${links.join(' ')} ${typedOn} ${text}
-      <span class="dci-supp-url"><input type="text" data-f="supp-url" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
+      <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
   }
@@ -17411,10 +17585,12 @@
   }
 
   /** [146] The rows at the end of an import, as the source gave them. */
-  function rememberFresh() {
+  function rememberFresh(rows = null) {
     const n = new Map();
-    S.freshRows = new Map();
-    S.rows.forEach((r) => {
+    // (3.43.5, counter-review) rows added later by the import (the "part of" rows of a series) join the fresh ones
+    if (!rows) S.freshRows = new Map();
+    else S.freshRows.forEach((f) => n.set(f.b, Math.max(n.get(f.b) || 0, Number(String(f.k).split('#')[1]) || 0)));
+    (rows || S.rows).forEach((r) => {
       const base = rowBaseKey(r);
       const i = (n.get(base) || 0) + 1;
       n.set(base, i);
@@ -17461,6 +17637,9 @@
         continue;
       }
       const a = S.artists.get(r.artistKey);
+      // (3.43.2, review) the "part of" row of a series the source lists comes with the source (it was stored as a row of your own
+      // and added once more with every import); (3.43.5) as a fresh row it is above – here only one not registered
+      if (a && a.srcSeries) continue;
       if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
     }
     // [3.36.1] rows of the source removed with ✕
@@ -17925,6 +18104,8 @@
       // for the release group, MusicBrainz has it on recordings; collected item K-5)
       if ((row.level === 'release' || (row.level === 'release_group' && row.types.includes('creative direction'))) && !c.allTracks && suggested.length
         && (row.types.includes('producer') || row.types.includes('creative direction'))) {
+        row.levelImport = 'recording'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
+        row.levelImportFrom = row.level;
         row.level = 'recording';
         resolveRowType(row);
       }
@@ -18008,6 +18189,9 @@
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      // [146] (3.36.0) what is remembered of the import before is stored first – (3.43.2, review) with the media choice and the works
+      // choices that import had (until 3.43.1 after `applyMediaChoice`: the old rows were stored under the new choice and "fitted" the new import)
+      saveRememberNow();
       // [Z-RI] (3.40.17, review) "↻ Repeat import" afresh: the choices of the works matrix go too (once the source was read)
       if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
@@ -18025,9 +18209,7 @@
       S.srcTracks = rel.tracks;
       // [Z-SUB] (3.41.12) index tracks whose sub-tracks are tracks of their own in MusicBrainz
       if (rel.subTracksSplit) log('info', 'subTracksSplit', { n: rel.subTracksSplit, source: source.name });
-      // [146] (3.36.0) what is remembered of the import before is stored first; this one is remembered once it is complete
-      // (an import started while another one still runs: only the last one counts)
-      saveRememberNow();
+      // (this one is remembered once it is complete; an import started while another one still runs: only the last one counts)
       const seq = ++importSeq;
       Object.assign(S, { rememberReady: false, freshRows: null, importSrc: `${source.id}:${id}` });
       // [145b] (3.35.6) "Works as track groups" of the track pool: ticked again with each import (those left out back first)
@@ -18135,6 +18317,8 @@
       if (ruleOn('S006') && S.rows.some((r) => r.level === 'work' && WRITER_TYPES.includes(norm(r.types[0] || '')))) {
         for (const r of S.rows) {
           if (!r.manual && !r.company && r.level === 'recording' && ARRANGER_TYPES.includes(norm(r.types[0] || ''))) {
+            r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
+            r.levelImportFrom = r.level;
             r.level = 'work';
             resolveRowType(r);
           }
@@ -18152,6 +18336,9 @@
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
+        // (3.43.2, review) another import started meanwhile: this one stops here (its series, notes and publishers would land in the
+        // new one – only `rememberFresh`/`finishRemember` were guarded)
+        if (seq !== importSeq) return;
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
         // [3.37.11] the artist credits taken from the Discogs spellings (item 161); [3.39.1] those of the entries' sources (item 185)
@@ -18162,7 +18349,11 @@
           log('info', anvSrcs.length === 1 && anvSrcs[0] === DISCOGS ? 'anvCredits' : 'anvCreditsAny', { list: anv.join(', '), src: anvSrcs.map(sourceLabel).join(', ') });
         }
         if (rel.series.length) {
+          const before = new Set(S.rows.map((r) => r.id));
           await loadSeries(rel.series);
+          if (seq !== importSeq) return;
+          // (3.43.5) the series' rows are rows of the source: remembered by their changes (3.43.2 left them out altogether)
+          if (S.freshRows) rememberFresh(S.rows.filter((r) => !before.has(r.id)));
           renderGroups();
         }
         const pooled = S.trackPool.length;
@@ -18170,6 +18361,7 @@
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
+        if (seq !== importSeq) return;
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
@@ -18214,7 +18406,10 @@
    */
   async function resolveViaAliases(list, source = S.source) {
     if (!source.aliases) return;
+    const seq = importSeq;
     for (const a of list) {
+      // (3.43.5, counter-review) another import started meanwhile: no more requests for this one (each takes a 2.5 s slot)
+      if (seq !== importSeq) return;
       try {
         const aliases = await source.aliases(a.dId);
         a.dAliases = aliases.map((x) => x.name);
@@ -18227,6 +18422,9 @@
         if (a.aliasHits.length) log('info', 'artistAliasSuggested', { name: a.name, list: a.aliasHits.map((h) => `${h.c.name} (${h.alias})`).join(', ') });
       } catch (e) {
         console.warn('[Discogs-Credits] aliases', a.name, e);
+        // [3.43.1] (review) said in the log (until 3.43.0 silent – "no aliases"); after Discogs' rate limit no more are asked
+        log('warn', 'aliasFailed', { name: a.name, msg: e.message });
+        if (e && e.status === 429) break;
       }
     }
   }
@@ -19145,7 +19343,7 @@
           for (const m of it.joinedItems) {
             S.staged.set(m.key, {
               state: newState, source, sig: itemSig(m), text, rowId: m.row.id, joined: J, jkey: it.jkey,
-              track: m.target && m.target.track ? m.target.track.idx : null, workLink: false,
+              track: m.target && m.target.track ? m.target.track.idx : null, workLink: false, noteKind: it.target.kind,
             });
             S.appliedKeys.add(m.key);
           }
@@ -19154,6 +19352,8 @@
             state: newState, source, sig: itemSig(it), text, rowId: it.row ? it.row.id : null,
             track: it.target && it.target.track ? it.target.track.idx : null, workLink: it.kind === 'work-link',
             ...(it.jkey ? { jkey: it.jkey } : {}),
+            // (3.43.4, review) what the edit note counts it as – taken off the count when it is taken out of the editor
+            noteKind: it.kind === 'work-link' ? 'workLinks' : it.target.kind, noteOrigin: it.origin || '',
           });
         }
         if (it.date) {
@@ -19188,13 +19388,28 @@
     let removed = 0;
     // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now);
     // [3.35.0] a single one only if its key was not staged anew
+    // (3.43.4, review) the edit note's "Done:" counts what is staged now: a relationship taken out is taken off the count
+    const uncount = (st) => {
+      if (!st || !st.noteKind) return;
+      if (S.noteStats[st.noteKind] > 0) S.noteStats[st.noteKind]--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'created' && S.noteStats.newWorkLinks > 0) S.noteStats.newWorkLinks--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'pending' && S.noteStats.pendingWorks > 0) S.noteStats.pendingWorks--;
+      noteChanged = true;
+    };
+    let noteChanged = false;
     const forget = (r) => {
       if (!r.joined) {
-        if (S.staged.get(r.key) === r.staged) S.staged.delete(r.key);
+        if (S.staged.get(r.key) === r.staged) {
+          uncount(r.staged);
+          S.staged.delete(r.key);
+        }
         return;
       }
+      let counted = false;
       for (const [k, st] of [...S.staged]) {
         if (st.joined !== r.joined) continue;
+        if (!counted) uncount(st);
+        counted = true;
         S.staged.delete(k);
         S.appliedKeys.delete(k);
       }
@@ -19263,7 +19478,8 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if (added || fillIds.length || dateFillIds.length || linkAttrN) {
+    // (3.43.4, review) also written anew after relationships were taken out or updated, when a block was written before
+    if (added || fillIds.length || dateFillIds.length || linkAttrN || ((noteChanged || updated) && S.lastNoteBlock)) {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
     }
@@ -19579,7 +19795,7 @@
     const menu = `<div class="dci-srcmenu" id="dci-srcmenu" role="group" aria-label="${esc(tr('srcmenu.button'))}" ${S.srcMenuOpen ? '' : 'hidden'}>
         ${picker ? `<div class="dci-srcmenu-row">${picker}</div>` : ''}
         <div class="dci-srcmenu-row dci-other">
-          <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
+          <input type="text" data-f="discogs-input" value="${esc((S.srcDraft || {}).other || '')}" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
           <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
         </div>
         ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
@@ -20524,7 +20740,8 @@
           saveCreatedWorkDate(i);
         });
       } else {
-        entry = S.datePool.find((d) => formatDateValue(d) === formatDateValue(value)) || { id: newPoolId(), name: '', ...value };
+        // (3.43.3, review) an entry of the pool is reused only with the same "ended" (the text of "1998" and "1998, ended" is one)
+        entry = S.datePool.find((d) => formatDateValue(d) === formatDateValue(value) && !!d.ended === !!value.ended) || { id: newPoolId(), name: '', ...value };
         if (!S.datePool.includes(entry)) S.datePool.push(entry);
         rows.forEach((r) => Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true }));
       }
@@ -23852,6 +24069,12 @@
           saveCreatedWorkDate(i);
         });
         renderWorks();
+      } else if (using.length || usingPlans.length) {
+        // (3.43.3, review) not updated: the rows keep their date as their own (until 3.43.2 they stayed "of the entry" – the event
+        // heads showed the entry's new date while the rows staged the old one)
+        using.forEach((r) => { r.date = { ...r.date, poolId: null, mx: false }; });
+        usingPlans.forEach(([, p]) => { p.date = { ...p.date, poolId: null }; });
+        renderWorks();
       }
     } else {
       S.datePool.push(entry);
@@ -24971,9 +25194,9 @@
         try {
           const e = await fetchJsEntity(mbid);
           name = e.name;
-          Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'created', editing: false, error: '' });
+          Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'created', editing: false, error: '', matchTouched: true });
         } catch (err) {
-          Object.assign(artist, { mbid, mbName: displayName, status: 'created', editing: false, error: '' });
+          Object.assign(artist, { mbid, mbName: displayName, status: 'created', editing: false, error: '', matchTouched: true });
         }
         showMessage('ok', 'artistDlg.done', { name });
         log('ok', 'artistCreated', { name, mbid });
@@ -25017,7 +25240,7 @@
         } catch (err) {
           console.warn('[Discogs-Credits]', err);
         }
-        Object.assign(owner, { mbid: e.gid || mbid, mbName: e.name || owner.name, mbComment: e.comment || '', status: 'created', editing: false, error: '' });
+        Object.assign(owner, { mbid: e.gid || mbid, mbName: e.name || owner.name, mbComment: e.comment || '', status: 'created', editing: false, error: '', matchTouched: true });
         for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).includes('seriesMissing'))) {
           r.notes = [];
           const rgSeries = /release group/i.test(String(e.typeName || ''));
@@ -25069,7 +25292,7 @@
         } catch (err) {
           console.warn('[Discogs-Credits]', err);
         }
-        Object.assign(company, { mbid: gid, mbName: name, mbComment: comment, status: 'created', editing: false, error: '' });
+        Object.assign(company, { mbid: gid, mbName: name, mbComment: comment, status: 'created', editing: false, error: '', matchTouched: true });
         setCompanyEntityType(company, entityType);
         showMessage('ok', 'companyDlg.done', { name });
         log('ok', 'companyCreated', { name, mbid: gid });
@@ -25871,7 +26094,9 @@
   function saveLiveJob({ quiet = false } = {}) {
     const key = `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`;
     const had = readJson('localStorage', key, null);
-    if (had && had.armedAt && !had.done) return;
+    // (3.43.4, review) a job armed but never finished (the edit rejected, the tab closed, an error) is dead after LIVE_JOB_MAX_MS or
+    // with an error: it is replaced (until 3.43.3 it blocked every later save of this release for good)
+    if (had && had.armedAt && !had.done && !had.error && Date.now() - (Number(had.armedAt) || 0) < LIVE_JOB_MAX_MS) return;
     const items = !liveComOn() ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
       .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual,
         place: p.place && p.place.mbid ? { mbid: p.place.mbid, credit: p.place.credit || '', name: p.place.name || '' } : null }));
@@ -28756,6 +28981,9 @@
     dgStatusTimer = setTimeout(() => {
       const releaseId = companionReleaseId();
       if (!S.sync.installed || !releaseId) return;
+      // [3.43.1] (review) the editor "Count exactly" opens in the background sends no marks: they would replace the marks of the
+      // editor you work in (the companion keeps one map per release)
+      if (S.autostartFrom === 'count') return;
       const site = viewSite();
       const items = [];
       const targetIndex = new Map();
@@ -29058,6 +29286,8 @@
       showMessage('ok', 'msg.openedTabs', { n: msg.n || 0 });
       log('info', 'openedTabs', { n: msg.n || 0 });
     } else if (msg.type === 'result') {
+      // [3.43.1] (review) only the result of a jump this tab sent (the companion relays results to every open dashboard)
+      if (msg.id && !S.sync.sent.has(String(msg.id))) return;
       S.sync.installed = true;
       const known = ['credit', 'track', 'artist', 'loading', 'none', 'no-tab'];
       S.sync.last = known.includes(msg.found) ? `found.${msg.found}` : '';
@@ -29084,7 +29314,11 @@
       lastShownAt = Date.now();
       S.sync.last = 'jumping';
       renderSync();
-      toDiscogs({ ...msg, id: nextId('c') });
+      // (3.43.1) an id of this tab (its page id and a counter): results of other tabs' jumps are not this one's
+      const id = `${syncPageId}:${nextId('c')}`;
+      S.sync.sent.add(id);
+      if (S.sync.sent.size > 50) S.sync.sent.delete(S.sync.sent.values().next().value);
+      toDiscogs({ ...msg, id });
     }, 250);
   }
 
@@ -29482,7 +29716,8 @@
         primaryCands: m.primaryCands, flags: new Set(m.flags.map(norm)), creditFromRole: m.credit || '', defaultLevel: m.level,
         translated: m.translated || '', translatedBase: m.translatedBase || '', prefix: m.prefix || null, prefixCredit: false,
       });
-      if (!row.levelTouched) row.level = m.level;
+      // (3.43.2, review) a credit switched off stays off
+      if (!row.levelTouched && !(row.srcOff || row.aboutHidden || row.notesHidden)) row.level = m.level;
     }
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
@@ -29515,6 +29750,8 @@
       }
     } else {
       S.overlay.querySelectorAll(`tr[data-row="${row.id}"], tr[data-tracksrow="${row.id}"]`).forEach((n) => n.remove());
+      // (3.43.5, review) an entry as a matrix: its lines and chips drawn anew (the line of the row stayed on screen, ticks and all)
+      if (artist && mxOn(artist) && (mxEntry(artist) || mxCompact(artist))) rerenderGroup(artist);
     }
     S.removedRows = [...(S.removedRows || []).slice(-29), { row, index, artist: removedArtist }];
     // [177] (3.38.12) the row as MusicBrainz names it
@@ -31142,7 +31379,8 @@
         const before = S.datePool.length;
         savePoolForm();
         // "save to pool" from a row or a work link: it now refers to the new entry
-        if (fromRow && S.datePool.length > before) {
+        // (3.43.5, review) a row whose date was cleared meanwhile is simply not linked to the entry (it threw)
+        if (fromRow && fromRow.date && S.datePool.length > before) {
           const entry = S.datePool[S.datePool.length - 1];
           fromRow.date.poolId = entry.id;
           fromRow.date.mx = false;
@@ -31151,7 +31389,7 @@
           suggestRowDate(fromRow, entry);
           renderDates();
         }
-        if (fromWork != null && S.datePool.length > before && S.workPlan.get(fromWork)) {
+        if (fromWork != null && S.datePool.length > before && S.workPlan.get(fromWork) && S.workPlan.get(fromWork).date) {
           S.workPlan.get(fromWork).date.poolId = S.datePool[S.datePool.length - 1].id;
           saveCreatedWorkDate(fromWork);
           renderWorkRow(fromWork);
@@ -32025,7 +32263,10 @@
       })();
       Object.entries(fields).forEach(([k, v]) => {
         const inp = box && box.querySelector(`[data-f="ed-${k}"]`);
-        if (inp && k !== 'ended') inp.value = v;
+        if (!inp) return;
+        // (3.43.3, review) "from 2015 to ????" ticks "ended" like the other date fields (it was skipped: "to present" was staged)
+        if (k === 'ended') inp.checked = !!v;
+        else inp.value = v;
       });
       return;
     }
@@ -32146,6 +32387,16 @@
           } catch (err) { /* the add button reports invalid MBIDs */ }
         }, 400);
       }
+      return;
+    }
+    // (3.43.5, review) the source panel's fields while typing: a redraw of the panel (an event lookup finishing in the background –
+    // findFestivals – or a lookup of an entry) gave them back empty until "Load" was clicked
+    if (f === 'text-src' || f === 'text-origin') {
+      if (S.textForm) S.textForm[f === 'text-src' ? 'text' : 'origin'] = el.value;
+      return;
+    }
+    if (f === 'discogs-input' || f === 'supp-url') {
+      S.srcDraft = { ...(S.srcDraft || {}), [f === 'discogs-input' ? 'other' : 'supp']: el.value };
       return;
     }
     // Pool form fields
@@ -32846,12 +33097,24 @@
     if (!LANGS[code] || code === LANG) return;
     LANG = code;
     writeJson('localStorage', 'dci-lang', code);
+    // (3.43.5, review) the "Mapping rules" window is built once with its texts: taken down, built anew if it was open (it stayed in
+    // the old language); the cover-art window drawn anew
+    const rules = document.getElementById('dci-rules');
+    const rulesOpen = !!rules && rulesShown();
+    const rulesAsWindow = S.rulesAsWindow;
+    if (rules) rules.remove();
     if (S.overlay) rebuildDashboard();
     else {
       renderLog();
       renderLauncher();
       renderControls();
     }
+    if (rulesOpen) {
+      openRules(null, { fromRow: rulesAsWindow });
+      S.rulesAsWindow = rulesAsWindow;
+      placeRules();
+    }
+    if (S.ocr) renderOcr();
     const select = from === 'bar' ? null : S.overlay && S.overlay.querySelector('[data-f="lang"]');
     if (select) select.focus();
   }
@@ -33179,7 +33442,8 @@
     let liveCom = 0;
     try {
       const job = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
-      liveCom = job && Array.isArray(job.items) ? job.items.length : 0;
+      // (3.43.4, review) only a job of this release that is not dead (see saveLiveJob)
+      liveCom = job && Array.isArray(job.items) && job.release === releaseMbid && !job.error && !(job.armedAt && !job.done && Date.now() - (Number(job.armedAt) || 0) > LIVE_JOB_MAX_MS) ? job.items.length : 0;
     } catch {
       liveCom = 0;
     }
@@ -34402,7 +34666,9 @@
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
-    DEV_KEY];
+    DEV_KEY,
+    // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload)
+    EDIT_NOTE_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -34427,6 +34693,9 @@
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full',
+      // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
+      // cleared, the running dashboard kept them until the next reload)
+      entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
     });
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)

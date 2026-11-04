@@ -14,6 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
+| 2026-11-04 | 3.43.0 – 3.43.5 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -97,6 +98,90 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-04
+
+### Import 3.43.5
+
+Full review, part 6: the dashboard's surface (package P6). The architecture and test reports of the review are in the notes (GP-Rest), not in the code.
+
+#### Fixed
+
+- **"Remove" in an opened line of an entry's matrix** takes the line off the screen at once (it stayed with its ticks until a later redraw).
+- **Text typed into "Paste text"** (and a URL typed into "Source ▾" or "+ Supplement") survives a redraw of the source panel – an event lookup finishing in the background gave the field back empty.
+- **The language switched** rebuilds the "Mapping rules" window (it kept the old language) and the cover-art window.
+- **"Save to pool" from a row whose date was cleared meanwhile** no longer throws (the pool form stayed open).
+
+#### Fixed (the counter-review of 3.43.0 – 3.43.5)
+
+- **Texts:** "Mixed by Jane Roe at Studio X and John Doe at Studio Y" gives both credits and both places (3.43.0 made a place "John Doe at Studio Y"); a sentence after "and" ("… and Dave Grohl played drums") is no place; a name like "Tears for Fears" or "Cat in the Hat" stays whole (3.43.0 cut it before "for"/"in" – only a word in lower case or a format like "Dolby Atmos", "Vinyl" is cut now); "Vocal Recording Studios" below a "by" line is a studio again; the role lines below "A & B – vocals" go to both; a "by" inside brackets does not split a clause; "Photography Jane Roe (Berlin)" is read without the bracket.
+- **A rules change:** the level the import chose counts only while the rule still gives what it gave then – an own rule "producer → skip" (or "release") wins now; rows skipped by "Skip works" or S046 stay skipped through the change.
+- **Remember per release:** the "part of" rows of a series are rows of the source again (3.43.2 left them out: a change to them was lost); an entity you created keeps its "as window" rules window on a language switch.
+- **An import started while another looks up its artists** also stops the first one's alias lookups at Discogs (they went on, 2.5 s each, logging into the new dashboard).
+- **Companion 1.11.1:** a hidden source tab whose last beat is older than 90 s (gone without "pagehide", or throttled hard) comes after a tab that beats, so a jump is answered.
+
+### Import 3.43.4
+
+Full review, part 5: staging, edit note, storage (package P5, with the first finding of P6).
+
+#### Fixed
+
+- **The edit note's "Done:" line says what is staged now:** a relationship taken out of the editor (a row on "Skip", unticked, staged again) is taken off the count, and the note is written anew after relationships were taken out or updated – until now its numbers only ever grew, and without a new relationship the note was not written at all (it said 5 while 3 were submitted).
+- **Live comments after a job that never finished:** a job armed at "Enter edit" whose edit was rejected (or the tab closed) blocked every later save of the live comments of that release for good, silently; a job older than 30 minutes or with an error is replaced now, and the statistics no longer count its items.
+- **"Reset all settings"** resets the edit note (Full | Simple – "Simple" came back after a reload) and, in the running dashboard, the entries as a matrix, joining, the shared events, the lines of a block and "by event" (the storage was cleared, but the dashboard kept the old values until the next reload – and staged with joining off).
+- **An import of own rules** takes only values the rule editor allows: a level of the register or "skip", a boolean switch, the details mode, a type for a role rule and an instrument for an instrument rule (a hand-edited file with "level": "foo" gave relationships on the recordings while the rule showed an unknown level).
+
+### Import 3.43.3
+
+Full review, part 4: works, dates and the created works (package P4, with the first finding of P5).
+
+#### Fixed
+
+- **"ended" of an event's date:** a begin-only date typed into the head of an event with "ended" ticked (MusicBrainz: "from 1998 to ????") took the pool's entry of the same year without it – and was staged without "ended" (or with it, the other way round). The entry is reused only when "ended" matches. Prio A.
+- **The list of works created in this browser and not linked yet** is matched by the recording, no longer by the track's index: a changed tracklist, or a medium that could not be read, purged it for good (the work in MusicBrainz was forgotten by the safety list). An entry whose recording is not among the tracks read is kept, not planned; only a link MusicBrainz has takes a work off the list. Prio A.
+- **A pool entry edited, "update n rows?" declined:** the rows keep their date as their own – until now they stayed "of the entry", so the event heads showed the entry's new date while the rows staged the old one.
+- **"from 2015 to ????" pasted** into the year of an event's date ticks "ended" like the other date fields (it was skipped: "to present" was staged).
+
+### Import 3.43.2
+
+Full review, part 3: flow and state (package P3).
+
+#### Fixed
+
+- **A rules change keeps what the import decided:** a level the import flow chose (a producer named for tracks on the recordings, arrangers next to writing credits on the works) and a credit switched off at the source or with the about/notes text stay so when a rule is switched or an own rule added – until now the remap reset every row to the rule's level, and a credit switched off came back active while its switch still said "off".
+- **"Remember changes … per release":** the snapshot of the import before is stored with the media choice that import had (it was stored under the new choice, so old rows "fitted" the new import); the "part of" row of a series the source lists is no longer stored as a row of your own (it was added once more with every import); an artist, label, place or series you created in the form is remembered as your choice (it was "missing" again after the next import).
+- **An import started while another one still looks up its entries** stops the first one: its series, notes and publishers no longer land in the new import.
+
+### Import 3.43.1
+
+Full review, part 2: sources, release page and companion (package P2), with Companion 1.11.1.
+
+#### Fixed
+
+- **A medium read from the relationship editor keeps its track artists.** When the web service leaves a medium's tracks or relationships out (very many recordings), the tracks come from MB's own pages of tracks – without their artists until now, so for a track performed by its writer "cover" was set by itself on the link recording → work (a track of a medium the web service delivered in full was treated right). Prio A.
+- **Discogs requests are paced** (one every 2.5 s, shared with the gap line of the release page): a release with many artists MusicBrainz does not have asked Discogs for their aliases back to back and ran into its limit (25 a minute without a login); a request that fails is said in the log ("the Discogs aliases could not be read – …") and after the limit no more are asked – until now a 429 counted as "no aliases" and "Create artist …" failed for a minute.
+- **Jump results of another dashboard** are no longer shown or logged: the companion relays results to every open dashboard; each tab marks its jumps with its own id now.
+- **"Count exactly"** (release page) no longer sends the marks of its background editor to the Discogs tab, where they replaced the marks of the editor you work in.
+
+### COMPANION 1.11.1
+
+- **A source tab in the background counts as open** for ten minutes after its last beat (browsers throttle a hidden tab's timers to once a minute): until now it was "no Discogs tab" after 7 s, and a jump found no tab.
+
+### Import 3.43.0
+
+The full review of the script (packages P1 – P6, read by independent reviewers), part 1: the text adapter (rules S074 – S077; collected item Q-cx). Each finding has a line in `smoke/text_corpus.json` that failed before.
+
+#### Fixed
+
+- **A track list after each name is that name's** (S074): "Produced by Jane Roe (tracks 1-2), John Doe (track 3)", "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)" and an "and John Doe (tracks 3, 4)" line below a "by" line. Before, the last list of the line counted for every name and the others were dropped – the relationships would have gone to the wrong tracks.
+- **"except track 3", "(not on track 3)", "all other tracks …"** are no longer read as the tracks named (S074): the line is listed as not recognized – before, the opposite of the text was staged.
+- **A second "… by" credit in a sentence** (S075): "Recorded by A at Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" give both credits and both places (B was lost, or "mixed by B" became a name). "Mixed by X in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": X, the rest listed as not recognized (it was part of the name). A clause of a line that gives nothing is listed ("Jane Roe – bass; vocals" → “vocals”).
+- **A list of roles before "by"** ("Photography, design and layout by X", "Produced, recorded and mixed by X and Y") gives every role – the first one alone was taken when it is a role by itself.
+- **Several "Name (roles)" in one line** (S076): "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit (one garbled credit before).
+- **Names before a dash or colon are split like names after "by"** (S077): "Jane Roe & John Doe – vocals" gives two credits. A name of the release's artists is never cut at its "&", "and" or comma, on either side: "Produced by Simon & Garfunkel", "Florence and the Machine – vocals" (before, "Simon" and "Garfunkel" were looked up as two artists).
+- **A role word before a name with a colon or dash in it** ("Vocal production: Jane Roe", "DJ Shadow – scratches") no longer gives a credit of "production: Jane Roe" or "Shadow – scratches".
+- **A role heading below a "by" line** ("Additional Recording", "Live Recording") is no studio (S071); a role heading right below a name ("Mixed by / Jane Roe / Mastered by / John Doe") is read (S067 skipped every second pair).
+- **Places:** "Hansa Tonstudio (Berlin)" has Berlin as its area (it stayed in the name); "Recorded at Studio X (Berlin), mixed at Studio Y (Paris)" gives both places with their verbs (the mix place was lost); "Recorded at Studio X and Studio Y", "… at Studio X, Berlin and Studio Y, Paris" give two places (one "Studio X and Studio Y" before).
 
 ## 2026-11-03
 
