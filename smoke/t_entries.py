@@ -905,6 +905,24 @@ def case_evdatefields():
             e1 = [pg.evaluate(INL, multi), pg.evaluate("(sel) => document.querySelectorAll(sel + ' [data-evdate]').length", multi), pg.evaluate(BOX, multi)]
             print('E) Solo Man (Kopf):', e0[0] and e0[0]['err'], '| Multi Man unten:', e0[1], '| Fehler unten:', e1)
             results.append(e0[0] and e0[0]['err'] and e0[1] == {'by': '', 'err': ''} and e1[0] and e1[0]['err'] and e1[0]['by'] == '2001' and e1[1] == 1 and e1[2] is None)
+            # F) (3.43.3, full review P4) "from 2015 to ????" pasted into the year of Begin ticks "ended" (it was skipped); a begin-only date
+            # with "ended" is not the pool's entry of the same year without it (the pool entry was reused, its "ended" taken)
+            pg.evaluate("""([sel, text]) => { const el = document.querySelector(sel); const dt = new DataTransfer(); dt.setData('text', text);
+              el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", [f'{box} [data-f=ed-by]', 'from 2015 to ????'])
+            pg.wait_for_timeout(200)
+            f0 = pg.evaluate(f"(() => {{ const b = document.querySelector('{box}'); return [b.querySelector('[data-f=ed-by]').value, b.querySelector('[data-f=ed-ended]').checked]; }})()")
+            for k, v in (('by', '1998'), ('bm', ''), ('bd', ''), ('ey', ''), ('em', ''), ('ed', '')):
+                pg.fill(f'{box} [data-f=ed-{k}]', v)
+            pg.evaluate(f"document.querySelector('{box} [data-f=ed-ended]').checked = false")
+            pg.click(f'{box} [data-act=em-evdate-apply]'); pg.wait_for_timeout(400)
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-by]', '1998')
+            pg.fill(f'{multi} .dci-em-evdatebox-inline [data-f=ed-bm]', '')
+            pg.evaluate(f"document.querySelector('{multi} .dci-em-evdatebox-inline [data-f=ed-ended]').checked = true")
+            pg.click(f'{multi} .dci-em-evdatebox-inline [data-act=em-evdate-apply]'); pg.wait_for_timeout(400)
+            f1 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /1998/.test(t))")
+            f2 = pg.evaluate("(() => { const pool = JSON.parse(localStorage.getItem('dci-date-pool:aaaaaaaa-1111-4111-8111-000000000001') || '[]'); return pool.filter(d => d.begin && d.begin.year === 1998).map(d => !!d.ended); })()")
+            print('F) eingefügt „from 2015 to ????“:', f0, '| Pool 1998:', f1, '| ended:', f2)
+            results.append(f0 == ['2015', True] and len(f1) == 2 and sorted(f2) == [False, True])
             print('Fehler:', errs)
             results.append(not errs)
         finally:

@@ -263,6 +263,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   review43: 3.43.3 (full review P4): a pool entry edited, "update n rows?" declined – the rows their own ("0 rows")
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
@@ -313,6 +314,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   review43: 3.43.3 (full review P4/P5): the list of created works matched by the recording (index refreshed), an
+                                #     entry of a recording not read kept, not planned
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
                                 #     [3.37.0] the strings arranger of the notes an entry (E5), nothing of a track list a name;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
@@ -651,6 +654,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
                                 #     without the tail
                                 #   evdatefields: 3.42.1 (Z-EDM): the date of an event a button; MB's fields below it (begin, end, ended, ⇣),
+                                #     (3.43.3, full review P4) F: "from 2015 to ????" pasted ticks "ended"; 1998 with and without "ended" are two pool entries
                                 #     Apply, a wrong month, a period pasted, ✕, no date
                                 #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
