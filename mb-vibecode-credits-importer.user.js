@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.4
+// @version      3.43.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5435,7 +5435,9 @@
     function splitBy(c) {
       const i = c.search(/\sby\s/i);
       if (i < 0 || !ruleOn('S075')) return [c];
-      const m = c.slice(i + 4).match(/\s+(?:and|&|\/)\s+(?=\p{L}+(?:\s+\p{L}+){0,2}\s+by\s)/iu);
+      // (3.43.5, counter-review) a "by" inside brackets ("(Walk by Faith and Stand by Me)") does not count
+      const masked = c.replace(/\([^)]*\)/g, (b) => b.replace(/\S/g, '_'));
+      const m = masked.slice(i + 4).match(/\s+(?:and|&|\/)\s+(?=\p{L}+(?:\s+\p{L}+){0,2}\s+by\s)/iu);
       if (!m) return [c];
       const k = i + 4 + m.index;
       return [c.slice(0, k), ...splitBy(c.slice(k + m[0].length))];
@@ -6023,7 +6025,9 @@
               const v = k === 0 ? verb : part.match(/^(\p{L}+)\s+at\s+/iu);
               const text = k === 0 ? part : part.replace(/^\p{L}+\s+at\s+/iu, '');
               const vb = k === 0 ? v : (v && v[1].replace(/ing$/i, 'ed')) || verb;
-              text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u).forEach((w) => { if (place(vb, placeOf(w))) any = true; });
+              // (3.43.5, counter-review) not at "and" when a sentence follows ("… and John Doe at Studio Y", "… and Dave played drums")
+              const pieces = text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u);
+              (pieces.slice(1).some((w) => /\sat\s|\s\p{Ll}+ed\b/u.test(w)) ? [text] : pieces).forEach((w) => { if (place(vb, placeOf(w))) any = true; });
             });
             return any;
           };
@@ -6087,11 +6091,22 @@
               unknownParts.push(`in ${clean(inOther[2])}`);
               left = inOther[1];
             }
-            // "Mixed by X at Studio Y"
-            const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
-            if (at2) {
-              places(verb, at2[2]);
-              right = at2[1];
+            // "Mixed by X at Studio Y"; (3.43.5, counter-review) "Mixed by X at Studio Y and Z at Studio W": pairs of name and place
+            const pairs = right.split(/\s+(?:and|&)\s+(?=[^,]+\s+at\s+)/iu);
+            if (pairs.length > 1 && pairs.every((x) => /\sat\s/i.test(x))) {
+              const names2 = [];
+              pairs.forEach((x) => {
+                const m2 = x.match(/^(.+?)\s+at\s+(.+)$/i);
+                places(verb, m2[2]);
+                names2.push(m2[1]);
+              });
+              right = names2.join(' and ');
+            } else {
+              const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
+              if (at2) {
+                places(verb, at2[2]);
+                right = at2[1];
+              }
             }
             // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
             const courtesy = right.search(TEXT_COURTESY);
@@ -6156,7 +6171,10 @@
               // [S075] "Mixed by Jane Roe in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": no name – listed
               let nm = x.name;
               const prep = ruleOn('S075') && !bandNames.has(norm(nm)) ? nm.match(/^(.+?)\s+((?:in|for|with)\s+\S.*)$/iu) : null;
-              if (prep && looksLikeName(prep[1])) {
+              // (3.43.5, counter-review) a name like "Tears for Fears", "Cat in the Hat" stays whole: cut only before a word in lower case
+              // or a format ("in Dolby Atmos", "for Vinyl")
+              const tail = prep ? prep[2].replace(/^\S+\s+/, '') : '';
+              if (prep && looksLikeName(prep[1]) && (/^\p{Ll}/u.test(tail) || /^(?:vinyl|cd|cassette|digital|dolby|atmos|stereo|mono|surround|pro\s+tools|logic|ableton|lp|tape)\b/i.test(tail))) {
                 unknownParts.push(prep[2]);
                 nm = prep[1];
               }
@@ -6343,8 +6361,8 @@
           const lefts = ruleOn('S077') ? names(left) : [left];
           if (rolesRight && !rolesLeft) {
             for (const n of lefts) rolesRight.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
-            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too
-            if (found && lefts.length === 1) lineLead = left;
+            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too – (3.43.5) of all the names ("A & B – vocals")
+            if (found) lineLead = lefts;
           } else if (rolesLeft && !rolesRight) {
             for (const x of namesScoped(right)) rolesLeft.forEach((r) => { if (addCredit(x.name, r, x.scope || cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
@@ -6366,7 +6384,7 @@
                 }
               });
               if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
-              if (found && lefts.length === 1) lineLead = left;
+              if (found) lineLead = lefts;
             }
           }
         };
@@ -6396,10 +6414,11 @@
             const name = words.slice(k).join(' ');
             const n = name.split(' ');
             if (n.length > 4 || TEXT_NOT_NAME.test(name) || n.every((w) => isRole(cap(w)))) continue;
-            // [3.43.0] (review) a name has no colon, dash or bracket ("Vocal production: Jane Roe" is no vocal credit of "production: Jane Roe")
-            if (/[:–—(]|\s-\s/.test(name)) continue;
+            // [3.43.0] (review) a name has no colon or dash ("Vocal production: Jane Roe" is no vocal credit of "production: Jane Roe");
+            // (3.43.5) a bracket at its end is left off ("Photography Jane Roe (Berlin)")
+            if (/[:–—]|\s-\s/.test(name) || /\(/.test(name.replace(/\s*\([^)]*\)$/, ''))) continue;
             if (!isRole(cap(role)) && !isRole(`${cap(role)} By`)) continue;
-            if (addCredit(name, roleOf(role), scope)) found++;
+            if (addCredit(name.replace(/\s*\([^)]*\)$/, ''), roleOf(role), scope)) found++;
           }
         };
         if (!found) {
@@ -6615,7 +6634,7 @@
           const list = roles ? null : playList(line);
           if (roles || list) {
             // a word that may be an instrument asks like those of a list (137d)
-            (roles || list.parts).forEach((r) => addCredit(cont.name, r, scope, roles || playable(r) ? {} : { guess: true }));
+            for (const nm of cont.names) (roles || list.parts).forEach((r) => addCredit(nm, r, scope, roles || playable(r) ? {} : { guess: true }));
             contWho = cont;
             return;
           }
@@ -6627,7 +6646,7 @@
           // (3.43.0, review) a role heading is no studio ("Additional Recording", "Live Recording"); the line's own track list counts
           // ("and John Doe (tracks 3, 4)" – before, the tracks of the line above)
           if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && !isRole(cap(line)) && !isRole(`${cap(line)} By`)
-            && !/^(?:additional|live|field|string|vocal|drum|surround|binaural|location)\b/i.test(line) && isCompanyRole(`${before.verb} At`)) {
+            && !(/^(?:additional|live|field|string|vocal|drum|surround|binaural|location)\b/i.test(line) && !/\b(?:studios?|sound|lab|room|house|hall)\b/i.test(line)) && isCompanyRole(`${before.verb} At`)) {
             const sc = scope || before.scope;
             companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: sc ? tracksOf(sc) : null, ...at() });
             return;
@@ -6722,7 +6741,7 @@
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
         }
         // [S070] (3.42.3) one name with its roles ("Name — roles", one part): lines of roles below it go on
-        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { name: lineLead };
+        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { names: Array.isArray(lineLead) ? lineLead : [lineLead] };
         // [S071] (3.42.3) one sentence of "by" credits (one verb: its place may follow) or a website left out: the next line may go on
         if (ruleOn('S071') && units.length === 1) {
           const added = credits.slice(c00);
@@ -10224,12 +10243,16 @@
     // [3.43.2] (review) a level the import chose stays (a producer named for tracks: recording; S006 arrangers: work – `levelImport`), and a
     // credit switched off at the source or with the about/notes text stays off (its level to come back to follows the rule)
     if (!row.levelTouched) {
-      if (row.srcOff || row.aboutHidden || row.notesHidden) {
-        const back = row.levelImport || m.level;
-        if (row.srcOff) row.srcOffLevel = back;
-        if (row.aboutHidden) row.aboutLevel = back;
-        if (row.notesHidden) row.notesLevel = back;
-      } else row.level = row.levelImport || m.level;
+      // (3.43.5, counter-review) the import's choice counts only while the rule still gives the level it was derived from (an own
+      // rule "producer → skip/release" wins); rows skipped by "Skip works" (mxSkipped) or S046 stay skipped too
+      const lv = row.levelImport && m.level === row.levelImportFrom ? row.levelImport : m.level;
+      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out) {
+        if (row.srcOff) row.srcOffLevel = lv;
+        if (row.aboutHidden) row.aboutLevel = lv;
+        if (row.notesHidden) row.notesLevel = lv;
+        if (row.s046Out) row.s046Out.level = lv;
+        row.level = 'skip';
+      } else row.level = lv;
     }
     // [3.32.7] a row of poems whose level was clicked: the type of its level (item 104b)
     if (row.poemLevels && isPoemRow(row) && row.level !== 'skip') {
@@ -15848,7 +15871,8 @@
     const all = readCreatedWorks();
     let changed = false;
     const list = all.filter((x) => {
-      const track = S.mbTracks.find((t) => t.recordingGid === x.rec);
+      const at = S.mbTracks[x.i];
+      const track = at && at.recordingGid === x.rec ? at : S.mbTracks.find((t) => t.recordingGid === x.rec);
       if (track && track.idx !== x.i) {
         x.i = track.idx;
         changed = true;
@@ -16967,7 +16991,7 @@
     const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id })) : '';
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
       ${links.join(' ')} ${typedOn} ${text}
-      <span class="dci-supp-url"><input type="text" data-f="supp-url" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
+      <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
   }
@@ -17561,10 +17585,12 @@
   }
 
   /** [146] The rows at the end of an import, as the source gave them. */
-  function rememberFresh() {
+  function rememberFresh(rows = null) {
     const n = new Map();
-    S.freshRows = new Map();
-    S.rows.forEach((r) => {
+    // (3.43.5, counter-review) rows added later by the import (the "part of" rows of a series) join the fresh ones
+    if (!rows) S.freshRows = new Map();
+    else S.freshRows.forEach((f) => n.set(f.b, Math.max(n.get(f.b) || 0, Number(String(f.k).split('#')[1]) || 0)));
+    (rows || S.rows).forEach((r) => {
       const base = rowBaseKey(r);
       const i = (n.get(base) || 0) + 1;
       n.set(base, i);
@@ -17612,7 +17638,7 @@
       }
       const a = S.artists.get(r.artistKey);
       // (3.43.2, review) the "part of" row of a series the source lists comes with the source (it was stored as a row of your own
-      // and added once more with every import)
+      // and added once more with every import); (3.43.5) as a fresh row it is above – here only one not registered
       if (a && a.srcSeries) continue;
       if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
     }
@@ -18078,8 +18104,9 @@
       // for the release group, MusicBrainz has it on recordings; collected item K-5)
       if ((row.level === 'release' || (row.level === 'release_group' && row.types.includes('creative direction'))) && !c.allTracks && suggested.length
         && (row.types.includes('producer') || row.types.includes('creative direction'))) {
+        row.levelImport = 'recording'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
+        row.levelImportFrom = row.level;
         row.level = 'recording';
-        row.levelImport = 'recording'; // (3.43.2) kept through a rules change (remapRow)
         resolveRowType(row);
       }
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
@@ -18290,8 +18317,9 @@
       if (ruleOn('S006') && S.rows.some((r) => r.level === 'work' && WRITER_TYPES.includes(norm(r.types[0] || '')))) {
         for (const r of S.rows) {
           if (!r.manual && !r.company && r.level === 'recording' && ARRANGER_TYPES.includes(norm(r.types[0] || ''))) {
+            r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
+            r.levelImportFrom = r.level;
             r.level = 'work';
-            r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow)
             resolveRowType(r);
           }
         }
@@ -18321,8 +18349,11 @@
           log('info', anvSrcs.length === 1 && anvSrcs[0] === DISCOGS ? 'anvCredits' : 'anvCreditsAny', { list: anv.join(', '), src: anvSrcs.map(sourceLabel).join(', ') });
         }
         if (rel.series.length) {
+          const before = new Set(S.rows.map((r) => r.id));
           await loadSeries(rel.series);
           if (seq !== importSeq) return;
+          // (3.43.5) the series' rows are rows of the source: remembered by their changes (3.43.2 left them out altogether)
+          if (S.freshRows) rememberFresh(S.rows.filter((r) => !before.has(r.id)));
           renderGroups();
         }
         const pooled = S.trackPool.length;
@@ -18375,7 +18406,10 @@
    */
   async function resolveViaAliases(list, source = S.source) {
     if (!source.aliases) return;
+    const seq = importSeq;
     for (const a of list) {
+      // (3.43.5, counter-review) another import started meanwhile: no more requests for this one (each takes a 2.5 s slot)
+      if (seq !== importSeq) return;
       try {
         const aliases = await source.aliases(a.dId);
         a.dAliases = aliases.map((x) => x.name);
@@ -19761,7 +19795,7 @@
     const menu = `<div class="dci-srcmenu" id="dci-srcmenu" role="group" aria-label="${esc(tr('srcmenu.button'))}" ${S.srcMenuOpen ? '' : 'hidden'}>
         ${picker ? `<div class="dci-srcmenu-row">${picker}</div>` : ''}
         <div class="dci-srcmenu-row dci-other">
-          <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
+          <input type="text" data-f="discogs-input" value="${esc((S.srcDraft || {}).other || '')}" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
           <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
         </div>
         ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
@@ -29716,6 +29750,8 @@
       }
     } else {
       S.overlay.querySelectorAll(`tr[data-row="${row.id}"], tr[data-tracksrow="${row.id}"]`).forEach((n) => n.remove());
+      // (3.43.5, review) an entry as a matrix: its lines and chips drawn anew (the line of the row stayed on screen, ticks and all)
+      if (artist && mxOn(artist) && (mxEntry(artist) || mxCompact(artist))) rerenderGroup(artist);
     }
     S.removedRows = [...(S.removedRows || []).slice(-29), { row, index, artist: removedArtist }];
     // [177] (3.38.12) the row as MusicBrainz names it
@@ -31343,7 +31379,8 @@
         const before = S.datePool.length;
         savePoolForm();
         // "save to pool" from a row or a work link: it now refers to the new entry
-        if (fromRow && S.datePool.length > before) {
+        // (3.43.5, review) a row whose date was cleared meanwhile is simply not linked to the entry (it threw)
+        if (fromRow && fromRow.date && S.datePool.length > before) {
           const entry = S.datePool[S.datePool.length - 1];
           fromRow.date.poolId = entry.id;
           fromRow.date.mx = false;
@@ -31352,7 +31389,7 @@
           suggestRowDate(fromRow, entry);
           renderDates();
         }
-        if (fromWork != null && S.datePool.length > before && S.workPlan.get(fromWork)) {
+        if (fromWork != null && S.datePool.length > before && S.workPlan.get(fromWork) && S.workPlan.get(fromWork).date) {
           S.workPlan.get(fromWork).date.poolId = S.datePool[S.datePool.length - 1].id;
           saveCreatedWorkDate(fromWork);
           renderWorkRow(fromWork);
@@ -32352,6 +32389,16 @@
       }
       return;
     }
+    // (3.43.5, review) the source panel's fields while typing: a redraw of the panel (an event lookup finishing in the background –
+    // findFestivals – or a lookup of an entry) gave them back empty until "Load" was clicked
+    if (f === 'text-src' || f === 'text-origin') {
+      if (S.textForm) S.textForm[f === 'text-src' ? 'text' : 'origin'] = el.value;
+      return;
+    }
+    if (f === 'discogs-input' || f === 'supp-url') {
+      S.srcDraft = { ...(S.srcDraft || {}), [f === 'discogs-input' ? 'other' : 'supp']: el.value };
+      return;
+    }
     // Pool form fields
     const pf = f && f.match(/^pf-(name|by|bm|bd|ey|em|ed)$/);
     if (pf && S.poolForm) {
@@ -33050,12 +33097,24 @@
     if (!LANGS[code] || code === LANG) return;
     LANG = code;
     writeJson('localStorage', 'dci-lang', code);
+    // (3.43.5, review) the "Mapping rules" window is built once with its texts: taken down, built anew if it was open (it stayed in
+    // the old language); the cover-art window drawn anew
+    const rules = document.getElementById('dci-rules');
+    const rulesOpen = !!rules && rulesShown();
+    const rulesAsWindow = S.rulesAsWindow;
+    if (rules) rules.remove();
     if (S.overlay) rebuildDashboard();
     else {
       renderLog();
       renderLauncher();
       renderControls();
     }
+    if (rulesOpen) {
+      openRules(null, { fromRow: rulesAsWindow });
+      S.rulesAsWindow = rulesAsWindow;
+      placeRules();
+    }
+    if (S.ocr) renderOcr();
     const select = from === 'bar' ? null : S.overlay && S.overlay.querySelector('[data-f="lang"]');
     if (select) select.focus();
   }

@@ -1578,4 +1578,59 @@ def case_compactlines():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_review43():
+    """Credits Importer 3.43.5 (full review, package P6 – the UI).
+    A) An entry as a matrix: "Remove" in an opened line's row takes the line off the screen (until 3.43.4 the line with its ticks
+       stayed until a later redraw).
+    B) Text typed into "Paste text" survives a redraw of the source panel (the menu "Source ▾" opened: renderSource) – until 3.43.4
+       the textarea came back empty (the text was read only at "Load").
+    C) "Mapping rules" open, the language switched to German: the window's title follows ("Mapping-Regeln"); until 3.43.4 it kept
+       the English texts."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            # (the rules as a window of their own: open beside the settings – in the dashboard, ⚙ Settings closes them)
+            pg.evaluate("localStorage.setItem('dci-rules-place', JSON.stringify('window'))")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            solo = sec_sel(pg, 'Solo Man')
+            lines0 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line').length", solo)
+            pg.click(f'{solo} tr.dci-em-line [data-act=em-detail]'); pg.wait_for_timeout(300)
+            pg.click(f'{solo} .dci-em-detail-row tr.dci-row [data-act=remove-row]'); pg.wait_for_timeout(500)
+            lines1 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line').length", solo)
+            print('A) Zeilen der Matrix:', lines0, '→ nach „Remove“:', lines1)
+            results.append(lines0 >= 1 and lines1 == lines0 - 1)
+            # B) the pasted text through a redraw
+            H.src_menu(pg, 'text-open'); pg.wait_for_timeout(200)
+            pg.fill('[data-f=text-src]', 'Bass – Jane Roe')
+            pg.fill('[data-f=text-origin]', 'booklet')
+            H.src_menu(pg); pg.wait_for_timeout(200)
+            H.src_menu(pg); pg.wait_for_timeout(200)
+            b1 = pg.evaluate("[document.querySelector('[data-f=text-src]').value, document.querySelector('[data-f=text-origin]').value]")
+            print('B) Text nach dem Neuzeichnen:', b1)
+            results.append(b1 == ['Bass – Jane Roe', 'booklet'])
+            # C) the rules window and the language
+            pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+            c0 = pg.evaluate("document.getElementById('dci-rules-title').textContent.trim()")
+            H.open_settings(pg, 'general')
+            pg.select_option('[data-f=lang]', 'de'); pg.wait_for_timeout(600)
+            c1 = pg.evaluate("(() => { const r = document.getElementById('dci-rules'); return r ? [r.hidden, document.getElementById('dci-rules-title').textContent.trim()] : null; })()")
+            print('C) Regelfenster:', c0, '→ Deutsch:', c1, '| Fehler:', errs)
+            results.append(c0 == 'Mapping rules' and c1 and c1[0] is False and c1[1] != 'Mapping rules' and not errs)
+        finally:
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
