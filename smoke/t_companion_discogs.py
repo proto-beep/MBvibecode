@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks; `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43; `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -446,6 +446,65 @@ def case_copymarks():
             b.close()
     finally:
         H.discogs_page, H.discogs_release = orig_page, orig_rel
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_review43():
+    """Credits Importer 3.43.1 / Companion 1.11.1 (full review, package P2).
+    A) A Discogs tab in the background (its beat throttled by the browser – 30 s old, "visible: false") still counts as open:
+       "connected" (until 1.11.0 a tab was "closed" after 7 s).
+    B) The result of a jump another dashboard sent (an id this tab never sent) is not shown nor logged (the companion relays
+       results to every open dashboard).
+    C) The editor "Count exactly" opens in the background (#dci-count) sends no marks to the Discogs tab: no status map of the
+       release in the shared storage after its import (until 3.43.0 it replaced the marks of the editor you work in)."""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SYNC = "document.querySelector('[data-el=sync]').textContent"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 90)
+        pg.wait_for_timeout(2500)
+        a0 = pg.evaluate(SYNC)
+        # A) a tab of the Discogs release, last beat 30 s ago, in the background
+        pg.evaluate(f"""() => GM_setValue('tab:fake30', {{ id: 'fake30', site: 'discogs', ts: Date.now() - 30000, visible: false, lastVisible: Date.now() - 30000,
+          releaseId: '{H.DISCOGS_ID}', releaseIds: ['{H.DISCOGS_ID}'] }})""")
+        try:
+            H.wait_for(pg, f"/connected/.test({SYNC})", 15)
+        except Exception:
+            pass
+        a1 = pg.evaluate(SYNC)
+        print('A) ohne Tab:', a0, '| Tab im Hintergrund, 30 s alt:', a1)
+        results.append('no Discogs tab' in a0 and 'connected' in a1)
+        # B) a result of a jump of another dashboard
+        n0 = len(pg.evaluate(LOGS))
+        pg.evaluate("document.dispatchEvent(new CustomEvent('dci:from-discogs', { detail: JSON.stringify({ type: 'result', id: 'other:c7', found: 'credit' }) }))")
+        pg.wait_for_timeout(800)
+        b1 = [x for x in pg.evaluate(LOGS)[n0:] if 'Discogs view' in x]
+        b2 = pg.evaluate(SYNC)
+        print('B) fremdes Ergebnis – Protokoll:', b1, '| Anzeige:', b2)
+        results.append(not b1 and 'credit highlighted' not in b2)
+        pg.evaluate("GM_deleteValue('tab:fake30')")
+        # C) the count tab: its import, then no status map of the release
+        pg.evaluate("[...GM_listValues()].filter(k => k.startsWith('statusMap:')).forEach(k => GM_deleteValue(k))")
+        ct = ctx.new_page()
+        cerrs = H.errors_of(ct)
+        ct.goto(f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        ct.evaluate(f"localStorage.setItem('dci-gap-count:{H.REL.lower()}', JSON.stringify({{ at: Date.now(), links: [{{ source: 'discogs', id: {H.DISCOGS_ID} }}] }}))")
+        ct.goto(f'https://musicbrainz.org/release/{H.REL}/edit-relationships#dci-count')
+        ct.evaluate(H.VIEW_PRESET, 'full')
+        H.with_companion(ct)
+        ct.add_script_tag(content=H.MAIN)
+        H.wait_for(ct, f"{LOGS}.some(x => /Import complete/.test(x))", 90)
+        ct.wait_for_timeout(4000)
+        c1 = ct.evaluate(f"[...GM_listValues()].filter(k => k === 'statusMap:{H.DISCOGS_ID}')")
+        c2 = [x for x in ct.evaluate(LOGS) if 'Count exactly' in x]
+        print('C) Zähl-Tab – Marken im Speicher:', c1, '| Start:', c2[:1], '| Fehler:', errs, cerrs)
+        results.append(not c1 and len(c2) == 1 and not errs and not cerrs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

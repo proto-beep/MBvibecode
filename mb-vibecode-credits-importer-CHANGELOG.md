@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 | – |
+| 2026-11-04 | 3.43.0 – 3.43.1 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.43.1
+
+Full review, part 2: sources, release page and companion (package P2), with Companion 1.11.1.
+
+#### Fixed
+
+- **A medium read from the relationship editor keeps its track artists.** When the web service leaves a medium's tracks or relationships out (very many recordings), the tracks come from MB's own pages of tracks – without their artists until now, so for a track performed by its writer "cover" was set by itself on the link recording → work (a track of a medium the web service delivered in full was treated right). Prio A.
+- **Discogs requests are paced** (one every 2.5 s, shared with the gap line of the release page): a release with many artists MusicBrainz does not have asked Discogs for their aliases back to back and ran into its limit (25 a minute without a login); a request that fails is said in the log ("the Discogs aliases could not be read – …") and after the limit no more are asked – until now a 429 counted as "no aliases" and "Create artist …" failed for a minute.
+- **Jump results of another dashboard** are no longer shown or logged: the companion relays results to every open dashboard; each tab marks its jumps with its own id now.
+- **"Count exactly"** (release page) no longer sends the marks of its background editor to the Discogs tab, where they replaced the marks of the editor you work in.
+
+### COMPANION 1.11.1
+
+- **A source tab in the background counts as open** for ten minutes after its last beat (browsers throttle a hidden tab's timers to once a minute): until now it was "no Discogs tab" after 7 s, and a jump found no tab.
 
 ### Import 3.43.0
 

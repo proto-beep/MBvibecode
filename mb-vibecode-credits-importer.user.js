@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.0
+// @version      3.43.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -55,6 +55,8 @@
   const uniq = (arr) => [...new Set(arr)];
   let idCounter = 0;
   const nextId = (prefix) => `${prefix}${++idCounter}`;
+  // [3.43.1] (review) this page's id for the companion: jump results of other dashboards are not this one's
+  const syncPageId = Math.random().toString(36).slice(2, 8);
 
   /**
    * Stored data of this script (browser storage of musicbrainz.org) has a generation. An update that raises it
@@ -1677,6 +1679,7 @@
       "match.aliasSuggest": "Suggestion from a Discogs alias:",
       "match.aliasUseTitle": "Assign this MusicBrainz artist (Discogs lists “{alias}” as an alias)",
       "log.artistAliasSuggested": "{name}: not found by its Discogs link; suggested via Discogs aliases: {list}",
+      "log.aliasFailed": "{name}: the Discogs aliases could not be read – {msg}",
       "rules.title": "Mapping rules",
       "rules.close": "Close the mapping rules",
       "rules.toWindow": "⧉ As window",
@@ -4982,9 +4985,18 @@
     const artistUrl = (id) => `${WEB}/artist/${id}`;
     const labelUrl = (id) => `${WEB}/label/${id}`;
 
+    // [3.43.1] (review) one request to Discogs every 2.5 s, shared with the gap line of the release page ('dci-gap-last'): Discogs allows
+    // 25 a minute without a login – a release with many unlinked artists asked for their aliases back to back ran into its 429
+    const PACE_KEY = 'dci-gap-last';
+    async function pace() {
+      const wait = 2500 - (Date.now() - (Number(readJson('localStorage', PACE_KEY, 0)) || 0));
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      writeJson('localStorage', PACE_KEY, Date.now());
+    }
     async function getJson(path, { missingId = null } = {}) {
+      await pace();
       const res = await fetch(`${API}/${path}`);
-      if (res.status === 429) throw new Error(tr('err.discogsLimit'));
+      if (res.status === 429) throw Object.assign(new Error(tr('err.discogsLimit')), { status: 429 });
       if (res.status === 404 && missingId != null) throw new Error(tr('err.discogsMissing', { id: missingId }));
       if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
       return res.json();
@@ -5256,8 +5268,8 @@
       },
       /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
       async aliases(id) {
-        const res = await fetch(`${API}/artists/${id}`);
-        const data = res.ok ? await res.json() : null;
+        // (3.43.1, review) paced like the other requests; an error (429 …) is thrown, not read as "no aliases"
+        const data = await getJson(`artists/${id}`);
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
       },
       // [3.34.7] Discogs images for the text from cover art (beta), only on request: the API gives their addresses only to a
@@ -8235,9 +8247,7 @@
 
   /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
   async function gapDiscogs(dId, ws) {
-    const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    writeJson('localStorage', 'dci-gap-last', Date.now());
+    // (3.43.1) the pace – one request every 2.5 s – is kept by the adapter itself now ('dci-gap-last', shared with the dashboard)
     // [Z-SUB] (3.41.15, review) with MusicBrainz's tracks: an index whose sub-tracks are tracks there is read as them
     return DISCOGS.release(dId, { tracks: ((ws && ws.media) || []).flatMap((m) => (m.tracks || []).map((t) => ({ title: t.title || '' }))) });
   }
@@ -9743,7 +9753,7 @@
     workDefaults: { typeId: '', languageIds: [] },
     workQueue: [],
     // Connection to the companion script for the Discogs tab
-    sync: { installed: false, tabs: 0, target: null, last: '' },
+    sync: { installed: false, tabs: 0, target: null, last: '', sent: new Set() },
     // How the Discogs tab follows the dashboard: 'click' or 'hover'
     syncMode: 'click',
     // Date pool: [{ id, name, begin, end, ended }] and the pool form
@@ -16077,6 +16087,9 @@
         const { tracks, linked } = await fetchMediumTracks(p.id);
         m.tracks = tracks.filter((t) => t && t.recording && !t.isDataTrack).sort((a, b) => a.position - b.position).map((t) => ({
           position: t.position, number: t.number || String(t.position), title: t.name,
+          // [3.43.1] (review) the track's artists as the web service gives them (`trackArtists`: "cover" is not set by itself for a
+          // track performed by its writer – until 3.43.0 these tracks had none, so it was)
+          'artist-credit': (((t.artistCredit || {}).names) || []).map((n) => ({ name: n.name || (n.artist && n.artist.name) || '', joinphrase: n.joinPhrase || '', artist: { id: n.artist && n.artist.gid, name: n.artist && n.artist.name } })),
           recording: { id: t.recording.gid, title: t.recording.name, disambiguation: t.recording.comment || '', relations: (t.recording.relationships || []).map((r) => wsRelOf(r, linked)) },
         }));
         log('info', 'mbMediumRead', { m: m.position, n: m.tracks.length });
@@ -18341,6 +18354,9 @@
         if (a.aliasHits.length) log('info', 'artistAliasSuggested', { name: a.name, list: a.aliasHits.map((h) => `${h.c.name} (${h.alias})`).join(', ') });
       } catch (e) {
         console.warn('[Discogs-Credits] aliases', a.name, e);
+        // [3.43.1] (review) said in the log (until 3.43.0 silent – "no aliases"); after Discogs' rate limit no more are asked
+        log('warn', 'aliasFailed', { name: a.name, msg: e.message });
+        if (e && e.status === 429) break;
       }
     }
   }
@@ -28870,6 +28886,9 @@
     dgStatusTimer = setTimeout(() => {
       const releaseId = companionReleaseId();
       if (!S.sync.installed || !releaseId) return;
+      // [3.43.1] (review) the editor "Count exactly" opens in the background sends no marks: they would replace the marks of the
+      // editor you work in (the companion keeps one map per release)
+      if (S.autostartFrom === 'count') return;
       const site = viewSite();
       const items = [];
       const targetIndex = new Map();
@@ -29172,6 +29191,8 @@
       showMessage('ok', 'msg.openedTabs', { n: msg.n || 0 });
       log('info', 'openedTabs', { n: msg.n || 0 });
     } else if (msg.type === 'result') {
+      // [3.43.1] (review) only the result of a jump this tab sent (the companion relays results to every open dashboard)
+      if (msg.id && !S.sync.sent.has(String(msg.id))) return;
       S.sync.installed = true;
       const known = ['credit', 'track', 'artist', 'loading', 'none', 'no-tab'];
       S.sync.last = known.includes(msg.found) ? `found.${msg.found}` : '';
@@ -29198,7 +29219,11 @@
       lastShownAt = Date.now();
       S.sync.last = 'jumping';
       renderSync();
-      toDiscogs({ ...msg, id: nextId('c') });
+      // (3.43.1) an id of this tab (its page id and a counter): results of other tabs' jumps are not this one's
+      const id = `${syncPageId}:${nextId('c')}`;
+      S.sync.sent.add(id);
+      if (S.sync.sent.size > 50) S.sync.sent.delete(S.sync.sent.values().next().value);
+      toDiscogs({ ...msg, id });
     }, 250);
   }
 
