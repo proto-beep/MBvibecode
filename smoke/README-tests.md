@@ -509,6 +509,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   statstime: 3.45.0 (Z-STD): pauses not counted (threshold in ⚙ Cache), work in the record; the times per source, Median | Average; review: the pause right before "Enter edit", the script's scrolling no work, the second record on a page, releases counted once, Average pooled, the field normalised
+                                #   theme: 3.46.0 (Z-DM): the dark theme – as a window and in the page (Auto | Light | Dark, Auto live), the light theme unchanged, contrast ≥ 3 in the dark one, colours of their own for it, ↺; review: the dark stylesheet only when needed (written = read), white text on text colours, the tags beside the dark pickers, „Reset all“
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                                 #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
                                 #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
@@ -849,6 +850,7 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     "(c)" / "(p)") – a mark on each line, a click on the row "Copyright (c)" highlights its line
                                 #   review43: 3.43.1 / companion 1.11.1 (full review P2): a Discogs tab in the background (beat 30 s old) still
                                 #     "connected"; the result of another dashboard's jump not shown; the "Count exactly" editor sends no marks
+                                #   sitedark: companion 1.12.0 (Z-DM): the marks follow the site's dark theme (Discogs: a dark background, data-theme; YouTube: html[dark]); review: oklch(), "header-dark", "darkblue-light" stay light
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
