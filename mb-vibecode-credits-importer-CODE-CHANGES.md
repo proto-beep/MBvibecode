@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.49.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.50.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.50.0 · 2026-11-04
+
+Block 7 – Z-PRO, Z-TAR.
+
+- **`TEXT.parse`:** [S079] **`proseCredits(text)`** (new; `proseName`, `playRoles`): "… <instruments> (<names>), with (special) guest(s) <name> <instruments> [and …], and <name> …" → `{ credits: [[name, role, guest]], lead }` – the longest end of the words before the brackets that is instruments or voices; the guests split at commas and at "and" before two capitalised words, a part of only instruments the name's before; `lead` the words before "with" when they are no "(names)". `readUnit` reads it before the clauses (guests `[Guest]`), `lead` with `readUnit` again (not recognized: listed).
+- **`personCase`:** [S059] a word `^\p{Lu}\p{Lu}\p{Ll}{2,}$` (not `MC…`, `D…`, `O…`) in normal case ("SHelley").
+- **Dashboard:** `S.mbTracks[i].trackArtistNames` (the artist credit's names, `nameKey`); [S078] **`applyTrackArtistTracks()`** (new; after `applyPerformerTracks` in the import and on a change of S078): rows `dAllTracks`, level recording, a performing type (`PERFORMING_TYPES`), no company, hand-made, supplement or S046 row – the chosen tracks whose artist credit names the entry (`name`, `rawName`, `caseFrom`, `mbName`, or `mbid`), when some but not all; `s078` keeps the tracks before, `tarPositions` the label (`.dci-tartracks` below the role, `ruleIdsOf` S078); log `tarTracks`.
+- **Rules:** S078, S079 (new), S059's note.
+- **Texts:** `role.tarTracks`, `log.tarTracks`.
+- **Tests:** `t_text_lists.py` **prose**, **trackartists**; `register_golden.json` anew (the rules).
+- **Review of Block 7:** `proseCredits`: the words before "with" split (`proseSplit`, commas in brackets kept) – each part "<instruments> (<names>)" read (the words before the instruments aside only in the first and only a few plain words; names in brackets of two words or of a release artist), the other parts the `lead` (with brackets or digits: null); guests by **`proseGuest`** ("Name (roles)", "Name on X", else the longest name with the instruments after it in small letters); `proseName` without `PROSE_NOT_NAME` words, `PROPER_WORDS`, `TEXT_NOT_NAME`, `TEXT_PLACE_WORDS`, regions; `readUnit` counts the lead's parts. `personCase`: not `\p{Lu}J…`, `Ó…`. `applyTrackArtistTracks`: `TAR_TYPES` (instrument, vocal, performer), the entry's name variations and the row's `anv`, `s078.set` (switched off: back only while the row has those tracks; a row of S046: its `s046` gets them), **`rebaseFields(row, keys)`** (new; `TAR_FIELDS`), run once more after `resolveArtists`; **`copyRuleTracks(from, to)`** (new; `cloneRow`, `copyRowForEvent`: `s046`, `s078` with sets of their own). Edit note: "Tracks from the artist credits of the tracks in MusicBrainz: NAME (role): tracks" for rows staged.
+- **Tests (review):** `t_text_lists.py` **prose2**, **trackartists2** (new).
 
 ## Import 3.49.0 · 2026-11-04
 

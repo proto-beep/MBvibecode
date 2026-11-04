@@ -2,7 +2,7 @@
 adapter, as t_textcorpus.py does (the roles: the register and a few instruments as MusicBrainz has them).
 
 Cases: hyphen, ignorelines, linernotes (3.48.0), rolesplit, roles, places, oldmarks, exceptread, exceptworks, exceptlayouts, rolesplit2,
-exceptworks2 (3.49.0); `python3 t_text_lists.py <case> …` runs only those."""
+exceptworks2 (3.49.0); prose, trackartists, prose2, trackartists2 (3.50.0); `python3 t_text_lists.py <case> …` runs only those."""
 import json
 import subprocess
 import harness as H  # noqa: F401 – used by the cases
@@ -508,6 +508,187 @@ End quote from Space Is the Place by Sun Ra
         n3 = pg.evaluate(NOTES)
         print('D)', [x[:3] for x in n3])
         results.append([x[:3] for x in n3] == [['1', 'cover', ''], ['2', 'quote', 'found'], ['3', 'cover', ''], ['3', 'arrangement', 'found']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_prose():
+    """Credits Importer 3.50.0 (collected item Z-PRO, S079): "Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal
+    and jaw harp, and SHelley Hirsch vocal." – David Watson highland bagpipes, Makigami Koichi vocal and jaw harp as a guest, Shelley Hirsch
+    (S059: two capitals before small letters a slip – "SHelley") vocal as a guest; "Recorded live at Café Oto, with special guests …" – the
+    words before "with" read as usual (the place); "with guests from all over the world" no credit; names as "DAngelo" stay."""
+    got = read([{'text': 'Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp, and SHelley Hirsch vocal.'},
+                {'text': 'Recorded live at Café Oto, with special guests Jane Roe saxophone and John Doe piano and drums.'},
+                {'text': 'A record with guests from all over the world.'}, {'text': 'DAngelo Smith - vocals'}, {'text': 'JOhn Doe - bass'}])
+    for g in got:
+        print('  ', g and g['credits'], g and g['companies'], g and g['unrecognized'])
+    if None in got:
+        print('Ergebnis: FEHLER', [False])
+        return
+    ok = [got[0]['credits'] == [['David Watson', 'highland bagpipes'], ['Makigami Koichi', 'vocal [Guest]'], ['Makigami Koichi', 'jaw harp [Guest]'], ['Shelley Hirsch', 'vocal [Guest]']]
+          and not got[0]['unrecognized'],
+          got[1]['credits'] == [['Jane Roe', 'saxophone [Guest]'], ['John Doe', 'piano [Guest]'], ['John Doe', 'drums [Guest]']] and got[1]['companies'] == [['Café Oto', 'Recorded At']],
+          not got[2]['credits'] and bool(got[2]['unrecognized']),
+          got[3]['credits'] == [['DAngelo Smith', 'vocals']] and got[4]['credits'] == [['John Doe', 'bass']]]
+    print('Ergebnis:', 'OK' if all(ok) else 'FEHLER', ok)
+
+
+def case_trackartists():
+    """Credits Importer 3.50.0 (collected item Z-TAR, S078; the maintainer: "die artists teil der recording artists sind und daher leicht den
+    korrekten tracks zugeordnet werden können"): the Throats credits pasted on a release whose tracks name their artists – David Watson on
+    all, Makigami Koichi on tracks 2 and 4, Ayako Koichi on track 3.
+    A) Makigami Koichi's harmonic overtone singing and jaw harp on tracks 2 and 4, Ayako Koichi's jaw harp on track 3 (said at the row,
+       rule S078); David Watson's highland bagpipes and composition on all four.
+    B) S078 switched off: all on all tracks again; on: as in A."""
+    WATSON, MAKIGAMI, AYAKO = H.uid('7a7a7a7a', 1), H.uid('7a7a7a7a', 2), H.uid('7a7a7a7a', 3)
+    H.TRACK_AC.update({0: [(WATSON, 'David Watson')], 1: [(WATSON, 'David Watson'), (MAKIGAMI, 'Makigami Koichi')],
+                       2: [(WATSON, 'David Watson'), (AYAKO, 'Ayako Koichi')], 3: [(WATSON, 'David Watson'), (MAKIGAMI, 'Makigami Koichi')]})
+    TEXT = 'David Watson - highland bagpipes, composition\nMakigami Koichi -harmonic overtone singing, jaw harp\nAyako Koichi -jaw harp'
+    H.attr(9201, 'jaw harp', 14, 14)
+    H.attr(9202, 'Great Highland bagpipe', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(),
+      (tr.querySelector('.dci-tartracks') || { textContent: '' }).textContent.trim()])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        r = pg.evaluate(ROWS)
+        print('A)', r)
+        by = {(n, role): (t, note) for n, role, t, note in r}
+        a_ok = by.get(('Makigami Koichi', 'harmonic overtone singing'), ('', ''))[0] == '2 of 4 tracks' and by.get(('Makigami Koichi', 'jaw harp'), ('', ''))[0] == '2 of 4 tracks' \
+            and 'artist: 2, 4 (rule S078)' in by.get(('Makigami Koichi', 'jaw harp'), ('', ''))[1] \
+            and by.get(('Ayako Koichi', 'jaw harp'), ('', ''))[0] == '1 of 4 tracks' and 'artist: 3 (rule S078)' in by.get(('Ayako Koichi', 'jaw harp'), ('', ''))[1] \
+            and by.get(('David Watson', 'highland bagpipes'), ('', ''))[0] == '4 of 4 tracks' and not by.get(('David Watson', 'highland bagpipes'), ('', 'x'))[1] \
+            and by.get(('David Watson', 'composition'), ('', ''))[0] != '2 of 4 tracks'
+        results.append(a_ok)
+        pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
+        box = '#dci-rules [data-rf=tables] [data-rule-on=S078]'
+        pg.locator(box).scroll_into_view_if_needed()
+        pg.uncheck(box); pg.wait_for_timeout(800)
+        r2 = pg.evaluate(ROWS)
+        pg.check(box); pg.wait_for_timeout(800)
+        r3 = pg.evaluate(ROWS)
+        print('B) aus:', r2, '\n   an:', r3)
+        results.append(all(t in ('4 of 4 tracks', '') and not note for n, role, t, note in r2) and r3 == r)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_prose2():
+    """Review of 3.50.0 (collected item Z-PRO, S079; S059): what the sentence reader must not do.
+    A) the words before "with" hold credits – "Highland bagpipes (David Watson), drums (Ann Lee), with guests …" keeps David Watson's
+       bagpipes; "Recorded at Loft, Cologne by Jane Roe; drums (Ann Lee), with guests …" keeps the recording credit and the place;
+    B) no place, event or make as a person: "Solo piano (Tokyo)", "(Live At The Village Vanguard)", "… and Fender Rhodes", "Gibson Les Paul
+       guitar", "Jane Bass vocals" – not read (the line as before); "Highland bagpipes (tracks 1-2), …" no person "tracks 1-2";
+    C) a guest not read – "… and Tim Berne" – nothing of the sentence (all or nothing);
+    D) more forms of guests: "With special guests: Jane Roe (bass, vocals), John Doe (guitar)", "With guests Oliver Lake on saxophone",
+       "Drums (Ann Lee) – with guests …";
+    E) S059: Dutch IJ and names as "TJay" stay ("Rob IJzerman", "IJsbrand Kok", "TJay Smith"), "SHelley" → "Shelley"."""
+    cases = ['Highland bagpipes (David Watson), drums (Ann Lee), with guests Bob Fay piano',
+             'Recorded at Loft, Cologne by Jane Roe; drums (Ann Lee), with guests Bob Fay piano',
+             'Solo piano (Tokyo), with guests Ann Lee drums', 'An evening of piano (Live At The Village Vanguard), with guests Ann Lee drums',
+             'with guests John Doe piano and Fender Rhodes', 'A set with guests Gibson Les Paul guitar', 'With guest Jane Bass vocals',
+             'Highland bagpipes (tracks 1-2), with guests Bob Fay piano',
+             'A night with guests Jane Roe saxophone and Tim Berne',
+             'With special guests: Jane Roe (bass, vocals), John Doe (guitar)', 'With guests Oliver Lake on saxophone', 'Drums (Ann Lee) – with guests Bob Fay piano',
+             'Rob IJzerman - bass', 'IJsbrand Kok - piano', 'TJay Smith - drums', 'SHelley Hirsch - vocals']
+    got = read([{'text': t} for t in cases])
+    for c, g in zip(cases, got):
+        print('  ', c[:50].ljust(50), '|', g and g['credits'], g and g['companies'], g and g['unrecognized'])
+    if None in got:
+        print('Ergebnis: FEHLER', [False])
+        return
+    names = lambda g: sorted(set(c[0] for c in g['credits']))
+    ok = [['David Watson', 'Highland bagpipes'] in got[0]['credits'] and ['Ann Lee', 'drums'] in got[0]['credits'],
+          ['Jane Roe', 'Recorded By'] in got[1]['credits'] and ['Loft', 'Recorded At'] in got[1]['companies'],
+          all('Tokyo' not in names(g) and 'Fender' not in names(g) and 'Gibson Les Paul' not in names(g) and 'Jane' not in names(g)
+              and not any(n.startswith('Live At') or n.startswith('tracks') for n in names(g)) for g in got[2:8]),
+          got[8]['credits'] == [] and got[8]['unrecognized'],
+          got[9]['credits'] == [['Jane Roe', 'bass [Guest]'], ['Jane Roe', 'vocals [Guest]'], ['John Doe', 'guitar [Guest]']]
+          and got[10]['credits'] == [['Oliver Lake', 'saxophone [Guest]']] and got[11]['credits'] == [['Ann Lee', 'Drums'], ['Bob Fay', 'piano [Guest]']],
+          [g['credits'][0][0] for g in got[12:]] == ['Rob IJzerman', 'IJsbrand Kok', 'TJay Smith', 'Shelley Hirsch']]
+    ok = [bool(x) for x in ok]
+    print('Ergebnis:', 'OK' if all(ok) else 'FEHLER', ok)
+
+
+def case_trackartists2():
+    """Review of 3.50.0 (collected item Z-TAR, S078).
+    A) Not for other roles: Ayako Koichi's recording (an engineer) stays on all tracks, her jaw harp on track 3.
+    B) Tracks changed by hand stay when S078 is switched off (Makigami Koichi's jaw harp on track 2 only); the other rows go back to all.
+    C) Linked and staged: the edit note says where the tracks come from ("Tracks from the artist credits of the tracks in MusicBrainz:
+       Ayako Koichi (jaw harp): 3")."""
+    WATSON, MAKIGAMI, AYAKO = H.uid('7a7a7a7a', 1), H.uid('7a7a7a7a', 2), H.uid('7a7a7a7a', 3)
+    H.TRACK_AC.update({0: [(WATSON, 'David Watson')], 1: [(WATSON, 'David Watson'), (MAKIGAMI, 'Makigami Koichi')],
+                       2: [(WATSON, 'David Watson'), (AYAKO, 'Ayako Koichi')], 3: [(WATSON, 'David Watson'), (MAKIGAMI, 'Makigami Koichi')]})
+    H.attr(9201, 'jaw harp', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[9303] = (AYAKO, 'Ayako Koichi')  # (her entity for the relationship editor)
+    TEXT = 'Makigami Koichi -jaw harp\nAyako Koichi -jaw harp, recording'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), (tr.querySelector('.dci-tartracks') || { textContent: '' }).textContent.trim(), tr.dataset.row])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        r = pg.evaluate(ROWS)
+        print('A)', [x[:4] for x in r])
+        by = {(x[0], x[1]): x for x in r}
+        results.append(by[('Ayako Koichi', 'recording')][2] == '4 of 4 tracks' and by[('Ayako Koichi', 'jaw harp')][2] == '1 of 4 tracks'
+                       and by[('Makigami Koichi', 'jaw harp')][2] == '2 of 4 tracks')
+        rid = by[('Makigami Koichi', 'jaw harp')][4]
+        pg.click(f'tr[data-row="{rid}"] [data-act=tracks-toggle]'); pg.wait_for_timeout(200)
+        pg.click(f'tr[data-tracksrow="{rid}"] input[data-f=track][data-i="3"]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
+        box = '#dci-rules [data-rf=tables] [data-rule-on=S078]'
+        pg.locator(box).scroll_into_view_if_needed()
+        pg.uncheck(box); pg.wait_for_timeout(800)
+        r2 = {(x[0], x[1]): x for x in pg.evaluate(ROWS)}
+        print('B)', [x[:4] for x in r2.values()])
+        results.append(r2[('Makigami Koichi', 'jaw harp')][2] == '1 of 4 tracks' and r2[('Ayako Koichi', 'jaw harp')][2] == '4 of 4 tracks'
+                       and not any(x[3] for x in r2.values()))
+        pg.check(box); pg.wait_for_timeout(800)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        pg.evaluate("document.querySelectorAll('#dci-rules [data-act=rules-close], #dci-rules .dci-close').forEach(b => b.click())")
+        pg.wait_for_timeout(300)
+        pg.evaluate("""[...document.querySelectorAll('section.dci-group')].filter(g => /Ayako/.test(g.textContent)).forEach(g => { const b = g.querySelector('[data-act=name-use]'); if (b) b.click(); })""")
+        pg.wait_for_timeout(2500)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        note = pg.evaluate("(document.getElementById('edit-note-text') || { value: '' }).value")
+        line = [ln for ln in note.split('\n') if 'artist credits of the tracks' in ln]
+        print('C)', line)
+        results.append(line == ['Tracks from the artist credits of the tracks in MusicBrainz: Ayako Koichi (jaw harp): 3.'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
