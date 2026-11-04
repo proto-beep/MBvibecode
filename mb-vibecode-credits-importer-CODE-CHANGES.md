@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.44.1, Companion 1.6.0 – 1.11.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.45.0, Companion 1.6.0 – 1.11.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.45.0 · 2026-11-04
+
+Block 2 – Z-STD.
+
+- **`STATS_TIME_KEY`** ('dci-stats-time': 'mean', else the median), **`STATS_IDLE_KEY`** ('dci-stats-idle', 300 s), `statIdleMs()`; both in `SETTINGS_KEYS`, `TOPIC_KEYS.statistics` / `.cache`. ⚙ Cache: `data-set="stats-idle"` beside `stats-on` (empty = default).
+- **`statActivity(e)`** (new; `initOnce` adds it once for click, keydown, pointerdown (capture), wheel, touchmove (capture, passive) and visibilitychange): a gap since `S.statLastAct` (or `S.statStart`) of at least the threshold adds to `S.statIdle`; hidden: the pause starts then.
+- **Records:** `idle: S.statIdle` in `statSnapshot`; at the confirmation `work = armedAt − start − idle` (beside `ms`). **`statTime(r)`** (new): `work`, else `ms` – used by `statAgg` (perRelease, perRel, per period) and `statMore` (fastest). `statMore` collects `m.srcTime` (source → release → { ms, rels, supp }).
+- **`statSourcesHtml(m, top, srcName)`** (new): the switch (`data-act="stats-time-view"`), a table `.dci-stats-srct` (source, releases, per release, per relationship, with supplement: n · per release); `statMedian`, `statMean`. Click case `stats-time-view`.
+- **Texts:** `stats.timeView`, `stats.time.median`, `stats.time.mean`, `stats.srcT.n`, `stats.srcT.perRelease`, `stats.srcT.perRel`, `stats.srcT.supp`, `settings.statsIdle`, `settings.statsIdleTitle`.
+- **Tests:** `t_ui_settings.py statstime` (A a pause of 3 s with the threshold 2: idle and work in the record; B the table, Median and Average, remembered).
+- **Review of Block 2:** `statSnapshot` closes the open gap first (`statActivity({ type: 'snapshot' })` – the arm listener runs before `statActivity` on the same click). `statActivity` ignores events with `isTrusted === false`, reads the threshold only for a gap of a second or more; listeners now click, keydown, pointerdown (capture) and wheel, touchmove (capture, passive) instead of scroll. `runStatJob`: `work` only when the job's `rec` has `idle` (not for jobs armed by 3.44.x); confirmed on the editor's page (`!final`) and `S.statStart === rec.start`: `S.statStart = armedAt`, `S.statIdle −= rec.idle`, `S.statLastAct` at least `armedAt`. `statMore`: `m.srcRel`, `m.suppRel` (source → Set of mbids); `statSourcesHtml` rows by releases, "with supplement" from `m.suppRel`, Average per relationship Σms / Σrels; `stats.withSupp` from `m.suppRel`. `stats-idle` and `alias-max`: `el.value` set to the stored value.
+- **Tests (review):** `t_ui_settings.py statstime` C (a pause with the script's scrolling, then straight "Enter edit"; the second record from the first "Enter edit" on), D (a release submitted twice; Average per relationship pooled; "with a supplement: 1"), E (100000 → 86400); `t_ui_settings.py statsmore` and `t_sources_bandcamp.py youtube` read the card "Sources" as its table.
 
 ## Import 3.44.1 · 2026-11-04
 
