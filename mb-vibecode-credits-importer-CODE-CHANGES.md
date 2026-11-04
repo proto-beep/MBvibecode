@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.42.8, Companion 1.6.0 – 1.11.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.43.1, Companion 1.6.0 – 1.11.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,25 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.43.1 · 2026-11-04
+
+Full review, package P2 (sources, release page, companion); Companion 1.11.1.
+
+- **`completeMedia`:** the rebuilt tracks carry `'artist-credit'` from `t.artistCredit.names` (gid, name, joinPhrase) → `trackArtists` in `init`, so `performersOf`/`coverAutoNow` see them.
+- **DISCOGS:** `PACE_KEY` ('dci-gap-last'), `pace()` (new) – `getJson` waits for 2.5 s since the last request; a 429 throws an error with `status: 429`. `aliases(id)` goes through `getJson` (no silent `[]`). `gapDiscogs` no longer paces itself. `resolveViaAliases`: a failure is logged (`log.aliasFailed`, new text) and after a 429 the loop stops.
+- **Companion messaging:** `syncPageId` (new, per page); the jump id is `${syncPageId}:c<n>`, kept in `S.sync.sent` (a Set of the last 50); `onFromDiscogs` ignores a `result` whose id this tab did not send.
+- **`sendDiscogsStatus`:** returns early when `S.autostartFrom === 'count'`.
+- **Companion 1.11.1:** `liveTabs` keeps a tab whose last beat said `visible: false` for `BEAT_HIDDEN_MS`; the key is deleted only after `BEAT_HIDDEN_MS + 60 s`.
+- **Tests:** `t_companion_discogs.py review43` (A hidden tab, B foreign result, C count tab); `t_works_more.py coverworks` D "Track-Artist, Medium nachgeladen" (`WS_NO_RELS`); `harness.py js_tracks` gives `artistCredit`.
+
+## Import 3.43.0 · 2026-11-04
+
+Full review (Q-cx), package P1 – the text adapter; rules S074 – S077 in the register (`TEXT_RULES`); corpus lines for every finding.
+
+- **`TEXT`:** `NAME_TRACKS`, `EXCEPT_TRACKS` (new constants). `splitBy(c)` (new, S075): a clause is split before a second "<verb> by" joined with and/&/slash; `clauses()` maps through it. `placeOf`: a trailing `(…)` without digits becomes the area.
+- **`parse`:** `namesScoped(side)` (new) replaces the inner work of `names()`: brackets mask commas/&/and before the split, a release artist (`bandNames`) is kept whole or joined back (S077), the track list in brackets after a name is resolved (S074) → `[{ name, scope }]`; `names()` maps to the names. `places(verb, tail)` (new): the tail after "at" split at ", <verb> at" (own verb) and " and <Two Capitalised Words>" (same verb), each through `place()`; used by both at-paths of the by-sentence and the "verb … at" sentence. By-path: `namesScoped(right)` with per-name scopes; a name with " in/for/with " is cut there, the rest to `unknownParts` (S075). `byRoles`: a phrase with a separator is read part by part first, the whole phrase as a fallback (`whole()`). `readClause`: ≥ 2 bracket groups → `namesWithRoles(clause)` (S076); S055 items split after ")" too; the left side of "Name – roles" through `names()` (`lefts`, S077; `lineLead` only for one name); "Role: names" with per-name scopes. `readUnit`: a clause that gives nothing goes to `unknownParts` when the line has several (S075). `roleThenName`: a name with `:`, `–`, `—`, ` - ` or `(` is skipped. `readLine`: an `EXCEPT_TRACKS` line with a track word (or "except/not" before a number) → `unrecognized` (S074); S071 studio line: not a role (`isRole`, `… By`, additional/live/field/… first), its own `scope` first; "and Name" line: `namesScoped`, scope of the name, then of the line, then of the line above. `headingLists`: the name-above check only for instrument headings (`!h.role`).
+- **Tests:** `smoke/text_corpus.json` 24 lines (3.43.0), `register_golden.json` renewed (S074 – S077); `t_sources_bandcamp.py labelpage` B: "Jane Roe & Friends" on Jane Roe's page is one credit of the band with its link (S077; until 3.42.8 cut at "&").
 
 ## Import 3.42.8 · 2026-11-03
 
