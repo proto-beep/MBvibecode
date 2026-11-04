@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.43.2 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.43.3 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.43.3
+
+Full review, part 4: works, dates and the created works (package P4, with the first finding of P5).
+
+#### Fixed
+
+- **"ended" of an event's date:** a begin-only date typed into the head of an event with "ended" ticked (MusicBrainz: "from 1998 to ????") took the pool's entry of the same year without it – and was staged without "ended" (or with it, the other way round). The entry is reused only when "ended" matches. Prio A.
+- **The list of works created in this browser and not linked yet** is matched by the recording, no longer by the track's index: a changed tracklist, or a medium that could not be read, purged it for good (the work in MusicBrainz was forgotten by the safety list). An entry whose recording is not among the tracks read is kept, not planned; only a link MusicBrainz has takes a work off the list. Prio A.
+- **A pool entry edited, "update n rows?" declined:** the rows keep their date as their own – until now they stayed "of the entry", so the event heads showed the entry's new date while the rows staged the old one.
+- **"from 2015 to ????" pasted** into the year of an event's date ticks "ended" like the other date fields (it was skipped: "to present" was staged).
 
 ### Import 3.43.2
 

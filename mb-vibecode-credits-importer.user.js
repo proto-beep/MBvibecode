@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.2
+// @version      3.43.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -15839,18 +15839,29 @@
 
   /** Drops works that are linked in MB by now and restores the others as planned links. */
   function syncCreatedWorks() {
-    const list = readCreatedWorks().filter((x) => {
-      const track = S.mbTracks[x.i];
-      return track && track.recordingGid === x.rec && !S.existing.workLinks.has(`${x.rec}|${x.gid}`);
+    // (3.43.3, review) a work is matched by its recording (the stored index is refreshed – the tracklist may have changed); a
+    // recording not among the tracks read (a medium that could not be read) is kept, not dropped; only a link MusicBrainz has takes
+    // a work off the list (until 3.43.2 a changed index or a medium read failed purged the list for good)
+    const all = readCreatedWorks();
+    let changed = false;
+    const list = all.filter((x) => {
+      const track = S.mbTracks.find((t) => t.recordingGid === x.rec);
+      if (track && track.idx !== x.i) {
+        x.i = track.idx;
+        changed = true;
+      }
+      return !S.existing.workLinks.has(`${x.rec}|${x.gid}`);
     });
-    writeJson('localStorage', CREATED_KEY, list);
+    if (changed || list.length !== all.length) writeJson('localStorage', CREATED_KEY, list);
     for (const x of list) {
+      if (!S.mbTracks.some((t) => t.recordingGid === x.rec)) continue;
       if (!S.workPlan.has(x.i)) {
         S.workPlan.set(x.i, { gid: x.gid, title: x.title, origin: 'created', flags: new Set(), date: x.date || null, dateOpen: !!x.date });
       }
     }
     if (!S.noteDiscogsId) S.noteDiscogsId = (list.find((x) => x.discogsId) || {}).discogsId || '';
-    return list;
+    // (the works planned here: those whose recording is among the tracks read)
+    return list.filter((x) => S.mbTracks.some((t) => t.recordingGid === x.rec));
   }
 
   // --- Emergency reset --------------------------------------------------------------------
@@ -20674,7 +20685,8 @@
           saveCreatedWorkDate(i);
         });
       } else {
-        entry = S.datePool.find((d) => formatDateValue(d) === formatDateValue(value)) || { id: newPoolId(), name: '', ...value };
+        // (3.43.3, review) an entry of the pool is reused only with the same "ended" (the text of "1998" and "1998, ended" is one)
+        entry = S.datePool.find((d) => formatDateValue(d) === formatDateValue(value) && !!d.ended === !!value.ended) || { id: newPoolId(), name: '', ...value };
         if (!S.datePool.includes(entry)) S.datePool.push(entry);
         rows.forEach((r) => Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true }));
       }
@@ -24001,6 +24013,12 @@
           p.date = { ...fieldsFromDate(entry), poolId: entry.id };
           saveCreatedWorkDate(i);
         });
+        renderWorks();
+      } else if (using.length || usingPlans.length) {
+        // (3.43.3, review) not updated: the rows keep their date as their own (until 3.43.2 they stayed "of the entry" – the event
+        // heads showed the entry's new date while the rows staged the old one)
+        using.forEach((r) => { r.date = { ...r.date, poolId: null, mx: false }; });
+        usingPlans.forEach(([, p]) => { p.date = { ...p.date, poolId: null }; });
         renderWorks();
       }
     } else {
@@ -32185,7 +32203,10 @@
       })();
       Object.entries(fields).forEach(([k, v]) => {
         const inp = box && box.querySelector(`[data-f="ed-${k}"]`);
-        if (inp && k !== 'ended') inp.value = v;
+        if (!inp) return;
+        // (3.43.3, review) "from 2015 to ????" ticks "ended" like the other date fields (it was skipped: "to present" was staged)
+        if (k === 'ended') inp.checked = !!v;
+        else inp.value = v;
       });
       return;
     }
