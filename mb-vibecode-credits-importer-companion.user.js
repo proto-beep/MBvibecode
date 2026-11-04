@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.11.1
+// @version      1.12.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.11.1';
+  const COMPANION_VERSION = '1.12.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -298,6 +298,8 @@
   // DISCOGS_SIDE and BANDCAMP_SIDE: which release the page shows, which page a command needs, how a credit is found.
 
   function initSourceSide(side) {
+    // [1.12.0] (Z-DM) the marks follow the site's dark theme from the start
+    ensureStyle();
     // sessionStorage survives navigation within the tab, so the tab keeps its id.
     let tabId = sessionStorage.getItem('dci-tab-id');
     if (!tabId) {
@@ -399,6 +401,7 @@
         return;
       }
       if (!multiEl) {
+        ensureStyle();
         multiEl = document.createElement('div');
         multiEl.id = 'dci-multi';
         multiEl.setAttribute('role', 'status');
@@ -580,8 +583,102 @@
       .dci-bc-offtext { opacity: 0.45; text-decoration: line-through; }
       /* [1.9.0] a date and a track group the dashboard uses, in its colours (dates purple, tracks orange) */
       .dci-txt-date { text-decoration: underline dashed #736dab; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-      .dci-txt-tracks { text-decoration: underline dashed #eb743b; text-decoration-thickness: 2px; text-underline-offset: 3px; }`;
-    document.head.appendChild(style);
+      .dci-txt-tracks { text-decoration: underline dashed #eb743b; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+      /* [1.12.0] (Credits Importer 3.46.0, Z-DM) the site shown dark (its own theme, or a dark background): the marks for it */
+      html.dci-site-dark .dci-dg-skip { background: #5c5a66; color: #ecebf2; }
+      html.dci-site-dark .dci-dg-staged { background: #8a84c4; }
+      html.dci-site-dark .dci-dg-unmapped { color: #1f1d29; }
+      html.dci-site-dark .dci-dg-unmapped-line { background-color: rgba(224, 168, 0, 0.22) !important; }
+      html.dci-site-dark .${HIGHLIGHT} { background-color: rgba(235, 116, 59, 0.24) !important; }
+      html.dci-site-dark .dci-bc-hl { background-color: rgba(235, 116, 59, 0.3) !important; }
+      html.dci-site-dark #dci-artwork { background: linear-gradient(#26242e, #26242e) padding-box, linear-gradient(135deg, #ba478f, #eb743b) border-box; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6); }
+      html.dci-site-dark #dci-artwork .dci-art-toggle { border-color: #4a4758; background: #33303f; color: #ecebf2; }
+      html.dci-site-dark .dci-txt-date { text-decoration-color: #a9a3e0; }
+      html.dci-site-dark .dci-txt-tracks { text-decoration-color: #f29a6c; }
+      html.dci-site-dark #dci-multi { background: #3a3220 !important; color: #f3dc94 !important; border-color: #6b5a2a !important; }`;
+    // ((1.12.0, review) a page without a head – an XML view – gets it too)
+    (document.head || document.documentElement).appendChild(style);
+    watchSiteDark();
+  }
+
+  /**
+   * [1.12.0] (Credits Importer 3.46.0, Z-DM; Q-eg) Whether the site is shown dark: YouTube's dark theme (html[dark]), Discogs' (a
+   * class or data attribute "dark" on html or body), else the lightness of the page's background (Bandcamp's own colours,
+   * a dark-mode extension). (Its own classes do not count.)
+   */
+  function siteDark() {
+    const h = document.documentElement;
+    const b = document.body;
+    if (isYoutube && h.hasAttribute('dark')) return true;
+    // ((1.12.0, review) whole words only: "dark", "dark-mode", "theme-dark" … – not "header-dark"; the theme attribute "dark" or "…-dark")
+    const DARK_CLASSES = ['dark', 'dark-mode', 'darkmode', 'dark-theme', 'theme-dark', 'is-dark', 'night', 'night-mode'];
+    const flag = (el) => !!el && (String(el.className || '').split(/\s+/).some((c) => DARK_CLASSES.includes(c.toLowerCase()))
+      || ['data-theme', 'data-color-mode', 'data-color-scheme', 'data-bs-theme'].some((a) => /^(?:dark|[\w-]*[-_]dark)$/i.test(el.getAttribute(a) || '')));
+    if (flag(h) || flag(b)) return true;
+    const bg = (el) => {
+      if (!el) return null;
+      const m = rgbOf(getComputedStyle(el).backgroundColor);
+      if (!m || m.length < 3 || (m.length > 3 && Number(m[3]) === 0)) return null;
+      const [r, g, bl] = m.slice(0, 3).map((x) => Number(x) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    // (the first background of its own from the page's main parts on: body, html; YouTube's app; Bandcamp's page)
+    const parts = [document.querySelector('ytd-app'), document.getElementById('pgBd'), b, h];
+    for (const el of parts) {
+      const l = bg(el);
+      if (l != null) return l < 0.2;
+    }
+    return false;
+  }
+  /**
+   * [1.12.0] (review) A colour as [r, g, b, a] – also oklch(), lab(), color(…) as the browser gives them (through a canvas).
+   */
+  let rgbCanvas = null;
+  function rgbOf(css) {
+    const c = String(css || '');
+    if (/^rgba?\(/i.test(c)) return c.match(/[\d.]+/g);
+    if (!c || c === 'transparent') return null;
+    try {
+      rgbCanvas = rgbCanvas || document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+      rgbCanvas.clearRect(0, 0, 1, 1);
+      // (a colour the canvas does not know leaves the transparent one)
+      rgbCanvas.fillStyle = 'rgba(0, 0, 0, 0)';
+      rgbCanvas.fillStyle = c;
+      rgbCanvas.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = rgbCanvas.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255].map(String);
+    } catch {
+      return null;
+    }
+  }
+  let siteDarkWatched = false;
+  function watchSiteDark() {
+    const apply = () => {
+      try {
+        document.documentElement.classList.toggle('dci-site-dark', siteDark());
+      } catch {
+        /* (no page yet) */
+      }
+    };
+    apply();
+    if (siteDarkWatched) return;
+    siteDarkWatched = true;
+    // (a theme switched while the page is open: html's and body's attributes, the system's choice)
+    let t = 0;
+    const later = () => {
+      clearTimeout(t);
+      t = setTimeout(apply, 120);
+    };
+    const mo = new MutationObserver(later);
+    const opts = { attributes: true, attributeFilter: ['class', 'dark', 'data-theme', 'data-color-mode', 'data-color-scheme', 'style'] };
+    mo.observe(document.documentElement, opts);
+    if (document.body) mo.observe(document.body, opts);
+    try {
+      const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq && mq.addEventListener) mq.addEventListener('change', later);
+    } catch {
+      /* (no matchMedia) */
+    }
   }
 
   function highlight(el) {
