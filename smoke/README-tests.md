@@ -508,6 +508,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   statstime: 3.45.0 (Z-STD): pauses not counted (threshold in ⚙ Cache), work in the record; the times per source, Median | Average; review: the pause right before "Enter edit", the script's scrolling no work, the second record on a page, releases counted once, Average pooled, the field normalised
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                                 #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
                                 #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
