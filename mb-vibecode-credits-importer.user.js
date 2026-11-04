@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.5
+// @version      3.44.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.44.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.44.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.44.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2253,6 +2253,11 @@
       "em.evClose": "Close event {n}",
       "em.evEditTitle": "Event {n} – what you set here goes for all its rows ({rows})",
       "em.evLevel": "Level:",
+      "em.skipTick": "This event is on “Skip” – a click on its level takes it back",
+      "em.levelBack": "Skip – a click puts the event on “{level}” again",
+      "em.levelNextWork": "Level – a click puts the event’s rows on “Work” (into the works matrix)",
+      "log.emEvSkip": "{name}: an event on “Skip” ({n} rows; a click on its level takes it back)",
+      "log.emEvBack": "{name}: an event taken back from “Skip” to {level} ({n} rows)",
       "em.evDate": "Date:",
       "em.evPool": "from the pool:",
       "em.evTracks": "Tracks:",
@@ -20480,10 +20485,13 @@
     const events = [];
     const evByKey = new Map();
     for (const r of rows) {
-      if (r.level === 'skip' || r.level === 'work') continue;
-      const k = eventKeyOf(r);
+      if (r.level === 'work') continue;
+      // [Z-CLV] (3.44.0) an event put on "Skip" by a click on its level stays at its place ("① Skip"; a click takes it back)
+      if (r.level === 'skip' && !r.emSkipEv) continue;
+      const k = r.level === 'skip' ? `skip|${r.emSkipEv}` : eventKeyOf(r);
       if (evByKey.has(k)) continue;
-      const e = { key: k, level: r.level, tracks: new Set(r.tracks), date: r.date ? { ...r.date } : null, n: 0 };
+      const from = r.level === 'skip' ? String(r.emSkipEv).split('|')[0] : r.level;
+      const e = { key: k, level: r.level, tracks: new Set(r.tracks), date: r.date ? { ...r.date } : null, n: 0, ...(r.level === 'skip' ? { skip: true, from, orig: r.emSkipEv } : {}) };
       evByKey.set(k, e);
       events.push(e);
     }
@@ -20498,13 +20506,14 @@
       return b ? [b.year, b.month || 0, b.day || 0].map((n, i) => String(n).padStart(i ? 2 : 4, '0')).join('-')
         : [d.by || d.ey || '9999', d.bm || d.em || '00', d.bd || d.ed || '00'].map((x, i) => String(x).padStart(i ? 2 : 4, '0')).join('-');
     };
-    events.sort((x, y) => (rank[x.level] ?? 3) - (rank[y.level] ?? 3) || (x.level === 'recording' ? y.tracks.size - x.tracks.size : 0)
+    const lvOf = (e) => (e.skip ? e.from : e.level);
+    events.sort((x, y) => (rank[lvOf(x)] ?? 3) - (rank[lvOf(y)] ?? 3) || (lvOf(x) === 'recording' ? y.tracks.size - x.tracks.size : 0)
       || (when(x) === when(y) ? 0 : !when(x) ? -1 : !when(y) ? 1 : when(x) < when(y) ? -1 : 1));
     events.forEach((e, i) => { e.n = i + 1; });
     for (const l of lines) {
       for (const r of l.rows) {
-        if (r.level === 'skip' || r.level === 'work') continue;
-        const k = eventKeyOf(r);
+        if (r.level === 'work' || (r.level === 'skip' && !r.emSkipEv)) continue;
+        const k = r.level === 'skip' ? `skip|${r.emSkipEv}` : eventKeyOf(r);
         if (!l.ev.has(k)) l.ev.set(k, []);
         l.ev.get(k).push(r);
       }
@@ -20531,7 +20540,7 @@
       const own = new Set(b.lines.flatMap((l) => [...l.ev.keys()]));
       const extra = S.emBlockEv.get(`${a.key}|${b.key}`) || new Set();
       b.events = shared ? events : events.filter((e) => own.has(e.key) || extra.has(e.key));
-      b.others = shared ? [] : events.filter((e) => !b.events.includes(e));
+      b.others = shared ? [] : events.filter((e) => !b.events.includes(e) && !e.skip);
     }
     return { lines, events, blocks, shared, join, evByKey };
   }
@@ -20548,11 +20557,13 @@
     // (3.42.8, review) not the box of the event's fields below (an error there opens no second one here)
     const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}` && !S.emEvDate.inline);
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
+    // [Z-CLV] (3.44.0) an event on "Skip": its number and the level as a button (a click takes it back)
+    if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e)}</th>`;
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
     return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
       data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
-      <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
+      ${evLevelBtn(e, a)}${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
       <button type="button" class="dci-textbtn dci-em-evdate${date ? ' dci-cl-has' : ''}" data-act="em-evdate-open" data-ev="${esc(e.key)}" aria-expanded="${dOpen}"
         title="${esc(tr('em.evDateOpenTitle'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">${esc(date || tr('cl.noDate'))}</button>${dOpen ? evDateBoxHtml(e, false, a) : ''}
         ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
@@ -20573,8 +20584,59 @@
       ${st && st.error ? `<span class="dci-err" data-el="evdate-error">${esc(st.error)}</span>` : ''}</div>`;
   }
 
-  /** [E4] (3.34.31) The rows of an entry in an event. */
-  const rowsInEvent = (a, evKey) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+  /** [E4] (3.34.31) The rows of an entry in an event; [Z-CLV] (3.44.0) of an event on "Skip" ("skip|<its key before>") those skipped with it. */
+  const rowsInEvent = (a, evKey) => (String(evKey).startsWith('skip|')
+    ? S.rows.filter((r) => r.artistKey === a.key && r.level === 'skip' && r.emSkipEv && `skip|${r.emSkipEv}` === evKey)
+    : S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey));
+
+  /**
+   * [Z-CLV] (3.44.0) The levels an event can be put on: those MusicBrainz has for the types of its rows (recording, release, release
+   * group, work), then "Skip" (Q-eh, Q-ei). The next one after the event's level; after "Skip" the level it had before.
+   */
+  function evLevels(a, e) {
+    const rows = a ? rowsInEvent(a, e.key) : [];
+    const cur = e.skip ? e.from : e.level;
+    return [...['recording', 'release', 'release_group', 'work'].filter((lv) => lv === cur || rows.some((r) => typeOnLevel(r, lv))), 'skip'];
+  }
+  function evLevelNext(a, e) {
+    const list = evLevels(a, e);
+    // a circle: after "Skip" the first level again (Recording) – from "Release" on to "Skip" and round, not back and forth
+    return e.skip ? list[0] : list[(list.indexOf(e.level) + 1) % list.length];
+  }
+  /** [Z-CLV] (3.44.0) The level of an event as a button: a click puts it on the next level (the tooltip names it). */
+  function evLevelBtn(e, a = null) {
+    const next = a ? evLevelNext(a, e) : null;
+    const title = !next ? '' : e.skip ? tr('em.levelBack', { level: tr(`level.${next}`) }) : next === 'work' ? tr('em.levelNextWork') : tr('cl.levelNext', { level: tr(`level.${next}`) });
+    return `<button type="button" class="dci-cl-level dci-em-lvbtn" data-act="em-evlevel-next" data-ev="${esc(e.key)}" data-n="${e.n}" data-level="${e.level}"${title ? ` title="${esc(title)}"` : ''}>${esc(tr(`level.${e.level}`))}</button>`;
+  }
+
+  /** [Z-CLV] (3.44.0) An event on "Skip" (its rows keep their level, tracks and date to come back to), or taken back from it. */
+  function emEventSkip(a, evKey, to = null) {
+    const rows = rowsInEvent(a, evKey);
+    if (!rows.length) return;
+    if (String(evKey).startsWith('skip|')) {
+      // back from "Skip": onto `to` (the first level of the circle) – a row that cannot be there onto the level it had
+      const was = String(evKey).slice(5).split('|')[0];
+      const lv = to || was;
+      rows.forEach((r) => {
+        delete r.emSkipEv;
+        const on = typeOnLevel(r, lv) ? lv : was;
+        levelOf(r, on);
+        if (on === 'recording' && !r.tracks.size) r.tracks = new Set(selTracks().map((x) => x.idx));
+        r.dateKeyed = true;
+      });
+      log('info', 'emEvBack', { name: a.mbName || a.name, level: tr(`level.${lv}`), n: rows.length });
+    } else {
+      rows.forEach((r) => {
+        levelOf(r, 'skip');
+        r.emSkipEv = evKey;
+      });
+      log('info', 'emEvSkip', { name: a.mbName || a.name, n: rows.length });
+    }
+    renderWorks();
+    rerenderGroup(a);
+    refresh();
+  }
 
   /**
    * [AE-3] (3.35.4) An event opened below its block: its level (the levels of MusicBrainz its rows' types have), its date (a
@@ -20583,7 +20645,8 @@
    */
   function emEventHtml(a, e) {
     const rows = rowsInEvent(a, e.key);
-    const levels = ['recording', 'release', 'release_group'].filter((lv) => lv === e.level || rows.some((r) => typeOnLevel(r, lv)));
+    // [Z-CLV] (3.44.0) all the levels MusicBrainz has for its rows, work and "Skip" too (Q-eh)
+    const levels = evLevels(a, e);
     const levelSeg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.evLevel'))}">${levels.map((lv) => `<button type="button" data-act="em-evlevel"
       data-ev="${esc(e.key)}" data-level="${lv}" aria-pressed="${lv === e.level}">${esc(tr(`level.${lv}`))}</button>`).join('')}</span>`;
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
@@ -20932,6 +20995,8 @@
     const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
     const ticks = b.events.map((e) => {
       const on = l.ev.has(e.key);
+      if (e.skip) return `<td class="dci-em-c-ev dci-em-c-skip"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''} disabled title="${esc(tr('em.skipTick'))}"
+        aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
       const ok = on || typeOnLevel(r, e.level);
       return `<td class="dci-em-c-ev"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
@@ -21074,11 +21139,12 @@
   }
 
   /** [E4] (3.35.0) The level, date and tracks of an event in short ("① Recording · 2024-08-14 · tracks 2, 5"). */
-  function evShortHtml(e) {
+  function evShortHtml(e, a = null) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
-    return `<span class="dci-em-evn">${circled(e.n)}</span> <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>
+    if (e.skip) return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}`;
+    return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}
       <span class="dci-cl-date${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
   }
 
@@ -21225,7 +21291,7 @@
         // [177] (3.38.10) the chip names the relationship as MusicBrainz does: "→ type" only without one
         return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null, a)}
           ${ltOf(l.rows[0]) ? '' : `<span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}
-          ${evs.map((e) => `<span class="dci-em-evchip">${evShortHtml(e)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
+          ${evs.map((e) => `<span class="dci-em-evchip${e.skip ? ' dci-em-evchip-skip' : ''}">${evShortHtml(e, a)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
           <span class="dci-status" data-emrows="${l.rows.map((x) => x.id).join(',')}"></span></div>`;
       }));
     } else {
@@ -21237,7 +21303,8 @@
         const shown = more || ls.length <= max + 1 ? ls : ls.filter((l, i) => i < max || !!lineAskHtml(l));
         const hidden = ls.length - shown.length;
         const ids = uniq(ls.flatMap((l) => l.ev.get(e.key)).map((r) => r.id)).join(',');
-        return `<div class="dci-em-cl" data-emev="${esc(e.key)}">${evShortHtml(e)} <span class="dci-em-sep" aria-hidden="true"></span>
+        // [Z-CLV] (3.44.0) an event on "Skip": grey, no target for chips dragged onto it
+        return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}" ${e.skip ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
           ${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
           : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
@@ -29569,6 +29636,8 @@
   /** [3.35.4] A row on another level, without drawing (setLevel; the event of an entry's matrix, AE-3): whether it was or is on works. */
   function levelOf(row, level) {
     delete row.scopeLevel;
+    // [Z-CLV] (3.44.0) a level chosen another way: no event on "Skip" any more (emEventSkip sets it again after this)
+    delete row.emSkipEv;
     delete row.mxSkipped;
     // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
     delete row.entrySkip;
@@ -30682,8 +30751,25 @@
         break;
       }
       case 'em-evlevel':
-        if (artist) emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
+        if (!artist) break;
+        // [Z-CLV] (3.44.0) "Skip" in the opened event too
+        if (btn.dataset.level === 'skip') emEventSkip(artist, btn.dataset.ev);
+        else emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
         break;
+      // [Z-CLV] (3.44.0) a click on the level of an event (compact lines, the head of its column): the next one, "Skip", back
+      case 'em-evlevel-next': {
+        if (!artist) break;
+        const m = entryModel(artist, shownRowsOf(artist).filter((r) => r.level !== 'work'));
+        const e = m.evByKey.get(btn.dataset.ev);
+        if (!e) break;
+        const next = evLevelNext(artist, e);
+        if (e.skip || next === 'skip') emEventSkip(artist, e.key, e.skip ? next : null);
+        else emEventLevel(artist, e.key, next);
+        // the focus on the level of the same event (its number stays) after the redraw
+        const again = S.overlay.querySelector(`[data-group="${artist.key}"] [data-act="em-evlevel-next"][data-n="${e.n}"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       case 'em-evpool':
         if (artist) emEventPool(artist, btn.dataset.ev, btn.dataset.id || '');
         break;
@@ -36657,6 +36743,10 @@
       #dci-overlay.dci-lvlc .dci-cl-level[data-level] { background: var(--lvl); color: var(--lvl-ink); }
       button.dci-cl-level { border: 0; cursor: pointer; }
       button.dci-cl-level:hover { filter: brightness(0.92); }
+      /* [Z-CLV] (3.44.0) an event on "Skip" at its place: grey, its level a button that takes it back */
+      .dci-em-evskip, .dci-em-c-skip { opacity: 0.6; }
+      .dci-em-evchip-skip { opacity: 0.6; }
+      .dci-cl-level[data-level="skip"] { background: #e3e1ea; color: #6d6a7c; }
       .dci-lvl-pick { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
       .dci-lvl-pick label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); }
       .dci-lvl-pick input[type="color"] { width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 22); padding: 0 2px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }

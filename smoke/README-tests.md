@@ -609,6 +609,8 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   levelclick: 3.44.0 (Z-CLV): the level of an event a button – Recording → Release → Skip (at its place) → Recording; an
+                                #     arranger to Work (works matrix); the head of the full matrix, ticks of a skipped event, "Skip" in the opened event
                                 #   review43: 3.43.5 (full review P6): "Remove" in a matrix line; pasted text through a redraw; the rules window in German
                                 #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed

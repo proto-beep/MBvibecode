@@ -708,7 +708,7 @@ EVEDIT = """(name) => { const g = [...document.querySelectorAll('section.dci-gro
 def case_evhead():
     """Credits Importer 3.35.4 (AE-3, on roles MusicBrainz has not on the new level): an event opened below its block.
     A) Part Man: ▸ in the head of ② (piano, track 2) opens it – "Event ② – … all its rows (1)", the levels of its types
-       (here Recording only – the test's MusicBrainz has instruments on recordings only), the date field, the dates of the
+       (here Recording only – the test's MusicBrainz has instruments on recordings only – and [3.44.0] Skip), the date field, the dates of the
        pool, the tracks with track 2 ticked; the head marked.
     B) Track 3 ticked: ② on tracks 2–3, still open, the focus on the box; both boxes taken off one after the other – the last
        one stays with a message (an event needs a track).
@@ -747,7 +747,7 @@ def case_evhead():
             pg.wait_for_timeout(400)
             a1 = pg.evaluate(EVEDIT, 'Part Man')
             print('A) vorher:', p0[0]['ev'] if p0 else None, '| offen:', a1)
-            results.append(bool(a1) and a1['title'] == 'Event ② – what you set here goes for all its rows (1)' and a1['levels'] == ['Recording*']
+            results.append(bool(a1) and a1['title'] == 'Event ② – what you set here goes for all its rows (1)' and a1['levels'] == ['Recording*', 'Skip']
                            and a1['date'] == '' and a1['tracks'] == [1] and a1['n'] == 4 and a1['open'] == ['② Recording track 2'])
             pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="2"]')
             pg.wait_for_timeout(400)
@@ -797,9 +797,9 @@ def case_evhead():
             kept2 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' .dci-em-kept').length", lvl)
             print('E) vorher:', e0[0]['ev'] if e0 else None, '| offen:', e1, '| Release:', e2, e2b[0]['ev'] if e2b else None,
                   '| zurück:', e3, '| Hinweis:', kept, kept2)
-            results.append(bool(e1) and e1['title'].endswith('(1)') and e1['levels'] == ['Recording*', 'Release']
-                           and bool(e2) and e2['title'].endswith('(2)') and e2['levels'] == ['Recording', 'Release*'] and e2b[0]['ev'] == ['① Release whole release']
-                           and bool(e3) and e3['levels'] == ['Recording*', 'Release'] and e3['tracks'] == [0, 1, 2, 3] and e3['title'].endswith('(1)')
+            results.append(bool(e1) and e1['title'].endswith('(1)') and e1['levels'] == ['Recording*', 'Release', 'Skip']
+                           and bool(e2) and e2['title'].endswith('(2)') and e2['levels'] == ['Recording', 'Release*', 'Skip'] and e2b[0]['ev'] == ['① Release whole release']
+                           and bool(e3) and e3['levels'] == ['Recording*', 'Release', 'Skip'] and e3['tracks'] == [0, 1, 2, 3] and e3['title'].endswith('(1)')
                            and kept == ['Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level Recording ok'] and kept2 == 0)
             pg.click(f'{lvl} .dci-em-evedit [data-act=em-evopen]')
             pg.wait_for_timeout(300)
@@ -1627,6 +1627,96 @@ def case_review43():
             c1 = pg.evaluate("(() => { const r = document.getElementById('dci-rules'); return r ? [r.hidden, document.getElementById('dci-rules-title').textContent.trim()] : null; })()")
             print('C) Regelfenster:', c0, '→ Deutsch:', c1, '| Fehler:', errs)
             results.append(c0 == 'Mapping rules' and c1 and c1[0] is False and c1[1] != 'Mapping rules' and not errs)
+        finally:
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_levelclick():
+    """Credits Importer 3.44.0 (collected item Z-CLV; Q-eh, Q-ei, Q-ej): the level of an event is a button wherever it shows.
+    A) Compact (lines by event): Solo Man's ① "Recording" is a button (the tooltip names the next level); clicks go through the levels
+       MusicBrainz has for his roles – Recording → Release → Skip → Recording; on "Skip" the event stays at its place, grey, "① Skip"
+       (its rows on "Skip"), a click takes it back to Recording on the same tracks.
+    B) An arranger (Discogs "Arranged By"): Work is in the circle – Recording → Release → Work (the rows into the works matrix).
+    C) The full matrix: the level in the head of the event's column is a button (the same circle); the ticks of an event on "Skip" are
+       shown, not changeable; the opened event offers "Skip" too."""
+    orig, rel = join_release()
+
+    def rel2():
+        d = rel()
+        d['extraartists'].append({'name': 'Arr Man', 'anv': '', 'role': 'Arranged By', 'tracks': '', 'id': 3075, 'join': ''})
+        return d
+    H.ARTISTS[3075] = (H.uid('dddddddd', 85), 'Arr Man')
+    H.discogs_release = rel2
+    # MusicBrainz's instrument on the release (44) and the arranger of a recording (297 there; the harness's 297 is the work's) and
+    # of a release (295), as on MusicBrainz – for this case only (caserun restores the harness)
+    H.lt(44, '67555849-61e5-455b-96e3-29733f0115f5', 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.lt(1297, '22661fb8-cdb7-4f67-8385-b2a8be6c9f0d', 'arranger', 'artist', 'recording', (1,))
+    H.lt(295, '34d5334e-a4c8-4b65-a5f8-bbcc9c81d13d', 'arranger', 'artist', 'release', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    LV = "(sel) => [...document.querySelectorAll(sel + ' [data-act=em-evlevel-next]')].map(b => [b.dataset.n, b.dataset.level, b.title])"
+    ROWS = "(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name).flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => { const b = tr.querySelector('[data-act=level][aria-pressed=true], .dci-cl-level[data-level]'); return b ? b.dataset.level : null; }))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            solo = sec_sel(pg, 'Solo Man')
+            seq = [pg.evaluate(LV, solo)]
+            skip_line = None
+            for k in range(3):
+                pg.click(f'{solo} [data-act=em-evlevel-next][data-n="1"]'); pg.wait_for_timeout(400)
+                seq.append(pg.evaluate(LV, solo))
+                if k == 1:
+                    skip_line = pg.evaluate("(sel) => { const l = document.querySelector(sel + ' .dci-em-cl.dci-em-skip[data-emskip]'); return l ? l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 40) : null; }", solo)
+            levels = [s0[0][1] if s0 else None for s0 in seq]
+            tracks = pg.evaluate("(sel) => (document.querySelector(sel + ' .dci-em-cl[data-emev] .dci-cl-tracks') || {}).textContent", solo)
+            print('A) Ebenen:', levels, '| Tooltip:', seq[0][0][2] if seq[0] else None, '| Skip am Platz:', skip_line, '| Tracks danach:', tracks)
+            results.append(levels == ['recording', 'release', 'skip', 'recording'] and seq[0][0][2].endswith('“Release”')
+                           and skip_line and skip_line.startswith('① Skip') and seq[2][0][2].endswith('“Recording” again'))
+            # B) the arranger: Work in the circle
+            arr = sec_sel(pg, 'Arr Man')
+            a0 = pg.evaluate(LV, arr)
+            steps = [a0[0][1] if a0 else None]
+            for _ in range(3):
+                cur = pg.evaluate(LV, arr)
+                if not cur:
+                    break
+                pg.click(f'{arr} [data-act=em-evlevel-next][data-n="1"]'); pg.wait_for_timeout(500)
+                cur = pg.evaluate(LV, arr)
+                steps.append(cur[0][1] if cur else 'work?')
+            wrows = pg.evaluate("[...document.querySelectorAll('th.dci-mx-col')].map(t => t.textContent).join(' ').includes('Arr Man')")
+            print('B) Arrangeur:', steps, '| in der Werke-Matrix:', wrows)
+            results.append(steps[0] == 'recording' and 'release' in steps and steps[-1] == 'work?' and wrows)
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.evaluate("localStorage.setItem('dci-view', JSON.stringify('full')); localStorage.removeItem('dci-remember:%s')" % H.REL)
+            pg.close()
+            # C) the full matrix
+            pg2, errs2 = H.open_mb_edit(ctx, companion=False, view='full')
+            pg2.on('dialog', lambda d: d.accept())
+            pg2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg2)
+            H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg2.wait_for_timeout(1200)
+            solo2 = sec_sel(pg2, 'Solo Man')
+            h0 = pg2.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-act=em-evlevel-next]')].map(b => b.dataset.level)", solo2)
+            pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evlevel-next][data-n="1"]'); pg2.wait_for_timeout(400)
+            pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evlevel-next][data-n="1"]'); pg2.wait_for_timeout(400)
+            h1 = pg2.evaluate("(sel) => { const th = document.querySelector(sel + ' th.dci-em-evskip'); const t = [...document.querySelectorAll(sel + ' td.dci-em-c-skip input')]; return th ? [th.textContent.replace(/\\s+/g, ' ').trim(), t.length, t.every(x => x.disabled), t.some(x => x.checked)] : null; }", solo2)
+            pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evlevel-next][data-n="1"]'); pg2.wait_for_timeout(400)
+            pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evopen]'); pg2.wait_for_timeout(300)
+            seg = pg2.evaluate("(sel) => [...document.querySelectorAll(sel + ' [data-act=em-evlevel]')].map(b => b.dataset.level)", solo2)
+            print('C) Kopf:', h0, '| Skip:', h1, '| geöffnet:', seg, '| Fehler:', errs2)
+            results.append(h0 and h0[0] == 'recording' and h1 and h1[0].startswith('① Skip') and h1[2] and h1[3] and seg == ['recording', 'release', 'skip'] and not errs2)
         finally:
             H.discogs_release = orig
             b.close()
