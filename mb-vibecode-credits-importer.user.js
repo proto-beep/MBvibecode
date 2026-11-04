@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.44.1
+// @version      3.45.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.44.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.44.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.45.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.45.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.44.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.45.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1777,6 +1777,15 @@
       "stats.more.works2": "Works",
       "stats.more.genres": "Genres and styles",
       "stats.genresView": "Genres and styles of the sources",
+      "stats.timeView": "Times:",
+      "stats.time.median": "Median",
+      "stats.time.mean": "Average",
+      "stats.srcT.n": "releases",
+      "stats.srcT.perRelease": "per release",
+      "stats.srcT.perRel": "per relationship",
+      "stats.srcT.supp": "with supplement",
+      "settings.statsIdle": "Pauses not counted from (seconds)",
+      "settings.statsIdleTitle": "The time of an import counts from its start until “Enter edit”; a gap without a click, a key or scrolling of at least this many seconds is a pause and is not counted (a hidden tab: from the moment it is hidden). 0: everything counts. For imports from 3.45.0 on.",
       "stats.genres.combined": "Combined",
       "stats.genres.separate": "Separate",
       "stats.more.decisions": "Decisions",
@@ -8879,6 +8888,33 @@
   const STATS_PERIOD_KEY = 'dci-stats-period';
   // [Z-STG2] (3.42.6) the card "Genres and styles": 'separate' (each source), else combined
   const STATS_GENRES_KEY = 'dci-stats-genres';
+  // [Z-STD] (3.45.0; Q-du, Q-el, Q-eo, Q-ep) the times of the card "Sources": 'mean' (the average), else the median; pauses without a
+  // click, a key or scrolling from this many seconds on are not counted (0: all counted)
+  const STATS_TIME_KEY = 'dci-stats-time';
+  const STATS_IDLE_KEY = 'dci-stats-idle';
+  const STATS_IDLE_DEFAULT = 300;
+  const statIdleMs = () => {
+    const v = Number(readJson('localStorage', STATS_IDLE_KEY, STATS_IDLE_DEFAULT));
+    return Number.isFinite(v) && v >= 0 ? Math.min(v, 86400) * 1000 : STATS_IDLE_DEFAULT * 1000;
+  };
+  /**
+   * [Z-STD] (3.45.0) The time of the import without its pauses: a click, a key, the wheel or a touch (in the dashboard and on MusicBrainz's page)
+   * is work; a gap from the threshold on is a pause and is not counted – a hidden tab is a pause from the moment it is hidden.
+   */
+  function statActivity(e) {
+    if (!S.statStart) return;
+    // (3.45.0, review) only the user's own input: the script's clicks and its scrolling (the log, scrollIntoView) are not work
+    if (e && e.isTrusted === false) return;
+    const now = Date.now();
+    const gap = now - (S.statLastAct || S.statStart);
+    // (a gap under a second is never a pause – the threshold is in whole seconds – so the setting is not read on each wheel turn)
+    if (gap >= 1000) {
+      const th = statIdleMs();
+      if (th > 0 && gap >= th) S.statIdle = (S.statIdle || 0) + gap;
+    }
+    // (hidden: the pause starts now – what was before it counts by the same threshold)
+    S.statLastAct = now;
+  }
   // ([E8] 3.38.2: the developer statistics are collected with the others; shown in "Developer mode" – DEV_KEY, 3.38.5)
   const STAT_JOB_PREFIX = 'dci-stat-job:';
   const STAT_JOB_MAX_MS = 30 * 60 * 1000;
@@ -9010,9 +9046,18 @@
       const conf = !final ? at : origin >= job.armedAt && origin - job.armedAt < STAT_FRESH_MS ? origin : job.armedAt;
       // (without how they were looked up)
       const rels = job.rec.rels.filter((it, i) => seen[i] !== false).map((it) => Object.fromEntries(Object.entries(it).filter(([k]) => k !== 'c')));
-      const rec = { ...job.rec, rels, id: `${String(mbid).toLowerCase()}:${job.armedAt}`, at, ms: job.rec.start ? Math.max(0, Math.round(conf - job.rec.start)) : null };
+      // [Z-STD] (3.45.0) work: from the start until "Enter edit" without the pauses (ms as before: until MusicBrainz confirmed)
+      // ((3.45.0, review) not for a job armed by an older version: it does not know its pauses)
+      const work = job.rec.start && job.armedAt && 'idle' in job.rec ? Math.max(0, Math.round(job.armedAt - job.rec.start - (job.rec.idle || 0))) : null;
+      const rec = { ...job.rec, rels, id: `${String(mbid).toLowerCase()}:${job.armedAt}`, at, ms: job.rec.start ? Math.max(0, Math.round(conf - job.rec.start)) : null, ...(work != null ? { work } : {}) };
       const ok = rels.length ? await statPut(rec) : true;
       writeJson('localStorage', key, null);
+      // (3.45.0, review) confirmed on the editor's page: a later "Enter edit" on it counts from this one on, not from the first import
+      if (!final && S.statStart && S.statStart === job.rec.start && 'idle' in job.rec) {
+        S.statStart = job.armedAt;
+        S.statIdle = Math.max(0, (S.statIdle || 0) - (job.rec.idle || 0));
+        if ((S.statLastAct || 0) < job.armedAt) S.statLastAct = job.armedAt;
+      }
       if (rels.length) liveLog(mbid, ok ? 'info' : 'warn', ok ? 'statsKept' : 'statsFailed', { n: rels.length }, logFn);
       return true;
     }
@@ -31658,6 +31703,11 @@
         writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
         renderStats();
         break;
+      case 'stats-time-view':
+        // [Z-STD] (3.45.0) the times of "Sources": median or average (remembered)
+        writeJson('localStorage', STATS_TIME_KEY, btn.dataset.view === 'mean' ? 'mean' : null);
+        renderStats();
+        break;
       case 'stats-genres-view':
         // [Z-STG2] (3.42.6) genres and styles of all sources in one list, or a list for each (remembered)
         writeJson('localStorage', STATS_GENRES_KEY, btn.dataset.view === 'separate' ? 'separate' : null);
@@ -33361,9 +33411,9 @@
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
-    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY],
+    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY],
     // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
-    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY],
+    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -33548,6 +33598,8 @@
    * import of this page.
    */
   function statSnapshot() {
+    // (3.45.0, review) a pause right before "Enter edit" is closed here – its click reaches statActivity only afterwards
+    statActivity({ type: 'snapshot' });
     const mb = getMB();
     const re = mb && mb.relationshipEditor;
     if (!re || !re.state || !S.initialized) return null;
@@ -33600,7 +33652,8 @@
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
     // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
-    return { v: 2, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+    // [Z-STD] (3.45.0) idle: the pauses not counted (the time of the record: from the start until "Enter edit" without them)
+    return { v: 2, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -33714,11 +33767,12 @@
       }
       const rels = r.rels || [];
       a.rels += rels.length;
-      if (r.ms != null && rels.length) {
-        a.msSum += r.ms;
+      const dur = statTime(r);
+      if (dur != null && rels.length) {
+        a.msSum += dur;
         a.msN++;
         a.msRels += rels.length;
-        relMs.set(r.mbid, (relMs.get(r.mbid) || 0) + r.ms);
+        relMs.set(r.mbid, (relMs.get(r.mbid) || 0) + dur);
       }
       for (const it of rels) {
         if (it.k === 's') a.s++;
@@ -33831,7 +33885,7 @@
     const m = { src: new Map(), supp: 0, link: new Map(), seenEnt: new Set(), rels: 0, dated: 0, prec: new Map(), dsrc: new Map(), places: new Map(),
       lv: new Map(), works: 0, decade: new Map(), format: new Map(), country: new Map(), label: new Map(), weekday: new Array(7).fill(0), hour: new Array(24).fill(0),
       days: new Map(), relByRelease: new Map(), fastest: null, instrFirst: new Map(), instrN: new Map(), ocr: { subs: 0, images: 0, lines: 0, corrected: 0 },
-      own: 0, ownRels: new Map(),
+      own: 0, ownRels: new Map(), srcTime: new Map(), srcRel: new Map(), suppRel: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
       genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
@@ -33844,7 +33898,24 @@
     for (const r of sorted) {
       const rels = r.rels || [];
       inc(m.src, r.src || 'other');
-      if ((r.supp || []).length) m.supp++;
+      // (3.45.0, review) the releases per source (a release submitted twice is one), and the releases with a supplement
+      const sk = r.src || 'other';
+      if (!m.srcRel.has(sk)) m.srcRel.set(sk, new Set());
+      m.srcRel.get(sk).add(r.mbid);
+      if ((r.supp || []).length) {
+        if (!m.suppRel.has(sk)) m.suppRel.set(sk, new Set());
+        m.suppRel.get(sk).add(r.mbid);
+      }
+      // [Z-STD] (3.45.0) the time of each release per source (its submissions together), with and without supplements
+      if (statTime(r) != null && rels.length) {
+        const per = m.srcTime.get(r.src || 'other') || new Map();
+        const x = per.get(r.mbid) || { ms: 0, rels: 0, supp: false };
+        x.ms += statTime(r);
+        x.rels += rels.length;
+        if ((r.supp || []).length) x.supp = true;
+        per.set(r.mbid, x);
+        m.srcTime.set(r.src || 'other', per);
+      }
       const d = new Date(r.at);
       m.weekday[(d.getDay() + 6) % 7] += rels.length;
       m.hour[d.getHours()] += rels.length;
@@ -33852,8 +33923,8 @@
       const rr = m.relByRelease.get(r.mbid) || { title: (r.rel && r.rel.title) || r.mbid, n: 0 };
       rr.n += rels.length;
       m.relByRelease.set(r.mbid, rr);
-      if (r.ms != null && rels.length >= 5) {
-        const per = r.ms / rels.length;
+      if (statTime(r) != null && rels.length >= 5) {
+        const per = statTime(r) / rels.length;
         if (!m.fastest || per < m.fastest.per) m.fastest = { per, title: (r.rel && r.rel.title) || r.mbid, n: rels.length };
       }
       // the release itself, at its first submission
@@ -33952,6 +34023,49 @@
     return { now: last === today || last === yesterday ? run : 0, longest };
   }
 
+  /** [Z-STD] (3.45.0) The time of a record: until "Enter edit" without the pauses (from 3.45.0), else until MusicBrainz confirmed. */
+  function statTime(r) {
+    if (r.work != null) return r.work;
+    return r.ms != null ? r.ms : null;
+  }
+  const statMedian = (xs) => {
+    if (!xs.length) return null;
+    const v = [...xs].sort((a, b) => a - b);
+    const h = Math.floor(v.length / 2);
+    return v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2;
+  };
+  const statMean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+
+  /**
+   * [Z-STD] (3.45.0; Q-eo) The card "Sources" with its times: per source the releases, the time per release and per relationship –
+   * the median or the average (a switch, remembered) – and of the releases with a supplement (they count in the source's row too).
+   */
+  function statSourcesHtml(m, top, srcName) {
+    const how = readJson('localStorage', STATS_TIME_KEY, 'median') === 'mean' ? 'mean' : 'median';
+    const f = how === 'mean' ? statMean : statMedian;
+    const seg = `<span class="dci-seg dci-seg-small dci-stats-tview" role="group" aria-label="${esc(tr('stats.timeView'))}">${['median', 'mean'].map((v) => `<button type="button"
+      data-act="stats-time-view" data-view="${v}" aria-pressed="${how === v}">${esc(tr(`stats.time.${v}`))}</button>`).join('')}</span>`;
+    // ((3.45.0, review) the releases, not the submissions)
+    const rows = top(new Map([...m.srcRel.entries()].map(([k, set]) => [k, set.size])), 8);
+    if (!rows.length) return `<p class="dci-sub">–</p>`;
+    // (per relationship: the median of the releases' times per relationship; the average all their time by all their relationships –
+    // as the tile "time per relationship")
+    const cell = (xs, per) => {
+      const v = per && how === 'mean' ? (xs.length ? xs.reduce((t, x) => t + x.ms, 0) / xs.reduce((t, x) => t + x.rels, 0) : null)
+        : f(xs.map((x) => (per ? x.ms / x.rels : x.ms)));
+      return v == null ? '–' : statDur(v);
+    };
+    const body = rows.map(([k, n]) => {
+      const xs = [...((m.srcTime.get(k) || new Map()).values())];
+      const sup = xs.filter((x) => x.supp);
+      const nSupp = (m.suppRel.get(k) || new Set()).size;
+      return `<tr data-src="${esc(k)}"><th scope="row">${esc(srcName(k))}</th><td>${statNum(n)}</td><td>${esc(cell(xs, false))}</td><td>${esc(cell(xs, true))}</td>
+        <td>${nSupp ? `${statNum(nSupp)} · ${esc(cell(sup, false))}` : '–'}</td></tr>`;
+    }).join('');
+    return `${seg}<table class="dci-stats-srct"><thead><tr><th scope="col"></th><th scope="col">${esc(tr('stats.srcT.n'))}</th><th scope="col">${esc(tr('stats.srcT.perRelease'))}</th>
+      <th scope="col">${esc(tr('stats.srcT.perRel'))}</th><th scope="col">${esc(tr('stats.srcT.supp'))}</th></tr></thead><tbody>${body}</tbody></table>`;
+  }
+
   function statsMoreHtml(recs) {
     const m = statMore(recs);
     const top = (map, n = 5) => [...map.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]))).slice(0, n);
@@ -33975,7 +34089,7 @@
     const once = [...m.instrN.entries()].filter(([, n]) => n === 1).map(([n]) => n).sort((x, y) => x.localeCompare(y));
     const list10 = (names) => (names.length ? `${esc(names.slice(0, 10).join(', '))}${names.length > 10 ? ' …' : ''}` : '–');
     return `<div class="dci-stats-cards">
-      ${card('sources', `${kv(top(m.src), srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: m.supp }))}</p>`)}
+      ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>`)}
       ${card('found', kv(['link', 'search', 'hand', 'created'].map((k) => [k, m.link.get(k) || 0]), (k) => tr(`stats.found.${k}`)))}
       ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
         ${kv(['day', 'month', 'year'].map((k) => [k, m.prec.get(k) || 0]), (k) => tr(`stats.prec.${k}`))}
@@ -34321,6 +34435,9 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
           row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
+          // [Z-STD] (3.45.0; Q-ep) beside it: pauses not counted from … seconds
+          row(`<label title="${esc(tr('settings.statsIdleTitle'))}">${esc(tr('settings.statsIdle'))} <input type="number" data-set="stats-idle" min="0" max="86400" step="1"
+            value="${Math.round(statIdleMs() / 1000)}"></label>`),
           // [Z-DS] (3.42.0) and deleting them (until 3.41.15 at the bottom of the statistics)
           (() => {
             if (S.statsData == null) statsLoad();
@@ -34618,10 +34735,17 @@
     } else if (k === 'remember') {
       // [146] (3.36.0) remembered per release, or not
       setRemember(el.checked);
+    } else if (k === 'stats-idle') {
+      const raw = String(el.value).trim();
+      const v = raw === '' ? STATS_IDLE_DEFAULT : Math.max(0, Math.min(86400, Math.round(Number(raw)) || 0));
+      writeJson('localStorage', STATS_IDLE_KEY, v === STATS_IDLE_DEFAULT ? null : v);
+      el.value = String(v);
+      log('info', 'settingValue', { what: tr('settings.statsIdle'), value: String(v) });
     } else if (k === 'alias-max') {
       // (3.44.1, review) an emptied field is the default, not 0
       const v = String(el.value).trim() === '' ? ALIAS_MAX_DEFAULT : clampInt(el.value, 0, 200, ALIAS_MAX_DEFAULT);
       writeJson('localStorage', ALIAS_MAX_KEY, v === ALIAS_MAX_DEFAULT ? null : v);
+      el.value = String(v);
       log('info', 'settingValue', { what: tr('settings.aliasMax'), value: String(v) });
     } else if (k === 'remember-max') {
       const v = clampInt(el.value, 0, 100, 50);
@@ -34841,7 +34965,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
@@ -34990,6 +35114,14 @@
   async function initOnce() {
     if (S.initialized || S.importStarting) return;
     S.importStarting = true;
+    // [Z-STD] (3.45.0) what counts as work: a click, a key, scrolling; a hidden tab a pause
+    if (!S.statListen) {
+      S.statListen = true;
+      // ((3.45.0, review) the wheel, a touch and the pointer instead of "scroll": the script scrolls too)
+      ['click', 'keydown', 'pointerdown'].forEach((t) => document.addEventListener(t, statActivity, true));
+      ['wheel', 'touchmove'].forEach((t) => document.addEventListener(t, statActivity, { capture: true, passive: true }));
+      document.addEventListener('visibilitychange', statActivity);
+    }
     // [E8] (3.38.0) the first import of this page: the start of the time of the statistics
     if (!S.statStart) S.statStart = Date.now();
     try {
@@ -36850,6 +36982,11 @@
       .dci-em-evskip, .dci-em-c-skip { opacity: 0.6; }
       .dci-em-evchip-skip { opacity: 0.6; }
       .dci-cl-level[data-level="skip"] { background: #e3e1ea; color: #6d6a7c; }
+      /* [Z-STD] (3.45.0) the times of the sources */
+      .dci-stats-srct { border-collapse: collapse; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
+      .dci-stats-srct th, .dci-stats-srct td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 2) 0; text-align: left; white-space: nowrap; }
+      .dci-stats-srct thead th { color: var(--muted); font-weight: normal; }
+      .dci-stats-srct td { font-variant-numeric: tabular-nums; }
       .dci-lvl-pick { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
       .dci-lvl-pick label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); }
       .dci-lvl-pick input[type="color"] { width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 22); padding: 0 2px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
