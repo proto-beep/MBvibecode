@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.43.5, Companion 1.6.0 – 1.11.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.44.1, Companion 1.6.0 – 1.11.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,28 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.44.1 · 2026-11-04
+
+Block 1, part 2 – Z-CAT, Z-ALC.
+
+- **`notesTrackCredits`** (S022): no group when the brackets follow a code without a space (`/[A-Za-z]+[-\s]?\d[\w.-]*$/` and "(" right after it) or the name has a word of a sentence (states, says, lists, reads, shows, website, site, page, according, mentions, notes).
+- **`ALIAS_MAX_KEY`** ('dci-alias-max', 12), `aliasMax()`; in `TOPIC_KEYS.sources` and `SETTINGS_KEYS`; ⚙ Sources number field `data-set="alias-max"` (0 – 200).
+- **`resolveViaAliases(list, source, { one })`:** sorted by the number of rows (then the dashboard's order), at most `aliasMax()`; the rest get `a.aliasLater` (also those after a 429); `setBusy('busy.aliases', { i, n })` while it asks, `busy.artists` again after; `msg.aliasesLater` / `log.aliasesLater`. **`suggestStackHtml`**: "Discogs aliases …" (`data-act="aliases-fetch"`) for `aliasLater` entries; click case `aliases-fetch` (one entry; `log.aliasesNone` without a hit).
+- **Texts:** `busy.aliases`, `msg.aliasesLater`, `log.aliasesLater`, `log.aliasesNone`, `match.aliasFetch`, `match.aliasFetchTitle`, `settings.aliasMax`, `settings.aliasMaxTitle`.
+- **Tests:** `t_sources.py aliascap`, `t_notes_dates.py catno`.
+- **Review of Block 1:** `skippedEv(r)` (new: `emSkipEv` and on skip and no `scopeLevel`/`mxSkipped`/`entrySkip`) in `entryModel` and `rowsInEvent`; `emTick` – a `skip|` key: ✕ takes the rows out of it, the spare row never one of a skipped event (`delete row.emSkipEv`); the drop target excludes `th.dci-em-evskip`, `emDropDate` returns for `skip|`; chips of a skipped event not draggable; `evHeadHtml` passes `a` to the skip head's button. `emEventSkip` back: `levelOf(r, was)`, `emEventMoved`, then `emEventLevel(a, eventKeyOf(rows[0]), to)`; to Skip closes `S.emEvOpen` of that event. `em-evlevel-next` focuses the button of the new key of the rows clicked. `remapRow`: a row of a skipped event resolves its type on the level it comes back to. `resolveViaAliases`: `aliasLater` deleted only after an answer, set again on a failure; `looked` counted and returned; message when any has `aliasLater`; returns early when `importSeq` moved on; `aliases-fetch` logs `aliasesNone` only with an answer. `DISCOGS.pace()` chained (`paceChain`). `alias-max`: empty → default. `notesTrackCredits`: the sentence words case-sensitive, without page/site/notes.
+- **Tests (review):** `t_entries.py levelclick` D (focus after sorting anew), E (tick into another event, the skipped event keeps its row); `t_sources.py aliascap` (a failed lookup keeps its button, the count); `t_entries.py evhead` – the opened event offers Skip (3.44.0).
+
+## Import 3.44.0 · 2026-11-04
+
+Block 1, part 1 – Z-CLV.
+
+- **`entryModel`:** rows on "Skip" with `emSkipEv` (the key of their event before) make an event `{ key: 'skip|<key>', level: 'skip', skip: true, from, orig }`, sorted at the place of its level before; the lines' `ev` maps hold them; `b.others` without them.
+- **`rowsInEvent`:** a `skip|` key gives the rows skipped with it. **`evLevels(a, e)`** (new): recording/release/release_group/work that MB has for the event's rows (`typeOnLevel`), then 'skip'; **`evLevelNext`** (new): the next one, after 'skip' the first. **`evLevelBtn(e, a)`** (new): `button.dci-cl-level.dci-em-lvbtn[data-act=em-evlevel-next][data-ev][data-n]` with the tooltip. **`emEventSkip(a, evKey, to)`** (new): to 'skip' (`levelOf(r, 'skip')`, `r.emSkipEv = evKey`) or back onto `to` (rows that cannot be there onto the level they had; recordings without tracks get all).
+- **`levelOf`** clears `emSkipEv`. **`evHeadHtml`**, **`evShortHtml(e, a)`**: the level a button; a skipped event's head only its number and the button (`th.dci-em-evskip`); compact line of a skipped event `.dci-em-cl.dci-em-skip[data-emskip]` (no drop target). Ticks of a skipped event `td.dci-em-c-skip`, disabled. **`emEventHtml`** levels from `evLevels` (work, skip). Click cases `em-evlevel` ('skip' → `emEventSkip`) and `em-evlevel-next` (new; focus back on the event's number).
+- **CSS:** `.dci-em-evskip`, `.dci-em-c-skip`, `.dci-em-evchip-skip`, `.dci-cl-level[data-level="skip"]`. **Texts:** `em.skipTick`, `em.levelBack`, `em.levelNextWork`, `log.emEvSkip`, `log.emEvBack`.
+- **Tests:** `t_entries.py levelclick` (compact circle with Skip at its place, the arranger to Work, the full matrix head, ticks and the opened event).
 
 ## Import 3.43.5 · 2026-11-04
 

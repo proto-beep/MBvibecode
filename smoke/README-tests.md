@@ -265,6 +265,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   catno: 3.44.1 (Z-CAT): "Music & Arts website states CD-4853(1)" in the notes gives no track group, "Pub Co (1, 3)" still does
                                 #   review43: 3.43.3 (full review P4): a pool entry edited, "update n rows?" declined – the rows their own ("0 rows")
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
@@ -609,6 +610,8 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   levelclick: 3.44.0 (Z-CLV): the level of an event a button – Recording → Release → Skip (at its place) → Recording; an
+                                #     arranger to Work (works matrix); the head of the full matrix, ticks of a skipped event, "Skip" in the opened event
                                 #   review43: 3.43.5 (full review P6): "Remove" in a matrix line; pasted text through a redraw; the rules window in German
                                 #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
@@ -664,6 +667,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
+                                #   aliascap: 3.44.1 (Z-ALC): at most 2 alias lookups (⚙ Sources), the one with the most rows first, the message, "Discogs aliases …" at the third
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
                                 #     index tracks, "A1 to A3", grouping, S018); through the adapter in the dashboard: aliases, series and
                                 #     parent label, forms for artist / label / series / work, edit notes, live from the format, US dates,
