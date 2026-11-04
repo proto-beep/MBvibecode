@@ -95,6 +95,9 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   rolesplit, roles, places, oldmarks, exceptread, exceptworks: 3.49.0 (Z-RTL, Z-ROL, Z-RPB, S069, Z-EXC – dashboard: covers, arrangement, quote)
                                 #   exceptlayouts, rolesplit2, exceptworks2: review of 3.49.0 (other layouts of the blocks, the parts' marks; nothing
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
+                                #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
+                                #   prose2, trackartists2: review of 3.50.0 (credits before "with", no place or make as a name, IJ names;
+                                #   other roles, tracks changed by hand, the edit note)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via

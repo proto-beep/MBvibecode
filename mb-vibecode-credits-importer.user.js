@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.49.0
+// @version      3.50.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.49.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.49.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.50.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.50.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.49.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.50.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -479,7 +479,9 @@
       "role.wholeRelease": "{src}: whole release",
       "role.splitFrom": "on {src}: “{raw}” (one row per task)",
       "role.perfTracks": "On the tracks of the “Performer” credits on Discogs: {list} (rule S046)",
+      "role.tarTracks": "On the tracks that name this person as their artist: {list} (rule S078)",
       "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
+      "log.tarTracks": "{name} ({role}): on tracks {list} – the tracks whose artist credit names this person (S078)",
       "role.unresolved": "Not matched: {list}",
       "note.uncredited": "According to {src} not named on the release (Uncredited).",
       "note.atPerson": "Discogs gives this person a role of a company (“… At”): read as what the person did (“… By”) – a person linked on Discogs is no place (S066).",
@@ -3447,7 +3449,10 @@
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
-    { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
+    // [3.50.0] collected items Z-PRO, Z-TAR
+    { id: 'S079', where: 'TEXT.parse (readUnit, proseCredits)', note: 'Texts (3.50.0): a sentence that describes the music – "Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp, and SHelley Hirsch vocal." – the instruments or voices before a name in brackets are the name\'s (words before them, "Experimental", left out); after "with (special) guest(s)" each name with the instruments or voices after it ("Jane Roe (bass, vocals)", "Oliver Lake on saxophone" too), as a guest; "and" between two names ends the one before; other parts before "with" are read as usual. A make ("Fender Rhodes"), a place or an event ("Solo piano (Tokyo)", "Live At …") is no name. Only when every guest is read so (before: the sentence not recognized)' },
+    { id: 'S078', where: 'applyTrackArtistTracks', note: 'Track artists (3.50.0): the instruments, voices and "performer" of a person credited for the whole release go onto the tracks whose artist credit in MusicBrainz names the person (by the name of the entry, as written or as in MusicBrainz, or by its id) – when those are some of the tracks, not all ("David Watson & Makigami Koichi" on two tracks: Makigami Koichi\'s jaw harp on those two). Not for writers, producers and other roles; switched off the tracks as they came' },
     // [3.43.0] review of the text adapter (package P1 of the full review)
     { id: 'S077', where: 'TEXT.parse (namesScoped, readClause; bandNames)', note: 'Texts (3.43.0): names before a dash or colon are split like names after "by" – "Jane Roe & John Doe – vocals" gives two credits (before: one artist "Jane Roe & John Doe"); and a name of the release\'s artists is never cut at its "&", "and" or comma, on either side ("Produced by Simon & Garfunkel", "Florence and the Machine" – before: "Simon" and "Garfunkel")' },
     { id: 'S076', where: 'TEXT.parse (readClause, namesWithRoles; S055 items)', note: 'Texts (3.43.0): several names with their roles in brackets in one clause – "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit of its own (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)' },
@@ -6020,6 +6025,93 @@
        * [3.21.0] The credits of one sentence of a line (mostly the whole line), its track list given (scope); pi: the
        * number of its first part on the line (the companion marks each part). → { found, unknown, parts }
        */
+      /**
+       * [S079] (3.50.0; Z-PRO) A sentence that describes the music: "Experimental highland bagpipes (David Watson), with guests Makigami
+       * Koichi vocal and jaw harp, and SHelley Hirsch vocal." → [[name, role, guest]] – the instruments or voices before a name in brackets
+       * (the words before them aside), after "with (special) guest(s)" each name with the instruments or voices after it → { credits, lead }
+       * (`lead`: the words before "with" without a name in brackets, read as usual – "Recorded live at X, with guests …"); null unless every
+       * guest is read so.
+       */
+      const PROSE_PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu|ten|ter)$/i;
+      // ((3.50.0, review) no make of an instrument – "Fender Rhodes", "Gibson Les Paul" –, no place or event: "Live At The Village Vanguard")
+      const PROSE_NOT_NAME = /^(?:live|at|the|in|on|of|and|with|from|for|festival|hall|club|studio|studios|records|session|sessions|concert|tour)$/i;
+      const proseName = (ws) => ws.length >= 1 && ws.length <= 5 && ws.every((w, k) => (/^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (k > 0 && k < ws.length - 1 && PROSE_PARTICLE.test(w)))
+        && !playable(w) && !isRole(cap(w.toLowerCase())) && !PROSE_NOT_NAME.test(w)) && looksLikeName(ws.join(' '))
+        && !PROPER_WORDS.some((p) => norm(p) === norm(ws[0]) || norm(p) === norm(ws.join(' ')))
+        && !TEXT_NOT_NAME.test(ws.join(' ')) && !TEXT_PLACE_WORDS.test(ws.join(' ')) && !regionOf(ws.join(' '));
+      const playRoles = (t) => {
+        const r = listRoles(clean(t));
+        return r && r.length && r.every(playable) ? r : null;
+      };
+      // (commas inside brackets stay: "Jane Roe (bass, vocals)")
+      const proseSplit = (t, re) => {
+        const out = [];
+        let depth = 0;
+        let cur = '';
+        for (let k = 0; k < t.length; k++) {
+          const ch = t[k];
+          if (ch === '(') depth++;
+          if (ch === ')') depth = Math.max(0, depth - 1);
+          if (!depth && re.test(ch)) {
+            out.push(cur);
+            cur = '';
+          } else cur += ch;
+        }
+        out.push(cur);
+        return out.map(clean).filter(Boolean);
+      };
+      /** [S079] One guest: "Makigami Koichi vocal and jaw harp", "Jane Roe (bass, vocals)", "Oliver Lake on saxophone" → { name, roles }. */
+      const proseGuest = (item) => {
+        let mm = item.match(/^(.+?)\s*\(([^()]+)\)$/u) || item.match(/^(.+?)\s+on\s+(.+)$/iu);
+        if (mm) {
+          const roles = proseName(clean(mm[1]).split(' ')) && playRoles(mm[2]);
+          return roles ? { name: clean(mm[1]), roles } : null;
+        }
+        const ws = item.split(' ');
+        // the longest name first – the instruments after it in small letters ("Jane Bass vocals" is no guess)
+        for (let k = Math.min(5, ws.length - 1); k >= 1; k--) {
+          if (!/^\p{Ll}/u.test(ws[k])) continue;
+          const roles = proseName(ws.slice(0, k)) && playRoles(ws.slice(k).join(' '));
+          if (roles) return { name: ws.slice(0, k).join(' '), roles };
+        }
+        return null;
+      };
+      const proseCredits = (text) => {
+        const t = clean(String(text || '')).replace(/[.;!]+$/, '');
+        const m = t.match(/^(.*?)[,;]?\s*\bwith\s+(?:special\s+)?guests?\s*:?\s+(.+)$/iu);
+        if (!m) return null;
+        const out = [];
+        // the words before "with": each part "<instruments> (<names>)" – the words before the instruments aside only in the first, when
+        // they are a few plain words ("Experimental"); the other parts read as usual ((3.50.0, review) none with brackets or digits: those
+        // are read as a whole line, as before)
+        const leadText = clean(m[1].replace(/\s*[–—-]\s*$/, ''));
+        const rest = [];
+        proseSplit(leadText, /[,;]/).forEach((seg, k) => {
+          const lead = seg.match(/^(.+?)\s*\(([^()]+)\)$/u);
+          const who = lead ? names(lead[2]).map(clean) : [];
+          const words = lead ? clean(lead[1]).split(' ') : [];
+          let roles = null;
+          let at = 0;
+          for (; at < words.length && !roles; at++) roles = playRoles(words.slice(at).join(' '));
+          const before = words.slice(0, Math.max(0, at - 1));
+          const plain = !before.length || (k === 0 && before.length <= 3 && before.every((w) => /^\p{L}+$/u.test(w) && !/^(?:by|at|in|on|for|and)$/i.test(w)));
+          // a name in brackets of two words or more, or one of the release's artists ("Solo piano (Tokyo)" is no person)
+          const person = (n) => proseName(n.split(' ')) && (n.split(' ').length >= 2 || bandNames.has(norm(n)));
+          if (roles && plain && who.length && who.every(person)) who.forEach((n) => roles.forEach((r) => out.push([n, r, false])));
+          else rest.push(seg);
+        });
+        const restText = rest.join(', ');
+        if (/[()[\]\d]/.test(restText)) return null;
+        let last = null;
+        for (const item of proseSplit(m[2], /[,;]/).flatMap((x) => x.replace(/^(?:and|&)\s+/i, '').split(/\s+(?:and|&)\s+(?=\p{Lu}[\p{L}'’.-]*\s+\p{Lu})/u)).map(clean).filter(Boolean)) {
+          // ("…, jaw harp" – more of the name before)
+          const got = (last && playRoles(item) && { name: last, roles: playRoles(item) }) || proseGuest(item);
+          if (!got) return null;
+          got.roles.forEach((r) => out.push([got.name, r, true]));
+          last = got.name;
+        }
+        return out.length ? { credits: out, lead: restText } : null;
+      };
       const readUnit = (unit, scope, pi) => {
         const line = unit;
         let found = 0;
@@ -6035,6 +6127,26 @@
           if (looksLikeName(name)) {
             roles.forEach((role) => companies.push({ who: who(name), role, catno: '', tracks: null, ...at() }));
             found++;
+          }
+        }
+        // [S079] (3.50.0; Z-PRO) a sentence that describes the music, with its musicians
+        const prose = !found && ruleOn('S079') ? proseCredits(line) : null;
+        if (prose) {
+          const asGuest = (r) => {
+            const p = parseRoleNotation(r)[0];
+            return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
+          };
+          prose.credits.forEach(([n, r, guest]) => { if (addCredit(n, guest ? asGuest(r) : r, scope)) found++; });
+          if (found) {
+            // (the words before "with": read on their own – not recognized, they are listed as such)
+            let parts = 1;
+            if (prose.lead) {
+              const r = readUnit(prose.lead, scope, pi + 1);
+              found += r.found;
+              parts += r.parts;
+              unknownParts.push(...(r.found ? r.unknown : [prose.lead]));
+            }
+            return { found, unknown: unknownParts, parts };
           }
         }
         const parts = found ? [] : clauses(line);
@@ -7700,6 +7812,9 @@
     return words.map((w, i) => {
       // (signs before or after a word stay: "SMITH," → "Smith,")
       const m = /^([^\p{L}]*)(\p{L}[\p{L}'’-]*)([^\p{L}]*)$/u.exec(w);
+      // [S059] (3.50.0; Z-PRO) two capitals before small letters – a slip of the shift key: "SHelley" → "Shelley" (not "DAngelo", "OBrien",
+      // "MCing" …)
+      if (m && isMixed && /^\p{Lu}\p{Lu}\p{Ll}{2,}$/u.test(m[2]) && !/^(?:MC|\p{Lu}J|[DOÓ])/u.test(m[2])) return m[1] + m[2].charAt(0) + m[2].slice(1).toLowerCase() + m[3];
       if (!m || !/^\p{Lu}[\p{Lu}'’-]*$/u.test(m[2])) return w;
       const [, lead, core, trail] = m;
       if (!isMixed && words.length > 1 && PERSON_PARTICLE.test(core)) {
@@ -10525,6 +10640,7 @@
     if (row.pubFromCompany) ids.push('S044');
     if (row.pcFromCompany) ids.push('S057');
     if (row.perfPositions) ids.push('S046');
+    if (row.tarPositions) ids.push('S078');
     if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
@@ -10632,6 +10748,8 @@
     log('info', 'rulesChanged', { what, n });
     // [S046] (3.31.8) performers on tracks: at once, both ways
     if (what === 'S046') applyPerformerTracks();
+    // [S078] (3.50.0) the tracks of the track artists: at once, both ways
+    if (what === 'S078') applyTrackArtistTracks();
     // [D022] (3.32.0) the notes' suggestions not applied yet are placed again (with or without what the days have in common)
     if ((what === 'D022' || what === 'D014') && S.mbTracks.length) {
       replaceNotesSuggestions();
@@ -16203,6 +16321,11 @@
       const t = noteTrack(i);
       if (t) lines.push(`${r.kind === 'quote' ? 'Quotes lyrics from' : 'Arrangement of'} “${r.title}”${(r.by || []).length ? ` (${r.by.join(', ')})` : ''} – not found in MusicBrainz (“${t.title}”).`);
     }));
+    // [S078] (3.50.0, review) tracks the source does not name, taken from the artist credits of the tracks in MusicBrainz
+    const stagedRows = new Set([...S.staged.values()].map((x) => x.rowId).filter(Boolean));
+    const tar = S.rows.filter((r) => r.tarPositions && r.level === 'recording' && stagedRows.has(r.id))
+      .map((r) => `${(S.artists.get(r.artistKey) || {}).name || ''} (${r.raw || rowRelText(r)}): ${r.tarPositions.join(', ')}`);
+    if (tar.length) lines.push(`Tracks from the artist credits of the tracks in MusicBrainz: ${uniq(tar).join('; ')}.`);
     if (S.noteDates.size) lines.push(`Dates entered in the dashboard: ${[...S.noteDates.values()].join('; ')}.`);
     if (S.noteLines.size) {
       lines.push(`Not stored in MB (${S.source.noteName} wording):`);
@@ -16571,6 +16694,8 @@
           recordingComment: (track.recording && track.recording.disambiguation) || '',
           // [3.39.9] its artists and the performers MusicBrainz has for the recording ("co?" – no cover of one of them; K-9)
           trackArtists: (track['artist-credit'] || []).map((c) => c.artist && c.artist.id).filter(Boolean),
+          // [S078] (3.50.0; Z-TAR) their names as credited and in MusicBrainz (an entry of the source is found by its name)
+          trackArtistNames: uniq((track['artist-credit'] || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
           mbPerformers: rels.filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id),
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
@@ -17990,6 +18115,16 @@
    */
   const REMAP_FIELDS = ['types', 'notes', 'work', 'primaryCands', 'consumed', 'defaultLevel', 'creditFromRole', 'ruleId', 'linkTypeId', 'translated',
     'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases', 'prefix', 'prefixCredit'];
+  /** (3.50.0, review) What a rule made of these fields of a row is no change of yours (S078: its tracks). */
+  function rebaseFields(row, keys) {
+    const f = S.freshRows && S.freshRows.get(row.id);
+    if (!f) return;
+    const cur = rowFieldsOf(row);
+    keys.forEach((k) => {
+      if (k in cur) f.f[k] = cur[k];
+      else delete f.f[k];
+    });
+  }
   function rebaseFresh(row) {
     const f = S.freshRows && S.freshRows.get(row.id);
     if (!f) return;
@@ -18652,6 +18787,8 @@
       mergePersonPublishers();
       // [S046] (3.31.8) performers on tracks, instruments for the release (off until switched on)
       applyPerformerTracks();
+      // [S078] (3.50.0; Z-TAR) a musician for the whole release on the tracks that name the musician as their artist
+      applyTrackArtistTracks();
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [S026] nor entries whose credits were all left out for a medium
@@ -18728,6 +18865,8 @@
         if (seq !== importSeq) return;
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
+        // [S078] (3.50.0, review) once more with the entries linked: their MusicBrainz names and ids
+        if (applyTrackArtistTracks()) renderGroups();
         // [3.37.11] the artist credits taken from the Discogs spellings (item 161); [3.39.1] those of the entries' sources (item 185)
         const anvOf = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)));
         const anv = anvOf.map(([a, sp]) => `${sp.shown} (${sp.base})`);
@@ -21838,6 +21977,8 @@
     if (row.date) c.date = { ...row.date };
     if (row.instrGuess) c.instrGuess = { ...row.instrGuess, options: [...row.instrGuess.options], ...(row.instrGuess.offered ? { offered: [...row.instrGuess.offered] } : {}) };
     if (row.keepCase) c.keepCase = { ...row.keepCase };
+    // ((3.50.0, review) S046 / S078 keep their tracks before of their own)
+    copyRuleTracks(row, c);
     delete c.mxOrigin;
     delete c.splitFrom;
     return c;
@@ -22343,6 +22484,7 @@
     return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
+      ${row.tarPositions ? `<div class="dci-sub dci-tartracks">${esc(tr('role.tarTracks', { list: row.tarPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${row.fromNotes ? `${notesLineInfo(row)} ${esc(tr('notes.credit'))}${where.length ? ` (${esc(where.join('; '))})` : ''}`
     : esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
         ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${prefixNoteHtml(row)}${notesFromHtml(row)}
@@ -23300,9 +23442,17 @@
   }
 
   /** A copy of a row right after it (for splitting by tracks or dates). */
+  /** (3.50.0, review) The tracks a rule kept (S046 `s046`, S078 `s078`) as sets of the copy's own – not shared with the row it comes from. */
+  function copyRuleTracks(from, to) {
+    const own = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v instanceof Set ? new Set(v) : v]));
+    if (from.s046) to.s046 = own(from.s046);
+    if (from.s078) to.s078 = own(from.s078);
+    if (from.tarPositions) to.tarPositions = [...from.tarPositions];
+  }
   function cloneRow(r, changes) {
     const c = { ...r, id: nextId('r'), flags: new Set(r.flags), suggested: new Set(r.suggested || []), tracks: new Set(r.tracks),
       excluded: new Set(r.excluded || []), date: r.date ? { ...r.date } : null, splitFrom: r.splitFrom || r.id, tracksOpen: false, ...changes };
+    copyRuleTracks(r, c);
     S.rows.splice(S.rows.indexOf(r) + 1, 0, c);
     return c;
   }
@@ -27069,6 +27219,56 @@
     }
     return n;
   }
+  /**
+   * [S078] (3.50.0; Z-TAR) Track artists (the maintainer: "die artists teil der recording artists sind und daher leicht den korrekten tracks
+   * zugeordnet werden können"): the instruments, voices and "performer" of a person credited for the whole release go onto the tracks whose
+   * artist credit names the person – by the name of the entry (as written at the source or found in MusicBrainz) or its MusicBrainz id –
+   * when those are some of the tracks chosen, not all of them (the release's artist plays on all: nothing changes) and not none. Switched
+   * off: the tracks as they came (`s078`). Returns the number of rows.
+   */
+  const TAR_TYPES = ['instrument', 'vocal', 'performer'];
+  const TAR_FIELDS = ['tracks', 'suggested', 's078', 'tarPositions', 's046'];
+  const sameSet = (a, b) => !!a && !!b && a.size === b.size && [...a].every((x) => b.has(x));
+  function applyTrackArtistTracks() {
+    const on = ruleOn('S078');
+    let n = 0;
+    const sel = selIdx();
+    for (const r of S.rows) {
+      if (!on) {
+        if (!r.s078) continue;
+        // ((3.50.0, review) back only while the row has the tracks the rule gave it – tracks changed by hand stay; a row S046 took
+        // over gets the tracks before as those S046 gives back)
+        if (r.s046) Object.assign(r.s046, { tracks: new Set(r.s078.tracks), suggested: new Set(r.s078.suggested) });
+        else if (sameSet(r.tracks, r.s078.set)) Object.assign(r, { tracks: new Set(r.s078.tracks), suggested: new Set(r.s078.suggested) });
+        delete r.s078;
+        delete r.tarPositions;
+        rebaseFields(r, TAR_FIELDS);
+        n++;
+        continue;
+      }
+      if (r.s078 || r.company || r.manual || r.other || r.supp || r.s046 || !r.dAllTracks || r.level !== 'recording') continue;
+      // ((3.50.0, review) instruments, voices and "performer" – not a conductor, an orchestra …)
+      if (!TAR_TYPES.includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))) continue;
+      const a = S.artists.get(r.artistKey);
+      if (!a || a.company) continue;
+      // ((3.50.0, review) also by its name variations and the row's "credited as")
+      const keys = new Set([a.name, a.rawName, a.caseFrom, a.mbName, r.anv, ...(a.anvs || []).map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv)))].filter(Boolean).map(nameKey));
+      const named = sel.filter((i) => {
+        const t = S.mbTracks[i];
+        return t && ((a.mbid && (t.trackArtists || []).includes(a.mbid)) || (t.trackArtistNames || []).some((k) => keys.has(k)));
+      });
+      if (!named.length || named.length >= sel.length || !r.tracks || named.length >= r.tracks.size || !named.every((i) => r.tracks.has(i))) continue;
+      r.s078 = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []), set: new Set(named) };
+      const positions = [trackListLabel(named)];
+      Object.assign(r, { tracks: new Set(named), suggested: new Set(named), tarPositions: positions });
+      rebaseFields(r, TAR_FIELDS);
+      log('info', 'tarTracks', { name: a.name, list: positions.join(', '), role: r.raw || '' });
+      n++;
+    }
+    return n;
+  }
+
+
 
   /**
    * [S048] (3.31.5) A name that looks like a person's (collected item 97b): two to four words, each with a capital (an
