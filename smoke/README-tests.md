@@ -100,6 +100,8 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # 3.43.0 (full review, P1 – S074 – S077): 24 lines – a track list after each name, "except" lines,
                                 #   a second "by" clause, role lists, several "Name (roles)", names before a dash split, a release artist
                                 #   never split, places with their area in brackets and a second place
+                                # 3.43.5 (counter-review): 7 lines – name-and-place pairs, a sentence after "and", "Tears for Fears", a studio with a role
+                                #   word, role lines below "A & B – vocals", a "by" in brackets, a bracket after a name
                                 # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
                                 # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
                                 # release's artists ("artists") and its number of tracks ("tracks")
@@ -607,6 +609,7 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   review43: 3.43.5 (full review P6): "Remove" in a matrix line; pasted text through a redraw; the rules window in German
                                 #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
                                 #     after staging stages the joins anew (taken out, staged again, nothing twice; [3.35.0] also a row taken

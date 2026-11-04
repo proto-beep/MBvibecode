@@ -192,7 +192,11 @@
       const own = tabs.filter((t) => siteOf(t) === site);
       // A tab that already shows the release comes first, then a visible one, then the last viewed one
       const same = releaseId ? own.filter((t) => tabReleases(t).includes(String(releaseId))) : [];
-      return [...(same.length ? same : own)].sort((a, b) => (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
+      // (1.11.1, counter-review) a hidden tab beats about once a minute (throttled); one whose beat is older than that may be gone
+      // without "pagehide" – it comes after a tab that beats, so a jump is answered
+      const fresh = (t) => t.visible || Date.now() - t.ts < 90000;
+      const pool = same.length && same.some(fresh) ? same : own;
+      return [...pool].sort((a, b) => (Number(fresh(b)) - Number(fresh(a))) || (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
     };
 
     const status = () => {

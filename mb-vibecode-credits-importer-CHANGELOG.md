@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.43.4 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.43.5 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,25 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.43.5
+
+Full review, part 6: the dashboard's surface (package P6). The architecture and test reports of the review are in the notes (GP-Rest), not in the code.
+
+#### Fixed
+
+- **"Remove" in an opened line of an entry's matrix** takes the line off the screen at once (it stayed with its ticks until a later redraw).
+- **Text typed into "Paste text"** (and a URL typed into "Source ▾" or "+ Supplement") survives a redraw of the source panel – an event lookup finishing in the background gave the field back empty.
+- **The language switched** rebuilds the "Mapping rules" window (it kept the old language) and the cover-art window.
+- **"Save to pool" from a row whose date was cleared meanwhile** no longer throws (the pool form stayed open).
+
+#### Fixed (the counter-review of 3.43.0 – 3.43.5)
+
+- **Texts:** "Mixed by Jane Roe at Studio X and John Doe at Studio Y" gives both credits and both places (3.43.0 made a place "John Doe at Studio Y"); a sentence after "and" ("… and Dave Grohl played drums") is no place; a name like "Tears for Fears" or "Cat in the Hat" stays whole (3.43.0 cut it before "for"/"in" – only a word in lower case or a format like "Dolby Atmos", "Vinyl" is cut now); "Vocal Recording Studios" below a "by" line is a studio again; the role lines below "A & B – vocals" go to both; a "by" inside brackets does not split a clause; "Photography Jane Roe (Berlin)" is read without the bracket.
+- **A rules change:** the level the import chose counts only while the rule still gives what it gave then – an own rule "producer → skip" (or "release") wins now; rows skipped by "Skip works" or S046 stay skipped through the change.
+- **Remember per release:** the "part of" rows of a series are rows of the source again (3.43.2 left them out: a change to them was lost); an entity you created keeps its "as window" rules window on a language switch.
+- **An import started while another looks up its artists** also stops the first one's alias lookups at Discogs (they went on, 2.5 s each, logging into the new dashboard).
+- **Companion 1.11.1:** a hidden source tab whose last beat is older than 90 s (gone without "pagehide", or throttled hard) comes after a tab that beats, so a jump is answered.
 
 ### Import 3.43.4
 
