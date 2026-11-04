@@ -1006,6 +1006,11 @@ def case_coverworks():
         H.MB_EXTRA.pop(H.REC[3], None)
         d3, e3 = pill_with(lambda: H.TRACK_AC.update({3: [(MONK, 'Thelonious Monk')]}))
         H.TRACK_AC.clear()
+        # (3.43.1, full review P2) the same track on a medium the web service answers without the recordings' relationships – the
+        # tracks are read from MB's own pages of tracks (/ws/js/tracks): their artists count too (until 3.43.0 none: "cover" set by itself)
+        d3b, e3b = pill_with(lambda: (H.TRACK_AC.update({3: [(MONK, 'Thelonious Monk')]}), H.WS_NO_RELS.add(1)))
+        H.TRACK_AC.clear()
+        H.WS_NO_RELS.clear()
         # (review) MusicBrainz's pianist of the whole release
         d4, e4 = pill_with(lambda: H.MB_EXTRA.setdefault(H.REL, []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': '67555849-61e5-455b-96e3-29733f0115f5',
                                                                                'attributes': ['piano'], 'attribute-values': {}, 'artist': {'id': MONK, 'name': 'Thelonious Monk'}}))
@@ -1028,11 +1033,11 @@ def case_coverworks():
         d8, e8 = pill_with(lambda: H.IS_PERSON.update({LEGAL: [MONK, TB]}), look=[MONK, LEGAL])
         H.IS_PERSON.clear()
         print('   is person:', d5, '| anderer Name in der Band:', d6, '| anderer Name, keine Band (Gegenprobe):', d7, '| zwei Künstlernamen:', d8, '| Fehler:', e5, e6, e7, e8)
-        print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e4)
+        print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Track-Artist, Medium nachgeladen:', d3b, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e3b, e4)
         no_co = lambda x: x is None or x[0] not in ('hint', 'auto')
         # d2, d3: performers known without a lookup – none asked then (the lookups list says [MONK] only where one is made)
-        results.append(d0 is not None and d0[0] == 'auto' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
-                       and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e4)))
+        results.append(d0 is not None and d0[0] == 'auto' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d3b) and no_co(d4)
+                       and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e3b, e4)))
         results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'auto' and no_co(d8) and not (e5 or e6 or e7 or e8))
 
         # E) [Z-CV] (3.40.17) "co?" only: classical; another credit of Monk

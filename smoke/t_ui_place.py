@@ -225,7 +225,9 @@ def case_keepplace():
         results.append(run(pg, False))
         # in the page
         pg2, errs2 = H.open_mb_edit(ctx, companion=False)
-        pg2.evaluate("localStorage.setItem('dci-place', JSON.stringify('page'))")
+        # (3.43.2) the artist created in the window comes back with the release ("Remember changes …"): forgotten here, so the page
+        # starts with "Create artist …" again
+        pg2.evaluate(f"localStorage.setItem('dci-place', JSON.stringify('page')); localStorage.removeItem('dci-remember:{H.REL}')")
         pg2.reload()
         pg2.add_script_tag(content=H.MAIN)
         pg2.wait_for_selector('#dci-open', timeout=20000)

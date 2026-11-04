@@ -97,6 +97,11 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
                                 # 3.42.3: "Gondola" (as on the page and with "○") and "Black Zenith" in the corpus (Z-GON, Z-BZ)
+                                # 3.43.0 (full review, P1 – S074 – S077): 24 lines – a track list after each name, "except" lines,
+                                #   a second "by" clause, role lists, several "Name (roles)", names before a dash split, a release artist
+                                #   never split, places with their area in brackets and a second place
+                                # 3.43.5 (counter-review): 7 lines – name-and-place pairs, a sentence after "and", "Tears for Fears", a studio with a role
+                                #   word, role lines below "A & B – vocals", a "by" in brackets, a bracket after a name
                                 # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
                                 # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
                                 # release's artists ("artists") and its number of tracks ("tracks")
@@ -260,6 +265,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   review43: 3.43.3 (full review P4): a pool entry edited, "update n rows?" declined – the rows their own ("0 rows")
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
@@ -310,6 +316,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   review43: 3.43.3 (full review P4/P5): the list of created works matched by the recording (index refreshed), an
+                                #     entry of a recording not read kept, not planned
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
                                 #     [3.37.0] the strings arranger of the notes an entry (E5), nothing of a track list a name;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
@@ -352,6 +360,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
                                 #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
+                                #     (3.43.1, full review P2) D: a track of a medium read from /ws/js/tracks keeps its artists – no "cover" by itself
                                 #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
                                 #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
                                 #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
@@ -417,6 +426,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     3.40.5 (Z-RG): a file whose T059 is a list of words (3.40.4) – the region read
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
+                                #   review43: 3.43.2 (full review P3): levels through a quick switch; an artist created in the form still the
+                                #     entry's after a reload ("Remember changes …"); one "part of" row of a Discogs series after a reload
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
                                 #   rulesdock: 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
                                 #     "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
@@ -438,6 +449,7 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     the questions (Q901 "keys": keyboard · synthesizer · piano – a pasted "Key Man – keys" asks); your changes,
                                 #     export (with "add"), import (Q902 new, W903 of the wrong kind skipped, W904 from a whole register), deleted
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
+                                #     (3.43.4, full review P5) C: an own rule with a level the editor never allows ("foo") is not imported
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
                                 #     mine"; an old rules file chosen and dropped onto the window; a whole register replacing my changes
@@ -546,6 +558,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   conngroups: 3.42.0 (Z-CONS): ⓘ Connections in groups (Sources, Websites, Tools & scripts, Resources, managers, Links)
                                 #   statsdelete: 3.42.0 (Z-DS): "Delete statistics …" in ⚙ Cache with the number; none in the statistics
                                 #   editnote: 3.41.9 (Z-EN), 3.42.0 (Z-EN2: no None, a stored "none" is Simple): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple (tooltips list
+                                #     (3.43.4, full review P5) E: "Done:" after a relationship was taken out (n) and staged again (n+1)
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
                                 #   statsgenres: 3.42.6 (Z-STG2): Bandcamp's tags (pageTags: links or JSON-LD, without the place's tag) – "Genres and
                                 #     styles" Combined (sources in the tooltip) | Separate, remembered
@@ -596,6 +609,7 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   review43: 3.43.5 (full review P6): "Remove" in a matrix line; pasted text through a redraw; the rules window in German
                                 #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
                                 #     after staging stages the joins anew (taken out, staged again, nothing twice; [3.35.0] also a row taken
@@ -645,6 +659,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
                                 #     without the tail
                                 #   evdatefields: 3.42.1 (Z-EDM): the date of an event a button; MB's fields below it (begin, end, ended, ⇣),
+                                #     (3.43.3, full review P4) F: "from 2015 to ????" pasted ticks "ended"; 1998 with and without "ended" are two pool entries
                                 #     Apply, a wrong month, a period pasted, ✕, no date
                                 #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
@@ -827,6 +842,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     click reaches it; closed: no note
                                 #   copymarks: companion 1.10.1 (Z-CR): the page writes "Copyright ©" / "Phonographic Copyright ℗" (the data
                                 #     "(c)" / "(p)") – a mark on each line, a click on the row "Copyright (c)" highlights its line
+                                #   review43: 3.43.1 / companion 1.11.1 (full review P2): a Discogs tab in the background (beat 30 s old) still
+                                #     "connected"; the result of another dashboard's jump not shown; the "Count exactly" editor sends no marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →

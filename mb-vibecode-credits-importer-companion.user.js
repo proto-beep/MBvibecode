@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.11.0
+// @version      1.11.1
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.11.0';
+  const COMPANION_VERSION = '1.11.1';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -175,8 +175,11 @@
       for (const key of GM_listValues()) {
         if (!String(key).startsWith('tab:')) continue;
         const tab = GM_getValue(key);
-        if (tab && now - tab.ts < STALE_MS) tabs.push(tab);
-        else if (!tab || now - tab.ts > 60000) GM_deleteValue(key);
+        // [1.11.1] (review) a tab in the background beats slowly (the browser throttles its timers – once a minute): it counts as open
+        // for as long as a hidden MB page's beat does (BEAT_HIDDEN_MS); until 1.11.0 it was "closed" after 7 s
+        const limit = tab && tab.visible === false ? BEAT_HIDDEN_MS : STALE_MS;
+        if (tab && now - tab.ts < limit) tabs.push(tab);
+        else if (!tab || now - tab.ts > BEAT_HIDDEN_MS + 60000) GM_deleteValue(key);
       }
       return tabs;
     };
@@ -189,7 +192,11 @@
       const own = tabs.filter((t) => siteOf(t) === site);
       // A tab that already shows the release comes first, then a visible one, then the last viewed one
       const same = releaseId ? own.filter((t) => tabReleases(t).includes(String(releaseId))) : [];
-      return [...(same.length ? same : own)].sort((a, b) => (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
+      // (1.11.1, counter-review) a hidden tab beats about once a minute (throttled); one whose beat is older than that may be gone
+      // without "pagehide" – it comes after a tab that beats, so a jump is answered
+      const fresh = (t) => t.visible || Date.now() - t.ts < 90000;
+      const pool = same.length && same.some(fresh) ? same : own;
+      return [...pool].sort((a, b) => (Number(fresh(b)) - Number(fresh(a))) || (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
     };
 
     const status = () => {

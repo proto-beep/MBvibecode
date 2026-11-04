@@ -721,4 +721,35 @@ def case_statgaps():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_review43():
+    """Credits Importer 3.43.3 (full review, packages P4/P5): the list of works created in this browser and not linked yet.
+    A) An entry stored with the index of another track (the tracklist changed: `i` 1, the recording of track 4) – matched by its
+       recording: the work is planned on track 4 and the entry kept with the index refreshed (until 3.43.2 it was dropped from the
+       list for good).
+    B) An entry whose recording is not among the tracks read (a medium that could not be read): kept in the list, not planned."""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    GHOST = H.uid('cccccccc', 4301)
+    W1, W2 = H.uid('cccccccc', 4302), H.uid('cccccccc', 4303)
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.evaluate(f"""localStorage.setItem('dci-created-works:{H.REL}', JSON.stringify([
+          {{ i: 1, rec: '{H.REC[3]}', gid: '{W1}', title: 'Made Here', discogsId: '', ts: 1 }},
+          {{ i: 2, rec: '{GHOST}', gid: '{W2}', title: 'Elsewhere', discogsId: '', ts: 1 }}]))""")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        pg.wait_for_timeout(1500)
+        stored = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-created-works:{H.REL}') || '[]').map(x => [x.i, x.gid])")
+        planned = pg.evaluate("document.querySelector('tr[data-work=\"3\"]').textContent.replace(/\\s+/g, ' ').trim().slice(0, 120)")
+        pend = [x for x in pg.evaluate(LOGS) if 'created work' in x or 'created works' in x]
+        print('A/B) gespeichert:', stored, '| Track 4:', planned, '| Protokoll:', pend, '| Fehler:', errs)
+        results.append(stored == [[3, W1], [2, W2]] and 'Made Here' in planned and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
