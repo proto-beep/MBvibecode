@@ -355,6 +355,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
                                 #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
+                                #     (3.43.1, full review P2) D: a track of a medium read from /ws/js/tracks keeps its artists – no "cover" by itself
                                 #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
                                 #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
                                 #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
@@ -830,6 +831,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     click reaches it; closed: no note
                                 #   copymarks: companion 1.10.1 (Z-CR): the page writes "Copyright ©" / "Phonographic Copyright ℗" (the data
                                 #     "(c)" / "(p)") – a mark on each line, a click on the row "Copyright (c)" highlights its line
+                                #   review43: 3.43.1 / companion 1.11.1 (full review P2): a Discogs tab in the background (beat 30 s old) still
+                                #     "connected"; the result of another dashboard's jump not shown; the "Count exactly" editor sends no marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →

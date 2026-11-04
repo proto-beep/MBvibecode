@@ -409,6 +409,8 @@ def js_tracks(medium_id, page):
     return {'linked_entities': {'link_type': {}, 'link_attribute_type': {}},
             'pager': {'current_page': page, 'next_page': page + 1 if more else None},
             'tracks': [{'id': 7000 + t['position'], 'position': t['position'], 'number': t['number'], 'name': t['title'],
+                        # [3.43.1] the track's artist credit as MB's JSON has it (artistCredit.names[].artist.gid)
+                        'artistCredit': {'names': [{'name': c['name'], 'joinPhrase': c.get('joinphrase', ''), 'artist': {'gid': c['artist']['id'], 'name': c['artist']['name']}} for c in t.get('artist-credit', [])]},
                         'recording': {'entityType': 'recording', 'gid': t['recording']['id'], 'name': t['recording']['title'],
                                       'relationships': [ws_to_js_rel(r) for r in t['recording'].get('relations', [])]}} for t in part]}
 

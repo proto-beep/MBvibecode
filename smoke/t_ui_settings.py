@@ -541,7 +541,7 @@ def case_reset():
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
         # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments')]  # [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last')]  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
             and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
             and art == [None, None]
