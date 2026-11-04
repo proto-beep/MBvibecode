@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43, [Companion 1.12.0] sitedark; `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43, [Companion 1.12.0] sitedark, [1.13.0] copymarks2; `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -554,6 +554,39 @@ def case_sitedark():
         results.append(y0 is False and y1 is True and not yterr)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_copymarks2():
+    """Companion 1.13.0 (Credits Importer 3.48.0, collected item Z-MCP; Q-ex): text copied from the page comes without the marks –
+    a line of the credits with its mark "○" selected and copied: the text (plain and HTML) has no mark, the page keeps it; the mark
+    cannot be selected (user-select: none).
+    Review of 1.13.0: several lines with marks – each line kept, no mark; text hidden on the page stays out; a selection without marks
+    is copied by the browser as always (not taken over); the links of the HTML with their whole addresses."""
+    COPY = """(() => { const li = document.querySelector('#release-credits li'); const m = document.createElement('span'); m.className = 'dci-dg-mark dci-dg-open'; m.textContent = '○'; li.prepend(m);
+      const r = document.createRange(); r.selectNodeContents(li); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      const dt = new DataTransfer(); const ev = new ClipboardEvent('copy', { clipboardData: dt, bubbles: true, cancelable: true }); document.dispatchEvent(ev);
+      return [dt.getData('text/plain').trim(), dt.getData('text/html').includes('dci-dg-mark'), ev.defaultPrevented, getComputedStyle(m).userSelect, li.textContent.includes('○'), li.textContent.replace('○', '').replace(/\\s+/g, ' ').trim()]; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        dg.wait_for_timeout(1200)
+        c = dg.evaluate(COPY)
+        MORE = """(() => { const ul = document.querySelector('#release-credits ul') || document.querySelector('#release-credits'); const lis = [...ul.querySelectorAll('li')].slice(0, 3);
+          lis.forEach((li) => { if (!li.querySelector('.dci-dg-mark')) { const m = document.createElement('span'); m.className = 'dci-dg-mark dci-dg-mb'; m.textContent = '✓'; li.prepend(m); } });
+          const hid = document.createElement('span'); hid.textContent = 'HIDDEN'; hid.style.display = 'none'; lis[1].appendChild(hid);
+          const copy = (node) => { const r = document.createRange(); r.selectNodeContents(node); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            const dt = new DataTransfer(); const ev = new ClipboardEvent('copy', { clipboardData: dt, bubbles: true, cancelable: true }); document.dispatchEvent(ev); return [dt.getData('text/plain'), dt.getData('text/html'), ev.defaultPrevented]; };
+          const a = copy(ul);
+          const plain = document.createElement('p'); plain.textContent = 'No marks here'; document.body.appendChild(plain);
+          const b = copy(plain);
+          return { lines: a[0].split('\\n').map((x) => x.trim()).filter(Boolean).length, marks: /[○✓●]/.test(a[0]), hidden: a[0].includes('HIDDEN'), abs: /href="https:\\/\\//.test(a[1]), rel: /href="\\//.test(a[1]), plainTaken: b[2] }; })()"""
+        m = dg.evaluate(MORE)
+        print('Kopiert:', c, '| mehrere Zeilen:', m, '| Fehler:', dgerr)
+        ok = c[0] == c[5] and '○' not in c[0] and c[1] is False and c[2] is True and c[3] == 'none' and c[4] is True \
+            and m['lines'] >= 3 and not m['marks'] and not m['hidden'] and m['abs'] and not m['rel'] and m['plainTaken'] is False and not dgerr
+        b.close()
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
 run_cases(globals())

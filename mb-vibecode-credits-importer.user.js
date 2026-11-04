@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.47.0
+// @version      3.48.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.47.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.47.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.48.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.48.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.47.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.48.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -290,6 +290,10 @@
       "ignored.why.releaseArtist": "the release’s artist – a title line, no credit",
       "ignored.why.website": "a website – no relationship of MusicBrainz",
       "ignored.why.nowhere": "no place named",
+      "ignored.why.heading": "a heading",
+      "ignored.why.releaseDate": "the date of the release on the page",
+      "ignored.why.definition": "a definition – no credit",
+      "ignored.why.linerNotes": "the text of the liner notes",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -6531,6 +6535,9 @@
       // lineLead: the name such a line gives (readClause)
       let contWho = null;
       let prevBy = null;
+      // [Z-LIN] (3.48.0) after "Notes by NAME:" the text of the notes (prose, not read); [Z-IGN] after a definition its explanation
+      let linerNotes = false;
+      let definitionNext = false;
       let lineLead = null;
       /**
        * [Z-UNA] (3.42.4) The own rules of texts whose phrase is in a text (words whole, any case): each its entry – a person with its
@@ -6650,15 +6657,40 @@
         part0 = clean(raw);
         pi0 = 0;
       };
-      /** One line of the text. */
+      /**
+       * [Z-LIN] [Z-IGN] (3.48.0, review) One line of the text: read as always; after "Notes by NAME:" (the text of the notes) and the
+       * line after a definition, what it gives as not recognized – and nothing else – is left out as such (a credit among them is read).
+       */
       const readLine = (raw) => {
+        const c0 = credits.length;
+        const k0 = companies.length;
+        const u0 = unrecognized.length;
+        const afterDefinition = definitionNext;
+        readLine0(raw);
+        if (afterDefinition && clean(raw)) definitionNext = false;
+        if ((linerNotes || afterDefinition) && credits.length === c0 && companies.length === k0 && unrecognized.length > u0) {
+          unrecognized.splice(u0).forEach((text) => ignored.push({ text: String(text).replace(/\s+→\s+\?.*$/, ''), why: afterDefinition ? 'definition' : 'linerNotes' }));
+        }
+      };
+      /** One line of the text. */
+      const readLine0 = (raw) => {
         let line = clean(raw);
+        // [Z-HYP] (3.48.0) "Makigami Koichi -harmonic overtone singing, jaw harp": a dash with a space only before it is the dash of
+        // "Name – roles" (not in a name: "Jean-Pierre", "A -B" with more dashes)
+        // ((3.48.0, review) no colon in it, no "by", "at" or "in" line – "Written by Lennon -McCartney", "Studio X -Berlin" –, and what
+        // follows the dash a role or a word in small letters – "Mary -Kate Olsen" stays)
+        if (line && !/\s[–—-]\s|:/.test(line) && !/\s(?:by|at|in)\s/i.test(` ${line} `)) {
+          const hy = line.match(/^(\p{Lu}[^-–—]{0,60}?\S)\s+[-–—](?=\p{L})([^-–—]+)$/u);
+          const first = hy ? clean(hy[2].split(/\s*[,;/&]\s*/)[0].replace(/\s*\([^)]*\)\s*$/, '')) : '';
+          if (hy && hy[1].split(/\s+/).length <= 5 && (/^\p{Ll}/u.test(first) || isRole(cap(first)))) line = `${hy[1]} - ${hy[2]}`;
+        }
         if (!line) {
           // [S043] an empty line after its publishers ends a block
           if (pubBlock && pubBlock.n) pubBlock = null;
           // [S070] [S071] (3.42.3) … and the roles of a name above, and a credit lines below may go on
           contWho = null;
           prevBy = null;
+          definitionNext = false;
           return;
         }
         startLine(raw);
@@ -6666,6 +6698,29 @@
         const before = prevBy;
         contWho = null;
         prevBy = null;
+        // [Z-IGN] (3.48.0) no credits: a heading of the credits alone ("credits", "Personnel:"), Bandcamp's "released / published
+        // January 13, 2022", a definition ("Intention (n.) /ɪnˈtɛnʃən/") and the line that explains it
+        // ((3.48.0, review) each of them ends a block of publishers too; a heading the liner notes)
+        if (/^(?:credits|personnel|musicians|line-?up|besetzung|mitwirkende)\s*:?$/i.test(line)) {
+          ignored.push({ text: line0, why: 'heading' });
+          pubBlock = null;
+          linerNotes = false;
+          return;
+        }
+        if (/^(?:released|published|veröffentlicht)\s+(?:on\s+)?(?:\p{L}+\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}|\d{1,2}\.?\s+\p{L}+\.?\s+\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}[./]\d{1,2}[./]\d{4})\.?$/iu.test(line)) {
+          ignored.push({ text: line0, why: 'releaseDate' });
+          pubBlock = null;
+          return;
+        }
+        // ((3.48.0, review) a word with its part of speech with a dot or as a word – "Intention (n.)", "(noun)" – and its pronunciation
+        // or nothing after it: not "Björk (v)" of a jazz list)
+        if (/^\p{L}[\p{L}'’-]*\s+\((?:(?:n|v|vb|adj|adv)\.|noun|verb|adjective|adverb)\)\s*(?:\/[^/]+\/)?\s*$/iu.test(line0)) {
+          ignored.push({ text: line0, why: 'definition' });
+          pubBlock = null;
+          definitionNext = true;
+          return;
+        }
+        if (/^(?:liner\s+)?notes\s+(?:by|von|par|por)\s+.+:\s*$/i.test(line0)) linerNotes = true;
         // [S068] (3.39.8) a line only of the name of the release's artist (a booklet's title): no credit, left out as such
         if (ruleOn('S068') && !pubBlock && artistNames.some((n) => norm(n) === norm(line.replace(/[.:]$/, '')))) {
           ignored.push({ text: line, why: 'releaseArtist' });
@@ -36137,6 +36192,19 @@
     out.push(cur);
     return out.map((x) => x.trim()).filter(Boolean);
   }
+  const DK_OV = 'html.dci-dk-overlay #dci-overlay';
+  const DK_SEMANTIC = [
+    // ((3.48.0, review) the lines at least 3:1 to their grounds)
+    `${DK_OV} { --sugg-bg: #3a3017; --sugg-line: #b8922f; --sugg-ink: #f2d98c; --date-bg: #2b2842; --date-line: #8a83cc; --date-d: #c3bdf2;
+      --date-d-dkg: #3a3560; --track-bg: #3b2519; --track-line: #c47a4e; --track-d: #f3b48f; --track-d-dkg: #5a3420; }`,
+    // (grounds of a suggestion whose text comes from elsewhere: the label of the pool's chips and of the date matrix's cells, the
+    // asking chips – (3.48.0, review) not their grips, menus and editors)
+    `${DK_OV} .dci-date-chip.dci-pchip-sugg > .dci-chip-main, ${DK_OV} .dci-date-chip.dci-pchip-sugg > .dci-chip-main .dci-chip-count,
+      ${DK_OV} .dci-dm-cell.dci-dm-auto > .dci-dm-date > .dci-chip-main, ${DK_OV} .dci-em-chip-ask, ${DK_OV} .dci-mx-newworks, ${DK_OV} .dci-row.dci-unmapped > td { color: var(--sugg-ink); }`,
+    // (the yellow grounds written as colours: as the suggestions)
+    `${DK_OV} .dci-mx-newworks, ${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
+    `${DK_OV} .dci-waiting, ${DK_OV} .dci-foot-chip-warn, ${DK_OV} input.dci-from-dg { color: var(--sugg-ink); }`,
+  ].join('\n');
   /** [Z-DM] (3.46.0, review) The dark stylesheet, made once, after the light one. */
   function ensureDarkSheet() {
     if (document.getElementById('dci-styles-dark')) return;
@@ -36206,6 +36274,9 @@
     walk(css, null);
     // (the browser's own parts – fields, scroll bars – dark too)
     out.push(`${DARK_ROOTS.map((r) => `html.dci-dk-${r.slice(4)} #${r}`).join(', ')} { color-scheme: dark; }`);
+    // [Z-DMY] (3.48.0; Q-et, Q-fd) the colours of meaning by hand (variant A): a muted ground of the colour with its text light in the
+    // same colour – suggestions amber, dates purple, tracks orange; what lies on such a ground takes its text colour
+    out.push(DK_SEMANTIC);
     return out.join('\n');
   }
 
