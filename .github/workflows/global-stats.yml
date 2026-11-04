@@ -11,7 +11,7 @@ on:
     - cron: '17 5 * * 0,4'
   # (a change of the script or of this file on the default branch: once)
   push:
-    branches: [main, 'claude/global-stats-workflow']
+    branches: [main]
     paths:
       - 'stats/global_stats.py'
       - '.github/workflows/global-stats.yml'
@@ -74,7 +74,8 @@ jobs:
               git checkout -q -B "$DATA_BRANCH" FETCH_HEAD
             else
               # (the first run: a branch of its own, with only the result)
-              git checkout -q --orphan "$DATA_BRANCH"
+              # ((review) a name of its own for each try – a second try finds no branch in its way)
+              git checkout -q --orphan "tmp-stats-$try"
               git rm -rq --cached . && git clean -fdqx -e .git
               printf '# Global statistics\n\nData of the workflow "Global statistics" on main (see stats/README.md there). Only numbers.\n' > README.md
               git add README.md
