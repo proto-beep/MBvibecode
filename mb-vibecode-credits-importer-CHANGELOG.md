@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.43.3 | 1.11.1 |
+| 2026-11-04 | 3.43.0 – 3.43.4 | 1.11.1 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.43.4
+
+Full review, part 5: staging, edit note, storage (package P5, with the first finding of P6).
+
+#### Fixed
+
+- **The edit note's "Done:" line says what is staged now:** a relationship taken out of the editor (a row on "Skip", unticked, staged again) is taken off the count, and the note is written anew after relationships were taken out or updated – until now its numbers only ever grew, and without a new relationship the note was not written at all (it said 5 while 3 were submitted).
+- **Live comments after a job that never finished:** a job armed at "Enter edit" whose edit was rejected (or the tab closed) blocked every later save of the live comments of that release for good, silently; a job older than 30 minutes or with an error is replaced now, and the statistics no longer count its items.
+- **"Reset all settings"** resets the edit note (Full | Simple – "Simple" came back after a reload) and, in the running dashboard, the entries as a matrix, joining, the shared events, the lines of a block and "by event" (the storage was cleared, but the dashboard kept the old values until the next reload – and staged with joining off).
+- **An import of own rules** takes only values the rule editor allows: a level of the register or "skip", a boolean switch, the details mode, a type for a role rule and an instrument for an instrument rule (a hand-edited file with "level": "foo" gave relationships on the recordings while the rule showed an unknown level).
 
 ### Import 3.43.3
 

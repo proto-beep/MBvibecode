@@ -794,7 +794,9 @@ def case_mappingio():
                        and chd['own'] == [] and isinstance(chd['off'], list) and json.loads(clip)['rules'] == chd['rules'] and status == 'Copied to the clipboard')
         # C) a file made by hand, pasted
         paste = {'format': 'mb-vibecode-credits-importer-mapping-changes', 'version': 2, 'script': '3.33.9', 'mapping': '3.33.9',
-                 'own': [{'id': 'U001', 'kind': 'role', 'on': True, 'discogs': 'gizmo', 'details': '', 'detailsMode': 'any', 'type': 'instrument', 'level': 'recording', 'instrument': 'theremin', 'credit': ''}],
+                 'own': [{'id': 'U001', 'kind': 'role', 'on': True, 'discogs': 'gizmo', 'details': '', 'detailsMode': 'any', 'type': 'instrument', 'level': 'recording', 'instrument': 'theremin', 'credit': ''},
+                         # (3.43.4, full review P5) a rule with values the editor never allows (level "foo", on "false" as a string): not imported
+                         {'id': 'U002', 'kind': 'role', 'on': 'false', 'discogs': 'thing', 'type': 'producer', 'level': 'foo'}],
                  'off': ['S007'],
                  'rules': {'R070': {'set': {'credit': 'cover painting'}, 'was': {'credit': 'cover art'}},
                            'C023': {'set': {'place': ['recorded at', 'engineered at'], 'level': 'release'}, 'was': {'level': 'work'}},
@@ -813,7 +815,8 @@ def case_mappingio():
                 and prev.get('C023', [''])[0] == 'new' and 'Types for places recorded at → recorded at, engineered at' in prev['C023'][1] and '⚠' in prev['C023'][1]
                 and prev.get('T002', [''])[0] == 'changed' and '+ zither' in prev['T002'][1] and prev.get('U001', [''])[0] == 'new' and prev.get('S007', [''])[0] == 'off'
                 and prev.get('R999', [''])[0] == 'skipped' and 'not in the mapping file' in prev['R999'][1] and prev.get('R031', [''])[0] == 'skipped' and 'code' in prev['R031'][1]
-                and prev.get('C003', [''])[0] == 'skipped' and 'pattern cannot be used' in prev['C003'][1] and prev.get('T099', [''])[0] == 'skipped' and stored == ['R071'])
+                and prev.get('C003', [''])[0] == 'skipped' and 'pattern cannot be used' in prev['C003'][1] and prev.get('T099', [''])[0] == 'skipped' and stored == ['R071']
+                and 'U002' not in prev)
         results.append(ok_c)
         pg.click('#dci-rules [data-mimport-apply]')
         pg.wait_for_timeout(700)

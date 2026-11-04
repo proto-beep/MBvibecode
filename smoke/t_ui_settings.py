@@ -518,7 +518,10 @@ def case_reset():
       set('dci-sync-mode', 'hover'); set('dci-dg-artwork', false); set('dci-dm-auto', true); set('dci-fill-credits', true);
       set('dci-role-codes', 'gema'); set('dci-user-rules', [{ id: 'U001', kind: 'role', on: true, discogs: 'Foo', type: 'performer', level: 'recording' }]);
       set('dci-rules-off', ['R001']); set('dci-date-pool:other', [{ id: 'd1', name: 'X', begin: { year: 1999 }, end: { year: 1999 }, ended: true }]);
-      set('dci-created-works:other', [{ i: 0, gid: 'g' }]); }""")
+      set('dci-created-works:other', [{ i: 0, gid: 'g' }]);
+      // (3.43.4, full review P5/P6) the edit note "Simple" (its key was left out of the reset), the entries as "Legacy" and no joining
+      // (the storage was cleared, the running dashboard kept them)
+      set('dci-edit-note', 'simple'); set('dci-entries-view', 'legacy'); set('dci-join', false); }""")
         pg.reload(); H.with_companion(pg); pg.add_script_tag(content=H.MAIN)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
@@ -542,9 +545,12 @@ def case_reset():
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
         # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
         settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last')]  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
+        # (3.43.4) the running dashboard draws the defaults at once: entries as a matrix (lines of a block), joining on, the edit note "Full"
+        live = pg.evaluate("[!!document.querySelector('.dci-em-line'), (document.querySelector('[data-f=join-auto]') || {}).checked, (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset ? (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset.mode : null]")
+        print('   im Dashboard (Matrix, Join, Edit note):', live)
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
             and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
-            and art == [None, None]
+            and art == [None, None] and live[0] is True and live[1] in (True, None) and live[2] in ('full', None)
         # 2) with the pools: the stored pools of all releases go, the created works stay
         H.open_reset(pg); pg.wait_for_timeout(150)
         pg.check('[data-f=reset-pools]')
@@ -1684,6 +1690,22 @@ def case_editnote():
         print('D)', d3, d0, '| Werk:', repr(n2), '| ↺:', d1)
         results.append(d3 == [['full', 'false'], ['simple', 'true']] and len(d0) == 2 and d0[1].startswith('Script: ')
                        and n2.split('\n')[1:2] and n2.split('\n')[1].startswith('Script: ') and d1 == [None, 'full'])
+        # E) (3.43.4, full review P5) "Done:" says what is staged now: Photo Guy's row on "Skip" and staged again (his relationship
+        # taken out of the editor) – "added n"; the row back on the release and staged – "added n+1" (until 3.43.3 the note was not
+        # written anew after a removal, and its count only ever grew: n+2 then)
+        import re as _re
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        ROWLEVEL = "(lv) => [...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy').querySelector('tr.dci-row [data-act=level][data-level=' + lv + ']').click()"
+        done = lambda: [l for l in pg.evaluate(NOTE).splitlines() if l.startswith('Done:')]
+        num = lambda e: int(_re.search(r'added (\d+) credit', e[0]).group(1)) if e and _re.search(r'added (\d+) credit', e[0]) else None
+        pg.evaluate(ROWLEVEL, 'skip'); pg.wait_for_timeout(400)
+        stage(pg)
+        e1 = done()
+        pg.evaluate(ROWLEVEL, 'release'); pg.wait_for_timeout(400)
+        stage(pg)
+        e2 = done()
+        print('E) Photo Guy ausgelassen:', e1, '| wieder dabei:', e2)
+        results.append(num(e1) is not None and num(e2) == num(e1) + 1)
         print('Fehler:', errs, errs2, errs3)
         results.append(not errs and not errs2 and not errs3)
         b.close()

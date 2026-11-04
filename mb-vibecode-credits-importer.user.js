@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.43.3
+// @version      3.43.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -12151,7 +12151,10 @@
     const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit', 'phrase', 'entity', 'role', 'tracks'];
     out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument', 'text'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
       && (r.kind !== 'text' || (typeof r.phrase === 'string' && r.phrase.trim() && ['artist', 'label', 'place', 'area'].includes(r.entity) && typeof r.role === 'string' && r.role.trim()))
-      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
+      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value))
+      // (3.43.4, review) the values the rule editor allows: a level of the register or "skip", "on" a boolean, the details mode any|exact
+      && (r.level == null || [...RULE_LEVELS, 'skip'].includes(r.level)) && (r.on == null || typeof r.on === 'boolean')
+      && (r.detailsMode == null || ['any', 'exact'].includes(r.detailsMode)) && (r.kind !== 'role' || (typeof r.type === 'string' && r.type.trim())) && (r.kind !== 'instrument' || (typeof r.instrument === 'string' && r.instrument.trim())))
       .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
     out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
     return out;
@@ -19306,7 +19309,7 @@
           for (const m of it.joinedItems) {
             S.staged.set(m.key, {
               state: newState, source, sig: itemSig(m), text, rowId: m.row.id, joined: J, jkey: it.jkey,
-              track: m.target && m.target.track ? m.target.track.idx : null, workLink: false,
+              track: m.target && m.target.track ? m.target.track.idx : null, workLink: false, noteKind: it.target.kind,
             });
             S.appliedKeys.add(m.key);
           }
@@ -19315,6 +19318,8 @@
             state: newState, source, sig: itemSig(it), text, rowId: it.row ? it.row.id : null,
             track: it.target && it.target.track ? it.target.track.idx : null, workLink: it.kind === 'work-link',
             ...(it.jkey ? { jkey: it.jkey } : {}),
+            // (3.43.4, review) what the edit note counts it as – taken off the count when it is taken out of the editor
+            noteKind: it.kind === 'work-link' ? 'workLinks' : it.target.kind, noteOrigin: it.origin || '',
           });
         }
         if (it.date) {
@@ -19349,13 +19354,28 @@
     let removed = 0;
     // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now);
     // [3.35.0] a single one only if its key was not staged anew
+    // (3.43.4, review) the edit note's "Done:" counts what is staged now: a relationship taken out is taken off the count
+    const uncount = (st) => {
+      if (!st || !st.noteKind) return;
+      if (S.noteStats[st.noteKind] > 0) S.noteStats[st.noteKind]--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'created' && S.noteStats.newWorkLinks > 0) S.noteStats.newWorkLinks--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'pending' && S.noteStats.pendingWorks > 0) S.noteStats.pendingWorks--;
+      noteChanged = true;
+    };
+    let noteChanged = false;
     const forget = (r) => {
       if (!r.joined) {
-        if (S.staged.get(r.key) === r.staged) S.staged.delete(r.key);
+        if (S.staged.get(r.key) === r.staged) {
+          uncount(r.staged);
+          S.staged.delete(r.key);
+        }
         return;
       }
+      let counted = false;
       for (const [k, st] of [...S.staged]) {
         if (st.joined !== r.joined) continue;
+        if (!counted) uncount(st);
+        counted = true;
         S.staged.delete(k);
         S.appliedKeys.delete(k);
       }
@@ -19424,7 +19444,8 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if (added || fillIds.length || dateFillIds.length || linkAttrN) {
+    // (3.43.4, review) also written anew after relationships were taken out or updated, when a block was written before
+    if (added || fillIds.length || dateFillIds.length || linkAttrN || ((noteChanged || updated) && S.lastNoteBlock)) {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
     }
@@ -26039,7 +26060,9 @@
   function saveLiveJob({ quiet = false } = {}) {
     const key = `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`;
     const had = readJson('localStorage', key, null);
-    if (had && had.armedAt && !had.done) return;
+    // (3.43.4, review) a job armed but never finished (the edit rejected, the tab closed, an error) is dead after LIVE_JOB_MAX_MS or
+    // with an error: it is replaced (until 3.43.3 it blocked every later save of this release for good)
+    if (had && had.armedAt && !had.done && !had.error && Date.now() - (Number(had.armedAt) || 0) < LIVE_JOB_MAX_MS) return;
     const items = !liveComOn() ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
       .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual,
         place: p.place && p.place.mbid ? { mbid: p.place.mbid, credit: p.place.credit || '', name: p.place.name || '' } : null }));
@@ -33360,7 +33383,8 @@
     let liveCom = 0;
     try {
       const job = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
-      liveCom = job && Array.isArray(job.items) ? job.items.length : 0;
+      // (3.43.4, review) only a job of this release that is not dead (see saveLiveJob)
+      liveCom = job && Array.isArray(job.items) && job.release === releaseMbid && !job.error && !(job.armedAt && !job.done && Date.now() - (Number(job.armedAt) || 0) > LIVE_JOB_MAX_MS) ? job.items.length : 0;
     } catch {
       liveCom = 0;
     }
@@ -34583,7 +34607,9 @@
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
-    DEV_KEY];
+    DEV_KEY,
+    // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload)
+    EDIT_NOTE_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -34608,6 +34634,9 @@
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full',
+      // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
+      // cleared, the running dashboard kept them until the next reload)
+      entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
     });
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)

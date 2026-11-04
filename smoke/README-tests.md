@@ -447,6 +447,7 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     the questions (Q901 "keys": keyboard · synthesizer · piano – a pasted "Key Man – keys" asks); your changes,
                                 #     export (with "add"), import (Q902 new, W903 of the wrong kind skipped, W904 from a whole register), deleted
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
+                                #     (3.43.4, full review P5) C: an own rule with a level the editor never allows ("foo") is not imported
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
                                 #     mine"; an old rules file chosen and dropped onto the window; a whole register replacing my changes
@@ -555,6 +556,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   conngroups: 3.42.0 (Z-CONS): ⓘ Connections in groups (Sources, Websites, Tools & scripts, Resources, managers, Links)
                                 #   statsdelete: 3.42.0 (Z-DS): "Delete statistics …" in ⚙ Cache with the number; none in the statistics
                                 #   editnote: 3.41.9 (Z-EN), 3.42.0 (Z-EN2: no None, a stored "none" is Simple): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple (tooltips list
+                                #     (3.43.4, full review P5) E: "Done:" after a relationship was taken out (n) and staged again (n+1)
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
                                 #   statsgenres: 3.42.6 (Z-STG2): Bandcamp's tags (pageTags: links or JSON-LD, without the place's tag) – "Genres and
                                 #     styles" Combined (sources in the tooltip) | Separate, remembered
