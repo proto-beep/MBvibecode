@@ -1,0 +1,90 @@
+# [Z-GST] Global statistics of MB x Vibecode: Credits Importer from MusicBrainz's edit dump.
+# Reads mbdump-edit.tar.bz2 of the latest full export (MetaBrainz, twice a week) as a stream and commits
+# stats/mb-vibecode-credits-importer-global.json to the data branch "stats" (made on the first run); the script's
+# statistics show it ("Global"). Only numbers, see stats/README.md.
+name: Global statistics
+
+on:
+  workflow_dispatch:
+  # (Thursday and Sunday, after the dumps of Wednesday and Saturday)
+  schedule:
+    - cron: '17 5 * * 0,4'
+  # (a change of the script or of this file on the default branch: once)
+  push:
+    branches: [main, 'claude/global-stats-workflow']
+    paths:
+      - 'stats/global_stats.py'
+      - '.github/workflows/global-stats.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: global-stats
+  cancel-in-progress: false
+
+defaults:
+  run:
+    # (bash -eo pipefail: a failed download or decompression fails the step)
+    shell: bash
+
+env:
+  BASE: https://data.metabrainz.org/pub/musicbrainz/data/fullexport
+  DATA_BRANCH: stats
+  OUT: stats/mb-vibecode-credits-importer-global.json
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q lbzip2
+      - name: Self-test
+        run: python3 stats/test_global_stats.py
+      - name: The latest dump
+        id: dump
+        run: |
+          DUMP=$(curl -fsSL --retry 3 "$BASE/LATEST" | tr -d '[:space:]')
+          [[ "$DUMP" =~ ^[0-9]{8}-[0-9]{6}$ ]] || { echo "unexpected LATEST: $DUMP"; exit 1; }
+          echo "dump=$DUMP" >> "$GITHUB_OUTPUT"
+          OLD=''
+          if git fetch -q --depth 1 origin "$DATA_BRANCH" 2>/dev/null; then
+            OLD=$(git show "FETCH_HEAD:$OUT" 2>/dev/null | python3 -c "import json,sys;print(json.load(sys.stdin).get('dump',''))" 2>/dev/null || true)
+          fi
+          # (a scheduled run with nothing new does nothing)
+          if [ "${{ github.event_name }}" = schedule ] && [ "$OLD" = "$DUMP" ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+          echo "dump: $DUMP (last: ${OLD:-none})"
+      - name: Read the edit dump
+        if: steps.dump.outputs.skip != '1'
+        env:
+          DUMP: ${{ steps.dump.outputs.dump }}
+        run: |
+          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump-edit.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --dump "$DUMP" --out "$RUNNER_TEMP/global.json"
+      - name: Commit the result to the data branch
+        if: steps.dump.outputs.skip != '1'
+        env:
+          DUMP: ${{ steps.dump.outputs.dump }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for try in 1 2; do
+            if git fetch -q origin "$DATA_BRANCH" 2>/dev/null; then
+              git checkout -q -B "$DATA_BRANCH" FETCH_HEAD
+            else
+              # (the first run: a branch of its own, with only the result)
+              git checkout -q --orphan "$DATA_BRANCH"
+              git rm -rq --cached . && git clean -fdqx -e .git
+              printf '# Global statistics\n\nData of the workflow "Global statistics" on main (see stats/README.md there). Only numbers.\n' > README.md
+              git add README.md
+            fi
+            mkdir -p stats
+            cp "$RUNNER_TEMP/global.json" "$OUT"
+            git add "$OUT"
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Global statistics: dump $DUMP"
+            git push -q origin "HEAD:$DATA_BRANCH" && exit 0
+            sleep 10
+          done
+          exit 1
