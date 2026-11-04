@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.48.0 | 1.11.1 – 1.13.0 |
+| 2026-11-04 | 3.43.0 – 3.49.0 | 1.11.1 – 1.13.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,26 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.49.0
+
+Block 6 – collected items Z-RTL, Z-ROL, Z-RPB, Z-EXC (Q-eu, Q-ev, Q-fa, Q-fb, Q-fe, Q-ff, Q-fg, Q-fh, Q-fi).
+
+#### Added / changed
+
+- **Several roles with their own tracks in one line:** "ghalani of Greenwood - bass (3, 7, 8, 9), additional bass (11)", "megiapa - production (2-14), vocals (1-14)" – each role on its tracks.
+- **Roles:** production and instrumental production – producer; composition – composer; "vocal sample", "drum sample" … – samples from artist ("contains samples by"); next to the instrument of the same person ("drums / drum sample") – sampler; harmonic overtone singing, throat singing – a voice; Juno – analog synthesizer credited "Juno"; EVI – electronic valve instrument; highland bagpipes – Great Highland bagpipe.
+- **"by" lines:** "Recorded and produced by X between Chicago and Los Angeles" – X recorded and produced, both cities recorded in; "Additional recording by X at Studio Y" – the studio recorded at.
+- **"All compositions and lyrics by X except:"** with the tracks below it, each a title and its lines: X composes and writes the lyrics of the other tracks; "Written by" and "Produced by" of a block are for its track. **"Originally performed by …"** is no credit (no performer of this release): the track is a cover – "cover" on the link of its work (the original, found by its writers) – and the edit note says so; with an arranger on its track it is an **arrangement**: a work of its own, staged **"arrangement of"** the original found in MusicBrainz. **"End quote from W by N"**: the work of the track **"quotes lyrics from"** the work W of N found in MusicBrainz (the track needs no writer; a new work is fine). A work not found is named in the edit note; the works matrix shows each of them below the title of the track.
+- **Texts copied with the companion's marks** before 1.13.0 ("○○○○Telemakus …") are read without them.
+
+#### Fixed (review of Block 6)
+
+- **No work with itself, nothing twice:** a track still linked to the original gets no "arrangement of" itself (the works matrix asks for a work of its own); a relationship MusicBrainz has already is not staged again; a new work's relationship waits for the link of its recording (held back by an invalid date). An arranged cover without a writer is not looked up by its title alone; a search that failed is no "not found" (nor in the edit note); the original is also found by the id of a linked writer.
+- **The blocks of "All … by X except:" in other layouts:** blocks without empty lines between them, an empty line between a title and its credits, titles with their number, quotation marks or a colon, several such headers – each with its own blocks; a header whose titles are no tracks of the release is listed as not recognized (before, X was credited on all tracks). Lines of instruments, headings and pairs in a block are for its track. "Originally recorded by X in 1975", "… (1975)" are covers, never credits; "End quote from Stand by Me by Ben E. King" names "Stand by Me".
+- **Edit note:** the works linked with the works they arrange or quote are counted ("linked 2 works with the works they arrange or quote"); a cover only while "cover" is on one of its links, only for tracks chosen. Nothing of an import before stays (also when the next one has no entries); a text taken as a supplement brings its covers and quotes too.
+- **Several roles with their own tracks:** each part is marked where it stands; a part not read is named ("→ ? “guitar (2019)”"); "vocals (1), and backing vocals (2)" gives both. "vocals, vocal samples" stays material sampled (no sampler). "between A and B" only when both are areas. The rules window shows a space of a pattern as one ("field) samples?").
+- **Dark theme:** the colours of meaning of 3.48.0 are written one rule per line like the rest of the dark stylesheet (two of its rules spanned two lines).
 
 ### Import 3.48.0 · COMPANION 1.13.0
 

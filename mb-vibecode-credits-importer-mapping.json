@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.48.0",
+  "version": "3.49.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -101,7 +101,7 @@
     {"id":"R001","kind":"special","note":"","re":null,"types":[],"level":"recording"},
     {"id":"R002","kind":"simple","note":"","re":{"$re":"^(written-by|written by|writer|songwriter|songwriters)$","$flags":""},"types":["writer","composer"],"level":"work","work":true},
     {"id":"R098","kind":"simple","note":"Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)","re":{"$re":"^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$","$flags":""},"types":["writer"],"level":"work","work":true,"notes":["musicLyrics"]},
-    {"id":"R003","kind":"simple","note":"","re":{"$re":"^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$","$flags":""},"types":["composer","writer"],"level":"work","work":true},
+    {"id":"R003","kind":"simple","note":"","re":{"$re":"^(composed by|composer|composition by|composition|compositions|music by|music|all music by|all music|score|score by|soundtrack)$","$flags":""},"types":["composer","writer"],"level":"work","work":true},
     {"id":"R004","kind":"simple","note":"","re":{"$re":"^(translated by|translation|translator|translations)$","$flags":""},"types":["translator"],"level":"work","work":true},
     {"id":"R005","kind":"simple","note":"The poet's words (\"Poems By\", \"Poetry By\", \"Poem By\") are R105 since 3.31.4","re":{"$re":"^(author|story by|screenwriter|script by|created by)$","$flags":""},"types":["writer"],"level":"work","work":true,"credit":true},
     {"id":"R105","kind":"special","note":"\"Poems By\", \"Poetry By\", \"Poem By\" (3.31.4): the poet is the lyricist of the works, with the role credit \"poems\", \"poetry\" or \"poem\" (lower case)","re":{"$re":"^(poems|poetry|poem)( written)? by$","$flags":""},"types":["lyricist","writer"],"level":"work","work":true},
@@ -110,8 +110,9 @@
     {"id":"R008","kind":"simple","note":"Vocals","re":{"$re":"^(lead vocals?|lead vocalist)$","$flags":""},"types":["vocal"],"level":"recording","primaryCands":["lead vocals"]},
     {"id":"R009","kind":"special","note":"","re":null,"types":["vocal"],"level":"recording"},
     {"id":"R010","kind":"simple","note":"","re":{"$re":"^solo vocals?$","$flags":""},"types":["vocal"],"level":"recording","flags":["solo"]},
-    {"id":"R011","kind":"special","note":"","re":{"$re":"^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$","$flags":""},"types":["vocal"],"level":"recording"},
+    {"id":"R011","kind":"special","note":"","re":{"$re":"^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|overtone singing|harmonic overtone singing|throat singing|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$","$flags":""},"types":["vocal"],"level":"recording"},
     {"id":"R108","kind":"special","note":"\"Host\", \"Hosted By\" (3.41.8, Q-cn): spoken vocals credited \"host\", miscellaneous support \"host\" or skipped – no type is assumed, the dashboard asks (Q012); until 3.41.7 spoken vocals (R012)","re":{"$re":"^(host|hosts|hosted by)$","$flags":""},"types":[],"level":"recording"},
+    {"id":"R109","kind":"simple","note":"\"Vocal sample\", \"drum sample\" (3.49.0, Z-ROL; Q-eu, Q-fe): material of the person that was sampled – samples from artist (\"contains samples by\"); next to the instrument of the same person (\"drums / drum sample\") the texts read it as sampler","re":{"$re":"^(vocal|voice|vox|drum|drums|percussion|guitar|bass|piano|keyboard|horn|string|strings|choir|speech|spoken word|field)\\s+samples?$","$flags":""},"types":["samples from artist"],"level":"recording"},
     {"id":"R012","kind":"special","note":"","re":{"$re":"^(announcer|commentator|interviewee|interviewer|dialog|dialogue|read by|presenter|compere|compère)$","$flags":""},"types":["vocal"],"level":"recording"},
     {"id":"R013","kind":"simple","note":"","re":{"$re":"^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$","$flags":""},"types":["vocal"],"level":"recording","primaryCands":["background vocals"]},
     {"id":"R014","kind":"simple","note":"","re":{"$re":"^(choir|choir vocals?)$","$flags":""},"types":["vocal"],"level":"recording","primaryCands":["choir vocals"]},
@@ -128,7 +129,7 @@
     {"id":"R023","kind":"simple","note":"","re":{"$re":"^assistant[- ]producer$","$flags":""},"types":["producer"],"level":"release","flags":["assistant"]},
     {"id":"R024","kind":"simple","note":"","re":{"$re":"^(additional[- ]producer|additional production)$","$flags":""},"types":["producer"],"level":"release","flags":["additional"]},
     {"id":"R025","kind":"special","note":"","re":{"$re":"^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$","$flags":""},"types":["producer"],"level":"recording"},
-    {"id":"R026","kind":"special","note":"\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer","re":{"$re":"^(producer|produced by|produced-by|produced|record producer)$","$flags":""},"types":["producer"],"level":"recording"},
+    {"id":"R026","kind":"special","note":"\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer","re":{"$re":"^(producer|produced by|produced-by|produced|record producer|production|instrumental production)$","$flags":""},"types":["producer"],"level":"recording"},
     {"id":"R027","kind":"simple","note":"","re":{"$re":"^(overdubbed by|overdubs by)$","$flags":""},"types":["recording","engineer"],"level":"recording","eng":true,"credit":true},
     {"id":"R028","kind":"simple","note":"","re":{"$re":"^(tape op|tape operator|restoration|restored by|daw|technical assistance)$","$flags":""},"types":["engineer"],"level":"recording","eng":true,"credit":true},
     {"id":"R029","kind":"simple","note":"","re":{"$re":"^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$","$flags":""},"types":["transfer","engineer"],"level":"release","eng":true},
@@ -209,6 +210,11 @@
   ],
   "INSTRUMENT_ALIASES": {
     "sequential px": ["Sequential Prophet X","Prophet X","synthesizer"],
+    "juno": ["analog synthesizer","synthesizer"],
+    "roland juno": ["analog synthesizer","synthesizer"],
+    "evi": ["electronic valve instrument","EVI"],
+    "highland bagpipes": ["Great Highland bagpipe","bagpipes"],
+    "highland pipes": ["Great Highland bagpipe","bagpipes"],
     "sequential prophet x": ["Sequential Prophet X","Prophet X","synthesizer"],
     "bass": ["bass"],
     "electric bass": ["electric bass guitar","bass guitar"],
@@ -352,7 +358,9 @@
     "mastering": ["engineer","engineered"]
   },
   "FIXED_ROLE_CREDITS": [
-    {"base":"drums","instrument":"drums (drum set)","credit":"drums"}
+    {"base":"drums","instrument":"drums (drum set)","credit":"drums"},
+    {"base":"juno","instrument":"analog synthesizer","credit":"Juno"},
+    {"base":"roland juno","instrument":"analog synthesizer","credit":"Roland Juno"}
   ],
   "ENGINEER_TASK_RE": {"$re":"^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing)$","$flags":"i"},
   "TEXT_NAME_SEP": {"$re":"\\s*(?:,|&|\\+|\\/|;|\\band\\b|\\bund\\b|\\bet\\b)\\s*","$flags":"i"},
