@@ -1696,6 +1696,15 @@ def case_levelclick():
             wrows = pg.evaluate("[...document.querySelectorAll('th.dci-mx-col')].map(t => t.textContent).join(' ').includes('Arr Man')")
             print('B) Arrangeur:', steps, '| in der Werke-Matrix:', wrows)
             results.append(steps[0] == 'recording' and 'release' in steps and steps[-1] == 'work?' and wrows)
+            # D) (3.44.1, review) Part Man has two events (all tracks, track 2): ① to Release – the events sort anew, the focus stays
+            # on the level of the event clicked (now ② Release)
+            part = sec_sel(pg, 'Part Man')
+            d0 = pg.evaluate(LV, part)
+            pg.click(f'{part} [data-act=em-evlevel-next][data-n="1"]'); pg.wait_for_timeout(400)
+            d1 = pg.evaluate(LV, part)
+            foc = pg.evaluate("(() => { const b = document.activeElement; return b && b.dataset.act === 'em-evlevel-next' ? [b.dataset.n, b.dataset.level] : null; })()")
+            print('D) Part Man:', [x[:2] for x in d0], '→', [x[:2] for x in d1], '| Fokus:', foc)
+            results.append([x[1] for x in d0] == ['recording', 'recording'] and [x[1] for x in d1] == ['recording', 'release'] and foc == ['2', 'release'])
             print('Fehler:', errs)
             results.append(not errs)
             pg.evaluate("localStorage.setItem('dci-view', JSON.stringify('full')); localStorage.removeItem('dci-remember:%s')" % H.REL)
@@ -1715,6 +1724,27 @@ def case_levelclick():
             pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evlevel-next][data-n="1"]'); pg2.wait_for_timeout(400)
             pg2.click(f'{solo2} th.dci-em-ev [data-act=em-evopen]'); pg2.wait_for_timeout(300)
             seg = pg2.evaluate("(sel) => [...document.querySelectorAll(sel + ' [data-act=em-evlevel]')].map(b => b.dataset.level)", solo2)
+            # E) (3.44.1, review) Part Man: ① (all tracks, electric guitar) on Skip; the guitar line ticked into ② (track 2) – a row of
+            # its own, the skipped event keeps its row (until 3.44.0 the skipped row was taken for it)
+            part2 = sec_sel(pg2, 'Part Man')
+            # the guitar line: the one whose tick is in the event of all tracks (the piano is on track 2 only) – the last line
+            gl = pg2.evaluate("(sel) => { const ls = [...document.querySelectorAll(sel + ' tr.dci-em-line')]; return ls.length ? ls[ls.length - 1].dataset.line : null; }", part2)
+            GEV = "([sel, line]) => { const x = [...document.querySelectorAll(sel + ' tr.dci-em-line[data-line=\"' + line + '\"] input[data-f=em-tick]')].find(i => i.checked); return x ? x.dataset.ev : null; }"
+            # (clicked until the guitar's event is on Skip – the page may have come back remembered from the compact one)
+            for _ in range(4):
+                ev = pg2.evaluate(GEV, [part2, gl])
+                if not ev or ev.startswith('skip|'):
+                    break
+                pg2.evaluate("([sel, ev]) => { const b = [...document.querySelectorAll(sel + ' th.dci-em-ev [data-act=em-evlevel-next]')].find(x => x.dataset.ev === ev); if (b) b.click(); }", [part2, ev])
+                pg2.wait_for_timeout(400)
+            heads = pg2.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev')].map(th => th.classList.contains('dci-em-evskip') ? 'skip' : 'ev')", part2)
+            box = pg2.evaluate("([sel, line]) => [...document.querySelectorAll(sel + ' tr.dci-em-line[data-line=\"' + line + '\"] input[data-f=em-tick]')].map(x => [x.dataset.ev.startsWith('skip|'), x.checked, x.disabled])", [part2, gl])
+            free = [i for i, x in enumerate(box) if not x[0] and not x[1]]
+            if free:
+                pg2.locator(f'{part2} tr.dci-em-line[data-line="{gl}"] input[data-f=em-tick]').nth(free[0]).check(); pg2.wait_for_timeout(400)
+            box2 = pg2.evaluate("([sel, line]) => [...document.querySelectorAll(sel + ' tr.dci-em-line[data-line=\"' + line + '\"] input[data-f=em-tick]')].map(x => [x.dataset.ev.startsWith('skip|'), x.checked])", [part2, gl])
+            print('E) Köpfe:', heads, '| Gitarre vorher:', box, '| nachher:', box2)
+            results.append('skip' in heads and free and [x for x in box2 if x[0]] == [[True, True]] and [x for x in box2 if not x[0]] == [[False, True]])
             print('C) Kopf:', h0, '| Skip:', h1, '| geöffnet:', seg, '| Fehler:', errs2)
             results.append(h0 and h0[0] == 'recording' and h1 and h1[0].startswith('① Skip') and h1[2] and h1[3] and seg == ['recording', 'release', 'skip'] and not errs2)
         finally:

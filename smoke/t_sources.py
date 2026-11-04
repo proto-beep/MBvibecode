@@ -871,4 +871,53 @@ def case_repeat():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_aliascap():
+    """Credits Importer 3.44.1 (collected item Z-ALC; Q-ea, Q-ec, Q-ek): Discogs aliases looked up per import – at most the number of
+    ⚙ Settings → Sources (here 2; default 12), those with the most rows first; a message says how many; the others have "Discogs
+    aliases …" at their entries, a click looks up that one (its suggestion follows)."""
+    orig_rel = H.discogs_release
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+
+    def rel():
+        d = orig_rel()
+        d['extraartists'] += [ex('Alias One', 'Guitar', 3041), ex('Alias Two', 'Bass', 3042), ex('Alias Two', 'Organ', 3042), ex('Alias Two', 'Piano', 3042),
+                              ex('Alias Three', 'Drums', 3043), ex('Alias Four', 'Flute', 3044), ex('Alias Four', 'Oboe', 3044)]
+        return d
+    H.discogs_release = rel
+    # (3.44.1, review) Alias Four: Discogs answers with an error – it keeps its button, the message counts the ones looked up
+    H.DG_API['/artists/3044'] = None
+    for i, al in [(3041, 3051), (3042, 3052), (3043, 3053)]:
+        H.DG_API[f'/artists/{i}'] = {'id': i, 'name': f'A{i}', 'aliases': [{'id': al, 'name': f'Real {i}'}]}
+        H.ARTISTS[al] = (H.uid('dddddddd', al - 2000), f'Real {i}')
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        asked = []
+        ctx.on('request', lambda r: asked.append(int(r.url.rsplit('/', 1)[1])) if '/artists/' in r.url and 'api.discogs.com' in r.url and r.url.rsplit('/', 1)[1].isdigit() else None)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.evaluate("localStorage.setItem('dci-alias-max', '3')")
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 90)
+        pg.wait_for_timeout(800)
+        a0 = list(asked)
+        msg = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Discogs aliases looked up' in m]
+        btn = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('[data-act=aliases-fetch]')).map(g => g.querySelector('.dci-gname strong').textContent.trim())")
+        print('A) gefragt:', a0, '| Meldung:', msg, '| Knopf bei:', btn)
+        # three asked by their rows (Alias Two 3, Alias Four 2, Alias One 1 – Alias Three 1 comes later in the dashboard); Alias Four
+        # failed: 2 of 4 looked up, the button at Alias Four and Alias Three
+        results.append(a0 == [3042, 3044, 3041] and msg and 'for 2 of 4 artists' in msg[0] and sorted(btn) == ['Alias Four', 'Alias Three'])
+        sec = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Alias Three').dataset.group")
+        pg.click(f'section[data-group="{sec}"] [data-act=aliases-fetch]')
+        H.wait_for(pg, f"!!document.querySelector('section[data-group=\"{sec}\"] [data-act=alias-use]')", 20)
+        sugg = pg.evaluate(f"[...document.querySelectorAll('section[data-group=\"{sec}\"] [data-act=alias-use]')].map(b => b.textContent.trim())")
+        print('B) nach Klick gefragt:', asked[len(a0):], '| Vorschlag:', sugg, '| Fehler:', errs)
+        results.append(asked[len(a0):] == [3043] and sugg and sugg[0].startswith('Real 3043') and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
