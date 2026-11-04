@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio).",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio). 3.43.0 (review of the text adapter, S074 – S077): track lists after each name, \"except\" lines, a second \"by\" clause, role lists, several \"Name (roles)\", names before a dash split, a release artist never split, places with their area in brackets and a second place.",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -2308,6 +2308,447 @@
         "unrecognized": [
           "Warp Recordings"
         ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe (tracks 1-2), John Doe (track 3)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By",
+            "on 1-2"
+          ],
+          [
+            "John Doe",
+            "Produced By",
+            "on 3"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Drums",
+            "on 1, 2"
+          ],
+          [
+            "John Doe",
+            "Drums",
+            "on 3, 4"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe (tracks 1, 2)\nand John Doe (tracks 3, 4)",
+      "tracks": 5,
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By",
+            "on 1, 2"
+          ],
+          [
+            "John Doe",
+            "Mixed By",
+            "on 3, 4"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe except track 3",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Produced by Jane Roe except track 3"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bass – Jane Roe (not on track 3)",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Bass – Jane Roe (not on track 3)"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Track 3 mixed by John Doe, all other tracks mixed by Jane Roe",
+      "tracks": 5,
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Track 3 mixed by John Doe, all other tracks mixed by Jane Roe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded by Jane Roe at Studio X and mastered by John Doe at Studio Y",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Recorded By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At"
+          ],
+          [
+            "Studio Y",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe and mixed by John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ],
+          [
+            "John Doe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe in Dolby Atmos",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Mixed by Jane Roe in Dolby Atmos → ? “in Dolby Atmos”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Jane Roe with John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Produced by Jane Roe with John Doe → ? “with John Doe”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe – bass; vocals",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "bass"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Jane Roe – bass; vocals → ? “vocals”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Photography, design and layout by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Photography By"
+          ],
+          [
+            "Jane Roe",
+            "Design By"
+          ],
+          [
+            "Jane Roe",
+            "Layout"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced, recorded and mixed by Jane Roe and John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ],
+          [
+            "Jane Roe",
+            "Recorded By"
+          ],
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Produced By"
+          ],
+          [
+            "John Doe",
+            "Recorded By"
+          ],
+          [
+            "John Doe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe (bass, vocals), John Doe (drums)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Bass"
+          ],
+          [
+            "Jane Roe",
+            "Vocals"
+          ],
+          [
+            "John Doe",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Featuring: Jane Roe (vocals), John Doe (guitar)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "vocals"
+          ],
+          [
+            "John Doe",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Roe & John Doe – vocals",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "vocals"
+          ],
+          [
+            "John Doe",
+            "vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vocal production: Jane Roe",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Vocal production: Jane Roe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe\nAdditional Recording\nJohn Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Additional Recording",
+          "John Doe"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by\nJane Roe\nMastered by\nJohn Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Hansa Tonstudio (Berlin) in 2019",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Hansa Tonstudio",
+            "Recorded At",
+            "(Berlin)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio X (Berlin), mixed at Studio Y (Paris)",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "(Berlin)"
+          ],
+          [
+            "Studio Y",
+            "Mixed At",
+            "(Paris)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio X, Berlin and Studio Y, Paris",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "(Berlin)"
+          ],
+          [
+            "Studio Y",
+            "Recorded At",
+            "(Paris)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Simon & Garfunkel",
+      "artists": [
+        "Simon & Garfunkel"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Simon & Garfunkel",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Florence and the Machine – vocals",
+      "artists": [
+        "Florence and the Machine"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Florence and the Machine",
+            "vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
         "ignored": []
       }
     }

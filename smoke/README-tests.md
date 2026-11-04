@@ -97,6 +97,9 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
                                 # 3.42.3: "Gondola" (as on the page and with "○") and "Black Zenith" in the corpus (Z-GON, Z-BZ)
+                                # 3.43.0 (full review, P1 – S074 – S077): 24 lines – a track list after each name, "except" lines,
+                                #   a second "by" clause, role lists, several "Name (roles)", names before a dash split, a release artist
+                                #   never split, places with their area in brackets and a second place
                                 # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
                                 # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
                                 # release's artists ("artists") and its number of tracks ("tracks")

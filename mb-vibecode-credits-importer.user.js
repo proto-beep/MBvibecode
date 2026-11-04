@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.8
+// @version      3.43.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.43.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.43.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.43.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3361,6 +3361,11 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    // [3.43.0] review of the text adapter (package P1 of the full review)
+    { id: 'S077', where: 'TEXT.parse (namesScoped, readClause; bandNames)', note: 'Texts (3.43.0): names before a dash or colon are split like names after "by" – "Jane Roe & John Doe – vocals" gives two credits (before: one artist "Jane Roe & John Doe"); and a name of the release\'s artists is never cut at its "&", "and" or comma, on either side ("Produced by Simon & Garfunkel", "Florence and the Machine" – before: "Simon" and "Garfunkel")' },
+    { id: 'S076', where: 'TEXT.parse (readClause, namesWithRoles; S055 items)', note: 'Texts (3.43.0): several names with their roles in brackets in one clause – "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit of its own (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)' },
+    { id: 'S075', where: 'TEXT.parse (clauses, splitBy, readUnit, by-path)', note: 'Texts (3.43.0): a second "<verb> by" joined with "and", "&" or "/" is a credit of its own – "Recorded by A at Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" (before: B lost, or "mixed by B" a name); a name with "in", "for" or "with" after "by" ("Mixed by X in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y") is listed as not recognized, not credited as written; a clause of a line that gives nothing is listed ("Jane Roe – bass; vocals": “vocals”)' },
+    { id: 'S074', where: 'TEXT.parse (NAME_TRACKS, EXCEPT_TRACKS, namesScoped, readLine)', note: 'Texts (3.43.0): a track list in brackets after a name is that name\'s – "Produced by Jane Roe (tracks 1-2), John Doe (track 3)", "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)", also on an "and Name (tracks …)" line below a "by" line (S071) – before, the last list of the line counted for every name and the others were dropped; tracks named by what they are not ("except track 3", "(not on track 3)", "all other tracks") are not read: the line is listed as not recognized (before: the tracks named were taken as the credit\'s)' },
     // [3.42.3] collected items Z-GON, Z-BZ
     { id: 'S073', where: 'TEXT.parse (readClause, addCredit; titleNames)', note: 'Texts (3.42.3): "With X, <sentence>" – "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" – is prose, no credit (a part after a comma of five words or more, no roles); and a name that is the title of the release or of one of its tracks ("Black Zenith") is never a person, unless it is the release\'s artist too. Before: "With …" gave the name a guest performer' },
     { id: 'S072', where: 'TEXT.parse (readLine; WEBSITE_BY, NOWHERE)', note: 'Texts (3.42.3): left out on purpose, not named as not recognized – "Website by X" (also "Web design by", "Site by"; MusicBrainz has no relationship for a website: "a website") and a place that is none, "Recorded all over the place" ("everywhere", "in various places": "no place named")' },
@@ -5314,6 +5319,10 @@
     const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*[:–—-]\\s*(.+)$`, 'i');
     const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
+    // [S074] (3.43.0, review) a track list in brackets right after a name ("Jane Roe (tracks 1-2), John Doe (track 3)")
+    const NAME_TRACKS = new RegExp(`\\s*\\(\\s*(?:on\\s+|auf\\s+)?(?:${TEXT_TRACK_WORDS}\\s*)?(${SPEC})\\s*\\)$`, 'i');
+    // [S074] … and tracks named by what they are not ("except track 3", "(not on track 3)", "all other tracks"): not read, listed
+    const EXCEPT_TRACKS = /\b(?:except|excluding|excl\.|but\s+not|not\s+on|all\s+(?:the\s+)?other|other\s+(?:tracks|titles|songs)|außer|sauf|excepto|salvo)\b/iu;
     // [S070] (3.42.3) … or after a bullet: "Matt Glassmeyer — saxophones • 1, 8" (collected item Z-GON a)
     const BULLET = new RegExp(`^(.*?\\S)\\s*[•·]\\s*(${SPEC})\\s*\\.?$`);
     // [S069] (3.42.3) the companion's status marks, copied with a line of its page ("○ Chris Lippincott — pedal steel • 3"; Z-GON i)
@@ -5345,7 +5354,8 @@
     function placeOf(text) {
       // [S039] (3.29.0) a date in brackets after the place ("TQA.HQ (July 2026)") is no part of it; [T047] (3.32.5) nor a
       // date right after it ("El Studio in San Francisco on September 3rd and 4th 2016": before, the whole part was left out)
-      const parts = String(text || '').replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
+      // [3.43.0] (review) an area in brackets after the place ("Hansa Tonstudio (Berlin)") is its area
+      const parts = String(text || '').replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/\s*\(([^()]+)\)/, ', $1').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
       if (!parts.length) return null;
       let name = parts[0];
       let area = parts[1] || '';
@@ -5404,7 +5414,19 @@
         }
         if (cur) out.push(cur);
       }
-      return out.map(clean).filter(Boolean);
+      return out.flatMap(splitBy).map(clean).filter(Boolean);
+    }
+    /**
+     * [S075] (3.43.0, review) A second "<verb> by" clause joined with "and", "&" or "/" is a clause of its own: "Recorded by A at
+     * Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" (before: B was lost, or part of A's name).
+     */
+    function splitBy(c) {
+      const i = c.search(/\sby\s/i);
+      if (i < 0 || !ruleOn('S075')) return [c];
+      const m = c.slice(i + 4).match(/\s+(?:and|&|\/)\s+(?=\p{L}+(?:\s+\p{L}+){0,2}\s+by\s)/iu);
+      if (!m) return [c];
+      const k = i + 4 + m.index;
+      return [c.slice(0, k), ...splitBy(c.slice(k + m[0].length))];
     }
     /**
      * [S063] (3.38.18) A name of two to four capitals ("RR", "R.R.", "HRG") that are the initials of exactly one release artist or one
@@ -5697,9 +5719,11 @@
         const l = noDates(left);
         if (!l) return [];
         if (distribution(l)) return distribution(l);
-        if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
+        // [3.43.0] (review) a list of roles ("Photography, design and layout by", "Produced, recorded and mixed by") is read part by
+        // part first – the whole phrase counted as the role of its first part and the others were lost
+        const whole = () => (isRole(`${cap(l)} By`) ? [`${cap(l)} By`] : isRole(cap(l)) ? [cap(l)] : []);
         // [3.14.0] "Layout by X": the role is "Layout"
-        if (isRole(cap(l))) return [cap(l)];
+        if (!TEXT_ROLE_SEP.test(l) && whole().length) return whole();
         // [183] (3.38.18) verbs one after another are each a role ("Recorded Mixed and Mastered by RR"; until 3.38.17 "Mixed By [Recorded]")
         const verbs = (x) => {
           const w = x.split(' ');
@@ -5709,7 +5733,9 @@
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] roles with their medium ("Vinyl LP mastering and digital mastering by X")
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
-        return withM.length && withM.every(Boolean) ? withM : [];
+        if (withM.length && withM.every(Boolean)) return withM;
+        // a role with "and" or a comma of its own ("Drum and Bass Programming")
+        return whole();
       };
       /**
        * [Z-AM] (3.41.7) The last word the roles of a list share ("Audio & Mixing Engineer" → Audio Engineer, Mixing Engineer;
@@ -5846,7 +5872,42 @@
         }
         return out.length && !clean(t.slice(end)) ? out : [];
       };
-      const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      /**
+       * The names of a list ("A, B & C"), each with the track list in brackets after it, if any ([S074]: "A (tracks 1-2), B (track 3)" –
+       * before, a comma inside the brackets cut the name and the brackets were dropped); [S077] (3.43.0, review) a name of the release's
+       * artists is never cut at its "&" or "and" ("Simon & Garfunkel", "Florence and the Machine"), nor is a part joined back to one.
+       */
+      const namesScoped = (side) => {
+        const whole = clean(side).replace(/\s*\([^)]*\)$/, '');
+        if (ruleOn('S077') && whole && bandNames.has(norm(whole))) return [{ name: whole, scope: null }];
+        // commas, "&" and "and" inside brackets do not separate names
+        const masked = String(side || '').replace(/\([^)]*\)/g, (b) => b.replace(/,/g, '\u0001').replace(/&/g, '\u0002').replace(/\band\b/gi, '\u0003'));
+        const raw = masked.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n.replace(/\u0001/g, ',').replace(/\u0002/g, '&').replace(/\u0003/g, 'and'))).filter(Boolean);
+        // parts that make up a release artist's name are joined back ("Simon", "Garfunkel")
+        const parts = [];
+        for (let i = 0; i < raw.length; i++) {
+          let took = 0;
+          if (ruleOn('S077')) {
+            for (let j = raw.length - 1; j > i; j--) {
+              const seg = raw.slice(i, j + 1).map((x) => x.replace(/\s*\([^)]*\)$/, ''));
+              const sep = [' & ', ' and ', ', ', ' und ', ' et ', ' y '].find((s) => bandNames.has(norm(seg.join(s))));
+              if (sep) {
+                took = j - i;
+                parts.push(seg.join(sep));
+                break;
+              }
+            }
+          }
+          if (!took) parts.push(raw[i]);
+          i += took;
+        }
+        return parts.map((n) => {
+          const m = ruleOn('S074') ? n.match(NAME_TRACKS) : null;
+          const set = m ? resolveTracks(m[1]) : null;
+          return { name: clean(n.replace(/\s*\([^)]*\)$/, '')), scope: set && set.size ? { set, spec: clean(m[1]) } : null };
+        }).filter((x) => x.name);
+      };
+      const names = (side) => namesScoped(side).map((x) => x.name);
       // [S051] (3.34.19) "X plays guitar, bass and drums"
       const PLAYS_LIST = new RegExp(`^(.+?)\\s+${TEXT_PLAY_VERBS.source}\\s+(?:the\\s+)?(.+)$`, 'i');
 
@@ -5939,6 +6000,21 @@
             found++;
             return true;
           };
+          /**
+           * [3.43.0] (review) The places after "at": "Studio X and Studio Y" are two of the verb; "Studio X (Berlin), mixed at Studio Y
+           * (Paris)" the second one of its own verb (before: one place "Studio X and Studio Y", or the mix place lost in the area).
+           */
+          const places = (verb, tail) => {
+            const own = String(tail || '').split(/,\s*(?=\p{L}+(?:ed|ing)\s+at\s)/iu);
+            let any = false;
+            own.forEach((part, k) => {
+              const v = k === 0 ? verb : part.match(/^(\p{L}+)\s+at\s+/iu);
+              const text = k === 0 ? part : part.replace(/^\p{L}+\s+at\s+/iu, '');
+              const vb = k === 0 ? v : (v && v[1].replace(/ing$/i, 'ed')) || verb;
+              text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u).forEach((w) => { if (place(vb, placeOf(w))) any = true; });
+            });
+            return any;
+          };
           // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
@@ -5987,7 +6063,7 @@
             // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
             const at = left.match(/^(.*?)\s+at\s+(.+)$/i);
             if (at) {
-              place(verb, placeOf(at[2]));
+              places(verb, at[2]);
               left = at[1];
             }
             // [3.22.0] "Recorded in Xixon, Asturies by X"
@@ -6002,7 +6078,7 @@
             // "Mixed by X at Studio Y"
             const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
             if (at2) {
-              place(verb, placeOf(at2[2]));
+              places(verb, at2[2]);
               right = at2[1];
             }
             // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
@@ -6064,7 +6140,16 @@
             // the place of roles that are all for one medium is for that medium too
             const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
             if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
-            for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+            for (const x of rolesM.length ? namesScoped(right) : []) {
+              // [S075] "Mixed by Jane Roe in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": no name – listed
+              let nm = x.name;
+              const prep = ruleOn('S075') && !bandNames.has(norm(nm)) ? nm.match(/^(.+?)\s+((?:in|for|with)\s+\S.*)$/iu) : null;
+              if (prep && looksLikeName(prep[1])) {
+                unknownParts.push(prep[2]);
+                nm = prep[1];
+              }
+              rolesM.forEach((r) => { if (addCredit(nm, r, x.scope || cScope)) found++; });
+            }
             return;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
@@ -6072,9 +6157,8 @@
           // [3.30.8] "All music recorded ... at X" (Discogs notes): the words for the music and the dots before the verb are no role
           const clauseV = clause.replace(TEXT_WHAT_PREFIX, '').replace(/\s*(?:\.{3}|…)\s*/g, ' ');
           if ((m = clauseV.match(/^(\p{L}+(?:\s*(?:,|\band\b|&|\+)\s*\p{L}+)*)\b.*?\s+at\s+(.+)$/iu))) {
-            const where = placeOf(m[2]);
             const verbs = ruleOn('S039') ? m[1].split(/\s*(?:,|\band\b|&|\+)\s*/i).filter(Boolean) : [m[1].split(/[\s,&+]/)[0]];
-            verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => place(v, where));
+            verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => places(v, m[2]));
             return;
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
@@ -6193,7 +6277,8 @@
               const p = parseRoleNotation(r)[0];
               return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
             };
-            const items = m[2].split(/\s*;\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u).map(clean).filter(Boolean);
+            // [S076] (3.43.0) "Featuring: Jane Roe (vocals), John Doe (guitar)": a comma after the brackets ends the item
+            const items = m[2].split(ruleOn('S076') ? /\s*;\s*|(?<=\))\s*,\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u : /\s*;\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u).map(clean).filter(Boolean);
             for (const item of items) {
               const it = item.match(/^(.+?)\s+on\s+(.+)$/i) || item.match(/^(.+?)\s+[–—-]\s+(.+)$/) || item.match(/^(.+?)\s*\(([^)]+)\)$/);
               const roles = it ? listRoles(clean(it[2])) : null;
@@ -6215,6 +6300,15 @@
               return;
             }
           }
+          // [S076] (3.43.0, review) several "Name (roles)" in one clause – "Jane Roe (bass, vocals), John Doe (drums)" – each a credit
+          // (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)
+          if (ruleOn('S076') && (clause.match(/\([^)]+\)/g) || []).length >= 2) {
+            const groups = namesWithRoles(clause);
+            if (groups.length) {
+              groups.forEach((x) => x.roles.forEach((r) => { if (addCredit(x.name, r, cScope)) found++; }));
+              return;
+            }
+          }
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -6233,12 +6327,14 @@
           }
           const rolesRight = listRoles(right);
           const rolesLeft = listRoles(left);
+          // [S077] (3.43.0, review) "Jane Roe & John Doe – vocals": two names, like after "by" (a release artist stays whole)
+          const lefts = ruleOn('S077') ? names(left) : [left];
           if (rolesRight && !rolesLeft) {
-            rolesRight.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
+            for (const n of lefts) rolesRight.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
             // [S070] (3.42.3) "Name — roles": lines of roles below it are his too
-            if (found) lineLead = left;
+            if (found && lefts.length === 1) lineLead = left;
           } else if (rolesLeft && !rolesRight) {
-            for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+            for (const x of namesScoped(right)) rolesLeft.forEach((r) => { if (addCredit(x.name, r, x.scope || cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
             // [3.6.0] Some roles known, some not: the known ones are taken, the rest is listed as not recognized
             const rp = roleParts(right);
@@ -6249,14 +6345,16 @@
               const maybe = ruleOn('S051') ? rp.unknown.filter(maybePlayable) : [];
               const guess = maybe.length && rp.known.filter(playable).length >= maybe.length ? new Set(maybe) : new Set();
               rp.parts.forEach((r) => {
-                if (isRole(r)) {
-                  if (addCredit(left, r, cScope)) found++;
-                } else if (guess.has(r)) {
-                  if (addCredit(left, r, cScope, { guess: true })) found++;
+                for (const n of lefts) {
+                  if (isRole(r)) {
+                    if (addCredit(n, r, cScope)) found++;
+                  } else if (guess.has(r)) {
+                    if (addCredit(n, r, cScope, { guess: true })) found++;
+                  }
                 }
               });
               if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
-              if (found) lineLead = left;
+              if (found && lefts.length === 1) lineLead = left;
             }
           }
         };
@@ -6273,6 +6371,9 @@
               typoMode = false;
             }
           }
+          // [3.43.0] (review) a clause of a line that gives nothing is listed ("Jane Roe – bass; vocals": "vocals") – before, only a
+          // whole line was
+          if (found === f0 && unknownParts.length === u0 && parts.length > 1 && ruleOn('S075')) unknownParts.push(clause);
         }
         // [3.14.0] "Photography Tom Barrett", "mastering john doe": a known role at the start, then a name of two to four
         // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
@@ -6283,6 +6384,8 @@
             const name = words.slice(k).join(' ');
             const n = name.split(' ');
             if (n.length > 4 || TEXT_NOT_NAME.test(name) || n.every((w) => isRole(cap(w)))) continue;
+            // [3.43.0] (review) a name has no colon, dash or bracket ("Vocal production: Jane Roe" is no vocal credit of "production: Jane Roe")
+            if (/[:–—(]|\s-\s/.test(name)) continue;
             if (!isRole(cap(role)) && !isRole(`${cap(role)} By`)) continue;
             if (addCredit(name, roleOf(role), scope)) found++;
           }
@@ -6468,6 +6571,12 @@
           ignored.push({ text: line, why: 'releaseArtist' });
           return;
         }
+        // [S074] (3.43.0, review) tracks named by what they are not ("Produced by X except track 3", "Bass – X (not on track 3)",
+        // "all other tracks mixed by Y"): not read – before, the tracks named were taken as the credit's
+        if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
+          unrecognized.push(line0);
+          return;
+        }
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -6503,15 +6612,19 @@
         // recording" – the place of its verb (mixed at; Z-GON e); "and Name" – one more name of its roles ("Website by Max Helgemo" / "and
         // Jacob Dawson-Daley": left out with it, Z-GON g)
         if (ruleOn('S071') && before) {
-          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
-            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: before.scope ? tracksOf(before.scope) : null, ...at() });
+          // (3.43.0, review) a role heading is no studio ("Additional Recording", "Live Recording"); the line's own track list counts
+          // ("and John Doe (tracks 3, 4)" – before, the tracks of the line above)
+          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && !isRole(cap(line)) && !isRole(`${cap(line)} By`)
+            && !/^(?:additional|live|field|string|vocal|drum|surround|binaural|location)\b/i.test(line) && isCompanyRole(`${before.verb} At`)) {
+            const sc = scope || before.scope;
+            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: sc ? tracksOf(sc) : null, ...at() });
             return;
           }
           const and = line.match(/^(?:and|&|und|et|y)\s+(.+)$/i);
-          const more = and ? names(and[1]) : [];
-          if (more.length && more.every((n) => looksLikeName(n) && /^\p{Lu}/u.test(n) && !TEXT_NOT_NAME.test(n) && !isRole(cap(n)))) {
+          const more = and ? namesScoped(and[1]) : [];
+          if (more.length && more.every((x) => looksLikeName(x.name) && /^\p{Lu}/u.test(x.name) && !TEXT_NOT_NAME.test(x.name) && !isRole(cap(x.name)))) {
             if (before.ignored) ignored.push({ text: line0, why: before.ignored });
-            else more.forEach((n) => before.roles.forEach((r) => addCredit(n, r, before.scope)));
+            else more.forEach((x) => before.roles.forEach((r) => addCredit(x.name, r, x.scope || scope || before.scope)));
             prevBy = before;
             return;
           }
@@ -6702,8 +6815,9 @@
         for (let i = 0; i < lines.length; i++) {
           const h = headingOf(lines[i]);
           if (!h) continue;
-          // (3.39.8, review) a name right above the heading: names above their instruments (S058), no heading
-          if (i > 0 && stackName(lines[i - 1])) continue;
+          // (3.39.8, review) a name right above the heading: names above their instruments (S058), no heading – (3.43.0, review) only
+          // an instrument's: a role heading below a name ("Mixed by / Jane Roe / Mastered by / John Doe") is one
+          if (i > 0 && !h.role && stackName(lines[i - 1])) continue;
           const names = [];
           let empties = 0;
           for (let j = i + 1; j < lines.length; j++) {

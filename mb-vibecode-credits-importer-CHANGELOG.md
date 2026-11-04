@@ -14,6 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
+| 2026-11-04 | 3.43.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -97,6 +98,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-04
+
+### Import 3.43.0
+
+The full review of the script (packages P1 – P6, read by independent reviewers), part 1: the text adapter (rules S074 – S077; collected item Q-cx). Each finding has a line in `smoke/text_corpus.json` that failed before.
+
+#### Fixed
+
+- **A track list after each name is that name's** (S074): "Produced by Jane Roe (tracks 1-2), John Doe (track 3)", "Drums: Jane Roe (tracks 1, 2), John Doe (tracks 3, 4)" and an "and John Doe (tracks 3, 4)" line below a "by" line. Before, the last list of the line counted for every name and the others were dropped – the relationships would have gone to the wrong tracks.
+- **"except track 3", "(not on track 3)", "all other tracks …"** are no longer read as the tracks named (S074): the line is listed as not recognized – before, the opposite of the text was staged.
+- **A second "… by" credit in a sentence** (S075): "Recorded by A at Studio X and mastered by B at Studio Y", "Produced by A and mixed by B" give both credits and both places (B was lost, or "mixed by B" became a name). "Mixed by X in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": X, the rest listed as not recognized (it was part of the name). A clause of a line that gives nothing is listed ("Jane Roe – bass; vocals" → “vocals”).
+- **A list of roles before "by"** ("Photography, design and layout by X", "Produced, recorded and mixed by X and Y") gives every role – the first one alone was taken when it is a role by itself.
+- **Several "Name (roles)" in one line** (S076): "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit (one garbled credit before).
+- **Names before a dash or colon are split like names after "by"** (S077): "Jane Roe & John Doe – vocals" gives two credits. A name of the release's artists is never cut at its "&", "and" or comma, on either side: "Produced by Simon & Garfunkel", "Florence and the Machine – vocals" (before, "Simon" and "Garfunkel" were looked up as two artists).
+- **A role word before a name with a colon or dash in it** ("Vocal production: Jane Roe", "DJ Shadow – scratches") no longer gives a credit of "production: Jane Roe" or "Shadow – scratches".
+- **A role heading below a "by" line** ("Additional Recording", "Live Recording") is no studio (S071); a role heading right below a name ("Mixed by / Jane Roe / Mastered by / John Doe") is read (S067 skipped every second pair).
+- **Places:** "Hansa Tonstudio (Berlin)" has Berlin as its area (it stayed in the name); "Recorded at Studio X (Berlin), mixed at Studio Y (Paris)" gives both places with their verbs (the mix place was lost); "Recorded at Studio X and Studio Y", "… at Studio X, Berlin and Studio Y, Paris" give two places (one "Studio X and Studio Y" before).
 
 ## 2026-11-03
 

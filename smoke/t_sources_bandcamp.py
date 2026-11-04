@@ -626,9 +626,11 @@ const id = (artist, pageName) => { const r = bc.toRelease(data(artist), 'https:/
 console.log(JSON.stringify({ names, own: id('Test Band', 'The Test Band'), friends: id('Jane Roe & Friends', 'Jane Roe'), label: id('Yunclas', 'Grabaciones Autobombo'), none: id('Test Band', '') }));
 """
         out = json.loads(subprocess.run(['node', '-e', NODE, SCRIPT], capture_output=True, text=True, check=True).stdout)
+        # (3.43.0, S077) "Guitar – Jane Roe & Friends" is one credit of the release's artist (its page): until 3.42.8 the name was
+        # cut at "&" and the first credit was "Jane Roe" without the link
         print('B)', out)
         ok_b = out['names'] == ['Grabaciones Autobombo', 'Jane Roe', ''] and out['own'] == ['https://x.bandcamp.com/', False, True] \
-            and out['friends'] == ['', False, True] and out['label'] == ['', True, False] and out['none'] == ['https://x.bandcamp.com/', False, True]
+            and out['friends'] == ['https://x.bandcamp.com/', False, True] and out['label'] == ['', True, False] and out['none'] == ['https://x.bandcamp.com/', False, True]
         results.append(ok_b)
 
         # C) Discogs: a person MusicBrainz does not have with this Discogs link
