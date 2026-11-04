@@ -1,0 +1,77 @@
+# [Z-GST] (alpha) Global statistics of MB x Vibecode: Credits Importer from MusicBrainz's edit dump.
+# Reads mbdump-edit.tar.bz2 of the latest full export (MetaBrainz, twice a week) as a stream and commits
+# stats/mb-vibecode-credits-importer-global.json back to the branch it ran on. Only numbers, see stats/README.md.
+name: Global statistics (alpha)
+
+on:
+  workflow_dispatch:
+  # (on the branch of the alpha: each push of the script or of this file runs it once; tags do not)
+  push:
+    branches: ['**']
+    paths:
+      - 'stats/global_stats.py'
+      - '.github/workflows/global-stats.yml'
+  # (schedules run only on the default branch – after a merge: Thursday and Sunday, after the dumps of Wednesday and Saturday)
+  schedule:
+    - cron: '17 5 * * 0,4'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: global-stats-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    # (bash -eo pipefail: a failed download or decompression fails the step)
+    shell: bash
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q lbzip2
+      - name: Self-test
+        run: python3 stats/test_global_stats.py
+      - name: The latest dump
+        id: dump
+        env:
+          BASE: https://data.metabrainz.org/pub/musicbrainz/data/fullexport
+        run: |
+          DUMP=$(curl -fsSL --retry 3 "$BASE/LATEST" | tr -d '[:space:]')
+          [[ "$DUMP" =~ ^[0-9]{8}-[0-9]{6}$ ]] || { echo "unexpected LATEST: $DUMP"; exit 1; }
+          echo "dump=$DUMP" >> "$GITHUB_OUTPUT"
+          OLD=$(python3 -c "import json;print(json.load(open('stats/mb-vibecode-credits-importer-global.json')).get('dump',''))" 2>/dev/null || true)
+          # (a scheduled run with nothing new does nothing)
+          if [ "${{ github.event_name }}" = schedule ] && [ "$OLD" = "$DUMP" ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+          echo "dump: $DUMP (last: ${OLD:-none})"
+      - name: Read the edit dump
+        if: steps.dump.outputs.skip != '1'
+        env:
+          BASE: https://data.metabrainz.org/pub/musicbrainz/data/fullexport
+          DUMP: ${{ steps.dump.outputs.dump }}
+        run: |
+          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump-edit.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --dump "$DUMP" --out "$RUNNER_TEMP/global.json"
+      - name: Commit the result
+        if: steps.dump.outputs.skip != '1'
+        env:
+          DUMP: ${{ steps.dump.outputs.dump }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # (the branch may have moved during the run: the result goes onto its newest commit)
+          for try in 1 2; do
+            git fetch -q origin "$GITHUB_REF_NAME"
+            git checkout -q -B "$GITHUB_REF_NAME" "origin/$GITHUB_REF_NAME"
+            cp "$RUNNER_TEMP/global.json" stats/mb-vibecode-credits-importer-global.json
+            git add stats/mb-vibecode-credits-importer-global.json
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Global statistics: dump $DUMP"
+            git push -q origin "HEAD:$GITHUB_REF_NAME" && exit 0
+            sleep 10
+          done
+          exit 1
