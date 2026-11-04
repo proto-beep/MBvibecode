@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.49.0 | 1.11.1 – 1.13.0 |
+| 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -100,6 +100,22 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-04
+
+### Import 3.50.0
+
+Block 7 – collected items Z-PRO, Z-TAR.
+
+#### Added / changed
+
+- **A sentence that describes the music:** "Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp, and SHelley Hirsch vocal." – David Watson highland bagpipes; Makigami Koichi vocal and jaw harp, Shelley Hirsch vocal, both as guests (rule S079). The words before "with" are read as usual ("Recorded live at Café Oto, with special guests …": the place).
+- **Names:** two capitals before small letters – a slip of the shift key – are written in normal case ("SHelley" → "Shelley"; not "DAngelo", "OBrien"; rule S059).
+- **Track artists:** a musician credited for the whole release whose name the artist credit of some tracks in MusicBrainz names gets the instruments, voices and "performer" on those tracks only ("David Watson & Makigami Koichi" on tracks 2 and 4: Makigami Koichi's jaw harp there); said at the row, rule S078 (switched off: all tracks).
+
+#### Fixed (review of Block 7)
+
+- **The sentence reader:** credits before "with" stay ("Highland bagpipes (David Watson), drums (Ann Lee), with guests …", "Recorded at Loft, Cologne by Jane Roe; …"); a place, an event or a make is no musician ("Solo piano (Tokyo)", "… and Fender Rhodes", "Gibson Les Paul guitar"), a name is taken whole ("Jane Bass vocals" is not read); track lists in brackets leave the line as before; guests also as "Jane Roe (bass, vocals)" and "Oliver Lake on saxophone".
+- **Names:** Dutch "IJ" and names as "TJay", "ÓBrien" stay as written.
+- **Track artists:** only instruments, voices and "performer"; switched off, tracks changed by hand stay; copies of a row keep their own tracks; once more when the entries are linked (their MusicBrainz names), and by the name variations; the edit note says which tracks come from the artist credits in MusicBrainz.
 
 ### Import 3.49.0
 
