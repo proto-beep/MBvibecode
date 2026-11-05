@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.53.0
+// @version      3.54.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.53.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.53.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.54.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.54.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.53.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.54.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1945,6 +1945,20 @@
       "stats.more.media": "Media and types",
       "stats.more.script": "Language and script",
       "stats.more.lengths": "Recording lengths",
+      "stats.more.artists": "The artists of the relationships",
+      "stats.more.labelsplaces": "Labels and places",
+      "stats.art.n": "Artists as MusicBrainz has them: {n} of {of}",
+      "stats.art.missing": "{n} not looked up yet – in the background while the dashboard is open (one a second, at most 60 a time)",
+      "stats.art.type": "Type",
+      "stats.art.noType": "no type",
+      "stats.art.gender": "Gender",
+      "stats.art.decade": "Born or founded",
+      "stats.art.country": "Country",
+      "stats.art.town": "Began in (town)",
+      "stats.art.century": "There in the centuries",
+      "stats.art.post": "Posthumous: {n} of {of} relationships of artists who had died or broken up (by the date of the relationship, else of the release)",
+      "stats.lp.labels": "Labels used most",
+      "stats.lp.places": "Places used most",
       "stats.ali.rc": "With a role credit: {pct} ({n} of {of} with instruments or vocals)",
       "stats.ali.ac": "Credited as: {pct} ({n} of {of})",
       "stats.ali.alias": "Entries found through an alias: {pct} ({n} of {of})",
@@ -9369,6 +9383,12 @@
   const statsGlobalOn = () => readJson('localStorage', STATS_GLOBAL_ON_KEY, true) !== false;
   // [Z-RDU] (3.53.0; Q-gi) the card "Recording lengths": 'mean' (the average), else the median
   const STATS_LEN_KEY = 'dci-stats-len';
+  // [Z-AST] (3.54.0; Q-fk, Q-gh) what MusicBrainz has of the artists of the submitted relationships – looked up in the background once
+  // a submission is counted, kept here: gid → [type, gender, begin year, end year (ended), country (ISO 3166-1), begin area, looked up at]
+  const STATS_ARTISTS_KEY = 'dci-stats-artists';
+  const STATS_ARTISTS_MAX = 3000;
+  const STATS_ARTISTS_PER_RUN = 60;
+  const STATS_ARTISTS_DAYS = 180;
   const STATS_IDLE_KEY = 'dci-stats-idle';
   const STATS_IDLE_DEFAULT = 300;
   const statIdleMs = () => {
@@ -9470,6 +9490,72 @@
       }
     }
     return seen;
+  }
+
+  /** [Z-AST] (3.54.0) The artists looked up for the statistics (gid → their data), from the browser's storage. */
+  const statArtistsRead = () => {
+    const o = readJson('localStorage', STATS_ARTISTS_KEY, null);
+    return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  };
+
+  /** [Z-AST] (3.54.0) What of an artist the statistics keep, from MusicBrainz's answer (/ws/2/artist/<gid>). */
+  function statArtistInfo(a, at = Date.now()) {
+    // ((review) "-0500" is the year -500; a year after this one is no year)
+    const year = (d) => {
+      const y = parseInt(String(d || ''), 10);
+      return Number.isFinite(y) && y && y <= new Date().getFullYear() ? y : null;
+    };
+    const ls = a['life-span'] || {};
+    const iso = (x) => (x && (x['iso-3166-1-codes'] || [])[0]) || '';
+    const ba = a['begin-area'] || null;
+    // (a begin area that is a country or a region – ISO 3166-1 / 3166-2 – is no town)
+    const town = ba && !iso(ba) && !((ba['iso-3166-2-codes'] || []).length) ? String(ba.name || '').slice(0, 60) : '';
+    return [String(a.type || ''), String(a.gender || ''), year(ls.begin), ls.ended || ls.end ? year(ls.end) || 0 : null, String(a.country || iso(a.area) || ''), town, at];
+  }
+
+  /**
+   * [Z-AST] (3.54.0; Q-fk; review) The artists of the counted relationships that are not looked up yet (or longer ago than
+   * STATS_ARTISTS_DAYS), newest submissions first: looked up at MusicBrainz in the background of the dashboard – after the dashboard's own
+   * requests (mbWsIdle), one a second, at most STATS_ARTISTS_PER_RUN a time (the rest next time) – and kept in the browser (at most
+   * STATS_ARTISTS_MAX, the oldest go). Started when the statistics are read (opening them, an import checked). It stops when collecting is
+   * switched off or the statistics are deleted (S.statArtistsGen), and for this page when the browser cannot store more.
+   */
+  async function statArtistsLookup() {
+    if (S.statArtistsRunning || S.statArtistsFull || !statsOn()) return;
+    S.statArtistsRunning = true;
+    const gen = S.statArtistsGen || 0;
+    let n = 0;
+    try {
+      const recs = (await statAll()) || [];
+      const known = statArtistsRead();
+      const old = Date.now() - STATS_ARTISTS_DAYS * 86400000;
+      const want = uniq([...recs].sort((x, y) => (y.at || 0) - (x.at || 0)).flatMap((r) => (r.rels || []).filter((it) => it.et === 'artist' && it.tg).map((it) => String(it.tg).toLowerCase())))
+        .filter((g) => /^[0-9a-f-]{36}$/.test(g) && !(known[g] && known[g][6] > old)).slice(0, STATS_ARTISTS_PER_RUN);
+      for (const gid of want) {
+        if (!statsOn() || (S.statArtistsGen || 0) !== gen) break;
+        let a = null;
+        try {
+          a = await mbWsIdle(`artist/${gid}`);
+        } catch {
+          a = null;
+        }
+        if (!a || !statsOn() || (S.statArtistsGen || 0) !== gen) continue;
+        const cur = statArtistsRead();
+        cur[gid] = statArtistInfo(a);
+        const keys = Object.keys(cur);
+        if (keys.length > STATS_ARTISTS_MAX) keys.sort((x, y) => (cur[x][6] || 0) - (cur[y][6] || 0)).slice(0, keys.length - STATS_ARTISTS_MAX).forEach((k) => delete cur[k]);
+        writeJson('localStorage', STATS_ARTISTS_KEY, cur);
+        // ((review) the browser's storage full: not again on this page)
+        if (!statArtistsRead()[gid]) {
+          S.statArtistsFull = true;
+          break;
+        }
+        n++;
+      }
+    } finally {
+      S.statArtistsRunning = false;
+    }
+    if (n && S.statsOpen && S.statsScope !== 'global') renderStats();
   }
 
   /** [E8] Jobs older than 30 minutes go (also those of other releases: a submission given up or failed). */
@@ -28607,6 +28693,8 @@
     Object.assign(S, { searchProgress: null, searchRunning: false, searchAgain: false });
     renderWorks();
     if (!worksResting()) log('ok', 'checksDone', { n: done });
+    // [Z-AST] (3.54.0) the import checked: the artists of the statistics not looked up yet, after the dashboard's own requests
+    if (statsOn()) statArtistsLookup().catch(() => {});
     if (again) autoSearchWorks();
   }
 
@@ -32889,6 +32977,8 @@
         if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
         statClear().then(() => {
           S.statsData = [];
+          writeJson('localStorage', STATS_ARTISTS_KEY, null); // [Z-AST] (3.54.0) the artists looked up for them too
+          S.statArtistsGen = (S.statArtistsGen || 0) + 1;
           log('info', 'statsDeleted', {});
           renderStats();
           renderSettings(); // [Z-DS] (3.42.0) the button is in ⚙ Settings → Cache
@@ -34961,6 +35051,8 @@
         ...(x.k === 's' ? { f: x.kinds || [] } : {}),
         // [Z-ALI] (3.53.0) the role credits themselves, and an entry found through an alias
         rt: attrs.map((a) => a.credit).filter(Boolean).slice(0, 4), al: entry && entry.viaAlias ? 1 : 0,
+        // [Z-AST] (3.54.0) the year of the relationship's date (posthumous: after the end of its artist)
+        dy: (state.begin_date && Number(state.begin_date.year)) || null,
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -35128,6 +35220,8 @@
     S.statsData = Array.isArray(all) ? all : [];
     S.statsLoading = false;
     if (S.statsOpen) renderStats();
+    // [Z-AST] (3.54.0) the artists not looked up yet (in the background)
+    statArtistsLookup().catch(() => {});
     // [Z-DS] (3.42.0) the number next to "Delete statistics …" in ⚙ Settings → Cache
     const st = S.overlay && S.overlay.querySelector('[data-el="stats-stored"]');
     if (st) renderSettings();
@@ -35324,7 +35418,9 @@
       // [Z-ALI] (3.53.0) role credits (of relationships with instruments or vocals), credited as, the role credits used, entries found through an alias
       rcN: 0, rcBase: 0, acN: 0, acBase: 0, rcTop: new Map(), y: 0, entY: new Set(), aliasEnt: new Set(),
       // [Z-RLS, Z-LNG, Z-RDU] (3.53.0) the releases (at their first submission): media, types of the release group, language, script, lengths
-      relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [] };
+      relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [],
+      // [Z-AST, Z-PLS] (3.54.0) the artists' relationships ([gid, year of the relationship, year of the release]); labels of the relationships
+      artRels: [], labelsRel: new Map(), placesRel: new Map(), entName: new Map() };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -35444,6 +35540,21 @@
           inc(m.dsrc, it.ds || 'hand');
         }
         if (it.et === 'place') inc(m.places, it.tn);
+        // ((review) labels by their MBID, shown by their name)
+        if (it.et === 'label') {
+          inc(m.labelsRel, it.tg || it.tn);
+          if (it.tg && it.tn) m.entName.set(it.tg, it.tn);
+        }
+        if (it.et === 'place' && it.tg && it.tn) {
+          inc(m.placesRel, it.tg);
+          m.entName.set(it.tg, it.tn);
+        }
+        // [Z-AST] the year of the relationship, else of the release – ((review) a relationship with a date from before 3.54.0, whose year
+        // the record does not hold, is left out of "posthumous")
+        if (it.et === 'artist' && it.tg && m.artRels.length < 50000) {
+          const y = 'dy' in it ? it.dy || (r.rel && r.rel.year) || null : it.d ? null : (r.rel && r.rel.year) || null;
+          m.artRels.push([String(it.tg).toLowerCase(), y]);
+        }
         if (it.et === 'work') m.works++;
         inc(m.lv, it.lv);
         for (const n of it.i || []) {
@@ -35615,6 +35726,7 @@
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
       ${statsMore3Html(m, { top, kv, card })}
+      ${statsMore4Html(m, { top, kv, card })}
       ${statsMore2Html(m, recs, { top, kv, card })}
     </div>`;
   }
@@ -35693,6 +35805,79 @@
         <li>${esc(tr('stats.len.rec', { time: statLen(f(m.lens)), n: statNum(m.lens.length) }))}</li>
         <li>${esc(tr('stats.len.rel', { time: statLen(f(m.relLens.map((xs) => f(xs)))), n: statNum(m.relLens.length) }))}</li></ul>
         <p class="dci-sub">${esc(tr('stats.len.hint'))}</p>${since(m.relY, nRel)}`)}`;
+  }
+
+  /** [Z-AST] (3.54.0) The centuries an artist was there (from its begin to its end, or to this year): [1900, 2000] for 1950 – 2010. */
+  function statCenturies(b, e, type = '', now = new Date().getFullYear()) {
+    if (!b || b > now) return [];
+    // ((review) a person without an end: at most 120 years)
+    const to = e || (e === 0 ? b : type === 'Person' ? Math.min(now, b + 120) : now);
+    const out = [];
+    for (let c = Math.floor(b / 100) * 100; c <= Math.max(b, to); c += 100) out.push(c);
+    return out.slice(0, 30);
+  }
+
+  /** [Z-AST] (3.54.0) The name of a country (ISO 3166-1) in the language of the dashboard. */
+  function statCountryName(code) {
+    try {
+      const n = new Intl.DisplayNames([LANG], { type: 'region' }).of(code);
+      if (n) return n;
+    } catch {
+      // (not a code the browser knows: the code)
+    }
+    return code;
+  }
+
+  /**
+   * [Z-AST, Z-PLS] (3.54.0; Q-fk, Q-gh, Q-gj) The artists of the relationships (each once – as MusicBrainz has them, looked up in the
+   * background of the dashboard, statArtistsLookup): their type, gender, the decade of their begin (birth, founding), country, the town
+   * they began in, the centuries they were there; the relationships after their end (posthumous: the date of the relationship, else
+   * the release's year). And the labels and places used most.
+   */
+  function statsMore4Html(m, { top, kv, card }) {
+    const info = statArtistsRead();
+    const arts = uniq(m.artRels.map((x) => x[0]));
+    const known = arts.filter((g) => info[g]);
+    const inc = (map, k) => {
+      if (k || k === 0) map.set(k, (map.get(k) || 0) + 1);
+    };
+    const types = new Map();
+    const genders = new Map();
+    const decades = new Map();
+    const countries = new Map();
+    const towns = new Map();
+    const centuries = new Map();
+    for (const g of known) {
+      const [t, gen, b, e, c, town] = info[g];
+      inc(types, t || '-');
+      if (gen) inc(genders, gen);
+      if (b) inc(decades, `${Math.floor(b / 10) * 10}s`);
+      if (c) inc(countries, c);
+      if (town) inc(towns, town);
+      statCenturies(b, e, t).forEach((x) => inc(centuries, x));
+    }
+    // posthumous: of the relationships whose artist ended (a year known) and that have a year
+    let post = 0;
+    let postOf = 0;
+    for (const [g, y] of m.artRels) {
+      const a = info[g];
+      if (!a || !a[3] || !y) continue;
+      postOf++;
+      if (y > a[3]) post++;
+    }
+    const byKey = (map) => [...map.entries()].sort((x, y) => (Number(x[0]) || 0) - (Number(y[0]) || 0));
+    const missing = arts.length - known.length;
+    return `${card('artists', `<p>${esc(tr('stats.art.n', { n: statNum(known.length), of: statNum(arts.length) }))}</p>
+        ${missing ? `<p class="dci-sub" data-el="stats-art-missing">${esc(tr('stats.art.missing', { n: statNum(missing) }))}</p>` : ''}
+        <h5>${esc(tr('stats.art.type'))}</h5>${kv(top(types, 6), (k) => (k === '-' ? tr('stats.art.noType') : k))}
+        <h5>${esc(tr('stats.art.gender'))}</h5>${kv(top(genders, 6))}
+        <h5>${esc(tr('stats.art.decade'))}</h5>${kv(top(decades, 6))}
+        <h5>${esc(tr('stats.art.country'))}</h5>${kv(top(countries, 6), statCountryName)}
+        <h5>${esc(tr('stats.art.town'))}</h5>${kv(top(towns, 6))}
+        <h5>${esc(tr('stats.art.century'))}</h5>${kv(byKey(centuries), (k) => `${k}–${Number(k) + 99}`)}
+        <p data-el="stats-art-post">${esc(tr('stats.art.post', { n: statNum(post), of: statNum(postOf) }))}</p>`)}
+      ${card('labelsplaces', `<h5>${esc(tr('stats.lp.labels'))}</h5>${kv(top(m.labelsRel, 5), (k) => m.entName.get(k) || k)}
+        <h5>${esc(tr('stats.lp.places'))}</h5>${kv(top(m.placesRel, 5), (k) => m.entName.get(k) || k)}`)}`;
   }
 
   function statsMore2Html(m, recs, { top, kv, card }) {
@@ -36685,6 +36870,8 @@
     if (stats) {
       statClear();
       S.statsData = [];
+      writeJson('localStorage', STATS_ARTISTS_KEY, null);
+      S.statArtistsGen = (S.statArtistsGen || 0) + 1;
       log('info', 'statsDeleted', {});
     }
     toDiscogs({ type: 'reset-settings' });

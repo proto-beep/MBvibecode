@@ -451,6 +451,9 @@ WORK_QUERIES = []
 # browse "recording?artist=" → artist gid → [{'title', 'work': {'id', 'title'}}] (a work may be missing) or a number
 # (that many recordings without works – a large catalogue). BROWSES records the browse requests (kind, artist, offset).
 ARTIST_WORKS = {}
+# [3.54.0] /ws/2/artist/<gid>: what MusicBrainz has of an artist (gid → fields of the answer) and the lookups made (gid, query)
+ARTIST_INFO = {}
+ARTIST_LOOKUPS = []
 ARTIST_RECORDINGS = {}
 BROWSES = []
 
@@ -857,7 +860,9 @@ def install_routes(ctx):
             # [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
             band += [{'target-type': 'artist', 'type': 'is person', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in IS_PERSON.get(a, [])]
             band += [{'target-type': 'artist', 'type': 'is person', 'direction': 'forward', 'artist': {'id': p, 'name': p}} for p, xs in IS_PERSON.items() if a in xs]
-            return json_route(route, {'id': a, 'relations': [
+            # [3.54.0] the artist's data (ARTIST_INFO: type, gender, life-span, area, begin-area, country); ARTIST_LOOKUPS the lookups
+            ARTIST_LOOKUPS.append((a, u.query))
+            return json_route(route, {'id': a, **ARTIST_INFO.get(a, {}), 'relations': [
                 {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
                 for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band})
         m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
