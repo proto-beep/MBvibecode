@@ -15,6 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
+| 2026-11-05 | 3.51.0 – | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -98,6 +99,26 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-05
+
+### Import 3.51.0
+
+Block 8 – collected items Z-OVL, Z-IML, Z-PCR, Z-VER (Q-gb, Q-gc3, Q-gd, Q-fm, Q-fs).
+
+#### Added / changed
+
+- **Nothing lies on anything else:** the cards of the statistics are as narrow as their column and scroll inside when something is wider; "Sources" takes the whole width, its column heads break into two lines (before, "with supplement" lay over "per relationship" and the card beside it). A new test looks through the whole dashboard – statistics, settings, the import, as a window and in the page – for texts that lie on each other.
+- **The bar on "Edit relationships" in one line:** "Import credits …" and the navigation of the source pages ("Discogs view: …") side by side; in a narrow window the navigation goes below.
+- **Places and labels:** the town or country after a comma at the source is no "credited as" – "Sound Development Studio, Zürich" for MusicBrainz's "Sound Development Studio" gives none – unless it is part of MusicBrainz's name (rule S080).
+- **Versions:** the head of ⚙ Settings shows the versions of the script, its mapping file and the companion (as it last reported itself – "last seen …", else "not connected"); at most once a day the script looks at GitHub, a newer version is marked "⚠ … available" with the link to update.
+
+#### Fixed (review of Block 8)
+
+- **Versions:** a browser that cannot store the check asks GitHub once a session (before: again and again while ⚙ Settings was open); only the line of the versions is drawn anew when the check comes back (not the settings, where something may be typed); the mapping file is checked too.
+- **Places and labels:** no legal form ("Inc.", "Ltd.", "GmbH" …), "Jr.", room ("Studio A") or single letter is taken for a town; a venue named after its town ("Sydney Opera House, Sydney") loses the town; "(CH)" after a town and a comma at the end go too; only places and labels; the rule is named at the row.
+- **The bar on "Edit relationships":** the warning of a second copy of the script stays a line of its own.
+- **The test for overlaps** follows the order the page is drawn in, scrolls through every view, looks at fields too and checks the compact view, larger text, a narrow window, the dark theme, the window "Mapping rules" and the log.
 
 ## 2026-11-04
 
