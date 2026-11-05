@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.52.0
+// @version      3.53.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.52.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.52.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.53.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.53.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.52.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.53.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1883,6 +1883,7 @@
       "stats.more.genres": "Genres and styles",
       "stats.genresView": "Genres and styles of the sources",
       "stats.timeView": "Times:",
+      "stats.lenView": "Lengths:",
       "stats.time.median": "Median",
       "stats.time.mean": "Average",
       "stats.srcT.n": "releases",
@@ -1933,6 +1934,42 @@
       "stats.weekdays": "Relationships by weekday",
       "stats.hours": "Relationships by hour",
       "stats.streak": "Days in a row: now {now}, longest {longest}",
+      "stats.streakWeek": "Weeks in a row (from Monday): now {now}, longest {longest}",
+      "stats.streakMonth": "Months in a row: now {now}, longest {longest}",
+      "stats.wdBest.rels": "Most active weekday by relationships: {day} ({n})",
+      "stats.wdBest.relsNone": "Most active weekday by relationships: –",
+      "stats.wdBest.subs": "Most active weekday by “Enter edit”: {day} ({n})",
+      "stats.wdBest.subsNone": "Most active weekday by “Enter edit”: –",
+      "stats.dailyOff": "When you work (hours, weekdays, days / weeks / months in a row, the most active weekday, the most in a day) is not shown – ⚙ Settings → Cache.",
+      "stats.more.credits": "Role credits and credited as",
+      "stats.more.media": "Media and types",
+      "stats.more.script": "Language and script",
+      "stats.more.lengths": "Recording lengths",
+      "stats.ali.rc": "With a role credit: {pct} ({n} of {of} with instruments or vocals)",
+      "stats.ali.ac": "Credited as: {pct} ({n} of {of})",
+      "stats.ali.alias": "Entries found through an alias: {pct} ({n} of {of})",
+      "stats.ali.top": "Role credits used most",
+      "stats.media.single": "single medium",
+      "stats.media.multi": "several media",
+      "stats.rg.primary": "Primary type of the release group",
+      "stats.rg.secondary": "Secondary types",
+      "stats.rg.none": "no primary type",
+      "stats.lang": "Language",
+      "stats.script": "Script",
+      "stats.lang.zxx": "[No linguistic content]",
+      "stats.lang.mul": "[Multiple languages]",
+      "stats.lang.qaa": "[Artificial (Other)]",
+      "stats.script.Qaaa": "[Multiple scripts]",
+      "stats.script.Hans": "Han (Simplified)",
+      "stats.script.Hant": "Han (Traditional)",
+      "stats.none": "not set",
+      "stats.len.rec": "A recording: {time} ({n} recordings)",
+      "stats.len.rel": "Per release (its recordings): {time} ({n} releases)",
+      "stats.len.hint": "Recordings without a length are left out.",
+      "settings.statsDaily": "Show when you work",
+      "settings.statsDailyTitle": "Hours, weekdays, days / weeks / months in a row, the most active weekday and the most in a day (the time per release and the months stay)",
+      "settings.statsGlobal": "Show “Global” (all users of the script)",
+      "settings.statsGlobalTitle": "Off: the statistics show only this browser, and nothing is loaded from GitHub",
       "stats.rec.day": "Most in a day: {n} relationships ({day})",
       "stats.rec.release": "Most for a release: {n} relationships ({title})",
       "stats.rec.fastest": "Fastest: {time} per relationship ({title}, {n} relationships)",
@@ -9324,6 +9361,14 @@
   const GLOBAL_STATS_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json';
   const GLOBAL_STATS_CACHE_KEY = 'dci-stats-global';
   const GLOBAL_STATS_MAX_AGE = 24 * 3600 * 1000;
+  // [Z-STH] (3.53.0; Q-fx) the statistics of when you work (hours, weekdays, streaks, the most active weekday): shown unless switched off
+  const STATS_DAILY_KEY = 'dci-stats-daily';
+  const statsDailyOn = () => readJson('localStorage', STATS_DAILY_KEY, true) !== false;
+  // [Z-GOF] (3.53.0; Q-fm) "Global" of the statistics (all users, loaded from GitHub): shown unless switched off – then nothing is loaded
+  const STATS_GLOBAL_ON_KEY = 'dci-stats-global-on';
+  const statsGlobalOn = () => readJson('localStorage', STATS_GLOBAL_ON_KEY, true) !== false;
+  // [Z-RDU] (3.53.0; Q-gi) the card "Recording lengths": 'mean' (the average), else the median
+  const STATS_LEN_KEY = 'dci-stats-len';
   const STATS_IDLE_KEY = 'dci-stats-idle';
   const STATS_IDLE_DEFAULT = 300;
   const statIdleMs = () => {
@@ -32829,6 +32874,11 @@
         writeJson('localStorage', STATS_TIME_KEY, btn.dataset.view === 'mean' ? 'mean' : null);
         renderStats();
         break;
+      case 'stats-len-view':
+        // [Z-RDU] (3.53.0) the lengths of the recordings: median or average (remembered)
+        writeJson('localStorage', STATS_LEN_KEY, btn.dataset.view === 'mean' ? 'mean' : null);
+        renderStats();
+        break;
       case 'stats-genres-view':
         // [Z-STG2] (3.42.6) genres and styles of all sources in one list, or a list for each (remembered)
         writeJson('localStorage', STATS_GENRES_KEY, btn.dataset.view === 'separate' ? 'separate' : null);
@@ -34550,9 +34600,9 @@
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
-    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY],
+    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY, STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY],
     // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
-    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_SCOPE_KEY],
+    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_SCOPE_KEY, STATS_LEN_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -34814,14 +34864,32 @@
     return { text, supp: !!supp, images: done.length, lines: String(text || '').split('\n').filter((l) => l.trim()).length, corrected: changed };
   }
 
-  /** [E8] The release as MusicBrainz has it at the import: year, country, formats, labels, and its relationships before. */
+  /**
+   * [E8] The release as MusicBrainz has it at the import: year, country, formats, labels, and its relationships before.
+   * [Z-RLS, Z-LNG, Z-RDU] (3.53.0) also its number of media, the types of its release group, its language and script (Additional
+   * details) and the lengths of its recordings (ms; without a length not kept).
+   */
   function statReleaseInfo(ws) {
     const nonUrl = (list) => (list || []).filter((r) => r['target-type'] !== 'url').length;
     const recs = new Map();
+    const lens = new Map();
     (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
-      if (t.recording && t.recording.id) recs.set(t.recording.id, t.recording);
+      if (t.recording && t.recording.id) {
+        recs.set(t.recording.id, t.recording);
+        // ((review) the recording's own length – without one it is left out)
+        const len = Number(t.recording.length) || 0;
+        if (len > 0 && !lens.has(t.recording.id)) lens.set(t.recording.id, Math.round(len));
+      }
     }));
+    const rg = ws['release-group'] || {};
+    const text = ws['text-representation'] || {};
     return {
+      media: (ws.media || []).length,
+      rgp: String(rg['primary-type'] || ''),
+      rgs: (rg['secondary-types'] || []).map(String).slice(0, 8),
+      lang: String(text.language || ''),
+      script: String(text.script || ''),
+      lens: [...lens.values()].slice(0, 500),
       title: ws.title || '',
       year: Number(String(ws.date || '').slice(0, 4)) || null,
       country: ws.country || '',
@@ -34891,6 +34959,8 @@
         a: attrs.filter((a) => a.root !== 'instrument' && a.root !== 'vocal').map((a) => a.name).filter(Boolean),
         // [Z-STV] (3.41.15, review) a relationship MusicBrainz had: what was added to it
         ...(x.k === 's' ? { f: x.kinds || [] } : {}),
+        // [Z-ALI] (3.53.0) the role credits themselves, and an entry found through an alias
+        rt: attrs.map((a) => a.credit).filter(Boolean).slice(0, 4), al: entry && entry.viaAlias ? 1 : 0,
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -34900,7 +34970,7 @@
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
     // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
     // [Z-STD] (3.45.0) idle: the pauses not counted (the time of the record: from the start until "Enter edit" without them)
-    return { v: 2, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+    return { v: 3, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -35248,7 +35318,13 @@
       own: 0, ownRels: new Map(), srcTime: new Map(), srcRel: new Map(), suppRel: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
-      genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
+      genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map(),
+      // [Z-STK, Z-WKD] (3.53.0) days, weeks (from Monday), months with something submitted; the submissions by weekday
+      dayIdx: new Set(), weekIdx: new Set(), monthIdx: new Set(), weekdaySubs: new Array(7).fill(0),
+      // [Z-ALI] (3.53.0) role credits (of relationships with instruments or vocals), credited as, the role credits used, entries found through an alias
+      rcN: 0, rcBase: 0, acN: 0, acBase: 0, rcTop: new Map(), y: 0, entY: new Set(), aliasEnt: new Set(),
+      // [Z-RLS, Z-LNG, Z-RDU] (3.53.0) the releases (at their first submission): media, types of the release group, language, script, lengths
+      relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [] };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -35280,6 +35356,12 @@
       m.weekday[(d.getDay() + 6) % 7] += rels.length;
       m.hour[d.getHours()] += rels.length;
       inc(m.days, statPeriodKey(r.at, 'day'), rels.length);
+      if (rels.length) {
+        m.dayIdx.add(statDayIdx(r.at));
+        m.weekIdx.add(statWeekIdx(r.at));
+        m.monthIdx.add(statMonthIdx(r.at));
+      }
+      m.weekdaySubs[(d.getDay() + 6) % 7]++;
       const rr = m.relByRelease.get(r.mbid) || { title: (r.rel && r.rel.title) || r.mbid, n: 0 };
       rr.n += rels.length;
       m.relByRelease.set(r.mbid, rr);
@@ -35294,6 +35376,20 @@
         (r.rel.formats || []).forEach((f) => inc(m.format, f));
         inc(m.country, r.rel.country);
         (r.rel.labels || []).forEach((l) => inc(m.label, l));
+      }
+      // [Z-RLS, Z-LNG, Z-RDU] (3.53.0) a release once, from its first record that holds them (from 3.53.0 on; (review) also when an
+      // earlier submission of it was made before)
+      if (r.rel && r.rel.media != null && !m.seenRelY.has(r.mbid)) {
+        m.seenRelY.add(r.mbid);
+        m.relY++;
+        if (r.rel.media) m.media[r.rel.media > 1 ? 'multi' : 'single']++;
+        inc(m.rgp, r.rel.rgp || '-');
+        (r.rel.rgs || []).forEach((t) => inc(m.rgs, t));
+        inc(m.lang, r.rel.lang || '-');
+        inc(m.script, r.rel.script || '-');
+        const lens = (r.rel.lens || []).map(Number).filter((x) => x > 0);
+        m.lens.push(...lens);
+        if (lens.length) m.relLens.push(lens);
       }
       if (r.ocr && (r.src === 'ocr' || (r.supp || []).includes('ocr'))) {
         m.ocr.subs++;
@@ -35355,6 +35451,25 @@
           inc(m.instrN, n);
         }
         if (/^U\d+$/.test(it.ru || '')) inc(m.ownRels, it.ru);
+        // [Z-ALI] (3.53.0) role credits and credited as (all records); the role credits themselves and aliases from 3.53.0 on
+        if ((it.i || []).length || (it.v || []).length) {
+          m.rcBase++;
+          if (it.rc) m.rcN++;
+        }
+        // ((review) credited as: of relationships with an artist, a label or a place – the others have none)
+        if (['artist', 'label', 'place'].includes(it.et)) {
+          m.acBase++;
+          if (it.ac) m.acN++;
+        }
+        if (Array.isArray(it.rt)) {
+          m.y++;
+          it.rt.forEach((t) => inc(m.rcTop, t));
+          // ((review) an alias finds artists only)
+          if (it.tg && it.et === 'artist') {
+            m.entY.add(it.tg);
+            if (it.al) m.aliasEnt.add(it.tg);
+          }
+        }
       }
     }
     // [Z-STC] (3.41.14) each pair of people once a release (at most 40 people of a release)
@@ -35365,22 +35480,33 @@
     return m;
   }
 
-  /** [E8] (3.38.1) Days in a row with something counted: now (ending today or yesterday) and the longest. */
-  function statStreaks(days) {
-    const keys = [...days.keys()].filter((k) => days.get(k) > 0).sort();
+  /** [Z-STK] (3.53.0) The number of a day, a week (from Monday) and a month in local time – consecutive ones differ by 1. */
+  const statDayIdx = (ms) => {
+    const d = new Date(ms);
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  };
+  const statWeekIdx = (ms) => Math.floor((statDayIdx(ms) - ((new Date(ms).getDay() + 6) % 7) + 3) / 7);
+  const statMonthIdx = (ms) => {
+    const d = new Date(ms);
+    return d.getFullYear() * 12 + d.getMonth();
+  };
+
+  /**
+   * [Z-STK] (3.53.0; Q-fn) Periods in a row with something submitted: now – ending in this period or the one before (it can still go
+   * on) – and the longest. idx: the numbers of the periods (statDayIdx …), cur: the number of this period.
+   */
+  function statRuns(idx, cur) {
+    const keys = [...idx].sort((a, b) => a - b);
     let longest = 0;
     let run = 0;
     let prev = null;
     for (const k of keys) {
-      const t = new Date(`${k}T12:00:00`).getTime();
-      run = prev != null && Math.round((t - prev) / 86400000) === 1 ? run + 1 : 1;
+      run = prev != null && k - prev === 1 ? run + 1 : 1;
       longest = Math.max(longest, run);
-      prev = t;
+      prev = k;
     }
-    const today = statPeriodKey(Date.now(), 'day');
-    const yesterday = statPeriodKey(Date.now() - 86400000, 'day');
     const last = keys[keys.length - 1];
-    return { now: last === today || last === yesterday ? run : 0, longest };
+    return { now: last === cur || last === cur - 1 ? run : 0, longest };
   }
 
   /** [Z-STD] (3.45.0) The time of a record: until "Enter edit" without the pauses (from 3.45.0), else until MusicBrainz confirmed. */
@@ -35441,7 +35567,18 @@
     const hours = Array.from({ length: 24 }, (_, h) => String(h));
     const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr', 'youtube'].includes(k) ? k : 'other'}`);
     const pct = (x) => `${statPct(x, m.rels)} %`;
-    const streak = statStreaks(m.days);
+    // [Z-STK, Z-WKD, Z-STH] (3.53.0) days, weeks, months in a row; the most active weekday – all of when you work can be switched off
+    const daily = statsDailyOn();
+    const now = Date.now();
+    const runs = { day: statRuns(m.dayIdx, statDayIdx(now)), week: statRuns(m.weekIdx, statWeekIdx(now)), month: statRuns(m.monthIdx, statMonthIdx(now)) };
+    const wdLong = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'long' }).format(new Date(2024, 0, 1 + i)));
+    // ((review) days with the same number: all of them)
+    const bestOf = (vals) => {
+      const mx = Math.max(0, ...vals);
+      return mx > 0 ? { day: wdLong.filter((_, i) => vals[i] === mx).join(' / '), n: statNum(mx) } : null;
+    };
+    const wdRels = bestOf(m.weekday);
+    const wdSubs = bestOf(m.weekdaySubs);
     const bestDay = top(m.days, 1)[0];
     const biggest = [...m.relByRelease.values()].sort((x, y) => y.n - x.n)[0];
     const thirty = Date.now() - 30 * 86400000;
@@ -35459,10 +35596,15 @@
         <p class="dci-sub">${esc(tr('stats.works', { n: statNum(m.works) }))}</p>`)}
       ${card('releases', `<h5>${esc(tr('stats.decade'))}</h5>${kv(top(m.decade))}<h5>${esc(tr('stats.format'))}</h5>${kv(top(m.format))}
         <h5>${esc(tr('stats.country'))}</h5>${kv(top(m.country))}<h5>${esc(tr('stats.label'))}</h5>${kv(top(m.label))}`)}
-      ${card('when', `<h5>${esc(tr('stats.weekdays'))}</h5>${bars(m.weekday, wd)}<h5>${esc(tr('stats.hours'))}</h5>${bars(m.hour, hours)}
-        <p data-el="stats-streak">${esc(tr('stats.streak', { now: streak.now, longest: streak.longest }))}</p>
+      ${card('when', `${daily ? `<h5>${esc(tr('stats.weekdays'))}</h5>${bars(m.weekday, wd)}<h5>${esc(tr('stats.hours'))}</h5>${bars(m.hour, hours)}
+        <p data-el="stats-streak">${esc(tr('stats.streak', { now: runs.day.now, longest: runs.day.longest }))}</p>
+        <p data-el="stats-streak-week">${esc(tr('stats.streakWeek', { now: runs.week.now, longest: runs.week.longest }))}</p>
+        <p data-el="stats-streak-month">${esc(tr('stats.streakMonth', { now: runs.month.now, longest: runs.month.longest }))}</p>
+        <ul class="dci-stats-kv" data-el="stats-wd-best">
+          <li>${esc(wdRels ? tr('stats.wdBest.rels', wdRels) : tr('stats.wdBest.relsNone'))}</li>
+          <li>${esc(wdSubs ? tr('stats.wdBest.subs', wdSubs) : tr('stats.wdBest.subsNone'))}</li></ul>` : `<p class="dci-sub" data-el="stats-daily-off">${esc(tr('stats.dailyOff'))}</p>`}
         <ul class="dci-stats-kv" data-el="stats-records">
-          <li>${esc(tr('stats.rec.day', { day: bestDay ? bestDay[0] : '–', n: bestDay ? statNum(bestDay[1]) : '0' }))}</li>
+          ${daily ? `<li>${esc(tr('stats.rec.day', { day: bestDay ? bestDay[0] : '–', n: bestDay ? statNum(bestDay[1]) : '0' }))}</li>` : ''}
           <li>${esc(tr('stats.rec.release', { title: biggest ? biggest.title : '–', n: biggest ? statNum(biggest.n) : '0' }))}</li>
           <li>${esc(m.fastest ? tr('stats.rec.fastest', { time: statDur(m.fastest.per), title: m.fastest.title, n: statNum(m.fastest.n) }) : tr('stats.rec.fastestNone'))}</li>
         </ul>`)}
@@ -35472,6 +35614,7 @@
       ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+      ${statsMore3Html(m, { top, kv, card })}
       ${statsMore2Html(m, recs, { top, kv, card })}
     </div>`;
   }
@@ -35498,6 +35641,58 @@
     const srcs = (g) => [['discogs', m.genres], ['bandcamp', m.bcTags]].map(([k, map]) => [k, map.get(g) || 0]).filter(([, n]) => n)
       .map(([k, n]) => `${tr(`stats.src.${k}`)} ${statNum(n)}`).join(' · ');
     return `${seg}<ul class="dci-stats-kv">${pairs.map(([g, n]) => `<li title="${esc(srcs(g))}"><span>${esc(cap(g))}</span> <span class="dci-sub">${statNum(n)}</span></li>`).join('')}</ul>`;
+  }
+
+  /** [Z-LNG] (3.53.0) The name of a language (ISO 639-3, as MusicBrainz gives it) or of a script (ISO 15924) in the language of the dashboard. */
+  function statLangName(code, type) {
+    if (!code || code === '-') return tr('stats.none');
+    // (MusicBrainz's own names of codes the browser does not name so)
+    const own = { language: { zxx: 'stats.lang.zxx', mul: 'stats.lang.mul', qaa: 'stats.lang.qaa' }, script: { Qaaa: 'stats.script.Qaaa', Hans: 'stats.script.Hans', Hant: 'stats.script.Hant' } }[type] || {};
+    if (own[code]) return tr(own[code]);
+    try {
+      const n = new Intl.DisplayNames([LANG], { type }).of(code);
+      if (n && n !== code) return n;
+    } catch {
+      // (a code the browser does not know: its name from the built-in list, else the code)
+    }
+    return (type === 'language' && (FALLBACK_LANGUAGES.find(([, , c]) => c === code) || [])[1]) || code;
+  }
+
+  /** [Z-RDU] (3.53.0) A length of a recording as MusicBrainz shows it: "3:07", "1:02:05". */
+  function statLen(ms) {
+    if (ms == null || !Number.isFinite(ms)) return '–';
+    const t = Math.round(ms / 1000);
+    const p2 = (n) => String(n).padStart(2, '0');
+    return t >= 3600 ? `${Math.floor(t / 3600)}:${p2(Math.floor((t % 3600) / 60))}:${p2(t % 60)}` : `${Math.floor(t / 60)}:${p2(t % 60)}`;
+  }
+
+  /**
+   * [Z-ALI, Z-RLS, Z-LNG, Z-RDU] (3.53.0; Q-fo, Q-fq, Q-gi) The cards of 3.53.0: role credits and credited as (and the entries found
+   * through an alias), the media and the types of the release groups, the language and script of the releases, the lengths of the
+   * recordings – of the releases edited with the script, each once (its first submission).
+   */
+  function statsMore3Html(m, { top, kv, card }) {
+    const since = (n, of) => (n < of ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.53.0' }))}</p>` : '');
+    const pctOf = (n, of) => `${statPct(n, of)} %`;
+    const nRel = m.relByRelease.size;
+    const how = readJson('localStorage', STATS_LEN_KEY, 'median') === 'mean' ? 'mean' : 'median';
+    const f = how === 'mean' ? statMean : statMedian;
+    const seg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('stats.lenView'))}">${['median', 'mean'].map((v) => `<button type="button"
+      data-act="stats-len-view" data-view="${v}" aria-pressed="${how === v}">${esc(tr(`stats.time.${v}`))}</button>`).join('')}</span>`;
+    const rgLabel = (k) => (k === '-' ? tr('stats.rg.none') : k);
+    return `${card('credits', `<ul class="dci-stats-kv">
+        <li>${esc(tr('stats.ali.rc', { pct: pctOf(m.rcN, m.rcBase), n: statNum(m.rcN), of: statNum(m.rcBase) }))}</li>
+        <li>${esc(tr('stats.ali.ac', { pct: pctOf(m.acN, m.acBase), n: statNum(m.acN), of: statNum(m.acBase) }))}</li>
+        <li>${esc(tr('stats.ali.alias', { pct: pctOf(m.aliasEnt.size, m.entY.size), n: statNum(m.aliasEnt.size), of: statNum(m.entY.size) }))}</li></ul>
+        <h5>${esc(tr('stats.ali.top'))}</h5>${kv(top(m.rcTop, 5))}${since(m.y, m.rels)}`)}
+      ${card('media', `${kv([['single', m.media.single], ['multi', m.media.multi]], (k) => tr(`stats.media.${k}`))}
+        <h5>${esc(tr('stats.rg.primary'))}</h5>${kv(top(m.rgp, 6), rgLabel)}<h5>${esc(tr('stats.rg.secondary'))}</h5>${kv(top(m.rgs, 6))}${since(m.relY, nRel)}`)}
+      ${card('script', `<h5>${esc(tr('stats.lang'))}</h5>${kv(top(m.lang, 6), (k) => statLangName(k, 'language'))}
+        <h5>${esc(tr('stats.script'))}</h5>${kv(top(m.script, 6), (k) => statLangName(k, 'script'))}${since(m.relY, nRel)}`)}
+      ${card('lengths', `${seg}<ul class="dci-stats-kv">
+        <li>${esc(tr('stats.len.rec', { time: statLen(f(m.lens)), n: statNum(m.lens.length) }))}</li>
+        <li>${esc(tr('stats.len.rel', { time: statLen(f(m.relLens.map((xs) => f(xs)))), n: statNum(m.relLens.length) }))}</li></ul>
+        <p class="dci-sub">${esc(tr('stats.len.hint'))}</p>${since(m.relY, nRel)}`)}`;
   }
 
   function statsMore2Html(m, recs, { top, kv, card }) {
@@ -35814,6 +36009,9 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
           row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
+          // [Z-STH, Z-GOF] (3.53.0; Q-fx, Q-fm) when you work, and "Global", can be left out of the statistics
+          row(check('data-set="stats-daily"', statsDailyOn(), tr('settings.statsDaily'), tr('settings.statsDailyTitle'))),
+          row(check('data-set="stats-global-on"', statsGlobalOn(), tr('settings.statsGlobal'), tr('settings.statsGlobalTitle'))),
           // [Z-STD] (3.45.0; Q-ep) beside it: pauses not counted from … seconds
           row(`<label title="${esc(tr('settings.statsIdleTitle'))}">${esc(tr('settings.statsIdle'))} <input type="number" data-set="stats-idle" min="0" max="86400" step="1"
             value="${Math.round(statIdleMs() / 1000)}"></label>`),
@@ -35967,11 +36165,13 @@
     }
     const active = document.activeElement;
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
-      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}${active.dataset.scope ? `[data-scope="${active.dataset.scope}"]` : ''}` : '') : '';
+      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}${active.dataset.scope ? `[data-scope="${active.dataset.scope}"]` : ''}${active.dataset.view ? `[data-view="${active.dataset.view}"]` : ''}` : '') : '';
     // [Z-ST] (3.40.6) "this browser only" in the head (Q-au)
     // [Z-GST] (3.47.0) "This browser | Global"
-    const global = S.statsScope === 'global';
-    const scope = `<span class="dci-seg dci-seg-small dci-stats-scope" role="group" aria-label="${esc(tr('stats.scope'))}">${['local', 'global'].map((v) => `<button type="button"
+    // [Z-GOF] (3.53.0) "Global" switched off in ⚙ Settings → Cache: only this browser (nothing loaded)
+    const gOn = statsGlobalOn();
+    const global = gOn && S.statsScope === 'global';
+    const scope = !gOn ? '' : `<span class="dci-seg dci-seg-small dci-stats-scope" role="group" aria-label="${esc(tr('stats.scope'))}">${['local', 'global'].map((v) => `<button type="button"
       data-act="stats-scope" data-scope="${v}" aria-pressed="${S.statsScope === v}" title="${esc(tr(`stats.scope.${v}Title`))}">${esc(tr(`stats.scope.${v}`))}</button>`).join('')}</span>`;
     el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button>${scope}${global ? ''
       : `<span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span>`}</div>
@@ -36105,6 +36305,22 @@
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr('stats.on'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'stats-daily' || k === 'stats-global-on') {
+      // [Z-STH, Z-GOF] (3.53.0) when you work; "Global" (off: only "This browser", nothing loaded from GitHub)
+      writeJson('localStorage', k === 'stats-daily' ? STATS_DAILY_KEY : STATS_GLOBAL_ON_KEY, el.checked ? null : false);
+      if (k === 'stats-global-on' && !el.checked) {
+        // ((review) "This browser" also after a reload; the copy of "Global" is not kept)
+        S.statsScope = 'local';
+        writeJson('localStorage', STATS_SCOPE_KEY, null);
+        try {
+          localStorage.removeItem(GLOBAL_STATS_CACHE_KEY);
+        } catch {
+          // (storage not available: nothing stored either)
+        }
+        S.globalStats = undefined;
+      }
+      log('info', 'settingValue', { what: tr(k === 'stats-daily' ? 'settings.statsDaily' : 'settings.statsGlobal'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderStats();
     } else if (k === 'live-comments') {
       // [3.32.9] the comments of live recordings (item 113)
       S.liveCom = el.checked;
@@ -36379,6 +36595,8 @@
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
     STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY,
+    // [Z-STH, Z-GOF, Z-RDU] (3.53.0) when you work, "Global", the lengths of the recordings
+    STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY, STATS_LEN_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves

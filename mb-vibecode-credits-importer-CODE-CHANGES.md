@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.52.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.53.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.53.0 · 2026-11-05
+
+Block 10 – Z-STK, Z-WKD, Z-STH, Z-GOF, Z-ALI, Z-RLS, Z-LNG, Z-RDU (the statistics of this browser; the global parts follow with the data dump).
+
+- **Records (version 3):** `statReleaseInfo(ws)` – `media` (number of media), `rgp` / `rgs` (primary / secondary types of the release group), `lang` / `script` (`text-representation`), `lens` (the lengths of its recordings in ms, at most 500, without a length left out); `statSnapshot` – each relationship `rt` (its role credits, at most 4) and `al` (its entry found through an alias, `viaAlias`); `v: 3`.
+- **`statMore`:** `dayIdx` / `weekIdx` / `monthIdx` (periods with relationships), `weekdaySubs` (submissions by weekday), `rcN` / `rcBase` (role credits of relationships with instruments or vocals), `acN`, `rcTop`, `y`, `entY`, `aliasEnt`, `relY`, `media`, `rgp`, `rgs`, `lang`, `script`, `lens`, `relLens` (the mean length of each release) – the release fields at its first submission, from records that have them.
+- **New:** `statDayIdx`, `statWeekIdx` (from Monday), `statMonthIdx`, **`statRuns(idx, cur)`** (now – ending in this period or the one before – and the longest; replaces `statStreaks`), **`statsMore3Html(m, …)`** (cards `credits`, `media`, `script`, `lengths`), **`statLangName(code, type)`** (`Intl.DisplayNames`, `zxx` / `mul` own texts, else the built-in list or the code), **`statLen(ms)`** ("3:07"); the card `when`: `stats-streak-week`, `stats-streak-month`, `stats-wd-best`; with "Show when you work" off `stats-daily-off` (no bars, streaks, weekday, most in a day).
+- **Settings:** `STATS_DAILY_KEY` 'dci-stats-daily' (`statsDailyOn()`), `STATS_GLOBAL_ON_KEY` 'dci-stats-global-on' (`statsGlobalOn()`; off: `renderStats` without "This browser | Global", never `globalStatsLoad`), `STATS_LEN_KEY` 'dci-stats-len' (`stats-len-view`); in ⚙ Settings → Cache (`data-set="stats-daily"`, `"stats-global-on"`), the reset of the topics cache / statistics, `SETTINGS_KEYS`.
+- **Texts:** `stats.streakWeek`, `stats.streakMonth`, `stats.wdBest.*`, `stats.dailyOff`, `stats.more.credits` / `media` / `script` / `lengths`, `stats.ali.*`, `stats.media.*`, `stats.rg.*`, `stats.lang`, `stats.script`, `stats.lang.zxx`, `stats.lang.mul`, `stats.none`, `stats.len.*`, `stats.lenView`, `settings.statsDaily(Title)`, `settings.statsGlobal(Title)`.
+- **Tests:** `t_ui_settings.py statsb10` (new; seeded records, the clock fixed), `statsrec` (new; the record of a submission).
+- **Review of Block 10:** "credited as" of relationships with an artist, a label or a place (`acBase`); entries found through an alias of artists only; a release counted from its first record of 3.53.0 (`seenRelY` – also when it was first submitted before); per release the median or the average of its own lengths too (`relLens` the lengths of each release); `lens` as numbers, the track's length no longer taken for a recording without one; ties of the most active weekday all named ("Tuesday / Wednesday"); `statLangName` MusicBrainz's names for `qaa`, `Qaaa`, `Hans`, `Hant` (`stats.lang.qaa`, `stats.script.*`); "Show “Global”" off also forgets the choice "Global" (`dci-stats-scope`) and the copy (`dci-stats-global`); `renderStats` keeps the focus on a pressed Median / Average (`data-view`); `stats.dailyOff` names all it hides; `statStreaks` removed. Tests: `statsb10` (a work relationship, a release first submitted with 3.52.0, `qaa` / `Qaaa`, the stored keys after "Global" off), `statsmore2` (record version 3).
 
 ## Import 3.52.0 · 2026-11-05
 

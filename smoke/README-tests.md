@@ -527,6 +527,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   theme: 3.46.0 (Z-DM): the dark theme – as a window and in the page (Auto | Light | Dark, Auto live), the light theme unchanged, contrast ≥ 3 in the dark one, colours of their own for it, ↺; review: the dark stylesheet only when needed (written = read), white text on text colours, the tags beside the dark pickers, „Reset all“
                                 #   globalstats: 3.47.0 (Z-GST): This browser | Global – the file of the workflow, once a day, "Load again", without network the copy, Reset all; review: a file with gaps, keyboard focus, a copy older than a day
                                 #   darkmeaning: 3.48.0 (Z-DMY): the colours of meaning in the dark theme by hand (variant A)
+                                #   statsb10: 3.53.0 (Block 10): days / weeks / months in a row, the most active weekday (relationships, "Enter edit"),
+                                #     role credits and credited as, aliases, media and types, language and script, recording lengths (Median | Average),
+                                #     "Show when you work" off, "Show “Global”" off (nothing loaded) – the clock fixed on 2026-06-17
+                                #   statsrec: 3.53.0: what a record holds of the release (media, types, language, script, lengths) and per relationship
                                 #   versions: 3.51.0 (Z-VER): the versions of script, mapping file and companion in the head, ⚠ and the link when GitHub has a newer one (once a day)
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                                 #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
