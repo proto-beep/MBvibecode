@@ -1622,6 +1622,8 @@ def case_editnote():
 
     def work_form(pg):
         # (the first track without a work that offers one: what is staged is remembered for the next page)
+        # ([3.52.0] the form is in the menu "＋ New ▾" of the row)
+        pg.locator('tr[data-work] [data-act=mx-newmenu]').first.evaluate('b => b.click()'); pg.wait_for_timeout(200)
         pg.locator('tr[data-work] [data-act=work-create]').first.evaluate('b => b.click()')
         pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
         url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")

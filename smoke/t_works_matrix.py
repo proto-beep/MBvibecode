@@ -207,6 +207,7 @@ def case_matrixcols():
         writer_rows = lambda: pg.evaluate("""[...document.querySelectorAll('.dci-group')].filter(g => (g.querySelector('.dci-gname') || {textContent: ''}).textContent.includes('Writer W'))
       .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(tr => (tr.className.match(/dci-lv-(\\w+)/) || [])[1])""")
         before = writer_rows()
+        pg.click(f'[data-colhead="{WK}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)  # ([Z-WMX] 3.52.0: « and ✕ in the menu)
         pg.click(f'[data-colhead="{WK}"] [data-act=mx-col-remove]'); pg.wait_for_timeout(300)
         out = writer_rows()
         stub = pg.locator('th.dci-mx-removed [data-act=mx-col-restore]')
@@ -218,6 +219,7 @@ def case_matrixcols():
         # (work-level rows live in the works matrix; in the list they show only while skipped)
         ok_b = before == [] and out == ['skip'] and 'Writer W' in stub_title and back == [] and pg.locator(f'[data-colhead="{WK}"]').count() == 1
         mbcol = f'mb:{LYRIC}'
+        pg.click(f'[data-colhead="{mbcol}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)  # ([Z-WMX] 3.52.0: ✕ in the menu)
         pg.click(f'[data-colhead="{mbcol}"] [data-act=mx-col-remove]'); pg.wait_for_timeout(200)
         folded = pg.locator(f'th.dci-mx-collapsed [data-act=mx-collapse][data-col="{mbcol}"]').count()
         print('B2) Spalte „nur in MusicBrainz“ ✕ → eingeklappt:', folded)
@@ -359,7 +361,7 @@ def case_fill():
     H.MB_EXTRA.clear()
     b, pg, dg, errs = open_mb(companion=True)
     H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
-    pg.click('tr[data-work="2"] [data-act=work-pending]'); pg.wait_for_timeout(400)   # track 3: a new work in the editor
+    pg.locator('tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(400)   # track 3: a new work in the editor
     pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
     pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
     pg.wait_for_timeout(1500)
@@ -448,6 +450,7 @@ def case_wattrs():
         print('    Kopf „Attribute für alle“:', head)
         ok_a = ok_a and [h[0] for h in head] == ['co', 'in', 'li', 'me', 'pa'] and all(h[1] == 'off' for h in head)
         r098 = pg.evaluate("[...document.querySelectorAll('[data-colhead]')].filter(h => h.textContent.includes('Writer Z')).map(h => (h.querySelector('[data-rule=R098]') || {}).title || '')")
+        pg.click('[data-act=mx-defaults]'); pg.wait_for_timeout(200)  # ([Z-WMX] 3.52.0: the defaults of new works in their popover)
         wtype = pg.evaluate("(() => { const s = document.querySelector('[data-f=work-type]'); return [s.options[s.selectedIndex].text, (s.parentElement.querySelector('.dci-ruleref') || {}).textContent || '']; })()")
         print('A2) Spalte Writer Z, R098:', r098, '| Typ neuer Werke:', wtype)
         ok_a = ok_a and any('Music and lyrics in one credit' in x for x in r098) and wtype == ['Song', 'S020']
@@ -472,11 +475,15 @@ def case_wattrs():
         pg.click(f'{p3} [data-act=mx-wattr-open]'); pg.wait_for_timeout(200)
         opened = [x[0] for x in pills(p3)]
         pg.click(f'{p3} [data-act=mx-wattr-open]'); pg.wait_for_timeout(200)
+        if not pg.locator('[data-act=mx-wattr-openall]').count():  # ([Z-WMX] 3.52.0: behind ⋯ in the corner)
+            pg.click('[data-act=mx-cornermore]'); pg.wait_for_timeout(200)
         pg.click('[data-act=mx-wattr-openall]'); pg.wait_for_timeout(200)
         all_open = [x[0] for x in pills(p3)]
+        if not pg.locator('[data-act=mx-wattr-openall]').count():  # ([Z-WMX] 3.52.0: behind ⋯ in the corner)
+            pg.click('[data-act=mx-cornermore]'); pg.wait_for_timeout(200)
         pg.click('[data-act=mx-wattr-openall]'); pg.wait_for_timeout(200)
         print('B3) Track 3 ohne Attribut: zu', closed, '| ▸ auf:', opened, '| alle Zeilen auf:', all_open, '| wieder zu:', pills(p3))
-        ok_b = ok_b and closed[0] == [] and 'none' in closed[1] and len(opened) == 5 and len(all_open) == 5 and pills(p3) == []
+        ok_b = ok_b and closed[0] == [] and 'attribute' in closed[1] and len(opened) == 5 and len(all_open) == 5 and pills(p3) == []
         # Attributes for all: "me" on for all, then off again
         pg.click('.dci-wattrs-all .dci-wpill[data-attr=medley]'); pg.wait_for_timeout(200)
         on_all = [state(s).get('me') for s in (w1, p2, p3)]
@@ -485,9 +492,13 @@ def case_wattrs():
         print('B4) „me“ für alle:', on_all, '| wieder aus:', off_all)
         ok_b = ok_b and on_all == ['on', 'on', 'on'] and off_all == ['off', 'off', []]
         # spell out: names instead of short forms, remembered
+        if not pg.locator('[data-act=mx-wattr-long]').count():  # ([Z-WMX] 3.52.0: behind ⋯ in the corner; a click elsewhere closes it)
+            pg.click('[data-act=mx-cornermore]'); pg.wait_for_timeout(200)
         pg.click('[data-act=mx-wattr-long]'); pg.wait_for_timeout(200)
         long_ = [x[0] for x in pills(w1)]
         stored = pg.evaluate("localStorage.getItem('dci-wattr-long')")
+        if not pg.locator('[data-act=mx-wattr-long]').count():  # ([Z-WMX] 3.52.0: behind ⋯ in the corner; a click elsewhere closes it)
+            pg.click('[data-act=mx-cornermore]'); pg.wait_for_timeout(200)
         pg.click('[data-act=mx-wattr-long]'); pg.wait_for_timeout(200)
         print('B5) ausgeschrieben:', long_, '| gespeichert:', stored, '| wieder kurz:', [x[0] for x in pills(w1)])
         ok_b = ok_b and long_[0] == 'cover✎' and long_[2] == 'live?' and stored == 'true' and pg.evaluate("localStorage.getItem('dci-wattr-long')") is None
@@ -612,6 +623,8 @@ def case_remember():
                 cd = pg.locator(f'[data-colhead="{other}"] [data-f=cd-by]').input_value()
                 pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)
             stub = pg.locator('th.dci-mx-removed [data-act=mx-col-restore]')
+            if not pg.locator('[data-f=work-type]').count():  # ([Z-WMX] 3.52.0: the defaults of new works in their popover)
+                pg.click('[data-act=mx-defaults]'); pg.wait_for_timeout(200)
             wtype = pg.evaluate("(() => { const s = document.querySelector('[data-f=work-type]'); return s ? s.options[s.selectedIndex].text : ''; })()")
             return {'co': dict((x[0].rstrip('?✎✓'), x[1]) for x in pg.evaluate(PILLS, w1)).get('co'), 'neu': pg.locator(p2).count(),
                     'raus': stub.get_attribute('title') if stub.count() else '', 'zeilen': writer_rows(), 'datum': cd, 'typ': wtype}
@@ -623,12 +636,15 @@ def case_remember():
         pg.click(f'{w1} .dci-wpill[data-attr=cover]'); pg.wait_for_timeout(200)
         pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(300)
         wk = pg.evaluate("[...document.querySelectorAll('[data-colhead]')].find(h => h.textContent.includes('Writer W')).dataset.colhead")
+        pg.click(f'[data-colhead="{wk}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)  # ([Z-WMX] 3.52.0: « and ✕ in the menu)
         pg.click(f'[data-colhead="{wk}"] [data-act=mx-col-remove]'); pg.wait_for_timeout(300)
         other = pg.evaluate("[...document.querySelectorAll('[data-colhead^=\"k:\"]')].filter(h => !h.textContent.includes('Writer W')).map(h => h.dataset.colhead)[0] || ''")
         if other:
             pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(300)
             pg.fill(f'[data-colhead="{other}"] [data-f=cd-by]', '1999'); pg.wait_for_timeout(200)
             pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)
+        if not pg.locator('[data-f=work-type]').count():  # ([Z-WMX] 3.52.0: the defaults of new works in their popover)
+            pg.click('[data-act=mx-defaults]'); pg.wait_for_timeout(200)
         sel = pg.locator('[data-f=work-type]')
         label = 'Aria'
         sel.select_option(label=label); pg.wait_for_timeout(200)
@@ -748,6 +764,159 @@ def case_review43():
         pend = [x for x in pg.evaluate(LOGS) if 'created work' in x or 'created works' in x]
         print('A/B) gespeichert:', stored, '| Track 4:', planned, '| Protokoll:', pend, '| Fehler:', errs)
         results.append(stored == [[3, W1], [2, W2]] and 'Made Here' in planned and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_wmx():
+    """Credits Importer 3.52.0 (collected item Z-WMX; mockup, Q-fp, Q-fw, Q-fz): the works matrix tidied up.
+    A) The head in one line: "▾ Works matrix", the counts as chips ("4 tracks", "1 work", "3 without a work") and ⓘ on the left (its
+       popover: the explanation that stood above the matrix); "Skip works" in the middle (filled, a colour of its own) with "＋ Suite …";
+       on the right the defaults for new works, "Search works", "＋ New works (3)" and ⋯ (spell out, open all, clear all dates, top).
+       No band "3 tracks have no work yet", no paragraph of explanation.
+    B) A column head: the name whole in a line of its own (its tooltip the name), ⚠ (not linked; a click: the entry) and ▾ in the line of
+       the roles; "credited as" always there; « and ✕ only in the ▾ menu.
+    C) The corner: "All artists credited as: ↺ MusicBrainz names for all" – every "credited as" of the matrix emptied.
+    D) A track without a work: "○ no work yet", the split button "＋ New ▾" – its menu: "Search MusicBrainz", "via form …"; "＋ attribute"
+       at each row; a cell waiting for a work: a chip with an hourglass ("waits for a work" for screen readers and in the tooltip).
+    E) The last column head "＋ Add a column": an MBID of an artist (a long name: smaller, whole, its tooltip) with a role adds its column;
+       a place: "A column holds an artist or a label – this is a place."; no MBID: the error. (review) Its cells off (as for an entry of
+       the dashboard); a label with "composer" (an artist's role) and an artist that is a column already: refused; a label with
+       "publishing" (the roles of an artist and of a label apart): its column.
+    F) (review) The popovers: a click elsewhere closes ⓘ; Esc closes ⋯ and the focus is on its button again (the dashboard stays);
+       a click inside the defaults keeps them open; "＋ Suite …" opens and closes its box."""
+    LONG = H.uid('dddddddd', 140)
+    H.ARTISTS[3140] = (LONG, 'Maximilian Alexander von Hohenberg')
+    PUBH = H.uid('eeeeeeee', 140)
+    H.COMPANIES[1140] = ('label', PUBH, 'Pub House')
+    for i, n in [(567, 'cover'), (578, 'live')]:
+        H.attr(i, n, i)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] table.dci-matrix')", 60)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(600)
+        a0 = pg.evaluate("""(() => { const w = document.querySelector('[data-el=works]'); const h = w.querySelector('.dci-wh');
+          const box = (x) => x ? x.getBoundingClientRect() : null; const l = box(h.querySelector('.dci-wh-l')), c = box(h.querySelector('.dci-wh-c')), r = box(h.querySelector('.dci-wh-r'));
+          const skip = h.querySelector('.dci-wh-c [data-act=mx-skip]'); const sb = box(skip); const hb = box(h);
+          return { chips: [...h.querySelectorAll('.dci-wh-chip')].map(x => x.textContent.trim()), oneLine: Math.abs(l.top - c.top) < 6 && Math.abs(c.top - r.top) < 6,
+            skip: skip ? [skip.textContent.trim(), getComputedStyle(skip).backgroundColor, Math.abs((sb.left + sb.right) / 2 - (hb.left + hb.right) / 2) < hb.width * 0.2] : null,
+            suite: !!h.querySelector('.dci-wh-c [data-act=suite-add-open]'),
+            right: [...h.querySelectorAll('.dci-wh-r > button, .dci-wh-r > * > button')].map(x => x.dataset.act),
+            text: w.textContent.includes('have no work yet'), para: w.textContent.includes('One row per work') }; })()""")
+        pg.locator('[data-el=works] [data-act=mx-help]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        a1 = pg.evaluate("(document.querySelector('[data-el=works] [data-el=works-help]') || {}).textContent || ''")
+        pg.locator('[data-el=works] [data-act=mx-more]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        a2 = pg.evaluate("[...document.querySelectorAll('[data-el=works] [data-el=works-more] button')].map(x => x.dataset.act)")
+        print('A)', a0, '| ⓘ:', a1[:80], '| ⋯:', a2)
+        results.append(a0['chips'] == ['4 tracks', '1 work', '3 without work'] and a0['oneLine'] and a0['skip'] and a0['skip'][0] == 'Skip works'
+                       and a0['skip'][1] not in ('rgba(0, 0, 0, 0)', 'rgb(255, 255, 255)') and a0['skip'][2] and a0['suite']
+                       and a0['right'][:1] == ['mx-defaults'] and 'works-search-all' in a0['right'] and 'works-pending-all' in a0['right'] and 'mx-more' in a0['right']
+                       and not a0['text'] and not a0['para'] and 'One row per work' in a1
+                       and {'works-create-all', 'works-open-all', 'mx-clear-dates', 'mx-top'} <= set(a2))
+        HEADS = """[...document.querySelectorAll('.dci-matrix thead th[data-colhead]')].map(th => { const n = th.querySelector('.dci-mx-name'); const roles = th.querySelector('.dci-mx-roles');
+          return [n ? n.textContent.replace(/^MB/, '').trim() : null, n ? n.title : null, n ? n.className : null, !!(roles && roles.querySelector('[data-act=mx-goto]')), !!(roles && roles.querySelector('[data-act=mx-colmenu]')),
+            !!th.querySelector('input[data-f=mx-credit], input[data-f=col-credit], .dci-mx-credit input'), !!th.querySelector('[data-act=mx-collapse]'), !!th.querySelector('[data-act=mx-col-remove]')]; })"""
+        b0 = pg.evaluate(HEADS)
+        print('B)', b0)
+        pw = [x for x in b0 if x[0] == 'Writer W']
+        gp = [x for x in b0 if x[0] == 'Ghost Pub']
+        pg.locator('.dci-matrix thead th[data-colhead]').first.locator('[data-act=mx-colmenu]').first.evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        b1 = pg.evaluate("(m => m ? [!!m.querySelector('[data-act=mx-collapse]'), !!m.querySelector('[data-act=mx-col-remove]')] : null)(document.querySelector('.dci-matrix .dci-mx-colmenu'))")
+        pg.locator('.dci-matrix .dci-mx-colmenu [data-act=mx-colmenu]').last.evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        print('B) Menü:', b1)
+        results.append(bool(pw) and pw[0][1] == 'Writer W' and not pw[0][3] and pw[0][4] and pw[0][5] and not pw[0][6] and not pw[0][7]
+                       and bool(gp) and gp[0][3] and all(x[5] for x in b0) and b1 == [True, True])
+        # C) the corner: all "credited as" to the MusicBrainz names
+        pg.fill('.dci-matrix thead input[data-f=mx-credit] >> nth=0', 'W. W.'); pg.locator('.dci-matrix thead input[data-f=mx-credit] >> nth=0').dispatch_event('change'); pg.wait_for_timeout(300)
+        c0 = pg.evaluate("[...document.querySelectorAll('.dci-matrix thead input[data-f=mx-credit]')].map(x => x.value)")
+        corner = pg.evaluate("(x => x ? x.textContent.replace(/\\s+/g, ' ').trim() : null)(document.querySelector('.dci-matrix thead .dci-mx-creditsall'))")
+        pg.locator('.dci-matrix thead [data-act=mx-clear-credits]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        c1 = pg.evaluate("[...document.querySelectorAll('.dci-matrix thead input[data-f=mx-credit]')].map(x => x.value)")
+        print('C)', corner, c0, c1)
+        results.append(corner == 'All artists credited as: ↺ MusicBrainz names for all' and c0[0] == 'W. W.' and not any(c1))
+        # D) a track without a work
+        ROW = """(i) => { const tr = document.querySelector(`.dci-matrix tr[data-work="${i}"]`); const m = tr.querySelector('.dci-mx-newmenu');
+          return [(tr.querySelector('.dci-mx-line .dci-badge') || {}).textContent, [...tr.querySelectorAll('.dci-split button')].map(b => b.textContent.trim()), m ? [...m.querySelectorAll('button')].map(b => b.dataset.act) : null,
+            !!tr.querySelector('.dci-wattr-add'), [...tr.querySelectorAll('td .dci-mxwait')].map(x => [x.textContent, !!x.closest('td').querySelector('.dci-hourglass'), x.closest('[title]') ? x.closest('[title]').title : ''])]; }"""
+        d0 = pg.evaluate(ROW, 1)
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=mx-newmenu]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        d1 = pg.evaluate(ROW, 1)
+        att = [pg.evaluate("!!document.querySelector('.dci-matrix tr[data-work=\"0\"] .dci-wattr-add')")]
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        att.append(pg.evaluate("(b => b ? b.textContent.trim() : null)(document.querySelector('.dci-matrix tr[data-work=\"1\"] .dci-wattr-add'))"))
+        print('D)', d0, d1, '| ＋ attribute (mit Werk, neues Werk):', att)
+        # (a track without any work has no link to carry attributes: "＋ attribute" once it has one, a new one too)
+        results.append(d0[0] == '○ no work yet' and d0[1] == ['＋ New', '▾'] and d0[2] is None and d1[2][:2] == ['work-search', 'work-create'] and not d0[3]
+                       and att == [True, '＋ attribute'] and d0[4] and all(x[0] == 'waits for a work' and x[1] and x[2].endswith('waits for a work') for x in d0[4]))
+        # E) "＋ Add a column"
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', 'nothing here')
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        e0 = pg.evaluate("(document.querySelector('[data-el=addcol-err]') || {}).textContent || null")
+        pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', f'https://musicbrainz.org/place/{H.COMPANIES[1002][1]}')
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
+        e1 = pg.evaluate("(document.querySelector('[data-el=addcol-err]') || {}).textContent || null")
+        pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', f'https://musicbrainz.org/artist/{LONG}')
+        pg.select_option('.dci-mx-addcol-pop [data-f=mx-addcol-role]', label='composer')
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(2000)
+        e2 = [x for x in pg.evaluate(HEADS) if x[0] and x[0].startswith('Maximilian')]
+        e3 = pg.evaluate("!!document.querySelector('.dci-mx-addcol-pop')")
+        CELLS = """(name) => { const ths = [...document.querySelectorAll('.dci-matrix thead th[data-colhead]')]; const k = ths.findIndex(th => (th.querySelector('.dci-mx-name') || {}).textContent?.replace(/^MB/, '').trim() === name);
+          if (k < 0) return null; return [...document.querySelectorAll('.dci-matrix tbody tr[data-work]')].map(tr => tr.children[k + 1] ? tr.children[k + 1].querySelectorAll('.dci-chip-on, .dci-mx-on, [aria-pressed=true]').length : -1); }"""
+        e4 = pg.evaluate(f"({CELLS})('Maximilian Alexander von Hohenberg')")
+        print('E)', e0, '|', e1, '|', e2, '| offen:', e3, '| Zellen:', e4)
+        results.append(e0 == 'No MBID recognized. Paste the link of an artist or label page of MusicBrainz, or its MBID.' and e1 == 'A column holds an artist or a label – this is a place.'
+                       and len(e2) == 1 and e2[0][0] == 'Maximilian Alexander von Hohenberg' and e2[0][1] == 'Maximilian Alexander von Hohenberg' and 'dci-mx-name-xs' in e2[0][2] and not e3
+                       and e4 is not None and not any(e4))
+
+        def addcol(url, group, role):
+            pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+            pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', url)
+            pg.evaluate("""([g, r]) => { const s = document.querySelector('.dci-mx-addcol-pop [data-f=mx-addcol-role]');
+              const o = [...s.querySelectorAll(`optgroup[label="${g}"] option`)].find(x => x.textContent.trim() === r); s.value = o ? o.value : ''; }""", [group, role])
+            pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
+            return pg.evaluate("(document.querySelector('[data-el=addcol-err]') || {}).textContent || null")
+
+        e5 = addcol(f'https://musicbrainz.org/label/{PUBH}', 'artist', 'composer')
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        e6 = addcol(f'https://musicbrainz.org/artist/{LONG}', 'artist', 'composer')
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        e7 = addcol(PUBH, 'label', 'publishing')
+        e8 = [x[0] for x in pg.evaluate(HEADS)]
+        print('E2) Label als composer:', e5, '| schon Spalte:', e6, '| Label publishing:', e7, e8)
+        results.append(e5 == '“composer” is not a role of a label – choose one of its roles.'
+                       and e6 == 'Maximilian Alexander von Hohenberg is a column of the matrix already – its roles are in the ▾ of its cells.'
+                       and e7 is None and 'Pub House' in e8)
+        # F) the popovers
+        HELP = "!!document.querySelector('[data-el=works] [data-el=works-help]')"
+        pg.locator('[data-el=works] [data-act=mx-help]').click(); pg.wait_for_timeout(200)
+        f0 = pg.evaluate(HELP)
+        pg.locator('.dci-matrix thead .dci-mx-frontcard strong').first.click(); pg.wait_for_timeout(200)
+        f1 = pg.evaluate(HELP)
+        pg.locator('[data-el=works] [data-act=mx-more]').click(); pg.wait_for_timeout(200)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        f2 = [pg.evaluate("!!document.querySelector('[data-el=works] [data-el=works-more]')"), pg.evaluate("document.activeElement && document.activeElement.dataset.act"),
+              pg.evaluate("!document.querySelector('#dci-overlay').hidden")]
+        pg.locator('[data-el=works] .dci-wh-r [data-act=mx-defaults]').click(); pg.wait_for_timeout(200)
+        pg.locator('[data-el=works] [data-el=works-defaults]').click(position={'x': 4, 'y': 4}); pg.wait_for_timeout(200)
+        f3 = pg.evaluate("!!document.querySelector('[data-el=works] [data-el=works-defaults]')")
+        pg.locator('[data-el=works] .dci-wh-c [data-act=suite-add-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        f4 = pg.evaluate("!!document.querySelector('[data-el=suite-add]')")
+        pg.locator('[data-el=works] .dci-wh-c [data-act=suite-add-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        f5 = pg.evaluate("!!document.querySelector('[data-el=suite-add]')")
+        print('F) ⓘ:', f0, f1, '| Esc ⋯:', f2, '| Standards:', f3, '| Suite:', f4, f5)
+        results.append(f0 and not f1 and f2 == [False, 'mx-more', True] and f3 and f4 and not f5)
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

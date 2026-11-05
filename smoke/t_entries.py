@@ -1524,10 +1524,12 @@ def case_compactlines():
             results.append(c['roleLines'] >= 1 and c['lastIsRole'] and c['tails'] == 1 and c['tail'] == '5 to stage ＋ role')
             pg.click(f'{sec} [data-act=works-goto]')
             pg.wait_for_timeout(400)
-            # the top of the works matrix right below the part of the dashboard that stays in view (Add entry manually, the pools)
+            # the top of the works matrix right below the part of the dashboard that stays in view (Add entry manually, the pools) – (3.52.0)
+            # or as far as the dashboard scrolls (the shorter works matrix may end the dashboard)
             d = pg.evaluate("""(w => { if (!w) return null; const body = document.querySelector('[data-el=body]').getBoundingClientRect();
               const stick = document.querySelector('[data-el=stick]').getBoundingClientRect(); const t = w.getBoundingClientRect().top;
-              return [w.classList.contains('dci-flash'), t >= stick.bottom - 2 && t <= stick.bottom + 40 && t < body.bottom]; })(document.querySelector('[data-el=works]'))""")
+              const b = document.querySelector('[data-el=body]'); const end = b.scrollTop + b.clientHeight >= b.scrollHeight - 2;
+              return [w.classList.contains('dci-flash'), t >= stick.bottom - 2 && (t <= stick.bottom + 40 || end) && t < body.bottom]; })(document.querySelector('[data-el=works]'))""")
             print('D) Werke:', d)
             results.append(d == [True, True])
             pg.click(f'{sec} .dci-em-tail [data-act=add-role]')

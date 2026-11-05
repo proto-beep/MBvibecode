@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.51.0
+// @version      3.52.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.51.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.51.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.52.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.52.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.51.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.52.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -624,16 +624,13 @@
       "manual.add": "Add",
       "works.missing.one": "{n} track has no work yet.",
       "works.missing.other": "{n} tracks have no work yet.",
-      "works.allDone": "Every track has a work or a staged link.",
       "works.type": "Work type for new works",
       "works.lang": "Lyrics languages for new works",
       "works.none": "none",
-      "works.searchAll": "Search works for all tracks without one",
       "works.linked": "linked",
       "works.plannedFound": "found, will be linked",
       "works.plannedCreated": "newly created, will be linked",
       "works.unplan": "Remove link",
-      "works.search": "Search",
       "works.searching": "Searching …",
       "works.link": "Link",
       "sub.window": "Open in separate window",
@@ -1127,6 +1124,10 @@
       "manual.search": "Search MB:",
       "manual.searchTitle": "Search MusicBrainz for an entry (links in a new tab)",
       "msg.badMbidAny": "No MBID recognized. Paste the URL of an MB artist, label or place page, or an MBID.",
+      "msg.addColOnly": "A column holds an artist or a label – this is a {type}.",
+      "msg.badMbidColumn": "No MBID recognized. Paste the link of an artist or label page of MusicBrainz, or its MBID.",
+      "msg.addColThere": "{name} is a column of the matrix already – its roles are in the ▾ of its cells.",
+      "msg.addColRole": "“{role}” is not a role of a {type} – choose one of its roles.",
       "note.unknownRole": "Not an instrument known to MusicBrainz. Added as “miscellaneous support” with the {src} role as task; choose a better type if there is one.",
       "date.pasteTitle": "You can paste a date as MusicBrainz shows it, e.g. “from 2015-01-26 until 2015-01-27”, “in 2015-01” or “on 2015-01-26”.",
       "log.datePasted": "Date pasted: {date}",
@@ -1209,7 +1210,6 @@
       "matrix.attrs": "Attributes of the link between recording and work",
       "matrix.attrsAll": "Attributes for all:",
       "matrix.attrsShort": "Attributes",
-      "matrix.attrsNone": "none",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
       "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
       "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers of this track and has only writing credits on this release (not classical music). A click takes it off.",
@@ -1431,7 +1431,6 @@
       "log.diagStep": "Diagnosis: {text}",
       "log.diagStop.one": "Diagnosis stopped after {n} step",
       "log.diagStop.other": "Diagnosis stopped after {n} steps",
-      "works.pending": "New work",
       "works.pendingTitle": "Marks a new work in the relationship editor, like MusicBrainz’s “Batch-add new works”. It is created together with its writers, publishers and the link to the recording when you click “Enter edit”.",
       "works.plannedPending": "new – created with “Enter edit”",
       "works.viaForm": "via form …",
@@ -1669,16 +1668,52 @@
       "roleCredit.fromDiscogs": "Taken from Discogs",
       "matrix.clearDates": "clear all dates",
       "matrix.clearDatesAsk": "Remove every date in the works matrix (column dates, cell dates and the dates of the links to works)?",
-      "matrix.missingWorks.one": "{n} track has no work yet.",
-      "matrix.missingWorks.other": "{n} tracks have no work yet.",
-      "matrix.newWorksAll.one": "New work for {n} track",
-      "matrix.newWorksAll.other": "New works for all {n} tracks",
       "matrix.newWorksHow": "created with “Enter edit”, like “Batch-add new works”",
       "matrix.addColTitle": "Add a column:",
       "matrix.addColChoose": "choose an entry …",
       "matrix.rowRole": "Role",
       "matrix.addColBtn": "Add column",
       "matrix.addColHint": "then switch on the cells of its works (or “all works”)",
+      "matrix.withoutWork.one": "{n} without work",
+      "matrix.withoutWork.other": "{n} without work",
+      "matrix.helpTitle": "How the works matrix works",
+      "matrix.suitesCount": "suites: {n} · parts: {parts}",
+      "matrix.defaults": "New works",
+      "matrix.defaultsTitle": "The role codes, the work type and the lyrics languages of new works",
+      "matrix.searchWorks": "Search works",
+      "matrix.newWorksN.one": "New work ({n})",
+      "matrix.newWorksN.other": "New works ({n})",
+      "matrix.moreTitle": "More: create works one by one via form, open the works in background tabs, clear all dates, to the top",
+      "matrix.noType": "no work type",
+      "matrix.noLang": "no lyrics language",
+      "matrix.suggestNew": "Suggested for new works: {what}",
+      "matrix.suggestNewLabel": "New works – suggested:",
+      "matrix.suggestFrom": "from the works of {names} in MusicBrainz: {parts}",
+      "matrix.suggestAccept": "Accept",
+      "matrix.suggestChange": "Change …",
+      "matrix.suggestIfNot": "if not accepted: neither type nor language is filled in",
+      "matrix.suggestPartType": "type {n} of {of}",
+      "matrix.suggestPartLang": "language {n} of {of}",
+      "matrix.suggestIfNotOwn": "if not accepted: the defaults stay ({what})",
+      "matrix.suggestRowTitle": "Suggested from the works of the artists – not filled in until “Accept” in the head of the matrix",
+      "matrix.creditsAll": "All artists credited as:",
+      "matrix.clearCreditsAll": "MusicBrainz names for all",
+      "matrix.addColumnHead": "Add a column",
+      "matrix.addColEntry": "An entry of the dashboard",
+      "matrix.addColOrMbid": "or an artist or label of MusicBrainz",
+      "matrix.addColMbid": "An artist or label of MusicBrainz",
+      "matrix.addColMbidPh": "MBID or musicbrainz.org link",
+      "matrix.cornerMore": "Spell out the attributes, open all rows",
+      "matrix.attrAdd": "attribute",
+      "matrix.newMenu": "More for a new work: search, form, work type and languages",
+      "works.pendingShort": "New",
+      "works.searchMb": "Search MusicBrainz …",
+      "wnote.coverShort": "Cover · {by}",
+      "wnote.arrangedShort": "Arrangement · {by}",
+      "wnote.arrangementShort": "Arrangement of {title}",
+      "wnote.quoteShort": "Quotes → {title}",
+      "wnote.needOwnShort": "needs a work of its own",
+      "log.worksSuggestTaken": "New works: {what} – the suggestion taken (each work can still be changed)",
       "matrix.colAll": "all works",
       "matrix.colAllTitle": "Switch this column on for every work shown",
       "log.matrixColumn": "Matrix column added: {name} ({role})",
@@ -1708,7 +1743,6 @@
       "sync.trackHoverTitle": "When the pointer rests on a track on the Discogs page, its row in the works matrix is highlighted",
       "log.dgHover": "Track highlight: {state}",
       "log.festivalSkipped": "Not taken over (festival; in MusicBrainz an event, not a place): {name}",
-      "matrix.clearCredits": "use MusicBrainz names",
       "matrix.clearCreditsTitle": "Clears every “credited as” in the works matrix, so MusicBrainz shows the names of the artists and labels",
       "log.matrixCreditsCleared": "Works matrix: “credited as” cleared in {n} rows",
       "picker.mediumTitle": "Click: all tracks of this medium on or off",
@@ -3457,6 +3491,8 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
+    // [3.52.0] collected item Z-WTS
+    { id: 'S081', where: 'workSuggestion, workSuggestHtml', note: 'New works (3.52.0): a work type and a lyrics language suggested from the works of the artists in MusicBrainz that the works matrix reads (from 3 works on) – each the one of more than half of them, "no work type" and "no lyrics language" too (the languages of a work together); a value without such a majority is not suggested. Yellow in the head of the matrix and at the rows: "Accept" fills it in for all new works (each can still be changed); not accepted, neither type nor language of it is filled in' },
     // [3.51.0] collected item Z-PCR
     { id: 'S080', where: 'sourceCreditFor, withoutAreaTail', note: 'Places and labels (3.51.0): the town or country after a comma in the name at the source – "Sound Development Studio, Zürich" – is no "credited as" when the rest is MusicBrainz\'s name ("Sound Development Studio": none) or the end is the area the source gives (the name without it); kept when it is part of MusicBrainz\'s name ("Studio, Zürich" for "Studio Zürich")' },
     // [3.50.0] collected items Z-PRO, Z-TAR
@@ -8271,9 +8307,28 @@
     }).replace(/\s+/g, ' ').trim();
   }
 
+  // Work types and languages exactly as offered by MusicBrainz: first from the page data,
+  // ([3.52.0] defined before the Node exports: suggestFromWorks reads them)
+  // then from MB's own "Add work" form, finally from a short built-in list.
+  const FALLBACK_WORK_TYPES = [
+    [17, 'Song'], [1, 'Aria'], [25, 'Audio drama'], [2, 'Ballet'], [3, 'Cantata'], [4, 'Concerto'],
+    [20, 'Étude'], [30, 'Incidental music'], [7, 'Madrigal'], [8, 'Mass'], [9, 'Motet'], [29, 'Musical'],
+    [10, 'Opera'], [24, 'Operetta'], [11, 'Oratorio'], [12, 'Overture'], [13, 'Partita'], [28, 'Play'],
+    [21, 'Poem'], [23, 'Prose'], [14, 'Quartet'], [5, 'Sonata'], [15, 'Song-cycle'], [22, 'Soundtrack'],
+    [6, 'Suite'], [18, 'Symphonic poem'], [16, 'Symphony'], [19, 'Zarzuela'],
+  ];
+  const FALLBACK_LANGUAGES = [
+    [486, '[No lyrics]', 'zxx'], [284, '[Multiple languages]', 'mul'], [120, 'English', 'eng'], [145, 'German', 'deu'],
+    [134, 'French', 'fra'], [393, 'Spanish', 'spa'], [195, 'Italian', 'ita'], [340, 'Portuguese', 'por'],
+    [113, 'Dutch', 'nld'], [403, 'Swedish', 'swe'], [100, 'Danish', 'dan'], [309, 'Norwegian', 'nor'],
+    [131, 'Finnish', 'fin'], [338, 'Polish', 'pol'], [98, 'Czech', 'ces'], [176, 'Hungarian', 'hun'],
+    [353, 'Russian', 'rus'], [433, 'Turkish', 'tur'], [159, 'Greek', 'ell'], [18, 'Arabic', 'ara'],
+    [198, 'Japanese', 'jpn'], [224, 'Korean', 'kor'], [76, 'Chinese', 'zho'], [238, 'Latin', 'lat'],
+  ];
+
   if (IS_NODE_TEST) {
     module.exports = {
-      splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
+      suggestFromWorks, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
       instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
@@ -9654,24 +9709,6 @@
     while (mbForeground > 0) await sleep(300);
     return mbWs(path, { background: true });
   }
-
-  // Work types and languages exactly as offered by MusicBrainz: first from the page data,
-  // then from MB's own "Add work" form, finally from a short built-in list.
-  const FALLBACK_WORK_TYPES = [
-    [17, 'Song'], [1, 'Aria'], [25, 'Audio drama'], [2, 'Ballet'], [3, 'Cantata'], [4, 'Concerto'],
-    [20, 'Étude'], [30, 'Incidental music'], [7, 'Madrigal'], [8, 'Mass'], [9, 'Motet'], [29, 'Musical'],
-    [10, 'Opera'], [24, 'Operetta'], [11, 'Oratorio'], [12, 'Overture'], [13, 'Partita'], [28, 'Play'],
-    [21, 'Poem'], [23, 'Prose'], [14, 'Quartet'], [5, 'Sonata'], [15, 'Song-cycle'], [22, 'Soundtrack'],
-    [6, 'Suite'], [18, 'Symphonic poem'], [16, 'Symphony'], [19, 'Zarzuela'],
-  ];
-  const FALLBACK_LANGUAGES = [
-    [486, '[No lyrics]', 'zxx'], [284, '[Multiple languages]', 'mul'], [120, 'English', 'eng'], [145, 'German', 'deu'],
-    [134, 'French', 'fra'], [393, 'Spanish', 'spa'], [195, 'Italian', 'ita'], [340, 'Portuguese', 'por'],
-    [113, 'Dutch', 'nld'], [403, 'Swedish', 'swe'], [100, 'Danish', 'dan'], [309, 'Norwegian', 'nor'],
-    [131, 'Finnish', 'fin'], [338, 'Polish', 'pol'], [98, 'Czech', 'ces'], [176, 'Hungarian', 'hun'],
-    [353, 'Russian', 'rus'], [433, 'Turkish', 'tur'], [159, 'Greek', 'ell'], [18, 'Arabic', 'ara'],
-    [198, 'Japanese', 'jpn'], [224, 'Korean', 'kor'], [76, 'Chinese', 'zho'], [238, 'Latin', 'lat'],
-  ];
 
   /**
    * All work types and languages MusicBrainz offers, taken from its own "Add work" form, so the lists are
@@ -16738,6 +16775,10 @@
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
+      // [Z-WTS] (3.52.0) a suggestion of the release before is no answer for this one
+      S.workSuggestDone = null;
+      S.workSuggestRaw = '';
+      Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
       S.digital = !!(ws.media || []).length && (ws.media || []).every((m) => /digital media/i.test(m.format || ''));
@@ -26582,28 +26623,36 @@
   }
   /** [Z-EXC] Below the title of a track in the works matrix: its cover, its quote, its arrangement (and the work found for it). */
   function workNotesHtml(i) {
+    // [Z-WMX] (3.52.0) short marks – "Cover · The Blackbyrds", "Quotes → Space Is the Place ✓" –, the whole sentence in the tooltip (and
+    // for screen readers); what to do (a work of its own, look for it by hand) stays in words
     const out = [];
     const c = S.textCovers && S.textCovers.get(i);
-    if (c) out.push(`<div class="dci-mx-wnote" data-wnote="cover">${esc(tr(c.arranged ? 'wnote.arranged' : 'wnote.cover', { by: c.by }))}</div>`);
+    const sr = (t) => `<span class="dci-sr"> – ${esc(t)}</span>`;
+    if (c) {
+      const full = tr(c.arranged ? 'wnote.arranged' : 'wnote.cover', { by: c.by });
+      out.push(`<span class="dci-mx-wnote dci-mx-mark dci-mx-mark-cover" data-wnote="cover" title="${esc(full)}">${esc(tr(c.arranged ? 'wnote.arrangedShort' : 'wnote.coverShort', { by: c.by }))}${sr(full)}</span>`);
+    }
     for (const r of (S.workRels && S.workRels.get(i)) || []) {
       const label = tr(r.kind === 'arrangement' ? 'wnote.arrangementOf' : 'wnote.quotesFrom', { title: r.title, by: (r.by || []).join(', ') || '–' });
+      const short = tr(r.kind === 'arrangement' ? 'wnote.arrangementShort' : 'wnote.quoteShort', { title: r.title });
       const searchUrl = `/search?query=${encodeURIComponent(r.title)}&type=work&method=indexed`;
       const search = `<a href="${searchUrl}" target="_blank" rel="noopener">${esc(tr('wnote.search'))}</a>`;
       let state;
-      if (r.state === 'search') state = `<span class="dci-sub">${esc(tr('works.searching'))}</span>`;
+      let why = '';
+      if (r.state === 'search') state = `<span class="dci-sub" title="${esc(tr('works.searching'))}">…</span>`;
       else if (r.state === 'found') {
         // ((3.49.0, review) the track's work is that work itself (an arranged cover needs a work of its own, Q-ff), or MusicBrainz has
         // the relationship already)
         const w = worksForTrack(i)[0];
         const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
-        const why = !w ? 'wnote.needWork' : w.gid === r.found.gid ? 'wnote.needOwn'
+        why = !w ? 'wnote.needWork' : w.gid === r.found.gid ? 'wnote.needOwn'
           : lt && S.existing && S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`) ? 'wnote.exists' : 'wnote.staged';
-        state = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.found.title)}</a>
-          <span class="dci-sub">${esc(tr(why))}</span>`;
-      } else state = `<span class="dci-sub">${esc(tr(r.state === 'noWriter' ? 'wnote.noWriter' : r.state === 'error' ? 'wnote.error' : 'wnote.notFound'))}</span> ${search}`;
-      out.push(`<div class="dci-mx-wnote" data-wnote="${r.kind}" data-wstate="${r.state}">${esc(label)} ${state}</div>`);
+        state = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener" title="${esc(r.found.title)} – ${esc(tr(why))}"><span class="dci-src dci-src-mb">MB</span>✓</a>${why === 'wnote.needOwn'
+          ? ` <span class="dci-sub dci-warn">${esc(tr('wnote.needOwnShort'))}</span>` : ''}${sr(`${r.found.title} ${tr(why)}`)}`;
+      } else state = `<span class="dci-sub dci-warn">${esc(tr(r.state === 'noWriter' ? 'wnote.noWriter' : r.state === 'error' ? 'wnote.error' : 'wnote.notFound'))}</span> ${search}`;
+      out.push(`<span class="dci-mx-wnote dci-mx-mark dci-mx-mark-${r.kind}" data-wnote="${r.kind}" data-wstate="${r.state}" title="${esc(label)}${why ? ` – ${esc(tr(why))}` : ''}">${esc(short)} ${state}<span class="dci-sr"> – ${esc(label)}</span></span>`);
     }
-    return out.join('');
+    return out.length ? `<div class="dci-mx-marks">${out.join('')}</div>` : '';
   }
   function coverAuto(i, work) {
     if (!work || !work.planned) return false;
@@ -26701,8 +26750,8 @@
   /** Closed attribute row: "none ▸ Attributes" at the end of the work's line. */
   function linkAttrsToggleHtml(mrow) {
     if (!mrow.work || !linkAttrTypes().length || linkAttrsOpen(mrow).open) return '';
-    return `<span class="dci-wattr-sum"><span class="dci-muted">${esc(tr('matrix.attrsNone'))}</span>
-      <button type="button" class="dci-textbtn dci-wattr-tgl" data-act="mx-wattr-open" aria-expanded="false">▸ ${esc(tr('matrix.attrsShort'))}</button></span>`;
+    // [Z-WMX] (3.52.0) "＋ attribute" (before: "none ▸ Attributes")
+    return `<span class="dci-wattr-sum"><button type="button" class="dci-small dci-wattr-tgl dci-wattr-add" data-act="mx-wattr-open" aria-expanded="false" title="${esc(tr('matrix.attrs'))}">＋ ${esc(tr('matrix.attrAdd'))}</button></span>`;
   }
 
   /** "Attributes for all" in the head of the track column, with "spell out" and "open all rows". */
@@ -26716,11 +26765,13 @@
       const state = k === rows.length ? 'on' : k ? 'mixed' : 'off';
       return `<span class="dci-wpill-drop" data-tgattr="${esc(n)}">${attrPillHtml(a, { state, act: 'mx-wattr-all', title: tr('matrix.attrAllTitle', { name: a.name, k, n: rows.length }) })}</span>`;
     }).join('');
-    return `<div class="dci-wattrs dci-wattrs-all" role="group" aria-label="${esc(tr('matrix.attrsAll'))}"><span class="dci-sub">${esc(tr('matrix.attrsAll'))}</span>${pills}</div>
-      <div class="dci-mx-cardline">
+    // [Z-WMX] (3.52.0) "spell out" and "open all rows" behind ⋯ (the hint for dropping in their tooltip)
+    return `<div class="dci-wattrs dci-wattrs-all" role="group" aria-label="${esc(tr('matrix.attrsAll'))}"><span class="dci-sub" title="${esc(tr('matrix.attrDropHint'))}">${esc(tr('matrix.attrsAll'))}</span>${pills}
+        <button type="button" class="dci-iconbtn dci-mx-cornermore" data-act="mx-cornermore" aria-expanded="${!!S.mxCornerMore}" aria-label="${esc(tr('matrix.cornerMore'))}" title="${esc(tr('matrix.cornerMore'))}">⋯</button></div>
+      ${S.mxCornerMore ? `<div class="dci-mx-cardline" data-el="corner-more">
         <button type="button" class="dci-textbtn" data-act="mx-wattr-long" aria-pressed="${S.wattrLong}">${esc(S.wattrLong ? `▾ ${tr('matrix.attrShort')}` : `▸ ${tr('matrix.attrLong')}`)}</button>
         <button type="button" class="dci-textbtn" data-act="mx-wattr-openall" aria-pressed="${S.wattrOpenAll}">${esc(tr(S.wattrOpenAll ? 'matrix.attrCloseAll' : 'matrix.attrOpenAll'))}</button>
-        <span class="dci-sub">${esc(tr('matrix.attrDropHint'))}</span></div>`;
+        <span class="dci-sub">${esc(tr('matrix.attrDropHint'))}</span></div>` : ''}`;
   }
 
   /**
@@ -26733,7 +26784,8 @@
     const rows = S.rows.filter((r) => r.ruleId === 'R098' && r.level !== 'skip');
     if (!song || !rows.length) return;
     if (rows.some((r) => !r.dSpec && !(r.dPositions || []).length)) {
-      if (!S.workDefaults.typeId) Object.assign(S.workDefaults, { typeId: String(song.id), typeAuto: 'S020' });
+      // ([Z-WTS] 3.52.0, review) not over a type taken from the suggestion ("no work type" too)
+      if (!S.workDefaults.typeId && !S.workDefaults.typeAccepted) Object.assign(S.workDefaults, { typeId: String(song.id), typeAuto: 'S020' });
       return;
     }
     rows.forEach((r) => r.tracks.forEach((i) => {
@@ -28085,6 +28137,8 @@
    * Reads the works of an artist: those linked to the artist (writer, arranger … – every artist–work relationship)
    * and those of the artist's recordings (also covers). onPage(entry) after each request.
    */
+  /** [Z-WTS] (3.52.0) The lyrics languages of a work of the web service (ISO 639-3: "eng", "zxx"). */
+  const workLangs = (w) => (Array.isArray(w.languages) && w.languages.length ? w.languages : w.language ? [w.language] : []).map(String);
   async function loadArtistWorks(mbid, name, onPage) {
     // [3.16.0] at most S.awMax works and recordings together (setting): the linked works first, the recordings with the rest
     const max = S.awMax;
@@ -28094,8 +28148,9 @@
       if (worksResting()) return Object.assign(entry, { stopped: true });
       const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
       const list = (d && d.works) || [];
+      // ([Z-WTS] 3.52.0: with its lyrics languages, for the suggestion of new works)
       list.forEach((w) => entry.works.set(w.id, { gid: w.id, title: w.title, aliases: (w.aliases || []).map((x) => x.name).filter(Boolean),
-        type: w.type || '', disambiguation: w.disambiguation || '', via: 'linked' }));
+        type: w.type || '', disambiguation: w.disambiguation || '', via: 'linked', languages: workLangs(w) }));
       entry.linkedRead += list.length;
       entry.linked = (d && d['work-count']) || entry.works.size;
       onPage(entry);
@@ -28124,7 +28179,7 @@
         for (const rel of rec.relations || []) {
           const w = rel.work;
           if (w && w.id && !entry.works.has(w.id)) {
-            entry.works.set(w.id, { gid: w.id, title: w.title, aliases: [], type: w.type || '', disambiguation: w.disambiguation || '', via: 'recorded', recording: rec.title || '' });
+            entry.works.set(w.id, { gid: w.id, title: w.title, aliases: [], type: w.type || '', disambiguation: w.disambiguation || '', via: 'recorded', recording: rec.title || '', languages: workLangs(w) });
           }
         }
       }
@@ -28266,10 +28321,12 @@
   const awClear = () => awStore('readwrite', (st) => st.clear());
   /** What was read of an artist, short (works as arrays) and with the time it was read (kept when a work is added). */
   const awPack = (mbid, e, readAt = Date.now()) => ({ mbid, name: e.name, readAt, max: e.max, linked: e.linked, total: e.total, recordings: e.recordings,
-    capped: e.capped, works: [...e.works.values()].map((w) => [w.gid, w.title, w.aliases || [], w.type || '', w.disambiguation || '', w.via === 'recorded' ? 'r' : 'l', w.recording || '']) });
+    capped: e.capped, works: [...e.works.values()].map((w) => [w.gid, w.title, w.aliases || [], w.type || '', w.disambiguation || '', w.via === 'recorded' ? 'r' : 'l', w.recording || '',
+      Array.isArray(w.languages) ? w.languages : null]) });
   const awUnpack = (rec) => ({ name: rec.name, max: rec.max, linked: rec.linked, total: rec.total, recordings: rec.recordings, capped: rec.capped, readAt: rec.readAt,
-    works: new Map((rec.works || []).map(([gid, title, aliases, type, disambiguation, via, recording]) => [gid,
-      { gid, title, aliases: aliases || [], type, disambiguation, via: via === 'r' ? 'recorded' : 'linked', recording }])) });
+    // ([Z-WTS] 3.52.0, review) the lyrics languages too – a record of 3.51.0 or before has none: unknown (null), not "no language"
+    works: new Map((rec.works || []).map(([gid, title, aliases, type, disambiguation, via, recording, languages]) => [gid,
+      { gid, title, aliases: aliases || [], type, disambiguation, via: via === 'r' ? 'recorded' : 'linked', recording, languages: Array.isArray(languages) ? languages : null }])) });
   /** Still good: younger than the days of the setting, and not cut off by a lower limit than the one set now. */
   const awFresh = (rec) => Date.now() - rec.readAt < S.awDays * 86400000 && (!rec.capped || rec.max >= S.awMax);
 
@@ -28427,7 +28484,7 @@
       log('info', 'artistWorksSpecial', { name: info.name });
     }
     if (!targets.size || !tracksWithoutWork().length) {
-      if (matchArtistWorks()) renderWorksBackground();
+      if (matchArtistWorks() || suggestionChanged()) renderWorksBackground();
       return;
     }
     S.artistWorksRunning = true;
@@ -28465,13 +28522,13 @@
             log('warn', 'artistWorksCapped', { name: info.name, n: e.linked + e.total, max: e.max });
           }
         }
-        if (matchArtistWorks()) renderWorksBackground();
+        if (matchArtistWorks() || suggestionChanged()) renderWorksBackground();
       }
     } catch (e) {
       log('error', 'error', { text: e.message });
     }
     S.artistWorksRunning = false;
-    if (matchArtistWorks()) renderWorksBackground();
+    if (matchArtistWorks() || suggestionChanged()) renderWorksBackground();
     const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
     const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
     if (!S.artistWorksAgain && !worksResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
@@ -28542,10 +28599,13 @@
     const typeName = (S.workOptions.types.find((t) => String(t.id) === String(opts.typeId)) || {}).name || '';
     const langName = (id) => (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || id;
     const open = S.mxOptsOpen.has(i);
+    // [Z-WTS] (3.52.0) a work without its own choice: the suggestion not taken yet, yellow with "?" (nothing of it is filled in)
+    const sg = !S.workRowOpts.has(i) && S.workSuggest ? suggestionText(S.workSuggest) : '';
     const btn = `<button type="button" class="dci-textbtn dci-mx-optsbtn" data-act="mx-opts" aria-expanded="${open}" title="${esc(tr('matrix.optsTitle'))}">${open ? '▾' : '▸'} ${esc([typeName, ...opts.languageIds.map(langName)].filter(Boolean).join(' · ') || tr('matrix.optsNone'))}</button>${typeAutoHtml(opts)}`;
+    const hint = sg ? ` <span class="dci-mx-wtsrow" title="${esc(tr('matrix.suggestRowTitle'))}">${esc(sg)}?</span>` : '';
     const panel = open ? `<div class="dci-row-opts"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
       <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${i}`)}</label></div>` : '';
-    return { btn, panel };
+    return { btn, panel, hint };
   }
 
   /**
@@ -28580,14 +28640,14 @@
           <a class="dci-mblink" href="/work/${esc(plan.offer.gid)}" target="_blank" rel="noopener" aria-label="${esc(plan.offer.title)}"><span class="dci-src dci-src-mb">MB</span></a>` : '';
         return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}`)}${linkAttrsHtml(mrow)}`;
       }
-      const o = pending ? rowOptsHtml(i) : { btn: '', panel: '' };
+      const o = pending ? rowOptsHtml(i) : { btn: '', panel: '', hint: '' };
       const badge = pending
         ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
         : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}`;
       // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
       const mParts = pending ? medleyParts(i) : [];
       const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
-      return `${head}${line(`${badge} ${unplan} ${o.btn}${split}`)}${linkAttrsHtml(mrow)}
+      return `${head}${line(`${badge} ${unplan} ${o.btn}${o.hint}${split}`)}${linkAttrsHtml(mrow)}
         <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
     const search = S.workSearch.get(i);
@@ -28620,11 +28680,16 @@
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
     const mParts = medleyParts(i);
     const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
-    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>${pick}
-        <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>${split}
-        <button type="button" class="dci-small" data-act="work-search">${esc(tr('works.search'))}</button>
-        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
-      ${found}${o.panel}`;
+    // [Z-WMX] (3.52.0) "＋ New ▾": a new work, and in its menu the search, the form, its type and languages (before: four buttons and links)
+    const menuOpen = S.mxNewMenu === i;
+    return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
+        <span class="dci-split"><button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pendingShort'))}</button><button type="button"
+          class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.hint}${split}${state}</div>
+      ${menuOpen ? `<div class="dci-mx-newmenu" role="group" aria-label="${esc(tr('matrix.newMenu'))}">
+        <button type="button" class="dci-textbtn" data-act="work-search">${esc(tr('works.searchMb'))}</button>
+        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>
+        ${o.btn}${o.panel}</div>` : ''}
+      ${found}`;
   }
 
   /** [180] (3.38.15) Opens or closes the list "n works ▾" of a track in the page (the matrix is not drawn anew). */
@@ -28649,6 +28714,7 @@
 
   /** A cell's role was set by a suggestion (publisher evidence, Discogs notes) and not confirmed yet. */
   const isSuggestedCell = (r, i) => !!(r.suggest && r.suggest.tracks.has(i) && !(r.confirmed && r.confirmed.has(i)));
+  const HOURGLASS_SVG = '<svg class="dci-hourglass" viewBox="0 0 10 14" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M1 1h8M1 13h8M2 1c0 4 6 4 6 6s-6 2-6 6M8 1c0 4-6 4-6 6s6 2 6 6"></path></svg>';
   const LOCK_SVG = '<svg class="dci-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
 
   /**
@@ -28671,8 +28737,9 @@
           : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         const label = rowPhrase(r) || rowTypeName(r);
-        return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
-          `${label}${date}${why}`);
+        // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
+        return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
+          `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
       }),
     ].join('');
     const title = st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
@@ -28733,19 +28800,25 @@
   function columnHeadHtml(col) {
     const a = col.artist;
     const collapsed = S.mxCollapsed.has(col.key);
+    // [Z-WMX] (3.52.0) the name whole, in a line of its own – smaller when long, all of it (and MusicBrainz's comment) in the tooltip;
+    // not linked: ⚠ before the roles (a click: the entry in the list)
+    const full = `${col.name}${a && a.mbComment ? ` (${a.mbComment})` : ''}`;
+    const size = col.name.length > 22 ? ' dci-mx-name-xs' : col.name.length > 15 ? ' dci-mx-name-s' : '';
     const name = col.mbid
-      ? `<a class="dci-mblink" href="/${entityPath(col.entityType)}/${esc(col.mbid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(col.name)}</a>${a && a.mbComment ? ` <span class="dci-disamb">(${esc(a.mbComment)})</span>` : ''}`
-      : `<strong>${esc(col.name)}</strong> <button type="button" class="dci-textbtn" data-act="mx-goto" data-key="${esc(a ? a.key : '')}">${esc(tr('matrix.notMatched'))}</button>`;
+      ? `<a class="dci-mblink dci-mx-name${size}" href="/${entityPath(col.entityType)}/${esc(col.mbid)}" target="_blank" rel="noopener" title="${esc(full)}"><span class="dci-src dci-src-mb">MB</span>${esc(col.name)}</a>`
+      : `<strong class="dci-mx-name${size}" title="${esc(full)}">${esc(col.name)}</strong>`;
+    const status = col.mbid ? '' : `<button type="button" class="dci-iconbtn dci-mx-unlinked" data-act="mx-goto" data-key="${esc(a ? a.key : '')}" title="${esc(tr('matrix.notMatched'))}" aria-label="${esc(tr('matrix.notMatched'))}">⚠</button>`;
     if (col.removed) {
       return `<th scope="col" class="dci-mx-col dci-mx-collapsed dci-mx-removed"><button type="button" class="dci-iconbtn" data-act="mx-col-restore" data-col="${esc(col.key)}"
         title="${esc(tr('matrix.restoreCol', { name: col.name }))}" aria-label="${esc(tr('matrix.restoreCol', { name: col.name }))}">»</button></th>`;
     }
     if (collapsed) return `<th scope="col" class="dci-mx-col dci-mx-collapsed"><button type="button" class="dci-iconbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.expand'))} ${esc(col.name)}">»</button></th>`;
     const menuOpen = S.mxColMenu === col.key;
-    const removeBtn = `<button type="button" class="dci-iconbtn dci-mx-remove" data-act="mx-col-remove" data-col="${esc(col.key)}"
-      title="${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}" aria-label="${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}">✕</button>`;
     const btns = `<span class="dci-mx-colbtns"><button type="button" class="dci-iconbtn" data-act="mx-colmenu" data-col="${esc(col.key)}" aria-expanded="${menuOpen}"
-        title="${esc(tr('matrix.colMenu'))}" aria-label="${esc(tr('matrix.colMenu'))}">▾</button><button type="button" class="dci-iconbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.collapse'))}" aria-label="${esc(tr('matrix.collapse'))}">«</button>${removeBtn}</span>`;
+        title="${esc(tr('matrix.colMenu'))}" aria-label="${esc(tr('matrix.colMenu'))}">▾</button></span>`;
+    // (« and ✕ in the menu of the column)
+    const foldBtns = `<div class="dci-mx-colmenu-tools"><button type="button" class="dci-textbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.collapse'))}">« ${esc(tr('matrix.collapse'))}</button>
+      <button type="button" class="dci-textbtn dci-mx-remove" data-act="mx-col-remove" data-col="${esc(col.key)}" title="${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}">✕ ${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}</button></div>`;
     const colDateRow = col.rows.find((r) => !r.ownDate && r.date && hasDateInput(r.date));
     const cd = S.mxColDate.get(col.key) || (colDateRow ? { ...colDateRow.date } : emptyDate());
     const cdInfo = validateDateFields(cd);
@@ -28754,13 +28827,13 @@
     const dateBox = `<div class="dci-mbdate dci-mx-datebox"><span class="dci-sub">${esc(tr('matrix.colDate'))}</span>${mbDateFields('cd', cd, true)}
         ${S.datePool.length ? `<select data-f="cd-pool" aria-label="${esc(tr('date.fromPool'))}"><option value="">${esc(tr('date.fromPool'))}</option>${S.datePool.map((d) => `<option value="${esc(d.id)}">${esc(poolLabel(d))}</option>`).join('')}</select>` : ''}
         <div class="dci-err" data-cd-err aria-live="polite">${esc(cdErr)}</div></div>`;
-    const menu = (inner) => (menuOpen ? `<div class="dci-mx-colmenu" role="group" aria-label="${esc(tr('matrix.colMenu'))}">${inner}
+    const menu = (inner) => (menuOpen ? `<div class="dci-mx-colmenu" role="group" aria-label="${esc(tr('matrix.colMenu'))}">${foldBtns}${inner}
       <button type="button" class="dci-textbtn" data-act="mx-colmenu" data-col="${esc(col.key)}">${esc(tr('common.close'))}</button></div>` : '');
     // Only in MusicBrainz: its date goes onto those relationships that have none (an edit of each)
     if (col.mbOnly) {
       return `<th scope="col" class="dci-mx-col dci-mx-locked dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-        <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
-        <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}</div>
+        <div class="dci-mx-colname">${columnKindTag(col)}${LOCK_SVG}${name}</div>
+        <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}${btns}</div>
         ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
     const nWorks = matrixRows().filter((m) => { const st = cellState(col, m); return st.active.length || st.existing.length; }).length;
@@ -28791,10 +28864,10 @@
     const typoText = uniq(col.rows.flatMap((r) => (r.typos || []).map((t) => tr('role.typoRead', { read: t.read, written: t.written })))).join(' · ');
     const s050 = typoText ? `<button type="button" class="dci-textbtn dci-ruleid dci-typo" data-act="rule-goto" data-rule="S050" title="${esc(typoText)}">S050</button>` : '';
     return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
-      <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
-        ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
-      <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
+      <div class="dci-mx-colname">${columnKindTag(col)}${name}</div>
+      <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
+        ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
+      <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
       ${menu(`${dateBox}
         <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
         ${r098 ? `<div class="dci-sub dci-ruleinfo">${esc(tr('note.musicLyrics'))}</div>` : ''}${pubMenu}${suggMenu}`)}</div></th>`;
@@ -29145,9 +29218,8 @@
   function suiteAddHtml() {
     const tracks = S.mbTracks.filter((t) => matrixTrack(t));
     if (tracks.length < 2) return '';
-    if (!S.suiteAdd) {
-      return `<p class="dci-sub dci-mx-suite-add"><button type="button" class="dci-small" data-act="suite-add-open" title="${esc(tr('suite.addTitle'))}">＋ ${esc(tr('suite.add'))}</button></p>`;
-    }
+    // [Z-WMX] (3.52.0) its button in the head of the matrix (suiteAddBtnHtml)
+    if (!S.suiteAdd) return '';
     const a = S.suiteAdd;
     const opt = (sel) => tracks.map((t) => `<option value="${t.idx}" ${sel === t.idx ? 'selected' : ''}>${esc(`${trackLabel(t)} ${t.title}`)}</option>`).join('');
     return `<div class="dci-mx-ask dci-mx-suite" data-el="suite-add" role="group" aria-label="${esc(tr('suite.add'))}">
@@ -29159,6 +29231,167 @@
       <button type="button" class="dci-small" data-act="suite-add-cancel">${esc(tr('suite.addCancel'))}</button>
       ${a.error ? `<span class="dci-err" data-el="suite-add-error">${esc(tr(a.error))}</span>` : ''}
       <p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
+  }
+
+  /** [Z-WMX] (3.52.0) "＋ Suite …" in the middle of the head of the works matrix (two tracks or more). */
+  function suiteAddBtnHtml() {
+    if (S.mbTracks.filter((t) => matrixTrack(t)).length < 2) return '';
+    return `<button type="button" class="dci-small dci-mx-suite-add" data-act="suite-add-open" aria-expanded="${!!S.suiteAdd}" title="${esc(tr('suite.addTitle'))}">＋ ${esc(tr('suite.add'))}</button>`;
+  }
+
+  /** [Z-WMX] (3.52.0) The defaults for new works in short (the button of the head): "Song · English", "none". */
+  function defaultsSummary() {
+    const d = S.workDefaults || {};
+    const typeName = (S.workOptions.types.find((t) => String(t.id) === String(d.typeId)) || {}).name || '';
+    const langs = (d.languageIds || []).map((id) => (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || id);
+    return [typeName, ...langs].filter(Boolean).join(' · ') || tr('matrix.optsNone');
+  }
+
+  /**
+   * [Z-WTS] (3.52.0) A work type and a lyrics language for new works from works in MusicBrainz (from 3 works on): each on its own,
+   * the value of more than half of the works – "" for no type / no language when most have none –, otherwise left out (undefined);
+   * a type or language this page does not offer is left out too. null when nothing is suggested.
+   * types: [{id, name}] of the work form, languages: [{id, name}]; a work {type: name, languages: [ISO 639-3 code, …]}.
+   */
+  function suggestFromWorks(list, types, languages, codes = {}) {
+    if (!list || list.length < 3) return null;
+    const major = (keys) => {
+      const counts = new Map();
+      keys.forEach((k) => counts.set(k, (counts.get(k) || 0) + 1));
+      const [k, n] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] || [];
+      return n > keys.length / 2 ? { k, n, of: keys.length } : null;
+    };
+    const t = major(list.map((w) => norm(w.type || '')));
+    // the languages of a work together ("deu+eng"); a work whose languages are not known (a record of 3.51.0) is not counted
+    const known = list.filter((w) => Array.isArray(w.languages));
+    const l = known.length >= 3 ? major(known.map((w) => [...new Set(w.languages.map(String))].sort().join('+'))) : null;
+    const typeOf = (k) => (types || []).find((x) => norm(x.name) === k)
+      || (types || []).find((x) => FALLBACK_WORK_TYPES.some(([id, nm]) => String(id) === String(x.id) && norm(nm) === k));
+    const typeId = !t ? undefined : !t.k ? '' : typeOf(t.k) ? String(typeOf(t.k).id) : undefined;
+    const offered = (id) => id != null && (languages || []).some((x) => String(x.id) === String(id));
+    const idOf = (code) => (codes[code] != null ? codes[code] : (FALLBACK_LANGUAGES.find(([, , c]) => c === code) || [])[0]);
+    const ids = l && l.k ? l.k.split('+').map(idOf) : [];
+    const langIds = !l ? undefined : !l.k ? [] : ids.every(offered) ? ids.map(String) : undefined;
+    if (typeId === undefined && langIds === undefined) return null;
+    return { typeId, langIds, nType: typeId !== undefined ? t.n : 0, nLang: langIds !== undefined ? l.n : 0, of: list.length, ofLang: known.length };
+  }
+
+
+  /**
+   * [Z-WTS] (3.52.0; Q-ft, Q-fu, Q-ge) A work type and a lyrics language for all new works, from the works of the artists in MusicBrainz
+   * the matrix reads anyway (their linked and recorded works): each the one of more than half of them – also "no type", "[No lyrics]" –,
+   * from 3 works on; a value without such a majority is not suggested. → { typeId ('' none), langIds ([] none), nType, nLang, of,
+   * ofLang, names }, a part undefined when not suggested; null without a suggestion (suggestFromWorks). ISO codes of languages are
+   * matched through the built-in list and the languages MusicBrainz's page data knows.
+   */
+  function workSuggestion() {
+    const works = new Map();
+    const names = [];
+    for (const [mbid, info] of S.artistWorkTargets || []) {
+      const e = S.artistWorks.get(mbid);
+      if (!e || !e.works.size) continue;
+      names.push(info.name || e.name || '');
+      e.works.forEach((w) => works.set(w.gid, w));
+    }
+    const codes = {};
+    Object.values((getMB().linkedEntities || {}).language || {}).forEach((x) => { if (x && x.iso_code_3) codes[x.iso_code_3] = x.id; });
+    const sg = suggestFromWorks([...works.values()], S.workOptions.types, S.workOptions.languages, codes);
+    return sg && { ...sg, names: uniq(names.filter(Boolean)) };
+  }
+  /** [Z-WTS] The key of a suggestion (what "Accept" took, what was drawn). */
+  const suggestionKey = (sg) => (sg ? `${sg.typeId}|${sg.langIds ? sg.langIds.join('+') : '-'}` : '');
+  /** [Z-WTS] (review) The works of an artist read: the suggestion differs from the one drawn (the matrix is drawn again for it). */
+  const suggestionChanged = () => ruleOn('S081') && suggestionKey(workSuggestion()) !== (S.workSuggestRaw || '');
+  /** [Z-WTS] The suggestion in words: "no work type · [No lyrics]" (a part without a majority left out). */
+  function suggestionText(sg) {
+    const typeName = sg.typeId === undefined ? '' : sg.typeId === '' ? tr('matrix.noType') : (S.workOptions.types.find((x) => String(x.id) === sg.typeId) || {}).name || '';
+    const langName = (id) => (S.workOptions.languages.find((x) => String(x.id) === id) || {}).name || '';
+    const langs = sg.langIds === undefined ? '' : !sg.langIds.length ? tr('matrix.noLang') : sg.langIds.map(langName).filter(Boolean).join(', ');
+    return [typeName, langs].filter(Boolean).join(' · ');
+  }
+  /**
+   * [Z-WTS] The yellow line below the head: the suggestion, with "Accept" (for all new works – each work can still be changed) and
+   * "Change …" (the defaults); not accepted, neither type nor language of it is filled in.
+   */
+  function workSuggestHtml() {
+    let sg = ruleOn('S081') ? workSuggestion() : null;
+    S.workSuggestRaw = suggestionKey(sg);
+    // what the defaults hold already is not asked (nothing to accept)
+    const d = S.workDefaults || {};
+    const same = (x, y) => x === undefined || x === y;
+    const sameLangs = (x, y) => x === undefined || [...x].sort().join('+') === [...(y || [])].map(String).sort().join('+');
+    if (sg && same(sg.typeId, String(d.typeId || '')) && sameLangs(sg.langIds, d.languageIds)) sg = null;
+    if (sg && S.workSuggestDone === suggestionKey(sg)) sg = null;
+    S.workSuggest = sg;
+    S.workSuggestShown = suggestionKey(sg);
+    if (!sg) return '';
+    const text = suggestionText(sg);
+    if (!text) return '';
+    // (review) defaults chosen by hand: they stay when the suggestion is not accepted
+    const own = d.typeId && !d.typeAuto || (d.languageIds || []).length;
+    const from = [sg.typeId !== undefined ? tr('matrix.suggestPartType', { n: sg.nType, of: sg.of }) : '', sg.langIds !== undefined ? tr('matrix.suggestPartLang', { n: sg.nLang, of: sg.ofLang }) : ''].filter(Boolean).join(' · ');
+    return `<div class="dci-mx-wts" data-el="works-suggest" role="group" aria-label="${esc(tr('matrix.suggestNew', { what: text }))}">
+      <span>${esc(tr('matrix.suggestNewLabel'))} <strong>${esc(text)}</strong></span>
+      <span class="dci-sub">${esc(tr('matrix.suggestFrom', { names: sg.names.slice(0, 3).join(', '), parts: from }))}</span>
+      <button type="button" class="dci-small dci-wts-ok" data-act="mx-wts-accept">${esc(tr('matrix.suggestAccept'))}</button>
+      <button type="button" class="dci-small" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}">${esc(tr('matrix.suggestChange'))}</button>
+      <span class="dci-sub">${esc(own ? tr('matrix.suggestIfNotOwn', { what: defaultsSummary() }) : tr('matrix.suggestIfNot'))}</span></div>`;
+  }
+
+  /** [Z-WMX] (3.52.0) In the corner of the matrix: "All artists credited as: ↺ MusicBrainz names for all" (before: in the tools above). */
+  function creditsHeadHtml() {
+    return `<div class="dci-mx-cardline dci-mx-creditsall"><span class="dci-sub">${esc(tr('matrix.creditsAll'))}</span>
+      <button type="button" class="dci-small" data-act="mx-clear-credits" title="${esc(tr('matrix.clearCreditsTitle'))}">↺ ${esc(tr('matrix.clearCreditsAll'))}</button></div>`;
+  }
+
+  /** A column of the works matrix for an entry of the dashboard: a row of it on level Work with the role, its cells off. */
+  function addMatrixColumn(a, lt) {
+    const et = a.company ? (a.entityType || 'label') : 'artist';
+    const row = makeRow(a.key, { manual: true, company: a.company ? a : null });
+    if (a.company) row.entityType = et;
+    applyRoleText(row, lt.name);
+    Object.assign(row, { level: 'work', levelTouched: true, tracks: new Set(), suggested: new Set() });
+    resolveRowType(row);
+    S.rows.push(row);
+    log('info', 'matrixColumn', { name: a.mbName || a.name, role: rowPhrase(row) || lt.name });
+    return row;
+  }
+
+  /**
+   * [Z-WMX] (3.52.0; Q-fz, review) "＋ Add a column" by an MBID or link: an artist or a label of MusicBrainz (anything else refused), a
+   * role of that kind of entity (an artist's role for an artist, a label's for a label); one that is a column already is refused. The
+   * entry is added to the dashboard (as by "Add entry manually", without a row of its own), the column as for an entry of the dashboard.
+   */
+  async function addColumnByMbid(mbid, lt) {
+    const e = await fetchJsEntity(mbid);
+    const et = String(e.entityType || '').replace('-', '_');
+    if (!['artist', 'label'].includes(et)) throw new Error(tr('msg.addColOnly', { type: tr(`entity.${et}`) }));
+    const gid = e.gid || mbid;
+    if (matrixColumns().some((c) => c.mbid === gid && !c.removed)) throw new Error(tr('msg.addColThere', { name: e.name }));
+    const role = typesFor('work', et).find((x) => x.id === lt.id) || typesFor('work', et).find((x) => norm(x.name) === norm(lt.name));
+    if (!role) throw new Error(tr('msg.addColRole', { role: lt.name, type: tr(`entity.${et}`) }));
+    const company = et === 'label';
+    let owner = [...S.artists.values()].find((a) => a.mbid === gid && (company ? a.company : !a.company && !a.other));
+    if (!owner) {
+      owner = {
+        key: nextId(company ? 'c' : 'a'), dId: 0, name: e.name, rawName: '', status: 'manual', manual: true,
+        company, other: false, entityType: company ? et : undefined, mbid: gid, mbName: e.name, mbComment: e.comment || '',
+        candidates: [], editing: false, error: '', anvs: [],
+      };
+      S.artists.set(owner.key, owner);
+    }
+    return addMatrixColumn(owner, role);
+  }
+
+  /**
+   * [Z-WMX] (3.52.0; Q-fz) The last column head "＋ Add a column": an entry of the dashboard or an artist or label of MusicBrainz (its MBID or
+   * link; which of them it is follows from the entry), with its role (before: "Add a column:" below the tools, only entries of the dashboard).
+   */
+  function addColumnHeadHtml() {
+    const open = !!S.mxAddColOpen;
+    return `<th scope="col" class="dci-mx-col dci-mx-addcol-head"><div class="dci-mx-card">
+      <button type="button" class="dci-small dci-mx-addcol-btn" data-act="mx-addcol-open" aria-expanded="${open}">＋ ${esc(tr('matrix.addColumnHead'))}</button>
+      ${open ? `<div class="dci-mx-colmenu dci-mx-addcol-pop" role="group" aria-label="${esc(tr('matrix.addColumnHead'))}">${addColumnHtml()}</div>` : ''}</div></th>`;
   }
 
   /** [Z-SUM] (3.41.11) "✓ Yes" of "＋ Suite …": the tracks from – to (of the works matrix), named; false (with its error) if not. */
@@ -29182,22 +29415,31 @@
     return o;
   }
 
-  /** "Add column": any entry already in the dashboard (artist or label) with a work-level role of your choice. */
+  /**
+   * "Add column": any entry already in the dashboard (artist or label) with a work-level role of your choice; [Z-WMX] (3.52.0; Q-fz) or
+   * an artist or label of MusicBrainz by its MBID or link (added as an entry by hand, like "Add entry manually").
+   */
   function addColumnHtml() {
     const inMatrix = new Set(matrixColumns().map((c) => c.mbid).filter(Boolean));
     const entries = [...S.artists.values()].filter((a) => a.mbid && !a.other && !inMatrix.has(a.mbid))
       .sort((x, y) => String(x.mbName || x.name).localeCompare(String(y.mbName || y.name)));
-    if (!entries.length) return '';
-    const chosen = S.mxAddCol && S.artists.get(S.mxAddCol.key);
+    const st = S.mxAddCol || {};
+    const chosen = st.key && S.artists.get(st.key);
     const et = chosen ? (chosen.company ? (chosen.entityType || 'label') : 'artist') : null;
-    const roles = et ? typesFor('work', et) : [];
-    return `<div class="dci-mx-addcol"><strong>${esc(tr('matrix.addColTitle'))}</strong>
-      <select data-f="mx-addcol-entry" aria-label="${esc(tr('matrix.addColTitle'))}"><option value="">${esc(tr('matrix.addColChoose'))}</option>
-        ${entries.map((a) => `<option value="${esc(a.key)}" ${chosen === a ? 'selected' : ''}>${esc(a.mbName || a.name)}${a.mbComment ? ` (${esc(a.mbComment)})` : ''}${a.company ? ` · ${esc(tr(`entity.${a.entityType || 'label'}`))}` : ''}</option>`).join('')}</select>
-      ${chosen ? `<select data-f="mx-addcol-role" aria-label="${esc(tr('matrix.rowRole'))}">${roles.map((lt) => `<option value="${lt.id}" ${S.mxAddCol.ltId === lt.id ? 'selected' : ''}>${esc(lt.name)}</option>`).join('')}</select>
-        <button type="button" data-act="mx-addcol">${esc(tr('matrix.addColBtn'))}</button>` : ''}
+    const roles = et ? typesFor('work', et) : null;
+    // (review) nothing chosen: the roles of an artist and of a label apart ("publishing" is both)
+    const opt = (lt) => `<option value="${lt.id}" ${Number(st.ltId) === lt.id ? 'selected' : ''}>${esc(lt.name)}</option>`;
+    const roleOpts = roles ? roles.map(opt).join('') : ['artist', 'label'].map((k) => `<optgroup label="${esc(tr(`entity.${k}`))}">${typesFor('work', k).map(opt).join('')}</optgroup>`).join('');
+    return `<div class="dci-mx-addcol">
+      ${entries.length ? `<label>${esc(tr('matrix.addColEntry'))} <select data-f="mx-addcol-entry" aria-label="${esc(tr('matrix.addColTitle'))}"><option value="">${esc(tr('matrix.addColChoose'))}</option>
+        ${entries.map((a) => `<option value="${esc(a.key)}" ${chosen === a ? 'selected' : ''}>${esc(a.mbName || a.name)}${a.mbComment ? ` (${esc(a.mbComment)})` : ''}${a.company ? ` · ${esc(tr(`entity.${a.entityType || 'label'}`))}` : ''}</option>`).join('')}</select></label>` : ''}
+      ${chosen ? '' : `<label>${esc(tr(entries.length ? 'matrix.addColOrMbid' : 'matrix.addColMbid'))} <input type="text" data-f="mx-addcol-mbid" value="${esc(st.mbid || '')}" placeholder="${esc(tr('matrix.addColMbidPh'))}" size="24"></label>`}
+      <label>${esc(tr('matrix.rowRole'))} <select data-f="mx-addcol-role" aria-label="${esc(tr('matrix.rowRole'))}">${roleOpts}</select></label>
+      <button type="button" class="dci-small dci-primary" data-act="mx-addcol"${st.busy ? ' disabled aria-busy="true"' : ''}>${esc(tr('matrix.addColBtn'))}</button>
+      ${st.error ? `<span class="dci-err" data-el="addcol-err">${esc(st.error)}</span>` : ''}
       <span class="dci-sub">${esc(tr('matrix.addColHint'))}</span></div>`;
   }
+
 
   function allWorkGids() {
     // (3.41.4, review) the parts of a track too
@@ -29213,11 +29455,68 @@
     const pos = wrap ? [wrap.scrollTop, wrap.scrollLeft] : null;
     const body = S.overlay && S.overlay.querySelector('.dci-body');
     const bodyTop = body ? body.scrollTop : null;
+    // [Z-WMX] (3.52.0, review) the focus stays where it was (a button of a popover, a menu of a row …), not on the page
+    const focusSel = mxFocusSelector();
     renderWorksInner();
     const wrap2 = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
     if (wrap2 && pos) [wrap2.scrollTop, wrap2.scrollLeft] = pos;
     if (body && bodyTop != null) body.scrollTop = bodyTop;
     setupMxScroll();
+    if (focusSel && !S.overlay.querySelector('[data-el="works"]').contains(document.activeElement)) {
+      const el = S.overlay.querySelector(focusSel);
+      if (el) el.focus({ preventScroll: true });
+    }
+  }
+
+  /** [Z-WMX] (3.52.0) A menu of a column head as high as the matrix shows below it (the rest scrolls inside the menu). */
+  function fitMxMenu(m) {
+    const wrap = m && m.closest('.dci-mx-wrap');
+    if (!m || !wrap) return;
+    const room = Math.min(wrap.getBoundingClientRect().bottom, window.innerHeight) - m.getBoundingClientRect().top - 8;
+    m.style.maxHeight = `${Math.max(140, Math.round(room))}px`;
+  }
+
+  /** [Z-WMX] (3.52.0, review) A selector for the element of the works section that has the focus (null: none there). */
+  function mxFocusSelector() {
+    const works = S.overlay && S.overlay.querySelector('[data-el="works"]');
+    const ae = document.activeElement;
+    if (!works || !ae || ae === works || !works.contains(ae) || !(ae.dataset.act || ae.dataset.f)) return null;
+    const tr = ae.closest('tr[data-work]');
+    const q = (k, v) => `[${k}="${CSS.escape(v)}"]`;
+    return `[data-el="works"] ${tr ? `tr${q('data-work', tr.dataset.work)} ` : ''}${ae.dataset.act ? q('data-act', ae.dataset.act) : q('data-f', ae.dataset.f)}${ae.dataset.col ? q('data-col', ae.dataset.col) : ''}`;
+  }
+
+  /**
+   * [Z-WMX] (3.52.0, review) The popovers of the works matrix: the state, what is inside (with its button) and the button that gets
+   * the focus when Esc closes it.
+   */
+  const MX_POPOVERS = [
+    ['mxHelpOpen', '[data-el="works-help"], [data-act="mx-help"]', () => '[data-el="works"] [data-act="mx-help"]'],
+    ['mxMoreOpen', '[data-el="works-more"], [data-act="mx-more"]', () => '[data-el="works"] [data-act="mx-more"]'],
+    ['mxDefaultsOpen', '[data-el="works-defaults"], [data-act="mx-defaults"], [data-el="works-suggest"]', () => '[data-el="works"] .dci-wh-r [data-act="mx-defaults"]'],
+    ['mxAddColOpen', '.dci-mx-addcol-pop, [data-act="mx-addcol-open"]', () => '[data-el="works"] [data-act="mx-addcol-open"]'],
+    ['mxCornerMore', '[data-el="corner-more"], [data-act="mx-cornermore"]', () => '[data-el="works"] [data-act="mx-cornermore"]'],
+    ['mxNewMenu', '.dci-mx-newmenu, [data-act="mx-newmenu"]', (v) => `[data-el="works"] tr[data-work="${v}"] [data-act="mx-newmenu"]`],
+  ];
+  const mxPopoverOpen = (k) => S[k] !== false && S[k] != null;
+  /** [Z-WMX] (review) A popover is still drawn that is closed (the matrix to be drawn again). */
+  const mxPopoversStale = () => !!S.overlay && MX_POPOVERS.some(([k, inside]) => !mxPopoverOpen(k) && S.overlay.querySelector(inside.split(', ')[0]));
+
+  /**
+   * [Z-WMX] (3.52.0, review) Closes the open popovers of the works matrix that target is not in (null: all) – a click elsewhere,
+   * Esc, folding the matrix. "Search MusicBrainz" and "via form …" of a row's menu close it too (they leave it). → the selector of
+   * the button of the last one closed (for the focus), or '' when none was open (nothing to draw).
+   */
+  function closeMxPopovers(target) {
+    let focus = '';
+    for (const [k, inside, btnSel] of MX_POPOVERS) {
+      if (!mxPopoverOpen(k)) continue;
+      const leaving = target && k === 'mxNewMenu' && target.closest('[data-act="work-search"], [data-act="work-create"]');
+      if (target && target.closest && target.closest(inside) && !leaving) continue;
+      focus = btnSel(S[k]);
+      S[k] = k === 'mxNewMenu' ? null : false;
+    }
+    return focus;
   }
 
   /**
@@ -29324,13 +29623,39 @@
     const folded = S.worksFolded;
     const skipped = S.worksSkip;
     el.classList.toggle('dci-works-off', skipped);
-    const head = `<div class="dci-works-head">
-        <h3><button type="button" class="dci-textbtn dci-works-fold" data-act="mx-fold" aria-expanded="${!folded}" title="${esc(tr(folded ? 'matrix.unfold' : 'matrix.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('matrix.title'))}</button></h3>
-        ${skipped ? `<span class="dci-works-skipped">${esc(tr('matrix.skipped'))}</span> <button type="button" class="dci-small" data-act="mx-skip" data-on="0">${esc(tr('matrix.unskip'))}</button>`
-    : `<button type="button" class="dci-small" data-act="mx-skip" data-on="1" title="${esc(tr('matrix.skipTitle'))}">${esc(tr('matrix.skip'))}</button>`}
-        ${folded ? `<span class="dci-sub" data-el="works-folded">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })} · ${
-    skipped ? tr('matrix.skippedRows', { n: S.rows.filter((r) => r.mxSkipped).length }) : tr('matrix.cols', { n: cols.length })}`)}</span>` : ''}
+    // [Z-WMX] (3.52.0) the head in one line: the counts and ⓘ (the explanation) – "Skip works", "＋ Suite …" in the middle – the
+    // defaults for new works, the search, "＋ New works (n)" and ⋯ (the rarer tools) on the right
+    const nTracks = uniq(mrows.map((m) => m.i)).length;
+    const nWorks = mrows.filter((m) => m.work).length;
+    const suites = suiteAsks();
+    const nSuites = suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).length;
+    const chip = (text, cls = '', title = '') => `<span class="dci-wh-chip${cls ? ` ${cls}` : ''}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</span>`;
+    const head = `<div class="dci-works-head dci-wh">
+        <div class="dci-wh-l"><h3><button type="button" class="dci-textbtn dci-works-fold" data-act="mx-fold" aria-expanded="${!folded}" title="${esc(tr(folded ? 'matrix.unfold' : 'matrix.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('matrix.title'))}</button></h3>
+          ${chip(tr('matrix.countTracks', { n: nTracks }))}${chip(tr('matrix.colWorks', { n: nWorks }))}${!skipped && missing ? chip(tr('matrix.withoutWork', { n: missing }), 'dci-wh-warn', tr('works.missing', { n: missing })) : ''}
+          ${folded ? `<span class="dci-sub" data-el="works-folded">${esc(skipped ? tr('matrix.skippedRows', { n: S.rows.filter((r) => r.mxSkipped).length }) : tr('matrix.cols', { n: cols.length }))}</span>` : ''}
+          ${folded ? '' : `<button type="button" class="dci-wh-help" data-act="mx-help" aria-expanded="${!!S.mxHelpOpen}" aria-label="${esc(tr('matrix.helpTitle'))}" title="${esc(tr('matrix.helpTitle'))}">i</button>`}</div>
+        <div class="dci-wh-c">${skipped ? `<span class="dci-works-skipped">${esc(tr('matrix.skipped'))}</span> <button type="button" class="dci-small dci-wh-skip" data-act="mx-skip" data-on="0">${esc(tr('matrix.unskip'))}</button>`
+    : `<button type="button" class="dci-wh-skip" data-act="mx-skip" data-on="1" title="${esc(tr('matrix.skipTitle'))}">${esc(tr('matrix.skip'))}</button>`}
+          ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
+        <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
+          ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
+          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}
+          <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
+      ${!skipped && !folded && S.mxHelpOpen ? `<div class="dci-wh-pop dci-wh-helppop" data-el="works-help"><p>${esc(tr('matrix.explain'))}</p></div>` : ''}
+      ${!skipped && !folded && S.mxMoreOpen ? `<div class="dci-wh-pop dci-wh-morepop" data-el="works-more" role="group" aria-label="${esc(tr('matrix.moreTitle'))}">
+        ${missing ? `<button type="button" class="dci-textbtn" data-act="works-create-all">${esc(tr('works.createAllForm'))}</button>` : ''}
+        ${allWorkGids().length ? `<button type="button" class="dci-textbtn" data-act="works-open-all" title="${esc(tr('works.openAllTitle'))}">${esc(tr('works.openAll', { n: allWorkGids().length }))}</button>` : ''}
+        <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
+        <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button></div>` : ''}
+      ${!skipped && !folded && S.mxDefaultsOpen ? `<div class="dci-wh-pop dci-works-bar" data-el="works-defaults">
+        ${codesSelect}
+        <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
+        <label>${esc(tr('works.lang'))} ${languagesHtml(S.workDefaults.languageIds, 'default')}</label>
+        <span class="dci-sub ${['form', 'page-full'].includes(S.workOptions.source) ? '' : 'dci-warn'}">${esc(tr(['form', 'page-full'].includes(S.workOptions.source) ? 'works.optionsHint' : 'works.optionsPartial',
+          { types: S.workOptions.types.length, n: S.workOptions.languages.length }))}</span></div>` : ''}
+      ${!skipped && !folded ? workSuggestHtml() : ''}
       ${skipped ? `<p class="dci-sub">${esc(tr('matrix.skippedHint'))}</p>` : ''}
       ${!skipped && S.worksLookups === 'ask' ? `<div class="dci-mx-ask" data-el="works-ask"><strong title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('matrix.askLookups', { n: tracksWithoutWork().length }))}</strong>
         <span class="dci-sub">${esc(tr('matrix.askTime', { min: worksLookupMinutes() }))}</span>
@@ -29338,43 +29663,45 @@
         <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
       ${!skipped && S.worksLookups === 'no' && tracksWithoutWork().length ? `<p class="dci-sub" data-el="works-lookups-off">${esc(tr('matrix.lookupsOff'))}
         <button type="button" class="dci-textbtn" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsNow'))}</button></p>` : ''}
-      ${skipped || folded ? '' : `<div data-el="suites">${suiteAsks().map(suiteAskHtml).join('')}${suiteAddHtml()}</div>`}`;
+      ${skipped || folded ? '' : `<div data-el="suites">${suiteAddHtml()}</div>`}`;
     if (folded) {
       el.innerHTML = head;
       return;
     }
     el.innerHTML = `
       ${head}
-      <p class="dci-muted">${esc(missing ? tr('works.missing', { n: missing }) : tr('works.allDone'))} ${esc(tr('matrix.explain'))}</p>
-      ${skipped ? '' : `<div class="dci-works-bar">
-        ${codesSelect}
-        <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
-        <label>${esc(tr('works.lang'))} ${languagesHtml(S.workDefaults.languageIds, 'default')}</label>
-        <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button>
-        <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
-        <button type="button" class="dci-textbtn" data-act="mx-clear-credits" title="${esc(tr('matrix.clearCreditsTitle'))}">${esc(tr('matrix.clearCredits'))}</button>
-        ${allWorkGids().length ? `<button type="button" data-act="works-open-all" title="${esc(tr('works.openAllTitle'))}">${esc(tr('works.openAll', { n: allWorkGids().length }))}</button>` : ''}
-        <span class="dci-sub ${['form', 'page-full'].includes(S.workOptions.source) ? '' : 'dci-warn'}">${esc(tr(['form', 'page-full'].includes(S.workOptions.source) ? 'works.optionsHint' : 'works.optionsPartial',
-          { types: S.workOptions.types.length, n: S.workOptions.languages.length }))}</span>
-      </div>
-      ${missing ? `<div class="dci-mx-newworks"><strong>${esc(tr('matrix.missingWorks', { n: missing }))}</strong>
-        <button type="button" class="dci-primary" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('matrix.newWorksAll', { n: missing }))}</button>
-        <span class="dci-sub">${esc(tr('matrix.newWorksHow'))}</span>
-        <button type="button" data-act="works-search-all">${esc(tr('works.searchAll'))}</button>
-        <button type="button" class="dci-textbtn" data-act="works-create-all">${esc(tr('works.createAllForm'))}</button></div>` : ''}
-      ${addColumnHtml()}
+      ${skipped ? '' : `
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
       ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}`}
       <div class="dci-mx-hs dci-mx-hs-top" data-mxhs="top" aria-hidden="true" hidden><div></div></div>
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
-            <span class="dci-sub">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })}`)}</span></div>${linkAttrsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}</tr></thead>
-          <tbody>${mrows.map((m) => `<tr data-work="${m.i}" data-mrow="${esc(m.key)}"><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}</tr>`).join('')}</tbody>
+            <span class="dci-sub" title="${esc(`${tr('matrix.countTracks', { n: nTracks })} · ${tr('matrix.colWorks', { n: nWorks })}`)}">${esc(`${nTracks} · ${nWorks}`)}</span></div>${linkAttrsHeadHtml()}${creditsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}${skipped ? '' : addColumnHeadHtml()}</tr></thead>
+          <tbody>${matrixBodyHtml(mrows, cols, skipped)}</tbody>
         </table>
       </div>
       <div class="dci-mx-hs dci-mx-hs-bottom" data-mxhs="bottom" aria-hidden="true" hidden><div></div></div>
       <div class="dci-mx-end" aria-hidden="true"></div>`;
+  }
+
+  /**
+   * [Z-WMX] (3.52.0; Q-fw) The rows of the works matrix; the tracks of a suite (asked about, or taken) below a row of the suite – its
+   * question or what was done – and indented (before: the questions as yellow boxes above the matrix).
+   */
+  function matrixBodyHtml(mrows, cols, skipped) {
+    const span = cols.length + 1 + (skipped ? 0 : 1);
+    const suites = skipped ? [] : suiteAsks();
+    const firstOf = new Map();
+    const inSuite = new Set();
+    suites.forEach((o) => {
+      const at = mrows.findIndex((m) => o.tracks.includes(m.i));
+      if (at >= 0 && !firstOf.has(at)) firstOf.set(at, []);
+      if (at >= 0) firstOf.get(at).push(o);
+      if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
+    });
+    return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) ? ' class="dci-mx-inpart"' : ''}><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -29471,18 +29798,40 @@
         S.mxMenu = null;
         break;
       case 'mx-addcol': {
+        // [Z-WMX] (3.52.0) by MBID or link: the entry added as by "Add entry manually", with the role chosen (a work-level role: its column)
+        // (no entry chosen: the MBID field counts – read here too, a change event may not have come yet)
+        if (!(S.mxAddCol && S.mxAddCol.key)) {
+          const st = S.mxAddCol || {};
+          if (st.busy) return true;
+          const pane = btn.closest('.dci-mx-addcol');
+          const raw = (pane && pane.querySelector('[data-f="mx-addcol-mbid"]') || {}).value || st.mbid || '';
+          const roleSel = pane && pane.querySelector('[data-f="mx-addcol-role"]');
+          const lt = idx().ltById.get(Number((roleSel && roleSel.value) || st.ltId));
+          const mbid = (String(raw).match(MBID_RE) || [])[0];
+          if (!mbid || !lt) {
+            S.mxAddCol = { ...st, mbid: raw, error: tr('msg.badMbidColumn') };
+            break;
+          }
+          S.mxAddCol = { ...st, mbid: raw, ltId: lt.id, busy: true, error: '' };
+          addColumnByMbid(mbid.toLowerCase(), lt).then(() => {
+            S.mxAddCol = null;
+            S.mxAddColOpen = false;
+            renderGroups();
+            renderWorks();
+            refresh();
+          }, (err) => {
+            S.mxAddCol = { ...(S.mxAddCol || st), mbid: raw, busy: false, error: err.message };
+            renderWorks();
+          });
+          return true;
+        }
         const a = S.mxAddCol && S.artists.get(S.mxAddCol.key);
         const et = a && (a.company ? (a.entityType || 'label') : 'artist');
         const lt = a && (idx().ltById.get(Number(S.mxAddCol.ltId)) || typesFor('work', et)[0]);
         if (!a || !lt) return true;
-        const row = makeRow(a.key, { manual: true, company: a.company ? a : null });
-        if (a.company) row.entityType = et;
-        applyRoleText(row, lt.name);
-        Object.assign(row, { level: 'work', levelTouched: true, tracks: new Set(), suggested: new Set() });
-        resolveRowType(row);
-        S.rows.push(row);
+        addMatrixColumn(a, lt);
         S.mxAddCol = null;
-        log('info', 'matrixColumn', { name: a.mbName || a.name, role: rowPhrase(row) || lt.name });
+        S.mxAddColOpen = false;
         renderGroups();
         break;
       }
@@ -29495,6 +29844,42 @@
           r.suggest = null;
         });
         c.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
+        break;
+      }
+      // [Z-WMX] (3.52.0) the popovers of the head, of a column "＋ Add a column", of a row "＋ New ▾"
+      case 'mx-help':
+        S.mxHelpOpen = !S.mxHelpOpen;
+        break;
+      case 'mx-more':
+        S.mxMoreOpen = !S.mxMoreOpen;
+        break;
+      case 'mx-defaults':
+        S.mxDefaultsOpen = !S.mxDefaultsOpen;
+        break;
+      case 'mx-addcol-open':
+        S.mxAddColOpen = !S.mxAddColOpen;
+        if (!S.mxAddColOpen) S.mxAddCol = null;
+        else setTimeout(() => fitMxMenu(S.overlay && S.overlay.querySelector('.dci-mx-addcol-pop')), 0);
+        break;
+      case 'mx-newmenu': {
+        const i = Number(btn.closest('tr[data-work]').dataset.work);
+        S.mxNewMenu = S.mxNewMenu === i ? null : i;
+        break;
+      }
+      case 'mx-cornermore':
+        S.mxCornerMore = !S.mxCornerMore;
+        break;
+      // [Z-WTS] (3.52.0) the suggestion taken for all new works (their defaults); each work can still be changed
+      case 'mx-wts-accept': {
+        const sg = S.workSuggest;
+        if (!sg) return true;
+        if (sg.typeId !== undefined) Object.assign(S.workDefaults, { typeId: sg.typeId || '', typeAuto: '', typeAccepted: true });
+        if (sg.langIds !== undefined) S.workDefaults.languageIds = [...sg.langIds];
+        // (review) tracks whose type only S020 set ("Song" from "Music and lyrics by"): the languages too (their type stays)
+        if (sg.langIds !== undefined) S.workRowOpts.forEach((o) => { if (o.typeAuto === 'S020' && !o.langTouched) o.languageIds = [...sg.langIds]; });
+        S.workSuggestDone = suggestionKey(sg);
+        log('info', 'worksSuggestTaken', { what: suggestionText(sg) });
+        scheduleRemember();
         break;
       }
       case 'mx-top': {
@@ -29520,8 +29905,9 @@
         S.searchCancel = true;
         return true;
       case 'mx-fold':
-        // [3.18.0] fold / unfold the works matrix (not stored)
+        // [3.18.0] fold / unfold the works matrix (not stored); [Z-WMX] (3.52.0, review) its popovers closed
         S.worksFolded = !S.worksFolded;
+        closeMxPopovers(null);
         renderWorks();
         return true;
       case 'mx-skip':
@@ -29570,6 +29956,12 @@
       }
       case 'mx-colmenu':
         S.mxColMenu = S.mxColMenu === btn.dataset.col ? null : btn.dataset.col;
+        // ([Z-WMX] 3.52.0) the menu as high as the matrix shows below its head (the head stays in place while the matrix scrolls): what does
+        // not fit scrolls inside the menu
+        if (S.mxColMenu) {
+          const key = S.mxColMenu;
+          setTimeout(() => fitMxMenu(S.overlay && [...S.overlay.querySelectorAll('[data-colhead] .dci-mx-colmenu')].find((x) => x.closest('[data-colhead]').dataset.colhead === key)), 0);
+        }
         break;
       case 'cd-copy': {
         const key = btn.closest('[data-colhead]').dataset.colhead;
@@ -29606,6 +29998,7 @@
         // Out of the matrix: its rows go to "Skip" (they stay in the list); MB-only columns are only folded
         const c = matrixColumns().find((x) => x.key === btn.dataset.col);
         if (!c) return true;
+        if (S.mxColMenu === c.key) S.mxColMenu = null; // ([Z-WMX] 3.52.0: from its menu – which goes with it)
         if (c.mbOnly) {
           S.mxCollapsed.add(c.key);
           break;
@@ -29643,6 +30036,7 @@
       }
       case 'mx-collapse': {
         const key = btn.dataset.col;
+        if (S.mxColMenu === key) S.mxColMenu = null;
         if (S.mxCollapsed.has(key)) S.mxCollapsed.delete(key);
         else S.mxCollapsed.add(key);
         break;
@@ -29714,7 +30108,11 @@
         }
         break;
       case 'mx-addcol-role':
-        if (S.mxAddCol) S.mxAddCol.ltId = Number(el.value);
+        S.mxAddCol = { ...(S.mxAddCol || {}), ltId: Number(el.value) };
+        return true;
+      // [Z-WMX] (3.52.0) an artist or label of MusicBrainz by its MBID or link
+      case 'mx-addcol-mbid':
+        S.mxAddCol = { ...(S.mxAddCol || {}), mbid: el.value, error: '' };
         return true;
       case 'mx-role': {
         if (!col || !mrow) return true;
@@ -29777,7 +30175,7 @@
           const i = Number(scope.split(':')[1]);
           const o = rowOpts(i);
           if (!o.languageIds.includes(el.value)) o.languageIds.push(el.value);
-          S.workRowOpts.set(i, o);
+          S.workRowOpts.set(i, { ...o, langTouched: true });
         }
         break;
       }
@@ -31083,6 +31481,9 @@
       }
       renderWorks();
     }
+    // [Z-WMX] (3.52.0, review) the popovers of the works matrix close with a click anywhere else; the click goes on to what it was on
+    // (drawn after it, unless what it did drew the matrix anyway)
+    if (e.target.closest && closeMxPopovers(e.target)) setTimeout(() => { if (mxPopoversStale()) renderWorks(); }, 0);
     // [180] (3.38.15) the list "n works ▾" closes with a click anywhere else – in the page, the click goes on to what it was on
     if (S.mxWorksOpen !== null && e.target.closest && !e.target.closest('.dci-mx-wlist, [data-act="mx-works"]')) closeWorksList();
     const btn = e.target.closest('[data-act]');
@@ -31312,6 +31713,12 @@
       }
       // [Z-SUM] (3.41.11) "＋ Suite …": its box opened, a suite added, closed
       case 'suite-add-open': {
+        // ([Z-WMX] 3.52.0, review) the button of the head opens and closes the box (what was typed is kept while open)
+        if (S.suiteAdd) {
+          S.suiteAdd = null;
+          renderWorks();
+          break;
+        }
         const ts = S.mbTracks.filter((t) => matrixTrack(t));
         S.suiteAdd = { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '' };
         renderWorks();
@@ -31329,7 +31736,7 @@
         const o = addSuite(val('mx-suite-from'), val('mx-suite-to'), val('mx-suite-name'));
         renderWorks();
         refresh();
-        const again = o ? S.overlay.querySelector(`[data-el="suites"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
+        const again = o ? S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -31364,7 +31771,7 @@
         }
         renderWorks();
         refresh();
-        const again = S.overlay.querySelector(`[data-el="suites"] [data-suite="${CSS.escape(o.key)}"] button`);
+        const again = S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`);
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -32792,7 +33199,7 @@
         } else {
           const i = Number(scope.split(':')[1]);
           const o = rowOpts(i);
-          S.workRowOpts.set(i, { ...o, languageIds: o.languageIds.filter((x) => x !== btn.dataset.id) });
+          S.workRowOpts.set(i, { ...o, languageIds: o.languageIds.filter((x) => x !== btn.dataset.id), langTouched: true });
         }
         renderWorks();
         break;
@@ -36693,6 +37100,16 @@
       closeSrcMenu(true);
       return;
     }
+    // [Z-WMX] (3.52.0, review) a popover of the works matrix (its button focused again), then the ▾ menu of a column
+    const mxFocus = closeMxPopovers(null) || (S.mxColMenu ? `[data-el="works"] .dci-mx-colbtns [data-act="mx-colmenu"][data-col="${CSS.escape(S.mxColMenu)}"]` : '');
+    if (mxFocus) {
+      e.preventDefault();
+      S.mxColMenu = null;
+      renderWorks();
+      const b = S.overlay.querySelector(mxFocus);
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     if (S.dmPick || S.dmEdit) {
       S.dmPick = null;
       S.dmEdit = null;
@@ -36849,9 +37266,9 @@
     // (grounds of a suggestion whose text comes from elsewhere: the label of the pool's chips and of the date matrix's cells, the
     // asking chips – (3.48.0, review) not their grips, menus and editors)
     `${DK_OV} .dci-date-chip.dci-pchip-sugg > .dci-chip-main, ${DK_OV} .dci-date-chip.dci-pchip-sugg > .dci-chip-main .dci-chip-count,
-      ${DK_OV} .dci-dm-cell.dci-dm-auto > .dci-dm-date > .dci-chip-main, ${DK_OV} .dci-em-chip-ask, ${DK_OV} .dci-mx-newworks, ${DK_OV} .dci-row.dci-unmapped > td { color: var(--sugg-ink); }`,
+      ${DK_OV} .dci-dm-cell.dci-dm-auto > .dci-dm-date > .dci-chip-main, ${DK_OV} .dci-em-chip-ask, ${DK_OV} .dci-row.dci-unmapped > td { color: var(--sugg-ink); }`,
     // (the yellow grounds written as colours: as the suggestions)
-    `${DK_OV} .dci-mx-newworks, ${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
+    `${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
     `${DK_OV} .dci-waiting, ${DK_OV} .dci-foot-chip-warn, ${DK_OV} input.dci-from-dg { color: var(--sugg-ink); }`,
   // ((3.49.0) each rule on one line, as the rest of the dark sheet – its lines are its rules)
   ].map((x) => x.replace(/\s*\n\s*/g, ' ')).join('\n');
@@ -37547,8 +37964,7 @@
       /* [Z-EXC] (3.49.0) a cover, an arrangement, a quote of the track (below its title) */
       .dci-mx-wnote { margin: calc(var(--u, 1px) * 2) 0; font-size: calc(var(--u, 1px) * 11.5); color: var(--sugg-ink); }
       .dci-mx-wnote .dci-mblink { margin: 0 calc(var(--u, 1px) * 3); }
-      .dci-mx-newworks, .dci-mx-addcol { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; }
-      .dci-mx-newworks { background: #fff8db; border: 1px solid #e8c547; }
+      .dci-mx-addcol { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; }
       .dci-mx-addcol { background: var(--soft); border: 1px solid var(--line); }
       /* Works matrix in the look of the date matrix: heads as cards, roles and attributes as chips */
       .dci-matrix thead th { padding: calc(var(--u, 1px) * 5); }
@@ -37561,11 +37977,12 @@
       .dci-mx-colbtns { margin-left: auto; display: inline-flex; gap: 2px; }
       .dci-mx-role { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c7d5f0; border-radius: 3px; background: #eef4ff; color: #2c4a80; font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-mx-datechip { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid var(--date-line); border-radius: 3px; background: var(--date-bg); color: var(--date-d); font-size: calc(var(--u, 1px) * 11); }
-      .dci-mx-col .dci-mx-credit { display: flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
-      .dci-mx-col .dci-mx-credit input { flex: 1; min-width: 0; width: auto; font-size: calc(var(--u, 1px) * 12); padding: 1px calc(var(--u, 1px) * 4); }
+      .dci-mx-col input.dci-mx-credit { display: block; width: 100%; box-sizing: border-box; min-width: 0; margin: calc(var(--u, 1px) * 4) 0 0; font-size: calc(var(--u, 1px) * 12); padding: 1px calc(var(--u, 1px) * 4); color: inherit; }
       .dci-mx-colmenu { position: absolute; left: 0; top: 100%; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 6); min-width: calc(var(--u, 1px) * 280);
         margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--date-line); border-top: 3px solid var(--purple); border-radius: 4px; background: #fff;
         box-shadow: 0 4px 16px rgba(38, 36, 48, 0.16); white-space: normal; }
+      /* [Z-WMX] (3.52.0) a long menu scrolls in itself (it holds « and ✕ now, at its top) */
+      .dci-mx-colmenu { max-height: min(55vh, calc(var(--u, 1px) * 520)); overflow-y: auto; }
       .dci-mx-colmenu .dci-mx-datebox { margin: 0; }
       .dci-info { color: var(--purple-d); text-decoration: none; cursor: help; }
       .dci-mx-title { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 6); }
@@ -37655,6 +38072,53 @@
       .dci-works { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding: 2px 0 calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); border-left: 3px solid var(--teal); }
       .dci-works h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
+      /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */
+      .dci-works-head.dci-wh { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      .dci-wh-l, .dci-wh-c, .dci-wh-r { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); min-width: 0; }
+      .dci-wh-r { justify-content: flex-end; }
+      .dci-wh-chip { padding: calc(var(--u, 1px) * 1) calc(var(--u, 1px) * 8); border-radius: 999px; background: var(--soft); color: #4a4558; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
+      .dci-wh-chip.dci-wh-warn { background: var(--sugg-bg); border: 1px solid var(--sugg-line); color: var(--sugg-ink, #6b4e00); }
+      .dci-wh-help { width: calc(var(--u, 1px) * 22); height: calc(var(--u, 1px) * 22); padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--purple-d); font: inherit; font-weight: 700; cursor: pointer; }
+      .dci-wh-skip { font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); border: 0; border-radius: 5px; background: #c2410c; color: #fff; cursor: pointer; box-shadow: 0 0 0 3px #fbd5c2; }
+      .dci-wh-skip:hover { background: #9a3412; }
+      .dci-works-off .dci-wh-skip { background: #fff; color: #9a3412; border: 1px solid #c2410c; box-shadow: none; }
+      .dci-wh-pop { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: #fff; box-shadow: 0 4px 14px rgba(40, 30, 80, 0.1); }
+      .dci-wh-pop p { margin: 0; max-width: 90ch; }
+      .dci-mx-wts { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid var(--sugg-line); border-radius: 6px; background: var(--sugg-bg); color: var(--sugg-ink, #4f3a00); }
+      .dci-mx-wts .dci-wts-ok { font-weight: 700; }
+      .dci-mx-wtsrow { padding: 0 calc(var(--u, 1px) * 5); border: 1px solid var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 11.5); }
+      .dci-mx-name { white-space: nowrap; }
+      .dci-mx-name-s { font-size: calc(var(--u, 1px) * 12); }
+      .dci-mx-name-xs { font-size: calc(var(--u, 1px) * 11); }
+      .dci-mx-colname .dci-mx-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .dci-mx-unlinked { color: #b4540a; font-weight: 700; }
+      .dci-mx-colbtns { margin-left: auto; }
+      .dci-mx-colmenu-tools { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); padding-bottom: calc(var(--u, 1px) * 4); border-bottom: 1px solid var(--line); }
+      .dci-split { display: inline-flex; }
+      .dci-split > button:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      .dci-split > .dci-split-more { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgba(255, 255, 255, 0.45); padding: 0 calc(var(--u, 1px) * 6); }
+      .dci-mx-newmenu { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 4) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+      .dci-wattr-add { border-style: dashed; color: var(--purple-d); background: #fff; }
+      .dci-mx-marks { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 3) 0; }
+      .dci-mx-mark { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 7); border-radius: 999px; border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 11.5); margin: 0; }
+      .dci-mx-mark-quote, .dci-mx-mark-arrangement { border-color: #8fa8d6; background: #e8eef9; color: #1f3f78; }
+      .dci-mx-mark .dci-mblink { margin: 0; }
+      .dci-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+      .dci-mxwait { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+      .dci-hourglass { width: calc(var(--u, 1px) * 9); height: calc(var(--u, 1px) * 12); margin-right: calc(var(--u, 1px) * 3); vertical-align: -1px; }
+      /* empty cells: their + and ▾ only under the pointer or with the focus */
+      .dci-mx-cell:not(:hover):not(:focus-within) .dci-mx-toggle.dci-mx-empty, .dci-mx-cell:not(.dci-mx-on):not(.dci-mx-mb):not(:hover):not(:focus-within) .dci-mx-more { opacity: 0; }
+      .dci-mx-col.dci-mx-locked { min-width: calc(var(--u, 1px) * 96); max-width: calc(var(--u, 1px) * 130); color: var(--muted); }
+      .dci-mx-col.dci-mx-locked .dci-lock { width: calc(var(--u, 1px) * 11); height: calc(var(--u, 1px) * 11); flex: none; }
+      .dci-mx-addcol-head { min-width: calc(var(--u, 1px) * 150); vertical-align: top; }
+      .dci-mx-addcol-btn { border-style: dashed; background: #faf9fc; color: var(--purple-d); text-align: left; }
+      .dci-mx-addcol-pop .dci-mx-addcol { display: flex; flex-direction: column; align-items: stretch; margin: calc(var(--u, 1px) * 6) 0 0; padding: 0; border: 0; background: none; }
+      .dci-mx-addcol-pop { position: absolute; z-index: 5; left: auto; right: 0; min-width: calc(var(--u, 1px) * 260); }
+      .dci-mx-addcol-head .dci-mx-card { position: relative; }
+      /* [Z-WMX] (3.52.0; Q-fw) a suite: a row of its own above its tracks, which are indented */
+      .dci-mx-suiterow td { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); background: var(--soft); text-align: left; }
+      .dci-mx-suiterow .dci-mx-ask { margin: 0; }
+      .dci-mx-inpart > .dci-mx-front { padding-left: calc(var(--u, 1px) * 22); box-shadow: inset calc(var(--u, 1px) * 4) 0 0 #c8c3e3; }
       .dci-works-head h3 { margin: 0; }
       .dci-works-head .dci-works-fold { font: inherit; font-weight: 600; color: inherit; padding: 0; text-decoration: none; }
       .dci-works-skipped { padding: 1px calc(var(--u, 1px) * 8); border-radius: 10px; background: #eee; color: #555; font-size: calc(var(--u, 1px) * 12); }

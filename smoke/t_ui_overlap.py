@@ -28,6 +28,8 @@ OVERLAPS = r"""(sel) => {
     if (!n.nodeValue.trim()) continue;
     const el = n.parentElement;
     if (!el || !shown(el) || el.closest('option, select, script, style, [role=tooltip], .dci-tip')) continue;
+    // (text for screen readers only: clipped to nothing)
+    if ((() => { for (let e = el; e && e !== root; e = e.parentElement) { const st = getComputedStyle(e); if ((st.clipPath && st.clipPath !== 'none') || (e.offsetWidth <= 1 && e.offsetHeight <= 1 && st.overflow === 'hidden')) return true; } return false; })()) continue;
     const range = document.createRange(); range.selectNodeContents(n);
     for (const r of range.getClientRects()) { const c = clip(el, r); if (c) items.push({ el, text: n.nodeValue.trim().slice(0, 40), r: c }); }
   }
