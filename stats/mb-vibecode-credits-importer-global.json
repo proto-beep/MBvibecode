@@ -5,7 +5,7 @@
   "MB x Vibecode: Import Discogs credits"
  ],
  "dump": "20261104-002222",
- "generated": "2026-11-04T22:37:03Z",
+ "generated": "2026-11-05T14:43:25Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits, releases or URLs; \"editors\" is how many different ones",
  "totals": {
@@ -241,9 +241,148 @@
   "release": 414,
   "release group": 2
  },
+ "credits": {
+  "credited_as": {
+   "n": 393,
+   "of": 4240
+  }
+ },
  "rows_read": {
   "edit": 151283347,
   "edit_data": 151283346,
-  "edit_note": 106664307
+  "edit_note": 106664307,
+  "edit_release": 218544832
+ },
+ "core": {
+  "dump": "20261104-002222",
+  "artists": {
+   "n": 386,
+   "of": 387,
+   "types": {
+    "Person": 368,
+    "-": 6,
+    "Other": 6,
+    "Group": 5,
+    "Orchestra": 1
+   },
+   "genders": {
+    "Male": 294,
+    "Female": 41,
+    "Not applicable": 2
+   },
+   "decades": {
+    "1940s": 33,
+    "1970s": 28,
+    "1950s": 28,
+    "1960s": 24,
+    "1930s": 14,
+    "1920s": 6,
+    "2000s": 4,
+    "1980s": 4,
+    "1990s": 3,
+    "1780s": 1,
+    "1890s": 1,
+    "1910s": 1,
+    "1880s": 1
+   },
+   "countries": {
+    "US": 81,
+    "GB": 52,
+    "FR": 16,
+    "CH": 15,
+    "NO": 11,
+    "DE": 9,
+    "SE": 7,
+    "IT": 7,
+    "PL": 5,
+    "JP": 4,
+    "PT": 4,
+    "NL": 4,
+    "LT": 4,
+    "CA": 3,
+    "DK": 3,
+    "ES": 2,
+    "GR": 2,
+    "AT": 2,
+    "BE": 2,
+    "XW": 2,
+    "ZA": 1,
+    "FI": 1,
+    "LU": 1,
+    "RU": 1,
+    "IN": 1
+   },
+   "towns": {
+    "Chicago": 10,
+    "London": 5,
+    "New York": 4,
+    "Sogndal": 4,
+    "Glasgow": 3,
+    "Philadelphia": 3,
+    "Brooklyn": 3,
+    "Bristol": 2,
+    "Falkirk": 2,
+    "Waukegan": 2,
+    "Sheffield": 2,
+    "Lisboa": 2,
+    "Amsterdam": 2,
+    "Boston": 2,
+    "Bern": 2,
+    "Warsaw": 2,
+    "Steigen": 1,
+    "Alicante": 1,
+    "Tempe": 1,
+    "Heathfield": 1
+   },
+   "centuries": {
+    "1700": 1,
+    "1800": 3,
+    "1900": 143,
+    "2000": 137
+   },
+   "posthumous": {
+    "n": 0,
+    "of": 157
+   }
+  },
+  "releases": {
+   "n": 67,
+   "media": {
+    "single": 62,
+    "multi": 5
+   },
+   "rg_primary": {
+    "Album": 64,
+    "Single": 1,
+    "EP": 1,
+    "Broadcast": 1
+   },
+   "rg_secondary": {
+    "Live": 23,
+    "Soundtrack": 1
+   },
+   "languages": {
+    "eng": 56,
+    "-": 4,
+    "mul": 3,
+    "ita": 1,
+    "deu": 1,
+    "cat": 1,
+    "nor": 1
+   },
+   "scripts": {
+    "Latn": 65,
+    "-": 2
+   }
+  },
+  "lengths": {
+   "recordings": 453,
+   "median_ms": 393240,
+   "mean_ms": 477503.0816777042
+  },
+  "role_credits": {
+   "n": 484,
+   "of": 1455
+  }
  }
 }
