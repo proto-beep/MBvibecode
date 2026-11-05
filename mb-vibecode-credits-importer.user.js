@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.50.0
+// @version      3.51.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.50.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.50.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.51.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.51.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.50.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.51.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -870,6 +870,13 @@
       "zoom.label": "Text size",
       "settings.buttonTitle": "All settings in one place, by topic",
       "settings.title": "Settings",
+      "ver.script": "Credits Importer {v}",
+      "ver.mapping": "mapping file {v}",
+      "ver.companion": "Companion {v}",
+      "ver.companionNone": "Companion: not connected",
+      "ver.seen": "(last seen {when})",
+      "ver.update": "{v} available",
+      "ver.updateTitle": "Version {v} is on GitHub – open it to update (your userscript manager offers the update)",
       "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
       "settings.t.general": "General",
       "settings.t.appearance": "Appearance",
@@ -960,7 +967,7 @@
       "conn.X008": "Run the script; their functions read Bandcamp pages (GM_xmlhttpRequest) and open background tabs (GM_openInTab).",
       "conn.X009.name": "Web profiles (Instagram, SoundCloud, Spotify …)",
       "conn.X009": "Profiles next to names in a text are kept as links: MusicBrainz is asked for an artist with them, “Create …” fills them in – the profiles themselves are never opened.",
-      "conn.X010": "Home page, issues and updates of the script (@updateURL); from 3.33.0 also its mapping file and from 3.34.0 its languages file, which the userscript manager loads with the script (@resource) – or the script itself, when the manager did not (raw.githubusercontent.com); from 3.47.0 the global statistics (Statistics → Global, at most once a day).",
+      "conn.X010": "Home page, issues and updates of the script (@updateURL); from 3.33.0 also its mapping file and from 3.34.0 its languages file, which the userscript manager loads with the script (@resource) – or the script itself, when the manager did not (raw.githubusercontent.com); from 3.47.0 the global statistics (Statistics → Global, at most once a day); from 3.51.0 the versions of the script, its mapping file and the companion on GitHub (⚙ Settings, the head of each file, at most once a day).",
       "conn.X011": "Its way of setting the comments of recordings – edits “edit recording” (type 72) sent to MusicBrainz's /ws/js/edit/create, with an edit note – is how the script enters the comments of live recordings after “Enter edit” (⚙ Settings → Staging, off by default); the script itself is not needed. MusicBrainz's /ws/js/release tells whether the relationships are saved.",
       "conn.X012": "The comments of live recordings follow its format – “live, 2004‐03‐23: Iridium, New York, NY, USA”: the place's credit or name with city, US or Canadian state code and country, the date –, and its line “Seed live comments” is added to their edit note; the script itself is not needed.",
       "settings.t.texts": "Texts",
@@ -3450,6 +3457,8 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
+    // [3.51.0] collected item Z-PCR
+    { id: 'S080', where: 'sourceCreditFor, withoutAreaTail', note: 'Places and labels (3.51.0): the town or country after a comma in the name at the source – "Sound Development Studio, Zürich" – is no "credited as" when the rest is MusicBrainz\'s name ("Sound Development Studio": none) or the end is the area the source gives (the name without it); kept when it is part of MusicBrainz\'s name ("Studio, Zürich" for "Studio Zürich")' },
     // [3.50.0] collected items Z-PRO, Z-TAR
     { id: 'S079', where: 'TEXT.parse (readUnit, proseCredits)', note: 'Texts (3.50.0): a sentence that describes the music – "Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp, and SHelley Hirsch vocal." – the instruments or voices before a name in brackets are the name\'s (words before them, "Experimental", left out); after "with (special) guest(s)" each name with the instruments or voices after it ("Jane Roe (bass, vocals)", "Oliver Lake on saxophone" too), as a guest; "and" between two names ends the one before; other parts before "with" are read as usual. A make ("Fender Rhodes"), a place or an event ("Solo piano (Tokyo)", "Live At …") is no name. Only when every guest is read so (before: the sentence not recognized)' },
     { id: 'S078', where: 'applyTrackArtistTracks', note: 'Track artists (3.50.0): the instruments, voices and "performer" of a person credited for the whole release go onto the tracks whose artist credit in MusicBrainz names the person (by the name of the entry, as written or as in MusicBrainz, or by its id) – when those are some of the tracks, not all ("David Watson & Makigami Koichi" on two tracks: Makigami Koichi\'s jaw harp on those two). Not for writers, producers and other roles; switched off the tracks as they came' },
@@ -8275,6 +8284,7 @@
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
       titleParts, headingKind, suiteOffers, trackPartsOf,
+      sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
     };
     return;
   }
@@ -10643,6 +10653,8 @@
     if (row.tarPositions) ids.push('S078');
     if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
+    // [S080] (3.51.0, review) the area after a comma left out of its "credited as"
+    if (a && a.company && a.mbid && a.mbName && !row.creditTouched && !row.manual && withoutAreaTail(String(row.anv || a.name || ''), a.mbName, a.area) !== String(row.anv || a.name || '')) ids.push('S080');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
     // [S060] (3.38.12) its name or its spelling written in capitals at the source, here in normal case
@@ -17854,17 +17866,18 @@
    * A page of another site (Bandcamp) as text. The userscript manager's GM_xmlhttpRequest may read other sites
    * (@connect); without it (other managers) the browser's fetch is tried, which most sites do not allow.
    */
-  function httpGet(url) {
+  function httpGet(url, headers = null) {
     if (typeof GM_xmlhttpRequest === 'function') {
       return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
-          method: 'GET', url, timeout: 30000,
+          method: 'GET', url, timeout: 30000, ...(headers ? { headers } : {}),
           onload: (r) => (r.status >= 200 && r.status < 300 ? resolve(r.responseText) : reject(new Error(tr('err.pageHttp', { status: r.status, url })))),
           onerror: () => reject(new Error(tr('err.pageNet', { url }))),
           ontimeout: () => reject(new Error(tr('err.pageNet', { url }))),
         });
       });
     }
+    // ((3.51.0, review) without the headers: a Range of a page's own fetch may need a CORS preflight GitHub does not answer)
     return fetch(url).then((res) => {
       if (!res.ok) throw new Error(tr('err.pageHttp', { status: res.status, url }));
       return res.text();
@@ -20511,12 +20524,40 @@
     const mb = String(a.mbName || '').trim();
     // [S060] (3.38.12) MusicBrainz's name in capitals too: the source's capitals ("DOOM" for MF DOOM, not "Doom")
     const caps = !!mb && !/\p{Ll}/u.test(mb);
-    const shown = String((caps && row.anvFrom) || row.anv || (caps && a.caseFrom) || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
+    let shown = String((caps && row.anvFrom) || row.anv || (caps && a.caseFrom) || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
+    // [Z-PCR] (3.51.0; Q-gd) a place or label with its town or country after a comma ("Sound Development Studio, Zürich"): without it
+    // when the rest is MusicBrainz's name or the end is the area the source gives – unless it is part of MusicBrainz's name ("Studio Zürich")
+    if (a.company && mb && ruleOn('S080') && (!a.entityType || ['place', 'label'].includes(a.entityType))) shown = withoutAreaTail(shown, mb, a.area);
     // [S031] (3.28.2) only the case differs ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar): MusicBrainz's
     // spelling, no "credited as" (typed in by hand it stays)
     if (shown && mb && ruleOn('S031') && typo(shown).toLocaleLowerCase() === typo(mb).toLocaleLowerCase()) return '';
     return shown && mb && shown !== mb ? typo(shown) : ''; // [S012]
   }
+
+  /** [Z-PCR] (3.51.0) A name without its area after a comma: "Sound Development Studio, Zürich" → "Sound Development Studio" (see S080). */
+  function withoutAreaTail(name0, mb, area) {
+    const name = String(name0 || '').replace(/[\s,;]+$/, '');
+    const parts = name.split(/\s*,\s*/);
+    // ((3.51.0, review) a comma at the end alone goes too: "Studio X,")
+    if (parts.length < 2) return name;
+    const same = (x, y) => typo(x).toLocaleLowerCase() === typo(y).toLocaleLowerCase();
+    // ((3.51.0, review) a town, a region, a country – "Zürich (CH)" too; no legal form, "Jr.", room or single letter)
+    const NOT_AREA = /^(?:inc|ltd|llc|llp|gmbh|ag|kg|ohg|ug|s\.?a|s\.?a\.?r\.?l|s\.?r\.?l|s\.?p\.?a|co|corp|corporation|company|plc|pty|bv|b\.v|nv|oy|ab|as|a\/s|aps|jr|sr|ii|iii|iv)\.?$/i;
+    const areaLike = (x) => /^\p{Lu}[\p{L}'’.\- ]*(?:\s*\([A-Z]{2,3}\))?$/u.test(x) && x.split(' ').length <= 4 && !NOT_AREA.test(x)
+      && !/^(?:studio|room|hall|stage|suite|booth)\s+\S{1,3}$/i.test(x) && !/^\p{Lu}\.?$/u.test(x);
+    for (let k = 1; k < parts.length; k++) {
+      const head = parts.slice(0, k).join(', ');
+      const tail = parts.slice(k).join(', ');
+      if (!parts.slice(k).every(areaLike)) continue;
+      // (the rest is MusicBrainz's name: the area goes – "Sydney Opera House, Sydney" too; MusicBrainz's name the whole one without the
+      // comma – "Studio, Zürich" for "Studio Zürich": kept)
+      if (same(head, mb)) return head;
+      if (same(parts.join(' '), mb)) return name0;
+      if (area && norm(area) === norm(tail.replace(/\s*\([A-Z]{2,3}\)$/, ''))) return head;
+    }
+    return name0;
+  }
+
 
   /** Applies sourceCreditFor to every row from Discogs whose credit was not edited by hand. */
   function syncSourceCredits() {
@@ -30072,7 +30113,10 @@
       Object.assign(S.sync, { installed: true, tabs: msg.tabs, target: msg.target, releases: msg.releases || (msg.target && msg.target.releaseId ? [String(msg.target.releaseId)] : []),
         sites: msg.sites && typeof msg.sites === 'object' ? msg.sites : null });
       // [173] (3.38.9) companion 1.10.0 and later say their version with each status
-      if (msg.version) S.sync.companionVersion = String(msg.version);
+      if (msg.version) {
+        S.sync.companionVersion = String(msg.version);
+        rememberCompanion(S.sync.companionVersion); // [Z-VER] (3.51.0)
+      }
       // [173] (3.38.9) an older companion (no version a few seconds after it answered): several imports at once switch its marks
       // off and on – said once
       if (!S.sync.versionCheck) {
@@ -35386,7 +35430,8 @@
     const pane = S.resetOpen ? resetHtml()
       : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
     // [3.27.2] the heading folds the settings in (item 57): a button that looks like the heading, with a tooltip
-    return `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="settings-fold" title="${esc(tr('settings.foldTitle'))}" aria-label="${esc(tr('settings.foldTitle'))}">${esc(tr('settings.title'))}</button> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
+    return `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="settings-fold" title="${esc(tr('settings.foldTitle'))}" aria-label="${esc(tr('settings.foldTitle'))}">${esc(tr('settings.title'))}</button> <span class="dci-sub">${esc(tr('settings.hint'))}</span>
+      ${versionsHtml()}</div>
       <div class="dci-set-wrap">
         <div class="dci-set-side">
           <div class="dci-set-tabs" role="tablist" aria-orientation="vertical" aria-label="${esc(tr('settings.title'))}">${tabs}</div>
@@ -36192,6 +36237,71 @@
   const CHANGELOG_URL = `${SCRIPT_URL}/blob/main/mb-vibecode-credits-importer-CHANGELOG.md`;
 
   const versionParts = (v) => String(v || '0').split('.').map((x) => parseInt(x, 10) || 0);
+  /**
+   * [Z-VER] (3.51.0; Q-fm, Q-fs) The versions in the head of ⚙ Settings – the script, its mapping file, the companion (as it last
+   * reported itself) – each with ⚠ and the link to update when GitHub (main) has a newer one; looked up at most once a day.
+   */
+  const UPDATE_KEY = 'dci-update-check';
+  const COMPANION_SEEN_KEY = 'dci-companion-seen';
+  const RAW_MAIN = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/';
+  const UPDATE_FILES = { script: 'mb-vibecode-credits-importer.user.js', mapping: 'mb-vibecode-credits-importer-mapping.json', companion: 'mb-vibecode-credits-importer-companion.user.js' };
+  const UPDATE_MAX_AGE = 86400000;
+  /** The version in the head of a file: "// @version 3.52.0" of a userscript, "\"version\": \"3.52.0\"" of the mapping file. */
+  function versionOfHeader(text) {
+    const m = String(text || '').match(/^\/\/\s*@version\s+([0-9][0-9.]*)\s*$/m) || String(text || '').match(/^\s*"version"\s*:\s*"([0-9][0-9.]*)"/m);
+    return m ? m[1] : '';
+  }
+  async function checkUpdates() {
+    if (S.updateLoading) return;
+    S.updateLoading = true;
+    // ((3.51.0, review) the time in memory too: a storage that cannot be written never starts it again and again)
+    S.updateCheckedAt = Date.now();
+    const had = readJson('localStorage', UPDATE_KEY, null) || {};
+    const out = { at: Date.now(), script: had.script || '', mapping: had.mapping || '', companion: had.companion || '' };
+    try {
+      for (const [k, file] of Object.entries(UPDATE_FILES)) {
+        try {
+          // only the head of the file (its metadata block)
+          const v = versionOfHeader(await httpGet(`${RAW_MAIN}${file}?t=${Date.now()}`, { Range: 'bytes=0-1499' }));
+          if (v) out[k] = v;
+        } catch { /* kept as it was */ }
+      }
+      S.updateResult = out;
+      writeJson('localStorage', UPDATE_KEY, out);
+    } finally {
+      S.updateLoading = false;
+      // ((3.51.0, review) only the versions drawn anew – not the settings, where something may be typed)
+      const el = S.overlay && S.overlay.querySelector('[data-el="versions"]');
+      if (el) el.outerHTML = versionsHtml();
+    }
+  }
+  /** [Z-VER] The companion as it reported itself here (version and when), remembered across pages. */
+  function rememberCompanion(version) {
+    if (!version) return;
+    const had = readJson('localStorage', COMPANION_SEEN_KEY, null);
+    if (had && had.version === version && Date.now() - had.at < 3600000) return;
+    writeJson('localStorage', COMPANION_SEEN_KEY, { version: String(version), at: Date.now() });
+  }
+  function versionsHtml() {
+    const stored = readJson('localStorage', UPDATE_KEY, null);
+    const fresh = (x) => !!(x && x.at <= Date.now() && Date.now() - x.at < UPDATE_MAX_AGE);
+    const up = fresh(stored) ? stored : S.updateResult || stored;
+    // at most once a day – and once a session when the browser cannot keep it
+    if (!fresh(stored) && !(S.updateCheckedAt && Date.now() - S.updateCheckedAt < UPDATE_MAX_AGE)) setTimeout(checkUpdates, 0);
+    const seen = readJson('localStorage', COMPANION_SEEN_KEY, null);
+    const comp = (S.sync && S.sync.companionVersion) || (seen && seen.version) || '';
+    const mapV = String((MAPPING.raw && MAPPING.raw.version) || '');
+    const newer = (have, latest) => !!(have && latest && compareVersions(latest, have) > 0);
+    const warn = (latest, file) => ` <a class="dci-ver-up" href="${esc(RAW_MAIN + file)}" target="_blank" rel="noopener" title="${esc(tr('ver.updateTitle', { v: latest }))}">⚠ ${esc(tr('ver.update', { v: latest }))}</a>`;
+    const parts = [
+      `<span data-ver="script">${esc(tr('ver.script', { v: VERSION }))}${newer(VERSION, up && up.script) ? warn(up.script, UPDATE_FILES.script) : ''}</span>`,
+      // (the mapping file comes with the script: its newer version through the script's update)
+      `<span data-ver="mapping">${esc(tr('ver.mapping', { v: mapV || '–' }))}${newer(mapV, up && up.mapping) && !newer(VERSION, up && up.script) ? warn(up.mapping, UPDATE_FILES.script) : ''}</span>`,
+      comp ? `<span data-ver="companion">${esc(tr('ver.companion', { v: comp }))}${!(S.sync && S.sync.companionVersion) && seen ? ` <span class="dci-sub">${esc(tr('ver.seen', { when: new Date(seen.at).toLocaleDateString(LANG) }))}</span>` : ''}${newer(comp, up && up.companion) ? warn(up.companion, UPDATE_FILES.companion) : ''}</span>`
+        : `<span data-ver="companion">${esc(tr('ver.companionNone'))}</span>`,
+    ];
+    return `<div class="dci-set-versions" data-el="versions">${parts.join('<span class="dci-sep" aria-hidden="true">·</span>')}</div>`;
+  }
   function compareVersions(a, b) {
     const x = versionParts(a);
     const y = versionParts(b);
@@ -36825,7 +36935,11 @@
     style.id = 'dci-styles';
     style.textContent = `
       #dci-pagebar { margin: 12px 0 22px; padding-bottom: 14px; border-bottom: 1px solid #e4e2ec; }
-      #dci-launcher { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; }
+      /* [Z-IML] (3.51.0) the button and the navigation of the source pages in one line – below it only in a narrow window; a notice
+         and the question of the language above them, each a line of its own */
+      #dci-pagebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+      #dci-pagebar > :not(#dci-launcher):not(#dci-controls) { flex: 0 0 auto; box-sizing: border-box; width: min(80ch, 100%); margin-right: calc(100% - min(80ch, 100%)); }
+      #dci-launcher { display: flex; align-items: center; gap: 12px; margin: 0; }
       #dci-open { font: inherit; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-open:hover { background: #f1f0f8; }
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
@@ -36864,7 +36978,7 @@
       #dci-launcher .dci-launch-ico:hover { background: #f1f0f8; }
       #dci-launcher .dci-launch-ico[aria-pressed="true"] { background: #ecebf6; border-color: #736dab; }
       #dci-launcher .dci-launch-sep { width: 1px; height: 16px; margin: 0 4px; background: #c8c5d6; }
-      #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
+      #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
       /* [3.28.0] only the status, as a badge, and ⚙ (item 66) */
       #dci-controls .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 2px 10px; border: 1px solid #dddae8; border-radius: 999px;
@@ -37857,6 +37971,12 @@
       /* [E8] (3.38.1) the further statistics */
       .dci-stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 230), 1fr)); gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 10) 0; }
       .dci-stats-card { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); }
+      /* [Z-OVL] (3.51.0) nothing runs out of a card: it is as narrow as its column, what is wider scrolls inside it */
+      .dci-stats-card { min-width: 0; overflow-x: auto; }
+      .dci-stats-card[data-el="stats-sources"] { grid-column: 1 / -1; }
+      /* [Z-VER] (3.51.0) the versions in the head of ⚙ Settings */
+      .dci-set-versions { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      .dci-set-versions .dci-ver-up { color: #a23b00; font-weight: 600; }
       .dci-stats-card h4 { margin: 0 0 calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 13); }
       /* [Z-STG2] (3.42.6) "Combined | Separate" of the genres, the heading of each source */
       .dci-stats-gview { display: inline-flex; margin-bottom: calc(var(--u, 1px) * 6); }
@@ -38164,7 +38284,7 @@
       /* [Z-STD] (3.45.0) the times of the sources */
       .dci-stats-srct { border-collapse: collapse; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
       .dci-stats-srct th, .dci-stats-srct td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 2) 0; text-align: left; white-space: nowrap; }
-      .dci-stats-srct thead th { color: var(--muted); font-weight: normal; }
+      .dci-stats-srct thead th { color: var(--muted); font-weight: normal; white-space: normal; vertical-align: bottom; }
       .dci-stats-srct td { font-variant-numeric: tabular-nums; }
       .dci-lvl-pick { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
       .dci-lvl-pick label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); }

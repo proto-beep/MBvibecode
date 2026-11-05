@@ -96,6 +96,7 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   exceptlayouts, rolesplit2, exceptworks2: review of 3.49.0 (other layouts of the blocks, the parts' marks; nothing
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
                                 #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
+                                #   placecredit: 3.51.0 (Z-PCR, the area after a comma)
                                 #   prose2, trackartists2: review of 3.50.0 (credits before "with", no place or make as a name, IJ names;
                                 #   other roles, tracks changed by hand, the edit note)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
@@ -520,6 +521,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   theme: 3.46.0 (Z-DM): the dark theme – as a window and in the page (Auto | Light | Dark, Auto live), the light theme unchanged, contrast ≥ 3 in the dark one, colours of their own for it, ↺; review: the dark stylesheet only when needed (written = read), white text on text colours, the tags beside the dark pickers, „Reset all“
                                 #   globalstats: 3.47.0 (Z-GST): This browser | Global – the file of the workflow, once a day, "Load again", without network the copy, Reset all; review: a file with gaps, keyboard focus, a copy older than a day
                                 #   darkmeaning: 3.48.0 (Z-DMY): the colours of meaning in the dark theme by hand (variant A)
+                                #   versions: 3.51.0 (Z-VER): the versions of script, mapping file and companion in the head, ⚠ and the link when GitHub has a newer one (once a day)
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                                 #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
                                 #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
@@ -614,6 +616,9 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   footbar: 3.41.10 (Z-SB2): classic scroll bars of a page wider and longer than the window – the dashboard at the
                                 #     bottom edge ends above / left of them (its footer wholly visible), also when the page grows wider later
 
+python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each other – statistics, settings, the import (window, page), the bar of
+                                #   "Edit relationships" (one line, below only when narrow); the check itself (detector); review: in the order
+                                #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
                                 #   logplace: log next to the edit note: right / left (width and height), above (height kept), too narrow → above,

@@ -2,7 +2,7 @@
 adapter, as t_textcorpus.py does (the roles: the register and a few instruments as MusicBrainz has them).
 
 Cases: hyphen, ignorelines, linernotes (3.48.0), rolesplit, roles, places, oldmarks, exceptread, exceptworks, exceptlayouts, rolesplit2,
-exceptworks2 (3.49.0); prose, trackartists, prose2, trackartists2 (3.50.0); `python3 t_text_lists.py <case> …` runs only those."""
+exceptworks2 (3.49.0); prose, trackartists, prose2, trackartists2 (3.50.0); placecredit (3.51.0); `python3 t_text_lists.py <case> …` runs only those."""
 import json
 import subprocess
 import harness as H  # noqa: F401 – used by the cases
@@ -693,6 +693,36 @@ def case_trackartists2():
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_placecredit():
+    """Credits Importer 3.51.0 (collected item Z-PCR, S080; Q-gd): the "credited as" of a place or label linked to MusicBrainz, in Node
+    (sourceCreditFor): "Sound Development Studio, Zürich" for MusicBrainz's "Sound Development Studio" – none (before: the whole name);
+    "Sound Development Studios, Zürich" with the area Zürich – "Sound Development Studios"; "Studio, Zürich" for "Studio Zürich" – kept
+    (the town is part of MusicBrainz's name); "Loft, Cologne, Germany" for "Loft" – none; another name ("Other Name") – kept whole.
+    Review of 3.51.0: no legal form, "Jr.", room or single letter is an area ("Blue Note, Inc.", "Power Station, Studio A", "Sammy Davis,
+    Jr.", "Studio A, B, C" kept); a venue named after its town ("Sydney Opera House, Sydney") – none; "Loft, Cologne (DE)" – none; a
+    comma at the end ("Studio X,") – none; an artist (no company: "Davis, Sammy") untouched."""
+    js = subprocess.run(['node', '-e', """
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const c = (name, mb, area) => m.sourceCreditFor({}, { company: true, name, mbName: mb, area });
+const r = (name, mb) => m.sourceCreditFor({}, { company: false, name, mbName: mb });
+console.log(JSON.stringify([c('Sound Development Studio, Zürich', 'Sound Development Studio'), c('Sound Development Studios, Zürich', 'Sound Development Studio', 'Zürich'),
+  c('Studio, Zürich', 'Studio Zürich'), c('Loft, Cologne, Germany', 'Loft'), c('Sound Development Studio, Zürich', 'Other Name'),
+  c('Blue Note, Inc.', 'Blue Note'), c('Power Station, Studio A', 'Power Station'), c('Sammy Davis, Jr.', 'Sammy Davis'), c('Studio A, B, C', 'Studio A'),
+  c('Sydney Opera House, Sydney', 'Sydney Opera House'), c('Loft, Cologne (DE)', 'Loft'), c('Studio X,', 'Studio X'), r('Davis, Sammy', 'Sammy Davis')]));
+""", str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+        print('Ergebnis: FEHLER', [False])
+        return
+    got = json.loads(js.stdout)
+    print('  ', got)
+    ok = got == ['', 'Sound Development Studios', 'Studio, Zürich', '', 'Sound Development Studio, Zürich',
+                 'Blue Note, Inc.', 'Power Station, Studio A', 'Sammy Davis, Jr.', 'Studio A, B, C', '', '', '', 'Davis, Sammy']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
 run_cases(globals())
