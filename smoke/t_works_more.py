@@ -185,7 +185,7 @@ def case_worksskip():
   const f = w.querySelector('[data-act=mx-fold]'); const s = w.querySelector('[data-act=mx-skip]');
   return { fold: f ? [f.textContent.trim(), f.getAttribute('aria-expanded')] : null, skip: s ? [s.textContent.trim(), s.dataset.on] : null,
     table: !!w.querySelector('table.dci-matrix'), cols: w.querySelectorAll('thead th[data-col], thead .dci-mx-colhead').length,
-    folded: (w.querySelector('[data-el=works-folded]') || {}).textContent || '', badge: (w.querySelector('.dci-works-skipped') || {}).textContent || '',
+    folded: w.querySelector('[data-el=works-folded]') ? [...w.querySelectorAll('.dci-wh-chip, [data-el=works-folded]')].map((e) => e.textContent).join(' · ') : '', badge: (w.querySelector('.dci-works-skipped') || {}).textContent || '',
     off: w.classList.contains('dci-works-off'), ask: (w.querySelector('[data-el=works-ask]') || {}).textContent || '',
     later: (w.querySelector('[data-el=works-lookups-off]') || {}).textContent || '' }; })()"""
     LEVEL = """(n) => { const g = [...document.querySelectorAll('section.dci-group, .dci-companies section, .dci-companies .dci-group')]
@@ -818,8 +818,8 @@ def case_workpick():
         st = lambda i: pg.evaluate(f"({STATE})({i})")
         a4, a3 = st(3), st(2)
         print('A) Track 1.4:', a4, '\n   Track 1.3:', a3)
-        results.append(a4 and a4['btn'] == '2 works ▾' and a4['exp'] == 'false' and not a4['shown'] and a4['sameLine'] and a4['badge'] == 'no work yet'
-                       and a3 and a3['btn'] == '1 work ▾' and a3['badge'] == 'no work yet' and not a3['shown'])
+        results.append(a4 and a4['btn'] == '2 works ▾' and a4['exp'] == 'false' and not a4['shown'] and a4['sameLine'] and a4['badge'].lstrip('○ ') == 'no work yet'
+                       and a3 and a3['btn'] == '1 work ▾' and a3['badge'].lstrip('○ ') == 'no work yet' and not a3['shown'])
         pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         b1 = st(3)
         pg.locator('tr[data-work="3"] .dci-mx-title strong').click(); pg.wait_for_timeout(300)
@@ -1160,7 +1160,8 @@ def case_suiteask():
 
     H.discogs_release = rel
     # ((3.41.11) the line "＋ Suite …" below the questions is not one of them)
-    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].filter(x => x.dataset.suite).map(x => [x.className,
+    # ([3.52.0] the questions in the header rows of the matrix: SUITES)
+    ASK = """(() => { if (!document.querySelector('[data-el=works] table.dci-matrix')) return null; return [...document.querySelectorAll('[data-el=works] [data-suite]')].map(x => [x.className,
       x.querySelector('strong') ? x.querySelector('strong').textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.textContent.trim()),
       (x.querySelector('[data-f=suite-name]') || {}).value || null, getComputedStyle(x).backgroundColor]); })()"""
     PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
@@ -1174,19 +1175,24 @@ def case_suiteask():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] .dci-mx-suite')", 60)
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(ASK)
         print('A)', a0)
         results.append(a0 is not None and len(a0) == 1 and a0[0][1] == 'all 4 tracks: parts of the suite “Trisect”?' and a0[0][2] == ['✓ Yes', '✕ No', '✓ Yes, with this name']
-                       and a0[0][3] == 'Trisect' and a0[0][4] == 'rgb(255, 248, 219)' and 'from the title of the release' in pg.evaluate("document.querySelector('[data-el=suites] .dci-mx-suite').textContent"))
-        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(500)
+                       and a0[0][3] == 'Trisect' and a0[0][4] == 'rgb(255, 248, 219)' and 'from the title of the release' in pg.evaluate("document.querySelector('[data-el=works] .dci-mx-suite').textContent"))
+        pg.click('[data-el=works] [data-act=suite-yes]'); pg.wait_for_timeout(500)
         b0 = [pg.evaluate(PARTS, i) for i in range(4)] + [pg.evaluate(ASK)[0][1], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “' in x]]
         print('B)', b0)
         results.append(b0[1] == [['', 'Trisect: Phase 1']] and b0[2] == [['part 1 of 2', 'Trisect: Phase 2'], ['part 2 of 2', 'Trisect: Phase 3']]
                        and b0[3] == [['part 1 of 3', 'Trisect: Transition'], ['part 2 of 3', 'Trisect: Phase 4'], ['part 3 of 3', 'Trisect: Coda']]
                        and b0[0] and b0[0][0][0] == '' and b0[4].startswith('all 4 tracks: parts of the suite “Trisect” – 6 works ＋ Create the suite in MusicBrainz …') and b0[4].endswith('↺ undo')
                        and b0[5] == ['Suite “Trisect” (all 4 tracks): 6 parts planned as works'])
+        # [3.52.0] (Q-fw) the question in a header row of the matrix above its first track, the tracks of the suite indented below it
+        rows0 = pg.evaluate("""[...document.querySelectorAll('.dci-matrix tbody > tr')].map(tr => tr.classList.contains('dci-mx-suiterow') ? 'suite'
+          : tr.classList.contains('dci-mx-inpart') ? 'part' : 'row')""")
+        print('   Zeilen:', rows0)
+        results.append(rows0[0] == 'suite' and rows0.count('suite') == 1 and rows0[1:] and set(rows0[1:]) == {'part'})
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         c0 = sorted(pg.evaluate(STAGED))
@@ -1201,13 +1207,13 @@ def case_suiteask():
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
         print('D)', d0, d1)
         results.append(d0 == ['"comma"', [['part 1 of 2', 'Trisect, Phase 2'], ['part 2 of 2', 'Trisect, Phase 3']]] and d1 == [None, [['part 1 of 2', 'Trisect: Phase 2'], ['part 2 of 2', 'Trisect: Phase 3']]])
-        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
         e0 = [pg.evaluate(ASK)[0][0], pg.evaluate(PARTS, 2)]
-        pg.click('[data-el=suites] [data-act=suite-no]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-no]'); pg.wait_for_timeout(400)
         e1 = pg.evaluate(ASK)[0][1:3]
-        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
-        pg.fill('[data-el=suites] [data-f=suite-name]', 'Trisect Suite')
-        pg.click('[data-el=suites] [data-act=suite-yes-name]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.fill('[data-el=works] [data-f=suite-name]', 'Trisect Suite')
+        pg.click('[data-el=works] [data-act=suite-yes-name]'); pg.wait_for_timeout(400)
         e2 = [pg.evaluate(PARTS, 0), pg.evaluate(PARTS, 1)]
         print('E) ↺:', e0, '| ✕:', e1, '| anderer Name:', e2)
         results.append('dci-mx-suite' in e0[0] and len(e0[1]) == 1 and e0[1][0][0] == '' and e1 == ['all 4 tracks: no suite “Trisect” ↺ ask again', ['↺ ask again']]
@@ -1253,7 +1259,7 @@ def case_suiteparts():
     PARTS = """(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
       return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 281).map(r => [r.entity0.name, r.entity0.gid, r.entity1.name, r.linkOrder, ids(r)])
         .sort((a, b) => a[3] - b[3]); })()"""
-    LINE = "(x => x ? [x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(b => b.dataset.act), (x.querySelector('a.dci-suite-mb') || {}).href || null] : null)(document.querySelector('[data-el=suites] .dci-mx-suite-done'))"
+    LINE = "(x => x ? [x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(b => b.dataset.act), (x.querySelector('a.dci-suite-mb') || {}).href || null] : null)(document.querySelector('[data-el=works] .dci-mx-suite-done'))"
     PREVIEW = "[...document.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /of the suite/.test(t))"
 
     def stage():
@@ -1268,15 +1274,15 @@ def case_suiteparts():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] .dci-mx-suite')", 60)
         pg.wait_for_timeout(500)
         # D) first: undone, nothing planned
-        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(300)
-        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=works] [data-act=suite-yes]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(300)
         pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
         d0 = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(li => li.textContent).filter(t => /suite/.test(t)).length")
         pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
-        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(500)
+        pg.click('[data-el=works] [data-act=suite-yes]'); pg.wait_for_timeout(500)
         a0 = pg.evaluate(LINE)
         pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
         a1 = pg.evaluate(PREVIEW)
@@ -1286,7 +1292,7 @@ def case_suiteparts():
         print('A)', a0, '| Vorschau:', a1, '| vorgemerkt:', a2)
         results.append(a0 is not None and '＋ Create the suite in MusicBrainz …' in a0[0] and 'Its “parts” wait until the suite exists in MusicBrainz' in a0[0]
                        and a0[1] == ['suite-create', 'suite-undo'] and a0[2] is None and a1 == [] and a2 == [[], 6])
-        pg.click('[data-el=suites] [data-act=suite-create]')
+        pg.click('[data-el=works] [data-act=suite-create]')
         H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
         src = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
         q = urllib.parse.parse_qs(urllib.parse.urlparse(src).query)
@@ -1295,7 +1301,7 @@ def case_suiteparts():
         H.COMPANIES[7096] = ('work', SUITE, 'Trisect')
         H.WORK_TITLES[SUITE] = 'Trisect'
         pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{SUITE}'")
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] a.dci-suite-mb')", 20)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] a.dci-suite-mb')", 20)
         pg.wait_for_timeout(400)
         b1 = [pg.evaluate(LINE), pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] *')].map(x => x.textContent).join(' ')")]
         print('B)', b0, '| Info:', info[:160], '\n  ', b1[0], '|', 'Suite “Trisect” has been created' in b1[1])
@@ -1359,15 +1365,16 @@ def case_medley():
         H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]')", 60)
         pg.wait_for_timeout(500)
         a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]'))"),
-              pg.evaluate("document.querySelectorAll('[data-el=suites] .dci-mx-suite').length")]
+              pg.evaluate("document.querySelectorAll('[data-el=works] .dci-mx-suite').length")]
         print('A)', a0)
         results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Each part a work of its own, linked as a medley in the order of the title: Alpha · Beta' and a0[2] == 0)
-        pg.click('.dci-matrix tr[data-work="2"] [data-act=medley-split]')
+        # ([3.52.0] clicked through the page: scrolled into view, the button may end up below the log of the harness)
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=medley-split]').evaluate('b => b.click()')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /MusicBrainz has works for/.test(li.textContent))", 30)
         pg.wait_for_timeout(500)
         b0 = [pg.evaluate(ROWS), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'medley' in x or 'MusicBrainz has works' in x],
               pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work=\"2\"] [data-act=part-pick]')].map(b => b.textContent.trim())")]
-        pg.click('.dci-matrix tr[data-work="2"] [data-act=part-pick]'); pg.wait_for_timeout(400)
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=part-pick]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
         b1 = pg.evaluate(ROWS)
         print('B)', b0, '\n  ', b1)
         results.append(b0[0] == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'Beta', []]] and b0[2] == ['Link “Beta”']
@@ -1378,7 +1385,7 @@ def case_medley():
         c0 = pg.evaluate(STAGED)
         print('C)', c0)
         results.append(c0 == [['Alpha', 1, [757]], ['Beta', 2, [757]]])
-        pg.click('.dci-matrix tr[data-work="2"] [data-act=medley-join]'); pg.wait_for_timeout(400)
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=medley-join]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
         d0 = pg.evaluate(ROWS)
         print('D)', d0)
         results.append(d0 == [['', '', ['Split into 2 works (medley)']]])
@@ -1400,8 +1407,10 @@ def case_suiteadd():
     C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
     (Until 3.41.10 a suite could only come from the source.)"""
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
-    BOX = """(() => { const b = document.querySelector('[data-el=suites]'); return b ? [...b.children].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim(),
-      [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select')].map(s => [...s.options].map(o => o.textContent))[0] || null]) : null; })()"""
+    # ([3.52.0] the questions in the header rows of the matrix, the box below the head, "＋ Suite …" in the head)
+    BOX = """(() => { const w = document.querySelector('[data-el=works]'); const b = w && w.querySelector('[data-el=suites]'); return b ? [...w.querySelectorAll('.dci-matrix [data-suite]'), ...b.children,
+      ...w.querySelectorAll('.dci-wh-c [data-act=suite-add-open]')].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim(),
+      x.matches('button') ? [x.dataset.act] : [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select')].map(s => [...s.options].map(o => o.textContent))[0] || null]) : null; })()"""
     PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim())"""
     results = []
     with sync_playwright() as p:
@@ -1411,17 +1420,17 @@ def case_suiteadd():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] [data-act=suite-add-open]')", 60)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] [data-act=suite-add-open]')", 60)
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(BOX)
-        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(300)
         a1 = pg.evaluate(BOX)
         pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
         a2 = pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null")
         print('A)', a0, '\n  ', a1, '| ohne Namen:', a2)
-        results.append(a0 == [['dci-sub dci-mx-suite-add', '＋ Suite …', ['suite-add-open'], None]] and a1 and 'dci-mx-suite' in a1[0][0]
+        results.append(a0 == [['dci-small dci-mx-suite-add', '＋ Suite …', ['suite-add-open'], None]] and a1 and 'dci-mx-suite' in a1[0][0]
                        and a1[0][1].startswith('Parts of a suite: tracks') and a1[0][2] == ['suite-add-yes', 'suite-add-cancel'] and len(a1[0][3]) == 4
-                       and a1[0][3][0].startswith('1.1 ') and a2 == 'Please type the name of the suite.' and pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length") == 0)
+                       and a1[0][3][0].startswith('1.1 ') and a2 == 'Please type the name of the suite.' and pg.evaluate("document.querySelectorAll('[data-el=works] [data-suite]').length") == 0)
         pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=1)
         pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
         pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisect')
@@ -1432,19 +1441,19 @@ def case_suiteadd():
                        and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
                        and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
         # (3.41.15, review) tracks of that suite again, under another name: not added (its parts would be lost)
-        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
         pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=2)
         pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
         pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisekt')
         pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
-        b1 = [pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null"), pg.evaluate("document.querySelectorAll('[data-el=suites] [data-suite]').length"),
+        b1 = [pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null"), pg.evaluate("document.querySelectorAll('[data-el=works] [data-suite]').length"),
               pg.evaluate(PARTS, 2)]
         pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
         print('B2) überlappend:', b1)
         results.append(b1 == ['Some of these tracks are in another suite or split as a medley – undo that first.', 1, ['Trisect: ' + H.TITLES[2]]])
-        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
         c0 = [pg.evaluate(BOX), pg.evaluate(PARTS, 1)]
-        pg.click('[data-el=suites] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
         pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
         c1 = pg.evaluate(BOX)
         print('C)', c0, '|', c1)
@@ -1505,7 +1514,7 @@ def case_subtracks():
         print('   Con Duct (tracks: 3):', rows.get('Con Duct'))
         results.append(rows.get('Bass Man') == [['Bass', [3]]] and wz[2][1] and 'composer' in wz[2][1][0] and wz[3][1] == []
                        and rows.get('Con Duct') == [['Conductor', [2, 3]]])
-        suites = pg.evaluate("[...document.querySelectorAll('[data-el=suites] [data-suite] strong')].map(x => x.textContent.trim())")
+        suites = pg.evaluate("[...document.querySelectorAll('[data-el=works] [data-suite] strong')].map(x => x.textContent.trim())")
         print('C)', suites)
         results.append(suites == ['tracks 3–4: parts of the suite “Suite X”?'])
         print('Fehler:', errs)
@@ -1573,25 +1582,25 @@ def case_suiterestage():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] .dci-mx-suite')", 60)
         pg.wait_for_timeout(500)
-        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(400)
-        pg.click('[data-el=suites] [data-act=suite-create]')
+        pg.click('[data-el=works] [data-act=suite-yes]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-create]')
         H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]')", 20)
         H.COMPANIES[7096] = ('work', SUITE, 'Trisect')
         H.WORK_TITLES[SUITE] = 'Trisect'
         pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{SUITE}'")
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] a.dci-suite-mb')", 20)
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] a.dci-suite-mb')", 20)
         stage()
         a1 = pg.evaluate(CHECK)['parts']
         # MusicBrainz has the suite now (by Writer W)
         H.WORK_SEARCH[:] = [{'id': SUITE, 'title': 'Trisect', 'type': 'Suite', 'aliases': [], 'relations': [{'target-type': 'artist', 'type': 'writer', 'artist': {'id': WW, 'name': 'Writer W'}}]}]
-        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
-        pg.click('[data-el=suites] [data-act=suite-yes]')
-        H.wait_for(pg, "!!document.querySelector('[data-el=suites] [data-act=suite-pick]')", 20)
-        a2 = [pg.evaluate("document.querySelector('[data-el=suites] [data-act=suite-pick]').textContent.trim()"), pg.evaluate("!!document.querySelector('[data-el=suites] a.dci-suite-mb')")]
-        pg.click('[data-el=suites] [data-act=suite-pick]'); pg.wait_for_timeout(400)
-        a3 = pg.evaluate("(document.querySelector('[data-el=suites] a.dci-suite-mb') || {}).href || null")
+        pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=works] [data-act=suite-yes]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=works] [data-act=suite-pick]')", 20)
+        a2 = [pg.evaluate("document.querySelector('[data-el=works] [data-act=suite-pick]').textContent.trim()"), pg.evaluate("!!document.querySelector('[data-el=works] a.dci-suite-mb')")]
+        pg.click('[data-el=works] [data-act=suite-pick]'); pg.wait_for_timeout(400)
+        a3 = pg.evaluate("(document.querySelector('[data-el=works] a.dci-suite-mb') || {}).href || null")
         stage()
         a0 = pg.evaluate(CHECK)
         print('A)', a1, a2, a3, a0)
@@ -1607,6 +1616,108 @@ def case_suiterestage():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_wts():
+    """Credits Importer 3.52.0 (collected item Z-WTS; Q-ft, Q-fu, Q-ge): a work type and a lyrics language for all new works, suggested from
+    the works of the artists the works matrix reads anyway (here the release artist: 3 Song in English, 1 Aria in [No lyrics]).
+    A) Yellow below the head: "New works – suggested: Song · English", "from 3 of 4 works of Test Band in MusicBrainz", "Accept", and
+       "if not accepted: neither type nor language is filled in"; each track without a work says "Song · English?" (yellow, its tooltip:
+       not filled in until "Accept").
+    B) Not accepted: the new works are staged without a type and without a language.
+    C) "Accept" (another page): the line and the hints go, the log says so; the defaults (popover of the head) hold Song and English; the new
+       works are staged as Song in English.
+    D) In Node (suggestFromWorks): type and language each on their own, more than half of the works ("" when most have none); fewer than
+       3 works, no majority or a value this page does not offer: not suggested. (review) The languages of a work together; works whose
+       languages are not known (stored by 3.51.0) are not counted; codes of the page's languages count too.
+    E) (review) The works of the artists stored in this browser keep their languages: a new page (works from the store) suggests the
+       same."""
+    import json
+    import subprocess
+    TB = H.uid('dddddddd', 60)
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    H.ARTIST_WORKS.update({TB: [{'id': H.uid('cccccccc', 120 + k), 'title': f'Elsewhere {k}', 'type': t, 'languages': [lg], 'aliases': []}
+                                for k, (t, lg) in enumerate([('Song', 'eng'), ('Song', 'eng'), ('Aria', 'zxx'), ('Song', 'eng')])]})
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    LINE = """(() => { const x = document.querySelector('[data-el=works] [data-el=works-suggest]'); return x ? [(x.querySelector('strong') || {}).textContent,
+      x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(b => b.dataset.act), getComputedStyle(x).backgroundColor] : null; })()"""
+    HINTS = "[...document.querySelectorAll('.dci-matrix tr[data-work] .dci-mx-wtsrow')].map(x => [x.closest('tr').dataset.work, x.textContent.trim(), x.title])"
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && !r.entity1.gid).map(r => [r.entity1.name, r.entity1.typeID,
+      (r.entity1.languages || []).map(l => l.language.id)]).sort())()"""
+    results = []
+
+    def start(ctx):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(400)
+        return pg, errs
+
+    def stage(pg):
+        pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+        return pg.evaluate(STAGED)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = start(ctx)
+        a0, a1 = pg.evaluate(LINE), pg.evaluate(HINTS)
+        print('A)', a0, '\n  ', a1)
+        results.append(a0 is not None and a0[0] == 'Song · English' and 'from the works of Test Band in MusicBrainz: type 3 of 4 · language 3 of 4' in a0[1] and 'mx-wts-accept' in a0[2]
+                       and a0[1].endswith('if not accepted: neither type nor language is filled in') and a0[3] == 'rgb(255, 248, 219)'
+                       and [x[1] for x in a1] == ['Song · English?'] * 3 and all('not filled in until “Accept”' in x[2] for x in a1))
+        b0 = stage(pg)
+        print('B) nicht angenommen:', b0)
+        results.append(len(b0) == 3 and all(x[1] is None and x[2] == [] for x in b0))
+        ctx.close()
+        ctx = H.new_context(b)
+        pg, errs2 = start(ctx)
+        # E) a second page of this browser (before anything is staged): the works of Test Band from the store, with their languages
+        pg3, errs3 = start(ctx)
+        e0 = [pg3.evaluate(LINE), [x for x in pg3.evaluate(LOGS) if 'Test Band' in x][:3]]
+        pg3.close()
+        print('E) aus dem Speicher:', e0)
+        results.append(e0[0] is not None and e0[0][0] == 'Song · English' and any('from the store' in x for x in e0[1]))
+        pg.bring_to_front()
+        pg.locator('[data-el=works] [data-act=mx-wts-accept]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.locator('[data-el=works] [data-act=mx-defaults]').first.evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        c0 = [pg.evaluate(LINE), pg.evaluate(HINTS), [x for x in pg.evaluate(LOGS) if 'suggestion taken' in x],
+              pg.evaluate("(document.querySelector('[data-el=works] select[data-f=work-type]') || {}).value"),
+              pg.evaluate("[...document.querySelectorAll('[data-el=works] [data-el=works-defaults] .dci-lang-chip')].map(x => x.firstChild.textContent.trim())")]
+        pg.locator('[data-el=works] [data-act=mx-defaults]').first.evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        c1 = stage(pg)
+        print('C) angenommen:', c0, '| gestaged:', c1)
+        results.append(c0[0] is None and c0[1] == [] and c0[2] == ['New works: Song · English – the suggestion taken (each work can still be changed)'] and c0[3] == '17' and c0[4] == ['English']
+                       and len(c1) == 3 and all(x[1] == 17 and x[2] == [120] for x in c1))
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const T = [{ id: 17, name: 'Song' }, { id: 1, name: 'Aria' }], L = [{ id: 120, name: 'English' }, { id: 486, name: '[No lyrics]' }];
+const w = (type, ...l) => ({ type, languages: l.filter(Boolean) });
+const f = (xs, codes) => m.suggestFromWorks(xs, T, L, codes);
+console.log(JSON.stringify([f([w('', 'zxx'), w('', 'zxx'), w('', 'zxx'), w('Song', 'eng'), w('Song', 'zxx')]), f([w('Song', 'eng'), w('Song', 'eng')]),
+  f([w('Song', 'eng'), w('Song', 'eng'), w('Aria', 'eng'), w('', 'eng')]), f([w('Song', 'eng'), w('Aria', 'zxx'), w('', 'deu')]),
+  f([w('Opera', 'deu'), w('Opera', 'deu'), w('Opera', 'deu')]), f([w('Song', ''), w('Song', ''), w('Song', 'eng')]),
+  f([{ type: 'Song' }, { type: 'Song' }, { type: 'Song' }, w('Aria', 'eng')]), f([w('Song', 'eng', 'zxx'), w('Song', 'zxx', 'eng'), w('Aria', 'eng')]),
+  f([w('Song', 'isl'), w('Song', 'isl'), w('Song', 'isl')], { isl: 120 })]));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-400:]}
+    print('D)', got)
+    # (review) several languages of a work together; a work whose languages are not known (a record of 3.51.0) not counted; a code of the
+    # page's languages (linkedEntities) beyond the built-in list
+    results.append(got == [{'typeId': '', 'langIds': ['486'], 'nType': 3, 'nLang': 4, 'of': 5, 'ofLang': 5}, None, {'langIds': ['120'], 'nType': 0, 'nLang': 4, 'of': 4, 'ofLang': 4},
+                           None, None, {'typeId': '17', 'langIds': [], 'nType': 3, 'nLang': 2, 'of': 3, 'ofLang': 3}, {'typeId': '17', 'nType': 3, 'nLang': 0, 'of': 4, 'ofLang': 1},
+                           {'typeId': '17', 'langIds': ['120', '486'], 'nType': 2, 'nLang': 2, 'of': 3, 'ofLang': 3}, {'typeId': '17', 'langIds': ['120'], 'nType': 3, 'nLang': 3, 'of': 3, 'ofLang': 3}])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
