@@ -22,3 +22,17 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
 - **When:** the GitHub Action `.github/workflows/global-stats.yml` – on Thursdays and Sundays (after the dumps of Wednesday and
   Saturday; nothing is done when the dump is the one read last), by hand (Actions → "Global statistics" → Run workflow), and once
   after a change of the script on `main`. The first run makes the branch `stats`.
+- **Once a week – the core dump** (from Credits Importer 3.55.0, collected item Z-AGS; Q-fl, Q-fr): on Sundays (or by hand,
+  "Run workflow" with **core**) the workflow also reads `mbdump.tar.bz2` of the same export as a stream – the tables `area`,
+  `artist`, `artist_type`, `gender`, `iso_3166_1`, `language`, `link_attribute_type`, `medium`, `recording`, `release`,
+  `release_group` and its types, `script` – for the artists and recordings of the relationships the script added (open or applied) and the release of each submission (the one
+  most of its edits are linked with in `edit_release` – MusicBrainz links an edit of a recording's or a work's relationship with every
+  release of it) (the edit pass writes
+  them to a file of the run, `--facts`, which is not committed). The result gets a section **`core`**: the artists (how many, their
+  type, gender, decade of their begin, country, the town they began in, the centuries they were there, posthumous relationships –
+  by the date of the relationship), the releases (single or several media, the primary and secondary types of their release
+  groups, language and script), the lengths of the recordings (median, average) and the role credits (of the relationships with an
+  instrument or vocal attribute). On the other days the section of before is kept (`--keep-core`) – the core pass also runs when it is missing or 6 days old; a failed
+  core pass (at most 150 minutes) keeps it too, with a warning.
+  Besides, every run counts the **"credited as"** of the relationships the script added with an artist, a label or a place
+  (section `credits`). Still only numbers (and the names of types, languages, scripts, countries and towns).

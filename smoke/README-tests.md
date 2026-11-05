@@ -531,6 +531,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     role credits and credited as, aliases, media and types, language and script, recording lengths (Median | Average),
                                 #     "Show when you work" off, "Show “Global”" off (nothing loaded) – the clock fixed on 2026-06-17
                                 #   statsrec: 3.53.0: what a record holds of the release (media, types, language, script, lengths) and per relationship
+                                #   globalcore: 3.55.0 (Z-AGS): "Global" with the section of the core dump (artists, releases, language and
+                                #     script, lengths, role credits) and "credited as"; a file without them: a line instead
                                 #   statsart: 3.54.0 (Z-AST, Z-PLS): the artists of the relationships (type, gender, decade, country, town, centuries,
                                 #     posthumous), labels and places used most (by MBID); the lookups in the dashboard (off: none; kept ones not again), deleted
                                 #   versions: 3.51.0 (Z-VER): the versions of script, mapping file and companion in the head, ⚠ and the link when GitHub has a newer one (once a day)

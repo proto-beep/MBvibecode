@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.54.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.55.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.55.0 · 2026-11-05
+
+Block 12 – Z-AGS (the global parts of Z-ALI, Z-RLS, Z-LNG, Z-RDU, Z-AST).
+
+- **`stats/global_stats.py`:** the edit pass – `rel_facts(d, lt)` (an added relationship: its artists, the year of its date, its attributes (type id, credited), creditable / credited), `Stats.facts`, `link_row` (`edit_release`, `edit_recording` of the script's edits), the section `credits` (`credited_as`), `--facts` (a file of the run, not committed), `--keep-core` (the section `core` of before); the core pass `--core --facts … --merge …` – **`Core`** reads `area`, `artist`, `artist_type`, `gender`, `iso_3166_1`, `language`, `link_attribute_type`, `medium`, `recording`, `release`, `release_group` and its types, `script` (columns as in CreateTables.sql) and gives `core` {dump, artists, releases, lengths, role_credits}; a core archive without its tables is an error (the result as it was).
+- **`stats/test_global_stats.py`:** the facts, the section `credits`, a made-up core dump (`build_core`), its section, a cut-off core dump, `--keep-core`. **`stats/README.md`**: the weekly core pass.
+- **`.github/workflows/global-stats.yml`:** input `core`; the step "Read the core dump" on Sundays or when asked (`continue-on-error`: a failed core pass keeps the section of before); the edit pass with `--facts` and `--keep-core`.
+- **Script:** `globalStatsClean` keeps `credits` and `core` (numbers, names of at most 80 characters); **`globalCoreHtml(d)`** (new; cards `stats-global-credits`, `-artists`, `-media`, `-script`, `-lengths`, the line `stats-global-corehead` or `stats-global-nocore`); CSS `.dci-stats-cards > .dci-stats-wide`; texts `stats.global.coreHead`, `noCore`, `rc`, `artN`, `post`, `relN`, `lenMedian`, `lenMean`.
+- **Tests:** `t_ui_settings.py globalcore` (new).
+- **Review of Block 12:** the recordings from the added relationships themselves (`edit_data`), the release of a submission the one most of its edits are linked with (`edit_release` links a recording's or a work's relationship with every release of it); the facts as short strings (`rel_facts` / `facts_of` – millions of edits are kept until the notes are read), numbers also as digits (`as_int`), only open or applied edits; the core pass keeps only the release groups of the wanted releases; `--keep-core` with an odd file, the result written to a temporary file first; the workflow: the old result only from the data branch (a branch there but not fetched: the run stops), the core pass also when the section of before is missing or 6 days old, `timeout-minutes: 150` and a warning when it fails; `globalCoreHtml` the centuries in the order of time.
 
 ## Import 3.54.0 · 2026-11-05
 
