@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-05 | 3.51.0 – 3.52.0 | – |
+| 2026-11-05 | 3.51.0 – 3.53.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -101,6 +101,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-05
+
+### Import 3.53.0
+
+Block 10 – the statistics of this browser: collected items Z-STK, Z-WKD, Z-STH, Z-GOF, Z-ALI, Z-RLS, Z-LNG, Z-RDU (Q-fn, Q-fo, Q-fq, Q-fx, Q-fy, Q-gi).
+
+#### Added / changed
+
+- **When you work:** besides the days in a row, **weeks in a row** (from Monday) and **months in a row** (calendar months) – now and the longest; the **most active weekday**, by relationships and by "Enter edit".
+- **Role credits and credited as** (a card of its own): the share of relationships with instruments or vocals that have a role credit, the share with a "credited as", the entries found through an alias, the role credits used most.
+- **Media and types:** the releases on a single medium or on several; the primary and secondary types of their release groups.
+- **Language and script** of the releases, as in MusicBrainz's "Additional details".
+- **Recording lengths:** a recording, and per release (the lengths of its recordings) – **Median | Average**, remembered; recordings without a length are left out.
+- These count each release edited with the script once; imports before 3.53.0 do not hold them ("Counted from 3.53.0 on").
+- **⚙ Settings → Cache:** **Show when you work** (hours, weekdays, days / weeks / months in a row, the most active weekday, the most in a day – the time per release and the months stay) and **Show “Global”** (off: only this browser, nothing loaded from GitHub).
+
+#### Fixed (review of Block 10)
+
+- **Credited as** counts among the relationships with artists, labels and places, **found through an alias** among the artists; a release first submitted before 3.53.0 counts with its next submission; the per-release length follows Median | Average too; a recording without a length of its own is left out; days with the same number all named as most active weekday; "[Multiple scripts]", "[Artificial (Other)]" and the Han scripts named as on MusicBrainz; "Show “Global”" off also forgets "Global" as the last choice and the copy of the global statistics.
 
 ### Import 3.52.0
 

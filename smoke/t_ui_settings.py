@@ -1278,6 +1278,170 @@ def case_statsmore():
 
 
 
+def case_statsb10():
+    """Credits Importer 3.53.0 (Block 10: Z-STK, Z-WKD, Z-STH, Z-GOF, Z-ALI, Z-RLS, Z-LNG, Z-RDU) – seven submissions of six releases
+    seeded, the clock of the page fixed on Wednesday, 2026-06-17 (the 15th, 16th, 17th of June; the 9th and 10th; 15 May; 21 April).
+    A) When you work: days in a row now 3, longest 3; weeks (from Monday) now 2, longest 2; months now 3, longest 3; the most active
+       weekday by relationships Wednesday (5), by "Enter edit" Tuesday (4).
+    B) Role credits and credited as: 60 % (3 of 5 with instruments or vocals), 18 % (2 of 11 – (review) relationships with artists,
+       labels, places), found through an alias 13 % (1 of 8 – (review) artists); the role credits used most "lead" 2, "solo" 1;
+       "Counted from 3.53.0 on" (records of 3.52.0).
+    C) Media and types (each release once, its first record of 3.53.0 – (review) also for a release first submitted with 3.52.0): single
+       4, several 2; Album 3, EP 1, Single 1, no primary type 1; Live 3, Compilation 1. Language and script: English 3, German 1,
+       [No linguistic content] 1, [Artificial (Other)] 1; Latin 4, not set 1, [Multiple scripts] 1.
+    D) Recording lengths: median 3:10 (8 recordings), per release 3:20 (5 releases – the median of each release's median); Average:
+       3:06 and 2:56 (remembered).
+    E) ⚙ Settings → Cache "Show when you work" off: no weekdays, hours, streaks, most active weekday or "Most in a day" – a line says
+       so; the most for a release stays.
+    F) "Show “Global”" off (with "Global" chosen before): no "This browser | Global", only this browser, nothing loaded from GitHub;
+       (review) the choice "Global" and the copy of the global statistics are not kept."""
+    import datetime
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.clock.set_fixed_time(datetime.datetime(2026, 6, 17, 12, 0, 0))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        at = lambda *ymdh: pg.evaluate("([y, m, d, h]) => new Date(y, m - 1, d, h).getTime()", list(ymdh))
+        rel = lambda title, media, rgp, rgs, lang, script, lens: {'title': title, 'year': 2001, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0,
+                                                                   'media': media, 'rgp': rgp, 'rgs': rgs, 'lang': lang, 'script': script, 'lens': lens}
+        rA = rel('A', 2, 'Album', ['Live'], 'eng', 'Latn', [180000, 240000])
+
+        def r3(k, lt, lv, et, tg, tn, i=(), v=(), rc=0, ac=0, rt=(), al=0):
+            x = stat_rel(k, lt, lv, et, tg, tn, i)
+            x.update({'v': list(v), 'rc': rc, 'ac': ac, 'rt': list(rt), 'al': al})
+            return x
+
+        def rec(n, ymd, mbid, relinfo, rels, v=3):
+            return {'v': v, 'id': f'{mbid}:{n}', 'mbid': mbid, 'at': at(*ymd, 10), 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': relinfo, 'own': 0, 'ocr': None, 'rels': rels}
+        recs = [
+            rec(1, (2026, 6, 17), 'm1', rA, [r3('n', 'instrument', 'recording', 'artist', 'g1', 'Ann', ['piano'], rc=1, ac=1, rt=['lead'], al=1),
+                                             r3('n', 'instrument', 'recording', 'artist', 'g2', 'Bob', ['bass']), r3('n', 'producer', 'release', 'artist', 'g5', 'Cid')]),
+            rec(2, (2026, 6, 16), 'm2', rel('B', 1, 'Album', [], 'deu', 'Latn', [200000]), [r3('n', 'vocal', 'recording', 'artist', 'g3', 'Dee', v=['lead vocals'], rc=1, rt=['lead'])]),
+            rec(3, (2026, 6, 15), 'm3', rel('C', 1, '', ['Compilation', 'Live'], 'zxx', '', []), [r3('n', 'producer', 'release', 'artist', 'g4', 'Eve'),
+                                                                                             r3('n', 'performance', 'recording', 'work', 'w9', 'Song')]),
+            rec(4, (2026, 6, 10), 'm4', {'title': 'D', 'year': 1999, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0},
+                [stat_rel('n', 'instrument', 'recording', 'artist', 'g6', 'Fay', ['drums'])], v=2),
+            rec(5, (2026, 5, 15), 'm1', rA, [r3('n', 'producer', 'release', 'artist', 'g1', 'Ann')]),
+            rec(6, (2026, 4, 21), 'm5', rel('E', 1, 'EP', [], 'eng', 'Latn', [300000, 100000, 200000]), [r3('n', 'instrument', 'recording', 'artist', 'g7', 'Gil', ['guitar'], rc=1, ac=1, rt=['solo'])]),
+            rec(7, (2026, 6, 9), 'm6', rel('F', 3, 'Album', ['Live'], 'qaa', 'Qaaa', [150000]), [r3('n', 'producer', 'release', 'artist', 'g8', 'Hal')]),
+            # (review) a release first submitted with 3.52.0, then with 3.53.0: counted from its record of 3.53.0
+            rec(8, (2026, 6, 9), 'm7', {'title': 'G', 'year': 2000, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0},
+                [stat_rel('n', 'producer', 'release', 'artist', 'g9', 'Ida')], v=2),
+            rec(9, (2026, 6, 17), 'm7', rel('G', 1, 'Single', [], 'eng', 'Latn', [120000]), [r3('n', 'producer', 'release', 'artist', 'g10', 'Jon')]),
+        ]
+        pg.evaluate("localStorage.setItem('dci-stats-scope', JSON.stringify('global'))")
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        pg.evaluate("localStorage.setItem('dci-stats-scope', 'null')")
+        H.open_stats(pg)
+        pg.wait_for_timeout(300)
+        # (the scope remembered as "Global": "This browser" first)
+        if pg.locator('[data-act=stats-scope][data-scope=local]').count():
+            pg.click('[data-act=stats-scope][data-scope=local]'); pg.wait_for_timeout(400)
+        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-${k}]`))"
+        card = lambda k: pg.evaluate(CARD, k)
+        a0 = card('when')
+        print('Gesät:', seeded, '\nA)', a0)
+        results.append(seeded and all(x in a0 for x in ['Days in a row: now 3, longest 3', 'Weeks in a row (from Monday): now 2, longest 2', 'Months in a row: now 3, longest 3',
+                                                        'Most active weekday by relationships: Wednesday (5)', 'Most active weekday by “Enter edit”: Tuesday (4)']))
+        b0 = card('credits')
+        print('B)', b0)
+        # ((review) credited as: of artists, labels and places – not the work; an alias: of artists)
+        results.append(b0 is not None and all(x in b0 for x in ['With a role credit: 60 % (3 of 5 with instruments or vocals)', 'Credited as: 18 % (2 of 11)',
+                                                                  'Entries found through an alias: 13 % (1 of 8)', 'lead 2', 'solo 1', 'Counted from 3.53.0 on – the imports before do not hold it.']))
+        c0, c1 = card('media'), card('script')
+        print('C)', c0, '|', c1)
+        results.append(c0 is not None and all(x in c0 for x in ['single medium 4', 'several media 2', 'Album 3', 'EP 1', 'Single 1', 'no primary type 1', 'Live 3', 'Compilation 1'])
+                       and c1 is not None and all(x in c1 for x in ['English 3', 'German 1', '[No linguistic content] 1', '[Artificial (Other)] 1', 'Latin 4', 'not set 1', '[Multiple scripts] 1']))
+        d0 = card('lengths')
+        pg.click('[data-el=stats-lengths] [data-act=stats-len-view][data-view=mean]'); pg.wait_for_timeout(300)
+        d1 = [card('lengths'), pg.evaluate("localStorage.getItem('dci-stats-len')")]
+        print('D)', d0, '|', d1)
+        # ((review) per release: the median of each release's median too)
+        results.append(d0 is not None and 'A recording: 3:10 (8 recordings)' in d0 and 'Per release (its recordings): 3:20 (5 releases)' in d0
+                       and 'A recording: 3:06 (8 recordings)' in d1[0] and 'Per release (its recordings): 2:56 (5 releases)' in d1[0] and d1[1] == '"mean"')
+        # E) when you work switched off
+        H.open_settings(pg, 'cache')
+        pg.click('[data-el=settings] [data-set=stats-daily]'); pg.wait_for_timeout(300)
+        H.open_stats(pg); pg.wait_for_timeout(300)
+        e0 = [card('when'), pg.evaluate("document.querySelectorAll('[data-el=stats-when] .dci-stats-cols').length"), pg.evaluate("localStorage.getItem('dci-stats-daily')")]
+        print('E)', e0)
+        results.append(e0[1] == 0 and e0[2] == 'false' and not any(('in a row:' in x or 'weekday by' in x or x.startswith('Most in a day')) for x in e0[0])
+                       and any(x.startswith('When you work (hours, weekdays, days / weeks / months in a row, the most active weekday, the most in a day) is not shown') for x in e0[0]) and any(x.startswith('Most for a release') for x in e0[0]))
+        # F) "Global" switched off
+        pg.evaluate("localStorage.setItem('dci-stats-scope', JSON.stringify('global'))")
+        H.open_settings(pg, 'cache')
+        n0 = len([u for u in H.RAW_REQUESTS if 'global' in u]) if hasattr(H, 'RAW_REQUESTS') else 0
+        pg.click('[data-el=settings] [data-set=stats-global-on]'); pg.wait_for_timeout(300)
+        H.open_stats(pg); pg.wait_for_timeout(500)
+        f0 = [pg.evaluate("document.querySelectorAll('[data-act=stats-scope]').length"), pg.evaluate("!!document.querySelector('.dci-stats-local')"),
+              pg.evaluate("!!document.querySelector('[data-el=stats-when]')"), pg.evaluate("localStorage.getItem('dci-stats-global-on')"),
+              (len([u for u in H.RAW_REQUESTS if 'global' in u]) if hasattr(H, 'RAW_REQUESTS') else 0) - n0]
+        print('F)', f0)
+        f1 = [pg.evaluate("localStorage.getItem('dci-stats-scope')"), pg.evaluate("localStorage.getItem('dci-stats-global')")]
+        print('   gespeichert:', f1)
+        results.append(f0 == [0, True, True, 'false', 0] and f1 == [None, None])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsrec():
+    """Credits Importer 3.53.0 (Z-RLS, Z-LNG, Z-RDU, Z-ALI): what a submission records of the release and its relationships. The
+    release of the harness with a release group "Album" + "Live", the script Latin and lengths for three of its four recordings;
+    everything staged, "Enter edit": the record (version 3) holds the number of media (1), "Album", ["Live"], "eng", "Latn", the three
+    lengths; each relationship its role credits ("rt") and whether its entry was found through an alias ("al")."""
+    results = []
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group'] = dict(d['release-group'], **{'primary-type': 'Album', 'secondary-types': ['Live']})
+        d['text-representation'] = {'language': 'eng', 'script': 'Latn'}
+        for m in d['media']:
+            for t in m['tracks']:
+                if t['position'] != 4:
+                    t['recording'] = dict(t['recording'], length=180000 + 1000 * t['position'])
+        return d
+
+    H.ws_release = ws
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        r = recs[0] if recs else {}
+        rel = r.get('rel') or {}
+        print('Datensatz:', r.get('v'), {k: rel.get(k) for k in ('media', 'rgp', 'rgs', 'lang', 'script', 'lens')}, '| rt/al:', [(x.get('rt'), x.get('al')) for x in r.get('rels', [])][:4])
+        results.append(len(recs) == 1 and r.get('v') == 3 and rel.get('media') == 1 and rel.get('rgp') == 'Album' and rel.get('rgs') == ['Live'] and rel.get('lang') == 'eng'
+                       and rel.get('script') == 'Latn' and sorted(rel.get('lens') or []) == [181000, 182000, 183000]
+                       and r.get('rels') and all(isinstance(x.get('rt'), list) and x.get('al') in (0, 1) for x in r['rels']))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsmore2():
     """Credits Importer 3.41.14 (collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC; Q-cv, Q-cw): the cards of
     3.41.14, for everyone (not only in "Developer mode"), from four stored submissions – one of 3.41.13 (v 1) and three of 3.41.14:
@@ -1363,7 +1527,8 @@ def case_statsmore2():
         print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
         # ((3.42.6, Z-STG2) and the tags of Bandcamp)
-        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
+        # ([3.53.0] version 3: the release's media, types, language, script and lengths; role credits and aliases)
+        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
