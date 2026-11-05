@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.54.0
+// @version      3.55.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.54.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.54.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.55.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.55.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.54.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.55.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1814,6 +1814,14 @@
       "stats.global.old": "Could not be loaded just now – these are the numbers of the last time.",
       "stats.global.none": "The global statistics are not there yet (or cannot be loaded now).",
       "stats.global.reload": "Load again",
+      "stats.global.coreHead": "From MusicBrainz's database dump of {date} (read once a week): the artists, releases and recordings of all edits with the script.",
+      "stats.global.noCore": "The artists, releases and recordings of all users come with the weekly reading of MusicBrainz's database dump.",
+      "stats.global.rc": "With a role credit: {pct} ({n} of {of} with instruments or vocals)",
+      "stats.global.artN": "Artists: {n} (of {of} in the relationships)",
+      "stats.global.post": "Posthumous: {n} of {of} relationships of artists who had died or broken up (by the date of the relationship)",
+      "stats.global.relN": "Releases: {n}",
+      "stats.global.lenMedian": "A recording – median: {time} ({n} recordings)",
+      "stats.global.lenMean": "A recording – average: {time}",
       "stats.global.edits": "edits",
       "stats.global.submissions": "submissions",
       "stats.global.editors": "editors",
@@ -35272,9 +35280,24 @@
     if (!d || typeof d !== 'object' || Array.isArray(d) || !d.totals || typeof d.totals !== 'object') return null;
     const nums = (o) => Object.fromEntries(Object.entries(obj(o)).slice(0, 200).map(([k, v]) => [String(k).slice(0, 80), Number(v) || 0]));
     const rows = (o, keys) => Object.fromEntries(Object.entries(obj(o)).slice(0, 200).map(([k, v]) => [String(k).slice(0, 40), Object.fromEntries(keys.map((f) => [f, Number(obj(v)[f]) || 0]))]));
+    // [Z-AGS] (3.55.0) "credited as" (every run) and the section of the core dump (once a week): only numbers, names of at most 80 characters
+    const pair = (o) => ({ n: Number(obj(o).n) || 0, of: Number(obj(o).of) || 0 });
+    const c = obj(d.core);
+    const ca = obj(c.artists);
+    const cr = obj(c.releases);
+    const cl = obj(c.lengths);
+    const ms = (x) => (Number.isFinite(Number(x)) && x != null ? Number(x) : null);
+    const core = c.artists || c.releases ? {
+      dump: String(c.dump || '').slice(0, 40),
+      artists: { n: Number(ca.n) || 0, of: Number(ca.of) || 0, types: nums(ca.types), genders: nums(ca.genders), decades: nums(ca.decades), countries: nums(ca.countries),
+        towns: nums(ca.towns), centuries: nums(ca.centuries), posthumous: pair(ca.posthumous) },
+      releases: { n: Number(cr.n) || 0, media: nums(cr.media), rg_primary: nums(cr.rg_primary), rg_secondary: nums(cr.rg_secondary), languages: nums(cr.languages), scripts: nums(cr.scripts) },
+      lengths: { recordings: Number(cl.recordings) || 0, median_ms: ms(cl.median_ms), mean_ms: ms(cl.mean_ms) },
+      role_credits: pair(c.role_credits),
+    } : null;
     return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
       by_version: rows(d.by_version, ['edits', 'submissions']), by_status: nums(d.by_status), by_source: nums(d.by_source), by_relationship_type: nums(d.by_relationship_type),
-      done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type) };
+      done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type), credits: { credited_as: pair(obj(d.credits).credited_as) }, core };
   }
 
   /** [Z-GST] (3.47.0) "Global": all users of the script on MusicBrainz, as the edit dump has them. */
@@ -35337,7 +35360,46 @@
     const status = [...merged(d.by_status, (k) => lbl(`stats.global.st.${k.replace(/\s+/g, '_')}`, k)).entries()].sort((x, y) => y[1] - x[1]).slice(0, 8);
     const lists = `<div class="dci-stats-lists">${list('versions', versions)}${list('sources', sources)}${list('types', top(d.by_relationship_type, 10))}</div>
       <div class="dci-stats-lists">${list('levels', top(d.done_by_level, 4), (k) => lbl(`level.${k.replace(' ', '_')}`, k))}${list('edits', top(d.by_edit_type, 6), (k) => k.replace(/^\d+\s+/, ''))}${list('status', status)}</div>`;
-    return [head, tiles, `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>`, table, lists];
+    return [head, tiles, `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>`, table, lists, globalCoreHtml(d)];
+  }
+
+  /**
+   * [Z-AGS] (3.55.0; Q-fl, Q-fr) "Global" from MusicBrainz's core dump (read once a week by the workflow): the artists, releases and
+   * recordings of all users' edits with the script, and their role credits – as the cards of this browser; "credited as" from every run.
+   */
+  function globalCoreHtml(d) {
+    const c = d.core;
+    const ca = d.credits && d.credits.credited_as && d.credits.credited_as.of ? d.credits.credited_as : null;
+    const num = (x) => statNum(Number(x) || 0);
+    // ((review) the centuries in the order of time: byTime)
+    const kvo = (o, label = (k) => k, n = 6, byTime = false) => {
+      const pairs = Object.entries(o || {}).sort(byTime ? (x, y) => Number(x[0]) - Number(y[0]) : (x, y) => (Number(y[1]) || 0) - (Number(x[1]) || 0)).slice(0, n);
+      return pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, v]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${num(v)}</span></li>`).join('')}</ul>` : `<p class="dci-sub">–</p>`;
+    };
+    const card = (key, body) => `<div class="dci-stats-card" data-el="stats-global-${key}"><h4>${esc(tr(`stats.more.${key}`))}</h4>${body}</div>`;
+    const pct = (p) => `${statPct(p.n, p.of)} %`;
+    const dumpDate = (x) => {
+      const m = /^(\d{4})(\d{2})(\d{2})/.exec(String(x || ''));
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : '–';
+    };
+    const credits = `<ul class="dci-stats-kv">${c ? `<li>${esc(tr('stats.global.rc', { pct: pct(c.role_credits), n: num(c.role_credits.n), of: num(c.role_credits.of) }))}</li>` : ''}
+      ${ca ? `<li>${esc(tr('stats.ali.ac', { pct: pct(ca), n: num(ca.n), of: num(ca.of) }))}</li>` : ''}</ul>`;
+    if (!c) return `<div class="dci-stats-cards" data-el="stats-global-core">${ca && ca.of ? card('credits', credits) : ''}<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p></div>`;
+    const a = c.artists;
+    const r = c.releases;
+    return `<div class="dci-stats-cards" data-el="stats-global-core"><p class="dci-sub dci-stats-wide" data-el="stats-global-corehead">${esc(tr('stats.global.coreHead', { date: dumpDate(c.dump) }))}</p>
+      ${card('credits', credits)}
+      ${card('artists', `<p>${esc(tr('stats.global.artN', { n: num(a.n), of: num(a.of) }))}</p>
+        <h5>${esc(tr('stats.art.type'))}</h5>${kvo(a.types, (k) => (k === '-' ? tr('stats.art.noType') : k))}<h5>${esc(tr('stats.art.gender'))}</h5>${kvo(a.genders)}
+        <h5>${esc(tr('stats.art.decade'))}</h5>${kvo(a.decades)}<h5>${esc(tr('stats.art.country'))}</h5>${kvo(a.countries, statCountryName)}
+        <h5>${esc(tr('stats.art.town'))}</h5>${kvo(a.towns)}<h5>${esc(tr('stats.art.century'))}</h5>${kvo(a.centuries, (k) => `${k}–${Number(k) + 99}`, 30, true)}
+        <p>${esc(tr('stats.global.post', { n: num(a.posthumous.n), of: num(a.posthumous.of) }))}</p>`)}
+      ${card('media', `<p>${esc(tr('stats.global.relN', { n: num(r.n) }))}</p>${kvo(r.media, (k) => tr(`stats.media.${k === 'multi' ? 'multi' : 'single'}`))}
+        <h5>${esc(tr('stats.rg.primary'))}</h5>${kvo(r.rg_primary, (k) => (k === '-' ? tr('stats.rg.none') : k))}<h5>${esc(tr('stats.rg.secondary'))}</h5>${kvo(r.rg_secondary)}`)}
+      ${card('script', `<h5>${esc(tr('stats.lang'))}</h5>${kvo(r.languages, (k) => statLangName(k, 'language'))}<h5>${esc(tr('stats.script'))}</h5>${kvo(r.scripts, (k) => statLangName(k, 'script'))}`)}
+      ${card('lengths', `<ul class="dci-stats-kv"><li>${esc(tr('stats.global.lenMedian', { time: statLen(c.lengths.median_ms), n: num(c.lengths.recordings) }))}</li>
+        <li>${esc(tr('stats.global.lenMean', { time: statLen(c.lengths.mean_ms) }))}</li></ul>`)}
+    </div>`;
   }
 
   /**
@@ -38843,6 +38905,8 @@
       /* [Z-OVL] (3.51.0) nothing runs out of a card: it is as narrow as its column, what is wider scrolls inside it */
       .dci-stats-card { min-width: 0; overflow-x: auto; }
       .dci-stats-card[data-el="stats-sources"] { grid-column: 1 / -1; }
+      /* [Z-AGS] (3.55.0) the line of the core dump over the whole width */
+      .dci-stats-cards > .dci-stats-wide { grid-column: 1 / -1; margin: 0; }
       /* [Z-VER] (3.51.0) the versions in the head of ⚙ Settings */
       .dci-set-versions { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
       .dci-set-versions .dci-ver-up { color: #a23b00; font-weight: 600; }

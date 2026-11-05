@@ -6,6 +6,11 @@ name: Global statistics
 
 on:
   workflow_dispatch:
+    inputs:
+      core:
+        description: 'Also read the core dump mbdump.tar.bz2 (artists, releases, recordings – normally only on Sundays)'
+        type: boolean
+        default: false
   # (Thursday and Sunday, after the dumps of Wednesday and Saturday)
   schedule:
     - cron: '17 5 * * 0,4'
@@ -50,18 +55,49 @@ jobs:
           [[ "$DUMP" =~ ^[0-9]{8}-[0-9]{6}$ ]] || { echo "unexpected LATEST: $DUMP"; exit 1; }
           echo "dump=$DUMP" >> "$GITHUB_OUTPUT"
           OLD=''
+          echo '{}' > "$RUNNER_TEMP/old.json"
           if git fetch -q --depth 1 origin "$DATA_BRANCH" 2>/dev/null; then
             OLD=$(git show "FETCH_HEAD:$OUT" 2>/dev/null | python3 -c "import json,sys;print(json.load(sys.stdin).get('dump',''))" 2>/dev/null || true)
+            # [3.55.0] the result of before (its section "core" is kept when the core dump is not read)
+            git show "FETCH_HEAD:$OUT" > "$RUNNER_TEMP/old.json" 2>/dev/null || echo '{}' > "$RUNNER_TEMP/old.json"
+          elif git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
+            # ((3.55.0, review) the data branch is there but could not be read: not run on without it)
+            echo "the branch $DATA_BRANCH could not be fetched"; exit 1
           fi
           # (a scheduled run with nothing new does nothing)
           if [ "${{ github.event_name }}" = schedule ] && [ "$OLD" = "$DUMP" ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
           echo "dump: $DUMP (last: ${OLD:-none})"
+          # [3.55.0, Z-AGS] the core dump once a week (Sundays) or when asked – ((review) and when the section "core" of before is missing
+          # or 6 days or more older than this dump); else it is kept
+          STALE=$(DUMP="$DUMP" python3 -c "
+          import datetime as d, json, os, sys
+          c = (json.load(open(sys.argv[1])) or {}).get('core') or {}
+          f = lambda x: d.datetime.strptime(x[:8], '%Y%m%d')
+          try: print(1 if (f(os.environ['DUMP']) - f(c.get('dump') or '')).days >= 6 else 0)
+          except ValueError: print(1)" "$RUNNER_TEMP/old.json" 2>/dev/null || echo 1)
+          if [ "$(date -u +%u)" = 7 ] || [ "${{ inputs.core }}" = true ] || [ "$STALE" = 1 ]; then echo "core=1" >> "$GITHUB_OUTPUT"; fi
       - name: Read the edit dump
         if: steps.dump.outputs.skip != '1'
         env:
           DUMP: ${{ steps.dump.outputs.dump }}
         run: |
-          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump-edit.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --dump "$DUMP" --out "$RUNNER_TEMP/global.json"
+          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump-edit.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --dump "$DUMP" --out "$RUNNER_TEMP/global.json" \
+            --facts "$RUNNER_TEMP/facts.json" --keep-core "$RUNNER_TEMP/old.json"
+      # [3.55.0, Z-AGS] the artists, releases and recordings of the script's edits, from the core dump (only numbers go into the result)
+      - name: Read the core dump
+        id: core
+        if: steps.dump.outputs.skip != '1' && steps.dump.outputs.core == '1'
+        # (a failed core pass keeps the section "core" of before: the edit pass's result is committed all the same – (review) within its own
+        # time, so that the job's time is not used up)
+        continue-on-error: true
+        timeout-minutes: 150
+        env:
+          DUMP: ${{ steps.dump.outputs.dump }}
+        run: |
+          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --core --facts "$RUNNER_TEMP/facts.json" --merge "$RUNNER_TEMP/global.json" --dump "$DUMP"
+      - name: The core dump failed
+        if: steps.core.outcome == 'failure'
+        run: echo "::warning::The core dump could not be read – the section \"core\" of before is kept"
       - name: Commit the result to the data branch
         if: steps.dump.outputs.skip != '1'
         env:
