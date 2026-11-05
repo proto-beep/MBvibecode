@@ -343,8 +343,13 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     its rows no longer skipped), a column date, the type of new works
                                 #   statgaps: 3.41.15 (review, Z-STV): "co" on a link MusicBrainz has, staged, "Enter edit" – the record holds it as
                                 #     supplemented with "attrs", gaps.attrs 1
+                                #   wmx: 3.52.0 (Z-WMX): the head in one line (chips, ⓘ, "Skip works" in the middle, defaults · search · new works · ⋯),
+                                #     column heads (the name whole with its tooltip, ⚠, ▾ with « and ✕), "All artists credited as: ↺ …", "＋ New ▾",
+                                #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
+                                #   wts: 3.52.0 (Z-WTS): the suggestion of a work type and a language from the works of the artists (yellow, "Accept");
+                                #     not accepted: the new works without either; accepted: Song in English; in Node suggestFromWorks (majorities, < 3 works)
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                                 #     writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                                 #     2,000), no redraw while typing in the works matrix (takes about 3 minutes)
@@ -380,7 +385,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   suitedata: 3.41.0 (Z-SU): in Node – Discogs headings and sub-tracks as parts, " / " parts, the kinds of headings
                                 #     (T061, a recording, a name), the suites offered (heading, index, the release's title, none)
                                 #   suiteask: 3.41.1 (Z-SU): "Trisect" – the yellow question, ✓ Yes: the parts as new works (part k of n), staged in
-                                #     their order without a type; ⚙ "Suite, Part" and ↺; undo, ✕ No, another name
+                                #     their order without a type; ⚙ "Suite, Part" and ↺; undo, ✕ No, another name; 3.52.0: the question a row of the
+                                #     matrix above its tracks, the tracks indented
                                 #   suiteparts: 3.41.2: the suite "Trisect" (type Suite) with "parts" (movement) to 7 parts in their order, entity0,
                                 #     no recording with it; the preview; nothing after ↺; 3.41.6 (Z-SUW): no "parts" before the suite is created in
                                 #     MB's form (name, type 6, the writer of all tracks), then from the work of MB

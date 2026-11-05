@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-05 | 3.51.0 – | – |
+| 2026-11-05 | 3.51.0 – 3.52.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -101,6 +101,28 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-05
+
+### Import 3.52.0
+
+Block 9 – collected items Z-WMX (the mockup "Works matrix – aufgeräumt"; Q-fp, Q-fw, Q-fz, Q-gc) and Z-WTS (Q-ft, Q-fu, Q-ge).
+
+#### Added / changed
+
+- **The works matrix tidied up – its head in one line:** on the left "▾ Works matrix", the counts as chips ("4 tracks", "1 work", "3 without work") and ⓘ with the explanation that stood above the matrix; in the middle "Skip works" (filled, orange-red) with "＋ Suite …" and the number of suites; on the right the defaults for new works (role codes, work type, lyrics languages – in a popover, the button says what is set), "Search works", "＋ New works (n)" and ⋯ (create one by one via form, open in tabs, clear all dates, top). The yellow band "n tracks have no work yet" is gone (the number is in its chip).
+- **Column heads:** the name whole, in a line of its own – smaller when it is long, all of it in the tooltip; ⚠ (not linked – a click shows the entry) and ▾ in the line of the roles; "credited as" always there as a field; « (fold) and ✕ (take out) in the ▾ menu. Columns only in MusicBrainz are narrow, with a lock.
+- **The corner:** "All works:" with the attribute chips and ⋯ (spell out, open all rows); "All artists credited as: ↺ MusicBrainz names for all".
+- **A track without a work:** "○ no work yet" and the split button "＋ New ▾" – its menu holds "Search MusicBrainz", "via form …" and the work type and languages of this work; each row with a work (a new one too) has "＋ attribute" (live, cover, …). Cover, quote and arrangement are short marks, the whole sentence in their tooltip.
+- **Cells:** "waits for a work" is a chip with an hourglass (the text in its tooltip); an empty cell shows its "+" only under the mouse.
+- **"＋ Add a column":** the last column head – an entry of the dashboard, or an artist or a label of MusicBrainz by its MBID or link, with its role.
+- **Suites:** the question of a suite is a row of the matrix above its first track; its tracks are indented below it.
+- **A suggestion for new works:** from the works in MusicBrainz of the artists the matrix reads anyway (from 3 works on) – a work type and a lyrics language, each when more than half of the works have it (also "no work type"); in yellow below the head ("New works – suggested: Song · English", from how many works of whom) and at each track without a work. It must be accepted: "Accept" sets it for all new works (each can still be changed); if not accepted, neither type nor language is filled in (rule S081).
+
+#### Fixed (review of Block 9)
+
+- **"＋ Add a column" by MBID:** the new column starts with its cells off and takes the role on the works (before, an arranger or a label's "publishing" did not become a column, and all cells were on); only a role of that kind of entity (an artist's or a label's – the list shows them apart), and not for an entry that is a column already.
+- **The suggestion:** the works of the artists stored in this browser keep their languages (on the next page the suggestion was gone); the matrix shows the suggestion as soon as the works are read; several languages of a work count together, and languages MusicBrainz's page knows beyond the built-in ones; "from the works of …: type 3 of 4 · language 3 of 4"; "Accept" reaches the tracks whose type came from "Music and lyrics by" too; with defaults chosen by hand the line says they stay.
+- **The popovers of the matrix** close with a click elsewhere (the click does what it was on) and with Esc (the focus back on their button, the dashboard stays open); the focus stays where it was when the matrix is drawn again; "＋ Suite …" opens and closes its box; "credited as" in the text colour; "＋ Add a column" stays inside the matrix.
+
 
 ### Import 3.51.0
 

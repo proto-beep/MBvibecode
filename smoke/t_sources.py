@@ -197,6 +197,8 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             ok4 = path == '/label/create' and q.get('edit-label.name') == 'Ghost Pub' and q.get('edit-label.url.0.text') == 'https://www.discogs.com/label/1005' \
                 and q.get('edit-label.url.0.link_type_id') == '217' and note_ok(q.get('edit-label.edit_note', ''), 'https://www.discogs.com/label/1005')
             # C5) a new work: edit note with the release
+            # ([3.52.0] the form is in the menu "＋ New ▾" of the row)
+            pg.locator('tr[data-work="1"] [data-act=mx-newmenu]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
             path, q, _ = form(pg, 'tr[data-work="1"] [data-act=work-create]')
             print('C5) Werk:', path, q.get('edit-work.name'), repr(q.get('edit-work.edit_note', '')[:140]))
             ok5 = path == '/work/create' and q.get('edit-work.edit_note', '').startswith('Source: https://www.discogs.com/release/1234\nPrefilled by') \
@@ -250,7 +252,9 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             rows = pg2.locator('tr.dci-row').count()
             H.src_menu(pg2)
             pg2.fill('[data-f=discogs-input]', 'https://www.discogs.com/release/999-Some-Title')
-            pg2.click('[data-act=discogs-load]'); pg2.wait_for_timeout(1500)
+            # ([3.52.0] waited for: the message takes about 1.7 s, more than the 1.5 s waited before)
+            pg2.click('[data-act=discogs-load]')
+            pg2.wait_for_function("[...document.querySelectorAll('.dci-msg')].some(m => /999/.test(m.textContent))", timeout=15000)
             err999 = [m for m in pg2.locator('.dci-msg').all_inner_texts() if '999' in m]
             H.src_menu(pg2)
             pg2.fill('[data-f=discogs-input]', 'no release here')

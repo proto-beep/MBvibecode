@@ -898,7 +898,7 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role, 
           return th ? [th.querySelector('.dci-mx-roles').textContent.replace(/\\s+/g, ' ').trim(), (th.querySelector('[data-rule=S050]') || { title: '' }).title] : null; })()""")
         msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
         print('B) j4vaman:', j4['rows'], '| Spalte:', col, '| j4vavaman:', jv['rows'], jv['sugg'], '| Meldungen:', msgs)
-        ok_b = any('Cover art' in r and 'From the “about” text' in r for r in j4['rows']) and col and col[0].startswith('composer') \
+        ok_b = any('Cover art' in r and 'From the “about” text' in r for r in j4['rows']) and col and col[0].lstrip('⚠').startswith('composer') \
             and col[1] == 'Read as “Music” (written “Muisc”)' and any('Liner Notes' in r for r in jv['rows']) \
             and jv['sugg'][:1] and jv['sugg'][0].startswith('j4vaman') and 'release artist' in jv['sugg'][0] and 'similar' in jv['sugg'][0] \
             and 'dci-st-missing' in jv['cls'] and not any('has no credits' in x for x in msgs)

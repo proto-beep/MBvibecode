@@ -454,7 +454,7 @@ Muisc and cover art by Jo Vaman"""
         head = pg.evaluate("""(() => { const th = [...document.querySelectorAll('th.dci-mx-col')].find(t => /Jo Vaman/.test(t.textContent));
           const b = th && th.querySelector('[data-rule=S050]'); return th ? [th.querySelector('.dci-mx-roles').textContent.replace(/\\s+/g, ' ').trim(), b ? b.title : ''] : null; })()""")
         print('B) Jo Vaman:', jo, '| Werk-Matrix:', head, '| nicht erkannt:', unrec)
-        ok_b = bool(head) and head[1] == 'Read as “Music” (written “Muisc”)' and head[0].startswith('composer') \
+        ok_b = bool(head) and head[1] == 'Read as “Music” (written “Muisc”)' and head[0].lstrip('⚠ ').startswith('composer') \
             and any(r[0] == 'Cover art' for r in jo) and not any('Muisc' in u for u in unrec)
         # C) ⚙ Settings → Texts
         H.open_settings(pg, 'texts')
