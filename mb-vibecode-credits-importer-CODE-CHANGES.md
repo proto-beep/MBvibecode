@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.50.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.51.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.51.0 · 2026-11-05
+
+Block 8 – Z-OVL, Z-IML, Z-PCR, Z-VER.
+
+- **CSS:** [Z-OVL] `.dci-stats-card` `min-width: 0; overflow-x: auto`, `[data-el="stats-sources"]` `grid-column: 1 / -1`, `.dci-stats-srct thead th` wrapping. [Z-IML] `#dci-pagebar` a wrapping flex row (`gap 8px 24px`), `#dci-launcher` and `#dci-controls` without their margins, `#dci-notice` / `#dci-langask` a row of their own (`width: min(80ch, 100%)` and the rest as margin).
+- **`sourceCreditFor`:** [Z-PCR] for companies (`a.company`) with a MusicBrainz name: **`withoutAreaTail(name, mb, area)`** (new) – the parts after a comma, each capitalised and of at most 4 words, go when the rest is MusicBrainz's name (`typo`, case) or the end is the source's area; kept when MusicBrainz's name holds them. Rule **S080**.
+- **Versions:** [Z-VER] **`versionsHtml()`** (new; in the head of ⚙ Settings, `data-el="versions"`), **`checkUpdates(force)`** (new; `UPDATE_KEY` 'dci-update-check' { at, script, companion }, a day; `httpGet(url, headers)` – new parameter – with `Range: bytes=0-1499` of each file on `main`, **`versionOfHeader(text)`**), **`rememberCompanion(version)`** (new; `COMPANION_SEEN_KEY` 'dci-companion-seen' { version, at }, from the companion's status). CSS `.dci-set-versions`, `.dci-ver-up`.
+- **Texts:** `ver.script`, `ver.mapping`, `ver.companion`, `ver.companionNone`, `ver.seen`, `ver.update`, `ver.updateTitle`.
+- **Node exports:** `sourceCreditFor`, `withoutAreaTail`, `versionOfHeader`.
+- **Tests:** `t_ui_overlap.py` (new: detector, stats, dashboard, settings, pagebar), `t_ui_settings.py versions`, `t_text_lists.py placecredit`.
+- **Review of Block 8:** `checkUpdates()` – `S.updateCheckedAt` (a check once a session when nothing is stored), `S.updateResult`, at the end only `[data-el="versions"]` replaced; started from `versionsHtml` with `setTimeout` (not while drawing); `UPDATE_FILES.mapping` (`versionOfHeader` also `"version": "…"`); `httpGet` sends the headers only with `GM_xmlhttpRequest`; the date of "last seen" in the script's language; `conn.X010` names the check. `withoutAreaTail` – the comma at the end, `NOT_AREA` (legal forms, Jr./Sr., numerals), rooms and single letters no area, "(XX)" after a town; the rest equal to MusicBrainz's name first, kept only when MusicBrainz's name is the whole one without the comma; `sourceCreditFor` only for places and labels; `rulesOfRow` names S080. `#dci-pagebar > :not(#dci-launcher):not(#dci-controls)` (also `#dci-twice`) a row of its own.
+- **Tests (review):** `t_ui_overlap.py` – `elementsFromPoint` and placed boxes, scrolling (`check(…, scroller)`), fields, closed `<details>`; detector (a cell running into a filled cell, a card too narrow), **views** (new: compact, 150 %, 900 px, dark; Mapping rules; log), pagebar (`#dci-twice`, 480 px); `t_ui_settings.py versions` D (storage that throws), the mapping file, reset (`dci-update-check`, `dci-companion-seen` are data, no settings); `t_text_lists.py placecredit` (Inc., Studio A, Jr., single letters, Sydney Opera House, "(DE)", the comma at the end, an artist).
 
 ## Import 3.50.0 · 2026-11-04
 

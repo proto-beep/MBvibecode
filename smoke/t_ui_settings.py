@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0); `python3 t_ui_settings.py <case> …` runs only those."""
 import json
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -545,7 +545,7 @@ def case_reset():
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
         # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last')]  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last', 'dci-update-check', 'dci-companion-seen')]  # (3.51.0) the versions on GitHub and the companion last seen: data  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
         # (3.43.4) the running dashboard draws the defaults at once: entries as a matrix (lines of a block), joining on, the edit note "Full"
         live = pg.evaluate("[!!document.querySelector('.dci-em-line'), (document.querySelector('[data-f=join-auto]') || {}).checked, (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset ? (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset.mode : null]")
         print('   im Dashboard (Matrix, Join, Edit note):', live)
@@ -2138,6 +2138,77 @@ def case_darkmeaning():
             and grip not in (None, 'rgb(242, 217, 140)') and not errs
         b.close()
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
+def case_versions():
+    """Credits Importer 3.51.0 (collected item Z-VER; Q-fm, Q-fs): the versions in the head of ⚙ Settings.
+    A) GitHub (main) has the script 9.9.9 and the companion 1.99.0 (the head of each file, its "@version"): "Credits Importer <this> ·
+       mapping file <this> · Companion …"; beside the script and the companion "⚠ 9.9.9 available" / "⚠ 1.99.0 available", each a link to
+       its file on GitHub. The companion (not running) as it last reported itself: "Companion 1.13.0 (last seen …)".
+    B) Opened again: GitHub is not asked again (once a day); with the versions of this release no ⚠.
+    C) No companion ever seen: "Companion: not connected".
+    D) (3.51.0, review) A browser that cannot store the check: GitHub asked once in the session, not again and again (before: about 25
+       requests a second while ⚙ Settings was open); the head of the mapping file read too."""
+    results = []
+    base = '/proto-beep/MBvibecode/main/'
+    H.RAW_GITHUB[base + 'mb-vibecode-credits-importer.user.js'] = '// ==UserScript==\n// @name         x\n// @version      9.9.9\n// ==/UserScript==\n'
+    H.RAW_GITHUB[base + 'mb-vibecode-credits-importer-companion.user.js'] = '// ==UserScript==\n// @version      1.99.0\n'
+    VERS = "(() => { const v = document.querySelector('[data-el=versions]'); return v ? [v.textContent.replace(/\\s+/g, ' ').trim(), [...v.querySelectorAll('a.dci-ver-up')].map(a => a.getAttribute('href').split('/').pop())] : null; })()"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate("localStorage.setItem('dci-companion-seen', JSON.stringify({ version: '1.13.0', at: Date.now() - 3600000 }))")
+        H.RAW_REQUESTS.clear()
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_settings(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=versions] a.dci-ver-up')", 20)
+        a = pg.evaluate(VERS)
+        n1 = len([u for u in H.RAW_REQUESTS if 'user.js' in u or 'mapping.json?t=' in u])
+        print('A)', a, '| Abrufe:', n1)
+        results.append(a is not None and a[0].startswith(f'Credits Importer {H.VERSION}') and f'mapping file {H.VERSION}' in a[0] and '9.9.9 available' in a[0]
+                       and 'Companion 1.13.0 (last seen' in a[0] and '1.99.0 available' in a[0]
+                       and a[1] == ['mb-vibecode-credits-importer.user.js', 'mb-vibecode-credits-importer-companion.user.js'] and n1 == 3)
+        reopen = lambda: [pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'), pg.wait_for_timeout(250),
+                          pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'), pg.wait_for_timeout(400)]
+        reopen()
+        n1b = len([u for u in H.RAW_REQUESTS if 'user.js' in u or 'mapping.json?t=' in u])
+        pg.evaluate("localStorage.setItem('dci-update-check', JSON.stringify({ at: Date.now(), script: '" + H.VERSION + "', companion: '1.13.0' }))")
+        reopen()
+        bb = pg.evaluate(VERS)
+        n2 = len([u for u in H.RAW_REQUESTS if 'user.js' in u or 'mapping.json?t=' in u])
+        print('B)', bb, '| Abrufe:', n2)
+        results.append(bb is not None and not bb[1] and n2 == n1 and n1b == n1)
+        pg.evaluate("localStorage.removeItem('dci-companion-seen')")
+        reopen()
+        c = pg.evaluate(VERS)
+        print('C)', c)
+        results.append(c is not None and 'Companion: not connected' in c[0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("(() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === 'dci-update-check') throw new Error('QuotaExceededError'); return set.call(this, k, v); }; })()")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.RAW_REQUESTS.clear()
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_settings(pg)
+        pg.wait_for_timeout(3000)
+        n = len([u for u in H.RAW_REQUESTS if 'user.js' in u or 'mapping.json?t=' in u])
+        d = pg.evaluate(VERS)
+        print('D) Abrufe in 3 s:', n, '|', d)
+        results.append(n == 3 and d is not None and '9.9.9 available' in d[0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())
