@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.53.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.54.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.54.0 · 2026-11-05
+
+Block 11 – Z-AST, Z-PLS (the global part of Z-AST follows with the data dump).
+
+- **Records:** each relationship `dy` (the year of its date).
+- **Artists:** **`statArtistsLookup()`** (new; started by `statsLoad` and after "Checks complete" of an import – in the dashboard, not on the release page; the artists of all records, newest first, not kept or older than `STATS_ARTISTS_DAYS` (180), at most `STATS_ARTISTS_PER_RUN` (60), one after another through `mbWsIdle` (after the dashboard's own requests); stops when collecting is off or the statistics were deleted (`S.statArtistsGen`), for the page when the storage is full (`S.statArtistsFull`); `S.statArtistsRunning`), **`statArtistInfo(a)`** (new; `[type, gender, begin year, end year (0: ended, year unknown), country, begin area (not a country or region), looked up at]`; years with `parseInt`, none after this year), **`statArtistsRead()`**; `STATS_ARTISTS_KEY` 'dci-stats-artists' (at most `STATS_ARTISTS_MAX` 3,000, the oldest go), deleted by "Delete statistics …" and by the reset without "keep statistics".
+- **`statMore`:** `artRels` ([gid, the year of the relationship, else of the release – a relationship with a date but no `dy` (before 3.54.0) none]), `labelsRel` / `placesRel` (by MBID) and `entName`.
+- **New:** **`statsMore4Html(m, …)`** (cards `artists` – looked up n of m, type, gender, decade, country, town, centuries, posthumous – and `labelsplaces`), **`statCenturies(b, e, type)`** (a person without an end at most 120 years; no begin after this year), **`statCountryName(code)`**.
+- **Texts:** `stats.more.artists`, `stats.more.labelsplaces`, `stats.art.*`, `stats.lp.*`.
+- **Tests:** `t_ui_settings.py statsart` (new); harness `ARTIST_INFO`, `ARTIST_LOOKUPS` (/ws/2/artist/<gid>).
+- **Review of Block 11:** the lookup moved from `runStatJob` (on the release page `S` and the request queue are not there) into the dashboard; all records' artists, not only those of the last submission; `mbWsIdle`; deleting the statistics stops a running lookup; a full storage stops it; old relationships with a date not counted as posthumous; regions no towns; years parsed with `parseInt`; centuries of persons without an end capped; labels and places by MBID. Test `statsart` A – C rewritten (collecting off: nothing looked up; on: looked up in the background; a new page after a counted submission).
 
 ## Import 3.53.0 · 2026-11-05
 
