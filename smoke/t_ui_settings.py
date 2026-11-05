@@ -1442,6 +1442,117 @@ def case_statsrec():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_statsart():
+    """Credits Importer 3.54.0 (Block 11: Z-AST, Z-PLS).
+    A) Seeded: two submissions with five artists, four of them looked up before (a person 1930 – 1990 of Chicago, US; a group 1965 –
+       1972 of GB; a person born 1985 in Hamburg; an orchestra founded 1882 in Berlin); collecting switched off (nothing looked up):
+       "Artists as MusicBrainz has them: 4 of 5", one not looked up yet; type Person 2, Group 1, Orchestra 1; gender Female 1, Male 1;
+       born or founded 1930s, 1960s, 1980s, 1880s; Germany 2, United States 1, United Kingdom 1; Chicago, Hamburg, Berlin; the centuries
+       1800–1899 1, 1900–1999 4, 2000–2099 2; posthumous 2 of 3 (by the date of the relationship, else the release's year; (review) a
+       relationship with a date from before 3.54.0 – no year in the record – left out). Labels used most ECM 2, Intakt 1 – (review) by
+       their MBID: two labels "Twin" are two; places Abbey Road 2.
+    B) (review) Collecting on, the statistics opened: the fifth artist looked up in the background of the dashboard ("5 of 5", a woman
+       born 1900, not ended: (review) 1900–1999 and 2000–2099 – a person at most 120 years); the begin area a region (ISO 3166-2) is no
+       town.
+    C) (review) A submission counted (on the editor's page or the release page), a new page of the editor with the import checked:
+       its artists looked up then (/ws/2/artist/<gid> without inc), kept with type, gender, years, country and town; an artist kept
+       before (Writer Z) not again, none twice; "Delete statistics …" deletes them too."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        ga = ['aaaaaaaa-0000-4000-8000-0000000000%02d' % k for k in range(1, 6)]
+        cache = {ga[0]: ['Person', 'Female', 1930, 1990, 'US', 'Chicago', now], ga[1]: ['Group', '', 1965, 1972, 'GB', '', now],
+                 ga[2]: ['Person', 'Male', 1985, None, 'DE', 'Hamburg', now], ga[3]: ['Orchestra', '', 1882, None, 'DE', 'Berlin', now]}
+        pg.evaluate("(c) => { localStorage.setItem('dci-stats-artists', JSON.stringify(c)); localStorage.setItem('dci-stats-on', 'false'); }", cache)
+
+        def r4(lt, et, tg, tn, dy=None, d=''):
+            x = stat_rel('n', lt, 'recording', et, tg, tn, d=d)
+            x.update({'rt': [], 'al': 0, 'dy': dy})
+            return x
+        old = stat_rel('n', 'instrument', 'recording', 'artist', ga[1], 'The Group', d='year')  # (3.53.0: a date, no "dy")
+        rel = {'title': 'A', 'year': 2001, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0, 'media': 1, 'rgp': 'Album', 'rgs': [], 'lang': 'eng', 'script': 'Latn', 'lens': []}
+        recs = [{'v': 3, 'id': 'm1:1', 'mbid': 'm1', 'at': now - 86400000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None,
+                 'rels': [r4('instrument', 'artist', ga[0], 'Ann', 1995), r4('producer', 'artist', ga[1], 'The Group'), r4('vocal', 'artist', ga[2], 'Cid', 2020), r4('producer', 'artist', ga[4], 'Dee'),
+                          r4('phonographic copyright', 'label', 'l1', 'ECM'), r4('published', 'label', 'l1', 'ECM'), r4('copyright', 'label', 'l2', 'Intakt'),
+                          r4('copyright', 'label', 'l3', 'Twin'), r4('copyright', 'label', 'l4', 'Twin'),
+                          r4('recorded at', 'place', 'p1', 'Abbey Road'), r4('mixed at', 'place', 'p1', 'Abbey Road')]},
+                {'v': 3, 'id': 'm2:2', 'mbid': 'm2', 'at': now, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': dict(rel, title='B'), 'own': 0, 'ocr': None,
+                 'rels': [r4('instrument', 'artist', ga[0], 'Ann', 1985), r4('performing orchestra', 'artist', ga[3], 'The Orchestra'), old]}]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.ARTIST_INFO[ga[4]] = {'type': 'Person', 'gender': 'Female', 'life-span': {'begin': '1900', 'ended': False},
+                                'begin-area': {'name': 'Bavaria', 'iso-3166-2-codes': ['DE-BY']}, 'area': {'name': 'Germany', 'iso-3166-1-codes': ['DE']}}
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        if pg.locator('[data-act=stats-scope][data-scope=local]').count():
+            pg.click('[data-act=stats-scope][data-scope=local]')
+        pg.wait_for_timeout(1500)
+        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-${k}]`))"
+        mine = lambda: [g for g, q in H.ARTIST_LOOKUPS if 'inc=' not in q]
+        a0, a1 = pg.evaluate(CARD, 'artists'), pg.evaluate(CARD, 'labelsplaces')
+        print('Gesät:', seeded, '\nA)', a0, '\n  ', a1, '| nachgeschlagen:', mine())
+        want = ['Artists as MusicBrainz has them: 4 of 5', '1 not looked up yet – in the background while the dashboard is open (one a second, at most 60 a time)', 'Person 2', 'Group 1', 'Orchestra 1',
+                'Female 1', 'Male 1', '1930s 1', '1960s 1', '1980s 1', '1880s 1', 'Germany 2', 'United States 1', 'United Kingdom 1', 'Chicago 1', 'Hamburg 1', 'Berlin 1',
+                '1800–1899 1', '1900–1999 4', '2000–2099 2', 'Posthumous: 2 of 3 relationships of artists who had died or broken up (by the date of the relationship, else of the release)']
+        print('   fehlt:', [x for x in want if x not in (a0 or [])])
+        results.append(seeded and a0 is not None and all(x in a0 for x in want) and a1 == ['ECM 2', 'Intakt 1', 'Twin 1', 'Twin 1', 'Abbey Road 2'] and not mine())
+        # B) collecting on: the fifth looked up in the background
+        H.open_settings(pg, 'cache')
+        pg.click('[data-el=settings] [data-set=stats-on]'); pg.wait_for_timeout(200)
+        pg.evaluate("localStorage.removeItem('dci-stats-on')")
+        H.open_stats(pg)
+        pg.evaluate("document.querySelector('[data-act=stats-period][data-period=day]') && document.querySelector('[data-act=stats-period][data-period=day]').click()")
+        H.wait_for(pg, "!!JSON.parse(localStorage.getItem('dci-stats-artists') || '{}')['%s']" % ga[4], 30)
+        pg.wait_for_timeout(800)
+        b0 = [pg.evaluate("JSON.parse(localStorage.getItem('dci-stats-artists'))['%s']" % ga[4])[:6], pg.evaluate(CARD, 'artists')]
+        print('B)', b0)
+        results.append(b0[0] == ['Person', 'Female', 1900, None, 'DE', ''] and b0[1] and 'Artists as MusicBrainz has them: 5 of 5' in b0[1]
+                       and '1900–1999 5' in b0[1] and '2000–2099 3' in b0[1] and mine() == [ga[4]])
+        # C) a submission counted; a new page of the editor: its artists looked up once the import is checked
+        bm, ww, wz = H.ARTISTS[3001][0], H.ARTISTS[3007][0], H.ARTISTS[3009][0]
+        pg.evaluate("([g, t]) => { const o = JSON.parse(localStorage.getItem('dci-stats-artists')); o[g] = ['Person', '', 1960, null, 'FR', '', t]; localStorage.setItem('dci-stats-artists', JSON.stringify(o)); }", [wz, now])
+        H.ARTIST_INFO[bm] = {'type': 'Person', 'gender': 'Male', 'life-span': {'begin': '1950-04-01', 'end': '2010', 'ended': True}, 'country': 'US',
+                             'area': {'name': 'United States', 'iso-3166-1-codes': ['US']}, 'begin-area': {'name': 'Memphis'}}
+        H.ARTIST_INFO[ww] = {'type': 'Group', 'life-span': {'begin': '1977', 'ended': False}, 'area': {'name': 'Germany', 'iso-3166-1-codes': ['DE']},
+                             'begin-area': {'name': 'Germany', 'iso-3166-1-codes': ['DE']}}
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /confirmed by MusicBrainz and counted/.test(li.textContent))", 30)
+        n0 = len(mine())
+        pg2, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg2.on('dialog', lambda d: d.accept())
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.wait_for(pg2, "(() => { const o = JSON.parse(localStorage.getItem('dci-stats-artists') || '{}'); return !!o['%s'] && !!o['%s']; })()" % (bm, ww), 60)
+        pg2.wait_for_timeout(3000)
+        kept = pg2.evaluate("JSON.parse(localStorage.getItem('dci-stats-artists') || '{}')")
+        looked = mine()[n0:]
+        print('C) nachgeschlagen:', len(looked), '| Bass Man:', kept.get(bm, [])[:6], '| Writer W:', kept.get(ww, [])[:6], '| Writer Z:', wz in looked)
+        c0 = kept.get(bm, [])[:6] == ['Person', 'Male', 1950, 2010, 'US', 'Memphis'] and kept.get(ww, [])[:6] == ['Group', '', 1977, None, 'DE', ''] \
+            and len(looked) == len(set(looked)) and bm in looked and wz not in looked and kept.get(wz, [])[:6] == ['Person', '', 1960, None, 'FR', '']
+        H.open_settings(pg2, 'cache')
+        pg2.click('[data-el=settings] [data-act=stats-delete]'); pg2.wait_for_timeout(800)
+        gone = pg2.evaluate("localStorage.getItem('dci-stats-artists')")
+        print('   gelöscht:', gone)
+        results.append(c0 and gone is None)
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsmore2():
     """Credits Importer 3.41.14 (collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC; Q-cv, Q-cw): the cards of
     3.41.14, for everyone (not only in "Developer mode"), from four stored submissions – one of 3.41.13 (v 1) and three of 3.41.14:

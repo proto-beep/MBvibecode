@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-05 | 3.51.0 – 3.53.0 | – |
+| 2026-11-05 | 3.51.0 – 3.54.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -101,6 +101,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-05
+
+### Import 3.54.0
+
+Block 11 – collected items Z-AST, Z-PLS (Q-fk, Q-gh, Q-gj).
+
+#### Added / changed
+
+- **The artists of the relationships** (a card of the statistics): the artists of the counted submissions are looked up at MusicBrainz in the background while the dashboard is open – after its own requests, one a second, kept in this browser – their type, gender, the decade they were born or founded, their country, the town they began in, the centuries they were there, and how many relationships are posthumous (by the date of the relationship, else the year of the release). Artists only; deleted with the statistics.
+- **Labels and places:** the labels and places of the relationships used most (only in this browser).
+
+#### Fixed (review of Block 11)
+
+- The artists are looked up in the dashboard (on the release page shown after "Enter edit" the lookup could not run), also those of earlier submissions, after the dashboard's own requests; deleting the statistics or switching collecting off stops it. A relationship with a date from before 3.54.0 is not taken for posthumous by the release's year; a region is no town; a person without an end counts for at most 120 years; labels and places with the same name are kept apart.
 
 ### Import 3.53.0
 
