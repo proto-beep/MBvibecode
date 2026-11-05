@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-05 | 3.51.0 – 3.54.0 | – |
+| 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
@@ -101,6 +101,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-05
+
+### Import 3.55.0
+
+Block 12 – collected item Z-AGS and the global parts of Z-ALI, Z-RLS, Z-LNG, Z-RDU, Z-AST (Q-fl, Q-fr).
+
+#### Added / changed
+
+- **Global – once a week from MusicBrainz's database dump:** the workflow "Global statistics" now also reads the core dump `mbdump.tar.bz2` on Sundays (by hand: "Run workflow" with "core") for the artists, releases and recordings of all edits with the script. **Global** shows them like the cards of this browser: the artists (type, gender, decade, country, town, centuries, posthumous), media and types, language and script, recording lengths, role credits; **credited as** with every reading. Only numbers (and the names of types, languages, scripts, countries and towns).
+
+#### Fixed (review of Block 12)
+
+- **Global:** the releases are those the submissions were made for (not every release of a recording or work with a new relationship), the recordings those of the new relationships; failed edits are left out; the centuries in the order of time; the weekly reading also when the last one is missing or a week old, and a failed one leaves the rest of the statistics as they are.
 
 ### Import 3.54.0
 

@@ -2257,6 +2257,55 @@ def case_theme():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_globalcore():
+    """Credits Importer 3.55.0 (collected item Z-AGS; Q-fl, Q-fr): "Global" with the section of MusicBrainz's core dump (read once a
+    week by the workflow) and "credited as" of every run.
+    A) The file with "credits" and "core": a line with the date of the core dump; role credits 40 % (2 of 5), credited as 25 % (1 of 4);
+       the artists (3 of 4; Person 2, Group 1; Female 1; 1930s …; Germany 2, United States 1; Chicago 1; the centuries in the order of
+       time – (review) 1800–1899 1, 1900–1999 3, 2000–2099 4; posthumous 1 of 2), the releases (2; several media 1, single medium 1; Album 1, no primary type 1; Live 1), English 1, not set
+       1, Latin 2; recording lengths median 2:30 (2 recordings), average 2:30.
+    B) A file without them (before 3.55.0): a line that they come with the weekly reading; no card of "credited as"."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    base = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261108-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1}}
+    data = dict(base, credits={'credited_as': {'n': 1, 'of': 4}}, core={
+        'dump': '20261108-002222', 'artists': {'n': 3, 'of': 4, 'types': {'Person': 2, 'Group': 1}, 'genders': {'Female': 1}, 'decades': {'1930s': 1, '1960s': 1, '1980s': 1},
+                                               'countries': {'DE': 2, 'US': 1}, 'towns': {'Chicago': 1}, 'centuries': {'1800': 1, '1900': 3, '2000': 4}, 'posthumous': {'n': 1, 'of': 2}},
+        'releases': {'n': 2, 'media': {'multi': 1, 'single': 1}, 'rg_primary': {'Album': 1, '-': 1}, 'rg_secondary': {'Live': 1}, 'languages': {'eng': 1, '-': 1}, 'scripts': {'Latn': 2}},
+        'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0}, 'role_credits': {'n': 2, 'of': 5}})
+    CARD = "(k) => (c => c ? (c.matches('p') ? [c] : [...c.querySelectorAll('li, p')]).map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-global-${k}]`))"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for k, d in (('A', data), ('B', base)):
+            H.RAW_GITHUB[PATH] = json.dumps(d)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda dd: dd.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.open_stats(pg)
+            pg.click('[data-act=stats-scope][data-scope=global]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+            got = {x: pg.evaluate(CARD, x) for x in ('corehead', 'credits', 'artists', 'media', 'script', 'lengths', 'nocore')}
+            print(k, got)
+            if k == 'A':
+                results.append(got['corehead'] == ["From MusicBrainz's database dump of 2026-11-08 (read once a week): the artists, releases and recordings of all edits with the script."]
+                               and got['credits'] == ['With a role credit: 40 % (2 of 5 with instruments or vocals)', 'Credited as: 25 % (1 of 4)']
+                               and all(x in got['artists'] for x in ['Artists: 3 (of 4 in the relationships)', 'Person 2', 'Group 1', 'Female 1', '1930s 1', 'Germany 2', 'United States 1',
+                                                                     'Chicago 1', 'Posthumous: 1 of 2 relationships of artists who had died or broken up (by the date of the relationship)'])
+                               and all(x in got['media'] for x in ['Releases: 2', 'several media 1', 'single medium 1', 'Album 1', 'no primary type 1', 'Live 1'])
+                               # ((review) the centuries in the order of time, not by their numbers)
+                               and [x for x in got['artists'] if '99 ' in x] == ['1800–1899 1', '1900–1999 3', '2000–2099 4']
+                               and got['script'] == ['English 1', 'not set 1', 'Latin 2'] and got['lengths'] == ['A recording – median: 2:30 (2 recordings)', 'A recording – average: 2:30']
+                               and got['nocore'] is None and not errs)
+            else:
+                results.append(got['nocore'] == ["The artists, releases and recordings of all users come with the weekly reading of MusicBrainz's database dump."]
+                               and got['credits'] is None and got['artists'] is None and not errs)
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_globalstats():
     """Credits Importer 3.47.0 (collected item Z-GST; Q-eq, Q-ey, Q-ez, Q-es): the statistics of all users ("Global").
     A) Statistics → "This browser | Global": Global loads the file of the workflow (raw.githubusercontent.com, branch "stats"): the
