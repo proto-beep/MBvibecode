@@ -357,6 +357,8 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #   nwa: 3.57.0 (Z-NWA, S083): an existing work (linked in MusicBrainz, or found and chosen) – its cells locked and
                                 #     struck through, only the link of the recording staged; a new work as before; S083 off: as before
                                 #     (review) a work made with the form in this browser stays open; cwr runs with S083 off
+                                #   addcolumn: 3.68.0 (Z-MXO, Z-ACO, Z-ACR, Z-MRC, S098–S100): the list of "＋ Add a column" in groups (with a personal
+                                #     publisher), its menu above the head of the tracks, the role by the rules, "Another role"; off
                                 #   creditskip: 3.64.0 (Z-WSK, S093): "Skip credits" beside a work – its work credits left out, the
                                 #     recording credits stay; "↺ Take credits"; off: no button
                                 #   publevel: 3.64.0 (Z-PUB, S094): "Work | Release" for a label's publishing row in its column; off

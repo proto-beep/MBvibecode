@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.67.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.68.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.68.0 · 2026-11-06
+
+Z-MXO, Z-ACO, Z-ACR, Z-MRC – "＋ Add a column".
+
+- **CSS** (Z-MXO): `.dci-matrix thead th:has(.dci-mx-colmenu)` above the sticky head of the tracks (z-index 6 over 3).
+- **`addColumnHtml`** (rule **S098**): `<optgroup>`s – people (**`addColPerson`**: the release's artists, writing roles, instruments and vocals), labels with the personal publishers of those people (`pub:<MBID>`, added by MBID with publishing), the others. **`loadPersonalPubs()`** (new): `artist/<MBID>?inc=label-rels` of up to 20 people when the list opens (the writers' `pubSuggest` taken over).
+- **`addColRole(a)`** (new; rule **S099**): the role chosen with the entry (`mx-addcol-entry`).
+- **`columnHeadHtml`** (rule **S100**): "Another role" (`mx-col-newrole`, action **`mx-col-addrole`**: `newColumnRow` on the tracks of the column's cells, on all when it has none); `cellMenuHtml` with `matrix.menuSeveral`.
+- **Texts:** matrix.addColPeople, addColLabels, addColOthers, addColPersonalPub, addRole, addRoleBtn, addRoleTitle, menuSeveral; log.matrixRole.
+- **Review:** the personal publishers of all people (also of a writer who is a column already); only labels among "Labels" (places, series, events among the others); the lookup by MBID (`personalPubsOf`), not redrawn while the list or the MBID field is in use (then when the focus leaves it); no change while a column is being added; the works of the tracks with their type and lyrics languages (`type`, `languages`), locked and skipped works aside, a person's own role kept for works that are no songs; "Another role" on the cells MusicBrainz has too, a publishing row `pubTouched`; `log.matrixRole` by tracks, with its plural.
+- **Tests:** `t_works_matrix.py addcolumn` (new); golden S098–S100.
 
 ## Import 3.67.0 · 2026-11-06
 

@@ -1259,4 +1259,103 @@ def case_publevel():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_addcolumn():
+    """Credits Importer 3.68.0 (collected items Z-MXO, Z-ACO, Z-ACR, Z-MRC; rules S098–S100): "＋ Add a column".
+    A) The list: "People of the release" first (the performers Bass Man, Drum Guy …), then "Labels" with the personal publisher of
+       Drum Guy MusicBrainz has (Drum Pub) and that of Writer W (a column already: Hidden Pub), then "Other entries" (Bob Producer, the
+       place Abbey Road Studios …).
+    B) Its menu is above the head of the tracks ("Track and work"): its head is drawn above that one (until 3.67.0 below it – the menu
+       was covered where it reached it).
+    C) Bass Man chosen: the role set by the rules (the most common writing role of the matrix: writer).
+    D) "Drum Pub" chosen: publishing; added: a column of Drum Pub.
+    E) The column of Writer W: "Another role" publishing – a second role on the tracks of its cells; a cell's menu says several roles
+       can be ticked.
+    F) Rules S098–S100 off: one list as before, the first role, no "Another role"."""
+    DP = H.uid('eeeeeeee', 12)
+    H.PERSONAL_PUBLISHERS.append({'label': DP, 'lname': 'Drum Pub', 'artist': H.ARTISTS[3004][0], 'name': 'Drum Guy'})
+    H.COMPANIES[1012] = ('label', DP, 'Drum Pub')
+    results = []
+    LIST = """(() => { const sel = document.querySelector('.dci-mx-addcol-pop [data-f=mx-addcol-entry]'); if (!sel) return null;
+      const gs = [...sel.querySelectorAll('optgroup')]; return gs.length ? gs.map(g => [g.label, [...g.querySelectorAll('option')].map(o => o.textContent.trim())]) : [['', [...sel.options].slice(1).map(o => o.textContent.trim())]]; })()"""
+    ROLE = "(() => { const s = document.querySelector('.dci-mx-addcol-pop [data-f=mx-addcol-role]'); return s ? s.options[s.selectedIndex].text : null; })()"
+
+    def run(off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S098', 'S099', 'S100']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(1500)
+            out = {'list': pg.evaluate(LIST)}
+            pg.evaluate("document.querySelector('.dci-mx-addcol-pop').scrollIntoView({ block: 'center', inline: 'center' })")
+            pg.wait_for_timeout(300)
+            out['top'] = pg.evaluate("""(() => { const m = document.querySelector('.dci-mx-addcol-pop'); if (!m) return null; const r = m.getBoundingClientRect();
+              const x = Math.max(r.left + 10, 0), y = r.top + Math.min(40, r.height / 2); const el = document.elementFromPoint(x, y);
+              const front = document.querySelector('.dci-matrix thead .dci-mx-front');
+              return el && m.contains(el) && Number(getComputedStyle(m.closest('th')).zIndex) > Number(getComputedStyle(front).zIndex); })()""")
+            sel = '.dci-mx-addcol-pop [data-f=mx-addcol-entry]'
+            key = pg.evaluate(f"[...document.querySelector('{sel}').options].find(o => o.textContent.trim() === 'Bass Man').value")
+            pg.select_option(sel, key)
+            pg.wait_for_timeout(400)
+            out['role'] = pg.evaluate(ROLE)
+            if not off:
+                v = pg.evaluate(f"[...document.querySelector('{sel}').options].find(o => /Drum Pub/.test(o.textContent)).value")
+                pg.select_option(sel, v)
+                pg.wait_for_timeout(400)
+                out['pubrole'] = pg.evaluate(ROLE)
+                pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()')
+                pg.wait_for_timeout(1500)
+                out['cols'] = pg.evaluate("[...document.querySelectorAll('.dci-matrix [data-colhead]')].map(h => (h.querySelector('.dci-mx-name') || h).textContent.trim())")
+            # E) Writer W: another role
+            ww = pg.evaluate("[...document.querySelectorAll('.dci-matrix [data-colhead]')].find(h => /Writer W/.test(h.textContent)).dataset.colhead")
+            pg.locator(f'.dci-matrix [data-colhead="{ww}"] [data-act=mx-colmenu]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            out['addrole'] = pg.locator(f'[data-f=mx-col-newrole][data-col="{ww}"]').count()
+            if out['addrole']:
+                pub = pg.evaluate(f"[...document.querySelector('[data-f=mx-col-newrole][data-col=\"{ww}\"]').options].find(o => /publish/.test(o.textContent)).value")
+                pg.select_option(f'[data-f=mx-col-newrole][data-col="{ww}"]', pub)
+                pg.locator(f'[data-act=mx-col-addrole][data-col="{ww}"]').evaluate('b => b.click()')
+                pg.wait_for_timeout(500)
+                out['roles'] = pg.evaluate(f"[...document.querySelectorAll('.dci-matrix [data-colhead=\"{ww}\"] .dci-mx-role')].map(r => (r.getAttribute('title') || r.textContent).toLowerCase())")
+                pg.keyboard.press('Escape')
+                pg.wait_for_timeout(200)
+                pg.locator('.dci-matrix td.dci-mx-cell.dci-mx-on [data-act=mx-menu]').first.scroll_into_view_if_needed()
+                pg.locator('.dci-matrix td.dci-mx-cell.dci-mx-on [data-act=mx-menu]').first.click(force=True)
+                pg.wait_for_timeout(300)
+                out['menu'] = pg.evaluate("(() => { const m = document.querySelector('.dci-mx-menu'); return m ? m.textContent.includes('Several roles can be ticked') : [document.querySelectorAll('.dci-matrix td.dci-mx-cell.dci-mx-on [data-act=mx-menu]').length, document.querySelectorAll('.dci-mx-menu, [class*=mx-menu]').length]; })()")
+            out['errs'] = errs
+            b.close()
+            return out
+
+    try:
+        o = run()
+        print('A)', o['list'], '\nB)', o['top'], '| C)', o['role'], '| D)', o.get('pubrole'), o.get('cols'), '\nE)', o['addrole'], o.get('roles'), o.get('menu'), o['errs'])
+        heads = [g[0] for g in (o['list'] or [])]
+        people = dict(o['list'] or []).get('People of the release (writers, artists, performers)', [])
+        labels = dict(o['list'] or []).get('Labels', [])
+        others = dict(o['list'] or []).get('Other entries', [])
+        results.append(heads[:2] == ['People of the release (writers, artists, performers)', 'Labels'] and 'Bass Man' in people and 'Drum Guy' in people
+                       and any('Drum Pub' in x and 'Drum Guy' in x for x in labels) and 'Bob Producer' in others and 'Bob Producer' not in people
+                       # ((review) also the personal publisher of a writer who is a column already; places among the others
+                       and any('Hidden Pub' in x and 'Writer W' in x for x in labels) and 'Abbey Road Studios · place' in others)
+        results.append(o['top'] is True)
+        results.append(o['role'] == 'writer')
+        results.append(o.get('pubrole') == 'publishing' and 'Drum Pub' in ' | '.join(o.get('cols') or []))
+        results.append(o['addrole'] == 1 and any('publish' in r for r in (o.get('roles') or [])) and o.get('menu') is True and not o['errs'])
+        o2 = run(off=True)
+        print('F)', o2['list'], o2['role'], o2['addrole'])
+        # (off: the first role of the list, as before)
+        results.append(len(o2['list']) == 1 and o2['addrole'] == 0 and o2['role'] == 'arranger')
+    finally:
+        H.PERSONAL_PUBLISHERS.pop()
+        H.COMPANIES.pop(1012, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
