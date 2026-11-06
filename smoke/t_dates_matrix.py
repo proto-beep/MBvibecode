@@ -1,6 +1,7 @@
 """Dates & tracks: the date matrix, dragging dates and track groups, the pools (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8), workgroups (3.35.6), foldapply (3.40.9) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
+import json
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -106,7 +107,7 @@ def case_dragdates():
     onto the column date and a cell of the works matrix; a date onto another date makes a period (pool and matrix);
     all dates of the Discogs notes go into the pool; cleared pools come back when the release is opened again;
     "load again from Discogs" (with and without the dates made by hand); "Cover Art" keeps "cover art" as wording."""
-    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
+    H.RULES_OFF = ['D022', 'S083']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     from common_rows import cells, drag, date_field
 
@@ -160,8 +161,9 @@ def case_dragdates():
         print('   Datum im Spaltenkopf:', chip)
         on = pg.locator('.dci-mx-cell.dci-mx-on').first
         mix = idof('Mix 1')
-        # ([3.56.0, Z-CWR] the first cell is Writer W's writer on track 1, left out beside the composer in MusicBrainz: the next one)
-        pg.drag_and_drop(f'.dci-pchip-date[data-id="{mix}"]', '.dci-mx-cell.dci-mx-on:not(:has(.dci-mxchip-cwr)) >> nth=0'); pg.wait_for_timeout(400)
+        # ([3.56.0, Z-CWR] the first cell is Writer W's writer on track 1, left out beside the composer in MusicBrainz: the next one;
+        # [3.57.0, Z-NWA] nor a cell of WORK1, a work MusicBrainz has: locked)
+        pg.drag_and_drop(f'.dci-pchip-date[data-id="{mix}"]', '.dci-mx-cell.dci-mx-on:not(.dci-mx-locked):not(:has(.dci-mxchip-cwr)) >> nth=0'); pg.wait_for_timeout(400)
         own = pg.locator('.dci-mx-cell.dci-mx-on sup').count()
         print('3) Spaltendatum Jahr:', cd, '| Zellen mit eigenem Datum (⌚):', own)
         ok3 = cd == '2001' and own >= 1
@@ -424,7 +426,8 @@ def case_tracksdrop():
     they are added; the places say so while dragging; a release-level row moves to the recording level); folded,
     the track pool stays in the bar with the date pool; a date dropped onto an empty cell of the works matrix says
     why it was not set, onto MB's dateless relationship it is planned as an edit; the release page checks work
-    credits (composer, publisher) on the works themselves when the release lookup lacks them."""
+    credits (composer, publisher) on the works themselves when the release lookup lacks them. ([3.57.0] B and C with rule S083 off:
+    WORK1 is a work MusicBrainz has, otherwise not supplemented.)"""
     import re
     import zooid
     from common_rows import drag, tracks_of_rows
@@ -433,13 +436,15 @@ def case_tracksdrop():
     results = []
 
 
-    def open_mb(companion=False):
+    def open_mb(companion=False, rules_off=None):
         b = PW.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         dg = None
         if companion:
             dg, _ = H.open_discogs(ctx)
         pg, errs = H.open_mb_edit(ctx, companion=companion)
+        if rules_off:
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({json.dumps(rules_off)}))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         pg.wait_for_timeout(500)
@@ -459,7 +464,8 @@ def case_tracksdrop():
 
 
     # --- B) default release: a release-level row moves to "Recording"; works matrix cells that cannot take a date
-    b, pg, _, errs = open_mb()
+    # ([3.57.0] rule S083 off: dates for the relationships of WORK1, a work MusicBrainz has, are what B2 tests)
+    b, pg, _, errs = open_mb(rules_off=['S083'])
     pg.click('[data-act=tg-new]'); pg.fill('[data-f=tg-name]', 'Side A')
     pg.check('[data-f=tg-track][data-i="0"]'); pg.check('[data-f=tg-track][data-i="1"]'); pg.click('[data-act=tg-save]'); pg.wait_for_timeout(200)
     rel_row = pg.locator('tr.dci-row.dci-lv-release').first
@@ -494,7 +500,8 @@ def case_tracksdrop():
     # --- C) release page: work credits found on the work itself ----------------------------------------------
     H.MB_EXTRA.clear()
     H.WORK_RELS_DIRECT_ONLY = True
-    b, pg, dg, errs = open_mb(companion=True)
+    # ([3.57.0] rule S083 off: the credits staged on WORK1, a work MusicBrainz has, are what the release page checks here)
+    b, pg, dg, errs = open_mb(companion=True, rules_off=['S083'])
     H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
     pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
     H.submit_staged(pg)
