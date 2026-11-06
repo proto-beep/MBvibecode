@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.66.0
+// @version      3.67.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.66.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.66.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.67.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.67.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.66.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.67.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -636,6 +636,20 @@
       "log.liveFailed": "The comments of the live recordings could not be entered: {msg}",
       "log.liveNone": "Comments of live recordings: nothing to enter (they are in MusicBrainz already)",
       "livecom.noticeTitle": "MB x Vibecode: Credits Importer – comments of live recordings",
+      "ded.from": "From “{phrase}” ({where})",
+      "ded.toggleTitle": "Switch between “dedicated to” and “tribute to” – they are easily mixed up",
+      "ded.kind.dedicated": "dedicated to",
+      "ded.kind.tribute": "tribute to",
+      "ded.src.discogs": "the Discogs notes",
+      "ded.src.bandcamp": "Bandcamp",
+      "ded.src.text": "the text",
+      "ded.src.supp": "the supplement",
+      "ded.src.title": "the release's title",
+      "ded.src.track": "the title of track {pos}",
+      "log.dedFound": "{name}: {kind} – from “{phrase}” in {where}",
+      "log.dedNoTarget": "“{phrase} {name}”: no entry of exactly that name in MusicBrainz – left out",
+      "log.dedSeveral": "“{phrase} {name}”: several entries of exactly that name in MusicBrainz – left out",
+      "log.dedToggled": "{name}: now “{kind}”",
       "livecom.noticeSet.one": "{n} comment entered:",
       "livecom.noticeSet.other": "{n} comments entered:",
       "livecom.noticeTracks.one": "track {list}",
@@ -3634,6 +3648,7 @@
     { id: 'S094', where: 'matrixColumns, columnHeadHtml (mx-pub-level)', note: 'Works matrix (3.64.0): each publishing row of a label switches in its column between "Work" (label – work publishing) and "Release" (on the release); a row put on the release this way keeps its column, so it can be put back' },
     { id: 'S095', where: 'openCreateDialog (S.statCreate), statTime, statsHeadLine', note: 'Statistics (3.65.0): the time per release and per relationship without the time of creating new entries (artists, labels, places, works – also works via the form): from the click on "Create …" until the new entry is linked, its pauses aside. A switch "Without new entries | With new entries" (Without at first, remembered) for every such time of this browser; records before 3.65.0 hold no such time (counted with it)' },
     { id: 'S096', where: 'runLiveJob, liveNotice, liveTracksText', note: 'Live recordings (3.66.0): the notice on the release page after "Enter edit" tidied up – how many comments were entered, then each comment once with its tracks ("1–3, 5"; with several media "1.1–1.3, 2.1"), then what was not entered, the tracks of the same reason together (before: one long line of all tracks and their comments)' },
+    { id: 'S097', where: 'findDedications, runDedications, addDedicationRow, dedicationHtml (ded-toggle)', note: 'Dedications (3.67.0): "dedicated to", "in memory of", "in memoriam", "for …" (a line of its own), "homage to", "gewidmet", "in Erinnerung an", "Hommage an" give "dedicated to"; "tribute to" gives "tribute to" – in the free texts (Discogs notes, Bandcamp, the text of the cover art) and the release\'s title ("Odes And Meditations For Cecil Taylor": a tribute). Only with a target MusicBrainz has exactly once by that name (an artist; a tribute also a label; on the works level also an area or a place) – "to my mother" is left out. Staged on the release group, or on the work of a track the sentence or the track title names (release group | work by the level of the row); one click switches "dedicated to" ⇄ "tribute to"; the row names the wording of the source' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -4452,6 +4467,66 @@
   const DATE_HINTS = MAP.DATE_HINTS;
   // [Z-CVA] (3.62.0, S090) "Cover [detail]": what the detail makes of it – { re, type, credit } (the mapping: COVER_DETAIL)
   const COVER_DETAIL = MAP.COVER_DETAIL;
+
+  // --- [Z-DED] (3.67.0, S097) dedications and tributes -----------------------------------------------------------------------
+  // (the phrases case-insensitive; the names after them case-sensitive – each word capitalised, initials "J.", particles between)
+  const DED_WORD = String.raw`(?:\p{Lu}\.|\p{Lu}[\p{L}'’\-]*)`;
+  const DED_NAME = String.raw`${DED_WORD}(?:[ \t]+(?:(?:de|da|del|der|den|van|von|la|le|di|du|of|the)[ \t]+)*${DED_WORD}){0,5}`;
+  const DED_PHRASES = [
+    { re: /\b(a tribute to|in tribute to|tribute to)(?=[ \t])/giu, kind: 'tribute' },
+    { re: /\b(dedicated to the memory of|dedicated to|in loving memory of|in memory of|in memoriam:?|homage to|in erinnerung an|hommage an|gewidmet:?)(?=[ \t])/giu, kind: 'dedicated' },
+  ];
+  // the names after a phrase: "the late (great)" and quotes left out, a list joined by commas, "and" (also "and to"), "&"
+  const DED_AFTER = new RegExp(String.raw`^[ \t]+(?:the[ \t]+late[ \t]+(?:great[ \t]+)?)?["“„']?(${DED_NAME}(?:[ \t]*(?:,|\band\b|&|\bund\b)[ \t]+(?:to[ \t]+)?["“„']?${DED_NAME})*)`, 'u');
+  /**
+   * [Z-DED] (3.67.0, S097) The dedications of a text: [{ kind: 'dedicated' | 'tribute', name, whole, phrase, sentence, at }] – the names
+   * after the phrases ("whole": the names together, "Simon & Garfunkel" before "Simon" and "Garfunkel"), "X Y gewidmet", a line
+   * "For X"; `title`: a title – the name after its last "For" ("Odes And Meditations For Cecil Taylor", two words at least), as
+   * `titleKind`; `phrases: false` (a track's title): only that ("In Memory Of Elizabeth Reed" is a song).
+   */
+  function findDedications(text, { title = false, titleKind = 'tribute', phrases = true } = {}) {
+    const src = String(text || '');
+    const out = [];
+    const split = (names) => names.split(/[ \t]*(?:,|\band\b|\bund\b)[ \t]+(?:to[ \t]+)?/iu).map((x) => x.replace(/["“”„'’]/g, '').replace(/[.\s]+$/, '').trim())
+      .filter((x) => x && /^\p{Lu}/u.test(x) && x.split(/\s+/).length <= 6);
+    const add = (kind, names, phrase, at, minWords = 1) => {
+      const sentence = (sentenceAround(src, at, at + phrase.length) || src).trim();
+      const whole = names.replace(/["“”„'’]/g, '').replace(/[.\s]+$/, '').trim();
+      for (const name of split(names)) {
+        if (name.split(/\s+/).length < minWords) continue;
+        if (!out.some((x) => x.kind === kind && foldWord(x.name) === foldWord(name))) out.push({ kind, name, whole, phrase: phrase.trim().replace(/[:\s]+$/, ''), sentence, at });
+      }
+    };
+    if (phrases) {
+      for (const p of DED_PHRASES) {
+        p.re.lastIndex = 0;
+        let m;
+        while ((m = p.re.exec(src))) {
+          const after = DED_AFTER.exec(src.slice(m.index + m[0].length));
+          if (after) add(p.kind, after[1], m[1], m.index);
+        }
+      }
+      // "Peter Brötzmann gewidmet" (a name of two words at least: "meinem Vater gewidmet" is none)
+      const before = new RegExp(String.raw`(${DED_NAME})[ \t]+gewidmet\b`, 'gu');
+      let g;
+      while ((g = before.exec(src))) add('dedicated', g[1], 'gewidmet', g.index, 2);
+      // "For Cecil Taylor" as a line of its own (two words at least: "For Promotion Only" is none … mostly)
+      let at = 0;
+      src.split(/\n/).forEach((line) => {
+        const m = new RegExp(String.raw`^[ \t]*(?:for|für|pour)[ \t]+(${DED_NAME})[ \t]*[.!]?[ \t]*$`, 'u').exec(line.replace(/^[ \t]*(for|für|pour)\b/i, (x) => x.toLowerCase()));
+        if (m && !/^(?:the|promotion|promo|radio)\b/i.test(m[1])) add('dedicated', m[1], line.trim().split(/\s+/)[0], at, 2);
+        at += line.length + 1;
+      });
+    }
+    if (title) {
+      // ((review) the last "For" of the title; a part after it in brackets, after ":" or a dash is left out)
+      const m = new RegExp(String.raw`^.*\b(for|For|FOR)[ \t]+(${DED_NAME})[ \t]*(?:[(:\-–—].*)?$`, 'u').exec(src);
+      if (m && !out.length) add(titleKind, m[2], m[1], m.index + m[0].lastIndexOf(m[1]), 2);
+    }
+    return out;
+  }
+
+
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
   // [3.32.5] only month words (whole, or the first three or four letters): before, any word that began so was taken
@@ -8710,7 +8785,7 @@
   if (IS_NODE_TEST) {
     module.exports = {
       suggestFromWorks, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
-      instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount,
+      instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount, findDedications,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
       mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates,
@@ -11430,7 +11505,8 @@
 
   /** Maps a row from Discogs again with the current rules; level, instrument and credits set by hand stay. */
   function remapRow(row) {
-    if (row.manual || row.other) return;
+    // ([Z-DED] 3.67.0, review) a dedication keeps its types (its words are no role of the mapping)
+    if (row.manual || row.other || row.dedication) return;
     let m;
     if (row.company) {
       const c = mapCompanyRole(row.raw);
@@ -11879,7 +11955,8 @@
       // ([Z-CWR] 3.56.0, review) a writer left out beside a more exact type is not looked for after "Enter edit"
       // ([Z-NWA] 3.57.0) nor one on an existing work (not staged)
       // ((review) one that MusicBrainz has stays: the release page still checks it)
-      const lockedOut = (x) => workLocked(x.work) && !(S.existing.loose && S.existing.loose.has(`${x.gid}|${artist.mbid}|${lt.gid}`));
+      // ([Z-DED] 3.67.0, review) a dedication is added to an existing work too
+      const lockedOut = (x) => !row.dedication && workLocked(x.work) && !(S.existing.loose && S.existing.loose.has(`${x.gid}|${artist.mbid}|${lt.gid}`));
       const leftOut = (x) => x.kind === 'work' && ((norm(lt.name) === 'writer' && exactOnWork.has(`${x.gid}|${artist.mbid}`)) || lockedOut(x));
       const tTargets = targets.filter((x) => isMbid(x.gid) && !leftOut(x));
       const rTargets = targets.filter((x) => x.kind === 'work' && !isMbid(x.gid) && x.track && isMbid(x.track.recordingGid) && !leftOut(x));
@@ -17607,6 +17684,7 @@
       S.tcpRole = null;
       S.tcpDefault = null;
       S.tcpHits = null;
+      S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up: of this release
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
@@ -19047,6 +19125,8 @@
       // (3.43.2, review) the "part of" row of a series the source lists comes with the source (it was stored as a row of your own
       // and added once more with every import); (3.43.5) as a fresh row it is above – here only one not registered
       if (a && a.srcSeries) continue;
+      // ([Z-DED] 3.67.0, review) a dedication comes again with every import (what was chosen for it: dedChoices)
+      if (r.dedication) continue;
       if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
     }
     // [3.36.1] rows of the source removed with ✕
@@ -19653,6 +19733,7 @@
       // [3.15.0] the matches with works of artists too (the works themselves stay known for the session)
       S.artistWorkHits = new Map();
       S.tcpHits = null; // [Z-TCP] (3.60.0, review) the works found by the names after the titles: of this import
+      S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up again with each import
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
@@ -23424,7 +23505,8 @@
     }
     // [177] (3.38.10) MusicBrainz's name of the relationship, the source's role in the tooltip
     const label = roleLabel(row);
-    const drole = `<div class="dci-drole" data-raw="${esc(row.raw)}" title="${esc(label.title)}">${esc(label.text)}</div>`;
+    // ([Z-DED] 3.67.0) a dedication: its wording and the switch "dedicated to" ⇄ "tribute to" below the role
+    const drole = `<div class="dci-drole" data-raw="${esc(row.raw)}" title="${esc(label.title)}">${esc(label.text)}</div>${dedicationHtml(row)}`;
     if (row.company) {
       return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
         ${row.pcFromCompany ? `<div class="dci-note dci-pcfrom">${esc(tr('role.pcFromCompany', { name: row.pcFromCompany, where: row.pcWhere || '' }))}${row.pcFromKey
@@ -27591,9 +27673,189 @@
     }
   }
 
+  /** [Z-DED] (3.67.0, S097) The relationship types of a dedication or a tribute on a level, for an entity type. */
+  function dedicationLt(kind, level, entityType) {
+    return typesFor(level, entityType).find((l) => (kind === 'tribute' ? ['tribute', 'tribute to'] : ['dedicated to', 'dedication']).includes(norm(l.name))) || null;
+  }
+  const DED_TYPES = { tribute: ['tribute', 'tribute to'], dedicated: ['dedicated to', 'dedication'] };
+
+  /**
+   * [Z-DED] (3.67.0, S097) The dedications of the texts of the import – the notes of the source (Discogs, Bandcamp's credits and
+   * "about", a text, the cover art's text), those of a supplement, the release's title and its tracks' titles – with a target
+   * MusicBrainz has exactly once by that name: a row each (in the background, once per name and kind).
+   */
+  async function runDedications(seq = importSeq) {
+    if (!ruleOn('S097') || !S.release || !idx()) return;
+    const srcName = tr(`ded.src.${S.source === DISCOGS ? 'discogs' : S.source === BANDCAMP ? 'bandcamp' : 'text'}`);
+    const found = [];
+    const texts = [[S.release.notes, srcName], [S.supp && S.supp.rel && S.supp.rel.notes, tr('ded.src.supp')]];
+    texts.forEach(([t, where]) => findDedications(t).forEach((d) => found.push({ ...d, where })));
+    findDedications(S.releaseTitleMb || S.release.title || '', { title: true }).forEach((d) => found.push({ ...d, where: tr('ded.src.title'), fromTitle: true }));
+    // ((review) a track's title: only "… For X", an artist, on its work
+    S.mbTracks.forEach((t) => findDedications(workTitleOf(t.title), { title: true, titleKind: 'dedicated', phrases: false })
+      .forEach((d) => found.push({ ...d, kind: 'dedicated', where: tr('ded.src.track', { pos: trackLabel(t) }), track: t.idx, fromTrackTitle: true })));
+    if (!found.length) return;
+    S.dedDone = S.dedDone || new Set();
+    const choices = dedChoices();
+    // ((review) the track a sentence names: its whole title as words, the longest, not inside the phrase or the name
+    const words = (x) => ` ${foldWord(x).replace(/[^\p{L}\p{N}']+/gu, ' ').trim()} `;
+    const trackOf = (d) => {
+      if (d.track != null) return d.track;
+      const sw = words(d.sentence.replace(d.phrase, ' ').replace(d.whole || d.name, ' '));
+      const hits = S.mbTracks.filter((t) => workTitleOf(t.title).length > 3 && sw.includes(words(workTitleOf(t.title))));
+      return hits.sort((a, b) => workTitleOf(b.title).length - workTitleOf(a.title).length).map((t) => t.idx)[0];
+    };
+    let added = 0;
+    const search = async (et, name) => {
+      const data = await mbWsIdle(`${et}?query=${encodeURIComponent(`${et}:${lucenePhrase(name)}`)}&limit=100`);
+      let same = ((data && data[`${et}s`]) || []).filter((x) => foldWord(x.name || '') === foldWord(name));
+      // (an area: the country when there are several of that name)
+      if (et === 'area' && same.length > 1) same = same.filter((x) => norm(x.type || '') === 'country');
+      return same;
+    };
+    for (const d of found) {
+      const track = trackOf(d);
+      const key = `${d.kind}|${foldWord(d.name)}|${track != null ? track : ''}`;
+      if (S.dedDone.has(key) || (choices[key] && choices[key].x)) continue;
+      // ((review) areas and places only with a phrase naming a track (not from a title)
+      const level = d.kind === 'dedicated' && track != null ? 'work' : 'release_group';
+      const kinds = d.kind === 'tribute' ? ['artist', 'label'] : level === 'work' && !d.fromTrackTitle ? ['artist', 'area', 'place', 'label'] : ['artist'];
+      let hit = null;
+      let failed = false;
+      let several = false;
+      // ((review) the names together first ("Simon & Garfunkel"), then each
+      const names = uniq([d.whole && d.whole !== d.name && found.filter((x) => x.whole === d.whole).length > 1 ? d.whole : '', d.name].filter(Boolean));
+      outer: for (const name of names) {
+        for (const et of kinds) {
+          if (!dedicationLt(d.kind, level, et)) continue;
+          let same;
+          try {
+            same = await search(et, name);
+          } catch (e) {
+            console.warn('[Discogs-Credits]', e);
+            failed = true;
+            break outer;
+          }
+          if (seq !== importSeq) return;
+          if (same.length === 1) {
+            hit = { gid: same[0].id, name: same[0].name, entityType: et, level };
+            break outer;
+          }
+          if (same.length > 1) {
+            several = true;
+            break outer;
+          }
+        }
+      }
+      // ((review) a failed search is tried again with the next run; "several" is no "none")
+      if (failed) continue;
+      S.dedDone.add(key);
+      if (!hit) {
+        log('info', several ? 'dedSeveral' : 'dedNoTarget', { name: d.name, phrase: d.phrase });
+        continue;
+      }
+      if (addDedicationRow(hit, { ...d, key, kind: (choices[key] && choices[key].kind) || d.kind }, track)) added++;
+    }
+    if (added && seq === importSeq) {
+      renderGroups();
+      renderWorks();
+      refresh();
+    }
+  }
+
+  /** [Z-DED] (3.67.0, review) What was chosen for the dedications of this release (kept in this browser): key → { kind, x: removed }. */
+  const DED_KEY = 'dci-ded';
+  function dedChoices() {
+    const all = readJson('localStorage', DED_KEY, null) || {};
+    return (releaseMbid && all[String(releaseMbid).toLowerCase()]) || {};
+  }
+  function dedChoose(key, v) {
+    if (!releaseMbid || !key) return;
+    const all = readJson('localStorage', DED_KEY, null) || {};
+    const rel = String(releaseMbid).toLowerCase();
+    all[rel] = { ...(all[rel] || {}), [key]: { ...((all[rel] || {})[key] || {}), ...v } };
+    const keys = Object.keys(all);
+    if (keys.length > 300) delete all[keys[0]];
+    writeJson('localStorage', DED_KEY, all);
+  }
+
+
+  /** [Z-DED] (3.67.0, S097) A row of a dedication or a tribute for an entity MusicBrainz has (not twice). */
+  function addDedicationRow(hit, d, track) {
+    const et = hit.entityType;
+    const company = et === 'label' || et === 'place';
+    const other = !company && et !== 'artist';
+    let owner = [...S.artists.values()].find((a) => a.mbid === hit.gid && (a.entityType || 'artist') === et);
+    if (owner && S.rows.some((r) => r.artistKey === owner.key && r.dedication)) return false;
+    if (!owner) {
+      owner = {
+        key: nextId(company ? 'c' : other ? 'o' : 'a'), dId: 0, name: hit.name, rawName: '', status: 'manual', manual: true, fromDedication: true,
+        company, other, entityType: company || other ? et : undefined, mbid: hit.gid, mbName: hit.name, mbComment: '', candidates: [], editing: false, error: '', anvs: [],
+      };
+      S.artists.set(owner.key, owner);
+    }
+    const phrase = d.phrase.replace(/^\p{Ll}/u, (c) => c.toUpperCase());
+    const row = makeRow(owner.key, { raw: phrase, base: phrase, company: company ? owner : null });
+    // ((review) nothing of the mapping of its words (the catch-all of instruments) stays on the row
+    Object.assign(row, { entityType: et, types: [...DED_TYPES[d.kind]], typeOptions: { [et]: [...DED_TYPES[d.kind]] }, notes: [], ruleId: '', unresolved: [],
+      level: hit.level, defaultLevel: hit.level, work: hit.level === 'work', creditFromRole: '', primaryCands: [], primaryText: '', flags: new Set(), consumed: [], mods: [],
+      dedication: { kind: d.kind, phrase: d.phrase, name: d.name, where: d.where, sentence: d.sentence.slice(0, 200), fromTitle: !!d.fromTitle, key: d.key || '',
+        level0: hit.level, track: track != null ? track : null } });
+    // (a tribute chosen before on a dedication of a work: on the release group)
+    if (d.kind === 'tribute' && row.level === 'work') Object.assign(row, { level: 'release_group', work: false });
+    if (other) row.other = true;
+    row.tracks = new Set(track != null ? [track] : []);
+    row.suggested = new Set(row.tracks);
+    resolveRowType(row);
+    refreshRowDetails(row);
+    S.rows.push(row);
+    log('info', 'dedFound', { name: hit.name, kind: tr(`ded.kind.${d.kind}`), phrase: d.phrase, where: d.where });
+    return true;
+  }
+
+  /** [Z-DED] (3.67.0, review) The level a dedication of the other kind goes to: a tribute on the release group, a dedication back where it was. */
+  function dedToggleTarget(row) {
+    const d = row.dedication;
+    const kind = d.kind === 'tribute' ? 'dedicated' : 'tribute';
+    const level = kind === 'tribute' ? 'release_group' : d.level0 || 'release_group';
+    return dedicationLt(kind, level, row.entityType || 'artist') ? { kind, level } : null;
+  }
+
+  /** [Z-DED] (3.67.0, S097) One click: "dedicated to" ⇄ "tribute to" (a tribute on the release group, a dedication back on its level). */
+  function toggleDedication(row) {
+    const d = row.dedication;
+    if (!d) return;
+    const to = dedToggleTarget(row);
+    if (!to) return;
+    const et = row.entityType || 'artist';
+    d.kind = to.kind;
+    row.types = [...DED_TYPES[to.kind]];
+    row.typeOptions = { [et]: [...DED_TYPES[to.kind]] };
+    row.linkTypeId = null;
+    if (row.level !== to.level) levelOf(row, to.level);
+    row.level = to.level;
+    row.work = to.level === 'work';
+    if (to.level === 'work' && d.track != null) row.tracks = new Set([d.track]);
+    resolveRowType(row);
+    refreshRowDetails(row);
+    dedChoose(d.key, { kind: to.kind });
+    log('info', 'dedToggled', { name: (S.artists.get(row.artistKey) || {}).name || '', kind: tr(`ded.kind.${to.kind}`) });
+  }
+
+  /** [Z-DED] (3.67.0, S097) The line of a dedication's row: the wording of the source, where it is, the switch. */
+  function dedicationHtml(row) {
+    const d = row.dedication;
+    if (!d || !ruleOn('S097')) return '';
+    const to = dedToggleTarget(row);
+    return `<div class="dci-sub dci-ded" title="${esc(d.sentence)}">${esc(tr('ded.from', { phrase: `${d.phrase} ${d.name}`, where: d.where }))}${to
+      ? ` <button type="button" class="dci-textbtn" data-act="ded-toggle" title="${esc(tr('ded.toggleTitle'))}">⇄ ${esc(tr(`ded.kind.${to.kind}`))}</button>` : ''}</div>`;
+  }
+
   /** [Z-TCP2] (3.63.0, review) The single words checked, then the works of the names in brackets looked up (in the background). */
   function runTitleComposerChecks(seq = importSeq) {
     checkTitleComposerSingles(seq).then(() => (seq === importSeq ? searchTitleComposerWorks(seq) : null)).catch((e) => console.warn('[Discogs-Credits]', e));
+    // [Z-DED] (3.67.0, S097) the dedications of the texts, in the background as well
+    runDedications(seq).catch((e) => console.warn('[Discogs-Credits]', e));
   }
 
 
@@ -32890,6 +33152,15 @@
         break;
       }
       // [S057] (3.37.10) a ℗ / © row back to the label entry
+      case 'ded-toggle':
+        // [Z-DED] (3.67.0, S097) "dedicated to" ⇄ "tribute to"
+        if (row) {
+          toggleDedication(row);
+          renderGroups();
+          renderWorks();
+          refresh();
+        }
+        break;
       case 'pc-as-label':
         if (row) {
           pcAsLabel(row);
@@ -34226,6 +34497,8 @@
         break;
       }
       case 'remove-row':
+        // ([Z-DED] 3.67.0, review) a dedication removed stays out for this release
+        if (row && row.dedication) dedChoose(row.dedication.key, { x: 1 });
         if (row) removeRow(row);
         break;
       case 'row-restore':

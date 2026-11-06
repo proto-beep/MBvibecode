@@ -1503,6 +1503,40 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dedphrases():
+    """Credits Importer 3.67.0 (collected item Z-DED, rule S097), in Node: the dedications of a text – "dedicated to A and B" (two),
+    "In memory of", "In Memoriam:", "Homage To", "gewidmet" (after the name too), "In Erinnerung an", "Hommage an" (dedicated to);
+    "A tribute to" (tribute to); "For Cecil Taylor" only as a line of its own ("Recorded for the BBC." not); "to my mother" none;
+    titles: "Odes And Meditations For Cecil Taylor" a tribute, "Music For Airports" none (one word).
+    (review) The name ends where its capitals end ("… who passed away", a new line); "Simon & Garfunkel" one name; "the memory of", "the late
+    great"; the last "For" of a title; "Sonata For Violin And Piano", "Walking To New Orleans", a track "In Memory Of Elizabeth Reed",
+    "meinem Vater gewidmet", "FOR PROMOTION ONLY": none."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const cases = [['This album is dedicated to Ornette Coleman and Don Cherry.', {}], ['In memory of Peter Kowald (1944–2002).', {}], ['Dedicated to my mother.', {}],
+  ['A tribute to Cecil Taylor, recorded live.', {}], ['Peter Brötzmann gewidmet.', {}], ['In Erinnerung an Peter Kowald', {}], ['Hommage an Albert Ayler', {}],
+  ['Recorded for the BBC.\nFor Cecil Taylor\nThanks for listening.', {}], ['Odes And Meditations For Cecil Taylor', { title: true }], ['Music For Airports', { title: true }],
+  ['In Memoriam: Don Cherry', {}], ['Homage To Monk', {}],
+  ['Dedicated to Cecil Taylor who passed away in 2018.', {}], ['Dedicated to Cecil Taylor\nRecorded At Loft, Cologne', {}], ['A tribute to Simon & Garfunkel.', {}],
+  ['Dedicated to the memory of Peter Kowald.', {}], ['A tribute to the late great Sun Ra.', {}], ['Songs To Sing For Cecil Taylor', { title: true }],
+  ['Sonata For Violin And Piano', { title: true }], ['Walking To New Orleans', { title: true }], ['In Memory Of Elizabeth Reed', { title: true, phrases: false, titleKind: 'dedicated' }],
+  ['Dieses Album ist meinem Vater gewidmet.', {}], ['FOR PROMOTION ONLY', {}]];
+console.log(JSON.stringify(cases.map(([t, o]) => m.findDedications(t, o).map((d) => [d.kind, d.name, d.phrase]))));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+    print(res)
+    D, T = 'dedicated', 'tribute'
+    want = [[[D, 'Ornette Coleman', 'dedicated to'], [D, 'Don Cherry', 'dedicated to']], [[D, 'Peter Kowald', 'In memory of']], [],
+            [[T, 'Cecil Taylor', 'A tribute to']], [[D, 'Peter Brötzmann', 'gewidmet']], [[D, 'Peter Kowald', 'In Erinnerung an']], [[D, 'Albert Ayler', 'Hommage an']],
+            [[D, 'Cecil Taylor', 'For']], [[T, 'Cecil Taylor', 'For']], [], [[D, 'Don Cherry', 'In Memoriam']], [[D, 'Monk', 'Homage To']],
+            [[D, 'Cecil Taylor', 'Dedicated to']], [[D, 'Cecil Taylor', 'Dedicated to']], [[T, 'Simon & Garfunkel', 'A tribute to']],
+            [[D, 'Peter Kowald', 'Dedicated to the memory of']], [[T, 'Sun Ra', 'A tribute to']], [[T, 'Cecil Taylor', 'For']], [], [], [], [], []]
+    results = [res == want]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_photoname():
     """Credits Importer 3.63.0 (collected item Z-PHN, rule S091): a photographer named in the detail of a photography credit.
     A) "Photography By [Bass Man]" (Bass Man the artist of the release) → photography credited "Bass Man" (until 3.62.0 "bass man");
