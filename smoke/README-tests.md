@@ -37,6 +37,9 @@ MBvibecode/ (this repository)
                                       [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
                                       script starts (the files written before expect the stores of a release kept); False in
                                       t_ui_settings.py cache and t_entries.py order (the script's default: off)
+                                #   statsdur: 3.65.0 (Z-DUR, S095): the time of creating an entry in the record (cr); the times without / with it,
+                                #     remembered; no switch in Global nor with S095 off
+                                #   globalgroups: 3.65.0 (Z-GLB): Global's head line (ⓘ, fold / open all), its groups, "+ n more"
                                 #   statscompact: 3.61.0 (Z-STL, Z-RDU2): the head in one line, the flat bar, the groups, cards and groups folded
                                 #     (remembered), fold / open all, "+ n more", the bars, the streaks in one line, Recording | Release
                                       [3.40.9] DM_FOLD: False – "Fold bar after Apply" stored off before the script starts (the files
