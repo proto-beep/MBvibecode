@@ -882,4 +882,124 @@ def case_pcperson():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_dedications():
+    """Credits Importer 3.67.0 (collected item Z-DED, rule S097): dedications and tributes.
+    A) The Discogs notes "Dedicated to Cecil Taylor and to my mother. Song Two is in memory of Bass Man.": Cecil Taylor (MusicBrainz has
+       one artist of that name) – "dedicated to" on the release group, the row names "Dedicated to Cecil Taylor" in the Discogs notes;
+       Bass Man – "dedicated to" on the work of track 2 (the sentence names its title); "my mother": nothing (no such entry).
+    B) One click "⇄ tribute to": Cecil Taylor's row a tribute (release group); staged: the release group "dedicated to" Bass Man on the
+       work … and the tribute to Cecil Taylor.
+    C) The release's title "Odes And Meditations For Cecil Taylor" (no notes): a tribute to Cecil Taylor from the start.
+    D) Rule S097 off: no such rows.
+    E) (review) The page loaded again after the switch to "tribute to": the row is a tribute again (kept for this release), no
+       "remembered change left out"; a change of the rules (S007 off) leaves its type as it is."""
+    import json
+    CT = H.uid('dddddddd', 3800)
+    RG = None
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 65: ('5e2907db-49ec-4a48-9f11-dfb99d2603ff', 'tribute', 'artist', 'release_group'),
+                 846: ('26131498-00e8-4136-b937-22a4be01a63d', 'dedication', 'artist', 'work')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    # (an artist MusicBrainz has – found by the search over the known ones, its entity for staging)
+    H.ARTISTS[3800] = (CT, 'Cecil Taylor')
+    orig_dg, orig_ws = H.discogs_release, H.ws_release
+    notes = {'v': ''}
+    title = {'v': None}
+
+    def dg():
+        d = orig_dg()
+        d['notes'] = notes['v']
+        return d
+
+    def ws(full=False):
+        d = orig_ws(full)
+        if title['v']:
+            d['title'] = title['v']
+        return d
+    H.discogs_release, H.ws_release = dg, ws
+    ROWS = """[...document.querySelectorAll('[data-group] tr.dci-row')].filter(tr => tr.querySelector('.dci-ded')).map(tr => ({
+      name: tr.closest('[data-group]').querySelector('.dci-gname strong').textContent.trim(), raw: tr.querySelector('.dci-drole').dataset.raw,
+      level: (tr.querySelector('[data-act=level][aria-pressed=true]') || {}).dataset ? tr.querySelector('[data-act=level][aria-pressed=true]').dataset.level : null,
+      type: (s => s ? s.options[s.selectedIndex].text : null)(tr.querySelector('[data-f=type]')), ded: tr.querySelector('.dci-ded').textContent.replace(/\\s+/g, ' ').trim(), row: tr.dataset.row,
+      status: (tr.querySelector('.dci-status') || {}).textContent }))"""
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1 && [868, 65, 846].includes(r.linkTypeID)).map(r => [r.entity0.gid || r.entity0.name, r.linkTypeID, r.entity1.gid || r.entity1.name, r.entity1.entityType || r.entity0.entityType]))()"""
+    results = []
+
+    def run(off=False, toggle=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S097']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            out = {'mx': pg.evaluate("""(() => { const h = [...document.querySelectorAll('.dci-matrix [data-colhead]')].find(x => /Bass Man/.test(x.textContent)); if (!h) return null;
+              return [...document.querySelectorAll(`.dci-matrix td.dci-mx-cell.dci-mx-on[data-col="${h.dataset.colhead}"]`)].map(td => Number(td.dataset.mrow.split(':')[1]) + 1); })()"""),
+                   'rows': pg.evaluate(ROWS), 'log': [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'mother' in x or 'tribute to' in x or 'dedicated to' in x]}
+            if toggle:
+                ct = next((r for r in out['rows'] if r['name'] == 'Cecil Taylor'), None)
+                if ct:
+                    pg.locator(f'tr[data-row="{ct["row"]}"] [data-act=ded-toggle]').evaluate('b => b.click()')
+                    pg.wait_for_timeout(500)
+                out['after'] = pg.evaluate(ROWS)
+                pg.click('[data-act=apply]')
+                pg.wait_for_timeout(3000)
+                pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+                pg.wait_for_timeout(500)
+                out['staged'] = pg.evaluate(STAGED)
+                # E) the page again (the same browser)
+                pg.reload(); pg.add_script_tag(content=H.MAIN)
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(2500)
+                out['again'] = pg.evaluate(ROWS)
+                out['lost'] = pg.evaluate("[...document.querySelectorAll('#dci-log li, [data-el=msgs] *')].some(e => /left out/.test(e.textContent) && /remembered/.test(e.textContent))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S007']))")
+                pg.evaluate("window.dispatchEvent(new StorageEvent('storage', { key: 'dci-rules-off' }))")
+                pg.wait_for_timeout(800)
+                out['rules'] = pg.evaluate(ROWS)
+            out['errs'] = errs
+            b.close()
+            return out
+
+    try:
+        notes['v'] = 'Dedicated to Cecil Taylor and to my mother. Song Two is in memory of Bass Man.'
+        o = run(toggle=True)
+        print('A)', json.dumps(o['rows'], ensure_ascii=False), '| Matrix Bass Man:', o['mx'], '\n   log:', o['log'])
+        by = {r['name']: r for r in o['rows']}
+        ct = by.get('Cecil Taylor')
+        results.append(ct and ct['level'] == 'release_group' and ct['type'] == 'dedicated to' and 'Dedicated to Cecil Taylor' in ct['ded'] and 'Discogs notes' in ct['ded']
+                       # (Bass Man on the works level: in the works matrix – its column on track 2)
+                       and o['mx'] == [2] and any(x.startswith('Bass Man: dedicated to – from “in memory of”') for x in o['log']) and not any('mother' in x for x in o['log']) and not o['errs'])
+        aft = {r['name']: r for r in o['after']}
+        print('B)', aft.get('Cecil Taylor'), '\n   staged:', o['staged'])
+        results.append(aft.get('Cecil Taylor') and aft['Cecil Taylor']['type'] == 'tribute' and aft['Cecil Taylor']['level'] == 'release_group'
+                       and any(x[1] == 65 and CT in (x[0], x[2]) for x in o['staged']) and any(x[1] == 846 for x in o['staged']) and not any(x[1] == 868 and CT in (x[0], x[2]) for x in o['staged']))
+        ag = {r['name']: r for r in o['again']}
+        print('E) wieder:', ag.get('Cecil Taylor'), '| verloren:', o['lost'], '| Regeln:', [r['type'] for r in o['rules']])
+        results.append(ag.get('Cecil Taylor') and ag['Cecil Taylor']['type'] == 'tribute' and not o['lost'] and all(r['type'] in ('tribute', 'dedicated to') for r in o['rules']))
+        notes['v'] = ''
+        title['v'] = 'Odes And Meditations For Cecil Taylor'
+        o2 = run()
+        print('C)', o2['rows'])
+        results.append(len(o2['rows']) == 1 and o2['rows'][0]['name'] == 'Cecil Taylor' and o2['rows'][0]['type'] == 'tribute' and "release's title" in o2['rows'][0]['ded'])
+        o3 = run(off=True)
+        print('D)', o3['rows'])
+        results.append(o3['rows'] == [])
+    finally:
+        H.discogs_release, H.ws_release = orig_dg, orig_ws
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.ARTISTS.pop(3800, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

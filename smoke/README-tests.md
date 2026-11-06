@@ -243,6 +243,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   dedications: 3.67.0 (Z-DED, S097): "Dedicated to" / "in memory of" in the notes – release group, the work of a
+                                #     track the sentence names; "to my mother" left out; ⇄ tribute to; the release's title a tribute; off
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
                                 #     Performance, the places of the notes (not when "Companies, etc." lists them; another role joins its
                                 #     entry), as a text: the place line recognized, "Including a 52 p. booklet." left out
@@ -422,6 +424,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   dedphrases: 3.67.0 (Z-DED, Node): the phrases of dedications and tributes, names joined, a title
                                 #   coverdetail: 3.62.0 (Z-CVA, S090, Node): "Cover [Cover Art]" → "cover art", the exceptions of COVER_DETAIL, the dashboard's role credit
                                 #   photoname: 3.63.0 (Z-PHN, S091): "Photography By [Bass Man]" credited "Bass Man"; off
                                 #   perfhints: 3.62.0 (Z-PDT review, Node): performance hints, not premieres or rights lines
