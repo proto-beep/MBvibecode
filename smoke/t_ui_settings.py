@@ -1346,7 +1346,8 @@ def case_statsb10():
         # (the scope remembered as "Global": "This browser" first)
         if pg.locator('[data-act=stats-scope][data-scope=local]').count():
             pg.click('[data-act=stats-scope][data-scope=local]'); pg.wait_for_timeout(400)
-        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-${k}]`))"
+        # ((3.65.0, Z-CFT) "Counted from … on" is the tooltip of the card's head: taken with its texts)
+        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).concat([(c.querySelector('.dci-stats-cardhead[data-since]') || {}).title].filter(Boolean)) : null)(document.querySelector(`[data-el=stats-${k}]`))"
         card = lambda k: pg.evaluate(CARD, k)
         a0 = card('when')
         print('Gesät:', seeded, '\nA)', a0)
@@ -1496,7 +1497,8 @@ def case_statsart():
         if pg.locator('[data-act=stats-scope][data-scope=local]').count():
             pg.click('[data-act=stats-scope][data-scope=local]')
         pg.wait_for_timeout(1500)
-        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-${k}]`))"
+        # ((3.65.0, Z-CFT) "Counted from … on" is the tooltip of the card's head: taken with its texts)
+        CARD = "(k) => (c => c ? [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).concat([(c.querySelector('.dci-stats-cardhead[data-since]') || {}).title].filter(Boolean)) : null)(document.querySelector(`[data-el=stats-${k}]`))"
         mine = lambda: [g for g, q in H.ARTIST_LOOKUPS if 'inc=' not in q]
         a0, a1 = pg.evaluate(CARD, 'artists'), pg.evaluate(CARD, 'labelsplaces')
         print('Gesät:', seeded, '\nA)', a0, '\n  ', a1, '| nachgeschlagen:', mine())
@@ -1610,9 +1612,11 @@ def case_statsmore2():
         pg.wait_for_timeout(600)
         H.open_stats(pg)
         pg.wait_for_timeout(600)
+        # ((3.65.0, Z-CFT) "Counted from … on" is the tooltip of the card's head – no line in the card)
         CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
-          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).concat([(c.querySelector('.dci-stats-cardhead[data-since]') || {}).title].filter(Boolean))]))"""
         c = pg.evaluate(CARDS)
+        nsince = pg.evaluate("document.querySelectorAll('.dci-stats-since').length")
         for k in ('suites', 'attrs', 'works2', 'genres', 'decisions', 'live', 'gaps', 'together'):
             print(f'   {k}:', c.get(k))
         since = 'Counted from 3.41.14 on – the imports before do not hold it.'
@@ -1620,8 +1624,8 @@ def case_statsmore2():
         results.append(seeded and ok('suites', 'suites 2', 'created in MusicBrainz 1', 'found in MusicBrainz 1', 'added by hand 1', 'their parts 5', 'medleys split 1', '“parts” relationships 3', since)
                        and ok('attrs', 'movement 3', 'live 2', 'additional 1', 'medley 1', since))
         results.append(ok('works2', 'linked with recordings 4', 'of them created in MusicBrainz’s form 1', 'new works in the relationship editor 2', since)
-                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '5 answers to the questions of the script', 'Q002: electric guitar 3', 'Q012: spoken vocals (credited “host”) 1', 'Q012: skip the role 1')
-                       and since not in c.get('decisions', []))
+                       and ok('genres', 'Jazz 2', 'Free Jazz 1', since) and ok('decisions', '5 answers to the questions of the script', 'Q002: electric guitar 3', 'Q012: spoken vocals (credited “host”) 1', 'Q012: skip the role 1')
+                       and since not in c.get('decisions', []) and nsince == 0)
         results.append(ok('live', 'recordings linked live with their works 2', 'live comments set 3', since)
                        and ok('gaps', 'role credits added 4', 'dates added 2', 'attributes added to links of recordings and works 1', since)
                        and c.get('together') == ['Ann & Bob 2'])
@@ -1660,7 +1664,7 @@ def case_statsgenres():
        Tennessee"); without links the "keywords" of its JSON-LD (also without the place).
     B) Three stored submissions – Discogs jazz, free jazz with Bandcamp jazz, ambient; Discogs jazz with Bandcamp ambient, drone; one of
        3.41.14 (genres only): "Combined" first – Jazz 3 (its tooltip "Discogs 3 · Bandcamp 1"; once a release, also when both name it),
-       Ambient 2, Drone 1, Free jazz 1; "Separate": Discogs (Jazz 3, Free jazz 1) and Bandcamp (Ambient 2, Drone 1, Jazz 1) – remembered
+       Ambient 2, Drone 1, Free Jazz 1 (3.65.0, Z-GNC: every word capitalised); "Separate": Discogs (Jazz 3, Free Jazz 1) and Bandcamp (Ambient 2, Drone 1, Jazz 1) – remembered
        (dci-stats-genres) when the statistics are shown again; "Combined" again: forgotten (the default)."""
     import json
     import subprocess
@@ -1700,7 +1704,7 @@ console.log(JSON.stringify([m.SOURCES.bandcamp.pageTags(links), m.SOURCES.bandca
         b1 = pg.evaluate(CARD)
         print('B) Combined:', b1)
         results.append(seeded and b1['seg'] == ['Combined ✓', 'Separate'] and not b1['heads']
-                       and b1['items'] == [['Jazz 3', 'Discogs 3 · Bandcamp 1'], ['Ambient 2', 'Bandcamp 2'], ['Drone 1', 'Bandcamp 1'], ['Free jazz 1', 'Discogs 1']])
+                       and b1['items'] == [['Jazz 3', 'Discogs 3 · Bandcamp 1'], ['Ambient 2', 'Bandcamp 2'], ['Drone 1', 'Bandcamp 1'], ['Free Jazz 1', 'Discogs 1']])
         pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=separate]')
         pg.wait_for_timeout(500)
         b2 = pg.evaluate(CARD)
@@ -1713,7 +1717,7 @@ console.log(JSON.stringify([m.SOURCES.bandcamp.pageTags(links), m.SOURCES.bandca
         b3 = pg.evaluate(CARD)
         print('   Separate:', b2, '| gespeichert:', stored, '| wieder:', b3['seg'])
         results.append(b2['seg'] == ['Combined', 'Separate ✓'] and b2['heads'] == ['Discogs', 'Bandcamp']
-                       and [x[0] for x in b2['items']] == ['Jazz 3', 'Free jazz 1', 'Ambient 2', 'Drone 1', 'Jazz 1'] and stored == '"separate"' and b3['seg'] == ['Combined', 'Separate ✓'])
+                       and [x[0] for x in b2['items']] == ['Jazz 3', 'Free Jazz 1', 'Ambient 2', 'Drone 1', 'Jazz 1'] and stored == '"separate"' and b3['seg'] == ['Combined', 'Separate ✓'])
         pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=combined]')
         pg.wait_for_timeout(500)
         b4 = pg.evaluate(CARD)
@@ -2095,6 +2099,165 @@ def case_statstime():
         print('B/D) Median:', b1, '| Durchschnitt:', b2, '| gespeichert:', stored, '|', supp, '| Fehler:', errs)
         results.append(seeded and b1 == [['Discogs', '3', '2 min 0 s', '30 s', '1 · 2 min 0 s'], ['Bandcamp', '1', '30 s', '10 s', '–']]
                        and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with a supplement: 1' and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsdur():
+    """Credits Importer 3.65.0 (collected item Z-DUR, rule S095): the times without the time of creating new entries.
+    A) "Create artist …" for "Nobody Known", 1.5 s until MusicBrainz shows the new artist (the entry linked): the record of "Enter edit"
+       holds that time (cr ≥ 1.5 s, at most its work time).
+    B) Stored records (1 min with 20 s of creating, 2 relationships; 2 min without, 4): "Without new entries" first – time per release
+       1 min 20 s, per relationship 27 s; "With new entries" – 1 min 30 s and 30 s, remembered (dci-stats-dur); the card "Sources" too.
+    C) "Global" has no such switch; rule S095 off: no switch, the times with everything (as before)."""
+    results = []
+    orig = H.discogs_release
+    NEW = H.uid('dddddddd', 78)
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': 'Nobody Known', 'anv': '', 'role': 'Vocals', 'tracks': '', 'id': 3999, 'join': ''}]
+        return d
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent === 'Nobody Known').dataset.group")
+            pg.locator(f'section.dci-group[data-group="{key}"] [data-act=artist-create]').evaluate('b => b.click()')
+            pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+            pg.wait_for_timeout(1500)
+            pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/artist/{NEW}'")
+            pg.wait_for_timeout(2600)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(2500)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(800)
+            added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+            H.WS_JS_RELEASE.clear()
+            H.WS_JS_RELEASE.update(js_release_of(added))
+            pg.evaluate(ENTER_EDIT)
+            pg.evaluate("document.getElementById('test-enter-edit').click()")
+            pg.wait_for_timeout(2500)
+            recs = pg.evaluate(STAT_COUNT) or []
+            r0 = recs[0] if recs else {}
+            print('A) Datensatz: cr', r0.get('cr'), 'work', r0.get('work'), '| Fehler:', errs)
+            results.append(r0.get('cr', 0) >= 1500 and r0.get('work') is not None and r0['cr'] <= r0['work'] and not errs)
+            # B) stored records (a fresh context)
+            ctx2 = H.new_context(b)
+            pg, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            now = pg.evaluate("Date.now()")
+            rl = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+            def rec(i, n, work, cr=0):
+                r = {'v': 3, 'id': f't:{i}', 'mbid': f'm{i}', 'at': now - i * 1000, 'start': now - 9999999, 'ms': work + 5000, 'work': work, 'src': 'discogs', 'supp': [],
+                     'rel': rl, 'own': 0, 'ocr': None, 'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}{k}', 'Ann') for k in range(n)]}
+                if cr:
+                    r['cr'] = cr
+                return r
+            pg.evaluate(STAT_SEED, [rec(1, 2, 60000, cr=20000), rec(2, 4, 120000)])
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(600)
+            H.open_stats(pg)
+            pg.wait_for_timeout(600)
+            TILES = """(() => ({ rel: (document.querySelector('[data-stat=perRelease] .dci-stats-num') || {}).textContent, per: (document.querySelector('[data-stat=perRel] .dci-stats-num') || {}).textContent,
+              seg: [...document.querySelectorAll('[data-act=stats-dur]')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? ' ✓' : '')),
+              src: [...document.querySelectorAll('[data-el=stats-sources] .dci-stats-srct tbody tr')].map(t => [...t.children].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).slice(2, 4)) }))()"""
+            b1 = pg.evaluate(TILES)
+            pg.click('[data-act=stats-dur][data-view=with]')
+            pg.wait_for_timeout(400)
+            b2 = pg.evaluate(TILES)
+            stored = pg.evaluate("localStorage.getItem('dci-stats-dur')")
+            print('B) ohne:', b1, '| mit:', b2, '| gespeichert:', stored)
+            # (per release: (40 s + 120 s) / 2 = 1 min 20 s; per relationship: 160 s / 6 = 27 s – with: 180 s / 2, 180 s / 6)
+            results.append(b1['seg'] == ['Without new entries ✓', 'With new entries'] and b1['rel'] == '1 min 20 s' and b1['per'] == '27 s'
+                           and b2['rel'] == '1 min 30 s' and b2['per'] == '30 s' and stored == '"with"' and b2['seg'] == ['Without new entries', 'With new entries ✓']
+                           and b1['src'] != b2['src'])
+            # C) Global: no switch; the rule off: none either, the times with everything
+            pg.click('[data-act=stats-dur][data-view=without]')
+            pg.wait_for_timeout(300)
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=global]')
+            pg.wait_for_timeout(600)
+            c1 = pg.locator('[data-act=stats-dur]').count()
+            pg.click('[data-el=stats] [data-act=stats-scope][data-scope=local]')
+            pg.wait_for_timeout(300)
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S095']))")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.open_stats(pg)
+            pg.wait_for_timeout(600)
+            c2 = pg.evaluate(TILES)
+            print('C) Global-Schalter:', c1, '| Regel aus:', c2)
+            results.append(c1 == 0 and c2['seg'] == [] and c2['rel'] == '1 min 30 s' and not errs2)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_globalgroups():
+    """Credits Importer 3.65.0 (collected item Z-GLB): "Global" as "This browser".
+    A) The head in one line: ⓘ (its texts: all users, only numbers; "Fold all" / "Open all"), "Dump of 2026-11-08", "Load again".
+    B) The groups Overview (over time, the lists), Who (credits, artists), Releases (media, script, lengths) – each folds.
+    C) A list of more than four (six versions): the first three, "+ 3 more" shows the rest.
+    D) "Fold all": every card of Global folded – (review) those of "This browser" not (Global folds by keys of its own, "g:…")."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261108-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1},
+            'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}},
+            'by_version': {f'3.6{k}.0': {'edits': k + 1} for k in range(6)}, 'by_source': {'discogs': 2},
+            'credits': {'credited_as': {'n': 1, 'of': 4}}, 'core': {
+                'dump': '20261108-002222', 'artists': {'n': 3, 'of': 4, 'types': {'Person': 2}, 'genders': {}, 'decades': {}, 'countries': {}, 'towns': {}, 'centuries': {}, 'posthumous': {'n': 0, 'of': 0}},
+                'releases': {'n': 2, 'media': {'single': 2}, 'rg_primary': {'Album': 2}, 'rg_secondary': {}, 'languages': {'eng': 2}, 'scripts': {'Latn': 2}},
+                'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0}, 'role_credits': {'n': 2, 'of': 5}}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_stats(pg)
+        pg.click('[data-act=stats-scope][data-scope=global]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+        head = pg.evaluate("""(() => { const h = document.querySelector('.dci-stats-head [data-el=stats-headline]');
+          return h ? { info: !!h.querySelector('[data-act=stats-info]'), where: (h.querySelector('[data-el=stats-global-head]') || {}).textContent, reload: !!h.querySelector('[data-act=stats-global-reload]') } : null; })()""")
+        pg.click('[data-el=stats-headline] [data-act=stats-info]')
+        pg.wait_for_timeout(300)
+        pop = pg.evaluate("(() => { const x = document.querySelector('[data-el=stats-info]'); return x ? [x.textContent.includes('All users of the script'), !!x.querySelector('[data-act=stats-fold-all]')] : null; })()")
+        print('A)', head, pop)
+        results.append(head and head['info'] and head['reload'] and 'Dump of 2026-11-08' in head['where'] and pop == [True, True])
+        groups = pg.evaluate("[...document.querySelectorAll('[data-el=stats-global-core] .dci-stats-group')].map(g => [g.dataset.group, [...g.querySelectorAll('.dci-stats-card')].map(c => c.dataset.card)])")
+        print('B)', groups)
+        # ((review) folded by keys of their own: "g:…")
+        results.append(groups == [['g:overview', []], ['g:who', ['g:credits', 'g:artists']], ['g:releases', ['g:media', 'g:script', 'g:lengths']]])
+        ver = lambda: pg.evaluate("[...document.querySelectorAll('[data-el=stats-global-versions] li')].filter(li => !li.hidden).length")
+        c0 = ver()
+        more = pg.evaluate("(() => { const b = document.querySelector('[data-el=stats-global-core] [data-act=stats-list-more]'); return b ? b.textContent.trim() : null; })()")
+        pg.click('[data-el=stats-global-core] [data-act=stats-list-more]')
+        pg.wait_for_timeout(300)
+        c1 = ver()
+        print('C)', c0, more, c1)
+        results.append(c0 == 3 and more == '+ 3 more' and c1 == 6)
+        # (ⓘ is still open: its "Fold all")
+        pg.click('[data-el=stats-info] [data-act=stats-fold-all]')
+        pg.wait_for_timeout(400)
+        folded = pg.evaluate("[...document.querySelectorAll('[data-el=stats-global-core] .dci-stats-card')].map(c => c.classList.contains('dci-stats-folded'))")
+        # ((review) "This browser" keeps its cards open
+        pg.click('[data-el=stats] [data-act=stats-scope][data-scope=local]')
+        pg.wait_for_timeout(400)
+        local = pg.evaluate("[...document.querySelectorAll('.dci-stats-card')].filter(c => c.classList.contains('dci-stats-folded')).length")
+        print('D)', folded, '| This browser gefaltet:', local, errs)
+        results.append(folded and all(folded) and local == 0 and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
