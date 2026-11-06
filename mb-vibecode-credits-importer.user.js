@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.70.0
+// @version      3.71.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.70.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.70.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.71.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.71.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.70.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.71.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3674,6 +3674,7 @@
     { id: 'S104', where: 'sourceElOf, showSourceOf', note: 'Companion (3.69.0): a click into an entry\'s line of the compact view (its white field) marks the line on Discogs (or Bandcamp) – a line of one row that row, else the entry' },
     { id: 'S105', where: 'suiteAddHtml, suiteAddBtnHtml, suiteTaken (suite-add-yes)', note: 'Works matrix (3.70.0): several suites – after "✓ Yes" the box stays open for the next one ("＋ Another suite"), from the first track that is free; tracks of a suite (or a medley) cannot be chosen again: the ranges of two suites never overlap' },
     { id: 'S106', where: 'onKeydown (mxArrow)', note: 'Works matrix (3.70.0): the arrow keys move between the cells (← → along a row, ↑ ↓ along a column; the front column of the tracks and the heads of the columns too); Space or Enter switches a cell as before' },
+    { id: 'S107', where: 'findDedications, runDedications', note: 'Dedications (3.71.0): "for …" in a sentence too, when an artist, a country or a place MusicBrainz has exactly once by that name follows ("This record is for Peter Kowald") – not after "recorded", "produced", "commissioned", "made", "mixed", "performed" (that is a production), not a label (a label only with "tribute to"), not after "thanks"; "written for" / "composed for" is a dedication of the work. A country or a place only on the work of a track the sentence names' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -4522,6 +4523,7 @@
         if (!out.some((x) => x.kind === kind && foldWord(x.name) === foldWord(name))) out.push({ kind, name, whole, phrase: phrase.trim().replace(/[:\s]+$/, ''), sentence, at });
       }
     };
+    const lineRead = new Set(); // (the lines "For X" read as such: their start)
     if (phrases) {
       for (const p of DED_PHRASES) {
         p.re.lastIndex = 0;
@@ -4539,9 +4541,43 @@
       let at = 0;
       src.split(/\n/).forEach((line) => {
         const m = new RegExp(String.raw`^[ \t]*(?:for|für|pour)[ \t]+(${DED_NAME})[ \t]*[.!]?[ \t]*$`, 'u').exec(line.replace(/^[ \t]*(for|für|pour)\b/i, (x) => x.toLowerCase()));
-        if (m && !/^(?:the|promotion|promo|radio)\b/i.test(m[1])) add('dedicated', m[1], line.trim().split(/\s+/)[0], at, 2);
+        if (m && !/^(?:the|promotion|promo|radio)\b/i.test(m[1])) {
+          add('dedicated', m[1], line.trim().split(/\s+/)[0], at, 2);
+          lineRead.add(at);
+        }
         at += line.length + 1;
       });
+    }
+    // [Z-DED2] (3.71.0, S107) "for …" in a sentence: not a production ("recorded for …") nor thanks; "written / composed for": the work
+    // ((review) not in a title; the sentence from its start: a production or thanks anywhere before "for", a quote open, a word with a
+    // capital before it ("Music For Airports" in a sentence), a list of names with commas (territories), the words of a release for a
+    // country ("bonus", "licensed", "pressed", "… only"); after "für" two words ("für Kinder"), "aufgenommen" / "komponiert" after the name)
+    if (phrases && !title && ruleOn('S107')) {
+      const re = /\b(for|für)(?=[ \t])/giu;
+      let m;
+      while ((m = re.exec(src))) {
+        const lineStart = src.lastIndexOf('\n', m.index - 1) + 1;
+        if (/^[ \t]*$/.test(src.slice(lineStart, m.index)) && lineRead.has(lineStart)) continue; // (a line "For X" is read above)
+        const head = src.slice(lineStart, m.index);
+        const cut = Math.max(...['.', '!', '?', ';'].map((c) => head.lastIndexOf(`${c} `)));
+        const sent = cut >= 0 ? head.slice(cut + 2) : head;
+        const before = sent.toLowerCase();
+        if (/\b(?:recorded|produced|commissioned|made|mixed|remixed|performed|played|mastered|engineered|edited|arranged|adapted|orchestrated|transcribed|compiled|curated|designed|photographed|filmed|broadcast|prepared|created|released|issued|licen[cs]ed|pressed|manufactured|distributed|printed|exclusive(?:ly)?|bonus|edition|version|thanks|thank you|thank|grateful|available|ready|aufgenommen|produziert|gemischt|danke|dank)\b/u.test(before)) continue;
+        const count = (re2) => (before.match(re2) || []).length;
+        if (count(/[“„]/g) > count(/”/g) || count(/"/g) % 2 === 1) continue; // (inside a quote: a title)
+        const prev = /(\S+)[ \t]+$/u.exec(sent);
+        if ((prev && /^\p{Lu}/u.test(prev[1]) && sent.trim().split(/\s+/).length > 1) || (m[1] !== m[1].toLowerCase() && sent.trim())) continue;
+        const rest = src.slice(m.index + m[0].length);
+        const after = DED_AFTER.exec(rest);
+        if (!after || /^(?:the|a|an|this|that|these|all|more|free|sale|promo\w*|promotion|radio|airplay|dj|djs|christmas|xmas|use|info|details|example|fun|life|ever|now|you|your|our|my|everyone|everybody|kids|children|beginners|today|tonight|only|review|reviewers|rental|internal|private|personal)\b/i.test(after[1])) continue;
+        if (after[1].includes(',')) continue;
+        const tail = rest.slice(after[0].length, after[0].length + 60).split(/[.!?;\n]/)[0];
+        if (/^[ \t]*(?:only|exclusive|market|release|edition|pressing)\b/i.test(tail) || /\b(?:aufgenommen|produziert|gemischt|veröffentlicht)\b/iu.test(tail)) continue;
+        const work = /\b(?:written|composed|geschrieben|komponiert)[ \t]*$/u.test(before) || /^[ \t]*(?:geschrieben|komponiert)\b/iu.test(tail);
+        const n0 = out.length;
+        add('dedicated', after[1], m[1], m.index, m[1].toLowerCase() === 'für' ? 2 : 1);
+        out.slice(n0).forEach((d) => Object.assign(d, { viaFor: true, ...(work ? { workOnly: true } : {}) }));
+      }
     }
     if (title) {
       // ((review) the last "For" of the title; a part after it in brackets, after ":" or a dash is left out)
@@ -27749,12 +27785,20 @@
       return same;
     };
     for (const d of found) {
-      const track = trackOf(d);
+      let track = trackOf(d);
+      // ([Z-DED2] 3.71.0, review) "written / composed for": the work of the track named (the only track of the release), else none;
+      // a single word after "for" (a country, a place, "Björk") only with a track named
+      if (d.viaFor && track == null && (d.workOnly || d.name.split(/\s+/).length < 2)) {
+        if (S.mbTracks.length !== 1) continue;
+        track = S.mbTracks[0].idx;
+      }
       const key = `${d.kind}|${foldWord(d.name)}|${track != null ? track : ''}`;
       if (S.dedDone.has(key) || (choices[key] && choices[key].x)) continue;
       // ((review) areas and places only with a phrase naming a track (not from a title)
       const level = d.kind === 'dedicated' && track != null ? 'work' : 'release_group';
-      const kinds = d.kind === 'tribute' ? ['artist', 'label'] : level === 'work' && !d.fromTrackTitle ? ['artist', 'area', 'place', 'label'] : ['artist'];
+      // ([Z-DED2] 3.71.0) after "for": no label (that is a production)
+      const kinds = (d.kind === 'tribute' ? ['artist', 'label'] : level === 'work' && !d.fromTrackTitle ? ['artist', 'area', 'place', 'label'] : ['artist'])
+        .filter((et) => !(d.viaFor && et === 'label'));
       let hit = null;
       let failed = false;
       let several = false;
