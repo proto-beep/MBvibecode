@@ -719,6 +719,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     credits: in the works matrix" (tooltip) and the button "＋ Another role for …" beside the lines, no link
                                 #     below; by role the same; the button opens the full matrix with a new line; full view as before;
                                 #     (review) an entry folded in the full view: the column and the toggle
+                                #   viewbits: 3.69.0 (Z-WRL, Z-CIN, Z-CRY, Z-CMK, S101–S104): no "whole release", the chips of an event one below
+                                #     the other, "Create artist …" yellow, a click into a compact line jumps on Discogs; off
                                 #   compactlines: 3.40.11 (Z-KH, mockup B): ⚙ Appearance "Compact entries: notes beside the lines | in the
                                 #     lines" – in the lines: no column, "n to stage" and "＋ role" at the end of the last line (by event, by
                                 #     role), "✓ link" and "✎ works ↓" in the head (tooltips), "✎ works ↓" brings the works matrix into view,
