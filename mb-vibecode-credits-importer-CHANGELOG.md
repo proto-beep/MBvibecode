@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.63.0 | – |
+| 2026-11-06 | 3.56.0 – 3.64.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.64.0
+
+#### Added
+
+- **"Skip credits" beside the work of a track** (collected item Z-WSK, rule S093): in the works matrix it leaves out the work credits of that track – its cells struck through and locked, nothing of them staged; the recording credits and the link of the recording with its work stay. Nor are the writers given to a work made with the form, and such a track without a work no longer waits for one. "↺ Take credits" brings them back; kept with the stored import. (A work shared by two tracks still gets the credits of the other track.)
+- **Publishers of a label: "Work | Release"** (collected item Z-PUB, rule S094): each publishing row of a label switches in its column of the works matrix between its works (label – work "publishing") and the release; a row put on the release this way keeps its column, so it can be put back.
+
+#### Fixed
+
+- **The list of live comments** (3.62.0, S089): the hint naming a concert date that is on no relationship yet is a note of its own again, no warning – the list groups those tracks as before (until now each was a line of its own).
 
 ### Import 3.63.0
 
