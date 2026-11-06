@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.69.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.70.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.70.0 · 2026-11-06
+
+Z-SU2, Z-MXK.
+
+- **`suiteTaken(i)`**, **`suiteAddDefaults()`** (new; rule **S105**): `suiteAddHtml` disables the tracks of a suite or medley (their name in brackets), lists the suites (`suite.list`), asks for "another"; after `addSuite` the box opens again from the first free track (none free: closed); `suiteAddBtnHtml` "＋ Another suite …".
+- **`mxArrow(e)`** (new; rule **S106**): from `onKeydown` – the cells, the front of the tracks and the heads as a grid; the next one with a button gets the focus (a cell without one: the cell, `tabIndex -1`); not in fields, menus or with a modifier.
+- **Texts:** suite.addAnother, suite.addAskMore, suite.addNone, suite.list, suite.taken, suite.takenMedley.
+- **Tests:** `t_works_more.py suiteadd` (B2: only one track free – the box closed, the head button disabled; D: a suite of tracks 3–4, the box open again, its tracks not to be chosen), `t_works_matrix.py mxarrows` (new); golden S105, S106.
+- **Review:** a suite needs two free tracks in a row (`suiteAddDefaults`; else the box stays closed and "＋ Another suite …" is disabled, `suite.addNone`); the tracks of a suite or medley still asked count as taken (`suiteAsks()`, a medley named so, `suite.takenMedley`); undoing a suite recomputes the box; the focus in the name field when the box opens again, the list of suites `aria-live`; the arrow keys find the cells by `td[data-col][data-mrow]` (`mxFocusSelector`), the row first, not in the list of works or an open menu, the focus without a jump (`preventScroll`, then `scrollIntoView` with `scroll-padding`).
 
 ## Import 3.69.0 · 2026-11-06
 
