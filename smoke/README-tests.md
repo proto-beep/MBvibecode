@@ -37,6 +37,8 @@ MBvibecode/ (this repository)
                                       [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
                                       script starts (the files written before expect the stores of a release kept); False in
                                       t_ui_settings.py cache and t_entries.py order (the script's default: off)
+                                #   statscompact: 3.61.0 (Z-STL, Z-RDU2): the head in one line, the flat bar, the groups, cards and groups folded
+                                #     (remembered), fold / open all, "+ n more", the bars, the streaks in one line, Recording | Release
                                       [3.40.9] DM_FOLD: False – "Fold bar after Apply" stored off before the script starts (the files
                                       written before work on in the open bar after "Apply"); True in t_dates_matrix.py foldapply
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
