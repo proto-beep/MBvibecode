@@ -1537,6 +1537,38 @@ console.log(JSON.stringify(cases.map(([t, o]) => m.findDedications(t, o).map((d)
     results = [res == want]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_dedforphrases():
+    """Credits Importer 3.71.0 (collected item Z-DED2, rule S107; review), in Node: "for …" within a sentence.
+    Found: "This record is for Cecil Taylor", "Song Two was composed for Ireland" (the work only), "A song for Ireland", "für Peter Kowald",
+    "Für Peter Kowald komponiert" (the work), "For Cecil Taylor (1929–2018)" at the start of a line, "Also for Peter Kowald" after a
+    sentence of thanks, "for Peter Kowald and Fred Anderson" (two).
+    None: a production anywhere before "for" ("Recorded live at the Loft for …"), "Bonus track for Japan", a list with commas
+    ("for Germany, Austria and Switzerland"), "for Japan only", a title in quotes or with capitals ("Music For Airports"), "für Kinder"
+    (one word after "für"), "Für Peter Kowald aufgenommen", "Not for Promotional Use"; titles: not read so ("Songs To Sing For Cecil Taylor"
+    a tribute by the title's rule, "Sonata For Violin And Piano" none)."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const cases = [['This record is for Cecil Taylor. Song Two was composed for Ireland. Mixed for Sony. Thanks for Bass Man.', {}],
+  ['Recorded live at the Loft for Peter Kowald.', {}], ['Bonus track for Japan.', {}], ['Released for Germany, Austria and Switzerland.', {}],
+  ['This version is for Japan only.', {}], ['A song for Ireland.', {}], ['We love "Music For Airports" by Eno.', {}], ['They love Music For Airports.', {}],
+  ['Ein Lied für Kinder.', {}], ['Dieses Album ist für Peter Kowald.', {}], ['Für Peter Kowald aufgenommen.', {}], ['Für Peter Kowald komponiert.', {}],
+  ['For Cecil Taylor (1929–2018)', {}], ['Not for Promotional Use.', {}], ['Songs To Sing For Cecil Taylor', { title: true }],
+  ['Sonata For Violin And Piano', { title: true }], ['Many thanks to Bob. Also for Peter Kowald, who helped.', {}],
+  ['This one is for Peter Kowald and Fred Anderson.', {}]];
+console.log(JSON.stringify(cases.map(([t, o]) => m.findDedications(t, o).map((d) => [d.kind, d.name, !!d.viaFor, !!d.workOnly]))));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+    print(res)
+    D, T = 'dedicated', 'tribute'
+    want = [[[D, 'Cecil Taylor', True, False], [D, 'Ireland', True, True]], [], [], [], [], [[D, 'Ireland', True, False]], [], [], [],
+            [[D, 'Peter Kowald', True, False]], [], [[D, 'Peter Kowald', True, True]], [[D, 'Cecil Taylor', True, False]], [],
+            [[T, 'Cecil Taylor', False, False]], [], [[D, 'Peter Kowald', True, False]], [[D, 'Peter Kowald', True, False], [D, 'Fred Anderson', True, False]]]
+    results = [res == want]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_photoname():
     """Credits Importer 3.63.0 (collected item Z-PHN, rule S091): a photographer named in the detail of a photography credit.
     A) "Photography By [Bass Man]" (Bass Man the artist of the release) → photography credited "Bass Man" (until 3.62.0 "bass man");

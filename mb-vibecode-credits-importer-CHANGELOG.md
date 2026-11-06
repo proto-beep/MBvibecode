@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.70.0 | – |
+| 2026-11-06 | 3.56.0 – 3.71.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.71.0
+
+#### Changed
+
+- **"for …" in a sentence** (collected item Z-DED2, rule S107): "This record is for Peter Kowald" is a dedication when an artist, a country or a place MusicBrainz has exactly once by that name follows. Not after "recorded", "produced", "commissioned", "made", "mixed", "performed" or another word of a production anywhere before it in the sentence, not after "thanks", not for a release of a country ("Bonus track for Japan", "for Japan only", a list with commas), not inside quotes or a title with capitals ("Music For Airports"), never a label (a label only with "tribute to"). "Written for" / "composed for" is a dedication of the work – of the track the sentence names, else none. A single word after "for" (a country, a place) only on the work of a track the sentence names; after "für" two words at least.
+- **The year of a cover painting** (collected item Z-CPD, checked): "Cover Painting: “View at Nice” (1992)" is a date of the group Artwork (since 3.37.9); applied with the date matrix it goes onto the illustrator's row (the test `t_notes_dates.py artwork` shows it).
 
 ### Import 3.70.0
 
