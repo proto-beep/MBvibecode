@@ -963,7 +963,8 @@ def case_stats():
         H.open_stats(pg)
         pg.wait_for_timeout(400)
         # [Z-SC] (3.40.14) "Collect statistics" in ⚙ Settings → Cache
-        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {textContent: ''}).textContent.startsWith('Statistics are being collected')]")
+        # ([3.61.0, Z-STL] the sentence in the tooltip of "Collecting: on")
+        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {title: ''}).title.startsWith('Statistics are being collected')]")
         print('A) Reiter:', tabs, '| leer, an:', a)
         results.append(tabs[-2:] == ['cache', 'connections'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
@@ -997,7 +998,8 @@ def case_stats():
         pg.click('[data-act=stats-period][data-period=day]')
         pg.wait_for_timeout(300)
         rows_d = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
-        tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
+        # ([3.61.0, Z-STL] up to ten each, the first three shown: those)
+        tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li:not([hidden])`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
         stored = pg.evaluate("localStorage.getItem('dci-stats-period')")
         print('C) Kacheln:', tiles, '\n   Monate:', rows_m, '| Tage:', rows_d, stored, '\n   Top:', tops)
         results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('before') in ('100 % / 0 %', '0 % / 100 %')
@@ -1164,8 +1166,9 @@ def case_statswhere():
     B) "⚙ Settings → Cache" in that line clicked: the statistics closed, ⚙ Settings open at Cache (remembered), the focus on the box.
     C) Unticked there (stored false, the log says so); the statistics opened again: "Collecting statistics is off – nothing new is
        counted. …".
-    D) ↺ of the topic Cache: ticked again (nothing stored)."""
-    WHERE = "(x => x ? [x.className, x.textContent.replace(/\\s+/g, ' ').trim()] : null)(document.querySelector('[data-el=stats] [data-el=stats-where]'))"
+    D) ↺ of the topic Cache: ticked again (nothing stored).
+    [3.61.0, Z-STL] in the head line: "Collecting: on ⚙" (the sentence in its tooltip)."""
+    WHERE = "(x => x ? [x.className, x.textContent.replace(/\\s+/g, ' ').trim(), x.title] : null)(document.querySelector('[data-el=stats] [data-el=stats-where]'))"
     BOX = "(b => b ? b.checked : null)(document.querySelector('[data-el=settings] [data-set=stats-on]'))"
     results = []
     with sync_playwright() as p:
@@ -1181,8 +1184,8 @@ def case_statswhere():
         a0 = [pg.evaluate(WHERE), pg.evaluate("document.querySelectorAll('[data-el=stats] [data-set]').length"),
               pg.evaluate("getComputedStyle(document.querySelector('[data-el=stats-where]')).color")]
         print('A)', a0)
-        results.append(a0[0] is not None and 'dci-sub' in a0[0][0] and a0[0][1] == 'Statistics are being collected – switched on and off in ⚙ Settings → Cache'
-                       and a0[1] == 0)
+        results.append(a0[0] is not None and 'dci-sub' in a0[0][0] and a0[0][1] == 'Collecting: on ⚙'
+                       and a0[0][2] == 'Statistics are being collected – switched on and off in ⚙ Settings → Cache' and a0[1] == 0)
         pg.click('[data-el=stats] [data-act=stats-where]')
         pg.wait_for_timeout(400)
         b0 = [pg.evaluate("!document.querySelector('[data-el=stats]').hidden"), pg.evaluate("!document.querySelector('[data-el=settings]').hidden"),
@@ -1198,7 +1201,7 @@ def case_statswhere():
         c1 = pg.evaluate(WHERE)
         print('C)', c0, c1)
         results.append(c0[0] == 'false' and c0[1] == ['Setting “Collect statistics”: off'] and c1 is not None
-                       and c1[1] == 'Collecting statistics is off – nothing new is counted. Switched on and off in ⚙ Settings → Cache')
+                       and c1[1] == 'Collecting: off ⚙' and c1[2] == 'Collecting statistics is off – nothing new is counted. Switched on and off in ⚙ Settings → Cache')
         H.open_settings(pg, 'cache')
         pg.click('[data-el=settings] [data-act=settings-reset][data-topic=cache]')
         pg.wait_for_timeout(400)
@@ -1266,7 +1269,8 @@ def case_statsmore():
         results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
                        and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
         results.append(ok('releases', '1980s 1', '1990s 1', 'CD 2', 'Vinyl 1', 'JP 1', 'CA 1', 'ECM 1', 'Intakt 1'))
-        results.append(cols == [7, 24] and ok('when', 'Days in a row: now 2, longest 2', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
+        # ([3.61.0, Z-STL] the streaks in one line)
+        results.append(cols == [7, 24] and ok('when', 'In a row (now / longest): days 2 / 2 · weeks 1 / 1 · months 1 / 1', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
                                              'Fastest: 24 s per relationship (A, 5 relationships)'))
         results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
                        and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')
@@ -1346,7 +1350,7 @@ def case_statsb10():
         card = lambda k: pg.evaluate(CARD, k)
         a0 = card('when')
         print('Gesät:', seeded, '\nA)', a0)
-        results.append(seeded and all(x in a0 for x in ['Days in a row: now 3, longest 3', 'Weeks in a row (from Monday): now 2, longest 2', 'Months in a row: now 3, longest 3',
+        results.append(seeded and all(x in a0 for x in ['In a row (now / longest): days 3 / 3 · weeks 2 / 2 · months 3 / 3',
                                                         'Most active weekday by relationships: Wednesday (5)', 'Most active weekday by “Enter edit”: Tuesday (4)']))
         b0 = card('credits')
         print('B)', b0)
@@ -2264,7 +2268,9 @@ def case_globalcore():
        the artists (3 of 4; Person 2, Group 1; Female 1; 1930s …; Germany 2, United States 1; Chicago 1; the centuries in the order of
        time – (review) 1800–1899 1, 1900–1999 3, 2000–2099 4; posthumous 1 of 2), the releases (2; several media 1, single medium 1; Album 1, no primary type 1; Live 1), English 1, not set
        1, Latin 2; recording lengths median 2:30 (2 recordings), average 2:30.
-    B) A file without them (before 3.55.0): a line that they come with the weekly reading; no card of "credited as"."""
+    B) A file without them (before 3.55.0): a line that they come with the weekly reading; no card of "credited as".
+    C) [3.61.0, Z-RDU2] "Release" in the card of the lengths: the whole length of a release (median 10:00 of 1 release, average 10:00);
+       a file of the core pass before 3.61.0 (no `releases`): a line that they come with the next pass."""
     results = []
     PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
     base = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261108-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1}}
@@ -2272,7 +2278,10 @@ def case_globalcore():
         'dump': '20261108-002222', 'artists': {'n': 3, 'of': 4, 'types': {'Person': 2, 'Group': 1}, 'genders': {'Female': 1}, 'decades': {'1930s': 1, '1960s': 1, '1980s': 1},
                                                'countries': {'DE': 2, 'US': 1}, 'towns': {'Chicago': 1}, 'centuries': {'1800': 1, '1900': 3, '2000': 4}, 'posthumous': {'n': 1, 'of': 2}},
         'releases': {'n': 2, 'media': {'multi': 1, 'single': 1}, 'rg_primary': {'Album': 1, '-': 1}, 'rg_secondary': {'Live': 1}, 'languages': {'eng': 1, '-': 1}, 'scripts': {'Latn': 2}},
-        'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0}, 'role_credits': {'n': 2, 'of': 5}})
+        'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0, 'releases': 1, 'release_median_ms': 600000, 'release_mean_ms': 600000.0}, 'role_credits': {'n': 2, 'of': 5}})
+    old = json.loads(json.dumps(data))
+    for k in ('releases', 'release_median_ms', 'release_mean_ms'):
+        old['core']['lengths'].pop(k)
     CARD = "(k) => (c => c ? (c.matches('p') ? [c] : [...c.querySelectorAll('li, p')]).map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-global-${k}]`))"
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -2302,6 +2311,23 @@ def case_globalcore():
                 results.append(got['nocore'] == ["The artists, releases and recordings of all users come with the weekly reading of MusicBrainz's database dump."]
                                and got['credits'] is None and got['artists'] is None and not errs)
             ctx.close()
+        # C) the whole length of the releases (3.61.0), and a file of the core pass before it
+        rl = []
+        for d in (data, old):
+            H.RAW_GITHUB[PATH] = json.dumps(d)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            pg.evaluate("localStorage.setItem('dci-stats-len-of', JSON.stringify('release'))")
+            H.open_dashboard(pg)
+            H.open_stats(pg)
+            pg.click('[data-act=stats-scope][data-scope=global]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+            rl.append(pg.evaluate(CARD, 'lengths'))
+            ctx.close()
+        print('C)', rl)
+        results.append(rl == [['A release (its whole length) – median: 10:00 (1 releases)', 'A release (its whole length) – average: 10:00'],
+                              ['The whole lengths of the releases come with the next weekly pass of the core dump.']])
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
@@ -2532,6 +2558,100 @@ def case_versions():
         d = pg.evaluate(VERS)
         print('D) Abrufe in 3 s:', n, '|', d)
         results.append(n == 3 and d is not None and '9.9.9 available' in d[0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_statscompact():
+    """Credits Importer 3.61.0 (collected items Z-STL after the mockup "Statistics Compact", Z-RDU2).
+    A) S1 – the head in one line: the period, ⓘ, "Collecting: on ⚙"; the two sentences only in ⓘ (with "Fold all cards", "Open all cards").
+    B) S2 – the tiles a flat bar: number and word, the line below in the tooltip ("2 × “Enter edit”").
+    C) S3 – the groups Overview · When · What · Who · Releases · Sources in that order; "Over time" and the top lists in Overview (S5).
+    D) S4 – a card folded: one line (its name, its first entry); remembered (dci-stats-fold), still folded when shown again; a group
+       folded: one line with its main numbers. "Fold all cards" folds every card, "Open all cards" opens them (nothing stored).
+    E) S4 – a list of more than four: the first three, "+ n more", a click shows the rest ("– fewer").
+    F) S6 – the bars of weekdays and hours at most 32 px; the streaks in one line.
+    G) Z-RDU2 – lengths: "Recording | Release"; Release: the whole length of each release (remembered)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        day = 86400000
+        relA = {'title': 'A', 'year': 1985, 'country': 'JP', 'formats': ['CD'], 'labels': ['ECM'], 'before': 0, 'media': 1, 'lens': [100000, 200000, 300000], 'whole': 600000}
+        relB = {'title': 'B', 'year': 1993, 'country': 'CA', 'formats': ['CD'], 'labels': ['Intakt'], 'before': 0, 'media': 1, 'lens': [600000, 600000], 'whole': 1200000}
+        names = ['Ann', 'Bob', 'Cid', 'Dan', 'Eve', 'Fay']
+        recs = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - day, 'start': now - day - 60000, 'ms': 60000, 'src': 'discogs', 'supp': [], 'rel': relA, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{k}', n, [i], lk='link') for k, (n, i) in enumerate(zip(names, ['piano', 'bass', 'drums', 'flute', 'harp', 'organ']))]},
+            {'v': 1, 'id': 'b:2', 'mbid': 'm2', 'at': now, 'start': now - 30000, 'ms': 30000, 'src': 'discogs', 'supp': [], 'rel': relB, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'producer', 'release', 'artist', 'g1', 'Ann', lk='link')]},
+        ]
+        pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        HEAD = """(() => { const h = document.querySelector('[data-el=stats] [data-el=stats-headline]'); if (!h) return null;
+          return { period: !!h.querySelector('[data-act=stats-period]'), info: !!h.querySelector('[data-act=stats-info]'), where: (h.querySelector('[data-el=stats-where]') || {}).textContent,
+            hintShown: [...document.querySelectorAll('[data-el=stats] p')].some(p => /Counted once MusicBrainz/.test(p.textContent)), top: Math.round(h.getBoundingClientRect().height) }; })()"""
+        a0 = pg.evaluate(HEAD)
+        pg.click('[data-el=stats] [data-act=stats-info]'); pg.wait_for_timeout(300)
+        a1 = pg.evaluate("(() => { const x = document.querySelector('[data-el=stats-info]'); return x ? [x.textContent.replace(/\\s+/g, ' ').trim().slice(0, 40), !!x.querySelector('[data-act=stats-fold-all]'), !!x.querySelector('[data-act=stats-open-all]')] : null; })()")
+        print('A)', a0, a1)
+        results.append(a0 and a0['period'] and a0['info'] and a0['where'].strip() == 'Collecting: on ⚙' and not a0['hintShown'] and a0['top'] <= 40
+                       and a1 and a1[1] and a1[2])
+        tiles = pg.evaluate("[...document.querySelectorAll('[data-el=stats] .dci-stats-tile')].map(t => [t.dataset.stat, t.querySelectorAll('.dci-sub').length, t.title, Math.round(t.getBoundingClientRect().height)])")
+        print('B)', tiles)
+        results.append(tiles and all(t[1] == 0 for t in tiles) and any(t[0] == 'releases' and '“Enter edit”' in t[2] for t in tiles) and max(t[3] for t in tiles) <= 52)
+        groups = pg.evaluate("[...document.querySelectorAll('[data-el=stats] .dci-stats-group')].map(g => g.dataset.group)")
+        ov = pg.evaluate("(() => { const g = document.querySelector('[data-group=overview]'); return g ? [!!g.querySelector('[data-el=stats-periods]'), g.querySelectorAll('.dci-stats-list').length] : null; })()")
+        print('C)', groups, ov)
+        results.append(groups == ['overview', 'when', 'what', 'who', 'releases', 'sources'] and ov == [True, 3])
+        pg.click('[data-el=stats-dates] [data-act=stats-card]'); pg.wait_for_timeout(300)
+        # ((review) the focus stays on that card's button)
+        foc = pg.evaluate("(document.activeElement && document.activeElement.dataset.card) || ''")
+        d0 = pg.evaluate("(() => { const c = document.querySelector('[data-el=stats-dates]'); return [c.classList.contains('dci-stats-folded'), (c.querySelector('.dci-stats-sum') || {}).textContent, c.querySelectorAll('li').length]; })()")
+        st = pg.evaluate("localStorage.getItem('dci-stats-fold')")
+        H.open_stats(pg); pg.wait_for_timeout(200); H.open_stats(pg); pg.wait_for_timeout(400)
+        d1 = pg.evaluate("document.querySelector('[data-el=stats-dates]').classList.contains('dci-stats-folded')")
+        pg.click('[data-group=who] [data-act=stats-group]'); pg.wait_for_timeout(300)
+        d2 = pg.evaluate("(() => { const g = document.querySelector('[data-group=who]'); return [g.classList.contains('dci-stats-gfolded'), !!g.querySelector('.dci-stats-card'), (g.querySelector('.dci-stats-sum') || {}).textContent || '']; })()")
+        # ((review) "Fold all cards" while Who is folded: its cards folded too once it is opened)
+        if not pg.locator('[data-el=stats-info]').count():
+            pg.click('[data-el=stats] [data-act=stats-info]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=stats-info] [data-act=stats-fold-all]'); pg.wait_for_timeout(300)
+        pg.click('[data-group=who] [data-act=stats-group]'); pg.wait_for_timeout(300)
+        d3 = pg.evaluate("[document.querySelectorAll('[data-el=stats] .dci-stats-card').length, document.querySelectorAll('[data-el=stats] .dci-stats-card.dci-stats-folded').length]")
+        if not pg.locator('[data-el=stats-info]').count():
+            pg.click('[data-el=stats] [data-act=stats-info]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=stats-info] [data-act=stats-open-all]'); pg.wait_for_timeout(300)
+        d4 = [pg.evaluate("document.querySelectorAll('[data-el=stats] .dci-stats-card.dci-stats-folded').length"), pg.evaluate("localStorage.getItem('dci-stats-fold')")]
+        print('D)', foc, d0, st, d1, d2, d3, d4)
+        results.append(foc == 'dates' and d0[0] and d0[1] and d0[2] == 0 and st == '{"cards":["dates"],"groups":[]}' and d1 and d2[0] and not d2[1] and d2[2]
+                       and d3[0] > 5 and d3[0] == d3[1] and d4 == [0, None])
+        e0 = pg.evaluate("(() => { const l = document.querySelector('[data-el=stats-top-instr]') ; const c = document.querySelector('[data-el=stats-instruments]');"
+                         " const L = document.querySelector('[data-el=stats-top-artists]'); return L ? [[...L.querySelectorAll('li')].filter(li => !li.hidden).length, (L.querySelector('[data-act=stats-list-more]') || {}).textContent] : null; })()")
+        pg.click('[data-el=stats-top-artists] [data-act=stats-list-more], [data-group=overview] [data-act=stats-list-more]')
+        pg.wait_for_timeout(300)
+        e1 = pg.evaluate("(() => { const L = document.querySelector('[data-el=stats-top-artists]'); return L ? [[...L.querySelectorAll('li')].filter(li => !li.hidden).length, (document.querySelector('[data-group=overview] [data-act=stats-list-more]') || {}).textContent] : null; })()")
+        print('E)', e0, e1)
+        f0 = pg.evaluate("Math.max(...[...document.querySelectorAll('[data-el=stats-when] .dci-stats-colbar')].map(x => parseFloat(x.style.height) || 0))")
+        f1 = pg.evaluate("[...document.querySelectorAll('[data-el=stats-when] [data-el=stats-streaks]')].map(x => x.textContent.trim())")
+        print('F)', f0, f1)
+        results.append(f0 <= 32 and len(f1) == 1 and f1[0].startswith('In a row (now / longest): days'))
+        pg.click('[data-el=stats-lengths] [data-act=stats-len-of][data-view=release]'); pg.wait_for_timeout(300)
+        g0 = [pg.evaluate("[...document.querySelectorAll('[data-el=stats-lengths] li')].map(x => x.textContent.trim())"), pg.evaluate("localStorage.getItem('dci-stats-len-of')")]
+        print('G)', g0)
+        # (median of 10:00 and 20:00: 15:00)
+        results.append(g0[0] == ['A release (its whole length): 15:00 (2 releases)'] and g0[1] == '"release"')
+        results.append(e0 == [3, '+ 3 more'] and e1 == [6, '– fewer'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

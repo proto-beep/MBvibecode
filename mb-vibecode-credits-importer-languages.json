@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.60.0",
+  "version": "3.61.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -368,7 +368,6 @@
     "stats.label": "Nach Label",
     "stats.weekdays": "Beziehungen nach Wochentag",
     "stats.hours": "Beziehungen nach Uhrzeit",
-    "stats.streak": "Tage in Folge: aktuell {now}, längste Serie {longest}",
     "stats.rec.day": "Rekord an einem Tag: {n} Beziehungen ({day})",
     "stats.rec.release": "Rekord für ein Release: {n} Beziehungen ({title})",
     "stats.rec.fastest": "Am schnellsten: {time} pro Beziehung ({title}, {n} Beziehungen)",
@@ -2807,7 +2806,6 @@
     "stats.label": "Por sello",
     "stats.weekdays": "Relaciones por día de la semana",
     "stats.hours": "Relaciones por hora",
-    "stats.streak": "Días seguidos: ahora {now}, máximo {longest}",
     "stats.rec.day": "Máximo en un día: {n} relaciones ({day})",
     "stats.rec.release": "Máximo en una publicación: {n} relaciones ({title})",
     "stats.rec.fastest": "Más rápido: {time} por relación ({title}, {n} relaciones)",
@@ -5246,7 +5244,6 @@
     "stats.label": "Par label",
     "stats.weekdays": "Relations par jour de la semaine",
     "stats.hours": "Relations par heure",
-    "stats.streak": "Jours d’affilée : actuellement {now}, plus longue série {longest}",
     "stats.rec.day": "Record en un jour : {n} relations ({day})",
     "stats.rec.release": "Record pour une parution : {n} relations ({title})",
     "stats.rec.fastest": "Le plus rapide : {time} par relation ({title}, {n} relations)",

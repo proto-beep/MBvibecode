@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.60.0
+// @version      3.61.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.60.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.60.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.61.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.61.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.60.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.61.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1967,9 +1967,6 @@
       "stats.label": "By label",
       "stats.weekdays": "Relationships by weekday",
       "stats.hours": "Relationships by hour",
-      "stats.streak": "Days in a row: now {now}, longest {longest}",
-      "stats.streakWeek": "Weeks in a row (from Monday): now {now}, longest {longest}",
-      "stats.streakMonth": "Months in a row: now {now}, longest {longest}",
       "stats.wdBest.rels": "Most active weekday by relationships: {day} ({n})",
       "stats.wdBest.relsNone": "Most active weekday by relationships: –",
       "stats.wdBest.subs": "Most active weekday by “Enter edit”: {day} ({n})",
@@ -2014,6 +2011,28 @@
       "stats.len.rec": "A recording: {time} ({n} recordings)",
       "stats.len.rel": "Per release (its recordings): {time} ({n} releases)",
       "stats.len.hint": "Recordings without a length are left out.",
+      "stats.whereOnShort": "Collecting: on",
+      "stats.whereOffShort": "Collecting: off",
+      "stats.infoTitle": "About the statistics",
+      "stats.foldAll": "Fold all cards",
+      "stats.openAll": "Open all cards",
+      "stats.fewer": "– fewer",
+      "stats.moreN": "+ {n} more",
+      "stats.group.overview": "Overview",
+      "stats.group.when": "When",
+      "stats.group.what": "What",
+      "stats.group.who": "Who",
+      "stats.group.releases": "Releases",
+      "stats.group.sources": "Sources",
+      "stats.streaks": "In a row (now / longest): days {d} / {dl} · weeks {w} / {wl} · months {m} / {ml}",
+      "stats.streaksTitle": "Days, weeks (from Monday) and months in a row with something entered: now and the longest",
+      "stats.lenOf": "Lengths of",
+      "stats.lenOf.recording": "Recording",
+      "stats.lenOf.release": "Release",
+      "stats.len.whole": "A release (its whole length): {time} ({n} releases)",
+      "stats.global.lenRelMedian": "A release (its whole length) – median: {time} ({n} releases)",
+      "stats.global.lenRelMean": "A release (its whole length) – average: {time}",
+      "stats.global.noRelLen": "The whole lengths of the releases come with the next weekly pass of the core dump.",
       "settings.statsDaily": "Show when you work",
       "settings.statsDailyTitle": "Hours, weekdays, days / weeks / months in a row, the most active weekday and the most in a day (the time per release and the months stay)",
       "settings.statsGlobal": "Show “Global” (all users of the script)",
@@ -9635,6 +9654,11 @@
   const statsGlobalOn = () => readJson('localStorage', STATS_GLOBAL_ON_KEY, true) !== false;
   // [Z-RDU] (3.53.0; Q-gi) the card "Recording lengths": 'mean' (the average), else the median
   const STATS_LEN_KEY = 'dci-stats-len';
+  // [Z-RDU2] (3.61.0) the lengths of the recordings or of the releases (their whole length) – this browser and "Global"
+  const STATS_LEN_OF_KEY = 'dci-stats-len-of';
+  const statLenOf = () => (readJson('localStorage', STATS_LEN_OF_KEY, 'recording') === 'release' ? 'release' : 'recording');
+  const statLenOfSeg = (of) => `<span class="dci-seg dci-seg-small dci-stats-lenof" role="group" aria-label="${esc(tr('stats.lenOf'))}">${['recording', 'release'].map((v) => `<button type="button"
+    data-act="stats-len-of" data-view="${v}" aria-pressed="${of === v}">${esc(tr(`stats.lenOf.${v}`))}</button>`).join('')}</span>`;
   // [Z-AST] (3.54.0; Q-fk, Q-gh) what MusicBrainz has of the artists of the submitted relationships – looked up in the background once
   // a submission is counted, kept here: gid → [type, gender, begin year, end year (ended), country (ISO 3166-1), begin area, looked up at]
   const STATS_ARTISTS_KEY = 'dci-stats-artists';
@@ -33639,6 +33663,37 @@
       case 'stats-global-reload':
         globalStatsLoad(true);
         break;
+      // [Z-STL] (3.61.0) a card or a group folded or opened (remembered), all of them (ⓘ), a list shown whole, ⓘ itself
+      case 'stats-card':
+      case 'stats-group': {
+        const f = statsFold();
+        const set = act === 'stats-card' ? f.cards : f.groups;
+        const k = act === 'stats-card' ? btn.dataset.card : btn.dataset.group;
+        if (set.has(k)) set.delete(k);
+        else set.add(k);
+        statsFoldSave();
+        renderStats();
+        break;
+      }
+      case 'stats-fold-all':
+      case 'stats-open-all': {
+        const f = statsFold();
+        // ((review) every card, also those of a folded group (not drawn); the groups as they are)
+        f.cards = new Set(act === 'stats-fold-all' ? [...STATS_GROUPS.flatMap(([, k]) => k), ...[...S.overlay.querySelectorAll('[data-el=stats] .dci-stats-card[data-card]')].map((c) => c.dataset.card)] : []);
+        statsFoldSave();
+        renderStats();
+        break;
+      }
+      case 'stats-list-more':
+        S.statsListOpen = S.statsListOpen || new Set();
+        if (S.statsListOpen.has(btn.dataset.list)) S.statsListOpen.delete(btn.dataset.list);
+        else S.statsListOpen.add(btn.dataset.list);
+        renderStats();
+        break;
+      case 'stats-info':
+        S.statsInfoOpen = !S.statsInfoOpen;
+        renderStats();
+        break;
       case 'stats-period':
         // [E8] (3.38.0) the statistics over days, weeks, months or years
         S.statsPeriod = btn.dataset.period;
@@ -33653,6 +33708,11 @@
       case 'stats-len-view':
         // [Z-RDU] (3.53.0) the lengths of the recordings: median or average (remembered)
         writeJson('localStorage', STATS_LEN_KEY, btn.dataset.view === 'mean' ? 'mean' : null);
+        renderStats();
+        break;
+      case 'stats-len-of':
+        // [Z-RDU2] (3.61.0) the recordings or the releases (remembered; this browser and "Global" alike)
+        writeJson('localStorage', STATS_LEN_OF_KEY, btn.dataset.view === 'release' ? 'release' : null);
         renderStats();
         break;
       case 'stats-genres-view':
@@ -35660,7 +35720,13 @@
     const nonUrl = (list) => (list || []).filter((r) => r['target-type'] !== 'url').length;
     const recs = new Map();
     const lens = new Map();
+    // [Z-RDU2] (3.61.0, review) the whole length: every track (its own length, else its recording's), only when each has one
+    let whole = 0;
+    let complete = true;
     (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
+      const tl = Number(t.length) || Number(t.recording && t.recording.length) || 0;
+      if (tl > 0) whole += tl;
+      else complete = false;
       if (t.recording && t.recording.id) {
         recs.set(t.recording.id, t.recording);
         // ((review) the recording's own length – without one it is left out)
@@ -35677,6 +35743,7 @@
       lang: String(text.language || ''),
       script: String(text.script || ''),
       lens: [...lens.values()].slice(0, 500),
+      ...(complete && whole > 0 ? { whole: Math.round(whole) } : {}),
       title: ws.title || '',
       year: Number(String(ws.date || '').slice(0, 4)) || null,
       country: ws.country || '',
@@ -35981,7 +36048,9 @@
       artists: { n: Number(ca.n) || 0, of: Number(ca.of) || 0, types: nums(ca.types), genders: nums(ca.genders), decades: nums(ca.decades), countries: nums(ca.countries),
         towns: nums(ca.towns), centuries: nums(ca.centuries), posthumous: pair(ca.posthumous) },
       releases: { n: Number(cr.n) || 0, media: nums(cr.media), rg_primary: nums(cr.rg_primary), rg_secondary: nums(cr.rg_secondary), languages: nums(cr.languages), scripts: nums(cr.scripts) },
-      lengths: { recordings: Number(cl.recordings) || 0, median_ms: ms(cl.median_ms), mean_ms: ms(cl.mean_ms) },
+      lengths: { recordings: Number(cl.recordings) || 0, median_ms: ms(cl.median_ms), mean_ms: ms(cl.mean_ms),
+        // [Z-RDU2] (3.61.0) the whole length of the releases (a file of the core pass before 3.61.0: none)
+        releases: Number(cl.releases) || 0, release_median_ms: ms(cl.release_median_ms), release_mean_ms: ms(cl.release_mean_ms) },
       role_credits: pair(c.role_credits),
     } : null;
     return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
@@ -36065,7 +36134,8 @@
       const pairs = Object.entries(o || {}).sort(byTime ? (x, y) => Number(x[0]) - Number(y[0]) : (x, y) => (Number(y[1]) || 0) - (Number(x[1]) || 0)).slice(0, n);
       return pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, v]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${num(v)}</span></li>`).join('')}</ul>` : `<p class="dci-sub">–</p>`;
     };
-    const card = (key, body) => `<div class="dci-stats-card" data-el="stats-global-${key}"><h4>${esc(tr(`stats.more.${key}`))}</h4>${body}</div>`;
+    // ([Z-STL] 3.61.0) cards that fold, as those of this browser
+    const card = (key, body) => statCard('stats-global-', key, tr(`stats.more.${key}`), body);
     const pct = (p) => `${statPct(p.n, p.of)} %`;
     const dumpDate = (x) => {
       const m = /^(\d{4})(\d{2})(\d{2})/.exec(String(x || ''));
@@ -36086,9 +36156,102 @@
       ${card('media', `<p>${esc(tr('stats.global.relN', { n: num(r.n) }))}</p>${kvo(r.media, (k) => tr(`stats.media.${k === 'multi' ? 'multi' : 'single'}`))}
         <h5>${esc(tr('stats.rg.primary'))}</h5>${kvo(r.rg_primary, (k) => (k === '-' ? tr('stats.rg.none') : k))}<h5>${esc(tr('stats.rg.secondary'))}</h5>${kvo(r.rg_secondary)}`)}
       ${card('script', `<h5>${esc(tr('stats.lang'))}</h5>${kvo(r.languages, (k) => statLangName(k, 'language'))}<h5>${esc(tr('stats.script'))}</h5>${kvo(r.scripts, (k) => statLangName(k, 'script'))}`)}
-      ${card('lengths', `<ul class="dci-stats-kv"><li>${esc(tr('stats.global.lenMedian', { time: statLen(c.lengths.median_ms), n: num(c.lengths.recordings) }))}</li>
-        <li>${esc(tr('stats.global.lenMean', { time: statLen(c.lengths.mean_ms) }))}</li></ul>`)}
+      ${card('lengths', `${statLenOfSeg(statLenOf())}${statLenOf() === 'release'
+        // [Z-RDU2] (3.61.0) the whole length of each release (the weekly core pass from 3.61.0; before: none)
+        ? (c.lengths.releases ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.global.lenRelMedian', { time: statLen(c.lengths.release_median_ms), n: num(c.lengths.releases) }))}</li>
+          <li>${esc(tr('stats.global.lenRelMean', { time: statLen(c.lengths.release_mean_ms) }))}</li></ul>` : `<p class="dci-sub" data-el="stats-global-norellen">${esc(tr('stats.global.noRelLen'))}</p>`)
+        : `<ul class="dci-stats-kv"><li>${esc(tr('stats.global.lenMedian', { time: statLen(c.lengths.median_ms), n: num(c.lengths.recordings) }))}</li>
+        <li>${esc(tr('stats.global.lenMean', { time: statLen(c.lengths.mean_ms) }))}</li></ul>`}`)}
     </div>`;
+  }
+
+  // --- [Z-STL] (3.61.0) the statistics compact: one head line, a flat bar, groups of cards that fold, short lists -----------------
+  const STATS_FOLD_KEY = 'dci-stats-fold';
+  /** [Z-STL] (3.61.0) The cards and groups folded (remembered in this browser; all open at first): { cards: Set, groups: Set }. */
+  function statsFold() {
+    if (!S.statsFold) {
+      const v = readJson('localStorage', STATS_FOLD_KEY, null) || {};
+      S.statsFold = { cards: new Set(Array.isArray(v.cards) ? v.cards : []), groups: new Set(Array.isArray(v.groups) ? v.groups : []) };
+    }
+    return S.statsFold;
+  }
+  function statsFoldSave() {
+    const f = statsFold();
+    writeJson('localStorage', STATS_FOLD_KEY, f.cards.size || f.groups.size ? { cards: [...f.cards], groups: [...f.groups] } : null);
+  }
+  /** [Z-STL] (3.61.0) The groups of the cards (S3) – the key of each card of this browser and of "Global". */
+  const STATS_GROUPS = [
+    ['when', ['when', 'lengths']],
+    ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'live', 'gaps', 'decisions', 'instruments']],
+    ['who', ['artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
+    ['releases', ['releases', 'media', 'script', 'genres']],
+    ['sources', ['sources', 'ocr']],
+  ];
+  /** [Z-STL] (3.61.0) The one line of a folded card: the first entry of its body as text ("0 % with a date", "producer 6"). */
+  function statSummary(body) {
+    const t = String(body || '').replace(/<span class="dci-seg[^"]*"[^>]*>(?:\s*<button[\s\S]*?<\/button>)+\s*<\/span>/g, '')
+      .replace(/<h5[\s\S]*?<\/h5>|<thead[\s\S]*?<\/thead>/g, '');
+    const m = t.match(/<(li|p|tr)(?=[\s>])[^>]*>([\s\S]*?)<\/\1>/);
+    const text = (m ? m[2] : t).replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ').trim();
+    return text.length > 64 ? `${text.slice(0, 62)}…` : text || '–';
+  }
+  /**
+   * [Z-STL] (3.61.0, S4) The lists of a card's body: the first three entries, "+ n more" for the rest (a click shows them, "– fewer"
+   * again; for this session). Lists of `.dci-stats-kv` and `<ol>` with more than four entries.
+   */
+  function statShortLists(body, key) {
+    let k = -1;
+    return String(body || '').replace(/<(ul class="dci-stats-kv"|ol)([^>]*)>([\s\S]*?)<\/(ul|ol)>/g, (all, tag, attrs, inner, close) => {
+      k++;
+      const items = inner.match(/<li[\s\S]*?<\/li>/g) || [];
+      if (items.length <= 4 || /<(?:ul|ol)\b/.test(inner)) return all;
+      const id = `${key}:${k}`;
+      const open = S.statsListOpen && S.statsListOpen.has(id);
+      let n = 0;
+      // ((review) an entry with a class of its own keeps it)
+      const shown = inner.replace(/<li(?=[\s>])([^>]*)>/g, (x, at) => {
+        if (n++ < 3 || open) return x;
+        return /\sclass="/.test(at) ? `<li${at.replace(/\sclass="/, ' class="dci-stats-hidden ')} hidden>` : `<li class="dci-stats-hidden"${at} hidden>`;
+      });
+      return `<${tag}${attrs}>${shown}</${close}><div class="dci-stats-morebtn"><button type="button" class="dci-textbtn" data-act="stats-list-more" data-list="${esc(id)}" aria-expanded="${!!open}">${esc(open
+        ? tr('stats.fewer') : tr('stats.moreN', { n: items.length - 3 }))}</button></div>`;
+    });
+  }
+  /** [Z-STL] (3.61.0, S4) A card that folds: its head (▾ / ▸, its name; folded, its one line), its body with short lists. */
+  function statCard(prefix, key, title, body) {
+    const open = !statsFold().cards.has(key);
+    return `<div class="dci-stats-card${open ? '' : ' dci-stats-folded'}" data-el="${prefix}${key}" data-card="${esc(key)}">
+      <h4><button type="button" class="dci-stats-cardhead" data-act="stats-card" data-card="${esc(key)}" aria-expanded="${open}"><span class="dci-stats-caret" aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(title)}</button>${open ? ''
+        : ` <span class="dci-sub dci-stats-sum">${esc(statSummary(body))}</span>`}</h4>${open ? statShortLists(body, key) : ''}</div>`;
+  }
+  /** [Z-STL] (3.61.0, S3) The cards in their groups, each a heading that folds and columns without gaps; cards of no group at the end. */
+  function statGroupsHtml(cards, extra = {}) {
+    const fold = statsFold();
+    const used = new Set();
+    const groups = [['overview', []], ...STATS_GROUPS].map(([g, keys]) => {
+      const list = keys.filter((k) => cards.has(k));
+      list.forEach((k) => used.add(k));
+      if (g === 'sources') [...cards.keys()].filter((k) => !used.has(k)).forEach((k) => { list.push(k); used.add(k); });
+      const lead = extra[g] || '';
+      if (!list.length && !lead) return '';
+      const open = !fold.groups.has(g);
+      const sum = list.slice(0, 2).map((k) => `${tr(`stats.more.${k}`)} ${statSummary(cards.get(k).body)}`).join(' · ');
+      return `<section class="dci-stats-group${open ? '' : ' dci-stats-gfolded'}" data-group="${g}">
+        <h3 class="dci-stats-gh"><button type="button" class="dci-textbtn" data-act="stats-group" data-group="${g}" aria-expanded="${open}"><span aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(tr(`stats.group.${g}`))}</button>${open ? ''
+          : ` <span class="dci-sub dci-stats-sum">${esc(sum.length > 90 ? `${sum.slice(0, 88)}…` : sum)}</span>`}</h3>
+        ${open ? `${lead}${list.length ? `<div class="dci-stats-grid">${list.map((k) => cards.get(k).html).join('')}</div>` : ''}` : ''}</section>`;
+    });
+    return groups.join('');
+  }
+  /** [Z-STL] (3.61.0, S1) The head in one line: the period, ⓘ (what is counted, where it is kept, fold or open all), collecting on or off. */
+  function statsHeadLine({ period = null, info = '', where = '' } = {}) {
+    const seg = period ? `<span class="dci-seg dci-seg-small dci-stats-period" role="group" aria-label="${esc(tr('stats.period'))}">${['day', 'week', 'month', 'year'].map((v) => `<button type="button"
+      data-act="stats-period" data-period="${v}" aria-pressed="${period === v}">${esc(tr(`stats.period.${v}`))}</button>`).join('')}</span>` : '';
+    const pop = S.statsInfoOpen ? `<div class="dci-stats-infopop" data-el="stats-info" role="region" aria-label="${esc(tr('stats.infoTitle'))}">${info}
+      <p class="dci-stats-foldall"><button type="button" class="dci-textbtn" data-act="stats-fold-all">${esc(tr('stats.foldAll'))}</button> <button type="button" class="dci-textbtn" data-act="stats-open-all">${esc(tr('stats.openAll'))}</button></p></div>` : '';
+    return `<div class="dci-stats-headline" data-el="stats-headline">${seg}<button type="button" class="dci-wh-help dci-stats-info" data-act="stats-info" aria-expanded="${!!S.statsInfoOpen}" aria-label="${esc(tr('stats.infoTitle'))}" title="${esc(tr('stats.infoTitle'))}">ⓘ</button>
+      <span class="dci-stats-spacer"></span>${where}${pop}</div>`;
   }
 
   /**
@@ -36098,10 +36261,12 @@
   function statsHtml() {
     const on = statsOn();
     // [Z-SC] (3.40.14) "Collect statistics" is in ⚙ Settings → Cache: here a grey line that says so and leads there
-    const head = [
-      `<p class="dci-sub dci-stats-where" data-el="stats-where">${esc(tr(on ? 'stats.whereOn' : 'stats.whereOff'))} <button type="button" class="dci-textbtn" data-act="stats-where">${esc(tr('stats.whereBtn'))}</button></p>`,
-      `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
-    ];
+    // [Z-STL] (3.61.0, S1) the head in one line: the period, ⓘ (the two sentences, fold or open all), "Collecting: on ⚙"
+    const period = ['day', 'week', 'month', 'year'].includes(S.statsPeriod) ? S.statsPeriod : 'month';
+    const whereText = `${tr(on ? 'stats.whereOn' : 'stats.whereOff')} ${tr('stats.whereBtn')}`;
+    const where = `<span class="dci-sub dci-stats-where" data-el="stats-where" title="${esc(whereText)}">${esc(tr(on ? 'stats.whereOnShort' : 'stats.whereOffShort'))} <button type="button" class="dci-textbtn" data-act="stats-where" title="${esc(tr('stats.whereBtn'))}" aria-label="${esc(tr('stats.whereBtn'))}">⚙</button></span>`;
+    const head = [statsHeadLine({ period: S.statsData && S.statsData.length ? period : null, where,
+      info: `<p>${esc(tr('stats.hint'))}</p><p>${esc(whereText)}</p>` })];
     if (S.statsData == null) {
       statsLoad();
       return [...head, `<p class="dci-sub" data-el="stats-loading">${esc(tr('stats.loading'))}</p>`];
@@ -36109,8 +36274,9 @@
     const recs = S.statsData;
     if (!recs.length) return [...head, `<p class="dci-sub" data-el="stats-empty">${esc(tr('stats.empty'))}</p>`];
     const a = statAgg(recs);
-    const tile = (key, value, sub = '') => `<div class="dci-stats-tile" data-stat="${key}"><span class="dci-stats-num">${esc(value)}</span>
-      <span class="dci-stats-lbl">${esc(tr(`stats.t.${key}`))}</span>${sub ? `<span class="dci-sub">${esc(sub)}</span>` : ''}</div>`;
+    // ([Z-STL] 3.61.0, S2) a flat bar: number and word; the line below it in the tooltip
+    const tile = (key, value, sub = '') => `<div class="dci-stats-tile" data-stat="${key}"${sub ? ` title="${esc(sub)}"` : ''}><span class="dci-stats-num">${esc(value)}</span>
+      <span class="dci-stats-lbl">${esc(tr(`stats.t.${key}`))}</span></div>`;
     const relsAll = a.n + a.s;
     const nRel = a.releases.size;
     const tiles = `<div class="dci-stats-tiles">
@@ -36123,7 +36289,6 @@
       ${tile('perRel', statDur(a.msRels ? a.msSum / a.msRels : null))}
     </div>`;
     // over time
-    const period = ['day', 'week', 'month', 'year'].includes(S.statsPeriod) ? S.statsPeriod : 'month';
     const groups = new Map();
     for (const r of recs) {
       const k = statPeriodKey(r.at, period);
@@ -36133,8 +36298,6 @@
     const keys = [...groups.keys()].sort().reverse().slice(0, 12);
     const per = keys.map((k) => [k, statAgg(groups.get(k))]);
     const max = Math.max(1, ...per.map(([, g]) => g.rels));
-    const seg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('stats.period'))}">${['day', 'week', 'month', 'year'].map((v) => `<button type="button"
-      data-act="stats-period" data-period="${v}" aria-pressed="${period === v}">${esc(tr(`stats.period.${v}`))}</button>`).join('')}</span>`;
     const table = `<div class="dci-tablewrap"><table class="dci-stats-table" data-el="stats-periods">
       <thead><tr><th scope="col">${esc(tr(`stats.period.${period}`))}</th><th scope="col">${esc(tr('stats.t.releases'))}</th><th scope="col">${esc(tr('stats.t.rels'))}</th>
         <th scope="col">${esc(tr('stats.col.new'))}</th><th scope="col">${esc(tr('stats.col.supp'))}</th><th scope="col">${esc(tr('stats.t.perRel'))}</th></tr></thead>
@@ -36143,12 +36306,14 @@
         <td>${statPct(g.n, g.n + g.s)} %</td><td>${statPct(g.s, g.n + g.s)} %</td><td>${esc(statDur(g.msRels ? g.msSum / g.msRels : null))}</td></tr>`).join('')}</tbody></table></div>`;
     const list = (key, items) => `<div class="dci-stats-list" data-el="stats-top-${key}"><h4>${esc(tr(`stats.top.${key}`))}</h4>${items.length
       ? `<ol>${items.map((x) => `<li><span>${esc(x.name)}</span> <span class="dci-sub">${statNum(x.n)}</span></li>`).join('')}</ol>` : `<p class="dci-sub">–</p>`}</div>`;
-    const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 3))}${list('instr', statTop(a.instr, 3))}${list('types', statTop(a.types, 5))}</div>`;
-    return [...head, tiles,
-      `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
+    // ([Z-STL] 3.61.0, S4) up to ten each, the first three shown ("+ n more")
+    const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 10))}${list('instr', statTop(a.instr, 10))}${list('types', statTop(a.types, 10))}</div>`;
+    // [Z-STL] (3.61.0, S3, S5) the cards in their groups; "Over time" and the three lists side by side in "Overview"
+    const overview = `<div class="dci-stats-overview"><div class="dci-stats-ot"><h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>${table}</div>${statShortLists(tops, 'overview')}</div>`;
+    return [...head, tiles, statGroupsHtml(statsMoreCards(recs), { overview }),
       // [E8] (3.38.2) the developer statistics – [171] (3.38.5) in "Developer mode"
       // [Z-DS] (3.42.0) deleting them is in ⚙ Settings → Cache (until 3.41.15 here)
-      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : ''];
+      S.devMode ? statsDevHtml(recs) : ''];
   }
 
   /**
@@ -36169,7 +36334,7 @@
       // [Z-ALI] (3.53.0) role credits (of relationships with instruments or vocals), credited as, the role credits used, entries found through an alias
       rcN: 0, rcBase: 0, acN: 0, acBase: 0, rcTop: new Map(), y: 0, entY: new Set(), aliasEnt: new Set(),
       // [Z-RLS, Z-LNG, Z-RDU] (3.53.0) the releases (at their first submission): media, types of the release group, language, script, lengths
-      relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [],
+      relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [], wholes: [],
       // [Z-AST, Z-PLS] (3.54.0) the artists' relationships ([gid, year of the relationship, year of the release]); labels of the relationships
       artRels: [], labelsRel: new Map(), placesRel: new Map(), entName: new Map() };
     const inc = (map, k, by = 1) => {
@@ -36237,6 +36402,8 @@
         const lens = (r.rel.lens || []).map(Number).filter((x) => x > 0);
         m.lens.push(...lens);
         if (lens.length) m.relLens.push(lens);
+        // [Z-RDU2] (3.61.0, review) the whole length of a release whose every track had one (records from 3.61.0)
+        if (r.rel.whole > 0) m.wholes.push(Number(r.rel.whole));
       }
       if (r.ocr && (r.src === 'ocr' || (r.supp || []).includes('ocr'))) {
         m.ocr.subs++;
@@ -36414,16 +36581,21 @@
       <th scope="col">${esc(tr('stats.srcT.perRel'))}</th><th scope="col">${esc(tr('stats.srcT.supp'))}</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
-  function statsMoreHtml(recs) {
+  function statsMoreCards(recs) {
     const m = statMore(recs);
+    // ([Z-STL] 3.61.0) each card kept by its key, drawn in its group (statGroupsHtml)
+    const cards = new Map();
     const top = (map, n = 5) => [...map.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]))).slice(0, n);
     const kv = (pairs, label = (k) => k) => (pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, n]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${statNum(n)}</span></li>`).join('')}</ul>`
       : `<p class="dci-sub">–</p>`);
-    const card = (key, body) => `<div class="dci-stats-card" data-el="stats-${key}"><h4>${esc(tr(`stats.more.${key}`))}</h4>${body}</div>`;
+    const card = (key, body) => {
+      cards.set(key, { body, html: statCard('stats-', key, tr(`stats.more.${key}`), body) });
+      return '';
+    };
     const bars = (vals, labels) => {
       const max = Math.max(1, ...vals);
       return `<div class="dci-stats-cols" role="img" aria-label="${esc(vals.map((v, i) => `${labels[i]}: ${v}`).join(', '))}">${vals.map((v, i) => `<span class="dci-stats-col" title="${esc(`${labels[i]}: ${statNum(v)}`)}">
-        <span class="dci-stats-colbar" style="height:${Math.round((36 * v) / max)}px"></span><span class="dci-stats-collbl">${esc(labels[i])}</span></span>`).join('')}</div>`;
+        <span class="dci-stats-colbar" style="height:${Math.round((32 * v) / max)}px"></span><span class="dci-stats-collbl">${esc(labels[i])}</span></span>`).join('')}</div>`;
     };
     const wd = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'short' }).format(new Date(2024, 0, 1 + i)));
     const hours = Array.from({ length: 24 }, (_, h) => String(h));
@@ -36447,7 +36619,8 @@
     const firstNew = [...m.instrFirst.entries()].filter(([, at]) => at >= thirty).map(([n]) => n).sort((x, y) => x.localeCompare(y));
     const once = [...m.instrN.entries()].filter(([, n]) => n === 1).map(([n]) => n).sort((x, y) => x.localeCompare(y));
     const list10 = (names) => (names.length ? `${esc(names.slice(0, 10).join(', '))}${names.length > 10 ? ' …' : ''}` : '–');
-    return `<div class="dci-stats-cards">
+    // (the cards register themselves: card() gives '')
+    void `
       ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>`)}
       ${card('found', kv(['link', 'search', 'hand', 'created'].map((k) => [k, m.link.get(k) || 0]), (k) => tr(`stats.found.${k}`)))}
       ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
@@ -36459,9 +36632,7 @@
       ${card('releases', `<h5>${esc(tr('stats.decade'))}</h5>${kv(top(m.decade))}<h5>${esc(tr('stats.format'))}</h5>${kv(top(m.format))}
         <h5>${esc(tr('stats.country'))}</h5>${kv(top(m.country))}<h5>${esc(tr('stats.label'))}</h5>${kv(top(m.label))}`)}
       ${card('when', `${daily ? `<h5>${esc(tr('stats.weekdays'))}</h5>${bars(m.weekday, wd)}<h5>${esc(tr('stats.hours'))}</h5>${bars(m.hour, hours)}
-        <p data-el="stats-streak">${esc(tr('stats.streak', { now: runs.day.now, longest: runs.day.longest }))}</p>
-        <p data-el="stats-streak-week">${esc(tr('stats.streakWeek', { now: runs.week.now, longest: runs.week.longest }))}</p>
-        <p data-el="stats-streak-month">${esc(tr('stats.streakMonth', { now: runs.month.now, longest: runs.month.longest }))}</p>
+        <p data-el="stats-streaks" title="${esc(tr('stats.streaksTitle'))}">${esc(tr('stats.streaks', { d: runs.day.now, dl: runs.day.longest, w: runs.week.now, wl: runs.week.longest, m: runs.month.now, ml: runs.month.longest }))}</p>
         <ul class="dci-stats-kv" data-el="stats-wd-best">
           <li>${esc(wdRels ? tr('stats.wdBest.rels', wdRels) : tr('stats.wdBest.relsNone'))}</li>
           <li>${esc(wdSubs ? tr('stats.wdBest.subs', wdSubs) : tr('stats.wdBest.subsNone'))}</li></ul>` : `<p class="dci-sub" data-el="stats-daily-off">${esc(tr('stats.dailyOff'))}</p>`}
@@ -36479,7 +36650,8 @@
       ${statsMore3Html(m, { top, kv, card })}
       ${statsMore4Html(m, { top, kv, card })}
       ${statsMore2Html(m, recs, { top, kv, card })}
-    </div>`;
+    `;
+    return cards;
   }
 
   /**
@@ -36552,9 +36724,11 @@
         <h5>${esc(tr('stats.rg.primary'))}</h5>${kv(top(m.rgp, 6), rgLabel)}<h5>${esc(tr('stats.rg.secondary'))}</h5>${kv(top(m.rgs, 6))}${since(m.relY, nRel)}`)}
       ${card('script', `<h5>${esc(tr('stats.lang'))}</h5>${kv(top(m.lang, 6), (k) => statLangName(k, 'language'))}
         <h5>${esc(tr('stats.script'))}</h5>${kv(top(m.script, 6), (k) => statLangName(k, 'script'))}${since(m.relY, nRel)}`)}
-      ${card('lengths', `${seg}<ul class="dci-stats-kv">
-        <li>${esc(tr('stats.len.rec', { time: statLen(f(m.lens)), n: statNum(m.lens.length) }))}</li>
-        <li>${esc(tr('stats.len.rel', { time: statLen(f(m.relLens.map((xs) => f(xs)))), n: statNum(m.relLens.length) }))}</li></ul>
+      ${card('lengths', `${seg} ${statLenOfSeg(statLenOf())}<ul class="dci-stats-kv">${statLenOf() === 'release'
+        // [Z-RDU2] (3.61.0) the whole length of each release: its recordings together
+        ? `<li>${esc(tr('stats.len.whole', { time: statLen(f(m.wholes)), n: statNum(m.wholes.length) }))}</li>`
+        : `<li>${esc(tr('stats.len.rec', { time: statLen(f(m.lens)), n: statNum(m.lens.length) }))}</li>
+        <li>${esc(tr('stats.len.rel', { time: statLen(f(m.relLens.map((xs) => f(xs)))), n: statNum(m.relLens.length) }))}</li>`}</ul>
         <p class="dci-sub">${esc(tr('stats.len.hint'))}</p>${since(m.relY, nRel)}`)}`;
   }
 
@@ -37101,7 +37275,7 @@
     }
     const active = document.activeElement;
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
-      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}${active.dataset.scope ? `[data-scope="${active.dataset.scope}"]` : ''}${active.dataset.view ? `[data-view="${active.dataset.view}"]` : ''}` : '') : '';
+      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}${active.dataset.scope ? `[data-scope="${active.dataset.scope}"]` : ''}${active.dataset.view ? `[data-view="${active.dataset.view}"]` : ''}${['card', 'group', 'list'].map((k) => (active.dataset[k] ? `[data-${k}="${CSS.escape(active.dataset[k])}"]` : '')).join('')}` : '') : '';
     // [Z-ST] (3.40.6) "this browser only" in the head (Q-au)
     // [Z-GST] (3.47.0) "This browser | Global"
     // [Z-GOF] (3.53.0) "Global" switched off in ⚙ Settings → Cache: only this browser (nothing loaded)
@@ -37109,9 +37283,12 @@
     const global = gOn && S.statsScope === 'global';
     const scope = !gOn ? '' : `<span class="dci-seg dci-seg-small dci-stats-scope" role="group" aria-label="${esc(tr('stats.scope'))}">${['local', 'global'].map((v) => `<button type="button"
       data-act="stats-scope" data-scope="${v}" aria-pressed="${S.statsScope === v}" title="${esc(tr(`stats.scope.${v}Title`))}">${esc(tr(`stats.scope.${v}`))}</button>`).join('')}</span>`;
-    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button>${scope}${global ? ''
-      : `<span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span>`}</div>
-      <div class="dci-stats-pane">${(global ? globalStatsHtml() : statsHtml()).join('')}</div>`;
+    // [Z-STL] (3.61.0, S1) the head line of the statistics (the period, ⓘ, "Collecting: on ⚙") in the head, next to "This browser | Global"
+    const parts = global ? globalStatsHtml() : statsHtml();
+    const headLine = String(parts[0] || '').startsWith('<div class="dci-stats-headline"') ? parts.shift() : '';
+    el.innerHTML = `<div class="dci-set-head dci-stats-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button>${scope}${global ? ''
+      : `<span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span>`}${headLine}</div>
+      <div class="dci-stats-pane">${parts.join('')}</div>`;
     const again = key && el.querySelector(key);
     if (again) again.focus();
   }
@@ -39585,6 +39762,35 @@
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
       /* [E8] (3.38.0) the statistics */
       .dci-stats-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 132), 1fr)); gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; }
+      /* [Z-STL] (3.61.0) compact: the head in one line, a flat bar, groups of cards in columns without gaps, cards that fold */
+      .dci-stats-headline { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-stats-head .dci-stats-headline { flex: 1 1 auto; margin: 0; }
+      .dci-stats-headline .dci-stats-spacer { flex: 1 1 auto; }
+      .dci-stats-headline .dci-stats-where { margin: 0; }
+      .dci-stats-infopop { position: absolute; top: 100%; right: 0; z-index: 5; max-width: min(calc(var(--u, 1px) * 520), 100%); background: var(--bg, #fff); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(40, 30, 80, 0.12); padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 14); font-size: calc(var(--u, 1px) * 12); }
+      .dci-stats-infopop p { margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-stats .dci-stats-tiles, [data-el=stats] .dci-stats-tiles { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+      [data-el=stats] .dci-stats-tile { flex: 1 0 auto; white-space: nowrap; flex-direction: row; align-items: baseline; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 0; border-right: 1px solid var(--line); border-radius: 0; min-height: 0; }
+      [data-el=stats] .dci-stats-tile .dci-stats-num { font-size: calc(var(--u, 1px) * 16); }
+      [data-el=stats] .dci-stats-tile:last-child { border-right: 0; }
+      [data-el=stats] .dci-stats-tiles { box-shadow: inset 0 -1px 0 var(--line); }
+      [data-el=stats] .dci-stats-cards { align-items: start; }
+      .dci-stats-group { margin: calc(var(--u, 1px) * 10) 0; }
+      .dci-stats-gh { margin: 0 0 calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+      .dci-stats-gh .dci-textbtn { font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+      .dci-stats-gh .dci-stats-sum { text-transform: none; letter-spacing: 0; font-weight: 400; }
+      .dci-stats-gfolded { border: 1px dashed var(--line); border-radius: 8px; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); }
+      .dci-stats-grid { column-width: calc(var(--u, 1px) * 250); column-gap: calc(var(--u, 1px) * 10); }
+      .dci-stats-grid > .dci-stats-card { break-inside: avoid; display: block; width: 100%; box-sizing: border-box; margin: 0 0 calc(var(--u, 1px) * 10); }
+      /* (the table of the sources across the columns) */
+      .dci-stats-grid > .dci-stats-card[data-el="stats-sources"] { column-span: all; display: block; }
+      .dci-stats-card h4 .dci-stats-cardhead { font: inherit; font-weight: 700; border: 0; background: none; padding: 0; color: inherit; cursor: pointer; text-align: left; }
+      .dci-stats-card.dci-stats-folded h4 { margin: 0; display: flex; justify-content: space-between; gap: calc(var(--u, 1px) * 8); }
+      .dci-stats-sum { font-weight: 400; }
+      .dci-stats-morebtn { margin: 1px 0 calc(var(--u, 1px) * 4); }
+      .dci-stats-overview { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: calc(var(--u, 1px) * 16); align-items: start; }
+      .dci-stats-overview > .dci-stats-lists { margin: 0; flex-wrap: nowrap; }
+      @container (max-width: 900px) { .dci-stats-overview { grid-template-columns: minmax(0, 1fr); } .dci-stats-overview > .dci-stats-lists { flex-wrap: wrap; } }
       .dci-stats-tile { display: flex; flex-direction: column; gap: 2px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); }
       .dci-stats-num { font-size: calc(var(--u, 1px) * 18); font-weight: 700; color: var(--purple-d); font-variant-numeric: tabular-nums; }
       .dci-stats-lbl { font-size: calc(var(--u, 1px) * 12); color: var(--ink); }

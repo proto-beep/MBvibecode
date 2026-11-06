@@ -334,7 +334,9 @@ class Stats:
 # --- [3.55.0, Z-AGS] the core pass: MusicBrainz's mbdump.tar.bz2 (once a week) -------------------------------------------------
 # (the columns as in MusicBrainz's admin/sql/CreateTables.sql; the tables in the order of the archive – alphabetical)
 CORE_TABLES = ('area', 'artist', 'artist_type', 'gender', 'iso_3166_1', 'language', 'link_attribute_type', 'medium', 'recording', 'release',
-               'release_group', 'release_group_primary_type', 'release_group_secondary_type', 'release_group_secondary_type_join', 'script')
+               'release_group', 'release_group_primary_type', 'release_group_secondary_type', 'release_group_secondary_type_join', 'script',
+               # [3.61.0, Z-RDU2] the tracks: the whole length of each release (its media's tracks together)
+               'track')
 CORE_NEEDED = ('area', 'artist', 'iso_3166_1', 'medium', 'release', 'release_group')
 ROOT_INSTRUMENT, ROOT_VOCAL = 14, 3
 AREA_COUNTRY = 1
@@ -370,6 +372,8 @@ class Core:
         self.root = {}  # link attribute type → its root
         self.media = Counter()  # release → number of media
         self.lengths = {}  # recording → length (ms)
+        self.medium_rel = {}  # [3.61.0] medium → release (of the releases wanted)
+        self.rel_len = {}  # [3.61.0] release → [length of its tracks together (ms), every track with a length]
         self.release = {}  # release → (release group, language, script)
         self.rg_type = {}
         self.rg_sec = defaultdict(list)
@@ -398,6 +402,7 @@ class Core:
             r = num(f[1])
             if r in self.want_rel:
                 self.media[r] += 1
+                self.medium_rel[int(f[0])] = r
         elif table == 'recording' and len(f) > 4:
             i = int(f[0])
             if i in self.want_rec:
@@ -409,6 +414,17 @@ class Core:
             if i in self.want_rel:
                 self.release[i] = (num(f[4]), num(f[7]), num(f[8]))
                 self.want_rg.add(num(f[4]))
+        # [3.61.0, Z-RDU2] track (id, gid, recording, medium, position, number, name, artist_credit, length, …): after medium
+        elif table == 'track' and len(f) > 8:
+            r = self.medium_rel.get(num(f[3]))
+            # ((review) a data track (is_data_track, f[11]) has no length of music: not counted)
+            if r is not None and not (len(f) > 11 and f[11] == b't'):
+                acc = self.rel_len.setdefault(r, [0, True])
+                ln = num(f[8])
+                if ln and ln > 0:
+                    acc[0] += ln
+                else:
+                    acc[1] = False
         # ((review) release comes before release_group: only the release groups of those releases)
         elif table == 'release_group' and len(f) > 4:
             i = int(f[0])
@@ -455,6 +471,8 @@ class Core:
             langs[nm['language'].get(lang, '') or '-'] += 1
             scripts[nm['script'].get(scr, '') or '-'] += 1
         lens = list(self.lengths.values())
+        # [3.61.0, Z-RDU2] the whole length of the releases whose every track has a length
+        rel_lens = [t for t, whole in self.rel_len.values() if whole and t > 0]
         # role credits: of the relationships with an instrument or vocal attribute, those with one of them credited
         base = cred = 0
         for attrs in self.attrs:
@@ -466,7 +484,8 @@ class Core:
             'artists': {'n': len(self.artist), 'of': len(self.want_art), 'types': top(types), 'genders': top(genders), 'decades': top(decades),
                         'countries': top(countries), 'towns': top(towns, 20), 'centuries': dict(sorted(centuries.items())), 'posthumous': {'n': post, 'of': post_of}},
             'releases': {'n': len(self.release), 'media': top(media), 'rg_primary': top(rgp), 'rg_secondary': top(rgs), 'languages': top(langs), 'scripts': top(scripts)},
-            'lengths': {'recordings': len(lens), 'median_ms': median(lens), 'mean_ms': mean(lens)},
+            'lengths': {'recordings': len(lens), 'median_ms': median(lens), 'mean_ms': mean(lens),
+                        'releases': len(rel_lens), 'release_median_ms': median(rel_lens), 'release_mean_ms': mean(rel_lens)},
             'role_credits': {'n': cred, 'of': base},
         }
 
@@ -487,6 +506,11 @@ def run_core(stream, facts, dump):
             core.rows[table] = n
             print(f'{table}: {n} rows', file=sys.stderr, flush=True)
     missing = [t for t in CORE_NEEDED if not core.rows.get(t)]
+    # [3.61.0, review] the tracks are not needed – without them (or before medium) the whole lengths of the releases are missing: say so
+    if not core.rows.get('track'):
+        print('warning: no rows of track – the whole lengths of the releases are not counted', file=sys.stderr, flush=True)
+    elif core.rows.get('medium') and not core.rel_len:
+        print('warning: track gave no lengths (read before medium?) – the whole lengths of the releases are not counted', file=sys.stderr, flush=True)
     if missing:
         raise SystemExit(f'the core archive is not complete: {", ".join(missing)} – nothing written')
     return {'dump': dump, **core.result()}
