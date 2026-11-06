@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.70.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.71.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.71.0 · 2026-11-06
+
+Z-DED2, Z-CPD.
+
+- **`findDedications`** (rule **S107**): "for" / "für" within a line – not after the words of a production, thanks or availability, not before a common word ("the", "all", "free" …); `viaFor`, and `workOnly` after "written" / "composed". **`runDedications`**: no label for `viaFor`.
+- Z-CPD: no change – the artwork's year reaches the illustrator through the date matrix (`t_notes_dates.py artwork`).
+- **Tests:** `t_notes_companies.py dedfor`, `t_mapping.py dedforphrases` (new, Node); golden S107.
+- **Review:** not in titles (`!title`; "Songs To Sing For Cecil Taylor" a tribute by the title's rule again); the sentence from its start for the words of a production, thanks, a release for a country (more verbs: "remixed", "arranged", "played" …, German ones); "record" no such word ("This record is for …"); a line "For X" skipped only when the line's rule read it (`lineRead`; "For X (1929–2018)" found); not inside quotes, not after a word with a capital nor a "For" with one; no list with commas, nothing before "only"; "für" two words, "aufgenommen" / "komponiert" after the name; `runDedications`: `workOnly` and a single word without a named track – the only track of the release, else nothing; the register note without a name that does not exist.
 
 ## Import 3.70.0 · 2026-11-06
 

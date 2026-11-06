@@ -1002,4 +1002,71 @@ def case_dedications():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dedfor():
+    """Credits Importer 3.71.0 (collected item Z-DED2, rule S107): "for …" in a sentence. The notes: "This record is for Cecil Taylor.
+    Song Two was composed for Ireland. Mixed for Sony. Thanks for Bass Man."
+    A) Cecil Taylor: "dedicated to" on the release group (an artist MusicBrainz has once); Ireland (a country): "dedication" on the
+       work of track 2 (the sentence names "Song Two"); "Mixed for Sony" (a production) and "Thanks for Bass Man": nothing.
+    B) Rule S107 off: none of them."""
+    import json
+    CT, IE = H.uid('dddddddd', 3800), H.uid('abababab', 40)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 846: ('26131498-00e8-4136-b937-22a4be01a63d', 'dedication', 'artist', 'work'),
+                 914: (H.uid('91491491', 1), 'dedication', 'area', 'work')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.ARTISTS[3800] = (CT, 'Cecil Taylor')
+    H.MB_SEARCH['area'] = [{'id': IE, 'name': 'Ireland', 'type': 'Country', 'score': 100}]
+    orig, orig_js = H.discogs_release, H.js_entity
+    # (the area as the editor's entity)
+    H.js_entity = lambda gid: {'entityType': 'area', 'id': 4040, 'gid': IE, 'name': 'Ireland', 'comment': ''} if gid == IE else orig_js(gid)
+
+    def dg():
+        d = orig()
+        d['notes'] = 'This record is for Cecil Taylor. Song Two was composed for Ireland. Mixed for Sony. Thanks for Bass Man.'
+        return d
+    H.discogs_release = dg
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1 && [868, 846, 914].includes(r.linkTypeID)).map(r => [r.entity0.gid || r.entity0.name, r.linkTypeID, r.entity1.gid || r.entity1.name]))()"""
+    results = []
+
+    def run(off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S107']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'dedicated to' in x]
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(500)
+            staged = pg.evaluate(STAGED)
+            b.close()
+            return log, staged, errs
+
+    try:
+        log, staged, errs = run()
+        print('A)', log, staged, errs)
+        results.append(any(x[0] == CT and x[1] == 868 for x in staged) and any(x[0] == IE and x[1] == 914 and x[2] == 'Song Two' for x in staged)
+                       and not any('Sony' in x or 'Bass Man' in x for x in log) and len(staged) == 2 and not errs)
+        log2, staged2, _ = run(off=True)
+        print('B)', log2, staged2)
+        results.append(staged2 == [])
+    finally:
+        H.discogs_release, H.js_entity = orig, orig_js
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.ARTISTS.pop(3800, None)
+        H.MB_SEARCH.pop('area', None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
