@@ -361,6 +361,7 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
+                                #   livedate: 3.62.0 (Z-PDT, Z-LVD, S089): "Performed in … on …" under Performance, the live comment without it before the matrix is applied, the hint naming it; off
                                 #   wts: 3.52.0 (Z-WTS): the suggestion of a work type and a language from the works of the artists (yellow, "Accept");
                                 #     not accepted: the new works without either; accepted: Song in English; in Node suggestFromWorks (majorities, < 3 works)
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
@@ -413,6 +414,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   coverdetail: 3.62.0 (Z-CVA, S090, Node): "Cover [Cover Art]" → "cover art", the exceptions of COVER_DETAIL, the dashboard's role credit
+                                #   perfhints: 3.62.0 (Z-PDT review, Node): performance hints, not premieres or rights lines
                                 #   dbr: 3.58.0 (Z-DBR, S084): "Piano [Acoustic]" → piano credited "acoustic piano" (marked; a click: "acoustic"),
                                 #     "Piano [Acoustic Piano]" without a word twice, "Vocals [Backing]" → "backing vocals", Moog / two details kept; S084 off
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,

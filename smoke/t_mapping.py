@@ -1420,4 +1420,86 @@ def case_dbr():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_coverdetail():
+    """Credits Importer 3.62.0 (collected item Z-CVA, rule S090), in Node: "Cover [detail]" – "[Cover Art]" and "[Art]" artwork credited
+    "cover art" (until 3.61.0 "cover"); "[Painting]", "[Cover Painting]" illustration, "[Photo]" photography – no credit; "[Layout]"
+    design credited "layout"; "[Collage]" artwork credited "cover collage"; "Cover" alone as before ("cover"); "Cover [Design]" as S037
+    ("cover design"). Rule S090 off: "[Cover Art]" credited "cover" again.
+    (3.62.0, review) "[Photo By]", "[Photographs]" photography, "[Graphic Design]" design – no credit; "[Painting, Layout]" (two types)
+    artwork credited "cover painting, layout". In the dashboard: the row "Cover [Photo]" photography without a role credit (not
+    "cover"; until 3.61.0 "cover photo"), "Cover [Layout]" design credited "layout"."""
+    import subprocess
+    node = r"""
+const off = process.argv[2] === 'off';
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' && off ? JSON.stringify(['S090']) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const out = {};
+for (const s of ['Cover [Cover Art]', 'Cover [Art]', 'Cover [Painting]', 'Cover [Cover Painting]', 'Cover [Photo]', 'Cover [Layout]', 'Cover [Collage]', 'Cover', 'Cover [Design]',
+  'Cover [Photo By]', 'Cover [Photographs]', 'Cover [Graphic Design]', 'Cover [Painting, Layout]']) {
+  const p = m.parseRoleNotation(s)[0];
+  const r = m.mapRole(p.base, p.mods);
+  out[s] = [r.types[0], r.credit];
+}
+console.log(JSON.stringify(out));
+"""
+    res = {}
+    for k in ('on', 'off'):
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), k], capture_output=True, text=True)
+        res[k] = json.loads(o.stdout) if o.returncode == 0 else {'err': o.stderr[-300:]}
+        print(k, res[k])
+    want = {'Cover [Cover Art]': ['artwork', 'cover art'], 'Cover [Art]': ['artwork', 'cover art'], 'Cover [Painting]': ['illustration', ''],
+            'Cover [Cover Painting]': ['illustration', ''], 'Cover [Photo]': ['photography', ''], 'Cover [Layout]': ['design', 'layout'],
+            'Cover [Collage]': ['artwork', 'cover collage'], 'Cover': ['artwork', 'cover'], 'Cover [Design]': ['design', 'cover design'],
+            'Cover [Photo By]': ['photography', ''], 'Cover [Photographs]': ['photography', ''], 'Cover [Graphic Design]': ['design', ''],
+            'Cover [Painting, Layout]': ['artwork', 'cover painting, layout']}
+    results = [res['on'] == want, res['off'].get('Cover [Cover Art]') == ['artwork', 'cover']]
+    if res['on'] != want:
+        print('   anders:', {k: (res['on'].get(k), v) for k, v in want.items() if res['on'].get(k) != v})
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': 'Keys Guy', 'anv': '', 'role': 'Cover [Photo]', 'tracks': '', 'id': 3003, 'join': ''},
+                              {'name': 'Photo Guy', 'anv': '', 'role': 'Cover [Layout]', 'tracks': '', 'id': 3006, 'join': ''}]
+        return d
+    H.discogs_release = rel
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        rows = dict(pg.evaluate("""[...document.querySelectorAll('[data-group] tr.dci-row')].filter(tr => /^Cover/.test(tr.querySelector('.dci-drole').dataset.raw.trim()))
+          .map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), (tr.querySelector('[data-f=role-credit]') || {}).value])"""))
+        b.close()
+    H.discogs_release = orig
+    print('Dashboard:', rows)
+    results.append(rows.get('Cover [Photo]') == '' and rows.get('Cover [Layout]') == 'layout' and not errs)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_perfhints():
+    """Credits Importer 3.62.0 (collected item Z-PDT, review), in Node: the words of a performance date (DATE_HINTS) – "Performed in St.
+    Ann's Church … on February 22nd, 2018" and "Recorded live in Berlin, 12 May 2005" are performance; a premiere ("First performed
+    12 May 1923", "Uraufgeführt am 12. Mai 1923") and a rights line ("Performance rights society GEMA 2004") are not (until the review
+    of 3.62.0 all three performance)."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const out = {};
+for (const t of ["Performed in St. Ann's Church, Dublin, Ireland on February 22nd, 2018.", 'Recorded live in Berlin, 12 May 2005',
+  'First performed 12 May 1923.', 'Uraufgeführt am 12. Mai 1923.', 'Performance rights society GEMA 2004']) out[t] = m.findDates(t).map((x) => x.hint || '');
+console.log(JSON.stringify(out));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    res = json.loads(o.stdout) if o.returncode == 0 else {}
+    print(res or o.stderr[-300:])
+    v = list(res.values())
+    results = [len(v) == 5 and v[0] == ['performance'] and v[1] == ['performance'] and all(x and 'performance' not in x for x in v[2:])]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

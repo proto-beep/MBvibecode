@@ -1721,4 +1721,66 @@ console.log(JSON.stringify([f([w('', 'zxx'), w('', 'zxx'), w('', 'zxx'), w('Song
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_livedate():
+    """Credits Importer 3.62.0 (collected items Z-PDT, Z-LVD; rule S089): the notes say "Performed in St. Ann’s Church, Dublin, Ireland
+    on February 22nd, 2018".
+    A) Z-PDT: the date is in the pool as Performance (until 3.61.0 another name: "performed" was no word of Performance).
+    B) Z-LVD: as the seed script takes it, the comment has only dates on relationships – "live: Abbey Road Studios, New York, NY, USA"
+       before the date matrix is applied; a hint names the concert date (2018-02-22) that is on no relationship yet (none before).
+    C) Rule S089 off: "live: Abbey Road Studios, New York, NY, USA" and no hint, as before."""
+    PLACE = H.COMPANIES[1002][1]
+    NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
+    H.PLACE_AREAS[PLACE] = NYC
+    H.AREA_INFO.update({NYC: {'name': 'New York', 'type': 'City', 'parent': NYS}, NYS: {'name': 'New York', 'type': 'Subdivision', 'iso2': ['US-NY'], 'parent': US},
+                        US: {'name': 'United States', 'type': 'Country', 'iso1': ['US']}})
+    orig, orig_dg = H.ws_release, H.discogs_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        return d
+
+    def dg():
+        d = orig_dg()
+        d['notes'] = 'Performed in St. Ann’s Church, Dublin, Ireland on February 22nd, 2018.'
+        return d
+    H.ws_release, H.discogs_release = ws, dg
+    LIST = """(() => { const el = document.querySelector('[data-el=livecom]'); if (!el || el.hidden) return null;
+      // (the offer above "Stage …" quotes the comment: “…”; the list once it is on)
+      const m = el.textContent.match(/\\(“([^”]+)”\\)/);
+      return [...new Set([...el.querySelectorAll('[data-f=livecom-text]')].map(x => x.value).concat(m ? [m[1]] : []))]; })()"""
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S089'] if off else ['S083']}))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(2500)
+            pool = pg.evaluate("[...document.querySelectorAll('[data-el=dates] .dci-pchip-date, .dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim())")
+            lst = pg.evaluate(LIST)
+            if pg.evaluate("!!document.querySelector('[data-act=livecom-yes]')"):
+                pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+            hint = pg.evaluate("(() => { const el = document.querySelector('[data-el=livecom]'); return el ? el.textContent.includes('date of the concert (2018-02-22)') : null; })()")
+            print('   Hinweis:', hint)
+            b.close()
+            return pool, lst, errs, hint
+
+    pool, lst, errs, hint = run(False)
+    print('A) Pool:', pool)
+    results.append(any('Performance' in x and '2018-02-22' in x for x in pool))
+    print('B)', lst)
+    results.append(bool(lst) and all(x == 'live: Abbey Road Studios, New York, NY, USA' for x in lst) and hint and not errs)
+    _, lst2, _, hint2 = run(True)
+    print('C)', lst2)
+    results.append(bool(lst2) and all(x == 'live: Abbey Road Studios, New York, NY, USA' for x in lst2) and not hint2)
+    H.ws_release, H.discogs_release = orig, orig_dg
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
