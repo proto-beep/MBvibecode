@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.71.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.72.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.72.0 · 2026-11-06
+
+Z-TST. The script: only its version.
+
+- **`smoke/quick.py`** (new): the quick tier – `t_static.py`, `t_register.py` and the cases of the other files that only run Node (their body or a helper of the file it calls runs `node`, no browser; found with `ast`); `--list`; a file that hangs counts as failed.
+- **Split:** `t_works_more.py` → `t_works_live.py` (livecom, livecomrun, liveoffer, livegroup, liveall, livedate, livetracks), `t_works_cover.py` (coverworks); the rest stays.
+- **Merged:** `t_media_choice.py` (media, mediaload, mediasel) into `t_start.py`, `t_ui_place.py` (inline, logplace, keepplace, srctexts) into `t_ui_view.py` – unchanged cases.
+- **Cases instead of log comparisons:** `t_ar.py` → `t_mapping.py annrep`, `t_focus.py` → `t_ui_head.py focusfields`, `t_release.py` → `t_companion_discogs.py marksrelease`, `t_artwork.py` → `t_companion_discogs.py artworkbox`, each with the checks of its reference log (the script's 25 ms gap instead of its own, but `focusfields` with its own, as before); `t_basic.py` deleted – its checks (14 entries, "Import complete", the connection, the marks before "Apply") are a step 0 of `marksrelease`.
+- **README-tests:** the layout, the quick tier, the sections of the new files, the table of former tests.
+- **Review:** the quick tier also finds the cases that reach Node through a helper of their file (`t_text_lists.py`: 17 instead of 7) and survives a file that hangs; `marksrelease` checks what `t_basic.py` did (step 0); `focusfields` keeps the script's own gap (typing while the lookups run); the case lists of `t_start.py` (gapsplit) and `t_ui_view.py` (footbar) complete.
 
 ## Import 3.71.0 · 2026-11-06
 
