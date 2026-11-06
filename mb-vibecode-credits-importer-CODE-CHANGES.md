@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.66.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.67.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.67.0 · 2026-11-06
+
+Z-DED – dedications and tributes.
+
+- **`findDedications(text, { title, titleKind })`** (new, exported; rule **S097**; `DED_NAME`, `DED_PHRASES`): the names after the phrases (several joined by "and", "&" or a comma), "X gewidmet", a line "For X"; in a title the name after its last "For" / "To" (two words at least).
+- **`runDedications(seq)`** (new): from `runTitleComposerChecks` (the end of an import, a supplement) – the notes of the source and of a supplement, the release's title, the tracks' titles; a track named in the sentence (or the track's own title) puts the dedication on its work; one search per entity type (`artist`, then `label` for a tribute, `area` / `place` / `label` on the works level) with exactly one entry of exactly that name (an area: the country among several). Once per name, kind and track (`S.dedDone`).
+- **`dedicationLt(kind, level, entityType)`**, **`DED_TYPES`**: the types by their names in MusicBrainz – "dedicated to" (artist – release group), "dedication" (artist / area / place / label – work), "tribute" (artist / label – release group).
+- **`addDedicationRow(hit, d, track)`** (new): the entry (found or new, `fromDedication`) and its row (`row.dedication`: kind, wording, name, where, sentence); **`toggleDedication(row)`** (action **`ded-toggle`**): the other kind, a tribute on the release group; **`dedicationHtml(row)`** below the role.
+- **Texts:** ded.from, ded.toggleTitle, ded.kind.*, ded.src.*, log.dedFound, log.dedNoTarget, log.dedToggled.
+- **Review:** the phrases matched without case, the names after them with it (`DED_AFTER`: capitals, initials, particles; "the late great", quotes; no new line); "dedicated to the memory of"; the names together first ("Simon & Garfunkel"); a title by its last "For" (not "To"), two words a name; a track's title without the phrases; "X gewidmet" two words; the track of a sentence by whole words, the longest title; a failed search tried again, "several" logged as such (`log.dedSeveral`), up to 100 results; `S.dedDone` cleared with each import; what was chosen (the kind, a row removed) kept per release (`dedChoices`, `dedChoose`, `dci-ded`) – the rows themselves are not remembered (they come with each import); `remapRow` leaves a dedication as it is; a dedication is added to an existing work too (S083); the row without the mapping's leftovers, its level and track kept for the switch (`dedToggleTarget`).
+- **Tests:** `t_notes_companies.py dedications` (new), `t_mapping.py dedphrases` (new, Node); golden S097.
 
 ## Import 3.66.0 · 2026-11-06
 
