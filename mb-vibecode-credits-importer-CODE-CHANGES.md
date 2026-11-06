@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.55.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.56.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.56.0 · 2026-11-06
+
+Z-CWR (a bug, first of the collected items) – never writer beside a more exact type.
+
+- **`writerExactPairs()`** (new): "work gid|artist MBID" of each person with composer, lyricist or librettist on a work – rows of the works matrix on its cells, and the relationships of the works in MusicBrainz (`S.existing.loose`, by link type gid).
+- **`computePlan`:** a writer row's target work in that set is left out (`info.exact`; rule **S082**); the status of the row `status.writerExact`.
+- **`cellHtml`:** such a writer struck through (`.dci-mxchip-cwr`, tooltip `matrix.writerExact`), not staged.
+- **Constants:** `WRITER_EXACT` (composer, lyricist, librettist).
+- **Texts:** `status.writerExact.one/other`, `matrix.writerExact`.
+- **Tests:** `t_works_matrix.py cwr` (new; MusicBrainz's composer, "Music By", "Lyrics By" beside "Written-By"; S082 off); `smoke/t_ui_overlap.py` – its head comment without a quotation; golden S082.
+- **Review of Z-CWR:** **`writersForTrack(i)`** – the writers of a new work's form and of a suite: a writer of a person who has composer, lyricist or librettist there left out, rows whose `excluded` covers the work skipped; **`S.writerExact`** – the pairs of the plan, also for the cells (a composer of the person on another track of the same work counts), drawn anew in **`renderWorksInner`** (a work just chosen or made); `info.mb` without the left-out writers; `sendDiscogsStatus` – a track with only left-out writers is `mb` (✓ on Discogs); **`searchWorks`** keeps the relationships of each work found (`S.foundWorkRels`), **`addFoundWorkRels(gid)`** (new; on `work-pick`) puts them into `S.existing` (a relation without `type-id` gets the id of its type's name; a work not from the search – the works of the artists – is looked up `work/<gid>?inc=artist-rels`, then drawn again).
+- **Tests (review):** `cwr` D (a picked work of the search with Writer W as composer in MusicBrainz), F (the form of a new work: composer and lyricist, no writer); `t_companion_discogs.py trackmarks` (track 1 ✓ from the start: Writer W composer there in MusicBrainz), `t_dates_matrix.py dragdates` (the date dropped on the first cell that is staged, not on a left-out writer), `t_ui_view.py foot` (24 new relationships: the writer of Writer W on WORK1 left out); `t_basic.py`, `t_release.py`: Writer W on track 1 ✓ on Discogs.
 
 ## Import 3.55.0 · 2026-11-05
 

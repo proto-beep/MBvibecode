@@ -343,6 +343,9 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     its rows no longer skipped), a column date, the type of new works
                                 #   statgaps: 3.41.15 (review, Z-STV): "co" on a link MusicBrainz has, staged, "Enter edit" – the record holds it as
                                 #     supplemented with "attrs", gaps.attrs 1
+                                #   cwr: 3.56.0 (Z-CWR, S082): no writer beside composer / lyricist / librettist of the same person on a work
+                                #     (MusicBrainz's composer, "Music By", "Lyrics By"); S082 off: as before
+                                #     (review) a picked work of the search with the composer in MusicBrainz; the form of a new work without writer
                                 #   wmx: 3.52.0 (Z-WMX): the head in one line (chips, ⓘ, "Skip works" in the middle, defaults · search · new works · ⋯),
                                 #     column heads (the name whole with its tooltip, ⚠, ▾ with « and ✕), "All artists credited as: ↺ …", "＋ New ▾",
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
