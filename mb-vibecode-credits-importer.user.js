@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.63.0
+// @version      3.64.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.63.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.63.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.64.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.64.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.63.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.64.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -533,6 +533,18 @@
       "status.workLocked.one": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
       "status.workLocked.other": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
       "matrix.workLocked": "not added: an existing work is not supplemented – only the link of the recording with it is staged",
+      "matrix.creditSkip": "Skip credits",
+      "matrix.creditSkipTitle": "Leave out the work credits of this track (composer, lyricist, publisher … on its work); the recording credits and the link of the recording with its work stay",
+      "matrix.creditTake": "Take credits",
+      "matrix.creditTakeTitle": "The work credits of this track were left out – take them again",
+      "matrix.creditSkipped": "not added: the work credits of this track are left out (“Skip credits”)",
+      "matrix.pubLevel": "Level of “{what}”",
+      "matrix.pubLevelWork": "“{what}” on the works of its tracks (label – work “publishing”)",
+      "matrix.pubLevelRelease": "“{what}” on the release instead of its works (label – release); the column stays, to put it back",
+      "matrix.pubOnRelease": "On the release: put a publishing row of this label back on “Work” to add it to the works of its tracks",
+      "log.pubLevel": "{name}: publishing on the level “{level}”",
+      "log.creditSkip": "Track {track}: its work credits are left out",
+      "log.creditTake": "Track {track}: its work credits are taken again",
       "matrix.workLockedRow": "An existing work: none of the relationships of this row are added to it – only the link of the recording with it (and its attributes) is staged.",
       "matrix.tcp.label": "Names in brackets after the titles ({n}) as",
       "matrix.tcp.composer": "Composer",
@@ -3602,6 +3614,8 @@
     // [3.63.0] collected items Z-PHN, Z-TCP2
     { id: 'S091', where: 'photographerName, roleCreditForInner', note: 'Photography (3.63.0): a detail that is the name of an artist of the release or of the dashboard – "Photography [Barry Guy]", "[Barry Guy photographs by]" – is the role credit as MusicBrainz writes the name ("Barry Guy", not "barry guy"), the words of the role left out' },
     { id: 'S092', where: 'TEXT.parse (S088), checkTitleComposerSingles, searchTitleComposerWorks', note: 'Texts (3.63.0): a single word in brackets after a title ("(Prince)", "(Monk)") is a credit only when it is the release\'s artist or MusicBrainz has exactly one artist of exactly that name; else no entry – only the works found for that title and name are offered' },
+    { id: 'S093', where: 'workFrontCell, cellHtml, computePlan (S.mxCreditSkip)', note: 'Works matrix (3.64.0): "Skip credits" beside the work of a track leaves out the work credits of that track (its cells struck through, nothing of them staged); the recording credits and the link of the recording with its work stay; nor are the writers given to a work made with the form. "↺ Take credits" brings them back; kept with the stored import. A work of two tracks gets the credits of the other track still' },
+    { id: 'S094', where: 'matrixColumns, columnHeadHtml (mx-pub-level)', note: 'Works matrix (3.64.0): each publishing row of a label switches in its column between "Work" (label – work publishing) and "Release" (on the release); a row put on the release this way keeps its column, so it can be put back' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -11506,6 +11520,9 @@
    * suite that MusicBrainz has) and chosen: it is not supplemented, only the link of the recording with it is staged. A work new in
    * the editor or made with the form is not locked.
    */
+  /** [Z-WSK] (3.64.0, S093) The work credits of track i left out ("Skip credits" in the works matrix). */
+  const creditsSkipped = (i) => ruleOn('S093') && !!S.mxCreditSkip && S.mxCreditSkip.has(i);
+
   function workLocked(w) {
     if (!w || !ruleOn('S083') || !MBID_RE.test(String(w.gid || ''))) return false;
     if (!(!w.planned || w.origin === 'search' || w.origin === 'mb')) return false;
@@ -11703,6 +11720,7 @@
       } else if (row.level === 'work') {
         const byGid = new Map();
         for (const i of [...row.tracks].sort((a, b) => a - b)) {
+          if (creditsSkipped(i)) continue; // [Z-WSK] (3.64.0, S093)
           const works = worksForTrack(i);
           if (!works.length) info.noWork++;
           for (const w of works) {
@@ -11855,7 +11873,8 @@
       const work = t && t.works.find((w) => w.gid === f.workGid);
       const lt = idx().ltById.get(f.ltId);
       const dateInfo = validateDateFields(f.date);
-      if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value) continue;
+      // ([Z-WSK] 3.64.0, review) nor those of a track whose work credits are left out
+      if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value || creditsSkipped(f.track)) continue;
       // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
       if (workLocked({ ...work, planned: false })) continue;
       items.push({
@@ -11881,7 +11900,7 @@
     for (const row of S.rows) {
       const a = S.artists.get(row.artistKey);
       if (row.level !== 'work' || S.worksSkip || !a || !a.mbid || !currentLinkType(row)) continue;
-      row.tracks.forEach((i) => { if (S.mbTracks[i] && matrixTrack(S.mbTracks[i]) && !worksForTrack(i).length) waiting.add(i); });
+      row.tracks.forEach((i) => { if (S.mbTracks[i] && matrixTrack(S.mbTracks[i]) && !worksForTrack(i).length && !creditsSkipped(i)) waiting.add(i); });
     }
     // Staged before but no longer wanted in the dashboard (row skipped, cell switched off, other type …)
     const removals = [...S.staged.entries()].filter(([k, st]) => {
@@ -18956,6 +18975,7 @@
       opts: encField([...S.workRowOpts]),
       defaults: S.workDefaults && (S.workDefaults.typeId || (S.workDefaults.languageIds || []).length) ? { ...S.workDefaults } : null,
       tcp: S.tcpRole || null, // [Z-TCP] (3.60.0, review) the switch "Composer | Writer"
+      creditSkip: S.mxCreditSkip && S.mxCreditSkip.size ? [...S.mxCreditSkip] : null, // [Z-WSK] (3.64.0, S093)
     };
   }
 
@@ -19002,6 +19022,13 @@
     const d = S.workDefaults || {};
     // [Z-TCP] (3.60.0, review) the switch as it was
     if (w.tcp && !S.tcpRole) S.tcpRole = w.tcp === 'composer' ? 'composer' : 'writer';
+    // [Z-WSK] (3.64.0, S093) the tracks whose work credits were left out
+    (w.creditSkip || []).forEach((i) => {
+      if (Number.isInteger(i) && i >= 0 && i < S.mbTracks.length && !S.mxCreditSkip.has(i)) {
+        S.mxCreditSkip.add(i);
+        count();
+      }
+    });
     if (w.defaults && !d.typeId && !(d.languageIds || []).length) {
       S.workDefaults = { typeId: w.defaults.typeId || '', languageIds: [...(w.defaults.languageIds || [])] };
       count();
@@ -21208,6 +21235,7 @@
     for (const [i, p] of [...S.workPlan]) if (!p || p.origin !== 'created') S.workPlan.delete(i);
     [S.linkAttrOn, S.linkAttrOff, S.mxRemoved, S.workRowOpts, S.mxColDate, S.liveComChoice].forEach((m) => { if (m && m.clear) m.clear(); });
     if (S.mxCollapsed) S.mxCollapsed.clear();
+    if (S.mxCreditSkip) S.mxCreditSkip.clear(); // [Z-WSK] (3.64.0)
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
     S.suiteWorks.clear();
@@ -26810,7 +26838,8 @@
   function startWorkCreate(i) {
     const track = S.mbTracks[i];
     if (!track) return;
-    const writers = writersForTrack(i);
+    // ([Z-WSK] 3.64.0, S093, review) the work credits of the track left out: the form without its writers
+    const writers = creditsSkipped(i) ? [] : writersForTrack(i);
     const opts = rowOpts(i);
     const typeName = (S.workOptions.types.find((x) => String(x.id) === String(opts.typeId)) || {}).name;
     const langName = opts.languageIds.map((id) => (S.workOptions.languages.find((x) => String(x.id) === String(id)) || {}).name).filter(Boolean).join(', ');
@@ -27112,6 +27141,7 @@
   S.wtCache = new Map();
   S.pubRels = new Map();
   S.workRowOpts = new Map();
+  S.mxCreditSkip = new Set(); // [Z-WSK] (3.64.0, S093) tracks whose work credits are left out
   S.mxAddCol = null;
   S.mxColDate = new Map();
 
@@ -27909,6 +27939,7 @@
       places.filter((x) => x.unassigned).forEach((x) => warn.push(tr('livecom.unassigned', { name: x.unassigned })));
       if (texts.length > 1) warn.push(tr('livecom.places', { list: texts.join(' · ') }));
       let dates = uniq(src.map((r) => liveDateText(rowDateInfo(r, currentLinkType(r)).value)).filter(Boolean));
+      let hint = '';
       // [Z-LVD] (3.62.0, S089) as the seed script (ROpdebee) takes it after "Enter edit": the dates of "recorded at / in" together with
       // those of the links with the works that are staged ("recording of": its own date, else the recording date of the track – its
       // performance rows); two dates are a conflict; before: only "recorded at / in" – a date in the pool under Performance went into no
@@ -27918,9 +27949,10 @@
         dates = uniq([...dates, ...linkDates.map(liveDateText).filter(Boolean)]);
         // (review) the one date of the concert (Performance in the date matrix or the pool) that is on no relationship yet: named in a
         // hint – the seed script takes only dates of relationships, so it comes into the comment once the date matrix is applied
+        // ((3.64.0) a hint of its own, no warning: the list groups such tracks as before)
         if (!dates.length) {
           if (concert === undefined) concert = concertDate();
-          if (concert) warn.push(tr('livecom.dateUnstaged', { date: formatDateValue(concert) }));
+          if (concert) hint = tr('livecom.dateUnstaged', { date: formatDateValue(concert) });
         }
       }
       if (dates.length > 1) warn.push(tr('livecom.dates', { list: dates.join(' · ') }));
@@ -27932,7 +27964,7 @@
       if (other) warn.push(tr('livecom.existing', { text: existing }));
       out.push({ i, rec: t.recordingGid, pos: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, auto, existing,
         same: !!existing && ascii(existing) === ascii(auto), pending: places.some((x) => x.pending), conflict: texts.length > 1 || dates.length > 1, other, warn,
-        place: places.length === 1 ? places[0] : null, kind });
+        place: places.length === 1 ? places[0] : null, kind, hint });
     }
     return out;
   }
@@ -28096,7 +28128,7 @@
     if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
     const rowOf = (p, sub = false) => {
       const c = liveChoice(p);
-      const notes = [...p.warn, ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
+      const notes = [...p.warn, ...(p.hint ? [p.hint] : []), ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
       return `<tr data-livecom="${esc(p.rec)}"${sub ? ' class="dci-livecom-sub"' : ''}><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
         <td class="dci-livecom-pos">${esc(p.pos)}</td><td class="dci-livecom-title">${esc(p.title)}</td>
         <td><input type="text" data-f="livecom-text" data-rec="${esc(p.rec)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.textAria', { pos: p.pos }))}"></td>
@@ -28108,7 +28140,7 @@
       const recs = g.items.map((p) => p.rec).join(',');
       const label = liveWhatLabel(g.items.map((p) => p.i), { prefix: false });
       const gOpen = S.liveComGroupOpen.has(g.items[0].rec);
-      const notes = g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : [];
+      const notes = [...(g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : []), ...(g.items.every((p) => p.hint && p.hint === g.items[0].hint) ? [g.items[0].hint] : [])];
       return `<tr data-livecom-group="${esc(recs)}"><td><input type="checkbox" data-f="livecom-on" data-recs="${esc(recs)}" ${c.on ? 'checked' : ''} aria-label="${esc(tr('livecom.groupOnAria', { list: label }))}"></td>
         <td class="dci-livecom-pos">${esc(label)}</td>
         <td class="dci-livecom-title"><button type="button" class="dci-textbtn dci-livecom-gbtn" data-act="livecom-group" data-rec="${esc(g.items[0].rec)}" aria-expanded="${gOpen}">${gOpen ? '▾' : '▸'} ${esc(tr('livecom.groupN', { n: g.items.length }))}</button></td>
@@ -28197,6 +28229,20 @@
         cols.set(key, { key, artist: a, mbid: a.mbid, name: a.mbName || a.name, entityType: a.company ? (a.entityType || 'label') : 'artist', rows: [], mbOnly: false });
       }
       cols.get(key).rows.push(row);
+    }
+    // [Z-PUB] (3.64.0, S094) a publishing row of a label put on the release from the matrix: its column stays (to put it back)
+    if (ruleOn('S094')) {
+      for (const row of S.rows) {
+        if (!row.pubFromMx || row.level !== 'release' || !isPublishedRow(row)) continue;
+        const a = S.artists.get(row.artistKey);
+        if (!a || !a.company) continue;
+        const key = `k:${a.key}`;
+        // ((review) a column taken out stays out
+        if (S.mxRemoved.has(key)) continue;
+        if (!cols.has(key)) cols.set(key, { key, artist: a, mbid: a.mbid, name: a.mbName || a.name, entityType: a.entityType || 'label', rows: [], mbOnly: false });
+        const c = cols.get(key);
+        c.relRows = [...(c.relRows || []), row];
+      }
     }
     // Columns taken out stay as folded stubs (a click brings them back); rows set back by hand bring them back as well
     for (const rm of S.mxRemoved.values()) {
@@ -28464,6 +28510,8 @@
   const matrixRel = (r, col = null) => MB_MATRIX_TYPES.includes(norm(r.type)) || r.entityType === 'label'
     || !!(col && col.rows.some((row) => norm(rowTypeName(row)) === norm(r.type)));
   const isPublisherCol = (col) => col.rows.some(isPublishingRow);
+  /** [Z-PUB] (3.64.0) A row of a publisher on the release (label – release "published" / "publishing"). */
+  const isPublishedRow = (row) => ['published', 'publishing'].includes(norm(rowTypeName(row)));
 
   /** What a cell holds: relationships already in MB, planned ones, and publisher evidence. */
   function cellState(col, mrow) {
@@ -28537,7 +28585,7 @@
    */
   function datelessExisting(col, mrow, st = cellState(col, mrow)) {
     // ([Z-NWA] 3.57.0, review) an existing work gets no dates either (a cell's date, a column's date)
-    if (!mrow.work || mrow.work.planned || workLocked(mrow.work)) return [];
+    if (!mrow.work || mrow.work.planned || workLocked(mrow.work) || creditsSkipped(mrow.i)) return [];
     return st.existing.filter((r) => r.begin === '' && r.end === '' && r.typeId);
   }
 
@@ -29616,7 +29664,12 @@
     // ([Z-NWA] 3.57.0, S083) an existing work: a lock – only its link is staged
     const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${workLocked(w)
       ? ` <span class="dci-mx-wlock" title="${esc(tr('matrix.workLockedRow'))}">${LOCK_SVG}<span class="dci-sr">${esc(tr('matrix.workLockedRow'))}</span></span>` : ''}`;
-    const line = (inner) => `<div class="dci-mx-line">${inner}${linkAttrsToggleHtml(mrow)}</div>`;
+    // [Z-WSK] (3.64.0, S093) "Skip credits" beside the work: its work credits left out (not on an existing work – nothing is added there)
+    // ((review) "↺ Take credits" while skipped, also when the track got an existing work meanwhile
+    const cskip = !ruleOn('S093') || (mrow.k && mrow.k > 1) || (!creditsSkipped(i) && work && workLocked(work)) ? ''
+      : creditsSkipped(i) ? ` <button type="button" class="dci-textbtn dci-mx-cskip" data-act="mx-creditskip" aria-pressed="true" title="${esc(tr('matrix.creditTakeTitle'))}">↺ ${esc(tr('matrix.creditTake'))}</button>`
+      : ` <button type="button" class="dci-textbtn dci-mx-cskip" data-act="mx-creditskip" aria-pressed="false" title="${esc(tr('matrix.creditSkipTitle'))}">${esc(tr('matrix.creditSkip'))}</button>`;
+    const line = (inner) => `<div class="dci-mx-line">${inner}${cskip}${linkAttrsToggleHtml(mrow)}</div>`;
     const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
       return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}`)}${linkAttrsHtml(mrow)}`;
@@ -29681,7 +29734,7 @@
     const menuOpen = S.mxNewMenu === i;
     return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
         <span class="dci-split"><button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pendingShort'))}</button><button type="button"
-          class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.hint}${split}${state}</div>
+          class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.hint}${split}${state}${cskip}</div>
       ${menuOpen ? `<div class="dci-mx-newmenu" role="group" aria-label="${esc(tr('matrix.newMenu'))}">
         <button type="button" class="dci-textbtn" data-act="work-search">${esc(tr('works.searchMb'))}</button>
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>
@@ -29724,7 +29777,12 @@
     const chip = (kind, text, title) => `<span class="dci-mxchip dci-mxchip-${kind}" title="${esc(title)}">${text}</span>`;
     // [Z-CWR] (3.56.0, S082) a writer beside composer, lyricist or librettist of the same person: struck through, not staged
     // ((review) the same pairs as the plan: a composer of the person on another track of this work counts too)
-    const locked = !!mrow.work && workLocked(mrow.work);
+    // ([Z-PUB] 3.64.0, review) a column with publishing rows on the release only: nothing to toggle in its cells
+    if (!col.rows.length && (col.relRows || []).length && !col.mbOnly) return `<td class="dci-mx-cell dci-mx-locked dci-mx-pubrel" title="${esc(tr('matrix.pubOnRelease'))}"></td>`;
+    const wlocked = !!mrow.work && workLocked(mrow.work);
+    // [Z-WSK] (3.64.0, S093) the work credits of the track left out: struck through and locked as on an existing work
+    const cskip = !wlocked && creditsSkipped(mrow.i);
+    const locked = wlocked || cskip;
     const exactHere = ruleOn('S082') && (mrow.work && col.mbid && S.writerExact ? S.writerExact.has(`${mrow.work.gid}|${col.mbid}`)
       : [...st.active.map((r) => rowTypeName(r)), ...st.existing.map((r) => r.type)].some((t) => WRITER_EXACT.includes(norm(t))));
     const codes = [
@@ -29740,18 +29798,18 @@
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         const label = rowPhrase(r) || rowTypeName(r);
         // [Z-NWA] (3.57.0, S083) an existing work: what the matrix suggests is not added – struck through, the cell locked
-        if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr('matrix.workLocked')}`);
+        if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr(cskip ? 'matrix.creditSkipped' : 'matrix.workLocked')}`);
         if (exactHere && norm(rowTypeName(r)) === 'writer') return chip('cwr', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, tr('matrix.writerExact'));
         // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
         return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
       }),
     ].join('');
-    const title = locked ? tr('matrix.workLocked') : st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
+    const title = cskip ? tr('matrix.creditSkipped') : locked ? tr('matrix.workLocked') : st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
       : st.hint ? tr('matrix.hint', { list: st.hint }) : st.unclear ? tr('matrix.unclear') : '';
     const collapsed = S.mxCollapsed.has(col.key) || col.removed;
     const menuOpen = S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key;
-    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length && !locked ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly || locked ? 'dci-mx-locked' : '', locked ? 'dci-mx-wlocked' : '',
+    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length && !locked ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly || locked ? 'dci-mx-locked' : '', wlocked ? 'dci-mx-wlocked' : '', cskip ? 'dci-mx-cskipped' : '',
     ].filter(Boolean).join(' ');
     if (collapsed) return `<td class="${cls} dci-mx-collapsed" title="${esc(title)}">${st.existing.length || st.active.length ? '•' : ''}</td>`;
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
@@ -29845,7 +29903,7 @@
     const roles = defaultRowsOf(col).filter((r, k, all) => all.findIndex((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub')) === k)
       .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowPhrase(r) || rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowPhrase(r)))}</span>`).join('');
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
-    const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => !workLocked(m.work) && cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
+    const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => !workLocked(m.work) && !creditsSkipped(m.i) && cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
     // [3.31.6] tracks from the notes: where they come from (item 97c)
     const notesFrom = uniq(col.rows.map((r) => r.notesFrom).filter(Boolean));
@@ -29863,6 +29921,14 @@
     const sugg = a.pubSuggest || [];
     const suggMenu = sugg.map((x) => `<div class="dci-sub">${esc(tr('matrix.suggestPub', { name: x.name }))}
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
+    // [Z-PUB] (3.64.0, S094) each publishing row of a label: "Work | Release"
+    // ((review) not the copies of a row for the date of a cell: they go with it
+    const pubRows = ruleOn('S094') && a && a.company ? [...col.rows.filter(isPublishingRow), ...(col.relRows || [])].filter((r) => !r.splitFrom) : [];
+    const pubLevels = pubRows.length ? `<div class="dci-mx-publevels">${pubRows.map((r) => {
+      const what = String(r.raw || '').trim() || rowPhrase(r) || rowTypeName(r);
+      const b = (lv) => `<button type="button" data-act="mx-pub-level" data-row="${esc(String(r.id))}" data-level="${lv}" aria-pressed="${r.level === lv}" title="${esc(tr(lv === 'work' ? 'matrix.pubLevelWork' : 'matrix.pubLevelRelease', { what }))}">${esc(tr(`level.${lv}`))}</button>`;
+      return `<span class="dci-seg dci-mx-publevel" role="group" aria-label="${esc(tr('matrix.pubLevel', { what }))}">${b('work')}${b('release')}</span>`;
+    }).join('')}</div>` : '';
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
     // [S050] (3.32.5) a role of the column read with a typo corrected (its rows are not in the entry)
@@ -29872,6 +29938,7 @@
       <div class="dci-mx-colname">${columnKindTag(col)}${name}</div>
       <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
+      ${pubLevels}
       <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
       ${menu(`${dateBox}
         <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
@@ -30028,7 +30095,8 @@
 
   /** [Z-SUW] (3.41.6) The writers credited for every track of a suite (composer, lyricist …): the writers of the suite. */
   function suiteWriters(sw) {
-    const lists = (sw.tracks || []).map((i) => writersForTrack(i).filter((w) => WRITER_TYPES.includes(norm(w.typeName))));
+    // ([Z-WSK] 3.64.0, review) not of the tracks whose work credits are left out
+    const lists = (sw.tracks || []).filter((i) => !creditsSkipped(i)).map((i) => writersForTrack(i).filter((w) => WRITER_TYPES.includes(norm(w.typeName))));
     if (!lists.length) return [];
     return lists[0].filter((w) => lists.every((l) => l.some((x) => x.mbid === w.mbid && x.linkTypeId === w.linkTypeId)));
   }
@@ -30710,7 +30778,7 @@
       if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
     });
     return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) ? ' class="dci-mx-inpart"' : ''}><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -34305,6 +34373,36 @@
           const u = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="work-unplan"]`);
           if (u) u.focus({ preventScroll: true });
         }
+        break;
+      }
+      // [Z-WSK] (3.64.0, S093) the work credits of a track left out or taken again
+      case 'mx-creditskip': {
+        const i = workIndexOf(btn);
+        if (!Number.isInteger(i)) break;
+        if (S.mxCreditSkip.has(i)) S.mxCreditSkip.delete(i);
+        else S.mxCreditSkip.add(i);
+        log('info', S.mxCreditSkip.has(i) ? 'creditSkip' : 'creditTake', { track: trackLabel(S.mbTracks[i]) });
+        renderWorks();
+        refresh();
+        const b = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="mx-creditskip"]`);
+        if (b) b.focus({ preventScroll: true });
+        break;
+      }
+      // [Z-PUB] (3.64.0, S094) a publishing row of a label: on its works or on the release
+      case 'mx-pub-level': {
+        const r = S.rows.find((x) => String(x.id) === btn.dataset.row);
+        if (!r || !['work', 'release'].includes(btn.dataset.level) || r.level === btn.dataset.level) break;
+        // ((review) the copies of the row for the dates of cells go with it
+        const copies = S.rows.filter((x) => x !== r && x.splitFrom === r.id && x.level === r.level);
+        r.pubFromMx = true;
+        copies.forEach((x) => {
+          x.pubFromMx = true;
+          levelOf(x, btn.dataset.level);
+        });
+        log('info', 'pubLevel', { name: (S.artists.get(r.artistKey) || {}).name || '', level: tr(`level.${btn.dataset.level}`) });
+        setLevel(r, btn.dataset.level);
+        const b = S.overlay.querySelector(`[data-act="mx-pub-level"][data-row="${r.id}"][data-level="${btn.dataset.level}"]`);
+        if (b) b.focus({ preventScroll: true });
         break;
       }
       case 'work-unplan': {
@@ -39540,6 +39638,10 @@
       .dci-mx-tcp { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); }
       .dci-mxchip-nwa { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mx-wlock { color: var(--muted); display: inline-flex; vertical-align: middle; }
+      .dci-mx-cskiprow td.dci-mx-cell { opacity: 0.55; }
+      .dci-mx-cskip[aria-pressed="true"] { font-weight: 600; }
+      .dci-mx-publevels { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 3); margin-top: calc(var(--u, 1px) * 2); }
+      .dci-mx-publevel button { font-size: 0.85em; padding: 0 calc(var(--u, 1px) * 4); }
       .dci-mx-wlock .dci-lock { width: calc(var(--u, 1px) * 11); height: calc(var(--u, 1px) * 11); }
       .dci-mxchip-wait { border-style: dotted; border-color: #aeaabf; border-left-style: solid; border-left-color: #c8c5d6; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mxchip sup { font-size: 0.7em; }

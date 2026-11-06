@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.63.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.64.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.64.0 · 2026-11-06
+
+Z-WSK, Z-PUB – the works matrix.
+
+- **`S.mxCreditSkip`** (new Set of track indexes; rule **S093**) and **`creditsSkipped(i)`**: `computePlan` leaves out the targets of work-level rows on such a track; `workFrontCell` shows "Skip credits" / "↺ Take credits" (action **`mx-creditskip`**, not on a locked existing work, once for the parts of a suite); `cellHtml` treats the cells like a locked work (struck through, title `matrix.creditSkipped`, class `dci-mx-cskipped`); the row `dci-mx-cskiprow`. Saved and restored with the works (`creditSkip`), cleared by "Start afresh" (`dropWorkChoices`).
+- **`isPublishedRow`** (new) and **`matrixColumns`** (rule **S094**): a publishing row of a label set on the release from the matrix (`row.pubFromMx`) keeps its column (`col.relRows`). **`columnHeadHtml`**: for each publishing row of a label a segment "Work | Release" (action **`mx-pub-level`** → `setLevel`, which changes the type as the level buttons of the row do).
+- **Texts:** matrix.creditSkip, creditSkipTitle, creditTake, creditTakeTitle, creditSkipped, pubLevel, pubLevelWork, pubLevelRelease; log.creditSkip, log.creditTake.
+- **Review:** "Skip credits" also for the form of a new work (`startWorkCreate` without writers, `suiteWriters` without the skipped tracks), the tracks waiting for a work, the date edits of existing relationships (`datelessExisting`, `computePlan`) and the count of suggestions; "↺ Take credits" also on a track that got an existing work meanwhile. Z-PUB: a column taken out stays out, the copies of a row for cell dates go with it (no switch of their own), the cells of a column with release rows only are locked with a hint (`matrix.pubOnRelease`), the log line `pubLevel`.
+- **Fix of 3.62.0:** `liveProposals` gives the concert-date hint as `p.hint` (not in `p.warn`, which keeps a track out of the groups of the list); the rows and groups show it as a note.
+- **Tests:** `t_works_matrix.py creditskip`, `publevel` (new; D: the waiting tracks and the form); golden S093, S094.
 
 ## Import 3.63.0 · 2026-11-06
 
