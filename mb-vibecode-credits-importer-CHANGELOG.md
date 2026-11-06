@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.60.0 | – |
+| 2026-11-06 | 3.56.0 – 3.61.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.61.0
+
+#### Changed
+
+- **The statistics, compact** (collected item Z-STL, after the mockup "Statistics Compact"):
+  - **The head in one line:** "This browser | Global", the period (Days · Weeks · Months · Years), **ⓘ** and "Collecting: on ⚙" on the right. The two sentences about what is counted and where it is kept are in the ⓘ, with "Fold all cards" and "Open all cards".
+  - **The tiles a flat bar:** number and word in one line; what stood below them ("2 × “Enter edit”", "7 new, 0 supplemented") is in their tooltip.
+  - **Groups:** Overview · When · What · Who · Releases · Sources, each a heading that folds; the cards of a group in columns without gaps (no longer as high as the highest of a row).
+  - **Cards fold** (▾ / ▸): folded, a card is one line with its first entry ("Dates 0 % with a date"); a folded group is one line with its main numbers. All open at first; what you fold is remembered in this browser.
+  - **Lists show the first three**, "+ n more" shows the rest ("– fewer" again); the top lists of the overview go up to ten.
+  - **Overview:** "Over time" and the lists of artists, instruments and relationship types side by side.
+  - **When you work:** the bars of weekdays and hours smaller (32 px); the days, weeks and months in a row in one line ("In a row (now / longest): days 3 / 3 · weeks 2 / 2 · months 3 / 3").
+- **Lengths of recordings or of releases** (collected item Z-RDU2): "Recording | Release" in the card of the lengths (remembered) – Release: the whole length of each release (its recordings together), in this browser and in "Global". For "Global" the weekly pass of MusicBrainz's core dump now also reads the tracks (the whole length of each release whose every track has a length); until its next run the card says they come with it.
 
 ### Import 3.60.0
 

@@ -107,6 +107,12 @@ def build_core(path, cut=None):
         ('release_group_secondary_type', [copy_line(6, 'Live', N, 0, N, 'g')]),
         ('release_group_secondary_type_join', [copy_line(601, 6, 'x')]),
         ('script', [copy_line(28, 'Latn', '215', 'Latin', 4)]),
+        # [3.61.0] tracks: release 701 (media 1, 2) 200000 + 100000 + 300000; 702 (medium 3) one track without a length; 999 not wanted
+        ('track', [copy_line(1, 'g', 801, 1, 1, '1', 'a', 1, 200000, 0, N, 'f'), copy_line(2, 'g', 802, 1, 2, '2', 'b', 1, 100000, 0, N, 'f'),
+                   copy_line(3, 'g', 803, 2, 1, '1', 'c', 1, 300000, 0, N, 'f'), copy_line(4, 'g', 803, 3, 1, '1', 'c', 1, N, 0, N, 'f'),
+                   copy_line(5, 'g', 999, 4, 1, '1', 'd', 1, 5, 0, N, 'f'),
+                   # (review) a data track without a length: not counted, the release stays whole
+                   copy_line(6, 'g', 804, 2, 2, '2', 'e', 1, N, 0, N, 't')]),
     ]
     with tarfile.open(path, 'w:bz2') as tar:
         for name, rows in tables:
@@ -174,7 +180,8 @@ def main():
                                                  'centuries': {'1900': 3, '2000': 1}, 'posthumous': {'n': 1, 'of': 2}}),
         ('core releases', r2['core']['releases'], {'n': 2, 'media': {'multi': 1, 'single': 1}, 'rg_primary': {'Album': 1, '-': 1}, 'rg_secondary': {'Live': 1},
                                                    'languages': {'eng': 1, '-': 1}, 'scripts': {'Latn': 2}}),
-        ('core lengths', r2['core']['lengths'], {'recordings': 2, 'median_ms': 150000.0, 'mean_ms': 150000.0}),
+        ('core lengths', r2['core']['lengths'], {'recordings': 2, 'median_ms': 150000.0, 'mean_ms': 150000.0,
+                                                 'releases': 1, 'release_median_ms': 600000.0, 'release_mean_ms': 600000.0}),
         ('core role credits', r2['core']['role_credits'], {'n': 1, 'of': 3}),
         ('core dump; the rest kept', [r2['core']['dump'], r2['totals']], ['core-test', r['totals']]),
         ('core cut off: an error, the result as it was', [p3.returncode != 0, r3.get('core', {}).get('dump')], [True, 'core-test']),
