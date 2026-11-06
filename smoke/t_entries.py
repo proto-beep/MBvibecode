@@ -798,7 +798,7 @@ def case_evhead():
             print('E) vorher:', e0[0]['ev'] if e0 else None, '| offen:', e1, '| Release:', e2, e2b[0]['ev'] if e2b else None,
                   '| zurück:', e3, '| Hinweis:', kept, kept2)
             results.append(bool(e1) and e1['title'].endswith('(1)') and e1['levels'] == ['Recording*', 'Release', 'Skip']
-                           and bool(e2) and e2['title'].endswith('(2)') and e2['levels'] == ['Recording', 'Release*', 'Skip'] and e2b[0]['ev'] == ['① Release whole release']
+                           and bool(e2) and e2['title'].endswith('(2)') and e2['levels'] == ['Recording', 'Release*', 'Skip'] and e2b[0]['ev'] == ['① Release']
                            and bool(e3) and e3['levels'] == ['Recording*', 'Release', 'Skip'] and e3['tracks'] == [0, 1, 2, 3] and e3['title'].endswith('(1)')
                            and kept == ['Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level Recording ok'] and kept2 == 0)
             pg.click(f'{lvl} .dci-em-evedit [data-act=em-evopen]')
@@ -935,7 +935,7 @@ def case_companies():
     """Credits Importer 3.35.5 (AE-4): companies and places as a matrix when a row of theirs offers a date and/or tracks.
     A) The test release: Abbey Road Studios (a place, "Recorded At" on the 4 recordings) – a matrix: a block "recorded at"
        ([Q-c] 3.38.14; its tooltip "from Discogs: Recorded At"; until 3.38.13 "Recorded At → recorded at"), ① Recording all 4 tracks, ticked; Sony ("Phonographic Copyright (p)", a label on the release) – a matrix,
-       ① Release whole release.
+       ① Release (3.69.0, S101: without "whole release").
     B) Pub Co ("Published By" on the works): its rows as before (no matrix – nothing on it offers a date or tracks).
     C) ☰ compact: Abbey Road Studios a line "① Recording no date all 4 tracks" with the chip "recorded at".
     D) Staged: the relationships of the companies and places the same as in the legacy view.
@@ -961,7 +961,7 @@ def case_companies():
             print('A) Abbey Road:', k_abbey, abbey, '| Sony:', k_sony, sony)
             results.append(k_abbey == [True, 0] and bool(abbey) and len(abbey) == 1 and abbey[0]['head'] == 'recorded at' and abbey[0]['tip'] == 'from Discogs: Recorded At'
                            and abbey[0]['ev'] == ['① Recording all 4 tracks'] and abbey[0]['lines'][0]['ticks'] == [True]
-                           and k_sony == [True, 0] and bool(sony) and sony[0]['ev'] == ['① Release whole release'] and sony[0]['lines'][0]['ticks'] == [True])
+                           and k_sony == [True, 0] and bool(sony) and sony[0]['ev'] == ['① Release'] and sony[0]['lines'][0]['ticks'] == [True])
             print('B) Pub Co:', k_pub)
             results.append(bool(k_pub) and k_pub[0] is False and k_pub[1] >= 1)
             pg.click('.dci-head [data-act=view-toggle]')
@@ -1752,6 +1752,79 @@ def case_levelclick():
         finally:
             H.discogs_release = orig
             b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_viewbits():
+    """Credits Importer 3.69.0 (collected items Z-WRL, Z-CIN, Z-CRY, Z-CMK; rules S101–S104).
+    A) Z-CIN: Joey Bada$$ (piano, vocals – one event): the two chips one below the other in a block of their own (before: in one line).
+    B) Z-WRL: Lina Notes ("Liner Notes", on the release): the line without "whole release".
+    C) Z-CRY: "Nobody Known" (not in MusicBrainz): "Create artist …" yellow; Bass Man (found): no such button.
+    D) Z-CMK: a click into the white field of Joey's line of the event: a jump on Discogs for Joey (the entry, two rows); (review) a
+       button of the line (its level) jumps not; "Create artist …" really yellow (its background).
+    E) Rules S101–S104 off: one line of chips, "whole release", the button as before, no jump from the line."""
+    CRED = [('Joey Bada$$', 'Piano', 3103, ''), ('Joey Bada$$', 'Vocals', 3103, ''), ('Lina Notes', 'Liner Notes', 3104, ''), ('Nobody Known', 'Guitar', 3999, '')]
+    for n, _r, i, _t in CRED[:3]:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = d['extraartists'] + [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CRED]
+        return d
+    H.discogs_release = rel
+    view0 = H.ENTRIES_VIEW
+    G = "(name) => [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name)"
+    results = []
+
+    def run(off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=True, view='compact')
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S101', 'S102', 'S103', 'S104']))")
+            pg.evaluate("window.__shows = []; document.addEventListener('dci:to-discogs', (e) => { try { const m = JSON.parse(e.detail); if (m.type === 'show') window.__shows.push(m); } catch (x) {} })")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(1500)
+            out = {}
+            out['chips'] = pg.evaluate(f"""(() => {{ const g = ({G})('Joey Bada$$'); if (!g) return null; const line = [...g.querySelectorAll('.dci-em-cl')].find(l => l.querySelectorAll('.dci-em-chip').length >= 2);
+              if (!line) return null; const c = [...line.querySelectorAll('.dci-em-chip')].map(x => x.getBoundingClientRect().top); return {{ list: !!line.querySelector('.dci-em-cllist'), stacked: c[1] > c[0] + 5 }}; }})()""")
+            out['lina'] = pg.evaluate(f"(() => {{ const g = ({G})('Lina Notes'); return g ? /whole release/.test(g.textContent) : null; }})()")
+            out['create'] = pg.evaluate(f"""(() => {{ const g = ({G})('Nobody Known'); const b = g && g.querySelector('[data-act=artist-create]');
+              const bm = ({G})('Bass Man'); return [b ? b.classList.contains('dci-create-miss') && getComputedStyle(b).backgroundColor !== 'rgb(255, 255, 255)' : null, !!(bm && bm.querySelector('[data-act=artist-create]'))]; }})()""")
+            pg.evaluate("window.__shows = []")
+            pg.evaluate(f"""(() => {{ const g = ({G})('Joey Bada$$'); const line = [...g.querySelectorAll('.dci-em-cl')].find(l => l.querySelectorAll('.dci-em-chip').length >= 2);
+              const r = line.getBoundingClientRect(); line.dispatchEvent(new MouseEvent('click', {{ bubbles: true, clientX: r.right - 4, clientY: r.top + 4 }})); }})()""")
+            pg.wait_for_timeout(800)
+            out['shows'] = pg.evaluate("window.__shows.map(m => [m.artistName, m.role])")
+            # ((review) a button of the line jumps not; a chip: its own row
+            pg.evaluate("window.__shows = []")
+            pg.evaluate(f"""(() => {{ const g = ({G})('Joey Bada$$'); const b = g.querySelector('.dci-em-cl .dci-cl-level, .dci-em-cl button'); if (b) b.dispatchEvent(new MouseEvent('click', {{ bubbles: true }})); }})()""")
+            pg.wait_for_timeout(700)
+            out['btn'] = pg.evaluate("window.__shows.length")
+            out['errs'] = errs
+            b.close()
+            return out
+
+    try:
+        o = run()
+        print('A)', o['chips'], '| B)', o['lina'], '| C)', o['create'], '| D)', o['shows'], o['errs'])
+        results.append(o['chips'] == {'list': True, 'stacked': True})
+        results.append(o['lina'] is False)
+        results.append(o['create'] == [True, False])
+        results.append(o['shows'] and o['shows'][-1][0] == 'Joey Bada$$' and o['shows'][-1][1] == '' and o['btn'] == 0 and not o['errs'])
+        o2 = run(off=True)
+        print('E)', o2['chips'], o2['lina'], o2['create'], o2['shows'])
+        results.append(o2['chips'] and not o2['chips']['list'] and o2['lina'] is True and o2['create'][0] is False and not o2['shows'])
+    finally:
+        H.ENTRIES_VIEW = view0
+        H.discogs_release = orig
+        for _n, _r, i, _t in CRED[:3]:
+            H.ARTISTS.pop(i, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
