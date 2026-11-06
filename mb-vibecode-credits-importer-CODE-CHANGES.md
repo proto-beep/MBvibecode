@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.56.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.57.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.57.0 · 2026-11-06
+
+Z-NWA – an existing work is not supplemented.
+
+- **`workLocked(w)`** (new; rule **S083**): an MBID and not planned (linked in MusicBrainz), or planned with origin `search` / `mb` (found and chosen, a part MusicBrainz has); `pending` and `created` are not locked.
+- **`computePlan`:** `planTarget` – a work target that is locked: a relationship MusicBrainz has (`S.existing.exact` / `loose`) counts as `existing`, every other one is left out (`info.locked`, the track marked `skip` – `RANK.skip`), no fill of credits; `leftOut` (the check after "Enter edit") also skips locked works; no `work-rel` ("arrangement of" / "quotes") from a locked work; no `suite-part` for a suite that is locked; no `S.dateFills` on locked works. The recording → work links and their attributes are planned as before.
+- **Row status:** `status.workLocked`; **`sendDiscogsStatus`:** a credit with only locked works is `skip`.
+- **`cellHtml`:** a locked work's cell – its active roles as `.dci-mxchip-nwa` (struck through, `matrix.workLocked`), class `dci-mx-locked dci-mx-wlocked`, no toggle, menu, suggestion buttons or date fills (and no `data-fill`: no drop of a date); `mx-cell`, `mx-sugg-ok/no` and `mx-menu` do nothing there. **`workFrontCell`:** `mbLink` shows the lock `.dci-mx-wlock` (`matrix.workLockedRow`).
+- **CSS:** `.dci-mxchip-nwa`, `.dci-mx-wlock`.
+- **Texts:** `status.workLocked.one/other`, `matrix.workLocked`, `matrix.workLockedRow`.
+- **Tests:** `t_works_matrix.py nwa` (new; WORK1 linked, a work of the search chosen, a new work; S083 off); golden S083.
+- **Review of Z-NWA:** a locked target of a hidden medium is not counted, one entered from here counts as applied; `leftOut` keeps a locked target MusicBrainz has (the release page still checks it); **`datelessExisting`** – none on a locked work (so neither a cell's date nor a column's date plans `S.dateFills` there); a column only in MusicBrainz shows `matrix.colDateLocked` instead of its date box while S083 is on; `workNotesHtml` – `wnote.locked` for "arrangement of" / "quotes" of a locked work; a suite MusicBrainz has shows the lock (`suite.locked`); **`foundRelsOf(gid)`** (new) – `cellState` shows the relationships of a work found and chosen (`S.foundWorkRels`) as in MusicBrainz; `nSugg` without locked cells; `mx-role`, `xd-pool`, `mx-celldate-apply` do nothing on a locked work; **`OWN_WORKS_KEY`** `dci-own-works` (new; `rememberOwnWork`, `ownWorks`, `S.ownWorks`) – the works made with the form in this browser (the last 500) are not locked. Limit: credits and dates filled into relationships of a work before it was locked (S083 off) stay in the editor – fills are never taken back.
+- **Tests (review):** `nwa` D (a work of one's own); `cwr` with S083 off (existing works are not supplemented at all otherwise).; **`smoke/harness.py`** – `RULES_OFF = ['S083']` by default (most cases stage work credits on WORK1, a work MusicBrainz has; `nwa` and `cwr` set the rules themselves), `t_dates_matrix.py` / `t_notes_dates.py` `['D022', 'S083']`, `tracksdrop` B and C and `dragdates` (a cell not locked) with S083 off.
 
 ## Import 3.56.0 · 2026-11-06
 

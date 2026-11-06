@@ -1095,7 +1095,9 @@ REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') 
 DM_FOLD = False
 DM_FOLD_PRESET = "(on) => { if (on || localStorage.getItem('dci-dm-fold') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-dm-fold', 'false'); }"
 
-RULES_OFF = []
+# [3.57.0] rule S083 (an existing work is not supplemented) off by default: most cases stage work credits on WORK1, a work
+# MusicBrainz has; t_works_matrix.py nwa and cwr set the rules themselves
+RULES_OFF = ['S083']
 RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
 
 
