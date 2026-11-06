@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.67.0
+// @version      3.68.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.67.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.67.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.68.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.68.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.67.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.68.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1739,6 +1739,16 @@
       "matrix.rowRole": "Role",
       "matrix.addColBtn": "Add column",
       "matrix.addColHint": "then switch on the cells of its works (or “all works”)",
+      "log.matrixRole.one": "Works matrix: {name} also as {role} ({n} track)",
+      "log.matrixRole.other": "Works matrix: {name} also as {role} ({n} tracks)",
+      "matrix.addColPeople": "People of the release (writers, artists, performers)",
+      "matrix.addColLabels": "Labels",
+      "matrix.addColOthers": "Other entries",
+      "matrix.addColPersonalPub": "{name} – personal publisher of {of} (MusicBrainz)",
+      "matrix.addRole": "Another role:",
+      "matrix.addRoleBtn": "＋ Add",
+      "matrix.addRoleTitle": "The same entry in another role (composer and publisher …): on the tracks of its cells, on all when it has none yet",
+      "matrix.menuSeveral": "Several roles can be ticked for one cell (composer and publisher …).",
       "matrix.withoutWork.one": "{n} without work",
       "matrix.withoutWork.other": "{n} without work",
       "matrix.helpTitle": "How the works matrix works",
@@ -3649,6 +3659,9 @@
     { id: 'S095', where: 'openCreateDialog (S.statCreate), statTime, statsHeadLine', note: 'Statistics (3.65.0): the time per release and per relationship without the time of creating new entries (artists, labels, places, works – also works via the form): from the click on "Create …" until the new entry is linked, its pauses aside. A switch "Without new entries | With new entries" (Without at first, remembered) for every such time of this browser; records before 3.65.0 hold no such time (counted with it)' },
     { id: 'S096', where: 'runLiveJob, liveNotice, liveTracksText', note: 'Live recordings (3.66.0): the notice on the release page after "Enter edit" tidied up – how many comments were entered, then each comment once with its tracks ("1–3, 5"; with several media "1.1–1.3, 2.1"), then what was not entered, the tracks of the same reason together (before: one long line of all tracks and their comments)' },
     { id: 'S097', where: 'findDedications, runDedications, addDedicationRow, dedicationHtml (ded-toggle)', note: 'Dedications (3.67.0): "dedicated to", "in memory of", "in memoriam", "for …" (a line of its own), "homage to", "gewidmet", "in Erinnerung an", "Hommage an" give "dedicated to"; "tribute to" gives "tribute to" – in the free texts (Discogs notes, Bandcamp, the text of the cover art) and the release\'s title ("Odes And Meditations For Cecil Taylor": a tribute). Only with a target MusicBrainz has exactly once by that name (an artist; a tribute also a label; on the works level also an area or a place) – "to my mother" is left out. Staged on the release group, or on the work of a track the sentence or the track title names (release group | work by the level of the row); one click switches "dedicated to" ⇄ "tribute to"; the row names the wording of the source' },
+    { id: 'S098', where: 'addColumnHtml, loadPersonalPubs', note: 'Works matrix (3.68.0): "＋ Add a column" lists first the people of the release – writers, composers, lyricists, the release\'s artists and its performers (artists with instruments or vocals) –, set apart then the labels with the personal publishers MusicBrainz has for those people, then the other entries' },
+    { id: 'S099', where: 'addColRole', note: 'Works matrix (3.68.0): the role of a column added is set by the rules – a person\'s own writing role (composer, lyricist, writer), else the most common one of the matrix, else the genre\'s (composer or writer); not lyricist when every work has no lyrics; writer or lyricist only when the works are songs (else composer); a label publishing' },
+    { id: 'S100', where: 'columnHeadHtml (mx-col-addrole), cellMenuHtml', note: 'Works matrix (3.68.0): a person in several roles (composer and publisher …): "＋ Another role" in the menu of the column adds one on the tracks of its cells; in a cell\'s menu several roles can be ticked (it says so)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -17650,6 +17663,9 @@
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
             title: r.work.title,
+            // ([Z-ACR] 3.68.0, review) its type and lyrics languages (the role of a column added)
+            type: r.work.type || '',
+            languages: workLangs(r.work),
             // Attributes of the link recording → work (live, cover, medley …) as MusicBrainz has them
             linkAttrs: (r.attributes || []).map(norm),
             writers: uniq((r.work.relations || [])
@@ -30256,6 +30272,7 @@
     const option = (lt, sub) => `<label class="dci-check"><input type="checkbox" data-f="mx-role" value="${lt.id}${sub ? ':sub' : ''}" ${activeKeys.has(`${lt.name}|${sub}`) ? 'checked' : ''}>
       ${S.roleCodes === 'names' ? '' : `<span class="dci-code">${esc(roleCode(lt.name, sub))}</span> `}${esc(label(lt, sub))}</label>`;
     return `<div class="dci-mx-menu" role="group" aria-label="${esc(tr('matrix.menuTitle'))}">
+      ${ruleOn('S100') ? `<div class="dci-sub">${esc(tr('matrix.menuSeveral'))}</div>` : ''}
       ${types.map((lt) => option(lt, false) + (norm(lt.name) === 'publishing' ? option(lt, true) : '')).join('')}
       <div class="dci-mbdate dci-mx-date"><span class="dci-sub">${esc(tr('matrix.ownDate'))}</span>${mbDateFields('xd', S.mxMenu.date || emptyDate(), true)}
         ${S.datePool.length ? `<select data-f="xd-pool" aria-label="${esc(tr('date.fromPool'))}"><option value="">${esc(tr('date.fromPool'))}</option>${S.datePool.map((d) => `<option value="${esc(d.id)}">${esc(poolLabel(d))}</option>`).join('')}</select>` : ''}
@@ -30358,6 +30375,13 @@
       <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
       ${menu(`${dateBox}
         <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
+        ${ruleOn('S100') ? (() => {
+          // [Z-MRC] (3.68.0, S100) another role of the same person (composer and publisher …) on the tracks of its cells
+          const have = new Set(defaultRowsOf(col).map((r) => norm(rowTypeName(r))));
+          const more = typesFor('work', col.entityType).filter((lt) => !have.has(norm(lt.name)));
+          return more.length ? `<div class="dci-mx-addrole"><label>${esc(tr('matrix.addRole'))} <select data-f="mx-col-newrole" data-col="${esc(col.key)}">${more.map((lt) => `<option value="${lt.id}">${esc(mbPhraseOf(lt) || lt.name)}</option>`).join('')}</select></label>
+            <button type="button" class="dci-small" data-act="mx-col-addrole" data-col="${esc(col.key)}" title="${esc(tr('matrix.addRoleTitle'))}">${esc(tr('matrix.addRoleBtn'))}</button></div>` : '';
+        })() : ''}
         ${r098 ? `<div class="dci-sub dci-ruleinfo">${esc(tr('note.musicLyrics'))}</div>` : ''}${pubMenu}${suggMenu}`)}</div></th>`;
   }
 
@@ -30911,24 +30935,121 @@
    */
   function addColumnHtml() {
     const inMatrix = new Set(matrixColumns().map((c) => c.mbid).filter(Boolean));
-    const entries = [...S.artists.values()].filter((a) => a.mbid && !a.other && !inMatrix.has(a.mbid))
-      .sort((x, y) => String(x.mbName || x.name).localeCompare(String(y.mbName || y.name)));
+    const byName = (x, y) => String(x.mbName || x.name).localeCompare(String(y.mbName || y.name));
+    const entries = [...S.artists.values()].filter((a) => a.mbid && !a.other && !inMatrix.has(a.mbid)).sort(byName);
     const st = S.mxAddCol || {};
     const chosen = st.key && S.artists.get(st.key);
-    const et = chosen ? (chosen.company ? (chosen.entityType || 'label') : 'artist') : null;
+    const pick = st.pick || null;
+    const et = chosen ? (chosen.company ? (chosen.entityType || 'label') : 'artist') : pick ? 'label' : null;
     const roles = et ? typesFor('work', et) : null;
     // (review) nothing chosen: the roles of an artist and of a label apart ("publishing" is both)
     const opt = (lt) => `<option value="${lt.id}" ${Number(st.ltId) === lt.id ? 'selected' : ''}>${esc(lt.name)}</option>`;
     const roleOpts = roles ? roles.map(opt).join('') : ['artist', 'label'].map((k) => `<optgroup label="${esc(tr(`entity.${k}`))}">${typesFor('work', k).map(opt).join('')}</optgroup>`).join('');
+    const entryOpt = (a) => `<option value="${esc(a.key)}" ${chosen === a ? 'selected' : ''}>${esc(a.mbName || a.name)}${a.mbComment ? ` (${esc(a.mbComment)})` : ''}${a.company ? ` · ${esc(tr(`entity.${a.entityType || 'label'}`))}` : ''}</option>`;
+    // [Z-ACO] (3.68.0, S098) the people of the release first, then the labels (with the personal publishers of those people), then the rest
+    let list = entries.map(entryOpt).join('');
+    if (ruleOn('S098')) {
+      const people = entries.filter((a) => !a.company && addColPerson(a));
+      // ((review) places, series and events among the others
+      const labels = entries.filter((a) => a.company && (a.entityType || 'label') === 'label');
+      // ((review) the personal publishers of all people – also of those who are a column already
+      const allPeople = [...S.artists.values()].filter((a) => a.mbid && addColPerson(a));
+      const rest = entries.filter((a) => !people.includes(a) && !labels.includes(a));
+      const known = new Set([...S.artists.values()].map((a) => a.mbid).filter(Boolean));
+      const pubs = uniq(allPeople.flatMap((a) => (a.personalPubs || []).map((x) => x.mbid))).filter((g) => !known.has(g) && !inMatrix.has(g)).map((g) => {
+        const of = allPeople.filter((a) => (a.personalPubs || []).some((x) => x.mbid === g));
+        return { mbid: g, name: of[0].personalPubs.find((x) => x.mbid === g).name, of: of.map((a) => a.mbName || a.name) };
+      });
+      const group = (label, html) => (html ? `<optgroup label="${esc(label)}">${html}</optgroup>` : '');
+      list = group(tr('matrix.addColPeople'), people.map(entryOpt).join(''))
+        + group(tr('matrix.addColLabels'), labels.map(entryOpt).join('') + pubs.map((x) => `<option value="pub:${esc(x.mbid)}" ${pick && pick.mbid === x.mbid ? 'selected' : ''}>${esc(tr('matrix.addColPersonalPub', { name: x.name, of: x.of.join(', ') }))}</option>`).join(''))
+        + group(tr('matrix.addColOthers'), rest.map(entryOpt).join(''));
+    }
+    const any = entries.length || /pub:/.test(list);
     return `<div class="dci-mx-addcol">
-      ${entries.length ? `<label>${esc(tr('matrix.addColEntry'))} <select data-f="mx-addcol-entry" aria-label="${esc(tr('matrix.addColTitle'))}"><option value="">${esc(tr('matrix.addColChoose'))}</option>
-        ${entries.map((a) => `<option value="${esc(a.key)}" ${chosen === a ? 'selected' : ''}>${esc(a.mbName || a.name)}${a.mbComment ? ` (${esc(a.mbComment)})` : ''}${a.company ? ` · ${esc(tr(`entity.${a.entityType || 'label'}`))}` : ''}</option>`).join('')}</select></label>` : ''}
-      ${chosen ? '' : `<label>${esc(tr(entries.length ? 'matrix.addColOrMbid' : 'matrix.addColMbid'))} <input type="text" data-f="mx-addcol-mbid" value="${esc(st.mbid || '')}" placeholder="${esc(tr('matrix.addColMbidPh'))}" size="24"></label>`}
+      ${any ? `<label>${esc(tr('matrix.addColEntry'))} <select data-f="mx-addcol-entry" aria-label="${esc(tr('matrix.addColTitle'))}"><option value="">${esc(tr('matrix.addColChoose'))}</option>
+        ${list}</select></label>` : ''}
+      ${chosen || pick ? '' : `<label>${esc(tr(entries.length ? 'matrix.addColOrMbid' : 'matrix.addColMbid'))} <input type="text" data-f="mx-addcol-mbid" value="${esc(st.mbid || '')}" placeholder="${esc(tr('matrix.addColMbidPh'))}" size="24"></label>`}
       <label>${esc(tr('matrix.rowRole'))} <select data-f="mx-addcol-role" aria-label="${esc(tr('matrix.rowRole'))}">${roleOpts}</select></label>
       <button type="button" class="dci-small dci-primary" data-act="mx-addcol"${st.busy ? ' disabled aria-busy="true"' : ''}>${esc(tr('matrix.addColBtn'))}</button>
       ${st.error ? `<span class="dci-err" data-el="addcol-err">${esc(st.error)}</span>` : ''}
       <span class="dci-sub">${esc(tr('matrix.addColHint'))}</span></div>`;
   }
+
+  /** [Z-ACO] (3.68.0, S098) A person of the release: a writer (on works), an artist of the release, a performer (instruments, vocals). */
+  function addColPerson(a) {
+    if (!a || a.company || a.other) return false;
+    if ((S.releaseCredit || []).some((p) => p.mbid && p.mbid === a.mbid)) return true;
+    return S.rows.some((r) => r.artistKey === a.key && r.level !== 'skip' && [...WRITER_TYPES, 'instrument', 'vocal'].includes(norm(rowTypeName(r))));
+  }
+
+  /** [Z-ACO] (3.68.0, S098) The personal publishers MusicBrainz has for the people of the release (in the background, each once). */
+  async function loadPersonalPubs() {
+    if (!ruleOn('S098') || S.pubsLoading) return;
+    const people = [...S.artists.values()].filter((a) => a.mbid && addColPerson(a) && (a.personalPubs === undefined || a.personalPubsOf !== a.mbid)).slice(0, 20);
+    if (!people.length) return;
+    S.pubsLoading = true;
+    const seq = importSeq;
+    try {
+      for (const a of people) {
+        try {
+          const data = await mbWsIdle(`artist/${a.mbid}?inc=label-rels`);
+          if (seq !== importSeq) return;
+          a.personalPubs = ((data && data.relations) || []).filter((r) => r['target-type'] === 'label' && r.label && isPersonalPublisherRel(r))
+            .map((r) => ({ mbid: r.label.id, name: r.label.name }));
+          a.personalPubsOf = a.mbid;
+        } catch (e) {
+          console.warn('[Discogs-Credits]', e);
+        }
+      }
+    } finally {
+      S.pubsLoading = false;
+    }
+    if (!S.mxAddColOpen || seq !== importSeq) return;
+    // ((review) not while the list or a field of it is used: when the focus leaves it
+    const pop = S.overlay && S.overlay.querySelector('.dci-mx-addcol-pop');
+    const field = pop && pop.querySelector('[data-f="mx-addcol-mbid"]');
+    if (field && S.mxAddCol !== null) S.mxAddCol = { ...(S.mxAddCol || {}), mbid: field.value };
+    if (pop && pop.contains(document.activeElement) && document.activeElement.matches('select, input')) {
+      pop.addEventListener('focusout', () => setTimeout(() => { if (S.mxAddColOpen && !pop.contains(document.activeElement)) renderWorks(); }, 0), { once: true });
+      return;
+    }
+    renderWorks();
+  }
+
+  /**
+   * [Z-ACR] (3.68.0, S099) The role of a column added, by the rules: a person's own writing role, else the most common one of the
+   * matrix, else the genre's; not lyricist when every work has no lyrics; writer or lyricist only for songs (else composer); a label
+   * publishing. → a relationship type (or null).
+   */
+  function addColRole(a) {
+    const et = a && a.company ? (a.entityType || 'label') : 'artist';
+    const types = typesFor('work', et);
+    const byName = (n) => types.find((x) => norm(x.name) === n) || null;
+    if (!ruleOn('S099')) return types[0] || null;
+    if (et !== 'artist') return byName('publishing') || types[0] || null;
+    const count = (rows) => {
+      const m = new Map();
+      rows.filter((r) => r.level !== 'skip' && WRITER_TYPES.includes(norm(rowTypeName(r)))).forEach((r) => m.set(norm(rowTypeName(r)), (m.get(norm(rowTypeName(r))) || 0) + 1));
+      return [...m.entries()].sort((x, y) => y[1] - x[1]).map(([k]) => k)[0] || '';
+    };
+    const own = count(S.rows.filter((r) => r.artistKey === a.key));
+    let name = own || count(S.rows.filter((r) => r.level === 'work')) || (ruleOn('S088') ? titleComposerRole() : 'composer');
+    // the works of the matrix: their types and lyrics languages (planned new ones by their options; not those it cannot get)
+    const works = matrixRows().filter((m) => !workLocked(m.work) && !creditsSkipped(m.i)).map((m) => {
+      if (m.work && !isPending(m.work.gid)) return { type: norm(m.work.type || ''), langs: (m.work.languages || []).map(String) };
+      const o = rowOpts(m.i);
+      const type = norm((S.workOptions.types.find((t) => String(t.id) === String(o.typeId)) || {}).name || '');
+      return { type, langs: (o.languageIds || []).map((x) => (String(x) === '486' ? 'zxx' : String(x))) };
+    });
+    const noLyrics = works.length && works.every((w) => w.langs.length && w.langs.every((l) => l === 'zxx'));
+    const typed = works.filter((w) => w.type);
+    const songs = typed.length ? typed.filter((w) => w.type === 'song').length * 2 >= typed.length : true;
+    if (name === 'lyricist' && noLyrics) name = 'composer';
+    if ((name === 'writer' || name === 'lyricist') && !songs && name !== own) name = 'composer';
+    return byName(name) || types[0] || null;
+  }
+
 
 
   function allWorkGids() {
@@ -31298,7 +31419,7 @@
           const st = S.mxAddCol || {};
           if (st.busy) return true;
           const pane = btn.closest('.dci-mx-addcol');
-          const raw = (pane && pane.querySelector('[data-f="mx-addcol-mbid"]') || {}).value || st.mbid || '';
+          const raw = (st.pick && st.pick.mbid) || (pane && pane.querySelector('[data-f="mx-addcol-mbid"]') || {}).value || st.mbid || '';
           const roleSel = pane && pane.querySelector('[data-f="mx-addcol-role"]');
           const lt = idx().ltById.get(Number((roleSel && roleSel.value) || st.ltId));
           const mbid = (String(raw).match(MBID_RE) || [])[0];
@@ -31329,6 +31450,24 @@
         renderGroups();
         break;
       }
+      // [Z-MRC] (3.68.0, S100) another role of the column's entry on the tracks of its cells (on all when it has none yet)
+      case 'mx-col-addrole': {
+        const c = matrixColumns().find((x) => x.key === btn.dataset.col);
+        const sel = S.overlay.querySelector(`[data-f="mx-col-newrole"][data-col="${CSS.escape(btn.dataset.col)}"]`);
+        const lt = sel && idx().ltById.get(Number(sel.value));
+        if (!c || !lt || !c.artist) return true;
+        const mrows = matrixRows().filter((m) => !workLocked(m.work) && !creditsSkipped(m.i));
+        // ((review) a cell with what MusicBrainz has counts too
+        const on = mrows.filter((m) => { const st = cellState(c, m); return st.active.length || st.existing.length; });
+        const target = on.length ? on : mrows;
+        if (!target.length) return true;
+        const r = newColumnRow(c, lt, false, target[0]);
+        target.slice(1).forEach((m) => addCell(r, m));
+        // ((review) the tracks chosen by hand: no publisher check resets them
+        if (isPublishingRow(r)) r.pubTouched = true;
+        log('info', 'matrixRole', { name: c.name, role: rowPhrase(r) || lt.name, n: new Set(target.map((m) => m.i)).size });
+        break;
+      }
       case 'mx-col-all': {
         const c = matrixColumns().find((x) => x.key === btn.dataset.col);
         if (!c) return true;
@@ -31353,7 +31492,11 @@
       case 'mx-addcol-open':
         S.mxAddColOpen = !S.mxAddColOpen;
         if (!S.mxAddColOpen) S.mxAddCol = null;
-        else setTimeout(() => fitMxMenu(S.overlay && S.overlay.querySelector('.dci-mx-addcol-pop')), 0);
+        else {
+          setTimeout(() => fitMxMenu(S.overlay && S.overlay.querySelector('.dci-mx-addcol-pop')), 0);
+          // ([Z-ACO] 3.68.0) the personal publishers of the people, in the background
+          loadPersonalPubs().catch((e) => console.warn('[Discogs-Credits]', e));
+        }
         break;
       case 'mx-newmenu': {
         const i = Number(btn.closest('tr[data-work]').dataset.work);
@@ -31603,10 +31746,19 @@
         writeJson('localStorage', 'dci-role-codes', el.value);
         break;
       case 'mx-addcol-entry':
+        // ((review) not while a column is being added
+        if (S.mxAddCol && S.mxAddCol.busy) return true;
+        // ([Z-ACO] 3.68.0) a personal publisher of MusicBrainz ("pub:<MBID>"): added as a label by its MBID
+        if (el.value.startsWith('pub:')) {
+          const pub = typesFor('work', 'label').find((x) => norm(x.name) === 'publishing') || typesFor('work', 'label')[0];
+          S.mxAddCol = { pick: { mbid: el.value.slice(4) }, ltId: pub ? pub.id : null };
+          break;
+        }
         S.mxAddCol = el.value ? { key: el.value, ltId: null } : null;
         if (S.mxAddCol) {
           const a = S.artists.get(el.value);
-          const first = typesFor('work', a.company ? (a.entityType || 'label') : 'artist')[0];
+          // ([Z-ACR] 3.68.0, S099) the role by the rules
+          const first = addColRole(a);
           S.mxAddCol.ltId = first ? first.id : null;
         }
         break;
@@ -40224,6 +40376,11 @@
       .dci-mx-addcol-btn { border-style: dashed; background: #faf9fc; color: var(--purple-d); text-align: left; }
       .dci-mx-addcol-pop .dci-mx-addcol { display: flex; flex-direction: column; align-items: stretch; margin: calc(var(--u, 1px) * 6) 0 0; padding: 0; border: 0; background: none; }
       .dci-mx-addcol-pop { position: absolute; z-index: 5; left: auto; right: 0; min-width: calc(var(--u, 1px) * 260); }
+      /* [Z-MXO] (3.68.0) a head with its menu open above the sticky head of the tracks ("Track and work") */
+      .dci-matrix thead th:has(.dci-mx-colmenu) { z-index: 6; }
+      .dci-mx-addcol select optgroup { font-weight: 600; }
+      .dci-mx-addcol select option { font-weight: normal; }
+      .dci-mx-addrole { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-mx-addcol-head .dci-mx-card { position: relative; }
       /* [Z-WMX] (3.52.0; Q-fw) a suite: a row of its own above its tracks, which are indented */
       .dci-mx-suiterow td { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); background: var(--soft); text-align: left; }

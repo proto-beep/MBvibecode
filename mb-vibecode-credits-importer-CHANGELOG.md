@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.67.0 | – |
+| 2026-11-06 | 3.56.0 – 3.68.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.68.0
+
+#### Changed
+
+- **"＋ Add a column" in order** (collected item Z-ACO, rule S098): first the people of the release – writers, composers, lyricists, the release's artists and its performers (artists with instruments or vocals) –, set apart then the labels with the personal publishers MusicBrainz has for those people (looked up when the list opens), then the other entries.
+- **Its role set by the rules** (collected item Z-ACR, rule S099): a person's own writing role, else the most common one of the matrix, else the genre's (composer or writer); not lyricist when every work has no lyrics; writer or lyricist only for songs (else composer); a label publishing.
+- **A person in several roles** (collected item Z-MRC, rule S100): "Another role" in the menu of a column adds composer, publisher … on the tracks of its cells; a cell's menu says that several roles can be ticked.
+
+#### Fixed
+
+- **The menu of "＋ Add a column"** (collected item Z-MXO) is no longer covered by the head of the tracks ("Track and work").
 
 ### Import 3.67.0
 
