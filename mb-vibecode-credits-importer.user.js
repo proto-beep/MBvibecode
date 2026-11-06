@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.65.0
+// @version      3.66.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.65.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.65.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.66.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.66.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.65.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.66.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -636,6 +636,17 @@
       "log.liveFailed": "The comments of the live recordings could not be entered: {msg}",
       "log.liveNone": "Comments of live recordings: nothing to enter (they are in MusicBrainz already)",
       "livecom.noticeTitle": "MB x Vibecode: Credits Importer – comments of live recordings",
+      "livecom.noticeSet.one": "{n} comment entered:",
+      "livecom.noticeSet.other": "{n} comments entered:",
+      "livecom.noticeTracks.one": "track {list}",
+      "livecom.noticeTracks.other": "tracks {list}",
+      "livecom.noticeNot": "Not entered:",
+      "livecom.notice.liveNotLive.one": "Track {list}: not live in MusicBrainz",
+      "livecom.notice.liveNotLive.other": "Tracks {list}: not live in MusicBrainz",
+      "livecom.notice.liveConflict.one": "Track {list}: {msg}",
+      "livecom.notice.liveConflict.other": "Tracks {list}: {msg}",
+      "livecom.notice.liveOther.one": "Track {list}: MusicBrainz has another comment “{text}” – not overwritten",
+      "livecom.notice.liveOther.other": "Tracks {list}: MusicBrainz has another comment “{text}” – not overwritten",
       "footer.hint": "Nothing is submitted. You review the changes in the editor and click “Enter edit” yourself.",
       "panic.button.one": "Emergency: link only the new work",
       "panic.button.other": "Emergency: link only the {n} new works",
@@ -3622,6 +3633,7 @@
     { id: 'S093', where: 'workFrontCell, cellHtml, computePlan (S.mxCreditSkip)', note: 'Works matrix (3.64.0): "Skip credits" beside the work of a track leaves out the work credits of that track (its cells struck through, nothing of them staged); the recording credits and the link of the recording with its work stay; nor are the writers given to a work made with the form. "↺ Take credits" brings them back; kept with the stored import. A work of two tracks gets the credits of the other track still' },
     { id: 'S094', where: 'matrixColumns, columnHeadHtml (mx-pub-level)', note: 'Works matrix (3.64.0): each publishing row of a label switches in its column between "Work" (label – work publishing) and "Release" (on the release); a row put on the release this way keeps its column, so it can be put back' },
     { id: 'S095', where: 'openCreateDialog (S.statCreate), statTime, statsHeadLine', note: 'Statistics (3.65.0): the time per release and per relationship without the time of creating new entries (artists, labels, places, works – also works via the form): from the click on "Create …" until the new entry is linked, its pauses aside. A switch "Without new entries | With new entries" (Without at first, remembered) for every such time of this browser; records before 3.65.0 hold no such time (counted with it)' },
+    { id: 'S096', where: 'runLiveJob, liveNotice, liveTracksText', note: 'Live recordings (3.66.0): the notice on the release page after "Enter edit" tidied up – how many comments were entered, then each comment once with its tracks ("1–3, 5"; with several media "1.1–1.3, 2.1"), then what was not entered, the tracks of the same reason together (before: one long line of all tracks and their comments)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -8698,7 +8710,7 @@
   if (IS_NODE_TEST) {
     module.exports = {
       suggestFromWorks, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
-      instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions,
+      instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
       mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates,
@@ -9524,14 +9536,48 @@
     }
   }
 
+  /**
+   * [Z-LCP] (3.66.0, S096) Tracks in short: "1–3, 5"; with several media "1.1–1.3, 2.1"; sides of a record "A1–A3, B1" (positions
+   * "medium.number" or "number"; the same track once).
+   */
+  function liveTracksText(positions, multi = true) {
+    const seen = new Set();
+    const parsed = [];
+    for (const p of positions || []) {
+      const m = /^(?:(\d+)\.)?([A-Za-z]*)(\d+)$/.exec(String(p).trim());
+      const x = m ? { m: Number(m[1] || 1), side: m[2].toUpperCase(), n: Number(m[3]), raw: String(p) } : { m: 0, side: '', n: NaN, raw: String(p) };
+      const k = Number.isFinite(x.n) ? `${x.m}|${x.side}|${x.n}` : `?${x.raw}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      parsed.push(x);
+    }
+    const sorted = parsed.sort((a, b) => a.m - b.m || a.side.localeCompare(b.side) || (Number.isFinite(a.n) && Number.isFinite(b.n) ? a.n - b.n : Number.isFinite(a.n) ? -1 : 1));
+    const label = (x) => (Number.isFinite(x.n) ? `${multi ? `${x.m}.` : ''}${x.side}${x.n}` : x.raw);
+    const out = [];
+    for (let k = 0; k < sorted.length; k++) {
+      let e = k;
+      while (Number.isFinite(sorted[k].n) && e + 1 < sorted.length && sorted[e + 1].m === sorted[k].m && sorted[e + 1].side === sorted[k].side && sorted[e + 1].n === sorted[e].n + 1) e++;
+      out.push(e > k ? `${label(sorted[k])}–${label(sorted[e])}` : label(sorted[k]));
+      k = e;
+    }
+    return out.join(', ');
+  }
+  /** Tracks counted by their parsed positions (the same track once). */
+  function liveTracksCount(positions) {
+    return new Set((positions || []).map((p) => {
+      const m = /^(?:(\d+)\.)?([A-Za-z]*)(\d+)$/.exec(String(p).trim());
+      return m ? `${Number(m[1] || 1)}|${m[2].toUpperCase()}|${Number(m[3])}` : String(p);
+    })).size;
+  }
+
   /** [3.32.10] A small box on the page with what was done (red: what was left out or went wrong). */
-  function liveNotice(lines) {
+  function liveNotice(lines, groups = null) {
     let box = document.getElementById('dci-livecom-notice');
     if (!box) {
       box = document.createElement('div');
       box.id = 'dci-livecom-notice';
       box.setAttribute('role', 'status');
-      box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:100000;max-width:520px;background:#fff;border:1px solid #b9b5cf;border-radius:4px;'
+      box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:100000;max-width:520px;max-height:70vh;overflow:auto;color-scheme:light;background:#fff;border:1px solid #b9b5cf;border-radius:4px;'
         + 'box-shadow:0 2px 8px rgba(40,30,80,.2);padding:8px 12px;font:13px/1.4 system-ui,sans-serif;color:#24213a';
       document.body.appendChild(box);
     }
@@ -9543,10 +9589,70 @@
     x.type = 'button';
     x.textContent = '✕';
     x.setAttribute('aria-label', tr('common.close'));
-    x.style.cssText = 'border:0;background:none;cursor:pointer';
+    x.style.cssText = 'border:0;background:none;cursor:pointer;color:inherit';
     x.addEventListener('click', () => box.remove());
     head.appendChild(x);
     box.appendChild(head);
+    const line = (cls, text, color = '') => {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.textContent = text;
+      if (color) d.style.color = color;
+      box.appendChild(d);
+      return d;
+    };
+    // [Z-LCP] (3.66.0, S096) tidied up: a failure first, how many, each comment once with its tracks, what was not entered, then the rest
+    if (groups && ruleOn('S096')) {
+      const { entered = [], skipped = [], failed = [], multi = true } = groups;
+      const red = (l) => (l.level === 'error' || l.level === 'warn' ? '#b3261e' : '');
+      const GROUPED = ['liveSet', 'liveNotLive', 'liveOther', 'liveConflict', 'liveFailed', 'liveNone'];
+      if (failed.length || skipped.length) box.setAttribute('role', failed.length ? 'alert' : 'status');
+      lines.filter((y) => y.key === 'liveFailed').forEach((l) => line(`dci-livecom-line dci-livecom-${l.level}`, tr(`log.${l.key}`, l.params), red(l)));
+      // ((review) "nothing to enter" only when nothing was left out either
+      if (!entered.length && !skipped.length && !failed.length) lines.filter((y) => y.key === 'liveNone').forEach((l) => line(`dci-livecom-line dci-livecom-${l.level}`, tr(`log.${l.key}`, l.params)));
+      const ul = (cls) => {
+        const list = document.createElement('ul');
+        list.className = cls;
+        list.style.cssText = 'margin:4px 0 0;padding:0 0 0 18px';
+        box.appendChild(list);
+        return list;
+      };
+      const groupLi = (list, g) => {
+        const li = document.createElement('li');
+        li.className = 'dci-livecom-group';
+        const q = document.createElement('strong');
+        q.textContent = `“${g.comment}”`;
+        const t = document.createElement('span');
+        t.className = 'dci-livecom-tracks';
+        t.style.color = '#5a5670';
+        t.textContent = ` – ${tr('livecom.noticeTracks', { n: liveTracksCount(g.tracks), list: liveTracksText(g.tracks, multi) })}`;
+        li.append(q, t);
+        list.appendChild(li);
+      };
+      if (entered.length) {
+        line('dci-livecom-line dci-livecom-ok dci-livecom-sum', tr('livecom.noticeSet', { n: entered.reduce((t, g) => t + liveTracksCount(g.tracks), 0) })).style.marginTop = '4px';
+        const list = ul('dci-livecom-groups');
+        entered.forEach((g) => groupLi(list, g));
+      }
+      if (skipped.length || failed.length) {
+        const h = line('dci-livecom-line dci-livecom-skiphead', tr('livecom.noticeNot'));
+        h.style.cssText = 'margin-top:6px;font-weight:600';
+        h.id = 'dci-livecom-nothead';
+        const list = ul('dci-livecom-notlist');
+        list.setAttribute('aria-labelledby', h.id);
+        // ((review) a failed edit: the comments that could not be entered, with their tracks
+        failed.forEach((g) => groupLi(list, g));
+        for (const g of skipped) {
+          const li = document.createElement('li');
+          li.className = `dci-livecom-line dci-livecom-${g.level}`;
+          li.textContent = tr(`livecom.notice.${g.key}`, { ...g.params, list: liveTracksText(g.tracks, multi), n: liveTracksCount(g.tracks) });
+          if (red(g)) li.style.color = red(g);
+          list.appendChild(li);
+        }
+      }
+      lines.filter((y) => !GROUPED.includes(y.key)).forEach((l) => line(`dci-livecom-line dci-livecom-${l.level}`, tr(`log.${l.key}`, l.params), red(l)));
+      return;
+    }
     for (const l of lines) {
       const d = document.createElement('div');
       d.className = `dci-livecom-line dci-livecom-${l.level}`;
@@ -9555,6 +9661,7 @@
       box.appendChild(d);
     }
   }
+
 
   /**
    * [3.32.10] Enters the comments of an armed job of this release once MusicBrainz has its relationships (tries: how often
@@ -9601,6 +9708,14 @@
       const edits = [];
       const done = [];
       const creditSaid = new Set();
+      // [Z-LCP] (3.66.0, S096) for the notice: the comments with their tracks, what was not entered by its reason
+      const entered = new Map();
+      const skipped = new Map();
+      const skip = (k, pos, params = {}, level = 'error') => {
+        const id = `${k}|${JSON.stringify(params)}`;
+        if (!skipped.has(id)) skipped.set(id, { key: k, level, params, tracks: [] });
+        skipped.get(id).tracks.push(pos);
+      };
       for (const it of job.items) {
         const x = recs.get(it.rec);
         const pos = it.pos || x.pos;
@@ -9609,11 +9724,13 @@
         const live = works.length ? works.some((r) => (r.attributes || []).some((a) => a.typeID === 578)) : rgLive;
         if (!live) {
           say('warn', 'liveNotLive', { pos });
+          skip('liveNotLive', x.pos || pos, {}, 'warn');
           continue;
         }
         const mb = liveCommentFromMb(rels);
         if (mb.conflict) {
           say('error', 'liveConflict', { pos, msg: mb.conflict });
+          skip('liveConflict', x.pos || pos, { msg: mb.conflict });
           continue;
         }
         let comment = it.manual ? it.comment : mb.comment;
@@ -9630,10 +9747,13 @@
         if (liveAscii(existing) === liveAscii(comment)) continue;
         if (existing && existing !== 'live') {
           say('error', 'liveOther', { pos, text: existing });
+          skip('liveOther', x.pos || pos, { text: existing });
           continue;
         }
         edits.push({ edit_type: 72, to_edit: it.rec, comment });
         done.push(`${pos} “${comment}”`);
+        if (!entered.has(comment)) entered.set(comment, []);
+        entered.get(comment).push(x.pos || pos);
       }
       let ok = true;
       if (edits.length) {
@@ -9652,7 +9772,9 @@
         say('info', 'liveNone', {});
       }
       writeJson('localStorage', key, ok ? { ...again, running: 0, done: Date.now() } : { ...again, running: 0, error: Date.now() });
-      if (lines.length) liveNotice(lines);
+      // ((review) the positions and the media of the same answer; a failed edit names its comments under "Not entered")
+      const groupsOf = [...entered].map(([comment, tracks]) => ({ comment, tracks }));
+      if (lines.length) liveNotice(lines, { entered: ok ? groupsOf : [], failed: ok ? [] : groupsOf, skipped: [...skipped.values()], multi: (data.mediums || []).filter((m) => (m.tracks || []).length).length > 1 });
       return ok;
     }
     return false;

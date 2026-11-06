@@ -457,7 +457,10 @@ def case_livecomrun():
        the page lists it; the job is done (a second "Enter edit" sends nothing).
     C) The release page MusicBrainz shows next: a job armed there (track 2 only, its comment changed by hand) is entered on that
        page – the hand-made comment with the new credit; "live" in MusicBrainz counts as no comment, another one is not
-       overwritten (red)."""
+       overwritten (red).
+    (3.66.0, collected item Z-LCP, rule S096) The box tidied up: "2 comments entered:", each comment once with its tracks
+       ("“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2–3"; before one long line of tracks and comments); on the release
+       page "Not entered:" with "Track 4: MusicBrainz has another comment “demo version” – not overwritten"."""
     PLACE = H.COMPANIES[1002][1]
     NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
     H.PLACE_AREAS[PLACE] = NYC
@@ -527,6 +530,8 @@ def case_livecomrun():
         posted = list(H.EDITS_POSTED)
         logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => [li.className, li.textContent.replace(/\\s+/g, ' ').trim()]).filter(x => /live recording|credit of|comment/i.test(x[1]))")
         notice = pg.evaluate("(() => { const n = document.getElementById('dci-livecom-notice'); return n ? n.textContent.replace(/\\s+/g, ' ').trim() : null; })()")
+        groups = pg.evaluate("[...document.querySelectorAll('#dci-livecom-notice .dci-livecom-group')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        print('   Gruppen:', groups)
         job2 = pg.evaluate(JOB)
         pg.evaluate("document.getElementById('test-enter-edit').click()")
         pg.wait_for_timeout(1500)
@@ -535,7 +540,8 @@ def case_livecomrun():
         ok_b = len(posted) == 1 and [(e['edit_type'], e['to_edit'], e['comment']) for e in posted[0]['edits']] == [(72, H.REC[1], new), (72, H.REC[2], new)] \
             and posted[0]['editNote'] == job['note'] and posted[0]['makeVotable'] is False \
             and any(c == 'dci-log-error' and '“Iridium” → “The Iridium”' in t for c, t in logs) and any('Comments of 2 live recordings entered' in t for c, t in logs) \
-            and notice and 'The Iridium' in notice and bool(job2 and job2.get('done')) and len(H.EDITS_POSTED) == 1
+            and notice and 'The Iridium' in notice and bool(job2 and job2.get('done')) and len(H.EDITS_POSTED) == 1 \
+            and groups == ['“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2–3'] and '2 comments entered:' in notice
         pg.close()
         # C) the release page
         H.WS_JS_RELEASE.clear()
@@ -553,6 +559,7 @@ def case_livecomrun():
         print('C) gesendet:', posted3, '\n   Kasten:', notice3, '\n   Protokoll:', logged)
         ok_c = len(posted3) == 1 and [(e['to_edit'], e['comment']) for e in posted3[0]['edits']] == [(H.REC[1], 'live 2001: The Iridium (by hand)')] \
             and posted3[0]['editNote'] == armed['note'] and notice3 and any('dci-livecom-error' in c and 'demo version' in t for c, t in notice3) \
+            and ['dci-livecom-line dci-livecom-skiphead', 'Not entered:'] in notice3 and ['dci-livecom-line dci-livecom-error', 'Track 4: MusicBrainz has another comment “demo version” – not overwritten'] in notice3 \
             and ['error', 'liveOther'] in logged and ['ok', 'liveSet'] in logged
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
@@ -1782,5 +1789,23 @@ def case_livedate():
     H.ws_release, H.discogs_release = orig, orig_dg
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_livetracks():
+    """Credits Importer 3.66.0 (collected item Z-LCP), in Node: the tracks of a comment in short – "2", "3", "4", "6" → "2–4, 6";
+    several media "1.1", "1.2", "1.3", "2.1" → "1.1–1.3, 2.1" (one medium written without it: "1–3, 1"); the same track once.
+    (review) The sides of a record: "A1–A3, B1"; "1.3", "3" and "03" are one track ("3–4" with 4), counted once."""
+    import json
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+console.log(JSON.stringify([m.liveTracksText(['2', '3', '4', '6', '3'], false), m.liveTracksText(['1.1', '1.2', '1.3', '2.1'], true), m.liveTracksText(['1.1', '1.2', '1.3', '2.1'], false), m.liveTracksText(['A1', '2'], false),
+  m.liveTracksText(['1.A2', '1.A1', '1.A3', '1.B1', '1.3'], false), m.liveTracksText(['1.3', '3', '03', '4'], false), m.liveTracksCount(['1.3', '3', '4'])]));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+    print(res)
+    results = [res == ['2–4, 6', '1.1–1.3, 2.1', '1–3, 1', '2, A1', '3, A1–A3, B1', '3–4', 2]]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

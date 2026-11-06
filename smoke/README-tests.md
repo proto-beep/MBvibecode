@@ -382,7 +382,9 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     another comment of MB not tickable, changed by hand, unticked; 3.38.3: tracks 2–3 one group line, the heading
                                 #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
                                 #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
-                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
+                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red);
+                                #     (3.66.0, Z-LCP, S096) the box: how many, each comment with its tracks, "Not entered:" by reason
+                                #   livetracks: 3.66.0 (Z-LCP, Node): the tracks of a comment in short ("2–4, 6", "1.1–1.3, 2.1")
                                 #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
                                 #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
                                 #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
