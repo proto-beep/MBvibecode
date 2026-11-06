@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43, [Companion 1.12.0] sitedark, [1.13.0] copymarks2; `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9), [Companion 1.10.1] copymarks, [3.43.1] review43, [Companion 1.12.0] sitedark, [1.13.0] copymarks2, [3.72.0] marksrelease (the former t_release.py), artworkbox (the former t_artwork.py); `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -589,6 +589,131 @@ def case_copymarks2():
             and m['lines'] >= 3 and not m['marks'] and not m['hidden'] and m['abs'] and not m['rel'] and m['plainTaken'] is False and not dgerr
         b.close()
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+# (the errors of a page closed while the Companion still writes – no fault of the scripts)
+def _real_errs(errs):
+    return [e for e in errs if 'Synchronous XHR in page dismissal' not in e]
+
+
+def case_marksrelease():
+    """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_release.py (until 3.71.0 compared with an old log), with its
+    checks, with those of the former smoke/t_basic.py: 0) before "Apply" 14 entries, the import complete, on Discogs "✓" for Writer W
+    (in MusicBrainz) and "○" for the rest; the marks on Discogs – 1) after "Apply": "●" for each staged credit (the first "Writer W" ✓ already in MusicBrainz, the
+    second "○"); one edit (Pub Co) left out on purpose; 2) the release page: "✓" for each, "✗ Pub Co" (its tooltip "staged, but not
+    (yet) in MusicBrainz …"), Bass Man's bass "mb"; 3) the release page closed: no marks; 4) opened again later: the same marks."""
+    def marks(dg):
+        return dg.evaluate("[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent + ' ' + m.closest('li, tr').querySelector('a').textContent)")
+    NAMES = ['Keys Guy', 'Drum Guy', 'Bob Producer', 'Photo Guy', 'Ann Rep', 'Sony', 'Abbey Road Studios']
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        # (the former t_basic.py) before "Apply": 14 entries, the import complete, on Discogs Writer W ✓ (in MusicBrainz), the rest ○
+        pg.wait_for_timeout(2500)
+        groups = pg.locator('.dci-group .dci-gname').count()
+        done_log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if x[9:].startswith('Import complete:')]
+        m0 = dg.locator('.dci-dg-mark').all_inner_texts()
+        print('0) vor Übernehmen:', groups, 'Einträge |', done_log, '|', m0)
+        results.append(groups == 14 and len(done_log) == 1 and done_log[0].startswith('Import complete: 14 roles of 14 entries in the dashboard')
+                       and m0 == ['✓'] + ['○'] * 11)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        m1 = marks(dg)
+        print('1) nach Übernehmen:', m1)
+        results.append(m1 == ['✓ Writer W', '○ Writer W', '● ●Bass Man', '● ●Guitar Guy'] + [f'● {n}' for n in NAMES] + ['● Pub Co'])
+        missing = H.submit_staged(pg, leave_out=1)
+        print('   absichtlich nicht angekommen:', missing)
+        pg.goto(f'https://musicbrainz.org/release/{H.REL}')   # "Enter edit" leads to the release page
+        H.with_companion(pg)
+        dg.wait_for_timeout(5000)
+        done = ['✓ Writer W', '○ Writer W', '✓ ✓Bass Man', '✓ ✓Guitar Guy'] + [f'✓ {n}' for n in NAMES] + ['✗ Pub Co']
+        m2 = marks(dg)
+        t = dg.evaluate("[...document.querySelectorAll('.dci-dg-pending')].map(m => m.title)")
+        items = H.STORE.data[f'statusMap:{H.REL}']['items']  # [companion 1.10.0] per release
+        bm = [(i['role'], i['status'], i.get('note')) for i in items if i['artistId'] == 3001]
+        print('2) Release-Seite:', m2, '\n   Tooltip ✗:', t[:1], '\n   Einträge Bass Man:', bm)
+        results.append(m2 == done and len(t) == 1 and t[0].startswith('staged, but not (yet) in MusicBrainz – the edit may still be open 0/1')
+                       and bm == [('Bass', 'mb', '')] and len(missing) == 1)
+        pg.close()
+        dg.wait_for_timeout(12000)
+        m3 = marks(dg)
+        print('3) Release-Seite geschlossen:', m3)
+        results.append(m3 == [])
+        H.open_mb_release(ctx)
+        dg.wait_for_timeout(5000)
+        m4 = marks(dg)
+        print('4) später wieder geöffnet:', m4)
+        results.append(m4 == done)
+        print('Fehler:', errs, dgerr)
+        results.append(not _real_errs(errs) and not _real_errs(dgerr))
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_artworkbox():
+    """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_artwork.py (until 3.71.0 compared with an old log), with its
+    checks: the cover miniature on Discogs – none before the connection; connected: fixed, the cover's image, a frame of 3 px in
+    MusicBrainz's colours, still at the top after scrolling (72 px); a click opens Discogs's image view; dragged 300 px left and
+    200 px down it moves without opening it, after reloading it is at the same place; folded: no image, the button "🖼"; the switch
+    "Artwork" off: gone, on: there again; the MusicBrainz page closed: gone."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        dg.wait_for_timeout(1500)
+        n0 = dg.locator('#dci-artwork').count()
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        dg.wait_for_timeout(2500)
+        box = dg.locator('#dci-artwork')
+        a = [n0, box.count(), box.locator('img').get_attribute('src') if box.count() else None,
+             dg.evaluate("getComputedStyle(document.getElementById('dci-artwork')).position") if box.count() else None,
+             dg.evaluate("(() => { const cs = getComputedStyle(document.getElementById('dci-artwork')); return [cs.borderTopWidth, cs.backgroundImage.includes('linear-gradient')]; })()") if box.count() else None]
+        dg.evaluate("window.scrollTo(0, 2000)"); dg.wait_for_timeout(200)
+        a.append(dg.evaluate("document.getElementById('dci-artwork').getBoundingClientRect().top"))
+        print('A) vorher, verbunden, Bild, Lage, Rahmen, oben nach Scrollen:', a)
+        results.append(a == [0, 1, 'https://i.discogs.com/cover-1234.png', 'fixed', ['3px', True], 72])
+        dg.evaluate("window.__clicked = []; document.querySelectorAll('a[href*=\"/image/\"]').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); window.__clicked.push(a.getAttribute('href')); }))")
+        box.locator('.dci-art-img').click(); dg.wait_for_timeout(200)
+        clicked = dg.evaluate("window.__clicked")
+        print('B) Klick öffnet Discogs-Bildansicht:', clicked)
+        results.append(clicked == ['/release/1234-Test-Band-Testalbum/image/1'])
+        # drag the box 300 px to the left and 200 px down: it moves, the cover view does not open, the place is kept
+        r0 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
+        dg.evaluate("window.__clicked = []")
+        dg.mouse.move(r0[0] + 40, r0[1] + 40); dg.mouse.down(); dg.mouse.move(r0[0] - 100, r0[1] + 140, steps=8); dg.mouse.move(r0[0] - 260, r0[1] + 240, steps=8); dg.mouse.up()
+        dg.wait_for_timeout(300)
+        r1 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
+        moved_ok = abs((r0[0] - r1[0]) - 300) < 3 and abs((r1[1] - r0[1]) - 200) < 3 and dg.evaluate("window.__clicked") == []
+        dg.reload(); H.with_companion(dg); dg.wait_for_timeout(3500)
+        r2 = dg.evaluate("(() => { const b = document.getElementById('dci-artwork'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.left, r.top]; })()")
+        print('C) verschoben von', [round(x) for x in r0], 'nach', [round(x) for x in r1], '| nach Neuladen:', r2 and [round(x) for x in r2])
+        results.append(bool(moved_ok and r2 and abs(r2[0] - r1[0]) < 3 and abs(r2[1] - r1[1]) < 3))
+        box = dg.locator('#dci-artwork')
+        box.locator('.dci-art-toggle').click(); dg.wait_for_timeout(200)
+        d = [box.locator('.dci-art-img').is_visible(), box.locator('.dci-art-toggle').inner_text()]
+        box.locator('.dci-art-toggle').click()
+        H.nav_switch(pg, 'data-dg-artwork'); dg.wait_for_timeout(2500)
+        d.append(dg.locator('#dci-artwork').count())
+        H.nav_switch(pg, 'data-dg-artwork'); dg.wait_for_timeout(2500)
+        d.append(dg.locator('#dci-artwork').count())
+        H.nav_switch(pg, 'data-dg-release'); dg.wait_for_timeout(1500)
+        pg.close(); dg.wait_for_timeout(12000)
+        d.append(dg.locator('#dci-artwork').count())
+        print('D) eingeklappt (Bild sichtbar, Knopf), Schalter aus, an, MB-Seite geschlossen:', d)
+        results.append(d == [False, '🖼', 0, 1, 0])
+        print('Fehler:', errs, dgerr)
+        results.append(not _real_errs(errs) and not _real_errs(dgerr))
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())
