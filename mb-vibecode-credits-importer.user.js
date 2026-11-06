@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.64.0
+// @version      3.65.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.64.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.64.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.65.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.65.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.64.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.65.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1850,6 +1850,11 @@
       "stats.scope.global": "Global",
       "stats.scope.globalTitle": "All users of the script on MusicBrainz: the edits with its edit note, read from MusicBrainz's edit dump twice a week",
       "stats.global.head": "All users of the script on MusicBrainz – from MusicBrainz's edit dump of {date} (twice a week).",
+      "stats.dur": "The times with or without creating new entries",
+      "stats.dur.without": "Without new entries",
+      "stats.dur.with": "With new entries",
+      "stats.durTitle": "Without new entries: the time of creating artists, labels, places and works (also works via the form) is left out of the time per release and per relationship – from the click on “Create …” until the new entry is linked. With new entries: all of it counts. Imports before 3.65.0 hold no such time.",
+      "stats.global.headShort": "Dump of {date}",
       "stats.global.privacy": "Only numbers: no names, edits or releases; “editors” is how many different ones. Counted are the edits with the script's edit note (“No note” cannot be found).",
       "stats.global.old": "Could not be loaded just now – these are the numbers of the last time.",
       "stats.global.none": "The global statistics are not there yet (or cannot be loaded now).",
@@ -3616,6 +3621,7 @@
     { id: 'S092', where: 'TEXT.parse (S088), checkTitleComposerSingles, searchTitleComposerWorks', note: 'Texts (3.63.0): a single word in brackets after a title ("(Prince)", "(Monk)") is a credit only when it is the release\'s artist or MusicBrainz has exactly one artist of exactly that name; else no entry – only the works found for that title and name are offered' },
     { id: 'S093', where: 'workFrontCell, cellHtml, computePlan (S.mxCreditSkip)', note: 'Works matrix (3.64.0): "Skip credits" beside the work of a track leaves out the work credits of that track (its cells struck through, nothing of them staged); the recording credits and the link of the recording with its work stay; nor are the writers given to a work made with the form. "↺ Take credits" brings them back; kept with the stored import. A work of two tracks gets the credits of the other track still' },
     { id: 'S094', where: 'matrixColumns, columnHeadHtml (mx-pub-level)', note: 'Works matrix (3.64.0): each publishing row of a label switches in its column between "Work" (label – work publishing) and "Release" (on the release); a row put on the release this way keeps its column, so it can be put back' },
+    { id: 'S095', where: 'openCreateDialog (S.statCreate), statTime, statsHeadLine', note: 'Statistics (3.65.0): the time per release and per relationship without the time of creating new entries (artists, labels, places, works – also works via the form): from the click on "Create …" until the new entry is linked, its pauses aside. A switch "Without new entries | With new entries" (Without at first, remembered) for every such time of this browser; records before 3.65.0 hold no such time (counted with it)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -9712,6 +9718,9 @@
   const STATS_ARTISTS_PER_RUN = 60;
   const STATS_ARTISTS_DAYS = 180;
   const STATS_IDLE_KEY = 'dci-stats-idle';
+  // [Z-DUR] (3.65.0, S095) the times of the statistics without the time of creating new entries ('with': all of it)
+  const STATS_DUR_KEY = 'dci-stats-dur';
+  const statDurMode = () => (ruleOn('S095') && readJson('localStorage', STATS_DUR_KEY, 'without') !== 'with' ? 'without' : 'with');
   const STATS_IDLE_DEFAULT = 300;
   const statIdleMs = () => {
     const v = Number(readJson('localStorage', STATS_IDLE_KEY, STATS_IDLE_DEFAULT));
@@ -9942,6 +9951,7 @@
       if (!final && S.statStart && S.statStart === job.rec.start && 'idle' in job.rec) {
         S.statStart = job.armedAt;
         S.statIdle = Math.max(0, (S.statIdle || 0) - (job.rec.idle || 0));
+        S.statCreate = Math.max(0, (S.statCreate || 0) - (job.rec.cr || 0)); // [Z-DUR] (3.65.0)
         if ((S.statLastAct || 0) < job.armedAt) S.statLastAct = job.armedAt;
       }
       if (rels.length) liveLog(mbid, ok ? 'info' : 'warn', ok ? 'statsKept' : 'statsFailed', { n: rels.length }, logFn);
@@ -26552,6 +26562,22 @@
 
   function openCreateDialog({ title, url, entityType, infoHtml, onCreated, onCancel }) {
     const place = rememberPlace();
+    // [Z-DUR] (3.65.0, S095) the time of creating a new entry: from the click on "Create …" until it is linked, its pauses aside
+    // ((review) from the click on "Create …" (the form opens after lookups); the next form of a queue from its opening
+    const click = S.crClick && Date.now() - S.crClick.at < 120000 ? S.crClick : null;
+    S.crClick = null;
+    const crStart = click ? click.at : Date.now();
+    const crIdle = click ? click.idle : S.statIdle || 0;
+    // ((review) clicks and keys in the form count as work too (else the time in it would be a pause, left out twice)
+    const watched = new WeakSet();
+    const watch = (doc) => {
+      try {
+        if (!doc || watched.has(doc)) return;
+        watched.add(doc);
+        ['click', 'keydown', 'pointerdown'].forEach((t) => doc.addEventListener(t, statActivity, true));
+        ['wheel', 'touchmove'].forEach((t) => doc.addEventListener(t, statActivity, { capture: true, passive: true }));
+      } catch { /* another origin */ }
+    };
     const sub = $('sub');
     const frame = $('sub-frame');
     const created = new RegExp(`^/${entityType}/(${MBID_RE.source})(?:/|$)`, 'i');
@@ -26570,8 +26596,13 @@
     const finish = (mbid) => {
       if (done) return;
       done = true;
+      // ([Z-DUR] 3.65.0, review) a pause up to now is closed before the time of creating is taken
+      statActivity({ type: 'created' });
       cleanup();
-      Promise.resolve(onCreated(mbid.toLowerCase())).finally(() => restorePlace(place));
+      Promise.resolve(onCreated(mbid.toLowerCase())).finally(() => {
+        if (S.statStart && crStart >= S.statStart) S.statCreate = (S.statCreate || 0) + Math.max(0, Date.now() - crStart - Math.max(0, (S.statIdle || 0) - crIdle));
+        restorePlace(place);
+      });
       restorePlace(place);
     };
     const check = (win) => {
@@ -26593,6 +26624,7 @@
     sub.hidden = false;
     frame.onload = () => {
       if (!check(frame.contentWindow)) $('sub-info').insertAdjacentHTML('beforeend', `<p class="dci-bad">${esc(tr('sub.blocked'))}</p>`);
+      else if (!done) watch(frame.contentDocument);
     };
     frame.src = url;
 
@@ -26616,7 +26648,7 @@
             clearInterval(pollTimer);
             return;
           }
-          check(popup);
+          if (check(popup)) watch(popup.document);
         }, 700);
       },
     };
@@ -32583,6 +32615,8 @@
     if (!btn || !S.overlay.contains(btn)) return;
     S.lastActEl = btn;
     const act = btn.dataset.act;
+    // ([Z-DUR] 3.65.0, S095, review) the time of creating a new entry from the click on "Create …" (its form opens after lookups)
+    if (['artist-create', 'company-create', 'other-create', 'work-create', 'works-create-all', 'suite-create'].includes(act)) S.crClick = { at: Date.now(), idle: S.statIdle || 0 };
     if ((act.startsWith('mx-') || act === 'cd-copy' || act === 'xd-copy') && matrixAction(act, btn)) return;
     const row = rowOf(btn);
     const artist = artistOf(btn);
@@ -33938,7 +33972,11 @@
       case 'stats-open-all': {
         const f = statsFold();
         // ((review) every card, also those of a folded group (not drawn); the groups as they are)
-        f.cards = new Set(act === 'stats-fold-all' ? [...STATS_GROUPS.flatMap(([, k]) => k), ...[...S.overlay.querySelectorAll('[data-el=stats] .dci-stats-card[data-card]')].map((c) => c.dataset.card)] : []);
+        // ([Z-GLB] 3.65.0, review) of the scope shown: Global's cards ("g:…") or those of this browser
+        const shown = [...S.overlay.querySelectorAll('[data-el=stats] .dci-stats-card[data-card]')].map((c) => c.dataset.card);
+        const glob = S.statsScope === 'global';
+        const mine = (k) => (glob ? String(k).startsWith('g:') : !String(k).startsWith('g:'));
+        f.cards = new Set(act === 'stats-fold-all' ? [...f.cards, ...(glob ? [] : STATS_GROUPS.flatMap(([, k]) => k)), ...shown] : [...f.cards].filter((k) => !mine(k)));
         statsFoldSave();
         renderStats();
         break;
@@ -33957,6 +33995,11 @@
         // [E8] (3.38.0) the statistics over days, weeks, months or years
         S.statsPeriod = btn.dataset.period;
         writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
+        renderStats();
+        break;
+      case 'stats-dur':
+        // [Z-DUR] (3.65.0, S095) the times without or with creating new entries (remembered)
+        writeJson('localStorage', STATS_DUR_KEY, btn.dataset.view === 'with' ? 'with' : null);
         renderStats();
         break;
       case 'stats-time-view':
@@ -36115,7 +36158,7 @@
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
     // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
     // [Z-STD] (3.45.0) idle: the pauses not counted (the time of the record: from the start until "Enter edit" without them)
-    return { v: 3, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+    return { v: 3, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -36365,8 +36408,12 @@
     }
     const num = (x) => statNum(Number(x) || 0);
     const dump = /^(\d{4})(\d{2})(\d{2})/.exec(String(d.dump || ''));
-    const head = `<p class="dci-sub" data-el="stats-global-head">${esc(tr('stats.global.head', { date: dump ? `${dump[1]}-${dump[2]}-${dump[3]}` : '–' }))} ${reload}</p>
-      <p class="dci-sub">${esc(tr('stats.global.privacy'))}</p>${S.globalErr ? `<p class="dci-sub" data-el="stats-global-old">${esc(tr('stats.global.old'))}</p>` : ''}`;
+    // [Z-GLB] (3.65.0) the head in one line as for this browser: ⓘ (what is counted, fold or open all), the date of the dump, "Load again"
+    const date = dump ? `${dump[1]}-${dump[2]}-${dump[3]}` : '–';
+    const headText = tr('stats.global.head', { date });
+    const head = statsHeadLine({ info: `<p>${esc(headText)}</p><p>${esc(tr('stats.global.privacy'))}</p>`,
+      where: `<span class="dci-sub dci-stats-where" data-el="stats-global-head" title="${esc(headText)}">${esc(tr('stats.global.headShort', { date }))} ${reload}</span>` });
+    const old = S.globalErr ? `<p class="dci-sub" data-el="stats-global-old">${esc(tr('stats.global.old'))}</p>` : '';
     const t = d.totals || {};
     const done = d.done || {};
     const tile = (key, value) => `<div class="dci-stats-tile" data-stat="g-${key}"><span class="dci-stats-num">${esc(value)}</span><span class="dci-stats-lbl">${esc(tr(`stats.global.${key}`))}</span></div>`;
@@ -36407,14 +36454,19 @@
     const status = [...merged(d.by_status, (k) => lbl(`stats.global.st.${k.replace(/\s+/g, '_')}`, k)).entries()].sort((x, y) => y[1] - x[1]).slice(0, 8);
     const lists = `<div class="dci-stats-lists">${list('versions', versions)}${list('sources', sources)}${list('types', top(d.by_relationship_type, 10))}</div>
       <div class="dci-stats-lists">${list('levels', top(d.done_by_level, 4), (k) => lbl(`level.${k.replace(' ', '_')}`, k))}${list('edits', top(d.by_edit_type, 6), (k) => k.replace(/^\d+\s+/, ''))}${list('status', status)}</div>`;
-    return [head, tiles, `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>`, table, lists, globalCoreHtml(d)];
+    // [Z-GLB] (3.65.0) the groups as for this browser – Overview (over time and the lists, "+ n more"), Who, Releases
+    const core = globalCoreParts(d);
+    const overview = `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))}</h4>${table}${statShortLists(lists, 'g:overview')}`;
+    return [head, old, tiles, `<div class="dci-stats-gcore" data-el="stats-global-core">${statGroupsHtml(core.cards, { overview, who: core.lead }, GLOBAL_STATS_GROUPS, 'g:')}</div>`];
   }
+  /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
+  const GLOBAL_STATS_GROUPS = [['who', ['credits', 'artists']], ['releases', ['media', 'script', 'lengths']]];
 
   /**
    * [Z-AGS] (3.55.0; Q-fl, Q-fr) "Global" from MusicBrainz's core dump (read once a week by the workflow): the artists, releases and
    * recordings of all users' edits with the script, and their role credits – as the cards of this browser; "credited as" from every run.
    */
-  function globalCoreHtml(d) {
+  function globalCoreParts(d) {
     const c = d.core;
     const ca = d.credits && d.credits.credited_as && d.credits.credited_as.of ? d.credits.credited_as : null;
     const num = (x) => statNum(Number(x) || 0);
@@ -36423,8 +36475,12 @@
       const pairs = Object.entries(o || {}).sort(byTime ? (x, y) => Number(x[0]) - Number(y[0]) : (x, y) => (Number(y[1]) || 0) - (Number(x[1]) || 0)).slice(0, n);
       return pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, v]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${num(v)}</span></li>`).join('')}</ul>` : `<p class="dci-sub">–</p>`;
     };
-    // ([Z-STL] 3.61.0) cards that fold, as those of this browser
-    const card = (key, body) => statCard('stats-global-', key, tr(`stats.more.${key}`), body);
+    // ([Z-STL] 3.61.0) cards that fold, as those of this browser; ([Z-GLB] 3.65.0) kept by their keys, drawn in their groups
+    const cards = new Map();
+    const card = (key, body) => {
+      cards.set(key, { body, html: statCard('stats-global-', key, tr(`stats.more.${key}`), body, `g:${key}`) });
+      return '';
+    };
     const pct = (p) => `${statPct(p.n, p.of)} %`;
     const dumpDate = (x) => {
       const m = /^(\d{4})(\d{2})(\d{2})/.exec(String(x || ''));
@@ -36432,11 +36488,13 @@
     };
     const credits = `<ul class="dci-stats-kv">${c ? `<li>${esc(tr('stats.global.rc', { pct: pct(c.role_credits), n: num(c.role_credits.n), of: num(c.role_credits.of) }))}</li>` : ''}
       ${ca ? `<li>${esc(tr('stats.ali.ac', { pct: pct(ca), n: num(ca.n), of: num(ca.of) }))}</li>` : ''}</ul>`;
-    if (!c) return `<div class="dci-stats-cards" data-el="stats-global-core">${ca && ca.of ? card('credits', credits) : ''}<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p></div>`;
+    if (!c) {
+      if (ca && ca.of) card('credits', credits);
+      return { cards, lead: `<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p>` };
+    }
     const a = c.artists;
     const r = c.releases;
-    return `<div class="dci-stats-cards" data-el="stats-global-core"><p class="dci-sub dci-stats-wide" data-el="stats-global-corehead">${esc(tr('stats.global.coreHead', { date: dumpDate(c.dump) }))}</p>
-      ${card('credits', credits)}
+    `${card('credits', credits)}
       ${card('artists', `<p>${esc(tr('stats.global.artN', { n: num(a.n), of: num(a.of) }))}</p>
         <h5>${esc(tr('stats.art.type'))}</h5>${kvo(a.types, (k) => (k === '-' ? tr('stats.art.noType') : k))}<h5>${esc(tr('stats.art.gender'))}</h5>${kvo(a.genders)}
         <h5>${esc(tr('stats.art.decade'))}</h5>${kvo(a.decades)}<h5>${esc(tr('stats.art.country'))}</h5>${kvo(a.countries, statCountryName)}
@@ -36451,7 +36509,8 @@
           <li>${esc(tr('stats.global.lenRelMean', { time: statLen(c.lengths.release_mean_ms) }))}</li></ul>` : `<p class="dci-sub" data-el="stats-global-norellen">${esc(tr('stats.global.noRelLen'))}</p>`)
         : `<ul class="dci-stats-kv"><li>${esc(tr('stats.global.lenMedian', { time: statLen(c.lengths.median_ms), n: num(c.lengths.recordings) }))}</li>
         <li>${esc(tr('stats.global.lenMean', { time: statLen(c.lengths.mean_ms) }))}</li></ul>`}`)}
-    </div>`;
+    `;
+    return { cards, lead: `<p class="dci-sub dci-stats-wide" data-el="stats-global-corehead">${esc(tr('stats.global.coreHead', { date: dumpDate(c.dump) }))}</p>` };
   }
 
   // --- [Z-STL] (3.61.0) the statistics compact: one head line, a flat bar, groups of cards that fold, short lists -----------------
@@ -36508,38 +36567,49 @@
     });
   }
   /** [Z-STL] (3.61.0, S4) A card that folds: its head (▾ / ▸, its name; folded, its one line), its body with short lists. */
-  function statCard(prefix, key, title, body) {
-    const open = !statsFold().cards.has(key);
-    return `<div class="dci-stats-card${open ? '' : ' dci-stats-folded'}" data-el="${prefix}${key}" data-card="${esc(key)}">
-      <h4><button type="button" class="dci-stats-cardhead" data-act="stats-card" data-card="${esc(key)}" aria-expanded="${open}"><span class="dci-stats-caret" aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(title)}</button>${open ? ''
-        : ` <span class="dci-sub dci-stats-sum">${esc(statSummary(body))}</span>`}</h4>${open ? statShortLists(body, key) : ''}</div>`;
+  function statCard(prefix, key, title, body, foldKey = key) {
+    // ([Z-GLB] 3.65.0, review) Global folds its cards by keys of its own ("g:credits")
+    const open = !statsFold().cards.has(foldKey);
+    // [Z-CFT] (3.65.0) "Counted from 3.53.0 on …": in the tooltip of the card's head (before: a line in the card)
+    const since = [];
+    body = String(body || '').replace(/<p class="dci-sub dci-stats-since">([^<]*)<\/p>/g, (x, t) => {
+      if (!since.includes(t)) since.push(t);
+      return '';
+    });
+    const sinceAt = since.length ? ` title="${since.join(' ')}" data-since="1"` : '';
+    return `<div class="dci-stats-card${open ? '' : ' dci-stats-folded'}" data-el="${prefix}${key}" data-card="${esc(foldKey)}">
+      <h4><button type="button" class="dci-stats-cardhead" data-act="stats-card" data-card="${esc(foldKey)}" aria-expanded="${open}"${sinceAt}><span class="dci-stats-caret" aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(title)}${since.length ? ' <span class="dci-stats-sincemark" aria-hidden="true">ⓘ</span>' : ''}</button>${open ? ''
+        : ` <span class="dci-sub dci-stats-sum">${esc(statSummary(body))}</span>`}</h4>${open ? statShortLists(body, foldKey) : ''}</div>`;
   }
   /** [Z-STL] (3.61.0, S3) The cards in their groups, each a heading that folds and columns without gaps; cards of no group at the end. */
-  function statGroupsHtml(cards, extra = {}) {
+  function statGroupsHtml(cards, extra = {}, defs = STATS_GROUPS, gp = '') {
     const fold = statsFold();
     const used = new Set();
-    const groups = [['overview', []], ...STATS_GROUPS].map(([g, keys]) => {
+    const groups = [['overview', []], ...defs].map(([g, keys]) => {
       const list = keys.filter((k) => cards.has(k));
       list.forEach((k) => used.add(k));
-      if (g === 'sources') [...cards.keys()].filter((k) => !used.has(k)).forEach((k) => { list.push(k); used.add(k); });
+      if (g === defs[defs.length - 1][0]) [...cards.keys()].filter((k) => !used.has(k)).forEach((k) => { list.push(k); used.add(k); });
       const lead = extra[g] || '';
       if (!list.length && !lead) return '';
-      const open = !fold.groups.has(g);
+      const open = !fold.groups.has(`${gp}${g}`);
       const sum = list.slice(0, 2).map((k) => `${tr(`stats.more.${k}`)} ${statSummary(cards.get(k).body)}`).join(' · ');
-      return `<section class="dci-stats-group${open ? '' : ' dci-stats-gfolded'}" data-group="${g}">
-        <h3 class="dci-stats-gh"><button type="button" class="dci-textbtn" data-act="stats-group" data-group="${g}" aria-expanded="${open}"><span aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(tr(`stats.group.${g}`))}</button>${open ? ''
+      return `<section class="dci-stats-group${open ? '' : ' dci-stats-gfolded'}" data-group="${gp}${g}">
+        <h3 class="dci-stats-gh"><button type="button" class="dci-textbtn" data-act="stats-group" data-group="${gp}${g}" aria-expanded="${open}"><span aria-hidden="true">${open ? '▾' : '▸'}</span> ${esc(tr(`stats.group.${g}`))}</button>${open ? ''
           : ` <span class="dci-sub dci-stats-sum">${esc(sum.length > 90 ? `${sum.slice(0, 88)}…` : sum)}</span>`}</h3>
         ${open ? `${lead}${list.length ? `<div class="dci-stats-grid">${list.map((k) => cards.get(k).html).join('')}</div>` : ''}` : ''}</section>`;
     });
     return groups.join('');
   }
   /** [Z-STL] (3.61.0, S1) The head in one line: the period, ⓘ (what is counted, where it is kept, fold or open all), collecting on or off. */
-  function statsHeadLine({ period = null, info = '', where = '' } = {}) {
+  function statsHeadLine({ period = null, info = '', where = '', dur = false } = {}) {
     const seg = period ? `<span class="dci-seg dci-seg-small dci-stats-period" role="group" aria-label="${esc(tr('stats.period'))}">${['day', 'week', 'month', 'year'].map((v) => `<button type="button"
       data-act="stats-period" data-period="${v}" aria-pressed="${period === v}">${esc(tr(`stats.period.${v}`))}</button>`).join('')}</span>` : '';
     const pop = S.statsInfoOpen ? `<div class="dci-stats-infopop" data-el="stats-info" role="region" aria-label="${esc(tr('stats.infoTitle'))}">${info}
       <p class="dci-stats-foldall"><button type="button" class="dci-textbtn" data-act="stats-fold-all">${esc(tr('stats.foldAll'))}</button> <button type="button" class="dci-textbtn" data-act="stats-open-all">${esc(tr('stats.openAll'))}</button></p></div>` : '';
-    return `<div class="dci-stats-headline" data-el="stats-headline">${seg}<button type="button" class="dci-wh-help dci-stats-info" data-act="stats-info" aria-expanded="${!!S.statsInfoOpen}" aria-label="${esc(tr('stats.infoTitle'))}" title="${esc(tr('stats.infoTitle'))}">ⓘ</button>
+    // [Z-DUR] (3.65.0, S095) the times without or with creating new entries
+    const durSeg = dur && ruleOn('S095') ? `<span class="dci-seg dci-seg-small dci-stats-dur" role="group" aria-label="${esc(tr('stats.dur'))}" title="${esc(tr('stats.durTitle'))}">${['without', 'with'].map((v) => `<button type="button"
+      data-act="stats-dur" data-view="${v}" aria-pressed="${statDurMode() === v}" title="${esc(tr('stats.durTitle'))}">${esc(tr(`stats.dur.${v}`))}</button>`).join('')}</span>` : '';
+    return `<div class="dci-stats-headline" data-el="stats-headline">${seg}${durSeg}<button type="button" class="dci-wh-help dci-stats-info" data-act="stats-info" aria-expanded="${!!S.statsInfoOpen}" aria-label="${esc(tr('stats.infoTitle'))}" title="${esc(tr('stats.infoTitle'))}">ⓘ</button>
       <span class="dci-stats-spacer"></span>${where}${pop}</div>`;
   }
 
@@ -36554,7 +36624,7 @@
     const period = ['day', 'week', 'month', 'year'].includes(S.statsPeriod) ? S.statsPeriod : 'month';
     const whereText = `${tr(on ? 'stats.whereOn' : 'stats.whereOff')} ${tr('stats.whereBtn')}`;
     const where = `<span class="dci-sub dci-stats-where" data-el="stats-where" title="${esc(whereText)}">${esc(tr(on ? 'stats.whereOnShort' : 'stats.whereOffShort'))} <button type="button" class="dci-textbtn" data-act="stats-where" title="${esc(tr('stats.whereBtn'))}" aria-label="${esc(tr('stats.whereBtn'))}">⚙</button></span>`;
-    const head = [statsHeadLine({ period: S.statsData && S.statsData.length ? period : null, where,
+    const head = [statsHeadLine({ period: S.statsData && S.statsData.length ? period : null, where, dur: !!(S.statsData && S.statsData.length),
       info: `<p>${esc(tr('stats.hint'))}</p><p>${esc(whereText)}</p>` })];
     if (S.statsData == null) {
       statsLoad();
@@ -36666,7 +36736,7 @@
       const rr = m.relByRelease.get(r.mbid) || { title: (r.rel && r.rel.title) || r.mbid, n: 0 };
       rr.n += rels.length;
       m.relByRelease.set(r.mbid, rr);
-      if (statTime(r) != null && rels.length >= 5) {
+      if (statTime(r) > 0 && rels.length >= 5) {
         const per = statTime(r) / rels.length;
         if (!m.fastest || per < m.fastest.per) m.fastest = { per, title: (r.rel && r.rel.title) || r.mbid, n: rels.length };
       }
@@ -36829,8 +36899,10 @@
 
   /** [Z-STD] (3.45.0) The time of a record: until "Enter edit" without the pauses (from 3.45.0), else until MusicBrainz confirmed. */
   function statTime(r) {
-    if (r.work != null) return r.work;
-    return r.ms != null ? r.ms : null;
+    const t = r.work != null ? r.work : r.ms != null ? r.ms : null;
+    // [Z-DUR] (3.65.0, S095) without the time of creating new entries (from the click on "Create …" until linked)
+    if (t == null || !(r.cr > 0) || statDurMode() === 'with') return t;
+    return Math.max(0, t - r.cr);
   }
   const statMedian = (xs) => {
     if (!xs.length) return null;
@@ -37096,7 +37168,16 @@
 
   function statsMore2Html(m, recs, { top, kv, card }) {
     const since = m.x < recs.length ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.41.14' }))}</p>` : '';
-    const cap = (t) => String(t || '').replace(/^\p{Ll}/u, (c) => c.toUpperCase());
+    // [Z-GNC] (3.65.0) genres and styles with every word capitalised ("Free Jazz", "Hip-Hop"; before only the first)
+    // ((review) small words lower case after the first, a few abbreviations in capitals, only Latin and Greek letters
+    const GENRE_SMALL = new Set(['n', "'n'", 'and', 'of', 'the', 'de', 'y', 'a', 'in', 'on', 'to', 'for', 'with']);
+    const GENRE_CAPS = { idm: 'IDM', ebm: 'EBM', uk: 'UK', us: 'US', nrg: 'NRG', mpb: 'MPB', aor: 'AOR', edm: 'EDM', dnb: 'DnB', rnb: 'RnB', 'r&b': 'R&B', dj: 'DJ', mc: 'MC', lo: 'Lo', 'p.funk': 'P.Funk' };
+    const titleCase = (t) => String(t || '').replace(/[^\s\-/(+]+/gu, (w, at) => {
+      const k = w.toLowerCase();
+      if (GENRE_CAPS[k]) return GENRE_CAPS[k];
+      if (at > 0 && GENRE_SMALL.has(k)) return w;
+      return w.replace(/^(['’]?)([\p{Script=Latin}\p{Script=Greek}])/u, (x, q, c) => q + c.toUpperCase());
+    });
     const answer = (k) => {
       const [q, a] = String(k).split('\t');
       return `${q}: ${a}`;
@@ -37107,7 +37188,7 @@
       .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
       ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
       ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
-      ${card('genres', `${statGenresHtml(m, { top, kv, cap })}${since}`)}
+      ${card('genres', `${statGenresHtml(m, { top, kv, cap: titleCase })}${since}`)}
       ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
       ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
       ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
