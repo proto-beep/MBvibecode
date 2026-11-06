@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.61.0 | – |
+| 2026-11-06 | 3.56.0 – 3.62.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.62.0
+
+#### Fixed
+
+- **The date in the comments of live recordings** (collected item Z-LVD, rule S089): as the seed script (ROpdebee) takes it after "Enter edit" – the dates of "recorded at" / "recorded in" together with those of the staged links of the recording with its works (a link's own date, else the recording date of the track); two different dates are a conflict. Before, only a date on the row "recorded at" counted: "live: Loft, Köln, Germany" although the date was known. A concert date that is on no relationship yet (the date matrix not applied) is named in a hint of the proposal. A recording whose comment in MusicBrainz is "live: …" without the date can now differ from the proposal (and is then not ticked).
+- **"Performed in … on …" is Performance** (collected item Z-PDT): "Performed in St. Ann’s Church, Dublin, Ireland on February 22nd, 2018" puts the date under Performance in the pool (before: under no group). Also "performance", "live at", "recorded live in", "live in concert", "aufgeführt" – not a premiere ("first performed", "uraufgeführt") nor a rights line ("performance rights", "public performance").
+- **"Cover [Cover Art]"** (collected item Z-CVA, rule S090): artwork credited "cover art" (before "cover"). The detail says what of the cover it is – "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]", "[Photo By]", "[Photographs]" photography, "[Graphic Design]" design (no credit), "[Layout]" design credited "layout", another detail artwork credited "cover …" (several details of different kinds: "cover painting, layout"; checkbox details such as "[Additional]" stay flags); the exceptions are a table of the mapping (COVER_DETAIL). "Cover [Design]" stays design credited "cover design" (S037).
 
 ### Import 3.61.0
 

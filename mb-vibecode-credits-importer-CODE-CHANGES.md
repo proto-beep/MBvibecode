@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.61.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.62.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.62.0 · 2026-11-06
+
+Z-LVD, Z-PDT, Z-CVA – three fixes.
+
+- **`stagedWorkLinkDate(i, plan)`** (new): the date a planned work link is staged with, as `computePlan` stages it (own valid date, else `recordingDateOf(i)` unless cleared; null when works are skipped, out of scope or of the media, already linked in MusicBrainz).
+- **`liveProposals`** (rule **S089**): the dates of "recorded at" / "in" united with `stagedWorkLinkDate` of the track's planned works (as `liveCommentFromMb` reads 693 / 698 / 278 together); more than one date is a conflict. No date: `concertDate()` (computed once) only in the hint **`livecom.dateUnstaged`** (review: the seed script would not enter it).
+- **Mapping `DATE_HINTS`** (performance): `\bperform(ed|ance|ances)\b`, `\blive (?:at|in)\b`, `aufgeführt` (before `\blive at\b` only).
+- **Mapping `COVER_DETAIL`** (new; `{ re, type, credit }`), **`COVER_DETAIL`** in the script; **`R063`** (rule **S090**): a detail of the table → its type (artwork, illustration, photography, design) and credit, every detail consumed; another detail → artwork credited `cover <detail>` (a detail with "cover" as written); without a detail as before. ("Cover [Design]" goes through R062 / S037 as before.) Review: each detail matched on its own (a final "by" left out, checkbox details left to their flags), one type for all or the fallback; `COVER_DETAIL = MAP.COVER_DETAIL` (guarded at the use, as `t_static mappingfile` wants); `roleCreditForInner` gives no credit for R063 without one (before: "cover" from the wording); rule badge S090.
+- **Mapping `DATE_HINTS`** (review): performance without "first / public performed", "performance rights", "uraufgeführt"; "live in" only as "recorded / performed live in", "live in concert".
+- **Register:** S089, S090.
+- **Tests:** `t_works_more.py livedate` (new; the notes' "Performed in … on …" under Performance, the comment without the date before the matrix is applied and the hint naming it, S089 off), `t_mapping.py coverdetail` (new, Node and dashboard; S090 off), `t_mapping.py perfhints` (new, Node); golden S089, S090.
 
 ## Import 3.61.0 · 2026-11-06
 
