@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.61.0
+// @version      3.62.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.61.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.61.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.62.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.62.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.61.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.62.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -601,6 +601,7 @@
       "livecom.unassigned": "{name} is not assigned yet – no place in the comment",
       "livecom.places": "Different places: {list} – none in the comment",
       "livecom.dates": "Different dates: {list} – none in the comment",
+      "livecom.dateUnstaged": "The date of the concert ({date}) is on no relationship of this recording yet: apply the date matrix (Performance) and the comment gets it",
       "livecom.existing": "MusicBrainz has another comment: “{text}” – it is not overwritten",
       "livecom.same": "MusicBrainz has this comment already",
       "livecom.pending": "looking up the area …",
@@ -3597,6 +3598,9 @@
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
     // [3.56.0] collected item Z-CWR
+    // [3.62.0] collected items Z-LVD, Z-CVA
+    { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
+    { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
     // [3.60.0] collected item Z-TCP
     { id: 'S088', where: 'TEXT.parse (readLine0), groupCredits, applyTitleComposerRole, titleComposerBarHtml, searchTitleComposerWorks', note: 'Texts (3.60.0): a track of a track list with its composers in brackets – "2 Bonu (Oliver Lake)", "8. Paix (Tarbaby)", "Sometimes It Snows In April (Prince)" (the title one track of the release, the brackets names) – the names write that track: writer or composer, as the switch above the works matrix says (its default from the genres of the source: jazz, improvised, new and classical music composer, pop, rock, metal … and unknown writer); a group stays the group. In the background the works of that title by an artist of each name are looked up and offered for the track (every one found, not only of one artist)' },
     // [3.59.0] collected item Z-TBY
@@ -3818,6 +3822,25 @@
       return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: rest.join(' ') });
     } },
       R063: { run: () => {
+      // [Z-CVA] (3.62.0, S090) the detail names what of the cover it is: the table of the mapping (COVER_DETAIL) – "Cover [Cover Art]"
+      // artwork credited "cover art", "[Cover Painting]" illustration without a credit, "[Layout]" design credited "layout"; another
+      // detail: artwork credited "cover …" ("[Collage]" → "cover collage")
+      // (review) each detail on its own, the checkbox details (additional, guest …) left to their flags; a final "by" left out
+      if (ruleOn('S090')) {
+        const dets = ms.filter((x) => !CHECKBOX_DETAILS.includes(x) && !flagForDetail(x));
+        const words = dets.map((x) => norm(x).replace(/\s+by$/, ''));
+        const hits = words.map((w) => (COVER_DETAIL || []).find((x) => x.re instanceof RegExp && x.re.test(w)));
+        if (dets.length && hits.every(Boolean) && new Set(hits.map((h) => h.type)).size === 1) {
+          dets.forEach((m) => consumed.add(m));
+          const types = { artwork: ['artwork', 'design/illustration'], illustration: ['illustration', 'design/illustration'], photography: ['photography'], design: designTypes }[hits[0].type] || ['artwork', 'design/illustration'];
+          return out(types, { ...rel, credit: uniq(hits.map((h) => h.credit || '').filter(Boolean)).join(', ') });
+        }
+        if (dets.length) {
+          dets.forEach((m) => consumed.add(m));
+          const det = words.join(', ');
+          return out(['artwork', 'design/illustration'], { ...rel, credit: /^cover\b/.test(det) ? det : `cover ${det}` });
+        }
+      }
       if (has('design')) return out(designTypes, { ...rel, credit: 'cover design' });
       if (has('photo', 'photos', 'photography')) return out(['photography'], { ...rel, credit: 'cover photo' });
       for (const w of ['illustration', 'painting', 'drawing']) {
@@ -4391,6 +4414,8 @@
 
   /** [T015] Keywords near a date that suggest its group (shown highlighted; the choice stays with the person). */
   const DATE_HINTS = MAP.DATE_HINTS;
+  // [Z-CVA] (3.62.0, S090) "Cover [detail]": what the detail makes of it – { re, type, credit } (the mapping: COVER_DETAIL)
+  const COVER_DETAIL = MAP.COVER_DETAIL;
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
   // [3.32.5] only month words (whole, or the first three or four letters): before, any word that began so was taken
@@ -11048,6 +11073,8 @@
     if (row.ruleId === 'R009' && `${norm(row.base).replace(/[^a-z]/g, '')}vocals` === norm(row.primaryText).replace(/[^a-z]/g, '')) return '';
     // [3.39.5] "Creative Direction" as MusicBrainz's creative direction: no role credit (it is for art direction on a release; K-5)
     if (row.ruleId === 'R081' && norm((currentLinkType(row) || {}).name || '') === 'creative direction') return '';
+    // [Z-CVA] (3.62.0, S090, review) "Cover [Cover Painting]" is an illustration without a credit (not "cover")
+    if (row.ruleId === 'R063' && ruleOn('S090') && !row.creditFromRole) return '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -11168,6 +11195,7 @@
       if ((row.mods || []).some((x) => CHECKBOX_DETAILS.includes(norm(x)) || ['additional', 'guest', 'solo'].includes(flagForDetail(x)))) ids.push('S002');
       if (/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+/i.test(base0) && !/design/i.test(base0)) ids.push('S003');
       if (row.ruleId === 'R062') ids.push('S004');
+      if (row.ruleId === 'R063' && ruleOn('S090') && (row.mods || []).length) ids.push('S090');
       if (row.level === 'work' && ARRANGER_TYPES.includes(norm(row.types[0] || '')) && row.defaultLevel === 'recording') ids.push('S006');
       if (row.creditFromRole && remainingMods(row).length && !wr) ids.push('S009');
       if (/[\s-]by$/i.test(base0)) ids.push('S010');
@@ -11466,6 +11494,22 @@
       if (exactGids.has(ltGid)) out.add(`${t}|${e}`);
     }
     return out;
+  }
+
+  /** [Z-LVD] (3.62.0, S089) The date a planned link of track i with its work is staged with (as computePlan stages it): its own valid
+   *  date, else the recording date of the track (performance rows) unless cleared; null when the link is not staged (works skipped, out
+   *  of scope or of the media, already in MusicBrainz) or has no date. */
+  function stagedWorkLinkDate(i, plan) {
+    const t = S.mbTracks[i];
+    const perf = idx().performanceLt;
+    if (!t || !plan || !plan.gid || !perf || perf.has_dates === false || S.worksSkip || S.scope === 'nonwork' || !inMedium(i)) return null;
+    if (S.existing.workLinks.has(`${t.recordingGid}|${plan.gid}`)) return null;
+    if (plan.date && hasDateInput(plan.date)) {
+      const v = validateDateFields(plan.date);
+      return v.error ? null : v.value;
+    }
+    const rec = plan.dateCleared ? null : recordingDateOf(i);
+    return rec ? rec.value : null;
   }
 
   function computePlan() {
@@ -27707,6 +27751,7 @@
    * else the area of "recorded in"; the date of those rows. → [{ i, rec, pos, title, auto, existing, warn: [], ok }]
    */
   function liveProposals() {
+    let concert; // [Z-LVD] (3.62.0, review) once for all tracks
     const rgLive = ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm).includes('live');
     const out = [];
     for (const t of S.mbTracks) {
@@ -27735,7 +27780,21 @@
       const texts = uniq(places.map((x) => x.text).filter(Boolean));
       places.filter((x) => x.unassigned).forEach((x) => warn.push(tr('livecom.unassigned', { name: x.unassigned })));
       if (texts.length > 1) warn.push(tr('livecom.places', { list: texts.join(' · ') }));
-      const dates = uniq(src.map((r) => liveDateText(rowDateInfo(r, currentLinkType(r)).value)).filter(Boolean));
+      let dates = uniq(src.map((r) => liveDateText(rowDateInfo(r, currentLinkType(r)).value)).filter(Boolean));
+      // [Z-LVD] (3.62.0, S089) as the seed script (ROpdebee) takes it after "Enter edit": the dates of "recorded at / in" together with
+      // those of the links with the works that are staged ("recording of": its own date, else the recording date of the track – its
+      // performance rows); two dates are a conflict; before: only "recorded at / in" – a date in the pool under Performance went into no
+      // comment ("live: Loft, Köln, Germany")
+      if (ruleOn('S089') && matrixTrack(t)) {
+        const linkDates = worksForTrack(i).map((w) => stagedWorkLinkDate(i, w)).filter(Boolean);
+        dates = uniq([...dates, ...linkDates.map(liveDateText).filter(Boolean)]);
+        // (review) the one date of the concert (Performance in the date matrix or the pool) that is on no relationship yet: named in a
+        // hint – the seed script takes only dates of relationships, so it comes into the comment once the date matrix is applied
+        if (!dates.length) {
+          if (concert === undefined) concert = concertDate();
+          if (concert) warn.push(tr('livecom.dateUnstaged', { date: formatDateValue(concert) }));
+        }
+      }
       if (dates.length > 1) warn.push(tr('livecom.dates', { list: dates.join(' · ') }));
       const place = texts.length === 1 ? texts[0] : '';
       const auto = `live${dates.length === 1 ? `, ${dates[0]}` : ''}${place ? `: ${place}` : ''}`;
