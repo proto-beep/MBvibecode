@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.65.0 | – |
+| 2026-11-06 | 3.56.0 – 3.66.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.66.0
+
+#### Changed
+
+- **The box "comments of live recordings" tidied up** (collected item Z-LCP, rule S096): after "Enter edit" it says how many comments were entered, then each comment once with its tracks ("“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2–3"; with several media "1.1–1.3, 2.1", sides of a record "A1–A3, B1"), then under "Not entered:" the tracks of the same reason together ("Tracks 4–5: not live in MusicBrainz"). Before: one long line of all tracks and their comments. The box scrolls when it is long; the dashboard's log keeps its lines as before.
 
 ### Import 3.65.0
 
