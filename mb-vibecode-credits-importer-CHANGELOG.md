@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.68.0 | – |
+| 2026-11-06 | 3.56.0 – 3.69.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.69.0
+
+#### Changed
+
+- **No "whole release"** (collected item Z-WRL, rule S101): a row or an event on the release (or its group) shows only its level.
+- **The instruments one below the other** (collected item Z-CIN, rule S103): in the compact view the instruments and roles of an event are a block of their own, one below the other (the full view lists each in a line of its own already).
+- **"Create artist …" yellow** (collected item Z-CRY, rule S102) when it is offered because MusicBrainz has no such entry (label, place … too).
+- **The Companion marks the line** (collected item Z-CMK, rule S104): a click into the white field of an entry's line in the compact view marks it on Discogs or Bandcamp – a line of one row that row, else the entry.
 
 ### Import 3.68.0
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.68.0
+// @version      3.69.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.68.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.68.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.69.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.69.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.68.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.69.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3662,6 +3662,10 @@
     { id: 'S098', where: 'addColumnHtml, loadPersonalPubs', note: 'Works matrix (3.68.0): "＋ Add a column" lists first the people of the release – writers, composers, lyricists, the release\'s artists and its performers (artists with instruments or vocals) –, set apart then the labels with the personal publishers MusicBrainz has for those people, then the other entries' },
     { id: 'S099', where: 'addColRole', note: 'Works matrix (3.68.0): the role of a column added is set by the rules – a person\'s own writing role (composer, lyricist, writer), else the most common one of the matrix, else the genre\'s (composer or writer); not lyricist when every work has no lyrics; writer or lyricist only when the works are songs (else composer); a label publishing' },
     { id: 'S100', where: 'columnHeadHtml (mx-col-addrole), cellMenuHtml', note: 'Works matrix (3.68.0): a person in several roles (composer and publisher …): "＋ Another role" in the menu of the column adds one on the tracks of its cells; in a cell\'s menu several roles can be ticked (it says so)' },
+    { id: 'S101', where: 'tracksShort, evHeadHtml, evShortHtml, tracksCell', note: 'View (3.69.0): a row or an event on the release (or its group) without the words "whole release" – the level says it' },
+    { id: 'S102', where: 'matchHtmlInner', note: 'Entries (3.69.0): "Create artist …" (label, place …) yellow when it is offered because MusicBrainz has no such entry (not found, no suggestion)' },
+    { id: 'S103', where: 'entryCompactHtml (.dci-em-cllist)', note: 'Compact view (3.69.0): the instruments and roles of an event in a block of their own, one below the other (before: in one line after the event)' },
+    { id: 'S104', where: 'sourceElOf, showSourceOf', note: 'Companion (3.69.0): a click into an entry\'s line of the compact view (its white field) marks the line on Discogs (or Bandcamp) – a line of one row that row, else the entry' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -21647,16 +21651,20 @@
   }
 
   function matchHtmlInner(a) {
+    // [Z-CRY] (3.69.0, S102) "Create …" yellow when it is offered because MusicBrainz has no such entry
+    // ((review) not when MusicBrainz suggests something: candidates, the same name, an alias, a person of that name)
+    const miss = ruleOn('S102') && !a.editing && a.status !== 'pending' && !(a.candidates || []).length && !(a.nameHits || []).length && !(a.aliasHits || []).length
+      && !a.personHit && !a.aliasLater && !a.etcWait ? ' class="dci-create-miss"' : '';
     const searchType = a.other ? a.entityType : a.company ? (personPublisher(a) && a.personHit ? 'artist' : a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
-    const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
+    const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button"${miss} data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       // [3.22.0] areas are added by MusicBrainz's area editors only: no "Create", a hint (S028)
       // [S048] (3.31.5) a publisher with a person's name: "Create artist …" – only that when MusicBrainz has an artist of exactly
       // that name (no label for a person); otherwise beside "Create label …" (the name may be a company's)
-      ? (personPublisher(a) ? `<button type="button" data-act="company-create" data-et="artist">${esc(tr('match.create'))}</button> ` : '')
-        + (personPublisher(a) && a.personHit ? '' : companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' '))
+      ? (personPublisher(a) ? `<button type="button"${miss} data-act="company-create" data-et="artist">${esc(tr('match.create'))}</button> ` : '')
+        + (personPublisher(a) && a.personHit ? '' : companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button"${miss} data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' '))
         + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
-      : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
+      : `<button type="button"${miss} data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
       <span class="dci-badge dci-badge-bad">${esc(tr(labelKey, { src: sourceLabel(entrySource(a)) }))}</span>
       <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
@@ -22189,7 +22197,7 @@
     // [Z-EDM] (3.42.1; Q-db) the date a button: a click opens MusicBrainz's fields below it (begin, end, ended)
     // (3.42.8, review) not the box of the event's fields below (an error there opens no second one here)
     const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}` && !S.emEvDate.inline);
-    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
+    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' && !ruleOn('S101') ? tr('tracks.wholeRelease') : '';
     // [Z-CLV] (3.44.0) an event on "Skip": its number and the level as a button (a click takes it back)
     if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}</th>`;
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
@@ -22562,7 +22570,7 @@
     if (!dated) return '';
     const pool = dated.date && dated.date.poolId ? S.datePool.find((d) => d.id === dated.date.poolId) : null;
     const date = pool ? formatDateValue(pool) : fieldsText(dated.date || {});
-    return `<div class="dci-bass-ask dci-em-both">${esc(tr('em.bothAsk', { name: dated.primaryText || dated.raw, tracks: tracksShort(dated) }))}
+    return `<div class="dci-bass-ask dci-em-both">${esc(tr('em.bothAsk', { name: dated.primaryText || dated.raw, tracks: tracksShort(dated) || tr('tracks.wholeRelease') }))}
       <button type="button" class="dci-textbtn" data-act="em-only" data-row="${dated.id}">${esc(tr('em.bothOnly', { date }))}</button> ·
       <button type="button" class="dci-textbtn" data-act="em-both" data-row="${dated.id}">${esc(tr('em.bothKeep'))}</button></div>`;
   }
@@ -22786,7 +22794,7 @@
   function evShortHtml(e, a = null) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
-    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
+    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' && !ruleOn('S101') ? tr('tracks.wholeRelease') : '';
     if (e.skip) return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}`;
     return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}
       <span class="dci-cl-date${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
@@ -22948,9 +22956,11 @@
         const hidden = ls.length - shown.length;
         const ids = uniq(ls.flatMap((l) => l.ev.get(e.key)).map((r) => r.id)).join(',');
         // [Z-CLV] (3.44.0) an event on "Skip": grey, no target for chips dragged onto it
-        return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}" ${e.skip ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
-          ${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
-          : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}
+        // ([Z-CIN] 3.69.0, S103) the instruments and roles one below the other, in a block of their own
+        const stack = ruleOn('S103');
+        return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}${stack ? ' dci-em-clstack' : ''}" ${e.skip ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
+          ${stack ? '<span class="dci-em-cllist">' : ''}${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
+          : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}${stack ? '</span>' : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
       }));
       const out = m.lines.filter((l) => !l.ev.size);
@@ -25845,7 +25855,7 @@
       main = `<button type="button" class="dci-tbtn" data-act="tracks-toggle" aria-expanded="${row.tracksOpen}">
         <span data-tcount="${row.id}">${esc(tr('tracks.count', { sel: row.tracks.size, n: selTracks().length }))}</span></button>`;
       if (row.level === 'work') main += `<div class="dci-sub">${esc(tr('tracks.worksOf'))}</div>`;
-    } else if (row.level === 'release') {
+    } else if (row.level === 'release' && !ruleOn('S101')) {
       main = `<span class="dci-muted">${esc(tr('tracks.wholeRelease'))}</span>`;
     }
     return `${main}<div class="dci-status" data-status="${row.id}"></div>`;
@@ -26132,7 +26142,8 @@
 
   /** "tracks 1–3, 5", "all 12 tracks", "whole release": the tracks of a row in short. */
   function tracksShort(row) {
-    if (row.level === 'release') return tr('tracks.wholeRelease');
+    // ([Z-WRL] 3.69.0, S101) the level says it: no "whole release"
+    if (row.level === 'release') return ruleOn('S101') ? '' : tr('tracks.wholeRelease');
     if (row.level !== 'recording') return '';
     const sel = selTracks();
     const on = sel.filter((x) => row.tracks.has(x.idx));
@@ -32286,7 +32297,15 @@
   }
 
   // (3.40.11, review) not the toggle "by event | by role" nor "✎ works ↓" in the head of a compact entry
-  const sourceElOf = (target) => (target && target.closest && !target.closest('.dci-ghead-r, .dci-works-goto') ? target.closest('tr.dci-row, tr[data-work], .dci-ghead') : null);
+  // ([Z-CMK] 3.69.0, S104) the lines of the compact view too (a click into their white field)
+  const sourceElOf = (target) => (target && target.closest && !target.closest('.dci-ghead-r, .dci-works-goto')
+    ? (ruleOn('S104') ? compactSourceEl(target) : target.closest('tr.dci-row, tr[data-work], .dci-ghead')) : null);
+  /** ([Z-CMK] 3.69.0, review) a chip: its rows; the white field of a compact line: the line; its other buttons and fields: nothing. */
+  function compactSourceEl(target) {
+    const el = target.closest('tr.dci-row, tr[data-work], .dci-ghead, .dci-em-chip[data-rows], .dci-em-cl, tr.dci-em-line');
+    if (el && el.matches('.dci-em-cl, tr.dci-em-line') && target.closest('button, input, select, textarea, a, label')) return null;
+    return el;
+  }
 
   function onFocusSource(e) {
     const el = sourceElOf(e.target);
@@ -32312,6 +32331,23 @@
   }
 
   function showSourceOf(el) {
+    // [Z-CMK] (3.69.0, S104) a line of the compact view: a line of one row that row, else the entry
+    if (el.matches('.dci-em-cl, tr.dci-em-line, .dci-em-chip')) {
+      // ((review) a line of an event: the rows of its status
+      const st = el.querySelector(':scope > [data-emrows]');
+      const ids = String(el.dataset.rows || (st && st.dataset.emrows) || '').split(',').filter(Boolean);
+      const rows = ids.map((id) => S.rows.find((r) => r.id === id)).filter((r) => r && !r.manual);
+      if (textSite()) {
+        const payload = bandcampPayloadForRows(rows.length ? rows : S.rows.filter((r) => r.artistKey === (artistOf(el) || {}).key && !r.manual));
+        if (payload.refs.length) showOnDiscogs(payload);
+        return;
+      }
+      if (rows.length === 1) {
+        showOnDiscogs(discogsPayloadForRow(rows[0]));
+        return;
+      }
+      // (several rows: the entry, as its head)
+    }
     if (textSite() && !el.matches('tr[data-work]')) {
       // [3.17.0] Bandcamp: the lines of the credit (or of all credits of the entry) on the album or a track page
       const row = el.matches('tr.dci-row') ? rowOf(el) : null;
@@ -40932,6 +40968,13 @@
       .dci-em-compact { gap: calc(var(--u, 1px) * 5); }
       .dci-em-chead { display: flex; justify-content: flex-end; }
       .dci-em-cl { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9); border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+      /* [Z-CIN] (3.69.0) the chips of an event one below the other */
+      .dci-em-cl.dci-em-clstack { align-items: flex-start; }
+      .dci-em-cllist { display: inline-flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 3); }
+      /* [Z-CRY] (3.69.0) "Create …" offered because the entry is missing */
+      .dci-gmatch button.dci-create-miss:not(.dci-textbtn), button.dci-create-miss { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
+      /* ([Z-WRL] 3.69.0, review) a row on the release: its empty tracks pill only while a track group is dragged (its drop target) */
+      #dci-overlay:not(.dci-dm-drag-tg) .dci-cl-tracks:empty { display: none; }
       .dci-em-cl.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
       .dci-em-sep { width: 1px; height: calc(var(--u, 1px) * 20); background: var(--line); }
       .dci-em-chip { display: inline-flex; align-items: stretch; border: 1px solid #9d97c9; border-radius: 3px; background: #ecebf7; }
