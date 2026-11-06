@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.59.0
+// @version      3.60.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.59.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.59.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.60.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.60.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.59.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.60.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -534,6 +534,14 @@
       "status.workLocked.other": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
       "matrix.workLocked": "not added: an existing work is not supplemented – only the link of the recording with it is staged",
       "matrix.workLockedRow": "An existing work: none of the relationships of this row are added to it – only the link of the recording with it (and its attributes) is staged.",
+      "matrix.tcp.label": "Names in brackets after the titles ({n}) as",
+      "matrix.tcp.composer": "Composer",
+      "matrix.tcp.writer": "Writer",
+      "matrix.tcp.fromGenre": "from the genre of the source: {genre}",
+      "matrix.tcp.noGenre": "no genre of the source known: writer",
+      "matrix.tcp.byHand": "chosen here",
+      "log.tcpWorks": "{track}: {n} work(s) of this title by {names} found – offered in the works matrix",
+      "log.tcpRole": "Names in brackets after the titles: {role}",
       "wnote.locked": "– not staged: an existing work is not supplemented",
       "suite.locked": "An existing suite: no parts are added to it (only new suites get their parts)",
       "matrix.colDateLocked": "Only in MusicBrainz: its relationships are on existing works, which are not supplemented – no date is added to them.",
@@ -3570,6 +3578,8 @@
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
     // [3.56.0] collected item Z-CWR
+    // [3.60.0] collected item Z-TCP
+    { id: 'S088', where: 'TEXT.parse (readLine0), groupCredits, applyTitleComposerRole, titleComposerBarHtml, searchTitleComposerWorks', note: 'Texts (3.60.0): a track of a track list with its composers in brackets – "2 Bonu (Oliver Lake)", "8. Paix (Tarbaby)", "Sometimes It Snows In April (Prince)" (the title one track of the release, the brackets names) – the names write that track: writer or composer, as the switch above the works matrix says (its default from the genres of the source: jazz, improvised, new and classical music composer, pop, rock, metal … and unknown writer); a group stays the group. In the background the works of that title by an artist of each name are looked up and offered for the track (every one found, not only of one artist)' },
     // [3.59.0] collected item Z-TBY
     { id: 'S085', where: 'TEXT.parse (nameRoles, readLine0)', note: 'Texts (3.59.0): a name and its roles without a dash or colon – "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”" (two to four words with capitals, then roles in small letters the register knows) – read as "Name - roles"; a role with its own tracks in brackets after the roles – "Orrin Evans piano (vocals on “Blessed Ones”)" – is a credit of its own on those tracks (before: not recognized, or "Orrin Evans piano" as a name)' },
     { id: 'S086', where: 'tracksByTitles', note: 'Texts (3.59.0): a title named by its start, whole words – "Blessed Ones" for "Blessed Ones The Eternal Truth" – is that track when only one title starts so (two words or six letters at least)' },
@@ -7051,6 +7061,36 @@
           && !/\b(?:guests?|gäste|gast|featuring|feat|with|band|musicians|personnel|credits|thanks|line-?up|ensemble|tracks?|side|disc|cd|lp|section|bonus|part|volume|vol|set|act|movement)\b/i.test(nm);
       };
       /**
+       * [Z-TCP] (3.60.0, S088, review) The names in the brackets after a title – ["Oliver Lake"], ["Eric Revis", "Nasheet Waits"] – or
+       * null: each part a name of one to four words with capitals (particles inside), none of them a role, an instrument, a society, a
+       * company word, a place, a month, a heading or a word of a version ("Live", "Hidden Track", "Deluxe Edition", "Traditional",
+       * "Side B", "Rework"); "Earth, Wind & Fire", "Hall & Oates" – single words joined by "&" – stay one name (a group).
+       */
+      const TCP_NOT_NAME = /^(?:live|remaster(?:ed)?|demo|edit|version|mix|remix|rework|reprise|intro|outro|interlude|theme|take|part|pt|bonus|single|mono|stereo|instrumental|acoustic|radio|extended|original|cover|alternate|alt|hidden|track|solo|deluxe|edition|side|disc|cd|lp|vol|volume|traditional|trad|anon|anonymous|unknown|arr|arranged|excerpt|excerpts|encore|medley|suite|movement|reprisal|session|sessions|unreleased|outtake|outtakes|rehearsal|music|publishing|songs|records|recordings|productions|feat|featuring|with|by|inspired|recorded|lyrics|words)\.?$/i;
+      const titleComposerParts = (inside) => {
+        const ok = (nm) => {
+          const ws = nm.split(/\s+/).filter(Boolean);
+          if (!ws.length || ws.length > 4 || /\d/.test(nm) || !looksLikeName(nm)) return false;
+          if (!ws.every((w, k) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || w === '&' || (k > 0 && k < ws.length - 1 && PROSE_PARTICLE.test(w)))) return false;
+          if (ws.some((w) => TCP_NOT_NAME.test(w) || (w !== '&' && (isRole(cap(w.toLowerCase())) || playable(w.toLowerCase()))))) return false;
+          return !SOCIETY_LINE.test(nm) && !TEXT_NOT_NAME.test(nm.replace(/^the\s+/i, '')) && !TEXT_PLACE_WORDS.test(nm) && !regionOf(nm)
+            && !TEXT_MONTH_WORD.test(nm) && !CREDITS_HEADING.test(nm) && !isRole(cap(nm)) && !isRole(`${cap(nm)} By`);
+        };
+        const whole = clean(inside);
+        if (bandNames.has(norm(whole)) && ok(whole.replace(/,/g, ''))) return [whole];
+        // (a rights society after a name is no name: "(Oliver Lake/BMI)" → Oliver Lake)
+        const parts = whole.split(/\s*(?:,|\/|\+|;)\s*/).map(clean).filter((x) => x && !SOCIETY_LINE.test(x)).flatMap((x) => {
+          const sub = x.split(/\s+(?:&|and|und)\s+/i).map(clean).filter(Boolean);
+          // single words joined by "&": one name (a group: "Hall & Oates"); names of several words: each ("Oliver Lake & Josh Lawrence")
+          return sub.length > 1 && sub.every((y) => y.split(/\s+/).length >= 2) ? sub : [x];
+        });
+        // ("Earth, Wind & Fire": single words, one of them joined by "&" – the whole bracket is one name)
+        if (parts.length > 1 && parts.every((x) => x.split(/\s+/).length === 1 || /\s&\s/.test(x)) && /\s(?:&|and)\s/i.test(whole)) {
+          return ok(whole.replace(/,/g, '')) ? [whole] : null;
+        }
+        return parts.length && parts.every(ok) ? parts : null;
+      };
+      /**
        * [Z-TBY] (3.59.0, S085) "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”": a name of two to four
        * words with capitals and its roles in small letters, without a dash or colon between them – read as "Name - roles".
        */
@@ -7175,6 +7215,40 @@
         if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
           unrecognized.push(line0);
           return;
+        }
+        // [Z-TCP] (3.60.0, S088) a track of the track list with its composers in brackets ("2 Bonu (Oliver Lake)", "8. Paix (Tarbaby)"):
+        // the names write that track (writer or composer: the switch of the works matrix; a group stays the group)
+        // ((review) a length after the brackets ("(Oliver Lake) 6:12"); the title as written too when it starts with a number ("12 Bars");
+        // its titles the same or one letter off, not by their start; a number of the list picks one of two tracks of that title)
+        const tcp = ruleOn('S088') && !sub && resolveTitles && !pubBlock
+          && line.match(/^(?:([A-Za-z]?\d{1,3})[.):]?\s+)?(\S.*?)\s*\(([^()]+)\)(?:\s*[-–—]?\s*\(?\d{1,2}:\d{2}\)?)?\s*\.?$/u);
+        // ((review) a single word – "(Prince)", "(Tarbaby)" – only in a numbered list or as the release's artist: "Bonu (Tokyo)" is none)
+        const tcpNames = tcp && (titleComposerParts(tcp[3]) || []).filter((n) => tcp[1] || n.includes(' ') || bandNames.has(norm(n)));
+        if (tcpNames && tcpNames.length) {
+          const unq = (t) => clean(t).replace(/^["“”'‘’„«»]+|["“”'‘’„«»]+$/gu, '');
+          const tries = uniq([unq(tcp[2]), ...(tcp[1] ? [unq(`${tcp[1]} ${tcp[2]}`)] : [])]).filter(Boolean);
+          let hit = null;
+          for (const title of tries) {
+            const res = resolveTitles([title], { prefix: false });
+            if (!res || !res.indexes || !res.indexes.size || (res.unresolved || []).length) continue;
+            const pos = tcp[1] && /^\d+$/.test(tcp[1]) ? Number(tcp[1]) - 1 : null;
+            const set = res.indexes.size === 1 ? res.indexes : pos != null && res.indexes.has(pos) ? new Set([pos]) : null;
+            if (set) { hit = { title, set }; break; }
+          }
+          // ((review) not the line of a band's members: "Tarbaby (Orrin Evans, Eric Revis)" where a track is named after the band
+          if (hit && !bandNames.has(norm(hit.title))) {
+            const sc = { set: hit.set, spec: `“${hit.title}”` };
+            const added = tcpNames.filter((n) => addCredit(n, 'Written-By', sc, { titleComposer: true })).length;
+            if (added) {
+              // ((review) in an "except" list its track is one of the exceptions)
+              if (exceptHead && exceptHead.open) {
+                const blk = { title: hit.title, scope: sc, n: 1 };
+                exceptBlocks.push(blk);
+                exceptHead.blocks.push(blk);
+              }
+              return;
+            }
+          }
         }
         // [Z-TBY] (3.59.0, S085) a name and its roles without a dash: as with one ((review) before the roles of a name above, S070: a
         // name as prose reads one – "Eric Revis double bass" below "Orrin Evans piano" is his –, a make is none: "Fender Rhodes piano")
@@ -7809,7 +7883,7 @@
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
       // [3.22.0] titles named in the credits: this album's tracks (S027)
-      const resolveTitles = ctx.resolveTitles ? (titles) => ctx.resolveTitles(titles, tracks) : null;
+      const resolveTitles = ctx.resolveTitles ? (titles, o) => ctx.resolveTitles(titles, tracks, o) : null;
       // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
       const bandName = String(data.artist || '').trim();
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
@@ -8153,9 +8227,11 @@
         const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}`;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
-            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes });
+            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer });
         }
         const entry = group.roles.get(rKey);
+        // [Z-TCP] (3.60.0) a name in brackets after a title only while every credit of the role is one
+        if (!c.titleComposer) entry.titleComposer = false;
         // [S054] (3.37.0) from the Discogs notes only while every credit of it comes from there; the line(s) of the notes
         if (!c.fromNotes) entry.fromNotes = false;
         if (c.notesLine) entry.notesLine = entry.notesLine && entry.notesLine !== c.notesLine ? `${entry.notesLine} / ${c.notesLine}` : c.notesLine;
@@ -8984,7 +9060,7 @@
   }
 
   /** (3.40.0, review) Tracks of a Bandcamp text by their titles ("on “Song Two”"): as tracksByTitles, without its helpers. */
-  function gapTracksByTitles(titles, srcTracks) {
+  function gapTracksByTitles(titles, srcTracks, { prefix = true } = {}) {
     const key = (t) => norm(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const keys = (srcTracks || []).map((t) => key((t && t.title) || ''));
     const indexes = new Set();
@@ -8993,7 +9069,7 @@
       const k = key(title);
       let hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
       // ([Z-TBY] 3.59.0, S086, review) the start of a title as in the dashboard (the count of the release page the same)
-      if (!hits.length && k && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
+      if (!hits.length && k && prefix && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
         const pre = keys.flatMap((x, i) => (x && x.startsWith(`${k} `) ? [i] : []));
         if (pre.length === 1) hits = pre;
       }
@@ -9026,7 +9102,7 @@
       isRole: gapIsRole, isCompanyRole: (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule,
       settings: { bandcampTracks: false },
       resolveTracks: (spec, srcTracks) => gapTracksIn(spec, srcTracks),
-      resolveTitles: (titles, srcTracks) => gapTracksByTitles(titles, srcTracks),
+      resolveTitles: (titles, srcTracks, o = {}) => gapTracksByTitles(titles, srcTracks, o),
       artistNames: uniq((ws['artist-credit'] || []).map((c) => c.name || (c.artist && c.artist.name)).filter(Boolean)),
       stackUp: false,
     };
@@ -17268,6 +17344,10 @@
       // [Z-WTS] (3.52.0) a suggestion of the release before is no answer for this one
       S.workSuggestDone = null;
       S.workSuggestRaw = '';
+      // [Z-TCP] (3.60.0) the switch and the works found by the names after the titles: of this release
+      S.tcpRole = null;
+      S.tcpDefault = null;
+      S.tcpHits = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
@@ -17948,6 +18028,7 @@
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
     row.suppName = S.supp.source.name;
+    if (!company && info.c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
     if (!company && S.supp.source === BANDCAMP) askTranslation(row);
     // [3.34.25] the same questions as in the import (the mapping is the same for every source)
@@ -18003,6 +18084,9 @@
     if (chosen.length && ((sp.rel.covers || []).length || (sp.rel.quotes || []).length)) addWorkNotes(sp.rel);
     // [3.18.0] the works matrix skipped: work rows taken over go to "Skip" with it
     if (S.worksSkip) setWorksRowsSkipped(true);
+    // [Z-TCP] (3.60.0, S088) names in brackets after titles of a supplement (a text, the cover read): the switch, their works
+    if (applyTitleComposerRole()) refresh();
+    searchTitleComposerWorks(importSeq).catch((e) => console.warn('[Discogs-Credits]', e));
     log('ok', 'suppApplied', { name: sp.source.name, n: chosen.length });
     renderSupp();
     renderGroups();
@@ -18425,7 +18509,7 @@
       settings: { bandcampTracks: S.bcTracks },
       resolveTracks: (spec, srcTracks = tracks) => tracksInText(`tracks ${spec}`, srcTracks),
       // [3.22.0] tracks named by their titles (S027)
-      resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
+      resolveTitles: (titles, srcTracks = tracks, o = {}) => tracksByTitles(titles, srcTracks, o),
       // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
       // [S073] (3.42.3) the titles of the release and its tracks in MusicBrainz: no persons (Z-BZ)
@@ -18455,7 +18539,7 @@
       const own = rel.tracks || [];
       // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
       const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
-      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles) => tracksByTitles(titles, own), placeNames });
+      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames });
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
       return;
@@ -18761,6 +18845,7 @@
       collapsed: [...S.mxCollapsed].map(colKeyOut).filter(Boolean),
       opts: encField([...S.workRowOpts]),
       defaults: S.workDefaults && (S.workDefaults.typeId || (S.workDefaults.languageIds || []).length) ? { ...S.workDefaults } : null,
+      tcp: S.tcpRole || null, // [Z-TCP] (3.60.0, review) the switch "Composer | Writer"
     };
   }
 
@@ -18805,6 +18890,8 @@
     if (w.opts) decField(w.opts).forEach(([i, o]) => { if (!S.workRowOpts.has(i)) { S.workRowOpts.set(i, o); count(); } });
     // the options for every new work (until changed), when none were chosen in this import
     const d = S.workDefaults || {};
+    // [Z-TCP] (3.60.0, review) the switch as it was
+    if (w.tcp && !S.tcpRole) S.tcpRole = w.tcp === 'composer' ? 'composer' : 'writer';
     if (w.defaults && !d.typeId && !(d.languageIds || []).length) {
       S.workDefaults = { typeId: w.defaults.typeId || '', languageIds: [...(w.defaults.languageIds || [])] };
       count();
@@ -19130,6 +19217,7 @@
         continue;
       }
       if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
+      if (c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
       // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
       if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
@@ -19294,6 +19382,7 @@
       if (S.searchRunning) S.searchCancel = true;
       // [3.15.0] the matches with works of artists too (the works themselves stay known for the session)
       S.artistWorkHits = new Map();
+      S.tcpHits = null; // [Z-TCP] (3.60.0, review) the works found by the names after the titles: of this import
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
@@ -19439,6 +19528,12 @@
         setWorkNotes(S.workNotesRel);
         // [Z-TBY] (3.59.0, S087) the groups above their members: whether MusicBrainz has them as members (in the background)
         checkGroupMembers(S.workNotesRel, seq).catch((e) => console.warn('[Discogs-Credits]', e));
+        // [Z-TCP] (3.60.0, S088) names in brackets after titles: writer or composer (the genre), their works looked up (in the background)
+        if (applyTitleComposerRole()) {
+          renderGroups();
+          refresh();
+        }
+        searchTitleComposerWorks(seq).catch((e) => console.warn('[Discogs-Credits]', e));
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
         S.gapExactPending = source === DISCOGS || source === BANDCAMP ? { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) } : null;
@@ -23527,7 +23622,7 @@
   /** [3.24.1] The titles that differ ("2: “Here” ≠ “MusicBrainz”"), the first ten. */
   const trackFitList = (f) => f.differ.slice(0, 10).map((x) => `${x.pos}: “${x.src}” ≠ “${x.mb}”`).join('; ') + (f.differ.length > 10 ? ' …' : '');
 
-  function tracksByTitles(titles, srcTracks = S.srcTracks) {
+  function tracksByTitles(titles, srcTracks = S.srcTracks, { prefix = true } = {}) {
     const key = (t) => normTitle(workTitleOf(t)).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const keys = (srcTracks || []).map((t) => key((t && t.title) || ''));
     const indexes = new Set();
@@ -23537,7 +23632,7 @@
       let hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
       if (!hits.length && k) hits = keys.flatMap((x, i) => (x && withinOne(x, k) ? [i] : []));
       // [Z-TBY] (3.59.0, S086) the start of a title, whole words ("Blessed Ones" for "Blessed Ones The Eternal Truth"): its one track
-      if (!hits.length && k && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
+      if (!hits.length && k && prefix && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
         const pre = keys.flatMap((x, i) => (x && x.startsWith(`${k} `) ? [i] : []));
         if (pre.length === 1) hits = pre;
       }
@@ -27069,6 +27164,126 @@
     if (rel) addWorkNotes(rel);
   }
   /**
+   * [Z-TCP] (3.60.0, S088) Writer or composer for the names in brackets after the titles of a track list: the switch (S.tcpRole), else
+   * the genres of the sources – jazz, improvised, new and classical music: composer; pop, rock, metal … and none known: writer.
+   */
+  // ((review) whole words; not with a word of popular music in the same tag ("acid jazz"? jazz – but "chamber pop", "contemporary r&b",
+  // "minimal techno", "electro swing", "rock opera" are not); "free" only as free jazz or free improvisation)
+  const TCP_COMPOSER_GENRES = /\b(?:jazz|bop|bebop|hard bop|post-bop|free jazz|free improvisation|improvis(?:ed|ation|ational)?|avant-garde|modern classical|contemporary classical|classical|baroque|romantic(?:ism)? era|neo-classical|opera|chamber music|new music|neue musik|e-musik|minimalism|serialism|musique concrète|big band|third stream)\b/i;
+  const TCP_WRITER_GENRES = /\b(?:pop|rock|r&b|rnb|techno|wave|hip[ -]?hop|rap|house|funk|country|electro|electronic|folk|metal|punk|soul|dance|disco|indie|reggae|ska|grunge|emo|trap|edm|schlager|chanson|singer[ -]songwriter)\b/i;
+  function titleComposerGenre() {
+    const rels = statRels();
+    // ((review) Discogs's genres first (they are few and broad), then styles and tags; a tag with both kinds of words counts as popular music
+    const kinds = (words) => {
+      const w = words.map(norm).filter(Boolean);
+      const comp = w.find((x) => TCP_COMPOSER_GENRES.test(x) && !TCP_WRITER_GENRES.test(x));
+      const writ = w.find((x) => TCP_WRITER_GENRES.test(x));
+      return { comp, writ };
+    };
+    for (const words of [rels.flatMap((r) => r.genres || []), rels.flatMap((r) => [...(r.styles || []), ...(r.bcTags || [])])]) {
+      const k = kinds(words);
+      if (k.comp && !k.writ) return { role: 'composer', genre: k.comp };
+      if (k.writ && !k.comp) return { role: 'writer', genre: k.writ };
+      if (k.comp && k.writ) return { role: 'writer', genre: k.writ };
+    }
+    return { role: 'writer', genre: '' };
+  }
+  // ((review) the default is kept once it was applied: a supplement taken later does not change it behind the rows)
+  const titleComposerRole = () => S.tcpRole || (S.tcpDefault && S.tcpDefault.role) || titleComposerGenre().role;
+  /** [Z-TCP] (3.60.0) The rows of names in brackets after titles get the type of the switch (not one chosen by hand) → how many changed. */
+  function applyTitleComposerRole({ auto = true } = {}) {
+    if (!S.tcpRole && !S.tcpDefault && S.rows.some((r) => r.titleComposer)) S.tcpDefault = titleComposerGenre();
+    const name = titleComposerRole();
+    let n = 0;
+    for (const row of S.rows) {
+      // ((review) on the works level only (a row put elsewhere by hand keeps its type)
+      if (!row.titleComposer || row.statTypeHand || row.manual || row.level !== 'work') continue;
+      const lt = typesFor('work', row.entityType || 'artist').find((x) => norm(x.name) === name);
+      const cur = currentLinkType(row);
+      if (!lt || (cur && cur.id === lt.id)) continue;
+      row.linkTypeId = lt.id;
+      row.types = [lt.name, ...row.types.filter((x) => norm(x) !== norm(lt.name))];
+      refreshRowDetails(row);
+      // ((review) set by the switch's default: no change of yours for the remembered release; the switch clicked: yours)
+      if (auto) rebaseFields(row, ['linkTypeId', 'types', 'roleCreditSuggest', 'roleCredit', 'flags']);
+      n++;
+    }
+    return n;
+  }
+  /** [Z-TCP] (3.60.0) The switch above the works matrix while there are names in brackets after titles. */
+  function titleComposerBarHtml() {
+    if (!ruleOn('S088')) return '';
+    const rows = S.rows.filter((r) => r.titleComposer && r.level !== 'skip');
+    if (!rows.length) return '';
+    const g = S.tcpDefault || titleComposerGenre();
+    const cur = titleComposerRole();
+    const seg = ['composer', 'writer'].map((v) => `<button type="button" data-act="mx-tcp" data-role="${v}" aria-pressed="${cur === v}">${esc(tr(`matrix.tcp.${v}`))}</button>`).join('');
+    const why = S.tcpRole ? tr('matrix.tcp.byHand') : g.genre ? tr('matrix.tcp.fromGenre', { genre: g.genre }) : tr('matrix.tcp.noGenre');
+    return `<div class="dci-mx-tcp" data-el="works-tcp"><span>${esc(tr('matrix.tcp.label', { n: uniq(rows.map((r) => r.artistKey)).length }))}</span>
+      <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('matrix.tcp.label', { n: rows.length }))}">${seg}</span><span class="dci-sub">${esc(why)}</span></div>`;
+  }
+  /**
+   * [Z-TCP] (3.60.0, S088) In the background: the works of a track's title by an artist of each name in brackets after it (by name:
+   * every artist of that name, not only one linked) – offered for the track like the works of the artists (S.tcpHits: track → works).
+   */
+  async function searchTitleComposerWorks(seq) {
+    // ((review) as the other work look-ups: not while they rest ("Skip works", "Not now", asked first), one run at a time
+    if (!ruleOn('S088') || !worksLookupsAllowed() || S.tcpRunning) return;
+    const byTrack = new Map();
+    for (const row of S.rows) {
+      if (!row.titleComposer || row.level !== 'work') continue;
+      const a = S.artists.get(row.artistKey);
+      if (!a) continue;
+      for (const i of row.tracks) {
+        const x = byTrack.get(i) || { names: [], ids: [] };
+        x.names = uniq([...x.names, a.name, ...(a.mbName && a.mbName !== a.name ? [a.mbName] : [])]);
+        if (a.mbid) x.ids = uniq([...x.ids, a.mbid]);
+        byTrack.set(i, x);
+      }
+    }
+    if (!byTrack.size) return;
+    S.tcpRunning = true;
+    let changed = false;
+    try {
+      for (const [i, who] of byTrack) {
+        const t = S.mbTracks[i];
+        // ((review) tracks of the matrix without a work only, each once for the same names)
+        if (!t || !matrixTrack(t) || isPlaceholderTitle(t.title) || worksForTrack(i).length) continue;
+        const key = who.names.map(norm).sort().join('|');
+        if (!S.tcpHits) S.tcpHits = new Map();
+        if (S.tcpHits.has(i) && S.tcpHits.get(i).key === key) continue;
+        // ((review) the title without the names in brackets and other notes ("(Prince)", "(Live)")
+        const title = titleWithoutComposer(workTitleOf(t.title), who.names) || workTitleOf(t.title);
+        const q = `${buildWorkQuery(title, [])} AND (${who.names.map((n) => `artist:${lucenePhrase(n)}`).join(' OR ')})`;
+        let data = null;
+        try {
+          data = await mbWsIdle(`work?query=${encodeURIComponent(q)}&limit=25`);
+        } catch (e) {
+          console.warn('[Discogs-Credits]', e);
+          continue;
+        }
+        if (seq !== importSeq || !S.tcpHits) return;
+        // ((review) an artist of that name – accents aside – or the entry itself; and a title like the track's)
+        const keys = new Set(who.names.map(foldWord));
+        const works = ((data && data.works) || []).filter((w) => (w.relations || []).some((r) => r.artist && (keys.has(foldWord(r.artist.name)) || who.ids.includes(r.artist.id)))
+          && similarWorkTitle(t.title, [w.title, ...(w.aliases || []).map((x) => x.name)], who.names));
+        works.forEach((w) => { if (!S.foundWorkRels) S.foundWorkRels = new Map(); if (w.id && Array.isArray(w.relations)) S.foundWorkRels.set(w.id, w.relations); });
+        S.tcpHits.set(i, { key, works: works.map((w) => ({
+          gid: w.id, title: w.title, type: w.type || '', disambiguation: w.disambiguation || '', score: w.score, aliases: (w.aliases || []).map((x) => x.name).filter(Boolean),
+          writerIds: uniq((w.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist).map((r) => r.artist.id)),
+          writers: uniq((w.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist).map((r) => `${r.artist.name} (${r.type})`)), artistWork: true })) });
+        if (works.length) {
+          changed = true;
+          log('info', 'tcpWorks', { track: trackLabel(t), n: works.length, names: who.names.join(', ') });
+        }
+      }
+    } finally {
+      S.tcpRunning = false;
+    }
+    if (changed) renderWorksBackground();
+  }
+
+  /**
    * [Z-TBY] (3.59.0, S087) The heading of a group above its members in a text ("Tarbaby:"): left out; an info when MusicBrainz does
    * not have them as members of the group ("member of band") – the group among the release's artists or the entries, the members
    * among the entries (by name). One look-up of the group's relationships.
@@ -28594,7 +28809,8 @@
     if (!track) return [];
     const own = search && search.state === 'done' ? search.results : [];
     // [3.15.0] and works of the release's artists, its writers and performers with this title
-    const hits = S.artistWorkHits.get(i) || [];
+    // ([Z-TCP] 3.60.0) and the works by the names in brackets after its title
+    const hits = [...(S.artistWorkHits.get(i) || []), ...(((S.tcpHits && S.tcpHits.get(i)) || {}).works || []).filter((w) => !(S.artistWorkHits.get(i) || []).some((x) => x.gid === w.gid))];
     const more = hits.filter((w) => !own.some((x) => x.gid === w.gid));
     // [179] (3.38.16) a work both found: why the works of the artists found it, and its composer, with the search's entry
     const merged = own.map((x) => {
@@ -30235,6 +30451,7 @@
         <span class="dci-sub ${['form', 'page-full'].includes(S.workOptions.source) ? '' : 'dci-warn'}">${esc(tr(['form', 'page-full'].includes(S.workOptions.source) ? 'works.optionsHint' : 'works.optionsPartial',
           { types: S.workOptions.types.length, n: S.workOptions.languages.length }))}</span></div>` : ''}
       ${!skipped && !folded ? workSuggestHtml() : ''}
+      ${!skipped && !folded ? titleComposerBarHtml() : ''}
       ${skipped ? `<p class="dci-sub">${esc(tr('matrix.skippedHint'))}</p>` : ''}
       ${!skipped && S.worksLookups === 'ask' ? `<div class="dci-mx-ask" data-el="works-ask"><strong title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('matrix.askLookups', { n: tracksWithoutWork().length }))}</strong>
         <span class="dci-sub">${esc(tr('matrix.askTime', { min: worksLookupMinutes() }))}</span>
@@ -30460,6 +30677,15 @@
         S.workSuggestDone = suggestionKey(sg);
         log('info', 'worksSuggestTaken', { what: suggestionText(sg) });
         scheduleRemember();
+        break;
+      }
+      case 'mx-tcp': {
+        // [Z-TCP] (3.60.0, S088) writer or composer for the names in brackets after the titles (rows whose type was chosen by hand stay)
+        S.tcpRole = btn.dataset.role === 'composer' ? 'composer' : 'writer';
+        applyTitleComposerRole({ auto: false });
+        scheduleRemember();
+        log('info', 'tcpRole', { role: S.tcpRole });
+        renderGroups();
         break;
       }
       case 'mx-top': {
@@ -38942,6 +39168,8 @@
       /* Waits for a work: grey dotted (not a suggestion) */
       /* [Z-CWR] (3.56.0) a writer left out beside a more exact type */
       .dci-mxchip-cwr { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
+      /* [Z-TCP] (3.60.0) writer or composer for the names in brackets after the titles */
+      .dci-mx-tcp { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); }
       .dci-mxchip-nwa { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mx-wlock { color: var(--muted); display: inline-flex; vertical-align: middle; }
       .dci-mx-wlock .dci-lock { width: calc(var(--u, 1px) * 11); height: calc(var(--u, 1px) * 11); }

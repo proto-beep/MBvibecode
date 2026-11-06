@@ -789,4 +789,53 @@ def case_namesroles2():
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+
+def case_tcpread():
+    """Credits Importer 3.60.0 (collected item Z-TCP, rule S088), in Node: a track list with the composers in brackets after the titles.
+    "1 Blessed Ones The Eternal Truth (Orrin Evans)", "2 Bonu (Oliver Lake)", "3. Bumper (Tarbaby)", "Dance Of The Evil Toys (Eric Revis /
+    Nasheet Waits)" – each name writes its track (marked as such); "Bonu (live)", "Song Nine (Jane Roe)" (no track of the release) and
+    "Bumper (Jane Roe, vocals)" are not read so."""
+    text = ('1 Blessed Ones The Eternal Truth (Orrin Evans)\n2 Bonu (Oliver Lake)\n3. Bumper (Tarbaby)\nDance Of The Evil Toys (Eric Revis / Nasheet Waits)\n'
+            'Bonu (live)\nSong Nine (Jane Roe)\nBumper (Jane Roe, vocals)')
+    titles = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Dance Of The Evil Toys']
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.role, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all', !!x.titleComposer]),")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': text, 'titles': titles, 'count': 4}])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout)[0] if not js.returncode else None
+    print('  ', g)
+    ok = g is not None and g['credits'] == [['Orrin Evans', 'Written-By', '0', True], ['Oliver Lake', 'Written-By', '1', True], ['Tarbaby', 'Written-By', '2', True],
+                                            ['Eric Revis', 'Written-By', '3', True], ['Nasheet Waits', 'Written-By', '3', True]] \
+        and g['unrecognized'] == ['Bonu (live)', 'Song Nine (Jane Roe)', 'Bumper (Jane Roe, vocals)']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
+def case_tcpread2():
+    """Credits Importer 3.60.0 (review of Z-TCP), in Node: brackets after a title that are no composers stay as before – a place
+    ("Bonu (Tokyo)"), "(Hidden Track)", "(Traditional)", "(Inspired By John Coltrane)"; a rights society is left out ("(Oliver Lake/BMI)"
+    → Oliver Lake); single words joined by "&" are one name ("(Earth, Wind & Fire)", "(Simon & Garfunkel)"); a length after it is fine
+    ("(Oliver Lake) 6:12"); a single word only in a numbered list ("Bonu (Tokyo)" none); the members of the band after a track named
+    after it are no composers ("Tarbaby (Orrin Evans, Eric Revis)");
+    a title only by its start is not enough ("Blessed Ones (Village Vanguard)")."""
+    titles = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Tarbaby', 'Paix']
+    cases = ['Bonu (Tokyo)', 'Bonu (Hidden Track)', 'Bumper (Traditional)', 'Bumper (Inspired By John Coltrane)', 'Paix (Oliver Lake/BMI)',
+             'Bonu (Earth, Wind & Fire)', 'Bumper (Simon & Garfunkel)', '2 Bonu (Oliver Lake) 6:12', 'Tarbaby (Orrin Evans, Eric Revis)', 'Blessed Ones (Village Vanguard)']
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all', !!x.titleComposer]),")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'),
+                         json.dumps([{'text': t, 'titles': titles, 'count': 5, 'artists': ['Tarbaby']} for t in cases])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    tc = [[c[:2] for c in x['credits'] if c[2]] for x in g] if g else None
+    for t, x in zip(cases, tc or []):
+        print('  ', t, '→', x)
+    ok = tc == [[], [], [], [], [['Oliver Lake', '4']], [['Earth, Wind & Fire', '1']], [['Simon & Garfunkel', '2']], [['Oliver Lake', '1']], [], []]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())
