@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5), companyperson (3.39.6), listkeys (3.39.6), toys (3.39.7) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5), companyperson (3.39.6), listkeys (3.39.6), toys (3.39.7) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases), [3.72.0] annrep (the former t_ar.py); `python3 t_mapping.py <case> …` runs only those."""
 import json
 import os
 import harness as H  # noqa: F401 – used by the cases
@@ -1615,6 +1615,29 @@ def case_photoname():
     results.append(rows2.get('Photography By [Bass Man]') == 'bass man')
     H.discogs_release = orig
     H.RELEASE_AC[:] = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_annrep():
+    """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_ar.py (until 3.71.0 compared with an old log), with its
+    checks: "Ann Rep" (A&R) on the release group with the task "consultant"; staged: one "A&R" (1010) to the release group
+    with task=consultant."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        row = pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text='Ann Rep')).first.locator('tr.dci-row').first
+        lv = [row.locator('[data-act=level][aria-pressed=true]').get_attribute('data-level'), row.locator('[data-f=role-credit]').input_value()]
+        print('Ebene, Task-Feld:', lv)
+        results.append(lv == ['release_group', 'consultant'])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        ar = pg.evaluate("window.__dispatched.filter(a => a.newRelationshipState && a.newRelationshipState.linkTypeID === 1010).map(a => [a.newRelationshipState.entity0.name, a.newRelationshipState.entity1.entityType, (a.newRelationshipState.attributes ? a.newRelationshipState.attributes.__tree : []).map(x => x.typeName + '=' + (x.text_value || ''))])")
+        print('Vorgemerkt:', ar, '| Fehler:', errs)
+        results.append(ar == [['Ann Rep', 'release_group', ['task=consultant']]] and not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
