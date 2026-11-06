@@ -357,6 +357,7 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #   nwa: 3.57.0 (Z-NWA, S083): an existing work (linked in MusicBrainz, or found and chosen) – its cells locked and
                                 #     struck through, only the link of the recording staged; a new work as before; S083 off: as before
                                 #     (review) a work made with the form in this browser stays open; cwr runs with S083 off
+                                #   mxarrows: 3.70.0 (Z-MXK, S106): the arrow keys between the cells, the front and the heads; off
                                 #   addcolumn: 3.68.0 (Z-MXO, Z-ACO, Z-ACR, Z-MRC, S098–S100): the list of "＋ Add a column" in groups (with a personal
                                 #     publisher), its menu above the head of the tracks, the role by the rules, "Another role"; off
                                 #   creditskip: 3.64.0 (Z-WSK, S093): "Skip credits" beside a work – its work credits left out, the
@@ -418,6 +419,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     MB's form (name, type 6, the writer of all tracks), then from the work of MB
                                 #   medley: 3.41.3: "Alpha / Beta" – ✕ No, the offer "Split into 2 works (medley)"; split: Beta found in MB; staged with
                                 #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
+                                #   (3.70.0, Z-SU2, S105) suiteadd B2: one track free – box closed, head button off; D: box open again, a suite's tracks off
                                 #   suiteadd: 3.41.11 (Z-SUM): "＋ Suite …" – the yellow box (tracks from – to, name), without a name an error,
                                 #     "Trisect" for tracks 2–4 accepted as a found suite (parts, create button, log); ↺ undo: gone; Cancel
                                 #   subtracks: 3.41.12 (Z-SUB): an index "Suite X" with 3a, 3b on two MB tracks – four tracks (log, no message),

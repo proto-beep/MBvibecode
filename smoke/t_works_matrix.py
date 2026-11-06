@@ -1358,4 +1358,43 @@ def case_addcolumn():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_mxarrows():
+    """Credits Importer 3.70.0 (collected item Z-MXK, rule S106): the arrow keys in the works matrix.
+    A) The focus on the cell of track 1 in the first column: → the next column's cell of track 1, ↓ that of track 2, ← back to the
+       first column, ← once more the front of track 2 (its first button); ↑ from the first row: the head of the column.
+    B) Rule S106 off: the arrows move nothing."""
+    WHERE = """(() => { const a = document.activeElement; const c = a && a.closest('.dci-matrix td.dci-mx-cell, .dci-matrix th.dci-mx-front, .dci-matrix th.dci-mx-col');
+      if (!c) return null; const tr = c.closest('tr'); const cells = [...tr.children].filter(x => x.matches('td.dci-mx-cell, th.dci-mx-front, th.dci-mx-col'));
+      return [tr.dataset.work != null ? Number(tr.dataset.work) : 'head', cells.indexOf(c)]; })()"""
+    results = []
+
+    def run(off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S106']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(500)
+            pg.evaluate("document.querySelector('.dci-matrix tr[data-work=\"0\"] td.dci-mx-cell [data-act=mx-cell]').focus()")
+            seen = [pg.evaluate(WHERE)]
+            for k in ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowLeft', 'ArrowUp', 'ArrowUp']:
+                pg.keyboard.press(k)
+                pg.wait_for_timeout(150)
+                seen.append(pg.evaluate(WHERE))
+            b.close()
+            return seen, errs
+
+    seen, errs = run()
+    print('A)', seen, errs)
+    results.append(seen == [[0, 1], [0, 2], [1, 2], [1, 1], [1, 0], [0, 0], ['head', 0]] and not errs)
+    seen2, _ = run(off=True)
+    print('B)', seen2)
+    results.append(seen2[0] == [0, 1] and seen2[1] == [0, 1])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

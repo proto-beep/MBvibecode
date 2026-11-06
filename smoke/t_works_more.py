@@ -1409,9 +1409,12 @@ def case_suiteadd():
        ✓ Yes · Cancel"; ✓ Yes without a name: "Please type the name of the suite." (nothing added).
     B) Tracks 1.2 – 1.4, "Trisect", ✓ Yes: as a suite found in the source – "tracks 2–4: parts of the suite “Trisect” – 3 works" with
        "＋ Create the suite in MusicBrainz …"; the parts "Trisect: …" (a track each); the log says it was added by hand.
-    B2) (3.41.15, review) tracks 3–4 again as "Trisekt": "Some of these tracks are in another suite …" – nothing added, the parts of
-       "Trisect" stay (until 3.41.14 the new suite took them, and undoing it left the tracks without a work).
+    B2) (3.41.15, review) the tracks of "Trisect" cannot become another suite (until 3.41.14 the new suite took them, and undoing it
+       left the tracks without a work) – (3.70.0, Z-SU2, S105) only track 1.1 is free (a suite needs two tracks in a row): the box is
+       closed, "＋ Another suite …" in the head is disabled ("Every track is in a suite already …").
     C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
+    D) (3.70.0, Z-SU2) a suite "Duo" of tracks 3–4: tracks 1–2 are free – the box opens again for another suite (from track 1.1, the
+       tracks "(Duo)" disabled, "Suites: Duo (tracks 3–4)", the focus in the name field).
     (Until 3.41.10 a suite could only come from the source.)"""
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
     # ([3.52.0] the questions in the header rows of the matrix, the box below the head, "＋ Suite …" in the head)
@@ -1447,17 +1450,13 @@ def case_suiteadd():
         results.append(b0[0] and b0[0][0][1].startswith('tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …')
                        and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
                        and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
-        # (3.41.15, review) tracks of that suite again, under another name: not added (its parts would be lost)
-        pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
-        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=2)
-        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
-        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Trisekt')
-        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(300)
-        b1 = [pg.evaluate("(document.querySelector('[data-el=suite-add-error]') || {}).textContent || null"), pg.evaluate("document.querySelectorAll('[data-el=works] [data-suite]').length"),
-              pg.evaluate(PARTS, 2)]
-        pg.click('[data-el=suite-add] [data-act=suite-add-cancel]'); pg.wait_for_timeout(200)
+        # (3.41.15, review) tracks of that suite cannot become another one – ([Z-SU2] 3.70.0, S105) only the track 1.1 is free: the box
+        # is closed and "＋ Another suite …" in the head is disabled
+        b1 = pg.evaluate("""(() => { const h = document.querySelector('[data-el=works] [data-act=suite-add-open]');
+          return { open: !!document.querySelector('[data-el=suite-add]'), head: h.textContent.trim(), disabled: h.disabled, title: h.title }; })()""")
         print('B2) überlappend:', b1)
-        results.append(b1 == ['Some of these tracks are in another suite or split as a medley – undo that first.', 1, ['Trisect: ' + H.TITLES[2]]])
+        results.append(b1 == {'open': False, 'head': '＋ Another suite …', 'disabled': True,
+                              'title': 'Every track is in a suite already (or alone between them): nothing to add'})
         pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
         c0 = [pg.evaluate(BOX), pg.evaluate(PARTS, 1)]
         pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
@@ -1465,6 +1464,19 @@ def case_suiteadd():
         c1 = pg.evaluate(BOX)
         print('C)', c0, '|', c1)
         results.append(c0[0] == a0 and c0[1] and not c0[1][0].startswith('Trisect') and c1 == a0)
+        # D) ([Z-SU2] 3.70.0, S105) a suite of tracks 3–4: tracks 1–2 are free, the box opens again for another suite, from track 1.1,
+        # the tracks "(Duo)" cannot be chosen, "Suites: Duo (tracks 3–4)" in the box, the name field has the focus
+        pg.click('[data-el=works] [data-act=suite-add-open]'); pg.wait_for_timeout(200)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-from]', index=2)
+        pg.select_option('[data-el=suite-add] [data-f=mx-suite-to]', index=3)
+        pg.fill('[data-el=suite-add] [data-f=mx-suite-name]', 'Duo')
+        pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(500)
+        d0 = pg.evaluate("""(() => { const box = document.querySelector('[data-el=suite-add]'); if (!box) return null; const f = box.querySelector('[data-f=mx-suite-from]');
+          return { from: f.value, disabled: [...f.options].filter(o => o.disabled).map(o => o.textContent.trim()), list: (box.querySelector('[data-el=suite-list]') || {}).textContent,
+                   focus: document.activeElement && document.activeElement.dataset.f, head: document.querySelector('[data-el=works] [data-act=suite-add-open]').textContent.trim() }; })()""")
+        print('D) frei 1–2:', d0)
+        results.append(d0 == {'from': '0', 'disabled': [f'1.{k} {H.TITLES[k - 1]} (Duo)' for k in (3, 4)], 'list': 'Suites: Duo (tracks 3–4)',
+                              'focus': 'mx-suite-name', 'head': '＋ Another suite …'})
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
