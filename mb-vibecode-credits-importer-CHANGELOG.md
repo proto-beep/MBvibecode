@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.58.0 | – |
+| 2026-11-06 | 3.56.0 – 3.59.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.59.0
+
+#### Added / changed
+
+- **Texts: a name and its roles without a dash** (collected item Z-TBY, rule S085): "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”" – a name of two to four words with capitals, then roles the register knows in small letters – are read like "Eric Revis – double bass" (before: not recognized). A role with its own tracks in brackets after the roles – "Orrin Evans piano (vocals on “Blessed Ones”)" – is a credit of its own on those tracks (before: "Orrin Evans piano" was taken as a name).
+- **A title by its start** (rule S086): "on “Blessed Ones”" is the track "Blessed Ones The Eternal Truth" when only one title starts with those words.
+- **The heading of a group above its members** (rule S087): "Tarbaby:" alone in a line is left out (no entry), so is a separator line ("+"); "Special guests:", "Guests:" and "Featuring:" are left out as headings of the credits. The names below the group's heading (up to an empty line or a separator) are its members: an info names those MusicBrainz does not have as members of the group yet ("member of band"), so the memberships can be added there. The Tarbaby text of the Clean Feed page now gives every credit, nothing not recognized (before: six lines).
 
 ### Import 3.58.0
 

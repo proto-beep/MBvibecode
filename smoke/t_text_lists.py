@@ -725,4 +725,68 @@ console.log(JSON.stringify([c('Sound Development Studio, Zürich', 'Sound Develo
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+
+def case_namesroles():
+    """Credits Importer 3.59.0 (collected item Z-TBY; S085, S087), in Node: a name and its roles without a dash, the heading of a group.
+    "The Quartet:" a group's heading (its members the names below it up to "+"), "Special guests:" and "Strings:" not; "Jane Roe piano",
+    "John Doe tenor saxophone, flute", "Mary Major vocals on “Bonu”" (the title: its track), "Ann Ray piano (vocals on “Bumper”)" (two
+    credits, vocals on track 3 only); "Recorded live at Studio X" and "Thanks to Bob Stone" are no names with roles; "Special guests:"
+    left out as a heading of the credits."""
+    text = ('The Quartet:\nJane Roe piano\nJohn Doe tenor saxophone, flute\n+\nSpecial guests:\nMary Major vocals on “Bonu”\n'
+            'Ann Ray piano (vocals on “Bumper”)\nRecorded live at Studio X\nThanks to Bob Stone\nStrings:')
+    titles = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Dance Of The Evil Toys']
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.role, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all']), groups: r.groups,")
+    node = node.replace("|evi)$/i.test(p.base); };", "|evi|tenor saxophone|strings?)$/i.test(p.base); };")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': text, 'titles': titles, 'count': 4}])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout)[0] if not js.returncode else None
+    print('  ', g)
+    ok = g is not None and sorted(g['credits']) == sorted([['Jane Roe', 'piano', 'all'], ['John Doe', 'tenor saxophone', 'all'], ['John Doe', 'flute', 'all'],
+                                                         ['Mary Major', 'vocals', '1'], ['Ann Ray', 'piano', 'all'], ['Ann Ray', 'vocals', '2']]) \
+        and [x['name'] for x in g['groups']] == ['The Quartet'] and g['groups'][0]['members'] == ['Jane Roe', 'John Doe'] \
+        and ['groupHeading', 'The Quartet:'] in g['ignored'] and ['separator', '+'] in g['ignored'] \
+        and ['heading', 'Special guests:'] in g['ignored'] and g['unrecognized'] == ['Strings:'] and 'Strings:' not in [i[1] for i in g['ignored'] if i[0] == 'groupHeading'] \
+        and 'Recorded live at Studio X' not in [c[0] for c in g['credits']] \
+        and not any(c[0].startswith('Thanks') for c in g['credits'])
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
+def case_namesroles2():
+    """Credits Importer 3.59.0 (review of Z-TBY), in Node – what must stay as before: the title of an "except" block ("Song Two:") is no
+    group; "Go Kurosawa plays guitar, bass and drums" keeps its name; "Eric Revis bass and Nasheet Waits drums" is not one person with an
+    instrument "Nasheet Waits drums"; "Fender Rhodes organ" is no artist; "organ" after a separator is no role of the name above;
+    "Volume 2:" is no group, "Besetzung:" a heading; the members of a group are its players ("Recorded by Joe Engineer" is none)."""
+    titles = ['Song One', 'Song Two', 'Song Three', 'Song Four']
+    cases = [
+        'All songs written by megiapa except:\nSong Two:\nWritten by John Roe',
+        'Go Kurosawa plays guitar, bass and drums',
+        'Eric Revis bass and Nasheet Waits drums',
+        'Fender Rhodes organ',
+        'Eric Revis - piano\n+\norgan',
+        'Volume 2:\nJane Roe piano\n\nBesetzung:\nJohn Doe bass',
+        'The Trio:\nJane Roe piano\nRecorded by Joe Engineer',
+    ]
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.role, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all']), groups: r.groups,")
+    node = node.replace("|evi)$/i.test(p.base); };", "|evi|organ)$/i.test(p.base); };")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t, 'titles': titles, 'count': 4} for t in cases])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for x in g or []:
+        print('  ', x)
+    names = lambda k: [c[0] for c in g[k]['credits']]
+    ok = g is not None and ['John Roe', 'Written By', '1'] in g[0]['credits'] and not g[0]['groups'] \
+        and 'Go Kurosawa -' not in names(1) and 'Eric Revis' not in names(2) and 'Fender Rhodes' not in names(3) \
+        and g[4]['credits'] == [['Eric Revis', 'piano', 'all']] \
+        and not g[5]['groups'] and ['heading', 'Besetzung:'] in g[5]['ignored'] and 'Volume 2:' in g[5]['unrecognized'] \
+        and [x['members'] for x in g[6]['groups']] == [['Jane Roe']]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())
