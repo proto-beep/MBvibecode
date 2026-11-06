@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – | – |
+| 2026-11-06 | 3.56.0 – 3.57.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.57.0
+
+#### Changed
+
+- **An existing work is not supplemented** (collected item Z-NWA, rule S083): a work linked in MusicBrainz, or found (search, works of the artists) and chosen in the works matrix, gets none of the relationships the matrix suggests – no writers, composers, lyricists, publishers, no dates or credits added to its relationships, no "arrangement of" / "quotes"; a suite MusicBrainz has gets no parts. Only the link of the recording with the work (and its attributes: live, cover …) is staged. Its row has a lock, its cells are struck through and locked; the status of a credit says why, and on Discogs such a credit is marked as skipped. New works (planned, or made with the form – also later, once MusicBrainz has their link) are not affected. Rule S083 can be switched off.
 
 ### Import 3.56.0
 

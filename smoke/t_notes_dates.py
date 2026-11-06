@@ -299,7 +299,7 @@ def case_choose():
     the period as well; the matrix asks "choose" and applies nothing until then; choosing the period puts it on
     the rows; a group button moves the entry; without its period the single days stay. [3.32.0] Without D022 (with it the
     matrix gets the common month at once, see t_rules_window.py quickswitch)."""
-    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
+    H.RULES_OFF = ['D022', 'S083']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     import zooid
     from common_rows import lib, cells
@@ -471,7 +471,7 @@ def case_trackpool():
     matrix as suggestions with their track groups and studios; "Apply" splits the rows; applying again gives the
     same rows; removing a date and applying again brings the rows back together. [3.32.0] Without D022 (periods and
     "choose" as before)."""
-    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
+    H.RULES_OFF = ['D022', 'S083']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     import zooid
     from common_rows import lib, cells, stage
@@ -559,7 +559,7 @@ def case_reldate():
     B) A row switched from recording to the release level takes the June date at once; switched back, the March dates.
     C) A date typed into a row by hand stays when the row changes its level.
     D) The mark is stored with the matrix (after loading the dashboard again it is still there)."""
-    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
+    H.RULES_OFF = ['D022', 'S083']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     from common_rows import rows_of
 
     # instruments on the release level exist in MusicBrainz too

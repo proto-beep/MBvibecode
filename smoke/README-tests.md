@@ -343,6 +343,10 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     its rows no longer skipped), a column date, the type of new works
                                 #   statgaps: 3.41.15 (review, Z-STV): "co" on a link MusicBrainz has, staged, "Enter edit" – the record holds it as
                                 #     supplemented with "attrs", gaps.attrs 1
+                                #   nwa: 3.57.0 (Z-NWA, S083): an existing work (linked in MusicBrainz, or found and chosen) – its cells locked and
+                                #     struck through, only the link of the recording staged; a new work as before; S083 off: as before
+                                #     (review) a work made with the form in this browser stays open; cwr runs with S083 off
+                                #     (the harness switches S083 off by default – RULES_OFF; nwa and cwr set the rules themselves)
                                 #   cwr: 3.56.0 (Z-CWR, S082): no writer beside composer / lyricist / librettist of the same person on a work
                                 #     (MusicBrainz's composer, "Music By", "Lyrics By"); S082 off: as before
                                 #     (review) a picked work of the search with the composer in MusicBrainz; the form of a new work without writer

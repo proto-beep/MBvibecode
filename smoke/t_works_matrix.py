@@ -930,7 +930,8 @@ def case_cwr():
     C) Rule S082 switched off: the writers are staged (as before).
     D) (review) A work found by the search and picked for track 2: MusicBrainz has Writer W as its composer – the writer of
        Writer W there struck through and not staged (until the review the relationships of a picked work were not known).
-    F) (review) The form of a new work for track 3: Writer Z as composer and lyricist, not as writer."""
+    F) (review) The form of a new work for track 3: Writer Z as composer and lyricist, not as writer.
+    [3.57.0] With rule S083 off throughout: existing works are not supplemented at all otherwise (case nwa)."""
     results = []
     orig = H.discogs_release
 
@@ -954,8 +955,7 @@ def case_cwr():
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
-            if rule_off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S082']))")
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S082'] if rule_off else ['S083']}))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -987,6 +987,7 @@ def case_cwr():
     # D) a picked work of the search, Writer W its composer in MusicBrainz (Writer W only "Written-By" on track 2); F) the form of a new work
     H.discogs_release = lambda: rel(False)
     FOUND = H.uid('cccccccc', 77)
+    H.JS_WORKS[FOUND] = (7077, 'Song Two')
     H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
         {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
     with sync_playwright() as p:
@@ -994,6 +995,7 @@ def case_cwr():
         ctx = H.new_context(b)
         pg, errs3 = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083']))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1015,12 +1017,99 @@ def case_cwr():
         staged3 = pg.evaluate(STAGED)
         b.close()
     H.WORK_SEARCH[:] = []
+    H.JS_WORKS.pop(FOUND, None)
     st3 = sorted((who(a), LT.get(lt, lt), 'FOUND' if w == FOUND else 'WORK1' if w == H.WORK1 else w) for a, lt, w in staged3)
     print('D) vorher:', [x[:2] for x in before], '| nach der Wahl:', [x[:2] for x in chips3], '|', st3, '| Fehler:', errs3)
     results.append(('1', 'writer') not in [tuple(x[:2]) for x in before] and ('1', 'writer') in [tuple(x[:2]) for x in chips3]
                    and not any(x[0] == 'W' and x[2] == 'FOUND' for x in st3) and not errs3)
     print('F) Formular:', info)
     results.append('composer: Writer Z' in info and 'lyricist: Writer Z' in info and 'writer: Writer Z' not in info)
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_nwa():
+    """Credits Importer 3.57.0 (collected item Z-NWA, rule S083): an existing work is not supplemented.
+    Track 1 is linked with WORK1 in MusicBrainz; for track 2 a work of the search (FOUND) is chosen; track 3 gets a new work.
+    Writer Z is "Lyrics By" on track 1 and "Music By" on track 2 (besides "Composed By" on track 3).
+    A) The rows of WORK1 and FOUND have the lock; their cells are struck through and locked (a click changes nothing); the row
+       of the new work not.
+    B) Staged: the link of track 2 with FOUND (performance) – but no writer, composer or lyricist on WORK1 or FOUND; Writer Z
+       composer of the new work. The status of the rows says why.
+    C) Rule S083 switched off: Writer Z lyricist on WORK1 and composer on FOUND are staged (as before).
+    D) (review) WORK1 made with the form in this browser (in "dci-own-works"): one's own work – not locked, Writer Z lyricist staged;
+       FOUND still locked."""
+    results = []
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['tracklist'][0]['extraartists'] = d['tracklist'][0]['extraartists'] + [ex('Writer Z', 'Lyrics By', 3009)]
+        d['tracklist'][1]['extraartists'] = d['tracklist'][1]['extraartists'] + [ex('Writer Z', 'Music By', 3009)]
+        return d
+    H.discogs_release = rel
+    WW, WZ = H.ARTISTS[3007][0], H.ARTISTS[3009][0]
+    FOUND = H.uid('cccccccc', 78)
+    H.JS_WORKS[FOUND] = (7078, 'Song Two')
+    H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'writer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
+    LT = {167: 'writer', 168: 'composer', 165: 'lyricist', 278: 'performance'}
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1 && [165, 167, 168, 278].includes(r.linkTypeID))
+      .map(r => [r.entity0.gid || r.entity0.name, r.linkTypeID, r.entity1.gid || r.entity1.name]))()"""
+    CHIPS = """(() => [...document.querySelectorAll('.dci-matrix .dci-mxchip-nwa')].map(c => [c.closest('tr').dataset.work, c.textContent.trim()]))()"""
+    LOCKS = """(() => [...document.querySelectorAll('.dci-matrix tr[data-work]')].filter(tr => tr.querySelector('.dci-mx-wlock')).map(tr => tr.dataset.work))()"""
+
+    def run(rule_off, own=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            # (the harness switches S083 off by default: here it is on unless asked)
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083'] if rule_off else []}))")
+            if own:
+                pg.evaluate(f"localStorage.setItem('dci-own-works', JSON.stringify(['{H.WORK1}']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, f"!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick][data-gid=\"{FOUND}\"]')", 30)
+            pg.locator(f'tr[data-work="1"] [data-act=work-pick][data-gid="{FOUND}"]').evaluate('b => b.click()')
+            pg.wait_for_timeout(400)
+            pg.locator('.dci-matrix tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()')
+            pg.wait_for_timeout(500)
+            chips = pg.evaluate(CHIPS)
+            locks = pg.evaluate(LOCKS)
+            # a click on a locked cell changes nothing (it has no button)
+            buttons = pg.evaluate("[...document.querySelectorAll('.dci-matrix td.dci-mx-wlocked [data-act=mx-cell], .dci-matrix td.dci-mx-wlocked [data-act=mx-menu]')].length")
+            status = pg.evaluate("[...document.querySelectorAll('.dci-status')].some(x => /the work exists in MusicBrainz/.test(x.textContent))")
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(500)
+            staged = pg.evaluate(STAGED)
+            b.close()
+            return chips, locks, buttons, status, staged, errs
+
+    name = lambda g: 'W' if g == WW else 'Z' if g == WZ else 'WORK1' if g == H.WORK1 else 'FOUND' if g == FOUND else 'rec' if g in H.REC else g
+    chips, locks, buttons, status, staged, errs = run(False)
+    st = sorted((name(a), LT.get(lt, lt), name(w)) for a, lt, w in staged)
+    print('A) gestrichen:', chips, '| Schloss:', locks, '| Knöpfe in gesperrten Zellen:', buttons, '\nB)', st, '| Hinweis:', status, '| Fehler:', errs)
+    results.append(sorted(set(locks)) == ['0', '1'] and ('0', 'lyricist') in [tuple(x) for x in chips] and ('1', 'composer') in [tuple(x) for x in chips]
+                   and not any(x[0] == '2' for x in chips) and buttons == 0)
+    results.append(('rec', 'performance', 'FOUND') in st and not any(x[2] in ('WORK1', 'FOUND') and x[1] != 'performance' for x in st)
+                   and ('Z', 'composer', 'Song Three') in st and status and not errs)
+    chips2, locks2, _, _, staged2, errs2 = run(True)
+    st2 = sorted((name(a), LT.get(lt, lt), name(w)) for a, lt, w in staged2)
+    print('C)', chips2, locks2, st2)
+    results.append(not chips2 and not locks2 and ('Z', 'lyricist', 'WORK1') in st2 and ('Z', 'composer', 'FOUND') in st2 and not errs2)
+    _, locks4, _, _, staged4, errs4 = run(False, own=True)
+    st4 = sorted((name(a), LT.get(lt, lt), name(w)) for a, lt, w in staged4)
+    print('D)', locks4, st4)
+    results.append(locks4 == ['1'] and ('Z', 'lyricist', 'WORK1') in st4 and ('Z', 'composer', 'FOUND') not in st4 and not errs4)
+    H.WORK_SEARCH[:] = []
+    H.JS_WORKS.pop(FOUND, None)
     H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

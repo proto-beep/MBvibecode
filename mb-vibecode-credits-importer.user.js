@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.56.0
+// @version      3.57.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.56.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.56.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.57.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.57.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.56.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.57.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -528,6 +528,13 @@
       "status.loose": "{n}× the type exists with other attributes",
       "status.writerExact.one": "{n}× writer left out: composer, lyricist or librettist is more exact",
       "status.writerExact.other": "{n}× writer left out: composer, lyricist or librettist is more exact",
+      "status.workLocked.one": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
+      "status.workLocked.other": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
+      "matrix.workLocked": "not added: an existing work is not supplemented – only the link of the recording with it is staged",
+      "matrix.workLockedRow": "An existing work: none of the relationships of this row are added to it – only the link of the recording with it (and its attributes) is staged.",
+      "wnote.locked": "– not staged: an existing work is not supplemented",
+      "suite.locked": "An existing suite: no parts are added to it (only new suites get their parts)",
+      "matrix.colDateLocked": "Only in MusicBrainz: its relationships are on existing works, which are not supplemented – no date is added to them.",
       "matrix.writerExact": "writer – left out: this person has a more exact type on this work (composer, lyricist or librettist)",
       "status.nothing": "nothing new",
       "issue.searching": "looking up MB artist",
@@ -3555,6 +3562,8 @@
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
     // [3.56.0] collected item Z-CWR
+    // [3.57.0] collected item Z-NWA
+    { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
     { id: 'S081', where: 'workSuggestion, workSuggestHtml', note: 'New works (3.52.0): a work type and a lyrics language suggested from the works of the artists in MusicBrainz that the works matrix reads (from 3 works on) – each the one of more than half of them, "no work type" and "no lyrics language" too (the languages of a work together); a value without such a majority is not suggested. Yellow in the head of the matrix and at the rows: "Accept" fills it in for all new works (each can still be changed); not accepted, neither type nor language of it is filled in' },
     // [3.51.0] collected item Z-PCR
@@ -10438,6 +10447,16 @@
    * beside a composer of theirs is left out, S082). A relation without its type id gets the id of the type of that name. A work
    * the search did not bring (the works of the artists have no relationships) is looked up once, then the plan is drawn again.
    */
+  /** [Z-NWA] (3.57.0, review) The artists' and labels' relationships of a work found, in the form of a linked work's `rels`. */
+  function foundRelsOf(gid) {
+    const rels = S.foundWorkRels && S.foundWorkRels.get(gid);
+    if (!rels) return [];
+    const byName = new Map(typesFor('work', 'artist').concat(typesFor('work', 'label')).map((lt) => [norm(lt.name), lt.gid]));
+    return rels.filter((x) => ['artist', 'label'].includes(x['target-type']) && x[x['target-type']]).map((x) => ({
+      mbid: x[x['target-type']].id, name: x[x['target-type']].name, type: x.type, typeId: x['type-id'] || byName.get(norm(x.type || '')) || '',
+      entityType: x['target-type'], attrs: (x.attributes || []).map(norm), begin: x.begin || '', end: x.end || '' }));
+  }
+
   function addFoundWorkRels(gid) {
     if (!S.existing || !MBID_RE.test(String(gid || ''))) return;
     const add = (rels) => {
@@ -11104,6 +11123,19 @@
    * [Z-CWR] (3.56.0, S082) "work gid|artist MBID" of each person with a type under writer (composer, lyricist, librettist) on a work:
    * rows of the works matrix on its cells (planned here), and the relationships of the works in MusicBrainz.
    */
+  /**
+   * [Z-NWA] (3.57.0, S083) An existing work of a track – linked in MusicBrainz, or found (search, works of the artists, a part of a
+   * suite that MusicBrainz has) and chosen: it is not supplemented, only the link of the recording with it is staged. A work new in
+   * the editor or made with the form is not locked.
+   */
+  function workLocked(w) {
+    if (!w || !ruleOn('S083') || !MBID_RE.test(String(w.gid || ''))) return false;
+    if (!(!w.planned || w.origin === 'search' || w.origin === 'mb')) return false;
+    // ((review) a work made with the form in this browser is one's own: not locked, also once MusicBrainz has its link)
+    if (!S.ownWorks) S.ownWorks = ownWorks();
+    return !S.ownWorks.has(w.gid);
+  }
+
   function writerExactPairs() {
     const out = new Set();
     for (const row of S.rows) {
@@ -11185,6 +11217,8 @@
           const t = S.mbTracks[i];
           return t && t.works.length === 1 ? [[i, { gid: t.works[0].gid, title: t.works[0].title, origin: 'mb' }]] : [];
         });
+        // [Z-NWA] (3.57.0, S083) a suite MusicBrainz has (found and chosen) gets no parts added (a new suite: its parts, also existing ones)
+        if (workLocked({ ...sw, planned: true })) continue;
         parts.forEach(([i, p], n) => {
           const key = `suite|${sw.gid}|${p.gid}`;
           planned.add(key);
@@ -11217,6 +11251,8 @@
         // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
         // nor what MusicBrainz has already)
         if (w.gid === r.found.gid || (S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`))) continue;
+        // ([Z-NWA] 3.57.0, S083) nor an existing work: it is not supplemented
+        if (workLocked(w)) continue;
         const key = `wrel|${r.kind}|${w.gid}|${r.found.gid}`;
         planned.add(key);
         if (S.scope === 'nonwork' || !inMedium(i)) continue;
@@ -11241,7 +11277,7 @@
     const exactOnWork = ruleOn('S082') ? writerExactPairs() : new Set();
     S.writerExact = exactOnWork;
     for (const row of S.rows) {
-      const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null, exact: 0 };
+      const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null, exact: 0, locked: 0 };
       rowInfo.set(row.id, info);
       if (row.level === 'skip') continue;
       // [3.18.0] a row put on the works level by hand while the works matrix is skipped: nothing of it is staged
@@ -11297,7 +11333,10 @@
       // the editor has no MBID yet: it is found later through its recording ("r").
       const isMbid = (g) => MBID_RE.test(String(g || ''));
       // ([Z-CWR] 3.56.0, review) a writer left out beside a more exact type is not looked for after "Enter edit"
-      const leftOut = (x) => x.kind === 'work' && norm(lt.name) === 'writer' && exactOnWork.has(`${x.gid}|${artist.mbid}`);
+      // ([Z-NWA] 3.57.0) nor one on an existing work (not staged)
+      // ((review) one that MusicBrainz has stays: the release page still checks it)
+      const lockedOut = (x) => workLocked(x.work) && !(S.existing.loose && S.existing.loose.has(`${x.gid}|${artist.mbid}|${lt.gid}`));
+      const leftOut = (x) => x.kind === 'work' && ((norm(lt.name) === 'writer' && exactOnWork.has(`${x.gid}|${artist.mbid}`)) || lockedOut(x));
       const tTargets = targets.filter((x) => isMbid(x.gid) && !leftOut(x));
       const rTargets = targets.filter((x) => x.kind === 'work' && !isMbid(x.gid) && x.track && isMbid(x.track.recordingGid) && !leftOut(x));
       // tt / rt: the track of each target, for the marks of each Discogs track line
@@ -11306,7 +11345,7 @@
         r: rTargets.map((x) => x.track.recordingGid), rt: rTargets.map((x) => x.track.idx),
       };
       // Status of each track for the marks on Discogs (open before staged before already in MusicBrainz)
-      const RANK = { open: 3, staged: 2, mb: 1 };
+      const RANK = { open: 3, staged: 2, mb: 1, skip: 0 };
       const markTrack = (target, st) => {
         if (!st || !target.track) return;
         info.per = info.per || new Map();
@@ -11318,6 +11357,22 @@
         const baseKey = `${target.gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
         const rowDate = row.dateKeyed ? formatDateValue(rowDateInfo(row, lt).value) : '';
         const key = rowDate ? `${baseKey}|d:${rowDate}` : baseKey;
+        // [Z-NWA] (3.57.0, S083) an existing work: not supplemented – what MusicBrainz has counts as there, the rest is left out
+        // ((review) a hidden medium is not counted; what was entered from here already counts as applied)
+        if (target.kind === 'work' && workLocked(target.work)) {
+          if (target.track && !inMedium(target.track.idx)) return;
+          if (S.existing.exact.has(baseKey) || S.existing.loose.has(`${target.gid}|${artist.mbid}|${lt.gid}`)) {
+            info.existing++;
+            return;
+          }
+          if (!S.staged.has(key) && S.appliedKeys.has(key)) {
+            info.applied++;
+            return;
+          }
+          info.locked++;
+          markTrack(target, 'skip');
+          return;
+        }
         // [Z-CWR] (3.56.0, S082) a writer where the person has composer, lyricist or librettist on this work: left out
         if (target.kind === 'work' && norm(lt.name) === 'writer' && exactOnWork.has(`${target.gid}|${artist.mbid}`)) {
           info.exact++;
@@ -11407,6 +11462,8 @@
       const lt = idx().ltById.get(f.ltId);
       const dateInfo = validateDateFields(f.date);
       if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value) continue;
+      // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
+      if (workLocked({ ...work, planned: false })) continue;
       items.push({
         kind: 'credit', fillDate: key, lt, attrs: [], noteText: '', credit: '', date: dateInfo.value, key: `fd|${key}`,
         artist: { mbid: f.mbid, mbName: f.name, name: f.name },
@@ -16615,8 +16672,21 @@
   // is submitted too, they are kept here (per release), so they cannot be forgotten.
 
   const readCreatedWorks = () => readJson('localStorage', CREATED_KEY, []);
+  /**
+   * [Z-NWA] (3.57.0, review) The works made with the form in this browser (the last 500, of every release): they stay open to
+   * supplements once MusicBrainz has their link (rule S083 locks only the works of others).
+   */
+  const OWN_WORKS_KEY = 'dci-own-works';
+  const ownWorks = () => new Set(readJson('localStorage', OWN_WORKS_KEY, []));
+  function rememberOwnWork(gid) {
+    const list = readJson('localStorage', OWN_WORKS_KEY, []).filter((g) => g !== gid);
+    list.push(gid);
+    writeJson('localStorage', OWN_WORKS_KEY, list.slice(-500));
+  }
 
   function rememberCreatedWork(i, gid, title) {
+    rememberOwnWork(gid);
+    S.ownWorks = null;
     const list = readCreatedWorks().filter((x) => x.gid !== gid);
     // (stored as "discogsId", as earlier versions did)
     list.push({ i, rec: S.mbTracks[i].recordingGid, gid, title, discogsId: (S.source === DISCOGS && srcReleaseId()) || '', ts: Date.now() });
@@ -25837,6 +25907,7 @@
       }
       // [Z-CWR] (3.56.0) writers left out beside composer, lyricist or librettist
       if (info.exact) parts.push(tr('status.writerExact', { n: info.exact }));
+      if (info.locked) parts.push(tr('status.workLocked', { n: info.locked }));
       if (info.loose) {
         parts.push(tr('status.loose', { n: info.loose }));
         el.classList.add('dci-warn');
@@ -26862,7 +26933,8 @@
         // the relationship already)
         const w = worksForTrack(i)[0];
         const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
-        why = !w ? 'wnote.needWork' : w.gid === r.found.gid ? 'wnote.needOwn'
+        // ([Z-NWA] 3.57.0, review) an existing work is not supplemented: not staged
+        why = !w ? 'wnote.needWork' : w.gid === r.found.gid ? 'wnote.needOwn' : workLocked(w) ? 'wnote.locked'
           : lt && S.existing && S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`) ? 'wnote.exists' : 'wnote.staged';
         state = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener" title="${esc(r.found.title)} – ${esc(tr(why))}"><span class="dci-src dci-src-mb">MB</span>✓</a>${why === 'wnote.needOwn'
           ? ` <span class="dci-sub dci-warn">${esc(tr('wnote.needOwnShort'))}</span>` : ''}${sr(`${r.found.title} ${tr(why)}`)}`;
@@ -27697,7 +27769,9 @@
 
   /** What a cell holds: relationships already in MB, planned ones, and publisher evidence. */
   function cellState(col, mrow) {
-    const existing = mrow.work && !mrow.work.planned ? (mrow.work.rels || []).filter((r) => r.mbid === col.mbid && matrixRel(r, col)) : [];
+    // ([Z-NWA] 3.57.0, review) a work found and chosen: its relationships as the search or the lookup brought them
+    const rels = !mrow.work ? [] : !mrow.work.planned ? mrow.work.rels || [] : mrow.work.origin === 'search' ? foundRelsOf(mrow.work.gid) : [];
+    const existing = rels.filter((r) => r.mbid === col.mbid && matrixRel(r, col));
     const active = col.rows.filter((r) => r.tracks.has(mrow.i) && !(mrow.work && r.excluded && r.excluded.has(`${mrow.i}|${mrow.work.gid}`)));
     const fresh = active.filter((r) => !existing.some((x) => norm(x.type) === norm(rowTypeName(r))));
     const ev = col.artist && col.artist.pubEvidence;
@@ -27764,7 +27838,8 @@
    * said so explicitly (older cached data without dates is left alone).
    */
   function datelessExisting(col, mrow, st = cellState(col, mrow)) {
-    if (!mrow.work || mrow.work.planned) return [];
+    // ([Z-NWA] 3.57.0, review) an existing work gets no dates either (a cell's date, a column's date)
+    if (!mrow.work || mrow.work.planned || workLocked(mrow.work)) return [];
     return st.existing.filter((r) => r.begin === '' && r.end === '' && r.typeId);
   }
 
@@ -28837,7 +28912,9 @@
     const dPos = S.srcTracks[i] ? S.srcTracks[i].position : '';
     const head = `<div class="dci-mx-title"><span class="dci-tn">${esc(trackLabel(track))}</span> <strong>${esc(track.title)}</strong>${dPos
       ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}</div>${workNotesHtml(i)}`;
-    const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>`;
+    // ([Z-NWA] 3.57.0, S083) an existing work: a lock – only its link is staged
+    const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${workLocked(w)
+      ? ` <span class="dci-mx-wlock" title="${esc(tr('matrix.workLockedRow'))}">${LOCK_SVG}<span class="dci-sr">${esc(tr('matrix.workLockedRow'))}</span></span>` : ''}`;
     const line = (inner) => `<div class="dci-mx-line">${inner}${linkAttrsToggleHtml(mrow)}</div>`;
     const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
@@ -28946,6 +29023,7 @@
     const chip = (kind, text, title) => `<span class="dci-mxchip dci-mxchip-${kind}" title="${esc(title)}">${text}</span>`;
     // [Z-CWR] (3.56.0, S082) a writer beside composer, lyricist or librettist of the same person: struck through, not staged
     // ((review) the same pairs as the plan: a composer of the person on another track of this work counts too)
+    const locked = !!mrow.work && workLocked(mrow.work);
     const exactHere = ruleOn('S082') && (mrow.work && col.mbid && S.writerExact ? S.writerExact.has(`${mrow.work.gid}|${col.mbid}`)
       : [...st.active.map((r) => rowTypeName(r)), ...st.existing.map((r) => r.type)].some((t) => WRITER_EXACT.includes(norm(t))));
     const codes = [
@@ -28960,33 +29038,35 @@
           : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         const label = rowPhrase(r) || rowTypeName(r);
+        // [Z-NWA] (3.57.0, S083) an existing work: what the matrix suggests is not added – struck through, the cell locked
+        if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr('matrix.workLocked')}`);
         if (exactHere && norm(rowTypeName(r)) === 'writer') return chip('cwr', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, tr('matrix.writerExact'));
         // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
         return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
       }),
     ].join('');
-    const title = st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
+    const title = locked ? tr('matrix.workLocked') : st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
       : st.hint ? tr('matrix.hint', { list: st.hint }) : st.unclear ? tr('matrix.unclear') : '';
     const collapsed = S.mxCollapsed.has(col.key) || col.removed;
     const menuOpen = S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key;
-    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly ? 'dci-mx-locked' : '',
+    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length && !locked ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly || locked ? 'dci-mx-locked' : '', locked ? 'dci-mx-wlocked' : '',
     ].filter(Boolean).join(' ');
     if (collapsed) return `<td class="${cls} dci-mx-collapsed" title="${esc(title)}">${st.existing.length || st.active.length ? '•' : ''}</td>`;
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
-    const fills = fillsOfCell(col, mrow).map(([key, f]) => {
+    const fills = (locked ? [] : fillsOfCell(col, mrow)).map(([key, f]) => {
       const staged = S.filledDates.has(key);
       const label = workTypePhrase(f.type, col.entityType) || f.type;
       return `<span class="dci-mx-fill" title="${esc(tr(staged ? 'matrix.fillStaged' : 'matrix.fillTitle', { type: label }))}">⌚ ${esc(roleCode(f.type, false, label))} ${esc(formatDateValue(validateDateFields(f.date).value) || '')}${staged ? ' ✓'
         : `<button type="button" class="dci-iconbtn" data-act="mx-fill-remove" data-key="${esc(key)}" aria-label="${esc(tr('matrix.fillRemove'))}" title="${esc(tr('matrix.fillRemove'))}">×</button>`}</span>`;
     }).join('');
-    const fillable = datelessExisting(col, mrow, st).length ? ' data-fill="1"' : '';
-    const suggBtns = sugg.length ? `<span class="dci-mx-suggbtns"><button type="button" class="dci-iconbtn dci-ok" data-act="mx-sugg-ok" title="${esc(tr('matrix.suggOk'))}" aria-label="${esc(tr('matrix.suggOk'))}">✓</button><button type="button" class="dci-iconbtn" data-act="mx-sugg-no" title="${esc(tr('matrix.suggNo'))}" aria-label="${esc(tr('matrix.suggNo'))}">×</button></span>` : '';
+    const fillable = !locked && datelessExisting(col, mrow, st).length ? ' data-fill="1"' : '';
+    const suggBtns = sugg.length && !locked ? `<span class="dci-mx-suggbtns"><button type="button" class="dci-iconbtn dci-ok" data-act="mx-sugg-ok" title="${esc(tr('matrix.suggOk'))}" aria-label="${esc(tr('matrix.suggOk'))}">✓</button><button type="button" class="dci-iconbtn" data-act="mx-sugg-no" title="${esc(tr('matrix.suggNo'))}" aria-label="${esc(tr('matrix.suggNo'))}">×</button></span>` : '';
     return `<td class="${cls}" data-col="${esc(col.key)}" data-mrow="${esc(mrow.key)}"${fillable} title="${esc(title)}">
-      ${col.mbOnly ? `<span class="dci-mx-chips">${codes}</span>` : `<button type="button" class="dci-mx-toggle${codes ? '' : ' dci-mx-empty'}" data-act="mx-cell" aria-label="${esc(tr('matrix.toggle', { name: col.name }))}">${codes || '+'}</button>${suggBtns}
+      ${col.mbOnly || locked ? `<span class="dci-mx-chips">${codes}</span>` : `<button type="button" class="dci-mx-toggle${codes ? '' : ' dci-mx-empty'}" data-act="mx-cell" aria-label="${esc(tr('matrix.toggle', { name: col.name }))}">${codes || '+'}</button>${suggBtns}
       <button type="button" class="dci-iconbtn dci-mx-more" data-act="mx-menu" aria-label="${esc(tr('matrix.menuTitle'))}">▾</button>`}
       ${fills}
-      ${menuOpen ? cellMenuHtml(col, mrow, st) : ''}</td>`;
+      ${menuOpen && !locked ? cellMenuHtml(col, mrow, st) : ''}</td>`;
   }
 
   function cellMenuHtml(col, mrow, st) {
@@ -29058,13 +29138,13 @@
       return `<th scope="col" class="dci-mx-col dci-mx-locked dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
         <div class="dci-mx-colname">${columnKindTag(col)}${LOCK_SVG}${name}</div>
         <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}${btns}</div>
-        ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
+        ${menu(ruleOn('S083') ? `<p class="dci-sub">${esc(tr('matrix.colDateLocked'))}</p>` : `<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
     const nWorks = matrixRows().filter((m) => { const st = cellState(col, m); return st.active.length || st.existing.length; }).length;
     const roles = defaultRowsOf(col).filter((r, k, all) => all.findIndex((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub')) === k)
       .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowPhrase(r) || rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowPhrase(r)))}</span>`).join('');
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
-    const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
+    const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => !workLocked(m.work) && cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
     // [3.31.6] tracks from the notes: where they come from (item 97c)
     const notesFrom = uniq(col.rows.map((r) => r.notesFrom).filter(Boolean));
@@ -29417,7 +29497,8 @@
         ? `<button type="button" class="dci-primary dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createBtn'))}</button>
           ${sw.offer ? `<button type="button" class="dci-small" data-act="suite-pick" title="${esc(tr('suite.pickTitle'))}">${esc(tr('suite.partPick', { title: sw.offer.title }))}</button>` : ''}
           <span class="dci-suite-wait">${esc(tr('suite.wait'))}</span>`
-        : `<a class="dci-suite-mb" href="/work/${esc(sw.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: sw.title }))}</a>`;
+        : `<a class="dci-suite-mb" href="/work/${esc(sw.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: sw.title }))}</a>${workLocked({ ...sw, planned: true })
+          ? ` <span class="dci-mx-wlock" title="${esc(tr('suite.locked'))}">${LOCK_SVG}<span class="dci-sr">${esc(tr('suite.locked'))}</span></span>` : ''}`;
       return `<p class="dci-sub dci-mx-suite-done" data-suite="${esc(o.key)}">${esc(tr('suite.done', { tracks, name: a.name, n }))}
         ${suite}
         <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.undoTitle'))}">↺ ${esc(tr('suite.undo'))}</button></p>`;
@@ -29992,7 +30073,8 @@
     const mrow = cellEl && matrixRows().find((m) => m.key === cellEl.dataset.mrow);
     switch (act) {
       case 'mx-cell': {
-        if (!col || !mrow || col.mbOnly) return true;
+        // ([Z-NWA] 3.57.0) a cell of an existing work is locked
+        if (!col || !mrow || col.mbOnly || workLocked(mrow.work)) return true;
         const st = cellState(col, mrow);
         if (st.active.length) st.active.forEach((r) => removeCell(r, mrow));
         else {
@@ -30008,7 +30090,7 @@
       case 'mx-sugg-ok':
       case 'mx-sugg-no': {
         // A suggested role of a cell (publisher evidence, Discogs notes): kept, or taken out
-        if (!col || !mrow) return true;
+        if (!col || !mrow || workLocked(mrow.work)) return true;
         cellState(col, mrow).active.filter((r) => isSuggestedCell(r, mrow.i)).forEach((r) => {
           if (act === 'mx-sugg-ok') r.confirmed = (r.confirmed || new Set()).add(mrow.i);
           else removeCell(r, mrow);
@@ -30018,7 +30100,7 @@
         break;
       }
       case 'mx-menu':
-        S.mxMenu = col && mrow && !(S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key) ? { col: col.key, mrow: mrow.key } : null;
+        S.mxMenu = col && mrow && !workLocked(mrow.work) && !(S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key) ? { col: col.key, mrow: mrow.key } : null;
         break;
       case 'mx-menu-close':
         S.mxMenu = null;
@@ -30205,7 +30287,7 @@
       case 'mx-celldate-apply': {
         const f = S.mxMenu && S.mxMenu.date;
         const info = f ? validateDateFields(f) : { error: 'empty' };
-        if (!col || !mrow || !f || info.error || !info.value) {
+        if (!col || !mrow || !f || info.error || !info.value || workLocked(mrow.work)) {
           const err = btn.parentElement.querySelector('[data-xd-err]');
           if (err) err.textContent = dateErrorText(info.error || 'empty');
           return true;
@@ -30341,7 +30423,7 @@
         S.mxAddCol = { ...(S.mxAddCol || {}), mbid: el.value, error: '' };
         return true;
       case 'mx-role': {
-        if (!col || !mrow) return true;
+        if (!col || !mrow || workLocked(mrow.work)) return true;
         const [ltId, sub] = el.value.split(':');
         const lt = idx().ltById.get(Number(ltId));
         const isSub = sub === 'sub';
@@ -30357,7 +30439,7 @@
       }
       case 'xd-pool': {
         const entry = S.datePool.find((d) => d.id === el.value);
-        if (col && mrow && entry) {
+        if (col && mrow && entry && !workLocked(mrow.work)) {
           cellOwnDate(col, mrow, { ...fieldsFromDate(entry), poolId: entry.id });
           S.mxMenu = null;
         }
@@ -30502,6 +30584,8 @@
           else if (info && info.existing > 0) status = 'mb';
           // ([Z-CWR] 3.56.0, review) only writers left out beside composer, lyricist or librettist: the more exact type covers them
           else if (info && info.exact > 0) status = 'mb';
+          // ([Z-NWA] 3.57.0) only credits on existing works, not supplemented: skipped
+          else if (info && info.locked > 0) status = 'skip';
           // For the check on the release page: MB entry, type and targets (indices into the shared target list)
           let mb = null;
           if (info && info.mb && (info.mb.t.length || info.mb.r.length) && row.level !== 'skip') {
@@ -38566,6 +38650,9 @@
       /* Waits for a work: grey dotted (not a suggestion) */
       /* [Z-CWR] (3.56.0) a writer left out beside a more exact type */
       .dci-mxchip-cwr { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
+      .dci-mxchip-nwa { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
+      .dci-mx-wlock { color: var(--muted); display: inline-flex; vertical-align: middle; }
+      .dci-mx-wlock .dci-lock { width: calc(var(--u, 1px) * 11); height: calc(var(--u, 1px) * 11); }
       .dci-mxchip-wait { border-style: dotted; border-color: #aeaabf; border-left-style: solid; border-left-color: #c8c5d6; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mxchip sup { font-size: 0.7em; }
       .dci-mxwait { font-size: calc(var(--u, 1px) * 11); font-weight: 400; }
