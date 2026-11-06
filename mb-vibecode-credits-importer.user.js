@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.55.0
+// @version      3.56.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.55.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.55.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.56.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.56.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.55.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.56.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -526,6 +526,9 @@
       "status.noWork.one": "{n} track without a work",
       "status.noWork.other": "{n} tracks without a work",
       "status.loose": "{n}× the type exists with other attributes",
+      "status.writerExact.one": "{n}× writer left out: composer, lyricist or librettist is more exact",
+      "status.writerExact.other": "{n}× writer left out: composer, lyricist or librettist is more exact",
+      "matrix.writerExact": "writer – left out: this person has a more exact type on this work (composer, lyricist or librettist)",
       "status.nothing": "nothing new",
       "issue.searching": "looking up MB artist",
       "issue.missingArtist": "MB artist missing",
@@ -3551,6 +3554,8 @@
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
+    // [3.56.0] collected item Z-CWR
+    { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
     { id: 'S081', where: 'workSuggestion, workSuggestHtml', note: 'New works (3.52.0): a work type and a lyrics language suggested from the works of the artists in MusicBrainz that the works matrix reads (from 3 works on) – each the one of more than half of them, "no work type" and "no lyrics language" too (the languages of a work together); a value without such a majority is not suggested. Yellow in the head of the matrix and at the rows: "Accept" fills it in for all new works (each can still be changed); not accepted, neither type nor language of it is filled in' },
     // [3.51.0] collected item Z-PCR
     { id: 'S080', where: 'sourceCreditFor, withoutAreaTail', note: 'Places and labels (3.51.0): the town or country after a comma in the name at the source – "Sound Development Studio, Zürich" – is no "credited as" when the rest is MusicBrainz\'s name ("Sound Development Studio": none) or the end is the area the source gives (the name without it); kept when it is part of MusicBrainz\'s name ("Studio, Zürich" for "Studio Zürich")' },
@@ -9829,6 +9834,11 @@
     const ids = uniq((writerMbids || []).filter(Boolean));
     if (!ids.length) return [];
     const data = await mbWs(`work?query=${encodeURIComponent(buildWorkQuery(title, ids))}&limit=25`);
+    // [Z-CWR] (3.56.0, review) the artists' relationships of each work found, kept: once it is picked they count as in MusicBrainz
+    ((data && data.works) || []).forEach((w) => {
+      if (!S.foundWorkRels) S.foundWorkRels = new Map();
+      if (w.id && Array.isArray(w.relations)) S.foundWorkRels.set(w.id, w.relations);
+    });
     return ((data && data.works) || []).map((w) => ({
       gid: w.id,
       title: w.title,
@@ -10422,6 +10432,30 @@
   };
 
   const $ = (name) => S.overlay.querySelector(`[data-el="${name}"]`);
+
+  /**
+   * [Z-CWR] (3.56.0, review) A work found by the search and picked: its artists' relationships in MusicBrainz count as existing (a writer
+   * beside a composer of theirs is left out, S082). A relation without its type id gets the id of the type of that name. A work
+   * the search did not bring (the works of the artists have no relationships) is looked up once, then the plan is drawn again.
+   */
+  function addFoundWorkRels(gid) {
+    if (!S.existing || !MBID_RE.test(String(gid || ''))) return;
+    const add = (rels) => {
+      const byName = new Map(typesFor('work', 'artist').map((lt) => [norm(lt.name), lt.gid]));
+      addExistingArtistRels(S.existing, gid, (rels || []).map((r) => (r['type-id'] ? r : { ...r, 'type-id': byName.get(norm(r.type || '')) || '' })));
+    };
+    const rels = S.foundWorkRels && S.foundWorkRels.get(gid);
+    if (rels) { add(rels); return; }
+    const existing = S.existing;
+    mbWs(`work/${gid}?inc=artist-rels`).then((w) => {
+      if (!w || S.existing !== existing) return;
+      if (!S.foundWorkRels) S.foundWorkRels = new Map();
+      S.foundWorkRels.set(gid, w.relations || []);
+      add(w.relations);
+      renderWorks();
+      refresh();
+    }).catch((e) => console.warn('[Discogs-Credits]', e));
+  }
 
   function addExistingArtistRels(existing, targetGid, rels) {
     (rels || []).forEach((r) => {
@@ -11066,6 +11100,31 @@
     return out;
   }
 
+  /**
+   * [Z-CWR] (3.56.0, S082) "work gid|artist MBID" of each person with a type under writer (composer, lyricist, librettist) on a work:
+   * rows of the works matrix on its cells (planned here), and the relationships of the works in MusicBrainz.
+   */
+  function writerExactPairs() {
+    const out = new Set();
+    for (const row of S.rows) {
+      if (row.level !== 'work' || row.company) continue;
+      const lt = currentLinkType(row);
+      const artist = S.artists.get(row.artistKey);
+      if (!lt || !artist || !artist.mbid || !WRITER_EXACT.includes(norm(lt.name))) continue;
+      for (const i of row.tracks) {
+        for (const w of worksForTrack(i)) {
+          if (!(row.excluded && row.excluded.has(`${i}|${w.gid}`))) out.add(`${w.gid}|${artist.mbid}`);
+        }
+      }
+    }
+    const exactGids = new Set(typesFor('work', 'artist').filter((lt) => WRITER_EXACT.includes(norm(lt.name))).map((lt) => lt.gid));
+    for (const k of (S.existing && S.existing.loose) || []) {
+      const [t, e, ltGid] = String(k).split('|');
+      if (exactGids.has(ltGid)) out.add(`${t}|${e}`);
+    }
+    return out;
+  }
+
   function computePlan() {
     const items = [];
     const rowInfo = new Map();
@@ -11178,8 +11237,11 @@
       }
     }
 
+    // [Z-CWR] (3.56.0, S082) works with a more exact type than writer for a person: work gid|artist MBID
+    const exactOnWork = ruleOn('S082') ? writerExactPairs() : new Set();
+    S.writerExact = exactOnWork;
     for (const row of S.rows) {
-      const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null };
+      const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null, exact: 0 };
       rowInfo.set(row.id, info);
       if (row.level === 'skip') continue;
       // [3.18.0] a row put on the works level by hand while the works matrix is skipped: nothing of it is staged
@@ -11234,8 +11296,10 @@
       // What the release page checks later: this MB entry with this type on these targets. A work that is new in
       // the editor has no MBID yet: it is found later through its recording ("r").
       const isMbid = (g) => MBID_RE.test(String(g || ''));
-      const tTargets = targets.filter((x) => isMbid(x.gid));
-      const rTargets = targets.filter((x) => x.kind === 'work' && !isMbid(x.gid) && x.track && isMbid(x.track.recordingGid));
+      // ([Z-CWR] 3.56.0, review) a writer left out beside a more exact type is not looked for after "Enter edit"
+      const leftOut = (x) => x.kind === 'work' && norm(lt.name) === 'writer' && exactOnWork.has(`${x.gid}|${artist.mbid}`);
+      const tTargets = targets.filter((x) => isMbid(x.gid) && !leftOut(x));
+      const rTargets = targets.filter((x) => x.kind === 'work' && !isMbid(x.gid) && x.track && isMbid(x.track.recordingGid) && !leftOut(x));
       // tt / rt: the track of each target, for the marks of each Discogs track line
       info.mb = {
         e: artist.mbid, lt: lt.gid, t: tTargets.map((x) => x.gid), tt: tTargets.map((x) => (x.track ? x.track.idx : -1)),
@@ -11254,6 +11318,12 @@
         const baseKey = `${target.gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
         const rowDate = row.dateKeyed ? formatDateValue(rowDateInfo(row, lt).value) : '';
         const key = rowDate ? `${baseKey}|d:${rowDate}` : baseKey;
+        // [Z-CWR] (3.56.0, S082) a writer where the person has composer, lyricist or librettist on this work: left out
+        if (target.kind === 'work' && norm(lt.name) === 'writer' && exactOnWork.has(`${target.gid}|${artist.mbid}`)) {
+          info.exact++;
+          markTrack(target, 'mb');
+          return;
+        }
         planned.add(key);
         if (target.track && !inMedium(target.track.idx)) return;
         const item = { kind: 'credit', row, artist, lt, attrs, noteText, target, key, credit: row.credit.trim(), date: rowDateInfo(row, lt).value };
@@ -25765,6 +25835,8 @@
         parts.push(tr('status.noWork', { n: info.noWork }));
         el.classList.add('dci-warn');
       }
+      // [Z-CWR] (3.56.0) writers left out beside composer, lyricist or librettist
+      if (info.exact) parts.push(tr('status.writerExact', { n: info.exact }));
       if (info.loose) {
         parts.push(tr('status.loose', { n: info.loose }));
         el.classList.add('dci-warn');
@@ -26207,6 +26279,8 @@
     const out = [];
     for (const row of S.rows) {
       if (row.level !== 'work' || !row.tracks.has(i)) continue;
+      // ((3.56.0, review) a cell taken out of a work of the track stays out)
+      if (row.excluded && worksForTrack(i).some((w) => row.excluded.has(`${i}|${w.gid}`))) continue;
       const artist = S.artists.get(row.artistKey);
       const lt = currentLinkType(row);
       if (!artist || !artist.mbid || !lt) continue;
@@ -26214,7 +26288,9 @@
         out.push({ mbid: artist.mbid, name: artist.mbName || artist.name, linkTypeId: lt.id, typeName: lt.name, credit: row.credit.trim() });
       }
     }
-    return out;
+    // [Z-CWR] (3.56.0, S082, review) the forms of new works and suites: no writer beside composer, lyricist or librettist of the person
+    if (!ruleOn('S082')) return out;
+    return out.filter((w) => norm(w.typeName) !== 'writer' || !out.some((x) => x.mbid === w.mbid && WRITER_EXACT.includes(norm(x.typeName))));
   }
 
   const trackLabel = (track) => `${track.medium}.${track.number}`;
@@ -26470,6 +26546,8 @@
     },
   };
   const WRITER_TYPES = ['composer', 'lyricist', 'writer', 'librettist'];
+  // [Z-CWR] (3.56.0, S082) the types under writer: one of them on a work, no writer of the same person beside it
+  const WRITER_EXACT = ['composer', 'lyricist', 'librettist'];
   const ARRANGER_TYPES = ['arranger', 'instrument arranger', 'vocal arranger', 'orchestrator'];
   // MusicBrainz names by default; a choice made in the list is remembered.
   S.roleCodes = readJson('localStorage', 'dci-role-codes', 'names');
@@ -28866,6 +28944,10 @@
     const st = cellState(col, mrow);
     const sugg = st.active.filter((r) => isSuggestedCell(r, mrow.i));
     const chip = (kind, text, title) => `<span class="dci-mxchip dci-mxchip-${kind}" title="${esc(title)}">${text}</span>`;
+    // [Z-CWR] (3.56.0, S082) a writer beside composer, lyricist or librettist of the same person: struck through, not staged
+    // ((review) the same pairs as the plan: a composer of the person on another track of this work counts too)
+    const exactHere = ruleOn('S082') && (mrow.work && col.mbid && S.writerExact ? S.writerExact.has(`${mrow.work.gid}|${col.mbid}`)
+      : [...st.active.map((r) => rowTypeName(r)), ...st.existing.map((r) => r.type)].some((t) => WRITER_EXACT.includes(norm(t))));
     const codes = [
       ...st.existing.map((r) => {
         const label = workTypePhrase(r.type, col.entityType, r.attrs || []) || r.type;
@@ -28878,6 +28960,7 @@
           : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         const label = rowPhrase(r) || rowTypeName(r);
+        if (exactHere && norm(rowTypeName(r)) === 'writer') return chip('cwr', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, tr('matrix.writerExact'));
         // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
         return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
@@ -29755,6 +29838,8 @@
       el.hidden = true;
       return;
     }
+    // [Z-CWR] (3.56.0, review) the pairs of the cells as they are now (a work just chosen or made: the plan is drawn after the matrix)
+    if (ruleOn('S082')) S.writerExact = writerExactPairs();
     el.hidden = false;
     const mrows = matrixRows();
     const cols = matrixColumns();
@@ -30415,6 +30500,8 @@
           else if (info && (info.ready > 0 || info.issues.length)) status = 'open';
           else if (info && info.applied > 0) status = 'staged';
           else if (info && info.existing > 0) status = 'mb';
+          // ([Z-CWR] 3.56.0, review) only writers left out beside composer, lyricist or librettist: the more exact type covers them
+          else if (info && info.exact > 0) status = 'mb';
           // For the check on the release page: MB entry, type and targets (indices into the shared target list)
           let mb = null;
           if (info && info.mb && (info.mb.t.length || info.mb.r.length) && row.level !== 'skip') {
@@ -33364,6 +33451,7 @@
         const i = workIndexOf(btn);
         S.mxWorksOpen = null;
         S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set(), composer: btn.dataset.composer || '', composerName: btn.dataset.composerName || '' });
+        addFoundWorkRels(btn.dataset.gid);
         log('info', 'workPicked', { track: trackLabel(S.mbTracks[i]), title: btn.dataset.title });
         rememberArtistWork(i, btn.dataset.gid, btn.dataset.title);
         renderWorks();
@@ -38476,6 +38564,8 @@
       .dci-mxchip-on { border-color: #c7d5f0; border-left-color: var(--role); background: #eef4ff; color: #2c4a80; }
       .dci-mxchip-sugg { border-style: dashed; border-color: var(--sugg-line); border-left-style: solid; border-left-color: var(--role); background: var(--sugg-bg); color: var(--sugg-ink); }
       /* Waits for a work: grey dotted (not a suggestion) */
+      /* [Z-CWR] (3.56.0) a writer left out beside a more exact type */
+      .dci-mxchip-cwr { border-style: dashed; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mxchip-wait { border-style: dotted; border-color: #aeaabf; border-left-style: solid; border-left-color: #c8c5d6; background: #fff; color: var(--muted); font-weight: 400; }
       .dci-mxchip sup { font-size: 0.7em; }
       .dci-mxwait { font-size: calc(var(--u, 1px) * 11); font-weight: 400; }

@@ -661,10 +661,11 @@ def case_kindcolors():
 
 def case_foot():
     """Credits Importer 3.38.4: the footer compact (collected item 169).
-    A) 1500 px (window): one line, at most 60 px high (until 3.38.3 about 200) – ▲▼, the summary in one line ("25 new relationships ·
+    A) 1500 px (window): one line, at most 60 px high (until 3.38.3 about 200) – ▲▼, the summary in one line ("24 new relationships ·
        ‹ 1 row incomplete › · 1 already on MB"; the levels in the tooltip), the chip "2 tracks without a work" (the whole message in
        its tooltip; clicked: shown below, again: hidden), "Preview", the short checkboxes (the long texts in their tooltips),
-       "Stage …" at the right, ⓘ "Nothing is submitted …"; no "⚙ Options".
+       "Stage …" at the right, ⓘ "Nothing is submitted …"; no "⚙ Options" ([3.56.0, Z-CWR] 24: the writer of Writer W on WORK1
+       is left out beside the composer in MusicBrainz).
     B) 900 px: two lines (at most 90 px) – the checkboxes in "⚙ Options ▾": it opens above, inside the dashboard, a box ticked there
        counts; a click elsewhere and Esc close it.
     C) 600 px: "Stage …" whole and inside the dashboard, at most 120 px.
@@ -699,7 +700,7 @@ def case_foot():
         a_shut = pg.evaluate(M)['msg']
         print('A) 1500:', a, '\n   Meldung:', a_open, a_shut)
         spread = max(a['tops']) - min(a['tops'])
-        ok_a = a['h'] <= 60 and spread <= 6 and a['sum'] == '25 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
+        ok_a = a['h'] <= 60 and spread <= 6 and a['sum'] == '24 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
             and a['chips'] == [['2 tracks without a work', '2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.']] \
             and a_open == ['2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.'] and a_shut == [] \
             and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['fill role credits', True], ['≤ 500 per staging', True]] \

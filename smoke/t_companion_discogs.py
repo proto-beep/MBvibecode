@@ -185,7 +185,9 @@ def case_trackmarks():
     """Status marks on Discogs for credits on track lines: one mark on each line, with the status of that track
     ("Written-By – Writer W" under tracks 1 and 2: two marks). On the release page each line is checked on its own:
     track 2's work is new in the editor and its link still open → ✗ there, ✓ on track 1; once the work is linked,
-    ✓ on both."""
+    ✓ on both.
+    [3.56.0, Z-CWR] Writer W is composer of track 1's work in MusicBrainz: the writer is left out there (rule S082) and its
+    line is ✓ from the start (until 3.55.0 ○, then ●)."""
     WRITER = H.ARTISTS[3007][0]
     results = []
 
@@ -206,7 +208,7 @@ def case_trackmarks():
         dg.wait_for_timeout(1500)
         m0 = marks(dg)
         print('1) vor dem Übernehmen (Track-Zeilen):', m0)
-        ok1 = sorted((x[0], x[2]) for x in m0) == [('1', 'Writer W'), ('2', 'Writer W')] and all(x[1] == '○' for x in m0)
+        ok1 = sorted((x[0], x[2]) for x in m0) == [('1', 'Writer W'), ('2', 'Writer W')] and dict((x[0], x[1]) for x in m0) == {'1': '✓', '2': '○'}
         # track 2 gets a new work in the editor; everything is staged
         pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(400)
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
@@ -214,7 +216,7 @@ def case_trackmarks():
         dg.wait_for_timeout(2000)
         m1 = marks(dg)
         print('2) nach Übernehmen:', m1)
-        ok1 = ok1 and sorted(x[1] for x in m1) == ['●', '●'] and any(x[3].startswith('1:') for x in m1)
+        ok1 = ok1 and dict((x[0], x[1]) for x in m1) == {'1': '✓', '2': '●'} and any(x[3].startswith('1:') for x in m1)
         results.append(ok1)
         H.submit_staged(pg)
         # the link of the new work (track 2) is still an open edit
