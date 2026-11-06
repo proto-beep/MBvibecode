@@ -1411,4 +1411,108 @@ def case_tarbaby():
 
 
 
+def case_titlecomposers():
+    """Credits Importer 3.60.0 (collected item Z-TCP, rule S088): a track list with the composers in brackets after the titles –
+    "1 Blessed Ones The Eternal Truth (Orrin Evans)", "2 Bonu (Oliver Lake)", "3 Bumper (Tarbaby)", "4 Dance Of The Evil Toys (Prince)".
+    A) Each name writes its track (a work-level row on that track only); Tarbaby stays the group (no rows for its members); nothing not
+       recognized. No genre known: writer; the switch above the works matrix says so.
+    B) "Composer" in the switch: every such row composer; "Writer" again: writer.
+    C) MusicBrainz has a work "Bonu" by Oliver Lake: it is offered for track 2 (found by the name, in the background).
+    D) Jazz in the tags of the page: composer from the start ("from the genre of the source: jazz").
+    E) Rule S088 off: the lines are not read so (no rows with those tracks)."""
+    PAGE = 'https://cleanfeedrecords.bandcamp.com/'
+    ALBUM = PAGE + 'album/dance-of-the-evil-toys'
+    TITLES = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Dance Of The Evil Toys']
+    H.TITLES[:] = TITLES
+    TB = H.uid('dddddddd', 3600)
+    who = {n: H.uid('dddddddd', 3601 + k) for k, n in enumerate(['Orrin Evans', 'Oliver Lake', 'Prince'])}
+    H.RELEASE_AC[:] = [(TB, 'Tarbaby', 'Tarbaby', '')]
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for n, g in [('Tarbaby', TB), *who.items()]]
+    BONU = H.uid('cccccccc', 3610)
+    H.WORK_SEARCH[:] = [{'id': BONU, 'title': 'Bonu', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': H.uid('dddddddd', 3699), 'name': 'Oliver Lake'}}]}]
+    H.JS_WORKS[BONU] = (7610, 'Bonu')
+    CREDITS = ('1 Blessed Ones The Eternal Truth (Orrin Evans)\n2 Bonu (Oliver Lake)\n3 Bumper (Tarbaby)\n4 Dance Of The Evil Toys (Prince)')
+
+    def page(tags):
+        html = H.bc_page({'artist': 'Tarbaby', 'current': {'title': 'Dance Of The Evil Toys', 'credits': CREDITS, 'about': '',
+                                                           'release_date': '17 Jun 2022 00:00:00 GMT'},
+                          'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]},
+                         band='Clean Feed Records')
+        if tags:
+            html = html.replace('</body>', ''.join(f'<a class="tag" href="https://bandcamp.com/discover/{t}">{t}</a>' for t in tags) + '</body>')
+        H.BC_PAGES[ALBUM] = html
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    # (work-level rows are in the works matrix: each column – its name, its roles, the tracks of its cells switched on)
+    ROWS = """(() => [...document.querySelectorAll('.dci-matrix [data-colhead]')].map(h => { const key = h.dataset.colhead;
+      const name = (h.querySelector('.dci-mx-name') || h).textContent.trim();
+      const roles = [...h.querySelectorAll('.dci-mx-role')].map(r => (r.getAttribute('title') || r.textContent).toLowerCase());
+      const role = roles.some(r => /composer/.test(r)) ? 'composer' : roles.some(r => /writer/.test(r)) ? 'writer' : roles.join('|').slice(0, 30);
+      const tracks = [...document.querySelectorAll(`.dci-matrix td.dci-mx-cell.dci-mx-on[data-col="${key}"]`)].map(td => Number(td.dataset.mrow.split(':')[1]) + 1);
+      return [name, [[role, [...new Set(tracks)].sort()]]]; }))()"""
+    BAR = "(() => { const b = document.querySelector('[data-el=works-tcp]'); return b ? [b.textContent.replace(/\\s+/g, ' ').trim(), [...b.querySelectorAll('[aria-pressed=true]')].map(x => x.dataset.role)] : null; })()"
+    results = []
+
+    def run(tags=(), off=False, clicks=()):
+        page(list(tags))
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S088']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            if off:
+                # (off: nothing read – no entries, no checks; the line of the log says what was not recognized)
+                pg.click('#dci-open')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Bandcamp read:/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1000)
+                out = {'read': [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Bandcamp read:' in x], 'bar': pg.evaluate(BAR)}
+                b.close()
+                return out
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            pg.wait_for_timeout(2500)
+            out = {'rows': pg.evaluate(ROWS), 'bar': pg.evaluate(BAR), 'unrec': pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())"),
+                   'offer': pg.evaluate(f"[...document.querySelectorAll('tr[data-work=\"1\"] [data-act=work-pick]')].map(b => b.dataset.gid)")}
+            for role in clicks:
+                pg.locator(f'[data-el=works-tcp] [data-act=mx-tcp][data-role={role}]').click(); pg.wait_for_timeout(500)
+                out[role] = (pg.evaluate(ROWS), pg.evaluate(BAR))
+            out['errs'] = errs
+            b.close()
+            return out
+
+    def types(rows):
+        return {n: [(t, tr) for t, tr in r if t] for n, r in rows}
+
+    o = run(clicks=('composer', 'writer'))
+    ty = types(o['rows'])
+    print('A)', ty, '| Leiste:', o['bar'], '| nicht erkannt:', o['unrec'])
+    results.append(ty.get('Oliver Lake') == [('writer', [2])] and ty.get('Orrin Evans') == [('writer', [1])] and ty.get('Tarbaby') == [('writer', [3])]
+                   and ty.get('Prince') == [('writer', [4])] and not o['unrec'] and o['bar'] and o['bar'][1] == ['writer'] and 'no genre' in o['bar'][0])
+    c, w = types(o['composer'][0]), types(o['writer'][0])
+    print('B) Composer:', c.get('Oliver Lake'), o['composer'][1], '| Writer:', w.get('Oliver Lake'), o['writer'][1])
+    results.append(c.get('Oliver Lake') == [('composer', [2])] and c.get('Tarbaby') == [('composer', [3])] and o['composer'][1][1] == ['composer']
+                   and w.get('Oliver Lake') == [('writer', [2])] and o['writer'][1][1] == ['writer'])
+    print('C) angeboten für Track 2:', o['offer'])
+    results.append(BONU in o['offer'] and not o['errs'])
+    o2 = run(tags=('jazz', 'free jazz'))
+    print('D)', types(o2['rows']).get('Oliver Lake'), o2['bar'])
+    results.append(types(o2['rows']).get('Oliver Lake') == [('composer', [2])] and o2['bar'] and 'jazz' in o2['bar'][0] and o2['bar'][1] == ['composer'])
+    o3 = run(off=True)
+    print('E) aus:', o3)
+    results.append(o3['read'] == ['Bandcamp read: 0 entries, 0 roles, 4 lines not recognized'] and o3['bar'] is None)
+    H.WORK_SEARCH[:] = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
