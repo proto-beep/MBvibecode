@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.65.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.66.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.66.0 · 2026-11-06
+
+Z-LCP – the box of the live comments.
+
+- **`runLiveJob`** (rule **S096**): besides the log lines, `entered` (comment → its tracks) and `skipped` (reason and its parameters → tracks) for **`liveNotice(lines, groups)`**, with whether the release has several media.
+- **`liveNotice`**: the lines other than those four kinds as before, then `livecom.noticeSet` and a list of the comments with `livecom.noticeTrack(s)`, then `livecom.noticeNot` and one line per reason (`livecom.notice.liveNotLive / liveConflict / liveOther`, plural by the tracks); `max-height: 70vh` with scrolling. Rule off: as before.
+- **`liveTracksText(positions, multi)`** (new, exported): "2–4, 6", "1.1–1.3, 2.1".
+- **Review:** the positions and the media from the same answer of MusicBrainz (`x.pos`, media with tracks); the sides of a record ("A1–A3, B1") and the same track once (`liveTracksCount`, also for the plurals); a failed edit names its comments under "Not entered" (`role=alert`); "nothing to enter" only when nothing was left out; the other lines (a changed credit) after the list; "Not entered" a list of its own; `livecom.noticeTracks` with its plural.
+- **Tests:** `t_works_more.py livecomrun` (the box), `livetracks` (new, Node); golden S096.
 
 ## Import 3.65.0 · 2026-11-06
 
