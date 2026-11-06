@@ -1,5 +1,5 @@
-"""Nothing of the dashboard lies on anything else (Credits Importer 3.51.0, collected item Z-OVL: "im screenshot überschneiden sich die
-anzeigen der statistik (v3.46.0) das soll an keiner stelle im skript so sein."): the texts of every view checked against each other –
+"""Nothing of the dashboard lies on anything else (Credits Importer 3.51.0, collected item Z-OVL – texts of the statistics lay on each
+other in 3.46.0; that must happen nowhere in the script): the texts of every view checked against each other –
 two texts that cover each other where both can be seen (no opaque ground of one over the other) are an overlap; a text that runs out of
 its card (wider than the card, the card not scrolling) too.
 

@@ -920,5 +920,109 @@ def case_wmx():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_cwr():
+    """Credits Importer 3.56.0 (collected item Z-CWR, rule S082): never writer beside a more exact type of the same person on a work.
+    Writer W is "Written-By" on tracks 1 and 2 (MusicBrainz has Writer W as composer of the work of track 1) and "Music By" on track 2;
+    Writer Z is "Composed By", "Lyrics By" and "Written-By" on track 3; new works for tracks 2 and 3.
+    A) The matrix: the writer of Writer W on tracks 1 and 2 and of Writer Z on track 3 struck through (its tooltip says why).
+    B) Staged: no writer of Writer W on the work of track 1 (composer in MusicBrainz) nor on the new work of track 2 (composer);
+       Writer Z composer and lyricist on the work of track 3, no writer.
+    C) Rule S082 switched off: the writers are staged (as before).
+    D) (review) A work found by the search and picked for track 2: MusicBrainz has Writer W as its composer – the writer of
+       Writer W there struck through and not staged (until the review the relationships of a picked work were not known).
+    F) (review) The form of a new work for track 3: Writer Z as composer and lyricist, not as writer."""
+    results = []
+    orig = H.discogs_release
+
+    def rel(music_by=True):
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        if music_by:
+            d['tracklist'][1]['extraartists'] = d['tracklist'][1]['extraartists'] + [ex('Writer W', 'Music By', 3007)]
+        d['tracklist'][2]['extraartists'] = d['tracklist'][2]['extraartists'] + [ex('Writer Z', 'Lyrics By', 3009), ex('Writer Z', 'Written-By', 3009)]
+        return d
+    H.discogs_release = rel
+    WW, WZ = H.ARTISTS[3007][0], H.ARTISTS[3009][0]
+    LT = {167: 'writer', 168: 'composer', 165: 'lyricist'}
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1 && [165, 167, 168].includes(r.linkTypeID))
+      .map(r => [r.entity0.gid, r.linkTypeID, r.entity1.gid || r.entity1.name]))()"""
+    CHIPS = """(() => [...document.querySelectorAll('.dci-matrix .dci-mxchip-cwr')].map(c => [c.closest('tr').dataset.work, c.textContent.trim(), c.title]))()"""
+
+    def run(rule_off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if rule_off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S082']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            for k in (1, 2):
+                pg.locator(f'.dci-matrix tr[data-work="{k}"] [data-act=work-pending]').evaluate('b => b.click()')
+                pg.wait_for_timeout(300)
+            chips = pg.evaluate(CHIPS)
+            status = pg.evaluate("[...document.querySelectorAll('.dci-status')].some(x => /writer left out/.test(x.textContent))")
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(500)
+            staged = pg.evaluate(STAGED)
+            b.close()
+            return chips, status, staged, errs
+
+    chips, status, staged, errs = run(False)
+    who = lambda g: 'W' if g == WW else 'Z' if g == WZ else g
+    st = sorted((who(a), LT.get(lt, lt), 'WORK1' if w == H.WORK1 else 'new') for a, lt, w in staged)
+    print('A)', chips, '\nB)', st, '| Hinweis:', status, '| Fehler:', errs)
+    results.append(sorted((x[0], x[1]) for x in chips) == [('0', 'writer'), ('1', 'writer'), ('2', 'writer')] and all('more exact type' in x[2] for x in chips))
+    results.append(not any(x[0] in ('W', 'Z') and x[1] == 'writer' for x in st) and ('W', 'composer', 'new') in st
+                   and ('Z', 'composer', 'new') in st and ('Z', 'lyricist', 'new') in st and not errs)
+    chips2, _, staged2, errs2 = run(True)
+    st2 = sorted((who(a), LT.get(lt, lt), 'WORK1' if w == H.WORK1 else 'new') for a, lt, w in staged2)
+    print('C)', chips2, st2)
+    results.append(not chips2 and ('W', 'writer', 'WORK1') in st2 and ('Z', 'writer', 'new') in st2 and not errs2)
+    # D) a picked work of the search, Writer W its composer in MusicBrainz (Writer W only "Written-By" on track 2); F) the form of a new work
+    H.discogs_release = lambda: rel(False)
+    FOUND = H.uid('cccccccc', 77)
+    H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs3 = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_for(pg, f"!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick][data-gid=\"{FOUND}\"]')", 30)
+        before = pg.evaluate(CHIPS)
+        pg.locator(f'tr[data-work="1"] [data-act=work-pick][data-gid="{FOUND}"]').evaluate('b => b.click()')
+        pg.wait_for_timeout(600)
+        chips3 = pg.evaluate(CHIPS)
+        # F) the form of a new work for track 3
+        pg.locator('tr[data-work="2"] [data-act=mx-newmenu]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('tr[data-work="2"] [data-act=work-create]').first.evaluate('b => b.click()')
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        info = pg.evaluate("document.querySelector('[data-el=sub-info]').textContent")
+        pg.click('[data-act=sub-close]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(500)
+        staged3 = pg.evaluate(STAGED)
+        b.close()
+    H.WORK_SEARCH[:] = []
+    st3 = sorted((who(a), LT.get(lt, lt), 'FOUND' if w == FOUND else 'WORK1' if w == H.WORK1 else w) for a, lt, w in staged3)
+    print('D) vorher:', [x[:2] for x in before], '| nach der Wahl:', [x[:2] for x in chips3], '|', st3, '| Fehler:', errs3)
+    results.append(('1', 'writer') not in [tuple(x[:2]) for x in before] and ('1', 'writer') in [tuple(x[:2]) for x in chips3]
+                   and not any(x[0] == 'W' and x[2] == 'FOUND' for x in st3) and not errs3)
+    print('F) Formular:', info)
+    results.append('composer: Writer Z' in info and 'lyricist: Writer Z' in info and 'writer: Writer Z' not in info)
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())

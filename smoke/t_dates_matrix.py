@@ -160,7 +160,8 @@ def case_dragdates():
         print('   Datum im Spaltenkopf:', chip)
         on = pg.locator('.dci-mx-cell.dci-mx-on').first
         mix = idof('Mix 1')
-        pg.drag_and_drop(f'.dci-pchip-date[data-id="{mix}"]', '.dci-mx-cell.dci-mx-on >> nth=0'); pg.wait_for_timeout(400)
+        # ([3.56.0, Z-CWR] the first cell is Writer W's writer on track 1, left out beside the composer in MusicBrainz: the next one)
+        pg.drag_and_drop(f'.dci-pchip-date[data-id="{mix}"]', '.dci-mx-cell.dci-mx-on:not(:has(.dci-mxchip-cwr)) >> nth=0'); pg.wait_for_timeout(400)
         own = pg.locator('.dci-mx-cell.dci-mx-on sup').count()
         print('3) Spaltendatum Jahr:', cd, '| Zellen mit eigenem Datum (⌚):', own)
         ok3 = cd == '2001' and own >= 1
