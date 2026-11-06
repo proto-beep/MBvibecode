@@ -1114,4 +1114,149 @@ def case_nwa():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_creditskip():
+    """Credits Importer 3.64.0 (collected item Z-WSK, rule S093): "Skip credits" beside the work of a track in the works matrix.
+    Track 1 is linked with WORK1 (Writer Z "Lyrics By" there); track 3 gets a new work (Writer Z composer).
+    A) "Skip credits" on track 1: its cells struck through and locked, the button now "↺ Take credits"; staged: nothing on WORK1
+       (no lyricist, no writer) – the recording credits of track 1 stay, the new work of track 3 keeps Writer Z composer.
+    B) "↺ Take credits" again: Writer Z lyricist of WORK1 staged as before.
+    C) Rule S093 off: no button.
+    D) (review) The tracks without a work skipped: the footer no longer counts them as waiting for a work; the form of a new work for
+       one of them carries no writers."""
+    results = []
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['tracklist'][0]['extraartists'] = d['tracklist'][0]['extraartists'] + [{'name': 'Writer Z', 'anv': '', 'role': 'Lyrics By', 'tracks': '', 'id': 3009, 'join': ''}]
+        return d
+    H.discogs_release = rel
+    WZ = H.ARTISTS[3009][0]
+    REC1 = H.REC[0]
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1)
+      .map(r => [r.entity0.gid || r.entity0.name, r.linkTypeID, r.entity1.gid || r.entity1.name]))()"""
+
+    def run(clicks, off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S093']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.locator('.dci-matrix tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()')
+            pg.wait_for_timeout(400)
+            nbtn = pg.evaluate("document.querySelectorAll('.dci-matrix [data-act=mx-creditskip]').length")
+            for _ in range(clicks):
+                pg.locator('.dci-matrix tr[data-work="0"] [data-act=mx-creditskip]').evaluate('b => b.click()')
+                pg.wait_for_timeout(400)
+            st = pg.evaluate("""(() => { const tr = document.querySelector('.dci-matrix tr[data-work="0"]'); const b = tr.querySelector('[data-act=mx-creditskip]');
+              return { btn: b ? [b.textContent.trim(), b.getAttribute('aria-pressed')] : null, skipped: tr.querySelectorAll('td.dci-mx-cskipped').length,
+                       toggles: tr.querySelectorAll('td.dci-mx-cskipped [data-act=mx-cell]').length, struck: [...tr.querySelectorAll('.dci-mxchip-nwa')].map(c => c.textContent.trim()) }; })()""")
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(500)
+            staged = pg.evaluate(STAGED)
+            b.close()
+            return nbtn, st, staged, errs
+
+    nbtn, st, staged, errs = run(1)
+    onW1 = [x for x in staged if x[2] == H.WORK1 and x[1] != 278]
+    onRec1 = [x for x in staged if x[2] == REC1]
+    newZ = [x for x in staged if x[0] == WZ and x[1] == 168]
+    print('A) Knöpfe:', nbtn, '|', st, '| auf WORK1:', onW1, '| Aufnahme 1:', len(onRec1), '| Writer Z composer:', newZ, '| Fehler:', errs)
+    results.append(nbtn >= 3 and st['btn'] == ['↺ Take credits', 'true'] and st['skipped'] >= 1 and st['toggles'] == 0 and 'lyricist' in st['struck'])
+    results.append(not onW1 and len(onRec1) >= 1 and newZ and not errs)
+    _, st2, staged2, _ = run(2)
+    print('B)', st2['btn'], [x for x in staged2 if x[2] == H.WORK1 and x[1] != 278])
+    results.append(st2['btn'] == ['Skip credits', 'false'] and [WZ, 165, H.WORK1] in staged2)
+    nbtn3, _, _, _ = run(0, off=True)
+    print('C) Knöpfe:', nbtn3)
+    results.append(nbtn3 == 0)
+    # (review) the tracks without a work skipped: no question about works for it on "Stage", and the form of a new work without its writers
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.dismiss())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        before = pg.evaluate("[...document.querySelectorAll('#dci-overlay *')].some(e => e.children.length === 0 && /^\\d+ tracks? without a work$|writing credits but no work yet/.test(e.textContent.trim()))")
+        for k in ('1', '2', '3'):
+            pg.locator(f'.dci-matrix tr[data-work="{k}"] [data-act=mx-creditskip]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+        waiting = pg.evaluate("[...document.querySelectorAll('#dci-overlay *')].some(e => e.children.length === 0 && /^\\d+ tracks? without a work$|writing credits but no work yet/.test(e.textContent.trim()))")
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=mx-newmenu]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=work-create]').evaluate('b => b.click()')
+        pg.wait_for_timeout(800)
+        src = pg.evaluate("(() => { const f = [...document.querySelectorAll('iframe')].find(x => /work\\/create/.test(x.src)); return f ? f.src : ''; })()")
+        b.close()
+    print('D) wartet vorher:', before, '| nachher:', waiting, '| Formular:', src[:160], '| rels:', 'rels.0' in src)
+    results.append(before and not waiting and '/work/create' in src and 'rels.0' not in src)
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_publevel():
+    """Credits Importer 3.64.0 (collected item Z-PUB, rule S094): each publishing row of a label switches in its column of the works
+    matrix between "Work" and "Release".
+    A) The column of Pub Co ("Published By") has "Work | Release", Work pressed.
+    B) "Release": the row is on the release (type "published"), the column stays with Release pressed; staged: Pub Co – release
+       "published", nothing of Pub Co on works.
+    C) "Work" again: Pub Co – work "publishing" staged as before.
+    D) Rule S094 off: no such buttons."""
+    PUB = H.COMPANIES[1003][1]
+    COL = """(() => { const h = [...document.querySelectorAll('.dci-matrix [data-colhead]')].find(x => /Pub Co/.test(x.textContent));
+      return h ? [...h.querySelectorAll('[data-act=mx-pub-level]')].map(b => b.dataset.level + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')) : null; })()"""
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => [r.entity0.gid || r.entity0.name, r.linkTypeID, r.entity1.gid || r.entity1.name]))()"""
+    results = []
+
+    def run(levels, off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S094']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            out = {'start': pg.evaluate(COL)}
+            for lv in levels:
+                pg.evaluate(f"""(() => {{ const h = [...document.querySelectorAll('.dci-matrix [data-colhead]')].find(x => /Pub Co/.test(x.textContent));
+                  h.querySelector('[data-act=mx-pub-level][data-level={lv}]').click(); }})()""")
+                pg.wait_for_timeout(500)
+                out[lv] = pg.evaluate(COL)
+            out['type'] = pg.evaluate("""(() => { const tr = [...document.querySelectorAll('[data-group] tr.dci-row')].find(t => t.closest('[data-group]').querySelector('.dci-gname').textContent.includes('Pub Co'));
+              const sel = tr && tr.querySelector('[data-f=type]'); return sel ? sel.options[sel.selectedIndex].text : null; })()""")
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(500)
+            out['staged'] = [x for x in pg.evaluate(STAGED) if x[0] == PUB]
+            out['errs'] = errs
+            b.close()
+            return out
+
+    o = run(['release'])
+    print('A)', o['start'], '\nB)', o['release'], o['type'], o['staged'], o['errs'])
+    results.append(o['start'] == ['work*', 'release'])
+    results.append(o['release'] == ['work', 'release*'] and o['type'] == 'published' and any(x[1] == 32 for x in o['staged'])
+                   and not any(x[1] == 208 for x in o['staged']) and not o['errs'])
+    o2 = run(['release', 'work'])
+    print('C)', o2['work'], o2['type'], o2['staged'])
+    results.append(o2['work'] == ['work*', 'release'] and any(x[1] == 208 for x in o2['staged']) and not any(x[1] == 32 for x in o2['staged']))
+    o3 = run([], off=True)
+    print('D)', o3['start'])
+    results.append(o3['start'] == [])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
