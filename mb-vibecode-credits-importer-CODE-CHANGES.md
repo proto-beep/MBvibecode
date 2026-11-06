@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.57.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.58.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.58.0 · 2026-11-06
+
+Z-DBR – Discogs details in brackets before their instrument.
+
+- **`joinDetail(detail, base)`** (new; rule **S084**): the detail before the instrument, the words both have once (the longest end of the detail that is the start of the instrument: "acoustic piano" + "piano" → "acoustic piano", "electric bass" + "bass guitar" → "electric bass guitar"); off: both as written.
+- **`instrumentCandidates`:** the candidate of each detail through `joinDetail` (before `${m} ${b}`: "acoustic piano piano").
+- **`descriptiveCredit(row, details, vocab)`** (new): an instrument row (the type's attribute root is instrument) with one detail of generic words of MusicBrainz's instrument names (`vocab.lower`, not `vocab.proper`, no digits): `joinDetail(details, base)` as role credit, unless it is the instrument itself. **`descriptiveVoice(row)`** (new): a voice ("Vocals") with one detail its MusicBrainz voice took (`consumed`): the detail before "vocals" ("backing vocals"), unless that is the voice's name. **`roleCreditForInner`** uses them after the task and before the details as written; **`row.creditShort`** – Discogs's short form (reset in `roleCreditFor`).
+- **Role credit field:** `dbr` (the credit from Discogs and a short form that differs) – class `dci-rc-dbr` (blue; dark: its own tones), `data-act="rc-short"`, title `roleCredit.dbrTitle`; **`rc-short`** sets the short form (made by hand) and keeps the focus.
+- **Texts:** `roleCredit.dbrTitle`.
+- **Tests:** `t_mapping.py dbr` (new; acoustic, acoustic piano, acoustic guitar, electric bass, backing vocals, Moog, two details; the click; S084 off); golden S084.
+- **Review of Z-DBR:** `joinDetail` – a hyphen as a space and a plural as its singular when it compares ("Electric-Bass" + "bass", "Electric Keyboard" + "keyboards"); `roleCreditOptions` – the suggestions through `joinDetail`; `descriptiveCredit` – the type "instrument" only (not "instrument arranger"), not for a translation (S025), nor for an instrument of the source with a make (each of its words generic: "Fender Rhodes [Acoustic]", "Hammond Organ [Electric]" keep "acoustic", "electric"); `descriptiveVoice` – not for a detail of a checkbox ("Guest", "Additional") or "Uncredited", always "vocals" ("Vocal [Lead]"), hyphens and spaces alike ("Mezzo Soprano" = mezzo-soprano vocals), "Vocals [Backing Vocals]" credited "backing vocals" without a short form; `rc-short` only while the credit is still Discogs's (not touched, the value the suggestion); typing (input and change) takes the mark and `data-act` off the field; `creditShort` in `REMAP_FIELDS`; the register note of S084.
+- **Tests (review):** `dbr` B – typed in, then clicked: what was typed stays, no longer marked.
 
 ## Import 3.57.0 · 2026-11-06
 

@@ -1354,4 +1354,70 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_dbr():
+    """Credits Importer 3.58.0 (collected item Z-DBR, rule S084): a Discogs detail in brackets that describes an instrument comes before it.
+    A) "Piano [Acoustic]" → piano credited "acoustic piano" (marked); "Piano [Acoustic Piano]" → "acoustic piano" (not "acoustic piano piano";
+       nothing shorter to give back: not marked); "Guitar [Acoustic]" → acoustic guitar (MusicBrainz has it: no role credit); "Bass [Electric]"
+       → electric bass guitar credited "electric bass" (as before); "Vocals [Backing]" → background vocals credited "backing vocals" (marked;
+       before: "vocals"); "Synthesizer [Moog]" keeps "Moog" (a make), "Piano [Electric, Muted]" its two details.
+    B) A click on the marked role credit gives Discogs's short form "acoustic" (no longer marked); (review) typed in first, a click keeps
+       what was typed.
+    C) Rule S084 off: "Piano [Acoustic]" credited "acoustic" (as before)."""
+    orig = H.discogs_release
+    ROLES = ['Piano [Acoustic]', 'Guitar [Acoustic]', 'Bass [Electric]', 'Vocals [Backing]', 'Synthesizer [Moog]', 'Piano [Electric, Muted]']
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': 'Keys Guy', 'anv': '', 'role': ', '.join(ROLES), 'tracks': '', 'id': 3003, 'join': ''},
+                              {'name': 'Drum Guy', 'anv': '', 'role': 'Piano [Acoustic Piano]', 'tracks': '', 'id': 3004, 'join': ''}]
+        return d
+    ROWS = """[...document.querySelectorAll('[data-group] tr.dci-row')]
+      .map(tr => { const v = (f) => { const e = tr.querySelector('[data-f=' + f + ']'); return e ? (e.tagName === 'SELECT' ? (e.options[e.selectedIndex] || {}).text : e.value) : '-'; };
+        const c = tr.querySelector('[data-f=role-credit]');
+        return [tr.querySelector('.dci-drole').dataset.raw.trim(), v('primary'), v('role-credit'), !!(c && c.classList.contains('dci-rc-dbr')), tr.dataset.row]; })"""
+    H.discogs_release = rel
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S084']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(600)
+            rows = {r[0]: r for r in pg.evaluate(ROWS) if r[0] in ROLES + ['Piano [Acoustic Piano]', 'Piano [Electric]', 'Piano [Muted]']}
+            after = None
+            if not off and rows.get('Piano [Acoustic]'):
+                pg.click(f'tr[data-row="{rows["Piano [Acoustic]"][4]}"] [data-f=role-credit]'); pg.wait_for_timeout(300)
+                after = [r for r in pg.evaluate(ROWS) if r[0] == 'Piano [Acoustic]']
+                # (review) typed in, then clicked: what was typed stays
+                if rows.get('Vocals [Backing]'):
+                    f = f'tr[data-row="{rows["Vocals [Backing]"][4]}"] [data-f=role-credit]'
+                    pg.fill(f, 'backing vocals (choir)'); pg.wait_for_timeout(200)
+                    pg.click(f); pg.wait_for_timeout(300)
+                    after += [r for r in pg.evaluate(ROWS) if r[0] == 'Vocals [Backing]']
+            b.close()
+            return rows, after, errs
+
+    rows, after, errs = run(False)
+    for k, r in rows.items():
+        print('  ', r[:4])
+    g = lambda k: tuple(rows[k][1:4]) if k in rows else None
+    results.append(g('Piano [Acoustic]') == ('piano', 'acoustic piano', True) and g('Piano [Acoustic Piano]') == ('piano', 'acoustic piano', False)
+                   and g('Guitar [Acoustic]') == ('acoustic guitar', '', False) and g('Bass [Electric]') == ('electric bass guitar', 'electric bass', False)
+                   and g('Vocals [Backing]') == ('background vocals', 'backing vocals', True) and g('Synthesizer [Moog]')[1:] == ('Moog', False)
+                   and g('Piano [Electric, Muted]') == ('piano', 'electric, muted', False) and not errs)
+    print('B) nach dem Klick:', after)
+    results.append(bool(after) and after[0][2] == 'acoustic' and after[0][3] is False and len(after) == 2 and after[1][2] == 'backing vocals (choir)' and after[1][3] is False)
+    rows2, _, _ = run(True)
+    print('C) aus:', rows2.get('Piano [Acoustic]'))
+    results.append(rows2.get('Piano [Acoustic]', [None, None, None, None])[2] == 'acoustic')
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
