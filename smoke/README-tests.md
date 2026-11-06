@@ -49,10 +49,12 @@ MBvibecode/ (this repository)
                                       harness set back after it, one result per case and one for the file
                                       [3.40.8] launch_own(**kw): a browser of its own (other launch options, e.g. overlay
                                       scroll bars); the case closes it
-  smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and seven
-                                      files of their own (golden tests, comparisons with older logs); each ends with
+  smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and two
+                                      files of their own (the golden tests t_register.py, t_textcorpus.py; [3.72.0] until
+                                      3.71.0 also five compared with older logs); each ends with
                                       "Ergebnis: OK/FEHLER"; [3.38.10] a row's role as the source wrote it is `data-raw` of
                                       `.dci-drole` (its text is MusicBrainz's name)
+  smoke/quick.py                      [3.72.0] the quick tier: t_static.py, t_register.py, the cases that only run Node
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
   smoke/mb_link_types.json            [3.38.10] MusicBrainz's relationship types: names and link phrases (all 698), entity types and
@@ -77,15 +79,15 @@ the file at the end ("Ergebnis: OK [n Fälle]", or the names of the cases that f
 file (each opens its own context and pages); what a case changes in the harness – the Discogs data, the search
 results, relationship types, the shared storage – is set back before the next one. The tests ask the mock MusicBrainz
 every 25 ms instead of the script's 1.1 s (`harness.MB_GAP`, environment `DCI_MB_GAP`, 0 = the script's gap): an import
-takes about 1 s. Cases whose checks depend on that time (artistworks, logplace) and the comparisons with
-older logs set `H.MAIN = H.MAIN_SLOW` (the script with its own gap).
+takes about 1 s. Cases whose checks depend on that time (artistworks, logplace) set `H.MAIN = H.MAIN_SLOW` (the script with its
+own gap). [3.72.0] The five files compared with logs of an older version (t_ar, t_artwork, t_basic, t_focus, t_release) are
+cases with their own checks now (annrep, artworkbox, marksrelease, focusfields – this one still with `H.MAIN_SLOW`; t_basic's checks
+are step 0 of marksrelease).
 
 ```
-python3 t_basic.py              # dashboard loads, companion connected, status marks on Discogs
-python3 t_focus.py              # typing in every date field keeps cursor and text
-python3 t_release.py            # MusicBrainz release page checks what arrived (✓ / ✗), marks go when closed
-python3 t_ar.py                 # A&R with task on the release group
-python3 t_artwork.py            # cover miniature on the Discogs page: shown when connected, click, fold, drag, place kept
+python3 quick.py                # [3.72.0] the quick tier (Z-TST): t_static.py, t_register.py and every case that only runs Node (in its
+                                #   body or through a helper of its file) –
+                                #   a few minutes for a first look; `--list` names them. The whole suite still decides
 python3 t_register.py           # the mapping register stays the same (3.11.0, golden test): a frozen corpus (register_corpus.json:
                                 # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
@@ -373,8 +375,7 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     column heads (the name whole with its tooltip, ⚠, ▾ with « and ✕), "All artists credited as: ↺ …", "＋ New ▾",
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
-python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
-                                #   livedate: 3.62.0 (Z-PDT, Z-LVD, S089): "Performed in … on …" under Performance, the live comment without it before the matrix is applied, the hint naming it; off
+python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
                                 #   wts: 3.52.0 (Z-WTS): the suggestion of a work type and a language from the works of the artists (yellow, "Accept");
                                 #     not accepted: the new works without either; accepted: Song in English; in Node suggestFromWorks (majorities, < 3 works)
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
@@ -384,33 +385,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     no works level, kept across a reload, no lookups), taken again (3.36.4: the new works planned before come
                                 #     back with it, nothing looked up), the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
-                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
-                                #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
-                                #     another comment of MB not tickable, changed by hand, unticked; 3.38.3: tracks 2–3 one group line, the heading
-                                #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
-                                #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
-                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red);
-                                #     (3.66.0, Z-LCP, S096) the box: how many, each comment with its tracks, "Not entered:" by reason
-                                #   livetracks: 3.66.0 (Z-LCP, Node): the tracks of a comment in short ("2–4, 6", "1.1–1.3, 2.1")
-                                #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
-                                #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
-                                #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
-                                #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
-                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
-                                #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
-                                #   liveall: 3.40.13 (Z-LC): "All" above the list – ticked, mixed (a track of the group unticked), all on and off;
-                                #     in livecom without the track MB has another comment for
                                 #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
-                                #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
-                                #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
-                                #     (3.43.1, full review P2) D: a track of a medium read from /ws/js/tracks keeps its artists – no "cover" by itself
-                                #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
-                                #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
-                                #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
-                                #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
-                                #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
-                                #     E: classical, or Monk with Liner Notes too – "co?" only
                                 #   suitedata: 3.41.0 (Z-SU): in Node – Discogs headings and sub-tracks as parts, " / " parts, the kinds of headings
                                 #     (T061, a recording, a name), the suites offered (heading, index, the release's title, none)
                                 #   suiteask: 3.41.1 (Z-SU): "Trisect" – the yellow question, ✓ Yes: the parts as new works (part k of n), staged in
@@ -429,7 +405,38 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
+python3 t_works_live.py         # [3.72.0, from t_works_more.py] Works: comments of live recordings
+                                #   livedate: 3.62.0 (Z-PDT, Z-LVD, S089): "Performed in … on …" under Performance, the live comment without it before the matrix is applied, the hint naming it; off
+                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
+                                #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
+                                #     another comment of MB not tickable, changed by hand, unticked; 3.38.3: tracks 2–3 one group line, the heading
+                                #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
+                                #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
+                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red);
+                                #     (3.66.0, Z-LCP, S096) the box: how many, each comment with its tracks, "Not entered:" by reason
+                                #   livetracks: 3.66.0 (Z-LCP, Node): the tracks of a comment in short ("2–4, 6", "1.1–1.3, 2.1")
+                                #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
+                                #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
+                                #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
+                                #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
+                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
+                                #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
+                                #   liveall: 3.40.13 (Z-LC): "All" above the list – ticked, mixed (a track of the group unticked), all on and off;
+                                #     in livecom without the track MB has another comment for
+
+python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers – works of the track's composer by a similar title
+                                #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
+                                #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
+                                #     (3.43.1, full review P2) D: a track of a medium read from /ws/js/tracks keeps its artists – no "cover" by itself
+                                #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
+                                #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
+                                #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
+                                #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
+                                #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
+                                #     E: classical, or Monk with Liner Notes too – "co?" only
+
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   annrep: 3.72.0 (Z-TST, the former t_ar.py): A&R with the task "consultant" on the release group
                                 #   dedphrases: 3.67.0 (Z-DED, Node): the phrases of dedications and tributes, names joined, a title
                                 #   dedforphrases: 3.71.0 (Z-DED2, S107, Node): "for …" in a sentence – found or not (a production before it,
                                 #     "bonus", a list with commas, "… only", quotes, capitals, "für" + one word, titles)
@@ -514,6 +521,7 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   focusfields: 3.72.0 (Z-TST, the former t_focus.py): typing in every date field keeps cursor and text
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
                                 #     Mapping rules, Log | Statistics, ⌨, ⚙ | ✕): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
@@ -667,16 +675,16 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     stays on Skip, "all": back); "Level for all rows" Recording, then Skip: "⊘ Skip", no stale "↺"
                                 #   footbar: 3.41.10 (Z-SB2): classic scroll bars of a page wider and longer than the window – the dashboard at the
                                 #     bottom edge ends above / left of them (its footer wholly visible), also when the page grows wider later
-
-python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each other – statistics, settings, the import (window, page), the bar of
-                                #   "Edit relationships" (one line, below only when narrow); the check itself (detector); review: in the order
-                                #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
-python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
+                                #   [3.72.0, from t_ui_place.py] window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
                                 #   logplace: log next to the edit note: right / left (width and height), above (height kept), too narrow → above,
                                 #     edit note drawn anew, remembered after reloading, "↺ Defaults" → window
                                 #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
+
+python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each other – statistics, settings, the import (window, page), the bar of
+                                #   "Edit relationships" (one line, below only when narrow); the check itself (detector); review: in the order
+                                #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
                                 #   levelclick: 3.44.0 (Z-CLV): the level of an event a button – Recording → Release → Skip (at its place) → Recording; an
@@ -805,15 +813,6 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     at once; the order with YouTube last (also an order stored before); (3.42.8, review) from the release editor
                                 #     with a new video only: Discogs
 
-python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
-                                #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
-                                #   mediaload: the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
-                                #     as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
-                                #     without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
-                                #     tracks and relationships the release lookup leaves out read from /ws/js/tracks
-                                #   mediasel: media choice before the import (three media): all = as before, media 2-3 without the release level,
-                                #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
-
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
                                 #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
                                 #     on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
@@ -838,6 +837,14 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
                                 #   gapsplit: 3.41.15 (review, Z-SUB): the release page reads an index whose sub-tracks are MB tracks as them –
                                 #     Bass Man on track 4 is there: "the credits of its list seem to be on MusicBrainz"
+                                #   [3.72.0, from t_media_choice.py] media: several media, loading media in the editor, the media choice
+                                #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
+                                #   mediaload: the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
+                                #     as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
+                                #     without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
+                                #     tracks and relationships the release lookup leaves out read from /ws/js/tracks
+                                #   mediasel: media choice before the import (three media): all = as before, media 2-3 without the release level,
+                                #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
 python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
                                 #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only
@@ -910,6 +917,11 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   marksrelease: 3.72.0 (Z-TST, the former t_release.py): marks after "Apply", the release page checks what arrived
+                                #     (✓ / ✗ with its tooltip), the marks go when it is closed and come back when it is opened again; 0) the former
+                                #     t_basic.py: 14 entries, "Import complete", the marks before "Apply"
+                                #   artworkbox: 3.72.0 (Z-TST, the former t_artwork.py): the cover miniature on Discogs – shown when connected, its
+                                #     frame, a click, dragged and kept after reloading, folded, the switch, gone with the MusicBrainz page
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
@@ -970,13 +982,13 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_aboutoff.py | t_sources_bandcamp.py | aboutoff |
 | t_adapter.py | t_sources.py | adapter |
 | t_afteredit.py | t_start.py | afteredit |
-| t_ar.py | t_ar.py | – (a file of its own) |
+| t_ar.py | t_mapping.py | annrep (3.72.0) |
 | t_areas.py | t_text_places.py | areas |
 | t_artistworks.py | t_works_more.py | artistworks |
-| t_artwork.py | t_artwork.py | – (a file of its own) |
+| t_artwork.py | t_companion_discogs.py | artworkbox (3.72.0) |
 | t_bandcamp.py | t_sources_bandcamp.py | bandcamp |
 | t_bar.py | t_ui_head.py | bar |
-| t_basic.py | t_basic.py | – (a file of its own) |
+| t_basic.py | t_companion_discogs.py | marksrelease (3.72.0; deleted, its checks there) |
 | t_bcoff.py | t_companion_bandcamp.py | bcoff |
 | t_bctrack.py | t_sources_bandcamp.py | bctrack |
 | t_bcview.py | t_companion_bandcamp.py | bcview |
@@ -991,7 +1003,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_entryhead.py | t_ui_head.py | entryhead |
 | t_facets.py | t_notes_dates.py | facets |
 | t_fill.py | t_works_matrix.py | fill |
-| t_focus.py | t_focus.py | – (a file of its own) |
+| t_focus.py | t_ui_head.py | focusfields (3.72.0) |
 | t_fold.py | t_ui_view.py | fold |
 | t_foreign.py | t_text_languages.py | foreign |
 | t_freetext.py | t_text_basics.py | freetext |
@@ -999,22 +1011,22 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_head.py | t_ui_head.py | head |
 | t_i18n.py | t_static.py | i18n |
 | t_initials.py | t_text_places.py | initials |
-| t_inline.py | t_ui_place.py | inline |
+| t_inline.py | t_ui_view.py | inline (3.72.0; until 3.71.0 t_ui_place.py) |
 | t_jump.py | t_ui_head.py | jump |
 | t_keepmarks.py | t_companion_discogs.py | keepmarks |
-| t_keepplace.py | t_ui_place.py | keepplace |
+| t_keepplace.py | t_ui_view.py | keepplace (3.72.0; until 3.71.0 t_ui_place.py) |
 | t_labelpage.py | t_sources_bandcamp.py | labelpage |
 | t_levels.py | t_ui_view.py | levels |
 | t_linernotes.py | t_sources_bandcamp.py | linernotes |
 | t_links.py | t_sources.py | links |
-| t_logplace.py | t_ui_place.py | logplace |
+| t_logplace.py | t_ui_view.py | logplace (3.72.0; until 3.71.0 t_ui_place.py) |
 | t_manualtop.py | t_ui_head.py | manualtop |
 | t_mastering.py | t_mapping.py | mastering |
 | t_matrix.py | t_dates_matrix.py | matrix |
 | t_matrixcols.py | t_works_matrix.py | matrixcols |
-| t_media.py | t_media_choice.py | media |
-| t_mediaload.py | t_media_choice.py | mediaload |
-| t_mediasel.py | t_media_choice.py | mediasel |
+| t_media.py | t_start.py | media (3.72.0; until 3.71.0 t_media_choice.py) |
+| t_mediaload.py | t_start.py | mediaload (3.72.0; until 3.71.0 t_media_choice.py) |
+| t_mediasel.py | t_start.py | mediasel (3.72.0; until 3.71.0 t_media_choice.py) |
 | t_medium.py | t_text_places.py | medium |
 | t_members.py | t_text_languages.py | members |
 | t_msgs.py | t_ui_head.py | msgs |
@@ -1033,7 +1045,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_register.py | t_register.py | – (a file of its own) |
 | t_relcheck.py | t_companion_discogs.py | relcheck |
 | t_reldate.py | t_notes_dates.py | reldate |
-| t_release.py | t_release.py | – (a file of its own) |
+| t_release.py | t_companion_discogs.py | marksrelease (3.72.0) |
 | t_reset.py | t_ui_settings.py | reset |
 | t_rowrules.py | t_rules_window.py | rowrules |
 | t_rows.py | t_ui_view.py | rows |
@@ -1044,7 +1056,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_settings.py | t_ui_settings.py | settings |
 | t_sounds.py | t_text_languages.py | sounds |
 | t_special.py | t_mapping.py | special |
-| t_srctexts.py | t_ui_place.py | srctexts |
+| t_srctexts.py | t_ui_view.py | srctexts (3.72.0; until 3.71.0 t_ui_place.py) |
 | t_suggstack.py | t_ui_view.py | suggstack |
 | t_supp.py | t_sources.py | supp |
 | t_textcorpus.py | t_textcorpus.py | – (a file of its own) |

@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools, [3.72.0] focusfields (the former t_focus.py); `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1235,6 +1235,57 @@ def case_launchtools():
         e0 = pg.evaluate(STATE)
         print('E) Zeilen:', e0['rows'])
         results.append(e0['rows'] > 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_focusfields():
+    """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_focus.py (until 3.71.0 compared with an old log), with its
+    checks: typing slowly into a field keeps the focus there while the dashboard redraws – the date of a row (year, month, day),
+    the date of a matrix column (its ▾ menu), the date of a matrix cell (its menu: 8 fields), the field "Find dates"."""
+    def check(pg, label, sel, text, scope=None):
+        loc = (scope or pg).locator(sel).first
+        loc.click()
+        pg.keyboard.type(text, delay=120)
+        pg.wait_for_timeout(1800)
+        st = pg.evaluate("""() => { const a = document.activeElement; return { f: a && a.dataset ? a.dataset.f : a && a.tagName, v: a && a.value }; }""")
+        ok = st['v'] is not None and text in str(st['v'])
+        print(f'{"OK " if ok else "FEHLER"} {label}: aktiv={st["f"]} Wert={st["v"]!r}')
+        return ok
+
+    # (with the script's own gap, as before: the lookups in the background still run while it types)
+    H.MAIN = H.MAIN_SLOW
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        H.open_discogs(ctx)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+
+        def row(name):
+            return pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text=name)).first.locator('tr.dci-row').first
+        row('Bass Man').locator('[data-act=date-open]').click()
+        results.append(check(pg, 'Zeile Jahr', '[data-f=rd-by]', '2001', row('Bass Man')))
+        results.append(check(pg, 'Zeile Monat', '[data-f=rd-bm]', '03', row('Bass Man')))
+        results.append(check(pg, 'Zeile Tag', '[data-f=rd-bd]', '02', row('Bass Man')))
+        # the column date is in the ▾ menu of the column head
+        pg.locator('[data-colhead] [data-act=mx-colmenu]').first.click(); pg.wait_for_timeout(300)
+        results.append(check(pg, 'Matrix-Spalte Jahr', '[data-f=cd-by]', '1999'))
+        pg.locator('[data-colhead] [data-act=mx-colmenu]').first.click(); pg.wait_for_timeout(300)
+        pg.locator('[data-act=mx-menu]').first.click(); pg.wait_for_timeout(400)
+        n = pg.locator('[data-f^=xd-]').count()
+        print('Zellmenü-Felder:', n)
+        results.append(n == 8)
+        if n:
+            results.append(check(pg, 'Matrix-Zelle Jahr', '[data-f=xd-by]', '1998'))
+        pg.click('#dci-overlay .dci-head h2'); pg.wait_for_timeout(300)
+        pg.evaluate("document.querySelector('[data-el=datefind]').open = true")
+        results.append(check(pg, 'Daten-Suchfeld', '[data-f=datefind]', 'Recorded 1 May 2002'))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
