@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.57.0
+// @version      3.58.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.57.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.57.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.58.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.58.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.57.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.58.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1676,6 +1676,7 @@
       "date.recordingDefault": "recording date {date}{pool}",
       "date.ownDate": "own date",
       "roleCredit.fromDiscogs": "Taken from Discogs",
+      "roleCredit.dbrTitle": "From Discogs: the detail “{short}” put before the instrument – “{long}” (rule S084). Click to use Discogs's short form “{short}”.",
       "matrix.clearDates": "clear all dates",
       "matrix.clearDatesAsk": "Remove every date in the works matrix (column dates, cell dates and the dates of the links to works)?",
       "matrix.newWorksHow": "created with “Enter edit”, like “Batch-add new works”",
@@ -3562,6 +3563,8 @@
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
     // [3.56.0] collected item Z-CWR
+    // [3.58.0] collected item Z-DBR
+    { id: 'S084', where: 'joinDetail, instrumentCandidates, roleCreditOptions, descriptiveCredit, descriptiveVoice, roleCreditForInner', note: 'Discogs (3.58.0): a detail in brackets that describes an instrument – "Piano [Acoustic]", "Bass [Fretless]" – comes before it: MusicBrainz\'s instrument of that name where it has one ("Piano [Upright]" → upright piano), else the instrument credited with both ("acoustic piano"); a word the detail repeats is written once ("Piano [Acoustic Piano]" → acoustic piano, not "acoustic piano piano"). Only details of generic words of MusicBrainz\'s instrument names – a make or model ("Synthesizer [Moog]", "Guitar [Gibson Les Paul]") keeps its own role credit, so does an instrument with a make ("Fender Rhodes [Acoustic]") and a translation. Voices too: "Vocals [Backing]" → background vocals credited "backing vocals" (before: "vocals"). The role credit is marked; a click on it gives Discogs\'s short form ("acoustic", "backing").' },
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
@@ -4384,6 +4387,22 @@
 
   // --- 2e. Applying the rules ------------------------------------------------------------------------------------------
 
+  /**
+   * [S084] (3.58.0) A detail before its instrument, a word both have written once: "acoustic" + "piano" → "acoustic piano",
+   * "acoustic piano" + "piano" → "acoustic piano", "electric bass" + "bass guitar" → "electric bass guitar".
+   */
+  function joinDetail(detail, base) {
+    if (!ruleOn('S084')) return [...norm(detail).split(' '), ...norm(base).split(' ')].filter(Boolean).join(' ');
+    // ((review) a hyphen as a space, a plural as its singular: "Electric-Bass" + "bass", "Electric Keyboard" + "keyboards")
+    const d = norm(detail).split(/[\s-]+/).filter(Boolean);
+    const b = norm(base).split(/[\s-]+/).filter(Boolean);
+    const one = (w) => (w.length > 3 ? w.replace(/(?<=[^s])s$/, '') : w);
+    for (let k = Math.min(d.length, b.length); k > 0; k--) {
+      if (d.slice(-k).map(one).join(' ') === b.slice(0, k).map(one).join(' ')) return [...d.slice(0, d.length - k), ...b].join(' ');
+    }
+    return [...d, ...b].join(' ');
+  }
+
   function instrumentCandidates(base, mods, { head = true } = {}) {
     const b = norm(base);
     const out = [];
@@ -4392,8 +4411,8 @@
       if (n && !out.includes(n)) out.push(n);
     };
     for (const m of mods.map(norm)) {
-      push(`${m} ${b}`);
-      aliasesFor(`${m} ${b}`).forEach(push);
+      push(joinDetail(m, b));
+      aliasesFor(joinDetail(m, b)).forEach(push);
       push(m);
       aliasesFor(m).forEach(push);
     }
@@ -4852,7 +4871,8 @@
     push(suggestion);
     push((mods || []).join(', '));
     (mods || []).forEach(push);
-    (mods || []).forEach((m) => push(`${m} ${withoutBy(base)}`));
+    // ([S084] 3.58.0, review) a word both have once ("acoustic piano", not "acoustic piano piano")
+    (mods || []).forEach((m) => push(joinDetail(m, withoutBy(base))));
     return out;
   }
 
@@ -10686,6 +10706,7 @@
     // [S052] (3.34.28) the words written small that MusicBrainz does not know, for the note of the row (caseNoteHtml)
     const outer = caseCtx;
     caseCtx = { lowered: [], runs: [], keep: row.keepCase || null };
+    row.creditShort = '';
     try {
       const credit = typo(roleCreditForInner(row)); // [S012]
       const words = new Set(norm(credit).split(/[\s,[\]()/]+/));
@@ -10720,6 +10741,49 @@
       const ws = words(m);
       return ws.length && ws.every((w) => refs.some((r) => sameWording(w, r)));
     })]);
+  }
+
+  /**
+   * [S084] (3.58.0) The role credit of an instrument with a detail that describes it: the detail before the Discogs instrument, a
+   * word both have once ("Piano [Acoustic]" → acoustic piano, "Piano [Acoustic Piano]" → acoustic piano). Only one detail, of
+   * generic words of MusicBrainz's instrument names (no make, model or number: "Moog", "Gibson Les Paul", "12-String" keep theirs).
+   */
+  function descriptiveCredit(row, details, vocab) {
+    if (!ruleOn('S084') || /[,;]/.test(details) || row.translated) return '';
+    const lt = currentLinkType(row);
+    const root = lt ? primaryRootOf(lt) : null;
+    // ((review) the type "instrument" only – not "instrument arranger" ("Arranged By [Horns]"); a translation keeps no credit, S025)
+    if (!lt || norm(lt.name) !== 'instrument' || !root || norm(root.name) !== 'instrument' || !norm(row.primaryText)) return '';
+    const generic = (w) => !/\d/.test(w) && vocab.lower.has(w) && !vocab.proper.has(w);
+    const words = norm(details).split(/[\s-]+/).filter(Boolean);
+    if (!words.length || !words.every(generic)) return '';
+    // ((review) nor a make in the instrument: "Fender Rhodes [Acoustic]", "Hammond Organ [Electric]" keep "acoustic", "electric")
+    const base = withoutBy(row.base);
+    const bw = norm(base).split(/[\s-]+/).filter(Boolean);
+    if (!bw.length || bw.length > 3 || !bw.every((w) => generic(w) || generic(w.replace(/(?<=[^s])s$/, '')))) return '';
+    const joined = joinDetail(details, base);
+    return norm(joined) === norm(row.primaryText) ? '' : joined;
+  }
+
+  /**
+   * [S084] (3.58.0) A voice with one detail that MusicBrainz's voice already took in other words ("Vocals [Backing]" → background
+   * vocals): credited with the detail before the Discogs word ("backing vocals"), Discogs's short form kept ("backing").
+   */
+  function descriptiveVoice(row) {
+    if (!ruleOn('S084') || (row.mods || []).length !== 1 || row.translated) return null;
+    const lt = currentLinkType(row);
+    const root = lt ? primaryRootOf(lt) : null;
+    if (!root || norm(root.name) !== 'vocal' || !norm(row.primaryText)) return null;
+    const m = row.mods[0];
+    // ((review) a detail that ticks a checkbox ("Guest", "Additional") or "Uncredited" is no kind of voice)
+    if (!(row.consumed || []).map(norm).includes(norm(m)) || /\d|[,;]/.test(m) || flagForDetail(m) || norm(m) === 'uncredited') return null;
+    if (!/^vocals?$/i.test(norm(row.base))) return null;
+    // ((review) always "vocals"; hyphens and spaces alike – "Mezzo Soprano" is MusicBrainz's mezzo-soprano vocals)
+    const credit = joinDetail(m, 'vocals');
+    const flat = (t) => norm(t).replace(/[\s-]+/g, '');
+    if (flat(credit) === flat(row.primaryText)) return null;
+    // ("Vocals [Backing Vocals]": the detail is the credit, nothing shorter to give back)
+    return flat(credit) === flat(m) ? { credit, short: '' } : { credit, short: norm(m) };
   }
 
   function roleCreditForInner(row) {
@@ -10765,7 +10829,20 @@
     const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: !(row.notes || []).includes('unknownRole') })) : '';
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
     if (task) return details ? (ruleOn('S009') ? `${details} ${task}` : `${task} [${details}]`) : task;
+    // [S084] (3.58.0) a detail that describes the instrument comes before it ("acoustic piano"); Discogs's short form is kept
+    const described = details && descriptiveCredit(row, details, vocab);
+    if (described) {
+      row.creditShort = details;
+      return described;
+    }
     if (details) return details;
+    // [S084] a voice whose detail MusicBrainz's voice took ("Vocals [Backing]" → background vocals): credited as Discogs says it
+    const voiced = descriptiveVoice(row);
+    if (voiced) {
+      row.creditShort = voiced.short;
+      return voiced.credit;
+    }
+    // (an empty detail of a voice is no credit "vocals" then either: below as before)
     // [S025] a translation ("Schlagzeug", "batería") gets no role credit: MusicBrainz's own name is used; [S032] a role
     // in Norwegian, Swedish or Danish ("Miksa av") neither
     if (row.translated && (ruleOn('S025') || ruleOn('S032'))) return '';
@@ -18447,7 +18524,7 @@
    * or role credit set by hand stays a change.
    */
   const REMAP_FIELDS = ['types', 'notes', 'work', 'primaryCands', 'consumed', 'defaultLevel', 'creditFromRole', 'ruleId', 'linkTypeId', 'translated',
-    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases', 'prefix', 'prefixCredit'];
+    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases', 'creditShort', 'prefix', 'prefixCredit'];
   /** (3.50.0, review) What a rule made of these fields of a row is no change of yours (S078: its tracks). */
   function rebaseFields(row, keys) {
     const f = S.freshRows && S.freshRows.get(row.id);
@@ -22933,10 +23010,12 @@
     // [S052] (3.34.27) the suggestions written like the role credit
     const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '', ruleOn('S052') ? creditCasing(lt) : undefined);
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
+    // [S084] (3.58.0) the detail put before the instrument: marked, a click gives Discogs's short form
+    const dbr = fromDiscogs && !!row.creditShort && norm(row.creditShort) !== norm(row.roleCredit);
     // [3.39.1] the tag in the colours and words of the row's source (a supplement's entry: its own)
     const rowSrc = entrySource(S.artists.get(row.artistKey));
     parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src ${srcTagClass(rowSrc)}" title="${esc(trSrcOf(rowSrc, 'roleCredit.fromDiscogs'))}">${esc(trSrcOf(rowSrc, 'roleCredit.fromTag'))}</span>` : ''}</span>
-        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(trSrcOf(rowSrc, 'roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
+        <input type="text" data-f="role-credit" class="${dbr ? 'dci-from-dg dci-rc-dbr' : fromDiscogs ? 'dci-from-dg' : ''}"${dbr ? ' data-act="rc-short"' : ''} list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${dbr ? esc(tr('roleCredit.dbrTitle', { short: row.creditShort, long: row.roleCredit })) : fromDiscogs ? esc(trSrcOf(rowSrc, 'roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
       <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
@@ -32547,6 +32626,17 @@
         rerenderRow(row);
         refresh();
         break;
+      case 'rc-short': {
+        // [S084] (3.58.0) the marked role credit clicked: Discogs's short form ("acoustic" for "acoustic piano"), kept (made by hand)
+        // ((review) only while it is still the credit from Discogs – not once typed in)
+        if (!row || !row.creditShort || row.roleCreditTouched || norm(btn.value) !== norm(row.roleCreditSuggest)) break;
+        Object.assign(row, { roleCredit: row.creditShort, roleCreditTouched: true });
+        rerenderRow(row);
+        refresh();
+        const f = S.overlay.querySelector(`tr[data-row="${row.id}"] [data-f="role-credit"]`);
+        if (f) f.focus({ preventScroll: true });
+        break;
+      }
       case 'rc-clear': {
         // [164] (3.37.13) ✕ at a role credit: empty, and kept empty (made by hand); in an entry's matrix for all rows of the line
         const line = btn.closest('tr.dci-em-line[data-rows]');
@@ -33748,6 +33838,11 @@
       case 'role-credit':
         row.roleCredit = el.value;
         row.roleCreditTouched = true;
+        // ([S084] 3.58.0, review) typed in: no longer marked, a click no longer gives the short form
+        if (el.classList.contains('dci-rc-dbr')) {
+          el.classList.remove('dci-rc-dbr');
+          delete el.dataset.act;
+        }
         updateHint(row);
         updateVoiceCredit(row);
         updateCaseNote(row);
@@ -34134,6 +34229,9 @@
     } else if (f === 'role-credit') {
       row.roleCredit = el.value;
       row.roleCreditTouched = true;
+      // ([S084] 3.58.0, review) typed in: no longer marked, a click no longer gives the short form
+      el.classList.remove('dci-rc-dbr');
+      delete el.dataset.act;
       updateHint(row);
       updateCaseNote(row);
     } else {
@@ -37909,6 +38007,7 @@
     // (the yellow grounds written as colours: as the suggestions)
     `${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
     `${DK_OV} .dci-waiting, ${DK_OV} .dci-foot-chip-warn, ${DK_OV} input.dci-from-dg { color: var(--sugg-ink); }`,
+    `${DK_OV} input.dci-from-dg.dci-rc-dbr { background: #22314d; border-color: #6f9be0; color: #dce8ff; }`,
   // ((3.49.0) each rule on one line, as the rest of the dark sheet – its lines are its rules)
   ].map((x) => x.replace(/\s*\n\s*/g, ' ')).join('\n');
   /** [Z-DM] (3.46.0, review) The dark stylesheet, made once, after the light one. */
@@ -38917,6 +39016,8 @@
       .dci-onlyworks { margin-left: calc(var(--u, 1px) * -8); }
       .dci-scope > .dci-sub { align-self: center; padding: 0 calc(var(--u, 1px) * 8); }
       input.dci-from-dg { background: #fff8db; border-color: #e0a800; font-weight: 600; }
+      /* [S084] (3.58.0) a detail put before its instrument: a click gives Discogs's short form */
+      input.dci-from-dg.dci-rc-dbr { background: #e8f1ff; border-color: #5b8bd6; cursor: pointer; }
       .dci-flash { outline: 3px solid #eb743b !important; outline-offset: 2px; transition: outline-color 0.3s; }
       .dci-matrix tr.dci-mx-hover > th, .dci-matrix tr.dci-mx-hover > td { background-color: #fff3c4 !important; }
       .dci-dgstatus-toggle { margin-left: calc(var(--u, 1px) * 6); background: #fff; color: #262430; border: 1px solid #c8c5d6; border-radius: 3px; cursor: pointer; font: inherit; }
