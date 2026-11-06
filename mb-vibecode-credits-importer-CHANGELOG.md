@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.64.0 | – |
+| 2026-11-06 | 3.56.0 – 3.65.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.65.0
+
+#### Changed
+
+- **Statistics: times without creating new entries** (collected item Z-DUR, rule S095): the time per release and per relationship leaves out the time of creating artists, labels, places and works (also works via the form) – from the click on "Create …" until the new entry is linked, its pauses aside. A switch **"Without new entries | With new entries"** in the head of "This browser" (Without at first, remembered; its tooltip says what it means) – for the tiles, the table over time and the card "Sources"; not for "Global". Imports before 3.65.0 hold no such time. Clicks and keys in the form count as work (not as a pause).
+- **"Counted from … on"** (collected item Z-CFT) is the tooltip of the card's head (ⓘ beside its name) instead of a line in the card.
+- **Genres and styles** (collected item Z-GNC) with every word capitalised: "Free Jazz", not "Free jazz" – small words after the first stay small ("Rock and Roll", "Drum n Bass"), a few abbreviations in capitals ("UK Garage", "IDM"), only Latin and Greek letters.
+- **"Global" as "This browser"** (collected item Z-GLB): the head in one line with ⓘ (what is counted, "Fold all" / "Open all"), the date of the dump and "Load again"; the groups Overview, Who and Releases that fold; lists of more than four "+ n more".
 
 ### Import 3.64.0
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.64.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.65.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.65.0 · 2026-11-06
+
+Z-DUR, Z-CFT, Z-GNC, Z-GLB – the statistics.
+
+- **`openCreateDialog`** (rule **S095**): from its start until `onCreated` has linked the entry, the time without the pauses meanwhile goes into **`S.statCreate`**; the record of "Enter edit" holds it as **`cr`** (`statSnapshot`), taken off again when a later "Enter edit" on the same page counts from this one on.
+- **`statTime(r)`**: without `r.cr` unless **`statDurMode()`** is `'with'` (**`STATS_DUR_KEY`** `dci-stats-dur`); **`statsHeadLine({ dur })`** draws the switch (action **`stats-dur`**) for this browser only.
+- **`statCard`** (Z-CFT): the `<p class="dci-sub dci-stats-since">` lines of a card's body become the `title` of its head (`data-since`, a ⓘ beside the name).
+- **`statsMore2Html`** (Z-GNC): genres and styles with `titleCase` (every word, also after "-", "/", "(", "&", "+").
+- **`globalStatsView`** (Z-GLB): `statsHeadLine` with the texts of the dump in ⓘ and `stats.global.headShort` with "Load again"; **`globalCoreParts`** (was `globalCoreHtml`) returns its cards by their keys and the line of the core dump; **`statGroupsHtml(cards, extra, defs)`** with **`GLOBAL_STATS_GROUPS`** (Who, Releases) and the lists of Overview through `statShortLists`.
+- **Review:** the time from the click on "Create …" (`S.crClick`, set in `onClick`; the form opens after lookups); clicks, keys, wheel and touch in the form (its frame or window) count as work (`watch`), a pause is closed (`statActivity`) before the time is taken – else it was left out twice; "fastest" without records of 0 s; Global folds its cards and groups by keys of their own (`g:…`; `statCard(…, foldKey)`, `statGroupsHtml(…, gp)`), "Fold all" / "Open all" only those of the scope shown; `titleCase` with small words, abbreviations and only Latin / Greek letters.
+- **Texts:** stats.dur, stats.dur.without, stats.dur.with, stats.durTitle, stats.global.headShort.
+- **Tests:** `t_ui_settings.py statsdur`, `globalgroups` (new); `statsb10`, `statsmore2` (the note in the tooltip, none in the card), `statsgenres` ("Free Jazz"); golden S095.
 
 ## Import 3.64.0 · 2026-11-06
 
