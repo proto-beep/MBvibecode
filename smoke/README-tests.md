@@ -407,6 +407,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   dbr: 3.58.0 (Z-DBR, S084): "Piano [Acoustic]" → piano credited "acoustic piano" (marked; a click: "acoustic"),
+                                #     "Piano [Acoustic Piano]" without a word twice, "Vocals [Backing]" → "backing vocals", Moog / two details kept; S084 off
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
                                 #     rule ids open "Mapping rules" at the rule, autoscroll while dragging (0.2 s, as in browsers)
                                 #   v217: "Mixed By [Mixing]" (S019), "Bass Guitar" asked (Q004), "[Additonal Musicians]" (S002), "All Music By",

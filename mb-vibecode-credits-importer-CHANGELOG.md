@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.57.0 | – |
+| 2026-11-06 | 3.56.0 – 3.58.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.58.0
+
+#### Changed
+
+- **Discogs: a detail that describes an instrument comes before it** (collected item Z-DBR, rule S084): "Piano [Acoustic]" is piano credited "acoustic piano" (before: "acoustic"); where MusicBrainz has an instrument of that name it is used ("Guitar [Acoustic]" → acoustic guitar). A word the detail repeats is written once – "Piano [Acoustic Piano]" is "acoustic piano", never "acoustic piano piano". Makes, models and numbers keep their own role credit ("Synthesizer [Moog]", "Guitar [Gibson Les Paul]"); so do several details, an instrument with a make ("Fender Rhodes [Acoustic]") and a translation. Voices too: "Vocals [Backing]" is background vocals credited "backing vocals" (before: "vocals"). Such a role credit is marked in blue; a click on it gives Discogs's short form ("acoustic", "backing") – once you typed in it, a click no longer does. Rule S084 can be switched off.
 
 ### Import 3.57.0
 
