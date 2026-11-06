@@ -91,6 +91,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   namesroles: 3.59.0 (Z-TBY, Node): a group "The …", "Special guests:" a heading, two credits from one line
+                                #   namesroles2: 3.59.0 (review): "except" titles, "plays …", two names in a line, a make, "Volume 2:" – as before
                                 #   hyphen, ignorelines, linernotes: 3.48.0 (Z-HYP, Z-IGN, Z-LIN); review: false positives (colon, "by" lines, credits among notes, "Björk (v)", publishers)
                                 #   rolesplit, roles, places, oldmarks, exceptread, exceptworks: 3.49.0 (Z-RTL, Z-ROL, Z-RPB, S069, Z-EXC – dashboard: covers, arrangement, quote)
                                 #   exceptlayouts, rolesplit2, exceptworks2: review of 3.49.0 (other layouts of the blocks, the parts' marks; nothing
@@ -731,6 +733,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   tarbaby: 3.59.0 (Z-TBY, S085–S087): the Tarbaby text on a label's page – names with roles without a dash, vocals by
+                                #     the start of a title, the group heading and "+" left out, an info on the member MusicBrainz lacks; off: six lines
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
                                 #     track pages through GM_xmlhttpRequest, band linked by its page, choice kept after a reload, edit note),
                                 #     digital media → Bandcamp first, order changed in the list, the Bandcamp menu (track pages off,
