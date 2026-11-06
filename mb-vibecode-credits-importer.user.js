@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.58.0
+// @version      3.59.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.58.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.58.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.59.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.59.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.58.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.59.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -295,6 +295,8 @@
       "ignored.why.definition": "a definition – no credit",
       "ignored.why.linerNotes": "the text of the liner notes",
       "ignored.why.exceptTitle": "the title of a track: the lines below it are for that track",
+      "ignored.why.groupHeading": "the heading of a group above its members – no credit",
+      "ignored.why.separator": "a separator between parts of the credits",
       "ignored.why.cover": "the original performers of a cover – no credit of this release (“cover” on the link of its work)",
       "ignored.why.quote": "a quote of another work – its work “quotes lyrics from” it (works matrix)",
       "wnote.cover": "Cover – originally performed by {by}: “cover” on the link of its work (the original)",
@@ -1137,6 +1139,11 @@
       "msg.addColOnly": "A column holds an artist or a label – this is a {type}.",
       "msg.badMbidColumn": "No MBID recognized. Paste the link of an artist or label page of MusicBrainz, or its MBID.",
       "msg.addColThere": "{name} is a column of the matrix already – its roles are in the ▾ of its cells.",
+      "msg.groupNotFound": "{group}: the heading of a group above {names} was left out. The group is not among the artists of this release in MusicBrainz, so whether they are its members was not checked.",
+      "msg.groupMembers.one": "{group}: MusicBrainz does not have {names} as a member of the group yet (“member of band”). The heading “{group}:” was left out – add the membership in MusicBrainz if it is right.",
+      "msg.groupMembers.other": "{group}: MusicBrainz does not have {names} as members of the group yet (“member of band”). The heading “{group}:” was left out – add the memberships in MusicBrainz if they are right.",
+      "log.groupMembers": "{group}: not members of the group in MusicBrainz yet – {names}",
+      "log.groupNotFound": "{group}: the group is not among the release’s artists – its members not checked",
       "msg.addColRole": "“{role}” is not a role of a {type} – choose one of its roles.",
       "note.unknownRole": "Not an instrument known to MusicBrainz. Added as “miscellaneous support” with the {src} role as task; choose a better type if there is one.",
       "date.pasteTitle": "You can paste a date as MusicBrainz shows it, e.g. “from 2015-01-26 until 2015-01-27”, “in 2015-01” or “on 2015-01-26”.",
@@ -3563,6 +3570,10 @@
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
     // [3.56.0] collected item Z-CWR
+    // [3.59.0] collected item Z-TBY
+    { id: 'S085', where: 'TEXT.parse (nameRoles, readLine0)', note: 'Texts (3.59.0): a name and its roles without a dash or colon – "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”" (two to four words with capitals, then roles in small letters the register knows) – read as "Name - roles"; a role with its own tracks in brackets after the roles – "Orrin Evans piano (vocals on “Blessed Ones”)" – is a credit of its own on those tracks (before: not recognized, or "Orrin Evans piano" as a name)' },
+    { id: 'S086', where: 'tracksByTitles', note: 'Texts (3.59.0): a title named by its start, whole words – "Blessed Ones" for "Blessed Ones The Eternal Truth" – is that track when only one title starts so (two words or six letters at least)' },
+    { id: 'S087', where: 'TEXT.parse (groupHeading, readLine), checkGroupMembers', note: 'Texts (3.59.0): the heading of a group above its members – "Tarbaby:" alone in a line (words with capitals, no role, not "Special guests:") – is left out (no credit), so is a separator line ("+"); the names below it up to an empty line or a separator are its members: an info says which of them MusicBrainz does not have as members of the group ("member of band"; the group among the release\'s artists or the entries)' },
     // [3.58.0] collected item Z-DBR
     { id: 'S084', where: 'joinDetail, instrumentCandidates, roleCreditOptions, descriptiveCredit, descriptiveVoice, roleCreditForInner', note: 'Discogs (3.58.0): a detail in brackets that describes an instrument – "Piano [Acoustic]", "Bass [Fretless]" – comes before it: MusicBrainz\'s instrument of that name where it has one ("Piano [Upright]" → upright piano), else the instrument credited with both ("acoustic piano"); a word the detail repeats is written once ("Piano [Acoustic Piano]" → acoustic piano, not "acoustic piano piano"). Only details of generic words of MusicBrainz\'s instrument names – a make or model ("Synthesizer [Moog]", "Guitar [Gibson Les Paul]") keeps its own role credit, so does an instrument with a make ("Fender Rhodes [Acoustic]") and a translation. Voices too: "Vocals [Backing]" → background vocals credited "backing vocals" (before: "vocals"). The role credit is marked; a click on it gives Discogs\'s short form ("acoustic", "backing").' },
     // [3.57.0] collected item Z-NWA
@@ -4067,6 +4078,10 @@
   // [T051] Texts (3.34.18): the words of places – "Recorded in Guruguru Brain studio, Rotterdam" names a place (recorded at),
   // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
   const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
+  // [Z-TBY] (3.59.0) a heading of the credits alone ("credits", "Personnel:", "Special guests:", "Besetzung:", "Gäste:"); the months (no
+  // group's heading: "June 12:")
+  const CREDITS_HEADING = /^(?:credits|personnel|musicians|line-?up|besetzung|mitwirkende|(?:special\s+)?guests?|gäste|featuring|feat\.?|with)\s*:?$/i;
+  const TEXT_MONTH_WORD = /\b(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec|januar|februar|märz|mai|juni|juli|oktober|dezember)\b/i;
 
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
@@ -6825,6 +6840,26 @@
       const blockScope = () => (titleBlock ? titleBlock.scope : null);
       const covers = [];
       const quotes = [];
+      // [Z-TBY] (3.59.0, S087) the heading of a group above its members ("Tarbaby:" / "Orrin Evans piano" …): its name and the names
+      // of the lines below it, up to an empty line or a separator ("+")
+      let groupHead = null;
+      const groups = [];
+      /** ((review) the groups with members, the same name once; a heading without members is not recognized again, as before) */
+      const groupsOut = () => {
+        const out = new Map();
+        for (const g of groups) {
+          if (!g.members.length) {
+            const k = ignored.indexOf(g.ign);
+            if (k >= 0) ignored.splice(k, 1);
+            if (!unrecognized.includes(g.ign.text)) unrecognized.push(g.ign.text);
+            continue;
+          }
+          const key = norm(g.name);
+          if (out.has(key)) out.get(key).members = uniq([...out.get(key).members, ...g.members]);
+          else out.set(key, { name: g.name, members: [...g.members], line: g.line });
+        }
+        return [...out.values()];
+      };
       let lineLead = null;
       /**
        * [Z-UNA] (3.42.4) The own rules of texts whose phrase is in a text (words whole, any case): each its entry – a person with its
@@ -6954,13 +6989,84 @@
         const k0 = companies.length;
         const u0 = unrecognized.length;
         const afterDefinition = definitionNext;
+        // [Z-TBY] (3.59.0, S087) a group's heading: no credit (left out as such); a separator ("+", "*") or an empty line ends it
+        const t = clean(raw);
+        if (!t || /^[+*•·~=_–—-]{1,5}$/u.test(t)) groupHead = null;
+        // (clean() takes the colon away: the line as written)
+        const t1 = String(raw || '').replace(/\s+/g, ' ').trim();
+        // ((review) as readLine0 does: a heading or separator ends the roles of a name above and the lines that go on a "by" line)
+        const ends = () => {
+          contWho = null;
+          prevBy = null;
+          definitionNext = false;
+        };
+        if (ruleOn('S087') && t && groupHeading(t1)) {
+          startLine(raw);
+          ends();
+          // ((review) a group only with members below it: else the line is not recognized, as before – groupsOut)
+          const ign = { text: line0, why: 'groupHeading' };
+          groupHead = { name: t, members: [], line: t1, ign };
+          groups.push(groupHead);
+          ignored.push(ign);
+          return;
+        }
+        if (ruleOn('S087') && t && /^[+*•·~=_–—-]{1,5}$/u.test(t)) {
+          startLine(raw);
+          ends();
+          ignored.push({ text: line0, why: 'separator' });
+          return;
+        }
+        const head = groupHead;
+        const i0 = ignored.length;
         readLine0(raw);
+        // ((review) the members: instruments and voices of the lines below it, not "Recorded by …"; a heading of the credits ends it)
+        if (head && head === groupHead) credits.slice(c0).forEach((c) => { if (c.who && c.who.name && playable(c.role) && !head.members.includes(c.who.name)) head.members.push(c.who.name); });
+        if (ignored.slice(i0).some((x) => x.why === 'heading')) groupHead = null;
         if (afterDefinition && clean(raw)) definitionNext = false;
         if ((linerNotes || afterDefinition) && credits.length === c0 && companies.length === k0 && unrecognized.length > u0) {
           unrecognized.splice(u0).forEach((text) => ignored.push({ text: String(text).replace(/\s+→\s+\?.*$/, ''), why: afterDefinition ? 'definition' : 'linerNotes' }));
         }
       };
       /** One line of the text. */
+      /**
+       * [Z-TBY] (3.59.0, S087) A line that is only a name with a colon – the heading of a group above its members ("Tarbaby:"): each word
+       * with a capital (or a small joining word), not a role nor a heading of the credits ("Special guests:", "Strings:").
+       */
+      const groupHeading = (t) => {
+        const m = t.match(/^([^:]{2,40}):\s*$/);
+        if (!m) return false;
+        const nm = clean(m[1]);
+        const words = nm.split(/\s+/);
+        // ((review) not the title of a track of an "except" block ("Song Two:", Z-EXC), nor any title of the release; no number, month,
+        // place or heading of the credits in another language ("Besetzung:", "Gäste:", "Horn Section:", "Volume 2:", "June 12:", "Berlin:")
+        if ((exceptHead && exceptHead.open) || titleNames.some((x) => norm(x) === norm(nm))) return false;
+        if (resolveTitles) {
+          const r = resolveTitles([nm]);
+          if (r && r.indexes && r.indexes.size) return false;
+        }
+        return looksLikeName(nm) && words.length <= 4 && words.every((w) => /^\p{Lu}/u.test(w) || /^(?:of|the|and|&|de|la|le|y|und)$/i.test(w))
+          && !/\d/.test(nm) && !CREDITS_HEADING.test(nm) && !TEXT_MONTH_WORD.test(nm) && !TEXT_PLACE_WORDS.test(nm) && !regionOf(nm)
+          && !isRole(cap(nm)) && !isRole(cap(nm.replace(/(?<=[^s])s$/i, ''))) && !(/(?:ed|ing|ion)$/i.test(nm) && isRole(`${cap(nm)} By`))
+          && !TEXT_NOT_NAME.test(nm.replace(/^the\s+/i, '')) && !PUBLISHER_HEAD.test(t)
+          && !/\b(?:guests?|gäste|gast|featuring|feat|with|band|musicians|personnel|credits|thanks|line-?up|ensemble|tracks?|side|disc|cd|lp|section|bonus|part|volume|vol|set|act|movement)\b/i.test(nm);
+      };
+      /**
+       * [Z-TBY] (3.59.0, S085) "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”": a name of two to four
+       * words with capitals and its roles in small letters, without a dash or colon between them – read as "Name - roles".
+       */
+      const nameRoles = (line) => {
+        if (!ruleOn('S085') || /:|\s[–—-]\s/.test(line)) return null;
+        // (a name with particles too: "Ludwig van Beethoven piano")
+        const nr = line.match(/^(\p{Lu}[\p{L}'’.-]*(?:\s+(?:\p{Lu}[\p{L}'’.-]*|van|von|de|der|den|da|di|del|della|la|le|du|dos|das|y|zu|ten|ter)){1,4})\s+(\p{Ll}.*)$/u);
+        // ((review) a name as prose reads one – no make ("Fender Rhodes"), place ("New York"), instrument or role in it – not a title
+        if (!nr || !proseName(nr[1].split(/\s+/)) || isRole(cap(nr[1])) || titleNames.some((x) => norm(x) === norm(nr[1]))) return null;
+        const roles = clean(nr[2].replace(/\s*\([^)]*\)\s*\.?$/, '').replace(/\s+on\s+["“'‘„].+$/u, ''));
+        // (no preposition or verb before or in the roles: "Bob Blue on Piano and Saxophone" is read as before – its "on" is no instrument)
+        if (!roles || /\s(?:by|at|for|to|with|from|on|in|of|plays?|playing|performs?|sings?)\s/i.test(` ${roles} `)) return null;
+        // ((review) every part an instrument or a voice the register knows: not "plays guitar", "recording", nor a second name ("Eric Revis
+        // bass and Nasheet Waits drums"))
+        return playRoles(roles) ? `${nr[1]} - ${nr[2]}` : null;
+      };
       const readLine0 = (raw, sub = false) => {
         let line = clean(raw);
         // [Z-HYP] (3.48.0) "Makigami Koichi -harmonic overtone singing, jaw harp": a dash with a space only before it is the dash of
@@ -6992,7 +7098,8 @@
         // [Z-IGN] (3.48.0) no credits: a heading of the credits alone ("credits", "Personnel:"), Bandcamp's "released / published
         // January 13, 2022", a definition ("Intention (n.) /ɪnˈtɛnʃən/") and the line that explains it
         // ((3.48.0, review) each of them ends a block of publishers too; a heading the liner notes)
-        if (/^(?:credits|personnel|musicians|line-?up|besetzung|mitwirkende)\s*:?$/i.test(line)) {
+        // ([Z-TBY] 3.59.0: "Special guests:", "Guests:", "Featuring:" alone too)
+        if (CREDITS_HEADING.test(line)) {
           ignored.push({ text: line0, why: 'heading' });
           pubBlock = null;
           linerNotes = false;
@@ -7067,6 +7174,24 @@
         // "all other tracks mixed by Y"): not read – before, the tracks named were taken as the credit's
         if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
           unrecognized.push(line0);
+          return;
+        }
+        // [Z-TBY] (3.59.0, S085) a name and its roles without a dash: as with one ((review) before the roles of a name above, S070: a
+        // name as prose reads one – "Eric Revis double bass" below "Orrin Evans piano" is his –, a make is none: "Fender Rhodes piano")
+        const asDash = !sub ? nameRoles(line) : null;
+        if (asDash) line = asDash;
+        // [Z-TBY] (3.59.0, S085) "Orrin Evans - piano (vocals on “Blessed Ones”)": a role with its own tracks in brackets after the roles
+        // – both parts read on their own, from the same line ((review) only roles before "on": "(overdubs on track 3)" stays as it was)
+        const rob = !sub && ruleOn('S085') && line.match(/^(.+?\s[–—-]\s)(.+?)\s*\(\s*(\p{Ll}[^()]*?\s+on\s+[^()]+?)\s*\)\s*\.?$/u);
+        if (rob && (listRoles(clean(rob[2])) || playList(clean(rob[2]))) && playRoles(rob[3].replace(/\s+on\s+.+$/, ''))) {
+          [rob[2], rob[3]].forEach((x, k) => {
+            const [c0, k0, u0] = [credits.length, companies.length, unrecognized.length];
+            readLine0(`${rob[1]}${x}`, true);
+            // ((review) the first part as the page writes it: without the dash a line without one got here)
+            const first = asDash ? clean(line0.replace(/\s*\([^()]*\)\s*\.?$/, '')) : clean(`${rob[1]}${x}`);
+            [...credits.slice(c0), ...companies.slice(k0)].forEach((c) => Object.assign(c, { part: k ? clean(x) : first, pi: k }));
+            for (let j = u0; j < unrecognized.length; j++) if (unrecognized[j] === line0) unrecognized[j] = `${line0} → ? “${clean(x)}”`;
+          });
           return;
         }
         // [Z-ROL] (3.49.0; Q-eu, Q-fe) "Mekala Session - drums / drum sample (2, 11, 13)": the sample of the instrument the same person
@@ -7454,9 +7579,9 @@
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut() };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut() };
     }
 
     /**
@@ -7505,6 +7630,7 @@
         // [Z-EXC] (3.49.0) covers and quotes of the tracks
         covers: res.covers || [],
         quotes: res.quotes || [],
+        groups: res.groups || [], // [Z-TBY] (3.59.0, S087)
       };
     }
 
@@ -7710,6 +7836,8 @@
       const ignored = [...(album.ignored || [])];
       // [Z-EXC] (3.49.0) covers and quotes of the credits and of the "about" text
       const covers = [...(album.covers || []), ...(aboutAll ? aboutRes.covers || [] : [])];
+      // [Z-TBY] (3.59.0, S087) the headings of groups above their members
+      const groups = [...(album.groups || [])];
       const quotes = [...(album.quotes || []), ...(aboutAll ? aboutRes.quotes || [] : [])];
       // [S058] (3.38.12) the lines not recognized of each track page, in both readings
       const trackUnrec = new Map();
@@ -7769,6 +7897,7 @@
         ignored,
         covers,
         quotes,
+        groups,
         band,
         released: cur.release_date || '',
       };
@@ -8862,7 +8991,12 @@
     const unresolved = [];
     for (const title of titles) {
       const k = key(title);
-      const hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
+      let hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
+      // ([Z-TBY] 3.59.0, S086, review) the start of a title as in the dashboard (the count of the release page the same)
+      if (!hits.length && k && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
+        const pre = keys.flatMap((x, i) => (x && x.startsWith(`${k} `) ? [i] : []));
+        if (pre.length === 1) hits = pre;
+      }
       if (hits.length) hits.forEach((i) => indexes.add(i));
       else unresolved.push(`“${title}”`);
     }
@@ -19303,6 +19437,8 @@
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
         setWorkNotes(S.workNotesRel);
+        // [Z-TBY] (3.59.0, S087) the groups above their members: whether MusicBrainz has them as members (in the background)
+        checkGroupMembers(S.workNotesRel, seq).catch((e) => console.warn('[Discogs-Credits]', e));
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
         S.gapExactPending = source === DISCOGS || source === BANDCAMP ? { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) } : null;
@@ -23400,6 +23536,11 @@
       const k = key(title);
       let hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
       if (!hits.length && k) hits = keys.flatMap((x, i) => (x && withinOne(x, k) ? [i] : []));
+      // [Z-TBY] (3.59.0, S086) the start of a title, whole words ("Blessed Ones" for "Blessed Ones The Eternal Truth"): its one track
+      if (!hits.length && k && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
+        const pre = keys.flatMap((x, i) => (x && x.startsWith(`${k} `) ? [i] : []));
+        if (pre.length === 1) hits = pre;
+      }
       if (hits.length) hits.forEach((i) => indexes.add(i));
       else unresolved.push(`“${title}”`);
     }
@@ -26927,6 +27068,58 @@
     S.workRels = new Map();
     if (rel) addWorkNotes(rel);
   }
+  /**
+   * [Z-TBY] (3.59.0, S087) The heading of a group above its members in a text ("Tarbaby:"): left out; an info when MusicBrainz does
+   * not have them as members of the group ("member of band") – the group among the release's artists or the entries, the members
+   * among the entries (by name). One look-up of the group's relationships.
+   */
+  async function checkGroupMembers(rel, seq) {
+    const groups = ((rel && rel.groups) || []).filter((g) => g.members && g.members.length);
+    if (!ruleOn('S087') || !groups.length) return;
+    // (the entries still looked up in MusicBrainz first: at most 20 s)
+    for (let k = 0; k < 40 && [...S.artists.values()].some((a) => a.status === 'pending'); k++) {
+      await sleep(500);
+      if (seq !== importSeq) return;
+    }
+    const byName = (name) => {
+      const n = norm(name);
+      const rc = (S.releaseCredit || []).find((p) => p.mbid && norm(p.name) === n);
+      if (rc) return rc.mbid;
+      const a = [...S.artists.values()].find((x) => x.mbid && !x.company && (norm(x.name) === n || norm(x.mbName) === n));
+      if (a) return a.mbid;
+      // (an entry not linked yet: its one candidate of exactly that name)
+      const open = [...S.artists.values()].find((x) => !x.mbid && !x.company && norm(x.name) === n);
+      // (a source that wants the names of the release's credit – Bandcamp – keeps the hits by name aside: nameHits)
+      const same = open ? uniq([...(open.candidates || []), ...(open.nameHits || [])].filter((c) => c.mbid && norm(c.name) === n).map((c) => c.mbid)) : [];
+      return same.length === 1 ? same[0] : '';
+    };
+    for (const g of groups) {
+      const gid = byName(g.name);
+      // ((review) a group not among the release's artists: only in the log – no info for every heading)
+      if (!gid) {
+        log('info', 'groupNotFound', { group: g.name });
+        continue;
+      }
+      let rels = null;
+      try {
+        const a = await mbWsIdle(`artist/${gid}?inc=artist-rels`);
+        // ((review) the group's members: "member of band" backward – forward are the groups the group is a member of)
+        rels = ((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.direction !== 'forward' && r.artist && r.artist.id);
+      } catch (e) {
+        console.warn('[Discogs-Credits]', e);
+      }
+      if (seq !== importSeq) return;
+      if (!rels) continue;
+      const ids = new Set(rels.map((r) => r.artist.id));
+      const names = new Set(rels.flatMap((r) => [r.artist.name, r['target-credit']].filter(Boolean).map(norm)));
+      // ((review) by MBID, or – a name not linked yet – by the name MusicBrainz has for a member
+      const missing = g.members.filter((nm) => { const id = byName(nm); return !(id && ids.has(id)) && !names.has(norm(nm)); });
+      if (!missing.length) continue;
+      showMessage('info', 'msg.groupMembers', { group: g.name, names: missing.join(', '), n: missing.length });
+      log('info', 'groupMembers', { group: g.name, names: missing.join(', ') });
+    }
+  }
+
   /** [Z-EXC] (3.49.0, review) The covers and quotes of a source (a supplement too: tracks that have one already keep it). */
   function addWorkNotes(rel) {
     if (!S.textCovers) setWorkNotes(null);

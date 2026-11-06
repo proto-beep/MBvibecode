@@ -1319,4 +1319,96 @@ def case_ytlinks():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_tarbaby():
+    """Credits Importer 3.59.0 (collected item Z-TBY; rules S085, S086, S087): Tarbaby, "Dance Of The Evil Toys" on the Bandcamp page of
+    a label – "Tarbaby:" / "Orrin Evans piano (vocals on “Blessed Ones”)" / "Eric Revis double bass" / "Nasheet Waits drums" / "+" /
+    "Oliver Lake alto saxophone" / "Josh Lawrence trumpet" / "Dana Murray percussion on “Dance Of The Evil Toys”" (until 3.58.0: six
+    lines not recognized).
+    A) Nothing not recognized: each name with its instruments (a name and its roles without a dash), Orrin Evans vocals on track 1 only
+       ("Blessed Ones" the start of "Blessed Ones The Eternal Truth"), Dana Murray percussion on track 4 only; no entry "Tarbaby".
+    B) "Tarbaby:" and "+" left out as such (the heading of a group, a separator).
+    C) MusicBrainz has Orrin Evans and Eric Revis as members of Tarbaby, not Nasheet Waits: an info names him (not the guests below "+").
+    D) Rules S085, S086, S087 off: the lines are not recognized again."""
+    PAGE = 'https://cleanfeedrecords.bandcamp.com/'
+    ALBUM = PAGE + 'album/dance-of-the-evil-toys'
+    TITLES = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Dance Of The Evil Toys']
+    H.TITLES[:] = TITLES
+    TB = H.uid('dddddddd', 3500)
+    who = {n: H.uid('dddddddd', 3501 + k) for k, n in enumerate(['Orrin Evans', 'Eric Revis', 'Nasheet Waits', 'Oliver Lake', 'Josh Lawrence', 'Dana Murray'])}
+    H.RELEASE_AC[:] = [(TB, 'Tarbaby', 'Tarbaby', '')]
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for n, g in [('Tarbaby', TB), *who.items()]]
+    H.BAND_MEMBERS[TB] = [who['Orrin Evans'], who['Eric Revis']]
+    for i, n in ((9311, 'percussion'), (9312, 'trumpet')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = ('Tarbaby:\nOrrin Evans piano (vocals on “Blessed Ones”)\nEric Revis double bass\nNasheet Waits drums\n+\n'
+               'Oliver Lake alto saxophone\nJosh Lawrence trumpet\nDana Murray percussion on “Dance Of The Evil Toys”')
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Tarbaby', 'current': {'title': 'Dance Of The Evil Toys', 'credits': CREDITS, 'about': '',
+                                                                    'release_date': '17 Jun 2022 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]},
+                                  band='Clean Feed Records')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=primary]') || {}).value || (r.querySelector('.dci-drole') || { dataset: {} }).dataset.raw || '',
+        [...document.querySelectorAll(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1)])]))()"""
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S085', 'S086', 'S087']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            if off:
+                # (off: nothing read – no entries, so no checks; the line of the log says what was not recognized)
+                pg.click('#dci-open')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Bandcamp read:/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1000)
+                read = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Bandcamp read:' in x]
+                msgs = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Tarbaby' in m]
+                b.close()
+                return read, None, None, msgs, errs
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            pg.wait_for_timeout(2500)
+            rows = pg.evaluate(ROWS)
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => [l.querySelector('.dci-ign-text').textContent.trim(), (l.querySelector('.dci-ign-why') || {}).textContent || ''])")
+            msgs = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Tarbaby' in m]
+            b.close()
+            return rows, unrec, ign, msgs, errs
+
+    rows, unrec, ign, msgs, errs = run(False)
+    by = {n: r for n, r in rows}
+    for n, r in rows:
+        print('  ', n, r)
+    print('A) nicht erkannt:', unrec)
+    orrin = by.get('Orrin Evans', [])
+    voc = [t for p, t in orrin if 'ocal' in p]
+    results.append(not unrec and all(n in by for n in who) and 'Tarbaby' not in by and any(p == 'piano' for p, _ in orrin) and voc == [[1]]
+                   and any(p == 'percussion' and t == [4] for p, t in by.get('Dana Murray', [])) and any(p == 'double bass' for p, _ in by.get('Eric Revis', [])))
+    print('B) ausgelassen:', ign)
+    results.append(['Tarbaby:', '– the heading of a group above its members – no credit'] in [[a, b.strip()] for a, b in ign]
+                   and any(a == '+' for a, _ in ign))
+    print('C) Hinweis:', msgs, '| Abfragen der Gruppe:', [q for g, q in H.ARTIST_LOOKUPS if g == TB])
+    results.append(len(msgs) == 1 and 'Nasheet Waits' in msgs[0] and 'Orrin Evans' not in msgs[0] and 'Oliver Lake' not in msgs[0] and not errs)
+    read2, _, _, msgs2, _ = run(True)
+    print('D) aus:', read2, msgs2)
+    results.append(read2 == ['Bandcamp read: 0 entries, 0 roles, 6 lines not recognized'] and not msgs2)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
 run_cases(globals())
