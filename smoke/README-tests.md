@@ -415,6 +415,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   coverdetail: 3.62.0 (Z-CVA, S090, Node): "Cover [Cover Art]" → "cover art", the exceptions of COVER_DETAIL, the dashboard's role credit
+                                #   photoname: 3.63.0 (Z-PHN, S091): "Photography By [Bass Man]" credited "Bass Man"; off
                                 #   perfhints: 3.62.0 (Z-PDT review, Node): performance hints, not premieres or rights lines
                                 #   dbr: 3.58.0 (Z-DBR, S084): "Piano [Acoustic]" → piano credited "acoustic piano" (marked; a click: "acoustic"),
                                 #     "Piano [Acoustic Piano]" without a word twice, "Vocals [Backing]" → "backing vocals", Moog / two details kept; S084 off
@@ -742,6 +743,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
                                 #   titlecomposers: 3.60.0 (Z-TCP, S088): names in brackets after the titles of a track list – writer, the switch,
                                 #     a work found by name offered, jazz in the tags → composer; off
+                                #   tcpsingle: 3.63.0 (Z-TCP2, S092): a single word in brackets – exactly one artist of that name an entry,
+                                #     else no entry and the works found offered (also by surname); off
                                 #   tarbaby: 3.59.0 (Z-TBY, S085–S087): the Tarbaby text on a label's page – names with roles without a dash, vocals by
                                 #     the start of a title, the group heading and "+" left out, an info on the member MusicBrainz lacks; off: six lines
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and

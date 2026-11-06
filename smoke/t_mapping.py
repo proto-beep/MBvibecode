@@ -1480,6 +1480,7 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
 def case_perfhints():
     """Credits Importer 3.62.0 (collected item Z-PDT, review), in Node: the words of a performance date (DATE_HINTS) – "Performed in St.
     Ann's Church … on February 22nd, 2018" and "Recorded live in Berlin, 12 May 2005" are performance; a premiere ("First performed
@@ -1499,6 +1500,55 @@ console.log(JSON.stringify(out));
     print(res or o.stderr[-300:])
     v = list(res.values())
     results = [len(v) == 5 and v[0] == ['performance'] and v[1] == ['performance'] and all(x and 'performance' not in x for x in v[2:])]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_photoname():
+    """Credits Importer 3.63.0 (collected item Z-PHN, rule S091): a photographer named in the detail of a photography credit.
+    A) "Photography By [Bass Man]" (Bass Man the artist of the release) → photography credited "Bass Man" (until 3.62.0 "bass man");
+       "Photography By [Bass Man photographs by]" → "Bass Man" too; "Photography By [Back Cover]" as before; (review) "[Drum Guy photos]"
+       – the drummer of the release, not its artist – "Drum Guy" (with the name the entry has in MusicBrainz).
+    B) Rule S091 off: "bass man" as before."""
+    orig = H.discogs_release
+    # (the release artist: "Bass Man" – an artist the fixtures know, as Barry Guy for Discogs 13172763)
+    H.RELEASE_AC[:] = [(H.ARTISTS[3001][0], 'Bass Man', 'Bass Man', '')]
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': 'Keys Guy', 'anv': '', 'role': 'Photography By [Bass Man]', 'tracks': '', 'id': 3003, 'join': ''},
+                              {'name': 'Photo Guy', 'anv': '', 'role': 'Photography By [Bass Man photographs by]', 'tracks': '', 'id': 3006, 'join': ''},
+                              {'name': 'Drum Guy', 'anv': '', 'role': 'Photography By [Back Cover]', 'tracks': '', 'id': 3005, 'join': ''},
+                              {'name': 'Bob Producer', 'anv': '', 'role': 'Photography By [Drum Guy photos]', 'tracks': '', 'id': 3005, 'join': ''}]
+        return d
+    H.discogs_release = rel
+    ROWS = """[...document.querySelectorAll('[data-group] tr.dci-row')].filter(tr => /Photography/.test(tr.querySelector('.dci-drole').dataset.raw))
+      .map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), (tr.querySelector('[data-f=role-credit]') || {}).value])"""
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S091']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(600)
+            rows = dict(pg.evaluate(ROWS))
+            b.close()
+            return rows, errs
+
+    rows, errs = run(False)
+    print('A)', rows)
+    results.append(rows.get('Photography By [Bass Man]') == 'Bass Man' and rows.get('Photography By [Bass Man photographs by]') == 'Bass Man'
+                   and rows.get('Photography By [Back Cover]') not in ('Bass Man', None)
+                   and rows.get('Photography By [Drum Guy photos]') == 'Drum Guy' and not errs)
+    rows2, _ = run(True)
+    print('B)', rows2)
+    results.append(rows2.get('Photography By [Bass Man]') == 'bass man')
+    H.discogs_release = orig
+    H.RELEASE_AC[:] = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

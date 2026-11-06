@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-06 | 3.56.0 – 3.62.0 | – |
+| 2026-11-06 | 3.56.0 – 3.63.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
@@ -102,6 +102,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-06
+
+### Import 3.63.0
+
+#### Changed
+
+- **A photographer named in the detail** (collected item Z-PHN, rule S091): "Photography By [Barry Guy]" with Barry Guy an artist of the release (or of the dashboard) is credited as MusicBrainz writes the name – "Barry Guy", not "barry guy"; "[Barry Guy photographs by]" → "Barry Guy" (the words of the role left out). Only for photography; checked again once the entries are found in MusicBrainz; no credit that repeats the row's own name.
+- **A single word in brackets after a title** (collected item Z-TCP2, rule S092): "(Prince)", "(Monk)" is a credit only when it is the release's artist or MusicBrainz has exactly one artist of exactly that name. Otherwise there is no entry (its rows are skipped, the log says why) and only the works found for that title are offered – the word taken as the surname of a composer, writer or lyricist too ("Misterioso" by Thelonious Monk for "(Monk)"). Checked only while the works are looked up (else the entry stays; "Yes" to the work lookups checks then); an entry with other credits of its own (a musician of the release) stays; a row taken by hand meanwhile is not set back; the check is no change of yours for the remembered release.
 
 ### Import 3.62.0
 

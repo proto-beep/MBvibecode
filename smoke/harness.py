@@ -882,8 +882,13 @@ def install_routes(ctx):
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
             # [3.49.0] also by the names of its artists (artist:"Sun Ra")
             names = set(n.lower() for n in re.findall(r'artist:"([^"]+)"', q))
+
+            # [3.63.0] as the search of MusicBrainz: a phrase is found in a longer name too (artist:"Monk" → "Thelonious Monk")
+            def in_name(name):
+                tok = name.lower().split()
+                return any(tok[k:k + len(n.split())] == n.split() for n in names for k in range(len(tok)))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
-                                                if any(r.get('artist', {}).get('id') in ids or r.get('artist', {}).get('name', '').lower() in names for r in w.get('relations', []))]})
+                                                if any(r.get('artist', {}).get('id') in ids or in_name(r.get('artist', {}).get('name', '')) for r in w.get('relations', []))]})
         # [3.32.9] a place with its area; an area with its type, ISO codes and the area it is part of (AREA_INFO)
         m = re.match(r'/ws/2/place/([0-9a-f-]{36})$', p)
         if m and m.group(1) in PLACE_AREAS:
