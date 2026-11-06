@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.62.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.63.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.63.0 · 2026-11-06
+
+Z-PHN, Z-TCP2.
+
+- **`photographerName(detail)`** (new; rule **S091**): the detail without the words of the role (photographs, photos, photography, by …), at most five words, matched by `foldWord` with `S.releaseCredit` (name or credit) or `S.artists` (MusicBrainz name or name) → the MusicBrainz name. **`roleCreditForInner`**: for type photography it gives that name before the other credit rules.
+- **Parser** (`TEXT.parse`, S088): `tcpSingle(n)` – a name without a space that is no band name of the source (rule **S092**) – flags the credit `tcpSingle`; carried through `groupCredits`, `addCreditRows` and the supplement rows.
+- **`checkTitleComposerSingles(seq)`** (new): one artist search per name (`artist:"…"`, limit 25), the exact names counted by `foldWord`; not exactly one → the rows `levelOf(r, 'skip')` and `tcpWorksOnly`, log **`tcpSingle`**, groups and works matrix rendered again. Runs before `searchTitleComposerWorks` at the end of an import and after a supplement.
+- **`searchTitleComposerWorks`**: also the rows `tcpWorksOnly`; their word is matched as the surname of a work's artist too (`who.singles`).
+- **Review:** `checkTitleComposerSingles` only with `worksLookupsAllowed()`, rows checked again after the search (`free`: on the works level, not by hand; `others`: no other credits of the entry), `tcpChecking` against two runs, `rebaseFields` for what the check sets; **`runTitleComposerChecks(seq)`** (new) also from `setWorksLookups(true)`; `searchTitleComposerWorks` stops for another import, its cache key with the single words, the surname only of composer / writer / lyricist / librettist relations; `levelOf` clears `tcpWorksOnly` for a level other than Skip; `S.releaseCredit` keeps `artistName` (the parser's artist names with it). `photographerName(detail, row)`: the whole detail first, the words of the role only at its start or end (Unicode-aware), `artistName`, no series / places / events, not the row's own artist; photography rows refreshed after `resolveArtists`.
+- **Tests:** `t_mapping.py photoname` (new; a drummer named in the detail too), `t_sources_bandcamp.py tcpsingle` (new); harness: the work search finds a phrase in a longer artist name (as MusicBrainz); golden S091, S092.
 
 ## Import 3.62.0 · 2026-11-06
 

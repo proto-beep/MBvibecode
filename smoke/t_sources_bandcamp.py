@@ -1515,4 +1515,71 @@ def case_titlecomposers():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_tcpsingle():
+    """Credits Importer 3.63.0 (collected item Z-TCP2, rule S092): a single word in brackets after a title – "1 Bonu (Prince)",
+    "2 Misterioso (Monk)", "3 Dance (Zorn)", "4 Bumper (Tarbaby)".
+    A) MusicBrainz has exactly one artist "Prince": his entry writes track 1; two artists "Monk" and none "Zorn": no entry (the rows are
+       skipped), only the works found are offered – "Misterioso" by Thelonious Monk for track 2 (the word as a surname); "Tarbaby" is
+       the release artist and stays. (Until 3.62.0 entries for Monk and Zorn too.)
+    B) Rule S092 off: entries for Monk and Zorn as before."""
+    PAGE = 'https://cleanfeedrecords.bandcamp.com/'
+    ALBUM = PAGE + 'album/singles'
+    TITLES = ['Bonu', 'Misterioso', 'Dance', 'Bumper']
+    old_titles = list(H.TITLES)
+    H.TITLES[:] = TITLES
+    TB = H.uid('dddddddd', 3620)
+    H.RELEASE_AC[:] = [(TB, 'Tarbaby', 'Tarbaby', '')]
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': n, 'disambiguation': d, 'score': 100} for n, g, d in [
+        ('Tarbaby', TB, ''), ('Prince', H.uid('dddddddd', 3621), ''), ('Monk', H.uid('dddddddd', 3622), 'a band'), ('Monk', H.uid('dddddddd', 3623), 'a rapper')]]
+    MIST = H.uid('cccccccc', 3630)
+    H.WORK_SEARCH[:] = [{'id': MIST, 'title': 'Misterioso', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': H.uid('dddddddd', 3631), 'name': 'Thelonious Monk'}}]}]
+    H.JS_WORKS[MIST] = (7630, 'Misterioso')
+    CREDITS = '1 Bonu (Prince)\n2 Misterioso (Monk)\n3 Dance (Zorn)\n4 Bumper (Tarbaby)'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Tarbaby', 'current': {'title': 'Singles', 'credits': CREDITS, 'about': '', 'release_date': '17 Jun 2022 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]}, band='Clean Feed Records')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    COLS = "[...document.querySelectorAll('.dci-matrix [data-colhead]')].map(h => (h.querySelector('.dci-mx-name') || h).textContent.trim())"
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S092'] if off else ['S083']}))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            pg.wait_for_timeout(2500)
+            out = {'cols': pg.evaluate(COLS), 'offer': pg.evaluate("[...document.querySelectorAll('tr[data-work=\"1\"] [data-act=work-pick]')].map(b => b.dataset.gid)"),
+                   'log': [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Monk' in x or 'Zorn' in x], 'errs': errs}
+            b.close()
+            return out
+
+    o = run(False)
+    print('A)', o)
+    cols = ' | '.join(o['cols'])
+    results.append('Prince' in cols and 'Tarbaby' in cols and 'Monk' not in cols and 'Zorn' not in cols and MIST in o['offer'] and not o['errs'])
+    o2 = run(True)
+    print('B)', o2['cols'])
+    cols2 = ' | '.join(o2['cols'])
+    results.append('Monk' in cols2 and 'Zorn' in cols2)
+    H.WORK_SEARCH[:] = []
+    H.MB_SEARCH.pop('artist', None)
+    H.RELEASE_AC[:] = []
+    H.TITLES[:] = old_titles
+    H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
