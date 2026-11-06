@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.69.0
+// @version      3.70.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.69.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.69.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.70.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.70.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.69.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.70.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1289,6 +1289,12 @@
       "suite.add": "Suite …",
       "suite.addTitle": "Tracks that are parts of a suite the source does not show (no heading, no index track): choose them and the name",
       "suite.addAsk": "Parts of a suite:",
+      "suite.addAnother": "Another suite …",
+      "suite.addAskMore": "Parts of another suite:",
+      "suite.list": "Suites: {list}",
+      "suite.taken": "in a suite",
+      "suite.takenMedley": "a medley",
+      "suite.addNone": "Every track is in a suite already (or alone between them): nothing to add",
       "suite.addFrom": "tracks",
       "suite.addTo": "to",
       "suite.addName": "name:",
@@ -3666,6 +3672,8 @@
     { id: 'S102', where: 'matchHtmlInner', note: 'Entries (3.69.0): "Create artist …" (label, place …) yellow when it is offered because MusicBrainz has no such entry (not found, no suggestion)' },
     { id: 'S103', where: 'entryCompactHtml (.dci-em-cllist)', note: 'Compact view (3.69.0): the instruments and roles of an event in a block of their own, one below the other (before: in one line after the event)' },
     { id: 'S104', where: 'sourceElOf, showSourceOf', note: 'Companion (3.69.0): a click into an entry\'s line of the compact view (its white field) marks the line on Discogs (or Bandcamp) – a line of one row that row, else the entry' },
+    { id: 'S105', where: 'suiteAddHtml, suiteAddBtnHtml, suiteTaken (suite-add-yes)', note: 'Works matrix (3.70.0): several suites – after "✓ Yes" the box stays open for the next one ("＋ Another suite"), from the first track that is free; tracks of a suite (or a medley) cannot be chosen again: the ranges of two suites never overlap' },
+    { id: 'S106', where: 'onKeydown (mxArrow)', note: 'Works matrix (3.70.0): the arrow keys move between the cells (← → along a row, ↑ ↓ along a column; the front column of the tracks and the heads of the columns too); Space or Enter switches a cell as before' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -30740,15 +30748,32 @@
    * [Z-SUM] (3.41.11; Q-ck, Q-cq) "＋ Suite …": a suite the source does not show (no heading, no index track) – the same yellow
    * question, with the tracks from – to and the name; "✓ Yes" accepts it as one found in the source.
    */
+  /** [Z-SU2] (3.70.0, S105) A track in a suite (or split as a medley) already: its name, else ''. */
+  function suiteTaken(i) {
+    const sw = [...S.suiteWorks.values()].find((x) => (x.tracks || []).includes(i));
+    if (sw) return sw.name || sw.title || tr('suite.taken');
+    if ((S.workParts.get(i) || []).length) return tr('suite.takenMedley');
+    // ((review) a suite of the source not answered yet: its tracks are its own
+    const ask = suiteAsks().find((o) => !S.suiteAnswers.has(o.key) && o.tracks.includes(i));
+    return ask ? ask.name || tr('suite.taken') : '';
+  }
+
   function suiteAddHtml() {
     const tracks = S.mbTracks.filter((t) => matrixTrack(t));
     if (tracks.length < 2) return '';
     // [Z-WMX] (3.52.0) its button in the head of the matrix (suiteAddBtnHtml)
     if (!S.suiteAdd) return '';
     const a = S.suiteAdd;
-    const opt = (sel) => tracks.map((t) => `<option value="${t.idx}" ${sel === t.idx ? 'selected' : ''}>${esc(`${trackLabel(t)} ${t.title}`)}</option>`).join('');
+    // ([Z-SU2] 3.70.0, S105) tracks of a suite already cannot be chosen (no overlap); the suites so far above
+    const many = ruleOn('S105');
+    const opt = (sel) => tracks.map((t) => {
+      const taken = many ? suiteTaken(t.idx) : '';
+      return `<option value="${t.idx}" ${sel === t.idx ? 'selected' : ''}${taken ? ' disabled' : ''}>${esc(`${trackLabel(t)} ${t.title}${taken ? ` (${taken})` : ''}`)}</option>`;
+    }).join('');
+    const done = many ? [...S.suiteWorks.values()].filter((sw) => (sw.tracks || []).length) : [];
     return `<div class="dci-mx-ask dci-mx-suite" data-el="suite-add" role="group" aria-label="${esc(tr('suite.add'))}">
-      <strong>${esc(tr('suite.addAsk'))}</strong>
+      ${done.length ? `<div class="dci-sub" data-el="suite-list" aria-live="polite">${esc(tr('suite.list', { list: done.map((sw) => `${sw.name || sw.title || ''} (${tracksShort({ level: 'recording', tracks: new Set(sw.tracks) })})`).join(' · ') }))}</div>` : ''}
+      <strong>${esc(tr(done.length ? 'suite.addAskMore' : 'suite.addAsk'))}</strong>
       <label>${esc(tr('suite.addFrom'))} <select data-f="mx-suite-from">${opt(a.from)}</select></label>
       <label>${esc(tr('suite.addTo'))} <select data-f="mx-suite-to">${opt(a.to)}</select></label>
       <label class="dci-suite-other">${esc(tr('suite.addName'))} <input type="text" data-f="mx-suite-name" value="${esc(a.name || '')}" size="24"></label>
@@ -30761,7 +30786,11 @@
   /** [Z-WMX] (3.52.0) "＋ Suite …" in the middle of the head of the works matrix (two tracks or more). */
   function suiteAddBtnHtml() {
     if (S.mbTracks.filter((t) => matrixTrack(t)).length < 2) return '';
-    return `<button type="button" class="dci-small dci-mx-suite-add" data-act="suite-add-open" aria-expanded="${!!S.suiteAdd}" title="${esc(tr('suite.addTitle'))}">＋ ${esc(tr('suite.add'))}</button>`;
+    // ([Z-SU2] 3.70.0, S105) "＋ Another suite" once there is one
+    const more = ruleOn('S105') && [...S.suiteWorks.values()].some((sw) => (sw.tracks || []).length);
+    // ((review) no two free tracks in a row: nothing to add
+    const none = more && !S.suiteAdd && !suiteAddDefaults().free;
+    return `<button type="button" class="dci-small dci-mx-suite-add" data-act="suite-add-open" aria-expanded="${!!S.suiteAdd}"${none ? ' disabled' : ''} title="${esc(tr(none ? 'suite.addNone' : 'suite.addTitle'))}">＋ ${esc(tr(more ? 'suite.addAnother' : 'suite.add'))}</button>`;
   }
 
   /** [Z-WMX] (3.52.0) The defaults for new works in short (the button of the head): "Song · English", "none". */
@@ -30917,6 +30946,18 @@
     return `<th scope="col" class="dci-mx-col dci-mx-addcol-head"><div class="dci-mx-card">
       <button type="button" class="dci-small dci-mx-addcol-btn" data-act="mx-addcol-open" aria-expanded="${open}">＋ ${esc(tr('matrix.addColumnHead'))}</button>
       ${open ? `<div class="dci-mx-colmenu dci-mx-addcol-pop" role="group" aria-label="${esc(tr('matrix.addColumnHead'))}">${addColumnHtml()}</div>` : ''}</div></th>`;
+  }
+
+  /** [Z-SU2] (3.70.0) The box of a new suite: from the first track that is free (after the suites so far) to the end of its free run. */
+  function suiteAddDefaults() {
+    const ts = S.mbTracks.filter((t) => matrixTrack(t));
+    if (!ruleOn('S105')) return { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '' };
+    const free = ts.filter((t) => !suiteTaken(t.idx));
+    if (!free.length) return { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '', free: false };
+    let end = ts.indexOf(free[0]);
+    while (end + 1 < ts.length && !suiteTaken(ts[end + 1].idx)) end++;
+    // ((review) a suite of one track is none: free only with two in a row
+    return { from: free[0].idx, to: ts[end].idx, name: '', error: '', free: end > ts.indexOf(free[0]) };
   }
 
   /** [Z-SUM] (3.41.11) "✓ Yes" of "＋ Suite …": the tracks from – to (of the works matrix), named; false (with its error) if not. */
@@ -31103,9 +31144,12 @@
     const works = S.overlay && S.overlay.querySelector('[data-el="works"]');
     const ae = document.activeElement;
     if (!works || !ae || ae === works || !works.contains(ae) || !(ae.dataset.act || ae.dataset.f)) return null;
-    const tr = ae.closest('tr[data-work]');
     const q = (k, v) => `[${k}="${CSS.escape(v)}"]`;
-    return `[data-el="works"] ${tr ? `tr${q('data-work', tr.dataset.work)} ` : ''}${ae.dataset.act ? q('data-act', ae.dataset.act) : q('data-f', ae.dataset.f)}${ae.dataset.col ? q('data-col', ae.dataset.col) : ''}`;
+    // ([Z-MXK] 3.70.0, review) a cell by its column and row (several cells and part rows per track)
+    const td = ae.closest('td[data-col][data-mrow]');
+    if (td) return `[data-el="works"] td${q('data-col', td.dataset.col)}${q('data-mrow', td.dataset.mrow)} ${ae.dataset.act ? q('data-act', ae.dataset.act) : q('data-f', ae.dataset.f)}`;
+    const tr = ae.closest('tr[data-mrow]') || ae.closest('tr[data-work]');
+    return `[data-el="works"] ${tr ? (tr.dataset.mrow ? `tr${q('data-mrow', tr.dataset.mrow)} ` : `tr${q('data-work', tr.dataset.work)} `) : ''}${ae.dataset.act ? q('data-act', ae.dataset.act) : q('data-f', ae.dataset.f)}${ae.dataset.col ? q('data-col', ae.dataset.col) : ''}`;
   }
 
   /**
@@ -33427,8 +33471,7 @@
           renderWorks();
           break;
         }
-        const ts = S.mbTracks.filter((t) => matrixTrack(t));
-        S.suiteAdd = { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '' };
+        S.suiteAdd = suiteAddDefaults();
         renderWorks();
         const f = S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-from"]');
         if (f) f.focus({ preventScroll: true });
@@ -33442,9 +33485,14 @@
         const box = btn.closest('[data-el="suite-add"]');
         const val = (f) => (box.querySelector(`[data-f="${f}"]`) || {}).value;
         const o = addSuite(val('mx-suite-from'), val('mx-suite-to'), val('mx-suite-name'));
+        // ([Z-SU2] 3.70.0, S105) the box open again for the next suite, from the first free track (none free: closed)
+        if (o && ruleOn('S105')) {
+          const next = suiteAddDefaults();
+          S.suiteAdd = next && next.free ? next : null;
+        }
         renderWorks();
         refresh();
-        const again = o ? S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
+        const again = o && !S.suiteAdd ? S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -33455,6 +33503,12 @@
       case 'suite-create':
       case 'suite-pick':
       case 'suite-undo': {
+        // ([Z-SU2] 3.70.0, review) an open box of a new suite: from the tracks free now (the name kept)
+        if (S.suiteAdd && ruleOn('S105')) setTimeout(() => {
+          if (!S.suiteAdd) return;
+          S.suiteAdd = { ...suiteAddDefaults(), name: S.suiteAdd.name || '' };
+          renderWorks();
+        }, 0);
         const box = btn.closest('[data-suite]');
         const o = box && suiteAsks().find((x) => x.key === box.dataset.suite);
         if (!o) break;
@@ -35636,7 +35690,54 @@
     inputTimer = setTimeout(refresh, 250);
   }
 
+  /**
+   * [Z-MXK] (3.70.0, S106) The arrow keys in the works matrix: from a cell (or the front of a track, the head of a column) to the next
+   * one in that direction; its button gets the focus (the cell itself when it has none). True when it moved.
+   */
+  function mxArrow(e) {
+    if (!ruleOn('S106') || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return false;
+    const dir = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key];
+    const t = e.target;
+    if (!dir || !t.closest || t.matches('input, select, textarea') || t.closest('.dci-mx-menu, .dci-mx-colmenu, .dci-mx-newmenu, .dci-mx-wlist')) return false;
+    if (t.getAttribute && t.getAttribute('aria-expanded') === 'true') return false;
+    const cell = t.closest('.dci-matrix td.dci-mx-cell, .dci-matrix th.dci-mx-front, .dci-matrix th.dci-mx-col');
+    const table = cell && cell.closest('.dci-matrix');
+    if (!cell || !table) return false;
+    const rows = [...table.querySelectorAll('thead tr, tbody tr[data-work]')];
+    const cellsOf = (tr) => [...tr.children].filter((c) => c.matches('td.dci-mx-cell, th.dci-mx-front, th.dci-mx-col'));
+    let r = rows.indexOf(cell.closest('tr'));
+    if (r < 0) return false;
+    let c = cellsOf(rows[r]).indexOf(cell);
+    if (c < 0) return false;
+    for (let k = 0; k < 50; k++) {
+      r += dir[0];
+      c += dir[1];
+      if (r < 0 || r >= rows.length || c < 0) return false;
+      const cs = cellsOf(rows[r]);
+      if (c >= cs.length) return false;
+      const to = cs[c];
+      const f = to.querySelector('button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (f) {
+        f.focus({ preventScroll: true });
+        f.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        return true;
+      }
+      if (!to.classList.contains('dci-mx-collapsed')) {
+        to.tabIndex = -1;
+        to.focus({ preventScroll: true });
+        to.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        return true;
+      }
+    }
+    return false;
+  }
+
   function onKeydown(e) {
+    // [Z-MXK] (3.70.0, S106) the arrow keys in the works matrix
+    if (mxArrow(e)) {
+      e.preventDefault();
+      return;
+    }
     // [3.25.0] the tabs of the settings: arrows, Home, End
     const tabBtn = e.target.closest && e.target.closest('.dci-set-tab');
     if (tabBtn && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
@@ -40202,7 +40303,9 @@
       .dci-tablewrap { overflow-x: auto; }
       .dci-table { width: 100%; min-width: calc(var(--u, 1px) * 1180); border-collapse: collapse; }
       /* Works matrix: header row and first column stay in place while scrolling */
-      .dci-mx-wrap { overflow: auto; max-height: 75vh; border: 1px solid var(--line); border-radius: 4px; position: relative; z-index: 0; isolation: isolate; }
+      .dci-mx-wrap { overflow: auto; max-height: 75vh; border: 1px solid var(--line); border-radius: 4px; position: relative; z-index: 0; isolation: isolate;
+        /* ([Z-MXK] 3.70.0, review) a cell scrolled into view clear of the sticky front column and head */
+        scroll-padding-left: calc(var(--u, 1px) * 420); scroll-padding-top: calc(var(--u, 1px) * 90); }
       /* [3.30.3] the scroll bars to the right and left (item 94) */
       .dci-mx-hs { overflow-x: scroll; overflow-y: hidden; min-height: calc(var(--u, 1px) * 14); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); box-sizing: border-box; }
       .dci-mx-hs[hidden] { display: none; }
