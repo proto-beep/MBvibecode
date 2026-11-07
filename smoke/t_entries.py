@@ -2161,4 +2161,91 @@ def case_arq386():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_arq387():
+    """Credits Importer 3.87.0 (collected items Z-ARQ2, Z-ARQ3): "＋ Another role" of Bob Producer (rows, the classic view).
+    A) The types as columns, one for each level in its colour (Recording first); a search without a hit on a level: that column left
+       out ("mix": no column Work); nothing found: no column.
+    B) "＋ New event": its tracks (all four ticked) – 1 and 2 off, a date typed (2020-05-05); "producer" of Recording: a row on
+       tracks 3, 4 with that date.
+    C) "instrument" chosen, "percussion" as its instrument: no role credit (until 3.86.0 "instrument").
+    D) (review) Staged: the producer of the new event (tracks 3, 4, dated) beside Bob's producer without a date on all four.
+    E) (review) A date that cannot be read ("soon"): a message, the types off; no track ("none"): the types off too."""
+    import common_rows as C
+    H.ENTRIES_VIEW = 'legacy'
+    sel = lambda name: f"[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes({name!r}))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+
+        def ask():
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+        COLS = "[...document.querySelectorAll('[data-el=arq] .dci-arq-col')].map(c => c.dataset.arqlv + ':' + (c.getAttribute('style') || '').includes('--dci-lvl-' + c.dataset.arqlv))"
+        ask()
+        a0 = pg.evaluate(COLS)
+        pg.keyboard.type('mix')
+        pg.wait_for_timeout(200)
+        a1 = pg.evaluate(COLS)
+        pg.keyboard.type('qqq')
+        pg.wait_for_timeout(200)
+        a2 = [pg.evaluate(COLS), pg.evaluate("document.querySelector('[data-el=arq-list]').textContent.trim().slice(0, 30)")]
+        print('A)', a0, a1, a2)
+        results.append(len(a0) >= 2 and a0[0] == 'recording:true' and all(x.endswith('true') for x in a0) and 'work:true' in a0 and 'work:true' not in a1 and a1 and a2[0] == [] and a2[1].startswith('No relationship type'))
+        pg.keyboard.press('Escape')
+        n0 = len(C.rows_of(pg, 'Bob Producer'))
+        ask()
+        pg.click('[data-el=arq] [data-f=arq-new]')
+        pg.wait_for_timeout(200)
+        on0 = pg.evaluate("[...document.querySelectorAll('[data-el=arq-new] [data-act=arq-ntrack]')].map(b => b.getAttribute('aria-pressed'))")
+        pg.click('[data-el=arq-new] [data-act=arq-ntrack][data-i="0"]')
+        pg.click('[data-el=arq-new] [data-act=arq-ntrack][data-i="1"]')
+        pg.fill('[data-el=arq-new] [data-f=arq-ndate]', '2020-05-05')
+        pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=producer]').click()
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        rows = C.rows_of(pg, 'Bob Producer')[n0:]
+        tr = C.tracks_of_rows(pg, 'Bob Producer')
+        print('B)', on0, rows, tr[-1:] if tr else tr)
+        results.append(on0 == ['true'] * 4 and len(rows) == 1 and rows[0].endswith('2020-05-05') and (not tr or tr[-1] == [3, 4]))
+        ask()
+        pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=instrument]').click()
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        rid = pg.evaluate(f"[...{sel('Bob Producer')}.querySelectorAll('tr.dci-row')].pop().dataset.row")
+        f = pg.locator(f'tr[data-row="{rid}"] [data-f=primary]')
+        f.fill('percussion')
+        f.evaluate("e => e.dispatchEvent(new Event('change', { bubbles: true }))")
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        c = pg.evaluate(f"(() => {{ const e = document.querySelector('tr[data-row=\"{rid}\"] [data-f=role-credit]'); return e ? [e.value, e.placeholder] : null; }})()")
+        print('C)', c)
+        results.append(c is not None and c[0] == '' and 'instrument' not in (c[1] or '').lower())
+        # D) (review) staged: the dated row beside the undated one of tracks 3, 4 – not merged into it (until the review lost)
+        C.stage(pg)
+        BOB = H.ARTISTS[3005][0]
+        d = pg.evaluate(f"""MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 141 && ((r.entity0 || {{}}).gid === '{BOB}' || (r.entity1 || {{}}).gid === '{BOB}'))
+          .map(r => (r.begin_date || {{}}).year || 0)""")
+        # E) (review) a date that cannot be read, or no track: a message, the types off
+        ask()
+        pg.click('[data-el=arq] [data-f=arq-new]')
+        pg.wait_for_timeout(200)
+        pg.fill('[data-el=arq-new] [data-f=arq-ndate]', 'soon')
+        e1 = pg.evaluate("[!document.querySelector('[data-el=arq-nerr]').hidden, [...document.querySelectorAll('[data-el=arq] .dci-arq-type')].every(b => b.disabled)]")
+        pg.fill('[data-el=arq-new] [data-f=arq-ndate]', '')
+        pg.click('[data-el=arq-new] [data-act=arq-nnone]')
+        pg.wait_for_timeout(200)
+        e2 = pg.evaluate("[[...document.querySelectorAll('[data-el=arq] .dci-arq-type')].every(b => b.disabled), document.querySelector('[data-el=arq-nerr]').hidden]")
+        pg.click('[data-el=arq] [data-act=arq-close]')
+        pg.wait_for_timeout(200)
+        print('D)', sorted(d), 'E)', e1, e2)
+        results.append(sorted(d) == [0, 0, 0, 0, 2020, 2020] and e1 == [True, True] and e2 == [True, True])
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

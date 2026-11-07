@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.86.0
+// @version      3.87.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.86.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.86.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.87.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.87.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.86.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.87.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2948,6 +2948,23 @@
       "arq.search": "Search a relationship type …",
       "arq.events": "For:",
       "arq.free": "Type a role yourself (e.g. Pressed By)",
+      "arq.lv.recording": "each track",
+      "arq.lv.release": "the whole release",
+      "arq.lv.work": "the songs (writing)",
+      "arq.lv.release_group": "all its releases",
+      "arq.more": "+ {n} more",
+      "arq.newEvent": "＋ New event",
+      "arq.newHead": "New event",
+      "arq.newSub": "– a column of its own, on the level of the type you choose",
+      "arq.newTracks": "Tracks",
+      "arq.newAll": "all",
+      "arq.newNone": "none",
+      "arq.newDate": "Date",
+      "arq.newDateSub": "optional",
+      "arq.newDateBad": "This date cannot be read – e.g. 2020-05-05, 2020-05 or 2020.",
+      "arq.newNoTracks": "Choose a track at least.",
+      "arq.newTracksSub": "The tracks count on the recordings; on the release, the release group or a work a new event needs its date to become a column of its own.",
+      "log.arqDateDropped": "“{type}” on {level}: the date of the new event left out (this type has none there)",
       "arq.none": "No relationship type found – type a role yourself below.",
       "log.arqAdded": "Another role for {name}: {type} ({n} row(s))",
       "matrix.allWorks": "all works",
@@ -2956,6 +2973,7 @@
       "matrix.allWorksOffTitle": "Every work has this column's role(s) – a click takes them off every work; a track group dropped here: the works of its tracks",
       "log.matrixAllWorksOn": "Works matrix: {col} for all works",
       "log.matrixAllWorksOff": "Works matrix: {col} off for all works",
+      "log.matrixRoleLevel": "Works matrix: {role} of {col} onto {level}",
       "settings.dropHead": "Drag & drop",
       "settings.drop.dates": "Dates onto rows and events",
       "settings.drop.tracks": "Track groups onto rows",
@@ -3926,6 +3944,7 @@
     { id: 'S130', where: 'festivalHtml, festivalEvent, festNameAlike, eventInfo, refresh', note: 'Festivals (3.85.0; collected item Z-FEV): the hint of a festival recording (S056) goes once an event is an entry (with a row not on Skip) – offered for it, or with a name alike, its own or an alias (the words of the shorter nearly all in the other, two at least or one that is no genre; years and "festival" aside), its time holding the festival\'s date; it comes back when the event goes' },
     { id: 'S131', where: 'festPlaceHtml, festivalOfPlace (fest-place-skip)', note: 'Festivals (3.85.0; collected item Z-FPL): at a place of a festival recording (named in its sentence as a whole, linked or not; the only place and festival only with "recorded at") the hint too; with the event linked as well both are named and "Place → Skip" puts its rows of the recording on Skip (all of them: the entry\'s own Skip, ↺ Take again) – MusicBrainz links the event to its place' },
     { id: 'S132', where: 'evAskTypes, answerEvAsk, trackIsVideo (festival-add)', note: 'Events (3.85.0; collected item Z-EVA): on a release with audio and videos an event gets a row for each – "recorded at" on the audio tracks, "video shot at" on the videos (the first answer of the question, and at once for an event of a festival recording); a track whose title says "(Video)", "Official Video" counts as a video, with a hint that MusicBrainz has an audio recording' },
+    { id: 'S135', where: 'columnHeadHtml (mx-role-level), mxRoleNextLevel', note: 'Works matrix (3.87.0; collected item Z-ARL2): a role of a column that MusicBrainz also has on other levels (arranger, orchestrator …) has its level beside it – a click puts its rows on the next level (Recording, Release …); in the entry its level button goes on round (… Skip, Work), as for every role on several levels' },
     { id: 'S134', where: 'arqOpen, arqHtml, arqPick (add-role)', note: 'Entries (3.86.0; collected item Z-ARQ): "＋ Another role" asks the relationship type – a search, the types by level (the common ones first), the events of the entry to tick (the one opened, else the first): a row for each event ticked on the level of the type, with its tracks and date; "Type a role yourself (e.g. Pressed By)" as until 3.85.0. For every kind of entry' },
     { id: 'S133', where: 'columnHeadHtml (mx-col-allworks), allWorksOn, dmTargetOf (mx-allworks)', note: 'Works matrix (3.86.0; collected item Z-AWB): "all works" below "credited as" in the head of each column – a click switches the column\'s role(s) on for every work (also a column with 0 works), all on: off; a track group dropped on it sets exactly the works of its tracks (⇧ Shift adds; setting "Drag & drop")' },
     { id: 'S128', where: 'TEXT.parse (dedicationNoName)', note: 'Texts (3.84.0; collected item Z-DEDN): a dedication without a name – "This album is dedicated to my lovely daughter and son", "In loving memory of my father" (my, our, the … and no capital letter after it) – is a line left out on purpose ("a dedication without a name"), not one not recognized' },
@@ -12187,6 +12206,9 @@
     // (no credit that only repeats the instrument: "Bass Guitar" left as bass guitar)
     if (question) return norm(row.primaryText) === norm(question.credit) ? '' : question.credit;
     const lt = currentLinkType(row);
+    // [Z-ARQ3] (3.87.0, S134) a row of a type chosen in the question of "＋ Another role": no wording of a source (its role text is the
+    // type's name – "instrument" was the role credit of percussion)
+    if (row.typePicked && ruleOn('S134')) return '';
     const wording = wordingCredit(row.base, row.mods, row.primaryText, lt ? lt.name : '', vocab);
     // [S035] (3.28.2) an instrument found by the last word of the role: the whole wording, in lower case ("wood flutes")
     if (wording && byHeadNoun(row.base, row.primaryText, row.mods)) return caseCredit(wording, vocab, { lowerUnknown: true });
@@ -30447,10 +30469,18 @@
     const o = S.emEvOpen && S.emEvOpen.get(a.key);
     // the event of the column one was in, else the first
     const pre = (o && evs.find((e) => e.key === o.ev)) || evs[0] || null;
-    S.arq = { key: a.key, q: '', evs: new Set(pre ? [pre.key] : []) };
+    S.arq = { key: a.key, q: '', evs: new Set(pre ? [pre.key] : []), newEv: false, newTracks: new Set(selIdx()), newDate: '', more: new Set() };
     rerenderGroup(a);
     const q = S.overlay.querySelector('[data-el="arq"] [data-f="arq-q"]');
     if (q) q.focus();
+  }
+  /** [Z-ARQ2] (3.87.0) The question drawn anew in place (its search and fields as they are), the focus back on `focusSel`. */
+  function arqRedraw(a, focusSel) {
+    const box = S.overlay.querySelector(`[data-group="${a.key}"] [data-el="arq"]`);
+    if (!box) return;
+    box.outerHTML = arqHtml(a);
+    const el = focusSel && S.overlay.querySelector(`[data-group="${a.key}"] [data-el="arq"] ${focusSel}`);
+    if (el) el.focus({ preventScroll: true });
   }
   function arqClose(focusBack) {
     const a = S.arq && S.artists.get(S.arq.key);
@@ -30460,33 +30490,80 @@
     const b = focusBack && S.overlay.querySelector(`[data-group="${a.key}"] [data-act="add-role"]`);
     if (b) b.focus({ preventScroll: true });
   }
-  /** The types to choose, by level: the common ones first, the others by name; only those the search finds. */
+  /**
+   * [Z-ARQ2] (3.87.0) The types to choose as columns, one for each level in its colour: the common ones first (six, the others behind
+   * "+ n more"), the others by name; with a search only what it finds – a level without a hit is left out.
+   */
   function arqListHtml(a) {
     const et = arqEntityType(a);
     const q = norm((S.arq && S.arq.q) || '');
     const common = ARQ_COMMON[et] || [];
-    const parts = ARQ_LEVELS.map((lv) => {
+    const cols = ARQ_LEVELS.map((lv) => {
       const all = typesFor(lv, et).filter((lt) => !lt.deprecated);
       const hit = all.filter((lt) => !q || norm(lt.name).includes(q) || norm(mbPhraseOf(lt) || '').includes(q));
       if (!hit.length) return '';
       const rank = (lt) => { const k = common.indexOf(norm(lt.name)); return k < 0 ? 999 : k; };
       const first = hit.filter((lt) => rank(lt) < 999).sort((x, y) => rank(x) - rank(y));
       const rest = hit.filter((lt) => rank(lt) === 999).sort((x, y) => x.name.localeCompare(y.name));
-      const btn = (lt) => `<button type="button" class="dci-small dci-arq-type" data-act="arq-pick" data-level="${lv}" data-type="${esc(lt.name)}" title="${esc(mbPhraseOf(lt) || lt.name)}">${esc(lt.name)}</button>`;
-      return `<div class="dci-arq-lv" data-arqlv="${lv}"><div class="dci-arq-lvname">${esc(tr(`level.${lv}`))}</div>
-        <div class="dci-arq-types">${first.map(btn).join('')}${first.length && rest.length ? '<span class="dci-arq-sep" aria-hidden="true"></span>' : ''}${rest.map(btn).join('')}</div></div>`;
-    }).join('');
-    return parts || `<p class="dci-sub">${esc(tr('arq.none'))}</p>`;
+      const open = !!q || (S.arq && S.arq.more && S.arq.more.has(lv));
+      const shown = open ? [...first, ...rest] : [...first, ...rest].slice(0, Math.max(6, Math.min(first.length, 8)));
+      const hidden = first.length + rest.length - shown.length;
+      const off = arqNewReady() ? '' : ' disabled';
+      const btn = (lt) => `<button type="button" class="dci-small dci-arq-type" data-act="arq-pick" data-level="${lv}" data-type="${esc(lt.name)}" title="${esc(mbPhraseOf(lt) || lt.name)}"${off}>${esc(lt.name)}</button>`;
+      return `<div class="dci-arq-col" data-arqlv="${lv}" style="--arq-ink: var(--dci-lvl-${lv}, #736dab)">
+        <div class="dci-arq-colh">${esc(tr(`level.${lv}`))}<small>${esc(tr(`arq.lv.${lv}`))}</small></div>
+        <div class="dci-arq-colb">${shown.map(btn).join('')}${hidden > 0 ? `<button type="button" class="dci-textbtn dci-arq-more" data-act="arq-more" data-level="${lv}">${esc(tr('arq.more', { n: hidden }))}</button>` : ''}</div></div>`;
+    }).filter(Boolean);
+    return cols.length ? `<div class="dci-arq-cols" style="--arq-cols: ${cols.length}">${cols.join('')}</div>` : `<p class="dci-sub">${esc(tr('arq.none'))}</p>`;
+  }
+  /** ((review) The date of "＋ New event": { ok, value } – nothing typed: ok without a value; MB's way first, then the text's ways. */
+  function arqNewDate(text) {
+    const t = String(text || '').trim();
+    if (!t) return { ok: true, value: null };
+    const p = parseDatePeriod(t);
+    if (p) return { ok: true, value: p.period || single(p.single) };
+    const fd = findDates(t, { usOrder: usDateOrder() })[0];
+    return fd && fd.value ? { ok: true, value: fd.value } : { ok: false, value: null };
+  }
+  /** ((review) "＋ New event" can be taken: a track at least, its date read (or none). */
+  const arqNewReady = () => !S.arq || !S.arq.newEv || (S.arq.newTracks.size > 0 && arqNewDate(S.arq.newDate).ok);
+  /** ((review) While its date is typed: the message and the type buttons in place (the field keeps its focus and caret). */
+  function arqNewState(box) {
+    if (!box || !S.arq) return;
+    const ready = arqNewReady();
+    box.querySelectorAll('.dci-arq-type').forEach((b) => { b.disabled = !ready; });
+    const bad = !arqNewDate(S.arq.newDate).ok;
+    const err = box.querySelector('[data-el="arq-nerr"]');
+    if (err) err.hidden = !bad;
+    const inp = box.querySelector('[data-f="arq-ndate"]');
+    if (inp) inp.setAttribute('aria-invalid', String(bad));
+  }
+  /** [Z-ARQ2] (3.87.0) "＋ New event": a column of its own – its tracks (those chosen above the entries first) and a date (optional). */
+  function arqNewHtml() {
+    if (!S.arq.newEv) return '';
+    const tracks = selTracks();
+    const bad = !arqNewDate(S.arq.newDate).ok;
+    return `<div class="dci-arq-new" data-el="arq-new"><span><strong>${esc(tr('arq.newHead'))}</strong> ${esc(tr('arq.newSub'))}</span>
+      <span class="dci-arq-ntracks">${esc(tr('arq.newTracks'))} ${tracks.map((t) => `<button type="button" class="dci-arq-ntrack" data-act="arq-ntrack" data-i="${t.idx}"
+        aria-pressed="${S.arq.newTracks.has(t.idx)}" title="${esc(t.title || '')}">${esc(S.mbTracks.some((x) => x.medium !== t.medium) ? trackLabel(t) : String(t.number))}</button>`).join('')}
+        <button type="button" class="dci-textbtn" data-act="arq-nall">${esc(tr('arq.newAll'))}</button> · <button type="button" class="dci-textbtn" data-act="arq-nnone">${esc(tr('arq.newNone'))}</button></span>
+      <label>${esc(tr('arq.newDate'))} <input type="text" data-f="arq-ndate" size="12" value="${esc(S.arq.newDate || '')}" placeholder="YYYY-MM-DD" aria-invalid="${bad}" aria-describedby="dci-arq-nerr"></label>
+      <span class="dci-sub">${esc(tr('arq.newDateSub'))}</span>
+      <span class="dci-err" id="dci-arq-nerr" data-el="arq-nerr" role="alert" ${bad ? '' : 'hidden'}>${esc(tr('arq.newDateBad'))}</span>
+      ${S.arq.newTracks.size ? '' : `<span class="dci-err" role="alert">${esc(tr('arq.newNoTracks'))}</span>`}
+      <span class="dci-sub dci-arq-nsub">${esc(tr('arq.newTracksSub'))}</span></div>`;
   }
   function arqHtml(a) {
     const evs = arqEvents(a);
-    const evHtml = evs.length ? `<div class="dci-arq-evs"><span class="dci-sub">${esc(tr('arq.events'))}</span>
-      ${evs.map((e) => `<label class="dci-arq-ev"><input type="checkbox" data-f="arq-ev" value="${esc(e.key)}" ${S.arq.evs.has(e.key) ? 'checked' : ''}> ${esc(arqEvText(e))}</label>`).join('')}</div>` : '';
+    const evHtml = `<div class="dci-arq-evs"><span class="dci-sub">${esc(tr('arq.events'))}</span>
+      ${evs.map((e) => `<label class="dci-arq-ev"><input type="checkbox" data-f="arq-ev" value="${esc(e.key)}" ${S.arq.evs.has(e.key) ? 'checked' : ''}> ${esc(arqEvText(e))}</label>`).join('')}
+      <label class="dci-arq-ev"><input type="checkbox" data-f="arq-new" ${S.arq.newEv ? 'checked' : ''}> <strong>${esc(tr('arq.newEvent'))}</strong></label></div>`;
     return `<div class="dci-arq" data-el="arq" role="group" aria-label="${esc(tr('group.addRole', { name: a.name }))}">
       <div class="dci-arq-head"><strong>${esc(tr('group.addRole', { name: a.mbName || a.name }))}</strong>
         <input type="search" data-f="arq-q" value="${esc(S.arq.q || '')}" placeholder="${esc(tr('arq.search'))}" aria-label="${esc(tr('arq.search'))}">
         <button type="button" class="dci-iconbtn" data-act="arq-close" title="${esc(tr('common.cancel'))}" aria-label="${esc(tr('common.cancel'))}">✕</button></div>
       ${evHtml}
+      ${arqNewHtml()}
       <div class="dci-arq-list" data-el="arq-list">${arqListHtml(a)}</div>
       <button type="button" class="dci-textbtn" data-act="arq-free">${esc(tr('arq.free'))}</button></div>`;
   }
@@ -30501,15 +30578,27 @@
     if (!typesFor(level, et).some((lt) => lt.name === name)) return;
     const ticked = arqEvents(a).filter((e) => S.arq.evs.has(e.key));
     const here = ticked.filter((e) => e.level === level);
-    const targets = here.length ? here : [null];
+    // [Z-ARQ2] (3.87.0) "＋ New event": a column of its own on the level of the type – its tracks, its date
+    let fresh = null;
+    if (S.arq.newEv) {
+      // ((review) a date that cannot be read, or no track: no row (its type buttons are off, see arqNewReady)
+      if (!arqNewReady()) return;
+      const nd = arqNewDate(S.arq.newDate);
+      fresh = { key: '', level, tracks: new Set(S.arq.newTracks), date: nd.value ? fieldsFromDate(nd.value) : null };
+    }
+    const targets = [...here, ...(fresh ? [fresh] : [])];
+    if (!targets.length) targets.push(null);
     const added = [];
     for (const e of targets) {
       const r = makeRow(a.key, { manual: true, company: a.company ? a : null });
       if (a.company) r.entityType = et;
       if (a.other) Object.assign(r, { other: true, entityType: a.entityType, types: [], typeOptions: null, notes: [] });
       applyRoleText(r, name);
-      Object.assign(r, { level, defaultLevel: level, levelTouched: true });
-      const from = e ? [e] : ticked;
+      Object.assign(r, { level, defaultLevel: level, levelTouched: true, typePicked: true });
+      refreshRowDetails(r); // ((review) its role credit again, now without the type's name
+      // ((review) a row of an event of its own (ticked or new) keeps its date in the key of the plan – not merged with a row without it
+      if (e) r.dateKeyed = true;
+      const from = e ? [e] : ticked.length ? ticked : [];
       r.tracks = from.length ? new Set(from.flatMap((x) => [...x.tracks])) : new Set(selIdx());
       r.suggested = new Set(r.tracks);
       // ((review) the date of its event (none: none – not one of the group's dates), only an event of its level, and only where the type
@@ -30517,6 +30606,8 @@
       resolveRowType(r);
       const lt = ltOf(r);
       r.date = e && e.date && level !== 'work' && !(lt && lt.has_dates === false) ? { ...e.date } : null;
+      // ((review) the date of "＋ New event" where the type has none (a work, a type without dates): said
+      if (fresh && e === fresh && fresh.date && !r.date) log('warn', 'arqDateDropped', { type: name, level: tr(`level.${level}`) });
       S.rows.push(r);
       added.push(r);
     }
@@ -30538,6 +30629,15 @@
       const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="add-role"]`);
       if (b) b.focus({ preventScroll: true });
     }
+  }
+
+  /** [Z-ARL2] (3.87.0, S135) The rows of a role of a column (its type, its "additional"), copies with their own dates too. */
+  const mxRoleRows = (col, r) => col.rows.filter((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub') && !isPublishingRow(x));
+  /** [Z-ARL2] (3.87.0, S135) The next level of a role of the works matrix – the first other level all its rows have a type on (none: ''). */
+  function mxRoleNextLevel(col, r) {
+    if (col.mbOnly || isPublishingRow(r)) return '';
+    const rows = mxRoleRows(col, r);
+    return ['recording', 'release', 'release_group'].find((lv) => rows.length && rows.every((x) => typeOnLevel(x, lv))) || '';
   }
 
   /** [Z-AWB] (3.86.0, S133) The column's roles on for every work of the matrix (none: false). */
@@ -30564,7 +30664,7 @@
     const row = makeRow(a.key, { manual: true, company: a.company ? a : null });
     if (a.company) row.entityType = a.entityType || 'label';
     applyRoleText(row, lt.name);
-    Object.assign(row, { level: 'work', levelTouched: true, tracks: new Set([mrow.i]), suggested: new Set() });
+    Object.assign(row, { level: 'work', levelTouched: true, tracks: new Set([mrow.i]), suggested: new Set(), typePicked: true }); // ((review) Z-ARQ3
     if (sub) row.flags.add('sub');
     resolveRowType(row);
     S.rows.push(row);
@@ -31915,7 +32015,13 @@
     }
     const nWorks = matrixRows().filter((m) => { const st = cellState(col, m); return st.active.length || st.existing.length; }).length;
     const roles = defaultRowsOf(col).filter((r, k, all) => all.findIndex((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub')) === k)
-      .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowPhrase(r) || rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowPhrase(r)))}</span>`).join('');
+      .map((r) => {
+        // [Z-ARL2] (3.87.0, S135) a role MusicBrainz also has on other levels (arranger …): its level, a click puts it on the next one
+        const next = ruleOn('S135') ? mxRoleNextLevel(col, r) : '';
+        const lvBtn = next ? `<button type="button" class="dci-cl-level dci-mx-rolelevel" data-act="mx-role-level" data-col="${esc(col.key)}" data-row="${esc(r.id)}" data-level="work"
+          title="${esc(tr('cl.levelNext', { level: tr(`level.${next}`) }))}" aria-label="${esc(`${rowPhrase(r) || rowTypeName(r)}: ${tr('cl.levelNext', { level: tr(`level.${next}`) })}`)}">${esc(tr('level.work'))}</button>` : '';
+        return `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowPhrase(r) || rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowPhrase(r)))}</span>${lvBtn}`;
+      }).join('');
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
     const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => !workLocked(m.work) && !creditsSkipped(m.i) && cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
@@ -31956,12 +32062,13 @@
       <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
       ${ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
         // [Z-AWB] (3.86.0, S133) the column's role(s) for every work at once – and off again; a track group dropped on it: exactly its works
+        // ([Z-AWB2] 3.87.0) the only one: "all works" of the column's ▾ menu only with S133 off
         const on = allWorksOn(col);
         return `<button type="button" class="dci-textbtn dci-mx-allworks" data-act="mx-col-allworks" data-col="${esc(col.key)}" data-allworks="${esc(col.key)}" aria-pressed="${on}"
           title="${esc(tr(on ? 'matrix.allWorksOffTitle' : 'matrix.allWorksOnTitle'))}">${esc(tr(on ? 'matrix.allWorksOn' : 'matrix.allWorks'))}</button>`;
       })() : ''}
       ${menu(`${dateBox}
-        <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
+        ${ruleOn('S133') ? '' : `<button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>`}
         ${ruleOn('S100') ? (() => {
           // [Z-MRC] (3.68.0, S100) another role of the same person (composer and publisher …) on the tracks of its cells
           const have = new Set(defaultRowsOf(col).map((r) => norm(rowTypeName(r))));
@@ -32509,6 +32616,7 @@
     const row = makeRow(a.key, { manual: true, company: a.company ? a : null });
     if (a.company) row.entityType = et;
     applyRoleText(row, lt.name);
+    row.typePicked = true; // ((review, Z-ARQ3) a type's name is no role credit
     Object.assign(row, { level: 'work', levelTouched: true, tracks: new Set(), suggested: new Set() });
     resolveRowType(row);
     S.rows.push(row);
@@ -33232,6 +33340,45 @@
         if (isPublishingRow(r)) r.pubTouched = true;
         log('info', 'matrixRole', { name: c.name, role: rowPhrase(r) || lt.name, n: new Set(target.map((m) => m.i)).size });
         break;
+      }
+      // [Z-ARL2] (3.87.0, S135) a role of the works matrix onto the next level: its rows leave the matrix (the entry has them, its level
+      // button goes on: … Skip, Work)
+      case 'mx-role-level': {
+        const c = matrixColumns().find((x) => x.key === btn.dataset.col);
+        const r = c && c.rows.find((x) => x.id === btn.dataset.row);
+        const next = r ? mxRoleNextLevel(c, r) : '';
+        if (!next) return true;
+        if (!ruleOn('S135')) return true;
+        const rows = mxRoleRows(c, r);
+        const mrows = matrixRows();
+        // ((review) cells switched off on a track of several works: the track only goes along where one of its works is still on
+        for (const x of rows) {
+          if (x.excluded && x.excluded.size) {
+            for (const i of [...x.tracks]) {
+              const ms = mrows.filter((m) => m.i === i && m.work);
+              if (ms.length && ms.every((m) => x.excluded.has(`${i}|${m.work.gid}`))) x.tracks.delete(i);
+            }
+            x.excluded = new Set();
+          }
+          if (x.ownDate) x.dateKeyed = true; // ((review) a copy with its date beside its row on the same recording
+        }
+        // ((review) a row left without tracks (its cells all with dates of their own) goes; none with any: the tracks chosen
+        const withTracks = rows.filter((x) => x.tracks.size);
+        if (!withTracks.length) rows.forEach((x) => { x.tracks = new Set(selIdx()); x.suggested = new Set(x.tracks); });
+        else rows.filter((x) => !x.tracks.size).forEach((x) => { S.rows = S.rows.filter((y) => y !== x); });
+        for (const x of rows.filter((y) => S.rows.includes(y))) {
+          levelOf(x, next);
+          matrixDateForLevel(x); // ((review) a date of the matrix: the one of its new level
+        }
+        log('info', 'matrixRoleLevel', { col: c.name, role: rowTypeName(r), level: tr(`level.${next}`) });
+        renderGroups();
+        renderDates();
+        renderWorks();
+        refresh();
+        // ((review) the focus on the column's menu (the button is gone)
+        const menu = S.overlay.querySelector(`[data-act="mx-colmenu"][data-col="${c.key}"]`);
+        if (menu) menu.focus({ preventScroll: true });
+        return true;
       }
       // [Z-AWB] (3.86.0, S133) "all works": the column's role(s) on for every work – or, all on, off for every work
       case 'mx-col-allworks': {
@@ -34483,6 +34630,7 @@
   }
 
   function remapManualRow(row, text) {
+    row.typePicked = false; // ([Z-ARQ3] 3.87.0) a role typed: its wording counts again
     applyRoleText(row, text);
     rerenderRow(row);
     refresh();
@@ -36881,6 +37029,29 @@
       case 'arq-close':
         arqClose(true);
         break;
+      // [Z-ARQ2] (3.87.0) "+ n more" of a level; the tracks of "＋ New event"
+      case 'arq-more':
+      case 'arq-ntrack':
+      case 'arq-nall':
+      case 'arq-nnone': {
+        if (!S.arq || !artist || artist.key !== S.arq.key) break;
+        if (act === 'arq-more') {
+          S.arq.more.add(btn.dataset.level);
+          // ((review) the focus on the first type it shows (its button is gone)
+          const col = btn.closest('.dci-arq-col');
+          const k = col ? col.querySelectorAll('.dci-arq-type').length : 0;
+          arqRedraw(artist);
+          const types = S.overlay.querySelectorAll(`[data-group="${artist.key}"] [data-arqlv="${btn.dataset.level}"] .dci-arq-type`);
+          if (types[k]) types[k].focus({ preventScroll: true });
+          break;
+        } else if (act === 'arq-ntrack') {
+          const i = Number(btn.dataset.i);
+          if (S.arq.newTracks.has(i)) S.arq.newTracks.delete(i);
+          else S.arq.newTracks.add(i);
+        } else S.arq.newTracks = act === 'arq-nall' ? new Set(selIdx()) : new Set();
+        arqRedraw(artist, `[data-act="${act}"]${btn.dataset.i ? `[data-i="${btn.dataset.i}"]` : ''}`);
+        break;
+      }
       case 'remove-row':
         // ([Z-DED] 3.67.0, review) a dedication removed stays out for this release
         if (row && row.dedication) dedChoose(row.dedication.key, { x: 1 });
@@ -37357,6 +37528,13 @@
       else S.arq.evs.delete(e.target.value);
       return;
     }
+    // [Z-ARQ2] (3.87.0) "＋ New event" ticked: its tracks and date shown
+    if (e.target && e.target.dataset && e.target.dataset.f === 'arq-new' && S.arq) {
+      S.arq.newEv = e.target.checked;
+      const a = S.artists.get(S.arq.key);
+      if (a) arqRedraw(a, '[data-f="arq-new"]');
+      return;
+    }
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     if (!f) return;
@@ -37766,6 +37944,11 @@
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     // [Z-ARQ] (3.86.0) the search of the question of "＋ Another role": only its list drawn anew (the field keeps the focus)
+    if (f === 'arq-ndate' && S.arq) {
+      S.arq.newDate = el.value; // [Z-ARQ2] (3.87.0) the date of "＋ New event"
+      arqNewState(el.closest('[data-el="arq"]'));
+      return;
+    }
     if (f === 'arq-q' && S.arq) {
       const g = el.closest('[data-group]');
       if (!g || g.dataset.group !== S.arq.key) return;
@@ -40590,8 +40773,10 @@
         row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
         // [Z-DNDS] (3.86.0) what a drop does at each place
         `<h4 class="dci-set-h" data-el="set-drop">${esc(tr('settings.dropHead'))}</h4>`,
-        ...DROP_PLACES.map((p) => row(`${esc(tr(`settings.drop.${p}`))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr(`settings.drop.${p}`))}">${['add', 'replace'].map((v) => `<button type="button"
-          data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`)),
+        // [Z-DNDA] (3.87.0) a grid: the places in one column, the switches exactly below each other (both halves of the same width)
+        `<div class="dci-drop-grid" data-el="drop-grid">${DROP_PLACES.map((p) => `<span class="dci-drop-place" id="dci-drop-${p}">${esc(tr(`settings.drop.${p}`))}</span>
+          <span class="dci-seg dci-seg-small" role="group" aria-labelledby="dci-drop-${p}">${['add', 'replace'].map((v) => `<button type="button"
+          data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`).join('')}</div>`,
       ],
       // [3.34.1] functions to try out
       beta: () => [
@@ -42676,6 +42861,11 @@
       .dci-srclink { margin-left: 4px; white-space: nowrap; }
       .dci-syncmode { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-seg.dci-seg-small button { padding: 1px calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
+      /* [Z-DNDA] (3.87.0) ⚙ Dates & tracks → Drag & drop: the switches exactly below each other */
+      .dci-drop-grid { display: grid; grid-template-columns: max-content max-content; align-items: center; gap: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 5) 0; }
+      .dci-drop-grid .dci-seg { display: inline-grid; grid-template-columns: 1fr 1fr; justify-self: stretch; }
+      .dci-drop-grid .dci-seg button { text-align: center; }
+      @container (max-width: 560px) { .dci-drop-grid { grid-template-columns: 1fr; } .dci-drop-grid .dci-drop-place { margin-top: calc(var(--u, 1px) * 4); } }
       #dci-controls .dci-seg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 3px; overflow: hidden; }
       #dci-controls .dci-seg button { border: 0; background: #fff; color: #262430; cursor: pointer; font: inherit; }
       #dci-controls .dci-seg button + button { border-left: 1px solid #c8c5d6; }
@@ -43305,12 +43495,28 @@
       .dci-arq-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       .dci-arq-head input[type=search] { flex: 1 1 calc(var(--u, 1px) * 180); min-width: 0; }
       .dci-arq-evs { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 6) 0 0; }
-      .dci-arq-list { max-height: calc(var(--u, 1px) * 260); overflow-y: auto; margin: calc(var(--u, 1px) * 6) 0; }
-      .dci-arq-lv { display: grid; grid-template-columns: calc(var(--u, 1px) * 90) 1fr; gap: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 3) 0; border-top: 1px solid var(--line); }
-      .dci-arq-lvname { font-weight: 600; }
-      .dci-arq-types { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
-      .dci-arq-sep { flex-basis: 100%; height: 0; }
+      .dci-arq-list { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 4); }
+      /* [Z-ARQ2] (3.87.0) a column for each level, in its colour (without the colours of the levels: one tone); narrow: below each other */
+      .dci-arq-cols { display: grid; grid-template-columns: repeat(var(--arq-cols, 4), minmax(0, 1fr)); gap: calc(var(--u, 1px) * 8); }
+      #dci-overlay:not(.dci-lvlc) .dci-arq-col { --arq-ink: #736dab !important; }
+      .dci-arq-col { border: 1px solid color-mix(in srgb, var(--arq-ink) 40%, transparent); border-top: calc(var(--u, 1px) * 5) solid var(--arq-ink); border-radius: 4px;
+        background: color-mix(in srgb, var(--arq-ink) 5%, transparent); min-width: 0; }
+      .dci-arq-colh { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); font-weight: 700; color: var(--arq-ink); border-bottom: 1px solid color-mix(in srgb, var(--arq-ink) 25%, transparent); }
+      .dci-arq-colh small { display: block; font-weight: normal; color: var(--muted, #6b6880); font-size: calc(var(--u, 1px) * 11); }
+      .dci-arq-colb { padding: calc(var(--u, 1px) * 6); display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 3); max-height: calc(var(--u, 1px) * 300); overflow-y: auto; }
+      .dci-arq-colb .dci-arq-type { text-align: left; color: var(--arq-ink); border-color: color-mix(in srgb, var(--arq-ink) 40%, transparent); }
+      .dci-arq-more { align-self: flex-start; font-size: calc(var(--u, 1px) * 11); }
+      .dci-arq-type:disabled { opacity: .5; cursor: not-allowed; }
+      .dci-arq-nsub { flex-basis: 100%; }
+      .dci-arq-new { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); margin: calc(var(--u, 1px) * 6) 0 0;
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px dashed #c9a400; border-radius: 4px; background: #fff7d6; }
+      .dci-arq-ntracks { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 3); }
+      .dci-arq-ntrack { min-width: calc(var(--u, 1px) * 24); padding: 0 calc(var(--u, 1px) * 4); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
+      .dci-arq-ntrack[aria-pressed="true"] { border-color: var(--dci-lvl-recording, #2f6db5); color: var(--dci-lvl-recording, #2f6db5); background: #e7eef8; font-weight: 600; }
+      .dci-arq { container-type: inline-size; }
+      @container (max-width: 640px) { .dci-arq-cols { grid-template-columns: 1fr; } }
       /* [Z-AWB] (3.86.0) "all works" below "credited as": a place for track groups too (exactly their works by default) */
+      .dci-mx-rolelevel { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 10); }
       .dci-mx-allworks { display: block; margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11); }
       .dci-mx-allworks[aria-pressed="true"] { font-weight: 600; text-decoration: none; }
       #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) [data-allworks] { outline: 1px dashed var(--orange); outline-offset: 1px; }

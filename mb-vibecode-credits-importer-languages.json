@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.86.0",
+  "version": "3.87.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2433,6 +2433,23 @@
     "arq.search": "Beziehungstyp suchen …",
     "arq.events": "Für:",
     "arq.free": "Rolle selbst eingeben (z. B. Pressed By)",
+    "arq.lv.recording": "jeder Track",
+    "arq.lv.release": "das ganze Release",
+    "arq.lv.work": "die Werke (Schreiben)",
+    "arq.lv.release_group": "alle seine Releases",
+    "arq.more": "+ {n} weitere",
+    "arq.newEvent": "＋ Neues Event",
+    "arq.newHead": "Neues Event",
+    "arq.newSub": "– eine eigene Spalte auf der Ebene des gewählten Typs",
+    "arq.newTracks": "Tracks",
+    "arq.newAll": "alle",
+    "arq.newNone": "keine",
+    "arq.newDate": "Datum",
+    "arq.newDateSub": "optional",
+    "arq.newDateBad": "Dieses Datum lässt sich nicht lesen – z. B. 2020-05-05, 2020-05 oder 2020.",
+    "arq.newNoTracks": "Bitte mindestens einen Track wählen.",
+    "arq.newTracksSub": "Die Tracks zählen auf den Aufnahmen; auf Release, Release-Gruppe oder Werk braucht ein neues Ereignis sein Datum, um eine eigene Spalte zu werden.",
+    "log.arqDateDropped": "„{type}“ auf {level}: das Datum des neuen Ereignisses weggelassen (dieser Typ hat dort keins)",
     "arq.none": "Kein Beziehungstyp gefunden – unten eine Rolle selbst eingeben.",
     "matrix.allWorks": "alle Werke",
     "matrix.allWorksOn": "✓ alle Werke",
@@ -2444,7 +2461,8 @@
     "settings.drop.allworks": "Track-Gruppen auf „alle Werke“",
     "settings.drop.add": "Ablegen fügt hinzu (⇧ ersetzt)",
     "settings.drop.replace": "Ablegen ersetzt (⇧ fügt hinzu)",
-    "arq.evTracks": "{n} Track(s)"
+    "arq.evTracks": "{n} Track(s)",
+    "log.matrixRoleLevel": "Werke-Matrix: {role} von {col} auf {level}"
   },
   "es": {
     "title": "Credits Importer",

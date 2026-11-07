@@ -1561,4 +1561,51 @@ def case_awb386():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_arl387():
+    """Credits Importer 3.87.0 (collected items Z-ARL2, Z-AWB2; rule S135): the release of case mxdrop (Nobody Here arranges 2, 4).
+    A) Beside the role "arranger" in the head of Nobody Here's column its level "Work"; a click: the arranger onto the recordings – the
+       column gone from the matrix, the entry has a row "arranger" on Recording whose level button goes on (… Work).
+    B) The column's ▾ menu has no "all works" any more (the button below "credited as" is it); S135 off: no level beside the role."""
+    orig_rel = H.discogs_release
+    H.lt(9297, H.uid('97979797', 1), 'arranger', 'artist', 'recording', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+
+    def rel():
+        d = orig_rel()
+        d['notes'] += '\nWritten by Writer W (1, 2).\nStrings arranged by Nobody Here (2, 4).'
+        return d
+
+    H.discogs_release = rel
+    results = []
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S135']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            col = pg.evaluate("(() => { const th = [...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(t => /Nobody Here/.test(t.textContent)); return th ? th.dataset.colhead : null; })()")
+            btn = pg.evaluate(f"(() => {{ const b = document.querySelector('[data-colhead=\"{col}\"] [data-act=mx-role-level]'); return b ? [b.textContent.trim(), b.title] : null; }})()")
+            menu_all = pg.evaluate(f"!!document.querySelector('[data-colhead=\"{col}\"] [data-act=mx-col-all]')")
+            if off:
+                print('B) aus', btn)
+                results.append(btn is None)
+            else:
+                pg.locator(f'[data-colhead="{col}"] [data-act=mx-role-level]').evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                gone = pg.evaluate("![...document.querySelectorAll('.dci-matrix th[data-colhead]')].some(t => /Nobody Here/.test(t.textContent))")
+                lv = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Nobody Here/.test(x.querySelector('.dci-gname').textContent));
+                  return g ? [...g.querySelectorAll('[data-act=level][aria-pressed=true], [data-act=em-evlevel-next]')].map(b => b.dataset.level + ':' + (b.title || '')) : null; })()""")
+                print('A)', btn, gone, lv, '| B) Menü:', menu_all)
+                results.append(btn and btn[0] == 'Work' and 'Recording' in btn[1] and gone and lv and any(x.startswith('recording') for x in lv) and not menu_all)
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
