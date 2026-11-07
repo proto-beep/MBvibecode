@@ -250,6 +250,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     one search after the clicks (counted), what was found before again without a search, the label chosen
                                 #   unaremember, kindrace, ownrulekind: 3.42.8 (review): words given an entry come back with "Remember changes …",
                                 #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
+                                #   btw384: 3.84.0 (Z-WPR, Z-BTW, Z-DEDN, Z-PGF): the Bandcamp text of "Inner Space" – "All tracks written,
+                                #     performed and recorded by", "Wojciech Stecko (Mindheal)" (artist name: searched, note), composed in /
+                                #     produced in Rzeszow with the period 2025-02 – 2026-04 (columns Composition, Production; staged with it),
+                                #     the dedication without a name left out on purpose, the frame of the bar on the release page
                                 #   z381ui: 3.81.0 (Z-RAD, Z-POR, Z-SYN, Z-SLD): Norwegian State radio a label (recording, broadcast), no "This
                                 #     was", no Guy, the place with its area Oslo; album portraits; Juno 101 / Korg Minilogue / TR-808 by model;
                                 #     Appalachian and hammered dulcimer
@@ -458,6 +462,9 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   z384: 3.84.0 (Node; Z-WPR, Z-BTW, Z-DEDN, review): "All tracks written, performed and recorded by", the
+                                #     artist name in brackets (not "(Tenor)", "(Jr.)", "(CD2)" …), a dedication inside a credit keeps it,
+                                #     composed in / produced in, the period for Composition and Production, a recording's word wins
                                 #   z382: 3.82.0 (Node; Z-DEDH, Z-YTW2): "dedicated to Mr. Polo’s …" → Marco Polo (one full name in the text), Martin
                                 #     Luther King, two Smiths or none: nothing; songs of a pasted text only with S122
                                 #   annrep: 3.72.0 (Z-TST, the former t_ar.py): A&R with the task "consultant" on the release group

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.83.0",
+  "version": "3.84.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122"]},
   "CHECKBOX_DETAILS": [
@@ -81,7 +81,8 @@
     [{"$re":"^mastered in","$flags":""},{"id":"C040","area":["mastered in"],"level":"release"}],
     [{"$re":"^produced in","$flags":""},{"id":"C041","area":["produced in"],"level":"recording"}],
     [{"$re":"^remixed in","$flags":""},{"id":"C042","area":["remixed in"],"level":"recording"}],
-    [{"$re":"^engineered in","$flags":""},{"id":"C043","area":["engineered in"],"level":"recording"}]
+    [{"$re":"^engineered in","$flags":""},{"id":"C043","area":["engineered in"],"level":"recording"}],
+    [{"$re":"^composed in","$flags":""},{"id":"C045","area":["composed in"],"level":"work"}]
   ],
   "DESIGN_PARTS": [
     "cover",
@@ -131,7 +132,7 @@
     {"id":"R023","kind":"simple","note":"","re":{"$re":"^assistant[- ]producer$","$flags":""},"types":["producer"],"level":"release","flags":["assistant"]},
     {"id":"R024","kind":"simple","note":"","re":{"$re":"^(additional[- ]producer|additional production)$","$flags":""},"types":["producer"],"level":"release","flags":["additional"]},
     {"id":"R025","kind":"special","note":"","re":{"$re":"^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$","$flags":""},"types":["producer"],"level":"recording"},
-    {"id":"R026","kind":"special","note":"\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer","re":{"$re":"^(producer|produced by|produced-by|produced|record producer|production|instrumental production)$","$flags":""},"types":["producer"],"level":"recording"},
+    {"id":"R026","kind":"special","note":"\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer","re":{"$re":"^(producer|produced by|produced-by|produced|record producer|production|music production|instrumental production)$","$flags":""},"types":["producer"],"level":"recording"},
     {"id":"R027","kind":"simple","note":"","re":{"$re":"^(overdubbed by|overdubs by)$","$flags":""},"types":["recording","engineer"],"level":"recording","eng":true,"credit":true},
     {"id":"R028","kind":"simple","note":"","re":{"$re":"^(tape op|tape operator|restoration|restored by|daw|technical assistance)$","$flags":""},"types":["engineer"],"level":"recording","eng":true,"credit":true},
     {"id":"R029","kind":"simple","note":"","re":{"$re":"^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$","$flags":""},"types":["transfer","engineer"],"level":"release","eng":true},
@@ -867,7 +868,7 @@
     ["7e84f845-ac16-41fe-9ff8-df12eb32af55","MusicBrainz Test Artist"]
   ],
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
-  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
+  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered|composed) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
     "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv"],
     "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév"],
@@ -896,6 +897,8 @@
     ["copyright",{"$re":"℗|©|\\(p\\)|\\(c\\)|copyright|phonographic","$flags":"i"}],
     ["performance",{"$re":"\\brecord(ed|ing|ings)?\\b|\\brec\\.|(?<!\\bfirst |\\bpublic )\\bperform(?:ed|ance|ances)\\b(?!\\s+rights)|\\blive at\\b|\\b(?:recorded|performed) live in\\b|\\blive in concert\\b|(?<!ur)aufgeführt|\\bsessions?\\b|aufgenommen|aufnahme|grabad|enregistr|\\bconcert|\\bkonzert","$flags":"i"}],
     ["artwork",{"$re":"\\bcover\\s+(?:painting|art(?:work)?|illustration|drawing|design|photo(?:graph)?)s?\\b|\\bphoto(?:graph)?s?\\b|\\bpaint(?:ing|ings|ed)\\b|\\billustrat(?:ion|ions|ed)\\b|\\bdrawings?\\b|\\bartwork\\b|\\bgemälde\\b|\\bzeichnung(?:en)?\\b|\\bpeinture\\b|\\bpintura\\b","$flags":"i"}],
+    ["composition",{"$re":"\\bcompos(?:ed|ing|ition)\\b|komponiert|\\bcompuest[oa]s?\\b|\\bcompos[ée]e?s?\\b","$flags":"i"}],
+    ["production",{"$re":"\\bproduc(?:ed|tion|ing)\\b|produziert|\\bproducid[oa]s?\\b|\\bproduite?s?\\b","$flags":"i"}],
     ["issue",{"$re":"\\b(?:re-?)?(?:issued|released)\\b|\\bfirst (?:issued|released|published)\\b|veröffentlicht|erschienen|\\bpublicad[oa]\\b|\\beditad[oa]\\b|\\bpublié|\\bsorti\\b","$flags":"i"}]
   ],
   "TEXT_MONTHS": {"$re":"\\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?=\\s|$)","$flags":"gi"},

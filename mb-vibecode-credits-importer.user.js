@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.83.0
+// @version      3.84.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.83.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.83.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.84.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.84.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.83.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.84.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -298,6 +298,7 @@
       "cover.linePeekHint": "Lines from the cover art: hover over one to see it in the image.",
       "ignored.why.thanks": "thanks",
       "ignored.why.endorsement": "a maker’s note",
+      "ignored.why.dedicationNoName": "a dedication without a name",
       "ignored.why.courtesy": "“appears courtesy of …”",
       "ignored.why.web": "only web addresses",
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
@@ -1589,6 +1590,7 @@
       "matrix.langAdd": "add a language …",
       "matrix.empty": "No writing credits yet. They appear here once Discogs is loaded, or add them with “Add entry manually” and a work-level role such as composer.",
       "group.workNote": "The writing credits of this entry are in the works matrix.",
+      "aka.note": "“{aka}” in brackets after {name}: the artist name of the same person – MusicBrainz is searched by both. If MusicBrainz has only “{aka}”, it may be cleaner to add {name} as an artist of his or her own (its legal name or “performs as”) than to credit “{aka}” as {name}.",
       "group.workNoteShort": "Writing credits: in the works matrix",
       "group.worksGoto": "✎ works ↓",
       "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
@@ -3885,6 +3887,9 @@
     { id: 'S123', where: 'findDedications, dedFullName', note: 'Dedications (3.82.0; collected item Z-DEDH): a form of address and a surname after "dedicated to" ("dedicated to Mr. Polo’s incredible explorations") – the one full name with that surname in the text or the release\'s title ("Marco Polo’s journey") is suggested in "Dedications & tributes" (artist – release); none when there is no full name or more than one' },
     { id: 'S124', where: 'applyPlan (removals, replaces, updates)', note: 'Staging (3.83.0; collected item Z-RLV): what was staged before and is changed in the dashboard since – its level, type, tracks, attributes, credits, date – is replaced at the next "Stage" (the old relationship taken out or updated), also when it was changed in the relationship editor itself; those are named in a message (until 3.82.0 they were left alone: "changed in the editor itself", "to remove by hand")' },
     { id: 'S125', where: 'dupAskHtml, dupAnswer, buildNoteBlock', note: 'Works (3.83.0; collected item Z-SNW): new works for all tracks while some have a work of the same title in MusicBrainz – three answers in the works matrix: the other works (those tracks left out to be linked), all works anyway, cancel; works created anyway are named in the edit note with the works of the same title (⚙ Settings → Staging → Edit note, on)' },
+    { id: 'S128', where: 'TEXT.parse (dedicationNoName)', note: 'Texts (3.84.0; collected item Z-DEDN): a dedication without a name – "This album is dedicated to my lovely daughter and son", "In loving memory of my father" (my, our, the … and no capital letter after it) – is a line left out on purpose ("a dedication without a name"), not one not recognized' },
+    { id: 'S126', where: 'TEXT.parse (readClause; TEXT_WHAT_VERBS)', note: 'Texts (3.84.0; collected items Z-WPR, Z-BTW): the words for the music before the verbs – "All tracks written, performed and recorded by …", "Tracks were composed and produced between … in …" – are no part of the credit (a role the register knows with them stays: "All songs written by"); joined verbs with a date and an area – "Composed and produced between February 2025 and April 2026 in Rzeszow, Poland" – give the area for each verb (composed in on the works, produced in on the recordings)' },
+    { id: 'S127', where: 'TEXT.parse (namesScoped, addCredit), the name search', note: 'Texts (3.84.0; collected item Z-WPR): a name in brackets after a person\'s name – "Wojciech Stecko (Mindheal)" – is the artist name of the same person: the credit stays the name as written, MusicBrainz is searched by both (the artist name only similar; a release\'s artist of that name first), a note at the entry says that an artist under the full name may be cleaner' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -4511,6 +4516,13 @@
   const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
+  // [Z-WPR] (3.84.0, S127, review) words in brackets after a name that are no artist name
+  const AKA_NOT = /^(?:tenor|soprano|mezzo(?:-soprano)?|alto|contralto|countertenor|baritone|bass|bass-baritone|treble|acoustic|electric|lead|backing|executive|assistant|additional|associate|co-\w+|jr\.?|sr\.?|junior|senior|[ivx]+|mbe|obe|cbe|rip|uncredited|credited|bonus|demo|intro|outro|reprise|original(?:\s+\w+)?|cast|deceased|vocals?|keys|drums|guitars?|piano|strings|horns|choir|orchestra|ensemble|live|studio|session|sessions|remastered|edit|version|mix|remix|courtesy|rhythm|solo|guest|featuring|various|unknown|anonymous|tba|tbc)$/i;
+  // [Z-WPR] (3.84.0, S126) the same words before verbs of any kind ("written", "performed", "composed"), the rest a credit or a place
+  const TEXT_WHAT_VERBS = TEXT_WHAT_PREFIX ? new RegExp(TEXT_WHAT_PREFIX.source.replace(String.raw`(?=\p{L}+ed\b)`,
+    String.raw`(?=(?:\p{L}+ed|written|sung)(?:\s*(?:,|and|&)\s*(?:\p{L}+ed|written|sung))+\s+(?:live\s+)?(?:by|at|in|on|between|from|during)\b)`), 'iu') : /(?!)/;
+  // ((3.84.0, review) only before two verbs or more ("written, performed and recorded by") – one verb as until 3.83.0: "Recording made
+  // at X by Y", "Compositions arranged by X"; no "made", "done", "shot", "drawn" (no role of their own)
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
   const TEXT_PACKAGE = MAP.TEXT_PACKAGE;
 
@@ -4763,6 +4775,18 @@
   // [Z-CVA] (3.62.0, S090) "Cover [detail]": what the detail makes of it – { re, type, credit } (the mapping: COVER_DETAIL)
   const COVER_DETAIL = MAP.COVER_DETAIL;
 
+  /**
+   * [Z-DEDN] (3.84.0, S128) A sentence that is a dedication without a name: "This album is dedicated to my lovely daughter and son",
+   * "In loving memory of my father" – after the words of the dedication no capital letter (no name, place or work; "I" aside).
+   */
+  const dedicationNoName = (unit) => {
+    // ((review) only a sentence that is the dedication ("This album is dedicated to …", "Dedicated to …"), not a credit with one
+    // ("Piano: John Smith (dedicated to my wife)", "Written by X, dedicated to my mother")
+    const m = String(unit).replace(/\s+/g, ' ').trim().match(/^(?:(?:this|the|our|my)\s+(?:album|record|release|recording|recordings|song|songs|ep|lp|single|work|piece|music|collection|project|tape)\s+(?:is|was|are|were)\s+)?(?:(?:lovingly|humbly|respectfully)\s+)?(?:dedicated to|in (?:loving )?memory of|in memoriam|dédié à|dedicado a)\s+(.+)$/iu);
+    return !!m && /^(?:(?:the\s+memory\s+of\s+)?(?:my|our|his|her|their|all|everyone|every|those|the|a|meine[mnrs]?|unsere[mnrs]?|mes|mon|ma|nos|mis|mi|nuestr[oa]s?)\b)/iu.test(m[1])
+      && !/\p{Lu}/u.test(m[1].replace(/\bI\b/g, ''));
+  };
+
   // --- [Z-DED] (3.67.0, S097) dedications and tributes -----------------------------------------------------------------------
   // (the phrases case-insensitive; the names after them case-sensitive – each word capitalised, initials "J.", particles between)
   const DED_WORD = String.raw`(?:\p{Lu}\.|\p{Lu}[\p{L}'’\-]*)`;
@@ -4932,6 +4956,11 @@
     // the artwork goes to the kind its words name (ART_KINDS): a painting to the illustration, a photo to the photography
     { key: 'artwork', label: 'Artwork', types: ['design/illustration', 'illustration', 'design', 'graphic design', 'art direction', 'artwork', 'photography'], releaseOnly: true,
       only: (n) => n !== 'photography' || ruleOn('D025') },
+    // [Z-BTW] (3.84.0) "Tracks were composed and produced between February 2025 and April 2026 in …": the writing on the works (and
+    // "composed in"), the production on the recordings (and "produced in") – columns of the date matrix only while they have rows or
+    // dates (optional)
+    { key: 'composition', label: 'Composition', types: ['composer', 'writer', 'lyricist', 'librettist', 'composed in'], optional: true },  // (D028)
+    { key: 'production', label: 'Production', types: ['producer', 'produced in'], optional: true },
   ];
   /**
    * [Z-CPI] (3.73.0, D025) The kinds of the artwork: the words of a date's line (`art` of the find and of its matrix cell) and the
@@ -5492,7 +5521,7 @@
     { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022 · [3.37.8] also with a comma after the month: June, 26, 1993 (until 3.37.7 only the year; also in D006, D007, D013)' },
     { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
     { id: 'D006', note: 'Days within one month: March 1–3, 1998 · 1–3 March 1998 · 1.–3. März 1998' },
-    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · September and October 2026 · between 1997 and 1998 · 1997/98' },
+    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · September and October 2026 · between 1997 and 1998 · between February 2025 and April 2026 (3.84.0) · 1997/98' },
     { id: 'D008', note: 'Month and year: November 2022 · Nov 2022' },
     { id: 'D009', note: 'Seasons give the year: Spring 1998 → 1998' },
     { id: 'D010', note: 'A year alone: 1998' },
@@ -5512,6 +5541,7 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D028', note: 'Dates of composition and production (3.84.0; collected item Z-BTW): "composed", "produced", "production" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined ("Recorded at …, produced by …, 12 March 1969" stays Performance; "composed and produced between …" both)' },
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
@@ -5572,6 +5602,13 @@
     { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
     { id: 'D007', re: `${P.M},?\\s+${P.D}${P.TO}${P.M},?\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
     { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
+    // [Z-BTW] (3.84.0) "between February 2025 and April 2026" (until 3.83.0 two months of their own)
+    // ((review) also "entre febrero de 2025 y abril de 2026"; the earlier one first whatever the order)
+    { id: 'D007', re: `(?:between|zwischen|entre)\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}\\s+(?:and|und|y|et)\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => {
+      const x = ymd(m[2], monthNo(m[1]));
+      const y = ymd(m[4], monthNo(m[3]));
+      return Number(m[2]) * 12 + monthNo(m[1]) > Number(m[4]) * 12 + monthNo(m[3]) ? span(y, x) : span(x, y);
+    } },
     { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
     // [3.14.0] two months of one year: "September and October 2026", "September to October 2026", "September/October 2026"
     { id: 'D007', re: `${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[3], monthNo(m[1])), ymd(m[3], monthNo(m[2]))) },
@@ -5701,6 +5738,7 @@
         let hintWord = '';
         const words = [];
         for (const [key, re] of DATE_HINTS) {
+          if ((key === 'composition' || key === 'production') && !ruleOn('D028')) continue; // [Z-BTW] (3.84.0)
           const g = new RegExp(re.source, 'gi');
           let h;
           while ((h = g.exec(before))) {
@@ -5726,6 +5764,12 @@
             if (!chain.includes(prev.key)) chain.unshift(prev.key);
             cur = prev;
           }
+        }
+        // [D028] (3.84.0, review) composition or production with a word of a recording in the sentence, not joined to it: the recording's
+        // ("Recorded at Abbey Road, produced by George Martin, 12 March 1969")
+        if ((hint === 'composition' || hint === 'production') && !chain.includes('performance') && words.some((w) => w.key === 'performance')) {
+          hint = 'performance';
+          chain.length = 0;
         }
         // [D018] (3.28.5) a year of a release or issue: left out, unless another word of the chain names a group
         if (hint === 'issue' && ruleOn('D018')) {
@@ -6506,10 +6550,13 @@
       let n0 = 0;
       const lineCount = new Map();
       const at = () => ({ line: line0, part: part0, pi: pi0, n: n0 });
+      // [Z-WPR] (3.84.0, S127) the artist names found in brackets after a name ("Wojciech Stecko (Mindheal)"): name → artist name
+      const akaOf = new Map();
       const addCredit = (name, role0, scope, extra0 = {}) => {
         // [S050] (3.32.5) in typo mode the role as it is read, with what was written
         const { role, typos } = readRole(role0);
-        const extra = typos ? { ...extra0, typos } : extra0;
+        const aka0 = akaOf.get(norm(name));
+        const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}) };
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
         // [Z-RAD] (3.81.0, S121, T066) a broadcaster that recorded it ("recorded by Norwegian State radio"): a label – recording, and
@@ -6799,7 +6846,17 @@
         return split.map((n) => {
           const m = ruleOn('S074') ? n.match(NAME_TRACKS) : null;
           const set = m ? resolveTracks(m[1]) : null;
-          return { name: clean(n.replace(/\s*\([^)]*\)$/, '')), scope: set && set.size ? { set, spec: clean(m[1]) } : null };
+          // [Z-WPR] (3.84.0, S127) "Wojciech Stecko (Mindheal)": a name in brackets after a person's name, no role, track, place or year –
+          // the artist name of the same person (searched too; the credit stays the name as written)
+          const ak = ruleOn('S127') && !m ? n.match(/^(.+?)\s*\(\s*(\p{Lu}[\p{L}\p{N}'’.&-]*(?:\s+\p{Lu}[\p{L}\p{N}'’.&-]*){0,2})\s*\)$/u) : null;
+          const aka = ak && clean(ak[1]).split(/\s+/).length >= 2 && !isRole(cap(ak[2])) && !playable(ak[2].toLowerCase()) && !regionOf(ak[2])
+            && !TEXT_PLACE_WORDS.test(ak[2]) && !/^(?:live|solo|guest|feat|ft|aka|tracks?|side|disc)\b/i.test(ak[2])
+            // ((review) no voice, modifier, suffix or note: "(Tenor)", "(Acoustic)", "(Executive)", "(Jr.)", "(II)", "(MBE)", "(Uncredited)",
+            // "(Bonus)", "(Original Cast)"; no short word in capitals ("UK", "NYC") – MusicBrainz's answer decides the rest (a person)
+            && !AKA_NOT.test(ak[2]) && !/^[\p{Lu}.]{1,4}$/u.test(ak[2]) && !/\d/.test(ak[2]) ? ak[2] : '';
+          const nm = clean(n.replace(/\s*\([^)]*\)$/, ''));
+          if (aka) akaOf.set(norm(nm), aka);
+          return { name: nm, scope: set && set.size ? { set, spec: clean(m[1]) } : null, ...(aka ? { aka } : {}) };
         }).filter((x) => x.name);
       };
       const names = (side) => namesScoped(side).map((x) => x.name);
@@ -6939,7 +6996,13 @@
         const readClause = (clause0, ci) => {
           // [Z-RAD] (3.81.0, S121) "This was recorded by …", "It was mixed by …", "These tracks were recorded live by …": the words before
           // the verb are no part of the credit (until 3.80.0 "This was" became its credit)
-          const clause = ruleOn('S121') ? clause0.replace(TEXT_FILLER_SUBJECT, (m0, live, v) => `${cap(v.toLowerCase())}${live ? ' live' : ''}`) : clause0;
+          const clause1 = ruleOn('S121') ? clause0.replace(TEXT_FILLER_SUBJECT, (m0, live, v) => `${cap(v.toLowerCase())}${live ? ' live' : ''}`) : clause0;
+          // [Z-WPR] (3.84.0, S126) "All tracks written, performed and recorded by …", "Tracks were composed and produced between … in …": the
+          // words for the music before the verbs are no part of the credit – a role the register knows with them stays ("All songs
+          // written by", R098)
+          const what = ruleOn('S126') ? clause1.match(TEXT_WHAT_VERBS) : null;
+          const byPart = what ? (clause1.match(/^(.+?)\s+by\s/i) || [])[1] : '';
+          const clause = what && !(byPart && isRole(cap(`${byPart} by`))) ? cap(clause1.slice(what[0].length)) : clause1;
           part0 = clause;
           pi0 = pi + ci;
           // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
@@ -7200,6 +7263,19 @@
           // [3.37.7] … with a date between: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
           if ((m = clause.match(/^(\p{L}+)\s+(.*?\d.*?)\s+in\s+(\p{Lu}.*)$/u)) && !noDates(m[2]).replace(/^(?:on|am|le|el)\b\s*/i, '')
             && (placeIn(m[1], m[3]) || inArea(m[1], areaOf(m[3].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
+          // [Z-BTW] (3.84.0, S126) … the verbs joined: "Composed and produced between February 2025 and April 2026 in Rzeszow, Poland" –
+          // the area for each verb (composed in on the works, produced in on the recordings; their dates come by their groups)
+          // ((review) also "in 2020", "during 2020"; a verb without an area type of MusicBrainz ("written in") gives nothing (and no "?"
+          // per verb); a place found for one verb ("… in Rzeszow Studio, Poland"): no area of that name for the others
+          if (ruleOn('S126') && (m = clause.match(/^(\p{L}+(?:\s*(?:,|\band\b|&)\s*\p{L}+)+)\s+(.*?\d.*?)\s+in\s+(\p{Lu}.*)$/u))
+            && !noDates(m[2]).replace(/^(?:on|am|le|el|between|from|in|during)\b\s*/i, '').replace(/\b(?:and|to|until|&)\b/gi, '').trim()) {
+            const where = areaOf(m[3].replace(TEXT_TIME_AFTER_NAME, ''));
+            const verbs = m[1].split(/\s*(?:,|\band\b|&)\s*/i).filter(Boolean);
+            const placed = verbs.filter((v) => placeIn(v, m[3]));
+            const rest = placed.length ? [] : verbs.filter((v) => isCompanyRole(areaRole(v)));
+            rest.forEach((v) => inArea(v, where));
+            if (placed.length || rest.length) return;
+          }
           // [Z-KXP] (3.79.0, S112) "KEXP.ORG presents maya ongaku performing live in the KEXP studio": a place after "performing /
           // playing / recorded / filmed (live) in (the)" later in the sentence (a word of places and a word in capitals) – recorded at;
           // the word of places with a capital ("KEXP Studio")
@@ -8188,6 +8264,11 @@
             ignored.push({ text: whole, why: TEXT_THANKS.test(unit) ? 'thanks' : TEXT_COURTESY_LINE.test(unit) ? 'courtesy' : 'endorsement' });
             continue;
           }
+          // [Z-DEDN] (3.84.0, S128) a dedication without a name ("This album is dedicated to my lovely daughter and son"): left out as such
+          if (ruleOn('S128') && dedicationNoName(unit)) {
+            ignored.push({ text: whole, why: 'dedicationNoName' });
+            continue;
+          }
           // [S072] (3.42.3) a website (no relationship of MusicBrainz) and "Recorded all over the place" (no place): left out as such
           if (ruleOn('S072') && WEBSITE_BY.test(clean(unit))) {
             ignored.push({ text: whole, why: 'website' });
@@ -9038,6 +9119,8 @@
       // [3.39.7] each spelling of the initials once ("RR, R.R. = Robert Rich")
       if (c.initials && !(group.initials || '').split(', ').includes(c.initials)) group.initials = group.initials ? `${group.initials}, ${c.initials}` : c.initials;
       if (c.initialsFor) group.initialsFor = c.initialsFor;
+      // [Z-WPR] (3.84.0, S127) the artist name the text gives in brackets
+      if (c.aka && !group.aka) group.aka = c.aka;
       // [S054] (3.37.0) a name only from the Discogs notes: searched by its name
       if (c.fromNotes && !who.id && group.fromNotes !== false) group.fromNotes = true;
       if (!c.fromNotes) group.fromNotes = false;
@@ -19160,7 +19243,8 @@
           ? { key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true, entityType: null,
             mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], src: sp.source, area: g.area || '' }
           : { key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', mbid: null, mbName: '',
-            candidates: [], editing: false, error: '', anvs: [], src: sp.source, ...(g.caseFrom ? { caseFrom: g.caseFrom } : {}) };
+            candidates: [], editing: false, error: '', anvs: [], src: sp.source, ...(g.caseFrom ? { caseFrom: g.caseFrom } : {}),
+            ...(g.aka ? { aka: g.aka } : {}) }; // ([Z-WPR] 3.84.0, review)
         S.artists.set(entry.key, entry);
         const rows = it.roles.map((info) => suppRow(entry.key, info, it.company ? entry : null)).filter(Boolean);
         if (!rows.length) {
@@ -20291,6 +20375,7 @@
       ...(g.caseFrom ? { caseFrom: g.caseFrom } : {}), // [S060] (3.38.12)
       ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
       ...(g.pageOf ? { pageOf: g.pageOf } : {}),
+      ...(g.aka ? { aka: g.aka } : {}), // [Z-WPR] (3.84.0)
       ...(g.fromNotes ? { fromNotes: true } : {}),
       ...(g.initials ? { initials: g.initials } : {}), ...(g.initialsFor ? { initialsFor: g.initialsFor } : {}), // [S063] (3.38.18)
       mbid: null, mbName: '', candidates: [], editing: false, error: '',
@@ -20909,6 +20994,17 @@
           const data5 = await mbWs(`label?query=${encodeURIComponent(`alias:${lucenePhrase(a.name)}`)}&limit=25`);
           for (const x of (data5 && data5.labels) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
         }
+        // [Z-WPR] (3.84.0, S127) a person with an artist name in brackets ("Wojciech Stecko (Mindheal)"): searched by it too – only similar
+        // ((review) only MusicBrainz's persons of exactly that name (or alias) – "(Metallica)", "(Poland)", "(Fender)" are none: no
+        // suggestion, no note (akaOk)
+        if (ruleOn('S127') && !a.company && a.aka && type === 'artist') {
+          const dataA = await mbWs(`artist?query=${encodeURIComponent(`artist:${lucenePhrase(a.aka)}`)}&limit=10`);
+          const person = (x) => !x.type || /^(?:person|character)$/i.test(x.type);
+          const named = (x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, a.aka) === 'same');
+          const hitsA = ((dataA && dataA.artists) || []).filter((x) => person(x) && named(x));
+          a.akaOk = hitsA.length > 0;
+          for (const x of hitsA) if (!items.some((y) => y.id === x.id)) items.push({ ...x, viaAka: true });
+        }
         const looseKeys = new Set([a.name, ...(a.altNames || []), ...apart].map((n) => looseName(digitWords(n))).filter(Boolean));
         // [3.13.0] A name with an initial ("T. Snekkestad", "Torben S. Snekkestad"): MusicBrainz's search needs every
         // word, and "T" is no word of "Torben" – so the written-out words are searched too (nameFit decides)
@@ -20922,6 +21018,8 @@
         const fitOf = (x) => {
           // [3.31.2] "Loft" in Cologne for "Loft Köln": similar
           if (x.viaArea) return 'similar';
+          // [Z-WPR] (3.84.0) the artist name of the text: similar (the person is named so there)
+          if (x.viaAka) return 'similar';
           const fits = [nameFit(x.name, a.name), ...(x.aliases || []).map((al) => nameFit(al.name, a.name))];
           // [T044] the same name without the legal form: offered too, as similar
           if (bare && bare !== a.name && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(withoutCompanyForm(n), bare) === 'same')) fits.push('similar');
@@ -20955,7 +21053,7 @@
         // [3.31.2] the city found at the end of the name is the entry's area ("(Köln)")
         if (placeArea && !a.area && hits.length) a.area = placeArea;
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
-        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: x.asArtist ? 'artist' : type, similar: fit === 'similar',
+        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: x.asArtist ? 'artist' : type, similar: fit === 'similar', ...(x.viaAka ? { aka: a.aka } : {}),
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
         // [3.22.2] areas: the area each one shown is part of (48)
         if (type === 'area') {
@@ -20983,10 +21081,13 @@
         if (!a.company) {
           // [3.32.6] also one at most two letters off ("j4vavaman" signing for j4vaman, collected item 115b): first, marked similar
           const close = (p) => nameFit(p.name, a.name) !== 'same' && nameClose(p.name, a.name);
-          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || close(p) || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
+          // ((3.84.0, review) the release's artist of the artist name in brackets: only a person MusicBrainz has so (akaOk), similar
+          const viaAka = (p) => !!(a.aka && a.akaOk && nameFit(p.name, a.aka) === 'same' && a.nameHits.some((h) => h.mbid === p.mbid && h.aka));
+          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || close(p) || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)
+            || viaAka(p))); // ([Z-WPR] 3.84.0: the artist name in brackets)
           for (const p of [...rel].reverse()) {
             const had = a.nameHits.find((h) => h.mbid === p.mbid);
-            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: close(p), disambiguation: '' }), release: true },
+            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: close(p) || viaAka(p), disambiguation: '' }), release: true },
               ...a.nameHits.filter((h) => h.mbid !== p.mbid)];
           }
         }
@@ -24201,6 +24302,7 @@
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
+        ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
         ${a.company ? `<div class="dci-variants dci-variants-co" data-variants="${a.key}">${creditAllHtml(a)}</div>` : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
@@ -26336,7 +26438,9 @@
     const m = dm();
     const counts = groupRowCounts();
     const pick = S.dmPick;
-    const cols = DATE_GROUPS.map((g) => {
+    // [Z-BTW] (3.84.0, review) the optional columns (Composition, Production) only with dates – or while a date is being placed
+    const shown = DATE_GROUPS.filter((g) => !g.optional || m.cells.some((c) => c.col === g.key) || (pick && pick.kind === 'date'));
+    const cols = shown.map((g) => {
       const cells = m.cells.filter((c) => c.col === g.key);
       const target = pick && pick.kind === 'date' && !cells.some((c) => c.date === pick.id);
       return `<div class="dci-dm-col" data-dmcol="${g.key}">
@@ -26350,7 +26454,7 @@
     return `<div class="dci-dm" data-el="dm">
       <p class="dci-sub dci-dm-help">${esc(tr('drop.help'))}</p>
       ${pick ? `<p class="dci-dm-pickhint" role="status">${esc(tr(pick.kind === 'date' ? 'drop.pickingDate' : 'drop.pickingTracks', { name: pickName(pick) }))}</p>` : ''}
-      <div class="dci-dm-grid">${cols}</div>
+      <div class="dci-dm-grid" style="--dm-cols: ${shown.length}">${cols}</div>
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
         <label class="dci-check" title="${esc(tr('dm.autoTitle'))}"><input type="checkbox" data-f="dm-auto" ${S.dmAuto ? 'checked' : ''}> ${esc(tr('dm.auto'))}</label>
@@ -42020,7 +42124,8 @@
     const style = document.createElement('style');
     style.id = 'dci-styles';
     style.textContent = `
-      #dci-pagebar { margin: 12px 0 22px; padding-bottom: 14px; border-bottom: 1px solid #e4e2ec; }
+      /* [Z-PGF] (3.84.0) a frame around the whole bar, like the boxes of the dashboard (until 3.83.0 a line below it) */
+      #dci-pagebar { margin: 12px 0 22px; padding: 12px 14px; border: 1px solid #e4e2ec; border-radius: 4px; }
       /* [Z-IML] (3.51.0) the button and the navigation of the source pages in one line – below it only in a narrow window; a notice
          and the question of the language above them, each a line of its own */
       #dci-pagebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
@@ -42829,6 +42934,8 @@
       .dci-mx-addcol-head { min-width: calc(var(--u, 1px) * 150); vertical-align: top; }
       .dci-mx-addcol-btn { border-style: dashed; background: #faf9fc; color: var(--purple-d); text-align: left; }
       .dci-mx-addcol-pop .dci-mx-addcol { display: flex; flex-direction: column; align-items: stretch; margin: calc(var(--u, 1px) * 6) 0 0; padding: 0; border: 0; background: none; }
+      /* [Z-WPR] (3.84.0) the note of an artist name in brackets */
+      .dci-aka-note { margin: calc(var(--u, 1px) * 2) 0 calc(var(--u, 1px) * 6); }
       .dci-mx-addcol-pop { position: fixed; z-index: 30; left: auto; right: 0; min-width: calc(var(--u, 1px) * 260); }
       /* [Z-MXO] (3.68.0) a head with its menu open above the sticky head of the tracks ("Track and work") */
       .dci-matrix thead th:has(.dci-mx-colmenu) { z-index: 6; }
@@ -43216,7 +43323,7 @@
       /* The date matrix: one column per date group */
       .dci-dm { margin-top: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: #fff; }
       .dci-dm-help { margin: 0 0 calc(var(--u, 1px) * 6); }
-      .dci-dm-grid { display: grid; grid-template-columns: repeat(6, minmax(calc(var(--u, 1px) * 140), 1fr)); gap: calc(var(--u, 1px) * 8); overflow-x: auto; }
+      .dci-dm-grid { display: grid; grid-template-columns: repeat(var(--dm-cols, 6), minmax(calc(var(--u, 1px) * 140), 1fr)); gap: calc(var(--u, 1px) * 8); overflow-x: auto; }
       .dci-dm-col { display: flex; flex-direction: column; min-width: 0; border: 1px solid #e7e5ef; border-radius: 4px; background: var(--soft); }
       .dci-dm-colhead { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); font-weight: 600; color: var(--date-d); border-bottom: 1px solid #e7e5ef; }
       .dci-dm-drop { flex: 1; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6); min-height: calc(var(--u, 1px) * 56); }
