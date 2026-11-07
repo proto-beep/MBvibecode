@@ -366,6 +366,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   arl387: 3.87.0 (Z-ARL2, Z-AWB2): the level of "arranger" in the column head – onto the recordings; no "all works" in the ▾ menu; S135 off
                                 #   awb386: 3.86.0 (Z-AWB, Z-DNDS): "all works" on and off, a track group dropped on it (exactly / ⇧ adds),
                                 #     ⚙ Dates & tracks → Drag & drop (five places, "all works" set to add, reset), S133 off: no button
                                 #   amx383: 3.83.0 (Z-AMX): the box of "＋ Add a column" whole in view (760 px, scrolled; review: the dashboard's
@@ -610,6 +611,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   dnda387: 3.87.0 (Z-DNDA): the drag & drop switches exactly below each other; narrow: the place above its switch
                                 #   statio: 3.76.0 (Z-SCV, S111): the statistics exported as JSON (whole) and CSV (a line per relationship, ";", BOM,
                                 #     release title, times on the first line, '=…), imported (the same id skipped, also twice in one
                                 #     file; records not readable left out, the statistics still drawn), a wrong file, the log ("rejected")
@@ -736,6 +738,7 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   arq387: 3.87.0 (Z-ARQ2, Z-ARQ3): the levels as columns (search leaves out levels), "＋ New event" (tracks 3, 4, a date), no role credit "instrument"; (review) staged beside the undated producer, an unreadable date or no track: the types off
                                 #   arq386: 3.86.0 (Z-ARQ): "＋ Another role" asks the type – search "mix", the levels, the events of an
                                 #     entry's matrix ticked, "Type a role yourself", Esc, S134 off as before
                                 #   rlv383: 3.83.0 (Z-RLV): staged, level / type changed, staged again – replaced, also one changed in the editor;

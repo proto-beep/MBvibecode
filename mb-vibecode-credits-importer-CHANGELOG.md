@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.86.0 | – |
+| 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,23 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.87.0
+
+#### Added
+
+- **"＋ New event" in the question of "＋ Another role"** (collected item Z-ARQ2): ticked, a column of its own on the level of the type you then choose – its tracks (those chosen above the entries first; click to take one in or out, all, none) and a date (optional, typed). A date that cannot be read, or no track, is said right there and the types stay off until it is right; a dated new event stays a relationship of its own beside one without a date on the same tracks.
+- **The level of a role in the works matrix** (collected item Z-ARL2, rule S135): a role that MusicBrainz also has on other levels (arranger, orchestrator …) has its level beside it in the head of its column – a click puts it on the recordings (or the release) – with the tracks of the cells that are on, copies with dates of their own beside it, a date of the date matrix that of the new level; in the entry its level button goes on round (… Skip, Work).
+
+#### Changed
+
+- **The levels in the question of "＋ Another role"** (Z-ARQ2): a column for each level in its colour (Recording, Release, Work, Release group – the colours of ⚙ Appearance), the common types first and the others behind "+ n more"; a search leaves out the levels without a hit; narrow (the width of the dashboard), the columns below each other.
+- **⚙ Settings → Dates & tracks → "Drag & drop"** (Z-DNDA): the five switches exactly below each other (narrow settings: one column).
+- **"all works" of a column's ▾ menu is gone** (Z-AWB2): the button below "credited as" (since 3.86.0) is it (the menu keeps it with S133 off).
+
+#### Fixed
+
+- **A type chosen in the question gave its name as role credit** (Z-ARQ3): "instrument" with percussion as its instrument had the role credit "instrument" – a row of a type chosen there has no wording of a source.
 
 ### Import 3.86.0
 
