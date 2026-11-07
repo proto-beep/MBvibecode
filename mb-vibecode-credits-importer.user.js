@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.81.0
+// @version      3.82.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.81.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.81.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.82.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.82.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.81.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.82.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2576,6 +2576,7 @@
       "quick.S046": "“Performer” on tracks → the instruments on those tracks",
       "quick.D026": "Photographs of the concert → the concert’s date",
       "quick.S114": "Heading of a group above its members → the group as performer too",
+      "quick.S122": "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp (not only YouTube)",
       "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
       "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
       "rules.roles": "Roles",
@@ -3865,6 +3866,8 @@
     { id: 'S119', where: 'TEXT.parse (splitRoles)', note: 'Texts (3.81.0; collected item Z-SLD): "Appalachian/Hammered Dulcimer" – a word before "/" that is no role, with the noun of the instrument after it an instrument of MusicBrainz too – are two instruments: Appalachian dulcimer, hammered dulcimer ("Piano/Keys" stays piano and keys)' },
     { id: 'S120', where: 'TEXT.parse (readLine)', note: 'Texts (3.81.0; collected item Z-OTR): "on track(s) …" after a role in a list of roles is that role\'s tracks – "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass on track 3" (each role with its own tracks, as "(2, 6)" after it)' },
     { id: 'S121', where: 'TEXT.parse (readClause, addCredit), TEXT_FILLER_SUBJECT, TEXT_BROADCASTER', note: 'Texts (3.81.0; collected item Z-RAD): "This was", "It was", "These tracks were" … before "recorded / mixed … by" are no part of the credit (until 3.80.0 its role credit); a broadcaster that recorded it (T066: "Norwegian State radio", "Westdeutscher Rundfunk", "BBC") is a label – recording (C021) and broadcast (C044) on the recordings; the names after "by" end with their sentence ("… and Guy. At the time …" made Guy a name of it); a place "outside / near Oslo" has Oslo as its area' },
+    { id: 'S122', where: 'TEXT.parse (songLists), BANDCAMP.toRelease', note: 'Texts (3.82.0; collected item Z-YTW2; off by default, a quick switch): the lists of songs of S118 also in pasted texts and Bandcamp\'s texts, not only in a YouTube video\'s description' },
+    { id: 'S123', where: 'findDedications, dedFullName', note: 'Dedications (3.82.0; collected item Z-DEDH): a form of address and a surname after "dedicated to" ("dedicated to Mr. Polo’s incredible explorations") – the one full name with that surname in the text or the release\'s title ("Marco Polo’s journey") is suggested in "Dedications & tributes" (artist – release); none when there is no full name or more than one' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -4752,7 +4755,52 @@
     { re: /\b(dedicated to the memory of|dedicated to|in loving memory of|in memory of|in memoriam:?|homage to|in erinnerung an|hommage an|gewidmet:?)(?=[ \t])/giu, kind: 'dedicated' },
   ];
   // the names after a phrase: "the late (great)" and quotes left out, a list joined by commas, "and" (also "and to"), "&"
-  const DED_AFTER = new RegExp(String.raw`^[ \t]+(?:the[ \t]+late[ \t]+(?:great[ \t]+)?)?["“„']?(${DED_NAME}(?:[ \t]*(?:,|\band\b|&|\bund\b)[ \t]+(?:to[ \t]+)?["“„']?${DED_NAME})*)`, 'u');
+  // [Z-DEDH] (3.82.0, S123) a name after a form of address ("Mr. Polo’s incredible explorations"): read with it, resolved below
+  const DED_HON = String.raw`(?:(?:Mr|Mrs|Ms|Miss|Dr|Mister|Madame|Mme|Monsieur|Herr|Frau)\.?[ \t]+)`;
+  const DED_AFTER = new RegExp(String.raw`^[ \t]+(?:the[ \t]+late[ \t]+(?:great[ \t]+)?)?["“„']?(${DED_HON}?${DED_NAME}(?:[ \t]*(?:,|\band\b|&|\bund\b)[ \t]+(?:to[ \t]+)?["“„']?${DED_HON}?${DED_NAME})*)`, 'u');
+  /**
+   * [Z-DEDH] (3.82.0, S123) "Mr. Polo" → "Marco Polo": the one full name with that surname in the text or the release's title ("Marco
+   * Polo’s journey", "The Great Journey of Marco Polo"); '' when there is none or more than one; the name as it is without a form of address.
+   */
+  function dedFullName(name, text) {
+    const raw = String(name || '');
+    // ((review) a form of address before a full name ("Dr. Martin Luther King", "Mr. John Smith"): the name without it
+    const long = ruleOn('S123') ? raw.match(new RegExp(String.raw`^${DED_HON}(\p{Lu}\S*(?:\s+\S+)+)$`, 'u')) : null;
+    if (long) return long[1];
+    const m = raw.match(new RegExp(String.raw`^${DED_HON}(\p{Lu}[\p{L}'’\-]+?)(?:['’]s)?$`, 'u'));
+    if (!m || !ruleOn('S123')) return name;
+    const sur = m[1];
+    let title = '';
+    try {
+      title = (S.releaseTitleMb || (S.release && S.release.title)) || '';
+    } catch {
+      title = ''; // (in Node: no dashboard)
+    }
+    const esc0 = sur.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&');
+    const WORD = String.raw`(?:\p{Lu}\.(?:\p{Lu}\.)*|\p{Lu}[\p{L}'’\-]*)`;
+    // (also "Marco Polo’s journey")
+    const re = new RegExp(String.raw`((?:${WORD}[ \t]+){1,3})${esc0}(?=['’]s\b|(?![\p{L}'’\-]))`, 'gu');
+    // (no given name: articles, prepositions, forms of address and the words a sentence starts with – "Yesterday Marco Polo")
+    const STOP = /^(?:The|A|An|Of|And|For|To|By|At|In|On|With|From|Doctor|Sir|Saint|St|Mr|Mrs|Ms|Miss|Dr|Mister|Madame|Mme|Monsieur|Herr|Frau|Yesterday|Today|Tonight|When|While|After|Before|Then|Now|Here|There|This|That|These|Those|As|If|But|So|Since|Once|Also|Every|All|Our|My|His|Her|Their|We|I|You|He|She|They|It|Even|Only|Just|Last|Next|First|Recently|Finally|Later|Thus|Although|Though|Because|Where|Why|How|What|Il|La|Le|Les|Der|Die|Das|Ein|Eine|Un|Une|El|Los)\.?$/;
+    const full = new Set();
+    let x;
+    for (const src of [String(text || ''), title]) {
+      re.lastIndex = 0;
+      while ((x = re.exec(src))) {
+        // (the words right before the surname, at most two, back to a word of STOP: "The Great Journey Of Marco Polo" → Marco Polo,
+        // "Martin Luther King", "B.B. King", "Yesterday Marco Polo" → Marco Polo)
+        const words = x[1].trim().split(/\s+/);
+        const given = [];
+        for (let k = words.length - 1; k >= 0 && given.length < 2; k--) {
+          if (STOP.test(words[k]) || !/^(?:\p{Lu}\p{Ll}|\p{Lu}\.)/u.test(words[k])) break;
+          given.unshift(words[k]);
+        }
+        if (given.length) full.add(`${given.join(' ')} ${sur}`);
+      }
+    }
+    // ((review) none or several: the name as written – "Mr Bungle", "Dr. Dre" are names; MusicBrainz is asked for exactly one)
+    return full.size === 1 ? [...full][0] : raw;
+  }
   /**
    * [Z-DED] (3.67.0, S097) The dedications of a text: [{ kind: 'dedicated' | 'tribute', name, whole, phrase, sentence, at }] – the names
    * after the phrases ("whole": the names together, "Simon & Garfunkel" before "Simon" and "Garfunkel"), "X Y gewidmet", a line
@@ -4762,13 +4810,16 @@
   function findDedications(text, { title = false, titleKind = 'tribute', phrases = true } = {}) {
     const src = String(text || '');
     const out = [];
-    const split = (names) => names.split(/[ \t]*(?:,|\band\b|\bund\b)[ \t]+(?:to[ \t]+)?/iu).map((x) => x.replace(/["“”„'’]/g, '').replace(/[.\s]+$/, '').trim())
+    // ([Z-DEDH] 3.82.0: "Polo’s" – the possessive off first)
+    const split = (names) => names.split(/[ \t]*(?:,|\band\b|\bund\b)[ \t]+(?:to[ \t]+)?/iu).map((x) => x.replace(/['’]s$/u, '').replace(/^["“„'‘]+|["”“'’]+$/gu, '').replace(/["“”„]/g, '').replace(/[.\s]+$/, '').trim())
       .filter((x) => x && /^\p{Lu}/u.test(x) && x.split(/\s+/).length <= 6);
     const add = (kind, names, phrase, at, minWords = 1) => {
       const sentence = (sentenceAround(src, at, at + phrase.length) || src).trim();
       const whole = names.replace(/["“”„'’]/g, '').replace(/[.\s]+$/, '').trim();
-      for (const name of split(names)) {
-        if (name.split(/\s+/).length < minWords) continue;
+      for (const name0 of split(names)) {
+        // [Z-DEDH] (3.82.0, S123) a form of address and a surname: the full name of the text, else nothing
+        const name = dedFullName(name0, src);
+        if (!name || name.split(/\s+/).length < minWords) continue;
         if (!out.some((x) => x.kind === kind && foldWord(x.name) === foldWord(name))) out.push({ kind, name, whole, phrase: phrase.trim().replace(/[:\s]+$/, ''), sentence, at });
       }
     };
@@ -7623,7 +7674,7 @@
        * ("00:00 Intro", "4:12 - Nuska", "Nuska (4:12)"). Numbers and times taken off; Intro, Interview, Outro … no song. The lines are
        * left out of the credits ("songList"). → { lines (those taken empty), songs }
        */
-      const songLists = (lines) => {
+      const songLists = (lines, strict = false) => {
         const out = [...lines];
         const songs = [];
         const TIME = String.raw`[([]?\d{1,2}:\d{2}(?::\d{2})?[)\]]?`;
@@ -7640,7 +7691,9 @@
         const creditLike = (t) => CREDITS_HEADING.test(t) || /^(?:credits|musicians|personnel|line-?up|band)$/i.test(t)
           || t.split(/\s+[-–—]\s+/).some((x, k, all) => all.length > 1 && (isRole(cap(clean(x))) || playable(clean(x).toLowerCase())))
           || ((m) => !!m && (isRole(cap(m[1])) || playable(m[1].toLowerCase())))(t.match(/\(([^()]+)\)\s*$/));
-        const isTitle = (t) => !!t && t.length <= 80 && !creditLike(t) && !/https?:\/\/|www\.|@|#\w/i.test(t) && !/:(?:\s|$)/.test(t) && !/^\W+$/.test(t)
+        // ((review) outside YouTube also no tracks in brackets ("John Smith (1, 3)"), no name of the release's artists, no list with commas
+        const strictNo = (t) => strict && (/\(\s*\d/.test(t) || bandNames.has(norm(t)) || /,\s/.test(t) || isRole(cap(t)));
+        const isTitle = (t) => !!t && t.length <= 80 && !creditLike(t) && !strictNo(t) && !/https?:\/\/|www\.|@|#\w/i.test(t) && !/:(?:\s|$)/.test(t) && !/^\W+$/.test(t)
           && !/^(?:recorded|mixed|mastered|produced|engineered|filmed|edited|directed|shot|written|composed|arranged|performed|hosted|thanks)\b/i.test(t)
           && !/\sby\s+\p{Lu}[\p{Ll}.'’-]*\s+\p{Lu}/u.test(t);
         const take = (k, t) => {
@@ -7649,7 +7702,8 @@
           out[k] = '';
         };
         for (let i = 0; i < out.length; i++) {
-          if (TEXT_SONG_HEAD.test(clean(out[i]))) {
+          // ((review) outside YouTube (S122) a heading with its colon, not "Set:" or "Tracks:" alone)
+          if (TEXT_SONG_HEAD.test(clean(out[i])) && (!strict || (/:\s*$/.test(out[i]) && !/^\s*(?:set|tracks|full set|chapters|timestamps)\s*:/i.test(out[i])))) {
             const at = ignored.length;
             let n = 0;
             let j = i + 1;
@@ -8313,7 +8367,10 @@
       const allLines0 = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
-      const songRead = ctx0 && ctx0.songs && ruleOn('S118') ? songLists(allLines1) : { lines: allLines1, songs: [] };
+      // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
+      // ((review) only where a release of one track can take them: `songsOk` of the pasted text and the Bandcamp album – not the Discogs
+      // notes, a track page, an album of many tracks)
+      const songRead = ctx0 && (ctx0.songs || (ruleOn('S122') && ctx0.songsOk)) && ruleOn('S118') ? songLists(allLines1, !ctx0.songs) : { lines: allLines1, songs: [] };
       const allLines = songRead.lines;
       // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
       const heads = headingLists(allLines);
@@ -8414,7 +8471,8 @@
     function toRelease(input, ctx) {
       const text = String((input && input.text) || '');
       const origin = String((input && input.origin) || '').trim();
-      const res = parse(text, ctx);
+      // [Z-YTW2] (3.82.0, S122) a release of one track can take a list of songs
+      const res = parse(text, { ...ctx, songsOk: (ctx.tracks || []).length <= 1 });
       return {
         source: 'text',
         id: ctx.sig(text),
@@ -8621,7 +8679,7 @@
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       // [S073] (3.42.3) the album's title and its tracks' are no persons (Z-BZ)
       const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName] });
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -8629,7 +8687,7 @@
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName] });
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
       // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
       // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
@@ -8704,6 +8762,8 @@
         covers,
         quotes,
         groups,
+        // [Z-YTW2] (3.82.0, S122) the songs its texts list (with the quick switch)
+        songs: [...(album.songs || []), ...(aboutRes.songs || [])],
         band,
         released: cur.release_date || '',
       };
@@ -8837,7 +8897,7 @@
     function toRelease(data, id, ctx) {
       const url = videoUrl(id);
       // [Z-YTW] (3.80.0, S118) the songs the description lists are read too
-      const rel = TEXT.toRelease({ text: data.description, origin: url }, { ...ctx, songs: true });
+      const rel = TEXT.toRelease({ text: data.description, origin: url }, { ...ctx, songs: true, songsOk: true });
       return { ...rel, source: 'youtube', id, url, title: data.title || url, noteSource: url, channel: data.channel, series: videoSeries(data) };
     }
     return {
