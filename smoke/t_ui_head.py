@@ -243,7 +243,8 @@ def case_evask():
        (no "video shot at": the release has no videos).
     B) "recorded at": the row is "recorded at" on the recordings (not the release), the entry folded to its compact lines; the
        question gone; the log says so.
-    C) A release with a video (track 2): the question offers "video shot at" too; "choose later" leaves the row as it was.
+    C) A release with a video (track 2): the question offers "video shot at" too (from 3.85.0 first both, by media type); "choose
+       later" leaves the row as it was.
     D) Rule S108 off: no question."""
     EV = H.uid('fefefefe', 11)
     H.COMPANIES[1031] = ('event', EV, 'Vancouver Jazz Festival 1993, Day 2')
@@ -296,7 +297,8 @@ def case_evask():
         pg.wait_for_timeout(300)
         r2 = pg.evaluate(ROW)
         print('C)', c, '| danach:', pg.evaluate(ASK), r2)
-        results.append(c and c['btns'] == ['recorded at', 'video shot at', 'choose later'] and pg.evaluate(ASK) is None and r2 and r2['type'] != 'recorded at' and not errs)
+        # ([Z-EVA] 3.85.0, S132) audio and video: "both" first – a row for each by media type
+        results.append(c and c['btns'] == ['recorded at + video shot at (by media type)', 'recorded at', 'video shot at', 'choose later'] and pg.evaluate(ASK) is None and r2 and r2['type'] != 'recorded at' and not errs)
     with sync_playwright() as p:
         pg, errs = open_page(p, off=True)
         d = pg.evaluate(ASK)
@@ -1390,6 +1392,60 @@ def case_focusfields():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_eva385():
+    """Credits Importer 3.85.0 (collected item Z-EVA, rule S132): an event on a release with audio and videos – track 2 a video
+    (MusicBrainz's flag), track 3 "Song Three (Official Video)" without the flag.
+    A) The question offers "recorded at + video shot at (by media type)" first.
+    B) Chosen: two rows – "recorded at" on tracks 1 and 4, "video shot at" on tracks 2 and 3; a message names track 3 (its title says
+       video, MusicBrainz has an audio recording)."""
+    import common_rows as C
+    EV = H.uid("fefefefe", 12)
+    H.COMPANIES[1032] = ('event', EV, 'Club Night 2020')
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.lt(9002, H.uid('9e9e9e9e', 2), 'recorded at', 'event', 'release', ())
+    H.lt(9003, H.uid('9e9e9e9e', 3), 'video shot at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.VIDEO_TRACKS.add(1)
+    old = H.TITLES[2]
+    H.TITLES[2] = 'Song Three (Official Video)'
+    ROWS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Club Night 2020/.test(x.querySelector('.dci-gname').textContent));
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); return (t ? (t.selectedOptions[0] || {}).text : '') + ' ' + (r.querySelector('[data-tcount]') || {textContent: ''}).textContent.trim(); }) : null; })()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
+            pg.click('[data-act=add-manual]')
+            H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
+            pg.wait_for_timeout(300)
+            btns = pg.evaluate("[...document.querySelectorAll('[data-el=manual-evq] button')].map(b => b.dataset.type || b.dataset.act)")
+            print('A)', btns)
+            results.append(btns[:1] == ['both'])
+            pg.click('[data-el=manual-evq] [data-type=both]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => /Club Night 2020/.test(x.textContent)).querySelectorAll('[data-act=row-open], [data-act=tracks-open]').forEach(b => b.click())")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            rows = pg.evaluate(ROWS)
+            tracks = C.tracks_of_rows(pg, 'Club Night 2020')
+            msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ')).filter(t => /looks like a video/.test(t))")
+            print('B)', rows, tracks, msgs)
+            results.append(rows is not None and len(rows) == 2 and rows[0].startswith('recorded at') and rows[1].startswith('video shot at')
+                           and (not tracks or tracks == [[1, 4], [2, 3]]) and len(msgs) == 1 and 'Song Three (Official Video)' in msgs[0])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.TITLES[2] = old
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

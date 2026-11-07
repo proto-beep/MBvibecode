@@ -736,8 +736,8 @@ def case_festival():
     B) Above the entries: "Festival recording: “International Jazz Festival Vancouver” (1993-06-26). MusicBrainz prefers the event
        to the place …"; offered: the event of that name whose time holds the date (1993-06-25 – 1993-07-04) – not the one of
        1994 –, nothing set (no entry of it).
-    C) Its button: the event an entry, in the colour of events (plum); the button greyed out; the log says so. ⚙ Appearance has
-       the colour "Event".
+    C) Its button: the event an entry, in the colour of events (plum); the log says so – from 3.85.0 (S130) the hint goes then (until
+       3.84.0 the button greyed out). ⚙ Appearance has the colour "Event".
     D) A pasted text "Recorded live at the Montreux Jazz Festival." (no date): the hint without events; "the Royal Festival Hall"
        (a place) gives none."""
     NOTES = ('Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier, Ltd. International Jazz Festival Vancouver.')
@@ -790,7 +790,8 @@ def case_festival():
         H.open_settings(pg, 'appearance')
         kinds = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-set=kind-color]')].map(i => [i.dataset.kind, i.value])")
         print('C) Eintrag:', ev, '| Knopf:', f2 and f2['offers'], '| Protokoll:', logs, '| Farben:', kinds)
-        results.append(ev == [True, 'rgb(138, 79, 125)'] and f2 and f2['offers'][0][1] is True and any('Event added' in t for t in logs)
+        # ([Z-FEV] 3.85.0, S130) the hint goes once its event is an entry (until 3.84.0 its button greyed out)
+        results.append(ev == [True, 'rgb(138, 79, 125)'] and f2 is None and any('Event added' in t for t in logs)
                        and ['event', '#8a4f7d'] in kinds)
         H.open_settings(pg)
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
@@ -1213,6 +1214,84 @@ def case_dedbox():
             H.ARTISTS.pop(k, None)
         H.MB_SEARCH.pop('artist', None)
         H.MB_SEARCH.pop('area', None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_fev385():
+    """Credits Importer 3.85.0 (collected items Z-FEV, Z-FPL, Z-EVA; rules S130 – S132): the notes of case festival ("… at the Western
+    Front Lodge, Vancouver … during the du Maurier, Ltd. International Jazz Festival Vancouver"), the place Western Front Lodge linked.
+    A) The festival hint above the entries, and at the linked place (S131).
+    B) The event offered taken: the hint above goes (S130 – the event's name alike); at the place both named with "Place → Skip"; the
+       event's row "recorded at" on the recordings at once (S132).
+    C) "Place → Skip": the place's rows on Skip, the button gone.
+    D) (review) It is the entry's own Skip (greyed, ↺ Take again); the event's row taken out: the hint above comes back."""
+    NOTES = ('Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier, Ltd. International Jazz Festival Vancouver.')
+    E1, P1 = H.uid('fefefefe', 1), H.uid('fefefefe', 385)
+    H.MB_SEARCH['event'] = [{'id': E1, 'name': 'du Maurier Ltd. International Jazz Festival Vancouver 1993', 'disambiguation': '', 'type': 'Festival',
+                             'life-span': {'begin': '1993-06-25', 'end': '1993-07-04'}}]
+    H.COMPANIES[1030] = ('event', E1, 'du Maurier Ltd. International Jazz Festival Vancouver 1993')
+    H.COMPANIES[1033] = ('place', P1, 'Western Front Lodge')
+    H.PLACE_AREAS['Western Front Lodge'] = 'Vancouver'
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    PLACE = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent));
+      if (!g) return null; const n = g.querySelector('[data-el=fest-place]');
+      return { note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '', skip: !!g.querySelector('[data-act=fest-place-skip]'),
+        levels: [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '') }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_for(pg, "!!document.querySelector('.dci-festival [data-act=festival-add]')", 20)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        uses = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent)); return g ? [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()) : null; })()")
+        linked = uses
+        pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent)); const b = g && g.querySelector('[data-act=name-use]'); if (b) b.click(); })()")
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        a = pg.evaluate(PLACE)
+        hint = pg.evaluate("!!document.querySelector('.dci-festival')")
+        print('A)', linked, a, hint)
+        results.append(hint and a and a['note'].startswith('Festival recording “International Jazz Festival Vancouver”') and not a['skip'])
+        pg.click('.dci-festival [data-act=festival-add]')
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(g => /du Maurier/.test(g.textContent))", 20)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        bb = pg.evaluate(PLACE)
+        hint2 = pg.evaluate("!!document.querySelector('.dci-festival')")
+        evrow = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent));
+          const r = g && g.querySelector('tr.dci-row'); const t = r && r.querySelector('[data-f=type]');
+          return r ? [(t && t.selectedOptions[0] || {}).text, (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level] : null; })()""")
+        print('B)', bb, hint2, evrow)
+        results.append(not hint2 and bb and bb['note'].startswith('The event “du Maurier Ltd. International Jazz Festival Vancouver 1993” is linked') and bb['skip']
+                       and evrow == ['recorded at', 'recording'])
+        pg.click('[data-act=fest-place-skip]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        c = pg.evaluate(PLACE)
+        print('C)', c)
+        results.append(c and c['levels'] and all(x == 'skip' for x in c['levels']) and not c['skip'])
+        # D) (review) the entry's own Skip (↺ Take again); the event's row taken out: the hint above back
+        took = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent)); return !!g && g.classList.contains('dci-gskipped'); })()")
+        pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent)); g.querySelectorAll('[data-act=remove-row]').forEach(b => b.click()); })()")
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        back = pg.evaluate("!!document.querySelector('.dci-festival')")
+        print('D)', took, back)
+        results.append(took and back)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

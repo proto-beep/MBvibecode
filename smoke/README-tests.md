@@ -263,6 +263,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   fev385: 3.85.0 (Z-FEV, Z-FPL, Z-EVA): the festival hint at the linked place, gone once the event is
+                                #     linked; at the place both named with "Place → Skip"; the event "recorded at" at once
                                 #   dedbox: 3.74.0 (Z-DEDQ, Z-FRM, S109): the box "Dedications & tributes" – frames, found, suggestions (several, none,
                                 #     no track), picked, MBID and level, "＋ Dedication | Tribute", the setting, off
                                 #   dedfor: 3.71.0 (Z-DED2, S107): "for …" in a sentence – an artist (release group), a country (the work of the track
@@ -309,6 +311,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   camd385: 3.85.0 (Z-CAMD): "Cameras: …" on a live recording gets the performance dates (S129 off: none)
                                 #   artkinds: 3.73.0 (Z-CPI, D025): the kinds of the artwork – a painting to the illustration, a cover photo to the
                                 #     photography, design without; the cell's "for:" changed; photos at the concert: the pool entry "Photography By"; off
                                 #   catno: 3.44.1 (Z-CAT): "Music & Arts website states CD-4853(1)" in the notes gives no track group, "Pub Co (1, 3)" still does
@@ -552,6 +555,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   eva385: 3.85.0 (Z-EVA): an event on a release with a video and a title "(Official Video)": "recorded at
+                                #     + video shot at" first – a row each by media type, a hint for the title-only video
                                 #   evask: 3.73.0 (Z-EVQ, S108): an event pasted into "Add entry manually" – "recorded at" (+ "video shot at" with
                                 #     videos), on the recordings, folded; "choose later"; off
                                 #   compacthint: (3.73.0, Z-CPV) the compact view the default, the arrow to the full view; who used the script before
