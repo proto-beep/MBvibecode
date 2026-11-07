@@ -245,6 +245,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   dedbox: 3.74.0 (Z-DEDQ, Z-FRM, S109): the box "Dedications & tributes" – frames, found, suggestions (several, none,
+                                #     no track), picked, MBID and level, "＋ Dedication | Tribute", the setting, off
                                 #   dedfor: 3.71.0 (Z-DED2, S107): "for …" in a sentence – an artist (release group), a country (the work of the track
                                 #     named); not after "Mixed", "Thanks"; off
                                 #   dedications: 3.67.0 (Z-DED, S097): "Dedicated to" / "in memory of" in the notes – release group, the work of a
