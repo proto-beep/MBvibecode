@@ -845,6 +845,7 @@ Mixed by Bob Mix"""
         # B) "＋ Another role" at Bob Mix: "Mixed By" once more
         key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bob Mix').dataset.group")
         pg.click(f'section.dci-group[data-group="{key}"] [data-act=add-role]')
+        pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
         pg.wait_for_timeout(400)
         pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.fill('Mixed By')
         pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.press('Tab')

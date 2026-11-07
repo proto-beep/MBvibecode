@@ -1400,7 +1400,8 @@ def case_eva385():
     (MusicBrainz's flag), track 3 "Song Three (Official Video)" without the flag.
     A) The question offers "recorded at + video shot at (by media type)" first.
     B) Chosen: two rows – "recorded at" on tracks 1 and 4, "video shot at" on tracks 2 and 3; a message names track 3 (its title says
-       video, MusicBrainz has an audio recording)."""
+       video, MusicBrainz has an audio recording).
+    C) (review) Another event, "video shot at" chosen as such: the hint for track 3 too."""
     import common_rows as C
     EV = H.uid("fefefefe", 12)
     H.COMPANIES[1032] = ('event', EV, 'Club Night 2020')
@@ -1441,6 +1442,19 @@ def case_eva385():
             print('B)', rows, tracks, msgs)
             results.append(rows is not None and len(rows) == 2 and rows[0].startswith('recorded at') and rows[1].startswith('video shot at')
                            and (not tracks or tracks == [[1, 4], [2, 3]]) and len(msgs) == 1 and 'Song Three (Official Video)' in msgs[0])
+            # C) (3.85.0 review) "video shot at" chosen as such: the hint for the title-only video too
+            EV2 = H.uid('fefefefe', 13)
+            H.COMPANIES[1034] = ('event', EV2, 'Club Night 2021')
+            pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV2}')
+            pg.click('[data-act=add-manual]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=manual-evq] [data-type=\"video shot at\"]')", 20)
+            pg.evaluate("document.querySelectorAll('.dci-msg').forEach(m => m.remove())")
+            pg.click('[data-el=manual-evq] [data-type="video shot at"]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            c = pg.evaluate("[...document.querySelectorAll('.dci-msg')].some(m => /looks like a video/.test(m.textContent))")
+            print('C)', c)
+            results.append(c)
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
