@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.75.0 | – |
+| 2026-11-07 | 3.73.0 – 3.76.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.76.0
+
+#### Changed
+
+- **The statistics exported and imported** (collected item Z-SCV, rule S111; ⚙ Settings → Cache): **JSON** keeps every record whole (one per "Enter edit" MusicBrainz confirmed, each with its id) – to import it in another browser, where a record that is there already (the same id) is skipped; so the same statistics can be kept in several browsers. A record that cannot be read (or would break the statistics) is not taken; the status says how many were added, how many were here already and how many could not be read. A file larger than 100 MB, or no file of statistics, is not imported (the log says "rejected"). **CSV** is one line per relationship, separated by semicolons – to read in a spreadsheet (with the title of the release; the times of a submission on its first line only, so a sum counts them once; local time); it cannot be imported. The purpose stands beside the buttons; each export and import goes into the log of imports and exports (⚙ Settings → General).
 
 ### Import 3.75.0
 

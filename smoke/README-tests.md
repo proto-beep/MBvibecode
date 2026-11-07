@@ -576,6 +576,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   statio: 3.76.0 (Z-SCV, S111): the statistics exported as JSON (whole) and CSV (a line per relationship, ";", BOM,
+                                #     release title, times on the first line, '=…), imported (the same id skipped, also twice in one
+                                #     file; records not readable left out, the statistics still drawn), a wrong file, the log ("rejected")
                                 #   profiles: 3.75.0 (Z-QSP, Z-QTA, S110): "Profile 1" from what is stored, the choice in the bar, "Standard" with the
                                 #     dashboard open, a change under Standard makes a profile, rename, export, import ("(2)"), the log [-]/[E]/[I],
                                 #     the active one deleted, "Reset all" deleting all
