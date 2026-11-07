@@ -1077,4 +1077,68 @@ Paul Foreman - guitar"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_z381ui():
+    """Credits Importer 3.81.0 (collected items Z-RAD, Z-POR, Z-SYN, Z-SLD) in the dashboard, from a pasted text.
+    A) "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983. …": Norwegian
+       State radio a label (S121) with two rows – recording and broadcast, on the recordings; no role credit "This was" (until 3.80.0
+       a person "recording" credited "This was"); "… Rutherford and Guy. At the time …" gives no Guy; the place Hennie-Onstad art centre
+       (its area Oslo).
+    B) "Album portraits by Selina Mayer": photography on the release, credited "album portraits" (R112).
+    C) "Tsinder Ash - Juno 101, Korg Minilogue, Roland TR-808, Appalachian/Hammered Dulcimer": synthesizer credited "Juno 101", synthesizer
+       credited "Korg Minilogue", drum machine credited "Roland TR-808" (R113); Appalachian dulcimer and hammered dulcimer (S119);
+       nothing not recognized."""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', etype: (g.querySelector('.dci-gname .dci-sub') || { textContent: '' }).textContent.trim(),
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {}).text : '',
+    ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '', (tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '']; }) }])))()"""
+    UNREC = "[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)"
+    for i, n in ((9381, 'Appalachian dulcimer'), (9382, 'hammered dulcimer'), (9383, 'drum machine'), (9384, 'sampler')):
+        H.attr(i, n, 14, 14)
+    H.lt(9385, H.uid('1a1a1a1a', 9385), 'recording', 'label', 'recording', ())
+    H.lt(9386, H.uid('1a1a1a1a', 9386), 'broadcast', 'label', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = """This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983. The first time I played with Rutherford and Guy. At the time I played soprano and tenor sax.
+
+Album portraits by Selina Mayer
+
+Tsinder Ash - Juno 101, Korg Minilogue, Roland TR-808, Appalachian/Hammered Dulcimer"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate(UNREC)
+        for k, v in g.items():
+            print('  ', k, v)
+        print('   nicht erkannt:', unrec)
+        credited = pg.evaluate("[...document.querySelectorAll('section.dci-group [data-f=credit]')].map(x => x.value).filter(Boolean)")
+        print('   Credited as:', credited)
+        radio = g.get('Norwegian State radio') or {'rows': [], 'kind': ''}
+        # (the names after "by" end with their sentence: no Guy; the place "outside Oslo" with its area)
+        results.append('Guy' not in g and 'Hennie-Onstad art centre' in g and not any('This was' in x for x in credited) and radio['kind'] == 'label')
+        results.append(sorted(r[0] for r in radio['rows']) == ['broadcast', 'recording'] and all(r[1] == 'recording' and r[3] == '' for r in radio['rows'])
+                       and not any('This was' in r[3] for v in g.values() for r in v['rows']))
+        sm = (g.get('Selina Mayer') or {'rows': [[]]})['rows']
+        results.append(sm == [['photography', 'release', '', 'album portraits']])
+        ta = sorted(((g.get('Tsinder Ash') or {'rows': []})['rows']), key=lambda r: (r[2], r[3]))
+        results.append(ta == sorted([['instrument', 'recording', 'synthesizer', 'Juno 101'], ['instrument', 'recording', 'synthesizer', 'Korg Minilogue'],
+                                     ['instrument', 'recording', 'drum machine', 'Roland TR-808'], ['instrument', 'recording', 'Appalachian dulcimer', ''],
+                                     ['instrument', 'recording', 'hammered dulcimer', '']], key=lambda r: (r[2], r[3])) and not any('Tsinder' in u for u in unrec))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
