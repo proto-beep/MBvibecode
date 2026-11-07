@@ -14,8 +14,8 @@ global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key:
 const m = require(process.argv[1]);
 const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
   const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated
-  || /^(?:additional\s+)?(piano|bass|guitar|drums|vocals|synth|synths|saxophone|trumpet|flute|harp|rhodes|percussion|jaw harp|highland bagpipes|bagpipes|sampler|analog synthesizer|electronic valve instrument|juno|evi)$/i.test(p.base); };
-const isCompanyRole = (role) => /copyright|phonographic|published|rights society|distributed|recorded at|mixed at|mastered at|recorded in|mixed in|produced in/i.test(role) && !!m.mapCompanyRole(role).rule;
+  || /^(?:additional\s+)?(piano|bass|guitar|drums|vocals|synth|synths|saxophone|trumpet|flute|harp|rhodes|percussion|jaw harp|highland bagpipes|bagpipes|sampler|analog synthesizer|electronic valve instrument|juno|evi|double bass|bass guitar|baritone electric guitar)$/i.test(p.base); };
+const isCompanyRole = (role) => /copyright|phonographic|published|rights society|distributed|recorded at|mixed at|mastered at|recorded in|mixed in|produced in|broadcast by/i.test(role) && !!m.mapCompanyRole(role).rule;
 const trackSet = (n) => (spec) => {
   const set = new Set();
   for (const part of String(spec).trim().split(/\s*(?:,|&|\band\b)\s*/)) {
@@ -28,9 +28,10 @@ const trackSet = (n) => (spec) => {
   return set.size ? set : null;
 };
 const out = JSON.parse(process.argv[2]).map((c) => {
+  (c.off || []).forEach((id) => m.setRuleOff && m.setRuleOff(id, true));
   const r = m.SOURCES.text.parse(c.text, { isRole, isCompanyRole, resolveTracks: trackSet(c.tracks || 14), artistNames: c.artists || [], titleNames: c.titles || [] });
   return { credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),
-    companies: r.companies.map((x) => [x.who.name, x.role]), unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]) };
+    companies: r.companies.map((x) => [x.who.name, x.role, ...(x.entity ? [x.entity] : [])]), unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]) };
 });
 console.log(JSON.stringify(out));
 """
@@ -134,7 +135,8 @@ def case_rolesplit():
 def case_roles():
     """Credits Importer 3.49.0 (collected item Z-ROL; Q-eu, Q-fa, Q-fe): production and instrumental production – producer; composition –
     composer; "vocal sample" – samples from artist (R109; "contains samples by"); "drums / drum sample" of one person – drums and
-    sampler; harmonic overtone singing – a voice (R011); Juno – analog synthesizer, credited "Juno"; EVI – electronic valve instrument;
+    sampler; harmonic overtone singing – a voice (R011); Juno – analog synthesizer, credited "Juno" ([3.81.0] by R113, a model – its
+    alias first); EVI – electronic valve instrument;
     highland bagpipes – Great Highland bagpipe."""
     node = r"""
 global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
@@ -155,7 +157,7 @@ console.log(JSON.stringify(out));
     print('  ', lines[0]['credits'], lines[1]['credits'])
     want = [['production', 'R026', ['producer'], ''], ['instrumental production', 'R026', ['producer'], ''], ['composition', 'R003', ['composer', 'writer'], ''],
             ['vocal sample', 'R109', ['samples from artist'], ''], ['harmonic overtone singing', 'R011', ['vocal'], 'harmonic overtone singing'],
-            ['Juno', 'R096', ['instrument'], 'analog synthesizer'], ['EVI', 'R096', ['instrument'], 'electronic valve instrument'],
+            ['Juno', 'R113', ['instrument'], 'analog synthesizer'], ['EVI', 'R096', ['instrument'], 'electronic valve instrument'],
             ['highland bagpipes', 'R096', ['instrument'], 'great highland bagpipe'], ['juno credit', 'Juno']]
     ok = got == want and lines[0]['credits'] == [['Mekala Session', 'drums', '2, 11,13'], ['Mekala Session', 'sampler', '2, 11,13']] \
         and lines[1]['credits'] == [['Juliana Markwardt', 'vocal sample', '2']]
@@ -739,7 +741,7 @@ def case_namesroles():
     node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
     node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
                         "credits: r.credits.map((x) => [x.who.name, x.role, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all']), groups: r.groups,")
-    node = node.replace("|evi)$/i.test(p.base); };", "|evi|tenor saxophone|strings?)$/i.test(p.base); };")
+    node = node.replace("|baritone electric guitar)$/i.test(p.base); };", "|baritone electric guitar|tenor saxophone|strings?)$/i.test(p.base); };")
     js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': text, 'titles': titles, 'count': 4}])], capture_output=True, text=True)
     if js.returncode:
         print(js.stderr[-1500:])
@@ -774,7 +776,7 @@ def case_namesroles2():
     node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
     node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
                         "credits: r.credits.map((x) => [x.who.name, x.role, x.tracks && x.tracks.indexes ? x.tracks.indexes.join(',') : 'all']), groups: r.groups,")
-    node = node.replace("|evi)$/i.test(p.base); };", "|evi|organ)$/i.test(p.base); };")
+    node = node.replace("|baritone electric guitar)$/i.test(p.base); };", "|baritone electric guitar|organ)$/i.test(p.base); };")
     js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t, 'titles': titles, 'count': 4} for t in cases])], capture_output=True, text=True)
     if js.returncode:
         print(js.stderr[-1500:])
@@ -837,6 +839,65 @@ def case_tcpread2():
         print('  ', t, '→', x)
     ok = tc == [[], [], [], [], [['Oliver Lake', '4']], [['Earth, Wind & Fire', '1']], [['Simon & Garfunkel', '2']], [['Oliver Lake', '1']], [], []]
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
+def case_z381():
+    """Credits Importer 3.81.0 (collected items Z-OTR, Z-SLD, Z-SYN, Z-POR, Z-RAD, Z-YTT; rules S119 – S121, R112, R113).
+    A) "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass
+       on track 3": each role with its tracks (S120; until 3.80.0 "? “Bass Guitar on track 2”, “4”, “6”").
+    B) Roles (Node): "Juno 101", "Korg Minilogue" – synthesizer (R113), "Roland TR-808" – drum machine, "Akai MPC 2000XL" – sampler, each
+       credited as written; "Appalachian/Hammered Dulcimer" – Appalachian dulcimer and hammered dulcimer (S119); "Piano/Keys" stays two;
+       "Album portraits", "Portraits" – photography on the release, credited "album portraits" / "portraits" (R112).
+    C) "This was recorded by Norwegian State radio, at …": the radio a label – recording and broadcast (S121), no "This was" (until 3.80.0
+       its role credit); "It was mixed by Jane Roe": Jane Roe mix, no detail.
+    D) Songs of a video (Z-YTT): "Anoyo Drive 00:32" / "Melting 13:37" / "Iyo no Hito 23:16" (the time last, no heading) – three songs;
+       "Doors 19:00" / "Support 20:00" / "Main act 21:00" – a schedule, no songs."""
+    got = read([{'text': 'Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2'},
+                {'text': 'Joe Davin - Bass Guitar on track 2,4,6, Double Bass on track 3'},
+                {'text': 'This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983.'},
+                {'text': 'It was mixed by Jane Roe.'},
+                {'text': 'Album portraits by Selina Mayer'}])
+    for g in got:
+        print('  ', g and g['credits'], g and g['companies'], g and g['unrecognized'])
+    a = got[0]['credits'] == [['Andy Becker', 'Baritone Electric Guitar', '2 & 6'], ['Andy Becker', 'Synth', '2']] \
+        and got[1]['credits'] == [['Joe Davin', 'Bass Guitar', '2,4,6'], ['Joe Davin', 'Double Bass', '3']] and not got[0]['unrecognized'] and not got[1]['unrecognized']
+    c = ['Norwegian State radio', 'Recorded By', 'label'] in got[2]['companies'] and ['Norwegian State radio', 'Broadcast By', 'label'] in got[2]['companies'] \
+        and not any('This was' in x[1] for x in got[2]['credits'] + got[2]['companies']) and got[3]['credits'] == [['Jane Roe', 'Mixed By']]
+    por = got[4]['credits'] == [['Selina Mayer', 'Album portraits By']]
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const one = (r) => { const p = m.parseRoleNotation(r)[0]; const x = m.mapRole(p.base, p.mods); return [r, x.rule, x.types, (x.primaryCands || []).slice(-1)[0] || '', x.credit, x.level]; };
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; return !!p && /^(appalachian dulcimer|hammered dulcimer|piano|keys|dulcimer)$/i.test(p.base); };
+const split = m.SOURCES.text.parse('Tsinder Ash - Appalachian/Hammered Dulcimer, Piano/Keys', { isRole, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [], titleNames: [] });
+console.log(JSON.stringify({ roles: ['Juno 101', 'Korg Minilogue', 'Roland TR-808', 'Akai MPC 2000XL', 'Album portraits by', 'Portraits', 'Piano'].map(one),
+  split: split.credits.map((x) => x.role) }));
+"""
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    b0 = json.loads(js.stdout) if not js.returncode else {'roles': [], 'split': []}
+    for r in b0['roles']:
+        print('  ', r)
+    print('   split:', b0['split'])
+    want = [['Juno 101', 'R113', ['instrument'], 'synthesizer', 'Juno 101', 'recording'], ['Korg Minilogue', 'R113', ['instrument'], 'synthesizer', 'Korg Minilogue', 'recording'],
+            ['Roland TR-808', 'R113', ['instrument'], 'drum machine', 'Roland TR-808', 'recording'], ['Akai MPC 2000XL', 'R113', ['instrument'], 'sampler', 'Akai MPC 2000XL', 'recording'],
+            ['Album portraits by', 'R112', ['photography'], '', 'Album portraits by', 'release'], ['Portraits', 'R112', ['photography'], '', 'Portraits', 'release'],
+            ['Piano', 'R096', ['instrument'], 'piano', '', 'recording']]
+    b = b0['roles'] == want and b0['split'] == ['Appalachian Dulcimer', 'Hammered Dulcimer', 'Piano', 'Keys']
+    songs = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const ctx = { isRole: () => false, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [], titleNames: [], songs: true };
+console.log(JSON.stringify(['Anoyo Drive 00:32\nMelting 13:37\nIyo no Hito 23:16', 'Doors 19:00\nSupport 20:00\nMain act 21:00'].map((t) => m.SOURCES.text.parse(t, ctx).songs)));
+"""
+    js2 = subprocess.run(['node', '-e', songs, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    d0 = json.loads(js2.stdout) if not js2.returncode else None
+    print('   songs:', d0, js2.stderr[-300:])
+    d = d0 == [['Anoyo Drive', 'Melting', 'Iyo no Hito'], []]
+    print('A)', a, '| B)', b, '| C)', c, '| portraits:', por, '| D)', d)
+    print('Ergebnis:', 'OK' if a and b and c and por and d else 'FEHLER', [a, b, c, por, d])
 
 
 run_cases(globals())

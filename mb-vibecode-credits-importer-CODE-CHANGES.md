@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.80.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.81.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.81.0 · 2026-11-07
+
+Z-YTT, Z-OTR, Z-SLD, Z-POR, Z-SYN, Z-SRCM, Z-RAD.
+
+- **`songLists`** (Z-YTT): without a heading the lines with a time first (`timeFirst`) or last (`timeLast`) – the same in every line (`posOf`), rising; three lines or more, two from 0:00; at least two songs (a run of `TEXT_SONG_SKIP` only – a schedule – is left as it was). `TEXT_SONG_SKIP` + doors (open), show, support, main act, headliner, curfew, tickets, Einlass, Beginn – each only as the whole title.
+- **`readLine`** (Z-OTR, S120): in a line "Name - roles" every " on|auf|en|sur (the) track(s) SPEC" before a comma, semicolon or the end becomes " (SPEC)" – read by Z-RTL (each role with its tracks).
+- **`splitRoles`** (Z-SLD, S119): before "/" a word that is no role, with the noun of the instrument after it an instrument as that is (`slashKind`, `playable`) – both parts get the noun.
+- **Mapping:** `R112` (portraits: photography, release, credit as written; S003 leaves "album" before "portraits" alone), `R113` (special; code: `gearKind` – `GEAR_MODELS` {brands, synthesizer, drum machine, sampler}, T065; primary candidates: the model's own names, then the kind; credit as written), `isKnownRole` takes a model with a number ("Juno 101"), `roleCreditForInner`: R113 the model as written (none when MusicBrainz's instrument is it). `C021` + label: recording (prefer artist), `C044` (broadcast / aired / transmitted by → label: broadcast, recording), `TEXT_COMPANY_RE` + broadcast by, `TEXT_BROADCASTER` (T066).
+- **`addCredit`** (Z-RAD, S121): "Recorded By" with a broadcaster's name → a company credit (`entity: 'label'`) and a second one "Broadcast By". **`readClause`**: `TEXT_FILLER_SUBJECT` – "This was / It was / These tracks were … (live) recorded …" → "Recorded (live)"; the side after "by" cut to its first sentence before pairs of name and place are split. **`placeOf`**: "… outside / near / close to X" – X its area.
+- **Menu "Source ▾"** (Z-SRCM): `source.pickLinked` (new, replaces `source.pick`), `srcmenu.bcSettings`.
+- **Register:** S119, S120, S121, T065, T066 (R112, R113 in the mapping file). **Texts:** source.pickLinked, srcmenu.bcSettings; removed: source.pick.
+- **Review:** `TEXT_BROADCASTER` narrower – an acronym of a broadcaster alone or with "Radio 3" …, a country's or "State / National / Public" radio or television, "Rundfunk", "Broadcasting Corporation" …, "Radio France / Bremen …" (not "TV on the Radio", "Radio Birdman", "Radio Moscow"); not one of the release's artists, nor a name with "engineer", "crew" … or a possessive; also "recorded live by" (the company role "Recorded By"). `GEAR_MODELS.ambiguous` – a model that is a word or a name too ("Gaia", "Jupiter", "Prophet", "Moog", "808" …) only with its maker before it or a number after it. `TEXT_SONG_SCHEDULE` (new; T064): a run of lines with times with one word of a schedule among them is no list of songs ("Doors 19:00 / Jane Roe 20:00 …"). `TEXT_ABBREV` + Rd, Blvd, Ave, Hwy, Pkwy, Sq, Wm, Chas, Jas, Thos, Geo ("Abbey Rd. Studios" stays whole after the cut to the first sentence). `TEXT_FILLER_SUBJECT` also before joined verbs ("This was recorded and mixed by …"). "just outside of Woodstock". The slash rule: no singular ("Lead/Backing Vocals"), the joined names written with capitals (no instrument found by its last word only). Z-RTL also "piano on track 3 and organ on track 5". The tables of the mapping file guarded (an older file: nothing found, no error).
+- **Tests:** `t_text_lists.py z381`, `t_text_places.py z381ui` (new); `t_text_lists.py roles` (Juno by R113).
 
 ## Import 3.80.0 · 2026-11-07
 

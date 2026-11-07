@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.80.0 | – |
+| 2026-11-07 | 3.73.0 – 3.81.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,25 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.81.0
+
+#### Added
+
+- **"on track …" after a role** (collected item Z-OTR, rule S120): "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass on track 3" – each role on its tracks (until 3.80.0 not recognized: "? “Bass Guitar on track 2”, “4”, “6”").
+- **Models of synthesizers, drum machines and samplers** (collected item Z-SYN, rule R113, list T065 in the mapping file): "Juno 101", "Korg Minilogue", "Roland TR-808", "Akai MPC 2000XL" … (a model that is a word or a name too – "Jupiter", "Prophet", "Moog" – only with its maker or a number: "Roland Jupiter", "Prophet 5") – MusicBrainz's instrument of that name if it has one, else **synthesizer**, **drum machine** or **sampler**, the model as written as role credit. The models and makers are three lists of the mapping file.
+- **"Appalachian/Hammered Dulcimer"** (collected item Z-SLD, rule S119): two instruments, Appalachian dulcimer and hammered dulcimer – when both are instruments of MusicBrainz ("Piano/Keys" stays piano and keys).
+- **"Album portraits by", "Portraits by"** (collected item Z-POR, rule R112): photography on the release, credited "album portraits" / "portraits".
+- **A broadcaster that recorded it** (collected item Z-RAD, rule S121, list T066): "recorded by Norwegian State radio" – a label with the relationships **recording** and **broadcast** on the recordings (until 3.80.0 a person "recording"); a broadcaster is a name like NRK, BBC Radio 3, "Norwegian State radio", "Westdeutscher Rundfunk", "Radio France" – not a band like "TV on the Radio", nor "BBC engineer John Smith". "Broadcast by …" is read too (C044).
+
+#### Changed
+
+- **"This was recorded by …"** (Z-RAD): "This was", "It was", "These tracks were" … before "recorded / mixed … by" are no part of the credit any more (they became its role credit); the names after "by" end with their sentence ("… played with Rutherford and Guy. At the time …" made Guy one); a place "outside / near Oslo" has Oslo as its area.
+- **Menu "Source ▾"** (collected item Z-SRCM): "Choose a linked source …" is now **"Import from another linked source …"**, "▸ Bandcamp" is **"▸ Bandcamp settings"**.
+
+#### Fixed
+
+- **The song list of a KEXP video** (collected item Z-YTT): "Anoyo Drive 00:32" / "Melting 13:37" / "Iyo no Hito 23:16" – the time after the title, no heading – is read again (3.80.0 took lines without a heading only with the time first and from 0:00). Lines with a time: first or last in every line, rising, three lines or more (two from 0:00); a schedule – one of its words among the lines ("Doors 19:00", "Einlass", "Curfew") – is none. "piano on track 3 and organ on track 5" is read per role too.
 
 ### Import 3.80.0
 
