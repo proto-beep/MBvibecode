@@ -113,6 +113,8 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
                                 #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
                                 #   placecredit: 3.51.0 (Z-PCR, the area after a comma)
+                                #   z381: 3.81.0 (Node; Z-OTR, Z-SYN, Z-SLD, Z-POR, Z-RAD, Z-YTT): "on track 2 & 6" per role; models as synthesizer /
+                                #     drum machine / sampler; "Appalachian/Hammered Dulcimer"; portraits; a broadcaster a label; "This was"; KEXP song times
                                 #   prose2, trackartists2: review of 3.50.0 (credits before "with", no place or make as a name, IJ names;
                                 #   other roles, tracks changed by hand, the edit note)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
@@ -248,6 +250,9 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     one search after the clicks (counted), what was found before again without a search, the label chosen
                                 #   unaremember, kindrace, ownrulekind: 3.42.8 (review): words given an entry come back with "Remember changes …",
                                 #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
+                                #   z381ui: 3.81.0 (Z-RAD, Z-POR, Z-SYN, Z-SLD): Norwegian State radio a label (recording, broadcast), no "This
+                                #     was", no Guy, the place with its area Oslo; album portraits; Juno 101 / Korg Minilogue / TR-808 by model;
+                                #     Appalachian and hammered dulcimer
                                 #   z379: 3.79.0 (Z-KXP, Z-CAM2, Z-VEN, Z-MEM, Z-PHC): "9/17/26" (D027); "… performing live in the KEXP studio"
                                 #     → KEXP Studio (S112); "Cameras: … & A with B" → four names (S116), misc "cameras" on the recordings,
                                 #     Recording | Release (R110); "venue: …" with city and date (S115); members below a group heading asked
