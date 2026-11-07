@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.84.0 | – |
+| 2026-11-07 | 3.73.0 – 3.85.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.85.0
+
+#### Added
+
+- **The festival hint at the linked place** (collected item Z-FPL, rule S131): a linked place named in the festival's sentence shows the hint too ("MusicBrainz prefers the event to the place"); with the event linked as well, both are named there with a button **Place → Skip** – MusicBrainz links an event to its place, so the place needs no relationship of its own. The place need not be linked; "Place → Skip" is the entry's own Skip (↺ Take again) – only its rows of the recording when it has others ("mixed at").
+- **Events on releases with audio and videos** (collected item Z-EVA, rule S132): the question for an event offers first **recorded at + video shot at (by media type)** – a row for each, "recorded at" on the audio tracks, "video shot at" on the videos. An event taken from a festival hint gets it at once (on a release of videos only: "video shot at"). A track whose title says "(Video)", "(Official Video)", "Official Music Video" counts as a video – with a hint that MusicBrainz has an audio recording (no video flag).
+- **Cameras of live recordings get the performance date** (collected item Z-CAMD, rule S129): rows of camera work (R110: "Cameras", "Filmed by" …) on live recordings are in the column Performance of the date matrix, as the performers.
+
+#### Changed
+
+- **The festival hint goes once its event is linked** (collected item Z-FEV, rule S130): an event entry with a name alike – or one of its aliases (looked up) – ends the hint above the entries ("International Jazz Festival Vancouver" ~ "du Maurier Ltd. International Jazz Festival Vancouver 1993"; not "Roskilde Festival" for "Glastonbury Festival"). Until 3.84.0 its button was only greyed out. Also an event added or linked by hand; its time must hold the festival's date; the hint comes back when the event's rows are taken out.
 
 ### Import 3.84.0
 
