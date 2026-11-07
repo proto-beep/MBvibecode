@@ -1081,4 +1081,92 @@ console.log(JSON.stringify([f([w('', 'zxx'), w('', 'zxx'), w('', 'zxx'), w('Song
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_snw383():
+    """Credits Importer 3.83.0 (collected item Z-SNW, rule S125): "＋ New works" while track 2 ("Song Two", Writer W) has a work of the same
+    title in MusicBrainz – three answers in the works matrix (until 3.82.0 a question of the browser: the others or none).
+    A) The box names Song Two; "Cancel": nothing planned.
+    B) "for the other tracks": tracks 3 and 4 get new works, track 2 none (it is to be linked).
+    C) Taken back, "for all tracks anyway": track 2 too; staged, the edit note names the work of the same title (its link).
+    D) ⚙ Settings → Staging → "Edit note": the switch off – the line is gone from the edit note.
+    E) (review) "Reset" of the topic Staging: the switch on again (until the review stored as reset, shown as off), the line back.
+    (review) Esc in the question closes the question, not the dashboard; the focus goes back to "＋ New works"."""
+    WW = H.ARTISTS[3007][0]
+    SAME = H.uid('cccccccc', 3830)
+    H.WORK_SEARCH[:] = [{'id': SAME, 'title': 'Song Two', 'type': 'Song', 'aliases': [], 'relations': [{'target-type': 'artist', 'type': 'writer', 'artist': {'id': WW, 'name': 'Writer W'}}]}]
+    PEND = "[...document.querySelectorAll('.dci-matrix tr[data-work]')].filter(tr => /new work/i.test((tr.querySelector('.dci-mx-line') || {}).textContent || '')).map(tr => Number(tr.dataset.work) + 1)"
+    NOTE = "document.getElementById('edit-note-text').value"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        click = lambda sel: pg.locator(sel).first.evaluate('b => b.click()')
+        click('[data-el=works] [data-act=works-pending-all]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=works-dupask]')", 10)
+        a0 = pg.evaluate("document.querySelector('[data-el=works-dupask]').textContent.replace(/\\s+/g, ' ').trim()")
+        # (review) Esc: the question closed, not the dashboard; the focus on "＋ New works"
+        pg.locator('[data-act=mx-dup-answer][data-answer=others]').focus()
+        pg.keyboard.press('Escape')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        esc = pg.evaluate("[!!document.querySelector('[data-el=works-dupask]'), !!document.querySelector('.dci-panel') && document.querySelector('.dci-panel').getClientRects().length > 0, (document.activeElement || {}).dataset ? document.activeElement.dataset.act : '']")
+        print('A) Esc', esc)
+        results.append(esc == [False, True, 'works-pending-all'])
+        click('[data-el=works] [data-act=works-pending-all]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=works-dupask]')", 10)
+        click('[data-act=mx-dup-answer][data-answer=cancel]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        a1 = [pg.evaluate("!!document.querySelector('[data-el=works-dupask]')"), pg.evaluate(PEND)]
+        print('A)', a0, '|', a1)
+        results.append('Song Two' in a0 and 'for the other tracks' in a0 and 'for all tracks anyway' in a0 and a1 == [False, []])
+        click('[data-el=works] [data-act=works-pending-all]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=works-dupask]')", 10)
+        click('[data-act=mx-dup-answer][data-answer=others]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        b0 = pg.evaluate(PEND)
+        print('B)', b0)
+        results.append(b0 == [3, 4])
+        for i in (2, 3):
+            un = pg.locator(f'.dci-matrix tr[data-work="{i}"] [data-act=work-unplan]')
+            if un.count():
+                un.first.evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        click('[data-el=works] [data-act=works-pending-all]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=works-dupask]')", 10)
+        click('[data-act=mx-dup-answer][data-answer=all]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        c0 = pg.evaluate(PEND)
+        pg.click('[data-act=apply]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Staging complete/.test(li.textContent))", 30)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        H.wait_still(pg, "document.getElementById('edit-note-text').value", 10, 300)
+        note = pg.evaluate(NOTE)
+        line = [l for l in note.splitlines() if 'same title' in l]
+        print('C)', c0, '|', line)
+        results.append(c0 == [2, 3, 4] and len(line) == 1 and '“Song Two”' in line[0] and f'/work/{SAME}' in line[0])
+        H.open_settings(pg, 'staging')
+        d0 = pg.evaluate("!!document.querySelector('[data-el=settings] [data-el=set-editnote]')")
+        pg.locator('[data-el=settings] [data-f=note-dup]').uncheck()
+        H.wait_still(pg, "document.getElementById('edit-note-text').value", 10, 300)
+        d1 = [l for l in pg.evaluate(NOTE).splitlines() if 'same title' in l]
+        print('D)', d0, d1, pg.evaluate("localStorage.getItem('dci-note-dup')"))
+        results.append(d0 and d1 == [] and pg.evaluate("localStorage.getItem('dci-note-dup')") == 'false')
+        # E) (review) "Reset" of the topic: the switch on again – stored and shown (the edit note names the work again)
+        click('[data-el=settings] [data-act=settings-reset][data-topic=staging]')
+        H.wait_still(pg, "document.getElementById('edit-note-text').value", 10, 300)
+        e0 = [pg.evaluate("localStorage.getItem('dci-note-dup')"), pg.evaluate("document.querySelector('[data-el=settings] [data-f=note-dup]').checked"),
+              len([l for l in pg.evaluate(NOTE).splitlines() if 'same title' in l])]
+        print('E)', e0)
+        results.append(e0 == [None, True, 1])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
