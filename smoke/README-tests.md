@@ -839,6 +839,11 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   ytlinks: 3.42.7 (Z-YTL): the videos a release links to as sources (each once, after Discogs), one alone loaded
                                 #     at once; the order with YouTube last (also an order stored before); (3.42.8, review) from the release editor
                                 #     with a new video only: Discogs
+                                #   kxs380: 3.80.0 (Z-KXS, Z-YTW): a KEXP video ("Live on KEXP", channel KEXP) – the series "Live on KEXP (full
+                                #     performance videos)" suggested on the recordings with the number 2025-04-08, KEXP Studio; the songs of
+                                #     the description left out as credits, "Split into 3 works (songs)" in their order, "Nuska" of the band
+                                #     offered, staged in order without "medley", the series staged with its number; the live comment of the
+                                #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
                                 #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only

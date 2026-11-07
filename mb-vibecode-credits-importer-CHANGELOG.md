@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.79.0 | – |
+| 2026-11-07 | 3.73.0 – 3.80.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.80.0
+
+#### Added
+
+- **"Live on KEXP" as a series** (collected item Z-KXS, rule S117): a YouTube video "… Full Performance (Live on KEXP)" on the channel KEXP (not a single song, not another channel) suggests the series **Live on KEXP (full performance videos)** – a series of recordings: the recordings part of it, the number the date it was recorded ("Recorded April 8, 2025." → 2025-04-08), its note says why (and asks for the number when the description has no single date). The series, its channel and title are a table of the mapping file (T063) – more can be added there.
+- **The songs of a video's description** (collected item Z-YTW, rule S118): a list below "Songs:", "Setlist:", "Tracklist:" … or two lines or more with a time ("00:00 Intro", "4:12 Nuska") is no credit any more (listed as left out: "a list of songs") – on a release of one track the works matrix offers **"Split into n works (songs)"**: each song a work of its own, linked in the order of the list (no "medley"; a song played twice twice); a work of the band – the release's artists: linked to them or one of their recordings, read with the works of the artists – or of the track's writers with that title is offered ("Link “Nuska”"), the others are new works, with the writers the text names only. Intro, Interview, Outro, Talk … are no songs (T064); a credit ("Guitar - John Smith", "Musicians") ends the list, "feat. …" is taken off the title; lines with a time without a heading count only from 0:00 on, the times rising (not "Doors 19:30").
+
+#### Changed
+
+- **Live comment without a work** (Z-KXS): a recording without a link to a work gets the live comment too when the source says it is live (the notes "performing live in …", a "Live Recording By" credit, its title) – until 3.79.0 only on a release group of type Live. As before, only with the setting of the live comments.
+- "… **performing live in the … studio**" in notes or a description says live (LIVE_NOTES; not "catch them performing live at …").
+- **Steadier tests** (Z-FLK, third stage): `t_dates_matrix.py` waits for a still dashboard after the import instead of a fixed time, and for the companion's marks.
 
 ### Import 3.79.0
 
