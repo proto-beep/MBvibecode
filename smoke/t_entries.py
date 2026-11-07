@@ -520,8 +520,8 @@ def case_restage():
     B) "One row each", staged again: the joined ones taken out, a relationship per instrument (12).
     C) "Join in one block", staged again: the singles taken out, joined again (4).
     D) A joined relationship changed in the relationship editor itself (an artist credit), then a role credit typed: staged –
-       the changed one stays as it is (its rows are not staged again, the summary of the staging says so), the other three are
-       staged anew – nothing twice."""
+       from 3.83.0 (S124) the changed one is replaced too and a message names it: four anew, nothing twice (until 3.82.0 the changed
+       one stayed as it was, its rows not staged again)."""
     orig, rel = join_release()
     H.discogs_release = rel
     results = []
@@ -574,7 +574,9 @@ def case_restage():
             kept = [r for r in d if r['id'] == edited]
             fresh = [r for r in d if r['id'] != edited]
             print('D) geändert behalten:', len(kept), kept[0]['attrs'] if kept else None, '| neu:', len(fresh), sorted(set(tuple(sorted(r['attrs'])) for r in fresh)))
-            results.append(len(kept) == 1 and len(fresh) == 3 and all('electric guitar [lead]' in r['attrs'] for r in fresh) and 'electric guitar' in kept[0]['attrs'])
+            # (3.83.0, S124) the changed one is replaced too – by what the dashboard has now – and named (until 3.82.0 it stayed)
+            said = pg.evaluate("[...document.querySelectorAll('.dci-msg')].some(m => /replaced by what the dashboard has now/.test(m.textContent))")
+            results.append(len(kept) == 0 and len(fresh) == 4 and all('electric guitar [lead]' in r['attrs'] for r in fresh) and said)
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()
@@ -1959,6 +1961,96 @@ def case_dnd378():
             for _n, _r, i, _t in JOIN_CREDITS:
                 H.ARTISTS.pop(i, None)
             b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_rlv383():
+    """Credits Importer 3.83.0 (collected item Z-RLV, rule S124): staged, then changed in the dashboard – staged again.
+    A) Bob Producer (producer, on the 4 recordings) staged, then his level switched to Release and staged again: the four recording
+       relationships are taken out of the editor, one on the release added.
+    B) Staged again on the recordings (the level back), one of them changed in the relationship editor itself (its credit), then the
+       level to Release once more: all four taken out (until 3.82.0 the changed one stayed – "to remove by hand"), a message names it.
+    C) The type changed (producer → mix, Release back to Recording first): replaced in place (no second relationship).
+    D) (review) One of them taken out in the relationship editor itself, then the credit changed in the dashboard: added anew (until
+       the review "changed in the editor itself" – never staged again).
+    E) (review) One's type changed in the relationship editor itself (mix → producer), then the credit: the dashboard's type again
+       (until the review the type of the editor stayed), a message names it."""
+    import common_rows as C
+    BOB = H.ARTISTS[3005][0]
+    BOB_ADDED = f"""MB.relationshipEditor.state.added.filter(r => (r.entity0 || {{}}).gid === '{BOB}' || (r.entity1 || {{}}).gid === '{BOB}').map(r => [r.linkTypeID, ((r.entity0 || {{}}).gid === '{BOB}' ? r.entity1 : r.entity0).entityType])"""
+    H.lt(30, H.LTS[30]['gid'], 'producer', 'artist', 'release', (1, 526))
+    H.lt(143, H.LTS[143]['gid'], 'mix', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => /Bob Producer/.test(s.querySelector('.dci-gname').textContent)).dataset.group")
+
+        def level(lv):
+            pg.locator(f'section.dci-group[data-group="{key}"] [data-act=level][data-level={lv}]').first.evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        C.stage(pg)
+        a0 = pg.evaluate(BOB_ADDED)
+        level('release')
+        C.stage(pg)
+        a1 = pg.evaluate(BOB_ADDED)
+        print('A)', a0, '→', a1)
+        results.append(sorted(a0) == [[141, 'recording']] * 4 and a1 == [[30, 'release']])
+        level('recording')
+        C.stage(pg)
+        b0 = pg.evaluate(BOB_ADDED)
+        # (one of them changed in the editor itself: its credit)
+        pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state; const i = st.added.findIndex(r => r.linkTypeID === 141 && ((r.entity0 || {{}}).gid === '{BOB}' || (r.entity1 || {{}}).gid === '{BOB}'));
+          const added = [...st.added]; added[i] = {{ ...added[i], entity0_credit: 'Bobby P.' }}; MB.relationshipEditor.state = {{ ...st, added }}; }})()""")
+        level('release')
+        C.stage(pg)
+        b1 = pg.evaluate(BOB_ADDED)
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent).join(' | ')")
+        print('B)', b0, '→', b1, '|', [m for m in msgs.split(' | ') if 'editor itself' in m][:2])
+        results.append(sorted(b0) == [[141, 'recording']] * 4 and b1 == [[30, 'release']] and 'replaced by what the dashboard has now' in msgs and 'remove by hand' not in msgs)
+        level('recording')
+        C.stage(pg)
+        rid = pg.evaluate(f"document.querySelector('section.dci-group[data-group=\"{key}\"] tr.dci-row').dataset.row")
+        pg.select_option(f'tr[data-row="{rid}"] [data-f=type]', label='mix')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        C.stage(pg)
+        c1 = pg.evaluate(BOB_ADDED)
+        print('C)', c1)
+        results.append(sorted(c1) == [[143, 'recording']] * 4)
+        BOB_CRED = f"""MB.relationshipEditor.state.added.filter(r => (r.entity0 || {{}}).gid === '{BOB}' || (r.entity1 || {{}}).gid === '{BOB}').map(r => [r.linkTypeID, r.entity0_credit || r.entity1_credit || ''])"""
+
+        def credit(v):
+            f = pg.locator(f'section.dci-group[data-group="{key}"] [data-f=credit]').first
+            f.fill(v)
+            f.evaluate("e => e.dispatchEvent(new Event('change', { bubbles: true }))")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        # D) (review) one taken out in the editor itself, then the credit changed: added anew (until the review "changed there")
+        pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state; const i = st.added.findIndex(r => r.linkTypeID === 143 && (r.entity0 || {{}}).gid === '{BOB}');
+          MB.relationshipEditor.state = {{ ...st, added: st.added.filter((_, k) => k !== i) }}; }})()""")
+        credit('B. Producer')
+        C.stage(pg)
+        d1 = pg.evaluate(BOB_CRED)
+        print('D)', d1)
+        results.append(sorted(d1) == [[143, 'B. Producer']] * 4)
+        # E) (review) one's type changed in the editor itself (→ producer), then the credit: the dashboard's type again, named
+        pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state; const i = st.added.findIndex(r => r.linkTypeID === 143 && (r.entity0 || {{}}).gid === '{BOB}');
+          const added = [...st.added]; added[i] = {{ ...added[i], linkTypeID: 141 }}; MB.relationshipEditor.state = {{ ...st, added }}; }})()""")
+        credit('Bob P.')
+        C.stage(pg)
+        e1 = pg.evaluate(BOB_CRED)
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent).join(' | ')")
+        print('E)', e1, 'replaced by what the dashboard has now' in msgs)
+        results.append(sorted(e1) == [[143, 'Bob P.']] * 4 and 'replaced by what the dashboard has now' in msgs)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

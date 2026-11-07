@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.82.0",
+  "version": "3.83.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -1655,8 +1655,6 @@
     "log.artistWorksCapped": "Werke von {name}: {n} Werke und Aufnahmen, nur die ersten {max} abgeglichen",
     "matrix.noSame": "Kein gleichnamiges Werk dieser Autoren in MusicBrainz.",
     "matrix.dupWarn": "MusicBrainz hat schon ein gleichnamiges Werk (siehe die Liste unter dem Track): {title}. Trotzdem ein neues Werk anlegen?",
-    "matrix.dupWarnAll.one": "Für {n} Track gibt es schon ein gleichnamiges Werk in MusicBrainz ({list}); er wird ausgelassen, damit du es verknüpfen kannst. Die übrigen Werke anlegen?",
-    "matrix.dupWarnAll.other": "Für {n} Tracks gibt es schon gleichnamige Werke in MusicBrainz ({list}); sie werden ausgelassen, damit du sie verknüpfen kannst. Die übrigen Werke anlegen?",
     "matrix.rowType": "Werkart",
     "matrix.rowLangs": "Liedtext-Sprachen",
     "matrix.langAdd": "Sprache hinzufügen …",
@@ -1787,7 +1785,6 @@
     "log.worksTaken.other": "Werk-Matrix wieder genommen ({n} Zeilen zurück)",
     "log.workRecheck.one": "Die Schreiber von {n} Track haben sich geändert – gleichnamige Werke werden neu gesucht",
     "log.workRecheck.other": "Die Schreiber von {n} Tracks haben sich geändert – gleichnamige Werke werden neu gesucht",
-    "log.stageSummary": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {changed} im Editor selbst geändert, {remove} von Hand zu entfernen",
     "seriesLabel.title": "Verlags-Label (Discogs „Parent Label“):",
     "seriesLabel.onCreate": "wird mit „Serie anlegen …“ eingetragen",
     "seriesLabel.noMb": "Label nicht in MusicBrainz gefunden",
@@ -2422,7 +2419,8 @@
     "matrix.topTitle": "Die Werke-Matrix zurück zur ersten Zeile scrollen",
     "sync.dgRelease": "Status auf der Release-Seite",
     "sync.dgReleaseTitle": "Die Discogs-Status-Zeichen bleiben, solange die MusicBrainz-Release-Seite offen ist (z. B. nach „Enter edit“), um auf einen Blick zu prüfen, was angekommen ist; sie verschwinden, wenn Release-Seite und Editor geschlossen sind",
-    "log.dgRelease": "Discogs-Status auf der Release-Seite: {state}"
+    "log.dgRelease": "Discogs-Status auf der Release-Seite: {state}",
+    "log.stageSummaryEdited": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {replaced} im Editor selbst geändert und trotzdem ersetzt oder herausgenommen, {changed} im Editor selbst geändert und belassen, {remove} von Hand zu entfernen"
   },
   "es": {
     "title": "Credits Importer",
@@ -4077,8 +4075,6 @@
     "log.artistWorksCapped": "Obras de {name}: {n} obras y grabaciones, solo se compararon las primeras {max}",
     "matrix.noSame": "Ninguna obra con el mismo título de estos autores en MusicBrainz.",
     "matrix.dupWarn": "MusicBrainz ya tiene una obra con el mismo título (ver la lista bajo la pista): {title}. ¿Crear una obra nueva de todos modos?",
-    "matrix.dupWarnAll.one": "{n} pista ya tiene en MusicBrainz una obra con el mismo título ({list}); se omite para poder enlazarla. ¿Crear las demás obras?",
-    "matrix.dupWarnAll.other": "{n} pistas ya tienen en MusicBrainz obras con el mismo título ({list}); se omiten para poder enlazarlas. ¿Crear las demás obras?",
     "matrix.rowType": "Tipo de obra",
     "matrix.rowLangs": "Idiomas de la letra",
     "matrix.langAdd": "añadir un idioma …",
@@ -4209,7 +4205,6 @@
     "log.worksTaken.other": "Matriz de obras tomada de nuevo ({n} filas de vuelta)",
     "log.workRecheck.one": "Los autores de {n} pista han cambiado: se vuelven a buscar sus obras homónimas",
     "log.workRecheck.other": "Los autores de {n} pistas han cambiado: se vuelven a buscar sus obras homónimas",
-    "log.stageSummary": "Añadido completo: {added} añadidas, {updated} actualizadas, {removed} quitadas, {changed} cambiadas en el propio editor, {remove} para quitar a mano",
     "seriesLabel.title": "Sello editor (Discogs «Parent Label»):",
     "seriesLabel.onCreate": "se añade con «Crear serie …»",
     "seriesLabel.noMb": "sello no encontrado en MusicBrainz",
@@ -4844,7 +4839,8 @@
     "matrix.topTitle": "Volver a la primera fila de la matriz de obras",
     "sync.dgRelease": "Estado en la página de la publicación",
     "sync.dgReleaseTitle": "Mantener las marcas de estado en Discogs mientras la página de la publicación de MusicBrainz esté abierta (p. ej. tras «Enter edit»), para comprobar de un vistazo lo que llegó; desaparecen al cerrar la página y el editor",
-    "log.dgRelease": "Estado de Discogs en la página de la publicación: {state}"
+    "log.dgRelease": "Estado de Discogs en la página de la publicación: {state}",
+    "log.stageSummaryEdited": "Añadido completo: {added} añadidas, {updated} actualizadas, {removed} quitadas, {replaced} cambiadas en el propio editor y reemplazadas o quitadas de todos modos, {changed} cambiadas en el propio editor y dejadas así, {remove} para quitar a mano"
   },
   "fr": {
     "title": "Credits Importer",
@@ -6499,8 +6495,6 @@
     "log.artistWorksCapped": "Œuvres de {name} : {n} œuvres et enregistrements, seuls les {max} premiers comparés",
     "matrix.noSame": "Aucune œuvre du même titre de ces auteurs dans MusicBrainz.",
     "matrix.dupWarn": "MusicBrainz a déjà une œuvre du même titre (voir la liste sous la piste) : {title}. Créer quand même une nouvelle œuvre ?",
-    "matrix.dupWarnAll.one": "{n} piste a déjà dans MusicBrainz une œuvre du même titre ({list}) ; elle est laissée de côté pour pouvoir la lier. Créer les autres œuvres ?",
-    "matrix.dupWarnAll.other": "{n} pistes ont déjà dans MusicBrainz des œuvres du même titre ({list}) ; elles sont laissées de côté pour pouvoir les lier. Créer les autres œuvres ?",
     "matrix.rowType": "Type d’œuvre",
     "matrix.rowLangs": "Langues des paroles",
     "matrix.langAdd": "ajouter une langue …",
@@ -6631,7 +6625,6 @@
     "log.worksTaken.other": "Matrice des œuvres reprise ({n} lignes de retour)",
     "log.workRecheck.one": "Les auteurs de {n} piste ont changé – ses œuvres homonymes sont cherchées à nouveau",
     "log.workRecheck.other": "Les auteurs de {n} pistes ont changé – leurs œuvres homonymes sont cherchées à nouveau",
-    "log.stageSummary": "Ajout terminé : {added} ajoutées, {updated} mises à jour, {removed} retirées, {changed} modifiées dans l’éditeur lui-même, {remove} à retirer à la main",
     "seriesLabel.title": "Label éditeur (Discogs « Parent Label ») :",
     "seriesLabel.onCreate": "est ajouté avec « Créer la série … »",
     "seriesLabel.noMb": "label introuvable dans MusicBrainz",
@@ -7266,6 +7259,7 @@
     "matrix.topTitle": "Revenir à la première ligne de la matrice des œuvres",
     "sync.dgRelease": "Statut sur la page de la parution",
     "sync.dgReleaseTitle": "Garder les marques de statut sur Discogs tant que la page de la parution MusicBrainz est ouverte (p. ex. après « Enter edit »), pour vérifier d’un coup d’œil ce qui est arrivé ; elles disparaissent quand la page et l’éditeur sont fermés",
-    "log.dgRelease": "Statut Discogs sur la page de la parution : {state}"
+    "log.dgRelease": "Statut Discogs sur la page de la parution : {state}",
+    "log.stageSummaryEdited": "Ajout terminé : {added} ajoutées, {updated} mises à jour, {removed} retirées, {replaced} modifiées dans l’éditeur lui-même et remplacées ou retirées malgré tout, {changed} modifiées dans l’éditeur lui-même et laissées telles quelles, {remove} à retirer à la main"
   }
 }

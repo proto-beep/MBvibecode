@@ -359,6 +359,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   amx383: 3.83.0 (Z-AMX): the box of "＋ Add a column" whole in view (760 px, scrolled; review: the dashboard's
+                                 #     window moved and smaller – inside it, nothing over it)
                                 #   review43: 3.43.3 (full review P4/P5): the list of created works matched by the recording (index refreshed), an
                                 #     entry of a recording not read kept, not planned
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -394,6 +396,8 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
+                                #   snw383: 3.83.0 (Z-SNW): three answers for works of the same title, the edit note names them, the switch
+                                 #     (review: Esc cancels the question, "Reset" of the topic)
                                 #   wts: 3.52.0 (Z-WTS): the suggestion of a work type and a language from the works of the artists (yellow, "Accept");
                                 #     not accepted: the new works without either; accepted: Song in English; in Node suggestFromWorks (majorities, < 3 works)
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
@@ -718,6 +722,8 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   rlv383: 3.83.0 (Z-RLV): staged, level / type changed, staged again – replaced, also one changed in the editor;
+                                 #     review: one taken out in the editor added anew, the dashboard's type over the editor's
                                 #   levelclick: 3.44.0 (Z-CLV): the level of an event a button – Recording → Release → Skip (at its place) → Recording; an
                                 #     arranger to Work (works matrix); the head of the full matrix, ticks of a skipped event, "Skip" in the opened event
                                 #   review43: 3.43.5 (full review P6): "Remove" in a matrix line; pasted text through a redraw; the rules window in German
