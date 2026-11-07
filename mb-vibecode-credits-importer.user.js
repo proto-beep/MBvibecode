@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.77.0
+// @version      3.78.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.77.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.77.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.78.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.78.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.77.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.78.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1488,8 +1488,6 @@
       "matrix.countTracks.one": "{n} track",
       "matrix.countTracks.other": "{n} tracks",
       "matrix.similar": "(similar name)",
-      "matrix.dropReplace": "↧ only the works of these tracks (⇧ Shift: add)",
-      "matrix.dropAdd": "＋ adds the works of these tracks",
       "log.matrixSuggOk": "Suggestion kept: {name}, track {track}",
       "log.matrixSuggNo": "Suggestion taken out: {name}, track {track}",
       "log.matrixAttrApplied": "Track group {name} → {attr}: {n} links",
@@ -2648,7 +2646,6 @@
       "em.unfold": "Show this block",
       "em.count": "{n} relationships to stage",
       "em.countShort": "{n} to stage",
-      "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
       "em.evDateOpenTitle": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended) – a date of the pool can be dropped here too",
       "em.evDateApply": "Apply",
@@ -2675,14 +2672,12 @@
       "em.evNoTracks": "An event on recordings needs at least one track – take its rows out with their ticks instead",
       "em.levelKept": "{name} stays on the level {level}: MusicBrainz has no “{type}” on the level {to}",
       "em.keptOk": "ok",
-      "em.dateDropped": "{date}: rows moved into its event {moved}, rows of their own in it {added}",
       "em.undo": "↶ Undo",
       "em.bothAsk": "{name}: {tracks} with and without a date –",
       "em.bothOnly": "only {date}",
       "em.bothKeep": "keep both",
       "em.wide": "Show the roles of {name} as their full matrix",
       "em.narrow": "Show the roles of {name} compact again",
-      "em.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line to move it there (⇧ Shift: in both)",
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
       "em.chipAsk": "Answer the question of {name} here",
       "em.chipNoteType": "“{role}” – chosen: {type}",
@@ -2891,12 +2886,44 @@
       "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
       "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
       "dm.pending": "not applied yet",
-      "dm.pickDate": "Move “{name}”: drag it into a column of the matrix, or click here and then on “place here”",
-      "dm.pickTracks": "Move “{name}”: drag it onto a date in the matrix, or click here and then on “tracks here”",
       "dm.placeHere": "+ place here",
       "dm.tracksHere": "+ tracks here",
       "dm.dropDates": "drag dates here",
-      "dm.help": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date. A date without a track group applies to all tracks. A date dragged onto another date (in the pool or here) makes a period of both; a pool date dragged onto the date field of a row goes onto that row. Dashed and yellow: a suggestion (found automatically), not applied yet – in the pools too, until it is used. ⠿ moves with clicks instead of dragging.",
+      "drop.help": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date (without one, a date is for all tracks). A date onto another date makes a period of both. Everywhere a drop adds – a date already there stays, tracks are added – and ⇧ Shift replaces; each drop says what it did, with ↶. Dashed and yellow: a suggestion, not applied yet. ⠿ picks a chip: then click (or Enter on) the place.",
+      "drop.pickDate": "Move “{name}”: drag it, or click here and then on the place (a column, a row, an event …)",
+      "drop.pickTracks": "Move “{name}”: drag it, or click here and then on the place (a date of the matrix, the tracks of a row, the works matrix)",
+      "drop.pickingDate": "⠿ “{name}” picked: click a place (or Enter on it) – a column of the matrix, the date of a row, an event or a block of an entry, the works matrix; ⇧ Shift replaces. Esc or ⠿ ends.",
+      "drop.pickingTracks": "⠿ “{name}” picked: click a place (or Enter on it) – a date of the matrix, the tracks of a row, the works matrix; ⇧ Shift replaces. Esc or ⠿ ends.",
+      "drop.dateHintTitle": "Drag a date into a column of the matrix, onto a row, an event or a block of an entry, the works matrix, or onto another date (makes a period of both). A date already there stays – ⇧ Shift replaces it",
+      "drop.tracksHintTitle": "Drag a track group onto a date in the matrix (that date then applies only to these tracks), onto the tracks of a row or onto the works matrix: adds them – ⇧ Shift replaces them",
+      "drop.tracksHint": "drop: add · ⇧ Shift: replace",
+      "drop.tracksReplace": "↧ replaces the tracks of this row",
+      "drop.tracksAdd": "＋ adds to the tracks of this row (⇧ Shift: replace)",
+      "drop.mxReplace": "↧ only the works of these tracks",
+      "drop.mxAdd": "＋ adds the works of these tracks (⇧ Shift: only these)",
+      "drop.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head: a new event with it; ⇧ Shift: replaces its date) and its tracks",
+      "drop.evDateTitle": "Drop a date of the pool here: without a date the event gets it; with one, a new event gets the new date (⇧ Shift: replaces it)",
+      "drop.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line: the role is in both (⇧ Shift: moves it there)",
+      "drop.emDate": "{date}: rows into its event {moved}, rows of their own (their date stays) {added}",
+      "drop.emNothing": "{date}: nothing in {name} could take it (the same date, no dates for the type, or none of the tracks)",
+      "drop.dateSet": "{date} → {name}",
+      "drop.dateReplaced": "{date} replaces the date of {name}",
+      "drop.rowDateAdded": "{date} added for {name}: a row of its own – its date {old} stays (⇧ Shift replaces it)",
+      "drop.needShift": "{name} already has a date ({old}): it stays. Hold ⇧ Shift while dropping to replace it.",
+      "drop.planNoDate": "{name}: its planned link takes no date (no planned link, or its work is already in MusicBrainz)",
+      "drop.rowSkip": "{name} is on “Skip”: no date set",
+      "drop.rowNoDates": "{name}: MusicBrainz has no dates for this type",
+      "drop.noTracks": "{name}: none of its tracks is on the media chosen – nothing changed",
+      "drop.tracksAdded": "{group} added to the tracks of {name}",
+      "drop.tracksReplaced": "{group} replaces the tracks of {name}",
+      "drop.chipBoth": "{name}: the role is in both events now",
+      "drop.chipMoved": "{name}: the role moved to the other event",
+      "drop.merged": "{a} + {b} → {date}",
+      "drop.undoStale": "Not undone: the dashboard changed since that drop (↶ would take those changes back too)",
+      "drop.placed": "{date} → the column {col} of the date matrix",
+      "drop.tracksOnDate": "{group} → {date} in the date matrix",
+      "log.dropDone": "Dropped: {text}",
+      "log.dropUndone": "Drop undone",
       "dm.apply": "Apply",
       "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
       "dm.auto": "apply automatically",
@@ -2984,12 +3011,7 @@
       "settings.workGroups": "Offer the works of the source as track groups",
       "settings.workGroupsTitle": "A work whose parts are tracks of their own (index tracks of Discogs: “First Encounter” on A1, A2, B1, B2) comes into the track pool as a track group with its name – as a suggestion. In the track pool you can leave them out for this import.",
       "date.dragHint": "drag",
-      "date.dragHintTitle": "Drag a date into a column of the matrix, onto the date field of a row, or onto another date (makes a period of both)",
       "trackpool.dragHint": "drag",
-      "trackpool.dragHintTitle": "Drag a track group onto a date in the matrix (that date then applies only to these tracks) or onto “Tracks and status” of a row (the row gets these tracks; hold Shift to add them to its own)",
-      "tracks.dropHint": "drop: replace · ⇧ Shift: add",
-      "tracks.dropReplace": "↧ replaces the tracks of this row (⇧ Shift: add)",
-      "tracks.dropAdd": "＋ adds to the tracks of this row",
       "log.tracksApplied.one": "Track group {name} put on a row: {n} track",
       "log.tracksApplied.other": "Track group {name} put on a row: {n} tracks",
       "log.tracksAdded.one": "Track group {name} added to a row: now {n} track",
@@ -17209,8 +17231,14 @@
 
   const LOG_PLACES = ['window', 'left', 'right', 'above'];
   S.logPlace = LOG_PLACES.includes(readJson('localStorage', 'dci-log-place', 'window')) ? readJson('localStorage', 'dci-log-place', 'window') : 'window';
-  /** Below this width (CSS px) of the edit note, the log does not go beside it but above it. */
-  const LOG_SIDE_MIN_PX = 640;
+  /**
+   * [Z-LOG] (3.78.0) Beside the edit note: the edit note at least LOG_NOTE_MIN_PX wide, the log at least LOG_SIDE_LOG_MIN_PX (with
+   * the gap between); with less room the log goes above it.
+   */
+  const LOG_NOTE_MIN_PX = 300;
+  const LOG_SIDE_LOG_MIN_PX = 240;
+  /** [Z-LOG] (3.78.0) The width the user gave the edit note beside the log (dragged), remembered. */
+  const LOG_NOTE_W_KEY = 'dci-log-note-w';
   /** Beside the edit note: the log's share of the edit note's width, and its least height. */
   const LOG_DOCK_SIDE_SHARE = 0.42;
   const LOG_DOCK_MIN_H = 140;
@@ -17247,7 +17275,7 @@
     if (!note || !note.parentElement) return { place: 'window', why: 'noNote', note: null };
     if (S.logPlace !== 'above') {
       const w = editNoteWidth(note);
-      if (w < LOG_SIDE_MIN_PX) return { place: 'above', why: 'narrow', note };
+      if (w < LOG_NOTE_MIN_PX + LOG_SIDE_LOG_MIN_PX + logDockGap()) return { place: 'above', why: 'narrow', note };
       return { place: S.logPlace, why: '', note, w };
     }
     return { place: 'above', why: '', note };
@@ -17286,18 +17314,24 @@
       el.style.width = '';
       el.style.height = `${Math.max(LOG_DOCK_MIN_H, Number(readJson('localStorage', 'dci-log-dock-h', 180)) || 180)}px`;
     } else {
-      const gap = Math.round(12 * (basePx() / 13));
-      const logW = Math.round(now.w * LOG_DOCK_SIDE_SHARE);
+      const gap = logDockGap();
+      // [Z-LOG] (3.78.0) the edit note as wide as the user dragged it last (remembered), else the log takes its share; both keep their least width
+      const noteW = logDockNoteWidth(now.w, gap);
+      const logW = Math.round(now.w - noteW - gap);
       el.style.width = `${logW}px`;
       if (side) {
         if (S.logNote !== note) {
           note.dataset.dciWidth = note.style.width || '';
           note.dataset.dciValign = note.style.verticalAlign || '';
           S.logNote = note;
-          S.logNoteRo = S.logNoteRo || new ResizeObserver(() => syncLogHeight());
+          S.logNoteRo = S.logNoteRo || new ResizeObserver(() => {
+            logNoteDragged();
+            syncLogHeight();
+          });
           S.logNoteRo.observe(note);
         }
-        note.style.width = `${Math.floor(now.w - logW - gap)}px`;
+        note.style.width = `${Math.floor(noteW)}px`;
+        S.logNoteSetW = Math.floor(noteW);
         note.style.verticalAlign = 'top';
         // the float ends below the edit note, whatever follows it
         const c = clear || Object.assign(document.createElement('div'), { id: 'dci-log-clear' });
@@ -17306,6 +17340,28 @@
       }
     }
     renderLogPlace();
+  }
+
+  const logDockGap = () => Math.round(12 * (basePx() / 13));
+
+  /** [Z-LOG] (3.78.0) The edit note's width beside the log: the one remembered (dragged), else the rest after the log's share. */
+  function logDockNoteWidth(w, gap) {
+    const max = w - gap - LOG_SIDE_LOG_MIN_PX;
+    const kept = Number(readJson('localStorage', LOG_NOTE_W_KEY, 0)) || 0;
+    const want = kept > 0 ? kept : w - gap - Math.round(w * LOG_DOCK_SIDE_SHARE);
+    return Math.max(LOG_NOTE_MIN_PX, Math.min(max, want));
+  }
+
+  /** [Z-LOG] (3.78.0) The user dragged the edit note wider or narrower beside the log: its width is remembered, the log takes the rest. */
+  function logNoteDragged() {
+    const note = S.logNote;
+    const el = S.logEl;
+    if (!note || !el || !el.classList.contains('dci-log-docked') || el.classList.contains('dci-log-dock-above')) return;
+    const w = Math.round(parseFloat(note.style.width) || note.getBoundingClientRect().width);
+    if (!S.logNoteSetW || Math.abs(w - S.logNoteSetW) <= 1) return;
+    writeJson('localStorage', LOG_NOTE_W_KEY, w);
+    S.logNoteSetW = w;
+    queueLogPlace(true);
   }
 
   function syncLogHeight() {
@@ -22508,7 +22564,7 @@
     if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}</th>`;
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
-    return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
+    return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('drop.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
       data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       ${evLevelBtn(e, a)}${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
       <button type="button" class="dci-textbtn dci-em-evdate${date ? ' dci-cl-has' : ''}" data-act="em-evdate-open" data-ev="${esc(e.key)}" aria-expanded="${dOpen}"
@@ -22786,13 +22842,22 @@
    * ("2024-08-14, tracks 2, 5") stays and gets a row of its own in the date's event. With ⇧ Shift a row stays where it is and
    * gets the row of its own too – a yellow question in its line then: "only <date> · keep both".
    */
-  function emDropDate(t, entry, both) {
+  function emDropDate(t, entry, replace) {
     const a = artistOf(t.el);
     if (!a) return;
     let rows;
-    if (t.kind === 'em-ev' && String(t.el.dataset.evhead).startsWith('skip|')) return;
-    if (t.kind === 'em-ev') rows = rowsInEvent(a, t.el.dataset.evhead);
-    else if (t.kind === 'em-line') rows = lineRows(t.el).filter((r) => r.level !== 'skip');
+    // ([Z-DND] 3.78.0) the head of an event, its short line ("① Release · no date") or the date in it
+    const evKey = t.el.dataset.evhead || t.el.dataset.evdrop || t.el.dataset.emev;
+    if (t.kind === 'em-ev' && String(evKey).startsWith('skip|')) return;
+    if (t.kind === 'em-ev') {
+      rows = rowsInEvent(a, evKey);
+      // ((review) "by role": the date of an event in the line of one role – that role's rows only)
+      const roleLine = t.el.closest('.dci-em-clrole[data-rows]');
+      if (roleLine) {
+        const ids = new Set(roleLine.dataset.rows.split(','));
+        rows = rows.filter((r) => ids.has(String(r.id)));
+      }
+    } else if (t.kind === 'em-line') rows = lineRows(t.el).filter((r) => r.level !== 'skip');
     else {
       // [3.35.0] all lines of the block, also those behind "▸ n more" and of a folded block
       const key = t.el.closest('.dci-em-block').dataset.block;
@@ -22812,6 +22877,9 @@
       const inter = set ? new Set([...r.tracks].filter((i) => set.has(i))) : new Set(r.tracks);
       if (set && !inter.size) continue;
       const covers = !set || inter.size === r.tracks.size;
+      // [Z-DND] (3.78.0) a row with another date keeps it: the new date gets a row of its own (a new event, a column of its own);
+      // ⇧ Shift replaces it
+      const both = !replace && hasYmd(r.date);
       undo.push({ id: r.id, date: r.date ? { ...r.date } : null, open: r.dateOpen, tracks: new Set(r.tracks), keyed: !!r.dateKeyed });
       r.dateKeyed = true;
       if (covers && !both) {
@@ -22821,18 +22889,24 @@
       }
       // in part (its tracks with the date move, the others stay – "other tracks there"), or with ⇧ Shift: a row of its own
       const c = copyRowForEvent(r);
-      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true, emBoth: !!both });
+      // ((3.78.0, review) a row of its own beside one with another date: no question "with and without a date")
+      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true, emBoth: false });
       if (set) c.tracks = inter;
       if (!both) r.tracks = new Set([...r.tracks].filter((i) => !inter.has(i)));
       S.rows.splice(S.rows.indexOf(r) + 1, 0, c);
       undo.push({ add: c.id });
       added++;
     }
-    if (!moved && !added) return;
+    if (!moved && !added) {
+      // ([Z-DND] 3.78.0) nothing could take the date: said, not silent
+      showMessage('info', 'drop.emNothing', { date: poolLabel(entry), name: a.mbName || a.name });
+      return;
+    }
+    dropForgetOld();
     const id = `u${++emUndoSeq}`;
     S.emUndo.set(id, undo);
     log('info', 'emDateDrop', { name: a.mbName || a.name, date: poolLabel(entry), moved, added });
-    showMessage('ok', 'em.dateDropped', { date: poolLabel(entry), moved, added }, { action: { act: 'em-undo', arg: id, label: 'em.undo' } });
+    showMessage('ok', 'drop.emDate', { date: poolLabel(entry), moved, added }, { action: { act: 'em-undo', arg: id, label: 'em.undo', drop: true } });
     renderDates();
     rerenderGroup(a);
     refresh();
@@ -23103,7 +23177,7 @@
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' && !ruleOn('S101') ? tr('tracks.wholeRelease') : '';
     if (e.skip) return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}`;
     return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}
-      <span class="dci-cl-date${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
+      <span class="dci-cl-date${date ? ' dci-cl-has' : ''}" data-evdrop="${esc(e.key)}" title="${esc(tr('drop.evDateTitle'))}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
   }
 
   /**
@@ -23200,7 +23274,7 @@
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -23282,13 +23356,16 @@
 
   /** [E4] (3.35.0) A chip dragged onto another event's line: its rows there (moved; ⇧ Shift: in both). */
   function emMoveChip(a, lineId, fromEv, toEv, both) {
-    if (fromEv === toEv) return;
+    if (fromEv === toEv) return false;
     const line = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).lines.find((l) => l.id === lineId);
-    if (!line) return;
+    if (!line) return false;
+    // ((3.78.0, review) already in that event, and kept in its own: nothing changed
+    if (both && line.rows.some((r) => r.level !== 'skip' && eventKeyOf(r) === toEv)) return false;
     emTick(a, line.rows, toEv, true);
     if (!both) emTick(a, line.rows, fromEv, false);
     rerenderGroup(a);
     refresh();
+    return true;
   }
 
   /**
@@ -25609,6 +25686,7 @@
    */
   function renderDates() {
     if (!S.overlay) return;
+    syncPickMode();
     const el = $('dates');
     el.hidden = !S.initialized;
     if (el.hidden) return;
@@ -25659,7 +25737,7 @@
   function gripHtml(kind, id, name) {
     const on = !!(S.dmPick && S.dmPick.kind === kind && S.dmPick.id === id);
     return `<button type="button" class="dci-chip-grip" data-act="dm-pick" data-kind="${kind}" data-id="${esc(id)}" aria-pressed="${on}"
-      title="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}" aria-label="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}">⠿</button>`;
+      title="${esc(tr(kind === 'date' ? 'drop.pickDate' : 'drop.pickTracks', { name }))}" aria-label="${esc(tr(kind === 'date' ? 'drop.pickDate' : 'drop.pickTracks', { name }))}">⠿</button>`;
   }
 
   /**
@@ -25691,7 +25769,7 @@
     const suggestions = poolSuggestions();
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
-    const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
+    const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('drop.dateHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
     // [165] (3.37.15) "+ New date" also in a folded pool and in the bar kept while "Dates & tracks" is folded
     const add = `<button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>`;
     if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}${add}</div>`;
@@ -25717,7 +25795,7 @@
       ${gripHtml('tg', g.id, g.name)}
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
-    const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
+    const hint = `<span class="dci-drag-hint" title="${esc(tr('drop.tracksHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media); [165] (3.37.15) also folded
     const media = selMedia();
     const add = media.length > 1
@@ -25779,7 +25857,8 @@
         </div></div>`;
     }).join('');
     return `<div class="dci-dm" data-el="dm">
-      <p class="dci-sub dci-dm-help">${esc(tr('dm.help'))}</p>
+      <p class="dci-sub dci-dm-help">${esc(tr('drop.help'))}</p>
+      ${pick ? `<p class="dci-dm-pickhint" role="status">${esc(tr(pick.kind === 'date' ? 'drop.pickingDate' : 'drop.pickingTracks', { name: pickName(pick) }))}</p>` : ''}
       <div class="dci-dm-grid">${cols}</div>
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
@@ -33321,61 +33400,212 @@
   /**
    * A pool date dropped onto a date field: a credit row (only onto the tracks the date has in the row's column
    * of the matrix, splitting the row), a planned link between recording and work, or the works matrix (a
-   * column's date or a cell's own date). Explicit, so it replaces a date the row already has.
+   * column's date or a cell's own date). [Z-DND] (3.78.0) A date already there stays (a row: the new one gets a row of its own;
+   * elsewhere: a message), ⇧ Shift (`replace`) replaces it.
    */
-  function dropDateOn(target, entry) {
+  function dropDateOn(target, entry, replace = false) {
+    const date = poolLabel(entry);
+    // [Z-DND] (3.78.0) a date already there stays: said, ⇧ Shift replaces it
+    const otherDate = (f) => hasYmd(f) && !(f.poolId && f.poolId === entry.id);
+    const needShift = (name, f) => {
+      showMessage('info', 'drop.needShift', { name, old: fieldsText(f) || formatDateValue(validateDateFields(f).value) || '' });
+      return null;
+    };
     const mxCell = target.closest('.dci-mx-cell[data-col]');
     const colHead = target.closest('[data-colhead]');
     if (mxCell || colHead) {
+      let name;
       if (mxCell) {
         const col = matrixColumns().find((c) => c.key === mxCell.dataset.col);
         const mrow = matrixRows().find((m) => m.key === mxCell.dataset.mrow);
-        if (!col || !mrow) return;
+        if (!col || !mrow) return null;
         const st = cellState(col, mrow);
+        name = `${col.name} · ${(mrow.work && mrow.work.title) || ''}`;
+        const own = st.active.find((r) => r.ownDate && otherDate(r.date));
+        if (own && !replace) return needShift(name, own.date);
+        // ((review) a date planned for its relationships in MusicBrainz (a fill) counts too)
+        const fill = fillsOfCell(col, mrow).find(([, f]) => otherDate(f.date));
+        if (fill && !replace) return needShift(name, fill[1].date);
         const res = setCellDate(col, mrow, { ...fieldsFromDate(entry), poolId: entry.id });
         // Nothing in the cell can take the date: say why instead of doing nothing
         if (res !== 'set') {
           if (res === 'dated') showMessage('info', 'msg.mxDateExisting', { name: col.name, types: uniq(st.existing.map((r) => r.type)).join(', ') });
           else showMessage('info', 'msg.mxDateEmpty', { name: col.name });
-          return;
+          return null;
         }
       } else {
-        S.mxColDate.set(colHead.dataset.colhead, { ...fieldsFromDate(entry), poolId: entry.id });
-        applyColumnDate(colHead.dataset.colhead);
+        const key = colHead.dataset.colhead;
+        const col = matrixColumns().find((c) => c.key === key);
+        name = (col && col.name) || '';
+        const old = S.mxColDate.get(key);
+        if (otherDate(old) && !replace) return needShift(name, old);
+        S.mxColDate.set(key, { ...fieldsFromDate(entry), poolId: entry.id });
+        applyColumnDate(key);
       }
-      log('info', 'dateApplied', { n: 1, date: poolLabel(entry) });
+      log('info', 'dateApplied', { n: 1, date });
       renderWorks();
       renderDates();
       refresh();
-      return;
+      return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
     }
     const workRow = target.closest('tr[data-work]');
     if (workRow && target.closest('.dci-w-date')) {
-      if (applyPoolToPlan(Number(workRow.dataset.work), entry)) {
-        log('info', 'dateApplied', { n: 1, date: poolLabel(entry) });
+      const i = Number(workRow.dataset.work);
+      const plan = S.workPlan.get(i);
+      const name = (S.mbTracks[i] && S.mbTracks[i].title) || '';
+      if (plan && otherDate(plan.date) && !replace) return needShift(name, plan.date);
+      if (applyPoolToPlan(i, entry)) {
+        log('info', 'dateApplied', { n: 1, date });
         renderDates();
         refresh();
+        return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
       }
-      return;
+      showMessage('info', 'drop.planNoDate', { name });
+      return null;
     }
     const row = rowOf(target);
-    if (!row) return;
+    if (!row) return null;
+    const name = dropRowName(row);
+    const lt = currentLinkType(row);
+    if (row.level === 'skip' || (lt && lt.has_dates === false)) {
+      showMessage('info', row.level === 'skip' ? 'drop.rowSkip' : 'drop.rowNoDates', { name });
+      return null;
+    }
     const group = dateGroupOf(row);
     const dmCell = group && dm().cells.find((c) => c.col === group.key && c.date === entry.id && !c.alt);
     const set = dmCell && cellTracks(dmCell);
-    if (set && (row.level === 'recording' || row.level === 'work')) {
-      if (![...row.tracks].some((i) => set.has(i))) {
-        showMessage('warn', 'dm.stampNoTracks', { name: dmCell.tgs.map((id) => (S.trackPool.find((g) => g.id === id) || {}).name).filter(Boolean).join(', ') });
-        return;
-      }
-      applyDateToTracks(row, entry, set);
-      return;
+    const inMatrix = set && (row.level === 'recording' || row.level === 'work');
+    if (inMatrix && ![...row.tracks].some((i) => set.has(i))) {
+      showMessage('warn', 'dm.stampNoTracks', { name: dmCell.tgs.map((id) => (S.trackPool.find((g) => g.id === id) || {}).name).filter(Boolean).join(', ') });
+      return null;
     }
-    if (applyPoolToRow(row, entry)) {
-      log('info', 'dateApplied', { n: 1, date: poolLabel(entry) });
+    // [Z-DND] (3.78.0) the row has another date: it keeps it, the new date gets a row of its own (with the tracks the date has in the matrix)
+    if (otherDate(row.date) && !replace) {
+      const c = copyRowForEvent(row);
+      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true });
+      if (inMatrix) c.tracks = new Set([...row.tracks].filter((i) => set.has(i)));
+      S.rows.splice(S.rows.indexOf(row) + 1, 0, c);
+      log('info', 'dateApplied', { n: 1, date });
+      const a = S.artists.get(row.artistKey);
+      if (a) rerenderGroup(a);
+      else renderGroups();
       renderDates();
       refresh();
+      return { key: 'drop.rowDateAdded', params: { date, name, old: fieldsText(row.date) } };
     }
+    if (inMatrix) {
+      applyDateToTracks(row, entry, set);
+      return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
+    }
+    if (applyPoolToRow(row, entry)) {
+      log('info', 'dateApplied', { n: 1, date });
+      renderDates();
+      refresh();
+      return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
+    }
+    return null;
+  }
+
+  /** [Z-DND] (3.78.0, review) A date with a year, month or day (not "ended" alone). */
+  const hasYmd = (f) => !!f && ['by', 'bm', 'bd', 'ey', 'em', 'ed'].some((k) => String(f[k] || '').trim() !== '');
+
+  /** [Z-DND] (3.78.0) A row in a message: its entry and its role ("Carl Saff: mastering"). */
+  const dropRowName = (row) => {
+    const a = S.artists.get(row.artistKey);
+    return [a && (a.mbName || a.name), rowTypeName(row) || row.raw].filter(Boolean).join(': ');
+  };
+
+  // --- [Z-DND] (3.78.0) A drop that changed something says so, with ↶ (the last one) -------------------------------------
+  const dropUndos = new Map();
+  let dropUndoSeq = 0;
+
+  /** What a drop can change: the rows, the works matrix (column dates, fills, attributes, planned links), the date matrix, the pool. */
+  function dropSnapshot() {
+    try {
+      // ((review) the rows copied at once: what they share stays shared)
+      const rows = structuredClone(S.rows.map((r) => ({ ...r })));
+      const planOf = (x) => ({ date: x.date ? { ...x.date } : x.date, dateOpen: x.dateOpen, flags: new Set(x.flags || []) });
+      return {
+        rows: S.rows.map((r, k) => [r, rows[k]]),
+        mxColDate: structuredClone(S.mxColDate),
+        dateFills: structuredClone(S.dateFills),
+        filled: new Set(S.filledDates),
+        attrOn: structuredClone(S.linkAttrOn),
+        attrOff: structuredClone(S.linkAttrOff),
+        // ((review) of the planned links (also the parts of suites) only what a drop changes: the objects stay those of the editor)
+        plans: [...[...S.workPlan].map(([i, x]) => [i, x, planOf(x)]), ...[...S.workParts].flatMap(([i, ps]) => ps.map((x) => [i, x, planOf(x)]))],
+        dm: structuredClone(dm()),
+        pool: S.datePool.map((x) => [x, structuredClone({ ...x })]),
+      };
+    } catch {
+      // (something that cannot be copied: the drop is done, without ↶)
+      return null;
+    }
+  }
+
+  function restoreFields(obj, copy) {
+    Object.keys(obj).forEach((k) => { if (!(k in copy)) delete obj[k]; });
+    return Object.assign(obj, copy);
+  }
+
+  /** ((review) The messages of older drops keep their text, without ↶ (it would undo the later ones too); other ↶ stay.) */
+  function dropForgetOld() {
+    S.messages.forEach((m) => { if (m.action && m.action.drop) m.action = null; });
+    dropUndos.clear();
+  }
+
+  /** ((review) What the dashboard holds, in short: ↶ of a drop only while it is the same (nothing changed since). */
+  const dropMark = () => {
+    try {
+      return JSON.stringify([S.rows.map((r) => [r.id, r.level, (r.types || []).join('|'), r.date ? fieldsText(r.date) : '', [...(r.tracks || [])].join(','), r.primaryText || '']),
+        [...S.mxColDate], dm().cells.map((c) => [c.id, c.col, c.date, (c.tgs || []).join(',')]), S.datePool.map((d) => d.id), S.dateFills.size]);
+    } catch {
+      return '';
+    }
+  };
+
+  function dropDone(snap, key, params) {
+    dropForgetOld();
+    log('info', 'dropDone', { text: tr(key, params) });
+    if (!snap) {
+      showMessage('ok', key, params);
+      return;
+    }
+    const id = `d${++dropUndoSeq}`;
+    snap.mark = dropMark();
+    dropUndos.set(id, snap);
+    showMessage('ok', key, params, { action: { act: 'drop-undo', arg: id, label: 'em.undo', drop: true } });
+  }
+
+  function dropUndo(id) {
+    const snap = dropUndos.get(id);
+    if (!snap) return;
+    dropUndos.delete(id);
+    // ((review) changed since the drop: not undone (it would take back those changes too)
+    if (snap.mark && dropMark() !== snap.mark) {
+      S.messages.forEach((m) => { if (m.action && m.action.act === 'drop-undo' && m.action.arg === id) m.action = null; });
+      showMessage('info', 'drop.undoStale');
+      return;
+    }
+    S.rows = snap.rows.map(([r, c]) => restoreFields(r, c));
+    S.mxColDate = snap.mxColDate;
+    S.dateFills = snap.dateFills;
+    S.filledDates = snap.filled;
+    S.linkAttrOn = snap.attrOn;
+    S.linkAttrOff = snap.attrOff;
+    snap.plans.forEach(([i, x, c]) => Object.assign(x, c));
+    uniq(snap.plans.map(([i]) => i)).forEach((i) => { if (S.workPlan.has(i)) saveCreatedWorkDate(i); });
+    S.dm = snap.dm;
+    saveMatrix();
+    S.datePool = snap.pool.map(([x, c]) => restoreFields(x, c));
+    savePool();
+    S.messages = S.messages.filter((m) => !(m.action && m.action.act === 'drop-undo' && m.action.arg === id));
+    log('info', 'dropUndone', {});
+    renderMessages();
+    renderDates();
+    renderGroups();
+    renderWorks();
+    refresh();
   }
 
   /**
@@ -33460,8 +33690,9 @@
     if (d.kind !== 'date') return null;
     // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
     // (3.44.1, review) not the head of an event on "Skip"
-    const em = t.closest('#dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
-    if (em) return { el: em, kind: em.matches('th') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
+    // ([Z-DND] 3.78.0) also the short line of an event and its date ("① Release · no date"), in both compact views
+    const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
+    if (em) return { el: em, kind: em.matches('th, [data-evdrop], [data-emev]') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
     if (!field || field.closest('[data-el="dates"]')) return null;
@@ -33478,15 +33709,22 @@
   function dropTracksOn(target, groupId, add) {
     const g = S.trackPool.find((x) => x.id === groupId);
     const row = rowOf(target);
-    if (!g || !row || !tracksDropFits(row)) return;
+    if (!g || !row || !tracksDropFits(row)) return null;
     const tracks = g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i));
+    // ([Z-DND] 3.78.0, review) none of its tracks on the media chosen: the row keeps its own
+    if (!tracks.length) {
+      showMessage('info', 'drop.noTracks', { name: g.name });
+      return null;
+    }
     const moved = row.level === 'release';
     if (moved) setLevel(row, 'recording');
-    row.tracks = new Set(add ? [...row.tracks, ...tracks] : tracks);
+    // ([Z-DND] 3.78.0) a row on the release level has no tracks of its own to add to: it gets the group's
+    row.tracks = new Set(add && !moved ? [...row.tracks, ...tracks] : tracks);
     updateTrackUi(row);
     log('info', add ? 'tracksAdded' : 'tracksApplied', { name: g.name, n: row.tracks.size });
     if (moved) showMessage('info', 'msg.tracksLevel', { name: g.name });
     refresh();
+    return { key: add && !moved ? 'drop.tracksAdded' : 'drop.tracksReplaced', params: { group: g.name, name: dropRowName(row) } };
   }
 
   function dmMarkOver(el) {
@@ -33506,8 +33744,14 @@
    */
   function dropTracksOnMatrix(kind, el, groupId, add) {
     const g = S.trackPool.find((x) => x.id === groupId);
-    if (!g) return;
+    if (!g) return null;
     const tracks = new Set(g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i)));
+    // ([Z-DND] 3.78.0, review) none of its tracks on the media chosen: nothing switched off
+    if (!tracks.size) {
+      showMessage('info', 'drop.noTracks', { name: g.name });
+      return null;
+    }
+    let name = '';
     if (kind === 'mx-attr') {
       const n = el.dataset.tgattr;
       let k = 0;
@@ -33518,9 +33762,11 @@
         } else if (!add) setLinkAttr(m.i, m.work, n, false);
       });
       log('info', add ? 'matrixAttrAdded' : 'matrixAttrApplied', { name: g.name, attr: n, n: k });
+      name = n;
     } else {
       const col = matrixColumns().find((c) => c.key === el.closest('[data-colhead]').dataset.colhead);
-      if (!col || col.mbOnly) return;
+      if (!col || col.mbOnly) return null;
+      name = col.name;
       const main = kind === 'mx-role' ? col.rows.filter((r) => r.id === el.dataset.tgrole) : defaultRowsOf(col);
       for (const r of main) {
         const splits = col.rows.filter((x) => x.splitFrom === r.id && x !== r);
@@ -33539,6 +33785,7 @@
     }
     renderWorks();
     refresh();
+    return { key: add ? 'drop.tracksAdded' : 'drop.tracksReplaced', params: { group: g.name, name } };
   }
 
   function onDragStart(e) {
@@ -33555,11 +33802,7 @@
     } catch (err) { /* old browsers */ }
     const kind = S.dmDrag.kind === 'cell' ? 'date' : S.dmDrag.kind === 'cell-tg' ? 'tg' : S.dmDrag.kind;
     // Track groups: the places on rows say what a drop does (replace; with Shift: add)
-    if (kind === 'tg') {
-      [['--dci-tg-hint', 'tracks.dropHint'], ['--dci-tg-replace', 'tracks.dropReplace'], ['--dci-tg-add', 'tracks.dropAdd'],
-        ['--dci-mx-replace', 'matrix.dropReplace'], ['--dci-mx-add', 'matrix.dropAdd']]
-        .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
-    }
+    if (kind === 'tg') setDropHints();
     // ([Z-FRM] 3.74.0, review) what the drag shows (the hints below the tracks of the rows) makes the entries longer: the works matrix
     // and the box of the dedications below them stay where they are (the browser's scroll anchoring did not always do it) – only when
     // the entries begin above the visible part (what is seen is below their start; with the dates and tracks in view nothing moves:
@@ -33633,10 +33876,11 @@
     if (!t) return;
     // [AE-2] (3.35.3) where the line goes: a mark above or below the line under the pointer
     if (t.kind === 'em-order') t.el.classList.toggle('dci-em-after', emAfter(t.el, e));
+    // ([Z-DND] 3.78.0) everywhere the same: a drop adds (keeps what is there), ⇧ Shift replaces
     if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr'].includes(t.kind)) {
-      t.el.classList.toggle('dci-drop-add', !!e.shiftKey);
+      t.el.classList.toggle('dci-drop-add', !e.shiftKey);
       const card = t.el.closest('.dci-mx-cardover');
-      if (card) card.classList.toggle('dci-drop-add', !!e.shiftKey);
+      if (card) card.classList.toggle('dci-drop-add', !e.shiftKey);
     }
     e.preventDefault();
     try {
@@ -33648,8 +33892,9 @@
     const t = dmTargetOf(e);
     const d = S.dmDrag;
     dmDragEnd();
+    // ([Z-DND] 3.78.0, review) a chip let go anywhere else: not its id typed into a field there
+    if (d) e.preventDefault();
     if (!t || !d) return;
-    e.preventDefault();
     // A pool entry from the Discogs notes dropped somewhere: used, no longer a suggestion
     const used = (d.kind === 'date' || d.kind === 'tg') && markPoolUsed(d.kind, d.id);
     try {
@@ -33678,21 +33923,27 @@
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
       return;
     }
+    const replace = !!e.shiftKey;
     if (t.kind === 'em-chip-ev') {
+      // ([Z-DND] 3.78.0) the role stays in its event too; ⇧ Shift moves it (it leaves the other event)
       const a = artistOf(t.el);
-      if (a) emMoveChip(a, d.id, d.ev, t.el.dataset.emev, !!e.shiftKey);
+      const snap = dropSnapshot();
+      if (a && emMoveChip(a, d.id, d.ev, t.el.dataset.emev, !replace)) dropDone(snap, replace ? 'drop.chipMoved' : 'drop.chipBoth', { name: a.mbName || a.name });
       return;
     }
     if (t.kind === 'tracks') {
+      const snap = dropSnapshot();
+      const before = JSON.stringify(dm().cells);
       dmAddTracks(t.el.dataset.dmcell, d.id, d.kind === 'cell-tg' ? d.cell : null);
+      const cell = dm().cells.find((c) => c.id === t.el.dataset.dmcell);
+      const date = cell && S.datePool.find((x) => x.id === cell.date);
+      if (JSON.stringify(dm().cells) !== before) dropDone(snap, 'drop.tracksOnDate', { group: (S.trackPool.find((g) => g.id === d.id) || {}).name || '', date: date ? poolLabel(date) : '' });
       return;
     }
-    if (t.kind === 'row-tracks') {
-      dropTracksOn(t.el, d.id, e.shiftKey);
-      return;
-    }
-    if (t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr') {
-      dropTracksOnMatrix(t.kind, t.el, d.id, e.shiftKey);
+    if (t.kind === 'row-tracks' || t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr') {
+      const snap = dropSnapshot();
+      const done = t.kind === 'row-tracks' ? dropTracksOn(t.el, d.id, !replace) : dropTracksOnMatrix(t.kind, t.el, d.id, !replace);
+      if (done) dropDone(snap, done.key, done.params);
       return;
     }
     const m = dm();
@@ -33700,22 +33951,37 @@
     const entry = dragged ? cellEntry(dragged) : S.datePool.find((x) => x.id === d.id);
     if (!entry) return;
     if (t.kind === 'em-ev' || t.kind === 'em-line' || t.kind === 'em-block') {
-      emDropDate(t, entry, !!e.shiftKey);
+      emDropDate(t, entry, replace);
       return;
     }
     if (t.kind === 'place') {
+      const snap = dropSnapshot();
+      const before = JSON.stringify(dm().cells);
       if (dragged) dmPlace(t.el.dataset.dmdrop, { cell: d.id });
       else dmPlace(t.el.dataset.dmdrop, { date: d.id });
+      const group = DATE_GROUPS.find((g) => g.key === t.el.dataset.dmdrop);
+      if (JSON.stringify(dm().cells) !== before) dropDone(snap, 'drop.placed', { date: poolLabel(entry), col: (group && group.label) || '' });
     } else if (t.kind === 'row') {
-      dropDateOn(t.el, entry);
+      const snap = dropSnapshot();
+      const done = dropDateOn(t.el, entry, replace);
+      if (done) dropDone(snap, done.key, done.params);
     } else if (t.kind === 'merge-pool') {
       const other = S.datePool.find((x) => x.id === t.el.dataset.id);
-      if (other && mergeDates(other, entry)) renderDates();
+      const snap = dropSnapshot();
+      const merged = other && mergeDates(other, entry);
+      if (merged) {
+        renderDates();
+        dropDone(snap, 'drop.merged', { a: poolLabel(other), b: poolLabel(entry), date: poolLabel(merged) });
+      }
     } else if (t.kind === 'merge-cell') {
       // The date of the matrix becomes the period of both; a dragged matrix date goes into it
       const c = m.cells.find((x) => x.id === t.el.dataset.dmcell);
-      const merged = c && mergeDates(cellEntry(c), entry);
+      const snap = dropSnapshot();
+      const before = c && cellEntry(c);
+      const merged = c && mergeDates(before, entry);
       if (!merged) return;
+      // ([Z-DND] 3.78.0) said, with ↶: the date of the cell became a period (a dragged cell went into it)
+      setTimeout(() => dropDone(snap, 'drop.merged', { a: poolLabel(before), b: poolLabel(entry), date: poolLabel(merged) }), 0);
       if (dragged) {
         c.tgs = uniq([...c.tgs, ...dragged.tgs]);
         c.studios = uniq([...c.studios, ...dragged.studios]);
@@ -33742,9 +34008,65 @@
     S.overlay.querySelectorAll('.dci-em-after').forEach((x) => x.classList.remove('dci-em-after'));
     dmMarkOver(null);
     S.overlay.querySelectorAll('.dci-mx-cardover').forEach((x) => x.classList.remove('dci-mx-cardover', 'dci-drop-add'));
+    syncPickMode();
+  }
+
+  /**
+   * [Z-DND] (3.78.0) A chip picked with ⠿ (no mouse needed): the places it can go are marked as while dragging it, and a click –
+   * or Enter on a place with the focus – drops it there (⇧ Shift: replace). Esc or ⠿ again ends it.
+   */
+  /** [Z-DND] (3.78.0) The texts the places show while a track group is dragged (or picked): add; ⇧ Shift: replace. */
+  function setDropHints() {
+    [['--dci-tg-hint', 'drop.tracksHint'], ['--dci-tg-replace', 'drop.tracksReplace'], ['--dci-tg-add', 'drop.tracksAdd'],
+      ['--dci-mx-replace', 'drop.mxReplace'], ['--dci-mx-add', 'drop.mxAdd']]
+      .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
+  }
+
+  function syncPickMode() {
+    if (!S.overlay || S.dmDrag) return;
+    const pick = S.dmPick;
+    S.overlay.classList.toggle('dci-dm-picking', !!pick);
+    if (pick && pick.kind === 'tg') setDropHints();
+    ['date', 'tg', 'pool'].forEach((k) => S.overlay.classList.toggle(`dci-dm-drag-${k}`, !!pick && (k === pick.kind || (k === 'pool' && pick.kind === 'date'))));
+  }
+
+  const pickName = (pick) => ((pick.kind === 'date' ? S.datePool : S.trackPool).find((x) => x.id === pick.id) || {}).name || '';
+
+  /** A click (or Enter) on a place while a chip is picked: dropped there (true), or nothing to do with it (false). */
+  /** ((review) The buttons inside a place that open it – a click on them while a chip is picked drops it; any other control acts as it does.) */
+  const PICK_OPENERS = new Set(['date-open', 'em-evdate-open', 'em-evopen', 'tracks-toggle', 'row-open', 'mx-cell', 'em-chip', 'em-fold']);
+
+  function pickDrop(e) {
+    const t0 = e.target;
+    if (!S.dmPick || !t0 || !t0.closest || !S.overlay.contains(t0) || t0.closest('[data-act="dm-pick"], [data-act="dm-drop-here"], .dci-dm-pickhint')) return false;
+    // ((review) a field (Enter does what it is for) and a link keep theirs
+    if (t0.closest('input, textarea, select, [contenteditable="true"], a[href]')) return false;
+    const d = { kind: S.dmPick.kind, id: S.dmPick.id, cell: null, list: null };
+    S.dmDrag = d;
+    let t = null;
+    try {
+      t = dmTargetOf(e);
+    } finally {
+      S.dmDrag = null;
+    }
+    if (!t) return false;
+    const ctl = t0.closest('[data-act]');
+    if (ctl && ctl !== t.el && t.el.contains(ctl) && !PICK_OPENERS.has(ctl.dataset.act)) return false;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const used = markPoolUsed(d.kind, d.id);
+    try {
+      onDropOn(t, d, e);
+    } finally {
+      if (used) renderDates();
+      syncPickMode();
+    }
+    return true;
   }
 
   function onClick(e) {
+    // [Z-DND] (3.78.0) a picked chip goes where the click is
+    if (S.dmPick && pickDrop(e)) return;
     // [169] (3.38.4) "⚙ Options ▾" of the footer closes with a click anywhere else
     if (S.footOptsOpen && e.target.closest && !e.target.closest('.dci-foot-opts')) setFootOpts(false);
     // An open ▾ menu of a column head closes with a click anywhere else
@@ -34259,6 +34581,10 @@
       }
       case 'em-undo':
         emUndoDrop(btn.dataset.arg);
+        break;
+      // [Z-DND] (3.78.0)
+      case 'drop-undo':
+        dropUndo(btn.dataset.arg);
         break;
       // [E4] (3.35.0) compact as a matrix: by event or by role, the full matrix of an entry, a chip opened or taken out
       case 'em-by':
@@ -36396,6 +36722,8 @@
   }
 
   function onKeydown(e) {
+    // [Z-DND] (3.78.0) a picked chip: Enter on a place drops it there
+    if (S.dmPick && e.key === 'Enter' && !e.isComposing && pickDrop(e)) return;
     // [Z-MXK] (3.70.0, S106) the arrow keys in the works matrix
     if (mxArrow(e)) {
       e.preventDefault();
@@ -36715,6 +37043,8 @@
   /** A button of the head: its symbol, the word only in a wide dashboard (the tooltip and aria-label always). */
   const headBtn = (act, icon, label, title, extra = '', cls = 'dci-headbtn') => `<button type="button" class="${cls} dci-ibtn" data-act="${act}" title="${esc(title)}" aria-label="${esc(label || title)}" ${extra}>${ico(icon)}${label ? `<span class="dci-hlabel">${esc(label)}</span>` : ''}</button>`;
 
+  let docDropOn = false;
+
   function buildOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'dci-overlay';
@@ -36863,6 +37193,18 @@
     overlay.addEventListener('dragover', onDragOver);
     overlay.addEventListener('drop', onDrop);
     overlay.addEventListener('dragend', dmDragEnd);
+    // ([Z-DND] 3.78.0, review) let go over a field of the page (the edit note …): not its id typed into it; a drag ended anywhere
+    // (its chip drawn anew meanwhile) ends ours too – once, also when the dashboard is built again
+    if (!docDropOn) {
+      docDropOn = true;
+      document.addEventListener('drop', (e) => {
+        if (S.dmDrag && !(S.overlay && S.overlay.contains(e.target))) {
+          e.preventDefault();
+          dmDragEnd();
+        }
+      }, true);
+      document.addEventListener('dragend', () => { if (S.dmDrag) setTimeout(() => { if (S.dmDrag) dmDragEnd(); }, 0); }, true);
+    }
     S.overlay = overlay;
     S.footOptsOpen = false;
     applyView();
@@ -37120,7 +37462,7 @@
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
@@ -39597,7 +39939,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -39631,7 +39973,7 @@
   const PROFILE_KEY = 'dci-profile'; // the active one: 'std' or an id
   const IO_LOG_KEY = 'dci-io-log'; // [{ at, dir: 'E' | 'I', what, file, n, skipped }] – never cleared
   const PROFILE_FILE_FORMAT = 'mb-vibecode-profiles';
-  const PROFILE_NOT = new Set(['dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
+  const PROFILE_NOT = new Set(['dci-log-note-w', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
     REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY, STATS_DAILY_KEY,
     STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
     // ((review) a window's state, and the frames of the cover art kept per release – no settings)
@@ -42182,7 +42524,7 @@
       .dci-dm-drop { flex: 1; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6); min-height: calc(var(--u, 1px) * 56); }
       .dci-dm-empty { color: var(--muted); font-size: calc(var(--u, 1px) * 11); text-align: center; margin: auto 0; }
       .dci-dm-dragging.dci-dm-drag-date .dci-dm-drop { outline: 2px dashed var(--date-line); outline-offset: -3px; }
-      .dci-dm-dragging.dci-dm-drag-tg .dci-dm-cell { outline: 2px dashed var(--track-line); outline-offset: 1px; }
+      .dci-dm-drag-tg .dci-dm-cell:not(.dci-dm-choose) { outline: 2px dashed var(--track-line); outline-offset: 1px; }
       #dci-overlay.dci-dm-drag-tg tr.dci-lv-recording .dci-c-tracks, #dci-overlay.dci-dm-drag-tg tr.dci-lv-work .dci-c-tracks,
       #dci-overlay.dci-dm-drag-tg tr.dci-lv-release .dci-c-tracks { outline: 1px dashed var(--track-line); outline-offset: -2px; }
       .dci-dm-drop.dci-dm-over { outline: 2px solid var(--date) !important; background: var(--date-bg); }
@@ -42382,7 +42724,12 @@
       .dci-em-cl .dci-status:empty { display: none; }
       .dci-em-cl .dci-status { margin-left: auto; }
       /* [E4] (3.34.31) dates of the pool dropped onto an event, a block, a line */
-      #dci-overlay.dci-dm-drag-date .dci-em-ev, #dci-overlay.dci-dm-drag-date .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
+      #dci-overlay.dci-dm-drag-pool .dci-em-ev:not(.dci-em-evskip), #dci-overlay.dci-dm-drag-pool .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
+      #dci-overlay.dci-dm-drag-pool .dci-em-ev.dci-dm-over, #dci-overlay.dci-dm-drag-pool .dci-em-bhead.dci-dm-over, #dci-overlay.dci-dm-drag-pool .dci-em-cl.dci-dm-over,
+      #dci-overlay.dci-dm-drag-pool .dci-cl-date[data-evdrop].dci-dm-over { outline: 2px solid var(--date); background: var(--date-bg); }
+      #dci-overlay.dci-dm-picking :is(.dci-em-bhead, .dci-em-ev, .dci-em-cl, tr.dci-em-line, .dci-cl-date, .dci-c-date, .dci-c-tracks, .dci-cl-tracks, .dci-mx-card, .dci-mx-cell,
+        .dci-w-date, [data-tgattr], [data-tgrole], [data-dmcell], [data-dmdrop], .dci-pchip-date) { cursor: copy; }
+      .dci-dm-pickhint { margin: 0 0 calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-left: 3px solid var(--date); background: var(--date-bg); color: var(--date-d); font-weight: 600; }
       #dci-overlay th.dci-em-ev.dci-dm-over, #dci-overlay .dci-em-bhead.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
       #dci-overlay tr.dci-em-line.dci-dm-over > td { background: var(--date-bg); box-shadow: inset 0 2px 0 var(--purple), inset 0 -2px 0 var(--purple); }
       /* [AE-2] (3.35.3) ⠿ of a line, and where a dragged line goes (a mark above or below the line under the pointer) */
@@ -42426,8 +42773,10 @@
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) { background: var(--soft); border-left-color: #c8c5d6; }
       #dci-overlay.dci-dm-drag-pool .dci-cl-date { outline: 1px dashed var(--date-line); outline-offset: 1px; }
+      #dci-overlay.dci-dm-drag-pool tr.dci-lv-skip .dci-cl-date { outline: 0; }
       #dci-overlay .dci-cl-date.dci-dm-over { outline: 2px solid var(--date) !important; background: var(--date-bg); }
       #dci-overlay.dci-dm-drag-tg .dci-cl-tracks { outline: 1px dashed var(--track-line); outline-offset: 1px; }
+      #dci-overlay.dci-dm-drag-tg tr.dci-lv-skip .dci-cl-tracks { outline: 0; }
       #dci-overlay .dci-cl-tracks.dci-dm-over { outline: 2px solid var(--orange) !important; }
       .dci-viewseg button[aria-pressed="true"] { font-weight: 600; }
       #dci-overlay.dci-compact .dci-group { margin-bottom: calc(var(--u, 1px) * 14); }
