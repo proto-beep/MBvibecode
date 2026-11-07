@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0); `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0), [3.75.0] profiles; `python3 t_ui_settings.py <case> …` runs only those."""
 import json
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -38,7 +38,7 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -54,7 +54,8 @@ def case_settabs():
         pg.wait_for_timeout(150)
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
-        results.append(k1 == [('appearance', True)] and k2 == [('connections', True)] and k3 == [('general', True)])
+        results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
+                       k2 == [('connections', True)] and k3 == [('general', True)])
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -182,7 +183,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -545,7 +546,7 @@ def case_reset():
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
         # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last', 'dci-update-check', 'dci-companion-seen', 'dci-view-kept')]  # (3.51.0) the versions on GitHub and the companion last seen: data  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments', 'dci-gap-last', 'dci-update-check', 'dci-companion-seen', 'dci-view-kept', 'dci-profile', 'dci-profiles')]  # (3.51.0) the versions on GitHub and the companion last seen: data  # (3.43.1) 'dci-gap-last': the time of the last Discogs request (the pace), no setting; [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
         # (3.43.4) the running dashboard draws the defaults at once: entries as a matrix (lines of a block), joining on, the edit note "Full"
         live = pg.evaluate("[!!document.querySelector('.dci-em-line, .dci-em-cl'), (document.querySelector('[data-f=join-auto]') || {}).checked, (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset ? (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset.mode : null]")
         print('   im Dashboard (Matrix, Join, Edit note):', live)
@@ -590,7 +591,7 @@ def case_notice():
         print('2) Update von 2.10.0 – Speicher:', keys(), '| Sitzung:', pg.evaluate("Object.keys(sessionStorage).filter(k => k.startsWith('dci-'))"))
         print('   Nachricht:', notice())
         n = notice() or ''
-        ok2 = keys() == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] or set(keys()) == {'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'}  # ([Z-CPV] 3.73.0)
+        ok2 = [k for k in keys() if k not in ('dci-profile', 'dci-profiles')] == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] or set(keys()) - {'dci-profile', 'dci-profiles'} == {'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'}  # ([Z-CPV] 3.73.0)
         # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0;
         # [3.37.0] 3.37.0, 3.36.0, 3.35.0
         ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.37.0' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' not in n and 'reset once' in n
@@ -2817,6 +2818,127 @@ def case_statscompact():
         results.append(e0 == [3, '+ 3 more'] and e1 == [6, '– fewer'])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_profiles():
+    """Credits Importer 3.75.0 (collected items Z-QSP, Z-QTA; rule S110): profiles of the settings and the quick switches.
+    The browser has used the script (the view "full", S078 switched off).
+    A) "Profile 1" made from what is stored, the active one; the choice "Standard | Profile 1" in the bar above the import button,
+       before "Window | In the page"; S078 is a quick switch ("Instruments only on the tracks of the track artist").
+    B) "Standard" chosen with the dashboard open: the compact view and S078 on at once (the defaults); the log says so.
+    C) A setting changed under "Standard" ("Show the box “Dedications & tributes”" off): a new profile "Profile 2 · <date time>",
+       now the active one; "Standard" unchanged (back to it: the box on).
+    D) "Profile 1" again: full, S078 off; "Profile 2": compact, the box off.
+    E) ⚙ Settings → Profiles: "Profile 2 …" renamed "Jazz" (the bar too); exported (a file with both); imported again: "Profile 1 (2)",
+       "Jazz (2)"; the log of imports and exports (General, folded) has both lines, its symbol [-] → [E] → [I] shows one each.
+    F) The active profile "Jazz" deleted: "Standard" is used.
+    G) "Reset all settings" with "Delete all your profiles": none left, "Standard" active.
+    (review) H) Loaded again, the dashboard opened: still "Standard", no profile made. I) The quick switch S078 switched under
+    "Standard" (the window "Mapping rules"): a new profile "Profile 1 · …" with S078 off."""
+    import json
+    H.RULES_OFF = ['S083', 'S078']
+    PROFS = "JSON.parse(localStorage.getItem('dci-profiles') || '[]').map(p => p.name)"
+    ACTIVE = "JSON.parse(localStorage.getItem('dci-profile') || 'null')"
+    PICK = """(() => { const s = document.getElementById('dci-profile'); const seg = document.querySelector('#dci-launcher .dci-place-seg');
+      return s ? { opts: [...s.options].map(o => o.textContent), sel: s.selectedOptions[0].textContent, before: !!(s.compareDocumentPosition(seg) & Node.DOCUMENT_POSITION_FOLLOWING) } : null; })()"""
+    STATE = """[document.getElementById('dci-overlay').classList.contains('dci-compact') ? 'compact' : 'full',
+      (JSON.parse(localStorage.getItem('dci-rules-off') || '[]')).includes('S078') ? 'S078 off' : 'S078 on',
+      document.querySelector('[data-el=dedbox]') && !document.querySelector('[data-el=dedbox]').hidden ? 'box' : 'no box']"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        a = [pg.evaluate(PROFS), pg.evaluate(ACTIVE), pg.evaluate(PICK)]
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        a.append(pg.evaluate(STATE))
+        print('A)', a)
+        results.append(a[0] == ['Profile 1'] and a[1] == 'p1' and a[2] == {'opts': ['Standard', 'Profile 1'], 'sel': 'Profile 1', 'before': True} and a[3] == ['full', 'S078 off', 'box'])
+        pg.select_option('#dci-profile', 'std')
+        pg.wait_for_timeout(800)
+        b1 = [pg.evaluate(STATE), pg.evaluate(ACTIVE), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Profile “' in x]]
+        print('B)', b1)
+        results.append(b1[0] == ['compact', 'S078 on', 'box'] and b1[1] == 'std' and 'Profile “Standard” used' in b1[2])
+        H.open_settings(pg, 'appearance')
+        pg.locator('[data-el=settings] [data-set=ded-box]').evaluate('b => b.click()')
+        pg.wait_for_timeout(500)
+        c1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE), pg.evaluate(PICK), pg.evaluate(STATE)]
+        print('C)', c1)
+        results.append(len(c1[0]) == 2 and c1[0][1].startswith('Profile 2 · 20') and c1[1] != 'std' and c1[2]['sel'] == c1[0][1] and c1[3] == ['compact', 'S078 on', 'no box'])
+        p2 = c1[1]
+        pg.select_option('#dci-profile', 'std')
+        pg.wait_for_timeout(500)
+        c2 = pg.evaluate(STATE)
+        pg.select_option('#dci-profile', 'p1')
+        pg.wait_for_timeout(800)
+        d1 = pg.evaluate(STATE)
+        pg.select_option('#dci-profile', p2)
+        pg.wait_for_timeout(800)
+        d2 = pg.evaluate(STATE)
+        print('C) Standard wieder:', c2, '| D) Profile 1:', d1, '| Profile 2:', d2)
+        results.append(c2 == ['compact', 'S078 on', 'box'] and d1 == ['full', 'S078 off', 'box'] and d2 == ['compact', 'S078 on', 'no box'])
+        # E) rename, export, import, the log
+        H.open_settings(pg, 'profiles')
+        inp = pg.locator(f'[data-el=settings] [data-f=profile-name][data-id="{p2}"]')
+        inp.fill('Jazz')
+        inp.press('Tab')
+        pg.wait_for_timeout(300)
+        e0 = pg.evaluate(PICK)
+        with pg.expect_download() as dl:
+            pg.click('[data-el=settings] [data-act=profile-export]')
+        path = dl.value.path()
+        data = json.loads(open(path, encoding='utf-8').read())
+        pg.set_input_files('[data-el=settings] [data-profiles-import]', path)
+        pg.wait_for_timeout(600)
+        e1 = [pg.evaluate(PROFS), e0['opts'], [x['name'] for x in data['profiles']], data['format']]
+        H.open_settings(pg, 'general')
+        pg.click('[data-el=settings] .dci-iolog > summary')
+        pg.wait_for_timeout(300)
+        LOGQ = "[...document.querySelectorAll('[data-el=settings] .dci-iolist li')].map(li => li.querySelector('.dci-iodir').textContent)"
+        io = [pg.evaluate(LOGQ)]
+        for _ in range(3):
+            pg.click('[data-el=settings] [data-act=io-filter]')
+            pg.wait_for_timeout(200)
+            io.append([pg.evaluate("document.querySelector('[data-el=settings] [data-act=io-filter]').textContent"), pg.evaluate(LOGQ)])
+        print('E)', e1, '| Log:', io)
+        results.append(e0['sel'] == 'Jazz' and e1[0] == ['Profile 1', 'Jazz', 'Profile 1 (2)', 'Jazz (2)'] and e1[2] == ['Profile 1', 'Jazz'] and e1[3] == 'mb-vibecode-profiles'
+                       and io[0] == ['⇩ I', '⇧ E'] and io[1] == ['[E]', ['⇧ E']] and io[2] == ['[I]', ['⇩ I']] and io[3] == ['[-]', ['⇩ I', '⇧ E']])
+        # F) the active one deleted
+        H.open_settings(pg, 'profiles')
+        pg.click(f'[data-el=settings] [data-act=profile-delete][data-id="{p2}"]')
+        pg.wait_for_timeout(600)
+        f1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE), pg.evaluate(STATE)]
+        print('F)', f1)
+        results.append(f1[0] == ['Profile 1', 'Profile 1 (2)', 'Jazz (2)'] and f1[1] == 'std' and f1[2] == ['compact', 'S078 on', 'box'])
+        # G) reset all: all profiles deleted
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        pg.check('[data-f=reset-prof][value=all]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        g1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE), pg.evaluate(PICK)['opts']]
+        print('G)', g1, '| Fehler:', errs)
+        results.append(g1 == [[], 'std', ['Standard']] and not errs)
+        # H) (review) "Standard" stays when the page is loaded again and the dashboard opened (nothing changed)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        h1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE)]
+        # I) (review) a quick switch under "Standard" (the window "Mapping rules"): a new profile with it
+        pg.locator('.dci-head [data-act=rules]').first.evaluate('b => b.click()')
+        H.wait_for(pg, "!!document.querySelector('[data-qs-toggle=S078]')", 15)
+        pg.locator('[data-qs-toggle=S078]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(600)
+        i1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE) != 'std', pg.evaluate("JSON.parse(localStorage.getItem('dci-profiles'))[0].quick.S078")]
+        print('H) wieder geladen:', h1, '| I) Schnellschalter:', i1)
+        results.append(h1 == [[], 'std'] and len(i1[0]) == 1 and i1[0][0].startswith('Profile 1 · ') and i1[1] and i1[2] is False)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

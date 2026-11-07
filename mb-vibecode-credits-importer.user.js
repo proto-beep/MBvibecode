@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.74.0
+// @version      3.75.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.74.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.74.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.75.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.75.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.74.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.75.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -85,7 +85,8 @@
     try {
       if (Number(window.localStorage.getItem('dci-store-epoch') || 0) >= STORE_EPOCH) return;
       // ([Z-CPV] 3.73.0, review) the view's one-time decision too (else a fresh browser counted as an old one at its second start)
-      const keep = (k) => (EPOCH_KEEPS_CREATED && k.startsWith('dci-created-works:')) || k === 'dci-notice-version' || k === 'dci-view-kept';
+      const keep = (k) => (EPOCH_KEEPS_CREATED && k.startsWith('dci-created-works:')) || k === 'dci-notice-version' || k === 'dci-view-kept'
+        || k === 'dci-profiles' || k === 'dci-profile' || k === 'dci-io-log'; // ([Z-QSP] 3.75.0, review)
       const old = [];
       for (let k = 0; k < window.localStorage.length; k++) {
         const key = window.localStorage.key(k);
@@ -987,6 +988,51 @@
       "ver.updateTitle": "Version {v} is on GitHub – open it to update (your userscript manager offers the update)",
       "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
       "settings.t.general": "General",
+      "settings.t.profiles": "Profiles",
+      "quick.S078": "Instruments only on the tracks of the track artist",
+      "profile.std": "Standard",
+      "profile.label": "Profile",
+      "profile.pickTitle": "The profile of your settings and quick switches – a change of “Standard” (the defaults) makes a new profile",
+      "profile.stdNote": "the defaults – a change makes a new profile",
+      "profile.explain": "A profile keeps the quick switches and the settings of ⚙ (also the language and “Developer mode”). “Standard” are the defaults and cannot be changed: changing something there makes a new profile (with the date and time) and uses it. A change in your own profile is kept in it at once. Not in a profile: the switches of the companion, remembering releases, the statistics, the other rule switches and your own rules.",
+      "profile.nameAria": "Name of the profile",
+      "profile.made": "made {at}",
+      "profile.active": "active",
+      "profile.use": "Use",
+      "profile.delete": "Delete",
+      "profile.deleteAria": "Delete the profile “{name}”",
+      "profile.export": "⇧ Export profiles",
+      "profile.exportTitle": "Saves your own profiles as a file (to take them to another browser) – “Standard” is in every script",
+      "profile.import": "⇩ Import profiles …",
+      "profile.importTitle": "Adds the profiles of a file exported before (a name that is here already gets “(2)”); the active profile stays",
+      "profile.exported": "{n} profiles saved as {file}",
+      "profile.imported": "{n} profiles added from {file}",
+      "profile.importBad": "{file} is no file of profiles",
+      "profile.importFull": "{file}: the profiles could not be stored (the browser's storage is full or blocked)",
+      "profile.off": "Profiles are switched off (rule S110): the settings are the same for everything.",
+      "reset.prof.keep": "Keep your profiles (“{name}” is used)",
+      "io.what.mapping": "mapping rules",
+      "io.title": "Imports and exports ({n})",
+      "io.filterTitle": "Show next: {next}",
+      "io.filterLabel": "Shown: {now} – a click switches",
+      "io.f.-": "all",
+      "io.f.E": "only exports",
+      "io.f.I": "only imports",
+      "io.kept": "kept, cannot be deleted",
+      "io.none": "Nothing imported or exported yet.",
+      "io.what.profiles": "profiles",
+      "io.exported": "{n} exported",
+      "io.imported": "{n} imported, {skipped} skipped",
+      "reset.profiles": "Profiles",
+      "reset.prof.active": "The active profile (“{name}”) as “Standard”",
+      "reset.prof.all": "Delete all your profiles (“Standard” stays)",
+      "log.profileNew": "New profile “{name}” – a setting of “Standard” was changed",
+      "log.profileUsed": "Profile “{name}” used",
+      "log.profilesExported": "{n} profiles exported: {file}",
+      "log.profilesImported": "{n} profiles imported from {file}",
+      "log.profileDeleted": "Profile “{name}” deleted",
+      "log.profilesDeletedAll": "All own profiles deleted – “{name}” is used",
+      "log.profileReset": "Profile “{name}” set to the defaults",
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
       "settings.kindColors": "Colours for the kinds of entries",
@@ -3602,6 +3648,14 @@
   function ruleOn(id) {
     return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
   }
+  /**
+   * [Z-QSP] (3.75.0) A rule's switch read without keeping the switched rules in memory yet (the profiles read them when the script
+   * starts; the rules are kept from the first import on, as before).
+   */
+  function ruleOnPeek(id) {
+    const off = rulesOffCache || new Set(loadStore(RULES_OFF_KEY, []));
+    return DEFAULT_OFF_RULES.has(id) ? off.has(`+${id}`) : !off.has(id);
+  }
 
   /** [3.31.7] Switches a built-in rule on or off (stored with the other switched rules). */
   function setRuleOn(id, on) {
@@ -3610,6 +3664,8 @@
       else rulesOff().delete(`+${id}`);
     } else if (on) rulesOff().delete(id);
     else rulesOff().add(id);
+    // [Z-QSP] (3.75.0, S110) a quick switch is part of the profile
+    if (writeJson.hook) writeJson.hook(`rule:${id}`);
   }
 
   /** Instrument spellings: own ones first, then the built-in table (T001). */
@@ -3735,6 +3791,7 @@
     { id: 'S107', where: 'findDedications, runDedications', note: 'Dedications (3.71.0): "for …" in a sentence too, when an artist, a country or a place MusicBrainz has exactly once by that name follows ("This record is for Peter Kowald") – not after "recorded", "produced", "commissioned", "made", "mixed", "performed" (that is a production), not a label (a label only with "tribute to"), not after "thanks"; "written for" / "composed for" is a dedication of the work. A country or a place only on the work of a track the sentence names' },
     { id: 'S108', where: 'addManualEntry, renderEvAsk, answerEvAsk', note: 'An event added by hand without a role (3.73.0): asked right below "Add entry manually" – "recorded at", or "video shot at" when the release has videos; on the recordings first (its level changes with a click), the entry folded to its compact lines' },
     { id: 'S109', where: 'renderDedBox, dedSuggest, dedTake', note: 'The box "Dedications & tributes" above the works matrix (3.74.0): the dedications found (MusicBrainz has exactly one entry of the name: added by themselves) and suggestions of those not sure – several entries of the name (each a button), none, a name after "for" without a track – each with a field for an MBID or a link and the level (the release group or the work of a track); "＋ Dedication | Tribute" adds one by hand. No "Create …" here. Shown unless switched off in ⚙ Settings → Appearance' },
+    { id: 'S110', where: 'profileTouched, applyProfile, renderProfilePickers', note: 'Profiles (3.75.0): the quick switches and the settings of ⚙ (with the language and "Developer mode") are kept per profile – "Standard" (the defaults, cannot be changed: a change there makes a new profile "Profile n · date time" and uses it) and your own (a change is kept in the active profile at once). Chosen beside the import button, before "Window | In the page", or in ⚙ Settings → Profiles (name, use, delete, export, import); applied at once, also with the dashboard open. Not in a profile: the switches of the companion, remembering releases, the statistics, the other rule switches and your own rules' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -12646,10 +12703,17 @@
   }
 
   function writeJson(area, key, value) {
+    let before = null;
+    let after = null;
     try {
+      before = window[area].getItem(key);
       if (value == null || (Array.isArray(value) && !value.length)) window[area].removeItem(key);
       else window[area].setItem(key, JSON.stringify(value));
+      after = window[area].getItem(key);
     } catch (e) { /* storage blocked or full */ }
+    // [Z-QSP] (3.75.0, S110) a setting of the profiles: kept in the active profile (or a new one, from "Standard") – ((review) only when
+    // what is stored changed)
+    if (area === 'localStorage' && writeJson.hook && before !== after) writeJson.hook(key);
   }
 
   // --- Log window ----------------------------------------------------------------
@@ -13633,6 +13697,7 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file });
+    ioLog('E', 'mapping', file, 1); // [Z-QSP] (3.75.0, review)
     S.mioStatus = tr('mapping.saved', { file });
     renderMappingIo();
   }
@@ -13640,7 +13705,10 @@
   function copyMappingExport() {
     const done = (ok) => {
       S.mioStatus = tr(ok ? 'mapping.copied' : 'mapping.copyFailed');
-      if (ok) log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file: tr('mapping.clipboard') });
+      if (ok) {
+        log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file: tr('mapping.clipboard') });
+        ioLog('E', 'mapping', tr('mapping.clipboard'), 1);
+      }
       renderMappingIo();
     };
     try {
@@ -13920,7 +13988,10 @@
     S.mImport = null;
     S.mioStatus = tr('mapping.imported', { n, name });
     log('info', 'mappingImported', { n, name, mode: tr(mode === 'replace' ? 'mapping.replace' : 'mapping.merge') });
+    ioLog('I', 'mapping', name, n); // [Z-QSP] (3.75.0, review)
     mappingChanged(tr('mapping.importWhat', { name }));
+    // ([Z-QSP] 3.75.0, review) its quick switches into the active profile
+    if (writeJson.hook) writeJson.hook('rule:*');
   }
 
   /** Export and import of the register (below your rules and your changes). */
@@ -33816,6 +33887,21 @@
         if (entry && applyPoolToRow(row, entry)) refresh();
         break;
       }
+      // [Z-QSP] (3.75.0, S110) the profiles in ⚙ Settings, the log of imports and exports
+      case 'profile-use':
+        applyProfile(btn.dataset.id);
+        break;
+      case 'profile-delete':
+        deleteProfile(btn.dataset.id);
+        break;
+      case 'profile-export':
+        exportProfiles();
+        break;
+      case 'io-filter':
+        S.ioFilter = { '-': 'E', E: 'I', I: '-' }[S.ioFilter || '-'];
+        S.ioOpen = true;
+        renderSettings();
+        break;
       // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes"
       case 'ded-add': {
         const box = S.overlay.querySelector('[data-el="dedbox"]');
@@ -35199,7 +35285,16 @@
       }
       case 'reset-do': {
         const box = (f) => { const el = S.overlay.querySelector(`[data-f="${f}"]`); return !!(el && el.checked); };
-        resetSettings({ rules: box('reset-rules'), pools: box('reset-pools'), stats: !box('reset-keepstats') });
+        // [Z-QSP] (3.75.0, S110) the active profile back to "Standard" (its settings and quick switches), or every own profile deleted
+        const prof = ruleOn('S110') ? S.resetProf || 'active' : '';
+        const profAll = prof === 'all' && !!S.overlay.querySelector('[data-f="reset-prof"][value="all"]:checked');
+        S.profileApplying = true;
+        try {
+          resetSettings({ rules: box('reset-rules'), pools: box('reset-pools'), stats: !box('reset-keepstats') });
+        } finally {
+          S.profileApplying = false;
+        }
+        if (prof) resetProfiles(profAll ? 'all' : 'active');
         break;
       }
       case 'add-role': {
@@ -35627,6 +35722,17 @@
   function onChange(e) {
     if (e.target.dataset && e.target.dataset.set) {
       settingsChange(e.target);
+      return;
+    }
+    // [Z-QSP] (3.75.0) a profile's name, a file of profiles
+    if (e.target.dataset && e.target.dataset.f === 'profile-name') {
+      renameProfile(e.target.dataset.id, e.target.value);
+      return;
+    }
+    if (e.target.dataset && e.target.dataset.profilesImport != null && e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      file.text().then((t) => importProfiles(t, file.name)).catch(showError);
+      e.target.value = '';
       return;
     }
     S.changingEl = e.target;
@@ -36919,7 +37025,8 @@
   // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
   // [146] (3.36.0) "Cache" new: what is remembered per release
   // [189] (3.39.3) the statistics with a button of their own in the head (until 3.39.2 the tab "Statistics" after "Cache")
-  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
+  // ([Z-QSP] 3.75.0) the profiles right after General
+  const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -36963,6 +37070,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
+    profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
@@ -38539,7 +38647,11 @@
         // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown); [171] (3.38.5) "Developer mode":
         // also the developer statistics
         row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
+        // [Z-QSP] (3.75.0) what was imported and exported, folded; never cleared
+        ioLogHtml(),
       ],
+      // [Z-QSP] (3.75.0, S110) the profiles
+      profiles: () => [profilesPaneHtml()],
       // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
       appearance: () => [
         row(`${esc(tr('zoom.label'))} <button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
@@ -38731,6 +38843,8 @@
       <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, c: Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-keepstats" ${S.resetKeepStats === false ? '' : 'checked'}> ${esc(tr('reset.keepStats'))}</label>
+      ${ruleOn('S110') && profilesRead().length ? `<fieldset class="dci-reset-prof"><legend>${esc(tr('reset.profiles'))}</legend>${(activeProfileId() === 'std' ? ['keep', 'all'] : ['active', 'all']).map((v) => `<label class="dci-check"><input type="radio" name="dci-reset-prof"
+        data-f="reset-prof" value="${v}" ${(S.resetProf && S.resetProf !== (activeProfileId() === 'std' ? 'active' : 'keep') ? S.resetProf : activeProfileId() === 'std' ? 'keep' : 'active') === v ? 'checked' : ''}> ${esc(tr(`reset.prof.${v}`, { name: profileNameOf(activeProfileId()) }))}</label>`).join('')}</fieldset>` : ''}
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-small" data-act="reset-do">${esc(tr('reset.do'))}</button>
@@ -38881,7 +38995,11 @@
     if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-rules') S.resetRules = e.target.checked;
     if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-pools') S.resetPools = e.target.checked;
     if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-keepstats') S.resetKeepStats = e.target.checked; // [E8] (3.38.0)
+    if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-prof') S.resetProf = e.target.value; // [Z-QSP] (3.75.0)
     if (e.type === 'click' && e.target.closest && e.target.closest('input, select, textarea')) return;
+    // ([Z-QSP] 3.75.0) the log of imports and exports folded or open: kept when the settings are drawn anew
+    const sum = e.type === 'click' && e.target.closest && e.target.closest('.dci-iolog > summary');
+    if (sum) S.ioOpen = !sum.parentElement.open;
     setTimeout(() => {
       syncSharedSwitches();
       if (S.settingsOpen) renderSettings();
@@ -39302,6 +39420,401 @@
     EDIT_NOTE_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups
     ALIAS_MAX_KEY];
+
+  // --- [Z-QSP] (3.75.0, S110) profiles: the settings and the quick switches, "Standard" (the defaults) and your own ----------------
+  // (not in a profile: the switches of the companion's pages, remembering releases, the statistics and how they are shown, what is
+  // folded or open, the tab of the settings, the other rule switches, your rules – these stay the same for every profile)
+  const PROFILES_KEY = 'dci-profiles'; // [{ id, name, at, values: { key: stored text | null }, quick: { rule id: on } }]
+  const PROFILE_KEY = 'dci-profile'; // the active one: 'std' or an id
+  const IO_LOG_KEY = 'dci-io-log'; // [{ at, dir: 'E' | 'I', what, file, n, skipped }] – never cleared
+  const PROFILE_FILE_FORMAT = 'mb-vibecode-profiles';
+  const PROFILE_NOT = new Set(['dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
+    REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY, STATS_DAILY_KEY,
+    STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
+    // ((review) a window's state, and the frames of the cover art kept per release – no settings)
+    'dci-log-open', OCR_FRAMES_KEY]);
+  const profileKeys = () => SETTINGS_KEYS.filter((k) => !PROFILE_NOT.has(k));
+  const profileQuick = () => QUICK_SWITCHES.slice();
+  const rawGet = (k) => { try { return window.localStorage.getItem(k); } catch { return null; } };
+  const rawSet = (k, v) => { try { if (v == null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch { /* blocked */ } };
+  function profilesRead() {
+    const list = readJson('localStorage', PROFILES_KEY, null);
+    return Array.isArray(list) ? list.filter((p) => p && p.id && p.values && typeof p.name === 'string') : [];
+  }
+  const profilesWrite = (list) => {
+    rawSet(PROFILES_KEY, JSON.stringify(list));
+    return rawGet(PROFILES_KEY) === JSON.stringify(list);
+  };
+  function activeProfileId() {
+    const id = readJson('localStorage', PROFILE_KEY, 'std');
+    return id && (id === 'std' || profilesRead().some((p) => p.id === id)) ? id : 'std';
+  }
+  const profileNameOf = (id) => (id === 'std' ? tr('profile.std') : (profilesRead().find((p) => p.id === id) || {}).name || tr('profile.std'));
+  /** What a profile holds: the stored text of each of its settings, each quick switch on or off. */
+  function profileSnapshot() {
+    return { values: Object.fromEntries(profileKeys().map((k) => [k, rawGet(k)])), quick: Object.fromEntries(profileQuick().map((id) => [id, ruleOnPeek(id)])) };
+  }
+  const stampOf = (t) => { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+  function nextProfileNumber(list) {
+    const ns = list.map((p) => Number((/^Profile (\d+)\b/.exec(p.name) || [])[1]) || 0);
+    return Math.max(0, ...ns) + 1;
+  }
+  /**
+   * A setting written (writeJson) or a quick switch switched (setRuleOn): kept in the active profile at once; under "Standard" (which
+   * cannot be changed) a new profile "Profile n · date time" is made from it and becomes the active one.
+   */
+  function profileTouched(key) {
+    if (S.profileApplying || !ruleOnPeek('S110')) return;
+    if (key.startsWith('rule:') ? key !== 'rule:*' && !profileQuick().includes(key.slice(5)) : !profileKeys().includes(key)) return;
+    const list = profilesRead();
+    let p = list.find((x) => x.id === activeProfileId());
+    let made = false;
+    // ((review) "Standard" stays while everything is as by default)
+    if (!p && profileIsDefault(profileSnapshot())) return;
+    if (!p) {
+      const at = Date.now();
+      p = { id: `p${at.toString(36)}`, name: `Profile ${nextProfileNumber(list)} · ${stampOf(at)}`, at };
+      list.push(p);
+      rawSet(PROFILE_KEY, JSON.stringify(p.id));
+      made = true;
+    }
+    Object.assign(p, profileSnapshot());
+    if (!profilesWrite(list)) return; // ((review) storage full or blocked: nothing said)
+    if (made) {
+      log('info', 'profileNew', { name: p.name });
+      renderProfilePickers();
+    }
+  }
+  /** ((review) A snapshot as "Standard" has it: nothing stored, every quick switch as by default.) */
+  function profileIsDefault(snap) {
+    return Object.values(snap.values).every((v) => v == null) && Object.entries(snap.quick).every(([id, on]) => on === !DEFAULT_OFF_RULES.has(id));
+  }
+  writeJson.hook = profileTouched;
+  // (once: who used the script before gets "Profile 1" with the settings as they are – and it is the active one)
+  (function profilesInit() {
+    if (rawGet(PROFILES_KEY) !== null) return;
+    const used = profileKeys().some((k) => rawGet(k) !== null) || profileQuick().some((id) => ruleOnPeek(id) === DEFAULT_OFF_RULES.has(id));
+    const at = Date.now();
+    profilesWrite(used ? [{ id: 'p1', name: 'Profile 1', at, ...profileSnapshot() }] : []);
+    rawSet(PROFILE_KEY, JSON.stringify(used ? 'p1' : 'std'));
+  })();
+  /** The settings read anew from the storage (a profile applied): what the dashboard keeps in its state. */
+  function reloadSettingsState() {
+    S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
+    S.dmFold = readJson('localStorage', DM_FOLD_KEY, true) !== false;
+    S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
+    S.devMode = readJson('localStorage', DEV_KEY, false) === true;
+    S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
+    S.rulesRowPlace = readJson('localStorage', RULES_ROW_KEY, 'window') === 'symbol' ? 'symbol' : 'window';
+    S.betaOcr = readJson('localStorage', BETA_OCR_KEY, false) === true;
+    S.ocrPreload = readJson('localStorage', OCR_PRELOAD_KEY, false) === true;
+    S.ocrAuto = readJson('localStorage', OCR_AUTO_KEY, false) === true;
+    S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
+    S.roleCodes = readJson('localStorage', 'dci-role-codes', 'names');
+    if (!['cisac', 'gema', 'names'].includes(S.roleCodes)) S.roleCodes = 'names';
+    S.capOn = readJson('localStorage', 'dci-stage-cap-on', true) !== false;
+    S.fillCredits = readJson('localStorage', 'dci-fill-credits', false) === true;
+    S.capLimit = Number(readJson('localStorage', 'dci-stage-cap', 500)) || 500;
+    S.awOn = readJson('localStorage', 'dci-aw-on', true) !== false;
+    Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = awValue(name, readJson('localStorage', d.key, d.def)); });
+    S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
+    S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
+    S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
+    S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
+    S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
+    S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
+    S.joinAuto = readJson('localStorage', JOIN_KEY, true) !== false;
+    S.workGroupsOn = readJson('localStorage', WORK_GROUPS_KEY, true) !== false;
+    S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
+    S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
+    S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
+    S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
+    S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
+    S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
+    S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
+    S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
+    S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
+    S.levelPalette = levelPaletteRead();
+    S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
+    S.kindPalette = kindPaletteRead();
+    S.darkColors = readJson('localStorage', DARK_COLORS_KEY, false) === true;
+    S.levelPaletteDark = paletteOwnRead(LEVEL_PALETTE_DARK_KEY, LEVEL_PALETTE_DEFAULT);
+    S.kindPaletteDark = paletteOwnRead(KIND_PALETTE_DARK_KEY, KIND_PALETTE_DEFAULT);
+    S.sourceOrder = readSourceOrder();
+    S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
+  }
+  /**
+   * A profile applied – also with the dashboard open: its settings stored, the quick switches set, the state read anew, the rules
+   * applied again (what you changed by hand in a row stays, as with a quick switch).
+   */
+  function applyProfile(id) {
+    const list = profilesRead();
+    const p = id === 'std' ? null : list.find((x) => x.id === id);
+    if (id !== 'std' && !p) return;
+    const scale = S.scale;
+    const place = S.place;
+    const logPlace = S.logPlace;
+    const changed = [];
+    S.profileApplying = true;
+    try {
+      for (const k of profileKeys()) rawSet(k, p ? (p.values[k] == null ? null : p.values[k]) : null);
+      for (const q of profileQuick()) {
+        const on = p && p.quick && q in p.quick ? !!p.quick[q] : !DEFAULT_OFF_RULES.has(q);
+        if (ruleOnPeek(q) !== on) {
+          setRuleOn(q, on);
+          changed.push(q);
+        }
+      }
+      saveRules();
+      rawSet(PROFILE_KEY, JSON.stringify(id));
+      reloadSettingsState();
+      const lang = readJson('localStorage', 'dci-lang', null) || 'en';
+      if (lang !== LANG) setLanguage(lang);
+      const sc = Number(readJson('localStorage', 'dci-scale', 1)) || 1;
+      if (sc !== scale) setScale(sc);
+      const pl = readJson('localStorage', 'dci-place', 'window') === 'page' ? 'page' : 'window';
+      if (pl !== place) setPlace(pl);
+      const lp0 = readJson('localStorage', 'dci-log-place', 'window');
+      const lp = LOG_PLACES.includes(lp0) ? lp0 : 'window';
+      if (lp !== logPlace) {
+        if (S.logEl) setLogPlace(lp);
+        else S.logPlace = lp;
+      }
+      applyTheme();
+      applyLevelColors();
+      applyKindColors();
+      applyView();
+      // ((review) what the setters do beside storing)
+      renameSuiteParts();
+      writeEditNote();
+      if (S.overlay) placeRules();
+      if (!S.devMode && DIAG.timer) stopDiag();
+      renderLog();
+      if (!S.betaOcr) closeOcr(true);
+      else ocrKeepOnTop();
+      applyWorkGroups({ quiet: true });
+      if (S.overlay) renderSource();
+      changed.forEach((q) => applyRulesChange(q));
+    } finally {
+      S.profileApplying = false;
+    }
+    log('info', 'profileUsed', { name: profileNameOf(id) });
+    renderLauncher();
+    if (S.overlay) {
+      renderGroups();
+      renderWorks();
+      renderDates();
+      renderSettings();
+      renderRulesBody();
+      refresh();
+    }
+  }
+  // ((review) another tab chose a profile: the same here – the state read anew (the storage is the other tab's already))
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'dci-rules-off') rulesOffCache = null;
+    if (e.key !== PROFILE_KEY || !ruleOnPeek('S110')) return;
+    rulesOffCache = null;
+    S.profileApplying = true;
+    try {
+      reloadSettingsState();
+      const lang = readJson('localStorage', 'dci-lang', null) || 'en';
+      if (lang !== LANG) setLanguage(lang);
+      applyTheme();
+      applyLevelColors();
+      applyKindColors();
+      applyView();
+      for (const r of S.rows) remapRow(r);
+    } finally {
+      S.profileApplying = false;
+    }
+    renderLauncher();
+    if (S.overlay) {
+      renderGroups();
+      renderWorks();
+      renderDates();
+      renderSettings();
+      refresh();
+    }
+  });
+  /** The choice of the profile beside "Window | In the page" (the bar of the page) and in ⚙ Settings → Profiles. */
+  function profileOptionsHtml() {
+    const cur = activeProfileId();
+    return [['std', tr('profile.std')], ...profilesRead().map((p) => [p.id, p.name])]
+      .map(([id, name]) => `<option value="${esc(id)}" ${id === cur ? 'selected' : ''}>${esc(name)}</option>`).join('');
+  }
+  function renderProfilePickers() {
+    const sel = document.getElementById('dci-profile');
+    if (sel) {
+      sel.hidden = !ruleOnPeek('S110');
+      const html = profileOptionsHtml();
+      if (sel.dataset.html !== html) {
+        sel.innerHTML = html;
+        sel.dataset.html = html;
+      }
+      sel.title = tr('profile.pickTitle');
+      sel.setAttribute('aria-label', tr('profile.label'));
+    }
+    const typing = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.f === 'profile-name';
+    if (S.overlay && S.settingsOpen && S.settingsTab === 'profiles' && !typing) renderSettings();
+  }
+  /** [Z-QSP] (3.75.0) A line of the log of imports and exports (in ⚙ Settings → General; never cleared). */
+  function ioLog(dir, what, file, n, skipped = 0) {
+    const old = readJson('localStorage', IO_LOG_KEY, null);
+    const list = Array.isArray(old) ? old : [];
+    list.push({ at: Date.now(), dir, what, file: String(file || '').slice(0, 200), n, skipped });
+    rawSet(IO_LOG_KEY, JSON.stringify(list.slice(-5000)));
+    if (S.overlay && S.settingsOpen) renderSettings();
+  }
+  function ioLogHtml() {
+    const stored = readJson('localStorage', IO_LOG_KEY, null);
+    const list = (Array.isArray(stored) ? stored : []).filter((x) => x && typeof x === 'object').slice().reverse();
+    const f = S.ioFilter || '-';
+    const shown = list.filter((x) => f === '-' || x.dir === f);
+    const next = { '-': 'E', E: 'I', I: '-' }[f];
+    return `<details class="dci-iolog" data-el="iolog" ${S.ioOpen ? 'open' : ''}><summary>${esc(tr('io.title', { n: list.length }))}</summary>
+      <div class="dci-iolog-head"><button type="button" class="dci-small dci-iofilter" data-act="io-filter" title="${esc(tr('io.filterTitle', { next: tr(`io.f.${next}`) }))}"
+        aria-label="${esc(tr('io.filterLabel', { now: tr(`io.f.${f}`) }))}">[${f}]</button> <span class="dci-sub">${esc(tr(`io.f.${f}`))} · ${esc(tr('io.kept'))}</span></div>
+      ${shown.length ? `<ul class="dci-iolist">${shown.map((x) => `<li><span class="dci-iodir">${x.dir === 'E' ? '⇧ E' : '⇩ I'}</span> ${esc(stampOf(x.at))} · ${esc(tr(`io.what.${x.what}`))}
+        · ${esc(x.file)} · ${esc(tr(x.dir === 'E' ? 'io.exported' : 'io.imported', { n: x.n, skipped: x.skipped || 0 }))}</li>`).join('')}</ul>`
+        : `<p class="dci-sub">${esc(tr('io.none'))}</p>`}</details>`;
+  }
+  /** ⚙ Settings → Profiles: the active one, each own profile (its name to change, use, delete), export and import. */
+  function profilesPaneHtml() {
+    if (!ruleOn('S110')) return `<p class="dci-sub">${esc(tr('profile.off'))}</p>`;
+    const cur = activeProfileId();
+    const list = profilesRead();
+    const one = (id, name, at) => `<li class="dci-prof ${id === cur ? 'dci-prof-on' : ''}" data-profile="${esc(id)}">
+      ${id === 'std' ? `<strong>${esc(name)}</strong> <span class="dci-sub">${esc(tr('profile.stdNote'))}</span>`
+    : `<input type="text" data-f="profile-name" data-id="${esc(id)}" value="${esc(name)}" aria-label="${esc(tr('profile.nameAria'))}"> <span class="dci-sub">${esc(tr('profile.made', { at: stampOf(at) }))}</span>`}
+      ${id === cur ? `<span class="dci-prof-cur">${esc(tr('profile.active'))}</span>` : `<button type="button" class="dci-small" data-act="profile-use" data-id="${esc(id)}">${esc(tr('profile.use'))}</button>`}
+      ${id === 'std' ? '' : `<button type="button" class="dci-textbtn" data-act="profile-delete" data-id="${esc(id)}" aria-label="${esc(tr('profile.deleteAria', { name }))}">${esc(tr('profile.delete'))}</button>`}</li>`;
+    return `<p class="dci-sub">${esc(tr('profile.explain'))}</p>
+      <ul class="dci-proflist">${one('std', tr('profile.std'), 0)}${list.map((p) => one(p.id, p.name, p.at)).join('')}</ul>
+      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="profile-export" ${list.length ? '' : 'disabled'} title="${esc(tr('profile.exportTitle'))}">${esc(tr('profile.export'))}</button>
+        <label class="dci-filebtn" title="${esc(tr('profile.importTitle'))}">${esc(tr('profile.import'))} <input type="file" accept=".json,application/json" data-profiles-import></label></div>
+      <div class="dci-sub" data-el="profile-status" aria-live="polite">${esc(S.profileStatus || '')}</div>`;
+  }
+  function exportProfiles() {
+    const list = profilesRead();
+    const d = new Date();
+    const file = `mb-vibecode-profiles-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
+    const text = `${JSON.stringify({ format: PROFILE_FILE_FORMAT, version: 1, script: VERSION, exported: d.toISOString(),
+      profiles: list.map((p) => ({ name: p.name, at: p.at, values: p.values, quick: p.quick })) }, null, 2)}\n`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    log('info', 'profilesExported', { n: list.length, file });
+    ioLog('E', 'profiles', file, list.length);
+    S.profileStatus = tr('profile.exported', { n: list.length, file });
+    renderSettings();
+  }
+  /** Profiles of a file added (a name there already: "… (2)"); the active one stays. */
+  function importProfiles(text, file) {
+    let data;
+    try {
+      data = String(text || '').length <= 2e6 ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+    if (!data || data.format !== PROFILE_FILE_FORMAT || !Array.isArray(data.profiles)) {
+      S.profileStatus = tr('profile.importBad', { file });
+      renderSettings();
+      return 0;
+    }
+    const list = profilesRead();
+    const keys = new Set(profileKeys());
+    const quick = new Set(profileQuick());
+    let n = 0;
+    let skipped = 0;
+    for (const x of data.profiles.slice(0, 200)) {
+      if (!x || typeof x.name !== 'string' || !x.values || typeof x.values !== 'object') {
+        skipped++;
+        continue;
+      }
+      let name = x.name.trim().slice(0, 80) || `Profile ${nextProfileNumber(list)}`;
+      if (list.some((p) => p.name === name) || name === tr('profile.std') || name === 'Standard') {
+        let k = 2;
+        while (list.some((p) => p.name === `${name} (${k})`)) k++;
+        name = `${name} (${k})`;
+      }
+      const values = Object.fromEntries(Object.entries(x.values).filter(([k, v]) => keys.has(k) && (v === null || typeof v === 'string')));
+      const q = Object.fromEntries(Object.entries(x.quick || {}).filter(([k]) => quick.has(k)).map(([k, v]) => [k, !!v]));
+      const at = Number.isFinite(Number(x.at)) && Number(x.at) > 0 ? Number(x.at) : Date.now();
+      list.push({ id: `p${Date.now().toString(36)}${n}`, name, at, values, quick: q });
+      n++;
+    }
+    if (!profilesWrite(list)) {
+      S.profileStatus = tr('profile.importFull', { file });
+      renderSettings();
+      return 0;
+    }
+    log('info', 'profilesImported', { n, file });
+    ioLog('I', 'profiles', file, n, skipped);
+    S.profileStatus = tr('profile.imported', { n, file });
+    renderProfilePickers();
+    renderSettings();
+    return n;
+  }
+  /** [Z-QSP] (3.75.0) "Reset all settings": the active profile as "Standard" ('active'), or no own profiles any more ('all'). */
+  function resetProfiles(how) {
+    const changed = [];
+    S.profileApplying = true;
+    try {
+      for (const q of profileQuick()) {
+        const on = !DEFAULT_OFF_RULES.has(q);
+        if (ruleOn(q) !== on) {
+          setRuleOn(q, on);
+          changed.push(q);
+        }
+      }
+      // (only when a quick switch changed: "Reset all settings" with the own rules removed leaves nothing stored)
+      if (changed.length) saveRules();
+      if (how === 'all') {
+        profilesWrite([]);
+        rawSet(PROFILE_KEY, JSON.stringify('std'));
+      } else {
+        const list = profilesRead();
+        const p = list.find((x) => x.id === activeProfileId());
+        if (p) {
+          Object.assign(p, profileSnapshot());
+          profilesWrite(list);
+        }
+      }
+      changed.forEach((q) => applyRulesChange(q));
+    } finally {
+      S.profileApplying = false;
+    }
+    log('info', how === 'all' ? 'profilesDeletedAll' : 'profileReset', { name: profileNameOf(activeProfileId()) });
+    renderProfilePickers();
+  }
+  function deleteProfile(id) {
+    const list = profilesRead();
+    const p = list.find((x) => x.id === id);
+    if (!p) return;
+    const wasActive = activeProfileId() === id;
+    profilesWrite(list.filter((x) => x !== p));
+    log('info', 'profileDeleted', { name: p.name });
+    if (wasActive) applyProfile('std');
+    renderProfilePickers();
+    renderSettings();
+  }
+  function renameProfile(id, name) {
+    const list = profilesRead();
+    const p = list.find((x) => x.id === id);
+    const nm = String(name || '').trim().slice(0, 80);
+    // ((review) not "Standard", not a name another profile has)
+    if (!p || !nm || nm === p.name || nm === tr('profile.std') || nm === 'Standard' || list.some((x) => x !== p && x.name === nm)) {
+      renderSettings();
+      return;
+    }
+    p.name = nm;
+    profilesWrite(list);
+    renderProfilePickers();
+  }
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -39758,6 +40271,7 @@
       b.title = tr(title);
     });
     syncLogBtn();
+    renderProfilePickers();
     bar.querySelector('#dci-launch-status').textContent = S.launchStatus ? tr(S.launchStatus.key, S.launchStatus.params) : '';
     renderNotice();
     renderLangAsk();
@@ -39850,6 +40364,7 @@
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
     // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
     bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
+      <select id="dci-profile" class="dci-profile-pick"></select>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
       <span class="dci-launch-tools">${'' /* [Z-LS] (3.40.14) symbols in the order of the dashboard's head: Log | Statistics · ⚙ */}<button type="button" id="dci-log-open" class="dci-launch-ico" aria-pressed="false">${ico('log')}</button><span class="dci-launch-sep" aria-hidden="true"></span><button type="button" id="dci-stats-open" class="dci-launch-ico">${ico('stats')}</button><button type="button" id="dci-set-open" class="dci-launch-ico">${ico('gear')}</button></span>
@@ -39864,6 +40379,8 @@
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
+    // [Z-QSP] (3.75.0, S110) the profile: applied at once (also with the dashboard open)
+    bar.querySelector('#dci-profile').addEventListener('change', (e) => applyProfile(e.target.value));
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
     bar.querySelector('#dci-stats-open').addEventListener('click', () => openFromBar('stats'));
     bar.querySelector('#dci-set-open').addEventListener('click', () => openFromBar('settings'));
@@ -40294,6 +40811,7 @@
       #dci-langask label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
       #dci-langask .dci-langask-ok { font: inherit; padding: 2px 14px; border: 1px solid #4b4585; border-radius: 3px; background: #4b4585; color: #fff; cursor: pointer; }
       #dci-langask .dci-langask-hint { flex-basis: 100%; color: #6d6a7c; font-size: 12px; }
+      #dci-launcher .dci-profile-pick { font-size: 12px; max-width: 16em; margin-right: 6px; } /* [Z-QSP] (3.75.0) */
       #dci-launcher .dci-place-seg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 3px; overflow: hidden; font-size: 12px; }
       #dci-launcher .dci-place-seg button { border: 0; background: #fff; color: #262430; cursor: pointer; font: inherit; padding: 2px 8px; }
       #dci-launcher .dci-place-seg button + button { border-left: 1px solid #c8c5d6; }
@@ -41013,6 +41531,16 @@
       .dci-dedrow { margin-top: 4px; }
       .dci-dedfields input { min-width: 16em; flex: 1 1 16em; }
       .dci-dedfields select { max-width: 22em; }
+      /* [Z-QSP] (3.75.0) the profiles in ⚙ Settings, the log of imports and exports */
+      .dci-proflist { list-style: none; margin: calc(var(--u, 1px) * 6) 0; padding: 0; }
+      .dci-prof { display: flex; flex-wrap: wrap; align-items: center; gap: 4px calc(var(--u, 1px) * 8); padding: 3px calc(var(--u, 1px) * 6); border-radius: 4px; }
+      .dci-prof-on { background: var(--soft); outline: 1px solid var(--line); }
+      .dci-prof input[type=text] { min-width: 14em; }
+      .dci-prof-cur { font-weight: 600; color: var(--muted); }
+      .dci-iolog summary { cursor: pointer; font-weight: 600; }
+      .dci-iolist { margin: 4px 0; padding-left: calc(var(--u, 1px) * 18); max-height: 14em; overflow: auto; }
+      .dci-iodir { font-family: monospace; }
+      .dci-reset-prof { border: 1px solid var(--line); border-radius: 4px; margin: 6px 0; padding: 4px 8px; }
       .dci-works h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
       /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */
