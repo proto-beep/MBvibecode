@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.82.0 | – |
+| 2026-11-07 | 3.73.0 – 3.83.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.83.0
+
+#### Changed
+
+- **Staged again after a change** (collected item Z-RLV, rule S124): a relationship staged before whose row was changed in the dashboard since – its level (Recording → Release …), type, tracks, attributes, credits, date – is replaced at the next "Stage" (taken out of the editor, or updated), **also when it was changed in the relationship editor itself**; those are named in a message ("… was changed in the relationship editor itself; it was replaced by what the dashboard has now"). Until 3.82.0 such a one stayed ("please remove it there by hand"). The dashboard's type and entities count, not those of the editor; one taken out in the editor itself is added anew; an old one goes only once what replaces it is staged (not cut by the cap); one only taken out is named as such.
+- **New works while some tracks have a work of the same title** (collected item Z-SNW, rule S125): "＋ New works" and "Create all …" ask in the works matrix – **for the other tracks** (those left out to be linked), **for all tracks anyway**, **Cancel** (until 3.82.0 a question of the browser: the others or none). New works created anyway are named in the edit note with the works of the same title – **⚙ Settings → Staging → Edit note** (a heading of its own now, with "Full | Simple"): "Name works of the same title in MusicBrainz when new works are created anyway" (on). Esc or a click elsewhere cancels the question; a work of MusicBrainz linked in place of the new one is not named; the switch is part of profiles and of "Reset".
+
+#### Fixed
+
+- **"＋ Add a column" of the works matrix** (collected item Z-AMX): its box is always whole in view – below its button (above it without room), moved as far as needed, inside the dashboard (also when its window is moved or made smaller), never under its bars that stay on top, also while the matrix or the page scrolls; hidden while its button is scrolled out of view (until 3.82.0 it ran out of the matrix to the left).
 
 ### Import 3.82.0
 

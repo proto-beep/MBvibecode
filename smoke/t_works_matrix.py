@@ -1280,8 +1280,8 @@ def case_addcolumn():
     A) The list: "People of the release" first (the performers Bass Man, Drum Guy …), then "Labels" with the personal publisher of
        Drum Guy MusicBrainz has (Drum Pub) and that of Writer W (a column already: Hidden Pub), then "Other entries" (Bob Producer, the
        place Abbey Road Studios …).
-    B) Its menu is above the head of the tracks ("Track and work"): its head is drawn above that one (until 3.67.0 below it – the menu
-       was covered where it reached it).
+    B) Its menu is above the head of the tracks ("Track and work") – until 3.67.0 below it (the menu was covered where it reached it);
+       from 3.83.0 (review) out of the matrix (fixed, its own stacking order).
     C) Bass Man chosen: the role set by the rules (the most common writing role of the matrix: writer).
     D) "Drum Pub" chosen: publishing; added: a column of Drum Pub.
     E) The column of Writer W: "Another role" publishing – a second role on the tracks of its cells; a cell's menu says several roles
@@ -1309,12 +1309,11 @@ def case_addcolumn():
             pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()')
             pg.wait_for_timeout(1500)
             out = {'list': pg.evaluate(LIST)}
-            pg.evaluate("document.querySelector('.dci-mx-addcol-pop').scrollIntoView({ block: 'center', inline: 'center' })")
+            pg.evaluate("document.querySelector('.dci-matrix thead [data-act=mx-addcol-open]').scrollIntoView({ block: 'end', inline: 'nearest' })")
             pg.wait_for_timeout(300)
             out['top'] = pg.evaluate("""(() => { const m = document.querySelector('.dci-mx-addcol-pop'); if (!m) return null; const r = m.getBoundingClientRect();
               const x = Math.max(r.left + 10, 0), y = r.top + Math.min(40, r.height / 2); const el = document.elementFromPoint(x, y);
-              const front = document.querySelector('.dci-matrix thead .dci-mx-front');
-              return el && m.contains(el) && Number(getComputedStyle(m.closest('th')).zIndex) > Number(getComputedStyle(front).zIndex); })()""")
+              return el && m.contains(el) && !m.closest('.dci-mx-wrap'); })()""")
             sel = '.dci-mx-addcol-pop [data-f=mx-addcol-entry]'
             key = pg.evaluate(f"[...document.querySelector('{sel}').options].find(o => o.textContent.trim() === 'Bass Man').value")
             pg.select_option(sel, key)
@@ -1410,6 +1409,59 @@ def case_mxarrows():
     seen2, _ = run(off=True)
     print('B)', seen2)
     results.append(seen2[0] == [0, 1] and seen2[1] == [0, 1])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_amx383():
+    """Credits Importer 3.83.0 (collected item Z-AMX): the box of "＋ Add a column" whole in view – the page 760 px wide, the matrix scrolled
+    to its left end, the box opened: its left and right edges inside the window (until 3.82.0 it ran out of the matrix to the left);
+    the matrix scrolled while it is open: still whole in view; its field takes text.
+    C) (review) The dashboard's window moved and made smaller: the box inside it and nothing over it (until the review it kept to the
+       browser's window and the bars of the dashboard that stay on top were drawn over it)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.set_viewport_size({'width': 760, 'height': 900})
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix thead [data-act=mx-addcol-open]')", 30)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').scroll_into_view_if_needed()
+        pg.evaluate("document.querySelector('.dci-mx-wrap').scrollLeft = 0")
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()')
+        H.wait_for(pg, "!!document.querySelector('.dci-mx-addcol-pop')", 10)
+        H.wait_still(pg, "JSON.stringify(document.querySelector('.dci-mx-addcol-pop').getBoundingClientRect())", 5, 200)
+        BOX = "(() => { const r = document.querySelector('.dci-mx-addcol-pop').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom), innerWidth, innerHeight]; })()"
+        a = pg.evaluate(BOX)
+        print('A) Kasten:', a)
+        results.append(a[0] >= 0 and a[1] <= a[4] and a[2] >= 0 and a[3] <= a[5])
+        pg.evaluate("document.querySelector('.dci-mx-wrap').scrollLeft = 99999")
+        H.wait_still(pg, "JSON.stringify(document.querySelector('.dci-mx-addcol-pop') && document.querySelector('.dci-mx-addcol-pop').getBoundingClientRect())", 5, 200)
+        b0 = pg.evaluate(BOX) if pg.evaluate("!!document.querySelector('.dci-mx-addcol-pop')") else None
+        field = pg.locator('.dci-mx-addcol-pop input[type=text]').first
+        field.fill('https://musicbrainz.org/artist/00000000-0000-4000-8000-000000000000')
+        print('B) gescrollt:', b0, '| Feld:', field.input_value()[:30])
+        results.append(b0 is not None and b0[0] >= 0 and b0[1] <= b0[4] and field.input_value().startswith('https://'))
+        # C) (review) the dashboard's window moved and made smaller: the box inside it, nothing drawn over it (the bars that stay on top)
+        pg.set_viewport_size({'width': 1200, 'height': 1000})
+        pg.evaluate("Object.assign(document.querySelector('.dci-panel').style, { left: '320px', top: '20px', width: '860px', height: '960px' })")
+        pg.wait_for_timeout(200)
+        pg.evaluate("document.querySelector('.dci-mx-wrap').scrollLeft = 99999; document.querySelector('.dci-matrix thead [data-act=mx-addcol-open]').scrollIntoView({ block: 'end', inline: 'nearest' })")
+        H.wait_still(pg, "JSON.stringify(document.querySelector('.dci-mx-addcol-pop').getBoundingClientRect())", 5, 200)
+        c0 = pg.evaluate("""(() => { const m = document.querySelector('.dci-mx-addcol-pop'); const r = m.getBoundingClientRect();
+          const p = document.querySelector('.dci-panel').getBoundingClientRect();
+          const pts = [[r.left + 6, r.top + 6], [r.right - 6, r.top + 6], [r.left + 6, r.bottom - 6], [r.right - 6, r.bottom - 6]];
+          return [r.left >= p.left - 1 && r.right <= p.right + 1 && r.top >= p.top - 1 && r.bottom <= p.bottom + 1,
+            pts.every(([x, y]) => { const el = document.elementFromPoint(x, y); return !!el && m.contains(el); }), getComputedStyle(m).visibility]; })()""")
+        print('C) im Fenster, frei:', c0)
+        results.append(c0 == [True, True, 'visible'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
