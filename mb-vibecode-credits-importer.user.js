@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.73.0
+// @version      3.74.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.73.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.73.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.74.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.74.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.73.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.74.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -650,6 +650,42 @@
       "log.liveNone": "Comments of live recordings: nothing to enter (they are in MusicBrainz already)",
       "livecom.noticeTitle": "MB x Vibecode: Credits Importer – comments of live recordings",
       "ded.from": "From “{phrase}” ({where})",
+      "dedbox.title": "Dedications & tributes",
+      "dedbox.add.dedicated": "Add a dedication",
+      "dedbox.add.tribute": "Add a tribute",
+      "dedbox.tributeRg": "A tribute is on the release group",
+      "dedbox.openTitle": "Open this entry in MusicBrainz (new tab)",
+      "dedbox.off": "Finding dedications in the texts is switched off (rule S097) – “＋ Dedication | Tribute” adds one.",
+      "dedbox.looking": "Looking up the dedications of the texts …",
+      "log.dedSeveralSugg": "“{phrase} {name}”: several entries of exactly that name in MusicBrainz – a suggestion in the box “Dedications & tributes”",
+      "log.dedNoTargetSugg": "“{phrase} {name}”: no entry of exactly that name in MusicBrainz – a suggestion in the box “Dedications & tributes”",
+      "dedbox.kind": "Dedication or tribute",
+      "dedbox.dedicated": "Dedication",
+      "dedbox.tribute": "Tribute",
+      "dedbox.mbid": "MBID or link of a MusicBrainz entry",
+      "dedbox.mbidTitle": "Paste the link of an artist, label, place or area page of MusicBrainz, or its MBID",
+      "dedbox.level": "Level",
+      "dedbox.levelRg": "release group",
+      "dedbox.levelWork": "work of track {pos} ({title})",
+      "dedbox.levelWorkShort": "work",
+      "dedbox.add": "Add",
+      "dedbox.several": "several entries of exactly that name in MusicBrainz – which one? (from {where})",
+      "dedbox.none": "no entry of exactly that name in MusicBrainz – an MBID? (from {where})",
+      "dedbox.noTrack": "the work of which track? (from {where})",
+      "dedbox.pickTitle": "This entry – on the level chosen",
+      "dedbox.dismiss": "leave out",
+      "dedbox.dismissTitle": "Leave this suggestion out (for this release)",
+      "dedbox.empty": "None found in the texts of this release – “＋ Dedication | Tribute” adds one.",
+      "dedbox.onRg": "on the release group",
+      "dedbox.onWork": "on the work of track {pos}",
+      "dedbox.goto": "↓ to its row",
+      "dedbox.gotoTitle": "Its row in the entries",
+      "dedbox.byHand": "added by hand",
+      "dedbox.noType": "MusicBrainz has no “{kind}” from {type} to a {level}",
+      "dedbox.twice": "{name} has a dedication or tribute here already",
+      "log.dedDismissed": "“{phrase} {name}”: suggestion left out",
+      "settings.dedBox": "Show the box “Dedications & tributes”",
+      "settings.dedBoxTitle": "Above the works matrix: the dedications and tributes found in the texts, suggestions to choose from, and adding one by hand",
       "ded.toggleTitle": "Switch between “dedicated to” and “tribute to” – they are easily mixed up",
       "ded.kind.dedicated": "dedicated to",
       "ded.kind.tribute": "tribute to",
@@ -3698,6 +3734,7 @@
     { id: 'S106', where: 'onKeydown (mxArrow)', note: 'Works matrix (3.70.0): the arrow keys move between the cells (← → along a row, ↑ ↓ along a column; the front column of the tracks and the heads of the columns too); Space or Enter switches a cell as before' },
     { id: 'S107', where: 'findDedications, runDedications', note: 'Dedications (3.71.0): "for …" in a sentence too, when an artist, a country or a place MusicBrainz has exactly once by that name follows ("This record is for Peter Kowald") – not after "recorded", "produced", "commissioned", "made", "mixed", "performed" (that is a production), not a label (a label only with "tribute to"), not after "thanks"; "written for" / "composed for" is a dedication of the work. A country or a place only on the work of a track the sentence names' },
     { id: 'S108', where: 'addManualEntry, renderEvAsk, answerEvAsk', note: 'An event added by hand without a role (3.73.0): asked right below "Add entry manually" – "recorded at", or "video shot at" when the release has videos; on the recordings first (its level changes with a click), the entry folded to its compact lines' },
+    { id: 'S109', where: 'renderDedBox, dedSuggest, dedTake', note: 'The box "Dedications & tributes" above the works matrix (3.74.0): the dedications found (MusicBrainz has exactly one entry of the name: added by themselves) and suggestions of those not sure – several entries of the name (each a button), none, a name after "for" without a track – each with a field for an MBID or a link and the level (the release group or the work of a track); "＋ Dedication | Tribute" adds one by hand. No "Create …" here. Shown unless switched off in ⚙ Settings → Appearance' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -17832,6 +17869,8 @@
       S.tcpDefault = null;
       S.tcpHits = null;
       S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up: of this release
+      S.dedSugg = []; // [Z-DEDQ] (3.74.0) its suggestions too
+      S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
@@ -19882,6 +19921,8 @@
       S.tcpHits = null; // [Z-TCP] (3.60.0, review) the works found by the names after the titles: of this import
       S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up again with each import
       S.evAsk = null; // ([Z-EVQ] 3.73.0, review) the question of an event of the import before
+      S.dedSugg = []; // [Z-DEDQ] (3.74.0)
+      S.dedForm = null;
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
@@ -26554,6 +26595,10 @@
     el.innerHTML = companies.length
       ? `<h3>${esc(tr('companies.title'))}</h3><p class="dci-muted">${esc(tr('companies.explain'))}</p>${companies.map(groupHtml).join('')}`
       : '';
+    // ([Z-FRM] 3.74.0, review) the frame of the entries only with entries in it
+    const frame = S.overlay && S.overlay.querySelector('[data-el="entries-frame"]');
+    if (frame) frame.hidden = !all.length;
+    renderDedBox(); // [Z-DEDQ] (3.74.0)
   }
 
   function rerenderGroup(a) {
@@ -27915,9 +27960,25 @@
     // ((review) a track's title: only "… For X", an artist, on its work
     S.mbTracks.forEach((t) => findDedications(workTitleOf(t.title), { title: true, titleKind: 'dedicated', phrases: false })
       .forEach((d) => found.push({ ...d, kind: 'dedicated', where: tr('ded.src.track', { pos: trackLabel(t) }), track: t.idx, fromTrackTitle: true })));
-    if (!found.length) return;
     S.dedDone = S.dedDone || new Set();
     const choices = dedChoices();
+    // ([Z-DEDQ] 3.74.0, review) what was picked in the box or added by hand comes back with each import (it is no remembered row)
+    let restored = 0;
+    for (const [key, c] of Object.entries(choices)) {
+      if (!c || c.x || !c.gid || S.rows.some((r) => r.dedication && r.dedication.key === key)) continue;
+      if (addDedicationRow({ gid: c.gid, name: c.name || '', entityType: c.et || 'artist', level: c.level || 'release_group' },
+        { kind: c.kind || 'dedicated', phrase: c.phrase || tr(`ded.kind.${c.kind || 'dedicated'}`), name: c.name || '', where: c.where || tr('dedbox.byHand'), sentence: '', key }, c.track != null ? c.track : null)) restored++;
+    }
+    if (restored && seq === importSeq) {
+      renderGroups();
+      renderWorks();
+      refresh();
+    }
+    if (!found.length) {
+      renderDedBox();
+      return;
+    }
+    S.dedRunning = true;
     // ((review) the track a sentence names: its whole title as words, the longest, not inside the phrase or the name
     const words = (x) => ` ${foldWord(x).replace(/[^\p{L}\p{N}']+/gu, ' ').trim()} `;
     const trackOf = (d) => {
@@ -27939,7 +28000,15 @@
       // ([Z-DED2] 3.71.0, review) "written / composed for": the work of the track named (the only track of the release), else none;
       // a single word after "for" (a country, a place, "Björk") only with a track named
       if (d.viaFor && track == null && (d.workOnly || d.name.split(/\s+/).length < 2)) {
-        if (S.mbTracks.length !== 1) continue;
+        if (S.mbTracks.length !== 1) {
+          // [Z-DEDQ] (3.74.0, S109) not left out quietly: a suggestion of the box (its track to choose; (review) a key of its own, once)
+          const k0 = `${d.kind}|${foldWord(d.name)}|?`;
+          if (!S.dedDone.has(k0)) {
+            S.dedDone.add(k0);
+            dedSuggest({ ...d, key: k0, needTrack: true }, []);
+          }
+          continue;
+        }
         track = S.mbTracks[0].idx;
       }
       const key = `${d.kind}|${foldWord(d.name)}|${track != null ? track : ''}`;
@@ -27952,6 +28021,7 @@
       let hit = null;
       let failed = false;
       let several = false;
+      let hits = [];
       // ((review) the names together first ("Simon & Garfunkel"), then each
       const names = uniq([d.whole && d.whole !== d.name && found.filter((x) => x.whole === d.whole).length > 1 ? d.whole : '', d.name].filter(Boolean));
       outer: for (const name of names) {
@@ -27972,6 +28042,8 @@
           }
           if (same.length > 1) {
             several = true;
+            // [Z-DEDQ] (3.74.0) the entries of that name: offered in the box
+            hits = same.slice(0, 8).map((x) => ({ gid: x.id, name: x.name, comment: x.disambiguation || '', entityType: et }));
             break outer;
           }
         }
@@ -27980,16 +28052,165 @@
       if (failed) continue;
       S.dedDone.add(key);
       if (!hit) {
-        log('info', several ? 'dedSeveral' : 'dedNoTarget', { name: d.name, phrase: d.phrase });
+        log('info', ruleOn('S109') ? (several ? 'dedSeveralSugg' : 'dedNoTargetSugg') : several ? 'dedSeveral' : 'dedNoTarget', { name: d.name, phrase: d.phrase });
+        // [Z-DEDQ] (3.74.0, S109) what was found but is not sure: a suggestion of the box (the entries of that name, a field for an MBID)
+        dedSuggest({ ...d, key, track }, hits);
         continue;
       }
       if (addDedicationRow(hit, { ...d, key, kind: (choices[key] && choices[key].kind) || d.kind }, track)) added++;
     }
+    S.dedRunning = false;
     if (added && seq === importSeq) {
       renderGroups();
       renderWorks();
       refresh();
     }
+    renderDedBox();
+  }
+
+  // --- [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" above the works matrix ------------------------------------------
+  const DED_BOX_KEY = 'dci-ded-box';
+  /** A suggestion of the box: a dedication found but not sure (several entries of the name, none, no track) – once per key. */
+  function dedSuggest(d, hits) {
+    if (!ruleOn('S109')) return;
+    S.dedSugg = S.dedSugg || [];
+    const choices = dedChoices();
+    if ((choices[d.key] && choices[d.key].x) || S.dedSugg.some((x) => x.key === d.key) || S.rows.some((r) => r.dedication && r.dedication.key === d.key)) return;
+    S.dedSugg.push({ key: d.key, kind: (choices[d.key] && choices[d.key].kind) || d.kind, name: d.name, phrase: d.phrase, where: d.where, sentence: String(d.sentence || '').slice(0, 200),
+      track: d.track != null ? d.track : null, needTrack: !!d.needTrack, fromTitle: !!d.fromTitle, hits });
+  }
+  /** The levels a dedication can go to: the release group, the work of each chosen track. */
+  const dedLevelOptions = (sel) => [`<option value="release_group" ${sel === 'release_group' ? 'selected' : ''}>${esc(tr('dedbox.levelRg'))}</option>`,
+    ...selTracks().map((t) => `<option value="work:${t.idx}" ${sel === `work:${t.idx}` ? 'selected' : ''}>${esc(tr('dedbox.levelWork', { pos: trackListLabel([t.idx]), title: workTitleOf(t.title) }))}</option>`)].join('');
+  /** ((review) what was typed or chosen in the box: kept in the state, so a redraw does not lose it) */
+  function dedDraftsSave(el) {
+    el.querySelectorAll('[data-f="ded-mbid"], [data-f="ded-level"]').forEach((f) => {
+      const key = f.dataset.key;
+      const x = key === 'form' ? S.dedForm : (S.dedSugg || []).find((s0) => s0.key === key);
+      if (x) x[f.dataset.f === 'ded-mbid' ? 'mbid' : 'level'] = f.value;
+    });
+  }
+  /** "Dedication | Tribute": one box split in two halves, each a button. */
+  const dedKindSeg = (act, kind, extra = '') => `<span class="dci-dedseg" role="group" aria-label="${esc(tr('dedbox.kind'))}">${['dedicated', 'tribute'].map((k) => `<button type="button"
+    data-act="${act}" data-kind="${k}" ${extra} ${act === 'ded-add' ? `aria-expanded="${!!(S.dedForm && S.dedForm.kind === k)}" aria-label="${esc(tr(`dedbox.add.${k}`))}"` : `aria-pressed="${kind === k}"`}>${act === 'ded-add' && k === 'dedicated' ? '＋ ' : ''}${esc(tr(`dedbox.${k}`))}</button>`).join('')}</span>`;
+  /** The fields of an entry to add: an MBID or a link, the level, "Add" – for a suggestion (its key) or the box's own form. */
+  function dedFieldsHtml(key, levelSel, help, draft = {}, kind = 'dedicated') {
+    const k = esc(key);
+    // ((review) a tribute: MusicBrainz's on the release group only)
+    const tribute = kind === 'tribute';
+    return `<span class="dci-dedfields"><input type="text" data-f="ded-mbid" data-key="${k}" value="${esc(draft.mbid || '')}" placeholder="${esc(tr('dedbox.mbid'))}" aria-label="${esc(tr('dedbox.mbid'))}" title="${esc(help)}">
+      <select data-f="ded-level" data-key="${k}" aria-label="${esc(tr('dedbox.level'))}" ${tribute ? `disabled title="${esc(tr('dedbox.tributeRg'))}"` : ''}>${dedLevelOptions(tribute ? 'release_group' : draft.level || levelSel)}</select>
+      <button type="button" class="dci-small" data-act="ded-take" data-key="${k}" ${S.dedBusy ? 'disabled' : ''}>${esc(tr('dedbox.add'))}</button></span>`;
+  }
+  function dedBoxShown() {
+    return ruleOn('S109') && S.dedBox !== false && !!S.release;
+  }
+  function renderDedBox() {
+    const el = S.overlay && S.overlay.querySelector('[data-el="dedbox"]');
+    if (!el) return;
+    el.hidden = !dedBoxShown();
+    if (el.hidden) {
+      el.innerHTML = '';
+      el.dciHtml = '';
+      return;
+    }
+    dedDraftsSave(el);
+    const ae = document.activeElement;
+    const keepFocus = el.contains(ae) && ae.dataset ? { f: ae.dataset.f || '', act: ae.dataset.act || '', key: ae.dataset.key || '', kind: ae.dataset.kind || '', gid: ae.dataset.gid || '' } : null;
+    const rows = S.rows.filter((r) => r.dedication && r.level !== 'skip');
+    const list = rows.map((r) => {
+      const a = S.artists.get(r.artistKey) || {};
+      const lv = r.level === 'work' && r.tracks && r.tracks.size ? tr('dedbox.onWork', { pos: trackListLabel([...r.tracks]) }) : tr('dedbox.onRg');
+      return `<li><span class="dci-dedkind">${esc(tr(`ded.kind.${r.dedication.kind}`))}</span> <strong>${esc(a.mbName || a.name || '')}</strong> <span class="dci-sub">${esc(lv)} · ${esc(r.dedication.where || '')}</span>
+        <button type="button" class="dci-textbtn" data-act="ded-goto" data-row="${esc(r.id)}" title="${esc(tr('dedbox.gotoTitle'))}">${esc(tr('dedbox.goto'))}</button></li>`;
+    }).join('');
+    const sugg = (S.dedSugg || []).map((x) => {
+      // ((review) the work of a track to choose: the first track at first)
+      const first = selTracks()[0];
+      const lvl = x.track != null ? `work:${x.track}` : x.needTrack && first ? `work:${first.idx}` : 'release_group';
+      const hits = x.hits.length ? `<span class="dci-dedhits">${x.hits.map((h) => `<span><button type="button" class="dci-small" data-act="ded-pick" data-key="${esc(x.key)}" data-gid="${esc(h.gid)}"
+        title="${esc(tr('dedbox.pickTitle'))}">${esc(h.name)}${h.comment ? ` <span class="dci-sub">(${esc(h.comment)})</span>` : ''}</button><a class="dci-textbtn" href="/${esc(h.entityType)}/${esc(h.gid)}" target="_blank"
+        rel="noopener" title="${esc(tr('dedbox.openTitle'))}" aria-label="${esc(tr('dedbox.openTitle'))}">↗</a></span>`).join('')}</span>` : '';
+      return `<div class="dci-dedsugg" data-key="${esc(x.key)}" role="group" aria-label="${esc(`${x.phrase} ${x.name}`)}">
+        <div><strong>“${esc(x.phrase)} ${esc(x.name)}”</strong> <span class="dci-sub" title="${esc(x.sentence)}">${esc(tr(x.hits.length ? 'dedbox.several' : x.needTrack ? 'dedbox.noTrack' : 'dedbox.none', { where: x.where }))}</span></div>
+        <div class="dci-dedrow">${dedKindSeg('ded-sugg-kind', x.kind, `data-key="${esc(x.key)}"`)}${hits}${dedFieldsHtml(x.key, lvl, tr('dedbox.mbidTitle'), x, x.kind)}
+          <button type="button" class="dci-textbtn" data-act="ded-dismiss" data-key="${esc(x.key)}" title="${esc(tr('dedbox.dismissTitle'))}">✕ ${esc(tr('dedbox.dismiss'))}</button></div></div>`;
+    }).join('');
+    const form = S.dedForm ? `<div class="dci-dedsugg dci-dedform" role="group" aria-label="${esc(tr(`dedbox.${S.dedForm.kind}`))}">
+        <div class="dci-dedrow">${dedKindSeg('ded-form-kind', S.dedForm.kind)}${dedFieldsHtml('form', 'release_group', tr('dedbox.mbidTitle'), S.dedForm, S.dedForm.kind)}
+          <button type="button" class="dci-textbtn" data-act="ded-form-cancel">${esc(tr('common.cancel'))}</button></div></div>` : '';
+    // ((review) drawn anew only when something changed: a box drawn anew takes the page's scroll anchor – the works matrix jumped
+    // while a track group was dragged)
+    const html = `<div class="dci-dedbox-head"><h3 id="dci-dedbox-h">${esc(tr('dedbox.title'))}</h3>${dedKindSeg('ded-add', '')}
+        <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S109" title="${esc(tr('rules.gotoTitle'))}">S109</button></div>
+      ${list ? `<ul class="dci-dedlist">${list}</ul>` : ''}${sugg}${form}
+      ${!list && !sugg && !form ? `<p class="dci-sub">${esc(tr(!ruleOn('S097') ? 'dedbox.off' : S.dedRunning ? 'dedbox.looking' : 'dedbox.empty'))}</p>` : ''}
+      <div class="dci-err" data-el="ded-err" aria-live="polite">${esc(S.dedErr || '')}</div>`;
+    if (el.dciHtml === html) return;
+    el.dciHtml = html;
+    el.innerHTML = html;
+    if (keepFocus) {
+      const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
+      const sel = keepFocus.f ? `[data-f="${q(keepFocus.f)}"]${keepFocus.key ? `[data-key="${q(keepFocus.key)}"]` : ''}`
+        : keepFocus.act ? `[data-act="${q(keepFocus.act)}"]${keepFocus.key ? `[data-key="${q(keepFocus.key)}"]` : ''}${keepFocus.kind ? `[data-kind="${q(keepFocus.kind)}"]` : ''}${keepFocus.gid ? `[data-gid="${q(keepFocus.gid)}"]` : ''}` : '';
+      // ((review) a button that is gone: the half of the head of its kind, else the head's first)
+      const f = (sel && el.querySelector(sel)) || el.querySelector(`.dci-dedbox-head [data-act="ded-add"][data-kind="${q(keepFocus.kind || 'dedicated')}"]`);
+      if (f) f.focus({ preventScroll: true });
+    }
+  }
+  /** Adds a dedication from the box: a suggestion (its key) or the form ('form'); gid from a button of the entries of that name. */
+  async function dedTake(key, gid = '') {
+    if (S.dedBusy) return;
+    const el = S.overlay.querySelector('[data-el="dedbox"]');
+    if (el) dedDraftsSave(el);
+    S.dedErr = '';
+    const err = { set textContent(v) { S.dedErr = v; renderDedBox(); } };
+    const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
+    const input = el && el.querySelector(`[data-f="ded-mbid"][data-key="${q(key)}"]`);
+    const levelSel = el && el.querySelector(`[data-f="ded-level"][data-key="${q(key)}"]`);
+    const mbid = gid || ((input && input.value.match(MBID_RE)) || [])[0];
+    if (!mbid) {
+      if (err) err.textContent = tr('msg.badMbidAny');
+      return;
+    }
+    const x = key === 'form' ? null : (S.dedSugg || []).find((s0) => s0.key === key);
+    const kind = x ? x.kind : (S.dedForm || {}).kind || 'dedicated';
+    const lv = kind === 'tribute' ? 'release_group' : levelSel ? levelSel.value : 'release_group';
+    const track = lv.startsWith('work:') ? Number(lv.slice(5)) : null;
+    const level = track != null ? 'work' : 'release_group';
+    const seq = importSeq;
+    let e;
+    S.dedBusy = true;
+    try {
+      e = await fetchJsEntity(mbid.toLowerCase());
+    } catch (ex) {
+      S.dedBusy = false;
+      err.textContent = ex.message;
+      return;
+    }
+    S.dedBusy = false;
+    if (seq !== importSeq) return;
+    const et = String((e && e.entityType) || '').replace('-', '_');
+    // (a tribute is MusicBrainz's on the release group only; a dedication of a work: also an area, a place, a label)
+    if (!e || !dedicationLt(kind, level, et)) {
+      err.textContent = tr('dedbox.noType', { kind: tr(`ded.kind.${kind}`), type: et ? tr(`entity.${et}`) : '?', level: tr(level === 'work' ? 'dedbox.levelWorkShort' : 'dedbox.levelRg') });
+      return;
+    }
+    const d = x ? { kind, phrase: x.phrase, name: x.name, where: x.where, sentence: x.sentence, fromTitle: x.fromTitle, key: x.key }
+      : { kind, phrase: tr(`ded.kind.${kind}`), name: e.name, where: tr('dedbox.byHand'), sentence: '', key: `hand|${e.gid || mbid}|${lv}` };
+    const gid0 = e.gid || mbid.toLowerCase();
+    const ok = addDedicationRow({ gid: gid0, name: e.name, entityType: et, level }, d, track);
+    if (!ok) {
+      err.textContent = tr('dedbox.twice', { name: e.name });
+      return;
+    }
+    // ((review) remembered for this release: added again with each import, as a find)
+    dedChoose(d.key, { kind, gid: gid0, et, name: e.name, level, track, phrase: d.phrase, where: d.where });
+    if (x) S.dedSugg = S.dedSugg.filter((s0) => s0 !== x);
+    else S.dedForm = null;
+    renderGroups();
+    renderWorks();
+    refresh();
   }
 
   /** [Z-DED] (3.67.0, review) What was chosen for the dedications of this release (kept in this browser): key → { kind, x: removed }. */
@@ -33237,8 +33458,23 @@
         ['--dci-mx-replace', 'matrix.dropReplace'], ['--dci-mx-add', 'matrix.dropAdd']]
         .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
     }
+    // ([Z-FRM] 3.74.0, review) what the drag shows (the hints below the tracks of the rows) makes the entries longer: the works matrix
+    // and the box of the dedications below them stay where they are (the browser's scroll anchoring did not always do it) – only when
+    // the entries begin above the visible part (what is seen is below their start; with the dates and tracks in view nothing moves:
+    // the place a chip is dropped on there would move away under the pointer)
+    const keep = $('works');
+    const frame = $('entries-frame');
+    const viewTop = inPage() ? 0 : $('body').getBoundingClientRect().top;
+    const top0 = keep && !keep.hidden && frame && frame.getBoundingClientRect().top < viewTop ? keep.getBoundingClientRect().top : null;
     S.overlay.classList.add('dci-dm-dragging', `dci-dm-drag-${kind}`);
     if (S.dmDrag.kind === 'date') S.overlay.classList.add('dci-dm-drag-pool');
+    if (top0 != null && top0 > 0) {
+      const dy = keep.getBoundingClientRect().top - top0;
+      if (Math.abs(dy) >= 1) {
+        if (inPage()) window.scrollBy(0, dy);
+        else $('body').scrollTop += dy;
+      }
+    }
   }
 
   /**
@@ -33580,7 +33816,62 @@
         if (entry && applyPoolToRow(row, entry)) refresh();
         break;
       }
-      // [S057] (3.37.10) a ℗ / © row back to the label entry
+      // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes"
+      case 'ded-add': {
+        const box = S.overlay.querySelector('[data-el="dedbox"]');
+        if (box) dedDraftsSave(box);
+        S.dedForm = S.dedForm && S.dedForm.kind === btn.dataset.kind ? null : { ...(S.dedForm || {}), kind: btn.dataset.kind };
+        renderDedBox();
+        if (S.dedForm) {
+          const inp = S.overlay.querySelector('[data-el="dedbox"] [data-f="ded-mbid"][data-key="form"]');
+          if (inp) inp.focus();
+        }
+        break;
+      }
+      case 'ded-form-kind':
+        if (S.dedForm) S.dedForm.kind = btn.dataset.kind;
+        renderDedBox();
+        break;
+      case 'ded-form-cancel':
+        S.dedForm = null;
+        renderDedBox();
+        break;
+      case 'ded-sugg-kind': {
+        const x = (S.dedSugg || []).find((s0) => s0.key === btn.dataset.key);
+        if (x) x.kind = btn.dataset.kind;
+        renderDedBox();
+        break;
+      }
+      case 'ded-pick':
+        dedTake(btn.dataset.key, btn.dataset.gid).catch(showError);
+        break;
+      case 'ded-take':
+        dedTake(btn.dataset.key).catch(showError);
+        break;
+      case 'ded-dismiss': {
+        const x = (S.dedSugg || []).find((s0) => s0.key === btn.dataset.key);
+        if (x) {
+          S.dedSugg = S.dedSugg.filter((s0) => s0 !== x);
+          dedChoose(x.key, { x: true });
+          log('info', 'dedDismissed', { name: x.name, phrase: x.phrase });
+        }
+        renderDedBox();
+        break;
+      }
+      case 'ded-goto': {
+        const r = S.rows.find((x) => x.id === btn.dataset.row);
+        if (r) revealRow(r);
+        const tr0 = r && S.overlay.querySelector(`tr[data-row="${r.id}"]`);
+        if (tr0) {
+          tr0.scrollIntoView({ block: 'center' });
+          // ((review) the focus too)
+          const fe = tr0.querySelector('button, [tabindex], input, select');
+          if (fe) fe.focus({ preventScroll: true });
+          tr0.classList.add('dci-flash');
+          setTimeout(() => tr0.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
       case 'ded-toggle':
         // [Z-DED] (3.67.0, S097) "dedicated to" ⇄ "tribute to"
         if (row) {
@@ -33590,6 +33881,7 @@
           refresh();
         }
         break;
+      // [S057] (3.37.10) a ℗ / © row back to the label entry
       case 'pc-as-label':
         if (row) {
           pcAsLabel(row);
@@ -35994,6 +36286,8 @@
       'artist-input': '[data-act="artist-set"]',
       'manual-artist': '[data-act="add-manual"]',
       'manual-role': '[data-act="add-manual"]',
+      // ([Z-DEDQ] 3.74.0, review) the MBID of a dedication: its "Add"
+      'ded-mbid': '[data-act="ded-take"]',
       'discogs-input': '[data-act="discogs-load"]',
       'bc-test-url': '[data-act="bc-test"]',
       'supp-url': '[data-act="supp-url"]',
@@ -36011,7 +36305,7 @@
     if (map[f]) {
       e.preventDefault();
       const scope = f === 'artist-input' ? e.target.closest('[data-match]')
-        : f === 'artist-credit-all' ? e.target.closest('[data-group]') : S.overlay;
+        : f === 'artist-credit-all' ? e.target.closest('[data-group]') : f === 'ded-mbid' ? e.target.closest('.dci-dedfields') : S.overlay;
       scope.querySelector(map[f]).click();
     } else if (f === 'role-text') {
       e.preventDefault();
@@ -36346,11 +36640,14 @@
               <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="artist" data-mode="clear">${esc(tr('toolbar.clearAll'))}</button>
             </span>
           </div>
-          <div data-el="groups"></div>
-          <section class="dci-companies" data-el="companies" hidden></section>
-          <section class="dci-companies dci-others" data-el="others" hidden></section>
-          <div class="dci-skipped" data-el="skipped" hidden></div>
-          <section class="dci-works" data-el="works" hidden></section>
+          <div class="dci-frame dci-frame-entries" data-el="entries-frame">
+            <div data-el="groups"></div>
+            <section class="dci-companies" data-el="companies" hidden></section>
+            <section class="dci-companies dci-others" data-el="others" hidden></section>
+            <div class="dci-skipped" data-el="skipped" hidden></div>
+          </div>
+          <section class="dci-frame dci-dedbox" data-el="dedbox" aria-labelledby="dci-dedbox-h" hidden></section>
+          <section class="dci-works dci-frame" data-el="works" hidden></section>
           <div data-el="datalists"></div>
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
@@ -36666,7 +36963,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY,
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
     texts: ['dci-weblinks-show'],
@@ -36700,6 +36997,7 @@
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
+  S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false; // [Z-DEDQ] (3.74.0) the box of the dedications: on unless switched off
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
@@ -38265,6 +38563,8 @@
           data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
         // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
         row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
+        // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
+        row(check('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'))),
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
@@ -38676,6 +38976,12 @@
       // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
       writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
       log('info', 'settingValue', { what: tr('settings.gapNone'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'ded-box') {
+      // [Z-DEDQ] (3.74.0) on unless switched off
+      S.dedBox = el.checked;
+      writeJson('localStorage', DED_BOX_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.dedBox'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderDedBox();
     } else if (k === 'skip-hide') {
       // [Z-SK] (3.40.15)
       S.skipHide = el.checked;
@@ -38879,6 +39185,7 @@
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'appearance') {
       setScale(1);
+      S.dedBox = true; // ([Z-DEDQ] 3.74.0, review)
       if (S.place !== 'window') setPlace('window');
       // ([Z-CPV] 3.73.0) the compact view is the default
       if (S.view !== 'compact') setView('compact');
@@ -38986,7 +39293,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, DED_BOX_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -39018,7 +39325,7 @@
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
-      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full',
+      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true,
       // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
       // cleared, the running dashboard kept them until the next reload)
       entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
@@ -40686,6 +40993,26 @@
       .dci-sync button, .dci-works-bar button, .dci-candidates button, .dci-gmatch button:not(.dci-textbtn) {
         border: 1px solid #c8c5d6; background: #fff; border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
       .dci-works { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding: 2px 0 calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); border-left: 3px solid var(--teal); }
+      /* [Z-FRM] (3.74.0) the entries, the dedications and the works each in a narrow frame (the works keep their teal bar) */
+      .dci-frame { border: 1px solid var(--line); border-radius: 6px; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 8) 0; }
+      .dci-works.dci-frame { border-left: 3px solid var(--teal); padding-left: calc(var(--u, 1px) * 14); margin-bottom: calc(var(--u, 1px) * 22); }
+      .dci-frame-entries > [data-el=groups]:empty { display: none; }
+      /* [Z-DEDQ] (3.74.0) the box "Dedications & tributes" */
+      .dci-dedbox h3 { margin: 0; font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
+      .dci-dedbox-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); }
+      .dci-dedseg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 4px; overflow: hidden; }
+      .dci-dedseg button { border: 0; background: #fff; color: var(--ink); padding: 3px calc(var(--u, 1px) * 8); cursor: pointer; }
+      .dci-dedseg button + button { border-left: 1px solid #c8c5d6; }
+      .dci-dedseg button:hover { background: var(--soft); }
+      .dci-dedseg button[aria-pressed=true], .dci-dedseg button[aria-expanded=true] { background: var(--purple, #6a3fa0); color: #fff; }
+      .dci-dedlist { margin: calc(var(--u, 1px) * 6) 0 0; padding-left: calc(var(--u, 1px) * 18); }
+      .dci-dedlist li { margin: 2px 0; }
+      .dci-dedkind { color: var(--muted); }
+      .dci-dedsugg { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 8); border: 1px dashed var(--line); border-radius: 6px; background: var(--soft); }
+      .dci-dedrow, .dci-dedfields, .dci-dedhits { display: flex; flex-wrap: wrap; align-items: center; gap: 4px calc(var(--u, 1px) * 8); }
+      .dci-dedrow { margin-top: 4px; }
+      .dci-dedfields input { min-width: 16em; flex: 1 1 16em; }
+      .dci-dedfields select { max-width: 22em; }
       .dci-works h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
       /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.73.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.74.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.74.0 · 2026-11-07
+
+Z-FRM, Z-DEDQ.
+
+- **Markup:** `[data-el=entries-frame]` (`.dci-frame .dci-frame-entries`) around the groups, companies, others and the skipped entries; `[data-el=dedbox]` (`.dci-frame .dci-dedbox`) before the works; `.dci-works` with `.dci-frame`. CSS `.dci-frame`, `.dci-ded*`.
+- **`runDedications`** (rule **S109**): what was left out goes to **`dedSuggest(d, hits)`** (new) – several entries of the name (`hits`: up to 8, gid, name, disambiguation and type), none, a name after "for" without a track (`needTrack`); `S.dedSugg` (cleared with each import, as `S.dedDone`); `renderDedBox()` at its end.
+- **`renderDedBox`**, **`dedTake(key, gid)`**, `dedKindSeg`, `dedFieldsHtml`, `dedLevelOptions`, `dedBoxShown` (new): the list of the rows with `dedication`, the suggestions (kind, entries of the name, MBID or link, level, leave out), the form of "＋ Dedication | Tribute" (`S.dedForm`); `dedTake` looks the entry up (`fetchJsEntity`), checks `dedicationLt` (a tribute: the release group), adds the row (`addDedicationRow`), remembers the kind (`dedChoose`); leaving out: `dedChoose(key, { x: true })`. `renderGroups` draws the box too. Actions ded-add, ded-form-kind, ded-form-cancel, ded-sugg-kind, ded-pick, ded-take, ded-dismiss, ded-goto.
+- **Setting** `dci-ded-box` (`S.dedBox`, Appearance; on unless switched off; in `SETTINGS_KEYS`, `resetSettings`).
+- **Texts:** dedbox.* (25), log.dedDismissed, settings.dedBox, settings.dedBoxTitle.
+- **Tests:** `t_notes_companies.py dedbox` (new); golden S109.
+- **Review:** what is typed or chosen in the box is kept in the state (`dedDraftsSave`: `mbid`, `level` of a suggestion and of `S.dedForm`; a kind switched keeps it), the focus kept by its field or button (else the half of the head); the suggestion without a track has a key of its own (`…|?`) and comes once (`S.dedDone`), none for a key a row has; what was picked or added by hand is remembered with its entry (`dedChoose`: gid, et, name, level, track, phrase, where) and added again by `runDedications` with each import; `dedTake`: one at a time (`S.dedBusy`), not into another import, the error kept (`S.dedErr`), a tribute always on the release group (its level select disabled), `.catch`; ↺ Appearance shows the box again; the frame of the entries hidden without entries; hits with their disambiguation and ↗; Enter in the MBID field adds; `aria-labelledby`, the halves named "Add a dedication / tribute"; the empty box says when it is still looking or S097 is off; the log lines say "a suggestion in the box" (`log.dedSeveralSugg`, `log.dedNoTargetSugg`). The box is drawn anew only when it changed (`el.dciHtml`), and a drag that starts keeps the works matrix where it is (`onDragStart`: the hints below the tracks of the rows make the entries longer – with the new frame the browser's scroll anchoring no longer made up for it, the matrix jumped 73 px; only when the entries begin above the visible part – with the dates and tracks in view nothing is scrolled, a drop there stays under the pointer).
 
 ## Import 3.73.0 · 2026-11-07
 
