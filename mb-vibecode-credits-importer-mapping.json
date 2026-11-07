@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.79.0",
+  "version": "3.80.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114"]},
   "CHECKBOX_DETAILS": [
@@ -474,6 +474,11 @@
     "place",
     "club"
   ],
+  "TEXT_SONG_HEAD": {"$re":"^(?:songs?|song\\s*list|(?:full\\s+)?set(?:\\s*-?\\s*list)?|setlist|track\\s*-?\\s*list(?:ing)?|tracks|songs?\\s+performed|chapters|timestamps)\\s*:?$","$flags":"i"},
+  "TEXT_SONG_SKIP": {"$re":"^(?:intro(?:duction)?|outro|interview|talk(?:ing)?|banter|chat|tuning|q\\s*&\\s*a|applause|break|credits|end(?:\\s+credits)?|soundcheck)\\b","$flags":"i"},
+  "SERIES_FROM_VIDEO": [
+    {"title":{"$re":"^(?=.*\\bfull performance\\b)(?=.*\\blive on kexp\\b)","$flags":"i"},"channel":{"$re":"^kexp\\b","$flags":"i"},"mbid":"7e46e6df-1446-4c2d-9810-247eaec64efb","name":"Live on KEXP (full performance videos)","type":"recording series","number":"performance"}
+  ],
   "TEXT_PLAY_VERBS": {"$re":"(?:played|performed|sung|plays|performs|sings|sang)","$flags":"i"},
   "TEXT_AUX_WORDS": {"$re":"(?:are|is|were|was|been|all|both)","$flags":"i"},
   "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},
@@ -882,7 +887,7 @@
     ["issue",{"$re":"\\b(?:re-?)?(?:issued|released)\\b|\\bfirst (?:issued|released|published)\\b|veröffentlicht|erschienen|\\bpublicad[oa]\\b|\\beditad[oa]\\b|\\bpublié|\\bsorti\\b","$flags":"i"}]
   ],
   "TEXT_MONTHS": {"$re":"\\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?=\\s|$)","$flags":"gi"},
-  "LIVE_NOTES": {"$re":"\\b(?:recorded|performed)\\s+live\\b|\\blive\\s+recording\\b|\\b(?:in|at|during)\\s+(?:a\\s+)?live\\s+(?:concert|performance)\\b|\\blive\\s+in\\s+concert\\b|\\brecorded\\s+in\\s+concert\\b","$flags":"i"},
+  "LIVE_NOTES": {"$re":"\\b(?:recorded|performed)\\s+live\\b|\\bperform(?:ing|s)\\s+live\\s+in\\s+(?:the\\s+)?[^.;\\n]{0,40}?\\bstudios?\\b|\\blive\\s+recording\\b|\\b(?:in|at|during)\\s+(?:a\\s+)?live\\s+(?:concert|performance)\\b|\\blive\\s+in\\s+concert\\b|\\brecorded\\s+in\\s+concert\\b","$flags":"i"},
   "LIVE_TITLE": {"$re":"\\((?:live|live at [^)]*|live in [^)]*|live version)\\)|\\[(?:live|live at [^\\]]*)\\]|\\s[-–—]\\s*live\\b","$flags":"i"},
   "NOTE_ROLES": [
     [{"$re":"\\b(published|publishing|publisher|verlag|verlegt|sub-?published)\\b","$flags":"i"},"publishing"],

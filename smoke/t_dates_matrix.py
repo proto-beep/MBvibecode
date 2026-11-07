@@ -6,6 +6,13 @@ import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 
+def settle(pg):
+    """[3.80.0] (Z-FLK) The dashboard after the import and its checks: the import complete, then its page unchanged for 300 ms (until
+    3.79.0 a fixed 1–1.5 s); (review) the whole page compared, not its length, and a page that does not come to rest fails."""
+    H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+    assert H.wait_still(pg, "document.body.innerHTML", 15, 300), 'the dashboard did not come to rest'
+
+
 def case_matrix():
     """Date matrix by hand: drag a date into a column and a track group onto it, apply; the click alternative
     (grip, then "place here"); the cell editor (column, track groups); moving a cell; a date with track groups
@@ -254,7 +261,7 @@ def case_pools():
         print('4) eingeklappt:', re.sub(r'\s+', ' ', pg.locator('.dci-pools-head').inner_text()), '| Matrix sichtbar:', pg.locator('.dci-dm').count())
         ok4 = pg.locator('.dci-dm').count() == 0
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
-        pg.click('#dci-open'); pg.wait_for_selector('.dci-pools-head', timeout=30000); pg.wait_for_timeout(1500)
+        pg.click('#dci-open'); pg.wait_for_selector('.dci-pools-head', timeout=30000); settle(pg)
         print('   nach Neuladen offen?', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'))
         # [3.32.1] open for this import (suggestions wait for "Apply", item 109), the folded state stays stored
         ok4 = ok4 and pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true' and pg.evaluate("localStorage.getItem('dci-pools-open')") == 'false'
@@ -508,7 +515,9 @@ def case_tracksdrop():
     H.submit_staged(pg)
     pg.goto(f'https://musicbrainz.org/release/{H.REL}')
     H.with_companion(pg)
-    dg.wait_for_timeout(6000)
+    # ([Z-FLK] 3.80.0) the marks once they stay (until 3.79.0 six seconds)
+    H.wait_ok(dg, "document.querySelectorAll('.dci-dg-mark').length > 0", 15)
+    H.wait_still(dg, "document.querySelectorAll('.dci-dg-mark').length + ' ' + [...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent).join()", 15, 600)
     marks = dg.evaluate("[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent + ' ' + m.closest('li, tr').querySelector('a').textContent)")
     print('C) Release-Seite (Werk-Beziehungen nur am Werk):', marks, '| Werk-Abfragen:', len(H.WORK_LOOKUPS))
     ok_c = '✓ Pub Co' in marks and '✓ Writer W' in marks and H.WORK1 in H.WORK_LOOKUPS and not any(m.startswith('✗') for m in marks)
@@ -606,7 +615,7 @@ def case_titledates():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1200)
+        settle(pg)
         if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
             pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
         a = [pg.evaluate(POOL), cells(pg).get('performance')]
@@ -656,7 +665,7 @@ def case_poolsopen():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1200)
+        settle(pg)
         st = lambda: [pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'), pg.locator('.dci-pool-dates.dci-pool-folded').count(),
                       pg.evaluate("[localStorage.getItem('dci-pools-open'), localStorage.getItem('dci-pool-fold')]")]
         a0 = st()
@@ -669,7 +678,7 @@ def case_poolsopen():
         pg, errs2 = H.open_mb_edit(ctx, companion=False)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1200)
+        settle(pg)
         b1 = st()
         logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'for this import' in x]
         print('B) neu geladen:', b1, '| Protokoll:', logs)
@@ -685,7 +694,7 @@ def case_poolsopen():
         pg, errs3 = H.open_mb_edit(ctx, companion=False)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1200)
+        settle(pg)
         b2 = st()
         print('   nach „Anwenden“ neu geladen:', b2)
         results.append(ok_b and b2[0] == 'false' and b2[2] == ['false', '{"dates":true}'])
@@ -708,7 +717,7 @@ def case_dmgoto():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1000)
+        settle(pg)
         msg = pg.evaluate("""(() => { const m = [...document.querySelectorAll('.dci-msg')].find(x => /placed in the date matrix/.test(x.textContent));
           const btn = m && m.querySelector('[data-act=dm-goto]'); return m ? [m.textContent.replace(/\\s+/g, ' ').trim(), btn ? btn.textContent.trim() : ''] : null; })()""")
         if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true':
@@ -765,7 +774,7 @@ def case_workgroups():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            pg.wait_for_timeout(1000)
+            settle(pg)
             if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
                 pg.click('.dci-pools-toggle')
                 pg.wait_for_timeout(200)
@@ -820,7 +829,7 @@ def case_workgroups():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            pg.wait_for_timeout(1000)
+            settle(pg)
             if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
                 pg.click('.dci-pools-toggle')
                 pg.wait_for_timeout(200)
@@ -837,7 +846,7 @@ def case_workgroups():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            pg.wait_for_timeout(1000)
+            settle(pg)
             if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
                 pg.click('.dci-pools-toggle')
                 pg.wait_for_timeout(200)
@@ -877,7 +886,7 @@ def case_foldapply():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1200)
+        settle(pg)
         OPEN = "document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')"
         BOX = "(b => b ? [b.checked, b.closest('label').textContent.trim()] : null)(document.querySelector('[data-el=dm] [data-f=dm-fold]'))"
         a0 = [pg.evaluate(OPEN), pg.evaluate(BOX), pg.evaluate("localStorage.getItem('dci-dm-fold')")]
@@ -995,14 +1004,14 @@ def case_foldapply():
         g0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')")]
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1000)
+        settle(pg)
         g1 = pg.evaluate(OPEN)
         pg.click('.dci-pools-toggle')
         pg.wait_for_timeout(300)
         g2 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')")]
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1000)
+        settle(pg)
         g3 = pg.evaluate(OPEN)
         print('G) „Apply“:', g0, '| neu geladen:', g1, '| ▲ von Hand:', g2, '| neu geladen:', g3)
         results.append(g0[0] == 'false' and g0[1] != 'false' and g1 == 'true' and g2 == ['false', 'false'] and g3 == 'false')

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.79.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.80.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.80.0 · 2026-11-07
+
+Z-KXS, Z-YTW, Z-FLK (t_dates_matrix).
+
+- **`YOUTUBE.videoSeries` (new; S117, `SERIES_FROM_VIDEO`, T063):** a line of the table whose `title` and `channel` (regular expressions) match the video → `{ mbid, name, type, number, fromVideo }` in `rel.series`; the number: the one full date of the group `number` names (`performance`) in the description, read once (`findDates`, no date that could be read two ways).
+- **`loadSeries`:** a series with an `mbid` needs no lookup (only those with a link are looked up); `recording series`: level recording (`resolveRowType`), the number as role credit, the note `note.seriesFromVideo` / `note.seriesFromVideoNoDate`; `loadSeriesLabel` only for a series with a link.
+- **`liveProposals`:** a track without a work is live also by `liveReason(i)` (S021), not only by a release group of type Live. **Mapping:** `LIVE_NOTES` + "perform·ing/s live in|at|on".
+- **`TEXT.parse` / `songLists` (new; S118, `TEXT_SONG_HEAD`, `TEXT_SONG_SKIP`, T064):** only with `ctx.songs` (YouTube's `toRelease`): a heading and the lines below it up to an empty line or one that is no title (a credit: "Recorded …", "… by Jane Roe", "Host: …"; an address), or two lines or more with a time; numbers, times and "(live)" taken off; the lines empty, listed as `songList`; `songs` in the result, `rel.songs`, `S.srcSongs`.
+- **Works matrix:** `songParts(i)` (the songs for the one track of the release), `medleyParts` takes them first; `splitMedley` – songs: no flag "medley", `songs: true` (badge `songs.partOf`, button `songs.split`, log `songsSplit`); `searchParts` – songs: the release's artists as writers too, `songOffersFromArtistWorks` (one work of that title among `S.artistWorks`), again after `runArtistWorks`.
+- **Register:** S117, S118, T063, T064. **Texts:** note.seriesFromVideo, note.seriesFromVideoNoDate, ignored.why.songList, songs.split, songs.splitTitle, songs.partOf, songs.partTitle, log.songsSplit.
+- **Review:** the series row gets the chosen tracks (`selIdx` – a manual row has none, it was never staged); the branch only for a series of a video (`x.fromVideo` – a Discogs series of recordings stays as before), `owner.viaMapping` (`match.viaMapping` instead of "found via YouTube link"), log `seriesVideo`; the live job (`runLiveJob`) takes a track live by the source (`bySource` of `liveProposals`, kept in the job) – it refused the comment after "Enter edit"; `SERIES_FROM_VIDEO` needs "full performance" in the title (no single songs); `LIVE_NOTES` only "perform·ing/s live in (the) … studio"; `songLists` – a credit ends the list (`creditLike`: `CREDITS_HEADING`, "Musicians", a role or instrument on a side of " - ", "Name (instrument)"), "feat. …" off the title, without a heading only times first, from 0:00 on and rising, a song played twice kept; `songOffersFromArtistWorks` only the works of the release's artists; the statistics count no songs as medleys; `settle` waits for "Import complete", compares the whole page and fails when it does not come to rest.
+- **Tests:** `t_sources_bandcamp.py kxs380` (new; also the live comment, the series staged, a single song and another channel). Z-FLK: `t_dates_matrix.py` – `settle(pg)` (the page unchanged for 300 ms) after the import instead of 1–1.5 s (12 places), the companion's marks once they stay instead of 6 s.
 
 ## Import 3.79.0 · 2026-11-07
 
