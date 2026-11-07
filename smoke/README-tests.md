@@ -454,6 +454,8 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   z382: 3.82.0 (Node; Z-DEDH, Z-YTW2): "dedicated to Mr. Polo’s …" → Marco Polo (one full name in the text), Martin
+                                #     Luther King, two Smiths or none: nothing; songs of a pasted text only with S122
                                 #   annrep: 3.72.0 (Z-TST, the former t_ar.py): A&R with the task "consultant" on the release group
                                 #   dedphrases: 3.67.0 (Z-DED, Node): the phrases of dedications and tributes, names joined, a title
                                 #   dedforphrases: 3.71.0 (Z-DED2, S107, Node): "for …" in a sentence – found or not (a production before it,

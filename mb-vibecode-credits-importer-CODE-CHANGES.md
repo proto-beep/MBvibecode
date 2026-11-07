@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.81.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.82.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.82.0 · 2026-11-07
+
+Z-DEDH, Z-YTW2.
+
+- **`findDedications`** (Z-DEDH, S123): `DED_HON` (Mr, Mrs, Ms, Miss, Dr, Mister, Madame, Mme, Monsieur, Herr, Frau) before a name after a phrase, also in a list; `split` takes a possessive off ("Polo’s"); `dedFullName` (new): a form of address and a surname → the one full name with that surname in the text or `S.release.title` (the capitalised words right before it, back to an article, "Of" or a form of address), '' with none or several – the name is left out.
+- **`TEXT.parse`** (Z-YTW2, S122; off): `songLists` also without `ctx.songs` when the rule is on; `BANDCAMP.toRelease` passes `songs` (the album's credits and its "about" text).
+- **Mapping:** `QUICK_SWITCHES` + S122, `DEFAULT_OFF_RULES` + S122. **Register:** S122, S123. **Texts:** quick.S122.
+- **Review:** `dedFullName` – none or several full names: the name as written ("Mr Bungle", "Dr. Dre", "Mr Oizo and Miss Kittin" as before 3.82.0; with S123 off too); a form of address before two words or more is left out ("Dr. Martin Luther King"); the given names at most two, back to a word of a list (articles, prepositions, forms of address, words a sentence starts with: "Yesterday"); initials count ("B.B. King" – with "Carole King" two); a possessive after the full name ("Marco Polo’s"); apostrophes inside a name stay ("O'Brien" – `split` takes only the quotes around a name off); the release's title from MusicBrainz first (`S.releaseTitleMb`). `songLists` with S122 only where `songsOk` (the pasted text and the Bandcamp album of one track – not the Discogs notes nor a track page), `strict` there: a heading with its colon, not "Set:" / "Tracks:" alone; no line with tracks in brackets, of the release's artists, with a comma, or a role.
+- **Tests:** `t_mapping.py z382` (new); `t_rules_window.py quickswitch` (eleven switches).
 
 ## Import 3.81.0 · 2026-11-07
 
