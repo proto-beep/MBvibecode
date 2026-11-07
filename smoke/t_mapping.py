@@ -1655,4 +1655,43 @@ def case_annrep():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_z382():
+    """Credits Importer 3.82.0 (collected items Z-DEDH, Z-YTW2; rules S123, S122), in Node.
+    A) Dedications with a form of address (S123): "dedicated to Mr. Polo’s incredible explorations" with "Marco Polo’s journey" in the
+       text – Marco Polo (until 3.81.0 none); "the memory of Dr. King" with "Martin Luther King" – Martin Luther King; "Mr. Smith" with
+       John Smith and Paul Smith, or alone – the name as written (looked up as any other); "Cecil Taylor and Mr. Brown … James Brown" –
+       both; (review) "Mr Bungle" stays; "Yesterday Marco Polo" – Marco Polo; "Conor O'Brien"; "Dr. Martin Luther King" without "Dr.".
+    B) Lists of songs outside YouTube (S122, a quick switch, off): a pasted text "Setlist:" / three titles – no songs while it is off
+       (the lines not recognized as before), the three songs with it on; (review) not for a release of many tracks, not below "Set:",
+       no names with tracks in brackets."""
+    import subprocess
+    node = r"""
+const on = process.argv[2] === 'on';
+global.localStorage = { getItem: (k) => (on && k === 'dci-rules-off' ? JSON.stringify(['+S122']) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const ded = ['This album, dedicated to Mr. Polo’s incredible explorations, is the work of an old friend. Never before has Marco Polo’s journey been brought to life.',
+  'Dedicated to the memory of Dr. King. Martin Luther King spoke.', 'Dedicated to Mr. Smith. John Smith and Paul Smith played.', 'Dedicated to Mr. Smith.',
+  'Dedicated to Cecil Taylor and Mr. Brown, as told by James Brown.', 'Dedicated to Mr Bungle.', 'Dedicated to Mr. Polo. Yesterday Marco Polo came home.',
+  "Dedicated to Mr. O'Brien. Conor O'Brien plays.", 'Dedicated to Dr. Martin Luther King.'].map((t) => m.findDedications(t).map((d) => d.name));
+const ctx = { isRole: () => false, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [], titleNames: [], songsOk: true };
+const r = m.SOURCES.text.parse('Setlist:\nApproach to Anywhere\nNuska\nMelting Fish', ctx);
+// ((review) not for a release of many tracks, not "Set:" alone, no names with tracks)
+const many = m.SOURCES.text.parse('Setlist:\nApproach to Anywhere\nNuska\nMelting Fish', { ...ctx, songsOk: false }).songs;
+const strict = ['Set:\nJohn Smith\nJane Roe', 'Songs:\nJohn Smith (1, 3)\nJane Roe (2)'].map((t) => m.SOURCES.text.parse(t, ctx).songs);
+console.log(JSON.stringify({ ded, songs: r.songs, unrec: r.unrecognized.length, many, strict }));
+"""
+    out = {}
+    for mode in ('off', 'on'):
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), mode], capture_output=True, text=True)
+        out[mode] = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-400:]
+        print(mode, out[mode])
+    # ((review) none or two full names: the name as written – looked up as any other ("Mr Bungle", "Dr. Dre" are names))
+    a = isinstance(out['off'], dict) and out['off']['ded'] == [['Marco Polo'], ['Martin Luther King'], ['Mr. Smith'], ['Mr. Smith'], ['Cecil Taylor', 'James Brown'],
+                                                             ['Mr Bungle'], ['Marco Polo'], ["Conor O'Brien"], ['Martin Luther King']]
+    b = isinstance(out['on'], dict) and out['off']['songs'] == [] and out['off']['unrec'] > 0 and out['on']['songs'] == ['Approach to Anywhere', 'Nuska', 'Melting Fish'] \
+        and out['on']['many'] == [] and out['on']['strict'] == [[], []]
+    print('Ergebnis:', 'OK' if a and b else 'FEHLER', [a, b])
+
+
 run_cases(globals())
