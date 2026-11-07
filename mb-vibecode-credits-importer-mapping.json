@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "3.78.0",
+  "version": "3.79.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
-  "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
+  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114"]},
   "CHECKBOX_DETAILS": [
     "additional",
     "guest",
@@ -34,7 +34,8 @@
     {"id":"Q010","base":"poems by / poetry / recitation …","rules":["R105","R106","R107"],"flag":"poemLevels","level":"release","ask":"typeAsk.askPoemsRelease","note":"A credit of poems switched to the release level (3.32.7; R105, R106, R107 – their type follows the level: works lyricist, recordings spoken vocals): the words of the works (lyricist), poems read out (spoken vocals) or poems printed in the booklet (liner notes)? Each keeps the role credit (\"poems\", \"poetry\", \"recitation\" …)","options":[{"type":"lyricist","level":"release","credit":true,"label":"lyricist (the words)"},{"type":"vocal","level":"release","instrument":"spoken vocals","credit":true,"label":"spoken vocals (read out)"},{"type":"liner notes","level":"release","credit":true,"label":"liner notes (poems in the booklet)"}]},
     {"id":"Q011","base":"voice","rule":"R015","flag":"askVoice","keep":true,"ask":"typeAsk.askVoice","pending":"typeAsk.pendingVoice","note":"\"Voice\" alone (3.34.20; 3.34.25 every source, also Discogs): plain vocals (MusicBrainz has no role credit for them), other vocals, lead vocals or spoken vocals credited \"voice\"? Until answered it stays vocals without role credit; with another voice chosen by hand \"voice\" is offered as its role credit. \"Vocals\" stays vocals without a question (R018)","options":[{"type":"vocal","level":"recording","label":"vocals","plain":true},{"type":"vocal","level":"recording","instrument":"other vocals","credit":"voice","label":"other vocals “voice”"},{"type":"vocal","level":"recording","instrument":"lead vocals","credit":"voice","label":"lead vocals “voice”"},{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":"voice","label":"spoken vocals “voice”"}]},
     {"id":"Q005","base":"text","rule":"R100","ask":"typeAsk.askText","note":"\"Text\" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German \"Text\" is the lyrics)? Nothing is assumed","options":[{"type":"liner notes","level":"release"},{"type":"lyricist","level":"work"}]},
-    {"id":"Q012","base":"host / hosted by","rule":"R108","ask":"typeAsk.askHost","note":"\"Host\", \"Hosted By\" (3.41.8, Q-cn): spoken vocals credited \"host\", miscellaneous support (task \"host\") or skipped? Nothing is assumed","options":[{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":"host","label":"spoken vocals (credited “host”)"},{"type":"misc","level":"recording","task":"host","label":"miscellaneous support (task “host”)"},{"type":"","level":"skip","label":"skip the role"}]}
+    {"id":"Q012","base":"host / hosted by","rule":"R108","ask":"typeAsk.askHost","note":"\"Host\", \"Hosted By\" (3.41.8, Q-cn): spoken vocals credited \"host\", miscellaneous support (task \"host\") or skipped? Nothing is assumed","options":[{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":"host","label":"spoken vocals (credited “host”)"},{"type":"misc","level":"recording","task":"host","label":"miscellaneous support (task “host”)"},{"type":"","level":"skip","label":"skip the role"}]},
+    {"id":"Q013","base":"member of … / performing group","rule":"R111","ask":"typeAsk.askMember","note":"A member below the heading of a group (3.79.0; collected item Z-MEM): performer on the recordings (suggested; the level can be changed) or no relationship? Nothing is added before it is answered","options":[{"type":"performer","level":"recording","label":"performer (on the recordings)","suggested":true},{"type":"","level":"skip","label":"no relationship"}]}
   ],
   "COMPANY_ROLES": [
     [{"$re":"^phonographic copyright","$flags":""},{"id":"C001","label":["phonographic copyright"],"artist":["phonographic copyright"],"level":"recording"}],
@@ -205,6 +206,8 @@
     {"id":"R093","kind":"simple","note":"","re":{"$re":"^(licensed from|licensor)$","$flags":""},"types":["licensor"],"level":"release"},
     {"id":"R094","kind":"simple","note":"","re":{"$re":"^audio director$","$flags":""},"types":["audio director"],"level":"release"},
     {"id":"R099","kind":"simple","note":"\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)","re":{"$re":"^(commissioned by|commissioned)$","$flags":""},"types":["commissioned"],"level":"work","work":true},
+    {"id":"R110","kind":"simple","note":"Camera work (3.79.0; collected item Z-CAM2): miscellaneous support on the recordings, the word as written (in lower case) as task – \"Cameras\" → cameras; the level can be switched to the release","re":{"$re":"^(cameras?|camera ?(?:operators?|crew|work|man|men|person|people)|camerawork|cinematograph(?:y|er)|director of photography|filmed by|filming|footage by)$","$flags":""},"types":["misc"],"level":"recording","credit":true},
+    {"id":"R111","kind":"special","note":"A member of a group – a name below its heading (3.79.0; collected item Z-MEM, S113) – or the group itself (S114): performer on the recordings? No type is assumed, the dashboard asks (Q013)","re":{"$re":"^(member of .+|performing group)$","$flags":""},"types":[],"level":"recording"},
     {"id":"R095","kind":"special","note":"Roles without an MB relationship type: added as \"misc\" with the Discogs role as task","re":{"$re":"^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \\(text\\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera|cameras|camera crew|camera operator|camera operators|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$","$flags":""},"types":["misc"],"level":"release"},
     {"id":"R096","note":"Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)","types":["instrument"],"level":"recording"}
   ],
@@ -464,6 +467,13 @@
   "TEXT_TIME_AFTER_NAME": {"$re":"\\s+(?:in|on|during|between|from|since|throughout|around)\\s+(?=[^,]*(?:\\b\\d{4}\\b|\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\b|\\b(?:spring|summer|autumn|fall|winter)\\b)).*$","$flags":"i"},
   "PLACE_DATE_TAIL": {"$re":"(?:\\s+(?:on|in|during|between|from|since|throughout|around|over)\\s+(?:the\\s+)?(?:(?:early|late|mid)[\\s-]+)?(?=\\d|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\b|(?:spring|summer|autumn|fall|winter)\\b)|\\s+(?=\\d{4},?\\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\b)).*$","$flags":"i"},
   "TEXT_PLACE_WORDS": {"$re":"(?<![\\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge|cent(?:er|re)|kaikan)(?![\\p{L}])","$flags":"iu"},
+  "TEXT_VENUE_HEAD": [
+    "venue",
+    "location",
+    "live at",
+    "place",
+    "club"
+  ],
   "TEXT_PLAY_VERBS": {"$re":"(?:played|performed|sung|plays|performs|sings|sang)","$flags":"i"},
   "TEXT_AUX_WORDS": {"$re":"(?:are|is|were|was|been|all|both)","$flags":"i"},
   "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},
@@ -890,6 +900,8 @@
     "S007",
     "D023",
     "S046",
-    "S078"
+    "S078",
+    "D026",
+    "S114"
   ]
 }

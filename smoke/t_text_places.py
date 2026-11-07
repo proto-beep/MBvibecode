@@ -951,4 +951,130 @@ def case_ownrulekind():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_z379():
+    """Credits Importer 3.79.0 (collected items Z-KXP, Z-CAM2, Z-VEN, Z-MEM, Z-PHC).
+    A) In Node (D027): "9/17/26" → 2026-09-17 (the 17 decides: month first), "17/9/26" → 2026-09-17, "9/17/99" → 1999-09-17.
+    B) The description of a KEXP video: "… performing live in the KEXP studio. Recorded April 8, 2025." gives the place KEXP Studio
+       (recorded at, S112 – before: not recognized); "Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht": four
+       names (S116), each miscellaneous support on the recordings with the task "cameras" (R110); its levels Recording | Release only.
+    C) "venue: industry city" / "brooklyn, NY" / "9/17/26" (S115): the place Industry City "(Brooklyn)", recorded at; the pool has
+       2026-09-17 (and the city as the area of the place); the lines are not listed as not recognized.
+    D) "Salisman Communal Orchestration:" with four names below it (S113): three of them asked "performer on the recordings, or no
+       relationship?" (nothing added before), the fourth – guitar elsewhere in the text – not; answered "performer": the row is a
+       performer on the recordings. The group itself only with S114 (E).
+    E) S114 on: the group asked too.
+    F) D026 on: "Photography [Live]: Jane Photo" with a concert "Recorded live at Café Oto, London, 12 May 2019": the row of the
+       photographs has the concert's date (without D026 only suggested – t_notes_dates.py artkinds)."""
+    import json
+    import subprocess
+
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const v = (d) => [d.value.begin].map((x) => [x.year, x.month, x.day].filter((y) => y != null).join('-')).join('/');
+console.log(JSON.stringify(['9/17/26', '17/9/26', '9/17/99'].map((t) => m.findDates(t).map((d) => [d.rule, v(d)]))));
+"""
+    a = json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True, check=True).stdout)
+    print('A) Node:', a)
+    results = [a == [[['D027', '2026-9-17']], [['D027', '2026-9-17']], [['D027', '1999-9-17']]]]
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1],
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return { type: t ? (t.options[t.selectedIndex] || {}).text : '',
+    level: ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '', levels: [...tr.querySelectorAll('[data-act=level]')].map(x => x.dataset.level),
+    credit: (tr.querySelector('[data-f=role-credit]') || {}).value || '', ask: (tr.querySelector('.dci-type-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim().slice(0, 90),
+    q: (tr.querySelector('.dci-type-ask') || { dataset: {} }).dataset.question || '' }; }) }])))()"""
+    UNREC = "[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)"
+    # (MusicBrainz names the type of miscellaneous support "misc")
+    H.lt(129, H.LTS[129]['gid'], 'misc', 'artist', 'recording', (1150,))
+    H.lt(63, H.LTS[63]['gid'], 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+
+    def load(pg, text):
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', text)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {load.n}", 90)
+        load.n += 1
+        pg.wait_for_timeout(800)
+        return pg.evaluate(GROUPS)
+
+    KEXP = """http://KEXP.ORG presents maya ongaku performing live in the KEXP studio. Recorded April 8, 2025.
+
+Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht"""
+    VENUE = """venue: industry city
+brooklyn, NY
+9/17/26"""
+    MEM = """Salisman Communal Orchestration:
+Sean Burke
+Paul Foreman
+Kevin Pulaski
+Travis Salisbury
+
+Paul Foreman - guitar"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        load.n = 2
+        g = load(pg, KEXP)
+        ks = g.get('KEXP Studio') or {'kind': '', 'rows': []}
+        cams = {n: (g.get(n) or {'rows': [{}]})['rows'][0] for n in ['Jim Beckmann', 'Carlos Cruz', 'Scott Holpainen', 'Luke Knecht']}
+        unrec = pg.evaluate(UNREC)
+        print('B) KEXP Studio:', ks, '| Kameras:', cams, '| nicht erkannt:', unrec)
+        results.append(ks['kind'] == 'place' and [r['type'] for r in ks['rows']] == ['recorded at'] and not any('KEXP' in x for x in unrec)
+                       and all(c.get('type') in ('misc', 'miscellaneous support') and c.get('level') == 'recording' and c.get('credit') == 'cameras' and c.get('levels') == ['recording', 'release', 'skip'] for c in cams.values()))
+        g = load(pg, VENUE)
+        ic = g.get('Industry City') or {'kind': '', 'rows': [], 'head': ''}
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.begin.year, d.begin.month, d.begin.day].join('-'))")
+        unrec = pg.evaluate(UNREC)
+        print('C) Industry City:', ic, '| Pool:', pool, '| nicht erkannt:', unrec)
+        results.append(ic['kind'] == 'place' and '(Brooklyn' in ic['head'] and [r['type'] for r in ic['rows']] == ['recorded at'] and '2026-9-17' in pool and not unrec)
+        g = load(pg, MEM)
+        asked = {n: (g.get(n) or {'rows': [{}]})['rows'] for n in ['Sean Burke', 'Paul Foreman', 'Kevin Pulaski', 'Travis Salisbury', 'Salisman Communal Orchestration']}
+        print('D) Mitglieder:', {n: [(r.get('q'), r.get('level'), r.get('type')) for r in rows] for n, rows in asked.items()})
+        ok_d = all(len(asked[n]) == 1 and asked[n][0].get('q') == 'Q013' and 'performer on the recordings' in asked[n][0].get('ask', '') for n in ['Sean Burke', 'Kevin Pulaski', 'Travis Salisbury']) \
+            and [r.get('q') for r in asked['Paul Foreman']] == [''] and not g.get('Salisman Communal Orchestration')
+        row = pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text='Sean Burke')).first.locator('tr.dci-row').first
+        row.locator('.dci-type-ask [data-act=type-pick][data-opt="0"]').click()
+        pg.wait_for_timeout(500)
+        sean = pg.evaluate(GROUPS).get('Sean Burke', {'rows': [{}]})['rows'][0]
+        print('   Sean Burke beantwortet:', sean)
+        results.append(ok_d and sean.get('type') == 'performer' and sean.get('level') == 'recording')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+        # E) S114 on; F) D026 on
+        H.RULES_OFF = ['S083', '+S114', '+D026']
+        # (one concert: no dates of the Discogs notes beside it)
+        orig = H.discogs_release
+
+        def rel():
+            d = orig()
+            d['notes'] = ''
+            return d
+        H.discogs_release = rel
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        load.n = 2
+        g = load(pg, MEM)
+        grp = (g.get('Salisman Communal Orchestration') or {'rows': [{}]})['rows']
+        print('E) S114 – die Gruppe:', [(r.get('q'), r.get('ask')) for r in grp])
+        results.append(len(grp) == 1 and grp[0].get('q') == 'Q013')
+        g = load(pg, "Recorded live at Café Oto, London, 12 May 2019\nPhotography [Live]: Jane Photo")
+        ph = pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text='Jane Photo')).first.locator('tr.dci-row').first
+        from common_rows import date_field
+        f = (date_field(ph, 'rd-by'), date_field(ph, 'rd-bm'), date_field(ph, 'rd-bd'))
+        print('F) D026 – Fotos des Konzerts:', f, '| Fehler:', errs)
+        results.append(f == ('2019', '05', '12') and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

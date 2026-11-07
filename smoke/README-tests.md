@@ -248,6 +248,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     one search after the clicks (counted), what was found before again without a search, the label chosen
                                 #   unaremember, kindrace, ownrulekind: 3.42.8 (review): words given an entry come back with "Remember changes …",
                                 #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
+                                #   z379: 3.79.0 (Z-KXP, Z-CAM2, Z-VEN, Z-MEM, Z-PHC): "9/17/26" (D027); "… performing live in the KEXP studio"
+                                #     → KEXP Studio (S112); "Cameras: … & A with B" → four names (S116), misc "cameras" on the recordings,
+                                #     Recording | Release (R110); "venue: …" with city and date (S115); members below a group heading asked
+                                #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   dedbox: 3.74.0 (Z-DEDQ, Z-FRM, S109): the box "Dedications & tributes" – frames, found, suggestions (several, none,

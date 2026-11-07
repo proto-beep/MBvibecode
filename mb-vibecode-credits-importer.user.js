@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.78.0
+// @version      3.79.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.78.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.78.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.79.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.79.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.78.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.79.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2563,6 +2563,10 @@
       "quick.S007": "Leave out festivals in “Companies, etc.”",
       "quick.D023": "Dates in the titles of the tracks",
       "quick.S046": "“Performer” on tracks → the instruments on those tracks",
+      "quick.D026": "Photographs of the concert → the concert’s date",
+      "quick.S114": "Heading of a group above its members → the group as performer too",
+      "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
+      "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
       "rules.roles": "Roles",
       "rules.wording": "Role credit wording",
       "rules.specialTitle": "Special handling",
@@ -3840,6 +3844,11 @@
     { id: 'S108', where: 'addManualEntry, renderEvAsk, answerEvAsk', note: 'An event added by hand without a role (3.73.0): asked right below "Add entry manually" – "recorded at", or "video shot at" when the release has videos; on the recordings first (its level changes with a click), the entry folded to its compact lines' },
     { id: 'S109', where: 'renderDedBox, dedSuggest, dedTake', note: 'The box "Dedications & tributes" above the works matrix (3.74.0): the dedications found (MusicBrainz has exactly one entry of the name: added by themselves) and suggestions of those not sure – several entries of the name (each a button), none, a name after "for" without a track – each with a field for an MBID or a link and the level (the release group or the work of a track); "＋ Dedication | Tribute" adds one by hand. No "Create …" here. Shown unless switched off in ⚙ Settings → Appearance' },
     { id: 'S110', where: 'profileTouched, applyProfile, renderProfilePickers', note: 'Profiles (3.75.0): the quick switches and the settings of ⚙ (with the language and "Developer mode") are kept per profile – "Standard" (the defaults, cannot be changed: a change there makes a new profile "Profile n · date time" and uses it) and your own (a change is kept in the active profile at once). Chosen beside the import button, before "Window | In the page", or in ⚙ Settings → Profiles (name, use, delete, export, import); applied at once, also with the dashboard open. Not in a profile: the switches of the companion, remembering releases, the statistics, the other rule switches and your own rules' },
+    { id: 'S112', where: 'TEXT.parse (readClause)', note: 'Texts (3.79.0; collected item Z-KXP): a place after "performing / playing / recorded / filmed (live) in (the)" later in a sentence – a word of places (T051) and a word in capitals – is the place where it was recorded: "KEXP.ORG presents maya ongaku performing live in the KEXP studio" gives KEXP Studio (recorded at; the word of places written with a capital, as MusicBrainz names such places)' },
+    { id: 'S113', where: 'TEXT.parse (readLine, memberLine, dropPlayingMembers), Q013', note: 'Texts (3.79.0; collected item Z-MEM): below the heading of a group (S087, "Salisman Communal Orchestration:") the lines that are only a person\'s name are its members – each offered as performer on the recordings (a question, Q013: nothing is added before it is answered; the level can be changed), unless the text gives the person an instrument or a voice elsewhere. They count as members for S087 too' },
+    { id: 'S114', where: 'TEXT.parse (readLine), Q013', note: 'Texts (3.79.0; collected item Z-MEM; off by default, a quick switch): the group of such a heading offered as performer too (the same question)' },
+    { id: 'S115', where: 'TEXT.parse (venueBlocks), TEXT_VENUE_HEAD', note: 'Texts (3.79.0; collected item Z-VEN): a line "venue: industry city" (the words of T062: venue, location, live at, place, club) with the lines right below it – a city ("brooklyn, NY") and a date ("9/17/26") – is the place where it was recorded live, read as "Recorded live at Industry City, Brooklyn, NY, 2026-09-17": the place Industry City (recorded at; its name with capitals), the city as its area – shown at the entry, and the places in it first among MusicBrainz\'s hits –, the date' },
+    { id: 'S116', where: 'TEXT.parse (namesScoped)', note: 'Texts (3.79.0; collected item Z-KXP): "A with B" in a list of names – both a person\'s name of two to four words with capitals – are two names ("Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht" – four); a name of the release\'s artists stays whole (S077)' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -4042,6 +4051,8 @@
       R097: { run: () => out([], { notes: ['askType'] }) },
       // [Q-cn] (3.41.8) "Host": spoken vocals credited "host", miscellaneous support "host" or skipped – asked (Q012)
       R108: { run: () => out([], { notes: ['askType'] }) },
+      // [Z-MEM] (3.79.0, S113) a member of a group (a name below its heading), or the group itself (S114): performer? – asked (Q013)
+      R111: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
       // [3.31.4] the word of the poet in lower case is the role credit ("Poems By" → "poems")
@@ -4223,6 +4234,8 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T062', where: 'TEXT_VENUE_HEAD, venueBlocks', note: 'Texts (3.79.0): the words before a colon that start a block of the place where it was played (S115) – "venue: …", "location: …", "live at: …", "place: …", "club: …"',
+      show: () => ({ pairs: [['words', TEXT_VENUE_HEAD.join(' · ')]] }) },
     { id: 'T061', where: 'SUITE_SKIP_HEADINGS, headingKind, suiteOffers', note: 'Works (3.41.0): headings of a track list that name no suite (Z-SU) – a side, a medium or bonus tracks: "Side A", "CD 1", "Disc Two", "Bonus Tracks", "Encore" (a heading that begins with one of these words); headings with the place or date of a recording ("Recorded at …", "Live at …", a year) are no suite either. Every other heading names a suite of the tracks below it, until the next heading – asked in the works matrix',
       show: () => ({ pairs: [['words', SUITE_SKIP_HEADINGS.join(' · ')]] }) },
     { id: 'T060', where: 'PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole', note: 'Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out',
@@ -4373,6 +4386,8 @@
   // [T051] Texts (3.34.18): the words of places – "Recorded in Guruguru Brain studio, Rotterdam" names a place (recorded at),
   // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
   const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
+  /** [Z-VEN] (3.79.0, T062) The words of a block of the place it was played at ("venue:", "location:" …). */
+  const TEXT_VENUE_HEAD = MAP.TEXT_VENUE_HEAD;
   // [Z-TBY] (3.59.0) a heading of the credits alone ("credits", "Personnel:", "Special guests:", "Besetzung:", "Gäste:"); the months (no
   // group's heading: "June 12:")
   const CREDITS_HEADING = /^(?:credits|personnel|musicians|line-?up|besetzung|mitwirkende|(?:special\s+)?guests?|gäste|featuring|feat\.?|with)\s*:?$/i;
@@ -5360,6 +5375,8 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
+    { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
 
@@ -5447,6 +5464,21 @@
       if (b > 12) return single(ymd(m[3], a, b));
       const us = single(ymd(m[3], a, b));
       const row = single(ymd(m[3], b, a));
+      if (a === b) return us;
+      return { ...(o.usOrder ? us : row), alt: o.usOrder ? row : us, order: o.usOrder ? 'us' : 'dayFirst' };
+    } },
+    // [Z-VEN] (3.79.0, D027) "9/17/26": the year of two digits in this century unless that is after this year
+    { id: 'D027', re: '(?<![\\p{L}\\d/.-])(\\d{1,2})/(\\d{1,2})/(\\d{2})(?![\\d/\\p{L}-])', make: (m, o) => {
+      const yy = Number(m[3]);
+      const now = new Date().getFullYear();
+      const y = String(2000 + yy > now ? 1900 + yy : 2000 + yy);
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (a > 12 && b > 12) return null;
+      if (a > 12) return single(ymd(y, b, a));
+      if (b > 12) return single(ymd(y, a, b));
+      const us = single(ymd(y, a, b));
+      const row = single(ymd(y, b, a));
       if (a === b) return us;
       return { ...(o.usOrder ? us : row), alt: o.usOrder ? row : us, order: o.usOrder ? 'us' : 'dayFirst' };
     } },
@@ -6598,7 +6630,20 @@
           if (!took) parts.push(raw[i]);
           i += took;
         }
-        return parts.map((n) => {
+        // [Z-KXP] (3.79.0, S116) "Scott Holpainen with Luke Knecht": two names (each a person's name of two to four words with capitals)
+        const personName = (x) => {
+          const ws = clean(x).split(/\s+/);
+          // ((review) no "The Band", no ensemble ("Count Basie Orchestra"))
+          return ws.length >= 2 && ws.length <= 4 && ws.every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w)) && !TEXT_PLACE_WORDS.test(x) && !isRole(cap(clean(x)))
+            && !/^the$/i.test(ws[0]) && !/\b(?:orchestra|orchester|band|ensemble|quartet|quintet|sextet|trio|choir|chorus|group|symphony|philharmonic|big band|collective)s?\b/i.test(x);
+        };
+        const split = ruleOn('S116') ? parts.flatMap((n) => {
+          const w = n.match(/^(.+?)\s+with\s+(.+)$/u);
+          const w2 = w ? w[2].replace(/\s*\([^)]*\)$/, '') : '';
+          // ((review) neither part one of the release's artists)
+          return w && !bandNames.has(norm(n)) && !bandNames.has(norm(w[1])) && !bandNames.has(norm(w2)) && personName(w[1]) && personName(w2) ? [w[1], w[2]] : [n];
+        }) : parts;
+        return split.map((n) => {
           const m = ruleOn('S074') ? n.match(NAME_TRACKS) : null;
           const set = m ? resolveTracks(m[1]) : null;
           return { name: clean(n.replace(/\s*\([^)]*\)$/, '')), scope: set && set.size ? { set, spec: clean(m[1]) } : null };
@@ -6996,6 +7041,17 @@
           // [3.37.7] … with a date between: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
           if ((m = clause.match(/^(\p{L}+)\s+(.*?\d.*?)\s+in\s+(\p{Lu}.*)$/u)) && !noDates(m[2]).replace(/^(?:on|am|le|el)\b\s*/i, '')
             && (placeIn(m[1], m[3]) || inArea(m[1], areaOf(m[3].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
+          // [Z-KXP] (3.79.0, S112) "KEXP.ORG presents maya ongaku performing live in the KEXP studio": a place after "performing /
+          // playing / recorded / filmed (live) in (the)" later in the sentence (a word of places and a word in capitals) – recorded at;
+          // the word of places with a capital ("KEXP Studio")
+          if (ruleOn('S112') && (m = clause.match(/\b(?:perform(?:ing|s|ed)|play(?:ing|s|ed)|recorded|filmed|captured)\s+(?:live\s+)?(?:in|at)\s+(?:the\s+)?(\p{Lu}[^,;:().!?]*?)\s*(?:[.!?](?:\s.*)?)?$/u))) {
+            const nm0 = clean(m[1]);
+            const wordsRe = new RegExp(TEXT_PLACE_WORDS.source, 'giu');
+            // ((review) no ensemble: "played in the Studio Orchestra")
+            if (TEXT_PLACE_WORDS.test(nm0) && /\p{Lu}/u.test(nm0.replace(wordsRe, '')) && nm0.split(/\s+/).length <= 5 && !/\b(?:by|with|and|for)\b/i.test(nm0)
+              && !/\b(?:orchestra|orchester|band|ensemble|quartet|quintet|sextet|trio|choir|chorus|group|symphony|philharmonic|big band|collective)s?\b/i.test(nm0)
+              && place('recorded', { name: nm0.replace(wordsRe, (w) => (/^\p{Ll}/u.test(w) ? cap(w) : w)), area: '' })) return;
+          }
           // [T051] (3.34.18) … and with "the" before the place: "Recorded in the Church of St. Mary, Berlin"
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+the\s+(\p{Lu}.*)$/u)) && placeIn(m[1], m[2])) return;
           // [S051] (3.34.19) "Go Kurosawa plays guitar, bass and drums" (T049)
@@ -7451,6 +7507,15 @@
           return;
         }
         const head = groupHead;
+        // [Z-MEM] (3.79.0, S113) a line only of a person's name below the heading: a member – offered as performer (Q013, R111);
+        // [S114] the group too, once
+        // ((review) not below a heading of crew, support, staff …; the group's name without commas in the role – a comma splits roles)
+        if (ruleOn('S113') && head && head === groupHead && memberLine(t) && !MEMBER_NOT_HEAD.test(head.name)) {
+          startLine(raw);
+          if (ruleOn('S114') && !head.offered && addCredit(head.name, 'Performing Group', null, { member: head.name, memberGroup: true })) head.offered = true;
+          if (addCredit(t, `Member of ${head.name.replace(/\s*,\s*/g, ' ')}`, null, { member: head.name }) && !head.members.includes(t)) head.members.push(t);
+          return;
+        }
         const i0 = ignored.length;
         readLine0(raw);
         // ((review) the members: instruments and voices of the lines below it, not "Recorded by …"; a heading of the credits ends it)
@@ -7460,6 +7525,64 @@
         if ((linerNotes || afterDefinition) && credits.length === c0 && companies.length === k0 && unrecognized.length > u0) {
           unrecognized.splice(u0).forEach((text) => ignored.push({ text: String(text).replace(/\s+→\s+\?.*$/, ''), why: afterDefinition ? 'definition' : 'linerNotes' }));
         }
+      };
+      /**
+       * [Z-VEN] (3.79.0, S115) "venue: industry city" / "brooklyn, NY" / "9/17/26" (T062): one line "Recorded live at Industry City,
+       * Brooklyn, NY, 9/17/26" – the lines below it that are a city and a date go into it (the city with capitals) and are empty.
+       */
+      const venueBlocks = (lines) => {
+        const heads = TEXT_VENUE_HEAD.map((w) => String(w).trim().replace(/[.*+?^$()|[\]{}\\]/g, '\\$&').replace(/\s+/g, '\\s+')).filter(Boolean);
+        if (!heads.length) return lines;
+        const headRe = new RegExp(`^\\s*(?:${heads.join('|')})\\s*:\\s*(.+?)\\s*$`, 'iu');
+        const titled = (x) => clean(x).split(/\s+/).map((w, k) => (k > 0 && /^(?:of|the|and|de|la|le|du|des|der|die|das)$/i.test(w) ? w.toLowerCase() : /^\p{Ll}/u.test(w) ? cap(w) : w)).join(' ');
+        const out = [...lines];
+        for (let i = 0; i < out.length; i++) {
+          const m = out[i].match(headRe);
+          if (!m || /\b(?:by|recorded|mixed)\b/i.test(m[1])) continue;
+          const name = titled(m[1]);
+          // ((review) a name that is only a city or a country ("Place: Berlin") is no place)
+          if (!looksLikeName(name) || /\d{3,}/.test(name) || regionOf(name)) continue;
+          // ((review) "location:" and "place:" name where it was recorded, not that it was live – "venue:", "live at:", "club:" do
+          const live = !/^\s*(?:location|place)\b/i.test(out[i]);
+          let area = '';
+          let date = '';
+          let j = i + 1;
+          for (; j < out.length && j <= i + 2; j++) {
+            const l = clean(out[j]);
+            if (!l) break;
+            const d = findDates(l, { usOrder: false });
+            if (!date && d.length === 1 && !noDates(l).replace(/[,./\s-]+/g, '')) {
+              date = l;
+              continue;
+            }
+            // ((review) a city only as "City, XX" or a known area – not a credit ("John Smith - guitar", "Mixed by …", "Musicians")
+            const city0 = !area && !/\d/.test(l) && !/\s[-–—]\s|\bby\b/i.test(l) && !isRole(cap(l)) && !isRole(cap(l.split(/\s+/)[0]))
+              ? l.match(/^([\p{L}][\p{L} .'’-]{1,40}?)(?:,\s*([\p{L} .]{2,30}))?$/u) : null;
+            const city = city0 && (city0[2] || regionOf(titled(city0[1]))) ? city0 : null;
+            if (city) {
+              area = [titled(city[1]), city[2] ? (/^\p{L}{2}$/u.test(city[2].trim()) ? city[2].trim().toUpperCase() : titled(city[2])) : ''].filter(Boolean).join(', ');
+              continue;
+            }
+            break;
+          }
+          out[i] = `Recorded ${live ? 'live ' : ''}at ${[name, area, date].filter(Boolean).join(', ')}`;
+          for (let k = i + 1; k < j; k++) out[k] = '';
+          i = j - 1;
+        }
+        return out;
+      };
+      /**
+       * [Z-MEM] (3.79.0, S113) A line that is only a person's name: two to four words with capitals (particles inside), no role,
+       * instrument, place, month, number or heading.
+       */
+      // ((review) headings of no group of musicians: "Live Sound Crew:", "Tour Support:", "Management:")
+      const MEMBER_NOT_HEAD = /\b(?:crew|support|staff|team|tour|management|thanks|engineering|production|technical|stage|sound|lighting|design|artwork|additional)\b/i;
+      const memberLine = (t) => {
+        const ws = t.split(/\s+/);
+        return looksLikeName(t) && ws.length >= 2 && ws.length <= 4 && !/\d/.test(t)
+          && ws.every((w, k) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (k > 0 && k < ws.length - 1 && /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu)$/i.test(w)))
+          && !ws.some((w) => playable(w.toLowerCase()) || isRole(cap(w.toLowerCase()))) && !isRole(cap(t)) && !TEXT_PLACE_WORDS.test(t) && !regionOf(t)
+          && !TEXT_MONTH_WORD.test(t) && !CREDITS_HEADING.test(t) && !TEXT_NOT_NAME.test(t) && !/\b(?:additional|musicians|crew|staff|team)\b/i.test(t);
       };
       /** One line of the text. */
       /**
@@ -8013,7 +8136,8 @@
         held.forEach(readLine);
       };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
+      const allLines0 = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
+      const allLines = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
       const heads = headingLists(allLines);
       const stacks = stackPairs(allLines.map((l, i) => (heads.has(i) ? '' : l)));
@@ -8076,6 +8200,9 @@
       quotes.forEach((q) => { q.tracks = [...q.scope.set]; });
       // [S063] (3.38.18) initials as a name ("RR"): the one release artist or name of the text they stand for (collected item 183)
       if (ruleOn('S063')) initialsOf(credits, artistNames);
+      // [Z-MEM] (3.79.0, S113) a member the text gives an instrument or a voice elsewhere: no question (the instruments say it)
+      const playing = new Set(credits.filter((c) => !c.member && c.who && c.who.name && playable(c.role)).map((c) => norm(c.who.name)));
+      for (let k = credits.length - 1; k >= 0; k--) if (credits[k].member && !credits[k].memberGroup && playing.has(norm(credits[k].who.name))) credits.splice(k, 1);
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
@@ -24072,7 +24199,10 @@
     const has = (level) => row.level === level || (names.length
       ? names.some((n) => levelsOfType(n, et).includes(level))
       : (level !== 'release_group' || (row.other && typesFor('release_group', et).length > 0)));
-    return { levels: ['recording', 'release', 'release_group', 'work'].filter(has), names };
+    // [Z-CAM2] (3.79.0) miscellaneous support: on the recordings or the release (the level a row has stays)
+    // ((review) the type the row has now – row.types keeps a type chosen before)
+    const misc = ['misc', 'miscellaneous support', 'miscellaneous roles'].includes(norm((lt && lt.name) || (row.types || [])[0] || ''));
+    return { levels: ['recording', 'release', 'release_group', 'work'].filter(has).filter((l) => !misc || l === 'recording' || l === 'release' || l === row.level), names };
   }
 
   /** [3.18.0] The works matrix skipped: no works level (taking the matrix again brings it back). */
@@ -25483,7 +25613,19 @@
       && !/:(?:range|lcd)$/.test(String(d.found)) && !viaLcd.has(String(d.found))).length;
     if (unplaced && pooled) showMessage('info', 'dm.autoPooled', { n: unplaced });
     if (placed || pooled) log('info', 'dmAuto', { n: placed, pooled });
-    if (photoConcertPool()) savePool();
+    const concertPhotos = photoConcertPool();
+    if (concertPhotos) {
+      savePool();
+      // [Z-PHC] (3.79.0, D026) their row gets it – not when the text names a date of their own (already on the row)
+      if (ruleOn('D026')) {
+        S.rows.filter((r) => r.level !== 'skip' && norm(rowTypeName(r) || '') === 'photography' && !hasDateInput(r.date) && !r.dateSuggOff
+          && CONCERT_PHOTO.test([r.raw, ...(r.mods || []), r.dBase, r.notesCredit].filter(Boolean).join(' · '))).forEach((r) => {
+          r.date = { ...fieldsFromDate(concertPhotos), poolId: concertPhotos.id };
+          r.dateOpen = true;
+          log('info', 'concertPhotoDate', { name: rowShort(r), date: poolLabel(concertPhotos) });
+        });
+      }
+    }
     saveMatrix();
     return { placed, pooled };
   }
