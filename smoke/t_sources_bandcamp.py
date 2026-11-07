@@ -1583,4 +1583,150 @@ def case_tcpsingle():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_kxs380():
+    """Credits Importer 3.80.0 (collected items Z-KXS, Z-YTW; rules S117, S118): a KEXP video ("maya ongaku - Full Performance (Live on
+    KEXP)" on the channel KEXP) as the source of a release of one track; its description: "… maya ongaku performing live in the KEXP
+    studio. Recorded April 8, 2025." / "Songs:" / "Approach to Anywhere" / "Nuska" / "Melting Fish" / credits.
+    A) The series "Live on KEXP (full performance videos)" (7e46e6df-…, from the mapping – no lookup) is suggested: on the recordings,
+       "part of", the number 2025-04-08, its note says why; KEXP Studio recorded at (S112).
+    A2) With the live comments switched on: the recording – no work, the release group not Live – gets one ("performing live in …").
+    B) The songs are no credits: the lines are listed as left out ("a list of songs …"), nothing not recognized.
+    C) Works matrix: "Split into 3 works (songs)" at the one track (title: the songs); split: "song 1 of 3" … in the order of the list,
+       "Nuska" – a work of the band (read with the works of the artists) – offered ("Link “Nuska”").
+    D) Staged: the three works linked in their order (linkOrder 1–3), none with "medley"; (review) the series on the recording, with the
+       number 2025-04-08.
+    E) Rule S117 off: no series; a single song "… (Live on KEXP)" on KEXP, a full performance on another channel: no series either."""
+    VID = 'TIUlGjNppa8'
+    DESC = """http://KEXP.ORG presents maya ongaku performing live in the KEXP studio. Recorded April 8, 2025.
+
+Songs:
+Approach to Anywhere
+Nuska
+Melting Fish
+
+Host: Troy Nelson
+Audio Engineer: Kevin Suggs
+Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
+    H.YT_PAGES[VID] = H.yt_page(VID, 'maya ongaku - Full Performance (Live on KEXP)', 'KEXP', DESC)
+    # ((review) a single song of KEXP, and a full performance on another channel: no series)
+    H.YT_PAGES['CCCCCCCCCCC'] = H.yt_page('CCCCCCCCCCC', 'maya ongaku - Nuska (Live on KEXP)', 'KEXP', DESC)
+    H.YT_PAGES['DDDDDDDDDDD'] = H.yt_page('DDDDDDDDDDD', 'maya ongaku - Full Performance (Live on KEXP)', 'Some Fan', DESC)
+    BAND = H.uid('dddddddd', 3800)
+    NUSKA = H.uid('cccccccc', 3801)
+    H.REC[:] = [H.uid('bbbbbbbb', 1)]
+    H.TITLES[:] = ['Full Performance']
+    H.RELEASE_AC[:] = [(BAND, 'maya ongaku', 'maya ongaku', '')]
+    H.ARTIST_WORKS[BAND] = [{'id': NUSKA, 'title': 'Nuska', 'type': 'Song', 'aliases': []}]
+    # (the series as MusicBrainz's entity, for staging)
+    H.COMPANIES[7380] = ('series', '7e46e6df-1446-4c2d-9810-247eaec64efb', 'Live on KEXP (full performance videos)')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m['tracks']:
+                t['recording']['relations'] = []
+        return d
+    H.ws_release = ws
+    H.attr(757, 'medley', 757)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (757,))
+    H.attr(788, 'number', 788, free=True)
+    H.lt(740, 'ea6f0698-6782-30d6-b16d-293081b66774', 'part of', 'recording', 'series', (788,))
+    H.lt(741, '3fa29f01-8e13-3e49-9b0a-ad212aa2f81d', 'part of', 'release', 'series', (788,))
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    SERIES = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => /Live on KEXP/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
+        const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+        return [t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-', lv ? lv.dataset.level : '', (tr.closest('tbody') || tr).textContent.includes('Suggested')]; })))()"""
+    PARTS = """() => [...document.querySelectorAll('.dci-matrix tr[data-work="0"]')].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
+      (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim(),
+      [...tr.querySelectorAll('[data-act=part-pick]')].map(b => b.textContent.trim())])"""
+    STAGED = """(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
+      return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity0.gid === '%s').map(r => [r.entity1.name, r.linkOrder, ids(r)]).sort((a, b) => a[1] - b[1]); })()""" % H.REC[0]
+    results = []
+
+    IMPORTS = "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length"
+
+    def load(pg, vid, n):
+        # (the source chosen for the release is remembered: the video may be loaded at the start already)
+        n = pg.evaluate(IMPORTS) + 1
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', f'https://www.youtube.com/watch?v={vid}')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 60)
+        pg.wait_for_timeout(800)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        load(pg, VID, 2)
+        a0 = pg.evaluate(SERIES)
+        a1 = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+        print('A)', a0, '|', a1)
+        results.append(a0 == [[['part of', '2025-04-08', 'recording', True]]] and 'KEXP Studio' in a1)
+        # A2) (Z-KXS) the live comment of the recording without a work: live by the description ("performing live in the KEXP studio")
+        H.open_settings(pg, 'staging')
+        pg.locator('[data-el=settings] [data-set=live-comments]').check()
+        H.wait_ok(pg, "!!document.querySelector('[data-el=livecom] tr[data-livecom]')", 15)
+        a2 = pg.evaluate("""[...document.querySelectorAll('[data-el=livecom] tr[data-livecom]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(),
+          tr.querySelector('[data-f=livecom-text]').value])""")
+        print('A2)', a2)
+        results.append(len(a2) == 1 and a2[0][0] == '1' and a2[0][1].startswith('live'))
+        # (the settings closed again by their symbol)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        H.wait_ok(pg, "!document.querySelector('[data-el=settings]') || document.querySelector('[data-el=settings]').hidden", 5)
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.textContent)")
+        unrec = pg.evaluate("[...document.querySelectorAll('[data-el=unrecognized] li, .dci-unrec li')].map(x => x.textContent.trim())")
+        print('B)', len([x for x in ign if 'list of songs' in x]), '|', unrec)
+        results.append(len([x for x in ign if 'list of songs' in x]) == 4 and not any('Nuska' in x for x in unrec))
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-split]')", 60)
+        c0 = pg.evaluate("(b => [b.textContent.trim(), b.title])(document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-split]'))")
+        # (the works of the band read first: the comparison with the works of the artists ends with a line in the log)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /works of the artists|Works of the artists|artists’ works/i.test(li.textContent))", 30)
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=medley-split]').evaluate('b => b.click()')
+        H.wait_for(pg, "document.querySelectorAll('.dci-matrix tr[data-work=\"0\"] [data-act=part-pick]').length > 0", 30)
+        c1 = pg.evaluate(PARTS)
+        c2 = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'songs of the description' in x]
+        print('C)', c0, '\n  ', c1, c2)
+        results.append(c0 == ['Split into 3 works (songs)', 'The songs the description lists, each a work of its own, linked in their order: Approach to Anywhere · Nuska · Melting Fish']
+                       and c1 == [['song 1 of 3', 'Approach to Anywhere', []], ['song 2 of 3', 'Nuska', ['Link “Nuska”']], ['song 3 of 3', 'Melting Fish', []]]
+                       and c2 == ['Track 1.1: split into the 3 songs of the description'])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        d0 = pg.evaluate(STAGED)
+        d1 = pg.evaluate("""MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 740).map(r => [r.entity0.gid, r.entity1.gid, JSON.stringify(r.attributes || {}).includes('2025-04-08')])""")
+        print('D)', d0, '| Serie:', d1)
+        results.append(d0 == [['Approach to Anywhere', 1, []], ['Nuska', 2, []], ['Melting Fish', 3, []]]
+                       and d1 == [[H.REC[0], '7e46e6df-1446-4c2d-9810-247eaec64efb', True]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # E) rule S117 off; a title without "Live on KEXP"
+    for off, vid in ((['S117'], VID), ([], 'CCCCCCCCCCC'), ([], 'DDDDDDDDDDD')):
+        H.RULES_OFF[:] = ['S083'] + off
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            load(pg, vid, 2)
+            e0 = pg.evaluate(SERIES)
+            print('E)', off, vid, e0)
+            results.append(e0 == [] and not errs)
+            b.close()
+    H.RULES_OFF[:] = ['S083']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

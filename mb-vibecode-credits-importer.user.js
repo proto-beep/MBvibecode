@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.79.0
+// @version      3.80.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.79.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.79.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.80.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.80.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.79.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.80.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -311,6 +311,7 @@
       "ignored.why.exceptTitle": "the title of a track: the lines below it are for that track",
       "ignored.why.groupHeading": "the heading of a group above its members – no credit",
       "ignored.why.separator": "a separator between parts of the credits",
+      "ignored.why.songList": "a list of songs – offered as the works of the track in the works matrix",
       "ignored.why.cover": "the original performers of a cover – no credit of this release (“cover” on the link of its work)",
       "ignored.why.quote": "a quote of another work – its work “quotes lyrics from” it (works matrix)",
       "wnote.cover": "Cover – originally performed by {by}: “cover” on the link of its work (the original)",
@@ -460,6 +461,7 @@
       "group.addRoleShort": "＋ role",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
+      "match.viaMapping": "from the mapping file (by the video)",
       "match.linkedShort": "✓ link",
       "match.manual": "set manually",
       "match.created": "newly created",
@@ -1433,6 +1435,11 @@
       "medley.joinTitle": "One work for the track again",
       "medley.partOf": "medley {k} of {n}",
       "medley.partTitle": "A part of a medley: a work of its own, linked with “medley” in its order",
+      "songs.split": "Split into {n} works (songs)",
+      "songs.splitTitle": "The songs the description lists, each a work of its own, linked in their order: {list}",
+      "songs.partOf": "song {k} of {n}",
+      "songs.partTitle": "A song of the description: a work of its own, linked in its order",
+      "log.songsSplit": "Track {track}: split into the {n} songs of the description",
       "log.medleySplit": "Track {track}: split into {n} works (medley)",
       "log.medleyJoined": "Track {track}: one work again",
       "log.partsFound": "Track {track}: MusicBrainz has works for {n} of its parts – offered at them",
@@ -1581,8 +1588,11 @@
       "log.pubEvidence.one": "Publisher {name}: evidence for {n} work",
       "log.pubEvidence.other": "Publisher {name}: evidence for {n} works",
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
+      "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
+      "note.seriesFromVideoNoDate": "Suggested: the video is on this series’ channel with its name in the title (rule S117). No single recording date was found in the description – please type the number (YYYY-MM-DD).",
       "note.seriesType": "MusicBrainz series of type “{type}” cannot be related to this release here.",
       "log.series": "Discogs series {name} ({number})",
+      "log.seriesVideo": "Series {name} suggested by the video ({number})",
       "match.noLinkSeries": "no MB series with this Discogs link",
       "level.release_group": "Release group",
       "preview.releaseGroup": "Release group",
@@ -3849,6 +3859,8 @@
     { id: 'S114', where: 'TEXT.parse (readLine), Q013', note: 'Texts (3.79.0; collected item Z-MEM; off by default, a quick switch): the group of such a heading offered as performer too (the same question)' },
     { id: 'S115', where: 'TEXT.parse (venueBlocks), TEXT_VENUE_HEAD', note: 'Texts (3.79.0; collected item Z-VEN): a line "venue: industry city" (the words of T062: venue, location, live at, place, club) with the lines right below it – a city ("brooklyn, NY") and a date ("9/17/26") – is the place where it was recorded live, read as "Recorded live at Industry City, Brooklyn, NY, 2026-09-17": the place Industry City (recorded at; its name with capitals), the city as its area – shown at the entry, and the places in it first among MusicBrainz\'s hits –, the date' },
     { id: 'S116', where: 'TEXT.parse (namesScoped)', note: 'Texts (3.79.0; collected item Z-KXP): "A with B" in a list of names – both a person\'s name of two to four words with capitals – are two names ("Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht" – four); a name of the release\'s artists stays whole (S077)' },
+    { id: 'S117', where: 'YOUTUBE.toRelease (videoSeries), loadSeries, SERIES_FROM_VIDEO', note: 'YouTube (3.80.0; collected item Z-KXS): a video whose title and channel match a line of T063 ("Live on KEXP" on the channel KEXP) is suggested as part of that series – "Live on KEXP (full performance videos)", a series of recordings: the recordings part of it, the number the date it was recorded ("Recorded April 8, 2025." → 2025-04-08)' },
+    { id: 'S118', where: 'TEXT.parse (songLists), medleyParts, splitMedley, searchParts, TEXT_SONG_HEAD, TEXT_SONG_SKIP', note: 'YouTube (3.80.0; collected item Z-YTW): the songs a video\'s description lists – below "Songs:", "Setlist:", "Tracklist:" (T064) or two lines or more with a time ("00:00 Intro", "4:12 Nuska") – are the works of the release\'s one track: "Split into n works (songs)" in the works matrix, each a work of its own in the order of the list (no "medley"); a work of the band\'s or of the track\'s writers with that title is offered, the others are new works (with the writers the text names only)' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -4234,6 +4246,10 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T063', where: 'SERIES_FROM_VIDEO, videoSeries', note: 'YouTube (3.80.0): series a video is part of by its title and its channel (S117) – the series (MBID), its kind (a series of recordings: on the recordings) and where its number comes from (the date of the group Performance: "Recorded …")',
+      show: () => ({ pairs: SERIES_FROM_VIDEO.map((x) => [x.name, `title ${x.title} · channel ${x.channel} · ${x.type} · ${x.mbid} · number: date (${x.number})`]) }) },
+    { id: 'T064', where: 'TEXT_SONG_HEAD, TEXT_SONG_SKIP, songLists', note: 'YouTube (3.80.0): the heading of a list of songs in a video\'s description and the lines of such a list that are no song (S118)',
+      show: () => ({ pairs: [['heading', TEXT_SONG_HEAD], ['no song', TEXT_SONG_SKIP]] }) },
     { id: 'T062', where: 'TEXT_VENUE_HEAD, venueBlocks', note: 'Texts (3.79.0): the words before a colon that start a block of the place where it was played (S115) – "venue: …", "location: …", "live at: …", "place: …", "club: …"',
       show: () => ({ pairs: [['words', TEXT_VENUE_HEAD.join(' · ')]] }) },
     { id: 'T061', where: 'SUITE_SKIP_HEADINGS, headingKind, suiteOffers', note: 'Works (3.41.0): headings of a track list that name no suite (Z-SU) – a side, a medium or bonus tracks: "Side A", "CD 1", "Disc Two", "Bonus Tracks", "Encore" (a heading that begins with one of these words); headings with the place or date of a recording ("Recorded at …", "Live at …", a year) are no suite either. Every other heading names a suite of the tracks below it, until the next heading – asked in the works matrix',
@@ -4388,6 +4404,11 @@
   const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
   /** [Z-VEN] (3.79.0, T062) The words of a block of the place it was played at ("venue:", "location:" …). */
   const TEXT_VENUE_HEAD = MAP.TEXT_VENUE_HEAD;
+  /** [Z-KXS] (3.80.0, T063) Series a YouTube video is part of by its title and channel ("Live on KEXP" on KEXP). */
+  const SERIES_FROM_VIDEO = MAP.SERIES_FROM_VIDEO;
+  /** [Z-YTW] (3.80.0, T064) The heading of a list of songs in a video's description ("Songs:", "Setlist:") and its lines that are none. */
+  const TEXT_SONG_HEAD = MAP.TEXT_SONG_HEAD;
+  const TEXT_SONG_SKIP = MAP.TEXT_SONG_SKIP;
   // [Z-TBY] (3.59.0) a heading of the credits alone ("credits", "Personnel:", "Special guests:", "Besetzung:", "Gäste:"); the months (no
   // group's heading: "June 12:")
   const CREDITS_HEADING = /^(?:credits|personnel|musicians|line-?up|besetzung|mitwirkende|(?:special\s+)?guests?|gäste|featuring|feat\.?|with)\s*:?$/i;
@@ -7527,6 +7548,74 @@
         }
       };
       /**
+       * [Z-YTW] (3.80.0, S118, T064) The songs a video's description lists (only for YouTube, ctx0.songs): below a heading ("Songs:",
+       * "Setlist:", "Tracklist:" – the lines up to an empty line or one that is no title) or two lines or more in a row with a time
+       * ("00:00 Intro", "4:12 - Nuska", "Nuska (4:12)"). Numbers and times taken off; Intro, Interview, Outro … no song. The lines are
+       * left out of the credits ("songList"). → { lines (those taken empty), songs }
+       */
+      const songLists = (lines) => {
+        const out = [...lines];
+        const songs = [];
+        const TIME = String.raw`[([]?\d{1,2}:\d{2}(?::\d{2})?[)\]]?`;
+        const timeFirst = new RegExp(`^\\s*${TIME}\\s*(?:[-–—:|.]\\s*)?(\\S.*?)\\s*$`, 'u');
+        const timeLast = new RegExp(`^\\s*(\\S.*?)\\s*(?:[-–—|]\\s*)?${TIME}\\s*$`, 'u');
+        const title = (raw) => {
+          const m = timeFirst.exec(raw) || timeLast.exec(raw);
+          return clean(m ? m[1] : raw).replace(/^(?:\d{1,2}\s*[.)]|\d{1,2}\s+[-–—]|[-–—•*·])\s*/u, '').replace(/\s*[([]live[)\]]$/i, '')
+            .replace(/\s*[([](?:feat\.?|ft\.?|featuring|with)\s[^()[\]]+[)\]]$/i, '').replace(/\s+(?:feat\.?|ft\.?|featuring)\s.+$/i, '')
+            .replace(/^["“'‘](.+)["”'’]$/u, '$1').trim();
+        };
+        // (no credit: "Recorded at …", "… by Jane Roe", "Host: …"; no address, handle or tag)
+        // ((review) a credit ends the list: "Guitar - John Smith", "John Smith - guitar", "John Smith (guitar)", a heading of the credits)
+        const creditLike = (t) => CREDITS_HEADING.test(t) || /^(?:credits|musicians|personnel|line-?up|band)$/i.test(t)
+          || t.split(/\s+[-–—]\s+/).some((x, k, all) => all.length > 1 && (isRole(cap(clean(x))) || playable(clean(x).toLowerCase())))
+          || ((m) => !!m && (isRole(cap(m[1])) || playable(m[1].toLowerCase())))(t.match(/\(([^()]+)\)\s*$/));
+        const isTitle = (t) => !!t && t.length <= 80 && !creditLike(t) && !/https?:\/\/|www\.|@|#\w/i.test(t) && !/:(?:\s|$)/.test(t) && !/^\W+$/.test(t)
+          && !/^(?:recorded|mixed|mastered|produced|engineered|filmed|edited|directed|shot|written|composed|arranged|performed|hosted|thanks)\b/i.test(t)
+          && !/\sby\s+\p{Lu}[\p{Ll}.'’-]*\s+\p{Lu}/u.test(t);
+        const take = (k, t) => {
+          if (!TEXT_SONG_SKIP.test(t)) songs.push(t);
+          ignored.push({ text: clean(out[k]), why: 'songList' });
+          out[k] = '';
+        };
+        for (let i = 0; i < out.length; i++) {
+          if (TEXT_SONG_HEAD.test(clean(out[i]))) {
+            const at = ignored.length;
+            let n = 0;
+            let j = i + 1;
+            for (; j < out.length; j++) {
+              if (!clean(out[j])) {
+                if (n) break;
+                continue;
+              }
+              const t = title(out[j]);
+              if (!isTitle(t)) break;
+              take(j, t);
+              n += 1;
+            }
+            if (n) {
+              ignored.splice(at, 0, { text: clean(out[i]), why: 'songList' });
+              out[i] = '';
+              i = j - 1;
+            }
+            continue;
+          }
+          // lines with a time first, two or more in a row – ((review) the times rising, the first at the start: "0:00", "00:00"; not
+          // "Doors 19:30" / "Show 20:30")
+          const secs = (x) => {
+            const m = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(x);
+            return m ? (m[3] != null ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : Number(m[1]) * 60 + Number(m[2])) : -1;
+          };
+          let j = i;
+          while (j < out.length && timeFirst.test(out[j]) && isTitle(title(out[j])) && (j === i ? secs(out[j]) === 0 : secs(out[j]) > secs(out[j - 1]))) j++;
+          if (j - i >= 2) {
+            for (let k = i; k < j; k++) take(k, title(out[k]));
+            i = j - 1;
+          }
+        }
+        return { lines: out, songs };
+      };
+      /**
        * [Z-VEN] (3.79.0, S115) "venue: industry city" / "brooklyn, NY" / "9/17/26" (T062): one line "Recorded live at Industry City,
        * Brooklyn, NY, 9/17/26" – the lines below it that are a city and a date go into it (the city with capitals) and are empty.
        */
@@ -8137,7 +8226,10 @@
       };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
       const allLines0 = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
-      const allLines = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
+      const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
+      // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
+      const songRead = ctx0 && ctx0.songs && ruleOn('S118') ? songLists(allLines1) : { lines: allLines1, songs: [] };
+      const allLines = songRead.lines;
       // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
       const heads = headingLists(allLines);
       const stacks = stackPairs(allLines.map((l, i) => (heads.has(i) ? '' : l)));
@@ -8207,9 +8299,9 @@
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut() };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut() };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs };
     }
 
     /**
@@ -8259,6 +8351,7 @@
         covers: res.covers || [],
         quotes: res.quotes || [],
         groups: res.groups || [], // [Z-TBY] (3.59.0, S087)
+        songs: res.songs || [], // [Z-YTW] (3.80.0, S118)
       };
     }
 
@@ -8637,11 +8730,30 @@
       if (!v) return null;
       return { id: v.videoId || '', title: String(v.title || ''), channel: String(v.author || ''), description: String(v.shortDescription || '') };
     }
+    /**
+     * [Z-KXS] (3.80.0, S117, T063) The series the video is part of by its title and channel ("Live on KEXP" on KEXP): its MBID, its
+     * kind, the number – the one full date of its group in the description ("Recorded April 8, 2025." → "2025-04-08"; none if several
+     * or if it could be read two ways, "4/8/2025").
+     */
+    function videoSeries(data) {
+      if (!ruleOn('S117')) return [];
+      const out = [];
+      for (const x of SERIES_FROM_VIDEO || []) {
+        if (!x.title.test(String(data.title || '')) || !x.channel.test(String(data.channel || '').trim())) continue;
+        const ymdOf = (v) => (v ? `${v.year}-${String(v.month).padStart(2, '0')}-${String(v.day).padStart(2, '0')}` : '');
+        const days = uniq(findDates(data.description)
+          .filter((d) => d.hint === x.number && !d.multi && !d.alt && d.value.begin && d.value.begin.day && (!d.value.end || ymdOf(d.value.end) === ymdOf(d.value.begin)))
+          .map((d) => ymdOf(d.value.begin)));
+        out.push({ id: null, mbid: x.mbid, name: x.name, type: x.type, links: [], number: days.length === 1 ? days[0] : '', fromVideo: true });
+      }
+      return out;
+    }
     /** The neutral release: the description read as a text, with the video as its source. */
     function toRelease(data, id, ctx) {
       const url = videoUrl(id);
-      const rel = TEXT.toRelease({ text: data.description, origin: url }, ctx);
-      return { ...rel, source: 'youtube', id, url, title: data.title || url, noteSource: url, channel: data.channel };
+      // [Z-YTW] (3.80.0, S118) the songs the description lists are read too
+      const rel = TEXT.toRelease({ text: data.description, origin: url }, { ...ctx, songs: true });
+      return { ...rel, source: 'youtube', id, url, title: data.title || url, noteSource: url, channel: data.channel, series: videoSeries(data) };
     }
     return {
       id: 'youtube',
@@ -10192,7 +10304,8 @@
         const pos = it.pos || x.pos;
         const rels = (x.rec.relationships || []);
         const works = rels.filter((r) => r.linkTypeID === 278);
-        const live = works.length ? works.some((r) => (r.attributes || []).some((a) => a.typeID === 578)) : rgLive;
+        // [Z-KXS] (3.80.0, review) without a work also live by the source ("performing live in …", a credit, the title)
+        const live = works.length ? works.some((r) => (r.attributes || []).some((a) => a.typeID === 578)) : rgLive || !!it.bySource;
         if (!live) {
           say('warn', 'liveNotLive', { pos });
           skip('liveNotLive', x.pos || pos, {}, 'warn');
@@ -20178,6 +20291,7 @@
       await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
+      S.srcSongs = rel.songs || []; // [Z-YTW] (3.80.0, S118)
       // [Z-SUB] (3.41.12) index tracks whose sub-tracks are tracks of their own in MusicBrainz
       if (rel.subTracksSplit) log('info', 'subTracksSplit', { n: rel.subTracksSplit, source: source.name });
       // (this one is remembered once it is complete; an import started while another one still runs: only the last one counts)
@@ -22170,7 +22284,9 @@
       const path = entityPath(a.company || a.other ? a.entityType : 'artist');
       // [3.39.1] (review) "found via Bandcamp link" for an entry of a Bandcamp supplement too
       // [Z-KH] (3.40.11) compact "in the lines" (Q-bg): "✓ link", the whole text as its tooltip
-      const okText = a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) });
+      // [Z-KXS] (3.80.0, review) a series of the mapping file (by the video), not found through a link
+      const okText = a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : a.viaMapping ? tr('match.viaMapping')
+        : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) });
       const short = a.status === 'linked' && !a.viaAlias && S.emSide === 'lines' && mxCompact(a) && !mxEntry(a);
       return `<span class="dci-badge dci-badge-ok"${short ? ` title="${esc(okText)}"` : ''}>${esc(short ? tr('match.linkedShort') : okText)}</span>
         ${a.company || a.other ? `<span class="dci-sub">${esc(tr(`entity.${a.entityType}`))}</span>` : ''}
@@ -27855,13 +27971,15 @@
 
   async function loadSeries(list) {
     let found = new Map();
+    // [Z-KXS] (3.80.0, S117) a series known by its MBID (from the mapping) needs no lookup
+    const byUrl = list.filter((x) => !x.mbid && (x.links || [])[0]);
     try {
-      found = await lookupUrls(list.map((x) => x.links[0]), 'series');
+      if (byUrl.length) found = await lookupUrls(byUrl.map((x) => x.links[0]), 'series');
     } catch (e) {
       console.warn('[Discogs-Credits] series lookup failed', e);
     }
     for (const x of list) {
-      const hit = (found.get(x.links[0]) || [])[0];
+      const hit = x.mbid ? { mbid: x.mbid, name: x.name, type: x.type || '', disambiguation: '' } : (found.get((x.links || [])[0]) || [])[0];
       const type = hit ? norm(hit.type) : '';
       const owner = {
         key: nextId('o'), dId: x.id, links: x.links, name: x.name, rawName: x.name, status: hit ? 'linked' : 'missing', other: true, srcSeries: true,
@@ -27869,6 +27987,7 @@
         candidates: [], editing: false, error: '', anvs: [],
       };
       owner.dNumber = seriesNumber(x.number);
+      if (x.fromVideo) owner.viaMapping = true;
       S.artists.set(owner.key, owner);
       const row = makeRow(owner.key, { manual: true, company: null });
       Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [] });
@@ -27882,13 +28001,21 @@
         row.level = 'release';
         const number = seriesNumber(x.number);
         if (number) Object.assign(row, { roleCredit: number, roleCreditTouched: true });
+      } else if (hit && type === 'recording series' && x.fromVideo) {
+        // [Z-KXS] (3.80.0, S117) a series of recordings ("Live on KEXP"): the recordings part of it, the number the recording date
+        // ((review) the tracks chosen – a manual row has none; only a series from a video: a Discogs series of recordings stays as before)
+        row.level = 'recording';
+        row.tracks = new Set(selIdx());
+        resolveRowType(row);
+        if (x.number) Object.assign(row, { roleCredit: x.number, roleCreditTouched: true });
+        if (x.fromVideo) row.notes = [x.number ? 'seriesFromVideo' : 'seriesFromVideoNoDate'];
       } else {
         Object.assign(row, { level: 'skip', levelTouched: true, seriesType: hit ? hit.type : '' });
         row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : 'seriesMissing'];
       }
       S.rows.push(row);
-      log(hit ? 'info' : 'warn', 'series', { name: x.name, number: x.number || '–' });
-      if (!hit) await loadSeriesLabel(owner);
+      log(hit ? 'info' : 'warn', x.fromVideo ? 'seriesVideo' : 'series', { name: x.name, number: x.number || '–' });
+      if (!hit && x.links && x.links.length) await loadSeriesLabel(owner);
     }
   }
 
@@ -29101,7 +29228,9 @@
       const i = t.idx;
       if (!t.recordingGid || !inSelection(i)) continue;
       const works = matrixTrack(t) ? worksForTrack(i) : (t.works || []);
-      const live = works.length ? works.some((w) => linkAttrsOf(i, w).has('live') || (w.linkAttrs || []).includes('live')) : rgLive;
+      // [Z-KXS] (3.80.0) without a work: also a track that is live by the source (S021: the notes "performing live in …", a credit, its title)
+      const bySource = !works.length && !rgLive && !!liveReason(i);
+      const live = works.length ? works.some((w) => linkAttrsOf(i, w).has('live') || (w.linkAttrs || []).includes('live')) : rgLive || bySource;
       if (!live) continue;
       const warn = [];
       const rowsOf = (type, kind) => S.rows.filter((r) => r.level === 'recording' && r.tracks && r.tracks.has(i) && norm(rowTypeName(r)) === type
@@ -29149,7 +29278,7 @@
       if (other) warn.push(tr('livecom.existing', { text: existing }));
       out.push({ i, rec: t.recordingGid, pos: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, auto, existing,
         same: !!existing && ascii(existing) === ascii(auto), pending: places.some((x) => x.pending), conflict: texts.length > 1 || dates.length > 1, other, warn,
-        place: places.length === 1 ? places[0] : null, kind, hint });
+        place: places.length === 1 ? places[0] : null, kind, hint, bySource });
     }
     return out;
   }
@@ -29174,7 +29303,7 @@
     // with an error: it is replaced (until 3.43.3 it blocked every later save of this release for good)
     if (had && had.armedAt && !had.done && !had.error && Date.now() - (Number(had.armedAt) || 0) < LIVE_JOB_MAX_MS) return;
     const items = !liveComOn() ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
-      .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual,
+      .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual, ...(p.bySource ? { bySource: true } : {}),
         place: p.place && p.place.mbid ? { mbid: p.place.mbid, credit: p.place.credit || '', name: p.place.name || '' } : null }));
     if (!items.length) {
       if (had) writeJson('localStorage', key, null);
@@ -30754,7 +30883,9 @@
       log('error', 'error', { text: e.message });
     }
     S.artistWorksRunning = false;
-    if (matchArtistWorks() || suggestionChanged()) renderWorksBackground();
+    // [Z-YTW] (3.80.0, S118) songs of a video split before the works of the artists were read: offered now
+    const songOffers = [...S.workParts.keys()].reduce((k, i) => k + songOffersFromArtistWorks(i), 0);
+    if (matchArtistWorks() || suggestionChanged() || songOffers) renderWorksBackground();
     const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
     const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
     if (!S.artistWorksAgain && !worksResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
@@ -30867,7 +30998,8 @@
         const n = (S.workParts.get(i) || []).length;
         const what = pending ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
           : `<span class="dci-badge dci-badge-plan">${esc(tr('works.plannedFound'))}</span> ${mbLink(work)}`;
-        const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr(plan.medley ? 'medley.partTitle' : 'suite.partTitle', { name: plan.suiteName || '' }))}">${esc(tr(plan.medley ? 'medley.partOf' : 'suite.partOf', { k: plan.k, n }))}</span> ` : '';
+        const pk = plan.songs ? 'songs' : plan.medley ? 'medley' : 'suite';
+        const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr(`${pk}.partTitle`, { name: plan.suiteName || '' }))}">${esc(tr(`${pk}.partOf`, { k: plan.k, n }))}</span> ` : '';
         // [Z-SU] (3.41.3) a medley: one work again
         const join = plan.medley && plan.k === 1 ? ` <button type="button" class="dci-textbtn" data-act="medley-join" title="${esc(tr('medley.joinTitle'))}">↺ ${esc(tr('medley.join'))}</button>` : '';
         // (3.41.4, review) a work of MusicBrainz found for the part: offered
@@ -30881,7 +31013,8 @@
         : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}`;
       // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
       const mParts = pending ? medleyParts(i) : [];
-      const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
+      const sk = songParts(i).length ? 'songs' : 'medley'; // [Z-YTW] (3.80.0)
+      const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr(`${sk}.splitTitle`, { list: mParts.join(' · ') }))}">${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
       return `${head}${line(`${badge} ${unplan} ${o.btn}${o.hint}${split}`)}${linkAttrsHtml(mrow)}
         <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
@@ -30914,7 +31047,8 @@
     }
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
     const mParts = medleyParts(i);
-    const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
+    const sk = songParts(i).length ? 'songs' : 'medley'; // [Z-YTW] (3.80.0)
+    const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr(`${sk}.splitTitle`, { list: mParts.join(' · ') }))}">${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
     // [Z-WMX] (3.52.0) "＋ New ▾": a new work, and in its menu the search, the form, its type and languages (before: four buttons and links)
     const menuOpen = S.mxNewMenu === i;
     return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
@@ -31378,10 +31512,18 @@
     log('info', 'suiteUndone', { name: o.name });
   }
 
+  /**
+   * [Z-YTW] (3.80.0, S118) The songs a video's description lists, as the parts of the release's one track ([] if the release has more
+   * tracks or the list fewer than two songs).
+   */
+  const songParts = (i) => (ruleOn('S118') && S.mbTracks.length === 1 && S.mbTracks[0].idx === i && (S.srcSongs || []).length > 1 ? S.srcSongs.slice() : []);
+
   /** [Z-SU] (3.41.3) The parts of a track that is in no suite accepted: its sub-tracks or the parts of its title ([] without). */
   function medleyParts(i) {
     const t = S.mbTracks[i];
     if (!t || t.works.length) return [];
+    const songs = songParts(i);
+    if (songs.length) return songs;
     const src = (S.srcTracks || [])[i] || null;
     return trackPartsOf(src && src.title ? src : { title: t.title });
   }
@@ -31393,14 +31535,16 @@
   function splitMedley(i) {
     const parts = medleyParts(i);
     if (parts.length < 2) return;
+    // [Z-YTW] (3.80.0, S118) the songs of a live video: works one after another, no "medley"
+    const songs = songParts(i).length > 1;
     const before = S.workPlan.get(i) || null;
     S.workPlan.delete(i);
     S.suiteSeq += 1;
     S.workParts.set(i, parts.map((title, k) => ({
-      gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(['medley']), medley: true,
-      ...(k === 0 && before ? { before } : {}),
+      gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(songs ? [] : ['medley']), medley: true,
+      ...(songs ? { songs: true } : {}), ...(k === 0 && before ? { before } : {}),
     })));
-    log('info', 'medleySplit', { track: trackLabel(S.mbTracks[i]), n: parts.length });
+    log('info', songs ? 'songsSplit' : 'medleySplit', { track: trackLabel(S.mbTracks[i]), n: parts.length });
     searchParts(i);
   }
   function joinMedley(i) {
@@ -31418,11 +31562,14 @@
    */
   async function searchParts(i) {
     const ps = S.workParts.get(i);
-    const writers = [...writerMbidsOfTrack(i)];
+    // [Z-YTW] (3.80.0, S118) the songs of a video: the works of the band too (the release's artists – as writers, and the works of their
+    // recordings read for the comparison with the works of the artists)
+    const songs = !!(ps && ps.some((p) => p.songs));
+    const writers = uniq([...writerMbidsOfTrack(i), ...(songs ? (S.releaseCredit || []).map((p) => p.mbid).filter(Boolean) : [])]);
     if (!ps || !writers.length) return;
-    let found = 0;
+    let found = songs ? songOffersFromArtistWorks(i) : 0;
     for (const p of ps) {
-      if (p.origin !== 'pending') continue;
+      if (p.origin !== 'pending' || p.offer) continue;
       const titles = uniq([p.title, ...(p.suiteName ? [`${p.suiteName}: ${p.part}`, `${p.suiteName}, ${p.part}`, p.part] : [])]);
       for (const title of titles) {
         let hits = [];
@@ -31444,6 +31591,30 @@
       renderWorksBackground();
       refresh();
     }
+  }
+
+  /**
+   * [Z-YTW] (3.80.0, S118) The songs of a video without a work offered: one work of that title (or alias) among the works of the artists
+   * read so far (S.artistWorks – linked to them or of their recordings). → how many were offered
+   */
+  function songOffersFromArtistWorks(i) {
+    const ps = S.workParts.get(i);
+    if (!ps || !ps.some((p) => p.songs)) return 0;
+    // ((review) only the works of the release's artists – not of guests or writers: a common title would find another work)
+    const all = new Map();
+    for (const p of S.releaseCredit || []) {
+      const e = p.mbid && S.artistWorks.get(p.mbid);
+      if (e) for (const w of e.works.values()) all.set(w.gid, w);
+    }
+    let n = 0;
+    for (const p of ps) {
+      if (p.origin !== 'pending' || p.offer) continue;
+      const same = [...all.values()].filter((w) => norm(w.title) === norm(p.title) || (w.aliases || []).some((x) => norm(x) === norm(p.title)));
+      if (same.length !== 1) continue;
+      p.offer = { gid: same[0].gid, title: same[0].title };
+      n += 1;
+    }
+    return n;
   }
 
   /** [Z-SU] (3.41.1) The question of a suite (or what was answered) at the top of the works matrix. */
@@ -38027,7 +38198,7 @@
       suites: {
         n: suites.length, created: suites.filter((sw) => sw.origin === 'created').length, found: suites.filter((sw) => sw.origin === 'search').length,
         manual: suites.filter((sw) => S.suiteManual.has(sw.key)).length, parts: parts.filter((p) => p.suite && suites.some((sw) => sw.key === p.suite)).length,
-        medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
+        medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley && !ps[0].songs).length,
       },
       works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
       // [Z-STG2] (3.42.6) Discogs's genres and styles and Bandcamp's tags, each of the source read or supplementing it
