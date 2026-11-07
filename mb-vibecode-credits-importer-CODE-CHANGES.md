@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.87.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.88.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.88.0 · 2026-11-08
+
+Z-EVL, Z-EVR, Z-FPL2, Z-CAMD2.
+
+- **`eventLinked`** (new; Z-EVL, S136): called by `setCompanyEntityType` (entity type event), `setArtistManually` and the search's own link of an event entry, `name-use`, and `addManualEntry` (an event without a role, instead of the question of S108); (`only`: these rows – `addManualEntry`, `festival-add` with S136 and without S132) for each row of the entry without a type chosen by hand (`statTypeHand`, `typePicked`), not on Skip, Work or Release group, without a type of an event or with "recorded at" / "video shot at": `entityType` event, tracks (none: `selIdx()`), the type by media (`trackIsVideo`: `both` / `video shot at` / `recorded at`) through `answerEvAsk`; a row that already has its type keeps it; of these rows (and the copies of "both") those on the release and not `levelTouched` → `levelOf(…, 'recording')`; only when something changed `renderGroups`, `renderDates` and log `eventLinkedTyped`; a question of another entry comes back. Also from `artist-pick` (an event entry).
+- **`festivalInMb`, `festInMbHtml`** (new; Z-EVR, S137): `S.mbTracks[].mbEvents` and `S.mbReleaseEvents` (the events of the recordings and of the release, from the web service); `festivalHtml` leaves out a festival MusicBrainz has on all tracks (`[data-el=fest-inmb]` instead), names the tracks for some; only "recorded at" / "video shot at", a name alike only with its time holding the festival's date (`eventInfo().span`); `{ id }` of the event – `festPlaceHtml` takes it as the festival's event; log `festivalInMb` once (`S.festInMbSaid`, reset per import).
+- **`eventInfo`** (Z-FPL2): `event/<mbid>?inc=aliases+place-rels` – `{ aliases, span, places, known }`, `failed` when not to be had (asked again after a minute; the redraw outside the request's chain); **`festPlacesRedraw`** (new) draws the places of a festival again when it comes. **`festPlaceHtml`**: with S131 and the event linked, "Place → Skip" only when `places` has the place (its MBID; not linked: the name); otherwise `festival.placeOther` / `festival.placeNone`; nothing while loading; not to be had: as before.
+- **`performanceDateSugg`** (new; Z-CAMD2, S138): a row "video shot at" (or camera work – R110 or the words – on video tracks only) of live tracks (all of them: `liveReason`, S021) and a row of the date column Performance with a date of the pool covering its tracks → that entry; first in `rowDateSugg` (title `date.suggPerformance`).
+- **Register:** S136, S137, S138; S131 extended. **Texts:** festival.inMb, festival.inMbSome, festival.placeOther, festival.placeNone, log.festivalInMb, log.eventLinkedTyped, date.suggPerformance.
+- **Tests:** `t_notes_companies.py evr388`, `evl388`, `camd388` (new; fail on 3.87.0); `t_ui_head.py evask`, `eva385` with S136 off (the question); `harness.py`: `EVENT_INFO` (an event with its places; others 404).
 
 ## Import 3.87.0 · 2026-11-07
 
