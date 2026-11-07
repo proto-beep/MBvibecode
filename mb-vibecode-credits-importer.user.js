@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.84.0
+// @version      3.85.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.84.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.84.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.85.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.85.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.84.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.85.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1069,6 +1069,14 @@
       "festival.addTitle": "Adds the event as an entry, as “Add entry manually” with its MBID does; choose its relationship there.",
       "log.festivalFound": "Festival recording in the text: “{name}” – events offered from MusicBrainz: {n}",
       "log.festivalAdded": "Event added: {name}",
+      "festival.placeHint": "Festival recording “{name}”: MusicBrainz prefers the event to the place – the event is linked to its place. Add the event (offered above, or with “Add entry manually”).",
+      "festival.placeBoth": "The event “{event}” is linked – MusicBrainz links an event to its place, so “{place}” needs no relationship of its own here.",
+      "festival.placeSkip": "Place → Skip",
+      "log.festPlaceSkipped": "Place on “Skip” (its event is linked): {name}",
+      "manual.evAskBoth": "recorded at + video shot at (by media type)",
+      "manual.evAskBothTitle": "A row for each: “recorded at” on the audio tracks, “video shot at” on the videos",
+      "msg.videoTitleAudio.one": "{n} track looks like a video by its title, but MusicBrainz has an audio recording (no video flag): {list} – “video shot at” for it all the same; check the recording.",
+      "msg.videoTitleAudio.other": "{n} tracks look like videos by their titles, but MusicBrainz has audio recordings (no video flag): {list} – “video shot at” for them all the same; check the recordings.",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
@@ -3887,6 +3895,10 @@
     { id: 'S123', where: 'findDedications, dedFullName', note: 'Dedications (3.82.0; collected item Z-DEDH): a form of address and a surname after "dedicated to" ("dedicated to Mr. Polo’s incredible explorations") – the one full name with that surname in the text or the release\'s title ("Marco Polo’s journey") is suggested in "Dedications & tributes" (artist – release); none when there is no full name or more than one' },
     { id: 'S124', where: 'applyPlan (removals, replaces, updates)', note: 'Staging (3.83.0; collected item Z-RLV): what was staged before and is changed in the dashboard since – its level, type, tracks, attributes, credits, date – is replaced at the next "Stage" (the old relationship taken out or updated), also when it was changed in the relationship editor itself; those are named in a message (until 3.82.0 they were left alone: "changed in the editor itself", "to remove by hand")' },
     { id: 'S125', where: 'dupAskHtml, dupAnswer, buildNoteBlock', note: 'Works (3.83.0; collected item Z-SNW): new works for all tracks while some have a work of the same title in MusicBrainz – three answers in the works matrix: the other works (those tracks left out to be linked), all works anyway, cancel; works created anyway are named in the edit note with the works of the same title (⚙ Settings → Staging → Edit note, on)' },
+    { id: 'S129', where: 'DATE_GROUPS (performance), cameraLive', note: 'Dates (3.85.0; collected item Z-CAMD): the rows of camera work (R110: "Cameras", "Filmed by" …) on live recordings belong to the column Performance of the date matrix – they get the date of the performance as the performers do' },
+    { id: 'S130', where: 'festivalHtml, festivalEvent, festNameAlike, eventInfo, refresh', note: 'Festivals (3.85.0; collected item Z-FEV): the hint of a festival recording (S056) goes once an event is an entry (with a row not on Skip) – offered for it, or with a name alike, its own or an alias (the words of the shorter nearly all in the other, two at least or one that is no genre; years and "festival" aside), its time holding the festival\'s date; it comes back when the event goes' },
+    { id: 'S131', where: 'festPlaceHtml, festivalOfPlace (fest-place-skip)', note: 'Festivals (3.85.0; collected item Z-FPL): at a place of a festival recording (named in its sentence as a whole, linked or not; the only place and festival only with "recorded at") the hint too; with the event linked as well both are named and "Place → Skip" puts its rows of the recording on Skip (all of them: the entry\'s own Skip, ↺ Take again) – MusicBrainz links the event to its place' },
+    { id: 'S132', where: 'evAskTypes, answerEvAsk, trackIsVideo (festival-add)', note: 'Events (3.85.0; collected item Z-EVA): on a release with audio and videos an event gets a row for each – "recorded at" on the audio tracks, "video shot at" on the videos (the first answer of the question, and at once for an event of a festival recording); a track whose title says "(Video)", "Official Video" counts as a video, with a hint that MusicBrainz has an audio recording' },
     { id: 'S128', where: 'TEXT.parse (dedicationNoName)', note: 'Texts (3.84.0; collected item Z-DEDN): a dedication without a name – "This album is dedicated to my lovely daughter and son", "In loving memory of my father" (my, our, the … and no capital letter after it) – is a line left out on purpose ("a dedication without a name"), not one not recognized' },
     { id: 'S126', where: 'TEXT.parse (readClause; TEXT_WHAT_VERBS)', note: 'Texts (3.84.0; collected items Z-WPR, Z-BTW): the words for the music before the verbs – "All tracks written, performed and recorded by …", "Tracks were composed and produced between … in …" – are no part of the credit (a role the register knows with them stays: "All songs written by"); joined verbs with a date and an area – "Composed and produced between February 2025 and April 2026 in Rzeszow, Poland" – give the area for each verb (composed in on the works, produced in on the recordings)' },
     { id: 'S127', where: 'TEXT.parse (namesScoped, addCredit), the name search', note: 'Texts (3.84.0; collected item Z-WPR): a name in brackets after a person\'s name – "Wojciech Stecko (Mindheal)" – is the artist name of the same person: the credit stays the name as written, MusicBrainz is searched by both (the artist name only similar; a release\'s artist of that name first), a note at the entry says that an artist under the full name may be cleaner' },
@@ -4942,7 +4954,9 @@
    */
   const DATE_GROUPS = [
     // [Z-AP] (3.40.12) the areas too ("recorded in", "mixed in", "mastered in": a date of the notes for "… in Hiroshima" went nowhere)
-    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at', 'recorded in'] },
+    // [Z-CAMD] (3.85.0, S129) the cameras of live recordings too (misc "cameras", R110): filmed at the performance
+    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at', 'recorded in',
+      'misc', 'miscellaneous support'], onlyNote: 'misc only for camera work on live recordings (S129)', only: (n, row) => !['misc', 'miscellaneous support'].includes(n) || cameraLive(row) },
     { key: 'mix', label: 'Mix', types: ['mix', 'mixed at', 'mixed in'] },
     // [3.15.1] releaseOnly: MusicBrainz has mastering on the release only (on recordings it is deprecated, "mastered at"
     // does not exist there) – every date of the column is for the release level, a track group only says which row
@@ -21347,9 +21361,100 @@
     renderSource();
   }
 
+  /**
+   * [Z-FEV] (3.85.0, S130) Two names of a festival or event alike: the words of the shorter (no year, no small words, not
+   * "festival") nearly all in the other ("Montreux Jazz Festival" ~ "Montreux Jazz Festival 1977"; not "Roskilde Festival").
+   */
+  function festNameAlike(x, y) {
+    const words = (n) => {
+      const all = String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^\p{L}\p{N}]+/u)
+        .filter((w) => w && !/^\d{2,4}$/.test(w) && !FEST_PARTICLE.test(w) && w !== 'the');
+      const own = all.filter((w) => !TEXT_FESTIVAL_WORDS.test(w));
+      return new Set(own.length ? own : all);
+    };
+    const a = words(x);
+    const b = words(y);
+    if (!a.size || !b.size) return false;
+    const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+    const hit = [...small].filter((w) => big.has(w));
+    // ((review) one word alike only when it is no genre ("Jazz Festival" ~ any jazz festival: no)
+    if (hit.length < 2 && (hit.length < 1 || FEST_GENRE.test(hit[0]))) return false;
+    return hit.length / small.size >= 0.75;
+  }
+  const FEST_GENRE = /^(?:jazz|rock|folk|blues|pop|metal|punk|soul|funk|music|musik|musique|classical|electronic|world|new|open|air|summer|winter|international|internacional)$/;
+  /**
+   * [Z-FEV] (3.85.0, S130) The aliases and the time of a linked event (looked up once; the hint drawn again then) – { aliases, span }.
+   * ((review) an error: looked up again later)
+   */
+  function eventInfo(mbid) {
+    if (!S.eventAliases) S.eventAliases = new Map();
+    if (!S.eventAliases.has(mbid)) {
+      S.eventAliases.set(mbid, { aliases: [], span: null });
+      mbWs(`event/${mbid}?inc=aliases`, { background: true }).then((d) => {
+        const ls = (d && d['life-span']) || {};
+        S.eventAliases.set(mbid, { aliases: ((d && d.aliases) || []).map((al) => al.name).filter(Boolean), span: ls.begin ? { b: lsKey(ls.begin, false), e: lsKey(ls.end || ls.begin, true) } : null });
+        S.festSig = null;
+        refresh();
+      }).catch(() => { S.eventAliases.delete(mbid); });
+    }
+    return S.eventAliases.get(mbid);
+  }
+  /**
+   * [Z-FEV] (3.85.0, S130) The event linked for a festival of the text: an entry of an event (with a row not on Skip) offered for it, or
+   * with a name or alias alike and – both known – its time holding the festival's date; or null. ((review) `any`: also with S130 off,
+   * for the place (S131))
+   */
+  function festivalEvent(f, any = false) {
+    if (!any && !ruleOn('S130')) return null;
+    const from = f.date && f.date.begin && f.date.begin.year ? dayKey(f.date.begin, false) : '';
+    const to = from ? dayKey(f.date.end && f.date.end.year ? f.date.end : f.date.begin, true) : '';
+    for (const a of S.artists.values()) {
+      if (a.entityType !== 'event' || !a.mbid || !S.rows.some((r) => r.artistKey === a.key && r.level !== 'skip')) continue;
+      if ((f.offers || []).some((o) => o.mbid === a.mbid)) return a;
+      const named = [a.mbName, a.name].some((n) => n && festNameAlike(n, f.name));
+      const info = eventInfo(a.mbid);
+      if (!named && !info.aliases.some((n) => festNameAlike(n, f.name))) continue;
+      if (from && info.span && !(info.span.b <= to && info.span.e >= from)) continue;
+      return a;
+    }
+    return null;
+  }
+  /** [Z-FPL] (3.85.0, S131) The festival of the text a linked place is part of: its name in the festival's sentence (or the only ones). */
+  function festivalOfPlace(a) {
+    const list = S.festivals || [];
+    if (!ruleOn('S131') || !list.length || !isPlaceEntry(a)) return null;
+    const fold = (x) => ` ${String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘`´]/g, "'").toLowerCase().replace(/[^\p{L}\p{N}']+/gu, ' ').trim()} `;
+    // ((review) the place as whole words of the sentence ("Lodge" is not "Western Front Lodge")
+    const named = list.find((f) => [a.mbName, a.name].some((n) => n && fold(f.line).includes(fold(n))));
+    if (named) return named;
+    // ((review) the only place and festival: only a place where it was recorded
+    const places = [...S.artists.values()].filter(isPlaceEntry);
+    const recAt = S.rows.some((r) => r.artistKey === a.key && /^recorded (?:at|in)$/.test(norm(rowTypeName(r) || '')));
+    return list.length === 1 && places.length === 1 && recAt ? list[0] : null;
+  }
+  /** [Z-FPL] (3.85.0, review) An entry of a place – linked, or a company that can be one (the place need not be linked). */
+  const isPlaceEntry = (a) => !!a && (a.entityType === 'place' || (!a.mbid && a.company && !a.entityType && companyTypes(a).includes('place')));
+  /**
+   * [Z-FPL] (3.85.0, S131) At a linked place of a festival recording: the hint (MusicBrainz prefers the event); with the event linked
+   * too, both named and "Place → Skip" (the event is linked to its place in MusicBrainz).
+   */
+  function festPlaceHtml(a) {
+    const f = festivalOfPlace(a);
+    if (!f) return '';
+    const ev = festivalEvent(f, true);
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    const skipped = rows.length && rows.every((r) => r.level === 'skip');
+    if (ev) {
+      return `<p class="dci-sub dci-fest-place" data-el="fest-place">${esc(tr('festival.placeBoth', { event: ev.mbName || ev.name, place: a.mbName || a.name }))}
+        ${skipped ? '' : `<button type="button" class="dci-small" data-act="fest-place-skip" data-key="${esc(a.key)}">${esc(tr('festival.placeSkip'))}</button>`}</p>`;
+    }
+    return `<p class="dci-sub dci-fest-place" data-el="fest-place">${esc(tr('festival.placeHint', { name: f.name }))}</p>`;
+  }
+
   /** The hint above the entries, with the events offered. */
   function festivalHtml() {
-    const list = S.festivals || [];
+    // [Z-FEV] (3.85.0, S130) not for a festival whose event is linked (a name or alias alike)
+    const list = (S.festivals || []).filter((f) => !festivalEvent(f));
     if (!list.length) return '';
     return `<div class="dci-festival" role="note">${list.map((f) => {
       const date = f.date ? ` (${formatDateValue(f.date)})` : '';
@@ -21399,10 +21504,24 @@
     return row;
   }
 
+  /**
+   * [Z-EVA] (3.85.0, S132) A track that is a video: MusicBrainz's video flag – or its title says so ("(Video)", "(Official Video)",
+   * "Official Music Video") though MusicBrainz has an audio recording (`titleOnly`: then a hint).
+   */
+  const VIDEO_TITLE = /\((?:official\s+)?(?:music\s+|lyric\s+|live\s+)?video\)|\[(?:official\s+)?(?:music\s+|lyric\s+)?video\]|\bofficial\s+(?:music\s+)?video\b/i;
+  const trackIsVideo = (t) => !!t && (t.video || (ruleOn('S132') && VIDEO_TITLE.test(t.title || '')));
+  const videoByTitleOnly = (t) => !!t && !t.video && ruleOn('S132') && VIDEO_TITLE.test(t.title || '');
+
   /** [Z-EVQ] (3.73.0, S108) The question below "Add entry manually" for an event just added: its relationship, one click. */
   function evAskTypes() {
-    return ['recorded at', ...(S.mbTracks || []).some((t) => t.video) ? ['video shot at'] : []]
-      .filter((n) => ['recording', 'release'].some((l) => typesFor(l, 'event').some((lt) => norm(lt.name) === n)));
+    // [Z-EVA] (3.85.0, S132) audio and video: both, a row for each by the media type of the tracks (first)
+    // ((review) the tracks of the media chosen
+    const pool = S.mbTracks ? selTracks() : [];
+    const vids = pool.filter(trackIsVideo);
+    const both = ruleOn('S132') && vids.length && vids.length < pool.length;
+    return [...(both ? ['both'] : []), 'recorded at', ...vids.length ? ['video shot at'] : []]
+      .filter((n) => n === 'both' || ['recording', 'release'].some((l) => typesFor(l, 'event').some((lt) => norm(lt.name) === n)))
+      .filter((n, k, all) => n !== 'both' || (all.includes('recorded at') && all.includes('video shot at')));
   }
   function renderEvAsk() {
     const el = S.overlay && S.overlay.querySelector('[data-el="manual-evq"]');
@@ -21412,7 +21531,8 @@
     const types = row ? evAskTypes() : [];
     el.hidden = !(a && types.length);
     el.innerHTML = a && types.length ? `<span id="dci-evq-text">${esc(tr('manual.evAsk', { name: a.mbName || a.name }))}</span>
-      ${types.map((n) => `<button type="button" class="dci-small dci-kind-event" data-act="manual-evq" data-type="${esc(n)}">${esc(n)}</button>`).join('')}
+      ${types.map((n) => `<button type="button" class="dci-small dci-kind-event${n === 'both' ? ' dci-primary' : ''}" data-act="manual-evq" data-type="${esc(n)}"
+        ${n === 'both' ? `title="${esc(tr('manual.evAskBothTitle'))}"` : ''}>${esc(n === 'both' ? tr('manual.evAskBoth') : n)}</button>`).join('')}
       <button type="button" class="dci-textbtn" data-act="manual-evq-later">${esc(tr('manual.evAskLater'))}</button>` : '';
   }
   /** [Z-EVQ] (3.73.0, S108) The relationship chosen: on the recordings first (a click on the level changes it), the entry folded. */
@@ -21421,6 +21541,24 @@
     S.evAsk = null;
     renderEvAsk();
     if (!row || !type) return;
+    // [Z-EVA] (3.85.0, S132) by media type: "recorded at" on the audio tracks, "video shot at" on the videos (a row each)
+    if (type === 'both') {
+      const vid = new Set((S.mbTracks || []).filter(trackIsVideo).map((t) => t.idx));
+      const audio = new Set([...row.tracks].filter((i) => !vid.has(i)));
+      const video = new Set([...row.tracks].filter((i) => vid.has(i)));
+      if (audio.size && video.size) {
+        const v = cloneRow(row, { tracks: video, suggested: new Set(video) });
+        Object.assign(row, { tracks: audio, suggested: new Set(audio) });
+        S.evAsk = v.id;
+        answerEvAsk('video shot at');
+        type = 'recorded at';
+      } else type = video.size ? 'video shot at' : 'recorded at';
+    }
+    // ((review) videos by their titles only: said also for "video shot at" chosen as such
+    if (type === 'video shot at' && ruleOn('S132')) {
+      const only = (S.mbTracks || []).filter((t) => row.tracks.has(t.idx) && videoByTitleOnly(t));
+      if (only.length) showMessage('warn', 'msg.videoTitleAudio', { n: only.length, list: only.map((t) => `${t.medium}.${t.number} “${t.title}”`).join(', ') });
+    }
     applyRoleText(row, type);
     if (!row.levelTouched && typesFor('recording', 'event').some((lt) => norm(lt.name) === norm(type))) Object.assign(row, { level: 'recording', defaultLevel: 'recording' });
     resolveRowType(row);
@@ -24302,6 +24440,7 @@
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
+        ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
@@ -27550,6 +27689,14 @@
 
   function refresh() {
     if (!S.overlay) return;
+    // [Z-FEV] (3.85.0, review) the festival hint above the entries drawn again when its event came or went (by hand too)
+    if ((S.festivals || []).length) {
+      const sig = S.festivals.map((f) => (festivalEvent(f) ? 1 : 0)).join('');
+      if (sig !== S.festSig) {
+        S.festSig = sig;
+        renderSource();
+      }
+    }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review)
     // [146] (3.36.0) the rows remembered soon after a change
@@ -28465,6 +28612,17 @@
   const ATTR_ABBR = { 'a cappella': 'ac', acappella: 'ac', 'a capella': 'ac', cover: 'co', demo: 'de', instrumental: 'in', karaoke: 'ka', live: 'li', medley: 'me', partial: 'pa' };
   const attrAbbr = (name) => ATTR_ABBR[norm(name)] || norm(name).replace(/[^a-z0-9]/g, '').slice(0, 2);
   const linkKey = (i, gid) => `${i}|${gid}`;
+  /**
+   * [Z-CAMD] (3.85.0, S129) A row of camera work (R110: "Cameras", "Filmed by" …) on live recordings: its date is the performance's
+   * (the column Performance of the date matrix).
+   */
+  function cameraLive(row) {
+    if (!row || !ruleOn('S129') || !(row.ruleId === 'R110' || /\b(?:cameras?|camera ?work|camerawork|cinematograph(?:y|er)|director of photography)\b/i.test(String(row.raw || '')))) return false;
+    if (!S.liveAuto || !ruleOn('S021')) return false;
+    if (row.level === 'release') return !!S.liveAuto.release;
+    return [...(row.tracks || [])].some((i) => liveReason(i));
+  }
+
   /** [S021] Why "live" is suggested for a track ('' if not). */
   function liveReason(i) {
     if (!ruleOn('S021')) return '';
@@ -34877,13 +35035,45 @@
         closeDashboard();
         break;
       // [S056] (3.37.8) an event offered for a festival recording: added as an entry
+      // [Z-FPL] (3.85.0, S131) a festival's place with its event linked: its rows on "Skip"
+      case 'fest-place-skip': {
+        const a = S.artists.get(btn.dataset.key);
+        if (!a) break;
+        const rows = S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip');
+        // ((review) the rows of the recording (not "mixed at" there); all of them: the entry's own Skip – "↺ Take again" brings them back
+        const rec = rows.filter((r) => /^recorded (?:at|in)$/.test(norm(rowTypeName(r) || '')));
+        log('info', 'festPlaceSkipped', { name: a.mbName || a.name });
+        if (rec.length === rows.length) skipEntry(a);
+        else {
+          rec.forEach((r) => levelOf(r, 'skip'));
+          renderGroups();
+          renderWorks();
+          refresh();
+        }
+        break;
+      }
       case 'festival-add': {
         const mbid = btn.dataset.mbid;
         const offer = (S.festivals || []).flatMap((f) => f.offers).find((o) => o.mbid === mbid);
         btn.disabled = true;
-        addEntryByMbid(mbid).then(() => {
+        addEntryByMbid(mbid).then((row) => {
           if (offer) offer.added = true;
           log('ok', 'festivalAdded', { name: offer ? offer.name : mbid });
+          // [Z-EVA] (3.85.0, S132) a festival's recording: "recorded at" – with videos too, "video shot at" on those (a row each)
+          if (row && row.entityType === 'event' && ruleOn('S132')) {
+            // ((review) also a release of videos only (all "video shot at"); a question of another event stays
+            const types = evAskTypes();
+            const prev = S.evAsk;
+            S.evAsk = row.id;
+            if (!types.length) renderEvAsk();
+            else {
+              answerEvAsk(types.includes('recorded at') && types.includes('video shot at') ? 'both' : types[0]);
+              if (prev && prev !== row.id && S.rows.some((r) => r.id === prev)) {
+                S.evAsk = prev;
+                renderEvAsk();
+              }
+            }
+          }
           renderSource();
         }, (err) => {
           btn.disabled = false;
