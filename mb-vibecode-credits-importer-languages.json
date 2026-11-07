@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.80.0",
+  "version": "3.81.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -768,7 +768,6 @@
     "raw": "{text}",
     "source.current": "{title} (Discogs {id})",
     "source.none": "Noch keine Quelle geladen",
-    "source.pick": "Verknüpfte Quelle wählen …",
     "source.other": "Andere Quelle: Discogs-Release (URL oder ID), Bandcamp-Album- oder -Track-URL oder YouTube-Video-URL",
     "source.load": "Laden",
     "source.currentLink": "{title} ({src})",
@@ -3191,7 +3190,6 @@
     "raw": "{text}",
     "source.current": "{title} (Discogs {id})",
     "source.none": "Aún no se ha cargado ninguna fuente",
-    "source.pick": "Elige una fuente enlazada…",
     "source.other": "Otra fuente: publicación de Discogs (URL o ID), URL de un álbum o una pista de Bandcamp o URL de un vídeo de YouTube",
     "source.load": "Cargar",
     "source.currentLink": "{title} ({src})",
@@ -5614,7 +5612,6 @@
     "raw": "{text}",
     "source.current": "{title} (Discogs {id})",
     "source.none": "Aucune source chargée pour l’instant",
-    "source.pick": "Choisir une source liée…",
     "source.other": "Autre source : parution Discogs (URL ou ID), URL d’un album ou d’une piste Bandcamp ou URL d’une vidéo YouTube",
     "source.load": "Charger",
     "source.currentLink": "{title} ({src})",

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.80.0
+// @version      3.81.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.80.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.80.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.81.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.81.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.80.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.81.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -135,7 +135,8 @@
       "raw": "{text}",
       "source.current": "{title} (Discogs {id})",
       "source.none": "No source loaded yet",
-      "source.pick": "Choose a linked source …",
+      "source.pickLinked": "Import from another linked source …",
+      "srcmenu.bcSettings": "Bandcamp settings",
       "source.other": "Other source: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
@@ -3860,7 +3861,10 @@
     { id: 'S115', where: 'TEXT.parse (venueBlocks), TEXT_VENUE_HEAD', note: 'Texts (3.79.0; collected item Z-VEN): a line "venue: industry city" (the words of T062: venue, location, live at, place, club) with the lines right below it – a city ("brooklyn, NY") and a date ("9/17/26") – is the place where it was recorded live, read as "Recorded live at Industry City, Brooklyn, NY, 2026-09-17": the place Industry City (recorded at; its name with capitals), the city as its area – shown at the entry, and the places in it first among MusicBrainz\'s hits –, the date' },
     { id: 'S116', where: 'TEXT.parse (namesScoped)', note: 'Texts (3.79.0; collected item Z-KXP): "A with B" in a list of names – both a person\'s name of two to four words with capitals – are two names ("Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht" – four); a name of the release\'s artists stays whole (S077)' },
     { id: 'S117', where: 'YOUTUBE.toRelease (videoSeries), loadSeries, SERIES_FROM_VIDEO', note: 'YouTube (3.80.0; collected item Z-KXS): a video whose title and channel match a line of T063 ("Live on KEXP" on the channel KEXP) is suggested as part of that series – "Live on KEXP (full performance videos)", a series of recordings: the recordings part of it, the number the date it was recorded ("Recorded April 8, 2025." → 2025-04-08)' },
-    { id: 'S118', where: 'TEXT.parse (songLists), medleyParts, splitMedley, searchParts, TEXT_SONG_HEAD, TEXT_SONG_SKIP', note: 'YouTube (3.80.0; collected item Z-YTW): the songs a video\'s description lists – below "Songs:", "Setlist:", "Tracklist:" (T064) or two lines or more with a time ("00:00 Intro", "4:12 Nuska") – are the works of the release\'s one track: "Split into n works (songs)" in the works matrix, each a work of its own in the order of the list (no "medley"); a work of the band\'s or of the track\'s writers with that title is offered, the others are new works (with the writers the text names only)' },
+    { id: 'S118', where: 'TEXT.parse (songLists), medleyParts, splitMedley, searchParts, TEXT_SONG_HEAD, TEXT_SONG_SKIP', note: 'YouTube (3.80.0; collected item Z-YTW): the songs a video\'s description lists – below "Songs:", "Setlist:", "Tracklist:" (T064) or lines with a time ("00:00 Intro", "4:12 Nuska"; [Z-YTT] 3.81.0: the time first or last in every line, rising, three lines or more – two from 0:00 on; no schedule of Doors, Support …) – are the works of the release\'s one track: "Split into n works (songs)" in the works matrix, each a work of its own in the order of the list (no "medley"); a work of the band\'s or of the track\'s writers with that title is offered, the others are new works (with the writers the text names only)' },
+    { id: 'S119', where: 'TEXT.parse (splitRoles)', note: 'Texts (3.81.0; collected item Z-SLD): "Appalachian/Hammered Dulcimer" – a word before "/" that is no role, with the noun of the instrument after it an instrument of MusicBrainz too – are two instruments: Appalachian dulcimer, hammered dulcimer ("Piano/Keys" stays piano and keys)' },
+    { id: 'S120', where: 'TEXT.parse (readLine)', note: 'Texts (3.81.0; collected item Z-OTR): "on track(s) …" after a role in a list of roles is that role\'s tracks – "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass on track 3" (each role with its own tracks, as "(2, 6)" after it)' },
+    { id: 'S121', where: 'TEXT.parse (readClause, addCredit), TEXT_FILLER_SUBJECT, TEXT_BROADCASTER', note: 'Texts (3.81.0; collected item Z-RAD): "This was", "It was", "These tracks were" … before "recorded / mixed … by" are no part of the credit (until 3.80.0 its role credit); a broadcaster that recorded it (T066: "Norwegian State radio", "Westdeutscher Rundfunk", "BBC") is a label – recording (C021) and broadcast (C044) on the recordings; the names after "by" end with their sentence ("… and Guy. At the time …" made Guy a name of it); a place "outside / near Oslo" has Oslo as its area' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -4136,6 +4140,9 @@
       R095: { run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
+      // [Z-SYN] (3.81.0, R113, T065) a model of a synthesizer, drum machine or sampler ("Juno 101", "TR-808", "MPC"): MusicBrainz's
+      // instrument of that name first, else the kind; the model as written as role credit
+      R113: { test: () => !!gearKind(b), run: () => out(['instrument'], { primaryCands: [...instrumentCandidates(b, ms, { head: false }), gearKind(b)], credit: true }) },
       R096: { test: () => true, run: () => out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true }) },
     };
     return ROLE_RULE_DATA.map((r) => {
@@ -4248,8 +4255,12 @@
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
     { id: 'T063', where: 'SERIES_FROM_VIDEO, videoSeries', note: 'YouTube (3.80.0): series a video is part of by its title and its channel (S117) – the series (MBID), its kind (a series of recordings: on the recordings) and where its number comes from (the date of the group Performance: "Recorded …")',
       show: () => ({ pairs: SERIES_FROM_VIDEO.map((x) => [x.name, `title ${x.title} · channel ${x.channel} · ${x.type} · ${x.mbid} · number: date (${x.number})`]) }) },
-    { id: 'T064', where: 'TEXT_SONG_HEAD, TEXT_SONG_SKIP, songLists', note: 'YouTube (3.80.0): the heading of a list of songs in a video\'s description and the lines of such a list that are no song (S118)',
-      show: () => ({ pairs: [['heading', TEXT_SONG_HEAD], ['no song', TEXT_SONG_SKIP]] }) },
+    { id: 'T064', where: 'TEXT_SONG_HEAD, TEXT_SONG_SKIP, TEXT_SONG_SCHEDULE, songLists', note: 'YouTube (3.80.0): the heading of a list of songs in a video\'s description and the lines of such a list that are no song (S118)',
+      show: () => ({ pairs: [['heading', TEXT_SONG_HEAD], ['no song', TEXT_SONG_SKIP], ['schedule (3.81.0)', TEXT_SONG_SCHEDULE]] }) },
+    { id: 'T065', where: 'GEAR_MODELS, gearKind, R113', note: 'Roles (3.81.0): models of synthesizers, drum machines and samplers ("Juno", "Minilogue", "TR-808", "MPC") and the makers that may stand before them ("Roland", "Korg", "Akai") – a model is MusicBrainz\'s instrument of that name if it has one, else synthesizer, drum machine or sampler, the model as role credit',
+      show: () => ({ pairs: Object.entries(gearModels()).map(([k, v]) => [k, v.join(' · ')]) }) },
+    { id: 'T066', where: 'TEXT_BROADCASTER, addCredit', note: 'Texts (3.81.0): words of the name of a broadcaster (radio, Rundfunk, broadcasting, television … and NRK, BBC, WDR …) – one that recorded it is a label with recording and broadcast (S121)',
+      show: () => ({ pairs: [['words', TEXT_BROADCASTER]] }) },
     { id: 'T062', where: 'TEXT_VENUE_HEAD, venueBlocks', note: 'Texts (3.79.0): the words before a colon that start a block of the place where it was played (S115) – "venue: …", "location: …", "live at: …", "place: …", "club: …"',
       show: () => ({ pairs: [['words', TEXT_VENUE_HEAD.join(' · ')]] }) },
     { id: 'T061', where: 'SUITE_SKIP_HEADINGS, headingKind, suiteOffers', note: 'Works (3.41.0): headings of a track list that name no suite (Z-SU) – a side, a medium or bonus tracks: "Side A", "CD 1", "Disc Two", "Bonus Tracks", "Encore" (a heading that begins with one of these words); headings with the place or date of a recording ("Recorded at …", "Live at …", a year) are no suite either. Every other heading names a suite of the tracks below it, until the next heading – asked in the works matrix',
@@ -4406,6 +4417,42 @@
   const TEXT_VENUE_HEAD = MAP.TEXT_VENUE_HEAD;
   /** [Z-KXS] (3.80.0, T063) Series a YouTube video is part of by its title and channel ("Live on KEXP" on KEXP). */
   const SERIES_FROM_VIDEO = MAP.SERIES_FROM_VIDEO;
+  /** [Z-SYN] (3.81.0, T065) Models of synthesizers, drum machines and samplers, and the makers' names that may stand before them. */
+  const GEAR_MODELS = MAP.GEAR_MODELS;
+  /** [Z-RAD] (3.81.0, T066) Words of a broadcaster's name ("Norwegian State radio", "Westdeutscher Rundfunk", "BBC"). */
+  const TEXT_BROADCASTER = MAP.TEXT_BROADCASTER;
+  /** [Z-YTT] (3.81.0, review) The words of a schedule ("Doors 19:00", "Einlass", "Curfew"): a run of lines with times among them is no list of songs. */
+  const TEXT_SONG_SCHEDULE = MAP.TEXT_SONG_SCHEDULE;
+  // ((review) a mapping file of an older version has none of these: nothing found, no error)
+  const NO_MATCH = /(?!)/;
+  const gearModels = () => GEAR_MODELS || { brands: [] };
+  /** [Z-RAD] (3.81.0, S121) "This was", "It was", "These tracks were" … before "recorded / mixed … by" (no part of the credit). */
+  const TEXT_FILLER_SUBJECT = /^(?:this|it|that|all(?:\s+of\s+(?:this|it))?|everything|(?:the|this)\s+(?:album|record|recording|session|concert|music|performance|set|ep|lp|piece)|(?:the|these|all)\s+(?:tracks|songs|pieces|recordings))\s+(?:was|were|has\s+been|have\s+been|got)\s+(?:(?:all|entirely|mostly|partly)\s+)?(?:(live)\s+)?(recorded|mixed|mastered|produced|engineered|filmed|captured|edited|remixed|taped)(?=(?:\s*(?:,|and|&)\s*[a-z]+ed)*\s+(?:live\s+)?(?:by|at|in|on)\b)/i;
+  const reWords = (list) => (list || []).map((w) => String(w).trim().toLowerCase().replace(/[.*+?^$()|[\]{}\\]/g, '\\$&').replace(/[\s-]+/g, '[\\s-]?')).filter(Boolean).join('|');
+  let gearRes = null;
+  /** [Z-SYN] The kind of a role that is a model ("juno 101", "korg minilogue", "roland tr-808") – 'synthesizer', 'drum machine', 'sampler' – or ''. */
+  function gearKind(b) {
+    if (!gearRes) {
+      const brands = reWords(gearModels().brands);
+      // ((review) a model that is a word or a name too – "Gaia", "Jupiter", "Prophet", "Moog", "808" (`ambiguous`) – only with its maker
+      // before it or a number after it: "Roland Jupiter", "Prophet 5"; the others alone too: "Juno 101", "Minilogue")
+      const G = gearModels();
+      const amb = new Set((G.ambiguous || []).map((w) => String(w).trim().toLowerCase()));
+      const tail = String.raw`(?:\s+(?:synth(?:esizer)?|mk\s?(?:i{1,3}|\d)|xl|se|i{1,3}|iv))?`;
+      const num = String.raw`[\s-]?\d{1,4}[a-z]{0,2}`;
+      gearRes = Object.keys(G).filter((k) => !['brands', 'ambiguous'].includes(k)).map((kind) => {
+        const all = G[kind] || [];
+        const plain = reWords(all.filter((w) => !amb.has(String(w).trim().toLowerCase())));
+        const ambW = reWords(all.filter((w) => amb.has(String(w).trim().toLowerCase())));
+        const parts = [];
+        if (plain) parts.push(String.raw`(?:(?:${brands})[\s-]+)?(?:${plain})(?:${num})?${tail}`);
+        if (ambW) parts.push(String.raw`(?:${brands})[\s-]+(?:${ambW})(?:${num})?${tail}`, String.raw`(?:${ambW})${num}${tail}`);
+        return [kind, parts.length ? new RegExp(`^(?:${parts.join('|')})$`, 'u') : /(?!)/];
+      });
+    }
+    const x = norm(b);
+    return (gearRes.find(([, re]) => re.test(x)) || [''])[0];
+  }
   /** [Z-YTW] (3.80.0, T064) The heading of a list of songs in a video's description ("Songs:", "Setlist:") and its lines that are none. */
   const TEXT_SONG_HEAD = MAP.TEXT_SONG_HEAD;
   const TEXT_SONG_SKIP = MAP.TEXT_SONG_SKIP;
@@ -4990,7 +5037,8 @@
       return { ...mapRole(tr0.term, modsIn, { noTranslation: true }), base: String(baseIn || '').trim(), translated: tr0.word, translatedBase: tr0.term, langs: tr0.langs };
     }
     const m = String(baseIn || '').match(/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+(.+)$/i);
-    if (m && ruleOn('S003') && !/design/i.test(baseIn)) {
+    // ([Z-POR] 3.81.0: "Album portraits by" are portraits for the album, credited so – R112)
+    if (m && ruleOn('S003') && !/design|portrait/i.test(baseIn)) {
       const res = mapRoleInner(m[2], modsIn);
       if (res.level === 'recording') res.level = 'release';
       return res;
@@ -6108,7 +6156,9 @@
       let name = parts[0];
       let area = parts[1] || '';
       // [3.30.8] "Studios in West Orange, New Jersey": West Orange, New Jersey (before: the name kept "in West Orange")
-      const inArea = name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u);
+      // ([Z-RAD] 3.81.0, S121: "the Hennie-Onstad art centre outside Oslo", "… near Hamburg" – the place, its area)
+      const inArea = name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u)
+        || (ruleOn('S121') ? name.match(/^(.+?)\s+(?:just\s+)?(?:outside(?:\s+of)?|near|close\s+to)\s+(\p{Lu}[\p{L}\s.'’-]*)$/u) : null);
       if (inArea) [name, area] = [inArea[1], [inArea[2], area].filter(Boolean).join(', ')];
       if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
       // [3.37.8] "at the Western Front Lodge": the article written small is no part of the name ("The Hit Factory" keeps it; item 158)
@@ -6394,8 +6444,16 @@
         const extra = typos ? { ...extra0, typos } : extra0;
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
-        if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
-        else {
+        // [Z-RAD] (3.81.0, S121, T066) a broadcaster that recorded it ("recorded by Norwegian State radio"): a label – recording, and
+        // broadcast too (a person who recorded it stays a person)
+        // ((review) also "recorded live by"; not one of the release's artists ("TV on the Radio"), nor a person of it ("BBC engineer John
+        // Smith", "Kexp's Kevin Suggs")
+        const broadcaster = ruleOn('S121') && /^recorded(?:\s+live)?\s+by$/i.test(p.raw) && (TEXT_BROADCASTER || NO_MATCH).test(clean(name)) && !bandNames.has(norm(name))
+          && !/\b(?:engineers?|technicians?|producers?|crew|team|staff)\b|['’]s\b/i.test(name);
+        if (broadcaster || isCompanyRoleKnown(p.raw)) {
+          companies.push({ who: who(name), role: broadcaster ? 'Recorded By' : p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra, ...(broadcaster ? { entity: 'label' } : {}) });
+          if (broadcaster) companies.push({ who: who(name), role: 'Broadcast By', catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra, entity: 'label', implied: true });
+        } else {
           // [S073] (3.42.3) the title of the release or of a track is no person ("With Black Zenith, …" on "Black Zenith"; Z-BZ) –
           // unless it is the name of the release's artist too (a release named after its artist)
           if (ruleOn('S073') && titleKeys.has(norm(name)) && !bandNames.has(norm(name))) return false;
@@ -6526,17 +6584,23 @@
           const words = parts[i].split(' ');
           // [S040] (3.29.0) also a list with commas only, when every part before is one kind ("Tenor, alto, soprano saxophones")
           const kindsOnly = ruleOn('S040') && parts.slice(0, i).every((x) => x.split(' ').length === 1 && INSTRUMENT_MODIFIER.test(x));
-          if (words.length < 2 || !(TEXT_AND_SEP.test(seps[i - 1]) || (seps[i - 1] === ',' && kindsOnly)) || !INSTRUMENT_MODIFIER.test(words[0])) continue;
+          // [Z-SLD] (3.81.0, S119) "Appalachian/Hammered Dulcimer": a word before "/" that is no role, with the noun of the part after it
+          // an instrument as that part is – Appalachian dulcimer, hammered dulcimer ("Piano/Keys" stays two)
+          // ((review) written with capitals: an instrument found only by its last word is no instrument then – "Noise Guitar")
+          const titled0 = (t) => t.replace(/(^|\s)(\p{Ll})/gu, (a, sp, c) => sp + c.toUpperCase());
+          const slashKind = (x, nounOf) => ruleOn('S119') && x.split(' ').length === 1 && !isRole(x) && playable(titled0(`${x} ${nounOf}`));
+          const slash = seps[i - 1] === '/' && words.length >= 2 && playable(parts[i]) && slashKind(parts[i - 1], words.slice(1).join(' '));
+          if (!slash && (words.length < 2 || !(TEXT_AND_SEP.test(seps[i - 1]) || (seps[i - 1] === ',' && kindsOnly)) || !INSTRUMENT_MODIFIER.test(words[0]))) continue;
           let noun = words.slice(1).join(' ');
           // [S040] each kind is one instrument: the noun in the singular ("saxophones" → saxophone), when that is known
           const one = noun.replace(/(?<=[^s])s$/i, '');
-          if (ruleOn('S040') && one !== noun && isRole(`${words[0]} ${one}`)) {
+          if (!slash && ruleOn('S040') && one !== noun && isRole(`${words[0]} ${one}`)) {
             noun = one;
             parts[i] = `${words[0]} ${noun}`;
           }
           // back through the list while the parts before are modifiers too ("alto, tenor & baritone sax")
           for (let j = i - 1; j >= 0 && (j === i - 1 || /^(,|&|\+|\/|and|und|et)$/.test(seps[j]) || kindsOnly); j--) {
-            if (parts[j].split(' ').length !== 1 || !INSTRUMENT_MODIFIER.test(parts[j]) || !isRole(`${parts[j]} ${noun}`)) break;
+            if (!(slash && seps[j] === '/' && slashKind(parts[j], noun)) && (parts[j].split(' ').length !== 1 || !INSTRUMENT_MODIFIER.test(parts[j]) || !isRole(`${parts[j]} ${noun}`))) break;
             parts[j] = `${parts[j]} ${noun}`;
           }
         }
@@ -6804,7 +6868,10 @@
         }
         const parts = found ? [] : clauses(line);
         // [S050] (3.32.5) one clause; read again in typo mode when it gave nothing (see typoMode)
-        const readClause = (clause, ci) => {
+        const readClause = (clause0, ci) => {
+          // [Z-RAD] (3.81.0, S121) "This was recorded by …", "It was mixed by …", "These tracks were recorded live by …": the words before
+          // the verb are no part of the credit (until 3.80.0 "This was" became its credit)
+          const clause = ruleOn('S121') ? clause0.replace(TEXT_FILLER_SUBJECT, (m0, live, v) => `${cap(v.toLowerCase())}${live ? ' live' : ''}`) : clause0;
           part0 = clause;
           pi0 = pi + ci;
           // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
@@ -6929,6 +6996,9 @@
             }
             let left = leftRaw.replace(TEXT_QUOTED_TITLE, ' ');
             let right = clause.slice(m[0].length - m[2].length);
+            // [Z-RAD] (3.81.0, S121) the names and places end with their sentence: "… recorded by Norwegian State radio, at …. The first time
+            // I played with Rutherford and Guy. At the time …" – Guy recorded nothing (the "at" of the next sentence split it as a pair)
+            if (ruleOn('S121')) right = firstSentence(right);
             // [3.21.4] the verb after the words of a medium, "mastering" as "mastered" ("Vinyl LP mastering … at X": mastered at)
             const kc0 = companies.length;
             // ([Z-RPB] 3.49.0: "Additional recording by X at Y" – the verb after a word that only qualifies it: recorded at Y)
@@ -7574,7 +7644,7 @@
           && !/^(?:recorded|mixed|mastered|produced|engineered|filmed|edited|directed|shot|written|composed|arranged|performed|hosted|thanks)\b/i.test(t)
           && !/\sby\s+\p{Lu}[\p{Ll}.'’-]*\s+\p{Lu}/u.test(t);
         const take = (k, t) => {
-          if (!TEXT_SONG_SKIP.test(t)) songs.push(t);
+          if (!TEXT_SONG_SKIP.test(t) && !(TEXT_SONG_SCHEDULE || NO_MATCH).test(t)) songs.push(t);
           ignored.push({ text: clean(out[k]), why: 'songList' });
           out[k] = '';
         };
@@ -7600,15 +7670,22 @@
             }
             continue;
           }
-          // lines with a time first, two or more in a row – ((review) the times rising, the first at the start: "0:00", "00:00"; not
-          // "Doors 19:30" / "Show 20:30")
+          // lines with a time, in a row – ((review) the times rising; not "Doors 19:30" / "Show 20:30") – [Z-YTT] (3.81.0) the time first
+          // or last ("Anoyo Drive 00:32" / "Melting 13:37" / "Iyo no Hito 23:16" – KEXP), the same in every line; three lines or more, two
+          // only from 0:00 on
           const secs = (x) => {
             const m = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(x);
             return m ? (m[3] != null ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : Number(m[1]) * 60 + Number(m[2])) : -1;
           };
+          const posOf = (x) => (timeFirst.test(x) ? 'first' : timeLast.test(x) ? 'last' : '');
+          const pos = posOf(out[i]);
           let j = i;
-          while (j < out.length && timeFirst.test(out[j]) && isTitle(title(out[j])) && (j === i ? secs(out[j]) === 0 : secs(out[j]) > secs(out[j - 1]))) j++;
-          if (j - i >= 2) {
+          while (pos && j < out.length && posOf(out[j]) === pos && isTitle(title(out[j])) && (j === i || secs(out[j]) > secs(out[j - 1]))) j++;
+          // (a run of only Doors / Support / Main act … is a schedule, no list of songs: left as it was)
+          const real = out.slice(i, j).filter((x) => !TEXT_SONG_SKIP.test(title(x))).length;
+          // ((review) one word of a schedule among them ("Doors 19:00 / Jane Roe 20:00 …", "Einlass 19:00"): a schedule – no songs)
+          const schedule = out.slice(i, j).some((x) => (TEXT_SONG_SCHEDULE || NO_MATCH).test(title(x)));
+          if ((j - i >= 3 || (j - i === 2 && secs(out[i]) === 0)) && real >= 2 && !schedule) {
             for (let k = i; k < j; k++) take(k, title(out[k]));
             i = j - 1;
           }
@@ -7924,11 +8001,19 @@
           });
           if (out.join('') !== body) line = `${dsl[1]}${out.join('')}${tail}`;
         }
+        // [Z-OTR] (3.81.0, S120) "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Bass Guitar on track 2,4,6,
+        // Double Bass on track 3": "on track …" after a role is its tracks – written as "(2 & 6)", read as below (Z-RTL)
+        if (!sub && ruleOn('S120')) {
+          const otr = line.match(/^(.+?\s[–—-]\s)(.+)$/);
+          const onTr = new RegExp(`\\s+(?:on|auf|en|sur)\\s+(?:the\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})(?=\\s*(?:[,;]|\\.?$)|\\s+(?:and|&)\\s+\\p{L})`, 'giu');
+          if (otr && onTr.test(otr[2])) line = `${otr[1]}${otr[2].replace(onTr, ' ($1)')}`;
+        }
         // [Z-RTL] (3.49.0) "ghalani of Greenwood - bass (3, 7, 8, 9), additional bass (11)", "megiapa - production (2-14), vocals (1-14)":
         // each role with its own tracks – the parts read on their own, from the same line
         const rtl = !sub && line.match(/^(.+?\s[–—-]\s)(.+)$/);
         if (rtl) {
-          const segs = rtl[2].split(new RegExp(`(?<=\\((?:${SPEC})\\))\\s*[,;]\\s*`));
+          // ([Z-OTR] 3.81.0, review) also "piano (3) and organ (5)"
+          const segs = rtl[2].split(new RegExp(`(?<=\\((?:${SPEC})\\))\\s*(?:[,;]|${ruleOn('S120') ? '\\s(?:and|&)(?=\\s)' : '(?!)'})\\s*`));
           if (segs.length > 1 && segs.every((x) => new RegExp(`\\((?:${SPEC})\\)\\s*\\.?$`).test(x))) {
             segs.forEach((x0, k) => {
               // ((3.49.0, review) "vocals (1), and backing vocals (2)"; each part marked where it stands, and one not read named)
@@ -11828,6 +11913,8 @@
     // [W001–W003] A wording rule of the register wins (e.g. "Bass [Upright]" → "upright bass")
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
+    // [Z-SYN] (3.81.0, R113) a model as written ("Korg Minilogue", "Juno 101" – not in lower case); none when MusicBrainz's instrument is it
+    if (row.ruleId === 'R113') return norm(row.primaryText) === norm(row.base) ? '' : String(row.base || '').trim();
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
     // [S052] (3.34.27) in lower case ("Chaims" → chaims); [164] (3.37.13) a similar instrument too, unless the word is one
     // slip off it (a typo) or the same word ("Taischigoto" → taishōgoto credited "taischigoto"; "Sxaophone" → saxophone without)
@@ -19377,7 +19464,8 @@
   /** [E1] A phrase the register knows as a role ("Mixed By", "Artwork"), or an instrument MusicBrainz has ("trumpet"). */
   function isKnownRole(phrase) {
     const p = parseRoleNotation(phrase)[0];
-    if (!p || !p.base || /\d/.test(p.base) || p.base.split(' ').length > 6) return false;
+    // ([Z-SYN] 3.81.0: a model with a number – "Juno 101", "TR-808" – is a role, R113)
+    if (!p || !p.base || (/\d/.test(p.base) && !(ruleOn('R113') && gearKind(p.base))) || p.base.split(' ').length > 6) return false;
     // [S033] (3.28.2) "Logo og kunst": tasks of the artwork joined by "and"
     if (splitArtTasks(p).length > 1) return true;
     const m = mapRole(p.base, p.mods);
@@ -21994,8 +22082,8 @@
     // Every linked source (Discogs releases, Bandcamp albums)
     const linkLabel = sourceLinkLabel;
     const picker = S.sourceLinks.length > 1
-      ? `<select data-f="discogs-pick" aria-label="${esc(tr('source.pick'))}">
-          <option value="">${esc(tr('source.pick'))}</option>
+      ? `<select data-f="discogs-pick" aria-label="${esc(tr('source.pickLinked'))}">
+          <option value="">${esc(tr('source.pickLinked'))}</option>
           ${S.sourceLinks.map((l) => `<option value="${esc(`${l.source}|${l.id}`)}" ${rel && S.source.id === l.source && l.id === rel.id ? 'selected' : ''}>${esc(linkLabel(l))}</option>`).join('')}
         </select>`
       : '';
@@ -22013,7 +22101,7 @@
         ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
         ${S.betaOcr ? item('ocr-open', `${esc(tr('ocr.menu'))}<span class="dci-beta-tag">beta</span>`, '', tr('ocr.menuTitle')) : ''}
         ${item('srcorder-toggle', `${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}`, `aria-expanded="${S.srcOrderOpen}"`)}
-        ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} Bandcamp`, `aria-expanded="${S.bcOpen}"`)}
+        ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} ${esc(tr('srcmenu.bcSettings'))}`, `aria-expanded="${S.bcOpen}"`)}
         ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
         ${S.source === DISCOGS && (S.notesOff || S.rows.some((r) => r.fromNotes)) ? `<label class="dci-check dci-menuitem" title="${esc(tr('notes.offTitle'))}"><input type="checkbox" data-f="notes-off" ${S.notesOff ? 'checked' : ''}> ${esc(tr('notes.off'))}</label>` : ''}
         ${item('forget-open', esc(tr('forget.button')), `aria-expanded="${!!S.forgetOpen}"`, tr('forget.title'))}
