@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.72.0
+// @version      3.73.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.72.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.72.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.73.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.73.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.72.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.73.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -69,10 +69,23 @@
   const STORE_EPOCH = 4;
   /** Whether this generation keeps the list of created works (it guards new works that are not linked yet). */
   const EPOCH_KEEPS_CREATED = false;
+  // [Z-CPV] (3.73.0) the compact view is the default from now on – who used the script before (its storage generation is set) and
+  // never chose a view keeps the full one; who chose one knows the switch (no arrow). Once: a reset of the settings gives the new
+  // default
+  (function keepFullView() {
+    try {
+      const ls = window.localStorage;
+      if (ls.getItem('dci-view-kept')) return;
+      if (ls.getItem('dci-view') !== null) ls.setItem('dci-hint-compact', 'true');
+      else if (ls.getItem('dci-store-epoch')) ls.setItem('dci-view', JSON.stringify('full'));
+      ls.setItem('dci-view-kept', '1');
+    } catch { /* storage blocked */ }
+  })();
   (function clearOldStorage() {
     try {
       if (Number(window.localStorage.getItem('dci-store-epoch') || 0) >= STORE_EPOCH) return;
-      const keep = (k) => (EPOCH_KEEPS_CREATED && k.startsWith('dci-created-works:')) || k === 'dci-notice-version';
+      // ([Z-CPV] 3.73.0, review) the view's one-time decision too (else a fresh browser counted as an old one at its second start)
+      const keep = (k) => (EPOCH_KEEPS_CREATED && k.startsWith('dci-created-works:')) || k === 'dci-notice-version' || k === 'dci-view-kept';
       const old = [];
       for (let k = 0; k < window.localStorage.length; k++) {
         const key = window.localStorage.key(k);
@@ -431,7 +444,7 @@
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
-      "group.addRoleBtn": "＋ Another role for {name}",
+      "group.addRoleOne": "＋ Another role",
       "group.skip": "⊘ Skip",
       "group.skipTitle": "All rows of this entry on “Skip”: nothing of it is staged (“↺ Take again” brings their levels back)",
       "group.unskip": "↺ Take again",
@@ -681,6 +694,9 @@
       "manual.artistAria": "MusicBrainz entry",
       "manual.rolePlaceholder": "MB relationship type or a role as the source writes it, e.g. artwork or Guitar [Electric]",
       "manual.add": "Add",
+      "manual.evAsk": "The event “{name}”: which relationship?",
+      "manual.evAskLater": "choose later",
+      "log.evAsked": "Event {name}: {type} (on the recordings; the level changes with a click)",
       "works.missing.one": "{n} track has no work yet.",
       "works.missing.other": "{n} tracks have no work yet.",
       "works.type": "Work type for new works",
@@ -2250,7 +2266,7 @@
       "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Beta); off, its ticks go again.",
       "settings.ocrAuto": "Auto-select the images with credits",
       "settings.ocrAutoTitle": "Text from cover art (beta): back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
-      "hint.compact": "Try the compact view: one line per role, open a line to change it – this symbol switches",
+      "hint.full": "Try the full view: every role with all its fields at once – this symbol switches",
       "hint.close": "Hide this hint",
       "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
       "settings.ocrFrontTitle": "Text from cover art (beta): while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
@@ -2793,6 +2809,12 @@
       "dm.editDate": "edit date",
       "dm.remove": "remove",
       "dm.rel": "Release level",
+      "dm.artFor": "for",
+      "dm.artAria": "The kind of the artwork the date {date} is for",
+      "dm.art.any": "illustration & design",
+      "dm.art.illustration": "illustration",
+      "dm.art.photo": "photography",
+      "dm.art.design": "design",
       "dm.relTitle": "This date only for rows on the release level (release, release group); rows on recordings and works take the other dates of the column. A row switched to the release level takes this date.",
       "log.dmRelDate": "{name}: new level – date from the matrix column {col}: {date}",
       "dm.twin": "{date} is already in “{group}”.",
@@ -3675,6 +3697,7 @@
     { id: 'S105', where: 'suiteAddHtml, suiteAddBtnHtml, suiteTaken (suite-add-yes)', note: 'Works matrix (3.70.0): several suites – after "✓ Yes" the box stays open for the next one ("＋ Another suite"), from the first track that is free; tracks of a suite (or a medley) cannot be chosen again: the ranges of two suites never overlap' },
     { id: 'S106', where: 'onKeydown (mxArrow)', note: 'Works matrix (3.70.0): the arrow keys move between the cells (← → along a row, ↑ ↓ along a column; the front column of the tracks and the heads of the columns too); Space or Enter switches a cell as before' },
     { id: 'S107', where: 'findDedications, runDedications', note: 'Dedications (3.71.0): "for …" in a sentence too, when an artist, a country or a place MusicBrainz has exactly once by that name follows ("This record is for Peter Kowald") – not after "recorded", "produced", "commissioned", "made", "mixed", "performed" (that is a production), not a label (a label only with "tribute to"), not after "thanks"; "written for" / "composed for" is a dedication of the work. A country or a place only on the work of a track the sentence names' },
+    { id: 'S108', where: 'addManualEntry, renderEvAsk, answerEvAsk', note: 'An event added by hand without a role (3.73.0): asked right below "Add entry manually" – "recorded at", or "video shot at" when the release has videos; on the recordings first (its level changes with a click), the entry folded to its compact lines' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -4611,8 +4634,37 @@
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
     // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159);
     // photographs are not in it (their date is the concert's, see rowDateSugg)
-    { key: 'artwork', label: 'Artwork', types: ['design/illustration', 'illustration', 'design', 'graphic design', 'art direction', 'artwork'], releaseOnly: true },
+    // [Z-CPI] (3.73.0, D025) photographs too: a date the text gives a photograph ("Cover Photo … (1985)") is theirs – a date of
+    // the artwork goes to the kind its words name (ART_KINDS): a painting to the illustration, a photo to the photography
+    { key: 'artwork', label: 'Artwork', types: ['design/illustration', 'illustration', 'design', 'graphic design', 'art direction', 'artwork', 'photography'], releaseOnly: true,
+      only: (n) => n !== 'photography' || ruleOn('D025') },
   ];
+  /**
+   * [Z-CPI] (3.73.0, D025) The kinds of the artwork: the words of a date's line (`art` of the find and of its matrix cell) and the
+   * rows they reach. '' (only "cover art", "artwork"): illustration and design, not photographs (as until 3.72.0).
+   */
+  const ART_KINDS = {
+    illustration: { words: /paint(?:ing|ings|ed)\b|illustrat(?:ion|ions|ed)\b|drawings?\b|gemälde|zeichnung|peinture|pintura/i, types: ['illustration', 'design/illustration'] },
+    photo: { words: /photo(?:s|graph|graphs|graphy|graphed)?\b|foto/i, types: ['photography'] },
+    design: { words: /designs?\b|designed\b|layouts?\b|art direction/i, types: ['design', 'graphic design', 'art direction'] },
+  };
+  /** [Z-CPI] (3.73.0, review) The kind of a row of the artwork: 'illustration', 'photo', 'design' or '' ("artwork"). */
+  const rowArtKind = (row) => {
+    const n = norm(rowTypeName(row) || '');
+    return Object.keys(ART_KINDS).find((k) => ART_KINDS[k].types.includes(n)) || '';
+  };
+  /** [Z-CPI] (3.73.0) The kind of the artwork a hint's words name ('' when none). */
+  const artKindOf = (words) => (ruleOn('D025') ? Object.keys(ART_KINDS).find((k) => ART_KINDS[k].words.test(String(words || ''))) || '' : '');
+  /** [Z-CPI] (3.73.0) Does a date of the Artwork column (its kind) reach this row? Photographs only with a photo's date. */
+  function artFits(cell, row) {
+    const n = norm(rowTypeName(row) || '');
+    if (!ruleOn('D025')) return n !== 'photography';
+    const kind = (cell && cell.art) || '';
+    if (!kind) return !ART_KINDS.photo.types.includes(n);
+    // ((review) the year of a cover photo is credited so: it goes to the photographs also when their credit says "live" – before the
+    // rule of the concert's date, which is only suggested)
+    return ART_KINDS[kind].types.includes(n);
+  }
   // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
   DATE_GROUPS.forEach((g) => { g.test = (n, row) => g.types.includes(n) && (!g.only || g.only(n, row)); });
 
@@ -5165,6 +5217,7 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -5277,6 +5330,16 @@
   const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
 
   /**
+   * [Z-CPI] (3.73.0, review) The hint artwork of a photo's words: none without D025 (as until 3.72.0), none for photographs taken at a
+   * concert (their date is the concert's: suggested, not given – see rowDateSugg).
+   */
+  function artHint(hint, word, before) {
+    if (hint !== 'artwork' || !ART_KINDS.photo.words.test(String(word || ''))) return hint;
+    if (!ruleOn('D025') || CONCERT_PHOTO.test(String(before || ''))) return '';
+    return hint;
+  }
+
+  /**
    * [D019] (3.28.5) Where the sentence of a place of a text begins (its line; ";" and ". " before a capital end a
    * sentence, not after an abbreviation of up to three letters; a line ending in ":" belongs to the next one).
    */
@@ -5323,6 +5386,7 @@
         const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
         let hint = '';
         let at = -1;
+        let hintWord = '';
         const words = [];
         for (const [key, re] of DATE_HINTS) {
           const g = new RegExp(re.source, 'gi');
@@ -5333,6 +5397,7 @@
             if (h.index > at && !inName) {
               at = h.index;
               hint = key;
+              hintWord = h[0];
             }
             if (!h[0]) break;
           }
@@ -5362,7 +5427,7 @@
         if (doubled) hint = 'copyright';
         found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
           multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
-          hint, hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
+          hint: artHint(hint, hintWord, before), ...(artHint(hint, hintWord, before) === 'artwork' ? { art: artKindOf(hintWord) } : {}), hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
     }
     found.sort((x, y) => x.index - y.index);
@@ -5375,7 +5440,7 @@
         if (cur.hint || !prev.hint) continue;
         const between = src.slice(prev.index + prev.text.length, cur.index);
         if (!/^\s*(?:\([^()\n]{0,30}\))?\s*(?:,|and|&|und|y|et)\s*(?:on\s+|am\s+|el\s+|le\s+)?$/i.test(between)) continue;
-        Object.assign(cur, { hint: prev.hint, hints: prev.hints || [], rule: `${cur.rule} · D021` });
+        Object.assign(cur, { hint: prev.hint, hints: prev.hints || [], rule: `${cur.rule} · D021`, ...(prev.art ? { art: prev.art } : {}) });
       }
     }
     return found;
@@ -11344,19 +11409,35 @@
     const whole = String(detail || '').replace(/\s+/g, ' ').trim();
     const ROLE = '(?:photographs?|photos?|photography|photographed|pictures?|shots?|taken|by)';
     const bare = whole.replace(new RegExp(`^(?:${ROLE}\\s+)+|(?:\\s+${ROLE})+$`, 'giu'), '').trim();
-    for (const nm of uniq([whole, bare]).filter(Boolean)) {
-      if (nm.split(/\s+/).length > 5) continue;
+    const known = (nm) => {
+      if (!nm || nm.split(/\s+/).length > 5) return '';
       const key = foldWord(nm);
       const rc = (S.releaseCredit || []).find((p) => foldWord(p.name || '') === key || foldWord(p.artistName || '') === key);
       const a = rc ? null : [...(S.artists ? S.artists.values() : [])].find((x) => !x.company && !x.other && (foldWord(x.mbName || '') === key || foldWord(x.name || '') === key));
-      const name = rc ? rc.artistName || rc.name : a ? a.mbName || a.name : '';
+      return rc ? rc.artistName || rc.name : a ? a.mbName || a.name : '';
+    };
+    // ((review) the row's own artist: no credit that repeats the name
+    const own = row && S.artists && S.artists.get(row.artistKey);
+    const isOwn = (name) => !!own && [own.name, own.mbName].some((x) => x && foldWord(x) === foldWord(name));
+    for (const nm of uniq([whole, bare]).filter(Boolean)) {
+      const name = known(nm);
       if (!name) continue;
-      // ((review) the row's own artist: no credit that repeats the name
-      const own = row && S.artists && S.artists.get(row.artistKey);
-      if (own && [own.name, own.mbName].some((x) => x && foldWord(x) === foldWord(name))) return '';
+      if (isOwn(name)) return '';
       return name;
     }
-    return '';
+    // [Z-PHN2] (3.73.0, S091) several people photographed – "[Marilyn Crispell & Gerry Hemingway]", "[A, B and C]": each name as
+    // MusicBrainz writes it when one of them at least is an artist of the release or of the dashboard, the others as written with
+    // a capital (proper names), the separators kept
+    const parts = bare.split(/(\s*(?:&|,|\band\b|\bund\b)\s*)/iu);
+    const names = parts.filter((_, i) => i % 2 === 0).map((x) => x.trim());
+    if (names.length < 2 || names.some((x) => !x || x.split(/\s+/).length > 5)) return '';
+    const hits = names.map(known);
+    if (!hits.some(Boolean) || hits.every((h) => h && isOwn(h))) return '';
+    // ((review) the others names too: two to five words of letters, no word of a position or a role ("Cover", "others", "1992")
+    const NOT_NAME = /^(?:cover|back|front|inner|inside|sleeve|booklet|tray|insert|others?|all|live|on|stage|studio|session|photos?|photographs?|band|group)$/i;
+    if (names.some((x, i) => !hits[i] && (!/^[\p{L}][\p{L}.'’\-]*(?:\s+[\p{L}][\p{L}.'’\-]*){1,4}$/u.test(x) || x.split(/\s+/).some((w) => NOT_NAME.test(w))))) return '';
+    const cap = (x) => x.split(/(\s+|-)/).map((w) => (/^\p{Ll}/u.test(w) && !NAME_PARTICLES.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join('');
+    return parts.map((x, i) => (i % 2 ? (/^\s*,/.test(x) ? ', ' : ` ${x.trim()} `) : hits[i / 2] || cap(x.trim()))).join('');
   }
 
 
@@ -17705,6 +17786,8 @@
           recordingComment: (track.recording && track.recording.disambiguation) || '',
           // [3.39.9] its artists and the performers MusicBrainz has for the recording ("co?" – no cover of one of them; K-9)
           trackArtists: (track['artist-credit'] || []).map((c) => c.artist && c.artist.id).filter(Boolean),
+          // [Z-EVQ] (3.73.0) a video ("video shot at" only then)
+          video: !!(track.recording && track.recording.video),
           // [S078] (3.50.0; Z-TAR) their names as credited and in MusicBrainz (an entry of the source is found by its name)
           trackArtistNames: uniq((track['artist-credit'] || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
           mbPerformers: rels.filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id),
@@ -19798,6 +19881,7 @@
       S.artistWorkHits = new Map();
       S.tcpHits = null; // [Z-TCP] (3.60.0, review) the works found by the names after the titles: of this import
       S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up again with each import
+      S.evAsk = null; // ([Z-EVQ] 3.73.0, review) the question of an event of the import before
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
@@ -20603,6 +20687,42 @@
     return row;
   }
 
+  /** [Z-EVQ] (3.73.0, S108) The question below "Add entry manually" for an event just added: its relationship, one click. */
+  function evAskTypes() {
+    return ['recorded at', ...(S.mbTracks || []).some((t) => t.video) ? ['video shot at'] : []]
+      .filter((n) => ['recording', 'release'].some((l) => typesFor(l, 'event').some((lt) => norm(lt.name) === n)));
+  }
+  function renderEvAsk() {
+    const el = S.overlay && S.overlay.querySelector('[data-el="manual-evq"]');
+    if (!el) return;
+    const row = S.evAsk && S.rows.find((r) => r.id === S.evAsk);
+    const a = row && S.artists.get(row.artistKey);
+    const types = row ? evAskTypes() : [];
+    el.hidden = !(a && types.length);
+    el.innerHTML = a && types.length ? `<span id="dci-evq-text">${esc(tr('manual.evAsk', { name: a.mbName || a.name }))}</span>
+      ${types.map((n) => `<button type="button" class="dci-small dci-kind-event" data-act="manual-evq" data-type="${esc(n)}">${esc(n)}</button>`).join('')}
+      <button type="button" class="dci-textbtn" data-act="manual-evq-later">${esc(tr('manual.evAskLater'))}</button>` : '';
+  }
+  /** [Z-EVQ] (3.73.0, S108) The relationship chosen: on the recordings first (a click on the level changes it), the entry folded. */
+  function answerEvAsk(type) {
+    const row = S.evAsk && S.rows.find((r) => r.id === S.evAsk);
+    S.evAsk = null;
+    renderEvAsk();
+    if (!row || !type) return;
+    applyRoleText(row, type);
+    if (!row.levelTouched && typesFor('recording', 'event').some((lt) => norm(lt.name) === norm(type))) Object.assign(row, { level: 'recording', defaultLevel: 'recording' });
+    resolveRowType(row);
+    // ((review) the date of the matrix for the new level)
+    if (matrixDateForLevel(row)) renderDates();
+    S.rowOpen.delete(row.id);
+    if (S.view === 'full') S.groupCompact.add(row.artistKey);
+    refreshRowDetails(row);
+    const a = S.artists.get(row.artistKey);
+    log('info', 'evAsked', { name: a ? a.mbName || a.name : '', type });
+    renderGroups();
+    refresh();
+  }
+
   async function addManualEntry() {
     const entityInput = S.overlay.querySelector('[data-f="manual-artist"]');
     const roleInput = S.overlay.querySelector('[data-f="manual-role"]');
@@ -20615,7 +20735,10 @@
     }
     try {
       // [3.37.8] (addEntryByMbid: also for the events offered, S056)
-      await addEntryByMbid(mbid, roleInput.value);
+      const row = await addEntryByMbid(mbid, roleInput.value);
+      // [Z-EVQ] (3.73.0, S108) an event without a role: asked right here – "recorded at" or (a release with videos) "video shot at"
+      S.evAsk = row && row.entityType === 'event' && !String(roleInput.value || '').trim() && ruleOn('S108') ? row.id : null;
+      renderEvAsk();
       entityInput.value = '';
       roleInput.value = '';
       roleInput.setAttribute('list', 'dci-dl-roles-artist');
@@ -22959,9 +23082,10 @@
    * notes of the entry (writing credits in the works matrix, rows skipped there) and "＋ Another role for …" as a button – in the
    * column the lines leave free, instead of three lines below them.
    */
+  // [Z-ARL] (3.73.0) "＋ Another role" without the name (it stands in the entry; a long name made it thick) – the name in its tooltip
   function emSideHtml(a, notes) {
     return `<div class="dci-em-side"><span class="dci-sub" data-emcount="${esc(a.key)}"></span>${notes}
-      <button type="button" class="dci-addrole-btn" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button></div>`;
+      <button type="button" class="dci-addrole-btn" data-act="add-role" title="${esc(tr('group.addRole', { name: a.name }))}" aria-label="${esc(tr('group.addRole', { name: a.name }))}">${esc(tr('group.addRoleOne'))}</button></div>`;
   }
 
   /** [Z-KH] (3.40.11) "in the lines" (B): the count and "＋ role" at the end of the entry's last line. */
@@ -23395,7 +23519,7 @@
           </table>
         </div>`}
         ${compact ? '' : `${notes}
-        <button type="button" class="dci-addrole-btn dci-addrole-full" data-act="add-role">${esc(tr('group.addRoleBtn', { name: a.name }))}</button>`}
+        <button type="button" class="dci-addrole-btn dci-addrole-full" data-act="add-role" title="${esc(tr('group.addRole', { name: a.name }))}" aria-label="${esc(tr('group.addRole', { name: a.name }))}">${esc(tr('group.addRoleOne'))}</button>`}
       </section>`;
   }
 
@@ -23826,13 +23950,29 @@
     return days.length === 1 ? fromPool[0] : null;
   }
 
+  /**
+   * [Z-CPI] (3.73.0, D025) The concert's date of photographs taken there: into the pool, named for them ("Photography By") – not
+   * given to their rows by itself (their row suggests it).
+   */
+  function photoConcertPool() {
+    if (!ruleOn('D025')) return null;
+    const row = S.rows.find((r) => r.level !== 'skip' && norm(rowTypeName(r) || '') === 'photography'
+      && CONCERT_PHOTO.test([r.raw, ...(r.mods || []), r.dBase, r.notesCredit].filter(Boolean).join(' · ')));
+    const c = row && concertDate();
+    if (!c) return null;
+    const name = String(row.dBase || '').replace(/\s*\[.*$/, '').trim() || 'Photography';
+    return poolDateFor({ begin: c.begin, end: c.end, ended: c.ended }, null, 'photo:concert', name.charAt(0).toUpperCase() + name.slice(1));
+  }
+
   /** A row's date suggested (✓ takes it, ✕ leaves it out): the liner notes', or the concert's for its photographs. → { entry, title } */
   function rowDateSugg(row) {
     const liner = linerDateSugg(row);
     if (liner) return { entry: liner, title: tr('date.suggLiner') };
     if (row.dateSuggOff || norm(rowTypeName(row)) !== 'photography') return null;
     const hit = CONCERT_PHOTO.test([row.raw, ...(row.mods || []), row.dBase, row.notesCredit].filter(Boolean).join(' · '));
-    const d = hit && concertDate();
+    const c = hit && concertDate();
+    // [Z-CPI] (3.73.0, D025) the photographs' own entry of the pool with the concert's date (named for them), else the concert's
+    const d = c && (S.datePool.find((x) => x.found === 'photo:concert' && formatDateValue(x) === formatDateValue(c)) || c);
     return d ? { entry: d, title: tr('date.suggConcert', { date: formatDateValue(d), text: row.notesCredit || row.raw || [row.dBase, ...(row.mods || [])].join(' ') }) } : null;
   }
 
@@ -24705,10 +24845,11 @@
     // stay in the pool)
     if (auto && lcd && group.key === 'performance' && ruleOn('D022')) {
       if (m.cells.some((c) => c.col === group.key && c.date === lcd.id)) return 0;
-      m.cells.push({ id: newCellId(), col: group.key, date: lcd.id, tgs, studios, auto, lcdOf: range.id });
+      m.cells.push({ id: newCellId(), col: group.key, date: lcd.id, tgs, studios, auto, lcdOf: range.id, ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
       return 1;
     }
-    m.cells.push({ id: newCellId(), col: group.key, date: range.id, alt: singles.map((d) => d.id), ...(lcd ? { lcd: lcd.id } : {}), tgs, studios, auto });
+    m.cells.push({ id: newCellId(), col: group.key, date: range.id, alt: singles.map((d) => d.id), ...(lcd ? { lcd: lcd.id } : {}), tgs, studios, auto,
+      ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
     return 1;
   }
 
@@ -24758,6 +24899,8 @@
       const here = cells.find((c) => c.col === group.key);
       const moved = !here && cells.find((c) => c.auto);
       const c = here || moved || { id: newCellId(), col: group.key, date: e.id, tgs: [], studios: [] };
+      // ([Z-CPI] 3.73.0, review) the kind its words name
+      if (group.key === 'artwork' && x.art && !c.art) c.art = x.art;
       if (!here && !moved) dm().cells.push(c);
       Object.assign(c, { col: group.key, auto: false, tgs: uniq([...c.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...c.studios, ...studios]) });
     }
@@ -24975,7 +25118,7 @@
       const company = !!(a && a.company);
       const sid = company ? studioId(a) : '';
       // [S016] A cell naming studios leaves the other studios alone (people's rows are not affected by it)
-      const mine = cells.filter((c) => !company || !c.studios.length || c.studios.includes(sid));
+      const mine = cells.filter((c) => (!company || !c.studios.length || c.studios.includes(sid)) && (group.key !== 'artwork' || artFits(c, r)));
       if (hasDateInput(r.date) && !r.date.mx) {
         const own = formatDateValue(validateDateFields(r.date).value);
         if (mine.length && !mine.some((c) => formatDateValue(cellEntry(c)) === own)) report.kept.push(r);
@@ -25105,7 +25248,8 @@
           return;
         }
         if (m.cells.some((c) => c.date === cellDate.id)) return;
-        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}) });
+        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}),
+          ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
         placed++;
       });
     });
@@ -25123,6 +25267,7 @@
       && !/:(?:range|lcd)$/.test(String(d.found)) && !viaLcd.has(String(d.found))).length;
     if (unplaced && pooled) showMessage('info', 'dm.autoPooled', { n: unplaced });
     if (placed || pooled) log('info', 'dmAuto', { n: placed, pooled });
+    if (photoConcertPool()) savePool();
     saveMatrix();
     return { placed, pooled };
   }
@@ -25239,7 +25384,9 @@
     if (!group || dm().cells.some((c) => c.col === group.key && c.date === entry.id)) return;
     const all = (row.level !== 'recording' && row.level !== 'work') || row.tracks.size >= selTracks().length;
     const tg = !all && row.tracks.size ? ensureTrackGroup(row.tracks) : null;
-    dm().cells.push({ id: newCellId(), col: group.key, date: entry.id, tgs: tg ? [tg.id] : [], studios: [], auto: true });
+    // ([Z-CPI] 3.73.0, review) a date of the artwork for the kind of its row (a photograph's not for the painting)
+    const art = group.key === 'artwork' && ruleOn('D025') ? rowArtKind(row) : '';
+    dm().cells.push({ id: newCellId(), col: group.key, date: entry.id, tgs: tg ? [tg.id] : [], studios: [], auto: true, ...(art ? { art } : {}) });
     dmChanged();
   }
 
@@ -25619,6 +25766,8 @@
         ${c.lcdOf ? lcdMenuHtml(c) : periodMenuHtml(c)}
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button>
       </div>
+      ${c.col === 'artwork' && ruleOn('D025') ? `<label class="dci-dm-art">${esc(tr('dm.artFor'))} <select data-f="dm-art" data-cell="${esc(c.id)}" aria-label="${esc(tr('dm.artAria', { date: poolLabel(e) }))}">
+        ${['', 'illustration', 'photo', 'design'].map((k) => `<option value="${k}" ${(c.art || '') === k ? 'selected' : ''}>${esc(tr(`dm.art.${k || 'any'}`))}</option>`).join('')}</select></label>` : ''}
       ${cellTracksHtml(c, (DATE_GROUPS.find((g) => g.key === c.col) || {}).releaseOnly ? '' // [3.15.1] mastering: always the release level
     : `<label class="dci-check dci-dm-rel" title="${esc(tr('dm.relTitle'))}"><input type="checkbox" data-f="dm-rel" data-cell="${esc(c.id)}" ${c.rel ? 'checked' : ''}> ${esc(tr('dm.rel'))}</label>`)}
       ${editing ? matrixEditorHtml(c) : ''}
@@ -26341,9 +26490,9 @@
 
   /** [3.27.0] Compact or full: the toggle above the entries and in ⚙ Settings → General (remembered). */
   function setView(view) {
-    // [3.27.2] full is the default again (item 72): only "compact" is stored
+    // [3.27.2] full is the default again (item 72): only "compact" is stored – [Z-CPV] (3.73.0) compact is the default: only "full"
     S.view = view === 'compact' ? 'compact' : 'full';
-    writeJson('localStorage', VIEW_KEY, S.view === 'full' ? null : 'compact');
+    writeJson('localStorage', VIEW_KEY, S.view === 'compact' ? null : 'full');
     log('info', 'viewSet', { view: tr(`view.${S.view}`) });
     applyView();
     renderGroups();
@@ -26352,16 +26501,17 @@
 
   /**
    * [143] (3.34.23) An arrow at "Compact | Full" in the head (collected item 143): until the view is switched for the first time (in
-   * the head or in ⚙ Settings) or the arrow closed with ✕; not for who stored the compact view; reset settings show it again. It lets the
-   * pointer through to what lies below it (only ✕ is a button).
+   * the head or in ⚙ Settings) or the arrow closed with ✕; reset settings show it again. It lets the pointer through to what lies
+   * below it (only ✕ is a button). [Z-CPV] (3.73.0) The other way round: in the compact view (the default) it points to the full one;
+   * not in the full view.
    */
-  const compactHintOn = () => S.view !== 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
+  const compactHintOn = () => S.view === 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
   function renderCompactHint() {
     if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
     const btn = S.overlay.querySelector('.dci-head [data-act="view-toggle"]');
     if (!btn || !compactHintOn()) return;
-    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr('hint.compact'))}</span>
+    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr('hint.full'))}</span>
       <button type="button" class="dci-textbtn dci-hint-x" data-act="hint-compact-close" title="${esc(tr('hint.close'))}" aria-label="${esc(tr('hint.close'))}">✕</button></span></span>`);
   }
   function compactHintDone() {
@@ -32692,12 +32842,15 @@
     if (!row.manual || hasDateInput(row.date)) return;
     const group = dateGroupOf(row);
     if (!group) return;
+    // ([Z-CPI] 3.73.0, review) of the artwork: only the dates of its kind (a row's own, a cell of the column that fits it)
+    const art = group.key === 'artwork' && ruleOn('D025');
+    const fits = (id) => !art || dm().cells.some((c) => c.col === 'artwork' && c.date === id && artFits(c, row));
     const counts = new Map();
     for (const r of S.rows) {
-      if (r !== row && r.date && r.date.poolId && (dateGroupOf(r) || {}).key === group.key) counts.set(r.date.poolId, (counts.get(r.date.poolId) || 0) + 1);
+      if (r !== row && r.date && r.date.poolId && (dateGroupOf(r) || {}).key === group.key && (!art || rowArtKind(r) === rowArtKind(row))) counts.set(r.date.poolId, (counts.get(r.date.poolId) || 0) + 1);
     }
-    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-    const named = S.datePool.filter((d) => String(d.name || '').startsWith(`${group.label} `)).slice(-1)[0];
+    const best = [...counts.entries()].filter(([id]) => fits(id)).sort((a, b) => b[1] - a[1])[0];
+    const named = S.datePool.filter((d) => String(d.name || '').startsWith(`${group.label} `) && fits(d.id)).slice(-1)[0];
     const entry = (best && S.datePool.find((d) => d.id === best[0])) || named;
     if (!entry) return;
     // Taken over automatically: "Apply" in the matrix may change it again
@@ -34820,6 +34973,13 @@
         refresh();
         break;
       }
+      // [Z-EVQ] (3.73.0, S108)
+      case 'manual-evq':
+        answerEvAsk(btn.dataset.type);
+        break;
+      case 'manual-evq-later':
+        answerEvAsk('');
+        break;
       case 'add-manual':
         addManualEntry();
         break;
@@ -35255,6 +35415,16 @@
       writeJson('localStorage', 'dci-dm-auto', el.checked);
       log('info', 'dmAutoSwitch', { state: tr(el.checked ? 'common.on' : 'common.off') });
       if (el.checked && dm().dirty) applyMatrix();
+      return;
+    }
+    if (f === 'dm-art') {
+      // [Z-CPI] (3.73.0, D025) the kind of the artwork a date of the column is for
+      const c = dm().cells.find((x) => x.id === el.dataset.cell);
+      if (!c) return;
+      if (el.value) c.art = el.value;
+      else delete c.art;
+      c.auto = false;
+      dmChanged();
       return;
     }
     if (f === 'dm-rel') {
@@ -36145,6 +36315,7 @@
                 ${['artist', 'label', 'place', 'area', 'event', 'series', 'recording', 'release', 'release_group', 'work', 'instrument']
                   .map((et) => `<a href="/search?type=${et}&method=indexed" target="_blank" rel="noopener">${esc(tr(`entity.${et}`))}</a>`).join(' · ')}</div>
               <div class="dci-err" data-el="manual-err"></div>
+              <div class="dci-manual-evq" data-el="manual-evq" role="group" aria-labelledby="dci-evq-text" aria-live="polite" hidden></div>
             </div>
             <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
           </div>
@@ -36512,9 +36683,8 @@
     statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_SCOPE_KEY, STATS_LEN_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
-  S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
-  // [143] (3.34.23) who chose the compact view before knows the switch: no arrow (also when going back to full)
-  if (S.view === 'compact') writeJson('localStorage', HINT_COMPACT_KEY, true);
+  // [Z-CPV] (3.73.0) compact unless the full view is chosen (until 3.72.0 full unless compact)
+  S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
   S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
   // [E4] (3.34.29)
   S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
@@ -38710,7 +38880,8 @@
     } else if (t === 'appearance') {
       setScale(1);
       if (S.place !== 'window') setPlace('window');
-      if (S.view !== 'full') setView('full');
+      // ([Z-CPV] 3.73.0) the compact view is the default
+      if (S.view !== 'compact') setView('compact');
       S.levelColors = true;
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
@@ -38842,7 +39013,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
@@ -40756,6 +40927,7 @@
       .dci-manual input[data-f="manual-artist"] { width: calc(var(--u, 1px) * 240); }
       .dci-manual input[data-f="manual-role"] { flex: 1 1 calc(var(--u, 1px) * 220); }
       .dci-manual-help { font-weight: 600; padding: 0 calc(var(--u, 1px) * 4); }
+      .dci-manual-evq { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; margin-top: 4px; border-radius: 6px; background: var(--hl, #fff7d6); }
       .dci-manual-search { flex-basis: 100%; }
       .dci-manual .dci-err { margin-top: 0; }
       .dci-manual .dci-err:empty { display: none; }
@@ -40962,6 +41134,8 @@
       .dci-dm-cell { border: 1px solid var(--date-line); border-left: 4px solid var(--date); border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); cursor: grab; }
       .dci-dm-cell.dci-dm-auto { border-style: dashed; border-color: var(--sugg-line); border-left-style: solid; border-left-color: var(--date); background: var(--sugg-bg); }
       .dci-dm-cell.dci-dm-editing { box-shadow: 0 0 0 2px var(--date-line); }
+      .dci-dm-art { display: flex; align-items: center; gap: 4px; font-size: calc(var(--u, 1px) * 11); color: var(--muted); margin: 2px 0; }
+      .dci-dm-art select { font-size: calc(var(--u, 1px) * 11); max-width: 100%; }
       .dci-dm-rel { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; font-size: calc(var(--u, 1px) * 11); color: var(--muted); cursor: pointer; }
       /* Separate days: choose the single days or the period */
       .dci-dm-cell.dci-dm-choose { border: 2px solid var(--warn); border-left-width: 4px; background: #fffaf0; }

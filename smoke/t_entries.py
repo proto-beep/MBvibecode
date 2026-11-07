@@ -1375,7 +1375,7 @@ def case_compactside():
     A) Barry Guy (double bass, composer): the toggle in the head, no line of its own; the column right of the lines, at their
        height; no link "+ Another role" below.
     B) by role: the lines per role, the column the same.
-    C) "＋ Another role for Barry Guy": a new row, his full matrix opened with its line (double bass and the new one; as the link did).
+    C) "＋ Another role for Barry Guy" ((3.73.0, Z-ARL) "＋ Another role", the name in its tooltip): a new row, his full matrix opened with its line (double bass and the new one; as the link did).
     D) The full view: the matrix of the entry, the link below it as before, no column, no toggle in the head; (3.40.11, review) the
        entry folded there (▾, compact lines): the column and the toggle as in the compact view."""
     CRED = [('Barry Guy', 'Double Bass', 3101, ''), ('Barry Guy', 'Composed By', 3101, ''), ('Evan Parker', 'Tenor Saxophone', 3102, '')]
@@ -1418,9 +1418,9 @@ def case_compactside():
             ep = pg.evaluate(INFO, 'Evan Parker')
             print('A) Barry Guy:', a, '\n   Evan Parker:', ep['side'])
             results.append(a['headBy'] and not a['chead'] and a['by'] == 'event' and a['beside'] and not a['linkBelow']
-                           and len(a['side']) == 3 and a['side'][0].endswith('relationships to stage') and a['side'][2] == '＋ Another role for Barry Guy'
+                           and len(a['side']) == 3 and a['side'][0].endswith('relationships to stage') and a['side'][2] == '＋ Another role'
                            and a['note'] == ['Writing credits: in the works matrix', 'The writing credits of this entry are in the works matrix.'] and 'dci-addrole-btn' in a['btnCls']
-                           and ep['side'] is not None and len(ep['side']) == 2 and ep['side'][1] == '＋ Another role for Evan Parker')
+                           and ep['side'] is not None and len(ep['side']) == 2 and ep['side'][1] == '＋ Another role')
             sec = sec_sel(pg, 'Barry Guy')
             pg.click(f'{sec} [data-act=em-by][data-by=role]')
             pg.wait_for_timeout(500)
