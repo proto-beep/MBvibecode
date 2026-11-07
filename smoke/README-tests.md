@@ -23,7 +23,7 @@ MBvibecode/ (this repository)
   tools/i18n_del.py                   removes texts in all languages (script and languages file, with plural forms)
   tools/mb_link_types.py              [3.38.10] writes smoke/mb_link_types.json from a checkout of metabrainz/musicbrainz-server
                                       (po/relationships.pot and t/sql/initial.sql are enough: git sparse-checkout)
-  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.38.10] link phrases: the
+  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.73.0] VIDEO_TRACKS (videos); [3.38.10] link phrases: the
                                       type's name, instrument and vocal with MusicBrainz's phrase ("{additional} {guest} {solo}
                                       {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
                                       [Companion 1.10.1] the Discogs page writes "Phonographic Copyright ℗" as the real one (the
@@ -289,6 +289,8 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   artkinds: 3.73.0 (Z-CPI, D025): the kinds of the artwork – a painting to the illustration, a cover photo to the
+                                #     photography, design without; the cell's "for:" changed; photos at the concert: the pool entry "Photography By"; off
                                 #   catno: 3.44.1 (Z-CAT): "Music & Arts website states CD-4853(1)" in the notes gives no track group, "Pub Co (1, 3)" still does
                                 #   review43: 3.43.3 (full review P4): a pool entry edited, "update n rows?" declined – the rows their own ("0 rows")
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
@@ -441,7 +443,7 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   dedforphrases: 3.71.0 (Z-DED2, S107, Node): "for …" in a sentence – found or not (a production before it,
                                 #     "bonus", a list with commas, "… only", quotes, capitals, "für" + one word, titles)
                                 #   coverdetail: 3.62.0 (Z-CVA, S090, Node): "Cover [Cover Art]" → "cover art", the exceptions of COVER_DETAIL, the dashboard's role credit
-                                #   photoname: 3.63.0 (Z-PHN, S091): "Photography By [Bass Man]" credited "Bass Man"; off
+                                #   photoname: 3.63.0 (Z-PHN, S091): "Photography By [Bass Man]" credited "Bass Man"; off; (3.73.0, Z-PHN2) "[A & B]" both
                                 #   perfhints: 3.62.0 (Z-PDT review, Node): performance hints, not premieres or rights lines
                                 #   dbr: 3.58.0 (Z-DBR, S084): "Piano [Acoustic]" → piano credited "acoustic piano" (marked; a click: "acoustic"),
                                 #     "Piano [Acoustic Piano]" without a word twice, "Vocals [Backing]" → "backing vocals", Moog / two details kept; S084 off
@@ -521,6 +523,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   evask: 3.73.0 (Z-EVQ, S108): an event pasted into "Add entry manually" – "recorded at" (+ "video shot at" with
+                                #     videos), on the recordings, folded; "choose later"; off
+                                #   compacthint: (3.73.0, Z-CPV) the compact view the default, the arrow to the full view; who used the script before
                                 #   focusfields: 3.72.0 (Z-TST, the former t_focus.py): typing in every date field keeps cursor and text
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
                                 #     Mapping rules, Log | Statistics, ⌨, ⚙ | ✕): symbols with names (words only when wide), no language / place / switches in

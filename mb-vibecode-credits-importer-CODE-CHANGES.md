@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.72.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.73.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.73.0 · 2026-11-07
+
+Z-ARL, Z-PHN2, Z-CPI, Z-EVQ, Z-CPV.
+
+- **`emSideHtml`**, the full view's button: text `group.addRoleOne` ("＋ Another role"), the name in `title` (`group.addRole`); `group.addRoleBtn` removed.
+- **`photographerName`** (rule **S091**): `known(name)`; a list ("&", "and", "und", commas) – each name looked up, one known at least: MusicBrainz's spelling, the others with a capital (`NAME_PARTICLES` small), the separators kept; none known or only the row's own artist: ''.
+- **`ART_KINDS`**, **`artKindOf`**, **`artFits`** (new; rule **D025**): the date group Artwork has `photography` too; `findDates` keeps the word of its hint (`art` of a find with the hint artwork); `autoPlaceFoundDates` gives the cell its `art`; `applyMatrixColumn` takes for a row of Artwork only the cells that fit it (a photo's date not for photographs at the concert); the cell's select `dm-art` (`dm.artFor`, `dm.art.*`). Mapping file: the hint artwork with "cover photo", "photo(s)", "photograph(s)".
+- **`photoConcertPool`** (new, D025): the concert's date of photographs at the concert as a pool entry named for them (`found: 'photo:concert'`); `rowDateSugg` suggests it.
+- **`evAskTypes`**, **`renderEvAsk`**, **`answerEvAsk`** (new; rule **S108**): `addManualEntry` asks for an event without a role (`S.evAsk`, `[data-el=manual-evq]`); `recorded at` / `video shot at` (`S.mbTracks[].video`, new), `resolveRowType`, level recording, the entry folded (`S.groupCompact`); log `evAsked`.
+- **The view** (Z-CPV): `keepFullView` (before `clearOldStorage`, once – `dci-view-kept`): a browser with a storage generation and no view stored keeps "full", one with a view stored no arrow; `S.view` compact unless "full" is stored; `setView` stores only "full"; `resetSettings` and ↺ Appearance: compact; `compactHintOn` in the compact view; the text `hint.full` (`hint.compact` removed).
+- **Texts:** group.addRoleOne, dm.artFor, dm.art.any/illustration/photo/design, manual.evAsk, manual.evAskLater, log.evAsked, hint.full; removed group.addRoleBtn, hint.compact.
+- **Tests:** `t_mapping.py photoname` (A2), `t_notes_dates.py artkinds` (new), `t_ui_head.py evask` (new), `compacthint` (the arrow the other way, D), `t_ui_view.py addrolebtn`, `compact`, `levels` (compact the default), `t_static.py round6` (a text of the round), `t_sources.py adapter` and `t_ui_settings.py reset`, `notice` (`dci-view-kept` stays), `t_entries.py` (the button's text); harness: `VIDEO_TRACKS`; golden S108, D025.
+- **Review:** `clearOldStorage` keeps `dci-view-kept` (else a fresh browser was an old one at its second start); photographs in the group Artwork only with D025 (`only`), a photo's hint without D025 or in a sentence of photographs at a concert none (`artHint`); `rowArtKind` (new) – "Save to pool" of a row (`suggestRowDate`) gives the cell the row's kind, a row added by hand (`autoGroupDate`) takes only a date of its kind; the kind kept by `useFoundDate`, `placeSeparateDays` and D021; a cover photo's year for every photograph (it goes before the concert's rule); "designs", "layouts"; several people photographed: the others must look like names (two to five words, no "Cover", "others" …); `aria-label` of "＋ Another role", of the question (`aria-labelledby`) and of the kind's select (`dm.artAria`); the question gone with a new import, the date of the new level (`matrixDateForLevel`).
 
 ## Import 3.72.0 · 2026-11-06
 
