@@ -303,8 +303,10 @@ def case_quickswitch():
           return [!!q.querySelector('.dci-quick-h strong'), q.querySelectorAll('.dci-quick-grid > .dci-qbtn-wrap').length, st.borderTopStyle, st.borderTopLeftRadius,
             q.querySelector('[data-qs-toggle=S045]').textContent.replace(/\\s+/g, ' ').trim()]; })()""")
         print('A) Schalter:', a, '| Kasten:', box)
-        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False], ['S078', True]]
-                       and box[:4] == [True, 8, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
+        # ([3.79.0] D026 and S114, both off)
+        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False], ['S078', True],
+                             ['D026', False], ['S114', False]]
+                       and box[:4] == [True, 10, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)
