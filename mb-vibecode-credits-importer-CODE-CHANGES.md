@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.78.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.79.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,22 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.79.0 · 2026-11-07
+
+Z-KXP, Z-CAM2, Z-MEM, Z-VEN, Z-PHC.
+
+- **`TEXT.parse` (readClause):** S112 – a place after "perform·ing/s/ed, play·ing/s/ed, recorded, filmed, captured (live) in|at (the)" to the end of the sentence (a sentence may follow), with a word of places (`TEXT_PLACE_WORDS`) and a word in capitals, at most five words, no "by / with / and / for": `place('recorded', …)`, the word of places with a capital.
+- **`namesScoped`:** S116 – a part "A with B", both a person's name (two to four words with capitals, no place word, no role), not a name of the release's artists: two names.
+- **`readLine` / `memberLine` (new):** S113 – below a group heading (S087) a line only of a person's name is a credit `Member of <group>` (`member`), pushed to the group's members; S114 – the heading once as `Performing Group` (`memberGroup`). After the lines: a member with an instrument or a voice in another credit is dropped (`playing`).
+- **`venueBlocks` (new; S115, `TEXT_VENUE_HEAD`):** a line "<word>: <name>" with a city line and a date line right below it (at most two) becomes "Recorded live at <Name>, <City, ST>, <date>"; the lines taken are empty.
+- **Mapping file:** `R110` (camera work: misc, recording, the word as task – before R095, which had them on the release), `R111` (special: `^(member of .+|performing group)$`) with `Q013` (performer on the recordings, suggested, | no relationship); `TEXT_VENUE_HEAD` (new list); `QUICK_SWITCHES` + D026, S114; `DEFAULT_OFF_RULES` + D026, S114.
+- **`rowLevels`:** a row of miscellaneous support only on recording and release (the level it has stays).
+- **`DATE_MATCHERS`:** D027 – "9/17/26": as D003, the year 20yy unless after this year (19yy).
+- **`dmAutoPlace`:** D026 – the rows of photographs of the concert (CONCERT_PHOTO) without a date get `photoConcertPool()`'s date (`log.concertPhotoDate`).
+- **Register:** S112–S116, D026, D027, T062. **Texts:** quick.D026, quick.S114, typeAsk.askMember, log.concertPhotoDate.
+- **Review:** `venueBlocks` takes a city line only as "City, XX" or a known area and never a credit ("John Smith - guitar", "Mixed by …", a role), skips a name that is only an area, and writes "Recorded at" (not "live") for "location:" / "place:"; S113 not below a heading of crew, support, staff … (`MEMBER_NOT_HEAD`), no "Additional Musicians" as a member, the group's name without commas in the role ("Member of Earth Wind & Fire" – a comma split the role); `rowLevels` takes misc from the type the row has now (`row.types` keeps a type chosen before); D027 not inside catalogue or runout numbers (no letter, "-" before or after); S112 no ensemble ("played in the Studio Orchestra"); S116 neither part one of the release's artists, no "The …", no ensemble.
+- **Tests:** `t_text_places.py z379` (new); `text_corpus.json`: "Produced by Jane Roe with John Doe" is two names now (S116); seven lines of the review added (written with UPDATE=1); `t_rules_window.py quickswitch` (ten switches: D026, S114). The mapping file: `TEXT_VENUE_HEAD` one word a line, as the export writes it (`mappingio`).
 
 ## Import 3.78.0 · 2026-11-07
 
