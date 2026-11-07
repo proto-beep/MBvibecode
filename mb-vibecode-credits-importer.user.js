@@ -33459,9 +33459,13 @@
         .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
     }
     // ([Z-FRM] 3.74.0, review) what the drag shows (the hints below the tracks of the rows) makes the entries longer: the works matrix
-    // and the box of the dedications below them stay where they are (the browser's scroll anchoring did not always do it)
+    // and the box of the dedications below them stay where they are (the browser's scroll anchoring did not always do it) – only when
+    // the entries begin above the visible part (what is seen is below their start; with the dates and tracks in view nothing moves:
+    // the place a chip is dropped on there would move away under the pointer)
     const keep = $('works');
-    const top0 = keep && !keep.hidden ? keep.getBoundingClientRect().top : null;
+    const frame = $('entries-frame');
+    const viewTop = inPage() ? 0 : $('body').getBoundingClientRect().top;
+    const top0 = keep && !keep.hidden && frame && frame.getBoundingClientRect().top < viewTop ? keep.getBoundingClientRect().top : null;
     S.overlay.classList.add('dci-dm-dragging', `dci-dm-drag-${kind}`);
     if (S.dmDrag.kind === 'date') S.overlay.classList.add('dci-dm-drag-pool');
     if (top0 != null && top0 > 0) {
