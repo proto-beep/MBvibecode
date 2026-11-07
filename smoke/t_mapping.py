@@ -1694,4 +1694,58 @@ console.log(JSON.stringify({ ded, songs: r.songs, unrec: r.unrecognized.length, 
     print('Ergebnis:', 'OK' if a and b else 'FEHLER', [a, b])
 
 
+def case_z384():
+    """Credits Importer 3.84.0 (collected items Z-WPR, Z-BTW, Z-DEDN; rules S126 – S128, D007, D028), in Node – with the review's cases.
+    A) Credits: "All tracks written, performed and recorded by X" – writer, performer, recording; "Music production, mix, mastering:
+       X (Mindheal)" – the artist name Mindheal; (review) a bracket that is a voice, modifier, suffix, tracks ("(Tenor)", "(Acoustic)",
+       "(Jr.)", "(II)", "(UK)", "(CD2)", "(A1-B2)") no artist name; a dedication inside a credit keeps the credit ("Piano: John Smith
+       (dedicated to my wife)"); "Recording made at Abbey Road by X" a place as before; "Compositions arranged by X" keeps
+       [Compositions]; a dedication without a name left out, not "not recognized".
+    B) Areas: "composed and produced between … in Rzeszow, Poland" – composed in and produced in; (review) "written and recorded in
+       2020 in Oslo, Norway" – recorded in only, no "?"; "… in Rzeszow Studio, Poland" – the studio produced at, no area "Rzeszow Studio".
+    C) Dates: "between February 2025 and April 2026" one period for composition and production; (review) "Recorded at Abbey Road,
+       produced by George Martin, 12 March 1969" stays Performance; "between April 2026 and February 2025" the earlier first;
+       "entre febrero de 2025 y abril de 2026" one period."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const MAPJ = JSON.parse(require('fs').readFileSync(process.argv[1].replace(/\.user\.js$/, '-mapping.json'), 'utf8'));
+const CRE = new RegExp(MAPJ.TEXT_COMPANY_RE.$re, MAPJ.TEXT_COMPANY_RE.$flags);
+const INSTR = /^(piano|guitar|bass|drums|vocals|keys)$/i;
+const isRole = (r) => { try { const p = m.parseRoleNotation(r)[0]; if (!p || !p.base) return false; const x = m.mapRole(p.base, p.mods); if (INSTR.test(p.base)) return true; return !!x && !!x.rule && x.rule !== 'R096' && !x.fallback; } catch (e) { return false; } };
+const isCompanyRole = (r) => { try { return CRE.test(String(r).toLowerCase().trim()) && !!(m.mapCompanyRole(r).rule); } catch (e) { return false; } };
+const ctx = { isRole, isCompanyRole, resolveTracks: () => null, artistNames: [], titleNames: [] };
+const P = (t) => { const r = m.SOURCES.text.parse(t, ctx); return { cr: r.credits.map((c) => [c.who.name, c.role, c.aka || '']), co: r.companies.map((c) => [c.who.name, c.role]), un: r.unrecognized, ig: (r.ignored || []).map((x) => x.why) }; };
+const texts = ['All tracks written, performed and recorded by Wojciech Stecko', 'Music production, mix, mastering: Wojciech Stecko (Mindheal)',
+  'Vocals: John Smith (Tenor)', 'Guitar: John Smith (Acoustic)', 'Bass: John Smith (Jr.)', 'Bass: John Smith (II)', 'Vocals: John Smith (UK)', 'Vocals: John Smith (CD2)', 'Bass: John Smith (A1-B2)',
+  'Piano: John Smith (dedicated to my wife)', 'Recording made at Abbey Road by John Smith', 'Compositions arranged by Max Mustermann', 'This album is dedicated to my lovely daughter and son.',
+  'Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland.', 'Written and recorded in 2020 in Oslo, Norway.',
+  'Composed and produced between February 2025 and April 2026 in Rzeszow Studio, Poland.'];
+const dates = ['Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland.', 'Recorded at Abbey Road, produced by George Martin, 12 March 1969',
+  'between April 2026 and February 2025', 'entre febrero de 2025 y abril de 2026'].map((t) => m.findDates(t).map((f) => [f.hint, f.hints.join('+'), m.formatDateValue(f.value)]));
+console.log(JSON.stringify({ p: texts.map(P), dates }));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(o.stdout) if o.returncode == 0 else None
+    if not out:
+        print(o.stderr[-600:])
+        print('Ergebnis: FEHLER')
+        return
+    p, d = out['p'], out['dates']
+    for t, x in zip(range(len(p)), p):
+        print('  ', t, x)
+    print('  ', d)
+    ws = 'Wojciech Stecko'
+    a = p[0]['cr'] == [[ws, 'Written By', ''], [ws, 'Performed By', ''], [ws, 'Recorded By', '']] and [c[2] for c in p[1]['cr']] == ['Mindheal'] * 3 \
+        and all(x['cr'] and all(c[2] == '' for c in x['cr']) for x in p[2:9]) and p[9]['cr'] == [['John Smith', 'Piano', '']] \
+        and p[10]['co'] == [['Abbey Road', 'Recorded At']] and p[11]['cr'] == [['Max Mustermann', 'Arranged By [Compositions]', '']] \
+        and p[12]['un'] == [] and 'dedicationNoName' in p[12]['ig']
+    b = p[13]['co'] == [['Rzeszow', 'Composed In'], ['Rzeszow', 'Produced In']] and p[13]['un'] == [] and p[14]['co'] == [['Oslo', 'Recorded In']] and p[14]['un'] == [] \
+        and p[15]['co'] == [['Rzeszow Studio', 'Produced At']]
+    c = d[0] == [['production', 'composition+production', '2025-02 – 2026-04']] and d[1][0][0] == 'performance' and d[2][0][2] == '2025-02 – 2026-04' \
+        and d[3] == [['', '', '2025-02 – 2026-04']]
+    print('Ergebnis:', 'OK' if a and b and c else 'FEHLER', [a, b, c])
+
+
 run_cases(globals())
