@@ -2,6 +2,7 @@
 
 Cases: foreign, nordic, prose, sounds, members – each the former smoke/t_<case>.py, unchanged; gondola, blackzenith (3.42.3); `python3 t_text_languages.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
+H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 

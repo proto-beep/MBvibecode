@@ -61,8 +61,20 @@ def drag(pg, src, dst, steps=10):
     x1, y1 = sb['x'] + sb['width'] / 2, sb['y'] + sb['height'] / 2
     pg.mouse.move(x0, y0)
     pg.mouse.down()
+    # ([3.77.0] Z-FLK) the drag starts with a few small steps; then the target is measured again – what a drag shows (the tracks
+    # pills of the rows above, say) may move it – and the pointer goes there
+    for k in range(1, 3):
+        pg.mouse.move(x0 + 4 * k, y0 + 4 * k)
+        pg.wait_for_timeout(30)
+    try:
+        sb2 = b.bounding_box(timeout=2000)
+    except Exception:
+        sb2 = None
+    if sb2:
+        x1, y1 = sb2['x'] + sb2['width'] / 2, sb2['y'] + sb2['height'] / 2
+    xs, ys = x0 + 8, y0 + 8
     for k in range(1, steps + 1):
-        pg.mouse.move(x0 + (x1 - x0) * k / steps, y0 + (y1 - y0) * k / steps)
+        pg.mouse.move(xs + (x1 - xs) * k / steps, ys + (y1 - ys) * k / steps)
         pg.wait_for_timeout(20)
     pg.mouse.up()
     pg.wait_for_timeout(300)

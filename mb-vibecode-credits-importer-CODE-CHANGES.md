@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.76.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.77.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.77.0 · 2026-11-07
+
+Z-FLK (first stage). The script: its version and one fix.
+
+- **`matrixChange` `mx-addcol-mbid`:** the error of the last "Add" (`S.mxAddCol.error`) is kept while the text is the same – the field taken away by the popup drawn again sent a change, which cleared it (found by Z-FLK: `wmx` E failed when the change came before the test read the message).
+- **`smoke/caserun.py`:** a case that failed runs once more on its own (`once`, which returns OK and the number of page errors); green then, "== name: WACKELIG – beim 2. Lauf OK" and the last line "Ergebnis: OK [n Fälle, wackelig: …]" (a file that fails: a line "Wackelig (…)" above its last line); `DCI_RETRY=0` / false / no / off without the second run. (Review) Not again: a case with a page error (`H.PAGE_ERRORS`), one that took over 150 s, and after three second runs in a file.
+- **`smoke/harness.py`:** `NO_ANIM` / `NO_ANIM_CSS` – transitions and animations off (a style before the script, and – review – `NO_ANIM_INIT` as an init script of the context, so also after a reload; the context with `reduced_motion='reduce'`; the script's smooth scrolling is JavaScript and stays); `PAGE_ERRORS`; `wait_ok` (True / False instead of an exception), `wait_still` (a value unchanged for 150 ms); set by the files of reading and mapping (`t_text_basics`, `t_text_languages`, `t_text_places`, `t_text_lists`, `t_mapping`, `t_notes_companies`, `t_notes_dates`, `t_sources`, `t_sources_bandcamp`); the UI files keep them.
+- **Waiting for the state instead of a time:** `t_ui_head.py jump` (the import complete and its height settled, the end and the top reached – ▼ again when the end grew – and the scrolling ended), `t_works_matrix.py wmx` (E: the popup, both errors – the place's waits in the queue of MusicBrainz requests, up to 60 s –, the new column; the measurements printed also when a wait runs out), `t_ui_settings.py profiles` (E: the profiles of the file imported – unsteady in the suite); `common_rows.drag` measures its target again after the first small steps of the drag.
+- Next stages: the other fixed waits of the files, one file after the other.
 
 ## Import 3.76.0 · 2026-11-07
 
