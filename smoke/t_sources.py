@@ -281,7 +281,8 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             n = re.sub(r'\s+', ' ', pg.locator('#dci-notice').inner_text()) if pg.locator('#dci-notice').count() else ''
             print('D) Update von 2.19.1 – Speicher vorher:', before, '| nachher:', after)
             print('   Nachricht:', n[:220])
-            ok_d = after == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and 'Import 3.0.0' in n and 'Credits Importer 3.5.0' in n \
+            # ([Z-QSP] 3.75.0) the profiles (made at the first start above) are kept too
+            ok_d = after == ['dci-notice-version', 'dci-profile', 'dci-profiles', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and 'Import 3.0.0' in n and 'Credits Importer 3.5.0' in n \
                 and 'Import 2.19.0' not in n and 'reset once' in n and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
             # within generation 4 (as if 3.5.0 ran before): nothing is reset
             pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v)); localStorage.removeItem('dci-updated-from');

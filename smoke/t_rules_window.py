@@ -272,7 +272,7 @@ def case_rowrules():
 
 def case_quickswitch():
     """Credits Importer 3.32.0 (milestone "Quick switches"): quick switches at the top of "Mapping rules" (collected item 97d).
-    A) Seven switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off – each with its id. [3.32.8] In a box
+    A) Eight switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off, ([Z-QSP] 3.75.0) S078 on – each with its id. [3.32.8] In a box
        of their own (head, frame with round corners of 4 px), each switch a button (pressed = on; collected item 116).
     B) A click on an id shows that rule in the list below (highlighted).
     C) A quick switch and the rule's own switch are the same: S007 off at the top (a click on its button) → off in the list and
@@ -303,8 +303,8 @@ def case_quickswitch():
           return [!!q.querySelector('.dci-quick-h strong'), q.querySelectorAll('.dci-quick-grid > .dci-qbtn-wrap').length, st.borderTopStyle, st.borderTopLeftRadius,
             q.querySelector('[data-qs-toggle=S045]').textContent.replace(/\\s+/g, ' ').trim()]; })()""")
         print('A) Schalter:', a, '| Kasten:', box)
-        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False]]
-                       and box[:4] == [True, 7, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
+        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False], ['S078', True]]
+                       and box[:4] == [True, 8, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)

@@ -1266,7 +1266,7 @@ def case_poolbar():
 
 def case_launchtools():
     """Credits Importer 3.40.14 (collected item Z-LS; Q-bz): Log | Statistics · ⚙ as symbols next to "Import credits …".
-    A) Without the companion: after "Import credits …" and "Window | Page" three buttons with a symbol and no word – Log (until 3.40.13
+    A) Without the companion: after "Import credits …", ([Z-QSP] 3.75.0) the profile and "Window | Page" three buttons with a symbol and no word – Log (until 3.40.13
        the word "Log"), a line, Statistics, ⚙ – their names as label and tooltip; the bar below (navigation) hidden.
     B) Log: the log shown and hidden, the button pressed while it is shown (as the one of the dashboard's head).
     C) Statistics: the dashboard opens with the statistics, the import not started ("Only the statistics are open – …", "Start
@@ -1292,7 +1292,7 @@ def case_launchtools():
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(BAR)
         print('A)', a0)
-        results.append(a0 is not None and a0['kids'] == ['dci-log-open', 'dci-launch-sep', 'dci-stats-open', 'dci-set-open'] and a0['all'][:4] == ['dci-open', 'dci-open-ocr', 'dci-place-seg', 'dci-launch-tools']
+        results.append(a0 is not None and a0['kids'] == ['dci-log-open', 'dci-launch-sep', 'dci-stats-open', 'dci-set-open'] and a0['all'][:5] == ['dci-open', 'dci-open-ocr', 'dci-profile', 'dci-place-seg', 'dci-launch-tools']
                        and a0['svg'] == [True, True, True] and a0['text'] == ['', '', ''] and a0['label'] == ['Log', 'Statistics', 'Settings']
                        and a0['title'][1].startswith('Statistics:') and a0['title'][2].startswith('All settings') and a0['controls'] is True)
         PRESSED = "document.getElementById('dci-log-open').getAttribute('aria-pressed')"
