@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.84.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.85.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.85.0 · 2026-11-07
+
+Z-FEV, Z-FPL, Z-EVA, Z-CAMD.
+
+- **`festNameAlike`, `eventAliases`, `festivalEvent`** (new; Z-FEV, S130): the words of the shorter name (no years, small words, "festival" words – T055) nearly all (¾) in the other; the aliases of a linked event from `/ws/2/event/<mbid>?inc=aliases` (`S.eventAliases`, once; drawn again then). `festivalHtml` leaves out a festival with its event.
+- **`festivalOfPlace`, `festPlaceHtml`** (new; Z-FPL, S131): at a linked place (`entityType` place) named in the festival's sentence (or the only place and festival) – `festival.placeHint`, or with the event `festival.placeBoth` and `[data-act=fest-place-skip]` (its rows `levelOf(…, 'skip')`, log `festPlaceSkipped`).
+- **`trackIsVideo`, `videoByTitleOnly`, `VIDEO_TITLE`** (new; Z-EVA, S132): `evAskTypes` offers `both` first when the release has audio and videos; `answerEvAsk('both')` splits the row (`cloneRow`) – video shot at on the videos, recorded at on the rest – and names the videos by title only (`msg.videoTitleAudio`). `festival-add` answers at once (`evAskTypes()[0]`).
+- **`cameraLive`** (new; Z-CAMD, S129): `DATE_GROUPS` performance + misc / miscellaneous support, `only` for R110 rows (or camera words) on live tracks (`liveReason`) or a live release.
+- **Review:** `festNameAlike` two words alike (or one that is no genre, `FEST_GENRE`); `eventInfo` (was `eventAliases`): aliases and life-span, an error looked up again; `festivalEvent` only events with a row not on Skip, offered or alike and – both known – in time, `any` for the place; `refresh` draws the source part again when a festival's event came or went (`S.festSig`); `festivalOfPlace` whole words, apostrophes alike, the only place only with "recorded at", `isPlaceEntry` (unlinked companies too); `fest-place-skip` → `skipEntry` (or only the recording rows); festival-add: `both` when both types exist, a pending question kept; `evAskTypes` by `selTracks()`; `msg.videoTitleAudio` for any "video shot at" (medium.track); `cameraLive` with S021, no "filmed" / "footage". German texts.
+- **Register:** S129 – S132. **Texts:** festival.placeHint, festival.placeBoth, festival.placeSkip, log.festPlaceSkipped, manual.evAskBoth, manual.evAskBothTitle, msg.videoTitleAudio.
+- **Tests:** `t_notes_companies.py fev385`, `t_ui_head.py eva385`, `t_notes_dates.py camd385` (new); `t_notes_companies.py festival` C (the hint goes), `t_ui_head.py evask` C (both first).
 
 ## Import 3.84.0 · 2026-11-07
 

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.84.0",
+  "version": "3.85.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -141,6 +141,13 @@
     "festival.addTitle": "Fügt das Event als Eintrag hinzu, wie es „Eintrag manuell hinzufügen“ mit seiner MBID tut; dort seine Beziehung wählen.",
     "log.festivalFound": "Festival-Aufnahme im Text: „{name}“ – angebotene Events aus MusicBrainz: {n}",
     "log.festivalAdded": "Event hinzugefügt: {name}",
+    "festival.placeHint": "Festival-Aufnahme „{name}“: MusicBrainz bevorzugt das Event vor dem Ort – das Event ist mit seinem Ort verknüpft. Füge das Event hinzu (oben angeboten oder mit „Eintrag manuell hinzufügen“).",
+    "festival.placeBoth": "Das Event „{event}“ ist verknüpft – MusicBrainz verknüpft ein Event mit seinem Ort, „{place}“ braucht hier keine eigene Beziehung.",
+    "manual.evAskBothTitle": "Je eine Zeile: „recorded at“ auf den Audio-Tracks, „video shot at“ auf den Videos",
+    "msg.videoTitleAudio.one": "{n} Track sieht nach dem Titel wie ein Video aus, MusicBrainz hat aber eine Audio-Aufnahme (ohne Video-Kennzeichen): {list} – trotzdem „video shot at“; bitte die Aufnahme prüfen.",
+    "msg.videoTitleAudio.other": "{n} Tracks sehen nach den Titeln wie Videos aus, MusicBrainz hat aber Audio-Aufnahmen (ohne Video-Kennzeichen): {list} – trotzdem „video shot at“; bitte die Aufnahmen prüfen.",
+    "festival.placeSkip": "Ort → Überspringen",
+    "manual.evAskBoth": "recorded at + video shot at (nach Medienart)",
     "settings.entries": "Einträge",
     "settings.emSide": "Kompakte Einträge",
     "settings.emSide.beside": "Notizen neben den Zeilen",

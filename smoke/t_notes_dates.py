@@ -863,4 +863,46 @@ def case_catno():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_camd385():
+    """Credits Importer 3.85.0 (collected item Z-CAMD, rule S129): a pasted text of a live recording – "Recorded live at Club X in
+    May 2020.", "Cameras: Carl Cam", "Guitar: Gus Guitar".
+    A) The date in the column Performance of the date matrix; applied: the camera row (misc "cameras", R110) gets the dates the guitar
+       row gets, 2020-05 among them (until 3.84.0 none).
+    B) Rule S129 off: the camera row no date."""
+    import common_rows as C
+    H.lt(129, H.LTS[129]['gid'], 'misc', 'artist', 'recording', (1150,))
+    H.lt(63, H.LTS[63]['gid'], 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = "Recorded live at Club X in May 2020.\nCameras: Carl Cam\nGuitar: Gus Guitar"
+    results = []
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S129']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            H.wait_still(pg, "document.body.innerHTML", 15, 300)
+            perf = C.cells(pg).get('performance')
+            pg.locator('[data-act=dm-apply]').evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            cam = [r.split(' | ')[1] for r in C.rows_of(pg, 'Carl Cam')]
+            gus = [r.split(' | ')[1] for r in C.rows_of(pg, 'Gus Guitar')]
+            print('B)' if off else 'A)', perf, '| Kamera:', cam, '| Gitarre:', gus)
+            if off:
+                results.append('2020-05' in gus and cam == [''])
+            else:
+                results.append(bool(perf) and '2020-05' in gus and cam == gus)
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
