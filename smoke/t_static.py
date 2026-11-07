@@ -268,7 +268,7 @@ def case_round6():
     symbols; the French with a no-break space before ":" (until 3.41.4: English in all three)."""
     import json
     import subprocess
-    KEYS = ['notes.off', 'gap.count', 'group.copyName', 'dm.fold', 'settings.emSide', 'group.addRoleBtn', 'livecom.all', 'stats.whereOn',
+    KEYS = ['notes.off', 'gap.count', 'group.copyName', 'dm.fold', 'settings.emSide', 'group.addRole', 'livecom.all', 'stats.whereOn',
             'statsOnly.hint', 'group.skip', 'settings.skipHide', 'repeat.button', 'repeat.ask', 'matrix.coverAuto', 'suite.ask', 'suite.yes',
             'settings.suiteNaming', 'medley.split', 'suite.partPick', 'log.partsFound']
     NODE = r"""

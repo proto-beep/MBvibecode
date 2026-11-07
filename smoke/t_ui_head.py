@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools, [3.72.0] focusfields (the former t_focus.py); `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools, [3.72.0] focusfields (the former t_focus.py), [3.73.0] evask; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -234,6 +234,74 @@ def case_entryhead():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_evask():
+    """Credits Importer 3.73.0 (collected item Z-EVQ, rule S108): an event pasted into "Add entry manually" without a role.
+    A) Right below the line: "The event “Vancouver Jazz Festival 1993, Day 2”: which relationship?" – "recorded at", "choose later"
+       (no "video shot at": the release has no videos).
+    B) "recorded at": the row is "recorded at" on the recordings (not the release), the entry folded to its compact lines; the
+       question gone; the log says so.
+    C) A release with a video (track 2): the question offers "video shot at" too; "choose later" leaves the row as it was.
+    D) Rule S108 off: no question."""
+    EV = H.uid('fefefefe', 11)
+    H.COMPANIES[1031] = ('event', EV, 'Vancouver Jazz Festival 1993, Day 2')
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.lt(9002, H.uid('9e9e9e9e', 2), 'recorded at', 'event', 'release', ())
+    H.lt(9003, H.uid('9e9e9e9e', 3), 'video shot at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    ASK = """(() => { const q = document.querySelector('[data-el=manual-evq]'); return q && !q.hidden ? { text: q.querySelector('span').textContent.trim(),
+      btns: [...q.querySelectorAll('button')].map(b => b.textContent.trim()) } : null; })()"""
+    ROW = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Vancouver Jazz Festival/.test(x.querySelector('.dci-gname').textContent));
+      if (!g) return null; const r = g.querySelector('tr.dci-row'); const t = r.querySelector('[data-f=type]');
+      return { type: t ? (t.selectedOptions[0] || {}).text : null, level: (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || null,
+        folded: g.classList.contains('dci-gcompact'), cline: !!r.querySelector('.dci-cline') && getComputedStyle(r.querySelector('td.dci-c-cline') || r).display !== 'none' }; })()"""
+    results = []
+
+    def open_page(p, off=False):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        if off:
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S108']))")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
+        pg.click('[data-act=add-manual]')
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Vancouver Jazz Festival/.test(x.textContent))", 20)
+        pg.wait_for_timeout(300)
+        return pg, errs
+
+    with sync_playwright() as p:
+        pg, errs = open_page(p)
+        a = pg.evaluate(ASK)
+        print('A)', a)
+        results.append(a == {'text': 'The event “Vancouver Jazz Festival 1993, Day 2”: which relationship?', 'btns': ['recorded at', 'choose later']})
+        pg.click('[data-el=manual-evq] [data-type="recorded at"]')
+        pg.wait_for_timeout(400)
+        r = pg.evaluate(ROW)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if x[9:].startswith('Event ')]
+        print('B)', r, '| Frage:', pg.evaluate(ASK), '| Log:', logs)
+        results.append(r and r['type'] == 'recorded at' and r['level'] == 'recording' and r['folded'] and pg.evaluate(ASK) is None
+                       and logs == ['Event Vancouver Jazz Festival 1993, Day 2: recorded at (on the recordings; the level changes with a click)'] and not errs)
+    H.VIDEO_TRACKS.add(1)
+    with sync_playwright() as p:
+        pg, errs = open_page(p)
+        c = pg.evaluate(ASK)
+        pg.click('[data-el=manual-evq] [data-act=manual-evq-later]')
+        pg.wait_for_timeout(300)
+        r2 = pg.evaluate(ROW)
+        print('C)', c, '| danach:', pg.evaluate(ASK), r2)
+        results.append(c and c['btns'] == ['recorded at', 'video shot at', 'choose later'] and pg.evaluate(ASK) is None and r2 and r2['type'] != 'recorded at' and not errs)
+    with sync_playwright() as p:
+        pg, errs = open_page(p, off=True)
+        d = pg.evaluate(ASK)
+        print('D)', d)
+        results.append(d is None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
@@ -511,22 +579,26 @@ def case_jump():
 
 
 def case_compacthint():
-    """Credits Importer 3.34.23: an arrow at "Compact | Full" (collected item 143).
-    A) Nothing stored about it: the dashboard's head shows the arrow below the symbol (its tip below the symbol), the text says
-       what the compact view is; what lies below it can still be clicked (the pointer goes through, only ✕ is a button).
-    B) The symbol switches to compact: the arrow is gone, stored; back to full and a new page: still gone.
-    C) ⚙ Settings → "Reset all settings": the arrow is back; ✕ closes it for good (stored), ↺ of Appearance brings it back.
-    D) The compact view stored before (an older version): no arrow, also after switching to full."""
+    """Credits Importer 3.34.23: an arrow at "Compact | Full" (collected item 143). (3.73.0, Z-CPV) The compact view is the default:
+    the arrow points to the full view now.
+    A) The compact view, nothing stored about the arrow: the dashboard's head shows the arrow below the symbol (its tip below the
+       symbol), the text says what the full view is ("Try the full view …"); what lies below it can still be clicked.
+    B) The symbol switches to full: the arrow is gone, stored; back to compact and a new page: still gone.
+    C) ⚙ Settings → "Reset all settings": the compact view and the arrow are back; ✕ closes it for good (stored), ↺ of Appearance
+       brings it back.
+    D) (3.73.0) Who used the script before (its storage generation set) and never chose a view: the full view kept, no arrow; a
+       browser that never ran the script: the compact view with the arrow; a view chosen before: no arrow."""
     results = []
     HINT = """(() => { const h = document.querySelector('.dci-head .dci-hint-compact'); const b = document.querySelector('.dci-head [data-act=view-toggle]');
       if (!h) return null; const r = h.querySelector('.dci-hint-bubble').getBoundingClientRect(); const br = b.getBoundingClientRect();
       const tip = getComputedStyle(h.querySelector('.dci-hint-bubble'), '::before');
       return { text: h.querySelector('.dci-hint-text').textContent, below: r.top >= br.bottom - 2, near: r.right >= br.left && r.left <= br.right + 40,
         through: getComputedStyle(h).pointerEvents === 'none', tip: tip.content !== 'none' }; })()"""
+    VIEW = "document.getElementById('dci-overlay').classList.contains('dci-compact') ? 'compact' : 'full'"
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
-        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         pg.evaluate("localStorage.removeItem('dci-hint-compact')")
@@ -534,30 +606,30 @@ def case_compacthint():
         pg.wait_for_timeout(800)
         a = pg.evaluate(HINT)
         print('A) Pfeil:', a)
-        results.append(bool(a) and a['text'].startswith('Try the compact view') and a['below'] and a['near'] and a['through'] and a['tip'])
+        results.append(bool(a) and a['text'].startswith('Try the full view') and a['below'] and a['near'] and a['through'] and a['tip'])
         # B) switched
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
-        b1 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
+        b1 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')"), pg.evaluate(VIEW)]
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
         b2 = pg.evaluate(HINT)
         pg.close()
-        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg, errs2 = H.open_mb_edit(ctx, companion=False, view='compact')
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         pg.wait_for_timeout(800)
         b3 = pg.evaluate(HINT)
-        print('B) nach dem Umschalten:', b1, '| wieder voll:', b2, '| neue Seite:', b3)
-        results.append(b1 == [None, 'true'] and b2 is None and b3 is None)
+        print('B) nach dem Umschalten:', b1, '| wieder kompakt:', b2, '| neue Seite:', b3)
+        results.append(b1 == [None, 'true', 'full'] and b2 is None and b3 is None)
         # C) reset all settings, ✕, ↺ of Appearance
         H.open_settings(pg)
         pg.click('[data-el=settings] [data-act=reset-open]')
         pg.wait_for_timeout(200)
         pg.click('[data-act=reset-do]')
         pg.wait_for_timeout(2500)
-        c1 = pg.evaluate(HINT)
+        c1 = [bool(pg.evaluate(HINT)), pg.evaluate(VIEW)]
         pg.click('.dci-head .dci-hint-compact [data-act=hint-compact-close]')
         pg.wait_for_timeout(300)
         c2 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
@@ -565,24 +637,39 @@ def case_compacthint():
         pg.locator('[data-el=settings] [data-act=settings-reset]').first.evaluate('b => b.click()')
         pg.wait_for_timeout(500)
         c3 = pg.evaluate(HINT)
-        print('C) nach „Reset all“:', bool(c1), '| ✕:', c2, '| ↺ Appearance:', bool(c3))
-        results.append(bool(c1) and c2 == [None, 'true'] and bool(c3))
+        print('C) nach „Reset all“:', c1, '| ✕:', c2, '| ↺ Appearance:', bool(c3))
+        results.append(c1 == [True, 'compact'] and c2 == [None, 'true'] and bool(c3))
         print('Fehler:', errs + errs2)
         results.append(not errs and not errs2)
         pg.close()
-        # D) the compact view stored before
-        ctx2 = H.new_context(b)
-        ctx2.add_init_script("if (localStorage.getItem('dci-view') === null) { localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-view', JSON.stringify('compact')); }")
-        pg, errs3 = H.open_mb_edit(ctx2, companion=False, view=None)
-        pg.wait_for_selector('#dci-open', timeout=20000)
-        H.open_dashboard(pg)
-        pg.wait_for_timeout(800)
-        d1 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
-        pg.click('.dci-head [data-act=view-toggle]')
-        pg.wait_for_timeout(300)
-        d2 = pg.evaluate(HINT)
-        print('D) kompakt gespeichert:', d1, '| voll:', d2, '| Fehler:', errs3)
-        results.append(d1 == [None, 'true'] and d2 is None and not errs3)
+        # D) the default for who used the script before, a new browser, a view chosen before
+        d = []
+        for init in ("localStorage.setItem('dci-store-epoch', '4')", "", "localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-view', JSON.stringify('compact'))"):
+            c = H.new_context(b)
+            if init:
+                c.add_init_script(f"if (!localStorage.getItem('dci-view-kept') && !sessionStorage.getItem('t-init')) {{ sessionStorage.setItem('t-init', '1'); {init}; }}")
+            if init:
+                pg, e3 = H.open_mb_edit(c, companion=False, view=None)
+            else:
+                # (a browser that never ran the script: none of the harness's presets – they set its storage generation)
+                pg = c.new_page()
+                e3 = H.errors_of(pg)
+                pg.goto(f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+                pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(800)
+            d.append([pg.evaluate(VIEW), bool(pg.evaluate(HINT)), not e3])
+            # ((review) a second start: the same – the fresh browser stays compact)
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(800)
+            d[-1].append(pg.evaluate(VIEW))
+            c.close()
+        print('D) vorher benutzt, neu, gewählt:', d)
+        results.append(d == [['full', False, True, 'full'], ['compact', True, True, 'compact'], ['compact', False, True, 'compact']])
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
