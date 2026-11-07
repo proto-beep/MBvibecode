@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.74.0 | – |
+| 2026-11-07 | 3.73.0 – 3.75.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.75.0
+
+#### Changed
+
+- **Profiles** (collected item Z-QSP, rule S110): the quick switches and the settings of ⚙ (with the language and "Developer mode") are kept per profile. **"Standard"** are the defaults and cannot be changed: a change there makes a new profile "Profile n · date time" and uses it; a change in your own profile is kept in it at once. Who used the script before starts with **"Profile 1"** (the settings as they were) and "Standard". The profile is chosen beside the import button, before "Window | In the page" – it applies at once, also with the dashboard open (the rules applied again; what you changed by hand stays) –, and in **⚙ Settings → Profiles** (its name, use, delete, export, import; a name there already gets "(2)"). Not in a profile: the switches of the companion's pages, remembering releases, the statistics, the other rule switches and your own rules. "Reset all settings" asks: the active profile as "Standard", or all your profiles deleted.
+- **Imports and exports** (Z-QSP): a log in ⚙ Settings → General (folded; it cannot be deleted; the last 5000 lines) – when which data were exported or imported (profiles, mapping rules); its symbol [-] / [E] / [I] shows all, only exports, only imports.
+- **A new quick switch** (collected item Z-QTA): S078 – the instruments of a person credited for the whole release only on the tracks of which they are a track artist.
 
 ### Import 3.74.0
 
