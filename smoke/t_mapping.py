@@ -1574,7 +1574,10 @@ def case_photoname():
     A) "Photography By [Bass Man]" (Bass Man the artist of the release) → photography credited "Bass Man" (until 3.62.0 "bass man");
        "Photography By [Bass Man photographs by]" → "Bass Man" too; "Photography By [Back Cover]" as before; (review) "[Drum Guy photos]"
        – the drummer of the release, not its artist – "Drum Guy" (with the name the entry has in MusicBrainz).
-    B) Rule S091 off: "bass man" as before."""
+    B) Rule S091 off: "bass man" as before.
+    A2) (3.73.0, Z-PHN2) several people photographed: "[Bass Man & Drum Guy]" credited "Bass Man & Drum Guy"; "[Bass Man, Jane van der
+       roe and Drum Guy]" → "Bass Man, Jane van der Roe and Drum Guy" (one name known: the others proper names, particles small); none
+       known ("[Nobody Known & Somebody Else]"): in small letters as before."""
     orig = H.discogs_release
     # (the release artist: "Bass Man" – an artist the fixtures know, as Barry Guy for Discogs 13172763)
     H.RELEASE_AC[:] = [(H.ARTISTS[3001][0], 'Bass Man', 'Bass Man', '')]
@@ -1584,7 +1587,11 @@ def case_photoname():
         d['extraartists'] += [{'name': 'Keys Guy', 'anv': '', 'role': 'Photography By [Bass Man]', 'tracks': '', 'id': 3003, 'join': ''},
                               {'name': 'Photo Guy', 'anv': '', 'role': 'Photography By [Bass Man photographs by]', 'tracks': '', 'id': 3006, 'join': ''},
                               {'name': 'Drum Guy', 'anv': '', 'role': 'Photography By [Back Cover]', 'tracks': '', 'id': 3005, 'join': ''},
-                              {'name': 'Bob Producer', 'anv': '', 'role': 'Photography By [Drum Guy photos]', 'tracks': '', 'id': 3005, 'join': ''}]
+                              {'name': 'Bob Producer', 'anv': '', 'role': 'Photography By [Drum Guy photos]', 'tracks': '', 'id': 3005, 'join': ''},
+                              # ([Z-PHN2] 3.73.0) several people photographed
+                              {'name': 'Guitar Guy', 'anv': '', 'role': 'Photography By [Bass Man & Drum Guy]', 'tracks': '', 'id': 3002, 'join': ''},
+                              {'name': 'Ann Rep', 'anv': '', 'role': 'Photography By [Bass Man, Jane van der roe and Drum Guy]', 'tracks': '', 'id': 3007, 'join': ''},
+                              {'name': 'Writer W', 'anv': '', 'role': 'Photography By [Nobody Known & Somebody Else]', 'tracks': '', 'id': 3008, 'join': ''}]
         return d
     H.discogs_release = rel
     ROWS = """[...document.querySelectorAll('[data-group] tr.dci-row')].filter(tr => /Photography/.test(tr.querySelector('.dci-drole').dataset.raw))
@@ -1610,6 +1617,12 @@ def case_photoname():
     results.append(rows.get('Photography By [Bass Man]') == 'Bass Man' and rows.get('Photography By [Bass Man photographs by]') == 'Bass Man'
                    and rows.get('Photography By [Back Cover]') not in ('Bass Man', None)
                    and rows.get('Photography By [Drum Guy photos]') == 'Drum Guy' and not errs)
+    # ([Z-PHN2] 3.73.0) "Bass Man & Drum Guy" with the "&"; others written with a capital (particles small); none known: as before
+    print('A2)', rows.get('Photography By [Bass Man & Drum Guy]'), '|', rows.get('Photography By [Bass Man, Jane van der roe and Drum Guy]'), '|',
+          rows.get('Photography By [Nobody Known & Somebody Else]'))
+    results.append(rows.get('Photography By [Bass Man & Drum Guy]') == 'Bass Man & Drum Guy'
+                   and rows.get('Photography By [Bass Man, Jane van der roe and Drum Guy]') == 'Bass Man, Jane van der Roe and Drum Guy'
+                   and rows.get('Photography By [Nobody Known & Somebody Else]') == 'nobody known & somebody else')
     rows2, _ = run(True)
     print('B)', rows2)
     results.append(rows2.get('Photography By [Bass Man]') == 'bass man')

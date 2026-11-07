@@ -15,6 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
+| 2026-11-07 | 3.73.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -100,6 +101,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-07
+
+### Import 3.73.0
+
+#### Changed
+
+- **"＋ Another role"** (collected item Z-ARL): the button of an entry no longer repeats its name (a long event made it thick); the name is in its tooltip.
+- **Several people photographed** (collected item Z-PHN2, rule S091): "Photography By [Marilyn Crispell & Gerry Hemingway]" is credited "Marilyn Crispell & Gerry Hemingway" – each name as MusicBrainz writes it when one of them is an artist of the release or of the dashboard, the others as proper names with a capital; "&", "and" and commas kept.
+- **The kinds of the artwork** (collected item Z-CPI, rule D025): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (until 3.72.0 to design too), "Cover Photo: “…” (1985)" to the photography by itself, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind and can be changed ("for: illustration / photography / design / illustration & design"). Without an illustration the date stays in the pool.
+- **Photographs taken at the concert** (Z-CPI): the concert's date goes into the pool named for them ("Photography By") and is suggested at their row – not given by itself; a date in a sentence of photographs at a concert ("Live photos from the festival, May 20, 1985") only into the pool. The year of a cover photo ("Cover Photo … (1985)") is credited so: it goes to the photography, also when its credit says "live". Rule D025 off: as until 3.72.0 (no photographs in the column Artwork).
+- **An event pasted into "Add entry manually"** (collected item Z-EVQ, rule S108): asked right below the line – "recorded at", or "video shot at" when the release has videos, or "choose later"; on the recordings first (a click on the level changes it), the entry folds to its compact lines.
+- **The compact view is the default** (collected item Z-CPV): for a new browser and after resetting the settings; who used the script before and never chose a view keeps the full one. The arrow at "Compact | Full" now points to the full view.
 
 ## 2026-11-06
 

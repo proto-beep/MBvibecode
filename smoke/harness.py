@@ -225,7 +225,7 @@ def ws_release(full=False):
             rels.append({'target-type': 'artist', 'type': 'instrument', 'type-id': LTS[148]['gid'], 'attributes': ['drums (drum set)'],
                          'attribute-values': {}, 'artist': {'id': ARTISTS[3004][0], 'name': 'Drum Guy'}})
         tracks.append({'position': i + 1, 'number': str(i + 1), 'title': TITLES[i],
-                       'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])},
+                       'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, []), **({'video': True} if i in VIDEO_TRACKS else {})},
                        **({'artist-credit': [{'name': n, 'joinphrase': '', 'artist': {'id': g, 'name': n}} for g, n in TRACK_AC[i]]} if i in TRACK_AC else {})})
     return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
@@ -421,6 +421,8 @@ MB_EXTRA = {}
 BAND_MEMBERS = {}
 # [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
 IS_PERSON = {}
+# [3.73.0] positions (0-based) whose recordings are videos (MusicBrainz's `video`)
+VIDEO_TRACKS = set()
 TRACK_AC = {}
 # True: submitted relationships of the work are missing in the release lookup (e.g. its link is still an open
 # edit) and only a lookup of the work itself has them. WORK_LOOKUPS records those lookups.

@@ -10,7 +10,8 @@ from caserun import launch_own, run_cases, sync_playwright  # noqa: F401 – the
 def case_compact():
     """Credits Importer 3.27.0: the compact view of the entries (collected item 31; milestone). [3.27.2] Full is the default
     again (item 72), the symbol in the head switches (item 60).
-    A) Full at first (nothing stored); the symbol in the head (not pressed) switches to compact – pressed, stored "compact"
+    A) Full at first (nothing stored; (3.73.0, Z-CPV) the browser has used the script before – the full view kept); the symbol in the
+       head (not pressed) switches to compact – pressed, ((3.73.0) compact is the default: nothing stored; until 3.72.0) stored "compact"
        (until 3.27.1: compact by default, "Compact | Full" above the entries); one line per row – the role as written
        → type and instrument, level, tracks in short, date (or "no date"), what is open in colour (yellow "Bass: which
        instrument? electric bass guitar · double bass · acoustic bass guitar", [3.32.3] the possibilities to click); the
@@ -23,7 +24,7 @@ def case_compact():
        mark is gone.
     E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back. [3.30.1] Its type stays on the
        line (grey), so the level does not move.
-    F) "Compact" remembered after reloading (3.36.1: Guitar Guy's row removed with ✕ stays removed – the release is remembered); ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
+    F) "Compact" remembered after reloading ((3.73.0) as the default; "Full" stored) (3.36.1: Guitar Guy's row removed with ✕ stays removed – the release is remembered); ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
        nothing stored.
     G) A jump to an incomplete row (› in the summary) opens it ([3.31.5] › until it gets there: the row of the publisher
        Ghost Pub, not in MusicBrainz, is incomplete too and shows in its entry – item 112)."""
@@ -58,7 +59,7 @@ def case_compact():
               pg.evaluate("localStorage.getItem('dci-view')")]
         bass = line('Bass Man')
         print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
-        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and ' '.join(bass[0]['text'].split()).startswith('▸ bass Recording all 4 tracks no date')
+        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, None] and bass and ' '.join(bass[0]['text'].split()).startswith('▸ bass Recording all 4 tracks no date')
                        # [3.32.3] the question whole, its possibilities to click (item 102)
                        and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar']] and not bass[0]['typeVisible'])
         # B) open, close
@@ -127,7 +128,7 @@ def case_compact():
         pg.click('[data-el=settings] [data-act=view][data-view=compact]')
         pg.wait_for_timeout(300)
         print('F) kompakt:', f1, '| neu geladen:', f2, '| Einstellungen:', f3, '| voll dort:', f4)
-        results.append(f1 == [True, False, '"compact"'] and f2 == [True, True, True] and f3 == [['compact', 'true'], ['full', 'false']] and f4 == [False, None, 'false', True])
+        results.append(f1 == [True, False, None] and f2 == [True, True, True] and f3 == [['compact', 'true'], ['full', 'false']] and f4 == [False, '"full"', 'false', True])
         pg.click('.dci-head [data-act=settings-open]')
         # G) a new row ("+ Another role") is open; closed and incomplete, a jump to it (› in the summary) opens it again
         pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) [data-act=add-role]')
@@ -338,7 +339,7 @@ def case_levels():
         pg.wait_for_timeout(500)
         # [3.34.29] the ↺ of Appearance also sets the entries back to the matrix (E4, the default): this case looks at the rows
         # as before, so "Legacy" again
-        matrix_back = pg.evaluate("[localStorage.getItem('dci-entries-view'), document.querySelectorAll('section.dci-em-entry').length > 0]")
+        matrix_back = pg.evaluate("[localStorage.getItem('dci-entries-view'), document.querySelectorAll('section.dci-em-entry, section.dci-em-centry').length > 0]")
         pg.click('.dci-set-pane [data-act=entries-view][data-view=legacy]')
         pg.wait_for_timeout(500)
         c3 = [pg.evaluate("[localStorage.getItem('dci-level-colors'), localStorage.getItem('dci-level-palette')]"),
@@ -785,7 +786,8 @@ def case_foot():
 def case_addrolebtn():
     """Credits Importer 3.40.13 (collected item Z-AB; Q-bs): "＋ Another role for …" a button in the full view too (until 3.40.12 a
     link "+ Another role for …" there; a button in the compact entries from 3.40.10).
-    A) Full view: below the rows of Bass Man the button "＋ Another role for Bass Man" (framed, not a text link).
+    A) Full view: below the rows of Bass Man the button "＋ Another role for Bass Man" (framed, not a text link); (3.73.0, Z-ARL)
+       "＋ Another role", the name in its tooltip ("+ Another role for Bass Man").
     B) Clicked: a new row for him."""
     BTN = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent === 'Bass Man');
       const x = g && g.querySelector(':scope > [data-act=add-role]'); if (!x) return null; const st = getComputedStyle(x);
@@ -801,7 +803,11 @@ def case_addrolebtn():
         pg.wait_for_timeout(1000)
         a0 = pg.evaluate(BTN)
         print('A)', a0)
-        results.append(a0 is not None and a0[:4] == ['＋ Another role for Bass Man', True, False, 'solid'])
+        # ([Z-ARL] 3.73.0) "＋ Another role" without the name, the name in its tooltip
+        a0t = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent === 'Bass Man');
+          const b = g && g.querySelector(':scope > [data-act=add-role]'); return b ? b.title : null; })()""")
+        print('   Tooltip:', a0t)
+        results.append(a0 is not None and a0[:4] == ['＋ Another role', True, False, 'solid'] and a0t == '+ Another role for Bass Man')
         pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) > [data-act=add-role]')
         pg.wait_for_timeout(300)
         b0 = pg.evaluate(BTN)

@@ -294,6 +294,100 @@ def case_artwork():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_artkinds():
+    """Credits Importer 3.73.0 (collected item Z-CPI, rule D025): the kinds of the artwork. Notes: "Recorded June, 26, 1993 at …" /
+    "Cover Painting: "View at Nice" (1992)" / "Cover Photo: "Lodge" (1985)"; Mary Vernon "Painting [Cover Painting]" (illustration),
+    Keys Guy "Design" (design), Photo Guy "Photography By [Cover Photo]", Live Shooter "Photography By [Live Photos]".
+    A) The matrix: Artwork 1992 "for: illustration", Artwork 1985 "for: photography", Performance 1993-06-26.
+    B) Applied: Mary Vernon 1992; Keys Guy no date (until 3.72.0 the painting's 1992 – design is in the column too); Photo Guy 1985
+       (the year of the cover photo, by itself); (review) Live Shooter (photos at the concert) 1985 too – the cover photo's year is
+       credited so and goes before the concert's date; the pool has the entry "Photography By" (the concert's date, named for them).
+    C) A cell's kind changed to "illustration & design": Keys Guy gets 1992 too.
+    D) Rule D025 off: no "for:" in the cells, the cover photo's 1985 no date of the column (only in the pool; as until 3.72.0); Keys
+       Guy 1992 and Mary Vernon only 1992 (as until 3.72.0).
+    E) (review) A photography row added by hand (Bass Man): the cover photo's 1985, not the painting's 1992."""
+    NOTES = 'Recorded June, 26, 1993 at the Western Front Lodge, Vancouver.\nCover Painting: "View at Nice" (1992)\nCover Photo: "Lodge" (1985)'
+    H.lt(927, H.uid('92792792', 1), 'illustration', 'artist', 'release', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        d['extraartists'] = [e for e in d['extraartists'] if e['name'] not in ('Photo Guy', 'Keys Guy')]
+        d['extraartists'] += [{'name': 'Mary Vernon (2)', 'anv': '', 'role': 'Painting [Cover Painting]', 'tracks': '', 'id': 2961807, 'join': ''},
+                              {'name': 'Keys Guy', 'anv': '', 'role': 'Design', 'tracks': '', 'id': 3003, 'join': ''},
+                              {'name': 'Photo Guy', 'anv': '', 'role': 'Photography By [Cover Photo]', 'tracks': '', 'id': 3006, 'join': ''},
+                              {'name': 'Live Shooter', 'anv': '', 'role': 'Photography By [Live Photos]', 'tracks': '', 'id': 3990, 'join': ''}]
+        return d
+
+    H.discogs_release = rel
+    H.ARTISTS[3990] = (H.uid('dddddddd', 990), 'Live Shooter')
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim().startsWith(name));
+      if (!g) return null; const r = g.querySelector('tr.dci-row'); const sg = r.querySelector('.dci-datechip-sugg');
+      return { chip: ((r.querySelector('.dci-datechip:not(.dci-datechip-sugg)') || {}).textContent || '').replace(/\\s+/g, ' ').trim(),
+        sugg: sg ? sg.querySelector('.dci-datechip-text').textContent.trim() : null }; }"""
+    CELLS = """[...document.querySelectorAll('.dci-dm-col')].flatMap(col => [...col.querySelectorAll('.dci-dm-cell')].map(c => [col.dataset.dmcol,
+      c.querySelector('.dci-chip-main').textContent.trim(), (c.querySelector('[data-f=dm-art]') || { selectedOptions: [{ text: null }] }).selectedOptions[0].text]))"""
+    results = []
+
+    def run(off=False):
+        out = {}
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'D025']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+            out['cells'] = sorted(pg.evaluate(CELLS))
+            pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(800)
+            out['rows'] = {n: pg.evaluate(ROW, n) for n in ('Mary Vernon', 'Keys Guy', 'Photo Guy', 'Live Shooter')}
+            out['pool'] = [d['name'] for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')") if d.get('found') == 'photo:concert']
+            if not off:
+                sel = pg.locator('.dci-dm-col[data-dmcol=artwork] .dci-dm-cell:has(.dci-chip-main:text-matches("1992")) [data-f=dm-art]')
+                sel.select_option('')
+                pg.wait_for_timeout(300)
+                pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(800)
+                out['keys2'] = pg.evaluate(ROW, 'Keys Guy')
+                # E) (review) a photography row added by hand: the date of its kind
+                pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+                pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{H.ARTISTS[3001][0]}')
+                pg.fill('[data-f=manual-role]', 'photography')
+                pg.click('[data-act=add-manual]')
+                pg.wait_for_timeout(800)
+                out['manual'] = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim().startsWith('Bass Man'));
+                  const r = g && [...g.querySelectorAll('tr.dci-row')].pop(); return r ? ((r.querySelector('.dci-datechip:not(.dci-datechip-sugg)') || {}).textContent || '').replace(/\\s+/g, ' ').trim() : null; })()""")
+            out['errs'] = errs
+            b.close()
+        return out
+
+    try:
+        a = run()
+        print('A)', a['cells'], '\nB)', a['rows'], '| Pool:', a['pool'], '\nC) Keys Guy:', a.get('keys2'), '| Fehler:', a['errs'])
+        cells = [(c, t[-4:] if t else t, k) for c, t, k in a['cells']]
+        results.append(('artwork', '1992', 'illustration') in cells and ('artwork', '1985', 'photography') in cells and any(c == 'performance' for c, _, _ in cells))
+        r = a['rows']
+        results.append('1992' in r['Mary Vernon']['chip'] and not r['Keys Guy']['chip'] and '1985' in r['Photo Guy']['chip'] and '1992' not in r['Photo Guy']['chip']
+                       and '1985' in r['Live Shooter']['chip'] and a['pool'] == ['Photography By'])
+        results.append(a['keys2'] and '1992' in a['keys2']['chip'] and not a['errs'])
+        print('E) von Hand:', a.get('manual'))
+        results.append('1985' in (a.get('manual') or '') and '1992' not in (a.get('manual') or ''))
+        d = run(off=True)
+        print('D)', d['cells'], d['rows']['Keys Guy'])
+        results.append(all(k is None for _, _, k in d['cells']) and not any(c == 'artwork' and '1985' in t for c, t, _ in d['cells']) and '1992' in d['rows']['Keys Guy']['chip']
+                       and d['rows']['Mary Vernon']['chip'].count('Artwork') == 1 and '1992' in d['rows']['Mary Vernon']['chip'])
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_choose():
     """Separate days ("Recorded June 16 & 19, 1980 at …"): the pool keeps both days as Discogs gives them and gets
     the period as well; the matrix asks "choose" and applies nothing until then; choosing the period puts it on
