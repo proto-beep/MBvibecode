@@ -210,8 +210,9 @@ def case_trackmarks():
         print('1) vor dem Übernehmen (Track-Zeilen):', m0)
         ok1 = sorted((x[0], x[2]) for x in m0) == [('1', 'Writer W'), ('2', 'Writer W')] and dict((x[0], x[1]) for x in m0) == {'1': '✓', '2': '○'}
         # track 2 gets a new work in the editor; everything is staged
-        pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(400)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        # (3.86.0: the head of the matrix is taller – the log of the dashboard may lie over the button: clicked as such)
+        pg.locator('tr[data-work="1"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.locator('[data-act=apply]').evaluate('b => b.click()'); pg.wait_for_timeout(3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         dg.wait_for_timeout(2000)
         m1 = marks(dg)

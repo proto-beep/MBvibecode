@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.85.0",
+  "version": "3.86.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2429,7 +2429,22 @@
     "sync.dgRelease": "Status auf der Release-Seite",
     "sync.dgReleaseTitle": "Die Discogs-Status-Zeichen bleiben, solange die MusicBrainz-Release-Seite offen ist (z. B. nach „Enter edit“), um auf einen Blick zu prüfen, was angekommen ist; sie verschwinden, wenn Release-Seite und Editor geschlossen sind",
     "log.dgRelease": "Discogs-Status auf der Release-Seite: {state}",
-    "log.stageSummaryEdited": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {replaced} im Editor selbst geändert und trotzdem ersetzt oder herausgenommen, {changed} im Editor selbst geändert und belassen, {remove} von Hand zu entfernen"
+    "log.stageSummaryEdited": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {replaced} im Editor selbst geändert und trotzdem ersetzt oder herausgenommen, {changed} im Editor selbst geändert und belassen, {remove} von Hand zu entfernen",
+    "arq.search": "Beziehungstyp suchen …",
+    "arq.events": "Für:",
+    "arq.free": "Rolle selbst eingeben (z. B. Pressed By)",
+    "arq.none": "Kein Beziehungstyp gefunden – unten eine Rolle selbst eingeben.",
+    "matrix.allWorks": "alle Werke",
+    "matrix.allWorksOn": "✓ alle Werke",
+    "settings.dropHead": "Drag & Drop",
+    "settings.drop.dates": "Daten auf Zeilen und Events",
+    "settings.drop.tracks": "Track-Gruppen auf Zeilen",
+    "settings.drop.matrix": "Track-Gruppen auf die Werke-Matrix",
+    "settings.drop.chips": "Rollen-Chips auf ein anderes Event",
+    "settings.drop.allworks": "Track-Gruppen auf „alle Werke“",
+    "settings.drop.add": "Ablegen fügt hinzu (⇧ ersetzt)",
+    "settings.drop.replace": "Ablegen ersetzt (⇧ fügt hinzu)",
+    "arq.evTracks": "{n} Track(s)"
   },
   "es": {
     "title": "Credits Importer",

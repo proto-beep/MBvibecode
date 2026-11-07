@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.85.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.86.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.86.0 · 2026-11-07
+
+Z-ARQ, Z-AWB, Z-DNDS.
+
+- **`addRoleRow`** (the old "add-role"), **`arqOpen`, `arqClose`, `arqHtml`, `arqListHtml`, `arqPick`** (new; Z-ARQ, S134): `S.arq` { key, q, evs }; the box `[data-el=arq]` below the variants of the entry; `ARQ_COMMON` (per kind), `ARQ_LEVELS`; `arqEvents` (the entry model's events not on Skip; preselected `S.emEvOpen`, else the first); a pick: `makeRow` + `applyRoleText(type)`, its level, the tracks and date of each event ticked on that level (else of all ticked, else the selection); `arq-free` → `addRoleRow`; search `arq-q` (onInput, only the list drawn again), `arq-ev` (onChangeInner), Esc; reset with a new import.
+- **`allWorksOn`** (new; Z-AWB, S133): `[data-act=mx-col-allworks][data-allworks]` below `mx-credit`; `mx-col-allworks` (matrixAction): `addCell` / `removeCell` for every matrix row on the column's default rows; `dmTargetOf` → `mx-allworks` (dropped as onto the head, `dropTracksOnMatrix('mx-col')`).
+- **Drop modes** (Z-DNDS): `DROP_KEY` `dci-drop-modes` ({ place: add | replace }, `DROP_DEFAULT`, `dropModesRead`), `dropReplace(place, shift)`, `DROP_PLACE_OF` (kind of target → place); `onDropOn` and `onDragOver` by the place; `setDropHints` the "Alt" texts for a place that replaces (`--dci-aw-*` for "all works"); ⚙ Dates & tracks: `[data-el=set-drop]`, `drop-mode`; in `SETTINGS_KEYS` (profiles), `TOPIC_KEYS.dates`, `resetTopic('dates')`, `reloadSettingsState`.
+- **Review:** the events of the question as plain text (`arqEvText`, no controls of the entry inside a label); one question at a time (`arqOpen` draws the other entry's away; picks, "type it yourself" and the search only from the box of the entry it is open for); the date only from a ticked event of the type's level and only where the type has dates (none taken from the date groups); the first new row opened and focused; Enter = the first type; Esc only with the focus in the question, a click elsewhere takes the box away; `addRoleRow(a, text)`; S134 off: no box. "all works": every row of the column counts (copies with their own dates – `awHas`), off for all of them, on only where no row of the role has the work; not the works locked or with skipped credits (`awRows`); no button without default rows or works. The texts that name ⇧ Shift by the settings: `drop.helpModes`, `drop.pickingDateModes`, `drop.pickingTracksModes` (instead of drop.help, drop.pickingDate, drop.pickingTracks), `drop.needShiftAlt`, `drop.rowDateAddedAlt`.
+- **Register:** S133, S134. **Texts:** arq.*, log.arqAdded, matrix.allWorks*, log.matrixAllWorksOn/Off, settings.dropHead, settings.drop.*, drop.*Alt.
+- **Tests:** `t_entries.py arq386`, `t_works_matrix.py awb386` (new); the tests that use "＋ Another role" choose "Type a role yourself" (`t_entries.py`, `t_rules_window.py`, `t_text_places.py`, `t_ui_view.py`); `t_companion_discogs.py trackmarks` clicks "＋ New" as such (the taller head of the matrix put the log over it).
 
 ## Import 3.85.0 · 2026-11-07
 

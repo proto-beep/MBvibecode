@@ -133,6 +133,7 @@ def case_compact():
         pg.click('.dci-head [data-act=settings-open]')
         # G) a new row ("+ Another role") is open; closed and incomplete, a jump to it (› in the summary) opens it again
         pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) [data-act=add-role]')
+        pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
         pg.wait_for_timeout(300)
         rows = line('Bass Man')
         new_row = rows[-1]
@@ -810,6 +811,7 @@ def case_addrolebtn():
         print('   Tooltip:', a0t)
         results.append(a0 is not None and a0[:4] == ['＋ Another role', True, False, 'solid'] and a0t == '+ Another role for Bass Man')
         pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) > [data-act=add-role]')
+        pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
         pg.wait_for_timeout(300)
         b0 = pg.evaluate(BTN)
         print('B)', b0)
