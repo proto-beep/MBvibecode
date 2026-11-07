@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.87.0",
+  "version": "3.88.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -141,6 +141,13 @@
     "festival.addTitle": "Fügt das Event als Eintrag hinzu, wie es „Eintrag manuell hinzufügen“ mit seiner MBID tut; dort seine Beziehung wählen.",
     "log.festivalFound": "Festival-Aufnahme im Text: „{name}“ – angebotene Events aus MusicBrainz: {n}",
     "log.festivalAdded": "Event hinzugefügt: {name}",
+    "festival.inMb": "In MusicBrainz ist das Release (oder alle seine Aufnahmen) schon mit dem Event „{name}“ verknüpft – der Festival-Hinweis entfällt.",
+    "log.festivalInMb": "Festival: MusicBrainz hat das Event „{name}“ schon ({tracks})",
+    "log.eventLinkedTyped": "Event verknüpft – seine Zeilen sofort auf den Aufnahmen (recorded at / video shot at): {name}",
+    "festival.inMbSome": "In MusicBrainz sind die Tracks {tracks} schon mit dem Event „{name}“ verknüpft – der Hinweis unten gilt für die übrigen Tracks.",
+    "festival.placeOther": "Das Event „{event}“ ist verknüpft, MusicBrainz hat dafür aber einen anderen Ort ({places}) – „{place}“ behält seine eigene Beziehung.",
+    "festival.placeNone": "Das Event „{event}“ ist verknüpft, MusicBrainz hat dafür aber noch keinen Ort – „{place}“ behält seine eigene Beziehung.",
+    "date.suggPerformance": "Das Datum der Aufführung ({date}) – dort gefilmt (eine Live-Aufnahme)",
     "festival.placeHint": "Festival-Aufnahme „{name}“: MusicBrainz bevorzugt das Event vor dem Ort – das Event ist mit seinem Ort verknüpft. Füge das Event hinzu (oben angeboten oder mit „Eintrag manuell hinzufügen“).",
     "festival.placeBoth": "Das Event „{event}“ ist verknüpft – MusicBrainz verknüpft ein Event mit seinem Ort, „{place}“ braucht hier keine eigene Beziehung.",
     "manual.evAskBothTitle": "Je eine Zeile: „recorded at“ auf den Audio-Tracks, „video shot at“ auf den Videos",
