@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.81.0 | – |
+| 2026-11-07 | 3.73.0 – 3.82.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.82.0
+
+#### Added
+
+- **A dedication to "Mr. Polo"** (collected item Z-DEDH, rule S123): "This album, dedicated to Mr. Polo’s incredible explorations …" – a form of address (Mr., Mrs., Ms., Dr. …) and a surname: the one full name with that surname in the text or the release's title ("Marco Polo’s journey", "The Great Journey of Marco Polo") is suggested in **Dedications & tributes** – on the release group, as MusicBrainz has "dedicated to" only there (and on works whose titles the text names). No full name, or two ("John Smith and Paul Smith"): the name as written, looked up like any other ("Mr Bungle", "Dr. Dre" are names); "Dr. Martin Luther King" without "Dr.".
+- **Quick switch "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp"** (collected item Z-YTW2, rule S122, off): the lists of songs of 3.80.0 not only in a YouTube video's description – for a release of one track, below "Songs:", "Setlist:", "Tracklist:" … with its colon (not "Set:" or "Tracks:" alone), no names with tracks in brackets, of the release's artists or with commas.
 
 ### Import 3.81.0
 
