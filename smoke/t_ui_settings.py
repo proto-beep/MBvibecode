@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0), [3.75.0] profiles; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0), [3.75.0] profiles, [3.76.0] statio; `python3 t_ui_settings.py <case> …` runs only those."""
 import json
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -2942,5 +2942,81 @@ def case_profiles():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_statio():
+    """Credits Importer 3.76.0 (collected item Z-SCV, rule S111): the statistics of this browser exported and imported (⚙ Settings → Cache).
+    A) Two records: "⇧ Export statistics (JSON)" – a file with both, whole; "⇧ Export as CSV" – a byte order mark, a head line and one
+       line per relationship (3), separated by semicolons; (review) the title of the release a column, the times of a record on its
+       first line only, a name beginning "=" kept as text ('=…); the purpose of each said beside them.
+    B) One record deleted, a file imported with the two records, one of them twice, and three not readable (an id not of its release,
+       a relationship that is no object, an instrument list that is no list): 1 record added, 2 here already, 3 not readable; the
+       statistics have both again and are drawn (3 relationships).
+    C) A file that is no file of statistics: said so, nothing added. The log of imports and exports: I (rejected), I, E (CSV), E (JSON)."""
+    import json
+    import tempfile
+    now = 1762500000000
+    ID1, ID2 = f'{H.REL}:{now}', f'{H.REL}:{now + 1000}'
+    recs = [{'v': 3, 'id': ID1, 'mbid': H.REL, 'at': now, 'start': now - 60000, 'ms': 60000, 'src': 'discogs', 'supp': [], 'rel': {'title': 'Cascades', 'before': 0},
+             'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane; "J"', ['piano']), stat_rel('n', 'producer', 'release', 'artist', 'g2', '=Joe')]},
+            {'v': 3, 'id': ID2, 'mbid': H.REL, 'at': now + 1000, 'start': None, 'ms': None, 'src': 'text', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'recorded at', 'recording', 'place', 'p1', 'Zojoji Hall')]}]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(500)
+        purpose = pg.evaluate("(document.querySelector('[data-el=settings] .dci-statio') || {}).parentElement ? document.querySelector('[data-el=settings] .dci-statio').parentElement.textContent.replace(/\\s+/g, ' ') : ''")
+        with pg.expect_download() as dl:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=json]')
+        jpath = dl.value.path()
+        data = json.loads(open(jpath, encoding='utf-8').read())
+        with pg.expect_download() as dl2:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=csv]')
+        raw = open(dl2.value.path(), encoding='utf-8').read()
+        csv = raw.lstrip('\ufeff').splitlines()
+        rows = [ln.split(';') for ln in csv]
+        print('A) JSON:', data['format'], [r['id'] for r in data['records']], '| CSV:', csv[:3], len(csv), '| BOM:', raw.startswith('\ufeff'), '| Zweck:', 'spreadsheet' in purpose)
+        head = rows[0]
+        sec = head.index('seconds of the record') if 'seconds of the record' in head else -1
+        results.append(data['format'] == 'mb-vibecode-statistics' and sorted(r['id'] for r in data['records']) == [ID1, ID2] and data['records'][0]['rels']
+                       and raw.startswith('\ufeff') and csv[0].startswith('id;record;confirmed;release;release title;source;kind;relationship') and len(csv) == 4
+                       and '"Jane; ""J"""' in csv[1] and ";'=Joe;" in csv[2] and ';Cascades;' in csv[1] and sec > 0
+                       and csv[1].split(';')[-2] == '60' and csv[2].split(';')[-2] == '' and 'spreadsheet' in purpose and 'several browsers' in purpose)
+        pg.evaluate(STAT_SEED, recs[:1])
+        bad = [{**recs[1], 'id': '00000000-0000-0000-0000-000000000000:5'}, {**recs[1], 'id': f'{H.REL}:7', 'at': 7, 'rels': [1]},
+               {**recs[1], 'id': f'{H.REL}:8', 'at': 8, 'rels': [{**recs[1]['rels'][0], 'i': 5}]}]
+        tmp = tempfile.mkdtemp()
+        fpath = f'{tmp}/stats.json'
+        json.dump({**data, 'records': data['records'] + [recs[1]] + bad}, open(fpath, 'w', encoding='utf-8'))
+        pg.set_input_files('[data-el=settings] [data-stats-import]', fpath)
+        pg.wait_for_function("(document.querySelector('[data-el=settings] [data-el=statio-status]') || {}).textContent && /added/.test(document.querySelector('[data-el=settings] [data-el=statio-status]').textContent)", timeout=10000)
+        b1 = [pg.evaluate("document.querySelector('[data-el=settings] [data-el=statio-status]').textContent"), sorted(r['id'] for r in pg.evaluate(STAT_COUNT))]
+        H.open_stats(pg)
+        pg.wait_for_selector('.dci-stats-tile', timeout=10000)
+        tiles = pg.evaluate("Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, t.querySelector('.dci-stats-num').textContent.trim()]))")
+        print('B)', b1, '| Kacheln:', tiles)
+        results.append(b1[0] == 'stats.json'.join(['1 record added from ', ' (2 here already, 3 not readable)']) and b1[1] == [ID1, ID2] and tiles.get('rels') == '3')
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(300)
+        pg.set_input_files('[data-el=settings] [data-stats-import]', dl2.value.path())
+        pg.wait_for_timeout(800)
+        c0 = pg.evaluate("document.querySelector('[data-el=settings] [data-el=statio-status]').textContent")
+        H.open_settings(pg, 'general')
+        pg.click('[data-el=settings] .dci-iolog > summary')
+        pg.wait_for_timeout(300)
+        io = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-iolist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        print('C)', c0, '| Log:', io, '| Fehler:', errs)
+        results.append(c0.endswith('is no file of statistics (JSON exported by this script)') and len(io) == 4 and io[0].startswith('⇩ I') and 'rejected' in io[0]
+                       and io[1].startswith('⇩ I') and 'statistics (JSON)' in io[1] and '1 imported, 5 skipped' in io[1] and io[2].startswith('⇧ E')
+                       and 'statistics (CSV)' in io[2] and io[3].startswith('⇧ E') and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

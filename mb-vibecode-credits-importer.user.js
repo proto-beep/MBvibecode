@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.75.0
+// @version      3.76.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.75.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.75.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.76.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.76.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.75.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.76.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1023,6 +1023,7 @@
       "io.what.profiles": "profiles",
       "io.exported": "{n} exported",
       "io.imported": "{n} imported, {skipped} skipped",
+      "io.rejected": "rejected (not imported)",
       "reset.profiles": "Profiles",
       "reset.prof.active": "The active profile (“{name}”) as “Standard”",
       "reset.prof.all": "Delete all your profiles (“Standard” stays)",
@@ -2049,6 +2050,31 @@
       "stats.top.instr": "Instruments used most",
       "stats.top.types": "Most frequent relationship types",
       "stats.delete": "Delete statistics …",
+      "statio.json": "⇧ Export statistics (JSON)",
+      "statio.jsonTitle": "Every record whole – to import it in another browser (⇩ Import there)",
+      "statio.csv": "⇧ Export as CSV",
+      "statio.csvTitle": "One line per relationship, separated by semicolons – to read in a spreadsheet; it cannot be imported",
+      "statio.import": "⇩ Import statistics (JSON) …",
+      "statio.importTitle": "Adds the records of a file exported before; a record that is here already (the same id) is skipped",
+      "statio.purpose": "JSON: to keep the same statistics in several browsers (export here, import there). CSV: to look at them in a spreadsheet.",
+      "statio.exported.one": "{n} record saved as {file}",
+      "statio.exported.other": "{n} records saved as {file}",
+      "statio.exportedCsv.one": "{n} relationship saved as {file}",
+      "statio.exportedCsv.other": "{n} relationships saved as {file}",
+      "statio.imported.one": "{n} record added from {file} ({here} here already, {bad} not readable)",
+      "statio.imported.other": "{n} records added from {file} ({here} here already, {bad} not readable)",
+      "statio.importing": "Importing {file} …",
+      "statio.tooBig": "{file} is larger than 100 MB – not imported",
+      "statio.noDb": "The statistics cannot be stored in this browser (its database is not available) – nothing imported",
+      "log.statsImportBad": "Statistics not imported: {file} is no file of statistics",
+      "log.statsImportNoDb": "Statistics not imported from {file}: the database of this browser is not available",
+      "log.statsImportBig": "Statistics not imported: {file} is larger than 100 MB",
+      "statio.bad": "{file} is no file of statistics (JSON exported by this script)",
+      "io.what.statistics": "statistics (JSON)",
+      "io.what.statisticsCsv": "statistics (CSV)",
+      "log.statsExported": "Statistics exported: {n} records, {file}",
+      "log.statsExportedCsv": "Statistics exported as CSV: {n} relationships, {file}",
+      "log.statsImported": "Statistics imported from {file}: {n} records added, {skipped} skipped",
       "stats.deleteAsk": "Delete all statistics (submissions counted: {n})? This cannot be undone.",
       "stats.stored": "Submissions counted: {n}",
       "stats.sec": "{s} s",
@@ -3792,6 +3818,7 @@
     { id: 'S108', where: 'addManualEntry, renderEvAsk, answerEvAsk', note: 'An event added by hand without a role (3.73.0): asked right below "Add entry manually" – "recorded at", or "video shot at" when the release has videos; on the recordings first (its level changes with a click), the entry folded to its compact lines' },
     { id: 'S109', where: 'renderDedBox, dedSuggest, dedTake', note: 'The box "Dedications & tributes" above the works matrix (3.74.0): the dedications found (MusicBrainz has exactly one entry of the name: added by themselves) and suggestions of those not sure – several entries of the name (each a button), none, a name after "for" without a track – each with a field for an MBID or a link and the level (the release group or the work of a track); "＋ Dedication | Tribute" adds one by hand. No "Create …" here. Shown unless switched off in ⚙ Settings → Appearance' },
     { id: 'S110', where: 'profileTouched, applyProfile, renderProfilePickers', note: 'Profiles (3.75.0): the quick switches and the settings of ⚙ (with the language and "Developer mode") are kept per profile – "Standard" (the defaults, cannot be changed: a change there makes a new profile "Profile n · date time" and uses it) and your own (a change is kept in the active profile at once). Chosen beside the import button, before "Window | In the page", or in ⚙ Settings → Profiles (name, use, delete, export, import); applied at once, also with the dashboard open. Not in a profile: the switches of the companion, remembering releases, the statistics, the other rule switches and your own rules' },
+    { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
     { id: 'S090', where: 'MAP.COVER_DETAIL, R063, roleCreditForInner', note: 'Discogs (3.62.0): "Cover [Cover Art]" / "[Art]" is artwork credited "cover art" (before "cover"); "[Painting]", "[Cover Painting]", "[Illustration]", "[Drawing]" illustration, "[Photo]" / "[Photography]" photography – without a credit; "[Layout]" design credited "layout"; another detail artwork credited "cover …" (the exceptions in the mapping: COVER_DETAIL; "[Design]" stays design credited "cover design", S037)' },
@@ -35232,6 +35259,10 @@
         writeJson('localStorage', STATS_GENRES_KEY, btn.dataset.view === 'separate' ? 'separate' : null);
         renderStats();
         break;
+      // [Z-SCV] (3.76.0, S111)
+      case 'stats-export':
+        exportStats(btn.dataset.kind).catch(showError);
+        break;
       case 'stats-delete':
         // [E8] (3.38.0) all statistics deleted (asked first)
         if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
@@ -35727,6 +35758,22 @@
     // [Z-QSP] (3.75.0) a profile's name, a file of profiles
     if (e.target.dataset && e.target.dataset.f === 'profile-name') {
       renameProfile(e.target.dataset.id, e.target.value);
+      return;
+    }
+    if (e.target.dataset && e.target.dataset.statsImport != null && e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      // ([Z-SCV] 3.76.0, review) one import at a time; a file of at most 100 MB
+      if (S.statioBusy) return;
+      if (file.size > 100 * 1024 * 1024) {
+        S.statioStatus = tr('statio.tooBig', { file: file.name });
+        log('warn', 'statsImportBig', { file: file.name });
+        ioLog('I', 'statistics', file.name, 0, 0, true);
+        e.target.value = '';
+        renderSettings();
+        return;
+      }
+      file.text().then((t) => importStats(t, file.name)).catch(showError);
+      e.target.value = '';
       return;
     }
     if (e.target.dataset && e.target.dataset.profilesImport != null && e.target.files && e.target.files[0]) {
@@ -37627,6 +37674,144 @@
     if (st) renderSettings();
   }
 
+  // --- [Z-SCV] (3.76.0, S111) the statistics of this browser exported and imported ------------------------------------------------
+  // JSON: every record whole (one per "Enter edit" MusicBrainz confirmed; its id: release MBID and the time) – to be imported in another
+  // browser; records there already (the same id) are skipped. CSV: one line per relationship, to read in a spreadsheet – not imported.
+  const STATS_FILE_FORMAT = 'mb-vibecode-statistics';
+  const dayStamp = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+  function downloadText(text, file, type) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  /** One cell of a CSV line (separated by ";", the spreadsheets of many languages read that). */
+  const csvCell = (v) => {
+    let t = Array.isArray(v) ? v.join(', ') : v == null ? '' : String(v);
+    // ((review) no formula: a name beginning "=", "+", "-", "@" stays text in a spreadsheet)
+    if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`;
+    return /[;"\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const STAT_CSV_COLS = ['id', 'record', 'confirmed', 'release', 'release title', 'source', 'kind', 'relationship', 'on', 'entity type', 'entity', 'entity mbid', 'instruments',
+    'vocals', 'attributes', 'role credits', 'date precision', 'year', 'entry created', 'found via', 'rule', 'seconds of the record', 'seconds of work of the record'];
+  const localStamp = (t) => { const d = new Date(t); return `${stampOf(t)}:${pad2(d.getSeconds())}`; };
+  function statsCsv(all) {
+    const lines = [STAT_CSV_COLS.join(';')];
+    for (const rec of all) {
+      (Array.isArray(rec.rels) ? rec.rels : []).forEach((it, i) => {
+        if (!it || typeof it !== 'object') return;
+        // ((review) the times of the record on its first line only: added up in a spreadsheet they count once)
+        const first = i === 0;
+        lines.push([`${rec.id}#${i + 1}`, rec.id, rec.at ? localStamp(rec.at) : '', rec.mbid || '', (rec.rel && rec.rel.title) || '', rec.src || '', it.k === 's' ? 'added to' : 'new', it.lt,
+          it.lv, it.et, it.tn, it.tg, it.i || [], it.v || [], it.a || [], it.rt || [], it.d || '', it.dy || '', it.nw ? 'yes' : '', it.lk || '', it.ru || '',
+          first && rec.ms != null ? Math.round(rec.ms / 1000) : '', first && rec.work != null ? Math.round(rec.work / 1000) : '']
+          .map(csvCell).join(';'));
+      });
+    }
+    return `\uFEFF${lines.join('\r\n')}\r\n`;
+  }
+  /**
+   * ((review) A record the statistics can show: what they draw of it, tried on it alone – an imported record that would break them
+   * is not kept.)
+   */
+  function statRecUsable(rec) {
+    try {
+      const a = statAgg([rec]);
+      ['artists', 'instr', 'types'].forEach((k) => statTop(a[k], 10));
+      statPeriodKey(rec.at, 'month');
+      statsMoreCards([rec]);
+      statsCsv([rec]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  /** ((review) An imported record checked: its id (release MBID and time), its time, its relationships – else null.) */
+  function statRecImport(rec) {
+    if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return null;
+    const mbid = typeof rec.mbid === 'string' ? rec.mbid.toLowerCase() : '';
+    const at = Number(rec.at);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(mbid) || typeof rec.id !== 'string' || !new RegExp(`^${mbid}:\\d+$`, 'i').test(rec.id)) return null;
+    if (!Number.isInteger(at) || at <= 0 || at > 8.64e15 || typeof rec.at !== 'number') return null;
+    if (!Array.isArray(rec.rels) || rec.rels.some((it) => !it || typeof it !== 'object' || Array.isArray(it))) return null;
+    return statRecUsable(rec) ? rec : null;
+  }
+  async function exportStats(kind) {
+    const all = (await statAll()) || [];
+    const csv = kind === 'csv';
+    const file = `mb-vibecode-statistics-${dayStamp()}.${csv ? 'csv' : 'json'}`;
+    if (csv) downloadText(statsCsv(all), file, 'text/csv;charset=utf-8');
+    else downloadText(`${JSON.stringify({ format: STATS_FILE_FORMAT, version: 1, script: VERSION, exported: new Date().toISOString(), records: all })}\n`, file, 'application/json');
+    const n = csv ? all.reduce((k, r) => k + ((r.rels || []).length), 0) : all.length;
+    log('info', csv ? 'statsExportedCsv' : 'statsExported', { n, file });
+    ioLog('E', csv ? 'statisticsCsv' : 'statistics', file, n);
+    S.statioStatus = tr(csv ? 'statio.exportedCsv' : 'statio.exported', { n, file });
+    renderSettings();
+  }
+  /** The records of a file added to the statistics of this browser; a record there already (the same id) is skipped. */
+  async function importStats(text, file) {
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+    if (!data || data.format !== STATS_FILE_FORMAT || data.version !== 1 || !Array.isArray(data.records)) {
+      S.statioStatus = tr('statio.bad', { file });
+      log('warn', 'statsImportBad', { file });
+      ioLog('I', 'statistics', file, 0, 0, true);
+      renderSettings();
+      return 0;
+    }
+    if (!(await statDb())) {
+      S.statioStatus = tr('statio.noDb');
+      log('warn', 'statsImportNoDb', { file });
+      ioLog('I', 'statistics', file, 0, 0, true);
+      renderSettings();
+      return 0;
+    }
+    S.statioBusy = true;
+    S.statioStatus = tr('statio.importing', { file });
+    renderSettings();
+    let n = 0;
+    let here = 0;
+    let bad = 0;
+    try {
+      const have = new Set((await statStore('readonly', (st) => st.getAllKeys())) || []);
+      const fresh = [];
+      for (const rec0 of data.records) {
+        const rec = statRecImport(rec0);
+        if (!rec) bad++;
+        else if (have.has(rec.id)) here++;
+        else {
+          have.add(rec.id);
+          fresh.push(rec);
+        }
+      }
+      // (in parts of 500, each one transaction)
+      for (let k = 0; k < fresh.length; k += 500) {
+        const part = fresh.slice(k, k + 500);
+        const ok = await statStore('readwrite', (st) => { part.forEach((rec) => st.put(rec)); return null; });
+        if (ok) n += part.length;
+        else bad += part.length;
+      }
+    } finally {
+      S.statioBusy = false;
+    }
+    log('info', 'statsImported', { n, skipped: here + bad, file });
+    ioLog('I', 'statistics', file, n, here + bad);
+    S.statioStatus = tr('statio.imported', { n, here, bad, file });
+    S.statsData = null;
+    S.statsLoading = false;
+    await statsLoad();
+    renderStats();
+    renderSettings();
+    return n;
+  }
+
   /**
    * [Z-GST] (3.47.0) The global statistics: the file of the workflow (its data branch), kept in this browser for a day; `force`:
    * loaded again now. Only numbers (no editors, edits, releases or URLs).
@@ -37934,7 +38119,14 @@
       statsLoad();
       return [...head, `<p class="dci-sub" data-el="stats-loading">${esc(tr('stats.loading'))}</p>`];
     }
-    const recs = S.statsData;
+    let recs = S.statsData;
+    // ([Z-SCV] 3.76.0, review) a record the statistics cannot show is left out (they are drawn without it)
+    try {
+      statAgg(recs);
+    } catch {
+      recs = recs.filter(statRecUsable);
+      S.statsData = recs;
+    }
     if (!recs.length) return [...head, `<p class="dci-sub" data-el="stats-empty">${esc(tr('stats.empty'))}</p>`];
     const a = statAgg(recs);
     // ([Z-STL] 3.61.0, S2) a flat bar: number and word; the line below it in the tooltip
@@ -38810,7 +39002,13 @@
             if (S.statsData == null) statsLoad();
             const n = S.statsData == null ? null : S.statsData.length;
             return row(`<button type="button" class="dci-small" data-act="stats-delete"${n === 0 ? ' disabled' : ''}>${esc(tr('stats.delete'))}</button>
-              <span class="dci-sub" data-el="stats-stored">${n == null ? esc(tr('stats.loading')) : esc(tr('stats.stored', { n }))}</span>`);
+              <span class="dci-sub" data-el="stats-stored">${n == null ? esc(tr('stats.loading')) : esc(tr('stats.stored', { n }))}</span>`)
+              // [Z-SCV] (3.76.0, S111) exported (JSON: to import in another browser; CSV: to read in a spreadsheet) and imported
+              + (ruleOn('S111') ? row(`<span class="dci-statio"><button type="button" class="dci-small" data-act="stats-export" data-kind="json"${n === 0 ? ' disabled' : ''}
+                title="${esc(tr('statio.jsonTitle'))}">${esc(tr('statio.json'))}</button>
+                <button type="button" class="dci-small" data-act="stats-export" data-kind="csv"${n === 0 ? ' disabled' : ''} title="${esc(tr('statio.csvTitle'))}">${esc(tr('statio.csv'))}</button>
+                <label class="dci-filebtn" title="${esc(tr('statio.importTitle'))}">${esc(tr('statio.import'))} <input type="file" accept=".json,application/json" data-stats-import ${S.statioBusy ? 'disabled' : ''}></label></span>
+                <div class="dci-sub">${esc(tr('statio.purpose'))}</div><div class="dci-sub" data-el="statio-status" aria-live="polite">${esc(S.statioStatus || '')}</div>`) : '');
           })(),
         ];
       },
@@ -38934,7 +39132,8 @@
     const active = document.activeElement;
     // [3.25.0] also a button (a tab, "Cancel"): the focus stays where it was
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]`
-      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}` : '') : '';
+      : active.dataset.statsImport != null ? '[data-stats-import]' : active.dataset.profilesImport != null ? '[data-profiles-import]'
+        : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}${active.dataset.kind ? `[data-kind="${active.dataset.kind}"]` : ''}${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` : '') : '';
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
@@ -39658,10 +39857,11 @@
     if (S.overlay && S.settingsOpen && S.settingsTab === 'profiles' && !typing) renderSettings();
   }
   /** [Z-QSP] (3.75.0) A line of the log of imports and exports (in ⚙ Settings → General; never cleared). */
-  function ioLog(dir, what, file, n, skipped = 0) {
+  function ioLog(dir, what, file, n, skipped = 0, rejected = false) {
     const old = readJson('localStorage', IO_LOG_KEY, null);
     const list = Array.isArray(old) ? old : [];
-    list.push({ at: Date.now(), dir, what, file: String(file || '').slice(0, 200), n, skipped });
+    // ([Z-SCV] 3.76.0, review) a file not taken is kept too: "rejected"
+    list.push({ at: Date.now(), dir, what, file: String(file || '').slice(0, 200), n, skipped, ...(rejected ? { rejected: true } : {}) });
     rawSet(IO_LOG_KEY, JSON.stringify(list.slice(-5000)));
     if (S.overlay && S.settingsOpen) renderSettings();
   }
@@ -39675,7 +39875,7 @@
       <div class="dci-iolog-head"><button type="button" class="dci-small dci-iofilter" data-act="io-filter" title="${esc(tr('io.filterTitle', { next: tr(`io.f.${next}`) }))}"
         aria-label="${esc(tr('io.filterLabel', { now: tr(`io.f.${f}`) }))}">[${f}]</button> <span class="dci-sub">${esc(tr(`io.f.${f}`))} · ${esc(tr('io.kept'))}</span></div>
       ${shown.length ? `<ul class="dci-iolist">${shown.map((x) => `<li><span class="dci-iodir">${x.dir === 'E' ? '⇧ E' : '⇩ I'}</span> ${esc(stampOf(x.at))} · ${esc(tr(`io.what.${x.what}`))}
-        · ${esc(x.file)} · ${esc(tr(x.dir === 'E' ? 'io.exported' : 'io.imported', { n: x.n, skipped: x.skipped || 0 }))}</li>`).join('')}</ul>`
+        · ${esc(x.file)} · ${esc(x.rejected ? tr('io.rejected') : tr(x.dir === 'E' ? 'io.exported' : 'io.imported', { n: x.n, skipped: x.skipped || 0 }))}</li>`).join('')}</ul>`
         : `<p class="dci-sub">${esc(tr('io.none'))}</p>`}</details>`;
   }
   /** ⚙ Settings → Profiles: the active one, each own profile (its name to change, use, delete), export and import. */
@@ -41541,6 +41741,9 @@
       .dci-iolist { margin: 4px 0; padding-left: calc(var(--u, 1px) * 18); max-height: 14em; overflow: auto; }
       .dci-iodir { font-family: monospace; }
       .dci-reset-prof { border: 1px solid var(--line); border-radius: 4px; margin: 6px 0; padding: 4px 8px; }
+      .dci-set-pane .dci-filebtn { display: inline-flex; gap: calc(var(--u, 1px) * 6); align-items: center; margin: 0; }
+      .dci-set-pane .dci-filebtn input { width: auto; }
+      .dci-statio { display: inline-flex; flex-wrap: wrap; gap: 4px calc(var(--u, 1px) * 8); align-items: center; }
       .dci-works h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
       /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */
