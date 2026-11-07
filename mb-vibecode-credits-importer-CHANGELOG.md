@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.85.0 | – |
+| 2026-11-07 | 3.73.0 – 3.86.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.86.0
+
+#### Added
+
+- **"＋ Another role" asks the relationship type** (collected item Z-ARQ, rule S134): a search field and the types by level (Recording, Release, Work, Release group – the common ones first, e.g. performer, instrument, vocal, producer, mix …); in an entry's matrix its events to tick (the one opened, else the first) – a row for each event ticked on the level of the type, with its tracks and date. "Type a role yourself (e.g. Pressed By)" does what the button did until 3.85.0 (with what was typed in the search). For every kind of entry; Enter takes the first type found, Esc or a click elsewhere closes it; the new row opens with its first field.
+- **"all works" in the head of each column of the works matrix** (collected item Z-AWB, rule S133): below "credited as" – a click switches the column's role(s) on for every work (also a column with 0 works, e.g. Marilyn Crispell), a second click off for every work. A track group dropped on it: exactly the works of its tracks (⇧ Shift adds).
+- **⚙ Settings → Dates & tracks → "Drag & drop"** (collected item Z-DNDS): a switch for each place – dates onto rows and events, track groups onto rows, track groups onto the works matrix, role chips onto another event, track groups onto "all works": **Drop adds (⇧ replaces)** or **Drop replaces (⇧ adds)**. The default as since 3.78.0 (adds), "all works" replaces. Saved in profiles; "↺ Defaults of this topic" resets it.
 
 ### Import 3.85.0
 

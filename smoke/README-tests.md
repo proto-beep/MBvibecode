@@ -366,6 +366,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   awb386: 3.86.0 (Z-AWB, Z-DNDS): "all works" on and off, a track group dropped on it (exactly / ⇧ adds),
+                                #     ⚙ Dates & tracks → Drag & drop (five places, "all works" set to add, reset), S133 off: no button
                                 #   amx383: 3.83.0 (Z-AMX): the box of "＋ Add a column" whole in view (760 px, scrolled; review: the dashboard's
                                  #     window moved and smaller – inside it, nothing over it)
                                 #   review43: 3.43.3 (full review P4/P5): the list of created works matched by the recording (index refreshed), an
@@ -734,6 +736,8 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   arq386: 3.86.0 (Z-ARQ): "＋ Another role" asks the type – search "mix", the levels, the events of an
+                                #     entry's matrix ticked, "Type a role yourself", Esc, S134 off as before
                                 #   rlv383: 3.83.0 (Z-RLV): staged, level / type changed, staged again – replaced, also one changed in the editor;
                                  #     review: one taken out in the editor added anew, the dashboard's type over the editor's
                                 #   levelclick: 3.44.0 (Z-CLV): the level of an event a button – Recording → Release → Skip (at its place) → Recording; an
