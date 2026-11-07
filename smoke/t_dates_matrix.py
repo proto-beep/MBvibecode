@@ -140,10 +140,11 @@ def case_dragdates():
         print('1) Pool:', chips(), '| Meldungen:', msgs)
         ok1 = len(chips()) == 4 and any('1975' in c for c in chips()) and any(c.startswith('Performance 1 (month) · 2001-03') for c in chips()) \
             and any('no word naming' in m for m in msgs) and pg.locator('[data-act=pool-stamp]').count() == 0
-        # 2) onto a row with a date of its own: replaced
+        # 2) onto a row with a date of its own: ([3.78.0] Z-DND) replaced with ⇧ Shift (without it the row would keep its date and the
+        # new one get a row of its own – t_entries.py dnd378)
         row('Guitar Guy').locator('[data-act=date-open]').click(); pg.keyboard.type('1999'); pg.wait_for_timeout(300)
         perf = idof('Performance 1 ·')
-        drag(pg, f'.dci-pchip-date[data-id="{perf}"] .dci-chip-main', dcell('Guitar Guy'))
+        drag(pg, f'.dci-pchip-date[data-id="{perf}"] .dci-chip-main', dcell('Guitar Guy'), shift=True)
         # ([3.38.4] the footer lower: the field of Keys Guy lay near the bottom edge, where the dashboard scrolls while dragging –
         # dragged as above, from the middle)
         drag(pg, f'.dci-pchip-date[data-id="{perf}"] .dci-chip-main', dcell('Keys Guy')); pg.wait_for_timeout(300)
@@ -422,8 +423,8 @@ def case_poolsmx():
 
 
 def case_tracksdrop():
-    """Track groups by drag & drop onto "Tracks and status" of rows (the row gets the group's tracks; with Shift
-    they are added; the places say so while dragging; a release-level row moves to the recording level); folded,
+    """Track groups by drag & drop onto "Tracks and status" of rows (([3.78.0] Z-DND) they are added; with Shift the row gets
+    the group's tracks only; the places say so while dragging; a release-level row moves to the recording level); folded,
     the track pool stays in the bar with the date pool; a date dropped onto an empty cell of the works matrix says
     why it was not set, onto MB's dateless relationship it is planned as an edit; the release page checks work
     credits (composer, publisher) on the works themselves when the release lookup lacks them. ([3.57.0] B and C with rule S083 off:
@@ -523,14 +524,13 @@ def case_tracksdrop():
     g2 = group_id(pg, '6')   # tracks 6–10
     g1 = pg.evaluate(f"[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].map(c => c.dataset.id).find(id => id !== {g2!r})")
     print('    Henry Threadgill vorher:', tracks(pg, 'Henry Threadgill'))
-    drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g2}"] .dci-chip-main', f'tr[data-row="{rid(pg, "Henry Threadgill")}"] .dci-c-tracks')
+    drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g2}"] .dci-chip-main', f'tr[data-row="{rid(pg, "Henry Threadgill")}"] .dci-c-tracks', shift=True)
     after = tracks(pg, 'Henry Threadgill')
     count = pg.locator(f'[data-tcount="{rid(pg, "Henry Threadgill")}"]').inner_text()
     print('    nach Ablegen von Tracks 6–10:', after, '|', count)
     ok_a1 = after == [6, 7, 8, 9, 10] and '5' in count
-    # with Shift: added to the row's own tracks
-    # (Playwright's mouse drag carries no modifier keys, so the drop with Shift is dispatched as events)
-    # The places on rows say what a drop does: replace, with Shift add (shown while a track group is dragged)
+    # without Shift: added to the row's own tracks (dispatched as events: the hints with and without the Shift key)
+    # The places on rows say what a drop does: add, with Shift replace (shown while a track group is dragged)
     hints = pg.evaluate(f"""(() => {{
   const src = document.querySelector('.dci-pools-body .dci-pchip-tg[data-id="{g1}"]');
   const dst = document.querySelector('tr[data-row="{rid(pg, "Henry Threadgill")}"] .dci-c-tracks');
@@ -542,7 +542,7 @@ def case_tracksdrop():
   const out = [after(other), after(dst)];
   dst.dispatchEvent(new DragEvent('dragover', {{ bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: true }}));
   out.push(after(dst));
-  dst.dispatchEvent(new DragEvent('drop', {{ bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: true }}));
+  dst.dispatchEvent(new DragEvent('drop', {{ bubbles: true, cancelable: true, dataTransfer: dt }}));
   src.dispatchEvent(new DragEvent('dragend', {{ bubbles: true, dataTransfer: dt }}));
   out.push(after(dst));
   return out;
@@ -550,13 +550,13 @@ def case_tracksdrop():
     pg.wait_for_timeout(200)
     added = tracks(pg, 'Henry Threadgill')
     print('A2) Hinweise beim Ziehen (andere Zeile | darüber | mit Umschalt | danach):', hints)
-    print('    mit Umschalt Tracks 1–5 dazu:', added)
-    ok_a2 = added == list(range(1, 11)) and 'Shift: add' in hints[0] and 'replaces the tracks' in hints[1] and 'adds to the tracks' in hints[2] \
+    print('    ohne Umschalt Tracks 1–5 dazu:', added)
+    ok_a2 = added == list(range(1, 11)) and 'Shift: replace' in hints[0] and 'adds to the tracks' in hints[1] and 'replaces the tracks' in hints[2] \
         and hints[3] in ('none', 'normal', '')
     # the open track list of a row is a target too
     r = rid(pg, 'Liberty Ellman')
     pg.click(f'tr[data-row="{r}"] [data-act=tracks-toggle]'); pg.wait_for_timeout(150)
-    drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g1}"] .dci-chip-main', f'tr[data-tracksrow="{r}"] .dci-chips')
+    drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g1}"] .dci-chip-main', f'tr[data-tracksrow="{r}"] .dci-chips', shift=True)
     print('    auf die offene Trackliste von Liberty Ellman:', tracks(pg, 'Liberty Ellman'))
     ok_a2 = ok_a2 and tracks(pg, 'Liberty Ellman') == [1, 2, 3, 4, 5]
     # folded: the track pool stays in the bar and can be dragged from there
@@ -564,10 +564,10 @@ def case_tracksdrop():
     kept_tg = pg.locator('.dci-pools-kept .dci-pchip-tg').count()
     kept_dates = pg.locator('.dci-pools-kept .dci-pchip-date').count()
     print('A3) eingeklappt oben – Track-Gruppen:', kept_tg, '| Daten:', kept_dates, '| Option:', pg.evaluate("document.querySelector('[data-el=dates]').textContent.includes('keep') ? 'x' : ''"))
-    drag(pg, f'.dci-pools-kept .dci-pchip-tg[data-id="{g2}"] .dci-chip-main', f'tr[data-row="{rid(pg, "Liberty Ellman")}"] .dci-c-tracks')
+    drag(pg, f'.dci-pools-kept .dci-pchip-tg[data-id="{g2}"] .dci-chip-main', f'tr[data-row="{rid(pg, "Liberty Ellman")}"] .dci-c-tracks', shift=True)
     print('    aus der Leiste auf Liberty Ellman:', tracks(pg, 'Liberty Ellman'))
     ok_a3 = kept_tg == 2 and kept_dates >= 1 and tracks(pg, 'Liberty Ellman') == [6, 7, 8, 9, 10]
-    log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].slice(-3).map(l => l.textContent.slice(9))")
+    log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].slice(-4).map(l => l.textContent.slice(9))")
     print('    Protokoll:', log)
     ok_a3 = ok_a3 and any('Track group' in x and 'put on a row: 5 tracks' in x for x in log)
     results += [ok_a1, ok_a2, ok_a3]

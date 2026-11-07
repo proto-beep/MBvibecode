@@ -783,7 +783,17 @@ def case_gapmore():
             dg, bcq, warns = [], [], []
             ctx.on('request', lambda r: dg.append(r.url) if 'api.discogs.com' in r.url else (bcq.append(r.url) if 'bandcamp.com' in r.url else None))
             pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}', all_tabs=True)
-            pr.on('console', lambda m: warns.append(m.text) if 'release gap' in m.text else None)
+            # ([3.78.0] Z-FLK) a request of the line still under way when the page is loaded again is cut off ("Failed to fetch") –
+            # not a fault: a warning while the page is being loaded again is left out (only that one)
+            nav = {'on': False}
+            pr.on('console', lambda m: warns.append(m.text) if 'release gap' in m.text and not (nav['on'] and 'Failed to fetch' in m.text) else None)
+
+            def again(goto=None):
+                nav['on'] = True
+                try:
+                    pr.goto(goto) if goto else pr.reload()
+                finally:
+                    nav['on'] = False
             pr.wait_for_timeout(800)
 
             def seed(kept=None, exact=None, none=None):
@@ -793,7 +803,7 @@ def case_gapmore():
                 js.append(f"localStorage.setItem('{EXACT}', {repr(__import__('json').dumps(exact))})" if exact is not None else f"localStorage.removeItem('{EXACT}')")
                 js.append("localStorage.setItem('dci-gap-none', 'true')" if none else "localStorage.removeItem('dci-gap-none')")
                 pr.evaluate('; '.join(js))
-                pr.reload()
+                again()
 
             def line(wait=True):
                 if wait:
@@ -871,7 +881,7 @@ def case_gapmore():
             results.append(c and exc.get('dId') == DID and exc['n'] > 0)
             # (review) the import of the tab fails (Discogs answers 404 there; the line has the credits kept): said, the tab closed
             H.DG_API[f'/releases/{DID}'] = None
-            pr.reload()
+            again()
             H.wait_for(pr, "!!document.querySelector('.dci-gapline [data-gap=count]')", 30)
             pr.click('.dci-gapline [data-gap=count]')
             pr.wait_for_timeout(300)
@@ -937,7 +947,7 @@ def case_gapmore():
             e1i = pr.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => / read: /.test(t))")
             print('   Import credits …:', e1i)
             results.append(bool(e1i) and e1i[-1].startswith('Bandcamp read:'))
-            pr.goto(f'https://musicbrainz.org/release/{REL}')
+            again(f'https://musicbrainz.org/release/{REL}')
             # (review) a release Discogs does not have (404): Bandcamp steps in too
             H.DG_API[f'/releases/{DID}'] = None
             seed()
@@ -961,7 +971,7 @@ def case_gapmore():
                 'Also linked: gone.bandcamp.com/album/testalbum – it could not be read.'] and pages == sorted([ALBUM, LABEL, GONE]))
             # ✕ hides it for the page counted (also loaded again)
             pr.click('.dci-gapline [data-gap=close]'); pr.wait_for_timeout(200)
-            pr.reload()
+            again()
             e3 = line(False)
             print('E3) ✕, neu geladen:', e3)
             results.append(e3 is None)
