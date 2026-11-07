@@ -9,11 +9,14 @@ unchanged. `run_cases(globals())` at the end of the file runs them one after ano
   the userscript manager …) is set back after it, so no case sees what another one set;
 - each case reports on its own ("== name: OK" / "== name: FEHLER", from its last line with "Ergebnis: …", as the suite's
   runner reads a test file); an exception ends only its case (the traceback is printed);
-- the last line is "Ergebnis: OK [n cases]" or "Ergebnis: FEHLER [names]" (the suite's runner reads it).
+- the last line is "Ergebnis: OK [n cases]" or "Ergebnis: FEHLER [names]" (the suite's runner reads it);
+- [3.77.0] a case that failed runs once more on its own: green then, it is "WACKELIG" (and named in the last line), not hidden
+  (`DCI_RETRY=0`: no second run).
 
 Only some cases: `python3 t_text_basics.py freetext names` (names without "case_").
 """
 import copy
+import os
 import io
 import sys
 import time
@@ -187,15 +190,18 @@ def run_cases(ns):
             sys.exit(2)
         cases = [(n, f) for n, f in cases if n in want]
     failed = []
+    flaky = []
     t0 = time.time()
-    for name, fn in cases:
-        print(f'\n== {name} ' + '=' * max(3, 70 - len(name)), flush=True)
+
+    def once(name, fn):
+        """One run of a case: (OK, page errors in it)."""
         snap = _snapshot()
         tee = _Tee(sys.stdout)
         old = sys.stdout
         sys.stdout = tee
         ok = False
-        t1 = time.time()
+        n0 = len(H.PAGE_ERRORS)
+        perr = 0
         try:
             fn()
             # as the suite's runner reads a test: its last line with "Ergebnis" (some say "[part] Ergebnis: OK …")
@@ -210,7 +216,33 @@ def run_cases(ns):
             for proxy in sync_playwright.opened:
                 proxy.close()
             sync_playwright.opened.clear()
+            perr = len(H.PAGE_ERRORS) - n0
             _restore(snap)
+        return ok, perr
+
+    retry_on = os.environ.get('DCI_RETRY', '1').strip().lower() not in ('0', 'false', 'no', 'off')
+    retries_left = 3
+
+    for name, fn in cases:
+        print(f'\n== {name} ' + '=' * max(3, 70 - len(name)), flush=True)
+        t1 = time.time()
+        ok, perr = once(name, fn)
+        # [3.77.0] (collected item Z-FLK) a case that failed runs once more on its own; green then: "wackelig", shown as such
+        # (DCI_RETRY=0 / false / no / off: no second run). ((review) Not again: a case with an error of the page (a fault of the
+        # script, not of the timing), one that took over 150 s, and after three second runs in a file.)
+        if not ok and retry_on:
+            took = time.time() - t1
+            why = ('Fehler der Seite' if perr else f'{took:.0f} s – zu lang' if took > 150 else 'schon 3 Wiederholungen in der Datei' if retries_left <= 0 else '')
+            if why:
+                print(f'== {name}: nicht wiederholt ({why})', flush=True)
+            else:
+                retries_left -= 1
+                print(f'== {name}: FEHLER beim 1. Lauf ({took:.0f} s) – noch einmal allein', flush=True)
+                ok, perr = once(name, fn)
+                if ok:
+                    flaky.append(name)
+                    print(f'== {name}: WACKELIG – beim 2. Lauf OK ({time.time() - t1:.0f} s für beide Läufe)', flush=True)
+                    continue
         print(f'== {name}: {"OK" if ok else "FEHLER"} ({time.time() - t1:.0f} s)', flush=True)
         if not ok:
             failed.append(name)
@@ -221,4 +253,7 @@ def run_cases(ns):
         except Exception as e:  # a case stopped playwright itself: reported, the results stand
             print('Browser beim Schließen:', e)
     print(f'\nFälle: {len(cases)} in {time.time() - t0:.0f} s')
-    print('Ergebnis:', 'OK' if not failed else 'FEHLER', f'[{len(cases)} Fälle]' if not failed else failed)
+    if flaky:
+        print('Wackelig (beim 2. Lauf OK):', flaky)
+    # (a file with failed cases: its last line names those only; the unsteady ones stand in the line "Wackelig" above it)
+    print('Ergebnis:', 'OK' if not failed else 'FEHLER', (f'[{len(cases)} Fälle' + (f', wackelig: {", ".join(flaky)}' if flaky else '') + ']') if not failed else failed)

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.76.0 | – |
+| 2026-11-07 | 3.73.0 – 3.77.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.77.0
+
+#### Fixed
+
+- **"＋ Add a column" of the works matrix:** the message of an MBID that cannot be a column (e.g. a place) stayed only a moment when the field still had the focus – it stays now until the text is changed.
+
+#### Changed
+
+- **Steadier tests** (collected item Z-FLK, first stage): a case that fails runs once more on its own – green then, it is shown as "WACKELIG" (unsteady), not hidden; not again when the page had an error (a fault of the script), when it took over 150 s, and after three second runs in a file. The files of reading and mapping run without transitions and animations (also after a reload); cases wait for what they check instead of a fixed time (the jumps ▲ ▼ – also until the scrolling has ended –, adding a column of the works matrix, importing profiles); dragging measures its target again once the drag has started.
 
 ### Import 3.76.0
 

@@ -556,19 +556,33 @@ def case_jump():
         H.open_dashboard(pg)
         pg.wait_for_timeout(500)
         body = "document.querySelector('[data-el=body]')"
-        pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()'); pg.wait_for_timeout(1200)
+        # ([3.77.0] Z-FLK) waits for the state, not for a time: at the end, at the top (a busy computer scrolls later)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        # ((review) what is drawn after the import has its height first; ▼ again if the end grew meanwhile)
+        H.wait_still(pg, f"{body}.scrollHeight", 15, 300)
+        at_end = f"(() => {{ const b = {body}; return b.scrollHeight - b.clientHeight > 100 && Math.abs(b.scrollTop - (b.scrollHeight - b.clientHeight)) <= 2; }})()"
+        for _ in range(3):
+            pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()')
+            if H.wait_ok(pg, at_end, 5) and H.wait_still(pg, f"{body}.scrollTop") and pg.evaluate(at_end):
+                break
         down = pg.evaluate(f"(() => {{ const b = {body}; return [Math.round(b.scrollTop), b.scrollHeight - b.clientHeight]; }})()")
-        pg.locator('[data-act=jump-top]').evaluate('b => b.click()'); pg.wait_for_timeout(1200)
+        pg.locator('[data-act=jump-top]').evaluate('b => b.click()')
+        H.wait_ok(pg, f"{body}.scrollTop === 0", 15)
         up = pg.evaluate(f"{body}.scrollTop")
         print('Fenster: ▼', down, '| ▲', up)
         results.append(down[1] > 100 and abs(down[0] - down[1]) <= 2 and up == 0)
         # in the page
         H.toggle_place(pg); pg.wait_for_timeout(300)
         inline = pg.evaluate("!!document.querySelector('.dci-inline')")
-        pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
+        pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()')
+        # ((review) in range, and the smooth scroll ended: a jump past the end would show)
+        H.wait_ok(pg, "(() => { const r = document.querySelector('.dci-panel').getBoundingClientRect().bottom - innerHeight; return scrollY > 200 && r >= -40 && r <= 20; })()", 15)
+        H.wait_still(pg, "scrollY")
         y1 = pg.evaluate("[Math.round(scrollY), Math.round(document.documentElement.scrollHeight - innerHeight)]")
         foot = pg.evaluate("Math.round(document.querySelector('.dci-panel').getBoundingClientRect().bottom - innerHeight)")
-        pg.locator('[data-act=jump-top]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
+        pg.locator('[data-act=jump-top]').evaluate('b => b.click()')
+        H.wait_ok(pg, "(() => { const t = document.querySelector('.dci-panel').getBoundingClientRect().top; return t >= 0 && t <= 20; })()", 15)
+        H.wait_still(pg, "scrollY")
         top = pg.evaluate("Math.round(document.querySelector('.dci-panel').getBoundingClientRect().top)")
         print('Seite:', inline, '| ▼ scrollY', y1, 'Ende des Dashboards zum Fensterrand:', foot, '| ▲ Anfang des Dashboards:', top)
         results.append(inline and y1[0] > 200 and -40 <= foot <= 20 and 0 <= top <= 20)

@@ -1060,15 +1060,26 @@ def add_mapping(ctx):
 
 
 def new_context(browser):
-    ctx = browser.new_context(viewport={'width': 1500, 'height': 1000}, accept_downloads=True)
+    extra = {'reduced_motion': 'reduce'} if NO_ANIM else {}
+    ctx = browser.new_context(viewport={'width': 1500, 'height': 1000}, accept_downloads=True, **extra)
+    if NO_ANIM:
+        ctx.add_init_script(script=f'({NO_ANIM_INIT})({json.dumps(NO_ANIM_CSS)})')
     install_routes(ctx)
     add_mapping(ctx)
     return ctx
 
 
+# ((3.77.0, review) every error of a page in this run of a case: caserun does not run a case again that had one)
+PAGE_ERRORS = []
+
+
 def errors_of(pg):
     errs = []
-    pg.on('pageerror', lambda e: errs.append(str(e)))
+
+    def on_error(e):
+        errs.append(str(e))
+        PAGE_ERRORS.append(str(e))
+    pg.on('pageerror', on_error)
     return errs
 
 
@@ -1108,6 +1119,17 @@ RULES_OFF = ['S083']
 RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
 
 
+# [3.77.0] (collected item Z-FLK) set True by the files that test reading and mapping (no UI): transitions and animations off
+NO_ANIM = False
+# ((3.77.0, review) the script scrolls smoothly in JavaScript (behavior: 'smooth'), which CSS does not change: transitions and
+# animations only; the context also asks for reduced motion)
+NO_ANIM_CSS = '*, *::before, *::after { transition: none !important; animation: none !important; }'
+# ((review) also after a reload: the style is put in every document of the context as it starts)
+NO_ANIM_INIT = ("(css) => { const put = () => { if (document.getElementById('dci-test-noanim')) return; const s = document.createElement('style'); "
+                "s.id = 'dci-test-noanim'; s.textContent = css; (document.head || document.documentElement).appendChild(s); }; "
+                "if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', put); else put(); }")
+
+
 def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg = ctx.new_page()
     errs = errors_of(pg)
@@ -1123,6 +1145,9 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
         with_companion(pg)
     if gm_xhr:
         pg.add_script_tag(content=GM_XHR_SHIM)
+    # [3.77.0] (Z-FLK) the files of reading and mapping: no transitions or animations (nothing to wait for); UI files keep them
+    if NO_ANIM:
+        pg.add_style_tag(content=NO_ANIM_CSS)
     pg.add_script_tag(content=MAIN)
     return pg, errs
 
@@ -1190,6 +1215,21 @@ def open_reset(pg):
 
 def wait_for(pg, js, timeout=30):
     pg.wait_for_function(js, timeout=timeout * 1000)
+
+
+def wait_ok(pg, js, timeout=30):
+    """[3.77.0] (Z-FLK, review) As wait_for, but True / False instead of an exception: the case goes on and prints what it measured."""
+    try:
+        wait_for(pg, js, timeout)
+        return True
+    except Exception:
+        return False
+
+
+def wait_still(pg, js, timeout=15, ms=150):
+    """[3.77.0] (Z-FLK, review) Waits until the value of `js` (an expression) stays the same for `ms` milliseconds – a smooth scroll
+    or a page still drawing has ended. True / False."""
+    return wait_ok(pg, f"(async () => {{ const a = JSON.stringify({js}); await new Promise(r => setTimeout(r, {ms})); return a === JSON.stringify({js}); }})()", timeout)
 
 
 def answer_media(pg, text=None, release=True, remember=False):

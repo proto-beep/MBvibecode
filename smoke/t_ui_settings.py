@@ -2894,7 +2894,8 @@ def case_profiles():
         path = dl.value.path()
         data = json.loads(open(path, encoding='utf-8').read())
         pg.set_input_files('[data-el=settings] [data-profiles-import]', path)
-        pg.wait_for_timeout(600)
+        # ([3.77.0] Z-FLK) the profiles imported (the file is read in the background), not a time
+        H.wait_ok(pg, "(JSON.parse(localStorage.getItem('dci-profiles') || '[]') || []).length >= 4", 15)
         e1 = [pg.evaluate(PROFS), e0['opts'], [x['name'] for x in data['profiles']], data['format']]
         H.open_settings(pg, 'general')
         pg.click('[data-el=settings] .dci-iolog > summary')
