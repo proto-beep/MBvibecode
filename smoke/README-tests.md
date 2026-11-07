@@ -329,7 +329,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #   pools: "Dates & tracks" folds (remembered), clear all track groups / dates (also other releases)
                                 #   poolsmx: 3.30.3: date pool and track pool fold on their own (folded bar and open block, remembered); the scroll
                                 #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
-                                #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
+                                #   tracksdrop: track groups dragged onto rows ([3.78.0] adds, Shift replaces; release level moves), track pool kept when folded,
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
                                 #   poolsopen: 3.32.1: "Dates & tracks" (and a folded date pool) open after an import whose suggestions wait for
                                 #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
@@ -697,6 +697,8 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
                                 #   logplace: log next to the edit note: right / left (width and height), above (height kept), too narrow → above,
                                 #     edit note drawn anew, remembered after reloading, "↺ Defaults" → window
+                                #   lognarrow: 3.78.0 (Z-LOG): beside an edit note of 600 px (300 + 240 px at least), the width dragged
+                                #     remembered (dci-log-note-w), its own width back in the window, 500 px → above
                                 #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
@@ -717,9 +719,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     “Drums”), ▸ rows, add. / guest / solo, more events than shared (fold, One row each, ＋ Event ▾, a tick into ①),
                                 #     a line out of ① (grey), One row each, what is staged after all of it
                                 #   dates: 3.34.31: a pool date onto a line (it moves into the date's event; ↶), onto the head of an event, typed
-                                #     into the heads (a new pool date; the pool's own date changed), with ⇧ onto a block (both, "only … · keep both"),
-                                #     what is staged (lead and background vocals with the date joined, background vocals without); [3.35.0] a date onto
-                                #     a block with lines behind "▸ n more"
+                                #     into the heads (a new pool date; the pool's own date changed), [3.78.0] onto a block: set, a second date kept
+                                #     (a new event), ↶, ⇧ replaces; what is staged (lead and background vocals with the date joined); [3.35.0] a date
+                                #     onto a block with lines behind "▸ n more" (kept: two events)
                                 #   compact: 3.35.0 (milestone): compact as a matrix – a line per event with the roles as chips, a chip dragged onto
                                 #     another event (moved), ✕ (taken out), by role, ▸ / ▾ in the head, a chip clicked (full matrix at its line),
                                 #     ⚙ Staging "An entry, compact, at first: by role", the summary "a relationship per instrument would be 33"
@@ -751,6 +753,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     credits: in the works matrix" (tooltip) and the button "＋ Another role for …" beside the lines, no link
                                 #     below; by role the same; the button opens the full matrix with a new line; full view as before;
                                 #     (review) an entry folded in the full view: the column and the toggle
+                                #   dnd378: 3.78.0 (Z-DND): a drop adds, ⇧ replaces, ↶ – "no date" of an event's short line, a second date (a new
+                                #     event), a row's date kept (a row of its own) / replaced, the column date of the works matrix ("⇧ Shift"),
+                                #     ⠿ with a click and Enter, Esc; a chip let go over the edit note
                                 #   viewbits: 3.69.0 (Z-WRL, Z-CIN, Z-CRY, Z-CMK, S101–S104): no "whole release", the chips of an event one below
                                 #     the other, "Create artist …" yellow, a click into a compact line jumps on Discogs; off
                                 #   compactlines: 3.40.11 (Z-KH, mockup B): ⚙ Appearance "Compact entries: notes beside the lines | in the

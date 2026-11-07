@@ -82,7 +82,8 @@ def case_compact():
         pg.wait_for_timeout(200)
         guitar = line('Guitar Guy')[0]['id']
         gid = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Side A')).dataset.id")
-        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'tr[data-row="{guitar}"] .dci-cl-tracks')
+        # ([3.78.0] Z-DND) with ⇧ Shift: the row gets the group's tracks only (without it they are added)
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'tr[data-row="{guitar}"] .dci-cl-tracks', shift=True)
         c1 = line('Guitar Guy')[0]
         date = pg.evaluate("document.querySelector('.dci-pools-body .dci-pchip-date').dataset.id")
         dlabel = pg.evaluate(f"document.querySelector('.dci-pools-body .dci-pchip-date[data-id=\"{date}\"] .dci-chip-main').textContent.replace(/\\s+/g, ' ').trim()")
@@ -1198,7 +1199,8 @@ def case_logplace():
 
         # C) too narrow beside it → above (hint); wider again → right; MB draws the edit note anew → the log follows
         place(pg, 'right')
-        pg.set_viewport_size({'width': 600, 'height': 900}); pg.wait_for_timeout(500)
+        # ([3.78.0] Z-LOG) beside it from 300 + 240 px (and the gap) on: narrower than that
+        pg.set_viewport_size({'width': 500, 'height': 900}); pg.wait_for_timeout(500)
         g = pg.evaluate(GEOM)
         hint = pg.evaluate("[document.querySelector('#dci-log [data-log-f=place]').title, document.querySelector('#dci-log [data-log-f=place]').className, document.querySelector('#dci-log [data-log-f=place]').value]")
         print('C1) schmal:', g['cls'], '| Hinweis:', hint)
@@ -1346,5 +1348,55 @@ def case_srctexts():
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_lognarrow():
+    """Credits Importer 3.78.0 (collected item Z-LOG): the log beside a narrow edit note.
+    A) An edit note 600 px wide (MusicBrainz's is narrower than the window): "left of edit note" puts the log beside it (until 3.77
+       it went above it below 640 px); the edit note keeps at least 300 px, the log at least 240.
+    B) The edit note dragged to 320 px beside the log: remembered (dci-log-note-w), the log takes the rest.
+    C) The log back in its window: the edit note gets its own width again; "right of edit note" again: 320 px, as dragged.
+    D) An edit note of 500 px: too narrow for both (300 + 240 + the gap) – the log goes above it, with the hint."""
+    CSS = '#edit-note-text { width: 600px; height: 90px; box-sizing: border-box; }'
+    GEOM = """(() => { const log = document.getElementById('dci-log'); const note = document.getElementById('edit-note-text');
+  const r = (el) => Math.round(el.getBoundingClientRect().width);
+  return { cls: log.className.replace('dci-window', '').trim(), log: r(log), note: r(note), noteW: note.style.width, kept: localStorage.getItem('dci-log-note-w') }; })()"""
+    results = []
+
+    def place(pg, value):
+        pg.evaluate(f"""() => {{ const s = document.querySelector('#dci-log [data-log-f=place]'); s.value = '{value}';
+      s.dispatchEvent(new Event('change', {{ bubbles: true }})); }}""")
+        pg.wait_for_timeout(300)
+        return pg.evaluate(GEOM)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.add_style_tag(content=CSS)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        a = place(pg, 'left')
+        print('A) links, Notiz 600 px:', a)
+        results.append('dci-log-dock-left' in a['cls'] and a['note'] >= 300 and a['log'] >= 240 and a['note'] + a['log'] <= 600)
+        pg.evaluate("document.getElementById('edit-note-text').style.width = '320px'")
+        H.wait_ok(pg, "localStorage.getItem('dci-log-note-w') === '320'", 5)
+        pg.wait_for_timeout(200)
+        g = pg.evaluate(GEOM)
+        print('B) Notiz auf 320 px gezogen:', g)
+        results.append(g['kept'] == '320' and g['note'] == 320 and g['log'] >= 240 and g['log'] > a['log'])
+        c1 = place(pg, 'window')
+        c2 = place(pg, 'right')
+        print('C) Fenster:', c1, '| rechts wieder:', c2)
+        results.append(c1['note'] == 600 and c1['noteW'] == '' and 'dci-log-dock-right' in c2['cls'] and c2['note'] == 320)
+        pg.evaluate("localStorage.removeItem('dci-log-note-w')")
+        place(pg, 'window')
+        pg.add_style_tag(content='#edit-note-text { width: 500px !important; }')
+        d = place(pg, 'left')
+        hint = pg.evaluate("document.querySelector('#dci-log [data-log-f=place]').title")
+        print('D) 500 px:', d, '| Hinweis:', hint[:60], '| Fehler:', errs)
+        results.append('dci-log-dock-above' in d['cls'] and 'Not enough room' in hint and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
