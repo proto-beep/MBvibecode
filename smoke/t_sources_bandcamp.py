@@ -2,6 +2,7 @@
 
 Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1), cloudpondbc (3.40.4) – each the former smoke/t_<case>.py, unchanged; youtube (3.41.13), ytlinks (3.42.7); `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
+H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 

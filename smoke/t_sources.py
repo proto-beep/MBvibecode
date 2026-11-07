@@ -2,6 +2,7 @@
 
 Cases: adapter, links, supp, tracksfit, indextracks (3.35.1), repeat (3.40.16) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
+H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 

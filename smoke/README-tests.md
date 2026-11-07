@@ -79,7 +79,12 @@ the file at the end ("Ergebnis: OK [n Fälle]", or the names of the cases that f
 file (each opens its own context and pages); what a case changes in the harness – the Discogs data, the search
 results, relationship types, the shared storage – is set back before the next one. The tests ask the mock MusicBrainz
 every 25 ms instead of the script's 1.1 s (`harness.MB_GAP`, environment `DCI_MB_GAP`, 0 = the script's gap): an import
-takes about 1 s. Cases whose checks depend on that time (artistworks, logplace) set `H.MAIN = H.MAIN_SLOW` (the script with its
+takes about 1 s. [3.77.0] (Z-FLK) A case that fails runs once more on its own: green then, it is "WACKELIG" (in a line
+"Wackelig (…)", and in the last line when the file counts as OK); `DCI_RETRY=0` (or false / no / off) without that. Not run again: a
+case with an error of the page (a fault of the script), one that took over 150 s, and after three second runs in one file. The files of
+reading and mapping set `H.NO_ANIM = True` (no transitions or animations, also after a reload; the context asks for reduced motion –
+the script's smooth scrolling in JavaScript stays); the UI files keep them. Waiting: `H.wait_for` (an exception after the time),
+`H.wait_ok` (True / False – the case prints what it measured), `H.wait_still` (a value unchanged for 150 ms: a smooth scroll ended). Cases whose checks depend on that time (artistworks, logplace) set `H.MAIN = H.MAIN_SLOW` (the script with its
 own gap). [3.72.0] The five files compared with logs of an older version (t_ar, t_artwork, t_basic, t_focus, t_release) are
 cases with their own checks now (annrep, artworkbox, marksrelease, focusfields – this one still with `H.MAIN_SLOW`; t_basic's checks
 are step 0 of marksrelease).

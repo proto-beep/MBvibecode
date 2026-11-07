@@ -1,6 +1,7 @@
 """Works matrix: track groups and notes, columns, dates of cells, attributes, publishers (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: mxdrop, matrixcols, fill, wattrs, pub, remember – each the former smoke/t_<case>.py, unchanged; `python3 t_works_matrix.py <case> …` runs only those."""
+import time
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -858,16 +859,26 @@ def case_wmx():
         results.append(d0[0] == '○ no work yet' and d0[1] == ['＋ New', '▾'] and d0[2] is None and d1[2][:2] == ['work-search', 'work-create'] and not d0[3]
                        and att == [True, '＋ attribute'] and d0[4] and all(x[0] == 'waits for a work' and x[1] and x[2].endswith('waits for a work') for x in d0[4]))
         # E) "＋ Add a column"
-        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        pg.locator('.dci-matrix thead [data-act=mx-addcol-open]').evaluate('b => b.click()')
+        pg.wait_for_selector('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', timeout=15000)
         pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', 'nothing here')
-        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()')
+        # ((3.77.0, review) the message, not a time)
+        H.wait_ok(pg, "/No MBID/.test((document.querySelector('[data-el=addcol-err]') || {}).textContent || '')", 15)
         e0 = pg.evaluate("(document.querySelector('[data-el=addcol-err]') || {}).textContent || null")
+        place_err = "/place/.test((document.querySelector('[data-el=addcol-err]') || {}).textContent || '')"
         pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', f'https://musicbrainz.org/place/{H.COMPANIES[1002][1]}')
-        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()')
+        # ([3.77.0] Z-FLK) the answer of the lookup, not a time. ((review) It waits in the queue of MusicBrainz requests behind the
+        # personal publishers and works looked up in the background: under load more than 15 s)
+        t_e1 = time.time()
+        H.wait_ok(pg, place_err, 60)
+        print('E) Antwort nach', round(time.time() - t_e1, 1), 's')
         e1 = pg.evaluate("(document.querySelector('[data-el=addcol-err]') || {}).textContent || null")
         pg.fill('.dci-mx-addcol-pop [data-f=mx-addcol-mbid]', f'https://musicbrainz.org/artist/{LONG}')
         pg.select_option('.dci-mx-addcol-pop [data-f=mx-addcol-role]', label='composer')
-        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()'); pg.wait_for_timeout(2000)
+        pg.locator('.dci-mx-addcol-pop [data-act=mx-addcol]').evaluate('b => b.click()')
+        H.wait_ok(pg, "[...document.querySelectorAll('.dci-matrix thead th[data-colhead] .dci-mx-name')].some(x => /Maximilian/.test(x.textContent))", 15)
         e2 = [x for x in pg.evaluate(HEADS) if x[0] and x[0].startswith('Maximilian')]
         e3 = pg.evaluate("!!document.querySelector('.dci-mx-addcol-pop')")
         CELLS = """(name) => { const ths = [...document.querySelectorAll('.dci-matrix thead th[data-colhead]')]; const k = ths.findIndex(th => (th.querySelector('.dci-mx-name') || {}).textContent?.replace(/^MB/, '').trim() === name);
