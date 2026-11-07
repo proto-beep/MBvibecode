@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.82.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.83.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.83.0 · 2026-11-07
+
+Z-RLV, Z-AMX, Z-SNW.
+
+- **`applyPlan`** (Z-RLV, S124): a relationship staged before that was changed in the editor itself (`relSig` differs) – in the removals (no longer "to remove by hand"), the replacements (`it.replaces`: another type) and the updates (`it.update`) – is replaced all the same; one removed there is added anew (replacement, update) or forgotten (removal); joined ones changed in the editor (`restage … edited`) are staged anew too. `sayEdited` → `log.stagedEditedReplaced`, the message `msg.editedReplaced`. With S124 off: as before.
+- **`fitAddColPop`** (new; Z-AMX): the box `.dci-mx-addcol-pop` fixed to the window – at the right edge of its button, within the window (8 px), below or above it, its height what is left; again after `renderWorks` and on every scroll (capture) and resize while `S.mxAddColOpen`.
+- **`dupAskHtml` / `dupAnswer`** (new; Z-SNW, S125): `S.mxDupAsk` { act: 'pending' | 'create', dupes } – the box `[data-el=works-dupask]` in the head of the works matrix; "others" as before, "all" also those tracks (`S.dupAnyway`: track → works of the same title; also a single "＋ New" / form after the browser's question); the edit note (`buildNoteBlock`): "New works although MusicBrainz has works of the same title (not the same works): “Title” (link)" while `S.noteDupWorks` (`dci-note-dup`, on; in the topic Staging, profiles, reset). ⚙ Settings → Staging: the heading `settings.editNoteHead` (`.dci-set-h`).
+- **Register:** S124, S125. **Texts:** msg.editedReplaced, log.stagedEditedReplaced, dupAsk.*, log.dupAll, settings.editNoteHead, settings.noteDup, settings.noteDupTitle; removed: matrix.dupWarnAll.
+- **Review:** `applyPlan` – `rowPlanned` (the keys planned for each row before the cap): an old relationship changed in the editor goes only once they are staged; one removed in the editor itself is added anew (`it = { ...it, replaces: null, update: null }`, `uncount` defined before the loop); edited ones keep the staged entities (and type: the dashboard's); named once done (`sayEdited`, `removedEdited` → `msg.editedRemoved`); `log.stageSummaryEdited` (replaces `log.stageSummary`). `fitAddColPop`: the box moved out of `.dci-mx-wrap` into `[data-el=works]` (z-index 30), its room the visible part of `.dci-body` less `.dci-head`, `.dci-stick`, `.dci-foot`, its button brought into view when it opens (`S.mxAddColShow`), hidden while the button is scrolled out of view by hand, placed again each frame while open (moving or resizing the dashboard's window fires no event). Z-SNW: `mxDupAsk` in `MX_POPOVERS` (Esc, a click elsewhere; the focus back on its button), reset with a new import (and `S.dupAnyway`), only works `pending` / `created` named, `dci-note-dup` in `SETTINGS_KEYS`, `resetTopic('staging')` sets `S.noteDupWorks` and writes the edit note again.
+- **Tests:** `t_entries.py rlv383`, `t_works_matrix.py amx383`, `t_works_more.py snw383` (new); `t_entries.py restage` D (S124: the changed one replaced), `t_works_matrix.py addcolumn` B (the box outside the matrix).
 
 ## Import 3.82.0 · 2026-11-07
 

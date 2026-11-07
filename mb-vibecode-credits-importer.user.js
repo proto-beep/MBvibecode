@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.82.0
+// @version      3.83.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.82.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.82.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.83.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.83.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.82.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.83.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1573,8 +1573,17 @@
       "log.artistWorksCapped": "Works of {name}: {n} works and recordings, only the first {max} compared",
       "matrix.noSame": "No work with the same title by these writers in MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz already has a work with the same title (see the list below the track): {title}. Create a new work anyway?",
-      "matrix.dupWarnAll.one": "{n} track already has a same-named work in MusicBrainz ({list}); it is left out so it can be linked instead. Create the other works?",
-      "matrix.dupWarnAll.other": "{n} tracks already have same-named works in MusicBrainz ({list}); they are left out so they can be linked instead. Create the other works?",
+      "dupAsk.label": "Works of the same title in MusicBrainz",
+      "dupAsk.text.one": "{n} track already has a work of the same title in MusicBrainz ({list}). Create new works …",
+      "dupAsk.text.other": "{n} tracks already have works of the same title in MusicBrainz ({list}). Create new works …",
+      "dupAsk.others": "for the other tracks (link those instead)",
+      "dupAsk.all": "for all tracks anyway",
+      "dupAsk.allTitle": "New works for these tracks too, although MusicBrainz has works of the same title",
+      "dupAsk.allTitleNote": "New works for these tracks too, although MusicBrainz has works of the same title – the edit note names those works",
+      "log.dupAll": "New works for all tracks, also for {n} with a work of the same title in MusicBrainz",
+      "settings.editNoteHead": "Edit note",
+      "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
+      "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
       "matrix.langAdd": "add a language …",
@@ -1626,6 +1635,13 @@
       "msg.stagedUpdated.other": "{n} relationships staged before were updated in the editor.",
       "msg.changedInMb.one": "{n} relationship was changed or removed in the relationship editor itself, so the dashboard left it alone: {list}",
       "msg.changedInMb.other": "{n} relationships were changed or removed in the relationship editor itself, so the dashboard left them alone: {list}",
+      "msg.editedReplaced.one": "{n} relationship was changed in the relationship editor itself; it was replaced by what the dashboard has now: {list}",
+      "msg.editedReplaced.other": "{n} relationships were changed in the relationship editor itself; they were replaced by what the dashboard has now: {list}",
+      "log.stagedEditedReplaced": "Changed in the editor itself, replaced all the same: {text}",
+      "msg.editedRemoved.one": "{n} relationship was changed in the relationship editor itself; it was taken out all the same – the dashboard no longer has it: {list}",
+      "msg.editedRemoved.other": "{n} relationships were changed in the relationship editor itself; they were taken out all the same – the dashboard no longer has them: {list}",
+      "log.stagedEditedRemoved": "Changed in the editor itself, taken out all the same: {text}",
+      "log.stageSummaryEdited": "Staging complete: {added} added, {updated} updated, {removed} taken out, {replaced} changed in the editor itself and replaced or taken out all the same, {changed} changed in the editor itself and left alone, {remove} to remove by hand",
       "msg.removeByHand.one": "{n} relationship staged before is no longer wanted, but it was changed in the relationship editor itself; please remove it there by hand: {list}",
       "msg.removeByHand.other": "{n} relationships staged before are no longer wanted, but they were changed in the relationship editor itself; please remove them there by hand: {list}",
       "preview.updateTitle": "Staged before; will be updated in the editor if it was not changed there",
@@ -1726,7 +1742,6 @@
       "log.worksTaken.other": "Works matrix taken again ({n} rows back)",
       "log.workRecheck.one": "The writers of {n} track changed – its same-named works are looked up again",
       "log.workRecheck.other": "The writers of {n} tracks changed – their same-named works are looked up again",
-      "log.stageSummary": "Staging complete: {added} added, {updated} updated, {removed} taken out, {changed} changed in the editor itself, {remove} to remove by hand",
       "seriesLabel.title": "Publishing label (Discogs “Parent Label”):",
       "seriesLabel.onCreate": "is added with “Create series …”",
       "seriesLabel.noMb": "label not found in MusicBrainz",
@@ -3868,6 +3883,8 @@
     { id: 'S121', where: 'TEXT.parse (readClause, addCredit), TEXT_FILLER_SUBJECT, TEXT_BROADCASTER', note: 'Texts (3.81.0; collected item Z-RAD): "This was", "It was", "These tracks were" … before "recorded / mixed … by" are no part of the credit (until 3.80.0 its role credit); a broadcaster that recorded it (T066: "Norwegian State radio", "Westdeutscher Rundfunk", "BBC") is a label – recording (C021) and broadcast (C044) on the recordings; the names after "by" end with their sentence ("… and Guy. At the time …" made Guy a name of it); a place "outside / near Oslo" has Oslo as its area' },
     { id: 'S122', where: 'TEXT.parse (songLists), BANDCAMP.toRelease', note: 'Texts (3.82.0; collected item Z-YTW2; off by default, a quick switch): the lists of songs of S118 also in pasted texts and Bandcamp\'s texts, not only in a YouTube video\'s description' },
     { id: 'S123', where: 'findDedications, dedFullName', note: 'Dedications (3.82.0; collected item Z-DEDH): a form of address and a surname after "dedicated to" ("dedicated to Mr. Polo’s incredible explorations") – the one full name with that surname in the text or the release\'s title ("Marco Polo’s journey") is suggested in "Dedications & tributes" (artist – release); none when there is no full name or more than one' },
+    { id: 'S124', where: 'applyPlan (removals, replaces, updates)', note: 'Staging (3.83.0; collected item Z-RLV): what was staged before and is changed in the dashboard since – its level, type, tracks, attributes, credits, date – is replaced at the next "Stage" (the old relationship taken out or updated), also when it was changed in the relationship editor itself; those are named in a message (until 3.82.0 they were left alone: "changed in the editor itself", "to remove by hand")' },
+    { id: 'S125', where: 'dupAskHtml, dupAnswer, buildNoteBlock', note: 'Works (3.83.0; collected item Z-SNW): new works for all tracks while some have a work of the same title in MusicBrainz – three answers in the works matrix: the other works (those tracks left out to be linked), all works anyway, cancel; works created anyway are named in the edit note with the works of the same title (⚙ Settings → Staging → Edit note, on)' },
     { id: 'S111', where: 'exportStats, importStats, statsCsv', note: 'The statistics of this browser exported and imported (3.76.0, ⚙ Settings → Cache): JSON keeps every record whole – to import it in another browser (a record there already, the same id: skipped; so the same statistics can be kept in several browsers); CSV is one line per relationship, separated by semicolons – to read in a spreadsheet, not to import. Each export and import goes into the log of imports and exports (⚙ Settings → General)' },
     // [3.62.0] collected items Z-LVD, Z-CVA
     { id: 'S089', where: 'liveProposals, stagedWorkLinkDate', note: 'Live recordings (3.62.0): the date of the comment as the seed script (ROpdebee) takes it – the dates of "recorded at" / "recorded in" together with those of the links of the recording with its works that are staged (a link\'s own date, else the recording date of the track: its performance rows); two different dates are a conflict. Before only of "recorded at" / "in": "live: Loft, Köln, Germany" without the date of the pool' },
@@ -17983,6 +18000,13 @@
     const tar = S.rows.filter((r) => r.tarPositions && r.level === 'recording' && stagedRows.has(r.id))
       .map((r) => `${(S.artists.get(r.artistKey) || {}).name || ''} (${r.raw || rowRelText(r)}): ${r.tarPositions.join(', ')}`);
     if (tar.length) lines.push(`Tracks from the artist credits of the tracks in MusicBrainz: ${uniq(tar).join('; ')}.`);
+    // [Z-SNW] (3.83.0, S125) a new work although MusicBrainz has one of the same title: named (setting, on)
+    if (S.noteDupWorks && S.dupAnyway && S.dupAnyway.size) {
+      // ((review) only a work new here – not one of MusicBrainz linked in its place since
+      const dup = [...S.dupAnyway].filter(([i]) => noteTrack(i) && worksForTrack(i).some((w) => w.planned && ['pending', 'created'].includes(w.origin)))
+        .map(([i, ws]) => `“${S.mbTracks[i].title}” (${ws.map((w) => `https://musicbrainz.org/work/${w.gid}`).join(', ')})`);
+      if (dup.length) lines.push(`New works although MusicBrainz has works of the same title (not the same works): ${dup.join('; ')}.`);
+    }
     if (S.noteDates.size) lines.push(`Dates entered in the dashboard: ${[...S.noteDates.values()].join('; ')}.`);
     if (S.noteLines.size) {
       lines.push(`Not stored in MB (${S.source.noteName} wording):`);
@@ -18413,6 +18437,9 @@
       S.dedSugg = []; // [Z-DEDQ] (3.74.0) its suggestions too
       S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
+      // [Z-SNW] (3.83.0, review) the question about works of the same title and its answers: of the import before
+      S.mxDupAsk = null;
+      S.dupAnyway = null;
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
       S.digital = !!(ws.media || []).length && (ws.media || []).every((m) => /digital media/i.test(m.format || ''));
@@ -21399,6 +21426,16 @@
       items = items.filter(only);
       removals = [];
     }
+    // [Z-RLV] (3.83.0, review) the keys planned for each row (before the cap): an old relationship changed in the editor itself goes
+    // only once what replaces it is staged (not cut by the cap, not failed)
+    const rowPlanned = new Map();
+    for (const it of items) {
+      for (const m of it.joinedItems || [it]) {
+        if (!m.row || S.staged.has(m.key)) continue;
+        if (!rowPlanned.has(m.row.id)) rowPlanned.set(m.row.id, []);
+        rowPlanned.get(m.row.id).push(m.key);
+      }
+    }
     // At most S.capLimit relationships per "Stage" (can be switched off), so each "Enter edit" stays reviewable
     let rest = 0;
     if (!only && S.capOn && (items.length > S.capLimit || S.capRun)) {
@@ -21425,6 +21462,26 @@
       restage.set(r.joined || `s:${r.key}`, { r, edited: !!cur && relSig(cur) !== relSig(r.staged.state) });
     }
     const editedGroups = (it) => String(it.rejoinOf || '').split(' ').filter((G) => restage.has(G) && restage.get(G).edited);
+    // [Z-RLV] (3.83.0, S124) what was changed in the editor itself is replaced all the same – by what the dashboard has now – and named
+    const replacedEdited = [];
+    const removedEdited = []; // ((review) taken out all the same, nothing in their place: the dashboard no longer has them
+    const editedSaid = new Set();
+    const sayEdited = (text, gone = false) => {
+      if (editedSaid.has(text)) return;
+      editedSaid.add(text);
+      (gone ? removedEdited : replacedEdited).push(text);
+      log('warn', gone ? 'stagedEditedRemoved' : 'stagedEditedReplaced', { text });
+    };
+    // (3.43.4, review) the edit note's "Done:" counts what is staged now: a relationship taken out is taken off the count
+    // ((3.83.0, review) defined before the relationships are added: one removed in the editor itself is added anew)
+    let noteChanged = false;
+    const uncount = (st) => {
+      if (!st || !st.noteKind) return;
+      if (S.noteStats[st.noteKind] > 0) S.noteStats[st.noteKind]--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'created' && S.noteStats.newWorkLinks > 0) S.noteStats.newWorkLinks--;
+      if (st.noteKind === 'workLinks' && st.noteOrigin === 'pending' && S.noteStats.pendingWorks > 0) S.noteStats.pendingWorks--;
+      noteChanged = true;
+    };
     const recordings = pageRecordings();
     const release = re.state.entity;
     let added = 0;
@@ -21439,15 +21496,27 @@
     const dateFillIds = [];
     let linkAttrN = 0;
     let step = 0;
-    for (const it of items) {
+    for (let it of items) {
       step++;
       if (step % 10 === 0 || step === items.length) {
         setBusy(round ? 'busy.applyProgressRound' : 'busy.applyProgress', { i: step, n: items.length, ...(round || {}) });
       }
       const text = describeItem(it);
-      if (it.rejoinOf && editedGroups(it).length) {
+      // ((3.83.0, review) with S124 the old one is named where it is taken out – only once its rows are staged anew)
+      if (it.rejoinOf && editedGroups(it).length && !ruleOn('S124')) {
         changedInMb.push(text);
         continue;
+      }
+      // [Z-RLV] (3.83.0, review, S124) a replacement or update of one that was removed in the editor itself: added anew
+      if ((it.replaces || it.update) && ruleOn('S124')) {
+        const prevSt = it.replaces ? it.replaces.staged : it.update;
+        const prevKey = it.replaces ? it.replaces.key : it.key;
+        if (!findRelationshipStates(re.state, new Set([prevSt.state.id])).get(prevSt.state.id)) {
+          if (S.staged.get(prevKey) === prevSt) uncount(prevSt);
+          S.staged.delete(prevKey);
+          S.appliedKeys.delete(prevKey);
+          it = { ...it, replaces: null, update: null };
+        }
       }
       // Attributes added to an existing link recording → work (works matrix)
       if (it.attrFill) {
@@ -21568,14 +21637,20 @@
         try {
           const prev = it.replaces.staged;
           const current = findRelationshipStates(re.state, new Set([prev.state.id])).get(prev.state.id);
-          if (!current || relSig(current) !== relSig(prev.state)) {
-            changedInMb.push(prev.text);
-            log('warn', 'stagedChangedInMb', { text: prev.text });
-            continue;
+          const edited = !current || relSig(current) !== relSig(prev.state);
+          if (edited) {
+            // [Z-RLV] (3.83.0, S124) changed in the editor: replaced all the same, and named (removed there: added anew, above)
+            if (!ruleOn('S124') || !current) {
+              changedInMb.push(prev.text);
+              log('warn', 'stagedChangedInMb', { text: prev.text });
+              continue;
+            }
           }
           const src = prev.source;
-          const backward = !(current.entity0 && current.entity0.id === src.id && current.entity0.entityType === src.entityType);
-          const newState = { ...current, linkTypeID: it.lt.id, ...relFields(it.attrs, it.credit, it.date, backward) };
+          // ((3.83.0, review) changed there: the entities as staged (not as edited), its type the dashboard's
+          const base = edited ? { ...current, entity0: prev.state.entity0, entity1: prev.state.entity1 } : current;
+          const backward = !(base.entity0 && base.entity0.id === src.id && base.entity0.entityType === src.entityType);
+          const newState = { ...base, linkTypeID: it.lt.id, ...relFields(it.attrs, it.credit, it.date, backward) };
           re.dispatch({
             type: 'update-relationship-state', sourceEntity: src, batchSelectionCount: null,
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
@@ -21584,6 +21659,7 @@
           S.staged.set(it.key, { ...prev, state: newState, sig: itemSig(it), text });
           S.appliedKeys.add(it.key);
           if (it.date) stagedDates.push({ id: newState.id, date: it.date, text });
+          if (edited) sayEdited(prev.text); // ((review) named once it is done
           updated++;
           log('ok', 'stagedReplaced', { old: prev.text, text });
         } catch (e) {
@@ -21597,20 +21673,26 @@
         try {
           const old = it.update.state;
           const current = findRelationshipStates(re.state, new Set([old.id])).get(old.id);
-          if (!current || relSig(current) !== relSig(old)) {
-            changedInMb.push(it.update.text);
-            log('warn', 'stagedChangedInMb', { text: it.update.text });
-            continue;
+          const edited = !current || relSig(current) !== relSig(old);
+          if (edited) {
+            if (!ruleOn('S124') || !current) {
+              changedInMb.push(it.update.text);
+              log('warn', 'stagedChangedInMb', { text: it.update.text });
+              continue;
+            }
           }
           const src = it.update.source;
-          const backward = !(current.entity0 && current.entity0.id === src.id && current.entity0.entityType === src.entityType);
-          const newState = { ...current, ...relFields(it.attrs, it.credit, it.date, backward) };
+          // ((3.83.0, review) changed there: type and entities as staged (not as edited)
+          const base = edited ? { ...current, linkTypeID: old.linkTypeID, entity0: old.entity0, entity1: old.entity1 } : current;
+          const backward = !(base.entity0 && base.entity0.id === src.id && base.entity0.entityType === src.entityType);
+          const newState = { ...base, ...relFields(it.attrs, it.credit, it.date, backward) };
           re.dispatch({
             type: 'update-relationship-state', sourceEntity: src, batchSelectionCount: null,
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.staged.set(it.key, { ...it.update, state: newState, sig: itemSig(it), text });
           if (it.date) stagedDates.push({ id: newState.id, date: it.date, text });
+          if (edited) sayEdited(it.update.text); // ((review) named once it is done
           updated++;
           log('ok', 'stagedUpdated', { text });
         } catch (e) {
@@ -21748,15 +21830,7 @@
     let removed = 0;
     // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now);
     // [3.35.0] a single one only if its key was not staged anew
-    // (3.43.4, review) the edit note's "Done:" counts what is staged now: a relationship taken out is taken off the count
-    const uncount = (st) => {
-      if (!st || !st.noteKind) return;
-      if (S.noteStats[st.noteKind] > 0) S.noteStats[st.noteKind]--;
-      if (st.noteKind === 'workLinks' && st.noteOrigin === 'created' && S.noteStats.newWorkLinks > 0) S.noteStats.newWorkLinks--;
-      if (st.noteKind === 'workLinks' && st.noteOrigin === 'pending' && S.noteStats.pendingWorks > 0) S.noteStats.pendingWorks--;
-      noteChanged = true;
-    };
-    let noteChanged = false;
+    // ((3.43.4, review) uncount: defined above, before the relationships are added)
     const forget = (r) => {
       if (!r.joined) {
         if (S.staged.get(r.key) === r.staged) {
@@ -21783,7 +21857,7 @@
           const st = S.staged.get(k);
           return !!st && st !== r.staged && (!r.joined || st.joined !== r.joined);
         });
-        if ((g && g.edited) || !done) continue;
+        if ((g && g.edited && !ruleOn('S124')) || !done) continue;
       }
       const current = findRelationshipStates(re.state, new Set([r.staged.state.id])).get(r.staged.state.id);
       if (!current) {
@@ -21791,13 +21865,22 @@
         continue;
       }
       if (relSig(current) !== relSig(r.staged.state)) {
-        toRemove.push(r.staged.text);
-        continue;
+        // [Z-RLV] (3.83.0, S124) changed in the editor itself: taken out all the same (the dashboard's row now says otherwise), named
+        if (!ruleOn('S124')) {
+          toRemove.push(r.staged.text);
+          continue;
+        }
+        // ((review) only once what replaces it is staged – not cut by the cap or failed (it waits for the next "Stage")
+        const isRe = !!(r.restage && r.restage.length);
+        const repl = isRe ? r.restage : (rowPlanned.get(r.staged.rowId) || []);
+        if (!isRe && repl.length && !repl.every((k) => S.staged.has(k))) continue;
+        r.sayGone = !repl.length;
       }
       try {
         re.dispatch({ type: 'remove-relationship', relationship: current });
         forget(r);
         if (!r.joined && !S.staged.has(r.key)) S.appliedKeys.delete(r.key);
+        if (r.sayGone != null) sayEdited(r.staged.text, r.sayGone); // ((3.83.0, review) named once it is out
         removed++;
         log('ok', 'stagedRemoved', { text: r.staged.text });
       } catch (e) {
@@ -21845,7 +21928,7 @@
     }
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
     saveLiveJob();
-    log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
+    log('ok', 'stageSummaryEdited', { added, updated, removed, replaced: replacedEdited.length + removedEdited.length, changed: changedInMb.length, remove: toRemove.length });
     if (round) {
       S.capRun.done++;
       if (rest) showMessage('info', 'msg.capRestRound', { n: rest, cap: S.capLimit, k: round.k, x: round.x, next: round.k + 1 });
@@ -21855,6 +21938,8 @@
       }
     }
     if (changedInMb.length) showMessage('warn', 'msg.changedInMb', { n: changedInMb.length, list: changedInMb.join('; ') });
+    if (replacedEdited.length) showMessage('warn', 'msg.editedReplaced', { n: replacedEdited.length, list: replacedEdited.join('; ') });
+    if (removedEdited.length) showMessage('warn', 'msg.editedRemoved', { n: removedEdited.length, list: removedEdited.join('; ') });
     if (removed) showMessage('ok', 'msg.stagedRemovedAll', { n: removed });
     if (toRemove.length) showMessage('warn', 'msg.removeByHand', { n: toRemove.length, list: toRemove.join('; ') });
     if (added) {
@@ -32178,6 +32263,8 @@
     if (wrap2 && pos) [wrap2.scrollTop, wrap2.scrollLeft] = pos;
     if (body && bodyTop != null) body.scrollTop = bodyTop;
     setupMxScroll();
+    // [Z-AMX] (3.83.0) the box of "＋ Add a column" placed again (it is drawn anew with the matrix)
+    if (S.mxAddColOpen) fitAddColPop();
     if (focusSel && !S.overlay.querySelector('[data-el="works"]').contains(document.activeElement)) {
       const el = S.overlay.querySelector(focusSel);
       if (el) el.focus({ preventScroll: true });
@@ -32190,6 +32277,69 @@
     if (!m || !wrap) return;
     const room = Math.min(wrap.getBoundingClientRect().bottom, window.innerHeight) - m.getBoundingClientRect().top - 8;
     m.style.maxHeight = `${Math.max(140, Math.round(room))}px`;
+  }
+
+  /**
+   * [Z-AMX] (3.83.0) The box of "＋ Add a column" always whole in view: below its button (or above it when there is no room), at its
+   * right edge, moved left or right as far as needed, as wide as the window allows; fixed to the window – the matrix that scrolls
+   * cuts nothing off (until 3.82.0 the box ran out of the matrix to the left). Placed again while the page or the matrix scrolls.
+   */
+  function fitAddColPop() {
+    const works = S.overlay && S.overlay.querySelector('[data-el="works"]');
+    const m = works && works.querySelector('.dci-mx-addcol-pop');
+    const btn = works && works.querySelector('.dci-matrix thead [data-act="mx-addcol-open"]');
+    const head = btn && (btn.closest('.dci-mx-card') || btn);
+    if (!m || !head) return;
+    // ((review) out of the matrix (its own stacking order): the sticky bars of the dashboard no longer cover it
+    if (m.parentElement !== works) works.appendChild(m);
+    // ((review) the room: the visible part of the dashboard's body, less the bars that stay on top (head, sticky bar, foot)
+    const body = S.overlay.querySelector('.dci-body');
+    const br = body ? body.getBoundingClientRect() : { top: 0, bottom: window.innerHeight, left: 0, right: window.innerWidth };
+    let top = Math.max(0, br.top), bottom = Math.min(window.innerHeight, br.bottom);
+    const left0 = Math.max(0, br.left), right0 = Math.min(window.innerWidth, br.right);
+    for (const bar of S.overlay.querySelectorAll('.dci-head, .dci-stick, .dci-foot')) {
+      const q = bar.getBoundingClientRect();
+      if (!q.height || q.bottom <= top || q.top >= bottom || q.right <= left0 || q.left >= right0) continue;
+      if (q.top + q.height / 2 < (top + bottom) / 2) top = Math.max(top, q.bottom); else bottom = Math.min(bottom, q.top);
+    }
+    let r = head.getBoundingClientRect();
+    // ((review) just opened with its button out of view (opened by a key, or the button half under a bar): the button brought into
+    // view first – later, scrolled away by hand, the box is hidden until it is back
+    if (S.mxAddColShow) {
+      S.mxAddColShow = false;
+      if (r.bottom > bottom || r.top < top || r.right > right0 || r.left < left0) {
+        btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        r = head.getBoundingClientRect();
+        if (body && (r.bottom > bottom || r.top < top)) body.scrollTop += r.bottom > bottom ? r.bottom - bottom + 8 : r.top - top - 8;
+        r = head.getBoundingClientRect();
+      }
+    }
+    const away = r.bottom < top || r.top > bottom || r.right < left0 || r.left > right0;
+    m.style.visibility = away ? 'hidden' : '';
+    const sig = [top, bottom, left0, right0, r.top, r.bottom, r.right, away].map(Math.round).join();
+    if (sig === m.dataset.fit) return;
+    m.dataset.fit = sig;
+    const inW = Math.max(160, right0 - left0 - 16);
+    Object.assign(m.style, { position: 'fixed', left: '0px', top: '0px', right: 'auto', maxHeight: '', maxWidth: `${Math.round(inW)}px` });
+    const w = Math.min(m.offsetWidth, inW);
+    const left = Math.max(left0 + 8, Math.min(r.right - w, right0 - w - 8));
+    const below = bottom - r.bottom - 8;
+    const above = r.top - top - 8;
+    const h = m.offsetHeight;
+    const up = h > below && above > below;
+    const room = Math.max(120, up ? above : below);
+    m.style.left = `${Math.round(left)}px`;
+    m.style.maxHeight = `${Math.round(room)}px`;
+    m.style.top = `${Math.round(up ? Math.max(top + 4, r.top - 4 - Math.min(h, room)) : Math.max(top + 4, Math.min(r.bottom + 4, bottom - Math.min(h, room) - 4)))}px`;
+    // ((review) placed again while it is open – also when the dashboard's window is moved or resized (no event for that)
+    if (!fitAddColPop.loop) {
+      const tick = () => {
+        if (!S.mxAddColOpen || !S.overlay || !S.overlay.querySelector('.dci-mx-addcol-pop')) { fitAddColPop.loop = 0; return; }
+        fitAddColPop();
+        fitAddColPop.loop = requestAnimationFrame(tick);
+      };
+      fitAddColPop.loop = requestAnimationFrame(tick);
+    }
   }
 
   /** [Z-WMX] (3.52.0, review) A selector for the element of the works section that has the focus (null: none there). */
@@ -32216,7 +32366,10 @@
     ['mxAddColOpen', '.dci-mx-addcol-pop, [data-act="mx-addcol-open"]', () => '[data-el="works"] [data-act="mx-addcol-open"]'],
     ['mxCornerMore', '[data-el="corner-more"], [data-act="mx-cornermore"]', () => '[data-el="works"] [data-act="mx-cornermore"]'],
     ['mxNewMenu', '.dci-mx-newmenu, [data-act="mx-newmenu"]', (v) => `[data-el="works"] tr[data-work="${v}"] [data-act="mx-newmenu"]`],
+    // [Z-SNW] (3.83.0, review) the question about works of the same title: Esc or a click elsewhere cancels it
+    ['mxDupAsk', '[data-el="works-dupask"], [data-act="works-pending-all"], [data-act="works-create-all"]', (v) => dupAskFrom(v)],
   ];
+  const dupAskFrom = (v) => `[data-el="works"] [data-act="works-${v && v.act === 'create' ? 'create' : 'pending'}-all"]`;
   const mxPopoverOpen = (k) => S[k] !== false && S[k] != null;
   /** [Z-WMX] (review) A popover is still drawn that is closed (the matrix to be drawn again). */
   const mxPopoversStale = () => !!S.overlay && MX_POPOVERS.some(([k, inside]) => !mxPopoverOpen(k) && S.overlay.querySelector(inside.split(', ')[0]));
@@ -32326,6 +32479,42 @@
     fit();
   }
 
+  /**
+   * [Z-SNW] (3.83.0, S125) New works for all tracks while some have a work of the same title in MusicBrainz: three answers – the other
+   * works only (those tracks left out to be linked), all works anyway, cancel (until 3.82.0 a question of the browser: the others or
+   * none).
+   */
+  function dupAskHtml() {
+    const a = S.mxDupAsk;
+    if (!a) return '';
+    const titles = a.dupes.map((i) => (S.mbTracks[i] || {}).title).filter(Boolean);
+    return `<div class="dci-mx-ask dci-mx-dupask" data-el="works-dupask" role="group" aria-label="${esc(tr('dupAsk.label'))}">
+      <strong>${esc(tr('dupAsk.text', { n: titles.length, list: titles.join(', ') }))}</strong>
+      <button type="button" class="dci-primary dci-small" data-act="mx-dup-answer" data-answer="others">${esc(tr('dupAsk.others'))}</button>
+      <button type="button" class="dci-small" data-act="mx-dup-answer" data-answer="all" title="${esc(tr(S.noteDupWorks ? 'dupAsk.allTitleNote' : 'dupAsk.allTitle'))}">${esc(tr('dupAsk.all'))}</button>
+      <button type="button" class="dci-small" data-act="mx-dup-answer" data-answer="cancel">${esc(tr('common.cancel'))}</button></div>`;
+  }
+  /** [Z-SNW] (3.83.0) The answer: what "＋ New works" or "Create all …" do then. */
+  function dupAnswer(answer) {
+    const a = S.mxDupAsk;
+    S.mxDupAsk = null;
+    if (!a || answer === 'cancel') return;
+    const missing = S.mbTracks.filter((x) => matrixTrack(x) && !worksForTrack(x.idx).length);
+    const take = answer === 'all' ? missing : missing.filter((x) => !sameNamed(x.idx).length);
+    if (answer === 'all') {
+      // the works of the same title, for the edit note ("… created although MusicBrainz has …")
+      if (!S.dupAnyway) S.dupAnyway = new Map();
+      missing.forEach((x) => { const same = sameNamed(x.idx); if (same.length) S.dupAnyway.set(x.idx, same.map((w) => ({ gid: w.gid, title: w.title }))); });
+      log('info', 'dupAll', { n: a.dupes.length });
+    }
+    if (a.act === 'pending') take.forEach((x) => planPendingWork(x.idx));
+    else {
+      S.workQueue = take.map((x) => x.idx);
+      S.workRun = { created: [] };
+      continueWorkQueue();
+    }
+  }
+
   function renderWorksInner() {
     if (!S.overlay) return;
     const el = $('works');
@@ -32385,6 +32574,7 @@
         <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
       ${!skipped && S.worksLookups === 'no' && tracksWithoutWork().length ? `<p class="dci-sub" data-el="works-lookups-off">${esc(tr('matrix.lookupsOff'))}
         <button type="button" class="dci-textbtn" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsNow'))}</button></p>` : ''}
+      ${!skipped && !folded ? dupAskHtml() : ''}
       ${skipped || folded ? '' : `<div data-el="suites">${suiteAddHtml()}</div>`}`;
     if (folded) {
       el.innerHTML = head;
@@ -32599,9 +32789,10 @@
         break;
       case 'mx-addcol-open':
         S.mxAddColOpen = !S.mxAddColOpen;
+        S.mxAddColShow = S.mxAddColOpen; // ([Z-AMX] 3.83.0, review) its button in view when it opens
         if (!S.mxAddColOpen) S.mxAddCol = null;
         else {
-          setTimeout(() => fitMxMenu(S.overlay && S.overlay.querySelector('.dci-mx-addcol-pop')), 0);
+          setTimeout(fitAddColPop, 0);
           // ([Z-ACO] 3.68.0) the personal publishers of the people, in the background
           loadPersonalPubs().catch((e) => console.warn('[Discogs-Credits]', e));
         }
@@ -36410,6 +36601,7 @@
         const i = workIndexOf(btn);
         const same = sameNamed(i);
         if (same.length && !confirm(tr('matrix.dupWarn', { title: same.map((w) => w.title).join(', ') }))) break;
+        if (same.length) (S.dupAnyway || (S.dupAnyway = new Map())).set(i, same.map((w) => ({ gid: w.gid, title: w.title })));
         S.workQueue = [];
         startWorkCreate(i);
         break;
@@ -36418,6 +36610,7 @@
         const i = workIndexOf(btn);
         const same = sameNamed(i);
         if (same.length && !confirm(tr('matrix.dupWarn', { title: same.map((w) => w.title).join(', ') }))) break;
+        if (same.length) (S.dupAnyway || (S.dupAnyway = new Map())).set(i, same.map((w) => ({ gid: w.gid, title: w.title })));
         planPendingWork(i);
         renderWorks();
         refresh();
@@ -36426,10 +36619,27 @@
       case 'works-pending-all': {
         const missing = S.mbTracks.filter((x) => matrixTrack(x) && !worksForTrack(x.idx).length);
         const dupes = missing.filter((x) => sameNamed(x.idx).length);
-        if (dupes.length && !confirm(tr('matrix.dupWarnAll', { n: dupes.length, list: dupes.map((x) => x.title).join(', ') }))) break;
-        missing.filter((x) => !sameNamed(x.idx).length).forEach((x) => planPendingWork(x.idx));
+        // [Z-SNW] (3.83.0, S125) three answers in the works matrix (no question of the browser)
+        if (dupes.length) {
+          S.mxDupAsk = { act: 'pending', dupes: dupes.map((x) => x.idx) };
+          renderWorks();
+          const b0 = S.overlay.querySelector('[data-act="mx-dup-answer"]');
+          if (b0) b0.focus({ preventScroll: true });
+          break;
+        }
+        missing.forEach((x) => planPendingWork(x.idx));
         renderWorks();
         refresh();
+        break;
+      }
+      case 'mx-dup-answer': {
+        const back = dupAskFrom(S.mxDupAsk);
+        dupAnswer(btn.dataset.answer);
+        renderWorks();
+        refresh();
+        // ((review) the focus back on the button that asked (the answer's button is gone)
+        const el = S.overlay && S.overlay.querySelector(back);
+        if (el) el.focus({ preventScroll: true });
         break;
       }
       case 'work-lang-remove': {
@@ -36520,7 +36730,14 @@
         break;
       case 'works-create-all': {
         const dupes = S.mbTracks.filter((x) => matrixTrack(x) && !worksForTrack(x.idx).length && sameNamed(x.idx).length);
-        if (dupes.length && !confirm(tr('matrix.dupWarnAll', { n: dupes.length, list: dupes.map((x) => x.title).join(', ') }))) break;
+        if (dupes.length) {
+          S.mxDupAsk = { act: 'create', dupes: dupes.map((x) => x.idx) };
+          S.mxMoreOpen = false;
+          renderWorks();
+          const b0 = S.overlay.querySelector('[data-act="mx-dup-answer"]');
+          if (b0) b0.focus({ preventScroll: true });
+          break;
+        }
         S.workQueue = S.mbTracks.filter((x) => matrixTrack(x) && !worksForTrack(x.idx).length && !sameNamed(x.idx).length).map((x) => x.idx);
         S.workRun = { created: [] };
         continueWorkQueue();
@@ -36643,6 +36860,15 @@
       log('info', 'dmFoldSwitch', { state: tr(el.checked ? 'common.on' : 'common.off') });
       // switched in ⚙ Settings: the box below the matrix follows
       if (!el.closest('[data-el="dates"]')) renderDates();
+      return;
+    }
+    // [Z-SNW] (3.83.0) works of the same title in the edit note
+    if (f === 'note-dup') {
+      S.noteDupWorks = el.checked;
+      writeJson('localStorage', 'dci-note-dup', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.noteDup'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (S.staged.size) writeEditNote();
+      renderWorks();
       return;
     }
     if (f === 'dm-auto') {
@@ -37932,7 +38158,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY, 'dci-note-dup'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
@@ -37962,6 +38188,8 @@
   S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false; // [Z-DEDQ] (3.74.0) the box of the dedications: on unless switched off
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
+  // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
+  S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -39761,10 +39989,13 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        // [Z-SNW] (3.83.0) the edit note under a heading of its own
+        `<h4 class="dci-set-h" data-el="set-editnote">${esc(tr('settings.editNoteHead'))}</h4>`,
         // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
         // (3.42.0) no "none"
         row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
           data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
+        row(check('data-f="note-dup"', S.noteDupWorks, tr('settings.noteDup'), tr('settings.noteDupTitle'))),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -40367,7 +40598,9 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', editNoteMode: 'full' });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', editNoteMode: 'full', noteDupWorks: true });
+      // ([Z-SNW] 3.83.0, review) the edit note as the defaults write it (Full, works of the same title named)
+      if (S.staged.size) writeEditNote();
       S.rows.forEach(updateHint);
       renderGroups();
       refresh();
@@ -40422,8 +40655,9 @@
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
     DEV_KEY,
-    // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload)
-    EDIT_NOTE_KEY,
+    // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload); [Z-SNW] (3.83.0, review) works of
+    // the same title named in it
+    EDIT_NOTE_KEY, 'dci-note-dup',
     // [Z-ALC] (3.44.1) the number of alias lookups
     ALIAS_MAX_KEY];
 
@@ -40539,6 +40773,7 @@
     S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
     S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
+    S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
     S.levelPalette = levelPaletteRead();
     S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -42594,7 +42829,7 @@
       .dci-mx-addcol-head { min-width: calc(var(--u, 1px) * 150); vertical-align: top; }
       .dci-mx-addcol-btn { border-style: dashed; background: #faf9fc; color: var(--purple-d); text-align: left; }
       .dci-mx-addcol-pop .dci-mx-addcol { display: flex; flex-direction: column; align-items: stretch; margin: calc(var(--u, 1px) * 6) 0 0; padding: 0; border: 0; background: none; }
-      .dci-mx-addcol-pop { position: absolute; z-index: 5; left: auto; right: 0; min-width: calc(var(--u, 1px) * 260); }
+      .dci-mx-addcol-pop { position: fixed; z-index: 30; left: auto; right: 0; min-width: calc(var(--u, 1px) * 260); }
       /* [Z-MXO] (3.68.0) a head with its menu open above the sticky head of the tracks ("Track and work") */
       .dci-matrix thead th:has(.dci-mx-colmenu) { z-index: 6; }
       .dci-mx-addcol select optgroup { font-weight: 600; }
@@ -42974,6 +43209,8 @@
       .dci-stats-colbar { display: block; width: 100%; max-width: calc(var(--u, 1px) * 18); min-height: 1px; background: var(--purple); border-radius: 2px 2px 0 0; }
       .dci-stats-collbl { font-size: calc(var(--u, 1px) * 9); color: var(--muted); line-height: 1.3; }
       .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }
+      /* [Z-SNW] (3.83.0) a heading inside a topic of the settings ("Edit note") */
+      .dci-set-h { margin: calc(var(--u, 1px) * 12) 0 calc(var(--u, 1px) * 4); padding-top: calc(var(--u, 1px) * 8); border-top: 1px solid var(--line); font-size: 1em; font-weight: 600; }
       .dci-dm-pending { color: var(--warn); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
 
       /* The date matrix: one column per date group */
