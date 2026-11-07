@@ -14,8 +14,9 @@ def case_mxdrop():
     Nobody Here (4)" is no entry (only the track group) – [3.37.0] (E5, S054) the notes read in full: Nobody Here is an entry from them,
     the strings arranger of tracks 2 and 4 (its column), and nothing of the track lists becomes a name ("Pub Co (1"). A click on a
     cell takes a track out.
-    Dropped (S023): onto a column head – all its roles only for the group's tracks; Shift adds; onto a role – only
-    that role; onto an attribute in the head of the track column – the links of the group's tracks (MB's own stay)."""
+    Dropped (S023): onto a column head – all its roles only for the group's tracks; onto a role – only
+    that role; onto an attribute in the head of the track column – the links of the group's tracks (MB's own stay). ([3.78.0] Z-DND)
+    Those replace with ⇧ Shift; a drop without it adds (the hint says so: "＋ adds the works of these tracks (⇧ Shift: only these)")."""
     import re
     from common_rows import drag
 
@@ -83,8 +84,9 @@ def case_mxdrop():
             and any('Pub Co · 1, 3' in x for x in pool()) and any('Ghostpub · 4' in x for x in pool()) and any('Nobody Here · 2, 4' in x for x in pool()) \
             and any('Writer W' in x and 'only a track group' in x for x in logs) \
             and c0.get('Nobody Here') == ['2', '4'] and any('Nobody Here (arranger) on tracks 2, 4' in x for x in logs) and not any('(' in k for k in c0)
-        pg.click(f'{cell("Pub Co", 3)} [data-act=mx-cell]'); pg.wait_for_timeout(200)
-        c1 = cols()
+        pg.click(f'{cell("Pub Co", 3)} [data-act=mx-cell]')
+        # ([3.78.0] Z-FLK) the cell drawn anew, not a time
+        c1 = {'Pub Co': settle(lambda: cols().get('Pub Co'), ['1'])}
         print('A2) Track 3 weggeklickt:', c1.get('Pub Co'))
         ok_a = ok_a and c1.get('Pub Co') == ['1']
         results.append(ok_a)
@@ -95,9 +97,9 @@ def case_mxdrop():
         gid = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Side A')).dataset.id")
         wz = colkey('Writer Z')
         print('B0) Writer Z vorher:', cols().get('Writer Z'))
-        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'[data-colhead="{wz}"] .dci-mx-card .dci-mx-credit')
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'[data-colhead="{wz}"] .dci-mx-card .dci-mx-credit', shift=True)
         b1 = settle(lambda: cols().get('Writer Z'), ['1+', '2+'])
-        # Shift: the group of track 4 added (synthetic events carry the Shift key)
+        # without Shift: the group of track 4 added (synthetic events; the hint with and without the Shift key)
         g4 = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Ghostpub')).dataset.id")
         hints = pg.evaluate(f"""(() => {{
       const src = document.querySelector('.dci-pools-body .dci-pchip-tg[data-id="{g4}"] .dci-chip-main').closest('[data-drag]');
@@ -110,17 +112,18 @@ def case_mxdrop():
       out.push(after(dst));
       dst.dispatchEvent(new DragEvent('dragover', {{ bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: true }}));
       out.push(after(dst));
-      dst.dispatchEvent(new DragEvent('drop', {{ bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: true }}));
+      dst.dispatchEvent(new DragEvent('drop', {{ bubbles: true, cancelable: true, dataTransfer: dt }}));
       src.dispatchEvent(new DragEvent('dragend', {{ bubbles: true, dataTransfer: dt }}));
       return out; }})()""")
         pg.wait_for_timeout(300)
         b2 = settle(lambda: cols().get('Writer Z'), ['1+', '2+', '4+'])
-        print('B1) „Side A“ auf Writer Z:', b1, '| mit Umschalt Track 4 dazu:', b2, '| Hinweise:', hints)
-        ok_b = b1 == ['1+', '2+'] and b2 == ['1+', '2+', '4+'] and hints[0] == 'dashed' and 'only the works of these tracks' in hints[1] and 'adds the works' in hints[2]
+        print('B1) „Side A“ mit Umschalt auf Writer Z:', b1, '| ohne Umschalt Track 4 dazu:', b2, '| Hinweise:', hints)
+        ok_b = b1 == ['1+', '2+'] and b2 == ['1+', '2+', '4+'] and hints[0] == 'dashed' and 'adds the works of these tracks (⇧ Shift: only these)' in hints[1] \
+            and 'only the works of these tracks' in hints[2] and 'adds' not in hints[2]
         # onto one role: lyricist only on the works of track 1 (group "Pub Co · 1, 3" → track 1 has a work, 3 waits)
         g13 = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Pub Co')).dataset.id")
         lyr = pg.evaluate(f"[...document.querySelectorAll('[data-colhead=\"{wz}\"] [data-tgrole]')].find(r => r.textContent.trim() === 'lyricist').dataset.tgrole")
-        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g13}"] .dci-chip-main', f'[data-colhead="{wz}"] [data-tgrole="{lyr}"]')
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g13}"] .dci-chip-main', f'[data-colhead="{wz}"] [data-tgrole="{lyr}"]', shift=True)
         # [3.31.8] a moment for the drop to be drawn (under load the reading came too early now and then)
         pg.wait_for_timeout(400)
         roles = settle(lambda: pg.evaluate(f"""[1, 2, 3, 4].map(t => [...document.querySelectorAll('.dci-matrix tr[data-work="' + (t - 1) + '"] .dci-mx-cell[data-col="{wz}"] .dci-mxchip')].map(c => c.textContent.trim().split(' ')[0]).sort())"""),
@@ -130,9 +133,11 @@ def case_mxdrop():
         results.append(ok_b)
 
         # C) onto an attribute in the head of the track column: "li" for the works of "Side A" (tracks 1, 2)
-        pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(300)
-        pg.click('tr[data-work="2"] [data-act=work-pending]'); pg.wait_for_timeout(300)
-        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', '.dci-wattrs-all [data-tgattr=live]')
+        pg.click('tr[data-work="1"] [data-act=work-pending]')
+        H.wait_ok(pg, "!document.querySelector('tr[data-work=\"1\"] [data-act=work-pending]')", 10)
+        pg.click('tr[data-work="2"] [data-act=work-pending]')
+        H.wait_ok(pg, "!document.querySelector('tr[data-work=\"2\"] [data-act=work-pending]')", 10)
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', '.dci-wattrs-all [data-tgattr=live]', shift=True)
         live = settle(lambda: pg.evaluate("""[...document.querySelectorAll('.dci-matrix tbody tr[data-mrow]')].filter(tr => tr.dataset.mrow.match(/^[wp]:/))
       .map(tr => [Number(tr.dataset.work) + 1, [...tr.querySelectorAll('.dci-wpill-on, .dci-wpill-mb')].map(b => b.textContent.trim())])"""), [[1, ['li✎']], [2, ['li']], [3, []]])
         print('C1) „Side A“ auf „li“:', live)

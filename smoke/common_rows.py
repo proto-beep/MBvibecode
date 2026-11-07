@@ -41,8 +41,9 @@ def stage(pg):
     pg.wait_for_timeout(1500)
 
 
-def drag(pg, src, dst, steps=10):
-    """Drag with the mouse in small steps (Playwright's drag_and_drop does not start a drag while a field has focus)."""
+def drag(pg, src, dst, steps=10, shift=False):
+    """Drag with the mouse in small steps (Playwright's drag_and_drop does not start a drag while a field has focus).
+    ([3.78.0] Z-DND) shift: ⇧ Shift held from the start of the drag to its drop (replace instead of add)."""
     a = pg.locator(src).first
     b = pg.locator(dst).first
     # In the middle of the list: near its edges the dashboard scrolls while dragging (after 0.2 s, as browsers do)
@@ -73,10 +74,14 @@ def drag(pg, src, dst, steps=10):
     if sb2:
         x1, y1 = sb2['x'] + sb2['width'] / 2, sb2['y'] + sb2['height'] / 2
     xs, ys = x0 + 8, y0 + 8
+    if shift:
+        pg.keyboard.down('Shift')
     for k in range(1, steps + 1):
         pg.mouse.move(xs + (x1 - xs) * k / steps, ys + (y1 - ys) * k / steps)
         pg.wait_for_timeout(20)
     pg.mouse.up()
+    if shift:
+        pg.keyboard.up('Shift')
     pg.wait_for_timeout(300)
 
 

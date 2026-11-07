@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.77.0 | – |
+| 2026-11-07 | 3.73.0 – 3.78.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,22 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.78.0
+
+#### Changed
+
+- **Drag & drop the same everywhere** (collected item Z-DND): a drop **adds** – a date already there stays (a row or an entry's event with another date keeps it, the new date gets a row of its own, a column of its own in the entry's matrix), a track group's tracks are added – and **⇧ Shift replaces** (until 3.77.0 it was the other way round for the tracks, the works matrix and the role chips, and dates were replaced). Where only one date can be (a column or a cell of the works matrix, a planned work link), a date already there stays and a message says to hold ⇧ Shift. **Every drop that changed something says so, with ↶ Undo**; a drop that cannot be done says why. A track group on a row of the release level gives it the group's tracks.
+- **⠿ without a mouse** for all places: picked, the places are marked and a line says what to do; a click – or Enter – on a place drops the chip there; Esc ends it.
+- **The log beside a narrower edit note** (collected item Z-LOG): the edit note may get narrower for it (at least 300 px, the log at least 240 px – until 3.77.0 an edit note under 640 px put the log above it); a width you drag the edit note to beside the log is remembered.
+
+#### Fixed
+
+- **"no date" in the short line of an event** (compact view, "① Release · no date · mastering") takes a dropped date now.
+- **A chip let go over a field** (the edit note, a field of the dashboard) no longer types its id into it.
+- **A track group without a track on the media chosen** no longer empties a row's tracks or switches roles off in the works matrix.
+- **Places that lit up but took nothing** while dragging (the heads of an entry's matrix while a date of the matrix is dragged, the cells "to choose", rows on Skip) are no longer marked.
+- **Steadier tests** (Z-FLK): `t_start.py gapmore` (a request cut off by loading the page again is no fault), `t_works_matrix.py mxdrop` (waits for what it checks).
 
 ### Import 3.77.0
 
