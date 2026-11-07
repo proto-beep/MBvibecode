@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.83.0 | – |
+| 2026-11-07 | 3.73.0 – 3.84.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.84.0
+
+#### Added
+
+- **An artist name in brackets after a name** (collected item Z-WPR, rule S127): "Music production, mix, mastering: Wojciech Stecko (Mindheal)" – the entry is the name as written (Wojciech Stecko), MusicBrainz is searched for both (an artist "Mindheal" is a similar suggestion, a release's artist of that name first), and a note at the entry says that an artist under the full name may be cleaner than crediting the artist name. Only a person MusicBrainz has under that name counts – "(Metallica)", "(Poland)", "(Tenor)", "(Jr.)", "(CD2)" are none.
+- **"Composed in"** (collected item Z-BTW, C045): an area where the works were composed, on the works ("Composed in Rzeszow, Poland").
+- **Dates of composition and production** (Z-BTW): "Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland." – one period 2025-02 – 2026-04 (D007; until 3.83.0 two months of their own), placed in the new columns **Composition** (writer, composer, lyricist, librettist, composed in) and **Production** (producer, produced in) of the date matrix (rule D028); those columns show only while they have dates. A word of a recording in the same sentence wins: "Recorded at Abbey Road, produced by George Martin, 12 March 1969" stays Performance. "between April 2026 and February 2025" and "entre febrero de 2025 y abril de 2026" are one period too.
+- **A dedication without a name** (collected item Z-DEDN, rule S128): "This album is dedicated to my lovely daughter and son." is a line left out on purpose ("a dedication without a name"), not one not recognized – only a sentence that is the dedication ("Piano: John Smith (dedicated to my wife)" keeps the piano).
+
+#### Changed
+
+- **"All tracks written, performed and recorded by …"** (Z-WPR, rule S126): "All tracks", "Tracks were" … before two verbs or more are no part of the credit – writer, performer and recording (until 3.83.0 not recognized); joined verbs with a date and an area ("composed and produced … in Rzeszow", "written and recorded in 2020 in Oslo") give the area for each verb that has one in MusicBrainz. "Music production" is producer (R026).
+- **The bar on the release page** (collected item Z-PGF) has a frame all around, like the boxes of the dashboard (until 3.83.0 a line below it).
 
 ### Import 3.83.0
 
