@@ -1465,4 +1465,100 @@ def case_amx383():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_awb386():
+    """Credits Importer 3.86.0 (collected items Z-AWB, Z-DNDS; rule S133): "all works" below "credited as" in the head of a column –
+    the release of case mxdrop (Writer W on tracks 1, 2; Nobody Here arranges 2, 4).
+    A) A click on Writer W's "all works": writer on all four works (the button "✓ all works"); a second click: on none.
+    B) A track group "Side A" (tracks 1, 2) dropped onto it: exactly those works (the default of this place replaces); a group of
+       track 4 with ⇧ Shift: added (1, 2, 4).
+    C) ⚙ Settings → Dates & tracks → "Drag & drop": a switch for each of five places; "all works" set to "Drop adds (⇧ replaces)":
+       stored; a group of track 3 dropped without ⇧ now adds (1, 2, 3, 4); "↺ Defaults of this topic": the setting gone.
+    D) Rule S133 off: no button."""
+    from common_rows import drag
+    orig_rel = H.discogs_release
+
+    def rel():
+        d = orig_rel()
+        d['notes'] += '\nWritten by Writer W (1, 2).\nStrings arranged by Nobody Here (2, 4).'
+        return d
+
+    H.discogs_release = rel
+    COLS = """(() => { const out = {};
+  document.querySelectorAll('.dci-matrix th[data-colhead]').forEach((th) => {
+    const name = (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim();
+    out[name] = [...document.querySelectorAll(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`)].filter(c => c.classList.contains('dci-mx-on')).map(c => Number(c.closest('tr').dataset.work) + 1);
+  }); return out; })()"""
+    results = []
+
+    def open_page(p, off=False):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        if off:
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S133']))")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return b, pg, errs
+
+    def group(pg, name, tracks):
+        pg.click('[data-act=tg-new]')
+        pg.fill('[data-f=tg-name]', name)
+        for t in tracks:
+            pg.check(f'[data-f=tg-track][data-i="{t - 1}"]')
+        pg.click('[data-act=tg-save]')
+        pg.wait_for_timeout(200)
+        return pg.evaluate(f"[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes({name!r})).dataset.id")
+
+    with sync_playwright() as p:
+        b, pg, errs = open_page(p)
+        cols = lambda: pg.evaluate(COLS)
+        ww = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead]:not(.dci-mx-locked)')].find(th => /^Writer W/.test((th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim())).dataset.colhead")
+        btn = f'[data-colhead="{ww}"] [data-act=mx-col-allworks]'
+        a0 = cols().get('Writer W')
+        pg.locator(btn).evaluate('b => b.click()')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        a1 = [cols().get('Writer W'), pg.locator(btn).inner_text().strip()]
+        pg.locator(btn).evaluate('b => b.click()')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        a2 = cols().get('Writer W')
+        print('A)', a0, '→', a1, '→', a2)
+        results.append(a0 == [1, 2] and a1 == [[1, 2, 3, 4], '✓ all works'] and a2 == [])
+        g12, g4, g3 = group(pg, 'Side A', [1, 2]), group(pg, 'Last', [4]), group(pg, 'Third', [3])
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g12}"] .dci-chip-main', btn)
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        b1 = cols().get('Writer W')
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g4}"] .dci-chip-main', btn, shift=True)
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        b2 = cols().get('Writer W')
+        print('B)', b1, b2)
+        results.append(b1 == [1, 2] and b2 == [1, 2, 4])
+        H.open_settings(pg, 'dates')
+        c0 = pg.evaluate("[!!document.querySelector('[data-el=settings] [data-el=set-drop]'), [...new Set([...document.querySelectorAll('[data-el=settings] [data-act=drop-mode]')].map(b => b.dataset.place))], [...document.querySelectorAll('[data-el=settings] [data-act=drop-mode][aria-pressed=true]')].map(b => b.dataset.place + ':' + b.dataset.mode)]")
+        pg.locator('[data-el=settings] [data-act=drop-mode][data-place=allworks][data-mode=add]').click()
+        stored = pg.evaluate("JSON.parse(localStorage.getItem('dci-drop-modes') || 'null')")
+        H.open_settings(pg)
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g3}"] .dci-chip-main', btn)
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        c1 = cols().get('Writer W')
+        H.open_settings(pg, 'dates')
+        pg.locator('[data-el=settings] [data-act=settings-reset][data-topic=dates]').click()
+        pg.wait_for_timeout(300)
+        c2 = pg.evaluate("localStorage.getItem('dci-drop-modes')")
+        print('C)', c0, stored, c1, c2)
+        results.append(c0[0] and c0[1] == ['dates', 'tracks', 'matrix', 'chips', 'allworks'] and c0[2] == ['dates:add', 'tracks:add', 'matrix:add', 'chips:add', 'allworks:replace']
+                       and stored and stored.get('allworks') == 'add' and c1 == [1, 2, 3, 4] and c2 is None)
+        results.append(not errs)
+        b.close()
+    with sync_playwright() as p:
+        b, pg, errs = open_page(p, off=True)
+        d = pg.locator('[data-act=mx-col-allworks]').count()
+        print('D)', d)
+        results.append(d == 0)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

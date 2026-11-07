@@ -1431,6 +1431,7 @@ def case_compactside():
             results.append(bb['by'] == 'role' and bb['roleLines'] >= 1 and bb['headBy'] and bb['side'] == a['side'] and bb['beside'])
             LINES = "[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Barry Guy').querySelectorAll('tr.dci-em-line').length"
             pg.click(f'{sec} .dci-em-side [data-act=add-role]')
+            pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
             pg.wait_for_timeout(600)
             c = pg.evaluate(INFO, 'Barry Guy')
             n1 = pg.evaluate(LINES)
@@ -1535,6 +1536,7 @@ def case_compactlines():
             print('D) Werke:', d)
             results.append(d == [True, True])
             pg.click(f'{sec} .dci-em-tail [data-act=add-role]')
+            pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
             pg.wait_for_timeout(600)
             e = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Barry Guy').querySelectorAll('tr.dci-em-line').length")
             print('E) ＋ role: Zeilen der Matrix', e)
@@ -2051,6 +2053,111 @@ def case_rlv383():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_arq386():
+    """Credits Importer 3.86.0 (collected item Z-ARQ, rule S134): "＋ Another role" asks the relationship type.
+    A) Rows (the classic view), Bob Producer: the question below his name – a search field, the types by level (Recording first,
+       "performer", "instrument" … the common ones first); "mix" typed: only types with "mix"; "mix" chosen: a row "mix" on the
+       recordings, the question gone.
+    B) The matrix of an entry (Solo Man of the release of case dnd378): his events to tick, the first ticked; all ticked, "producer"
+       chosen: a line "producer" on each (their tracks).
+    C) "Type a role yourself (e.g. Pressed By)": as until 3.85.0 – a new row, its role field focused; Esc closes the question.
+    D) Rule S134 off: no question, the row at once.
+    E) (review) One question at a time – another entry's "＋ Another role" closes the first; Enter in the search takes the first type."""
+    orig, rel = join_release()
+    ROWTYPES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes(name));
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); return [(t && t.selectedOptions[0] || {}).text || '', (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '']; }) : null; }"""
+    results = []
+
+    def open_page(p, view, off=False):
+        H.ENTRIES_VIEW = view
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        if off:
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S134']))")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return b, pg, errs
+
+    sel = lambda name: f"[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes({name!r}))"
+    try:
+        with sync_playwright() as p:
+            H.discogs_release = orig
+            b, pg, errs = open_page(p, 'legacy')
+            n0 = len(pg.evaluate(ROWTYPES, 'Bob Producer'))
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            lv = pg.evaluate("[...document.querySelectorAll('[data-el=arq] [data-arqlv]')].map(x => x.dataset.arqlv)")
+            first = pg.evaluate("[...document.querySelectorAll('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick]')].slice(0, 3).map(b => b.dataset.type)")
+            focused = pg.evaluate("document.activeElement && document.activeElement.dataset.f")
+            pg.keyboard.type('mix')
+            pg.wait_for_timeout(200)
+            found = pg.evaluate("[...document.querySelectorAll('[data-el=arq] [data-act=arq-pick]')].map(b => b.dataset.type)")
+            pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=mix]').click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            rows = pg.evaluate(ROWTYPES, 'Bob Producer')
+            print('A)', lv, first, focused, found, rows[n0:], pg.evaluate("!!document.querySelector('[data-el=arq]')"))
+            results.append(lv[:1] == ['recording'] and first[:2] == ['performer', 'instrument'] and focused == 'arq-q' and found and all('mix' in t for t in found)
+                           and rows[n0:] == [['mix', 'recording']] and not pg.evaluate("!!document.querySelector('[data-el=arq]')"))
+            # C) typed by hand; Esc
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            pg.keyboard.press('Escape')
+            pg.wait_for_timeout(200)
+            esc = pg.evaluate("!!document.querySelector('[data-el=arq]')")
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            pg.click('[data-el=arq] [data-act=arq-free]')
+            pg.wait_for_timeout(300)
+            c = pg.evaluate("document.activeElement && document.activeElement.dataset.f")
+            print('C)', esc, c)
+            results.append(not esc and c == 'role-text')
+            # E) (review) one question at a time (another entry's closes it); Enter takes the first type found
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            pg.evaluate(f"{sel('Guitar Guy')}.querySelector('[data-act=add-role]').click()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            boxes = pg.evaluate("[...document.querySelectorAll('[data-el=arq]')].map(x => x.closest('[data-group]').querySelector('.dci-gname').textContent.includes('Guitar Guy'))")
+            n2 = len(pg.evaluate(ROWTYPES, 'Guitar Guy'))
+            pg.keyboard.type('mix')
+            pg.keyboard.press('Enter')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            e = pg.evaluate(ROWTYPES, 'Guitar Guy')[n2:]
+            print('E)', boxes, e)
+            results.append(boxes == [True] and e == [['mix', 'recording']])
+            results.append(not errs)
+            b.close()
+        with sync_playwright() as p:
+            H.discogs_release = rel
+            b, pg, errs = open_page(p, 'matrix')
+            pg.evaluate(f"{sel('Solo Man')}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            evs = pg.evaluate("[...document.querySelectorAll('[data-el=arq] [data-f=arq-ev]')].map(x => x.checked)")
+            pg.evaluate("document.querySelectorAll('[data-el=arq] [data-f=arq-ev]').forEach(x => { if (!x.checked) x.click(); })")
+            pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=producer]').click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            added = pg.evaluate(f"[...{sel('Solo Man')}.querySelectorAll('tr[data-rows]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /^producer/.test(t))")
+            print('B)', evs, added)
+            results.append(len(evs) >= 1 and evs[0] and not any(evs[1:]) and len(added) == len(evs))
+            results.append(not errs)
+            b.close()
+        with sync_playwright() as p:
+            H.discogs_release = orig
+            b, pg, errs = open_page(p, 'legacy', off=True)
+            pg.evaluate(f"{sel('Bob Producer')}.querySelector('[data-act=add-role]').click()")
+            pg.wait_for_timeout(300)
+            d = [pg.evaluate("!!document.querySelector('[data-el=arq]')"), pg.evaluate("document.activeElement && document.activeElement.dataset.f")]
+            print('D)', d)
+            results.append(d == [False, 'role-text'])
+            b.close()
+    finally:
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

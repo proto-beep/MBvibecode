@@ -234,6 +234,7 @@ def case_rowrules():
         # E) the arrow in the head (compact view): Bass Man with a second role
         sec = "section.dci-group:has(.dci-gname strong:text-is('Bass Man'))"
         pg.click(f'{sec} [data-act=add-role]')
+        pg.click('[data-el=arq] [data-act=arq-free]')  # ([Z-ARQ] 3.86.0) the role typed by hand
         pg.wait_for_timeout(300)
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(400)

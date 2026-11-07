@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.85.0
+// @version      3.86.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.85.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.85.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.86.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.86.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.85.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.86.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2930,11 +2930,8 @@
       "dm.placeHere": "+ place here",
       "dm.tracksHere": "+ tracks here",
       "dm.dropDates": "drag dates here",
-      "drop.help": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date (without one, a date is for all tracks). A date onto another date makes a period of both. Everywhere a drop adds – a date already there stays, tracks are added – and ⇧ Shift replaces; each drop says what it did, with ↶. Dashed and yellow: a suggestion, not applied yet. ⠿ picks a chip: then click (or Enter on) the place.",
       "drop.pickDate": "Move “{name}”: drag it, or click here and then on the place (a column, a row, an event …)",
       "drop.pickTracks": "Move “{name}”: drag it, or click here and then on the place (a date of the matrix, the tracks of a row, the works matrix)",
-      "drop.pickingDate": "⠿ “{name}” picked: click a place (or Enter on it) – a column of the matrix, the date of a row, an event or a block of an entry, the works matrix; ⇧ Shift replaces. Esc or ⠿ ends.",
-      "drop.pickingTracks": "⠿ “{name}” picked: click a place (or Enter on it) – a date of the matrix, the tracks of a row, the works matrix; ⇧ Shift replaces. Esc or ⠿ ends.",
       "drop.dateHintTitle": "Drag a date into a column of the matrix, onto a row, an event or a block of an entry, the works matrix, or onto another date (makes a period of both). A date already there stays – ⇧ Shift replaces it",
       "drop.tracksHintTitle": "Drag a track group onto a date in the matrix (that date then applies only to these tracks), onto the tracks of a row or onto the works matrix: adds them – ⇧ Shift replaces them",
       "drop.tracksHint": "drop: add · ⇧ Shift: replace",
@@ -2942,6 +2939,36 @@
       "drop.tracksAdd": "＋ adds to the tracks of this row (⇧ Shift: replace)",
       "drop.mxReplace": "↧ only the works of these tracks",
       "drop.mxAdd": "＋ adds the works of these tracks (⇧ Shift: only these)",
+      "arq.evTracks": "{n} track(s)",
+      "drop.helpModes": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date (without one, a date is for all tracks). A date onto another date makes a period of both. A drop adds or replaces as ⚙ Settings → Dates & tracks → “Drag & drop” says for its place (by default it adds – a date already there stays, tracks are added; on “all works” it replaces) – ⇧ Shift does the other; each drop says what it did, with ↶. Dashed and yellow: a suggestion, not applied yet. ⠿ picks a chip: then click (or Enter on) the place.",
+      "drop.pickingDateModes": "⠿ “{name}” picked: click a place (or Enter on it) – a column of the matrix, the date of a row, an event or a block of an entry, the works matrix; ⇧ Shift does the other of add and replace. Esc or ⠿ ends.",
+      "drop.pickingTracksModes": "⠿ “{name}” picked: click a place (or Enter on it) – a date of the matrix, the tracks of a row, the works matrix, “all works”; ⇧ Shift does the other of add and replace. Esc or ⠿ ends.",
+      "drop.needShiftAlt": "{name} already has a date ({old}): it stays. Drop without ⇧ Shift to replace it.",
+      "drop.rowDateAddedAlt": "{date} added for {name}: a row of its own – its date {old} stays (without ⇧ Shift it is replaced)",
+      "arq.search": "Search a relationship type …",
+      "arq.events": "For:",
+      "arq.free": "Type a role yourself (e.g. Pressed By)",
+      "arq.none": "No relationship type found – type a role yourself below.",
+      "log.arqAdded": "Another role for {name}: {type} ({n} row(s))",
+      "matrix.allWorks": "all works",
+      "matrix.allWorksOn": "✓ all works",
+      "matrix.allWorksOnTitle": "This column's role(s) for every work at once – or drop a track group here: the works of its tracks (⚙ Settings → Dates & tracks → Drag & drop)",
+      "matrix.allWorksOffTitle": "Every work has this column's role(s) – a click takes them off every work; a track group dropped here: the works of its tracks",
+      "log.matrixAllWorksOn": "Works matrix: {col} for all works",
+      "log.matrixAllWorksOff": "Works matrix: {col} off for all works",
+      "settings.dropHead": "Drag & drop",
+      "settings.drop.dates": "Dates onto rows and events",
+      "settings.drop.tracks": "Track groups onto rows",
+      "settings.drop.matrix": "Track groups onto the works matrix",
+      "settings.drop.chips": "Role chips onto another event",
+      "settings.drop.allworks": "Track groups onto “all works”",
+      "settings.drop.add": "Drop adds (⇧ replaces)",
+      "settings.drop.replace": "Drop replaces (⇧ adds)",
+      "drop.tracksHintAlt": "drop: replace · ⇧ Shift: add",
+      "drop.tracksReplaceAlt": "↧ replaces the tracks of this row (⇧ Shift: add)",
+      "drop.tracksAddAlt": "＋ adds to the tracks of this row",
+      "drop.mxReplaceAlt": "↧ only the works of these tracks (⇧ Shift: add)",
+      "drop.mxAddAlt": "＋ adds the works of these tracks",
       "drop.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head: a new event with it; ⇧ Shift: replaces its date) and its tracks",
       "drop.evDateTitle": "Drop a date of the pool here: without a date the event gets it; with one, a new event gets the new date (⇧ Shift: replaces it)",
       "drop.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line: the role is in both (⇧ Shift: moves it there)",
@@ -3899,6 +3926,8 @@
     { id: 'S130', where: 'festivalHtml, festivalEvent, festNameAlike, eventInfo, refresh', note: 'Festivals (3.85.0; collected item Z-FEV): the hint of a festival recording (S056) goes once an event is an entry (with a row not on Skip) – offered for it, or with a name alike, its own or an alias (the words of the shorter nearly all in the other, two at least or one that is no genre; years and "festival" aside), its time holding the festival\'s date; it comes back when the event goes' },
     { id: 'S131', where: 'festPlaceHtml, festivalOfPlace (fest-place-skip)', note: 'Festivals (3.85.0; collected item Z-FPL): at a place of a festival recording (named in its sentence as a whole, linked or not; the only place and festival only with "recorded at") the hint too; with the event linked as well both are named and "Place → Skip" puts its rows of the recording on Skip (all of them: the entry\'s own Skip, ↺ Take again) – MusicBrainz links the event to its place' },
     { id: 'S132', where: 'evAskTypes, answerEvAsk, trackIsVideo (festival-add)', note: 'Events (3.85.0; collected item Z-EVA): on a release with audio and videos an event gets a row for each – "recorded at" on the audio tracks, "video shot at" on the videos (the first answer of the question, and at once for an event of a festival recording); a track whose title says "(Video)", "Official Video" counts as a video, with a hint that MusicBrainz has an audio recording' },
+    { id: 'S134', where: 'arqOpen, arqHtml, arqPick (add-role)', note: 'Entries (3.86.0; collected item Z-ARQ): "＋ Another role" asks the relationship type – a search, the types by level (the common ones first), the events of the entry to tick (the one opened, else the first): a row for each event ticked on the level of the type, with its tracks and date; "Type a role yourself (e.g. Pressed By)" as until 3.85.0. For every kind of entry' },
+    { id: 'S133', where: 'columnHeadHtml (mx-col-allworks), allWorksOn, dmTargetOf (mx-allworks)', note: 'Works matrix (3.86.0; collected item Z-AWB): "all works" below "credited as" in the head of each column – a click switches the column\'s role(s) on for every work (also a column with 0 works), all on: off; a track group dropped on it sets exactly the works of its tracks (⇧ Shift adds; setting "Drag & drop")' },
     { id: 'S128', where: 'TEXT.parse (dedicationNoName)', note: 'Texts (3.84.0; collected item Z-DEDN): a dedication without a name – "This album is dedicated to my lovely daughter and son", "In loving memory of my father" (my, our, the … and no capital letter after it) – is a line left out on purpose ("a dedication without a name"), not one not recognized' },
     { id: 'S126', where: 'TEXT.parse (readClause; TEXT_WHAT_VERBS)', note: 'Texts (3.84.0; collected items Z-WPR, Z-BTW): the words for the music before the verbs – "All tracks written, performed and recorded by …", "Tracks were composed and produced between … in …" – are no part of the credit (a role the register knows with them stays: "All songs written by"); joined verbs with a date and an area – "Composed and produced between February 2025 and April 2026 in Rzeszow, Poland" – give the area for each verb (composed in on the works, produced in on the recordings)' },
     { id: 'S127', where: 'TEXT.parse (namesScoped, addCredit), the name search', note: 'Texts (3.84.0; collected item Z-WPR): a name in brackets after a person\'s name – "Wojciech Stecko (Mindheal)" – is the artist name of the same person: the credit stays the name as written, MusicBrainz is searched by both (the artist name only similar; a release\'s artist of that name first), a note at the entry says that an artist under the full name may be cleaner' },
@@ -18537,6 +18566,7 @@
       // [Z-SNW] (3.83.0, review) the question about works of the same title and its answers: of the import before
       S.mxDupAsk = null;
       S.dupAnyway = null;
+      S.arq = null; // [Z-ARQ] (3.86.0) the question of "＋ Another role" of an entry of the import before
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
       S.digital = !!(ws.media || []).length && (ws.media || []).every((m) => /digital media/i.test(m.format || ''));
@@ -24445,6 +24475,7 @@
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
         ${a.company ? `<div class="dci-variants dci-variants-co" data-variants="${a.key}">${creditAllHtml(a)}</div>` : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
+        ${S.arq && S.arq.key === a.key && ruleOn('S134') ? arqHtml(a) : ''}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         ${mxEntry(a) ? entryMatrixHtml(a, rows) : compact ? entryCompactHtml(a, rows, notes, inLines) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
@@ -26591,8 +26622,8 @@
         </div></div>`;
     }).join('');
     return `<div class="dci-dm" data-el="dm">
-      <p class="dci-sub dci-dm-help">${esc(tr('drop.help'))}</p>
-      ${pick ? `<p class="dci-dm-pickhint" role="status">${esc(tr(pick.kind === 'date' ? 'drop.pickingDate' : 'drop.pickingTracks', { name: pickName(pick) }))}</p>` : ''}
+      <p class="dci-sub dci-dm-help">${esc(tr('drop.helpModes'))}</p>
+      ${pick ? `<p class="dci-dm-pickhint" role="status">${esc(tr(pick.kind === 'date' ? 'drop.pickingDateModes' : 'drop.pickingTracksModes', { name: pickName(pick) }))}</p>` : ''}
       <div class="dci-dm-grid" style="--dm-cols: ${shown.length}">${cols}</div>
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
@@ -30353,6 +30384,174 @@
     if (row.excluded && mrow.work) row.excluded.delete(`${mrow.i}|${mrow.work.gid}`);
   }
 
+  /** "＋ Another role" as until 3.85.0 (and "Type a role yourself" of its question): a new row, its role still to type. */
+  function addRoleRow(artist, text = '') {
+    const r = makeRow(artist.key, { manual: true, company: artist.company ? artist : null });
+    if (artist.other) {
+      Object.assign(r, { other: true, entityType: artist.entityType, types: [], typeOptions: null, notes: [] });
+      applyRoleText(r, '');
+    }
+    // ((3.86.0, review) what was typed in the search of the question: the role, as typed into the row
+    if (String(text).trim()) applyRoleText(r, String(text).trim());
+    r.tracks = new Set(selIdx());
+    S.rows.push(r);
+    // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open; [3.35.0] compact: the entry opened
+    if (mxCompact(artist)) S.emWide.add(artist.key);
+    if (mxEntry(artist)) {
+      S.emOpen.add(r.id);
+      rerenderGroup(artist);
+      const inp = S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`);
+      if (inp) inp.focus();
+      refresh();
+      return;
+    }
+    // [3.27.0] a new row is open (its role is still to type)
+    S.rowOpen.add(r.id);
+    const tbody = S.overlay.querySelector(`[data-group="${artist.key}"] tbody`);
+    if (tbody) {
+      tbody.insertAdjacentHTML('beforeend', rowHtml(r));
+      S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`).focus();
+    } else rerenderGroup(artist);
+    refresh();
+  }
+
+  // --- [Z-ARQ] (3.86.0, S134) "＋ Another role" asks the relationship type ---------------------------------------------------------
+  /** The common types of each kind of entry: first in the question (the others below them, by name). */
+  const ARQ_COMMON = {
+    artist: ['performer', 'instrument', 'vocal', 'producer', 'co-producer', 'mix', 'recording', 'engineer', 'mastering', 'arranger', 'remixer', 'conductor',
+      'writer', 'composer', 'lyricist', 'programming', 'photography', 'design/illustration', 'design', 'graphic design', 'liner notes', 'misc', 'miscellaneous support'],
+    label: ['phonographic copyright', 'copyright', 'publishing', 'published', 'distributed', 'manufactured', 'marketed', 'licensor', 'rights society'],
+    place: ['recorded at', 'mixed at', 'mastered at', 'engineered at', 'produced at', 'edited at', 'remixed at'],
+    event: ['recorded at', 'video shot at'],
+    area: ['recorded in', 'mixed in', 'mastered in', 'produced in', 'composed in', 'engineered in', 'remixed in'],
+  };
+  const ARQ_LEVELS = ['recording', 'release', 'work', 'release_group'];
+  /** The kind of entity an entry's new rows are for. */
+  const arqEntityType = (a) => (a.other ? a.entityType : a.company ? a.entityType || companyTypes(a)[0] || 'label' : 'artist');
+  /** The events of an entry's matrix (not "Skip") – to tick. */
+  const arqEvents = (a) => (mxOn(a) ? entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).events.filter((e) => !e.skip) : []);
+
+  /** ((review) An event of the question as plain text – no controls of the entry inside a label: number, level, date, tracks. */
+  function arqEvText(e) {
+    const pool = e.date && e.date.poolId ? S.datePool.find((x) => x.id === e.date.poolId) : null;
+    const date = pool ? poolLabel(pool) : e.date && hasDateInput(e.date) ? fieldsText(e.date) : '';
+    return [`${circled(e.n)} ${tr(`level.${e.level}`)}`, date, e.level === 'recording' ? tr('arq.evTracks', { n: e.tracks.size }) : ''].filter(Boolean).join(' · ');
+  }
+
+  function arqOpen(a) {
+    // ((review) the question of another entry closed first (its box drawn away)
+    const prev = S.arq && S.arq.key !== a.key ? S.artists.get(S.arq.key) : null;
+    S.arq = null;
+    if (prev) rerenderGroup(prev);
+    const evs = arqEvents(a);
+    const o = S.emEvOpen && S.emEvOpen.get(a.key);
+    // the event of the column one was in, else the first
+    const pre = (o && evs.find((e) => e.key === o.ev)) || evs[0] || null;
+    S.arq = { key: a.key, q: '', evs: new Set(pre ? [pre.key] : []) };
+    rerenderGroup(a);
+    const q = S.overlay.querySelector('[data-el="arq"] [data-f="arq-q"]');
+    if (q) q.focus();
+  }
+  function arqClose(focusBack) {
+    const a = S.arq && S.artists.get(S.arq.key);
+    S.arq = null;
+    if (!a) return;
+    rerenderGroup(a);
+    const b = focusBack && S.overlay.querySelector(`[data-group="${a.key}"] [data-act="add-role"]`);
+    if (b) b.focus({ preventScroll: true });
+  }
+  /** The types to choose, by level: the common ones first, the others by name; only those the search finds. */
+  function arqListHtml(a) {
+    const et = arqEntityType(a);
+    const q = norm((S.arq && S.arq.q) || '');
+    const common = ARQ_COMMON[et] || [];
+    const parts = ARQ_LEVELS.map((lv) => {
+      const all = typesFor(lv, et).filter((lt) => !lt.deprecated);
+      const hit = all.filter((lt) => !q || norm(lt.name).includes(q) || norm(mbPhraseOf(lt) || '').includes(q));
+      if (!hit.length) return '';
+      const rank = (lt) => { const k = common.indexOf(norm(lt.name)); return k < 0 ? 999 : k; };
+      const first = hit.filter((lt) => rank(lt) < 999).sort((x, y) => rank(x) - rank(y));
+      const rest = hit.filter((lt) => rank(lt) === 999).sort((x, y) => x.name.localeCompare(y.name));
+      const btn = (lt) => `<button type="button" class="dci-small dci-arq-type" data-act="arq-pick" data-level="${lv}" data-type="${esc(lt.name)}" title="${esc(mbPhraseOf(lt) || lt.name)}">${esc(lt.name)}</button>`;
+      return `<div class="dci-arq-lv" data-arqlv="${lv}"><div class="dci-arq-lvname">${esc(tr(`level.${lv}`))}</div>
+        <div class="dci-arq-types">${first.map(btn).join('')}${first.length && rest.length ? '<span class="dci-arq-sep" aria-hidden="true"></span>' : ''}${rest.map(btn).join('')}</div></div>`;
+    }).join('');
+    return parts || `<p class="dci-sub">${esc(tr('arq.none'))}</p>`;
+  }
+  function arqHtml(a) {
+    const evs = arqEvents(a);
+    const evHtml = evs.length ? `<div class="dci-arq-evs"><span class="dci-sub">${esc(tr('arq.events'))}</span>
+      ${evs.map((e) => `<label class="dci-arq-ev"><input type="checkbox" data-f="arq-ev" value="${esc(e.key)}" ${S.arq.evs.has(e.key) ? 'checked' : ''}> ${esc(arqEvText(e))}</label>`).join('')}</div>` : '';
+    return `<div class="dci-arq" data-el="arq" role="group" aria-label="${esc(tr('group.addRole', { name: a.name }))}">
+      <div class="dci-arq-head"><strong>${esc(tr('group.addRole', { name: a.mbName || a.name }))}</strong>
+        <input type="search" data-f="arq-q" value="${esc(S.arq.q || '')}" placeholder="${esc(tr('arq.search'))}" aria-label="${esc(tr('arq.search'))}">
+        <button type="button" class="dci-iconbtn" data-act="arq-close" title="${esc(tr('common.cancel'))}" aria-label="${esc(tr('common.cancel'))}">✕</button></div>
+      ${evHtml}
+      <div class="dci-arq-list" data-el="arq-list">${arqListHtml(a)}</div>
+      <button type="button" class="dci-textbtn" data-act="arq-free">${esc(tr('arq.free'))}</button></div>`;
+  }
+  /**
+   * A type chosen: a row of it for each event ticked on its level (their tracks and dates) – or, none there, one row on its level
+   * (the tracks of the events ticked, else those chosen above, and the date of the first one ticked).
+   */
+  function arqPick(level, name) {
+    const a = S.arq && S.artists.get(S.arq.key);
+    if (!a || !ARQ_LEVELS.includes(level)) return;
+    const et = arqEntityType(a);
+    if (!typesFor(level, et).some((lt) => lt.name === name)) return;
+    const ticked = arqEvents(a).filter((e) => S.arq.evs.has(e.key));
+    const here = ticked.filter((e) => e.level === level);
+    const targets = here.length ? here : [null];
+    const added = [];
+    for (const e of targets) {
+      const r = makeRow(a.key, { manual: true, company: a.company ? a : null });
+      if (a.company) r.entityType = et;
+      if (a.other) Object.assign(r, { other: true, entityType: a.entityType, types: [], typeOptions: null, notes: [] });
+      applyRoleText(r, name);
+      Object.assign(r, { level, defaultLevel: level, levelTouched: true });
+      const from = e ? [e] : ticked;
+      r.tracks = from.length ? new Set(from.flatMap((x) => [...x.tracks])) : new Set(selIdx());
+      r.suggested = new Set(r.tracks);
+      // ((review) the date of its event (none: none – not one of the group's dates), only an event of its level, and only where the type
+      // has dates
+      resolveRowType(r);
+      const lt = ltOf(r);
+      r.date = e && e.date && level !== 'work' && !(lt && lt.has_dates === false) ? { ...e.date } : null;
+      S.rows.push(r);
+      added.push(r);
+    }
+    S.arq = null;
+    log('info', 'arqAdded', { name: a.mbName || a.name, type: name, n: added.length });
+    if (mxCompact(a)) S.emWide.add(a.key);
+    // ((review) the first new row open, its first field focused (an instrument, a voice …)
+    if (added[0] && level !== 'work') (mxEntry(a) ? S.emOpen : S.rowOpen).add(added[0].id);
+    renderGroups();
+    if (level === 'work') renderWorks();
+    renderDates();
+    refresh();
+    const r0 = added[0] && S.overlay.querySelector(`tr[data-row="${added[0].id}"]`);
+    if (r0) {
+      r0.scrollIntoView({ block: 'nearest' });
+      const fld = r0.querySelector('[data-f="primary"], [data-f="role-text"], input, select');
+      if (fld) fld.focus({ preventScroll: true });
+    } else {
+      const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="add-role"]`);
+      if (b) b.focus({ preventScroll: true });
+    }
+  }
+
+  /** [Z-AWB] (3.86.0, S133) The column's roles on for every work of the matrix (none: false). */
+  function allWorksOn(col) {
+    const mrows = awRows();
+    const rows = defaultRowsOf(col);
+    return !!mrows.length && !!rows.length && rows.every((r) => mrows.every((m) => awHas(col, r, m)));
+  }
+  /** ((review) The works "all works" switches: not those locked or whose credits are skipped. */
+  const awRows = () => matrixRows().filter((m) => !(m.work && workLocked(m.work)) && !creditsSkipped(m.i));
+  /** ((review) A role of the column on for a work – its row or a copy of it with a date of its own. */
+  const awSame = (r, x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub');
+  const awHas = (col, r, m) => col.rows.some((x) => awSame(r, x) && x.tracks.has(m.i) && !(m.work && x.excluded && x.excluded.has(`${m.i}|${m.work.gid}`)));
+
   /** The roles a column stands for by default (one row per type, without per-cell copies). */
   function defaultRowsOf(col) {
     const seen = new Set();
@@ -31755,6 +31954,12 @@
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
       ${pubLevels}
       <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
+      ${ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
+        // [Z-AWB] (3.86.0, S133) the column's role(s) for every work at once – and off again; a track group dropped on it: exactly its works
+        const on = allWorksOn(col);
+        return `<button type="button" class="dci-textbtn dci-mx-allworks" data-act="mx-col-allworks" data-col="${esc(col.key)}" data-allworks="${esc(col.key)}" aria-pressed="${on}"
+          title="${esc(tr(on ? 'matrix.allWorksOffTitle' : 'matrix.allWorksOnTitle'))}">${esc(tr(on ? 'matrix.allWorksOn' : 'matrix.allWorks'))}</button>`;
+      })() : ''}
       ${menu(`${dateBox}
         <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
         ${ruleOn('S100') ? (() => {
@@ -33026,6 +33231,25 @@
         // ((review) the tracks chosen by hand: no publisher check resets them
         if (isPublishingRow(r)) r.pubTouched = true;
         log('info', 'matrixRole', { name: c.name, role: rowPhrase(r) || lt.name, n: new Set(target.map((m) => m.i)).size });
+        break;
+      }
+      // [Z-AWB] (3.86.0, S133) "all works": the column's role(s) on for every work – or, all on, off for every work
+      case 'mx-col-allworks': {
+        const c = matrixColumns().find((x) => x.key === btn.dataset.col);
+        if (!c || c.mbOnly) return true;
+        const mrows = awRows();
+        const off = allWorksOn(c);
+        // ((review) off: every row of the column (copies with their own dates too); on: only where no row of the role has the work
+        if (off) c.rows.forEach((r) => { mrows.forEach((m) => removeCell(r, m)); r.suggest = null; });
+        else {
+          defaultRowsOf(c).forEach((r) => {
+            mrows.forEach((m) => { if (!awHas(c, r, m)) addCell(r, m); });
+            r.suggest = null;
+            r.confirmed = new Set([...(r.confirmed || []), ...mrows.map((m) => m.i)]);
+          });
+        }
+        c.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
+        log('info', off ? 'matrixAllWorksOff' : 'matrixAllWorksOn', { col: c.name });
         break;
       }
       case 'mx-col-all': {
@@ -34322,7 +34546,8 @@
     // [Z-DND] (3.78.0) a date already there stays: said, ⇧ Shift replaces it
     const otherDate = (f) => hasYmd(f) && !(f.poolId && f.poolId === entry.id);
     const needShift = (name, f) => {
-      showMessage('info', 'drop.needShift', { name, old: fieldsText(f) || formatDateValue(validateDateFields(f).value) || '' });
+      // ([Z-DNDS] 3.86.0, review) with "Drop replaces" it is a drop without ⇧ Shift that replaces
+      showMessage('info', S.dropModes && S.dropModes.dates === 'replace' ? 'drop.needShiftAlt' : 'drop.needShift', { name, old: fieldsText(f) || formatDateValue(validateDateFields(f).value) || '' });
       return null;
     };
     const mxCell = target.closest('.dci-mx-cell[data-col]');
@@ -34405,7 +34630,7 @@
       else renderGroups();
       renderDates();
       refresh();
-      return { key: 'drop.rowDateAdded', params: { date, name, old: fieldsText(row.date) } };
+      return { key: S.dropModes && S.dropModes.dates === 'replace' ? 'drop.rowDateAddedAlt' : 'drop.rowDateAdded', params: { date, name, old: fieldsText(row.date) } };
     }
     if (inMatrix) {
       applyDateToTracks(row, entry, set);
@@ -34569,6 +34794,9 @@
       if (d.kind === 'tg') {
         const attr = t.closest('[data-tgattr]');
         if (attr) return { el: attr, kind: 'mx-attr' };
+        // [Z-AWB] (3.86.0, S133) "all works" of a column
+        const aw = t.closest('[data-colhead]:not(.dci-mx-locked) [data-allworks]');
+        if (aw) return { el: aw, kind: 'mx-allworks' };
         const role = t.closest('[data-colhead]:not(.dci-mx-locked) [data-tgrole]');
         if (role) return { el: role, kind: 'mx-role' };
         const card = t.closest('[data-colhead]:not(.dci-mx-locked) .dci-mx-card');
@@ -34790,11 +35018,13 @@
     if (!t) return;
     // [AE-2] (3.35.3) where the line goes: a mark above or below the line under the pointer
     if (t.kind === 'em-order') t.el.classList.toggle('dci-em-after', emAfter(t.el, e));
-    // ([Z-DND] 3.78.0) everywhere the same: a drop adds (keeps what is there), ⇧ Shift replaces
-    if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr'].includes(t.kind)) {
-      t.el.classList.toggle('dci-drop-add', !e.shiftKey);
+    // ([Z-DND] 3.78.0) a drop adds (keeps what is there), ⇧ Shift replaces – [Z-DNDS] (3.86.0) or the other way round, by the setting
+    // of the place
+    if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr', 'mx-allworks'].includes(t.kind)) {
+      const add = !dropReplace(DROP_PLACE_OF[t.kind], e.shiftKey);
+      t.el.classList.toggle('dci-drop-add', add);
       const card = t.el.closest('.dci-mx-cardover');
-      if (card) card.classList.toggle('dci-drop-add', !e.shiftKey);
+      if (card) card.classList.toggle('dci-drop-add', add);
     }
     e.preventDefault();
     try {
@@ -34837,7 +35067,8 @@
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
       return;
     }
-    const replace = !!e.shiftKey;
+    // [Z-DNDS] (3.86.0) replace or add: the setting of the place, turned round with ⇧ Shift
+    const replace = dropReplace(DROP_PLACE_OF[t.kind] || 'dates', e.shiftKey);
     if (t.kind === 'em-chip-ev') {
       // ([Z-DND] 3.78.0) the role stays in its event too; ⇧ Shift moves it (it leaves the other event)
       const a = artistOf(t.el);
@@ -34854,9 +35085,10 @@
       if (JSON.stringify(dm().cells) !== before) dropDone(snap, 'drop.tracksOnDate', { group: (S.trackPool.find((g) => g.id === d.id) || {}).name || '', date: date ? poolLabel(date) : '' });
       return;
     }
-    if (t.kind === 'row-tracks' || t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr') {
+    if (t.kind === 'row-tracks' || t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr' || t.kind === 'mx-allworks') {
       const snap = dropSnapshot();
-      const done = t.kind === 'row-tracks' ? dropTracksOn(t.el, d.id, !replace) : dropTracksOnMatrix(t.kind, t.el, d.id, !replace);
+      // ([Z-AWB] 3.86.0) onto "all works": as onto the head of the column
+      const done = t.kind === 'row-tracks' ? dropTracksOn(t.el, d.id, !replace) : dropTracksOnMatrix(t.kind === 'mx-allworks' ? 'mx-col' : t.kind, t.el, d.id, !replace);
       if (done) dropDone(snap, done.key, done.params);
       return;
     }
@@ -34931,8 +35163,11 @@
    */
   /** [Z-DND] (3.78.0) The texts the places show while a track group is dragged (or picked): add; ⇧ Shift: replace. */
   function setDropHints() {
-    [['--dci-tg-hint', 'drop.tracksHint'], ['--dci-tg-replace', 'drop.tracksReplace'], ['--dci-tg-add', 'drop.tracksAdd'],
-      ['--dci-mx-replace', 'drop.mxReplace'], ['--dci-mx-add', 'drop.mxAdd']]
+    // [Z-DNDS] (3.86.0) the texts of a place whose drop replaces: "(⇧ Shift: add)" (the "Alt" texts)
+    const alt = (p, key) => (S.dropModes && S.dropModes[p] === 'replace' ? `${key}Alt` : key);
+    [['--dci-tg-hint', alt('tracks', 'drop.tracksHint')], ['--dci-tg-replace', alt('tracks', 'drop.tracksReplace')], ['--dci-tg-add', alt('tracks', 'drop.tracksAdd')],
+      ['--dci-mx-replace', alt('matrix', 'drop.mxReplace')], ['--dci-mx-add', alt('matrix', 'drop.mxAdd')],
+      ['--dci-aw-replace', alt('allworks', 'drop.mxReplace')], ['--dci-aw-add', alt('allworks', 'drop.mxAdd')]]
       .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
   }
 
@@ -34981,6 +35216,12 @@
   function onClick(e) {
     // [Z-DND] (3.78.0) a picked chip goes where the click is
     if (S.dmPick && pickDrop(e)) return;
+    // [Z-ARQ] (3.86.0, review) the question of "＋ Another role" closes with a click elsewhere
+    // (the box taken away, nothing drawn anew: the click goes on to what it was on)
+    if (S.arq && e.target.closest && !e.target.closest('[data-el="arq"], [data-act="add-role"]')) {
+      S.arq = null;
+      S.overlay.querySelectorAll('[data-el="arq"]').forEach((x) => x.remove());
+    }
     // [169] (3.38.4) "⚙ Options ▾" of the footer closes with a click anywhere else
     if (S.footOptsOpen && e.target.closest && !e.target.closest('.dci-foot-opts')) setFootOpts(false);
     // An open ▾ menu of a column head closes with a click anywhere else
@@ -35440,6 +35681,18 @@
         break;
       }
       // [Z-EN] (3.41.9) ⚙ Settings → Staging → Edit note
+      // [Z-DNDS] (3.86.0) what a drop does at a place
+      case 'drop-mode': {
+        const p = btn.dataset.place;
+        if (!DROP_PLACES.includes(p)) break;
+        S.dropModes = { ...S.dropModes, [p]: btn.dataset.mode === 'replace' ? 'replace' : 'add' };
+        writeJson('localStorage', DROP_KEY, DROP_PLACES.every((x) => S.dropModes[x] === DROP_DEFAULT[x]) ? null : S.dropModes);
+        log('info', 'settingValue', { what: tr(`settings.drop.${p}`), value: tr(`settings.drop.${S.dropModes[p]}`) });
+        renderSettings();
+        const again = S.overlay.querySelector(`[data-act="drop-mode"][data-place="${p}"][data-mode="${S.dropModes[p]}"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       case 'edit-note-mode': {
         S.editNoteMode = btn.dataset.mode === 'simple' ? 'simple' : 'full';
         writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
@@ -36605,30 +36858,29 @@
         break;
       }
       case 'add-role': {
-        const r = makeRow(artist.key, { manual: true, company: artist.company ? artist : null });
-        if (artist.other) {
-          Object.assign(r, { other: true, entityType: artist.entityType, types: [], typeOptions: null, notes: [] });
-          applyRoleText(r, '');
-        }
-        r.tracks = new Set(selIdx());
-        S.rows.push(r);
-        // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open; [3.35.0] compact: the entry opened
-        if (mxCompact(artist)) S.emWide.add(artist.key);
-        if (mxEntry(artist)) {
-          S.emOpen.add(r.id);
-          rerenderGroup(artist);
-          const inp = S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`);
-          if (inp) inp.focus();
-          refresh();
+        // [Z-ARQ] (3.86.0, S134) the type asked first (a search, the types by level, the events to tick; a role typed by hand stays)
+        if (ruleOn('S134')) {
+          arqOpen(artist);
           break;
         }
-        // [3.27.0] a new row is open (its role is still to type)
-        S.rowOpen.add(r.id);
-        S.overlay.querySelector(`[data-group="${artist.key}"] tbody`).insertAdjacentHTML('beforeend', rowHtml(r));
-        S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`).focus();
-        refresh();
+        addRoleRow(artist);
         break;
       }
+      // [Z-ARQ] (3.86.0, S134) the question of "＋ Another role": a type chosen, typed by hand, closed
+      case 'arq-pick':
+        // ((review) only from the box of the entry it is open for
+        if (S.arq && artist && artist.key === S.arq.key) arqPick(btn.dataset.level, btn.dataset.type);
+        break;
+      case 'arq-free': {
+        const a = S.arq && artist && artist.key === S.arq.key ? artist : null;
+        const q = (S.arq && S.arq.q) || '';
+        arqClose(false);
+        if (a) addRoleRow(a, q);
+        break;
+      }
+      case 'arq-close':
+        arqClose(true);
+        break;
       case 'remove-row':
         // ([Z-DED] 3.67.0, review) a dedication removed stays out for this release
         if (row && row.dedication) dedChoose(row.dedication.key, { x: 1 });
@@ -37099,6 +37351,12 @@
   }
 
   function onChangeInner(e) {
+    // [Z-ARQ] (3.86.0) an event of the question of "＋ Another role" ticked or not
+    if (e.target && e.target.dataset && e.target.dataset.f === 'arq-ev' && S.arq) {
+      if (e.target.checked) S.arq.evs.add(e.target.value);
+      else S.arq.evs.delete(e.target.value);
+      return;
+    }
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     if (!f) return;
@@ -37507,6 +37765,16 @@
   function onInput(e) {
     const el = e.target;
     const f = el.dataset && el.dataset.f;
+    // [Z-ARQ] (3.86.0) the search of the question of "＋ Another role": only its list drawn anew (the field keeps the focus)
+    if (f === 'arq-q' && S.arq) {
+      const g = el.closest('[data-group]');
+      if (!g || g.dataset.group !== S.arq.key) return;
+      S.arq.q = el.value;
+      const a = S.artists.get(S.arq.key);
+      const list = a && el.closest('[data-el="arq"]') && el.closest('[data-el="arq"]').querySelector('[data-el="arq-list"]');
+      if (list) list.innerHTML = arqListHtml(a);
+      return;
+    }
     // [3.29.2] a colour of a level shown while it is chosen (stored on "change")
     if (el.dataset && el.dataset.set === 'level-color' && /^#[0-9a-f]{6}$/i.test(el.value) && LEVEL_PALETTE_DEFAULT[el.dataset.level]) {
       S.levelPalette[el.dataset.level] = el.value.toLowerCase();
@@ -37703,6 +37971,13 @@
   }
 
   function onKeydown(e) {
+    // [Z-ARQ] (3.86.0, review) Enter in the search of the question: the first type found
+    if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.f === 'arq-q' && S.arq) {
+      const first = e.target.closest('[data-el="arq"]').querySelector('[data-act="arq-pick"]');
+      e.preventDefault();
+      if (first) first.click();
+      return;
+    }
     // [Z-DND] (3.78.0) a picked chip: Enter on a place drops it there
     if (S.dmPick && e.key === 'Enter' && !e.isComposing && pickDrop(e)) return;
     // [Z-MXK] (3.70.0, S106) the arrow keys in the works matrix
@@ -38442,6 +38717,20 @@
   // [3.37.8] events their own colour, plum (collected item 158)
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
+  // [Z-DNDS] (3.86.0) what a drop does at each place – "add" (⇧ Shift: replace) or "replace" (⇧ Shift: add)
+  const DROP_KEY = 'dci-drop-modes';
+  const DROP_PLACES = ['dates', 'tracks', 'matrix', 'chips', 'allworks'];
+  const DROP_DEFAULT = { dates: 'add', tracks: 'add', matrix: 'add', chips: 'add', allworks: 'replace' };
+  const dropModesRead = () => {
+    const v = readJson('localStorage', DROP_KEY, null) || {};
+    return Object.fromEntries(DROP_PLACES.map((p) => [p, v[p] === 'add' || v[p] === 'replace' ? v[p] : DROP_DEFAULT[p]]));
+  };
+  /** [Z-DNDS] (3.86.0) A drop at a place replaces (true) or adds: its setting, turned round with ⇧ Shift. */
+  const dropReplace = (place, shift) => ((S.dropModes || DROP_DEFAULT)[place] === 'replace') !== !!shift;
+  /** [Z-DNDS] (3.86.0) The place of a drop target (its setting). */
+  const DROP_PLACE_OF = { 'row-tracks': 'tracks', 'mx-col': 'matrix', 'mx-role': 'matrix', 'mx-attr': 'matrix', 'mx-allworks': 'allworks', 'em-chip-ev': 'chips',
+    'em-ev': 'dates', 'em-line': 'dates', 'em-block': 'dates', row: 'dates' };
+
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
@@ -38453,7 +38742,7 @@
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY, 'dci-note-dup'],
-    dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
+    dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
@@ -38484,6 +38773,7 @@
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
+  S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -40298,6 +40588,10 @@
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
         // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
         row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
+        // [Z-DNDS] (3.86.0) what a drop does at each place
+        `<h4 class="dci-set-h" data-el="set-drop">${esc(tr('settings.dropHead'))}</h4>`,
+        ...DROP_PLACES.map((p) => row(`${esc(tr(`settings.drop.${p}`))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr(`settings.drop.${p}`))}">${['add', 'replace'].map((v) => `<button type="button"
+          data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`)),
       ],
       // [3.34.1] functions to try out
       beta: () => [
@@ -40899,7 +41193,7 @@
       renderGroups();
       refresh();
     } else if (t === 'dates') {
-      Object.assign(S, { dmAuto: false, dmFold: true, dmFoldWait: false, poolsKeep: true, workGroupsOn: true });
+      Object.assign(S, { dmAuto: false, dmFold: true, dmFoldWait: false, poolsKeep: true, workGroupsOn: true, dropModes: { ...DROP_DEFAULT } });
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'statistics') {
@@ -40952,6 +41246,8 @@
     // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload); [Z-SNW] (3.83.0, review) works of
     // the same title named in it
     EDIT_NOTE_KEY, 'dci-note-dup',
+    // [Z-DNDS] (3.86.0) what a drop does at each place
+    DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups
     ALIAS_MAX_KEY];
 
@@ -41068,6 +41364,7 @@
     S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
+    S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
     S.levelPalette = levelPaletteRead();
     S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -42062,6 +42359,12 @@
       closeSrcMenu(true);
       return;
     }
+    // [Z-ARQ] (3.86.0) the question of "＋ Another role" (the focus in it – other popovers keep theirs)
+    if (S.arq && document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-el="arq"]')) {
+      e.preventDefault();
+      arqClose(true);
+      return;
+    }
     // [Z-WMX] (3.52.0, review) a popover of the works matrix (its button focused again), then the ▾ menu of a column
     const mxFocus = closeMxPopovers(null) || (S.mxColMenu ? `[data-el="works"] .dci-mx-colbtns [data-act="mx-colmenu"][data-col="${CSS.escape(S.mxColMenu)}"]` : '');
     if (mxFocus) {
@@ -42997,6 +43300,23 @@
       /* A track group being dragged: the column heads, their roles and the attributes it can go onto */
       #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) .dci-mx-card { outline: 2px dashed var(--track-line); outline-offset: -1px; }
       #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) [data-tgrole], #dci-overlay.dci-dm-drag-tg [data-tgattr] .dci-wpill { outline: 1px dashed var(--orange); outline-offset: 1px; }
+      /* [Z-ARQ] (3.86.0) the question of "＋ Another role" */
+      .dci-arq { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+      .dci-arq-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      .dci-arq-head input[type=search] { flex: 1 1 calc(var(--u, 1px) * 180); min-width: 0; }
+      .dci-arq-evs { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 6) 0 0; }
+      .dci-arq-list { max-height: calc(var(--u, 1px) * 260); overflow-y: auto; margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-arq-lv { display: grid; grid-template-columns: calc(var(--u, 1px) * 90) 1fr; gap: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 3) 0; border-top: 1px solid var(--line); }
+      .dci-arq-lvname { font-weight: 600; }
+      .dci-arq-types { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
+      .dci-arq-sep { flex-basis: 100%; height: 0; }
+      /* [Z-AWB] (3.86.0) "all works" below "credited as": a place for track groups too (exactly their works by default) */
+      .dci-mx-allworks { display: block; margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11); }
+      .dci-mx-allworks[aria-pressed="true"] { font-weight: 600; text-decoration: none; }
+      #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) [data-allworks] { outline: 1px dashed var(--orange); outline-offset: 1px; }
+      #dci-overlay [data-allworks].dci-dm-over { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
+      #dci-overlay.dci-dm-drag-tg [data-allworks].dci-dm-over::after { content: var(--dci-aw-replace); display: block; font-size: calc(var(--u, 1px) * 11); font-weight: 600; color: var(--track-d); }
+      #dci-overlay.dci-dm-drag-tg [data-allworks].dci-dm-over.dci-drop-add::after { content: var(--dci-aw-add); font-weight: normal; }
       #dci-overlay .dci-mx-card.dci-dm-over, #dci-overlay [data-tgrole].dci-dm-over { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
       #dci-overlay [data-tgattr].dci-dm-over .dci-wpill { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
       #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-dm-over::after, #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-mx-cardover::after {
