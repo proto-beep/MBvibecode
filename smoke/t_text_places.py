@@ -1141,4 +1141,89 @@ Tsinder Ash - Juno 101, Korg Minilogue, Roland TR-808, Appalachian/Hammered Dulc
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_btw384():
+    """Credits Importer 3.84.0 (collected items Z-WPR, Z-BTW, Z-DEDN, Z-PGF; rules S126 – S128, D007, C045): the text of a Bandcamp
+    album (cyclicaldreams, "Inner Space"), pasted.
+    A) "All tracks written, performed and recorded by Wojciech Stecko": writer, performer, recording – "All tracks" no part of the
+       credit; "Music production, mix, mastering: Wojciech Stecko (Mindheal)": producer (R026 "music production"), mix, mastering.
+    B) "(Mindheal)" his artist name: the entry is Wojciech Stecko (the name as written), MusicBrainz's "Mindheal" a similar
+       suggestion, a note says an artist under the full name may be cleaner.
+    C) "Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland.": Rzeszow composed in (works,
+       C045) and produced in (recordings); the date one period 2025-02 – 2026-04 (D007; until 3.83.0 two months of their own) for
+       the groups Composition and Production – columns of the date matrix now.
+    D) "This album is dedicated to my lovely daughter and son.": left out on purpose, "a dedication without a name" (S128).
+    E) The bar on the release page has a frame on all four sides (Z-PGF; until 3.83.0 a line below it)."""
+    H.lt(875, '1d4c0b5b-0000-4000-8000-000000000875', 'composed in', 'area', 'work', ())
+    H.lt(1101, '1d4c0b5b-0000-4000-8000-000000001101', 'produced in', 'area', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    RZ, MH = H.uid('eeeeeeee', 384), H.uid('dddddddd', 384)
+    H.MB_SEARCH['area'] = [{'id': RZ, 'name': 'Rzeszów', 'type': 'City', 'disambiguation': '', 'score': 100, 'aliases': [{'name': 'Rzeszow'}]}]
+    H.ARTISTS[3384] = (MH, 'Mindheal')
+    H.COMPANIES[3385] = ('area', RZ, 'Rzeszów')
+    TEXT = """This album is dedicated to my lovely daughter and son.
+All tracks written, performed and recorded by Wojciech Stecko
+Music production, mix, mastering: Wojciech Stecko (Mindheal)
+Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland."""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  { sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
+    aka: (g.querySelector('[data-el=aka-note]') || {}).textContent || '',
+    rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', tr.dataset.level || '']; }) }])))()"""
+    import common_rows as C
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        e0 = pg.evaluate("(() => { const c = getComputedStyle(document.getElementById('dci-pagebar')); return [c.borderTopWidth, c.borderLeftWidth, c.borderRightWidth, c.borderBottomWidth, c.borderTopLeftRadius]; })()")
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        g = pg.evaluate(ROWS)
+        for k, v in g.items():
+            print('   ', k, v)
+        ws = g.get('Wojciech Stecko') or {'rows': [], 'sugg': [], 'aka': ''}
+        types = sorted(r[1] for r in ws['rows'])
+        print('A)', types)
+        mx = pg.evaluate("[...document.querySelectorAll('.dci-matrix thead .dci-mx-card')].map(h => h.textContent.replace(/\\s+/g, ' ').trim())")
+        print('   Matrix:', [x[:50] for x in mx])
+        results.append(types == sorted(['performer', 'recording', 'producer', 'mix', 'mastering']) and not any('All tracks' in r[0] for r in ws['rows'])
+                       and any('Wojciech Stecko' in x and 'writer' in x for x in mx))
+        print('B)', ws['sugg'][:3], '|', ws['aka'][:90])
+        results.append(any('Mindheal' in x for x in ws['sugg']) and 'Mindheal' in ws['aka'] and 'full name' not in ws['aka'] and 'artist of his or her own' in ws['aka'])
+        rz = g.get('Rzeszow') or {'rows': []}
+        dm = C.cells(pg)
+        print('C)', rz['rows'], '|', dm.get('composition'), dm.get('production'))
+        pg.locator('[data-act=dm-apply]').evaluate('b => b.click()')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        prod = [r for r in C.rows_of(pg, 'Wojciech Stecko')]
+        # (linked: Wojciech Stecko as Mindheal for the test, Rzeszow as Rzeszów – then staged)
+        for nm in ('Wojciech Stecko', 'Rzeszow'):
+            pg.evaluate(f"[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === '{nm}').querySelector('[data-act=name-use]').click()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        pg.locator('[data-act=apply]').evaluate('b => b.click()')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Staging complete/.test(li.textContent))", 30)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        rels = pg.evaluate("""MB.relationshipEditor.state.added.map(r => [r.linkTypeID, [r.begin_date, r.end_date].map(d => d ? [d.year, d.month].join('-') : '').join(' – ')])""")
+        dated = sorted(set(tuple(x) for x in rels if x[0] in (167, 875, 141, 1101)))
+        print("   Zeilen:", prod, "| gestaged:", dated)
+        results.append(any(r[:2] == ['Produced In', 'produced in'] for r in rz['rows']) and any('Rzeszow' in x and 'composed in' in x for x in mx)
+                       and dm.get('composition', [[None]])[0][0] == 'Composition 1 · 2025-02 – 2026-04' and dm.get('production', [[None]])[0][0] == 'Production 1 · 2025-02 – 2026-04'
+                       and dated == [(141, '2025-2 – 2026-4'), (167, '2025-2 – 2026-4'), (875, '2025-2 – 2026-4'), (1101, '2025-2 – 2026-4')])
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li, [data-el=ignored] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        print('D)', ign, '| nicht erkannt:', unrec)
+        results.append(any('daughter' in x and 'a dedication without a name' in x for x in ign) and not unrec)
+        print('E)', e0)
+        results.append(e0[:4] == ['1px'] * 4 and e0[4] != '0px')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

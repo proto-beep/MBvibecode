@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.83.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.84.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.84.0 · 2026-11-07
+
+Z-WPR, Z-BTW, Z-DEDN, Z-PGF.
+
+- **`TEXT.parse`** (S126): `TEXT_WHAT_VERBS` (from `TEXT_WHAT_PREFIX`, its lookahead for verbs of any kind joined by commas / "and" before by / at / in / on / between / from / during) – in `readClause` the words before the verbs are cut (`clause1` → `clause`) unless the register knows the role with them ("All songs written by", R098); a clause "verb, verb and verb <date> in <Area>" gives `placeIn` / `inArea` for each verb.
+- **`namesScoped` / `addCredit`** (S127): "Name (Artist name)" – one to three capitalised words in the bracket, no role, instrument, region, place word, the name of two words or more – `aka`; `akaOf` (name → aka) puts it on every credit of that name; `groupCredits` and `newPersonEntry` keep `aka`. **The name search:** `artist:"aka"` too (`viaAka`: similar when the name or an alias is the aka), a release's artist of that name; `nameHits[].aka`. **Entry:** `[data-el=aka-note]` (`aka.note`).
+- **`dedicationNoName`** (new; S128): a dedication's words followed by my / our / the … and no capital letter – `ignored` with `dedicationNoName` (`ignored.why.dedicationNoName`).
+- **Dates:** D007 "between <month> <year> and <month> <year>"; `DATE_HINTS` composition, production (mapping); `DATE_GROUPS` composition, production (`optional`: `matrixHtml` shows them only with rows or cells).
+- **Mapping:** C045 `^composed in` → area "composed in" on works; `TEXT_COMPANY_RE` + composed in; R026 + "music production".
+- **CSS:** `#dci-pagebar` a frame (border 1px #e4e2ec, radius 4px, padding) instead of the line below it.
+- **Register:** S126, S127, S128, D028; D007 note. **Texts:** aka.note, ignored.why.dedicationNoName.
+- **Review:** S128 only a sentence that is the dedication (anchored: "This album is dedicated to …", "In loving memory of …"); S127 `!m` (any track bracket), `AKA_NOT` (voices, modifiers, suffixes, notes), no short capitals or digits – and in the search only MusicBrainz's persons (or no type) of exactly that name or alias (`a.akaOk`; the note and a release's artist of that name only then, similar); the note only before an entry is linked and with S127 on, `.dci-aka-note`; supplement entries keep `aka`. S126 only before two verbs or more, no made / done / shot / drawn; the area clause also after "in" / "during" a date, only verbs with an area type, a place found first. D028 (new): the hint words composition / production, and a word of a recording in the sentence wins unless joined. D007 "between": the earlier first, Spanish "de". `matrixHtml`: the optional columns only with cells or while a date is placed; `.dci-dm-grid` columns by `--dm-cols`. Texts de / es / fr for aka.note, ignored.why.dedicationNoName.
+- **Tests:** `t_text_places.py btw384`, `t_mapping.py z384` (new).
 
 ## Import 3.83.0 · 2026-11-07
 
