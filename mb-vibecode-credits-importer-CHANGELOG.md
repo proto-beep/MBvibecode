@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 – 3.78.0 | – |
+| 2026-11-07 | 3.73.0 – 3.79.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,22 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.79.0
+
+#### Added
+
+- **"… performing live in the KEXP studio"** (collected item Z-KXP, rule S112): a place later in a sentence – after "performing / playing / recorded / filmed (live) in (the)", with a word of places – is where it was recorded: KEXP Studio (recorded at). Until 3.78.0 such a line was not recognized.
+- **"A with B" in a list of names** (rule S116): "Scott Holpainen with Luke Knecht" are two names.
+- **Members below the heading of a group** (collected item Z-MEM, rules S113, S114): "Salisman Communal Orchestration:" with names below it – each member is offered as performer on the recordings (a question: nothing is added before it is answered; the level can be changed), unless the text gives the person an instrument elsewhere. With the quick switch **"Heading of a group above its members → the group as performer too"** (S114, off) the group is offered as well.
+- **A block of the venue** (collected item Z-VEN, rules S115, T062, D027): "venue: industry city" / "brooklyn, NY" / "9/17/26" – the place Industry City (recorded at) with its city (shown at the entry, and the places in it first among MusicBrainz's hits) and the date 2026-09-17. The words – venue, location, live at, place, club – are a list in the mapping file. Dates with a year of two digits ("9/17/26") are read (D027).
+- **Quick switch "Photographs of the concert → the concert’s date"** (collected item Z-PHC, rule D026, off): the photographs of a concert get its date (until now it is only suggested at their row); a date the text names for them has priority.
+
+#### Changed
+
+- **Camera work** (collected item Z-CAM2, R110): "Cameras", "Camera Operator", "Cinematographer", "Filmed By" … are miscellaneous support **on the recordings** (until 3.78.0 on the release), the word as written as task ("cameras").
+- **Miscellaneous support** switches between **Recording and Release** only.
+- **"location:" and "place:"** start a block of where it was recorded (not live) – "venue:", "live at:" and "club:" say live; the line below is taken as its city only when it is one ("Brooklyn, NY" or a known area), never a credit.
 
 ### Import 3.78.0
 

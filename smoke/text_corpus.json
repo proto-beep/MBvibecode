@@ -2476,7 +2476,11 @@
       "expect": {
         "credits": [
           [
-            "Jane Roe with John Doe",
+            "Jane Roe",
+            "Produced By"
+          ],
+          [
+            "John Doe",
             "Produced By"
           ]
         ],
@@ -2872,6 +2876,117 @@
         ],
         "companies": [],
         "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Venue: The Fillmore\nJohn Smith - guitar\nJane Doe - drums",
+      "expect": {
+        "credits": [
+          [
+            "John Smith",
+            "guitar"
+          ],
+          [
+            "Jane Doe",
+            "drums"
+          ]
+        ],
+        "companies": [
+          [
+            "The Fillmore",
+            "Recorded At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Location: Electric Lady Studios\nMixed by John Smith",
+      "expect": {
+        "credits": [
+          [
+            "John Smith",
+            "Mixed By"
+          ]
+        ],
+        "companies": [
+          [
+            "Electric Lady Studios",
+            "Recorded At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Live Sound Crew:\nJohn Smith\nJane Doe",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "John Smith",
+          "Jane Doe",
+          "Live Sound Crew:"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Earth, Wind & Fire:\nMaurice White\nVerdine White",
+      "expect": {
+        "credits": [
+          [
+            "Maurice White",
+            "Member of Earth Wind & Fire"
+          ],
+          [
+            "Verdine White",
+            "Member of Earth Wind & Fire"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Earth, Wind & Fire:",
+            "why": "groupHeading"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Matrix / Runout (Side A): ABC-1/2/12",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Matrix / Runout (Side A): ABC-1/2/12"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "John Smith played in the Studio Orchestra",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "John Smith played in the Studio Orchestra"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bob Dylan with The Band",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Bob Dylan with The Band"
+        ],
         "ignored": []
       }
     }
