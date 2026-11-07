@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1), festival (3.37.8), pcperson (3.37.10) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1), festival (3.37.8), pcperson (3.37.10) – each the former smoke/t_<case>.py, unchanged, [3.74.0] dedbox; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1065,6 +1065,152 @@ def case_dedfor():
             H.LTS.pop(i, None)
         H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
         H.ARTISTS.pop(3800, None)
+        H.MB_SEARCH.pop('area', None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dedbox():
+    """Credits Importer 3.74.0 (collected items Z-DEDQ, Z-FRM; rule S109): the box "Dedications & tributes" above the works matrix.
+    Notes: "This record is for Cecil Taylor. In memory of Peter Kowald. Written for Ireland." – MusicBrainz has one Cecil Taylor, two
+    entries "Peter Kowald", Ireland a country (a single word after "for": no track named).
+    A) The entries, the box and the works matrix each in a narrow frame, the box between them; in it "dedicated to Cecil Taylor"
+       (on the release group, added by itself); a suggestion "In memory of Peter Kowald" with both entries as buttons (the second
+       "(German painter)"); a suggestion "for Ireland" ("the work of which track?"); no "Create …" anywhere in the box.
+    B) "Peter Kowald (German painter)": his row "dedicated to" on the release group, listed in the box, the suggestion gone.
+    C) "for Ireland": the work of track 2 chosen, the MBID of the area pasted, "Add": a row of the area on the work of track 2.
+    D) "＋ Dedication | Tribute" – the half "Tribute": a form; the link of Bass Man: his row "tribute to" on the release group.
+       "Tribute" with the area: "MusicBrainz has no “tribute to” from area to a release group".
+    E) ⚙ Settings → Appearance "Show the box …" off: the box gone (on: back). Rule S109 off: no box, no suggestions.
+    (review) A2) what is typed into a suggestion stays when its kind is switched (a tribute: the level is the release group);
+    "In memory of Nobody Known" (none): "leave out". F) Loaded again: the picked, the chosen and the added ones are back, what was
+    left out stays out."""
+    CT, PK1, PK2, IE = H.uid('dddddddd', 3800), H.uid('dddddddd', 3801), H.uid('dddddddd', 3802), H.uid('abababab', 41)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 846: ('26131498-00e8-4136-b937-22a4be01a63d', 'dedication', 'artist', 'work'),
+                 914: (H.uid('91491491', 1), 'dedication', 'area', 'work'),
+                 9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.ARTISTS[3800] = (CT, 'Cecil Taylor')
+    H.ARTISTS[3801] = (PK1, 'Peter Kowald')
+    H.MB_SEARCH['artist'] = [{'id': PK2, 'name': 'Peter Kowald', 'disambiguation': 'German painter', 'score': 100}]
+    H.MB_SEARCH['area'] = [{'id': IE, 'name': 'Ireland', 'type': 'Country', 'score': 100}]
+    orig, orig_js = H.discogs_release, H.js_entity
+    H.js_entity = lambda gid: ({'entityType': 'area', 'id': 4041, 'gid': IE, 'name': 'Ireland', 'comment': ''} if gid == IE
+                               else {'entityType': 'artist', 'id': 3802, 'gid': PK2, 'name': 'Peter Kowald', 'comment': 'German painter'} if gid == PK2 else orig_js(gid))
+
+    def dg():
+        d = orig()
+        d['notes'] = 'This record is for Cecil Taylor. In memory of Peter Kowald. Written for Ireland. In memory of Nobody Known.'
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()),
+        sugg: [...b.querySelectorAll('.dci-dedsugg:not(.dci-dedform)')].map(x => [x.querySelector('strong').textContent.trim(), x.querySelector('.dci-sub').textContent.trim(),
+          [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())]),
+        create: /create/i.test(b.textContent), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
+    FRAMES = """(() => { const f = (sel) => { const el = document.querySelector(sel); if (!el || el.hidden) return null; const cs = getComputedStyle(el);
+      return [cs.borderTopWidth, cs.borderTopStyle, Math.round(el.getBoundingClientRect().top)]; };
+      return [f('[data-el=entries-frame]'), f('[data-el=dedbox]'), f('[data-el=works]')]; })()"""
+    results = []
+
+    def open_page(p, off=None):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        if off:
+            H.RULES_OFF = off
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(2500)
+        return pg, errs
+
+    try:
+        with sync_playwright() as p:
+            pg, errs = open_page(p)
+            a, fr = pg.evaluate(BOX), pg.evaluate(FRAMES)
+            print('A)', a, '\n   Rahmen:', fr)
+            results.append(a and any(x.startswith('dedicated to Cecil Taylor on the release group') for x in a['list'])
+                           and ['“In memory of Peter Kowald”', 'several entries of exactly that name in MusicBrainz – which one? (from the Discogs notes)',
+                                ['Peter Kowald', 'Peter Kowald (German painter)']] in a['sugg']
+                           and any(x[0] == '“for Ireland”' and x[1].startswith('the work of which track?') and not x[2] for x in a['sugg']) and not a['create']
+                           and all(x and x[0] == '1px' and x[1] == 'solid' for x in fr) and fr[0][2] < fr[1][2] < fr[2][2])
+            # (review) what is typed stays when the kind is switched
+            k1 = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find(x => /Ireland/.test(x.textContent)).dataset.key")
+            pg.fill(f'[data-el=dedbox] [data-f=ded-mbid][data-key="{k1}"]', 'typed text')
+            pg.click(f'[data-el=dedbox] [data-act=ded-sugg-kind][data-key="{k1}"][data-kind=tribute]')
+            pg.wait_for_timeout(200)
+            kept = [pg.input_value(f'[data-el=dedbox] [data-f=ded-mbid][data-key="{k1}"]'), pg.evaluate(f"document.querySelector('[data-el=dedbox] [data-f=ded-level][data-key=\"{k1}\"]').disabled")]
+            pg.click(f'[data-el=dedbox] [data-act=ded-sugg-kind][data-key="{k1}"][data-kind=dedicated]')
+            pg.wait_for_timeout(200)
+            print('A2) getippt nach ⇄:', kept)
+            results.append(kept == ['typed text', True])
+            pg.click('[data-el=dedbox] [data-act=ded-pick]:has-text("German painter")')
+            pg.wait_for_timeout(1200)
+            b1 = pg.evaluate(BOX)
+            print('B)', b1)
+            results.append(b1 and any(x.startswith('dedicated to Peter Kowald on the release group') for x in b1['list']) and not any('Peter Kowald' in x[0] for x in b1['sugg']))
+            key = k1
+            pg.select_option(f'[data-el=dedbox] [data-f=ded-level][data-key="{key}"]', 'work:1')
+            pg.fill(f'[data-el=dedbox] [data-f=ded-mbid][data-key="{key}"]', f'https://musicbrainz.org/area/{IE}')
+            pg.click(f'[data-el=dedbox] [data-act=ded-take][data-key="{key}"]')
+            pg.wait_for_timeout(1200)
+            c1 = pg.evaluate(BOX)
+            print('C)', c1)
+            results.append(c1 and any(x.startswith('dedicated to Ireland on the work of track 2') for x in c1['list']) and [x[0] for x in c1['sugg']] == ['“In memory of Nobody Known”'])
+            # (review) "leave out"
+            pg.click('[data-el=dedbox] [data-act=ded-dismiss]')
+            pg.wait_for_timeout(300)
+            results.append(pg.evaluate(BOX)['sugg'] == [])
+            pg.click('[data-el=dedbox] .dci-dedbox-head [data-act=ded-add][data-kind=tribute]')
+            pg.wait_for_timeout(300)
+            pg.fill('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', f'https://musicbrainz.org/area/{IE}')
+            pg.click('[data-el=dedbox] [data-act=ded-take][data-key=form]')
+            pg.wait_for_timeout(800)
+            d0 = pg.evaluate(BOX)['err']
+            pg.fill('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', f'https://musicbrainz.org/artist/{H.ARTISTS[3001][0]}')
+            pg.click('[data-el=dedbox] [data-act=ded-take][data-key=form]')
+            pg.wait_for_timeout(1200)
+            d1 = pg.evaluate(BOX)
+            print('D) Fehler:', d0, '|', d1)
+            results.append(d0 == 'MusicBrainz has no “tribute to” from area to a release group' and any(x.startswith('tribute to Bass Man on the release group') for x in d1['list'])
+                           and not pg.evaluate("!!document.querySelector('[data-el=dedbox] .dci-dedform')"))
+            H.open_settings(pg, 'appearance')
+            pg.locator('[data-el=settings] [data-set=ded-box]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            e0 = [pg.evaluate(BOX), pg.evaluate("localStorage.getItem('dci-ded-box')")]
+            pg.locator('[data-el=settings] [data-set=ded-box]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            e1 = pg.evaluate(BOX) is not None
+            print('E) aus:', e0, '| an:', e1, '| Fehler:', errs)
+            results.append(e0 == [None, 'false'] and e1 and not errs)
+            # F) (review) loaded again: what was picked or added by hand is back, what was left out stays out
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            f1 = pg.evaluate(BOX)
+            print('F) wieder geladen:', f1)
+            results.append(f1 and len(f1['list']) == 4 and any(x.startswith('dedicated to Peter Kowald') for x in f1['list']) and any(x.startswith('dedicated to Ireland on the work of track 2') for x in f1['list'])
+                           and any(x.startswith('tribute to Bass Man') for x in f1['list']) and f1['sugg'] == [])
+        with sync_playwright() as p:
+            pg, errs = open_page(p, off=['S083', 'S109'])
+            e2 = [pg.evaluate(BOX), pg.evaluate("document.querySelector('[data-el=dedbox]').hidden")]
+            print('E) S109 aus:', e2)
+            results.append(e2 == [None, True])
+    finally:
+        H.discogs_release, H.js_entity = orig, orig_js
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        for k in (3800, 3801):
+            H.ARTISTS.pop(k, None)
+        H.MB_SEARCH.pop('artist', None)
         H.MB_SEARCH.pop('area', None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

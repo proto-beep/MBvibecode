@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-07 | 3.73.0 | – |
+| 2026-11-07 | 3.73.0 – 3.74.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
@@ -103,6 +103,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-07
+
+### Import 3.74.0
+
+#### Changed
+
+- **Three frames** (collected item Z-FRM): the entries (artists, labels, places, other entries), the new box of the dedications and the works matrix each stand in a narrow frame.
+- **The box "Dedications & tributes"** (collected item Z-DEDQ, rule S109) between the entries and the works matrix: the dedications found in the texts (MusicBrainz has exactly one entry of the name: added by themselves, as before) and suggestions of those not sure – several entries of the name (each a button, with its disambiguation), none, a name after "for" without a track (until 3.73.0 only a line in the log) – each with a field for an MBID or a link and the level (the release group or the work of a track); "Dedication | Tribute" switches the kind of a suggestion. **"＋ Dedication | Tribute"**: each half opens the field to add one by hand. No "Create …" here; "leave out" drops a suggestion for this release; a tribute is always on the release group; "↓ to its row" shows the row. What was picked or added by hand comes back when the release is loaded again. ⚙ Settings → Appearance: "Show the box “Dedications & tributes”" (on by default).
 
 ### Import 3.73.0
 
