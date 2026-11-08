@@ -5,7 +5,7 @@
   "MB x Vibecode: Import Discogs credits"
  ],
  "dump": "20261104-002222",
- "generated": "2026-11-06T17:33:41Z",
+ "generated": "2026-11-08T07:35:56Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits, releases or URLs; \"editors\" is how many different ones",
  "totals": {
@@ -241,6 +241,31 @@
   "release": 414,
   "release group": 2
  },
+ "per_release": {
+  "n": 67,
+  "rels": {
+   "mean": 64.04477611940298,
+   "median": 52
+  },
+  "by_level": {
+   "recording": {
+    "mean": 50.17910447761194,
+    "median": 42
+   },
+   "release": {
+    "mean": 6.17910447761194,
+    "median": 6
+   },
+   "work": {
+    "mean": 7.656716417910448,
+    "median": 5
+   },
+   "release group": {
+    "mean": 0.029850746268656716,
+    "median": 0
+   }
+  }
+ },
  "credits": {
   "credited_as": {
    "n": 393,
@@ -378,11 +403,25 @@
   "lengths": {
    "recordings": 453,
    "median_ms": 393240,
-   "mean_ms": 477503.0816777042
+   "mean_ms": 477503.0816777042,
+   "releases": 64,
+   "release_median_ms": 3111500.0,
+   "release_mean_ms": 3355113.03125
   },
   "role_credits": {
    "n": 484,
    "of": 1455
+  },
+  "per_release": {
+   "n": 67,
+   "recordings": {
+    "mean": 6.955223880597015,
+    "median": 6
+   },
+   "rels_per_recording": {
+    "mean": 7.282641304754423,
+    "median": 6.090909090909091
+   }
   }
  }
 }
