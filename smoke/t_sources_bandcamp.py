@@ -962,7 +962,8 @@ def case_bcspell():
     HEAD = """(() => [...document.querySelectorAll('section.dci-group')].map(g => { const n = g.querySelector('.dci-gname');
       const tag = n.querySelector('.dci-dglink .dci-src'); const chip = n.querySelector('.dci-gcredit-anv');
       const name = n.querySelector('strong');
-      return { name: name.textContent.trim(), nameTitle: name.title, chip: chip ? chip.textContent.trim() : '', chipTitle: chip ? chip.title : '',
+      // ([3.89.0] Z-NCY: the name a button that clicks through its spellings – its title holds the name's)
+      return { name: name.textContent.trim(), nameTitle: name.title || (name.closest('button.dci-ncy-name') || {}).title || '', chip: chip ? chip.textContent.trim() : '', chipTitle: chip ? chip.title : '',
         tag: tag ? [tag.textContent.trim(), tag.className, getComputedStyle(tag).backgroundColor, getComputedStyle(tag).color, tag.closest('a').title, getComputedStyle(tag).boxShadow] : null,
         text: n.textContent + ' ' + [...n.querySelectorAll('[title]')].map(x => x.title).join(' ') }; }))()"""
     results = []

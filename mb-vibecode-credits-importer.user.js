@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.88.0
+// @version      3.89.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.88.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.88.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.89.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.89.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.88.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.89.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -301,6 +301,7 @@
       "ignored.why.dedicationNoName": "a dedication without a name",
       "ignored.why.courtesy": "“appears courtesy of …”",
       "ignored.why.web": "only web addresses",
+      "ignored.why.profile": "a profile of the name above – kept as its web link",
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
       "ignored.why.permission": "a permission – no credit",
       "ignored.why.releaseArtist": "the release’s artist – a title line, no credit",
@@ -447,6 +448,9 @@
       "log.initialsUsed": "Initials {said}: {name} chosen – credited “{said}”",
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
+      "ncy.allTitle": "Click: the next spelling as “credited as” on all relationships of {name} ({list}) – the name in MusicBrainz is an empty field",
+      "ncy.oneTitle": "⇄ The next spelling as “credited as” here only ({list})",
+      "log.ncyAll": "{name}: credited as “{value}” on all its relationships",
       "group.addRole": "+ Another role for {name}",
       "group.addRoleOne": "＋ Another role",
       "group.skip": "⊘ Skip",
@@ -510,6 +514,8 @@
       "note.prefixNote": "MusicBrainz has no “{word}” and no role credit for this type: “{credit}” goes into the edit note.",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
       "note.misc": "MusicBrainz has no specific relationship for this role. It is added as “miscellaneous support” with the {src} role as task; set it to Skip if you do not want it.",
+      "note.plateNone": "“Plated By”: MusicBrainz credits vinyl plating only to an artist, and has none of this name – left out on purpose (Skip).",
+      "log.plateNone": "{name}: “Plated By” left out – no artist of this name in MusicBrainz",
       "type.skipped": "not applied",
       "type.choose": "Choose type …",
       "type.aria": "MusicBrainz relationship type",
@@ -3953,6 +3959,9 @@
     { id: 'S132', where: 'evAskTypes, answerEvAsk, trackIsVideo (festival-add)', note: 'Events (3.85.0; collected item Z-EVA): on a release with audio and videos an event gets a row for each – "recorded at" on the audio tracks, "video shot at" on the videos (the first answer of the question, and at once for an event of a festival recording); a track whose title says "(Video)", "Official Video" counts as a video, with a hint that MusicBrainz has an audio recording' },
     { id: 'S136', where: 'eventLinked (setCompanyEntityType, setArtistManually, name-use, the search)', note: 'Events (3.88.0; collected item Z-EVL): an event linked – found, chosen or by MBID – gives its rows without a relationship of an event one at once, on the recordings of their tracks (those the text or the track list gave, else all): "recorded at" on the audio tracks, "video shot at" on the videos (a row each); a type chosen by hand stays; also an event pasted into “Add entry manually” without a role (the question of S108 only with S136 off)' },
     { id: 'S137', where: 'festivalHtml, festivalInMb', note: 'Festivals (3.88.0; collected item Z-EVR): MusicBrainz already has the festival\'s event for the release or all its recordings – a message where the hint was (and in the log) instead of the hint; for some recordings: the message names them, the hint stays for the others' },
+    { id: 'S140', where: 'profileUrlOf (TEXT.parse, readLine)', note: 'Texts (3.89.0; collected item Z-FBH): a line of a profile alone below a name – "fb: x" (Facebook), "ig: x" / "insta: x" (Instagram), "tw: x" / "twitter: x" / "x: x", "sc: x" / "soundcloud: x", "yt: x" / "youtube: x", "bandcamp: x", a bare "@x" (Instagram) – is a web link of that name\'s entry (the last name of the line above), only in the background (for "Create …" and the search by links); the line is left out as such' },
+    { id: 'S141', where: 'plateNone (refresh); R114, C046', note: 'Roles (3.89.0; collected item Z-PLT): "Plated By" is miscellaneous support with the task "vinyl plating" on the release, only for vinyl (else left out, S026); a company only as an artist of MusicBrainz – none of that name: left out on purpose (Skip, said at the row)' },
+    { id: 'S139', where: 'entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)', note: 'Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source\'s, its name, the name in MusicBrainz) as "credited as" on all its relationships – also those changed one by one; a small ⇄ beside each "credited as" (a row, a line of an entry\'s matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field' },
     { id: 'S138', where: 'rowDateSugg, performanceDateSugg', note: 'Dates (3.88.0; collected item Z-CAMD2): "video shot at" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them' },
     { id: 'S135', where: 'columnHeadHtml (mx-role-level), mxRoleNextLevel', note: 'Works matrix (3.87.0; collected item Z-ARL2): a role of a column that MusicBrainz also has on other levels (arranger, orchestrator …) has its level beside it – a click puts its rows on the next level (Recording, Release …); in the entry its level button goes on round (… Skip, Work), as for every role on several levels' },
     { id: 'S134', where: 'arqOpen, arqHtml, arqPick (add-role)', note: 'Entries (3.86.0; collected item Z-ARQ): "＋ Another role" asks the relationship type – a search, the types by level (the common ones first), the events of the entry to tick (the one opened, else the first): a row for each event ticked on the level of the type, with its tracks and date; "Type a role yourself (e.g. Pressed By)" as until 3.85.0. For every kind of entry' },
@@ -4235,6 +4244,8 @@
       R095: { run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
+      // [Z-PLT] (3.89.0, R114) "Plated By": miscellaneous support, the task "vinyl plating" (roleCreditForInner), only for vinyl (mediumOfRow)
+      R114: { run: () => out(['misc'], { ...rel }) },
       // [Z-SYN] (3.81.0, R113, T065) a model of a synthesizer, drum machine or sampler ("Juno 101", "TR-808", "MPC"): MusicBrainz's
       // instrument of that name first, else the kind; the model as written as role credit
       R113: { test: () => !!gearKind(b), run: () => out(['instrument'], { primaryCands: [...instrumentCandidates(b, ms, { head: false }), gearKind(b)], credit: true }) },
@@ -5776,6 +5787,30 @@
     }
     if (!cut && lineStart > 0 && /:\s*$/.test(src.slice(src.lastIndexOf('\n', lineStart - 2) + 1, lineStart - 1))) lineStart = src.lastIndexOf('\n', lineStart - 2) + 1;
     return lineStart + cut;
+  }
+
+  /**
+   * [Z-FBH] (3.89.0, S140) A line of a profile alone – "fb: amp.puttipong", "Instagram: @x", "yt: x", "bandcamp: x", "@x" (Instagram) –
+   * as its web address; '' for anything else.
+   */
+  const PROFILE_SITES = [
+    [/^(?:fb|facebook)$/i, (h) => `https://www.facebook.com/${h}`],
+    [/^(?:ig|insta|instagram)$/i, (h) => `https://www.instagram.com/${h}/`],
+    [/^(?:tw|twitter|x)$/i, (h) => `https://twitter.com/${h}`],
+    [/^(?:sc|soundcloud)$/i, (h) => `https://soundcloud.com/${h}`],
+    [/^(?:yt|youtube)$/i, (h) => `https://www.youtube.com/@${h}`],
+    [/^bandcamp$/i, (h) => `https://${h.toLowerCase()}.bandcamp.com/`],
+  ];
+  function profileUrlOf(line) {
+    const m = String(line || '').match(/^(?:([a-z]{1,10})\s*[:：]\s*)?@?([\w][\w.-]{0,59})$/iu);
+    if (!m) return '';
+    const handle = m[2].replace(/\.+$/, '');
+    // ((review) a handle has a letter ("x: 3", "tw: 2019" are none)
+    if (!/\p{L}/u.test(handle)) return '';
+    if (!m[1]) return /^@/.test(line) ? `https://www.instagram.com/${handle}/` : '';
+    const site = PROFILE_SITES.find(([re]) => re.test(m[1]));
+    if (!site || (site[0].source.includes('bandcamp') && !/^[a-z0-9-]+$/i.test(handle))) return '';
+    return site[1](handle);
   }
 
   /**
@@ -7623,6 +7658,14 @@
       // [S071] the "by" credits of the line above ({ verb, roles, scope, line, ignored }) a line may go on (a studio, "and Name");
       // lineLead: the name such a line gives (readClause)
       let contWho = null;
+      let lastCredited = []; // [Z-FBH] (3.89.0) the credits of the line above, and that line
+      let lastLine = '';
+      const noteCredited = (c0, k0, raw) => {
+        // ((review) a profile is a person's rather than a studio's or a label's: the people of the line first
+        const people = credits.slice(c0).filter((c) => c.who && c.who.name);
+        lastCredited = people.length ? people : companies.slice(k0).filter((c) => c.who && c.who.name);
+        lastLine = String(raw || '');
+      };
       let prevBy = null;
       // [Z-LIN] (3.48.0) after "Notes by NAME:" the text of the notes (prose, not read); [Z-IGN] after a definition its explanation
       let linerNotes = false;
@@ -7786,6 +7829,19 @@
         const k0 = companies.length;
         const u0 = unrecognized.length;
         const afterDefinition = definitionNext;
+        // [Z-FBH] (3.89.0, S140) "fb: amp.puttipong", "ig: …", "@name" below a name: a web link of that name's entry (the last one of the
+        // line above) – only in the background, for "Create …" and the search by its links; the line is no credit
+        const prof = ruleOn('S140') ? profileUrlOf(String(raw || '').replace(/\s+/g, ' ').trim()) : '';
+        if (prof && lastCredited.length) {
+          startLine(raw);
+          // ((review) the last name by its place in the line above (a credit before a company of it)
+          // (no line – a heading list, a pair: the last one read)
+          const at = (c) => lastLine.toLowerCase().lastIndexOf(String(c.who.name).toLowerCase());
+          const best = lastCredited.map((c, k) => [at(c), k, c]).sort((x, y) => y[0] - x[0] || y[1] - x[1])[0][2].who.name;
+          lastCredited.filter((c) => c.who && c.who.name === best && !c.who.links.includes(prof)).forEach((c) => c.who.links.push(prof));
+          ignored.push({ text: line0, why: 'profile' });
+          return;
+        }
         // [Z-TBY] (3.59.0, S087) a group's heading: no credit (left out as such); a separator ("+", "*") or an empty line ends it
         const t = clean(raw);
         if (!t || /^[+*•·~=_–—-]{1,5}$/u.test(t)) groupHead = null;
@@ -7832,6 +7888,8 @@
         if ((linerNotes || afterDefinition) && credits.length === c0 && companies.length === k0 && unrecognized.length > u0) {
           unrecognized.splice(u0).forEach((text) => ignored.push({ text: String(text).replace(/\s+→\s+\?.*$/, ''), why: afterDefinition ? 'definition' : 'linerNotes' }));
         }
+        // [Z-FBH] (3.89.0) the names of this line, for a profile in the line right below
+        noteCredited(c0, k0, raw);
       };
       /**
        * [Z-YTW] (3.80.0, S118, T064) The songs a video's description lists (only for YouTube, ctx0.songs): below a heading ("Songs:",
@@ -8551,7 +8609,12 @@
           // [S070] [S071] (3.42.3) no line above goes on across a heading or a pair
           contWho = null;
           prevBy = null;
-          if (heads.get(li)) readHeading(heads.get(li));
+          const [hc, hk] = [credits.length, companies.length];
+          // ((3.89.0, review) a profile below them: theirs (the lines of its names keep them)
+          if (heads.get(li)) {
+            readHeading(heads.get(li));
+            noteCredited(hc, hk, '');
+          }
           continue;
         }
         // [S058] (3.38.7) a line of a pair: read with the other one
@@ -8559,7 +8622,11 @@
           flushBlock();
           contWho = null;
           prevBy = null;
-          if (stacks.get(li)) readStacked(stacks.get(li));
+          const [sc, sk] = [credits.length, companies.length];
+          if (stacks.get(li)) {
+            readStacked(stacks.get(li));
+            noteCredited(sc, sk, '');
+          }
           continue;
         }
         if (ruleOn('S051')) {
@@ -8571,7 +8638,9 @@
             roleBlock.push(raw);
             continue;
           }
+          const [bc, bk] = [credits.length, companies.length];
           if (roleBlock.length && readBlock(roleBlock, raw)) {
+            noteCredited(bc, bk, raw);
             roleBlock = [];
             contWho = null;
             prevBy = null;
@@ -12147,6 +12216,8 @@
     if (wr) return wr.credit;
     // [Z-SYN] (3.81.0, R113) a model as written ("Korg Minilogue", "Juno 101" – not in lower case); none when MusicBrainz's instrument is it
     if (row.ruleId === 'R113') return norm(row.primaryText) === norm(row.base) ? '' : String(row.base || '').trim();
+    // [Z-PLT] (3.89.0) "Plated By" – of a person or (as an artist) a company: the task "vinyl plating"
+    if (row.ruleId === 'R114' || row.ruleId === 'C046') return 'vinyl plating';
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
     // [S052] (3.34.27) in lower case ("Chaims" → chaims); [164] (3.37.13) a similar instrument too, unless the word is one
     // slip off it (a typo) or the same word ("Taischigoto" → taishōgoto credited "taischigoto"; "Sxaophone" → saxophone without)
@@ -19287,6 +19358,7 @@
       if (kind) return { kind, word: m };
     }
     if ((row.types || []).some((t) => norm(t) === 'lacquer cut') || /\blacquer\b/i.test(row.base || '')) return { kind: 'vinyl', word: 'lacquer cut' };
+    if (row.ruleId === 'R114') return { kind: 'vinyl', word: 'vinyl plating' }; // [Z-PLT] (3.89.0)
     return null;
   }
 
@@ -19310,9 +19382,11 @@
 
   /** [S026] A company row for a medium the release does not have: a lacquer cut, or the place of a text's vinyl mastering. */
   function companyLeftOutForMedium(row, r, rel, text) {
-    const kind = r.medium ? mediumKindOf(r.medium) : /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
+    // [Z-PLT] (3.89.0) "Plated By" too
+    const plated = /^plated\b/i.test(r.role || '');
+    const kind = r.medium ? mediumKindOf(r.medium) : plated || /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
     if (!kind || !mediumMissing(kind)) return false;
-    noteLeftOut(rel, text, r.medium || 'lacquer cut', r.role);
+    noteLeftOut(rel, text, r.medium || (plated ? 'vinyl plating' : 'lacquer cut'), r.role);
     return true;
   }
 
@@ -21175,6 +21249,12 @@
           const dataP = pw ? await mbWs(`artist?query=${encodeURIComponent(`artist:(${pw}) OR alias:(${pw})`)}&limit=25`) : null;
           ((dataP && dataP.artists) || []).forEach((x) => items.push({ ...x, asArtist: true }));
         }
+        // [Z-PLT] (3.89.0, S141) a company that plated (all its rows "Plated By"): only MusicBrainz's artists of that name count
+        if (plateCompany(a)) {
+          const pw = luceneWords(a.name);
+          const dataP = pw ? await mbWs(`artist?query=${encodeURIComponent(`artist:(${pw}) OR alias:(${pw})`)}&limit=25`) : null;
+          items.splice(0, items.length, ...((dataP && dataP.artists) || []).map((x) => ({ ...x, asArtist: true })));
+        }
         // [3.31.2] a place in an area the source names (any part: "West Orange", "New Jersey") first; one elsewhere is similar
         const inArea = (x) => !areaParts.length || areaParts.some((p) => nameKey(p) === nameKey((x.area || {}).name || ''));
         const placeFit = (x) => { const f = fitOf(x); return f === 'same' && type === 'place' && areaParts.length && !inArea(x) ? 'similar' : f; };
@@ -21354,7 +21434,7 @@
     const pubByName = (a) => a.company && ((ruleOn('S043') && S.rows.some((r) => r.artistKey === a.key && ['publishing', 'rights society'].includes(norm(rowTypeName(r)))))
       // [S057] (3.37.10) ℗ / © of a person's name (MusicBrainz knows no label with its Discogs link): artists and labels of that name
       || (a.dId && personCopyright(a)));
-    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a)) && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a)) && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
@@ -23135,6 +23215,46 @@
     return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
   }
   /**
+   * [Z-NCY] (3.89.0, S139) The spellings of an entry to click through, each once and in this order: the source's (the name variations of
+   * its rows and of the entry), its name there and in the dashboard, the name in MusicBrainz, then any other "credited as" of its rows.
+   */
+  const ncyClean = (x) => String(x || '').replace(/\*$/, '').replace(/\s*\(\d+\)$/, '').trim();
+  function ncySpellings(a) {
+    if (!a) return [];
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    const out = [];
+    // ((review) the source's spellings first, then its name and the name in MusicBrainz
+    for (const v of [...rows.map((r) => r.anv), ...(a.anvs || []), a.rawName, a.name, a.mbName, ...rows.map((r) => r.credit)].map(ncyClean).filter(Boolean)) {
+      if (!out.some((x) => typo(x) === typo(v))) out.push(v);
+    }
+    return out;
+  }
+  const ncyOn = (a) => ruleOn('S139') && ncySpellings(a).length > 1;
+  /** [Z-NCY] (3.89.0) What MusicBrainz gets as the name of a row: its "credited as", empty – the entry's name in MusicBrainz. */
+  const ncyShown = (a, r) => ncyClean(r.credit) || ncyClean(a.mbName) || ncyClean(a.name);
+  /** [Z-NCY] (3.89.0) The next spelling for these rows: after the one they all have (different ones: the first). */
+  function ncyNext(a, rows) {
+    const list = ncySpellings(a);
+    if (list.length < 2 || !rows.length) return null;
+    const cur = uniq(rows.map((r) => typo(ncyShown(a, r))));
+    const k = cur.length === 1 ? list.findIndex((x) => typo(x) === cur[0]) : -1;
+    return list[(k + 1) % list.length];
+  }
+  /** [Z-NCY] (3.89.0) The next spelling set on the rows (the name in MusicBrainz: the field empty). → the spelling */
+  function ncyStep(a, rows) {
+    const v = ncyNext(a, rows);
+    if (v == null) return null;
+    const credit = a.mbName && typo(v) === typo(ncyClean(a.mbName)) ? '' : v;
+    rows.forEach((r) => Object.assign(r, { credit, creditTouched: true, caseCredit: false }));
+    return v;
+  }
+  /** [Z-NCY] (3.89.0) The small ⇄ beside a "credited as": its rows only (act: ncy-row, ncy-line or mx-ncy). */
+  function ncyBtnHtml(a, act, extra = '') {
+    if (!ncyOn(a)) return '';
+    const t = tr('ncy.oneTitle', { list: ncySpellings(a).join(' → ') });
+    return `<button type="button" class="dci-iconbtn dci-ncy" data-act="${act}"${extra} title="${esc(t)}" aria-label="${esc(t)}">⇄</button>`;
+  }
+  /**
    * [3.32.2] The spelling of the release in the head of an entry (collected item 100): the name variation of its rows (the most
    * frequent one), with "*" as Discogs writes it, when it differs from the name of the entry; null otherwise.
    */
@@ -23253,13 +23373,20 @@
     title="${esc(tr('group.copyName', { name: a.name }))}" aria-label="${esc(tr('group.copyName', { name: a.name }))}"></button>`);
 
   function entryNameHtml(a) {
+    // [Z-NCY] (3.89.0, S139) a click on the name: the next spelling as "credited as" on all its relationships
+    // ((review) the title of the name with it – the one of the name inside would hide it
+    const ncy = (html, title = '') => {
+      if (!ncyOn(a)) return html;
+      const t = tr('ncy.allTitle', { name: a.mbName || a.name, list: ncySpellings(a).join(' → ') });
+      return `<button type="button" class="dci-ncy-name" data-act="ncy-all" title="${esc(title ? `${title}\n${t}` : t)}" aria-label="${esc(t)}">${html.replace(/ title="[^"]*"/, '')}</button>`;
+    };
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
+    if (!sp) return `${ncy(`<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>`)}${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161); [3.39.1] in the words of the entry's source (collected item 185)
     const src = entrySource(a);
     const title = [trSrcOf(src, 'group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [trSrcOf(src, 'group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
+    return `${ncy(`<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`, title)}${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
   function creditChipHtml(a) {
@@ -23923,7 +24050,7 @@
     // [176] (3.38.11) credited as (F-176a): the spelling of the source, empty = the MusicBrainz name; another
     // spelling on some tracks is a line of its own (lineKeyOf; F-176b)
     const ac = `<input type="text" data-f="em-ac" list="dci-ac-${esc(a.key)}" value="${esc(r.credit || '')}" placeholder="${esc(tr('credit.placeholder'))}"
-      aria-label="${esc(tr('em.acLabel', { name }))}" title="${esc(tr('credit.placeholder'))}: ${esc(a.mbName || a.name)}">`;
+      aria-label="${esc(tr('em.acLabel', { name }))}" title="${esc(tr('credit.placeholder'))}: ${esc(a.mbName || a.name)}">${ncyBtnHtml(a, 'ncy-line')}`;
     const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
     // [3.36.6] a cell per attribute, below its word in the head (collected item 148)
     const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
@@ -24909,7 +25036,7 @@
     }
     if (row.company || row.other) {
       parts.push(`<label class="dci-credit">${esc(tr('credit.companyLabel'))}
-        <input type="text" data-f="credit" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('credit.companyLabel'))}">
+        <input type="text" data-f="credit" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('credit.companyLabel'))}">${ncyBtnHtml(S.artists.get(row.artistKey), 'ncy-row')}
       </label>`);
       return parts.join('');
     }
@@ -24917,7 +25044,7 @@
     // a task; for other relationship types the field is not offered (the Discogs role stays visible).
     if (!canRoleCredit(lt)) {
       parts.push(`<label class="dci-credit">${esc(tr('artistCredit.label'))}
-        <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">
+        <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">${ncyBtnHtml(S.artists.get(row.artistKey), 'ncy-row')}
       </label>`);
       return parts.join('');
     }
@@ -24935,7 +25062,7 @@
       <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
       <div class="dci-case-slot">${caseNoteHtml(row)}</div>`);
     parts.push(`<label class="dci-credit">${esc(tr('artistCredit.label'))}
-        <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">
+        <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">${ncyBtnHtml(S.artists.get(row.artistKey), 'ncy-row')}
       </label>`);
     return parts.join('');
   }
@@ -27893,6 +28020,33 @@
     if (b) b.setAttribute('aria-expanded', String(S.footOptsOpen));
   }
 
+  /** [Z-PLT] (3.89.0, S141) A company whose rows are all "Plated By": MusicBrainz has it only as an artist (searched as one). */
+  const plateCompany = (a) => ruleOn('S141') && !!a && !!a.company && S.rows.some((r) => r.artistKey === a.key)
+    && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C046');
+  /**
+   * [Z-PLT] (3.89.0, S141) "Plated By" of a company: MusicBrainz has it only as an artist (misc "vinyl plating") – no artist of that name
+   * found, or the company linked as a label or place (another role of it): its rows left out on purpose (Skip, said at the row); a level
+   * chosen by hand stays; ((review) linked to an artist later: on its level again, without the note.
+   */
+  function plateNone() {
+    if (!ruleOn('S141')) return;
+    for (const r of S.rows) {
+      if (r.ruleId !== 'C046' || r.levelTouched) continue;
+      const a = S.artists.get(r.artistKey);
+      if (!a) continue;
+      const none = a.mbid ? a.entityType && a.entityType !== 'artist' : Array.isArray(a.nameHits) && !a.nameHits.length;
+      const noted = (r.notes || []).includes('plateNone');
+      if (none && r.level !== 'skip') {
+        Object.assign(r, { level: 'skip', notes: uniq([...(r.notes || []), 'plateNone']) });
+        log('info', 'plateNone', { name: a.name });
+        rerenderGroup(a);
+      } else if (!none && noted && a.mbid) {
+        Object.assign(r, { level: r.defaultLevel || 'release', notes: r.notes.filter((n) => n !== 'plateNone') });
+        rerenderGroup(a);
+      }
+    }
+  }
+
   function refresh() {
     if (!S.overlay) return;
     // [Z-FEV] (3.85.0, review) the festival hint above the entries drawn again when its event came or went (by hand too)
@@ -27904,6 +28058,7 @@
       }
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
+    plateNone(); // [Z-PLT] (3.89.0, S141)
     S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review)
     // [146] (3.36.0) the rows remembered soon after a change
     scheduleRemember();
@@ -32212,7 +32367,7 @@
       <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
       ${pubLevels}
-      <input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">
+      <span class="dci-mx-creditw"><input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">${col.artist && !col.mbOnly ? ncyBtnHtml(col.artist, 'mx-ncy', ` data-col="${esc(col.key)}"`) : ''}</span>
       ${ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
         // [Z-AWB] (3.86.0, S133) the column's role(s) for every work at once – and off again; a track group dropped on it: exactly its works
         // ([Z-AWB2] 3.87.0) the only one: "all works" of the column's ▾ menu only with S133 off
@@ -33493,6 +33648,18 @@
         if (isPublishingRow(r)) r.pubTouched = true;
         log('info', 'matrixRole', { name: c.name, role: rowPhrase(r) || lt.name, n: new Set(target.map((m) => m.i)).size });
         break;
+      }
+      // [Z-NCY] (3.89.0, S139) the column's spelling: the next one
+      case 'mx-ncy': {
+        const c = matrixColumns().find((x) => x.key === btn.dataset.col);
+        if (!c || !c.artist || !ruleOn('S139')) return true;
+        ncyStep(c.artist, c.rows);
+        rerenderGroup(c.artist);
+        renderWorks();
+        refresh();
+        const b = S.overlay.querySelector(`[data-act="mx-ncy"][data-col="${c.key}"]`);
+        if (b) b.focus({ preventScroll: true });
+        return true;
       }
       // [Z-ARL2] (3.87.0, S135) a role of the works matrix onto the next level: its rows leave the matrix (the entry has them, its level
       // button goes on: … Skip, Work)
@@ -37216,6 +37383,28 @@
       case 'row-restore':
         restoreRow(btn.dataset.arg);
         break;
+      // [Z-NCY] (3.89.0, S139) the next spelling: on all the entry's relationships, a row's, a line's
+      case 'ncy-all':
+      case 'ncy-row':
+      case 'ncy-line': {
+        const a = artist || (row && S.artists.get(row.artistKey));
+        // ((review) a double or triple click (to select the name) is one step
+        if (!a || !ruleOn('S139') || (e && e.detail > 1)) break;
+        const rows = act === 'ncy-all' ? S.rows.filter((r) => r.artistKey === a.key) : act === 'ncy-line' ? lineRows(btn) : row ? [row] : [];
+        const v = ncyStep(a, rows);
+        if (v == null) break;
+        if (act === 'ncy-all') log('info', 'ncyAll', { name: a.mbName || a.name, value: v });
+        const line = act === 'ncy-line' && btn.closest('tr.dci-em-line');
+        // ((review) in an entry's matrix the group at once (its lines follow the spelling)
+        if (act === 'ncy-row' && !mxOn(a)) rerenderRow(row);
+        else rerenderGroup(a);
+        renderWorks();
+        refresh();
+        const sel = act === 'ncy-all' ? `[data-group="${a.key}"] [data-act="ncy-all"]` : line ? `tr.dci-em-line[data-line="${line.dataset.line}"] [data-act="ncy-line"]` : `tr[data-row="${row.id}"] [data-act="ncy-row"]`;
+        const b = S.overlay.querySelector(sel) || S.overlay.querySelector(`[data-group="${a.key}"] [data-act="ncy-all"]`);
+        if (b) b.focus({ preventScroll: true });
+        break;
+      }
       case 'artist-credit-all': {
         const input = S.overlay.querySelector(`[data-variants="${artist.key}"] [data-f="artist-credit-all"]`);
         const value = input ? input.value.trim() : '';
@@ -43595,6 +43784,14 @@
       .dci-mx-role { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c7d5f0; border-radius: 3px; background: #eef4ff; color: #2c4a80; font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-mx-datechip { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid var(--date-line); border-radius: 3px; background: var(--date-bg); color: var(--date-d); font-size: calc(var(--u, 1px) * 11); }
       .dci-mx-col input.dci-mx-credit { display: block; width: 100%; box-sizing: border-box; min-width: 0; margin: calc(var(--u, 1px) * 4) 0 0; font-size: calc(var(--u, 1px) * 12); padding: 1px calc(var(--u, 1px) * 4); color: inherit; }
+      /* [Z-NCY] (3.89.0) the name of an entry clicks through its spellings; ⇄ beside a "credited as" for that one only */
+      .dci-ncy-name { all: unset; cursor: pointer; border-radius: 3px; }
+      .dci-ncy-name strong { text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; }
+      .dci-ncy-name:hover strong { text-decoration-style: solid; }
+      .dci-ncy-name:focus-visible { outline: 2px solid var(--focus, #2f6db5); outline-offset: 2px; }
+      .dci-ncy { margin-left: calc(var(--u, 1px) * 2); padding: 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 12); line-height: 1.4; }
+      .dci-mx-creditw { display: flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin: calc(var(--u, 1px) * 4) 0 0; }
+      .dci-mx-creditw input.dci-mx-credit { margin: 0; flex: 1 1 auto; }
       .dci-mx-colmenu { position: absolute; left: 0; top: 100%; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 6); min-width: calc(var(--u, 1px) * 280);
         margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--date-line); border-top: 3px solid var(--purple); border-radius: 4px; background: #fff;
         box-shadow: 0 4px 16px rgba(38, 36, 48, 0.16); white-space: normal; }

@@ -254,6 +254,8 @@ PERSONAL_PUBLISHERS = [
 
 # Track counts per medium (None: one medium with all tracks)
 MEDIA = None
+# [3.89.0] the format of the media (MusicBrainz's name: 'CD', '12" Vinyl', 'Digital Media' …)
+MEDIA_FORMAT = 'CD'
 # [3.42.3] the release's title in MusicBrainz (S073: a name of a text equal to it is no person)
 REL_TITLE = 'Testalbum'
 
@@ -365,7 +367,7 @@ def split_media(tracks, title_key):
             t['number'] = str(j + 1)
             part.append(t)
         # [3.21.1] the medium's id and number of tracks, as MusicBrainz gives them (web service: "track-count", page data: track_count)
-        out.append({'position': pos, 'format': 'CD', title_key: '', 'tracks': part, 'id': 4500 + pos,
+        out.append({'position': pos, 'format': MEDIA_FORMAT, title_key: '', 'tracks': part, 'id': 4500 + pos,
                     ('track-count' if title_key == 'title' else 'track_count'): n})
         k += n
     return out
