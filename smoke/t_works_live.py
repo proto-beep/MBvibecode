@@ -15,7 +15,7 @@ def case_livecom():
        MusicBrainz without "live") is not; "live: Abbey Road Studios, New York, NY, USA" (the place of "recorded at", its area
        from MusicBrainz: city, US state code, "USA"); track 3 has "live" in MusicBrainz (ticked), track 4 another comment (not
        tickable, red note).
-       [3.38.3] Tracks 2 and 3 are one line "2–3 · ▸ 2 tracks" (the same comment, item 168), ▸ shows them; the heading "▾ Live
+       [3.38.3] Tracks 2 and 3 are one line "2, 3 · ▸ 2 tracks" ([Z-TRR] 3.93.0) (the same comment, item 168), ▸ shows them; the heading "▾ Live
        disambiguation comments: 2 of 3" (item 170).
     C) The place credited as "Iridium" and the matrix applied (the date 2001-03 on the place): "live, 2001‐03: Iridium, New
        York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked.
@@ -75,7 +75,7 @@ def case_livecom():
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
             and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
             and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')") \
-            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3' \
+            and b0[0] == [['2, 3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3' \
             and pg.evaluate("document.querySelector('[data-el=livecom] thead [data-all]').dataset.recs.split(',').length") == 2
         # C)
         rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
@@ -116,7 +116,7 @@ def case_livecomrun():
        page – the hand-made comment with the new credit; "live" in MusicBrainz counts as no comment, another one is not
        overwritten (red).
     (3.66.0, collected item Z-LCP, rule S096) The box tidied up: "2 comments entered:", each comment once with its tracks
-       ("“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2–3"; before one long line of tracks and comments); on the release
+       ("“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2, 3"; before one long line of tracks and comments); on the release
        page "Not entered:" with "Track 4: MusicBrainz has another comment “demo version” – not overwritten"."""
     PLACE = H.COMPANIES[1002][1]
     NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
@@ -198,7 +198,7 @@ def case_livecomrun():
             and posted[0]['editNote'] == job['note'] and posted[0]['makeVotable'] is False \
             and any(c == 'dci-log-error' and '“Iridium” → “The Iridium”' in t for c, t in logs) and any('Comments of 2 live recordings entered' in t for c, t in logs) \
             and notice and 'The Iridium' in notice and bool(job2 and job2.get('done')) and len(H.EDITS_POSTED) == 1 \
-            and groups == ['“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2–3'] and '2 comments entered:' in notice
+            and groups == ['“live, 2001‐03: The Iridium, New York, NY, USA” – tracks 2, 3'] and '2 comments entered:' in notice
         pg.close()
         # C) the release page
         H.WS_JS_RELEASE.clear()
@@ -508,7 +508,7 @@ def case_livedate():
 def case_livetracks():
     """Credits Importer 3.66.0 (collected item Z-LCP), in Node: the tracks of a comment in short – "2", "3", "4", "6" → "2–4, 6";
     several media "1.1", "1.2", "1.3", "2.1" → "1.1–1.3, 2.1" (one medium written without it: "1–3, 1"); the same track once.
-    (review) The sides of a record: "A1–A3, B1"; "1.3", "3" and "03" are one track ("3–4" with 4), counted once."""
+    (review) The sides of a record: "A1–A3, B1"; "1.3", "3" and "03" are one track ("3, 4" with 4 – [Z-TRR] 3.93.0: two tracks one by one), counted once."""
     import json
     import subprocess
     node = r"""
@@ -520,7 +520,7 @@ console.log(JSON.stringify([m.liveTracksText(['2', '3', '4', '6', '3'], false), 
     o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
     res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
     print(res)
-    results = [res == ['2–4, 6', '1.1–1.3, 2.1', '1–3, 1', '2, A1', '3, A1–A3, B1', '3–4', 2]]
+    results = [res == ['2–4, 6', '1.1–1.3, 2.1', '1–3, 1', '2, A1', '3, A1–A3, B1', '3, 4', 2]]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

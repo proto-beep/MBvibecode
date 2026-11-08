@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.92.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.93.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.93.0 · 2026-11-08
+
+- **New:** `runLabel(a, b, label)` – a run of tracks: one, two one by one ("3, 4"), a range from three ("3–5"); used by `tracksShort`, `trackListLabel` (the names of track groups too), `liveTracksText`, `liveWhatText` (Z-TRR; `trackSetText` did so already with its own code).
+- **Texts:** `sync.off`, `sync.noTab`, `sync.connected`, `sync.otherPage`, `log.discogsJump` and their `…Site` forms, `sync.oldSite`, `sync.oldSiteV` – "Script Companion: …" in all four languages (Z-CNAME).
+- **CSS:** `.dci-busy` 20 px below (was 10) – the sticky bar (`.dci-stick`, 14 px up) no longer covers its last line (Z-BCST).
+- **Review:** `tracksShort` ends a run at a medium ("1.12, 2.1"); `.dci-busy` with a message below it 10 px as before (`:has(+ .dci-msgs:not(:empty))`); `sync.oldSiteV` in German, Spanish and French.
+- **Tests:** `t_ui_head.py head393` (new; fails on 3.92.0); the status texts in `t_companion_bandcamp.py`, `t_sources_bandcamp.py`, `t_start.py`, `t_companion_discogs.py`, `t_ui_head.py`; two tracks one by one in `t_dates_matrix.py titledates`, `t_entries.py remember`, `t_notes_dates.py facets`, `t_ui_settings.py ui305`, `t_ui_view.py compact`, `t_works_live.py livecom, livecomrun, livetracks`, `t_works_more.py suiteadd, subtracks`.
 
 ## Import 3.92.0 · 2026-11-08
 

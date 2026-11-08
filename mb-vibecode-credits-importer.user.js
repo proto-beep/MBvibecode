@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.92.0
+// @version      3.93.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.92.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.92.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.93.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.93.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.92.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.93.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -396,11 +396,11 @@
       "match.webUseTitle": "MusicBrainz has an artist with this link ({url}), found next to the name in the text – only a suggestion: check before assigning",
       "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
       "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
-      "sync.off": "Discogs view: off",
+      "sync.off": "Script Companion: off",
       "sync.offTitle": "The companion script “MB x Vibecode: Credits Importer Companion” is not installed or not active.",
-      "sync.noTab": "Discogs view: no Discogs tab",
+      "sync.noTab": "Script Companion: no Discogs tab",
       "sync.openTab": "open in background",
-      "sync.connected": "Discogs view: connected ({where})",
+      "sync.connected": "Script Companion: connected ({where})",
       "sync.visible": "visible tab",
       "sync.background": "background tab",
       "sync.jumping": "jumping to the source …",
@@ -905,7 +905,7 @@
       "log.panic.other": "Emergency reset requested: the page reloads and keeps {n} work links",
       "log.panicDone.one": "Emergency reset: {n} link to a newly created work staged",
       "log.panicDone.other": "Emergency reset: {n} links to newly created works staged",
-      "log.discogsJump": "Discogs view: {result}",
+      "log.discogsJump": "Script Companion: {result}",
       "syncMode.label": "jump to source",
       "syncMode.hover": "on mouse-over",
       "syncMode.click": "on click",
@@ -2807,7 +2807,7 @@
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
       "rules.question": "Question",
-      "sync.otherPage": "Discogs view: a Discogs tab is open, but on another page",
+      "sync.otherPage": "Script Companion: a Discogs tab is open, but on another page",
       "sync.load": "Load the release there",
       "sync.loadTitle": "Opens this release in the connected Discogs tab",
       "sync.loaded": "release loaded",
@@ -2828,13 +2828,13 @@
       "log.keepMarks": "Marks kept after the editor is closed: {state}",
       "sync.srcLinkTitle": "Opens this release on {site} in a new tab",
       "match.openNew": "Opens it in MusicBrainz, in a new tab",
-      "sync.offSite": "{site} view: off",
-      "sync.noTabSite": "{site} view: no {site} tab",
-      "sync.connectedSite": "{site} view: connected ({where})",
+      "sync.offSite": "Script Companion: off",
+      "sync.noTabSite": "Script Companion: no {site} tab",
+      "sync.connectedSite": "Script Companion: connected ({where})",
       "sync.found.loadingSite": "{site} is loading the release …",
       "sync.found.noneSite": "source not found on {site}",
       "sync.found.no-tabSite": "no {site} tab",
-      "log.discogsJumpSite": "{site} view: {result}",
+      "log.discogsJumpSite": "Script Companion: {result}",
       "log.syncModeSite": "{site} view follows the dashboard {mode}",
       "sync.dgStatusSite": "{site} status",
       "sync.dgStatusTitleSite": "Shows in the credits of the {site} page which credits are already in MusicBrainz, staged, open, skipped or not mapped – a mark before each part of a line; a click on a mark shows its row in the dashboard",
@@ -2843,12 +2843,12 @@
       "sync.trackHoverTitleSite": "When the pointer rests on a track on the {site} page, its row in the works matrix is highlighted",
       "sync.reloadTitleSite": "Reload the connected {site} tab",
       "log.dgReloadSite": "Connected {site} tab reloaded",
-      "sync.otherPageSite": "{site} view: a {site} tab is open, but on another page",
+      "sync.otherPageSite": "Script Companion: a {site} tab is open, but on another page",
       "sync.loadTitleSite": "Opens this release in the connected {site} tab",
       "sync.dgReleaseTitleSite": "Keep the {site} status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
       "log.dgReleaseSite": "{site} status on the release page: {state}",
-      "sync.oldSite": "{site} view: needs the companion script 1.8.0 or later – please update “MB x Vibecode: Credits Importer Companion”",
-      "sync.oldSiteV": "{site} view: needs the companion script {version} or later – please update “MB x Vibecode: Credits Importer Companion”",
+      "sync.oldSite": "Script Companion: version 1.8.0 or later needed for {site} – please update “MB x Vibecode: Credits Importer Companion”",
+      "sync.oldSiteV": "Script Companion: version {version} or later needed for {site} – please update “MB x Vibecode: Credits Importer Companion”",
       "bc.fromTrackPage.one": "From the track page:",
       "bc.fromTrackPage.other": "From the track pages:",
       "bc.trackPageTitle": "Opens the track page on Bandcamp",
@@ -10817,7 +10817,7 @@
     for (let k = 0; k < sorted.length; k++) {
       let e = k;
       while (Number.isFinite(sorted[k].n) && e + 1 < sorted.length && sorted[e + 1].m === sorted[k].m && sorted[e + 1].side === sorted[k].side && sorted[e + 1].n === sorted[e].n + 1) e++;
-      out.push(e > k ? `${label(sorted[k])}–${label(sorted[e])}` : label(sorted[k]));
+      out.push(runLabel(k, e, (i) => label(sorted[i]))); // [Z-TRR] (3.93.0)
       k = e;
     }
     return out.join(', ');
@@ -19290,6 +19290,15 @@
   // "Supplements from …" (new role, new entry); other tracks → "differs", the loaded source stays until chosen.
   // Nothing is taken over by itself; one supplement at a time, one after another.
 
+  /**
+   * [Z-TRR] (3.93.0) A run of tracks in short: one track, two tracks one by one ("3, 4"), a range from three on ("3–5") – so
+   * "1, 3–5, 7, 10–15, 17, 18". `a`, `b` the first and last index of the run, `label` the label of an index.
+   */
+  function runLabel(a, b, label) {
+    if (a === b) return String(label(a));
+    return b === a + 1 ? `${label(a)}, ${label(b)}` : `${label(a)}–${label(b)}`;
+  }
+
   /** "1–3, 5" (with several media "1.1–1.3"), or "all". */
   function trackSetText(list, all) {
     if (all) return tr('supp.allTracks');
@@ -26040,7 +26049,7 @@
       if (last && i === last[1] + 1 && S.mbTracks[i].medium === S.mbTracks[last[1]].medium) last[1] = i;
       else runs.push([i, i]);
     }
-    return runs.map(([a, b]) => (a === b ? label(a) : `${label(a)}–${label(b)}`)).join(', ');
+    return runs.map(([a, b]) => runLabel(a, b, label)).join(', '); // [Z-TRR] (3.93.0)
   }
 
   // --- [3.16.1] "Leave out the about text" (Bandcamp; per release, at once, without a new import) ---------------------
@@ -27962,10 +27971,11 @@
     for (const x of on) {
       const i = pos.get(x.idx);
       const last = runs[runs.length - 1];
-      if (last && i === last[1] + 1) last[1] = i;
+      // ([Z-TRR] 3.93.0, review) a run ends at a medium too ("1.12, 2.1")
+      if (last && i === last[1] + 1 && sel[i].medium === sel[last[1]].medium) last[1] = i;
       else runs.push([i, i]);
     }
-    return tr(on.length === 1 ? 'cl.track' : 'cl.tracks', { list: runs.map(([a, b]) => (a === b ? label(sel[a]) : `${label(sel[a])}–${label(sel[b])}`)).join(', ') });
+    return tr(on.length === 1 ? 'cl.track' : 'cl.tracks', { list: runs.map(([a, b]) => runLabel(a, b, (i) => label(sel[i]))).join(', ') }); // [Z-TRR] (3.93.0)
   }
 
   /**
@@ -30547,9 +30557,9 @@
       if (last && i === last[1] + 1 && S.mbTracks[i].medium === S.mbTracks[last[1]].medium) last[1] = i;
       else runs.push([i, i]);
     }
-    runs.forEach(([a, b]) => parts.push({ at: [S.mbTracks[a].medium, a], tracks: a === b ? pos(a) : `${pos(a)}–${pos(b)}`, n: b - a + 1 }));
+    runs.forEach(([a, b]) => parts.push({ at: [S.mbTracks[a].medium, a], tracks: runLabel(a, b, pos), n: b - a + 1 })); // [Z-TRR] (3.93.0)
     parts.sort((x, y) => (x.at[0] - y.at[0]) || (x.at[1] - y.at[1]));
-    return { media: media.join(', '), tracks: runs.map(([a, b]) => (a === b ? pos(a) : `${pos(a)}–${pos(b)}`)).join(', '), n: rest.length, parts };
+    return { media: media.join(', '), tracks: runs.map(([a, b]) => runLabel(a, b, pos)).join(', '), n: rest.length, parts };
   }
 
   /** [168] (3.38.3) The offer's or a group's name: "CD 1–5, tracks 6.1–6.3" or "1–5". */
@@ -44168,7 +44178,9 @@
       .dci-panic:hover { background: #fbeceb; }
 
       .dci-body { flex: 1; overflow: auto; padding: calc(var(--u, 1px) * 14) calc(var(--u, 1px) * 20) calc(var(--u, 1px) * 28); }
-      .dci-busy { padding: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 10); color: var(--purple-d); font-weight: 600; }
+      .dci-busy { padding: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 20); color: var(--purple-d); font-weight: 600; }
+      /* ([Z-BCST] 3.93.0, review) a message below it: no bar to keep away from – the space as before */
+      .dci-busy:has(+ .dci-msgs:not(:empty)) { padding-bottom: calc(var(--u, 1px) * 10); }
       .dci-msg { margin: 0 0 calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border-left: 3px solid var(--purple); background: var(--soft); max-width: 80ch; }
       .dci-msg-warn { border-left-color: var(--warn); }
       .dci-msg-error { border-left-color: var(--err); }
