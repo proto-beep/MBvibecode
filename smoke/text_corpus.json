@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio). 3.43.0 (review of the text adapter, S074 – S077): track lists after each name, \"except\" lines, a second \"by\" clause, role lists, several \"Name (roles)\", names before a dash split, a release artist never split, places with their area in brackets and a second place. 3.43.5 (counter-review): name-and-place pairs after \"by\", a sentence after \"and\" no place, \"Tears for Fears\" whole, a studio with a role word, role lines below \"A & B – vocals\", a \"by\" inside brackets, a bracket after a name.",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument). 3.34.26: in \"Name – roles\" lines too (137d (c)) – at least as many instruments known as such words. 3.42.3: the credits of Ross McReynolds \"Gondola\" (Bandcamp; collected item Z-GON) as on the page and with the companion's status mark ○ before each line (S069 – S072; both read alike), and the liner notes of Stellarium \"Black Zenith\" (Z-BZ, S073: prose, no guest); the instruments of this test with organ, percussion, zither, pedal steel, Wurlitzer, horns, sampling and plurals. 3.42.8 (review): \"With A, B and members of …\" (names, no sentence: guests) and a label below a \"by\" line (\"Warp Recordings\": no studio). 3.43.0 (review of the text adapter, S074 – S077): track lists after each name, \"except\" lines, a second \"by\" clause, role lists, several \"Name (roles)\", names before a dash split, a release artist never split, places with their area in brackets and a second place. 3.43.5 (counter-review): name-and-place pairs after \"by\", a sentence after \"and\" no place, \"Tears for Fears\" whole, a studio with a role word, role lines below \"A & B – vocals\", a \"by\" inside brackets, a bracket after a name. 3.92.0 (review of S144 – S149): two lines in one only after a list of roles (\"Mary Jane Doe\", \"Thanks to Bob:\"), no broken list joined over a role and its name below, \"Strings:\" / \"Amplifier:\" before names no equipment, \"All lyrics … except …\" as before, no time as an area (\"at Christmas\"), a shared instrument word not taken as other instruments (\"lead, backing vocals\"), place names of a player no instruments.",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -2986,6 +2986,155 @@
         "companies": [],
         "unrecognized": [
           "Bob Dylan with The Band"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Doe: vocals\nMary Jane Doe: piano",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "vocals"
+          ],
+          [
+            "Mary Jane Doe",
+            "piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bob: guitar\nThanks to Bob: you rock",
+      "expect": {
+        "credits": [
+          [
+            "Bob",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Thanks to Bob: you rock",
+            "why": "thanks"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Jane Doe: vocals, guitar, bass\nDrums\nBob Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "vocals"
+          ],
+          [
+            "Jane Doe",
+            "guitar"
+          ],
+          [
+            "Jane Doe",
+            "bass"
+          ],
+          [
+            "Bob Roe",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Strings: Anna Bell, Carl Dunn",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Strings: Anna Bell, Carl Dunn"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Amplifier: Anna Bell",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Amplifier: Anna Bell"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "All lyrics written by Jane Doe, except \"Love\" by John Smith",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "All lyrics written by Jane Doe, except \"Love\" by John Smith"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Abbey Road Studios at Christmas by John Smith",
+      "expect": {
+        "credits": [
+          [
+            "John Smith",
+            "Recorded By"
+          ]
+        ],
+        "companies": [
+          [
+            "Abbey Road Studios at Christmas",
+            "Recorded At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Jane Doe: lead, backing vocals",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "lead vocals"
+          ],
+          [
+            "Jane Doe",
+            "backing vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "John Smith: guitar\nJohn Smith: Berlin, Germany",
+      "expect": {
+        "credits": [
+          [
+            "John Smith",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "John Smith: Berlin, Germany"
         ],
         "ignored": []
       }
