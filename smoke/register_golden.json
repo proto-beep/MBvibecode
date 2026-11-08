@@ -2748,8 +2748,7 @@
    ["Mix 3", {"day": null, "month": null, "year": 1980}, {"day": null, "month": null, "year": 1980}],
    ["Performance 5", {"day": null, "month": 3, "year": 2025}, {"day": null, "month": 4, "year": 2025}],
    ["Performance 5 (year)", {"day": null, "month": null, "year": 2025}, {"day": null, "month": null, "year": 2025}],
-   ["Mastering 1", {"day": null, "month": 5, "year": 2025}, {"day": null, "month": 5, "year": 2025}],
-   ["Mix 4", {"day": null, "month": 5, "year": 2025}, {"day": null, "month": 5, "year": 2025}],
+   ["Mastering · Mix 1", {"day": null, "month": 5, "year": 2025}, {"day": null, "month": 5, "year": 2025}],
    ["Performance 6", {"day": null, "month": null, "year": 2017}, {"day": null, "month": null, "year": 2017}]
   ],
   "rows": [
@@ -2886,6 +2885,8 @@
    "D020 Words naming groups joined by \"and\", \"&\" or commas give the date to each group: \"Mixed and mastered by X in March 2026\" → Mix and Mastering, \"Recorded, mixed and mastered 2001\" → Performance, Mix and Mastering (3.28.5)",
    "D023 Dates in the titles of the tracks (\"March 23, 2004 (Set 1)\", \"March 23, 2004 (Set 2)\"): each date with a day goes into the date pool, the tracks with that date into the track pool (\"March 23, 2004 · 1–2\") and, as a suggestion, under Performance into the date matrix (\"Apply\" as usual); \"(Set 1)\" is no part of the date. Off until switched on (3.31.7)",
    "D024 The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month (\"© 2019 March Records\") leaves the year only",
+   "D030 One date for several groups (3.95.0; collected item Z-DPD): \"composed and produced between February 2025 and April 2026\" is one entry of the date pool named for all its groups (\"Production · Composition 1\") in each of their columns – changed in the pool, for all; changed in a cell of one column, that cell gets a date of its own",
+   "D029 The date of the production is the recording's too (3.95.0; collected item Z-PRD): with no date of the recording in the text, a date after \"produced\" / \"production\" also goes to Performance (the recordings and their instruments) – not the date of \"composed\"; a date of the recording wins",
    "D028 Dates of composition and production (3.84.0; collected item Z-BTW): \"composed\", \"produced\", \"production\" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined (\"Recorded at …, produced by …, 12 March 1969\" stays Performance; \"composed and produced between …\" both)",
    "D027 A date with a year of two digits, \"9/17/26\", \"17/9/26\" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)",
    "D026 Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert's date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)",

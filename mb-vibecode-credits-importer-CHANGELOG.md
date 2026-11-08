@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.94.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.95.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.95.0
+
+- **The date of the production** (Z-PRD, rule D029): "Tracks were composed and produced between February 2025 and April 2026" – with no date of the recording in the text, the date after "produced" also goes to Performance, i.e. the recordings and their instruments (what is produced is recorded); the date after "composed" does not. A date of the recording wins ("Recorded in 2024 … produced in 2025": Performance 2024).
+- **One date in the pool** (Z-DPD, rule D030): a date for several groups is one entry of the date pool, named for them ("Production · Composition 1 · 2025-02 – 2026-04"; before "Production 1" and "Composition 1" with the same date). Changed in the pool, it changes for all; changed in a cell of the date matrix ("Edit date", another date saved), that cell and its rows get a date of its own ("Composition 1"). The date of the production is no concert date for the photographs (D025).
 
 ### Import 3.94.0
 
