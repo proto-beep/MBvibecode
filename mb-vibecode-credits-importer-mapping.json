@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.91.0",
+  "version": "3.92.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122"]},
   "CHECKBOX_DETAILS": [
@@ -218,6 +218,21 @@
     {"id":"R096","note":"Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)","types":["instrument"],"level":"recording"}
   ],
   "INSTRUMENT_ALIASES": {
+    "kick drum": ["bass drum"],
+    "guiro": ["güiro"],
+    "kick": ["bass drum"],
+    "snare": ["snare drum"],
+    "djambe": ["djembe"],
+    "kazizi": ["caxixi"],
+    "sampring from records": ["sampler"],
+    "sampling from records": ["sampler"],
+    "saxophone trio": ["saxophone"],
+    "rhodes piano mk2": ["Rhodes piano","electric piano"],
+    "rhodes piano": ["Rhodes piano","electric piano"],
+    "bug shaker": ["shaker"],
+    "nut shell shaker": ["shaker"],
+    "rhythm maschine": ["drum machine"],
+    "rhythm machine": ["drum machine"],
     "sequential px": ["Sequential Prophet X","Prophet X","synthesizer"],
     "juno": ["analog synthesizer","synthesizer"],
     "roland juno": ["analog synthesizer","synthesizer"],
@@ -484,10 +499,11 @@
   "TEXT_SONG_SKIP": {"$re":"^(?:intro(?:duction)?|outro|interview|talk(?:ing)?|banter|chat|tuning|q\\s*&\\s*a|applause|break|credits|end(?:\\s+credits)?|soundcheck)\\b","$flags":"i"},
   "GEAR_MODELS": {
     "brands": ["roland","korg","moog","yamaha","sequential","sequential circuits","dave smith","oberheim","arp","akai","e-mu","emu","elektron","novation","arturia","teenage engineering","behringer","waldorf","access","clavia","nord","linn","casio","ensoniq","kawai","alesis","buchla","make noise","modal","ase","asm","dreadbox","fairlight","sci"],
-    "synthesizer": ["juno","alpha juno","jupiter","jx-3p","jx-8p","sh-101","sh-09","sh-2","system-100","system-8","d-50","jd-800","jd-xi","jd-xa","jp-8000","gaia","minimoog","micromoog","memorymoog","moog","moog one","mother-32","subsequent","sub 37","sub phatty","grandmother","matriarch","prophet","prophet-5","prophet-6","prophet rev2","ob-6","ob-x","ob-xa","ob-8","matrix-1000","minilogue","monologue","prologue","microkorg","ms-20","ms-2000","polysix","mono/poly","triton","wavestation","wavestate","opsix","volca keys","volca bass","dx7","dx100","cs-80","cs-60","op-1","op-z","nord lead","nord wave","odyssey","2600","virus","blofeld","microfreak","minifreak","minibrute","microbrute","matrixbrute","polybrute","bass station","hydrasynth","deepmind","tb-303","303","digitone","analog four","eurorack","modular"],
+    "synthesizer": ["juno","alpha juno","jupiter","jx-3p","jx-8p","sh-101","sh-09","sh-2","system-100","system-8","d-50","jd-800","jd-xi","jd-xa","jp-8000","gaia","minimoog","micromoog","memorymoog","moog","moog one","mother-32","subsequent","sub 37","sub phatty","grandmother","matriarch","prophet","prophet-5","prophet-6","prophet rev2","ob-6","ob-x","ob-xa","ob-8","matrix-1000","minilogue","monologue","prologue","microkorg","ms-20","ms-2000","polysix","mono/poly","triton","wavestation","wavestate","opsix","volca keys","volca bass","dx7","dx100","cs-80","cs-60","op-1","op-z","nord lead","nord wave","odyssey","2600","virus","blofeld","microfreak","minifreak","minibrute","microbrute","matrixbrute","polybrute","bass station","hydrasynth","deepmind","tb-303","303","digitone","analog four","eurorack","modular","nord stage","nord electro","nord piano","multipoly","multi/poly"],
+    "electric organ": ["yc","combo organ"],
     "drum machine": ["tr-808","808","tr-909","909","tr-707","tr-727","tr-606","tr-505","tr-8","tr-8s","cr-78","linndrum","linn drum","lm-1","linnlm-1","drumulator","rhythm ace","drumbrute","analog rytm","rytm","volca beats","sr-16","hr-16","rx5","dr-55","dr-110"],
     "sampler": ["mpc","mpc60","mpc2000","mpc 2000xl","mpc live","sp-404","sp-404sx","sp-1200","sp-12","s950","s1000","s3000","emulator","emulator ii","fairlight cmi","mirage","digitakt","octatrack","volca sample","sp-555","ep-133","ko ii"],
-    "ambiguous": ["gaia","jupiter","prophet","virus","odyssey","mirage","emulator","triton","prologue","moog","modular","eurorack","subsequent","grandmother","matriarch","303","808","909","2600","peak","summit","nord lead","digitone","rytm"]
+    "ambiguous": ["gaia","jupiter","prophet","virus","odyssey","mirage","emulator","triton","prologue","moog","modular","eurorack","subsequent","grandmother","matriarch","303","808","909","2600","peak","summit","nord lead","digitone","rytm","yc"]
   },
   "TEXT_BROADCASTER": {"$re":"^(?:nrk|bbc|wdr|ndr|swr|swf|sfb|sdr|mdr|rbb|dlf|orf|srf|drs|rai|rt[ée]|yle|svt|vpro|nps|avro|nhk|cbc|wnyc|wfmu|kexp|nts|fip|rtbf|vrt|brt|wgbh|npr)(?:\\s+(?:radio|tv|television|\\d{1,2}|[ivx]{1,3}|kultur|klassik|jazz|music|musik))*$|\\b(?:state|national|public|norwegian|swedish|danish|finnish|german|west german|french|italian|dutch|swiss|austrian|polish|czech|hungarian|bavarian|belgian|spanish|portuguese|irish|scottish|welsh|canadian|australian|japanese)\\s+(?:state\\s+)?(?:radio|broadcasting|television|broadcaster)\\b|\\b(?:rundfunk|radiodiffusion|radiotelevisione|radiotelevisión|radiotelevision|kringkasting|kringkastning|radiofonia|fernsehen|broadcasting(?:\\s+(?:corporation|company|service|system|union))?|broadcaster)\\b|^radio\\s+(?:france|bremen|canada|nacional|nederland|television|corporation|beijing|tirana|bratislava|praha|sweden|norway|denmark|finland)\\b","$flags":"iu"},
   "TEXT_SONG_SCHEDULE": {"$re":"^(?:doors(?:\\s+open)?|show|support|support act|main\\s+act|headliner|curfew|tickets?|einlass|beginn|ende|start)$","$flags":"i"},

@@ -1731,4 +1731,112 @@ Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+MAYA1 = "Credits \n\nAll songs was written & arranged by maya ongaku \n\nAll Lyrics was written by Tsutomu Sonoda \n\nRecording & Mix by Tsutomu Sonoda at Nothing Space Studio at Shonan \n\nMastered by Soushi Mizuno at studio MASS \n\nArt work & Design by Tsutomu Sonoda \n\n\nA1 \n”Vanishing Waves” (3:19) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Kick Drum \n\nRyota Takano：Sei water Whale D \n\nShoei Ikeda：Upright Piano \n\n\nA2 \n\"Astral Echoes\" (5:33) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6) \n\nRyota Takano：Bass Guitar, Rhythm Maschine (TR 8S), Sei, Sei Wakka Ring \n\nShoei Ikeda：Rhodes Piano, Clarinet, Synthesizer (Moog Grandmother) \n\n\nA3 \n\"Thinkingscape\" (5:46) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Contrabass, Esraj, Kick Drum, Field Recording \n\nRyota Takano：Bass Guitar, Maracas, Tanpura, Sei, Sei Wakka Ring \n\nShoei Ikeda：Clarinet, Synthesizer (Moog Grandmother), Caxixi, Guiro, Sleigh Bells \n\n\nA4 \n”Flowing” (5:44) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Electric Guitar, Synthesizer (JUNO 6), Kick Drum, China Cymbal, Kazizi, Field \n\nRecording \n\nRyota Takano：Bass Synthesizer (Moog Grandmother), Rhythm Maschine (TR 8S) \n\nShoei Ikeda：Rhodes Piano, Flute, Synthesizer (Moog Grandmother), Triangle \n\n\nB1 \n”Hisoku Blue” (6:41) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Kick Drum \n\nRyota Takano：Bass Guitar, Sei Stick \n\nShoei Ikeda：Saxophone, Upright Piano, Caxixi, Nut Shell Shaker \n\n\nB2 \n\"In Nothing Space\" (1:24) \n\nTsutomu Sonoda：Poetry, Synthesizer (JUNO 6), Field Recording \n\n\nB3 \n\"You are Silence\" (6:01) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6 & Multipoly), Kick Drum, Triangle \n\nRyota Takano：Bass Guitar, Rhythm Maschine (TR 8S) \n\nShoei Ikeda：Rhodes Piano, Caxixi, Nut Shell Shaker, Sleigh Bells \n\n\nB4 \n“Permanent Waves\" (5:09) \n\nTsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Kick Drum \n\nRyota Takano：Sei"
+MAYA2 = "\"Approach\" \nTsutomu Sonoda : Acoustic Guitar, Electric Guitar, Rain Stick \nShoei ikeda: Bass Drum, Djambe, Saxophone Trio, Flute, Vibraslap, China Cymbal \nRyota Takano: Bass Guitar, Shaker, Flexatone \n\n\"Nuska\" \nTsutomu Sonoda : Vocal, Chorus, Acoustic Guitar, Electric Guitar, Shaker, Sei Water \nShoei Ikeda : Synthesizer(Nord stage2), Bass Drum, Sei Water \nRyota Takano: Bass Guitar, Bug shaker, Sei Water \n\n\"Description of a certain sound\" \nTsutomu Sonoda : Vocal, Poetry Reading, Electric Guitar, Acoustic Guitar, Triangle, Whistle \nShoei Ikeda: Saxophone, Electric Organ(YAMAHA YC-45D) \nRyota Takano: Djambe \n\n\"Melting\" \nTsutomu Sonoda : Vocal, Chorus, Acoustic Guitar, Electric Guitar, Shaker, Guiro \nShoei Ikeda Saxophone, Synthesizer(Nord stage2), Bass Drum, Snare Drum \nRyota Takano: Bass Guitar \n\n\"Something in morning rain\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Guiro, Shaker, Bongo, Triangle \nShoei Ikeda: Rhodes Piano MK2, Synthesizer(Nord stage2), Flute, Bass Drum \nRyota Takano: Bass Guitar, Djambe \n\n\"Rakusui\" \nTsutomu Sonoda : Acoustic Guitar \n\n\"Water Dreams\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Bass Drum, Snare \nShoei Ikeda: Synthesizer(Nord stage2), Saxophone \nRyota Takano: Sei water \n\n\"Pillow Song\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Guiro, Triangle, Sampring from Records Shoei Ikeda: Wurlitzer (Nord stage2), Electric Piano, Synthesizer(Nord stage2) \nRyota Takano: Bass Guitar \n\nAll Studio Microphone: AKG C414xls \nHandy Recorder for field recording : TASCAM DR-07 MK2 \nAll field recording by Ryota Takano \nAll Guitar Amplifier : Fender Twin Reverb '78 \nMicpreamp : TUBE-TECH MP-1A \nAudio Interface: AUDIENT iD4 mk2 \nDAW: Logic Pro X"
+
+
+def case_maya392():
+    """Credits Importer 3.92.0 (collected items Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; rules S144 – S149):
+    the credits of two Bandcamp albums of maya ongaku (eight tracks each).
+    A) "Nothing Space Music" – "Name：roles" with the Japanese colon, a block per track ("A1" / "”Vanishing Waves” (3:19)"): nothing not
+       recognized; Tsutomu Sonoda: JUNO 6 a synthesizer credited "JUNO 6" on all eight, Multipoly on track 7 (two models), kick drum a
+       bass drum credited "kick drum" (6), poetry spoken vocals (track 6), field recording (the broken line joined) on 3; Ryota Takano:
+       TR 8S a drum machine, "Sei" other instruments credited "sei"; Shoei Ikeda: Guiro güiro; the place Nothing Space Studio, its area
+       Shonan.
+    B) "Approach to Anima" – titles in quotation marks: nothing not recognized, the equipment left out (6 lines); "Shoei ikeda" and the
+       line without its colon are Shoei Ikeda (one entry); "Wurlitzer (Nord stage2)" a synthesizer credited "Wurlitzer (Nord stage2)",
+       "Electric Organ(YAMAHA YC-45D)" an electric organ credited "YAMAHA YC-45D", "Saxophone Trio" a saxophone credited "saxophone
+       trio", "Sampring from Records" a sampler credited "sampling from records"; "All field recording by Ryota Takano" on all tracks.
+    C) Rules S144 – S149 off: (A) has lines not recognized again."""
+    T1 = ['Vanishing Waves', 'Astral Echoes', 'Thinkingscape', 'Flowing', 'Hisoku Blue', 'In Nothing Space', 'You are Silence', 'Permanent Waves']
+    T2 = ['Approach', 'Nuska', 'Description of a certain sound', 'Melting', 'Something in morning rain', 'Rakusui', 'Water Dreams', 'Pillow Song']
+    INSTR = ['bass drum', 'djembe', 'caxixi', 'güiro', 'sleigh bells', 'China cymbal', 'flute', 'triangle', 'shaker', 'Rhodes piano', 'electric piano',
+             'other instruments', 'sampler', 'snare drum', 'electric organ', 'bongos', 'vibraslap', 'flexatone', 'rain stick', 'whistle', 'drum machine',
+             'clarinet', 'maracas', 'tanpura', 'esraj', 'upright piano', 'bass guitar']
+    for k, n in enumerate(INSTR):
+        H.attr(9600 + k, n, 14, 14)
+    H.attr(9690, 'spoken vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(9691, H.uid('1a1a1a1a', 9691), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.REC.extend(H.uid('bbbbbbbb', i) for i in range(5, 9))
+    BAND = 'https://mayaongakuggb.bandcamp.com'
+    ROWS = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); const p = r.querySelector('[data-f=primary]'); const c = r.querySelector('[data-f=role-credit]');
+        return [(r.querySelector('.dci-drole') || { dataset: {} }).dataset.raw, t ? (t.selectedOptions[0] || {}).text : '', p ? p.value : '', c ? c.value : '',
+          (r.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()]; })])"""
+    results = []
+
+    def run(text, titles, slug, off=False):
+        H.TITLES[:] = titles
+        album = f'{BAND}/album/{slug}'
+        H.BC_PAGES[album] = H.bc_page({'artist': 'maya ongaku', 'current': {'title': slug, 'credits': text, 'about': '', 'release_date': '01 Jan 2023 00:00:00 GMT'},
+                                      'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(titles)]}, band='maya ongaku')
+        orig_ws = H.ws_release
+
+        def ws(full=False):
+            d = orig_ws(full)
+            d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': album}}]
+            for m in d['media']:
+                m['format'] = 'Digital Media'
+            return d
+        H.ws_release = ws
+        try:
+            with sync_playwright() as p:
+                H.ENTRIES_VIEW = 'legacy'
+                b = p.chromium.launch(args=H.LAUNCH_ARGS)
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+                pg.on('dialog', lambda d: d.accept())
+                if off:
+                    pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S144', 'S145', 'S146', 'S147', 'S148', 'S149']))")
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+                H.wait_still(pg, "document.body.innerHTML", 10, 500)
+                pg.evaluate("document.querySelectorAll('[data-act=row-open]').forEach(b => b.click())")
+                H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                groups = {g[0]: g[1] for g in pg.evaluate(ROWS)}
+                unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+                ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' '))")
+                b.close()
+                return groups, unrec, ign, errs
+        finally:
+            H.ws_release = orig_ws
+
+    def row(groups, who, raw):
+        for name, rows in groups.items():
+            if who in name:
+                for r in rows:
+                    if r[0] == raw:
+                        return r[1:]
+        return None
+
+    g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music')
+    a = [row(g, 'Tsutomu Sonoda', 'JUNO 6'), row(g, 'Tsutomu Sonoda', 'Multipoly'), row(g, 'Tsutomu Sonoda', 'Kick Drum'), row(g, 'Tsutomu Sonoda', 'Spoken Vocals [Poetry]'),
+         row(g, 'Tsutomu Sonoda', 'Field Recording'), row(g, 'Ryota Takano', 'TR 8S'), row(g, 'Ryota Takano', 'Sei'), row(g, 'Shoei Ikeda', 'Guiro')]
+    place = [n for n in g if 'Nothing Space Studio' in n]
+    print('A)', unrec, a, place)
+    results.append(unrec == [] and a == [['instrument', 'synthesizer', 'JUNO 6', '8 of 8 tracks'], ['instrument', 'synthesizer', 'Multipoly', '1 of 8 tracks'],
+                                         ['instrument', 'bass drum', 'kick drum', '6 of 8 tracks'], ['vocal', 'spoken vocals', 'poetry', '1 of 8 tracks'],
+                                         ['field recordist', '', '', '3 of 8 tracks'], ['instrument', 'drum machine', 'TR 8S', '3 of 8 tracks'],
+                                         ['instrument', 'other instruments', 'sei', '3 of 8 tracks'], ['instrument', 'güiro', 'guiro', '1 of 8 tracks']]
+                   and len(place) == 1 and 'Shonan' in place[0] and not errs)
+    g, unrec, ign, errs = run(MAYA2, T2, 'approach-to-anima')
+    ikeda = [n for n in g if 'ikeda' in n.lower()]
+    b = [row(g, 'Shoei Ikeda', 'Nord stage2 [Wurlitzer]'), row(g, 'Shoei Ikeda', 'YAMAHA YC-45D'), row(g, 'Shoei Ikeda', 'Saxophone Trio'),
+         row(g, 'Tsutomu Sonoda', 'Sampling from Records'), row(g, 'Ryota Takano', 'Field Recordings By')]
+    gear = [x for x in ign if 'equipment' in x]
+    print('B)', unrec, ikeda, b, len(gear))
+    results.append(unrec == [] and len(ikeda) == 1 and b == [['instrument', 'synthesizer', 'Wurlitzer (Nord stage2)', '1 of 8 tracks'],
+                                                             ['instrument', 'electric organ', 'YAMAHA YC-45D', '1 of 8 tracks'],
+                                                             ['instrument', 'saxophone', 'saxophone trio', '1 of 8 tracks'],
+                                                             ['instrument', 'sampler', 'sampling from records', '1 of 8 tracks'], ['field recordist', '', '', '8 of 8 tracks']]
+                   and len(gear) == 6 and not errs)
+    g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music', off=True)
+    print('C)', len(unrec))
+    results.append(len(unrec) > 5 and not errs)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

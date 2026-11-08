@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.91.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.92.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.92.0
+
+#### Added
+
+- **Credits of texts per track and with the Japanese colon** (collected items Z-FWC, Z-TBL, Z-NCL, Z-WRAP; rules S144, S145): "Tsutomu Sonoda：Vocal, …" reads as "Name: roles"; a track's title alone – in quotation marks, with its position ("A1") and length ("(3:19)") – makes the lines "Name: roles" below it its credits, up to the next title, a line for all tracks ("All …") or any other line ("Mixed by …"; the title decides, else the position: A1 … B4 are tracks 1 … 8); a tracklist (titles next to each other) and a band's name above its members open no such block; a name of such lines without its colon, two such lines in one and a list broken across two lines are read as meant; "Shoei ikeda" and "Shoei Ikeda" are one entry.
+- **Models in brackets** (Z-IMD, rule S146): "Synthesizer (JUNO 6)", "Rhythm Maschine (TR 8S)", "Electric Organ(YAMAHA YC-45D)" – the model is the instrument (as "Juno 101" or "TR-808" alone), credited as written; "JUNO 6 & Multipoly" two relationships; "Wurlitzer (Nord stage2)" a synthesizer credited "Wurlitzer (Nord stage2)" (Discogs's "Minimoog [Lead]" stays credited "Minimoog"). New models: Nord Stage / Electro / Piano, Multipoly, Yamaha YC.
+- **Equipment left out** (Z-GEAR, rule S147): "All Studio Microphone: …", "Handy Recorder for field recording: …", "Guitar Amplifier: …", "Micpreamp: …", "Audio Interface: …", "DAW: …" are no credits (before: "Logic Pro X" as one); "Strings:", "Recorder:" or "Amplifier:" before names stay credits.
+- **Unknown instruments of a player** (Z-SEI, rule S149): in the block of a track, each word of a player's list that may be an instrument ("Sei", "Sei Wakka Ring", "Sei water Whale D") is asked as such a word – other instruments, credited as written, when MusicBrainz has nothing like it –, however many and also without a known instrument on the line; "Poetry" among the instruments spoken vocals. Elsewhere such words are asked as before ("lead, backing vocals" stays lead vocals and backing vocals).
+- **"Event added": a note** (Z-EVL): an event pasted into "Add entry manually" without a role says below the line (and in the log) which type it got on which tracks ("on all tracks"); the note follows its rows (removed, another type, another language).
+
+#### Changed
+
+- **Words of texts** (Z-LYR, Z-SPA, Z-ITY; rule S148): "All Lyrics was written by X" and "All field recording by X" are read (with "except …" after it as before); "Art work" is artwork; "Nothing Space Studio at Shonan" is the place with its area (not "at Christmas"); kick drum is a bass drum, snare a snare drum, Djambe a djembe, Kazizi caxixi, Guiro güiro, Rhodes Piano MK2 a Rhodes piano, Bug / Nut Shell Shaker a shaker, "Saxophone Trio" a saxophone, "Sampring from Records" a sampler (credited "sampling from records") – each credited as written.
 
 ### COMPANION 1.14.0
 

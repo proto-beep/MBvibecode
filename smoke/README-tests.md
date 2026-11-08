@@ -113,6 +113,8 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
                                 #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
                                 #   placecredit: 3.51.0 (Z-PCR, the area after a comma)
+                                #   tbl392r: 3.92.0 (review of Z-TBL, S145; Node): no block of a tracklist ("1. Opening" …, "Side A" / "A1 …",
+                                #     bare titles), of a band's name above its members, of a position beyond the tracks; "Mixed by …" ends a block
                                 #   z381: 3.81.0 (Node; Z-OTR, Z-SYN, Z-SLD, Z-POR, Z-RAD, Z-YTT): "on track 2 & 6" per role; models as synthesizer /
                                 #     drum machine / sampler; "Appalachian/Hammered Dulcimer"; portraits; a broadcaster a label; "This was"; KEXP song times
                                 #   prose2, trackartists2: review of 3.50.0 (credits before "with", no place or make as a name, IJ names;
@@ -570,6 +572,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   evnote392: 3.92.0 (Z-EVL): an event added without a role – the note which type on which tracks, gone with the
+                                #     next entry; (review) "on all tracks", gone with its rows
                                 #   ncy389: 3.89.0 (Z-NCY, S139): the name clicks through the spellings on all rows (MusicBrainz's: empty), ⇄ of a
                                 #     row only, the name sets all the same again; ⇄ of a works-matrix column; off
                                 #   eva385: 3.85.0 (Z-EVA): an event on a release with a video and a title "(Official Video)": "recorded at
@@ -845,6 +849,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   maya392: 3.92.0 (Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; S144 – S149): two
+                                #     albums of maya ongaku – "：", blocks per track, models, other instruments, equipment left out; off
                                 #   titlecomposers: 3.60.0 (Z-TCP, S088): names in brackets after the titles of a track list – writer, the switch,
                                 #     a work found by name offered, jazz in the tags → composer; off
                                 #   tcpsingle: 3.63.0 (Z-TCP2, S092): a single word in brackets – exactly one artist of that name an entry,
