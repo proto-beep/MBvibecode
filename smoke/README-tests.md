@@ -861,6 +861,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   maya396: 3.96.0 (Z-SEI2, Z-AMP, Z-NORD): track pages with credits of their own ("Sei water Whale D" asked, nothing
+                                #     not recognized); "All Guitar Amplifier : Fender Twin Reverb '78" effects of Tsutomu Sonoda
                                 #   maya392: 3.92.0 (Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; S144 – S149): two
                                 #     albums of maya ongaku – "：", blocks per track, models, other instruments, equipment left out; off
                                 #   titlecomposers: 3.60.0 (Z-TCP, S088): names in brackets after the titles of a track list – writer, the switch,

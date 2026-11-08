@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.95.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.96.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.96.0 · 2026-11-08
+
+- **TEXT.parse:** context `oneTrack`, `players` (new); the result has `players` (the "Name: roles" names of the text). S149 in `readUnit`: `trackBlock || oneTrack`, a player of the text or of `players`. Bandcamp `toRelease`: each track page read with `oneTrack: true` and the album's players.
+- **Z-AMP (S151):** `AMP_LINE` (new) before the equipment of S147 – the models (and a person in brackets) of the line kept in `ampLines`; at the end of the text `playersOf` (guitar; bass; keys) → `addCredit` of the model with `roleCredit`, else `addPlaceholder` (now with `extra`). `GEAR_MODELS`: kind `effects` (amplifiers, amp modellers, pedals), brands of amplifiers and pedals, more ambiguous words; `gearKind` takes a year after an apostrophe ("'78").
+- **Z-NORD (S152):** **`modelSpelling`** and `MODEL_CASE` (new) – used by `roleCreditForInner` (R113), the model credits of `withModels` and Z-AMP; exported for Node.
+- **Review:** `ampParts` (new) splits outside brackets and at " / " only ("Mesa/Boogie"); a person in brackets only names in capitals without a number ("(fuzz)", "(2x12)", "(track 3)" are none); a model with a number only shaped like one (a maker and a code), bare "Effects:" only with known models (studio gear stays as before); a model known only by its number credited to "Effects"; the bass itself for a bass amplifier (not a bass clarinet); no one or several players: an entry named for the question (`ampAsk`, not the release's artist); `withModels` keeps the instrument beside an amplifier ("Guitar (Fender Twin Reverb)"); `players` only names with an instrument or a voice (`playersOut`), on a track page only the words the album's blocks asked (`guessedWords`), no title; `modelSpelling` keeps mixed case as written ("Prophet-5", "MicroKorg", "OB-Xa"), capitals only for words of models of four letters and more ("JUNO", "YAMAHA"; "EMS", "OCD" stay; `modelWords`); "SD-1" with its maker only.
+- **Tests:** `t_sources_bandcamp.py maya396` (new; fails on 3.95.0); `maya392`: "Juno 6", "Wurlitzer (Nord Stage 2)", "Yamaha YC-45D", five lines of equipment; four lines of amplifiers in `text_corpus.json`.
 
 ## Import 3.95.0 · 2026-11-08
 

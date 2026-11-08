@@ -1735,7 +1735,17 @@ MAYA1 = "Credits \n\nAll songs was written & arranged by maya ongaku \n\nAll Lyr
 MAYA2 = "\"Approach\" \nTsutomu Sonoda : Acoustic Guitar, Electric Guitar, Rain Stick \nShoei ikeda: Bass Drum, Djambe, Saxophone Trio, Flute, Vibraslap, China Cymbal \nRyota Takano: Bass Guitar, Shaker, Flexatone \n\n\"Nuska\" \nTsutomu Sonoda : Vocal, Chorus, Acoustic Guitar, Electric Guitar, Shaker, Sei Water \nShoei Ikeda : Synthesizer(Nord stage2), Bass Drum, Sei Water \nRyota Takano: Bass Guitar, Bug shaker, Sei Water \n\n\"Description of a certain sound\" \nTsutomu Sonoda : Vocal, Poetry Reading, Electric Guitar, Acoustic Guitar, Triangle, Whistle \nShoei Ikeda: Saxophone, Electric Organ(YAMAHA YC-45D) \nRyota Takano: Djambe \n\n\"Melting\" \nTsutomu Sonoda : Vocal, Chorus, Acoustic Guitar, Electric Guitar, Shaker, Guiro \nShoei Ikeda Saxophone, Synthesizer(Nord stage2), Bass Drum, Snare Drum \nRyota Takano: Bass Guitar \n\n\"Something in morning rain\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Guiro, Shaker, Bongo, Triangle \nShoei Ikeda: Rhodes Piano MK2, Synthesizer(Nord stage2), Flute, Bass Drum \nRyota Takano: Bass Guitar, Djambe \n\n\"Rakusui\" \nTsutomu Sonoda : Acoustic Guitar \n\n\"Water Dreams\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Bass Drum, Snare \nShoei Ikeda: Synthesizer(Nord stage2), Saxophone \nRyota Takano: Sei water \n\n\"Pillow Song\" \nTsutomu Sonoda : Vocal, Acoustic Guitar, Electric Guitar, Guiro, Triangle, Sampring from Records Shoei Ikeda: Wurlitzer (Nord stage2), Electric Piano, Synthesizer(Nord stage2) \nRyota Takano: Bass Guitar \n\nAll Studio Microphone: AKG C414xls \nHandy Recorder for field recording : TASCAM DR-07 MK2 \nAll field recording by Ryota Takano \nAll Guitar Amplifier : Fender Twin Reverb '78 \nMicpreamp : TUBE-TECH MP-1A \nAudio Interface: AUDIENT iD4 mk2 \nDAW: Logic Pro X"
 
 
-def case_maya392():
+def case_maya396():
+    """Credits Importer 3.96.0 (Z-SEI2, Z-AMP, Z-NORD; rules S149, S151, S152): maya ongaku on Bandcamp, as on the real pages.
+    A) "Nothing Space Music" with the pages of its tracks, which have credits of their own (track 1: "… Ryota Takano：Sei water Whale D …",
+       track 8: "… Ryota Takano：Sei"): nothing not recognized (until 3.95.0 "1: Ryota Takano: Sei water Whale D", "8: Ryota Takano: Sei") –
+       "Sei water Whale D" asked: other instruments credited "sei water whale d" · miscellaneous support.
+    B) "Approach to Anima": "All Guitar Amplifier : Fender Twin Reverb '78" – effects of the one guitarist, Tsutomu Sonoda, credited "Fender
+       Twin Reverb '78" (until 3.95.0 left out as equipment)."""
+    return case_maya392(only396=True)
+
+
+def case_maya392(only396=False):
     """Credits Importer 3.92.0 (collected items Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; rules S144 – S149):
     the credits of two Bandcamp albums of maya ongaku (eight tracks each).
     A) "Nothing Space Music" – "Name：roles" with the Japanese colon, a block per track ("A1" / "”Vanishing Waves” (3:19)"): nothing not
@@ -1755,6 +1765,7 @@ def case_maya392():
              'clarinet', 'maracas', 'tanpura', 'esraj', 'upright piano', 'bass guitar']
     for k, n in enumerate(INSTR):
         H.attr(9600 + k, n, 14, 14)
+    H.attr(9689, 'effects', 14, 14)
     H.attr(9690, 'spoken vocals', 3, 3)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.lt(9691, H.uid('1a1a1a1a', 9691), 'field recordist', 'artist', 'recording', ())
@@ -1767,11 +1778,17 @@ def case_maya392():
           (r.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()]; })])"""
     results = []
 
-    def run(text, titles, slug, off=False):
+    def run(text, titles, slug, off=False, pages=None):
         H.TITLES[:] = titles
         album = f'{BAND}/album/{slug}'
         H.BC_PAGES[album] = H.bc_page({'artist': 'maya ongaku', 'current': {'title': slug, 'credits': text, 'about': '', 'release_date': '01 Jan 2023 00:00:00 GMT'},
-                                      'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(titles)]}, band='maya ongaku')
+                                      'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0, **({'title_link': f'/track/t{i + 1}'} if pages else {})}
+                                                    for i, t in enumerate(titles)]}, band='maya ongaku')
+        # ([Z-SEI2] 3.96.0) the pages of the tracks with their own credits, as on Bandcamp
+        for i, t in enumerate(titles if pages else []):
+            H.BC_PAGES[f'{BAND}/track/t{i + 1}'] = H.bc_page({'artist': 'maya ongaku', 'album_url': f'/album/{slug}',
+                                                               'current': {'title': t, 'credits': pages.get(i + 1, ''), 'about': ''},
+                                                               'trackinfo': [{'track_num': 1, 'title': t, 'duration': 180.0}]}, band='maya ongaku')
         orig_ws = H.ws_release
 
         def ws(full=False):
@@ -1812,12 +1829,26 @@ def case_maya392():
                         return r[1:]
         return None
 
+    if only396:
+        PAGE1 = 'Tsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Kick Drum \n\nRyota Takano：Sei water Whale D \n\nShoei Ikeda：Upright Piano'
+        PAGE8 = 'Tsutomu Sonoda：Vocal, Acoustic Guitar, Synthesizer (JUNO 6), Kick Drum \n\nRyota Takano：Sei'
+        g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music', pages={1: PAGE1, 8: PAGE8})
+        whale = row(g, 'Ryota Takano', 'Sei water Whale D')
+        print('A)', unrec, whale)
+        results.append(unrec == [] and whale is not None and whale[:3] == ['instrument', 'other instruments', 'sei water whale d'] and not errs)
+        g, unrec, ign, errs = run(MAYA2, T2, 'approach-to-anima')
+        amp = row(g, 'Tsutomu Sonoda', "Fender Twin Reverb '78")
+        print('B)', unrec, amp, [x for x in ign if 'Fender' in x])
+        results.append(unrec == [] and amp == ['instrument', 'effects', "Fender Twin Reverb '78", '8 of 8 tracks'] and not [x for x in ign if 'Fender' in x] and not errs)
+        print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+        return
     g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music')
     a = [row(g, 'Tsutomu Sonoda', 'JUNO 6'), row(g, 'Tsutomu Sonoda', 'Multipoly'), row(g, 'Tsutomu Sonoda', 'Kick Drum'), row(g, 'Tsutomu Sonoda', 'Spoken Vocals [Poetry]'),
          row(g, 'Tsutomu Sonoda', 'Field Recording'), row(g, 'Ryota Takano', 'TR 8S'), row(g, 'Ryota Takano', 'Sei'), row(g, 'Shoei Ikeda', 'Guiro')]
     place = [n for n in g if 'Nothing Space Studio' in n]
     print('A)', unrec, a, place)
-    results.append(unrec == [] and a == [['instrument', 'synthesizer', 'JUNO 6', '8 of 8 tracks'], ['instrument', 'synthesizer', 'Multipoly', '1 of 8 tracks'],
+    # ([Z-NORD] 3.96.0) the model written the usual way: "Juno 6", "Nord Stage 2", "Yamaha YC-45D"; ([Z-AMP]) the amplifier an effect, no equipment
+    results.append(unrec == [] and a == [['instrument', 'synthesizer', 'Juno 6', '8 of 8 tracks'], ['instrument', 'synthesizer', 'Multipoly', '1 of 8 tracks'],
                                          ['instrument', 'bass drum', 'kick drum', '6 of 8 tracks'], ['vocal', 'spoken vocals', 'poetry', '1 of 8 tracks'],
                                          ['field recordist', '', '', '3 of 8 tracks'], ['instrument', 'drum machine', 'TR 8S', '3 of 8 tracks'],
                                          ['instrument', 'other instruments', 'sei', '3 of 8 tracks'], ['instrument', 'güiro', 'guiro', '1 of 8 tracks']]
@@ -1828,11 +1859,11 @@ def case_maya392():
          row(g, 'Tsutomu Sonoda', 'Sampling from Records'), row(g, 'Ryota Takano', 'Field Recordings By')]
     gear = [x for x in ign if 'equipment' in x]
     print('B)', unrec, ikeda, b, len(gear))
-    results.append(unrec == [] and len(ikeda) == 1 and b == [['instrument', 'synthesizer', 'Wurlitzer (Nord stage2)', '1 of 8 tracks'],
-                                                             ['instrument', 'electric organ', 'YAMAHA YC-45D', '1 of 8 tracks'],
+    results.append(unrec == [] and len(ikeda) == 1 and b == [['instrument', 'synthesizer', 'Wurlitzer (Nord Stage 2)', '1 of 8 tracks'],
+                                                             ['instrument', 'electric organ', 'Yamaha YC-45D', '1 of 8 tracks'],
                                                              ['instrument', 'saxophone', 'saxophone trio', '1 of 8 tracks'],
                                                              ['instrument', 'sampler', 'sampling from records', '1 of 8 tracks'], ['field recordist', '', '', '8 of 8 tracks']]
-                   and len(gear) == 6 and not errs)
+                   and len(gear) == 5 and not errs)
     g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music', off=True)
     print('C)', len(unrec))
     results.append(len(unrec) > 5 and not errs)
