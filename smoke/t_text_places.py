@@ -1151,7 +1151,8 @@ def case_btw384():
        suggestion, a note says an artist under the full name may be cleaner.
     C) "Tracks were composed and produced between February 2025 and April 2026 in Rzeszow, Poland.": Rzeszow composed in (works,
        C045) and produced in (recordings); the date one period 2025-02 – 2026-04 (D007; until 3.83.0 two months of their own) for
-       the groups Composition and Production – columns of the date matrix now.
+       the groups Composition and Production – columns of the date matrix now ([Z-DPD] 3.95.0: one entry of the pool for both,
+       "Production · Composition 1").
     D) "This album is dedicated to my lovely daughter and son.": left out on purpose, "a dedication without a name" (S128).
     E) The bar on the release page has a frame on all four sides (Z-PGF; until 3.83.0 a line below it)."""
     H.lt(875, '1d4c0b5b-0000-4000-8000-000000000875', 'composed in', 'area', 'work', ())
@@ -1213,7 +1214,7 @@ Tracks were composed and produced between February 2025 and April 2026 in Rzeszo
         dated = sorted(set(tuple(x) for x in rels if x[0] in (167, 875, 141, 1101)))
         print("   Zeilen:", prod, "| gestaged:", dated)
         results.append(any(r[:2] == ['Produced In', 'produced in'] for r in rz['rows']) and any('Rzeszow' in x and 'composed in' in x for x in mx)
-                       and dm.get('composition', [[None]])[0][0] == 'Composition 1 · 2025-02 – 2026-04' and dm.get('production', [[None]])[0][0] == 'Production 1 · 2025-02 – 2026-04'
+                       and dm.get('composition', [[None]])[0][0] == 'Production · Composition 1 · 2025-02 – 2026-04' and dm.get('production', [[None]])[0][0] == 'Production · Composition 1 · 2025-02 – 2026-04'
                        and dated == [(141, '2025-2 – 2026-4'), (167, '2025-2 – 2026-4'), (875, '2025-2 – 2026-4'), (1101, '2025-2 – 2026-4')])
         ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li, [data-el=ignored] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
         unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
@@ -1226,5 +1227,88 @@ Tracks were composed and produced between February 2025 and April 2026 in Rzeszo
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_prd395():
+    """Credits Importer 3.95.0 (Z-PRD, Z-DPD; rules D029, D030), a pasted text, no dates from Discogs's notes:
+    A) "Tracks were composed and produced between February 2025 and April 2026.": one entry of the date pool, "Production · Composition 1"
+       (until 3.94.0 "Production 1" and "Composition 1"), in the columns Composition, Production and – no date of the recording in the
+       text – Performance; applied, Jane Doe's performer row has it (until 3.94.0 none).
+    B) Its date changed in the cell of Composition ("Edit date", another year saved): that cell gets a date of its own ("Composition 1 ·
+       2020-02 – 2026-04"), Production and Performance keep the shared one; (review) opening the form alone changes nothing.
+    C) "Recorded in 2024 by Jane Doe" in the same text: Performance has 2024 only – the date of the production is not the recording's.
+    D) (review) Two dates of composition and production: "Production · Composition 1" and "… 2"; E) "composed" alone with the same date:
+       one cell in Composition."""
+    import common_rows as C
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = ''
+        return d
+    H.discogs_release = rel
+    results = []
+
+    def run(text, edit=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', text)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            H.wait_still(pg, "document.body.innerHTML", 15, 300)
+            pool = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].map(x => x.textContent.replace(/\\s+/g, ' ').trim().replace(/ \\d+ rows?$/, ''))")
+            dm = C.cells(pg)
+            out = {'pool': pool, 'dm': {k: [c[0] for c in v] for k, v in dm.items() if v}}
+            if edit:
+                pg.locator('.dci-dm-col[data-dmcol=composition] [data-act=dm-edit]').first.evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                pg.locator('.dci-dm-col[data-dmcol=composition] [data-act=pool-edit]').first.evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                # ((review) the date of its own once another date is saved – not on opening the form
+                out['pool1'] = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].length")
+                pg.fill('[data-f=pf-by]', '2020')
+                pg.locator('[data-act=pool-save]').evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                out['pool2'] = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].map(x => x.textContent.replace(/\\s+/g, ' ').trim().replace(/ \\d+ rows?$/, ''))")
+                out['dm2'] = {k: [c[0] for c in v] for k, v in C.cells(pg).items() if v}
+            else:
+                pg.locator('[data-act=dm-apply]').evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                out['jane'] = C.rows_of(pg, 'Jane Doe')
+            out['errs'] = errs
+            b.close()
+            return out
+
+    try:
+        SHARED = 'Production · Composition 1 · 2025-02 – 2026-04'
+        a = run('All tracks performed by Jane Doe\nTracks were composed and produced between February 2025 and April 2026.')
+        print('A)', a)
+        results.append([x for x in a['pool'] if '2025' in x] == [SHARED]
+                       and a['dm'].get('composition') == [SHARED] and a['dm'].get('production') == [SHARED] and a['dm'].get('performance') == [SHARED]
+                       and any('2025-02 – 2026-04' in r for r in a['jane']) and not a['errs'])
+        b2 = run('All tracks performed by Jane Doe\nTracks were composed and produced between February 2025 and April 2026.', edit=True)
+        print('B)', b2.get('pool2'), b2.get('dm2'))
+        results.append(b2['pool1'] == 1 and sorted(x for x in b2['pool2'] if '202' in x) == sorted([SHARED, 'Composition 1 · 2020-02 – 2026-04'])
+                       and b2['dm2'].get('composition') == ['Composition 1 · 2020-02 – 2026-04'] and b2['dm2'].get('production') == [SHARED]
+                       and b2['dm2'].get('performance') == [SHARED])
+        c = run('Recorded in 2024 by Jane Doe\nTracks were composed and produced in 2025.')
+        print('C)', c)
+        results.append([x for x in c['dm'].get('performance', [])] == ['Performance 1 · 2024'] and c['dm'].get('production') == ['Production · Composition 1 · 2025'])
+        # (review) two such dates: numbered one after the other; a date of one group alone the same as the shared one: no second cell
+        d = run('All tracks performed by Jane Doe\nTracks 1 and 2 were composed and produced in 2019. Tracks 3 and 4 were composed and produced in 2021.')
+        e = run('All tracks performed by Jane Doe\nTracks were composed and produced in 2025. The songs were composed in 2025.')
+        print('D)', d['pool'], '| E)', e['dm'].get('composition'))
+        results.append(sorted(x for x in d['pool'] if '20' in x) == ['Production · Composition 1 · 2019', 'Production · Composition 2 · 2021']
+                       and len(e['dm'].get('composition') or []) == 1)
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
