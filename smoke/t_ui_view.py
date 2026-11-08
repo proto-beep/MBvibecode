@@ -18,7 +18,7 @@ def case_compact():
        fields of the full row and the "credited as" block hidden.
     B) A click on the line opens the full row (its type field focused); "▴ compact" closes it again.
     C) The tracks and the date of the compact line are still drop targets: a track group ("Side A", tracks 1–2) dropped
-       onto it gives "tracks 1–2", a date of the pool shows on the line.
+       onto it gives "tracks 1, 2" ([Z-TRR] 3.93.0), a date of the pool shows on the line.
     D) The question answered ("double bass") – [3.32.3] in the compact line itself, the row stays closed (item 102; until
        3.32.2 the line said "Bass: which instrument?" and the question was in the opened row): the line says so, the yellow
        mark is gone.
@@ -90,7 +90,7 @@ def case_compact():
         drag(pg, f'.dci-pools-body .dci-pchip-date[data-id="{date}"] .dci-chip-main', f'tr[data-row="{guitar}"] .dci-cl-date')
         c2 = line('Guitar Guy')[0]
         print('C) Trackgruppe:', c1['text'], '| Datum', repr(dlabel[:30]), '→', c2['text'], c2['hasDate'])
-        results.append('tracks 1–2' in c1['text'] and c2['hasDate'] and dlabel.split(' · ')[0] in c2['text'] and not c2['open'])
+        results.append('tracks 1, 2' in c1['text'] and c2['hasDate'] and dlabel.split(' · ')[0] in c2['text'] and not c2['open'])
         # D) [3.32.3] the question answered in the compact line itself (until 3.32.2: in the opened row); the row stays closed
         pg.click(f'tr[data-row="{rid}"] .dci-cl-askq [data-act=instr-pick][data-instr="double bass"]')
         pg.wait_for_timeout(400)

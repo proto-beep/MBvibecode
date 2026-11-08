@@ -489,7 +489,7 @@ def case_ui305():
         c5 = pg.locator('.dci-track-form input[data-f=tg-text]').input_value()
         print('C) „1-2, 4“:', c1, '| Häkchen 3 dazu:', c2, '| „9“:', c3, '| Speichern mit „9“:', c4, '| „2-3“ gespeichert:', pool, '| bearbeiten:', c5)
         results.append(c1 == [[1, 2, 4], 'tg-text'] and c2 == [[1, 2, 3, 4], '1–4'] and c3[0] == [1, 2, 3, 4] and '9' in c3[1]
-                       and c4[0] and '9' in c4[1] and pool == [['Tracks 2–3', [1, 2]]] and c5 == '2–3')
+                       and c4[0] and '9' in c4[1] and pool == [['Tracks 2, 3', [1, 2]]] and c5 == '2, 3')
         # German name of the tab
         pg.click('[data-act=tg-cancel]')
         H.open_settings(pg, 'general')

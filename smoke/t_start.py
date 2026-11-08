@@ -337,7 +337,7 @@ def case_harmony():
 def case_navlink():
     """Credits Importer 3.17.4: the source next to the status in the navigation bar (collected item 22), and a link at each
     name suggestion (collected item 24).
-    A) Bandcamp loaded, no Bandcamp tab: the bar above "Import credits …" says "Bandcamp view: no Bandcamp tab", links the
+    A) Bandcamp loaded, no Bandcamp tab: the bar above "Import credits …" says "Script Companion: no Bandcamp tab" (until 3.93.0 "Bandcamp view: …"), links the
        album ("↗ Bandcamp", a new tab) and has "open in background", which opens it in the background.
     B) A Bandcamp tab on another album: the bar offers "Load the release there", which loads the album there.
     C) Discogs loaded: the bar links the Discogs release.
@@ -409,7 +409,7 @@ def case_navlink():
         pg.wait_for_timeout(300)
         opened = pg.evaluate("window.__opened || []")
         print('A) Leiste:', a1, '| geöffnet:', opened)
-        results.append(a1 is not None and a1[0].startswith('Bandcamp view: no Bandcamp tab') and a1[1] is not None and a1[1][0] == '↗ Bandcamp'
+        results.append(a1 is not None and a1[0].startswith('Script Companion: no Bandcamp tab') and a1[1] is not None and a1[1][0] == '↗ Bandcamp'
                        and a1[1][1] == ALBUM and a1[1][2] == '_blank' and 'sync-open' in a1[2] and ALBUM in opened)
         # D) suggestions
         d1 = pg.evaluate(SUGG)
@@ -424,7 +424,7 @@ def case_navlink():
         H.wait_for(pg, "(document.querySelector('#dci-controls .dci-syncstatus') || {}).textContent.includes('connected')", 20)
         b2 = pg.evaluate(BAR)
         print('B) andere Seite:', b1, '| danach:', b2)
-        results.append('sync-load' in b1[2] and b2[0].startswith('Bandcamp view: connected') and b2[1] is not None)
+        results.append('sync-load' in b1[2] and b2[0].startswith('Script Companion: connected') and b2[1] is not None)
         print('Fehler:', real(errs), real(bcerr))
         results.append(not real(errs) and not real(bcerr))
         b.close()

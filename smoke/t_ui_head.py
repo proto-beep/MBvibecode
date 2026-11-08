@@ -230,7 +230,7 @@ def case_entryhead():
               pg.evaluate("[...document.querySelectorAll('.dci-set-tab')].filter(t => t.getAttribute('aria-selected') === 'true').map(t => t.dataset.topic)"),
               pg.evaluate("!!document.querySelector('[data-el=settings] .dci-set-pane [data-dg-status]')")]
         print('C) Leiste:', c1, '| ⚙ →', c2)
-        results.append(c1[0] and c1[1] == 0 and c1[2] and 'Discogs view' in c1[3] and c1[4] and c2 == [True, True, ['discogs'], True])
+        results.append(c1[0] and c1[1] == 0 and c1[2] and 'Script Companion' in c1[3] and c1[4] and c2 == [True, True, ['discogs'], True])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1606,5 +1606,44 @@ def case_evnote392():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_head393():
+    """Credits Importer 3.93.0: A) (Z-TRR) tracks in short – two tracks one by one, a range from three on: "tracks 1, 3–5, 7, 8",
+    "tracks 2, 3" (until 3.92.0 "1, 3–5, 7–8", "2–3"). B) (Z-BCST) "Reading …" above the sticky bar: the bar does not cover the
+    bottom of its letters (g, p) – the text ends above it. C) (Z-CNAME) the bar names the companion: "Script Companion: off" (until 3.92.0 "Discogs view: off")."""
+    H.REC.extend(H.uid('bbbbbbbb', i) for i in range(5, 9))
+    H.TITLES[:] = ['Song One', 'Song Two', 'Song Three', 'Song Four', 'Song Five', 'Song Six', 'Song Seven', 'Song Eight']
+    TEXT = """Tracks 1, 3-5, 7, 8: Jane Doe – guitar
+Tracks 2-3: John Roe – piano"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        c = pg.evaluate("(document.querySelector('.dci-syncstatus') || { textContent: '' }).textContent.trim()")
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(500)
+        a = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].filter(g => /Jane Doe|John Roe/.test(g.textContent))
+          .flatMap(g => [...g.querySelectorAll('.dci-cl-tracks')].map(x => x.textContent.trim())).sort()""")
+        pg.evaluate("(() => { const el = document.querySelector('[data-el=busy]'); el.hidden = false; el.textContent = 'Reading Bandcamp …'; document.querySelector('[data-el=msgs]').innerHTML = ''; })()")
+        pg.wait_for_timeout(200)
+        bb = pg.evaluate("""(() => { const el = document.querySelector('[data-el=busy]'); const rg = document.createRange(); rg.selectNodeContents(el);
+          return [rg.getBoundingClientRect().bottom, document.querySelector('[data-el=stick]').getBoundingClientRect().top]; })()""")
+        print('A)', a, '| B) Textende / Leiste:', bb, '| C)', c)
+        results.append(a == ['tracks 1, 3–5, 7, 8', 'tracks 2, 3'])
+        results.append(bb[0] <= bb[1])
+        results.append(c.startswith('Script Companion: ') and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
