@@ -863,7 +863,7 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     kept across a reload, reset by "Delete stored import"
                                 #   linernotes: liner notes in Bandcamp's about text (3.17.2): the three places of the name, five sentences over several
                                 #     paragraphs, cases without (4 sentences, "Special Thanks" …), entry as suggestion, pool name, jump, left out,
-                                #     3.17.6: the date as a suggestion at the row, ✓ takes it
+                                #     3.17.6: the date as a suggestion at the row, ✓ takes it; Companion 1.14.0 (Z-BCAM): the mark in the about text
                                 #   labelpage: an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
                                 #     first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
                                 #     line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
@@ -1021,6 +1021,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   copymarks2: companion 1.13.0 (Z-MCP): copied text without the marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
+                                #   (Companion 1.14.0, Z-BCAM) bcview C: a mark in the "about" text; textmarks D: ◷ before a date line, ♥ before
+                                #     a dedication line of the "about" text
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
                                 #     "Load the release there", marks before each part of a line (none in the about text, shortened texts
                                 #     opened), mark → row, jumps (part of a line, sentence of the about text, track both ways), track

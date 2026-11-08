@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.13.0
+// @version      1.14.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.13.0';
+  const COMPANION_VERSION = '1.14.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -476,7 +476,8 @@
     }
     document.addEventListener('click', (e) => {
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
-      if (!mark) return;
+      // ([1.14.0] the mark of a date or dedication line: no row of its own)
+      if (!mark || !mark.dataset.row) return;
       e.preventDefault();
       e.stopPropagation();
       // only kept marks (no editor open): nothing to show or switch
@@ -492,7 +493,8 @@
     let markTimer = null;
     let markEl = null;
     document.addEventListener('mouseover', (e) => {
-      const mark = e.target.closest && e.target.closest('.dci-dg-mark');
+      const found = e.target.closest && e.target.closest('.dci-dg-mark');
+      const mark = found && found.dataset.row ? found : null;
       if (mark === markEl) return;
       markEl = mark;
       clearTimeout(markTimer);
@@ -565,6 +567,9 @@
       .dci-dg-skip { background: #c4c4c4; color: #333; }
       .dci-dg-unmapped { background: #e0a800; }
       .dci-dg-pending { background: #c0392b; }
+      /* [1.14.0] the line of a date or a dedication the dashboard took (no credit of its own: no click) */
+      .dci-bc-textmark { background: #fff; color: #736dab; box-shadow: inset 0 0 0 1px #736dab; cursor: default; font-weight: normal; }
+      html.dci-site-dark .dci-bc-textmark { background: transparent; color: #b9b4e8; box-shadow: inset 0 0 0 1px #b9b4e8; }
       #dci-artwork { position: fixed; top: 72px; right: 12px; z-index: 2147483000; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
         padding: 4px; border-radius: 6px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
         /* MusicBrainz colours: a frame from MB purple to MB orange */
@@ -1329,27 +1334,56 @@
   // [1.8.1] the text of a part whose credits are all switched off
   const BC_OFF = 'dci-bc-offtext';
 
+  // [1.14.0] (Credits Importer 3.91.0, Z-BCAM) the line of a date or a dedication the dashboard took: a mark of its own
+  const BC_TEXT_SYMBOL = { date: '◷', ded: '♥' };
+
   function renderBandcampStatus(map) {
     ensureStyle();
-    const root = bcCredits();
-    if (!root) return;
-    root.querySelectorAll('.dci-bc-markwrap, .dci-dg-mark').forEach((m) => m.remove());
-    root.querySelectorAll(`.${BC_OFF}`).forEach((x) => x.replaceWith(...x.childNodes));
-    root.normalize();
+    // [1.14.0] (Z-BCAM) also the "about" text: its credits get their marks there (before: only shown as a sentence)
+    const roots = { credits: bcCredits(), about: bcAbout() };
+    Object.values(roots).filter(Boolean).forEach((root) => {
+      root.querySelectorAll('.dci-bc-markwrap, .dci-dg-mark').forEach((m) => m.remove());
+      root.querySelectorAll(`.${BC_OFF}`).forEach((x) => x.replaceWith(...x.childNodes));
+      root.normalize();
+    });
     if (!map || !map.enabled) return;
+    for (const [part, root] of Object.entries(roots)) if (root) renderBandcampPart(map, part, root);
+  }
+
+  function renderBandcampPart(map, part, root) {
     const page = bcPageIn(map.releaseId);
+    const about = part === 'about';
     const todo = [];
     (map.items || []).forEach((item, order) => (item.refs || []).forEach((r, k) => {
-      if (r.about || (r.page || '') !== page) return;
+      if (!!r.about !== about || (r.page || '') !== page) return;
       todo.push({ item, r, order: order * 1000 + k });
     }));
-    if (!todo.length) return;
+    // [1.14.0] (Z-BCAM) the lines of the dates and dedications it took – not Bandcamp's own release date ("released …"); only on the
+    // release's own page
+    const lines = page ? [] : (map.texts || []).filter((t) => t.part === part && BC_TEXT_SYMBOL[t.kind] && t.line && !/^released\b/i.test(String(t.line).trim()));
+    if (!todo.length && !lines.length) return;
     bcExpand();
     const st = bcStream(root);
     const places = [];
     for (const t of todo) {
       const at = bcFindLine(st, t.r.line, t.r.n);
       if (at >= 0) places.push({ ...t, range: bcPartRange(st, at, t.r) });
+    }
+    // a line without a credit's mark: the mark of its date at its start – of a dedication before its sentence ((review) a paragraph is
+    // one line of the "about" text); one mark a place, the first in the text
+    const textAt = new Map();
+    for (const t of lines) {
+      const at = bcFindLine(st, t.line, t.ln || 0);
+      if (at < 0) continue;
+      const end = at + bcNeedle(t.line).length;
+      let pos = at;
+      let to = end;
+      if (t.kind === 'ded') {
+        const i = st.s.indexOf(bcNeedle(t.text), at);
+        if (i >= at && i < end) [pos, to] = [i, Math.min(end, i + bcNeedle(t.text).length)];
+      }
+      if (textAt.has(pos) || places.some((p) => p.range[0] >= pos && p.range[0] < to)) continue;
+      textAt.set(pos, t);
     }
     places.forEach((x) => { x.pos = x.range[0]; });
     // From the end, so that the places before stay where they are; marks at the same place in their order, together
@@ -1370,7 +1404,18 @@
       if (!item.off) at.allOff = false;
     }
     // From the end: a part whose credits are all off is greyed, then its marks go before it
-    atPos.forEach(({ frag, range, allOff }, pos) => {
+    const all = [...atPos.entries(), ...[...textAt.entries()].map(([pos, t]) => [pos, { text: t }])].sort((a, b) => b[0] - a[0]);
+    all.forEach(([pos, { frag, range, allOff, text }]) => {
+      if (text) {
+        const m = document.createElement('span');
+        m.className = `dci-dg-mark dci-bc-mark dci-bc-textmark dci-bc-${text.kind}`;
+        m.textContent = BC_TEXT_SYMBOL[text.kind];
+        m.title = text.title || '';
+        m.setAttribute('role', 'img');
+        m.setAttribute('aria-label', text.title || text.text || '');
+        bcInsert(st, pos, m);
+        return;
+      }
       if (allOff && range[1] > range[0]) bcWrap(st, range[0], range[1], BC_OFF);
       bcInsert(st, pos, frag);
     });
