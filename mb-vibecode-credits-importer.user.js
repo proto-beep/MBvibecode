@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.94.0
+// @version      3.95.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.94.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.94.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.95.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.95.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.94.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.95.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -958,6 +958,7 @@
       "date.untitled": "Date",
       "preview.date": "date {date}",
       "log.dateSaved": "Date saved: {date}",
+      "log.dateOwn": "Date pool: {date} for this column only (shared before with “{from}”)",
       "log.dateRemoved": "Date deleted: {date}",
       "match.searchArtist": "Search artists",
       "th.date": "Date",
@@ -5658,6 +5659,8 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D030', note: 'One date for several groups (3.95.0; collected item Z-DPD): "composed and produced between February 2025 and April 2026" is one entry of the date pool named for all its groups ("Production · Composition 1") in each of their columns – changed in the pool, for all; changed in a cell of one column, that cell gets a date of its own' },
+    { id: 'D029', note: 'The date of the production is the recording\'s too (3.95.0; collected item Z-PRD): with no date of the recording in the text, a date after "produced" / "production" also goes to Performance (the recordings and their instruments) – not the date of "composed"; a date of the recording wins' },
     { id: 'D028', note: 'Dates of composition and production (3.84.0; collected item Z-BTW): "composed", "produced", "production" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined ("Recorded at …, produced by …, 12 March 1969" stays Performance; "composed and produced between …" both)' },
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
@@ -25590,7 +25593,8 @@
 
   /** The one date of the concert: the Performance dates of the matrix (else of the pool), when there is only one. */
   function concertDate() {
-    const ids = uniq(dm().cells.filter((c) => c.col === 'performance' && !c.alt).map((c) => c.date));
+    // ((3.95.0, review) not the date of the production (D029): no concert
+    const ids = uniq(dm().cells.filter((c) => c.col === 'performance' && !c.alt && !c.viaProd).map((c) => c.date));
     const fromPool = ids.length ? ids.map((id) => S.datePool.find((x) => x.id === id)).filter(Boolean)
       : S.datePool.filter((x) => /^Performance\b/.test(x.name || '') && x.begin && x.begin.day);
     const days = uniq(fromPool.map((x) => formatDateValue(x)));
@@ -25622,7 +25626,8 @@
     const filmed = type === 'video shot at' || ((row.ruleId === 'R110' || /\b(?:cameras?|camera ?work|camerawork|cinematograph(?:y|er))\b/i.test(String(row.raw || '')))
       && vids.length && vids.every(trackIsVideo));
     if (!filmed || !S.liveAuto || !ruleOn('S021') || !(S.liveAuto.release || [...row.tracks].every((i) => liveReason(i)))) return null;
-    const src = S.rows.find((r) => r !== row && r.level !== 'skip' && r.date && r.date.poolId && (dateGroupOf(r) || {}).key === 'performance' && [...row.tracks].every((i) => r.tracks.has(i)));
+    const viaProd = new Set(dm().cells.filter((c) => c.col === 'performance' && c.viaProd).map((c) => c.date)); // ((3.95.0, review) D029
+    const src = S.rows.find((r) => r !== row && r.level !== 'skip' && r.date && r.date.poolId && !viaProd.has(r.date.poolId) && (dateGroupOf(r) || {}).key === 'performance' && [...row.tracks].every((i) => r.tracks.has(i)));
     return (src && S.datePool.find((x) => x.id === src.date.poolId)) || null;
   }
 
@@ -26450,8 +26455,9 @@
   function poolDateFor(v, group, foundKey, name = '') {
     const label = group ? group.label : tr('datefind.poolName');
     const text = formatDateValue(v);
+    // ((3.95.0, review) a name of several groups ("Production · Composition 1") is one of each of them
     const same = S.datePool.find((d) => formatDateValue(d) === text && !!d.ended === !!v.ended
-      && (d.found === foundKey || String(d.name || '').startsWith(`${label} `)));
+      && (d.found === foundKey || String(d.name || '').split(' · ').some((x) => x === label || x.startsWith(`${label} `))));
     if (same) return same;
     const e = { id: newPoolId(), name: name || `${label} ${nextGroupNumber({ label })}`, begin: v.begin, end: v.end, ended: v.ended, found: foundKey };
     S.datePool.push(e);
@@ -26875,7 +26881,13 @@
     m.found = sig;
     let placed = 0;
     const before = S.datePool.length;
-    dateFinds().notes.forEach((x0, i) => {
+    const finds = dateFinds().notes;
+    // [Z-PRD] (3.95.0, D029) no date of the recording in the text: the date of the production is the recording's too (what is produced
+    // is recorded) – not the date of the composition
+    // ((review) or a date of the column Performance not from the notes – placed by hand, from the titles of the tracks (D023)
+    const recDated = finds.some((x) => [x.hint, ...(x.hints || [])].includes('performance'))
+      || m.cells.some((c) => c.col === 'performance' && !String((S.datePool.find((d) => d.id === c.date) || {}).found || '').startsWith('notes:'));
+    finds.forEach((x0, i) => {
       const key = `notes:${i}`;
       if (S.aboutOff && fromAboutText(x0)) return; // [3.16.1]
       // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
@@ -26886,7 +26898,16 @@
         x = { ...x, tracks: kept };
       }
       // [D020] (3.28.5) joined words ("mixed and mastered … March 2026"): the date goes to each of their groups
-      const groups = uniq([x.hint, ...(x.hints || [])]).map((k) => DATE_GROUPS.find((g) => g.key === k) || null).filter((g, k) => g || k === 0);
+      const keys0 = uniq([x.hint, ...(x.hints || [])]);
+      const keys = ruleOn('D029') && !recDated && keys0.includes('production') ? uniq([...keys0, 'performance']) : keys0;
+      const groups = keys.map((k) => DATE_GROUPS.find((g) => g.key === k) || null).filter((g, k) => g || k === 0);
+      // [Z-DPD] (3.95.0, D030) one date for several groups: one entry of the pool, named for all ("Production · Composition 1") – it is
+      // given by the pool; changed in a cell of one group, the cell gets a date of its own
+      const shared = ruleOn('D030') && groups.length > 1 && groups.every(Boolean) && !x.multi
+        ? (() => {
+          const joined = groups.filter((g) => keys0.includes(g.key)).map((g) => g.label).join(' · ');
+          return poolDateFor(x.value, groups[0], key, `${joined} ${nextGroupNumber({ label: joined })}`); // ((review) by the joined name
+        })() : null;
       groups.forEach((group, gi) => {
         // the first group keeps the key of the find; the others get their own (their own pool entry, named for the group)
         const gkey = gi ? `${key}~${group.key}` : key;
@@ -26901,20 +26922,25 @@
         // when it is in their signature: "Liner notes – Jane Roe")
         const liner = S.release && S.release.liner;
         const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
-        const e = poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
+        const e = shared || poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
         // [3.17.6] marked for the liner notes: their row shows it as a suggestion
         if (forLiner) e.liner = liner.name;
         const common = addCommonDate(e.begin, e.end, group, gkey, e);
         if (!group) return;
         // [D022] (3.32.0) a period of Performance: what its days have in common at once (the period stays in the pool)
         const cellDate = common && group.key === 'performance' && ruleOn('D022') ? common : e;
-        const here = m.cells.find((c) => c.col === group.key && c.date === cellDate.id);
+        // ((3.95.0, review) a cell of the column with the same date (another entry of the pool) is it too; a column whose shared date was
+        // given a date of its own (D030) keeps that
+        const sameDate = (c) => { const d = S.datePool.find((y) => y.id === c.date); return !!d && formatDateValue(d) === formatDateValue(cellDate) && !!d.ended === !!cellDate.ended; };
+        const here = m.cells.find((c) => c.col === group.key && (c.date === cellDate.id || (shared && sameDate(c))));
+        if (!here && shared && m.cells.some((c) => c.col === group.key && String((S.datePool.find((d) => d.id === c.date) || {}).found || '') === `${key}~${group.key}`)) return;
         if (here) {
           if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
           return;
         }
-        if (m.cells.some((c) => c.date === cellDate.id)) return;
+        if (!shared && m.cells.some((c) => c.date === cellDate.id)) return;
         m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}),
+          ...(group.key === 'performance' && !keys0.includes('performance') ? { viaProd: true } : {}), // ((review) D029: no concert
           ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
         placed++;
       });
@@ -27471,7 +27497,7 @@
         <span class="dci-sub">${esc(tr('dm.studiosHint'))}</span></div>` : ''}
       <div class="dci-mbdate-tools">
         ${c.auto ? `<button type="button" class="dci-small" data-act="dm-confirm" data-cell="${esc(c.id)}">${esc(tr('dm.confirm'))}</button>` : ''}
-        <button type="button" class="dci-textbtn" data-act="pool-edit" data-id="${esc(c.date)}">${esc(tr('dm.editDate'))}</button>
+        <button type="button" class="dci-textbtn" data-act="pool-edit" data-id="${esc(c.date)}" data-cell="${esc(c.id)}">${esc(tr('dm.editDate'))}</button>
         <button type="button" class="dci-textbtn" data-act="dm-remove" data-cell="${esc(c.id)}">${esc(tr('dm.remove'))}</button>
         <button type="button" class="dci-textbtn" data-act="dm-edit" data-cell="${esc(c.id)}">${esc(tr('common.close'))}</button>
       </div></div>`;
@@ -27670,6 +27696,26 @@
     f.error = res.error ? dateErrorText(res.error) : !res.value ? tr('date.errEmpty') : '';
     if (f.error) {
       renderDates();
+      return;
+    }
+    // [Z-DPD] (3.95.0, D030, review) from a cell whose date others share, another date: a date of its own for that cell (and its rows)
+    const forkCell = f.forkCell && f.id ? dm().cells.find((c) => c.id === f.forkCell) : null;
+    const shared = forkCell && S.datePool.find((d) => d.id === f.id);
+    if (shared && formatDateValue(res.value) !== formatDateValue(shared)) {
+      const group = DATE_GROUPS.find((g) => g.key === forkCell.col);
+      const own = { ...shared, id: newPoolId(), name: group ? `${group.label} ${nextGroupNumber(group)}` : `${shared.name} *`, ...res.value,
+        found: shared.found ? `${shared.found}~${forkCell.col}` : '' };
+      S.datePool.push(own);
+      forkCell.date = own.id;
+      S.rows.filter((r) => r.date && r.date.poolId === shared.id && (dateGroupOf(r) || {}).key === forkCell.col)
+        .forEach((r) => { r.date = { ...fieldsFromDate(own), poolId: own.id, mx: !!r.date.mx }; });
+      savePool();
+      S.poolForm = null;
+      log('info', 'dateOwn', { date: poolLabel(own), from: poolLabel(shared) });
+      dmChanged();
+      renderDates();
+      renderGroups();
+      refresh();
       return;
     }
     const i = S.datePool.findIndex((d) => d.id === f.id);
@@ -37469,9 +37515,16 @@
       case 'pool-new':
         openPoolForm();
         break;
-      case 'pool-edit':
-        openPoolForm(S.datePool.find((d) => d.id === btn.dataset.id));
+      case 'pool-edit': {
+        const d = S.datePool.find((x) => x.id === btn.dataset.id);
+        // [Z-DPD] (3.95.0, D030) the date of a cell that other cells share (one date for several groups): changed here (saved with another
+        // date), a date of its own for this cell – changed in the pool, for all
+        const m = btn.dataset.cell ? dm() : null;
+        const cell = m && m.cells.find((c) => c.id === btn.dataset.cell);
+        openPoolForm(d);
+        if (d && cell && S.poolForm && ruleOn('D030') && m.cells.some((c) => c !== cell && c.date === d.id)) S.poolForm.forkCell = cell.id;
         break;
+      }
       case 'datefind-use':
         useFoundDate(btn.dataset.src, btn.dataset.i, btn.dataset.group);
         break;

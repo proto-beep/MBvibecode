@@ -68,7 +68,8 @@ console.log(JSON.stringify(T.map((t) => m.findDates(t).map((d) => [d.text, d.rul
         cells = sorted((c['col'], byId[c['date']]['name'], fmt(byId[c['date']])) for c in mx.get('cells', []))
         names = sorted((d['name'], fmt(d)) for d in pool)
         print('B) Matrix:', cells, '| Pool:', names)
-        results.append(cells == [('mastering', 'Mastering 1', '2010-3/2010-3'), ('mix', 'Mix 1', '2010-3/2010-3'), ('performance', 'Performance 1 (month)', '2009-1/2009-1')]
+        # ([Z-DPD] 3.95.0, D030) one date of "mixed and mastered": one entry of the pool for both
+        results.append(cells == [('mastering', 'Mastering · Mix 1', '2010-3/2010-3'), ('mix', 'Mastering · Mix 1', '2010-3/2010-3'), ('performance', 'Performance 1 (month)', '2009-1/2009-1')]
                        and ('Performance 1', '2009-1-19/2009-1-20') in names
                        and not any('2011' in n[1] for n in names))
         print('Fehler:', errs)
