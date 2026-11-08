@@ -376,6 +376,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   pps390: 3.90.0 (Z-PPS, S142): Pub Co (Writer W's personal publisher) follows Writer W – on with track 3, off with
+                                #     track 2; its cell of track 1 off by hand stays; "on all tracks" stays (review); off
                                 #   arl387: 3.87.0 (Z-ARL2, Z-AWB2): the level of "arranger" in the column head – onto the recordings; no "all works" in the ▾ menu; S135 off
                                 #   awb386: 3.86.0 (Z-AWB, Z-DNDS): "all works" on and off, a track group dropped on it (exactly / ⇧ adds),
                                 #     ⚙ Dates & tracks → Drag & drop (five places, "all works" set to add, reset), S133 off: no button

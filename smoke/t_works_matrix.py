@@ -1608,4 +1608,62 @@ def case_arl387():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_pps390():
+    """Credits Importer 3.90.0 (collected item Z-PPS, rule S142): Pub Co is the personal publisher of Writer W in MusicBrainz (S014).
+    A) At the import: Pub Co on the works of Writer W (tracks 1, 2).
+    B) Writer W switched on for track 3: Pub Co there too (until 3.89.0 only at the import).
+    C) Writer W off on track 2: Pub Co off there too.
+    D) Pub Co's cell of track 1 off by hand: it stays off when Writer W goes off and on again there.
+    E) Rule S142 off: B leaves Pub Co as it was.
+    F) (review) "On all tracks" of Pub Co (not a click on a cell): all four stay – not cut back to the writers' works."""
+    COLS = """(() => { const out = {};
+  document.querySelectorAll('.dci-matrix th[data-colhead]').forEach((th) => {
+    const name = (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim();
+    out[name] = [...document.querySelectorAll(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`)].filter(c => c.classList.contains('dci-mx-on'))
+      .map(c => Number(c.closest('tr').dataset.work) + 1);
+  }); return out; })()"""
+    results = []
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S142']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            colkey = lambda name: pg.evaluate(f"[...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(th => th.textContent.includes({name!r})).dataset.colhead")
+            click = lambda name, track: (pg.evaluate(f"document.querySelector('.dci-matrix tr[data-work=\"{track - 1}\"] .dci-mx-cell[data-col=\"{colkey(name)}\"] [data-act=mx-cell]').click()"),
+                                         H.wait_still(pg, "document.body.innerHTML", 10, 200))
+            pub = lambda: pg.evaluate(COLS).get('Pub Co')
+            a = pub()
+            click('Writer W', 3)
+            bb = pub()
+            if off:
+                print('E)', a, bb)
+                results.append(a == [1, 2] and bb == [1, 2])
+                results.append(not errs)
+                b.close()
+                continue
+            click('Writer W', 2)
+            c = pub()
+            click('Pub Co', 1)
+            click('Writer W', 1)
+            click('Writer W', 1)
+            d = [pub(), pg.evaluate(COLS).get('Writer W')]
+            pg.evaluate(f"document.querySelector('[data-act=mx-colmenu][data-col=\"{colkey('Pub Co')}\"]').click()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.evaluate(f"(b => b && b.click())(document.querySelector('[data-act=mx-pub-all][data-col=\"{colkey('Pub Co')}\"]'))")
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            f = pub()
+            print('A)', a, 'B)', bb, 'C)', c, 'D)', d, 'F)', f)
+            results.append(f == [1, 2, 3, 4])
+            results.append(a == [1, 2] and bb == [1, 2, 3] and c == [1, 3] and d == [[3], [1, 3]])
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

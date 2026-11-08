@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.89.0 | – |
+| 2026-11-08 | 3.88.0 – 3.90.0 | – |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.90.0
+
+#### Changed
+
+- **A personal publisher follows its writers** (collected item Z-PPS, rule S142): a publisher of the works matrix that MusicBrainz has as the personal publisher of writers (S014) keeps the works of their writing credits at every change, not only at the import – on where one of them writes (one is enough), off where none does any more. A cell of the publisher changed by hand stays – however it was changed (a click, its menu, a drop, "on all tracks", the row's tracks), also after loading the page again – a source that names the publisher's tracks keeps them, a locked work or one with its credits skipped is left alone; a work of a medley follows the writers of that work; a publisher column added by hand follows too; no other personal publisher comes by itself.
 
 ### Import 3.89.0
 
