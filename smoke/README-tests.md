@@ -227,6 +227,10 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   prd395: 3.95.0 (Z-PRD, Z-DPD; D029, D030): "composed and produced between …" – one pool entry "Production ·
+                                #     Composition 1" in Composition, Production and Performance (Jane Doe's performer row dated); "Edit date" in
+                                #     the cell of Composition (another year saved): its own date; "Recorded in 2024 …": Performance 2024 only;
+                                #     (review) two such dates numbered 1, 2; "composed" alone with the same date: one cell
                                 #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
                                 #     Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
                                 #     titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the

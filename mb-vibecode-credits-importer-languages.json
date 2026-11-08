@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.94.0",
+  "version": "3.95.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -1314,6 +1314,7 @@
     "date.untitled": "Datum",
     "preview.date": "Datum {date}",
     "log.dateSaved": "Datum gespeichert: {date}",
+    "log.dateOwn": "Date Pool: {date} nur für diese Spalte (vorher gemeinsam mit „{from}“)",
     "log.dateRemoved": "Datum gelöscht: {date}",
     "match.searchArtist": "Artists suchen",
     "th.date": "Datum",
