@@ -486,7 +486,7 @@ def case_review43():
         n0 = len(pg.evaluate(LOGS))
         pg.evaluate("document.dispatchEvent(new CustomEvent('dci:from-discogs', { detail: JSON.stringify({ type: 'result', id: 'other:c7', found: 'credit' }) }))")
         pg.wait_for_timeout(800)
-        b1 = [x for x in pg.evaluate(LOGS)[n0:] if 'Discogs view' in x]
+        b1 = [x for x in pg.evaluate(LOGS)[n0:] if 'Script Companion' in x]
         b2 = pg.evaluate(SYNC)
         print('B) fremdes Ergebnis – Protokoll:', b1, '| Anzeige:', b2)
         results.append(not b1 and 'credit highlighted' not in b2)

@@ -754,7 +754,7 @@ def case_suiteadd():
        closed, "＋ Another suite …" in the head is disabled ("Every track is in a suite already …").
     C) ↺ undo: the parts go and so does the suite (nothing asked again); "＋ Suite …" is there again. Cancel closes the box.
     D) (3.70.0, Z-SU2) a suite "Duo" of tracks 3–4: tracks 1–2 are free – the box opens again for another suite (from track 1.1, the
-       tracks "(Duo)" disabled, "Suites: Duo (tracks 3–4)", the focus in the name field).
+       tracks "(Duo)" disabled, "Suites: Duo (tracks 3, 4)", the focus in the name field).
     (Until 3.41.10 a suite could only come from the source.)"""
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
     # ([3.52.0] the questions in the header rows of the matrix, the box below the head, "＋ Suite …" in the head)
@@ -815,7 +815,7 @@ def case_suiteadd():
           return { from: f.value, disabled: [...f.options].filter(o => o.disabled).map(o => o.textContent.trim()), list: (box.querySelector('[data-el=suite-list]') || {}).textContent,
                    focus: document.activeElement && document.activeElement.dataset.f, head: document.querySelector('[data-el=works] [data-act=suite-add-open]').textContent.trim() }; })()""")
         print('D) frei 1–2:', d0)
-        results.append(d0 == {'from': '0', 'disabled': [f'1.{k} {H.TITLES[k - 1]} (Duo)' for k in (3, 4)], 'list': 'Suites: Duo (tracks 3–4)',
+        results.append(d0 == {'from': '0', 'disabled': [f'1.{k} {H.TITLES[k - 1]} (Duo)' for k in (3, 4)], 'list': 'Suites: Duo (tracks 3, 4)',
                               'focus': 'mx-suite-name', 'head': '＋ Another suite …'})
         print('Fehler:', errs)
         results.append(not errs)
@@ -831,7 +831,7 @@ def case_subtracks():
        the tracks differ (until 3.41.11 "3 tracks instead of 4", Bass Man's bass on track 3 with Song Three).
     B) Bass Man's bass on track 4 only; Writer Z writes track 3 (the works matrix); (3.41.15, review) a credit of the release for
        "tracks: 3" (the index) on both of its tracks (until 3.41.14 not resolved: the index has no position, its sub-tracks one base).
-    C) The index is offered as a suite of tracks 3–4 ("tracks 3–4: parts of the suite “Suite X”?").
+    C) The index is offered as a suite of tracks 3–4 ("tracks 3, 4: parts of the suite “Suite X”?"; [Z-TRR] 3.93.0).
     D) In Node: titles that do not fit, but splitting gives MusicBrainz's number of tracks: split; a number that does not fit: not."""
     import json
     import subprocess
@@ -875,7 +875,7 @@ def case_subtracks():
                        and rows.get('Con Duct') == [['Conductor', [2, 3]]])
         suites = pg.evaluate("[...document.querySelectorAll('[data-el=works] [data-suite] strong')].map(x => x.textContent.trim())")
         print('C)', suites)
-        results.append(suites == ['tracks 3–4: parts of the suite “Suite X”?'])
+        results.append(suites == ['tracks 3, 4: parts of the suite “Suite X”?'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

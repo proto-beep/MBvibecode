@@ -1049,7 +1049,7 @@ def case_remember():
             after = [sl(pg.evaluate(BLOCKS, n)) for n in ('Multi Man', 'Part Man', 'Solo Man')]
             print('vorher:', before)
             print('nachher:', after)
-            results.append(before == after and before[0][0][2][0] == 'drums (drum set)' and before[1][0][1][1] == '② Recording tracks 2–3' and len(before[2]) == 2)
+            results.append(before == after and before[0][0][2][0] == 'drums (drum set)' and before[1][0][1][1] == '② Recording tracks 2, 3' and len(before[2]) == 2)
             pg.click('[data-act=apply]')
             pg.wait_for_timeout(1500)
             n = len(pg.evaluate(ADDED))

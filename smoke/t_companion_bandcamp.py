@@ -118,7 +118,7 @@ def case_bcview():
         opened = pg.evaluate("window.__opened || []")
         dg_marks = dg.evaluate("document.querySelectorAll('.dci-dg-mark').length")
         print('A) Ansicht:', a1, '| geöffnet:', opened, '| Marken auf Discogs:', dg_marks)
-        results.append(a1.startswith('Bandcamp view: no Bandcamp tab') and ALBUM in opened and dg_marks == 0)
+        results.append(a1.startswith('Script Companion: no Bandcamp tab') and ALBUM in opened and dg_marks == 0)
         # B) a Bandcamp tab on another album, then "Load the release there"
         bc, bcerr = H.open_bandcamp(ctx, OTHER)
         H.wait_for(pg, f"{SYNC}.includes('on another page')", 20)
@@ -128,7 +128,7 @@ def case_bcview():
         H.wait_for(pg, f"{SYNC}.includes('connected')", 20)
         b2 = pg.evaluate(SYNC)
         print('B) andere Seite:', b1, '| danach:', b2)
-        results.append(b1.startswith('Bandcamp view: a Bandcamp tab is open, but on another page') and b2.startswith('Bandcamp view: connected'))
+        results.append(b1.startswith('Script Companion: a Bandcamp tab is open, but on another page') and b2.startswith('Script Companion: connected'))
         # C) the marks
         poll(bc, "document.querySelectorAll('.tralbum-credits .dci-dg-mark').length >= 7")
         bc.wait_for_timeout(500)
@@ -226,7 +226,7 @@ def case_bcview():
       return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').textContent.trim(),
         !!t.querySelector('[data-dg-artwork]'), t.querySelector('.dci-sub').textContent.trim().slice(0, 60)]; })()""")
         print('G) alter Companion:', g1, '| Menü:', g2)
-        results.append(g1.startswith('Bandcamp view: needs the companion script 1.8.0') and g2[:3] == ['Source pages', 'Bandcamp status', False])
+        results.append(g1.startswith('Script Companion: version 1.8.0 or later needed for Bandcamp') and g2[:3] == ['Source pages', 'Bandcamp status', False])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -706,7 +706,7 @@ https://kexp.org"""
         pg.wait_for_timeout(300)
         opened = pg.evaluate("window.__opened || []")
         print('A) Ansicht:', a1, '| geöffnet:', opened)
-        results.append(a1.startswith('YouTube view: no YouTube tab') and f'https://www.youtube.com/watch?v={V1}' in opened)
+        results.append(a1.startswith('Script Companion: no YouTube tab') and f'https://www.youtube.com/watch?v={V1}' in opened)
         # B)
         yt, yterr = H.open_youtube(ctx, f'https://www.youtube.com/watch?v={V2}')
         H.wait_for(pg, f"{SYNC}.includes('on another page')", 20)
@@ -716,7 +716,7 @@ https://kexp.org"""
         H.wait_for(pg, f"{SYNC}.includes('connected')", 20)
         b2 = pg.evaluate(SYNC)
         print('B) anderes Video:', b1, '| danach:', b2)
-        results.append(b1.startswith('YouTube view: a YouTube tab is open, but on another page') and b2.startswith('YouTube view: connected'))
+        results.append(b1.startswith('Script Companion: a YouTube tab is open, but on another page') and b2.startswith('Script Companion: connected'))
         # C) the marks
         poll(yt, "document.querySelectorAll('#expanded .dci-dg-mark').length >= 4")
         yt.wait_for_timeout(500)
@@ -804,7 +804,7 @@ https://kexp.org"""
         pg.wait_for_timeout(300)
         g1 = pg.evaluate(SYNC)
         print('G) alter Companion:', g1)
-        results.append(g1.startswith('YouTube view: needs the companion script 1.11.0'))
+        results.append(g1.startswith('Script Companion: version 1.11.0 or later needed for YouTube'))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

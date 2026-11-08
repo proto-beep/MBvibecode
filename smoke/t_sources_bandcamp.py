@@ -758,7 +758,7 @@ def case_bctrack():
         a2 = [pg.evaluate(SYNC), bc.evaluate("document.querySelectorAll('.tralbum-credits .dci-dg-mark').length")]
         print('A) Quelle, Einträge, Anfragen an die Track-Seite:', a1, '| Bandcamp-Tab:', a2)
         results.append(a1[0] == ['Single Song (Bandcamp)', SINGLE] and a1[1] == ['Jane Roe: Mixed By', 'Peter Evans: Trumpet']
-                       and a1[2] == 1 and a2[0].startswith('Bandcamp view: connected') and a2[1] == 2)
+                       and a1[2] == 1 and a2[0].startswith('Script Companion: connected') and a2[1] == 2)
         # B) in Node
         node = """const m = require(process.argv[1]); const bc = m.SOURCES.bandcamp;
       const ids = ['https://TestBand.bandcamp.com/TRACK/Single-Song?from=embed', 'https://testband.bandcamp.com/album/testalbum#x', 'https://testband.bandcamp.com/music', 'https://testband.bandcamp.com/'].map(bc.parseReleaseId);
@@ -784,7 +784,7 @@ def case_bctrack():
         c3 = [pg.evaluate(SYNC), bc.evaluate("document.querySelectorAll('.tralbum-credits .dci-dg-mark').length")]
         print('C) Quelle, Einträge:', c1, '| Tab:', c2, '→', c3)
         results.append(c1 == [['Song Two (Bandcamp)', SONG2], ['Anna Viola: Viola']] and 'on another page' in c2
-                       and c3[0].startswith('Bandcamp view: connected') and c3[1] == 1)
+                       and c3[0].startswith('Script Companion: connected') and c3[1] == 1)
         # D) "Test page"
         H.src_menu(pg, 'bc-toggle')
         pg.wait_for_timeout(200)

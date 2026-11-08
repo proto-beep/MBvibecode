@@ -86,7 +86,7 @@ def case_facets():
        end of the range), E1–F1 (6–7).
     B) "in live concert" names tracks: "live" is offered for the existing link of track 1 (its sentence names A1–B1) with
        that reason – not for the whole release.
-    C) [3.36.7] (collected item 150, S053) the places of the notes with their tracks – Goldsmith's College on A1–B1, Heiman Recording
+    C) [3.36.7] (collected item 150, S053) the places of the notes with their tracks – Goldsmith's College on A1, B1 ([Z-TRR] 3.93.0: two tracks one by one), Heiman Recording
        Studios on C1–D and E1–F1 ("C1–F1") –, no area London (until 3.36.6 no places from these sentences at all)."""
     POS = ['A1', 'B1', 'C1', 'C2', 'D', 'E1', 'F1']
     H.TITLES[:] = ['Part One', 'Part Two', 'Organic', 'Trisect', 'Ontology', 'Part Six', 'Part Seven']
@@ -128,8 +128,8 @@ def case_facets():
         day = lambda d: '-'.join(str(x) for x in (d['begin']['year'], d['begin']['month'], d['begin']['day']))
         cells = sorted((c['col'], day(byId[c['date']]), [(tgById[t]['name'], tgById[t]['tracks']) for t in c['tgs']]) for c in mx.get('cells', []))
         print('A) Matrix:', cells)
-        results.append(cells == [('performance', '1979-10-4', [('Tracks C1–D', [2, 3, 4])]), ('performance', '1980-5-2', [('Tracks E1–F1', [5, 6])]),
-                                 ('performance', '1981-5-22', [('Tracks A1–B1', [0, 1])])])
+        results.append(cells == [('performance', '1979-10-4', [('Tracks C1–D', [2, 3, 4])]), ('performance', '1980-5-2', [('Tracks E1, F1', [5, 6])]),
+                                 ('performance', '1981-5-22', [('Tracks A1, B1', [0, 1])])])
         # B) "live" offered on track 1's existing link, for its tracks
         live = pg.evaluate("""[...document.querySelectorAll('.dci-wpill[data-attr=live]')].map(x => [x.textContent.trim(), x.title])""")
         print('B) live:', live)
@@ -140,7 +140,7 @@ def case_facets():
       .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
         ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])])""")
         print('C) Einträge:', names, '\n   Orte:', places)
-        results.append('London' not in names and places == [["Goldsmith's College", [['Recorded At', 'ⓘ Tracks A1–B1 from the notes']]],
+        results.append('London' not in names and places == [["Goldsmith's College", [['Recorded At', 'ⓘ Tracks A1, B1 from the notes']]],
                                                             ['Heiman Recording Studios', [['Recorded At', 'ⓘ Tracks C1–F1 from the notes']]]])
         print('Fehler:', errs)
         results.append(not errs)

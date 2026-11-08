@@ -572,6 +572,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   head393: 3.93.0: tracks in short "1, 3–5, 7, 8" / "2, 3" (Z-TRR); "Reading …" not covered by the sticky
+                                #     bar (Z-BCST); "Script Companion: …" (Z-CNAME). From 3.93.0 the other files expect two tracks one by one
+                                #     ("tracks 2, 3", "Tracks A1, B1") where they had "2–3", "A1–B1"
                                 #   evnote392: 3.92.0 (Z-EVL): an event added without a role – the note which type on which tracks, gone with the
                                 #     next entry; (review) "on all tracks", gone with its rows
                                 #   ncy389: 3.89.0 (Z-NCY, S139): the name clicks through the spellings on all rows (MusicBrainz's: empty), ⇄ of a
