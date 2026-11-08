@@ -482,6 +482,8 @@ AREA_PARENTS = {}
 # [3.32.9] places and areas with what they are part of (live comments, item 113): PLACE_AREAS place gid → area gid; AREA_INFO
 # area gid → {'name', 'type', 'iso1': [...], 'iso2': [...], 'parent': gid}
 PLACE_AREAS = {}
+# [3.88.0] events with their places (Z-FPL2): gid → {'name', 'begin', 'end', 'aliases', 'places': [(place gid, name)]}
+EVENT_INFO = {}
 AREA_INFO = {}
 # [3.32.10] MusicBrainz's /ws/js/release/<gid>?inc=rels recordings (a test sets the answer) and the edits sent to /ws/js/edit/create
 WS_JS_RELEASE = {}
@@ -891,6 +893,13 @@ def install_routes(ctx):
                 return any(tok[k:k + len(n.split())] == n.split() for n in names for k in range(len(tok)))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
                                                 if any(r.get('artist', {}).get('id') in ids or in_name(r.get('artist', {}).get('name', '')) for r in w.get('relations', []))]})
+        # [3.88.0] an event with its aliases and places (EVENT_INFO: gid → {'name', 'begin', 'end', 'places': [(gid, name)]}; others: 404)
+        m = re.match(r'/ws/2/event/([0-9a-f-]{36})$', p)
+        if m and m.group(1) in EVENT_INFO:
+            e = EVENT_INFO[m.group(1)]
+            return json_route(route, {'id': m.group(1), 'name': e.get('name', ''), 'aliases': [{'name': n} for n in e.get('aliases', [])],
+                                      'life-span': {'begin': e.get('begin'), 'end': e.get('end')},
+                                      'relations': [{'type': 'held at', 'target-type': 'place', 'place': {'id': g, 'name': n}} for g, n in e.get('places', [])]})
         # [3.32.9] a place with its area; an area with its type, ISO codes and the area it is part of (AREA_INFO)
         m = re.match(r'/ws/2/place/([0-9a-f-]{36})$', p)
         if m and m.group(1) in PLACE_AREAS:

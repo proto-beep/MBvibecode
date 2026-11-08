@@ -245,7 +245,8 @@ def case_evask():
        question gone; the log says so.
     C) A release with a video (track 2): the question offers "video shot at" too (from 3.85.0 first both, by media type); "choose
        later" leaves the row as it was.
-    D) Rule S108 off: no question."""
+    D) Rule S108 off: no question.
+    (From 3.88.0 with rule S136 off – on, an event without a role gets its rows at once.)"""
     EV = H.uid('fefefefe', 11)
     H.COMPANIES[1031] = ('event', EV, 'Vancouver Jazz Festival 1993, Day 2')
     H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
@@ -265,8 +266,8 @@ def case_evask():
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
-        if off:
-            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S108']))")
+        # ([Z-EVL] 3.88.0) the question only with rule S136 off (on: at once, case evl388 of t_notes_companies.py)
+        pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S108', 'S136'] if off else ['S136']}))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1421,6 +1422,7 @@ def case_eva385():
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S136']))")  # ([Z-EVL] 3.88.0) the question
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
