@@ -761,6 +761,11 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   arr394: 3.94.0 (Z-ARRL, Z-ARRD, S150): Discogs "Arranged By" on the works (entry among "Writing credits and
+                                #     arrangements of the works", "arranger · Work" clicks back to Recording → Release → Work); "[Strings]" on the
+                                #     recordings; a text "All songs were arranged by" on the works, "Arranged by" alone not (review: nor a song
+                                #     word elsewhere in the line, "Melody Gardot - …, arrangements"); Bandcamp "All songs
+                                #     was written & arranged by" on the works
                                 #   arq387: 3.87.0 (Z-ARQ2, Z-ARQ3): the levels as columns (search leaves out levels), "＋ New event" (tracks 3, 4, a date), no role credit "instrument"; (review) staged beside the undated producer, an unreadable date or no track: the types off
                                 #   arq386: 3.86.0 (Z-ARQ): "＋ Another role" asks the type – search "mix", the levels, the events of an
                                 #     entry's matrix ticked, "Type a role yourself", Esc, S134 off as before

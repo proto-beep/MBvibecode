@@ -1644,7 +1644,8 @@ def case_levelclick():
     A) Compact (lines by event): Solo Man's ① "Recording" is a button (the tooltip names the next level); clicks go through the levels
        MusicBrainz has for his roles – Recording → Release → Skip → Recording; on "Skip" the event stays at its place, grey, "① Skip"
        (its rows on "Skip"), a click takes it back to Recording on the same tracks.
-    B) An arranger (Discogs "Arranged By"): Work is in the circle – Recording → Release → Work (the rows into the works matrix).
+    B) An arranger (Discogs "Arranged By"; from 3.94.0 with S150 off – on, it starts on Work, see arr394): Work is in the circle –
+       Recording → Release → Work (the rows into the works matrix).
     C) The full matrix: the level in the head of the event's column is a button (the same circle); the ticks of an event on "Skip" are
        shown, not changeable; the opened event offers "Skip" too."""
     orig, rel = join_release()
@@ -1670,6 +1671,7 @@ def case_levelclick():
             H.ENTRIES_VIEW = 'matrix'
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S150']))")
             pg.on('dialog', lambda d: d.accept())
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
@@ -2247,5 +2249,125 @@ def case_arq387():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_arr394():
+    """Credits Importer 3.94.0 (Z-ARRL, Z-ARRD; rule S150): arrangements of works.
+    A) Discogs "Arranged By – Writer Z" (no writing credits on the release): arranger on the works (the works matrix); the entry among
+       "Writing credits and arrangements of the works" (after the other entries); its line "arranger · Work" – a click puts it back on
+       "Recording", the entry among the others again; its level then clicks through Recording → Release → Work and stays a button.
+    B) Discogs "Arranged By [Strings]": on the recordings (an arrangement for the recording).
+    C) A text "All songs were arranged by Writer Z": on the works; "Arranged by Writer Z" alone: on the recordings; (review) not a song
+       word elsewhere in the line ("Melody Gardot - vocals, arrangements", "Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z").
+    D) Bandcamp "All songs was written & arranged by Writer Z": arranger on the works (until 3.93.0 on the recordings)."""
+    H.lt(9297, H.uid('1a1a1a1a', 9297), 'arranger', 'artist', 'recording', ())
+    H.lt(9295, H.uid('1a1a1a1a', 9295), 'arranger', 'artist', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+    WZ = "[...document.querySelectorAll('section.dci-group')].find(g => /Writer Z/.test((g.querySelector('.dci-gname') || {}).textContent || ''))"
+    STATE = f"""(() => {{ const g = {WZ}; if (!g) return null; const wo = !!g.closest('[data-el=workonly]');
+      return [wo, [...g.querySelectorAll('[data-act=em-evlevel-next], [data-act=arr-level]')].map(x => x.textContent.trim()),
+        (document.querySelector('[data-el=workonly] h3') || {{ textContent: '' }}).textContent.trim()]; }})()"""
+    MXCOL = "[...document.querySelectorAll('.dci-works th')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Writer Z/.test(t))"
+    results = []
+
+    def discogs(role):
+        def rel():
+            d = orig()
+            for t in d['tracklist']:
+                t['extraartists'] = []
+            d['extraartists'].append({'name': 'Writer Z', 'anv': '', 'role': role, 'tracks': '', 'id': 3009, 'join': ''})
+            return d
+        return rel
+
+    def open_pg(p):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return b, pg, errs
+
+    try:
+        H.ENTRIES_VIEW = 'matrix'
+        # A) "Arranged By"
+        H.discogs_release = discogs('Arranged By')
+        with sync_playwright() as p:
+            b, pg, errs = open_pg(p)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(400)
+            a0 = pg.evaluate(STATE)
+            mx = pg.evaluate(MXCOL)
+            seq = []
+            for _ in range(4):
+                pg.locator(f"section.dci-group:has(.dci-gname:has-text('Writer Z')) [data-act=em-evlevel-next], section.dci-group:has(.dci-gname:has-text('Writer Z')) [data-act=arr-level]").first.click()
+                pg.wait_for_timeout(400)
+                seq.append(pg.evaluate(STATE))
+            print('A)', a0, mx, '\n  ', seq)
+            results.append(a0 == [True, ['Work'], 'Writing credits and arrangements of the works'] and len(mx) == 1 and 'arranger' in mx[0]
+                           and [x[:2] for x in seq] == [[False, ['Recording']], [False, ['Release']], [True, ['Work']], [False, ['Recording']]] and not errs)
+            b.close()
+        # B) "Arranged By [Strings]"
+        H.discogs_release = discogs('Arranged By [Strings]')
+        with sync_playwright() as p:
+            b, pg, errs = open_pg(p)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(400)
+            b0 = pg.evaluate(STATE)
+            print('B)', b0)
+            results.append(b0 is not None and b0[0] is False and b0[1] == ['Recording'])
+            b.close()
+        # C) texts
+        H.discogs_release = orig
+        out = []
+        for text in ['All songs were arranged by Writer Z\nJane Doe: guitar', 'Arranged by Writer Z\nJane Doe: guitar',
+                     'Melody Gardot - vocals, arrangements\nVocals on tracks 2, 4 by Jane Doe, arranged by Writer Z']:
+            with sync_playwright() as p:
+                b, pg, errs = open_pg(p)
+                H.src_menu(pg, 'text-open')
+                pg.fill('[data-f=text-src]', text)
+                pg.click('[data-act=text-load]')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+                H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                out.append([pg.evaluate(f"(() => {{ const g = {WZ}; return g ? !!g.closest('[data-el=workonly]') : null; }})()"), len(pg.evaluate(MXCOL))])
+                b.close()
+        print('C)', out)
+        results.append(out == [[True, 1], [False, 0], [False, 0]])
+    finally:
+        H.discogs_release = orig
+    # D) Bandcamp
+    album = 'https://testband.bandcamp.com/album/testalbum'
+    H.BC_PAGES[album] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'All songs was written & arranged by Writer Z\n\nJane Doe: guitar',
+                                  'about': '', 'release_date': '01 Jan 2023 00:00:00 GMT'},
+                                  'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(H.TITLES)]}, band='Test Band')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': album}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            d = [pg.evaluate(f"(() => {{ const g = {WZ}; return g ? !!g.closest('[data-el=workonly]') : null; }})()"), pg.evaluate(MXCOL)]
+            print('D)', d)
+            results.append(d[0] is True and len(d[1]) == 1 and 'arranger' in d[1][0] and not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

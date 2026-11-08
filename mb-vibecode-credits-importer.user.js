@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.93.0
+// @version      3.94.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.93.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.93.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.94.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.94.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.93.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.94.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1621,6 +1621,10 @@
       "group.workNote": "The writing credits of this entry are in the works matrix.",
       "aka.note": "“{aka}” in brackets after {name}: the artist name of the same person – MusicBrainz is searched by both. If MusicBrainz has only “{aka}”, it may be cleaner to add {name} as an artist of his or her own (its legal name or “performs as”) than to credit “{aka}” as {name}.",
       "group.workNoteShort": "Writing credits: in the works matrix",
+      "group.workOnlyTitle": "Writing credits and arrangements of the works",
+      "group.workOnlyExplain": "Entries with relationships of works only – the relationships themselves are in the works matrix below.",
+      "group.arrLevelTitle": "Level – a click puts this arrangement on “{level}” (out of the works matrix)",
+      "log.arrLevel": "{name}: {type} back on “{level}” (out of the works matrix)",
       "group.worksGoto": "✎ works ↓",
       "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
       "settings.mxSkipRows": "Show the rows skipped with the works matrix with their entries",
@@ -3986,6 +3990,7 @@
     { id: 'S147', where: 'readLine0 (TEXT_GEAR)', note: 'Texts (3.92.0; collected item Z-GEAR): a line of equipment – "Microphone: …", "Handy Recorder for field recording: …", "Guitar Amplifier: …", "Micpreamp: …", "Audio Interface: …", "DAW: Logic Pro X" – is no credit (left out as such); names after it ("Amplifier: Anna Bell", "Mic: John Smith") and "Strings:", "Recorder:", "Laptop:" as before' },
     { id: 'S148', where: 'tidyLines, placeOf', note: 'Texts (3.92.0; collected items Z-LYR, Z-SPA): "All Lyrics was written by X" – lyrics by X, "All field recording by X" – field recording by X (not with "except …" after it); "Art work" is artwork; "Nothing Space Studio at Shonan" – the place, Shonan its area (no time: "at Christmas")' },
     { id: 'S149', where: 'readUnit, tidyLines', note: 'Texts (3.92.0; collected item Z-SEI): in the block of a track (S145) each word that may be an instrument in the list of a player of the text asks as such a word of a list (137d: other instruments, credited as written, when no instrument is like it) – however many ("Ryota Takano: Bass Guitar, Sei, Sei Wakka Ring"), also without a known one ("Ryota Takano: Sei"); poetry among the instruments: spoken vocals, credited as written' },
+    { id: 'S150', where: 'TEXT.parse (WORK_ARR), loadRelease', note: 'Arrangements of works (3.94.0; collected items Z-ARRL, Z-ARRD): a line of a text about songs, tracks or compositions ("All songs was written & arranged by X") and Discogs\'s "Arranged By" without more (not "Arranged By [Strings]") put the arranger on the works (the works matrix) – as S006 without writing credits; a bare "Arranged by X" of a text stays on the recordings. The level of such an arrangement stays a button in its entry ("arranger · Work"): a click puts it back on the recordings' },
     { id: 'S143', where: 'statPerRelease, statPerReleaseHtml, globalPerRelease (statsMoreCards, globalCoreParts)', note: 'Statistics (3.91.0; collected item Z-SRR): the card "Per release" – the relationships of a release (all its submissions; also by level), its recordings and the relationships on its recordings per recording, each the average and the median of the releases; in "This browser" (recordings from 3.91.0 on) and in "Global" (from the edit dump, the recordings from the core dump)' },
     { id: 'S139', where: 'entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)', note: 'Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source\'s, its name, the name in MusicBrainz) as "credited as" on all its relationships – also those changed one by one; a small ⇄ beside each "credited as" (a row, a line of an entry\'s matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field' },
     { id: 'S138', where: 'rowDateSugg, performanceDateSugg', note: 'Dates (3.88.0; collected item Z-CAMD2): "video shot at" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them' },
@@ -6662,6 +6667,13 @@
       // the companion (rawOf)
       const rawOf = new Map();
       const textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
+      // [Z-ARRL] (3.94.0, S150) a line about songs, tracks, compositions …: its arrangement is that of the works ("All songs was written &
+      // arranged by maya ongaku")
+      let curLine = '';
+      // ((review) at the start of the line only – not "Melody Gardot – arrangements", "Vocals on tracks 2, 4 …, arranged by X", "Track 2
+      // arranged by X")
+      const WORK_ARR = /^(?:all\s+)?(?:(?:of\s+)?the\s+)?(?:songs|tracks|compositions|tunes|pieces|melodies|works|music)\b(?!\s*\d)[^.;:]*?\b(?:arrang|orchestrat)/i;
+      const SONG_WORDS = /^(?:all\s+)?(?:the\s+|of\s+the\s+)?(?:songs?|tracks?|compositions?|tunes?|pieces?|melod(?:y|ies)|works?|music)(?:\s+(?:were|was|are|is|(?:have|has)\s+been))?$/i;
       const roleWord =(x) => cap(String(x || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim());
       const NAME_ROLES = /^\s*(\p{L}[\p{L}'’.\- ]{1,40}?)\s*:\s*(\S.*)$/u;
       const tidyRoles = (rest) => rest.split(/\s*,\s*/).filter((x) => isRole(roleWord(x)));
@@ -6839,13 +6851,18 @@
       const akaOf = new Map();
       const addCredit = (name, role0, scope, extra0 = {}) => {
         // [S050] (3.32.5) in typo mode the role as it is read, with what was written
-        const { role, typos } = readRole(role0);
+        const { role: role1, typos } = readRole(role0);
         const aka0 = akaOf.get(norm(name));
-        const p = parseRoleNotation(role)[0];
+        const p1 = parseRoleNotation(role1)[0];
+        // [Z-ARRL] (3.94.0, S150) "All songs were arranged by X": the songs are no detail of the arrangement – an arrangement of the works
+        const songsArr = !!p1 && ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p1.base || '') && (p1.mods || []).length > 0 && p1.mods.every((x) => SONG_WORDS.test(String(x).trim()));
+        const role = songsArr ? p1.base : role1;
+        const p = songsArr ? parseRoleNotation(role)[0] : p1;
         if (!p || !looksLikeName(name)) return false;
         // [Z-IMD] (3.92.0, S146, review) another instrument played on a model of the text: credited as written ("Wurlitzer (Nord stage2)")
         const mc = modelCredits.get(norm(p.raw));
-        const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}) };
+        const workArr = ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p.base || '') && !(p.mods || []).length && (songsArr || WORK_ARR.test(curLine));
+        const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}), ...(workArr ? { workArr: true } : {}) };
         // [Z-RAD] (3.81.0, S121, T066) a broadcaster that recorded it ("recorded by Norwegian State radio"): a label – recording, and
         // broadcast too (a person who recorded it stays a person)
         // ((review) also "recorded live by"; not one of the release's artists ("TV on the Radio"), nor a person of it ("BBC engineer John
@@ -8052,6 +8069,7 @@
       const startLine = (raw) => {
         // ([Z-FWC] 3.92.0) the line as the source wrote it (before tidyLines)
         line0 = (rawOf.get(raw) || raw).trim();
+        curLine = clean(raw); // ([Z-ARRL] 3.94.0, review) every way a line is read (headings, pairs, blocks)
         const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
         n0 = lineCount.get(sameKey) || 0;
         lineCount.set(sameKey, n0 + 1);
@@ -8337,6 +8355,7 @@
       };
       const readLine0 = (raw, sub = false) => {
         let line = clean(raw);
+        curLine = line; // ([Z-ARRL] 3.94.0) the line an arrangement is read from
         // [Z-HYP] (3.48.0) "Makigami Koichi -harmonic overtone singing, jaw harp": a dash with a space only before it is the dash of
         // "Name – roles" (not in a name: "Jean-Pierre", "A -B" with more dashes)
         // ((3.48.0, review) no colon in it, no "by", "at" or "in" line – "Written by Lennon -McCartney", "Studio X -Berlin" –, and what
@@ -9584,6 +9603,7 @@
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
+        if (c.workArr) entry.workArr = true; // [Z-ARRL] (3.94.0, S150)
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
         // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
@@ -12834,6 +12854,34 @@
   }
 
   /** After a rule was added, changed or switched: every row is mapped again and the dashboard redrawn. */
+  /** [Z-ARRL] (3.94.0, S150) Whether a row is an arrangement of the works by S150 (a text about songs; Discogs's plain "Arranged By"). */
+  function s150Row(r, source = S.source) {
+    return ruleOn('S150') && norm(r.types[0] || '') === 'arranger' && !(r.mods || []).length && typeOnLevel(r, 'work')
+      && (!!r.workArr || (source === DISCOGS && !r.fromNotes && /^arranged by$/i.test(String(r.base || r.raw || '').trim())));
+  }
+
+  /**
+   * [S006] Arrangements named together with writing credits belong to the works (matrix), not the recordings; [Z-ARRL] (3.94.0, S150)
+   * so does an arrangement of songs in a text and Discogs's "Arranged By" without more – the recording stays the next level of its
+   * button. `rows`: those to look at (all, or those of a supplement). Whether any moved.
+   */
+  function arrangersToWorks(rows, source = S.source) {
+    const s006 = ruleOn('S006') && S.rows.some((r) => r.level === 'work' && WRITER_TYPES.includes(norm(r.types[0] || '')));
+    let n = 0;
+    for (const r of rows) {
+      if (r.manual || r.company || r.level !== 'recording') continue;
+      const by006 = s006 && ARRANGER_TYPES.includes(norm(r.types[0] || ''));
+      if (!by006 && !s150Row(r, source)) continue;
+      r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
+      r.levelImportFrom = r.level;
+      if (!by006) r.s150Moved = true; // ((review) S150 switched off: back)
+      r.level = 'work';
+      resolveRowType(r);
+      n++;
+    }
+    return n > 0;
+  }
+
   function applyRulesChange(what) {
     saveRules();
     let n = 0;
@@ -12849,6 +12897,20 @@
     if (what === 'S046') applyPerformerTracks();
     // [S078] (3.50.0) the tracks of the track artists: at once, both ways
     if (what === 'S078') applyTrackArtistTracks();
+    // ([Z-ARRL] 3.94.0, review) S150: the arrangements it put on the works back on the recordings – or there again
+    if (what === 'S150') {
+      for (const r of S.rows) {
+        if (!r.s150Moved) continue;
+        if (!ruleOn('S150') && r.level === 'work') {
+          r.level = r.levelImportFrom || 'recording';
+          delete r.levelImport;
+        } else if (ruleOn('S150') && r.level === 'recording') {
+          Object.assign(r, { levelImport: 'work', levelImportFrom: 'recording', level: 'work' });
+        } else continue;
+        resolveRowType(r);
+        rebaseFresh(r);
+      }
+    }
     // [D022] (3.32.0) the notes' suggestions not applied yet are placed again (with or without what the days have in common)
     if ((what === 'D022' || what === 'D014') && S.mbTracks.length) {
       replaceNotesSuggestions();
@@ -19703,6 +19765,7 @@
     }
     // ((3.92.0, review) a role credit of the text as in the import: S064, S146)
     if (!company && info.c.roleCredit) Object.assign(row, { roleCredit: info.c.roleCredit, roleCreditTouched: true });
+    if (!company && info.c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
     row.tracks = new Set(info.tracks);
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
@@ -19761,6 +19824,8 @@
       }
     }
     sp.items = sp.items.filter((it) => !chosen.includes(it));
+    // ([Z-ARRL] 3.94.0, review) the arrangements of the works among the rows taken over (S006, S150)
+    arrangersToWorks(S.rows.filter((r) => r.supp === sp.source.short && !r.levelTouched && !r.levelImport), sp.source);
     // [Z-EXC] (3.49.0, review) the covers and quotes of a supplement too (once its credits are taken: the writers of an arrangement)
     if (chosen.length && ((sp.rel.covers || []).length || (sp.rel.quotes || []).length)) addWorkNotes(sp.rel);
     // [3.18.0] the works matrix skipped: work rows taken over go to "Skip" with it
@@ -20929,6 +20994,7 @@
         else Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
+      if (c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
       row.unresolved = c.unresolved;
@@ -21175,15 +21241,9 @@
       refresh();
 
       // [S006] Arrangements named together with writing credits belong to the works (matrix), not the recordings
-      if (ruleOn('S006') && S.rows.some((r) => r.level === 'work' && WRITER_TYPES.includes(norm(r.types[0] || '')))) {
-        for (const r of S.rows) {
-          if (!r.manual && !r.company && r.level === 'recording' && ARRANGER_TYPES.includes(norm(r.types[0] || ''))) {
-            r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
-            r.levelImportFrom = r.level;
-            r.level = 'work';
-            resolveRowType(r);
-          }
-        }
+      // [Z-ARRL] (3.94.0, S150) so does an arrangement of songs in a text ("All songs was … arranged by X") and Discogs's "Arranged By"
+      // without more (not "Arranged By [Strings]") – the recording stays the next level of the button
+      if (arrangersToWorks(S.rows, source)) {
         // [3.18.0] the works matrix skipped: those too
         if (S.worksSkip && setWorksRowsSkipped(true)) {
           renderGroups();
@@ -25074,7 +25134,7 @@
     const inLines = compact && S.emSide === 'lines';
     const workNote = allRows.some((r) => r.level === 'work' && !isPublishingRow(r));
     const worksLink = inLines && workNote ? `<button type="button" class="dci-textbtn dci-works-goto" data-act="works-goto" title="${esc(tr('group.workNote'))}">${esc(tr('group.worksGoto'))}</button>` : '';
-    const notes = `${workNote && !inLines ? (compact ? `<p class="dci-sub dci-work-note" title="${esc(tr('group.workNote'))}">${esc(tr('group.workNoteShort'))}</p>`
+    const notes = `${arrLinesHtml(allRows)}${workNote && !inLines ? (compact ? `<p class="dci-sub dci-work-note" title="${esc(tr('group.workNote'))}">${esc(tr('group.workNoteShort'))}</p>`
       : `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>`) : ''}${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}`;
     const aSrc = entrySource(a);
     const sourceLink = a.dId && (a.links || [])[0]
@@ -28164,7 +28224,14 @@
     const skipped = S.skipHide ? all.filter(entrySkipped) : [];
     const withRows = all.filter((a) => !skipped.includes(a));
     renderSkippedList(skipped);
-    $('groups').innerHTML = withRows.filter((a) => !a.company && !a.other).map(groupHtml).join('');
+    // [Z-ARRL] (3.94.0) entries with relationships of works only: together above the works matrix, the last of the entries
+    const wonly = withRows.filter((a) => !a.company && !a.other && workOnlyEntry(a));
+    $('groups').innerHTML = withRows.filter((a) => !a.company && !a.other && !wonly.includes(a)).map(groupHtml).join('');
+    const wel = $('workonly');
+    wel.hidden = !wonly.length;
+    wel.innerHTML = wonly.length
+      ? `<h3>${esc(tr('group.workOnlyTitle'))}</h3><p class="dci-muted">${esc(tr('group.workOnlyExplain'))}</p>${wonly.map(groupHtml).join('')}`
+      : '';
     const others = withRows.filter((a) => a.other);
     const oel = $('others');
     oel.hidden = !others.length;
@@ -28181,6 +28248,39 @@
     const frame = S.overlay && S.overlay.querySelector('[data-el="entries-frame"]');
     if (frame) frame.hidden = !all.length;
     renderDedBox(); // [Z-DEDQ] (3.74.0)
+  }
+
+  /**
+   * [Z-ARRL] (3.94.0) An entry whose relationships are all on works (writing credits, arrangements of the works; not taken out): shown
+   * with the others like it above the works matrix.
+   */
+  function workOnlyEntry(a) {
+    // ((review) as groupHtml shows them: a row taken out ("Skip") keeps the entry in its place
+    const rs = S.rows.filter((r) => r.artistKey === a.key);
+    return rs.some((r) => r.level === 'work') && !rs.some((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
+  }
+
+  /**
+   * [Z-ARRL] (3.94.0) The arrangements of an entry on works ("arranger · Work"): its level as a button, a click puts it back on the
+   * recordings (the next level of the circle) – an arrangement moved into the works matrix stays to be clicked through.
+   */
+  function arrLinesHtml(rows) {
+    if (!ruleOn('S135')) return '';
+    const cand = rows.filter((r) => r.level === 'work' && !r.company && ARRANGER_TYPES.includes(norm(r.types[0] || '')));
+    if (!cand.length) return '';
+    // ((review) one line per role of the works matrix (its date copies, its cells), moved as its column's ▾ does (S135)
+    const cols = matrixColumns();
+    const seen = new Set();
+    return cand.map((r) => {
+      const c = cols.find((x) => x.rows.includes(r));
+      const next = c ? mxRoleNextLevel(c, r) : '';
+      const key = c ? `${c.key}|${norm(rowTypeName(r) || '')}` : '';
+      if (!next || seen.has(key)) return '';
+      seen.add(key);
+      return `<p class="dci-sub dci-arr-line">${esc(rowTypeName(r) || r.types[0] || '')}${r.primaryText ? ` (${esc(r.primaryText)})` : ''}
+          <button type="button" class="dci-cl-level dci-em-lvbtn" data-act="arr-level" data-row="${esc(r.id)}" data-level="work"
+            title="${esc(tr('group.arrLevelTitle', { level: tr(`level.${next}`) }))}">${esc(tr('level.work'))}</button></p>`;
+    }).join('');
   }
 
   function rerenderGroup(a) {
@@ -28397,6 +28497,13 @@
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     plateNone(); // [Z-PLT] (3.89.0, S141)
+    // ([Z-ARRL] 3.94.0) an entry that became one of works only (a level changed in its lines), or is one no more: in its place
+    if (S.overlay && S.rows.length) {
+      const wel = S.overlay.querySelector('[data-el="workonly"]');
+      const shown = new Set(wel ? [...wel.querySelectorAll('[data-group]')].map((x) => x.dataset.group) : []);
+      const want = [...S.artists.values()].filter((a) => !a.company && !a.other && S.overlay.querySelector(`[data-group="${a.key}"]`) && workOnlyEntry(a)).map((a) => a.key);
+      if (want.length !== shown.size || want.some((k) => !shown.has(k))) renderGroups();
+    }
     // ([Z-EVL] 3.92.0, review) the note of an event as its rows are now (a row removed, its type changed)
     if (S.evNote) {
       const note = evNoteText();
@@ -31393,6 +31500,42 @@
     return ['recording', 'release', 'release_group'].find((lv) => rows.length && rows.every((x) => typeOnLevel(x, lv))) || '';
   }
 
+  /**
+   * [Z-MXL] (3.90.0, S135) The rows of a role of the works matrix onto the next level of its circle (recording, release …), as its
+   * column's ▾ does; ([Z-ARRL] 3.94.0) also the line "arranger · Work" of its entry. The level ('' – nothing moved).
+   */
+  function mxRoleMove(c, r) {
+    const next = r ? mxRoleNextLevel(c, r) : '';
+    if (!next || !ruleOn('S135')) return '';
+    const rows = mxRoleRows(c, r);
+    const mrows = matrixRows();
+    // ((review) cells switched off on a track of several works: the track only goes along where one of its works is still on
+    for (const x of rows) {
+      if (x.excluded && x.excluded.size) {
+        for (const i of [...x.tracks]) {
+          const ms = mrows.filter((m) => m.i === i && m.work);
+          if (ms.length && ms.every((m) => x.excluded.has(`${i}|${m.work.gid}`))) x.tracks.delete(i);
+        }
+        x.excluded = new Set();
+      }
+      if (x.ownDate) x.dateKeyed = true; // ((review) a copy with its date beside its row on the same recording
+    }
+    // ((review) a row left without tracks (its cells all with dates of their own) goes; none with any: the tracks chosen
+    const withTracks = rows.filter((x) => x.tracks.size);
+    if (!withTracks.length) rows.forEach((x) => { x.tracks = new Set(selIdx()); x.suggested = new Set(x.tracks); });
+    else rows.filter((x) => !x.tracks.size).forEach((x) => { S.rows = S.rows.filter((y) => y !== x); });
+    for (const x of rows.filter((y) => S.rows.includes(y))) {
+      levelOf(x, next);
+      matrixDateForLevel(x); // ((review) a date of the matrix: the one of its new level
+    }
+    log('info', 'matrixRoleLevel', { col: c.name, role: rowTypeName(r), level: tr(`level.${next}`) });
+    renderGroups();
+    renderDates();
+    renderWorks();
+    refresh();
+    return next;
+  }
+
   /** [Z-AWB] (3.86.0, S133) The column's roles on for every work of the matrix (none: false). */
   function allWorksOn(col) {
     const mrows = awRows();
@@ -34113,35 +34256,7 @@
       case 'mx-role-level': {
         const c = matrixColumns().find((x) => x.key === btn.dataset.col);
         const r = c && c.rows.find((x) => x.id === btn.dataset.row);
-        const next = r ? mxRoleNextLevel(c, r) : '';
-        if (!next) return true;
-        if (!ruleOn('S135')) return true;
-        const rows = mxRoleRows(c, r);
-        const mrows = matrixRows();
-        // ((review) cells switched off on a track of several works: the track only goes along where one of its works is still on
-        for (const x of rows) {
-          if (x.excluded && x.excluded.size) {
-            for (const i of [...x.tracks]) {
-              const ms = mrows.filter((m) => m.i === i && m.work);
-              if (ms.length && ms.every((m) => x.excluded.has(`${i}|${m.work.gid}`))) x.tracks.delete(i);
-            }
-            x.excluded = new Set();
-          }
-          if (x.ownDate) x.dateKeyed = true; // ((review) a copy with its date beside its row on the same recording
-        }
-        // ((review) a row left without tracks (its cells all with dates of their own) goes; none with any: the tracks chosen
-        const withTracks = rows.filter((x) => x.tracks.size);
-        if (!withTracks.length) rows.forEach((x) => { x.tracks = new Set(selIdx()); x.suggested = new Set(x.tracks); });
-        else rows.filter((x) => !x.tracks.size).forEach((x) => { S.rows = S.rows.filter((y) => y !== x); });
-        for (const x of rows.filter((y) => S.rows.includes(y))) {
-          levelOf(x, next);
-          matrixDateForLevel(x); // ((review) a date of the matrix: the one of its new level
-        }
-        log('info', 'matrixRoleLevel', { col: c.name, role: rowTypeName(r), level: tr(`level.${next}`) });
-        renderGroups();
-        renderDates();
-        renderWorks();
-        refresh();
+        if (!r || !mxRoleMove(c, r)) return true;
         // ((review) the focus on the column's menu (the button is gone)
         const menu = S.overlay.querySelector(`[data-act="mx-colmenu"][data-col="${c.key}"]`);
         if (menu) menu.focus({ preventScroll: true });
@@ -36810,6 +36925,19 @@
         else emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
         break;
       // [Z-CLV] (3.44.0) a click on the level of an event (compact lines, the head of its column): the next one, "Skip", back
+      // [Z-ARRL] (3.94.0) an arrangement on works back onto the recordings (the next level of its circle) – out of the works matrix
+      case 'arr-level': {
+        if (!row || row.level !== 'work') break;
+        const c = matrixColumns().find((x) => x.rows.includes(row));
+        const next = c ? mxRoleMove(c, row) : '';
+        if (!next) break;
+        log('info', 'arrLevel', { name: (S.artists.get(row.artistKey) || {}).name || '', type: rowTypeName(row) || '', level: tr(`level.${next}`) });
+        // ((review) the focus on the level of the entry, where it is now
+        const grp = S.overlay.querySelector(`[data-group="${row.artistKey}"]`);
+        const again = grp && (grp.querySelector('[data-act="em-evlevel-next"]') || grp.querySelector('[data-act="arr-level"]') || grp.querySelector('[data-f="level"]'));
+        if (again) again.focus();
+        break;
+      }
       case 'em-evlevel-next': {
         if (!artist) break;
         const m = entryModel(artist, shownRowsOf(artist).filter((r) => r.level !== 'work'));
@@ -36824,7 +36952,8 @@
         const r0 = moved.find((r) => S.rows.includes(r) && r.level !== 'work');
         const key = r0 ? (r0.level === 'skip' ? `skip|${r0.emSkipEv}` : eventKeyOf(r0)) : '';
         const grp = S.overlay.querySelector(`[data-group="${artist.key}"]`);
-        const again = grp && ([...grp.querySelectorAll('[data-act="em-evlevel-next"]')].find((x) => x.dataset.ev === key) || grp.querySelector('[data-act="em-evlevel-next"]'));
+        const again = grp && ([...grp.querySelectorAll('[data-act="em-evlevel-next"]')].find((x) => x.dataset.ev === key) || grp.querySelector('[data-act="em-evlevel-next"]')
+          || grp.querySelector('[data-act="arr-level"]')); // ((3.94.0, review) gone into the works matrix: its line "arranger · Work")
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -39372,6 +39501,7 @@
             <div data-el="groups"></div>
             <section class="dci-companies" data-el="companies" hidden></section>
             <section class="dci-companies dci-others" data-el="others" hidden></section>
+            <section class="dci-companies dci-workonly" data-el="workonly" hidden></section>
             <div class="dci-skipped" data-el="skipped" hidden></div>
           </div>
           <section class="dci-frame dci-dedbox" data-el="dedbox" aria-labelledby="dci-dedbox-h" hidden></section>
