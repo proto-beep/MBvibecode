@@ -742,6 +742,164 @@ def case_medley():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_mdly398():
+    """Credits Importer 3.98.0 (collected item Z-MDLY; rule S157): medleys by the separators of the release; traditional tunes arranged.
+    Track 2 "Alpha/Beta" (no spaces), track 3 "AC/DC Song", track 4 "Gamma + Delta"; Traditional wrote, The Band arranged (Discogs).
+    MusicBrainz has two works "Alpha" by [traditional] – A1 with 3 recordings, A2 with 1 and an arrangement "Alpha" of another band.
+    A) In the head: "Medleys: split 1 title" (track 2; "AC/DC" is an exception, "+" no separator yet), "✎ /".
+    B) ✎, "+" added: "split 2 titles"; clicked: track 2 → Alpha · Beta, track 4 → Gamma · Delta (the titles of MusicBrainz).
+    C) Alpha (a traditional tune with arrangers): a new work, "arrangement of" suggested in yellow – A1 first ("3 recordings"), A2 in its
+       list – and "an arrangement exists: Alpha (Other Band arrangement)" (stage 1, the arrangements of A2).
+    D) "link it instead": the part linked to that arrangement, the suggestion gone.
+    E) (review) In Node, medleySplit: "/" with or without spaces, other separators only with spaces ("Hip-Hop", "Mr. Brown" whole),
+       nothing inside brackets, the exceptions whole ("AC/DC", "w/Friends", "24/7", "1/2"); suites keep " / " (titleParts)."""
+    import json
+    import subprocess
+    TRAD = '9be7f096-97ec-4615-8957-8d40b5dcbc41'
+    H.TITLES[1] = 'Alpha/Beta'
+    H.TITLES[2] = 'AC/DC Song'
+    H.TITLES[3] = 'Gamma + Delta'
+    H.attr(757, 'medley', 757)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (757,))
+    H.lt(350, H.uid('1aaa0000', 350), 'arrangement', 'work', 'work')
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3093] = (TRAD, '[traditional]')
+    H.ARTISTS[3094] = (H.uid('dddddddd', 94), 'The Band')
+    A1, A2, EX = H.uid('cccccccc', 141), H.uid('cccccccc', 142), H.uid('cccccccc', 143)
+    rel_trad = [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': TRAD, 'name': '[traditional]'}}]
+    H.WORK_SEARCH[:] = [{'id': A1, 'title': 'Alpha', 'type': 'Song', 'aliases': [], 'relations': rel_trad},
+                        {'id': A2, 'title': 'Alpha', 'type': 'Song', 'aliases': [], 'disambiguation': 'reel', 'relations': rel_trad}]
+    rec = lambda k: {'target-type': 'recording', 'type': 'performance', 'recording': {'id': H.uid('eeeeeeee', k), 'title': 'Alpha'}}
+    H.MB_EXTRA[A1] = [rec(1), rec(2), rec(3)]
+    H.MB_EXTRA[A2] = [rec(4), {'target-type': 'work', 'type': 'arrangement', 'direction': 'forward',
+                               'work': {'id': EX, 'title': 'Alpha', 'disambiguation': 'Other Band arrangement'}}]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Traditional', 'anv': '', 'role': 'Written-By', 'tracks': '', 'id': 3093, 'join': ''},
+                             {'name': 'The Band', 'anv': '', 'role': 'Arranged By', 'tracks': '', 'id': 3094, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    HEAD = """(() => { const h = document.querySelector('[data-el=works] .dci-mx-medleys'); return h ? [(h.querySelector('[data-act=medley-split-all]') || {}).textContent || '',
+      (h.querySelector('[data-act=medley-seps]') || {}).textContent.trim()] : null; })()"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || tr.querySelector('.dci-mx-title strong') || {textContent: ''}).textContent.trim())"""
+    SUGG = """(() => { const x = document.querySelector('.dci-matrix tr[data-work="1"] [data-wnote=arrsugg]'); return x ? [x.textContent.replace(/\\s+/g, ' ').trim(),
+      [...x.querySelectorAll('select[data-f=mx-arr-cand] option')].map(o => o.textContent), !!x.querySelector('[data-act=arr-existing]')] : null; })()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            a0 = pg.evaluate(HEAD)
+            print('A)', a0)
+            results.append(a0 == ['Medleys: split 1 title', '✎ /'])
+            pg.locator('[data-el=works] [data-act=medley-seps]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            pg.fill('[data-el=works] [data-f=mx-medley-sep]', '+')
+            pg.press('[data-el=works] [data-f=mx-medley-sep]', 'Enter'); pg.wait_for_timeout(400)
+            b0 = pg.evaluate(HEAD)
+            pg.locator('[data-el=works] [data-act=medley-split-all]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            b1 = [pg.evaluate(PARTS, 1), pg.evaluate(PARTS, 2), pg.evaluate(PARTS, 3)]
+            print('B)', b0, b1)
+            results.append(b0 == ['Medleys: split 2 titles', '✎ / +'] and b1 == [['Alpha', 'Beta'], ['AC/DC Song'], ['Gamma', 'Delta']])
+            pg.evaluate("document.activeElement && document.activeElement.blur && document.activeElement.blur()")
+            H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"1\"] [data-act=arr-existing]')", 60)
+            c0 = pg.evaluate(SUGG)
+            print('C)', c0)
+            results.append(bool(c0) and c0[0].startswith('Alpha: arrangement of MBAlpha') and c0[1][0].startswith('Alpha – 3 recordings') and 'reel' in c0[1][1] and c0[2]
+                           and 'Other Band arrangement' in c0[0])
+            pg.locator('.dci-matrix tr[data-work="1"] [data-act=arr-existing]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            d0 = [pg.evaluate(PARTS, 1), pg.evaluate(SUGG), pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work=\"1\"] .dci-mblink')].map(a => a.getAttribute('href'))")]
+            print('D)', d0)
+            results.append(d0[0] == ['MBAlpha', 'Beta'] and d0[1] is None and f'/work/{EX}' in d0[2])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const T = ['Alpha/Beta', 'AC/DC Song', 'Jam w/Friends', 'Song (Live/Remix)', '24/7 Blues / Night', 'Hip-Hop Medley', '1/2 Time', 'Mr. Brown + St. Louis'];
+console.log(JSON.stringify([T.map((t) => m.medleySplit(t, ['/', '+', '-'])), m.titleParts('Alpha/Beta'), m.titleParts('Phase 2 / Phase 3')]));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    e0 = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-300:]}
+    print('E)', e0)
+    results.append(e0 == [[['Alpha', 'Beta'], [], [], [], ['24/7 Blues', 'Night'], [], [], ['Mr. Brown', 'St. Louis']], [], ['Phase 2', 'Phase 3']])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_arrdis398():
+    """Credits Importer 3.98.0 (collected item Z-ARRDIS; rule S158): the disambiguation of new arrangement works of traditional tunes.
+    Traditional wrote, The Band arranged (Discogs); tracks 2–4 get new works ("＋ New works").
+    A) In the footer: "Disambiguation “The Band arrangement” for the new arrangement works (3 new works · tracks …)?" ✓ ✕.
+    B) ✓: the text field "The Band arrangement" (changed to "The Band arr.").
+    C) Staged: the three new works carry the disambiguation; a small box on the page names them; the log says so."""
+    TRAD = '9be7f096-97ec-4615-8957-8d40b5dcbc41'
+    H.ARTISTS[3093] = (TRAD, '[traditional]')
+    H.ARTISTS[3094] = (H.uid('dddddddd', 94), 'The Band')
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Traditional', 'anv': '', 'role': 'Written-By', 'tracks': '', 'id': 3093, 'join': ''},
+                             {'name': 'The Band', 'anv': '', 'role': 'Arranged By', 'tracks': '', 'id': 3094, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = "(() => { const x = document.querySelector('.dci-foot [data-el=arrcom]'); return x && !x.hidden ? [x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('input')].map(i => i.value)] : null; })()"
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && !r.entity1.gid).map(r => [r.entity1.name, r.entity1.comment]).sort())()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            a0 = pg.evaluate(BOX)
+            print('A)', a0)
+            results.append(bool(a0) and a0[0].startswith('Disambiguation “The Band arrangement” for the new arrangement works (3 new works · ') and '2' in a0[0] and '4' in a0[0] and a0[1] == [])
+            pg.locator('.dci-foot [data-act=arrcom-yes]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            b0 = pg.evaluate(BOX)
+            pg.fill('.dci-foot [data-f=arrcom-text]', 'The Band arr.')
+            pg.press('.dci-foot [data-f=arrcom-text]', 'Enter'); pg.wait_for_timeout(300)
+            b1 = pg.evaluate(BOX)
+            print('B)', b0, b1)
+            results.append(bool(b0) and b0[1] == ['The Band arrangement'] and bool(b1) and b1[1] == ['The Band arr.'])
+            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(300)
+            c0 = [pg.evaluate(STAGED), pg.evaluate("(document.getElementById('dci-arrcom-notice') || {}).textContent || ''"),
+                  [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'disambiguation' in x]]
+            print('C)', c0)
+            results.append(c0[0] == [['Song Four', 'The Band arr.'], ['Song Three', 'The Band arr.'], ['Song Two', 'The Band arr.']]
+                           and '“The Band arr.”: Song Two, Song Three, Song Four' in c0[1] and len(c0[2]) >= 3)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_suiteadd():
     """Credits Importer 3.41.11 (collected item Z-SUM; Q-ck, Q-cq): a suite the source does not show, added by hand.
     The release of the harness (no headings, no index track, no " / "): no suite asked.
@@ -761,7 +919,7 @@ def case_suiteadd():
     BOX = """(() => { const w = document.querySelector('[data-el=works]'); const b = w && w.querySelector('[data-el=suites]'); return b ? [...w.querySelectorAll('.dci-matrix [data-suite]'), ...b.children,
       ...w.querySelectorAll('.dci-wh-c [data-act=suite-add-open]')].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim(),
       x.matches('button') ? [x.dataset.act] : [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select')].map(s => [...s.options].map(o => o.textContent))[0] || null]) : null; })()"""
-    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim())"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || tr.querySelector('.dci-mx-title strong') || {textContent: ''}).textContent.trim())"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
