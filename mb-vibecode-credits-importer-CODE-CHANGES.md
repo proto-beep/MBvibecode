@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.88.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.89.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.89.0 · 2026-11-08
+
+Z-NCY, Z-FBH, Z-PLT.
+
+- **`ncySpellings`, `ncyNext`, `ncyStep`, `ncyBtnHtml`, `ncyOn`, `ncyShown`, `ncyClean`** (new; Z-NCY, S139): the spellings (the rows' `anv`, `anvs`, `rawName`, `name`, `mbName`, the rows' `credit`; "*" and "(2)" left out, each once by `typo`); the next after the one all rows have (different: the first); the MusicBrainz name as `credit: ''`, `creditTouched`, `caseCredit: false`; a click with `detail > 1` is none; the name's own title goes into the button's. `entryNameHtml` wraps the name in `button.dci-ncy-name[data-act=ncy-all]`; ⇄ `ncy-row` beside `[data-f=credit]` (3×), `ncy-line` beside `em-ac`, `mx-ncy` beside `mx-credit` (in `.dci-mx-creditw`); handlers in the click switch and `matrixAction`, focus kept; log `ncyAll`.
+- **`profileUrlOf`, `PROFILE_SITES`** (new; Z-FBH, S140): `readLine` of `TEXT.parse` – a line of a profile alone right below credits (`lastCredited` / `lastLine` by `noteCredited` – also after a heading list, a pair, a block; the people before companies) adds the address to `who.links` of the last name there (by its place in the line); a handle needs a letter, Bandcamp `[a-z0-9-]` and is `ignored` (`why: 'profile'`); without a name above: read as before.
+- **Mapping** (Z-PLT): R114 `^(plated by|plating|plated)$` → misc, release (out of R095); C046 `^plated (by|at)` → artist misc, release, prefer artist. `roleCreditForInner`: R114 / C046 → "vinyl plating"; `mediumOfRow` (R114) and `companyLeftOutForMedium` ("Plated …"): vinyl (S026). **`plateCompany`**, **`plateNone`** (new; S141): such a company is searched only as an artist (`suggestByName`, the name search); no hit, or linked as a label or place → its rows on Skip with `note.plateNone` (from `refresh`), a level chosen by hand stays; linked to an artist later → `defaultLevel`, the note gone.
+- **Register:** S139, S140, S141; R114, C046. **Texts:** ncy.allTitle, ncy.oneTitle, log.ncyAll, ignored.why.profile, note.plateNone, log.plateNone.
+- **Tests:** `t_ui_head.py ncy389`, `t_text_basics.py fbh389`, `t_notes_companies.py plt389` (new; fail on 3.88.0); `harness.py`: `MEDIA_FORMAT`.
 
 ## Import 3.88.0 · 2026-11-08
 
