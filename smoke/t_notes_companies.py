@@ -1295,4 +1295,206 @@ def case_fev385():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def _fest388(pg_setup):
+    """The release of case festival (notes with the festival), with `pg_setup(H)` before the page opens."""
+    NOTES = ('Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier, Ltd. International Jazz Festival Vancouver.')
+    E1 = H.uid('fefefefe', 1)
+    H.MB_SEARCH['event'] = [{'id': E1, 'name': 'du Maurier Ltd. International Jazz Festival Vancouver 1993', 'disambiguation': '', 'type': 'Festival',
+                             'life-span': {'begin': '1993-06-25', 'end': '1993-07-04'}}]
+    H.COMPANIES[1030] = ('event', E1, 'du Maurier Ltd. International Jazz Festival Vancouver 1993')
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.lt(9003, H.uid('9e9e9e9e', 3), 'video shot at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    pg_setup(E1)
+    return E1
+
+
+def case_evr388():
+    """Credits Importer 3.88.0 (collected item Z-EVR, rule S137): the notes of case festival; MusicBrainz already has the festival's
+    event ("du Maurier Ltd. International Jazz Festival Vancouver 1993", "recorded at").
+    A) On all four recordings: no festival hint – a message where it was ("already linked"), and in the log.
+    B) On tracks 1 and 2 only: the message names them, the hint (with its offer) stays for the others."""
+    results = []
+    for part in ([0, 1, 2, 3], [0, 1]):
+        def setup(E1, part=part):
+            for i in part:
+                H.MB_EXTRA[H.REC[i]] = H.MB_EXTRA.get(H.REC[i], []) + [{'target-type': 'event', 'type': 'recorded at', 'type-id': H.LTS[9001]['gid'], 'attributes': [],
+                                                                     'event': {'id': E1, 'name': 'du Maurier Ltd. International Jazz Festival Vancouver 1993'}}]
+        _fest388(setup)
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, "!!document.querySelector('.dci-festival')", 20)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            msg = pg.evaluate("(document.querySelector('[data-el=fest-inmb]') || {}).textContent || ''")
+            hint = pg.evaluate("!!document.querySelector('.dci-festival [data-act=festival-add]')")
+            logged = pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /MusicBrainz already has the event/.test(li.textContent))")
+            print('A)' if len(part) == 4 else 'B)', msg[:120], hint, logged)
+            if len(part) == 4:
+                results.append('already linked with the event' in msg and not hint and logged)
+            else:
+                results.append('tracks 1, 2 are already linked' in msg and hint and logged)
+            results.append(not errs)
+            b.close()
+        for i in part:
+            H.MB_EXTRA[H.REC[i]] = [x for x in H.MB_EXTRA.get(H.REC[i], []) if x.get('target-type') != 'event']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_evl388():
+    """Credits Importer 3.88.0 (collected items Z-EVL, Z-FPL2; rules S136, S131): the notes of case festival, track 2 a video.
+    A) The event pasted into "Add entry manually" with the role "launch event", then again without a role: its new row at once –
+       "recorded at" on the recordings 1, 3, 4 and "video shot at" on 2; no question (until 3.87.0 "which relationship?"); (review)
+       the row "launch event" stays.
+    B) The place Western Front Lodge linked, the festival's event taken, MusicBrainz has another place for the event ("Vogue
+       Theatre"): no "Place → Skip" at the place, it says the place keeps its relationship.
+    C) MusicBrainz has Western Front Lodge for the event: "Place → Skip" as before.
+    D) MusicBrainz has no place for the event: said so, no "Place → Skip"."""
+    import common_rows as C
+    results = []
+    P1, P2 = H.uid('fefefefe', 385), H.uid('fefefefe', 386)
+
+    def setup(E1):
+        H.VIDEO_TRACKS.add(1)
+    E1 = _fest388(setup)
+    H.lt(9004, H.uid('9e9e9e9e', 4), 'launch event', 'event', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TYPES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes(name));
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); return [(t && t.selectedOptions[0] || {}).text || '',
+        (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '']; }) : null; }"""
+
+    def open_page(p):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return b, pg, errs
+
+    with sync_playwright() as p:
+        H.ENTRIES_VIEW = 'legacy'
+        b, pg, errs = open_page(p)
+        for role in ('launch event', ''):
+            pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{E1}')
+            pg.fill('[data-f=manual-role]', role)
+            pg.click('[data-act=add-manual]')
+            H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent))", 20)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.textContent)).querySelectorAll('[data-act=row-open], [data-act=tracks-open]').forEach(b => b.click())")
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        rows = pg.evaluate(TYPES, 'du Maurier')
+        tracks = C.tracks_of_rows(pg, 'du Maurier')
+        ask = pg.evaluate("(() => { const q = document.querySelector('[data-el=manual-evq]'); return !!q && !q.hidden && !!q.querySelector('button'); })()")
+        print('A)', rows, tracks, ask)
+        results.append(rows is not None and sorted(r[0] + '|' + r[1] for r in rows) == ['launch event|release', 'recorded at|recording', 'video shot at|recording']
+                       and [1, 3, 4] in tracks and [2] in tracks and not ask)
+        results.append(not errs)
+        b.close()
+    H.COMPANIES[1033] = ('place', P1, 'Western Front Lodge')
+    H.PLACE_AREAS['Western Front Lodge'] = 'Vancouver'
+    PLACE = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent));
+      if (!g) return null; const n = g.querySelector('[data-el=fest-place]');
+      return { note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '', skip: !!g.querySelector('[data-act=fest-place-skip]') }; })()"""
+    for part, places in (('B', [(P2, 'Vogue Theatre')]), ('C', [(P1, 'Western Front Lodge')]), ('D', [])):
+        H.EVENT_INFO[E1] = {'name': 'du Maurier Ltd. International Jazz Festival Vancouver 1993', 'begin': '1993-06-25', 'end': '1993-07-04', 'places': places}
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            H.wait_for(pg, "!!document.querySelector('.dci-festival [data-act=festival-add]')", 20)
+            pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Western Front Lodge/.test(x.querySelector('.dci-gname').textContent)); const b = g && g.querySelector('[data-act=name-use]'); if (b) b.click(); })()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.click('.dci-festival [data-act=festival-add]')
+            H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(g => /du Maurier/.test(g.textContent))", 20)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            x = pg.evaluate(PLACE)
+            print(part + ')', x)
+            if part == 'B':
+                results.append(x and not x['skip'] and 'MusicBrainz has another place for it (Vogue Theatre)' in x['note'] and 'keeps its own relationship' in x['note'])
+            elif part == 'C':
+                results.append(x and x['skip'] and x['note'].startswith('The event “du Maurier Ltd. International Jazz Festival Vancouver 1993” is linked – MusicBrainz links'))
+            else:
+                results.append(x and not x['skip'] and 'has no place for it yet' in x['note'])
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_camd388():
+    """Credits Importer 3.88.0 (collected item Z-CAMD2, rule S138): the notes of case festival as a live recording ("Recorded live June,
+    26, 1993"), track 2 a video, the festival's event pasted into "Add entry manually".
+    A) Its row "video shot at" (track 2) has the performance's date as a suggestion (yellow, ✓ / ✕) – not set.
+    B) ✓ takes it.
+    C) Rule S138 off: no suggestion."""
+    results = []
+
+    def setup(E1):
+        H.VIDEO_TRACKS.add(1)
+    E1 = _fest388(setup)
+    fest = H.discogs_release
+
+    def live():
+        d = fest()
+        d['notes'] = d['notes'].replace('Recorded June', 'Recorded live June')
+        return d
+    H.discogs_release = live
+    SUGG = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent));
+      if (!g) return null; const r = [...g.querySelectorAll('tr.dci-row')].find(r => { const t = r.querySelector('[data-f=type]'); return t && (t.selectedOptions[0] || {}).text === 'video shot at'; });
+      if (!r) return 'no row'; const c = r.querySelector('.dci-datechip-sugg');
+      return { sugg: c ? c.querySelector('.dci-datechip-text').textContent.trim() : '', title: c ? c.title : '', id: r.dataset.row }; })()"""
+    for off in (False, True):
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S138']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{E1}')
+            pg.click('[data-act=add-manual]')
+            H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent))", 20)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.textContent)).querySelectorAll('[data-act=row-open]').forEach(b => b.click())")
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            a = pg.evaluate(SUGG)
+            if not off:
+                print('A)', a)
+                results.append(isinstance(a, dict) and '1993-06-26' in a['sugg'] and 'performance' in a['title'].lower())
+                if isinstance(a, dict) and a['sugg']:
+                    pg.evaluate(f'document.querySelector(\'tr[data-row="{a["id"]}"] .dci-datechip-sugg [data-act=date-take]\').click()')
+                    H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                bb = pg.evaluate(f"""(() => {{ const r = document.querySelector('tr[data-row="{a['id'] if isinstance(a, dict) else ''}"]'); if (!r) return null;
+                  return [...r.querySelectorAll('[data-f^=rd-]')].map(x => x.value).filter(Boolean).join('-') || (r.querySelector('.dci-datechip:not(.dci-datechip-sugg) .dci-datechip-text') || {{textContent: ''}}).textContent.trim(); }})()""")
+                print('B)', bb)
+                results.append(bool(bb) and '1993' in bb)
+            else:
+                print('C)', a)
+                results.append(isinstance(a, dict) and a['sugg'] == '')
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

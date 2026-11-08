@@ -15,6 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
+| 2026-11-08 | 3.88.0 | – |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -101,6 +102,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-08
+
+### Import 3.88.0
+
+#### Changed
+
+- **An event linked gets its relationships at once** (collected item Z-EVL, rule S136): an event found, chosen, linked by its MBID or pasted into "Add entry manually" without a role – its rows go straight onto the recordings of their tracks (those the text or the track list gave, else all): "recorded at" on the audio tracks, "video shot at" on the videos, a row each. No question and no type to choose any more; a type chosen by hand (or in "＋ Another role"), another relationship of the event ("launch event") and a level chosen by hand stay. (With S136 off the question of 3.73.0 is back.)
+- **"Place → Skip" only for the event's own place** (Z-FPL2, rule S131): with the festival's event linked, the place offers "Place → Skip" only when MusicBrainz has that place for the event; another place there (or none yet): it says so, and the place keeps its relationship.
+
+#### Added
+
+- **Festival hint: MusicBrainz already has the event** (Z-EVR, rule S137): linked to the release or all its recordings – a message where the hint was (and in the log); linked to some recordings – the message names those tracks, and the hint with its offer stays for the others. Only "recorded at" / "video shot at" count, and an event of the same name only when its time holds the festival's date; the place of the festival then follows that event.
+- **The performance date for filming** (Z-CAMD2, rule S138): "video shot at" – or camera work on videos – of live recordings shows the date of the performance of the same tracks as a suggestion (yellow, ✓ takes it, ✕ leaves it out); nothing is set by itself.
 
 ## 2026-11-07
 

@@ -263,6 +263,12 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   camd388: 3.88.0 (Z-CAMD2, S138): "video shot at" of a live recording – the performance's date suggested, ✓
+                                #     takes it; off
+                                #   evl388: 3.88.0 (Z-EVL, Z-FPL2; S136, S131): an event pasted without a role – "recorded at" / "video shot at"
+                                #     at once (tracks 1, 3, 4 / 2), no question, its "launch event" row stays; "Place → Skip" only when MusicBrainz has that place for the event (another, none)
+                                #   evr388: 3.88.0 (Z-EVR, S137): MusicBrainz already has the festival's event – on all recordings a message
+                                #     instead of the hint (and in the log), on some the tracks named and the hint stays
                                 #   fev385: 3.85.0 (Z-FEV, Z-FPL, Z-EVA): the festival hint at the linked place, gone once the event is
                                 #     linked; at the place both named with "Place → Skip"; the event "recorded at" at once
                                 #   dedbox: 3.74.0 (Z-DEDQ, Z-FRM, S109): the box "Dedications & tributes" – frames, found, suggestions (several, none,
@@ -561,7 +567,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   eva385: 3.85.0 (Z-EVA): an event on a release with a video and a title "(Official Video)": "recorded at
                                 #     + video shot at" first – a row each by media type, a hint for the title-only video
                                 #   evask: 3.73.0 (Z-EVQ, S108): an event pasted into "Add entry manually" – "recorded at" (+ "video shot at" with
-                                #     videos), on the recordings, folded; "choose later"; off
+                                #     videos), on the recordings, folded; "choose later"; off (from 3.88.0 with S136 off, as eva385)
                                 #   compacthint: (3.73.0, Z-CPV) the compact view the default, the arrow to the full view; who used the script before
                                 #   focusfields: 3.72.0 (Z-TST, the former t_focus.py): typing in every date field keeps cursor and text
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
