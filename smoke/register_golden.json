@@ -2761,11 +2761,7 @@
    ["ArtistJohn Doe", [["Recorded live By", "128", "", "recording", "4 of 4 tracks"], ["Mastering", "42", "", "release", ""]]],
    ["ArtistA", [["Mastered By", "42", "", "release", ""]]],
    ["ArtistPat Smith", [["Mixed By", "143", "", "recording", "4 of 4 tracks"], ["Mastered By", "42", "", "release", ""]]],
-   ["ArtistZoe Q", []],
-   ["ArtistYan Y", []],
-   ["ArtistAnn", []],
    ["ArtistBen", [["Mixed By", "143", "", "recording", "4 of 4 tracks"]]],
-   ["ArtistKim", []],
    ["ArtistAl One", [["Guitar", "148", "guitar", "recording", "4 of 4 tracks"]]],
    ["ArtistBo Two", [["Guitar", "148", "guitar", "recording", "4 of 4 tracks"]]],
    ["ArtistCy Three", [["Artwork", "", "", "release", ""]]],
@@ -2792,7 +2788,11 @@
    ["PlaceBig Room", [["Produced At", "", "", "recording", "4 of 4 tracks"]]],
    ["PlaceSmall Room", [["Engineered At", "", "", "recording", "4 of 4 tracks"]]],
    ["AreaXixon (Asturies, Spain)", [["Recorded In", "698", "", "recording", "4 of 4 tracks"]]],
-   ["AreaParis", [["Mixed In", "", "", "recording", "4 of 4 tracks"]]]
+   ["AreaParis", [["Mixed In", "", "", "recording", "4 of 4 tracks"]]],
+   ["ArtistZoe Q", []],
+   ["ArtistYan Y", []],
+   ["ArtistAnn", []],
+   ["ArtistKim", []]
   ],
   "unrec": [
    "Drums (tracks 1, 4) – Dee Four",
@@ -3625,6 +3625,7 @@
    "S147 Texts (3.92.0; collected item Z-GEAR): a line of equipment – \"Microphone: …\", \"Handy Recorder for field recording: …\", \"Guitar Amplifier: …\", \"Micpreamp: …\", \"Audio Interface: …\", \"DAW: Logic Pro X\" – is no credit (left out as such); names after it (\"Amplifier: Anna Bell\", \"Mic: John Smith\") and \"Strings:\", \"Recorder:\", \"Laptop:\" as before readLine0 (TEXT_GEAR)",
    "S148 Texts (3.92.0; collected items Z-LYR, Z-SPA): \"All Lyrics was written by X\" – lyrics by X, \"All field recording by X\" – field recording by X (not with \"except …\" after it); \"Art work\" is artwork; \"Nothing Space Studio at Shonan\" – the place, Shonan its area (no time: \"at Christmas\") tidyLines, placeOf",
    "S149 Texts (3.92.0; collected item Z-SEI): in the block of a track (S145) each word that may be an instrument in the list of a player of the text asks as such a word of a list (137d: other instruments, credited as written, when no instrument is like it) – however many (\"Ryota Takano: Bass Guitar, Sei, Sei Wakka Ring\"), also without a known one (\"Ryota Takano: Sei\"); poetry among the instruments: spoken vocals, credited as written readUnit, tidyLines",
+   "S150 Arrangements of works (3.94.0; collected items Z-ARRL, Z-ARRD): a line of a text about songs, tracks or compositions (\"All songs was written & arranged by X\") and Discogs's \"Arranged By\" without more (not \"Arranged By [Strings]\") put the arranger on the works (the works matrix) – as S006 without writing credits; a bare \"Arranged by X\" of a text stays on the recordings. The level of such an arrangement stays a button in its entry (\"arranger · Work\"): a click puts it back on the recordings TEXT.parse (WORK_ARR), loadRelease",
    "S143 Statistics (3.91.0; collected item Z-SRR): the card \"Per release\" – the relationships of a release (all its submissions; also by level), its recordings and the relationships on its recordings per recording, each the average and the median of the releases; in \"This browser\" (recordings from 3.91.0 on) and in \"Global\" (from the edit dump, the recordings from the core dump) statPerRelease, statPerReleaseHtml, globalPerRelease (statsMoreCards, globalCoreParts)",
    "S139 Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source's, its name, the name in MusicBrainz) as \"credited as\" on all its relationships – also those changed one by one; a small ⇄ beside each \"credited as\" (a row, a line of an entry's matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)",
    "S138 Dates (3.88.0; collected item Z-CAMD2): \"video shot at\" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them rowDateSugg, performanceDateSugg",

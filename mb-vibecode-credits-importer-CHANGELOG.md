@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.93.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.94.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.94.0
+
+- **Arrangements of the works** (Z-ARRL, Z-ARRD; rule S150): "All songs was written & arranged by X" (a line about songs, tracks or compositions) and Discogs's "Arranged By" without more put the arranger on the works – into the works matrix, also without writing credits (as S006 with them). "Arranged By [Strings]" and a bare "Arranged by X" of a text stay on the recordings. "All songs were arranged by X" is no arrangement "of all songs" any more (the words were taken as its detail).
+- **Clicking through** (Z-ARRL): an arrangement on the works keeps its level as a button in its entry ("arranger · Work"): a click puts it back on "Recording", from where the level clicks through Release and Work again (before, the line was gone once it was on "Work").
+- **Entries of the works** (Z-ARRL): entries with relationships of works only are shown together after the other entries, under "Writing credits and arrangements of the works" – above the dedications and the works matrix. An entry with a role on "Skip" stays where it is.
+- Switching S150 off puts its arrangements back on the recordings; a supplement's arrangements of the works go there too.
 
 ### Import 3.93.0
 
