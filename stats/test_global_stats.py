@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """A small made-up edit dump through global_stats.py: what it counts (python3 stats/test_global_stats.py).
 
+[3.91.0] Also per release: the relationships (by level), its recordings and the relationships per recording.
 Also (review of the alpha): one submission sent in parts (25 edits a request, new works first, live comments later with a line more)
 is one, its "Done:" counted once; a voter quoting the script's line is no edit of it; "Remove relationship" gets its type by its id;
 an edited relationship its new type; an archive cut off between its files or without its tables is an error."""
@@ -186,6 +187,13 @@ def main():
         ('core dump; the rest kept', [r2['core']['dump'], r2['totals']], ['core-test', r['totals']]),
         ('core cut off: an error, the result as it was', [p3.returncode != 0, r3.get('core', {}).get('dump')], [True, 'core-test']),
         ('keep-core', r4.get('core'), {'dump': 'old'}),
+        # [3.91.0, Z-SRR] per release: 701 (3: 2 recording, 1 release) and 702 (1 recording); the edits of editor 7's later note have no release.
+        # The core: 701 has three tracks (a data track not), 702 one
+        ('per release', r['per_release'], {'n': 2, 'rels': {'mean': 2.0, 'median': 2.0},
+                                           'by_level': {'recording': {'mean': 1.5, 'median': 1.5}, 'release': {'mean': 0.5, 'median': 0.5}}}),
+        ('facts per release', fx['release_rec_rels'], [[701, 2], [702, 1]]),
+        ('core per release', r2['core']['per_release'], {'n': 2, 'recordings': {'mean': 2.0, 'median': 2.0},
+                                                        'rels_per_recording': {'mean': (2 / 3 + 1) / 2, 'median': (2 / 3 + 1) / 2}}),
     ]
     bad = [(k, got, want) for k, got, want in checks if got != want]
     text = json.dumps(r2)

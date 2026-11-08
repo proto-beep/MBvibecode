@@ -3050,4 +3050,67 @@ def case_dnda387():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_srr391():
+    """Credits Importer 3.91.0 (collected item Z-SRR, rule S143): the card "Per release" (group Releases).
+    A) This browser – release m1 (5 relationships: 4 on recordings, 1 on the release; 4 recordings) and m2 (two submissions: 2 + 1 on
+       recordings; 2 recordings): relationships 4 / 4, on Recording 3.5 / 3.5, on Release 0.5 / 0.5, recordings 3 / 3, relationships per
+       recording 1.25 / 1.25 (average / median).
+    B) Global (per_release of the edit dump, the core's recordings): its numbers in the card "Per release".
+    C) Rule S143 off: no card."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261108-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1},
+            'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}}, 'by_version': {'3.91.0': {'edits': 10}}, 'by_source': {'discogs': 2},
+            'per_release': {'n': 2, 'rels': {'mean': 2.0, 'median': 2.0}, 'by_level': {'recording': {'mean': 1.5, 'median': 1.5}, 'release': {'mean': 0.5, 'median': 0.5}}},
+            'credits': {'credited_as': {'n': 1, 'of': 4}}, 'core': {
+                'dump': '20261108-002222', 'artists': {'n': 3, 'of': 4, 'types': {'Person': 2}, 'genders': {}, 'decades': {}, 'countries': {}, 'towns': {}, 'centuries': {}, 'posthumous': {'n': 0, 'of': 0}},
+                'releases': {'n': 2, 'media': {'single': 2}, 'rg_primary': {'Album': 2}, 'rg_secondary': {}, 'languages': {'eng': 2}, 'scripts': {'Latn': 2}},
+                'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0}, 'role_credits': {'n': 2, 'of': 5},
+                'per_release': {'n': 2, 'recordings': {'mean': 2.0, 'median': 2.0}, 'rels_per_recording': {'mean': 0.8333, 'median': 0.8333}}}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    CARD = """(sel) => { const c = document.querySelector(sel); return c ? [...c.querySelectorAll('tbody tr')].map(t => [...t.children].map(x => x.textContent.trim()).join(' | ')) : null; }"""
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S143']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            now = pg.evaluate("Date.now()")
+            rel1 = {'title': 'A', 'year': 1985, 'country': 'JP', 'formats': ['CD'], 'labels': ['ECM'], 'before': 0, 'recs': 4}
+            rel2 = {'title': 'B', 'year': 1993, 'country': 'CA', 'formats': ['CD'], 'labels': ['Intakt'], 'before': 0, 'recs': 2}
+            ins = lambda g: stat_rel('n', 'instrument', 'recording', 'artist', g, 'X', ['piano'])
+            recs = [{'v': 3, 'id': 'a:1', 'mbid': 'm1', 'at': now - 9000, 'start': now - 20000, 'ms': 11000, 'src': 'discogs', 'supp': [], 'rel': rel1, 'own': 0, 'ocr': None,
+                     'rels': [ins('g1'), ins('g2'), ins('g3'), ins('g4'), stat_rel('n', 'producer', 'release', 'artist', 'g5', 'P')]},
+                    {'v': 3, 'id': 'b:1', 'mbid': 'm2', 'at': now - 5000, 'start': now - 8000, 'ms': 3000, 'src': 'discogs', 'supp': [], 'rel': rel2, 'own': 0, 'ocr': None,
+                     'rels': [ins('g1'), ins('g2')]},
+                    {'v': 3, 'id': 'b:2', 'mbid': 'm2', 'at': now - 1000, 'start': now - 2000, 'ms': 1000, 'src': 'text', 'supp': [], 'rel': rel2, 'own': 0, 'ocr': None,
+                     'rels': [ins('g3')]}]
+            pg.evaluate(STAT_SEED, recs)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(600)
+            H.open_stats(pg)
+            pg.wait_for_timeout(600)
+            a = pg.evaluate(CARD, '[data-el=stats-perrelease]')
+            grp = pg.evaluate("(c => c ? c.closest('.dci-stats-group').dataset.group : null)(document.querySelector('[data-el=stats-perrelease]'))")
+            if off:
+                print('C)', a)
+                results.append(a is None)
+                results.append(not errs)
+                b.close()
+                continue
+            pg.click('[data-act=stats-scope][data-scope=global]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+            gl = pg.evaluate(CARD, '[data-el=stats-global-perrelease]')
+            print('A)', grp, a)
+            print('B)', gl)
+            results.append(grp == 'releases' and a == ['Relationships | 4 | 4', 'on Recording | 3.5 | 3.5', 'on Release | 0.5 | 0.5', 'Recordings | 3 | 3', 'Relationships per recording | 1.3 | 1.3'])
+            results.append(gl == ['Relationships | 2 | 2', 'on Recording | 1.5 | 1.5', 'on Release | 0.5 | 0.5', 'Recordings | 2 | 2', 'Relationships per recording | 0.8 | 0.8'])
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
