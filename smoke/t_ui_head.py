@@ -1542,4 +1542,69 @@ def case_ncy389():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_evnote392():
+    """Credits Importer 3.92.0 (collected item Z-EVL, rule S136): an event pasted into "Add entry manually" without a role, track 2 a video –
+    below the line (and in the log): "Event “Club Night 2020”: recorded at on tracks 1, 3, 4 · video shot at on track 2 – the type can be
+    changed in its row." (no question); the next entry added: the note gone.
+    B) (review) no video: "… recorded at on all tracks – …" (not "on tracks all"); its row removed: the note gone with it."""
+    EV = H.uid('fefefefe', 12)
+    H.COMPANIES[1032] = ('event', EV, 'Club Night 2020')
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.lt(9003, H.uid('9e9e9e9e', 3), 'video shot at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.VIDEO_TRACKS.add(1)
+    EXTRA = H.uid('dddddddd', 31)
+    H.ARTISTS[3031] = (EXTRA, 'Extra Person')
+    NOTE = "(() => { const n = document.querySelector('[data-el=manual-evq] [data-el=ev-note]'); const q = document.querySelector('[data-el=manual-evq]'); return n && !q.hidden ? n.textContent : null; })()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
+        pg.click('[data-act=add-manual]')
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        a = pg.evaluate(NOTE)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if x[9:].startswith('Event “Club')]
+        ask = pg.evaluate("!!document.querySelector('[data-el=manual-evq] [data-act=manual-evq]')")
+        pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{EXTRA}')
+        pg.fill('[data-f=manual-role]', 'producer')
+        pg.click('[data-act=add-manual]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        b2 = pg.evaluate(NOTE)
+        print('A)', a, logs, ask, '| danach:', b2)
+        results.append(a == 'Event “Club Night 2020”: recorded at on tracks 1, 3, 4 · video shot at on track 2 – the type can be changed in its row.'
+                       and logs == [a] and not ask and b2 is None and not errs)
+        b.close()
+    H.VIDEO_TRACKS.discard(1)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
+        pg.click('[data-act=add-manual]')
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        a = pg.evaluate(NOTE)
+        pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => /Club Night 2020/.test(x.textContent)).querySelectorAll('[data-act=remove-row]').forEach(x => x.click())")
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        b2 = pg.evaluate(NOTE)
+        print('B)', a, '| entfernt:', b2)
+        results.append(a == 'Event “Club Night 2020”: recorded at on all tracks – the type can be changed in its row.' and b2 is None and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

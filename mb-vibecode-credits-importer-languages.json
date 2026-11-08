@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.91.0",
+  "version": "3.92.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2486,7 +2486,14 @@
     "stats.srr.rels": "Beziehungen",
     "stats.srr.onLevel": "auf {level}",
     "stats.srr.recs": "Aufnahmen",
-    "stats.srr.rpr": "Beziehungen je Aufnahme"
+    "stats.srr.rpr": "Beziehungen je Aufnahme",
+    "manual.evNote": "Event „{name}“: {list} – der Typ lässt sich in seiner Zeile ändern.",
+    "manual.evPart": "{type} auf den Tracks {tracks}",
+    "manual.evPart1": "{type} auf Track {tracks}",
+    "manual.evPartAll": "{type} auf allen Tracks",
+    "log.evNote": "{text}",
+    "ignored.why.trackTitle": "der Titel eines Tracks (oder seine Position): die Zeilen darunter sind seine Credits",
+    "ignored.why.gear": "Ausrüstung (Mikrofone, Verstärker, Interfaces, Software): kein Credit"
   },
   "es": {
     "title": "Credits Importer",

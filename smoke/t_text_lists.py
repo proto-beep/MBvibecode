@@ -842,6 +842,36 @@ def case_tcpread2():
 
 
 
+def case_tbl392r():
+    """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
+    A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all
+    tracks; a line that is no "Name: roles" ("Mixed by …") ends a block; a band's name above its members ("Black Sabbath", a track of
+    that name) opens none; a position beyond the tracks ("12.") none; a quoted title of no track ends the block before it."""
+    titles = ['Opening', 'Love', 'Closing', 'Black Sabbath']
+    cases = ['Tracklist:\n1. Opening\n2. Love\n3. Closing\n\nCredits:\nJohn Smith: guitar\nMixed by Bob Roe',
+             '"Opening"\nJohn Smith: guitar\n"Love"\nJane Doe: piano\n\nMixed by Bob Roe\nMastered by Carl Poe',
+             'Side A\nA1 Opening\nA2 Love\nSide B\nB1 Closing\n\nJohn Smith: guitar',
+             'Love\nPeace\nClosing\n\nJohn Smith: guitar',
+             'Black Sabbath\nOzzy Osbourne: vocals\nTony Iommi: guitar',
+             '12. "Bonus Song"\nJohn Smith: guitar',
+             '"Opening"\nJohn Smith: guitar\n\n"Bonus Song"\nJane Doe: piano']
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.tracks ? [...(x.tracks.set || x.tracks.indexes || [])].map((i) => i + 1).join(',') || 'all' : 'all']),")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'),
+                         json.dumps([{'text': t, 'titles': titles, 'count': 4} for t in cases])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    got = [x['credits'] for x in g] if g else None
+    for t, x in zip(cases, got or []):
+        print('  ', t.replace('\n', ' / ')[:70], '→', x)
+    ok = got == [[['John Smith', 'all'], ['Bob Roe', 'all']], [['John Smith', '1'], ['Jane Doe', '2'], ['Bob Roe', 'all'], ['Carl Poe', 'all']],
+                 [['John Smith', 'all']], [['John Smith', 'all']], [['Ozzy Osbourne', 'all'], ['Tony Iommi', 'all']], [['John Smith', 'all']],
+                 [['John Smith', '1'], ['Jane Doe', 'all']]]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_z381():
     """Credits Importer 3.81.0 (collected items Z-OTR, Z-SLD, Z-SYN, Z-POR, Z-RAD, Z-YTT; rules S119 – S121, R112, R113).
     A) "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass

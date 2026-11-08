@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.91.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.92.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,28 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.92.0 · 2026-11-08
+
+Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; Z-EVL (the note).
+
+- **`tidyLines`** (new; `TEXT.parse`, S144): before a text is read – "：" and fullwidth brackets as ASCII; (S148) "All lyrics / field recording … was written by X" → "Lyrics by X", "Art work" → "Artwork", "Sampring" → "Sampling"; the names of the "Name: roles" lines (`NAME_ROLES`, a role among `tidyRoles`) in one spelling (the one most lines have); a line without the colon after such a name and two such lines in one split; (S146) **`withModels`**: "Kind (Model[ & Model])" with `gearKind` → the model(s) (`MODEL_KINDS`) or "Model [Kind]"; a list broken across lines joined when the two words make a role; (S149) poetry of a player "Spoken Vocals [word]". **`rawOf`**: the line as written for `startLine` (the marks of the companion).
+- **Track blocks** (S145): `trackBlock`, `POS_LINE`, `TITLE_LINE`, `posOrder` / **`posIndex`** – a quoted title (or an exact one without brackets) with its position and length; "A1" alone remembered for the title below; the scope of the lines below (`useScope` … `trackBlock.scope`); a line "All …" ends it; ignored `trackTitle`.
+- **`TEXT_GEAR`** (new, S147): `readLine0` – ignored `gear`.
+- **`placeOf`** (S148): "X at Y" with a word of places in X – Y its area.
+- **R113** (S146): with a detail ("Nord stage2 [Wurlitzer]") the instrument of the model's kind, credited "Wurlitzer (Nord stage2)" (`roleCreditForInner`). **`isKnownRole`**: a word of T001 with a number ("Rhodes Piano MK2").
+- **Mapping:** `GEAR_MODELS` – synthesizer: nord stage, nord electro, nord piano, multipoly, multi/poly; electric organ: yc, combo organ (`yc` ambiguous); `INSTRUMENT_ALIASES` (T001): kick drum, kick, snare, djambe, kazizi, guiro, sampring / sampling from records, saxophone trio, rhodes piano (mk2), bug / nut shell shaker, rhythm maschine / machine.
+- **`addManualEntry`** (Z-EVL): `S.evNote` – `manual.evNote` with `manual.evPart` / `manual.evPart1` per row (`renderEvAsk` shows it, `role="status"`; reset per import and with the next entry); log `evNote`.
+- **Register:** S144 – S149. **Texts:** manual.evNote, manual.evPart, manual.evPart1, log.evNote, ignored.why.trackTitle, ignored.why.gear.
+- **Tests:** `t_sources_bandcamp.py maya392`, `t_ui_head.py evnote392` (new; fail on 3.91.0).
+- **Review:**
+  - `tidyLines`: two lines in one only when the part before ends in a role (`lm`); a broken list not joined when its last word alone is a role or a name follows; S149 keeps poetry only (`textPlayers` for `readUnit`); S148 not with "except / but / apart from …".
+  - `withModels`: `kindFits` (the kind of the model as the word before it, keyboards any) and `modelCredits` – `addCredit` gives the role credit "Wurlitzer (Nord stage2)" (`roleCredit`, as S064; `suppRow` takes it too). R113 in `roleCreditForInner` as in 3.91.0.
+  - Track blocks: `ROLE_PAIR` – any other line, a heading (also of `headingLists` / `stackPairs`) ends a block; `titleLike` / `lineNear` (`curLi`) – a title next to a title (`SIDE_LINE` skipped above) is a tracklist; `exactTrack` (`resolveTitles(…, { prefix: false, exact: true })`, `tracksByTitles` `exact`: no title one letter off); without quotes or position `bareTitle` / `bareBlockCount` ≥ 2, not a band name, not ending in ":"; `posIndex` within `trackCount` for numbers. `sourceContext().resolveTitles` takes the options in place of the tracks.
+  - `readUnit` (S149): in a track block, a player of the text (`textPlayers`): each word that may be an instrument (≤ 5 words, no "at / in / by …") a `guess` (137d) – however many, also without a known one.
+  - `TEXT_GEAR`: without strings, recorders alone, computer, laptop, effects, speakers; a line of it only with a number, a model (`gearKind`), software or no list of names after the colon. `placeOf`: `TIME_WORDS` ("at Christmas").
+  - Z-EVL: `S.evNote` = `{ key, ids }`, the text by **`evNoteText`** (new) from its rows as they are (`manual.evPartAll` "on all tracks"); `refresh` draws it anew when it changed (`S.evNoteShown`).
+  - Tests: `t_text_lists.py tbl392r` (new), `t_ui_head.py evnote392` B, nine lines in `text_corpus.json`; `maya392` A: "Sei" asked (other instruments, credited "sei").
 
 ## Companion 1.14.0 · 2026-11-08
 
