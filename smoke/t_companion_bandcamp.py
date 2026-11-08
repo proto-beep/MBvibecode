@@ -12,8 +12,8 @@ def case_bcview():
     B) A Bandcamp tab on another album: "a Bandcamp tab is open, but on another page" – "Load the release there" loads the
        album; then "connected".
     C) Status marks only in the credits, before each part of a line: "Written by Jane Roe, mixed by Bob Mix" two marks,
-       "Mixed and mastered by Mark Master" two marks at the same place, none for "Thanks Mom." and none in the "about"
-       text (also when Bandcamp shortened it: "more").
+       "Mixed and mastered by Mark Master" two marks at the same place, none for "Thanks Mom."; (Companion 1.14.0, Z-BCAM) in the
+       "about" text one, before "Recorded at Loft in Cologne …" (also when Bandcamp shortened it: "more"; until 1.13.0 none there).
     D) A click on a mark shows its row in the dashboard ("From Bandcamp: …") – since 3.17.5 with "Click switches" off (on, a
        click switches the credit, see t_bcoff.py).
     E) A row jumps to its part of the line; a place from the "about" text marks only its sentence (the shortened text is
@@ -133,14 +133,14 @@ def case_bcview():
         poll(bc, "document.querySelectorAll('.tralbum-credits .dci-dg-mark').length >= 7")
         bc.wait_for_timeout(500)
         c1 = marks(bc)
-        c_about = bc.evaluate("document.querySelectorAll('.tralbum-about .dci-dg-mark').length")
+        c_about = bc.evaluate("[...document.querySelectorAll('.tralbum-about .dci-dg-mark')].filter(m => !m.classList.contains('dci-bc-textmark') && /^[○●✓✗–!]$/.test(m.textContent)).length")
         shown = bc.evaluate("[...document.querySelectorAll('.tralbum-credits .bcTruncateMore')].map(x => x.style.display)")
         print('C) Marken:', c1)
         print('   im about-Text:', c_about, '| gekürzte Credits geöffnet:', shown)
         want = [['○', 'Written by Jane ', 'Written By'], ['○', 'mixed by Bob Mix', 'Mixed By'], ['○', 'Mixed and master', 'Mixed By'],
                 ['○', 'Mixed and master', 'Mastered By'], ['○', 'Test Band – guit', 'guitar'], ['○', 'Trumpet: Peter E', 'Trumpet'],
                 ['○', 'Photography Tom ', 'Photography By']]
-        results.append(c1 == want and c_about == 0 and shown == [''])
+        results.append(c1 == want and c_about == 1 and shown == [''])
         # D) a click on a mark: its row in the dashboard (3.17.5: with "Click switches" off)
         H.nav_switch(pg, 'data-click-toggle')
         poll(bc, "document.querySelector('.tralbum-credits .dci-dg-mark').title.includes('click to show it')")
@@ -400,7 +400,8 @@ def case_textmarks():
     C) "Status on Discogs" switched off: no underlines (and no marks); on again: back.
     D) Bandcamp: "Recorded by Jane Roe in 2020" in the credits and "Tracks 1-2 mixed in July 2019." in the "about" text –
        each underlined in its text, "Tracks 1-2" too ("2020" in its line, not in "released January 1, 2020" above the
-       credits); the credit marks are still there.
+       credits); the credit marks are still there; (Companion 1.14.0, Z-BCAM) the line of the "about" text without a credit has the
+       mark of its date (◷), "Dedicated to Jim Hall." the mark of its dedication (♥).
     E) [1.9.0] Two lines of one artist with the same role ("Vocals [Clean]", "Vocals [Screams]"): a mark on each line."""
     import json
 
@@ -495,6 +496,9 @@ def case_textmarks():
         b.close()
 
     # D) Bandcamp
+    H.ARTISTS[3910] = (H.uid('dddddddd', 3910), 'Jim Hall')  # ([1.14.0] the dedication of the "about" text: a row)
+    H.lt(868, 'b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group', dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     H.attr(9121, 'viola', 14, 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     BAND = 'https://testband.bandcamp.com'
@@ -504,7 +508,7 @@ def case_textmarks():
     H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
     TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
     H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Recorded by Jane Roe in 2020\nViola: Anna Viola',
-                                   'about': 'Tracks 1-2 mixed in July 2019.', 'release_date': '01 Jan 2020 00:00:00 GMT'}, 'trackinfo': TRACKS}, ALBUM)
+                                   'about': 'Tracks 1-2 mixed in July 2019.\nDedicated to Jim Hall.', 'release_date': '01 Jan 2020 00:00:00 GMT'}, 'trackinfo': TRACKS}, ALBUM)
     for i, t in enumerate(TRACKS):
         url = f'{BAND}{t["title_link"]}'
         H.BC_PAGES[url] = H.bc_html({'artist': 'Test Band', 'album_url': '/album/testalbum', 'current': {'title': t['title'], 'credits': ''},
@@ -536,7 +540,10 @@ def case_textmarks():
       return [[...r.querySelectorAll('.dci-txt-date')].map(s => s.textContent), [...r.querySelectorAll('.dci-txt-tracks')].map(s => s.textContent),
         r.querySelectorAll('.dci-dg-mark').length, [...r.querySelectorAll('.dci-txt-date')].map(s => (s.previousSibling || {}).textContent || '')]; }))()""")
         print('D) Bandcamp (Credits, about):', d1)
-        results.append([x[:3] for x in d1] == [[['2020'], [], 2], [['July 2019'], ['Tracks 1-2'], 0]] and d1[0][3][0].endswith('Jane Roe in '))
+        poll(bc, "document.querySelectorAll('.tralbum-about .dci-bc-textmark').length >= 2")
+        dm = bc.evaluate("[...document.querySelectorAll('.tralbum-about .dci-bc-textmark')].map(m => [m.textContent, m.classList.contains('dci-bc-date') || m.classList.contains('dci-bc-ded'), !!m.title])")
+        print('   Datumsmarke im about-Text:', dm)
+        results.append([x[:3] for x in d1] == [[['2020'], [], 2], [['July 2019'], ['Tracks 1-2'], 2]] and d1[0][3][0].endswith('Jane Roe in ') and dm == [['◷', True, True], ['♥', True, True]])
         bcerr = [e for e in bcerr if 'page dismissal' not in e]
         print('Fehler:', errs, bcerr)
         results.append(not errs and not bcerr)
