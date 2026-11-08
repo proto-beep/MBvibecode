@@ -184,7 +184,7 @@ def case_entryhead():
   const g = [...document.querySelectorAll('section.dci-group')].find(s => nm(s) === name);
   if (!g) return null; const a = g.querySelector('.dci-dglink'); const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
   return { link: a ? [a.textContent, a.getAttribute('href'), a.title] : null, chip: c && !c.hidden ? [c.textContent.trim(), c.title] : null,
-    shown: [st.textContent.trim(), st.title || ''] }; }"""
+    shown: [st.textContent.trim(), st.title || (st.closest('button.dci-ncy-name') || {}).title || ''] }; }"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1462,6 +1462,83 @@ def case_eva385():
             b.close()
     finally:
         H.TITLES[2] = old
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ncy389():
+    """Credits Importer 3.89.0 (collected item Z-NCY, rule S139): Bass Man credited "B. Man" (bass, vocals), "Bassman" in MusicBrainz;
+    Writer W credited "W. Writer" (works matrix).
+    A) The name clicks through the spellings on all his rows: "Bass Man" (his name), "Bassman" (the field empty – the name in
+       MusicBrainz), "B. Man" again (where it started; (review) the source's spellings first).
+    B) ⇄ of the bass row: only that row ("Bass Man"); the name again sets both the same (the first spelling, "B. Man").
+    C) ⇄ of Writer W's column in the works matrix: its "credited as" the next spelling.
+    D) Rule S139 off: no button on the name, no ⇄."""
+    import common_rows as C
+    H.ARTISTS[3001] = (H.ARTISTS[3001][0], 'Bassman')
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        for ea in d['extraartists']:
+            if ea['name'] == 'Bass Man':
+                ea['anv'] = 'B. Man'
+        d['extraartists'].append({'name': 'Bass Man', 'anv': 'B. Man', 'role': 'Vocals', 'tracks': '', 'id': 3001, 'join': ''})
+        for t in d['tracklist']:
+            for ea in t['extraartists']:
+                if ea['name'] == 'Writer W':
+                    ea['anv'] = 'W. Writer'
+        return d
+    H.discogs_release = rel
+    G = "[...document.querySelectorAll('section.dci-group')].find(x => /Bass|B\\. Man/.test(x.querySelector('.dci-gname').textContent))"
+    CREDITS = f"[...{G}.querySelectorAll('tr.dci-row')].map(r => {{ const f = r.querySelector('[data-f=credit]'); return f ? f.value : '?'; }})"
+    results = []
+    for off in (False, True):
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S139']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.evaluate(f"{G}.querySelectorAll('[data-act=row-open]').forEach(b => b.click())")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            if off:
+                d = pg.evaluate(f"[!!{G}.querySelector('[data-act=ncy-all]'), document.querySelectorAll('[data-act=ncy-row], [data-act=mx-ncy], [data-act=ncy-line]').length]")
+                print('D)', d)
+                results.append(d == [False, 0])
+                results.append(not errs)
+                b.close()
+                continue
+            seen = [pg.evaluate(CREDITS)]
+            for _ in range(3):
+                pg.evaluate(f"{G}.querySelector('[data-act=ncy-all]').click()")
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                seen.append(pg.evaluate(CREDITS))
+            focus = pg.evaluate("(document.activeElement || {}).dataset ? document.activeElement.dataset.act : ''")
+            print('A)', seen, focus)
+            results.append(seen == [['B. Man', 'B. Man'], ['Bass Man', 'Bass Man'], ['', ''], ['B. Man', 'B. Man']] and focus == 'ncy-all')
+            pg.evaluate(f"{G}.querySelector('tr.dci-row [data-act=ncy-row]').click()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            b1 = pg.evaluate(CREDITS)
+            pg.evaluate(f"{G}.querySelector('[data-act=ncy-all]').click()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            b2 = pg.evaluate(CREDITS)
+            print('B)', b1, b2)
+            results.append(sorted(b1) == ['B. Man', 'Bass Man'] and b2 == ['B. Man', 'B. Man'])
+            col = "[...document.querySelectorAll('.dci-matrix thead th[data-colhead]')].find(th => /Writer W|W\\. Writer/.test(th.textContent))"
+            c0 = pg.evaluate(f"(th => th ? th.querySelector('[data-f=mx-credit]').value : null)({col})")
+            pg.evaluate(f"(th => th && th.querySelector('[data-act=mx-ncy]').click())({col})")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            c1 = pg.evaluate(f"(th => th ? th.querySelector('[data-f=mx-credit]').value : null)({col})")
+            print('C)', c0, '→', c1)
+            results.append(c0 is not None and c1 is not None and c0 != c1)
+            results.append(not errs)
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

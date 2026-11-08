@@ -134,6 +134,8 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # release's artists ("artists") and its number of tracks ("tracks")
 
 python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
+                                #   fbh389: 3.89.0 (Z-FBH, S140): "fb:", "ig:", "yt:", "bandcamp:", "sc:", "tw:", "@name" below a name – its links,
+                                #     the lines left out as profiles; found by the Facebook link, not shown
                                 #   freetext: credits from a pasted text (3.2.0): "Name – roles", "Role: names", two clauses in a line, places
                                 #     ("Recorded live at …", "Mastered by A at Studio"), tracks ("Tracks 3–4: …", "(1, 3)"), ℗, lines not
                                 #     recognized; works matrix; names only suggested (dashed, yellow), a click assigns; edit note
@@ -263,6 +265,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   plt389: 3.89.0 (Z-PLT; R114, C046, S141): "Plated By" – a person misc "vinyl plating" on a vinyl release, a
+                                #     company without an artist of its name on Skip (said); on a CD both left out with the reason
                                 #   camd388: 3.88.0 (Z-CAMD2, S138): "video shot at" of a live recording – the performance's date suggested, ✓
                                 #     takes it; off
                                 #   evl388: 3.88.0 (Z-EVL, Z-FPL2; S136, S131): an event pasted without a role – "recorded at" / "video shot at"
@@ -564,6 +568,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   ncy389: 3.89.0 (Z-NCY, S139): the name clicks through the spellings on all rows (MusicBrainz's: empty), ⇄ of a
+                                #     row only, the name sets all the same again; ⇄ of a works-matrix column; off
                                 #   eva385: 3.85.0 (Z-EVA): an event on a release with a video and a title "(Official Video)": "recorded at
                                 #     + video shot at" first – a row each by media type, a hint for the title-only video
                                 #   evask: 3.73.0 (Z-EVQ, S108): an event pasted into "Add entry manually" – "recorded at" (+ "video shot at" with

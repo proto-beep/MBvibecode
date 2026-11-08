@@ -1790,4 +1790,65 @@ def case_hostask():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_fbh389():
+    """Credits Importer 3.89.0 (collected item Z-FBH, rule S140): a line of a profile alone below a name.
+    A) In Node: "fb: amp.puttipong", "ig: amp_p" below "Photography: Amp Puttipong" – his links facebook.com/amp.puttipong and
+       instagram.com/amp_p/; "yt:", "bandcamp:", "sc:", "tw:" below "Mixed By: Tom Smith"; "@janedoe.audio" below "Mastering: Jane
+       Doe" – Instagram; the lines left out as profiles, nothing not recognized. "fb: x" with no name above: not recognized, as before.
+       (review) "Recorded by Alice at Studio X" / "ig: alice": Alice's (not the studio's); a heading "Mixed by:" / "Bob Smith" / "Ann Lee" /
+       "fb: ann.mix": Ann Lee's; after an empty line or "x: 3": not taken.
+    B) In the dashboard: nothing not recognized, the line left out on purpose; Amp Puttipong found by his Facebook link; the link not
+       shown (only in the background)."""
+    import json
+    import subprocess
+    TEXT = "Photography: Amp Puttipong\nfb: amp.puttipong\nig: amp_p\nMastering: Jane Doe\n@janedoe.audio\nMixed By: Tom Smith\nyt: tomsmithmusic\nbandcamp: tomsmith\nsc: tom-smith\ntw: tsmith"
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (r) => /^(Photography|Mastering|Mixed By|Produced By|Recorded By|Guitar|Video By)$/i.test(r);
+const out = JSON.parse(process.argv[2]).map((t) => {
+  const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: () => null });
+  return [r.credits.map((c) => [c.who.name, c.who.links || []]), (r.ignored || []).map((x) => x.why), r.unrecognized];
+});
+console.log(JSON.stringify(out));
+"""
+    results = []
+    MORE = ['Recorded by Alice at Studio X\nig: alice', 'Guitar: Carl\nMixed by:\nBob Smith\nAnn Lee\nfb: ann.mix', 'Video by Bob\n\n@label_official', 'Mixed By: Tom Smith\nx: 3']
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([TEXT, 'fb: lonely.handle\nProduced By: Ann Lee', *MORE])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    got = json.loads(js.stdout) if not js.returncode else []
+    print('A)', got)
+    want = [['Amp Puttipong', ['https://www.facebook.com/amp.puttipong', 'https://www.instagram.com/amp_p/']], ['Jane Doe', ['https://www.instagram.com/janedoe.audio/']],
+            ['Tom Smith', ['https://www.youtube.com/@tomsmithmusic', 'https://tomsmith.bandcamp.com/', 'https://soundcloud.com/tom-smith', 'https://twitter.com/tsmith']]]
+    links = lambda g: {n: l for n, l in g[0] if l}
+    results.append(len(got) == 6 and got[0][0] == want and got[0][1] == ['profile'] * 7 and got[0][2] == [] and got[1][2] == ['fb: lonely.handle']
+                   and links(got[2]) == {'Alice': ['https://www.instagram.com/alice/']} and links(got[3]) == {'Ann Lee': ['https://www.facebook.com/ann.mix']}
+                   and links(got[4]) == {} and links(got[5]) == {})
+    AMP = H.uid('cccccccc', 389)
+    H.WEB_URLS['https://www.facebook.com/amp.puttipong'] = (AMP, 'Amp Puttipong')
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT.split('\nMastering')[0])
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")
+        amp = pg.evaluate(f"""(() => {{ const g = [...document.querySelectorAll('section.dci-group')].find(x => /Amp Puttipong/.test(x.querySelector('.dci-gname').textContent));
+          return g ? [g.className.match(/dci-st-(\\w+)/)[1], [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid), g.querySelectorAll('.dci-weblink').length,
+            (g.innerHTML.match(/{AMP}/) || []).length > 0] : null; }})()""")
+        print('B)', unrec, ign, amp)
+        results.append(unrec == [] and any(x.startswith('fb: amp.puttipong') for x in ign) and amp is not None and amp[3] and amp[2] == 0)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
