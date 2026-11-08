@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.86.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.87.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.87.0 · 2026-11-07
+
+Z-DNDA, Z-ARQ3, Z-ARQ2, Z-AWB2, Z-ARL2.
+
+- **Settings** (Z-DNDA): `[data-el=drop-grid]` – a grid of two columns (the places, the switches; `.dci-seg` an inline grid of two equal halves); narrow (`@container`) one column.
+- **`roleCreditForInner`** (Z-ARQ3): `row.typePicked` (set by `arqPick`, cleared by `remapManualRow`) – no `wordingCredit` / `fixedRoleCredit` from the type's name.
+- **`arqListHtml`** (Z-ARQ2): columns `.dci-arq-col` with `--c: var(--dci-lvl-<level>)` (one tone without level colours), `arq.lv.*` under the name, six to eight types then `arq-more` (`S.arq.more`); a search shows all hits and leaves out the levels without one; `@container (max-width: 640px)` one column (`.dci-arq` an inline-size container); the colour as `--arq-ink` (dark mode lightens it as a text colour). **`arqNewHtml`** (new): `arq-new` (checkbox), `arq-ntrack` / `arq-nall` / `arq-nnone`, `arq-ndate` (`S.arq.newEv`, `newTracks`, `newDate`); `arqPick` adds a target of its own (its tracks, **`arqNewDate`** (new: `parseDatePeriod`, then `findDates`) → `fieldsFromDate`), rows of a target `dateKeyed`, `refreshRowDetails` after `typePicked`, log `arqDateDropped` when the type has no date there; **`arqNewReady`**, **`arqNewState`** (new): the types `disabled` and `[data-el=arq-nerr]` while the date cannot be read or no track is on (updated in place while typing); `arq-more` focuses the first type it shows; **`arqRedraw`** (new) draws the box anew in place.
+- **`mx-col-all`** (Z-AWB2): in the column's ▾ menu only with S133 off.
+- **`mxRoleRows`, `mxRoleNextLevel`** (new; Z-ARL2, S135): `[data-act=mx-role-level]` beside a role chip of the works matrix whose rows all have a type on another level; `mx-role-level` (matrixAction, with S135): tracks whose cells are all off leave the row (`excluded` cleared), copies with `ownDate` get `dateKeyed`, rows left without tracks go (none with any: the tracks chosen), then `levelOf(…, next)` and `matrixDateForLevel` for each, `renderDates`, focus on the column's ▾ (log `matrixRoleLevel`); the button has an `aria-label` with the role. `newColumnRow` and `addMatrixColumn` set `typePicked` too; `roleCreditForInner` reads it with S134.
+- **Register:** S135. **Texts:** arq.lv.*, arq.more, arq.new* (arq.newDateBad, arq.newNoTracks, arq.newTracksSub too), log.matrixRoleLevel, log.arqDateDropped.
+- **Tests:** `t_ui_settings.py dnda387`, `t_entries.py arq387`, `t_works_matrix.py arl387` (new).
 
 ## Import 3.86.0 · 2026-11-07
 
