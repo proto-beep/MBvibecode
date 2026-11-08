@@ -1497,4 +1497,52 @@ def case_camd388():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_plt389():
+    """Credits Importer 3.89.0 (collected item Z-PLT; R114, C046, S141): "Plated By – Pete Plater" (a person) and the company "Plated
+    By – Plate Co" (no artist of that name in MusicBrainz).
+    A) A 12" vinyl: Pete Plater miscellaneous support on the release, the task "vinyl plating"; Plate Co left out on purpose – its row on
+       Skip, said at the row.
+    B) A CD: Pete Plater left out (for vinyl plating – this release: CD), no entry."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'].append({'name': 'Pete Plater', 'anv': '', 'role': 'Plated By', 'tracks': '', 'id': 3389, 'join': ''})
+        d['companies'].append({'name': 'Plate Co', 'entity_type_name': 'Plated By', 'id': 1389, 'catno': ''})
+        return d
+    H.discogs_release = rel
+    H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes(name));
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); const c = r.querySelector('[data-f=role-credit]');
+        return [(t && t.selectedOptions[0] || {}).text || '', (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '',
+          c ? c.value : (r.textContent.includes('vinyl plating') ? 'vinyl plating' : ''), [...r.querySelectorAll('.dci-note')].map(n => n.textContent.slice(0, 40))]; }) : null; }"""
+    results = []
+    for fmt in ('12" Vinyl', 'CD'):
+        H.MEDIA_FORMAT = fmt
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            pg.evaluate("document.querySelectorAll('section.dci-group [data-act=row-open]').forEach(b => b.click())")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pete, co = pg.evaluate(ROWS, 'Pete Plater'), pg.evaluate(ROWS, 'Plate Co')
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+            print('A)' if fmt != 'CD' else 'B)', pete, co, [x for x in ign if 'Plat' in x], pg.evaluate("(g => g ? [g.className, g.querySelectorAll('[data-act=name-use]').length] : null)([...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes('Plate Co')))"))
+            if fmt != 'CD':
+                results.append(pete is not None and len(pete) == 1 and pete[0][0] == 'misc' and pete[0][1] == 'release' and pete[0][2] == 'vinyl plating'
+                               and co is not None and co and all(r[1] == 'skip' for r in co) and any(n.startswith('“Plated By”: MusicBrainz') for r in co for n in r[3]))
+            else:
+                results.append(pete is None and any('Pete Plater' in x and 'vinyl plating' in x for x in ign))
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 | – |
+| 2026-11-08 | 3.88.0 – 3.89.0 | – |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.89.0
+
+#### Added
+
+- **Click through the spellings of a name** (collected item Z-NCY, rule S139): a click on the name of an entry (person, label, place, area …) puts the next of its spellings – the source's, its name, the name in MusicBrainz – as "credited as" on all its relationships, also those changed one by one; the name in MusicBrainz is an empty field (a double click is one step). A small ⇄ beside each "credited as" (a row, a line of an entry's matrix, a column of the works matrix) clicks through them for that one only.
+- **Profiles below a name** (Z-FBH, rule S140): a line "fb: amp.puttipong" below "Photography: Amp Puttipong" is his Facebook page (facebook.com/amp.puttipong) – in the background, for "Create artist …" and the search by links; the same for "ig:" / "insta:" (Instagram), "tw:" / "twitter:" / "x:", "sc:" / "soundcloud:", "yt:" / "youtube:", "bandcamp:" and a bare "@name" (Instagram) – the person's of the line right above (also below a heading list or a pair), a handle with a letter. The line is left out on purpose instead of "not recognized".
+- **"Plated By"** (Z-PLT, rules R114, C046, S141): miscellaneous support with the task "vinyl plating" on the release – only for vinyl (on other media left out, with the reason). A company only as an artist of MusicBrainz – none of that name, or linked as a label or place: left out on purpose (Skip, said at the row); linked to an artist later: on its level again.
 
 ### Import 3.88.0
 
