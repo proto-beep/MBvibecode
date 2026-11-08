@@ -550,7 +550,8 @@ see you all next time"""
         # B) before: no writers, no query with him; after the click: searched, found
         before = [q for q in H.WORK_QUERIES if AG in q]
         same0 = pg.locator(f'.dci-same [data-act=work-pick][data-gid="{GID}"]').count()
-        pg.locator('[data-act=name-use]').first.click()
+        # ((3.94.0) his entry – of writing credits only – among those of the works, after the others)
+        pg.locator("section.dci-group:has-text('Agusti') [data-act=name-use]").first.click()
         H.wait_for(pg, f"!!document.querySelector('.dci-same [data-act=work-pick][data-gid=\"{GID}\"]')", 20)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Checks complete/.test(li.textContent)).length >= 2", 20)
         pg.wait_for_timeout(1500)
@@ -1700,7 +1701,7 @@ def case_z384():
        X (Mindheal)" – the artist name Mindheal; (review) a bracket that is a voice, modifier, suffix, tracks ("(Tenor)", "(Acoustic)",
        "(Jr.)", "(II)", "(UK)", "(CD2)", "(A1-B2)") no artist name; a dedication inside a credit keeps the credit ("Piano: John Smith
        (dedicated to my wife)"); "Recording made at Abbey Road by X" a place as before; "Compositions arranged by X" keeps
-       [Compositions]; a dedication without a name left out, not "not recognized".
+       [Compositions] (from 3.94.0, Z-ARRL: "Arranged By" of the works – the compositions are no detail); a dedication without a name left out, not "not recognized".
     B) Areas: "composed and produced between … in Rzeszow, Poland" – composed in and produced in; (review) "written and recorded in
        2020 in Oslo, Norway" – recorded in only, no "?"; "… in Rzeszow Studio, Poland" – the studio produced at, no area "Rzeszow Studio".
     C) Dates: "between February 2025 and April 2026" one period for composition and production; (review) "Recorded at Abbey Road,
@@ -1739,7 +1740,7 @@ console.log(JSON.stringify({ p: texts.map(P), dates }));
     ws = 'Wojciech Stecko'
     a = p[0]['cr'] == [[ws, 'Written By', ''], [ws, 'Performed By', ''], [ws, 'Recorded By', '']] and [c[2] for c in p[1]['cr']] == ['Mindheal'] * 3 \
         and all(x['cr'] and all(c[2] == '' for c in x['cr']) for x in p[2:9]) and p[9]['cr'] == [['John Smith', 'Piano', '']] \
-        and p[10]['co'] == [['Abbey Road', 'Recorded At']] and p[11]['cr'] == [['Max Mustermann', 'Arranged By [Compositions]', '']] \
+        and p[10]['co'] == [['Abbey Road', 'Recorded At']] and p[11]['cr'] == [['Max Mustermann', 'Arranged By', '']] \
         and p[12]['un'] == [] and 'dedicationNoName' in p[12]['ig']
     b = p[13]['co'] == [['Rzeszow', 'Composed In'], ['Rzeszow', 'Produced In']] and p[13]['un'] == [] and p[14]['co'] == [['Oslo', 'Recorded In']] and p[14]['un'] == [] \
         and p[15]['co'] == [['Rzeszow Studio', 'Produced At']]

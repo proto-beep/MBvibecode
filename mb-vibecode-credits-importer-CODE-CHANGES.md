@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.93.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.94.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.94.0 · 2026-11-08
+
+- **TEXT.parse:** `curLine` (set by `readLine0`), `WORK_ARR` (songs, tracks, compositions … before "arrang"), `SONG_WORDS`; `addCredit` drops song words as the detail of an arrangement ("All songs were" of "Arranged By [All songs were]") and marks `workArr`; groups and rows carry it (`entry.workArr`, `row.workArr` in `addCreditRows` and `suppRow`).
+- **loadRelease:** S006 together with **S150** (new): an arranger without detail on the recordings goes onto the works when it is `workArr` or Discogs's "Arranged By" (not from the notes) – with `levelImport` as S006.
+- **Entries:** **`workOnlyEntry`**, **`arrBackLevels`**, **`arrLinesHtml`** (new) – `renderGroups` puts entries of works only into the new section `[data-el=workonly]` (after the others, before the skipped ones), with its heading; `groupHtml` shows each arrangement on works as "arranger · Work" with a button (`data-act=arr-level`: `setLevel` onto the first level back, tracks of the selection for the recordings; log `arrLevel`); `refresh` draws the entries again when one became one of works only or is one no more.
+- **Texts:** `group.workOnlyTitle`, `group.workOnlyExplain`, `group.arrLevelTitle`, `log.arrLevel` (en, de).
+- **Review:** `WORK_ARR` only at the start of a line (no song word in a name or another clause: "Melody Gardot – arrangements", "Track 2 arranged by"), also "orchestrated"; `curLine` set in `startLine` (headings, pairs, blocks); **`arrangersToWorks`** and **`s150Row`** (new, from `loadRelease`) – also for the rows of a supplement; `s150Moved` – S150 switched off puts them back (`applyRulesChange`); `workOnlyEntry` as `groupHtml` shows the rows (a skipped row keeps the entry in place); the line "arranger · Work" per role of the works matrix, moved by **`mxRoleMove`** (new, the body of `mx-role-level`, S135), the focus on the entry's level afterwards.
+- **Tests:** `t_entries.py arr394` (new; fails on 3.93.0); `levelclick` B with S150 off; `t_works_matrix.py addcolumn` E clicks the cell's menu in the middle of the window; `t_mapping.py z384`: "Compositions arranged by X" is "Arranged By"; `recheck` clicks the suggestion of the writer's own entry (now among those of the works).
 
 ## Import 3.93.0 · 2026-11-08
 
