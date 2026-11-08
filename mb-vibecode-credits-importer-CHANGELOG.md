@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.95.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.96.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.96.0
+
+- **Bandcamp's track pages** (Z-SEI2, rule S149): a track page with credits of its own is read as the block of its track, the players of the album's credits known there – "Ryota Takano：Sei water Whale D" (track 1) and "Ryota Takano：Sei" (track 8) of "Nothing Space Music" are asked as words of a list of instruments (other instruments credited "sei water whale d" · miscellaneous support) instead of "not recognized".
+- **Amplifiers and effects** (Z-AMP, rule S151): "All Guitar Amplifier : Fender Twin Reverb '78" is the instrument effects credited "Fender Twin Reverb '78" – of the one guitarist of the text (a bass amplifier: the bassist, a keyboard amplifier: the keyboardist), of the person in brackets ("Pedals: Big Muff (Jane Doe)"), else an entry to be given an artist by hand ("Vox AC30 – Jane Doe / John Roe?"). A guitar played through an amplifier stays a guitar ("Guitar (Fender Twin Reverb)": guitar and effects). A model of an amplifier or a pedal in a player's list ("Jane Doe: guitar, Big Muff") is effects too. Preamps, compressors, microphones, interfaces and software stay equipment without a credit. New models: Fender, Marshall, Vox, Mesa Boogie, Orange, Roland JC-120, Ampeg, Kemper, Line 6, Fractal, Electro-Harmonix, Boss, Ibanez, MXR, Strymon, Eventide … (GEAR_MODELS "effects").
+- **Models written the usual way** (Z-NORD, rule S152): in the role credit "Nord stage2" is "Nord Stage 2", "JUNO 6" "Juno 6", "prophet5" "Prophet 5", "YAMAHA YC-45D" "Yamaha YC-45D"; codes stay in capitals ("TR-8S", "DX7", "JCM800"), names written in mixed case stay as written ("Prophet-5", "MicroKorg").
 
 ### Import 3.95.0
 

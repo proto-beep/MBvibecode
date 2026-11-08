@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.95.0
+// @version      3.96.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.95.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.95.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.96.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.96.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.95.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.96.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3992,6 +3992,8 @@
     { id: 'S148', where: 'tidyLines, placeOf', note: 'Texts (3.92.0; collected items Z-LYR, Z-SPA): "All Lyrics was written by X" – lyrics by X, "All field recording by X" – field recording by X (not with "except …" after it); "Art work" is artwork; "Nothing Space Studio at Shonan" – the place, Shonan its area (no time: "at Christmas")' },
     { id: 'S149', where: 'readUnit, tidyLines', note: 'Texts (3.92.0; collected item Z-SEI): in the block of a track (S145) each word that may be an instrument in the list of a player of the text asks as such a word of a list (137d: other instruments, credited as written, when no instrument is like it) – however many ("Ryota Takano: Bass Guitar, Sei, Sei Wakka Ring"), also without a known one ("Ryota Takano: Sei"); poetry among the instruments: spoken vocals, credited as written' },
     { id: 'S150', where: 'TEXT.parse (WORK_ARR), loadRelease', note: 'Arrangements of works (3.94.0; collected items Z-ARRL, Z-ARRD): a line of a text about songs, tracks or compositions ("All songs was written & arranged by X") and Discogs\'s "Arranged By" without more (not "Arranged By [Strings]") put the arranger on the works (the works matrix) – as S006 without writing credits; a bare "Arranged by X" of a text stays on the recordings. The level of such an arrangement stays a button in its entry ("arranger · Work"): a click puts it back on the recordings' },
+    { id: 'S151', where: 'readLine0 (AMP_LINE, ampLines), GEAR_MODELS effects', note: 'Amplifiers and effects (3.96.0; collected item Z-AMP): "All Guitar Amplifier : Fender Twin Reverb \'78", "Pedals: Big Muff (Jane Doe)" – the instrument effects credited with the model, of the person in brackets, else of the one guitarist of the text (bass amplifier: the bassist; keyboard amplifier: the keyboardist), else a credit without a name to be given; a model in a player\'s list ("Jane Doe: guitar, Big Muff") effects too (R113). Preamps, compressors, microphones, interfaces, software stay equipment (S147)' },
+    { id: 'S152', where: 'modelSpelling', note: 'Models written the usual way in their role credit (3.96.0; collected item Z-NORD): "Nord stage2" → "Nord Stage 2", "JUNO 6" → "Juno 6", "prophet5" → "Prophet 5"; codes in capitals ("TR-8S", "DX7", "JCM800"); the model as MusicBrainz\'s instrument: its name, no role credit' },
     { id: 'S143', where: 'statPerRelease, statPerReleaseHtml, globalPerRelease (statsMoreCards, globalCoreParts)', note: 'Statistics (3.91.0; collected item Z-SRR): the card "Per release" – the relationships of a release (all its submissions; also by level), its recordings and the relationships on its recordings per recording, each the average and the median of the releases; in "This browser" (recordings from 3.91.0 on) and in "Global" (from the edit dump, the recordings from the core dump)' },
     { id: 'S139', where: 'entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)', note: 'Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source\'s, its name, the name in MusicBrainz) as "credited as" on all its relationships – also those changed one by one; a small ⇄ beside each "credited as" (a row, a line of an entry\'s matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field' },
     { id: 'S138', where: 'rowDateSugg, performanceDateSugg', note: 'Dates (3.88.0; collected item Z-CAMD2): "video shot at" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them' },
@@ -4553,6 +4555,31 @@
   // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
   const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
   /** [Z-GEAR] (3.92.0, S147) A line of equipment ("Microphone: …", "Audio Interface: …", "DAW: …") – its words before the colon. */
+  /** [Z-AMP] (3.96.0, review) The models of a line of amplifiers: split at commas, ";", "&", "and" and " / " outside brackets. */
+  const ampParts = (t) => {
+    const out = [];
+    let depth = 0;
+    let cur = '';
+    const s0 = String(t || '');
+    for (let k = 0; k < s0.length; k++) {
+      const ch = s0[k];
+      if (ch === '(' || ch === '[') depth++;
+      else if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
+      const rest = s0.slice(k);
+      const sep = depth ? null : rest.match(/^(?:\s*[,;&]\s*|\s+and\s+|\s+\/\s+)/i);
+      if (sep) {
+        out.push(cur);
+        cur = '';
+        k += sep[0].length - 1;
+        continue;
+      }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.map((x) => x.trim()).filter(Boolean);
+  };
+  /** [Z-AMP] (3.96.0, S151) A line of amplifiers or effects: "(All) (Guitar|Bass|Keyboard) Amplifier(s): …", "Pedals: …", "Effects: …". */
+  const AMP_LINE = /^(?:all\s+)?(?:(guitar|bass|keyboard|keys)\s+)?(amp(?:lifier)?s?|amp\s+modell?ers?|(?:effects?\s+)?pedals?|effects?(?:\s+(?:units?|processors?))?|stomp\s*box(?:es)?)(?:\s+for\s+[^:]{1,40})?\s*:\s*(\S.*)$/i;
   const TEXT_GEAR = /^(?:all\s+)?(?:(?:studio|main|vocal|room)\s+)?(?:microphones?|mics?|(?:handy|field|portable|tape|digital|zoom)\s+recorders?|(?:guitar\s+|bass\s+)?amp(?:lifier)?s?|mic[\s-]?pre-?amp(?:lifier)?s?|pre-?amp(?:lifier)?s?|audio\s+interfaces?|interfaces?|daws?|software|plug-?ins?|(?:studio\s+)?monitors?|(?:studio\s+|monitor\s+)speakers?|headphones?|(?:mixing\s+)?(?:console|desk)|tape\s+machines?|converters?|compressors?|equali[sz]ers?|eq|(?:effects?\s+)?pedals?|picks|cables)(?:\s+for\s+[^:]{1,40})?\s*:\s*\S/i;
   /** [Z-VEN] (3.79.0, T062) The words of a block of the place it was played at ("venue:", "location:" …). */
   const TEXT_VENUE_HEAD = MAP.TEXT_VENUE_HEAD;
@@ -4580,7 +4607,8 @@
       const G = gearModels();
       const amb = new Set((G.ambiguous || []).map((w) => String(w).trim().toLowerCase()));
       const tail = String.raw`(?:\s+(?:synth(?:esizer)?|mk\s?(?:i{1,3}|\d)|xl|se|i{1,3}|iv))?`;
-      const num = String.raw`[\s-]?\d{1,4}[a-z]{0,2}`;
+      // ([Z-AMP] 3.96.0) also the year of a model after an apostrophe ("Fender Twin Reverb '78")
+      const num = String.raw`(?:[\s-]?\d{1,4}[a-z]{0,2}|\s+['’]\d{2})`;
       gearRes = Object.keys(G).filter((k) => !['brands', 'ambiguous'].includes(k)).map((kind) => {
         const all = G[kind] || [];
         const plain = reWords(all.filter((w) => !amb.has(String(w).trim().toLowerCase())));
@@ -4593,6 +4621,41 @@
     }
     const x = norm(b);
     return (gearRes.find(([, re]) => re.test(x)) || [''])[0];
+  }
+  // [Z-NORD] (3.96.0, S152) makers and codes written their own way
+  const MODEL_CASE = { akg: 'AKG', arp: 'ARP', mxr: 'MXR', ehx: 'EHX', jhs: 'JHS', 'e-mu': 'E-mu', emu: 'E-mu', 'mesa/boogie': 'Mesa/Boogie', proco: 'ProCo', earthquaker: 'EarthQuaker',
+    mk: 'MK', mkii: 'MKII', mkiii: 'MKIII', ii: 'II', iii: 'III', iv: 'IV', xl: 'XL', se: 'SE', xs: 'XS' };
+  /**
+   * [Z-NORD] (3.96.0, S152) A model written the usual way: maker and model with a capital letter, a space before its number ("Nord
+   * stage2" → "Nord Stage 2", "JUNO 6" → "Juno 6", "prophet5" → "Prophet 5"); codes in capitals as known ("tr-8s" → "TR-8S", "dx7" →
+   * "DX7", "jcm800" → "JCM800"); a year kept ("'78"). (MusicBrainz's own instrument of the model is its name: no role credit then.)
+   */
+  let modelWordsSet = null;
+  /** ((3.96.0, review) The makers and the words of models of GEAR_MODELS: "JUNO", "NORD" are words, not codes.) */
+  const modelWords = () => {
+    if (!modelWordsSet) {
+      const G = gearModels();
+      modelWordsSet = new Set(Object.values(G).flat().flatMap((w) => String(w).toLowerCase().split(/[\s-]+/)).filter((w) => /^[a-z]{3,}$/.test(w)));
+    }
+    return modelWordsSet;
+  };
+  function modelSpelling(t0) {
+    if (!ruleOn('S152')) return String(t0 || '').trim();
+    return String(t0 || '').trim().split(/\s+/).map((tok) => {
+      const low = tok.toLowerCase();
+      if (MODEL_CASE[low]) return MODEL_CASE[low];
+      if (/^['’]\d{2}$/.test(tok) || /^\d+$/.test(tok)) return tok;
+      // ((review) a word in mixed case is written so on purpose: "Prophet-5", "Juno-106", "MicroKorg", "OB-Xa", "Rev2"
+      const upper = tok === tok.toUpperCase();
+      if (tok !== low && !upper) return tok;
+      // all in capitals: a word ("JUNO", "YAMAHA") with a capital letter only – codes and short names stay ("EMS", "OCD", "TR-8S", "AKG")
+      if (upper) return /^\p{L}+$/u.test(tok) && /[AEIOUY]/.test(tok) && (tok.length > 4 || (tok.length === 4 && modelWords().has(low))) ? tok[0] + low.slice(1) : tok;
+      const glued = tok.match(/^([a-z]{3,})(\d+[a-z]?)$/i);
+      if (glued && /[aeiouy]/i.test(glued[1])) return `${glued[1][0].toUpperCase()}${glued[1].slice(1).toLowerCase()} ${glued[2].toUpperCase()}`;
+      if (/^[a-z]{3,}(?:-[a-z]{3,})+$/i.test(tok)) return tok.split('-').map((x) => x[0].toUpperCase() + x.slice(1).toLowerCase()).join('-');
+      if (/\d|-/.test(tok) || /^[a-z]{1,2}$/i.test(tok) || (/^[a-z]{3,}$/i.test(tok) && !/[aeiouy]/i.test(tok))) return tok.toUpperCase();
+      return /^\p{L}/u.test(tok) ? tok[0].toUpperCase() + tok.slice(1).toLowerCase() : tok;
+    }).join(' ');
   }
   /** [Z-YTW] (3.80.0, T064) The heading of a list of songs in a video's description ("Songs:", "Setlist:") and its lines that are none. */
   const TEXT_SONG_HEAD = MAP.TEXT_SONG_HEAD;
@@ -6645,7 +6708,7 @@
 
     function parse(text, ctx0) {
       const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [],
-        ownTexts = [], trackCount = 0 } = ctx0;
+        ownTexts = [], trackCount = 0, oneTrack = false, players = [], guessedWords = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -6670,9 +6733,11 @@
       // the companion (rawOf)
       const rawOf = new Map();
       const textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
+      const guessedSet = new Set(); // ([Z-SEI2] 3.96.0, review) the words asked in blocks of tracks
       // [Z-ARRL] (3.94.0, S150) a line about songs, tracks, compositions …: its arrangement is that of the works ("All songs was written &
       // arranged by maya ongaku")
       let curLine = '';
+      const ampLines = []; // [Z-AMP] (3.96.0, S151)
       // ((review) at the start of the line only – not "Melody Gardot – arrangements", "Vocals on tracks 2, 4 …, arranged by X", "Track 2
       // arranged by X")
       const WORK_ARR = /^(?:all\s+)?(?:(?:of\s+)?the\s+)?(?:songs|tracks|compositions|tunes|pieces|melodies|works|music)\b(?!\s*\d)[^.;:]*?\b(?:arrang|orchestrat)/i;
@@ -6701,9 +6766,12 @@
         const models = m[2].split(/\s*(?:&|\band\b|\+|\/)\s*/).map((x) => x.trim()).filter(Boolean);
         if (!models.length || !models.every((x) => gearKind(x))) return item;
         const kind = m[1].trim();
+        // ([Z-AMP] 3.96.0, review) amplifiers and pedals: the instrument stays, the models are effects of their own ("Guitar (Fender
+        // Twin Reverb)" → guitar, effects "Fender Twin Reverb")
+        if (kind && models.every((x) => gearKind(x) === 'effects')) return [kind, ...models].join(', ');
         return models.map((x) => {
           if (!kind || (MODEL_KINDS.test(kind) && kindFits(kind, x))) return x;
-          modelCredits.set(norm(`${x} [${kind}]`), `${kind} (${x})`);
+          modelCredits.set(norm(`${x} [${kind}]`), `${kind} (${modelSpelling(x)})`); // ([Z-NORD] 3.96.0)
           return `${x} [${kind}]`;
         }).join(', ');
       }).join(', ');
@@ -6891,12 +6959,12 @@
       const titleKeys = new Set((titleNames || []).map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
-      const addPlaceholder = (said, role0, scope) => {
+      const addPlaceholder = (said, role0, scope, extra = {}) => {
         const { role, typos } = readRole(role0);
         const p = parseRoleNotation(role)[0];
         if (!p || isCompanyRoleKnown(p.raw)) return false;
         credits.push({ who: { id: 0, name: '', rawName: said, links: [], placeholder: said }, role: p.raw, base: p.base, details: p.mods, credited: '',
-          tracks: tracksOf(scope), ...at(), ...(typos ? { typos } : {}) });
+          tracks: tracksOf(scope), ...at(), ...(typos ? { typos } : {}), ...extra });
         return true;
       };
       // [3.14.0] A role with "By" ("Mixed By"), else without ("Layout", "Photography", "Artwork")
@@ -7767,9 +7835,14 @@
             const rp = roleParts(right);
             // [Z-SEI] (3.92.0, S149) in the block of a track (S145) a player of the text: each word that may be an instrument asks, however
             // many ("Ryota Takano: Bass Guitar, Sei, Sei Wakka Ring") – also without an instrument known ("Ryota Takano: Sei")
-            const blockWords = ruleOn('S149') && ruleOn('S051') && trackBlock && lefts.length === 1 && textPlayers.has(norm(lefts[0]))
+            // ([Z-SEI2] 3.96.0) a text of one track (a track page of Bandcamp) is such a block, the players of the album's text count
+            const blockWords = ruleOn('S149') && ruleOn('S051') && (trackBlock || oneTrack) && lefts.length === 1
+              && (textPlayers.has(norm(lefts[0])) || players.includes(norm(lefts[0])))
               ? rp.unknown.filter((x) => x.split(' ').length <= 5 && /^\p{L}[\p{L}'’.\s-]*$/u.test(x) && !isRole(x) && !isRole(`${cap(x)} By`)
-                && !/\b(?:at|in|on|by|from|with|for|of|and|the)\b/i.test(x)) : [];
+                && !/\b(?:at|in|on|by|from|with|for|of|and|the)\b/i.test(x) && !titleKeys.has(norm(x))
+                // ((3.96.0, review) on a page of one track only the words the album's text asked too ("Sei"; not "Berlin", "Instagram")
+                && (trackBlock || guessedWords.includes(norm(x)))) : [];
+            blockWords.forEach((x) => guessedSet.add(norm(x)));
             if (rp.known.length || (blockWords.length && blockWords.length === rp.parts.length)) {
               // [137d] (3.34.26) words that may be instruments – at least as many instruments known as such words – ask like the
               // words of a list of instruments ("Barry Guy – double bass, sticks-and-stones": other instruments “sticks-and-stones”);
@@ -8389,6 +8462,30 @@
         // January 13, 2022", a definition ("Intention (n.) /ɪnˈtɛnʃən/") and the line that explains it
         // ((3.48.0, review) each of them ends a block of publishers too; a heading the liner notes)
         // ([Z-TBY] 3.59.0: "Special guests:", "Guests:", "Featuring:" alone too)
+        // [Z-AMP] (3.96.0, S151) amplifiers and effects ("All Guitar Amplifier : Fender Twin Reverb '78", "Pedals: Big Muff (Jane Doe)"):
+        // effects credited with the model – of the person in brackets, else of the one guitarist of the text (the bassist for a bass
+        // amplifier, the keyboardist for a keyboard amplifier), else a credit without a name (ampLines, at the end of the text)
+        const ampM = ruleOn('S151') && !sub ? line.match(AMP_LINE) : null;
+        if (ampM) {
+          // ((review) split outside brackets, at " / " only – "Mesa/Boogie" is one name)
+          const items = ampParts(clean(ampM[3])).map((x) => {
+            const pm = x.match(/^(.*?\S)\s*\(([^()]+)\)$/);
+            if (!pm) return { model: x, person: '' };
+            const inner = clean(pm[2]);
+            // ((review) a person in brackets: names with capitals, no number, no title, not a model – "(fuzz)", "(2x12)", "(track 3)" are not
+            const person = /^\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,3}$/u.test(inner) && !gearKind(inner) && !titleKeys.has(norm(inner)) ? inner : '';
+            return { model: clean(pm[1]), person };
+          });
+          // (a model: known as one, or a maker and a code – "Laney LC30"; names after it stay as before: "Amplifier: Anna Bell"; (review) bare
+          // "Effects:" only with known models – "Effects: Lexicon 480L" is the studio's)
+          const effectsOnly = /^effects?(?:\s+(?:units?|processors?))?$/i.test(ampM[2]);
+          const modelLike = (x) => gearKind(x) === 'effects' || (!effectsOnly && /\d/.test(x) && /^\p{Lu}/u.test(x) && x.split(/\s+/).length <= 4
+            && !/\b(?:from|of|the|and|in|on|with|for|by|track|tracks)\b/i.test(x));
+          if (items.length && items.every((x) => modelLike(x.model))) {
+            ampLines.push({ kind: (ampM[1] || '').toLowerCase(), items, scope: trackBlock ? trackBlock.scope : null, line: line0, part: part0, pi: pi0, n: n0 });
+            return;
+          }
+        }
         // [Z-GEAR] (3.92.0, S147) the equipment ("All Studio Microphone: AKG C414xls", "DAW: Logic Pro X"): no credit, left out as such
         // ((review) not names after it – "Amplifier: X Y", "Mic: John Smith": read as before; a model has a number, a maker, or is software)
         const gearSide = ruleOn('S147') && !sub && TEXT_GEAR.test(line) ? clean(line.slice(line.indexOf(':') + 1)) : '';
@@ -8984,6 +9081,35 @@
       const arrangedOn = (set) => credits.some((c) => /arrang/i.test(c.role) && c.tracks && c.tracks.indexes && c.tracks.indexes.some((i) => set.has(i)));
       covers.forEach((c) => { c.arranged = arrangedOn(c.scope.set); c.tracks = [...c.scope.set]; });
       quotes.forEach((q) => { q.tracks = [...q.scope.set]; });
+      // ([Z-SEI2] 3.96.0, review) the players of the text: names with an instrument or a voice
+      const playersOut = () => uniq(credits.filter((c) => c.who && c.who.name && !c.who.placeholder && playable(c.role)).map((c) => norm(c.who.name)));
+      // [Z-AMP] (3.96.0, S151) the amplifiers and effects: the person in brackets, else the one player of the text (guitar; bass; keys),
+      // else a credit without a name ("guitar amplifier – Jane Doe / John Roe?": the entry to be given)
+      if (ampLines.length) {
+        const playersOf = (kind) => uniq(credits.filter((c) => c.who && c.who.name && !c.who.placeholder).filter((c) => {
+          const r = String(c.base || c.role || '');
+          // ((review) the bass itself – not a bass clarinet, trombone, synthesizer, voice or drum
+          if (kind === 'bass') return /^(?:(?:electric|upright|acoustic|fretless|double|string|contra)\s*)?bass(?:\s+guitar)?$|^contrabass$/i.test(r.trim());
+          if (kind === 'keyboard' || kind === 'keys') return /keyboard|keys|synth|organ|piano|rhodes|wurlitzer|clavinet/i.test(r);
+          return /guitar/i.test(r) && !/\bbass\b/i.test(r);
+        }).map((c) => c.who.name)).filter((n, i, all) => all.findIndex((x) => norm(x) === norm(n)) === i);
+        for (const a of ampLines) {
+          [line0, part0, pi0, n0] = [a.line, a.part, a.pi, a.n];
+          const who = playersOf(a.kind);
+          for (const it of a.items) {
+            const name = it.person || (who.length === 1 ? who[0] : '');
+            // ((review) a model known only by its number: the instrument effects with it as credit
+            const role = gearKind(it.model) === 'effects' ? it.model : 'Effects';
+            if (name) addCredit(name, role, a.scope, { roleCredit: modelSpelling(it.model) });
+            else {
+              // ((review) no one or several: an entry named for the question, to be given an artist by hand (not the release's artist)
+              const said = `${modelSpelling(it.model)} – ${who.length ? `${who.join(' / ')}?` : '?'}`;
+              const pr = parseRoleNotation(role)[0];
+              if (pr) credits.push({ who: { id: 0, name: said, rawName: said, links: [], ampAsk: true }, role: pr.raw, base: pr.base, details: pr.mods, credited: '', tracks: tracksOf(a.scope), ...at(), roleCredit: modelSpelling(it.model) });
+            }
+          }
+        }
+      }
       // [S063] (3.38.18) initials as a name ("RR"): the one release artist or name of the text they stand for (collected item 183)
       if (ruleOn('S063')) initialsOf(credits, artistNames);
       // [Z-MEM] (3.79.0, S113) a member the text gives an instrument or a voice elsewhere: no question (the instruments say it)
@@ -8993,9 +9119,9 @@
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet] };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet] };
     }
 
     /**
@@ -9260,7 +9386,8 @@
       const trackAltUnrec = new Map();
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
-        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles, titleNames });
+        // ([Z-SEI2] 3.96.0) a track page is the text of one track: the players of the album's credits are known there
+        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles, titleNames, oneTrack: true, players: album.players || [], guessedWords: album.guessedWords || [] });
         const on = { indexes: [i], position: tracks[i].position };
         // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
         const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
@@ -9992,7 +10119,7 @@
 
   if (IS_NODE_TEST) {
     module.exports = {
-      suggestFromWorks, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
+      suggestFromWorks, modelSpelling, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
       instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount, findDedications,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
@@ -12529,7 +12656,7 @@
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
     // [Z-SYN] (3.81.0, R113) a model as written ("Korg Minilogue", "Juno 101" – not in lower case); none when MusicBrainz's instrument is it
-    if (row.ruleId === 'R113') return norm(row.primaryText) === norm(row.base) ? '' : String(row.base || '').trim();
+    if (row.ruleId === 'R113') return norm(row.primaryText) === norm(row.base) ? '' : modelSpelling(row.base); // ([Z-NORD] 3.96.0)
     // [Z-PLT] (3.89.0) "Plated By" – of a person or (as an artist) a company: the task "vinyl plating"
     if (row.ruleId === 'R114' || row.ruleId === 'C046') return 'vinyl plating';
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
