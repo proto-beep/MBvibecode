@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.96.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.97.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.97.0
+
+- **Work type and languages beside each work** (Z-WTS2, rule S153): every work of the works matrix shows its type and lyrics languages as a small label beside its title – "[Song · English, German]" is what is filled in. A click on the label of a new work opens its type and languages; each part of a medley (or of songs) has a label and attributes of its own. A work of MusicBrainz shows its label only ("[Song · English]", "[no work type]"). A title saying "instrumental" gets [No lyrics] (S153) unless its languages are chosen by hand.
+- **Defaults chosen by hand count** (Z-WTS2): choosing the type or a language in "⚙ Defaults" answers the yellow suggestion – it goes, with its marks at the works, and the defaults are filled in (before, "no work type · [No lyrics]?" stayed at each work and looked like what would be filled in). A suggestion not yet answered is a small yellow "?" at the label (its tooltip says what is suggested). A type that only S020 set ("Music and lyrics by" → Song) now takes a language added to the defaults later.
+- **The family itself as an answer** (Z-QGTR): the question for "Guitar" also offers guitar, "Bass" also bass guitar, "Horns" also wind instruments (credited "horns": brass and saxophones). Choosing the instrument of the word itself answers the question – the "?" goes (before it kept asking).
+- **Several models of one instrument** (Z-MSYN, rule S155): "Synthesizer [Juno 6]" and "Synthesizer [Multipoly]" of one person on a recording are one synthesizer credited "Juno 6, Multipoly" – for every instrument, per recording (a track with one model only gets that one), also with "One row each". Before, the second row of the same relationship was left out and its role credit lost. The quick switch S155 "… each role credit on its own" is off and greyed: MusicBrainz takes an instrument once per relationship and no second relationship that differs only in its role credit.
+- **The run in the footer** (Z-FOOT): left in the footer's line a chip with the latest step of the log – yellow while the dashboard reads and compares, filled as far as the requests to MusicBrainz known so far are done (the whole text and "12 of 20 requests" in its tooltip) – and a thin line along the top of the footer as long. When everything is done the chip turns green, "All imports and checks done", and stays; the line goes. The footer gets no higher (the chip shrinks first).
 
 ### Import 3.96.0
 
