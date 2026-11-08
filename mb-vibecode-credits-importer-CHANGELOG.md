@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.90.0 | – |
+| 2026-11-08 | 3.88.0 – 3.91.0 | – |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.91.0
+
+#### Added
+
+- **Statistics: "Per release"** (collected item Z-SRR, rule S143): a card in the group Releases – the relationships of a release (all its submissions together; also by level: Recording, Release, Work, Release group), its recordings and the relationships on its recordings per recording, each as the average and the median of the releases – the relationships as the edit note counts them (new ones, not links of works). In "This browser" (the recordings are counted from this version on) and in "Global" (the relationships from the edit dump, the recordings from the weekly core dump – both from the next run of the workflow on).
+- **For Companion 1.14.0** (Z-BCAM): the credits of Bandcamp's "about" text and the sentence of a dedication taken go to the companion, which marks them on the Bandcamp page.
 
 ### Import 3.90.0
 

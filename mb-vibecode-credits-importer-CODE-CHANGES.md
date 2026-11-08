@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.90.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.91.0, Companion 1.6.0 – 1.13.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.91.0 · 2026-11-08
+
+Z-SRR; for Companion 1.14.0 (Z-BCAM).
+
+- **`statReleaseInfo`**: `recs` – the number of recordings of the release (records from 3.91.0 on).
+- **`statPerRelease`, `statPerReleaseHtml`, `SRR_LEVELS`** (new; S143): per release MBID (all its records) the new relationships (`k: 'n'`, not links of works – as "Done:" counts them), by `it.lv`, its `rel.recs`; `{ n, rels, lv, nRecs, recs, rpr }` with `{ mean, median }` (`statMean`, `statMedian`); the card `perrelease` (group `releases`, a table average / median, the levels indented, "Counted from 3.91.0 on" when records have no recordings). **`globalPerRelease`** (new): `per_release` of the global file (by level as the edit dump names them, "release group") with `core.per_release`; **`srrClean`** (new) keeps both in `globalStatsClean` (numbers only). `GLOBAL_STATS_GROUPS` and `STATS_GROUPS` with `perrelease`.
+- **`usedTextMarks`**: `kind: 'ded'` – the sentence of a dedication or tribute whose row is not on Skip and not from the title (text `textMark.ded`). The status map sends the refs of the "about" text on Bandcamp too (`about: true`; the companion before 1.14.0 leaves them out).
+- **`stats/global_stats.py`**: the release of each submission kept (`sub_rel`; a tie – recordings also on another release – none); `per_release` (`n`, `rels`, `by_level` – average and median of the releases, from "Done:"); `facts_out` with `release_rec_rels`; the core pass counts the recordings of each release (each once; not data tracks, not a pregap) – `core.per_release` (`recordings`, `rels_per_recording`). `stats/test_global_stats.py`: the three new parts.
+- **Register:** S143. **Texts:** stats.more.perrelease, stats.srr.*, textMark.ded.
+- **Tests:** `t_ui_settings.py srr391` (new; fails on 3.90.0); `stats/test_global_stats.py`.
 
 ## Import 3.90.0 · 2026-11-08
 
