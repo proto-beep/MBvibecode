@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.92.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.93.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.93.0
+
+- **Tracks in short** (Z-TRR): two tracks one after another are named one by one, a range only from three on – "tracks 1, 3–5, 7, 10–15, 17, 18" (before "7–8", "17–18"); in the lines of the rows and entries, the track groups, the live dialog and the notes of live comments.
+- **Script Companion** (Z-CNAME): the bar before the import and the head of the dashboard say "Script Companion: connected (background tab)", "Script Companion: no Bandcamp tab" … for every source (before "Discogs view: …", "Bandcamp view: …").
+- **"Reading Bandcamp …"** (Z-BCST): the status while a source is read is no longer cut at the bottom (the lower parts of g, p) by the bar below it.
 
 ### Import 3.92.0
 
