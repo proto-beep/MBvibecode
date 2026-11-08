@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.90.0
+// @version      3.91.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.90.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.90.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.91.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.91.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.90.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.91.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2210,6 +2210,14 @@
       "stats.more.lengths": "Recording lengths",
       "stats.more.artists": "The artists of the relationships",
       "stats.more.labelsplaces": "Labels and places",
+      "stats.more.perrelease": "Per release",
+      "stats.srr.n": "Releases: {n}",
+      "stats.srr.mean": "average",
+      "stats.srr.median": "median",
+      "stats.srr.rels": "Relationships",
+      "stats.srr.onLevel": "on {level}",
+      "stats.srr.recs": "Recordings",
+      "stats.srr.rpr": "Relationships per recording",
       "stats.art.n": "Artists as MusicBrainz has them: {n} of {of}",
       "stats.art.missing": "{n} not looked up yet – in the background while the dashboard is open (one a second, at most 60 a time)",
       "stats.art.type": "Type",
@@ -2805,6 +2813,8 @@
       "textMark.dateMatrix": "Credits Importer: “{date}” is in the date matrix",
       "textMark.dateRow": "Credits Importer: “{date}” is the date of a row",
       "textMark.tracks": "Credits Importer: the track group “{name}” is in the date matrix",
+      "textMark.ded": "Credits Importer: a dedication or tribute taken ({name})",
+      "stats.srr.recsN": "The recordings and per recording: of {n} releases",
       "log.srcOff": "{site}: {name} – {role} switched off (“Skip”)",
       "log.srcOn": "{site}: {name} – {role} switched on again",
       "log.clickToggle": "A click on a mark switches the credit: {state}",
@@ -3963,6 +3973,7 @@
     { id: 'S140', where: 'profileUrlOf (TEXT.parse, readLine)', note: 'Texts (3.89.0; collected item Z-FBH): a line of a profile alone below a name – "fb: x" (Facebook), "ig: x" / "insta: x" (Instagram), "tw: x" / "twitter: x" / "x: x", "sc: x" / "soundcloud: x", "yt: x" / "youtube: x", "bandcamp: x", a bare "@x" (Instagram) – is a web link of that name\'s entry (the last name of the line above), only in the background (for "Create …" and the search by links); the line is left out as such' },
     { id: 'S141', where: 'plateNone (refresh); R114, C046', note: 'Roles (3.89.0; collected item Z-PLT): "Plated By" is miscellaneous support with the task "vinyl plating" on the release, only for vinyl (else left out, S026); a company only as an artist of MusicBrainz – none of that name: left out on purpose (Skip, said at the row)' },
     { id: 'S142', where: 'ppsSync (refresh), ppsWriters, ppsLoadRels, ppsHandSet', note: 'Works matrix (3.90.0; collected item Z-PPS): a publisher that MusicBrainz has as the personal publisher of writers (S014) follows their writing credits at every change, not only at the import – on where one of them writes (one is enough), off where none does; a cell of it set by hand stays, a source that names its tracks keeps them; no other personal publisher by itself' },
+    { id: 'S143', where: 'statPerRelease, statPerReleaseHtml, globalPerRelease (statsMoreCards, globalCoreParts)', note: 'Statistics (3.91.0; collected item Z-SRR): the card "Per release" – the relationships of a release (all its submissions; also by level), its recordings and the relationships on its recordings per recording, each the average and the median of the releases; in "This browser" (recordings from 3.91.0 on) and in "Global" (from the edit dump, the recordings from the core dump)' },
     { id: 'S139', where: 'entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)', note: 'Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source\'s, its name, the name in MusicBrainz) as "credited as" on all its relationships – also those changed one by one; a small ⇄ beside each "credited as" (a row, a line of an entry\'s matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field' },
     { id: 'S138', where: 'rowDateSugg, performanceDateSugg', note: 'Dates (3.88.0; collected item Z-CAMD2): "video shot at" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them' },
     { id: 'S135', where: 'columnHeadHtml (mx-role-level), mxRoleNextLevel', note: 'Works matrix (3.87.0; collected item Z-ARL2): a role of a column that MusicBrainz also has on other levels (arranger, orchestrator …) has its level beside it – a click puts its rows on the next level (Recording, Release …); in the entry its level button goes on round (… Skip, Work), as for every role on several levels' },
@@ -34284,7 +34295,8 @@
           const a = S.artists.get(row.artistKey);
           if (!a || row.manual || !row.raw) continue;
           // Discogs: credits with a Discogs artist or label; Bandcamp: credits of its own text (not of a supplement)
-          const refs = textSite(site) ? (row.srcRefs || []).filter((r) => !r.about) : [];
+          // ([Z-BCAM] 3.91.0, review) on Bandcamp also the credits of the "about" text (the companion 1.14.0 marks them there; before: skipped)
+          const refs = textSite(site) ? (row.srcRefs || []).filter((r) => !r.about || site === 'bandcamp') : [];
           if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
@@ -34324,7 +34336,7 @@
           };
           if (textSite(site)) {
             items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}),
-              refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
+              refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.about ? { about: true } : {}), ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
           }
           // [S054] (3.37.0) a credit from the notes is no line of Discogs's credits (its mark would land on another role of the name)
@@ -34404,6 +34416,13 @@
         if (g && used(g)) add('tracks', at + ref.index, ref.text, tr('textMark.tracks', { name: g.name }));
       }
     });
+    // [Z-BCAM] (3.91.0) the sentence of a dedication or tribute taken (its row not on Skip): the companion (1.14.0) marks its line
+    for (const r of S.rows) {
+      const d = r.dedication;
+      if (!d || !d.sentence || d.fromTitle || r.level === 'skip') continue;
+      const i = notes.indexOf(d.sentence);
+      if (i >= 0) add('ded', i, d.sentence, tr('textMark.ded', { name: d.name || d.phrase || d.kind || '' }));
+    }
     return out.sort((a, b) => a.index - b.index).map(({ index, ...rest }) => rest);
   }
 
@@ -39688,6 +39707,7 @@
       formats: uniq((ws.media || []).map((m) => m.format || '').filter(Boolean)),
       labels: uniq((ws['label-info'] || []).map((li) => li && li.label && li.label.name).filter(Boolean)),
       before: nonUrl(ws.relations) + [...recs.values()].reduce((n, r) => n + nonUrl(r.relations), 0),
+      recs: recs.size, // [Z-SRR] (3.91.0) its recordings
     };
   }
 
@@ -40128,10 +40148,21 @@
         // [Z-RDU2] (3.61.0) the whole length of the releases (a file of the core pass before 3.61.0: none)
         releases: Number(cl.releases) || 0, release_median_ms: ms(cl.release_median_ms), release_mean_ms: ms(cl.release_mean_ms) },
       role_credits: pair(c.role_credits),
+      // [Z-SRR] (3.91.0) per release: the recordings and the relationships per recording (a core pass before 3.91.0: none)
+      per_release: srrClean(c.per_release, ['recordings', 'rels_per_recording']),
     } : null;
     return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
       by_version: rows(d.by_version, ['edits', 'submissions']), by_status: nums(d.by_status), by_source: nums(d.by_source), by_relationship_type: nums(d.by_relationship_type),
-      done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type), credits: { credited_as: pair(obj(d.credits).credited_as) }, core };
+      done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type), credits: { credited_as: pair(obj(d.credits).credited_as) }, core,
+      per_release: srrClean(d.per_release, ['rels']) };
+  }
+  /** [Z-SRR] (3.91.0) A part "per_release" of the global file – only numbers: { n, <key>: { mean, median } …, by_level }; null without. */
+  function srrClean(p, keys) {
+    if (!p || typeof p !== 'object' || Array.isArray(p) || !(Number(p.n) > 0)) return null;
+    const num = (v) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+    const mm = (x) => ({ mean: num((x || {}).mean), median: num((x || {}).median) });
+    const lv = p.by_level && typeof p.by_level === 'object' ? Object.fromEntries(['recording', 'release', 'work', 'release group'].filter((k) => p.by_level[k]).map((k) => [k, mm(p.by_level[k])])) : {};
+    return { n: Number(p.n), ...Object.fromEntries(keys.map((k) => [k, mm(p[k])])), by_level: lv };
   }
 
   /** [Z-GST] (3.47.0) "Global": all users of the script on MusicBrainz, as the edit dump has them. */
@@ -40204,7 +40235,15 @@
     return [head, old, tiles, `<div class="dci-stats-gcore" data-el="stats-global-core">${statGroupsHtml(core.cards, { overview, who: core.lead }, GLOBAL_STATS_GROUPS, 'g:')}</div>`];
   }
   /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
-  const GLOBAL_STATS_GROUPS = [['who', ['credits', 'artists']], ['releases', ['media', 'script', 'lengths']]];
+  const GLOBAL_STATS_GROUPS = [['who', ['credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']]];
+  /** [Z-SRR] (3.91.0) "Per release" of all users: the edits' part (relationships, by level) and the core's (recordings, per recording). */
+  function globalPerRelease(d) {
+    const e = d && d.per_release;
+    if (!e || !e.n) return null;
+    const c = d.core && d.core.per_release;
+    const lv = Object.fromEntries(SRR_LEVELS.map((l) => [l, (e.by_level || {})[l.replace('_', ' ')] || { mean: 0, median: 0 }]));
+    return { n: e.n, rels: e.rels, lv, nRecs: c ? c.n : 0, recs: c ? c.recordings : null, rpr: c ? c.rels_per_recording : null };
+  }
 
   /**
    * [Z-AGS] (3.55.0; Q-fl, Q-fr) "Global" from MusicBrainz's core dump (read once a week by the workflow): the artists, releases and
@@ -40232,6 +40271,9 @@
     };
     const credits = `<ul class="dci-stats-kv">${c ? `<li>${esc(tr('stats.global.rc', { pct: pct(c.role_credits), n: num(c.role_credits.n), of: num(c.role_credits.of) }))}</li>` : ''}
       ${ca ? `<li>${esc(tr('stats.ali.ac', { pct: pct(ca), n: num(ca.n), of: num(ca.of) }))}</li>` : ''}</ul>`;
+    // [Z-SRR] (3.91.0, S143) per release
+    const pr = ruleOn('S143') ? globalPerRelease(d) : null;
+    if (pr) card('perrelease', statPerReleaseHtml(pr));
     if (!c) {
       if (ca && ca.of) card('credits', credits);
       return { cards, lead: `<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p>` };
@@ -40276,7 +40318,7 @@
     ['when', ['when', 'lengths']],
     ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'live', 'gaps', 'decisions', 'instruments']],
     ['who', ['artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
-    ['releases', ['releases', 'media', 'script', 'genres']],
+    ['releases', ['perrelease', 'releases', 'media', 'script', 'genres']],
     ['sources', ['sources', 'ocr']],
   ];
   /** [Z-STL] (3.61.0) The one line of a folded card: the first entry of its body as text ("0 % with a date", "producer 6"). */
@@ -40664,6 +40706,46 @@
   const statMean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
   /**
+   * [Z-SRR] (3.91.0, S143) Per release – all its submissions together: its relationships (also by level), its recordings (records from
+   * 3.91.0 on) and the relationships on its recordings per recording; each the average and the median of the releases.
+   */
+  const SRR_LEVELS = ['recording', 'release', 'work', 'release_group'];
+  function statPerRelease(recs) {
+    const by = new Map();
+    for (const r of recs) {
+      if (!r || !r.mbid) continue;
+      const x = by.get(r.mbid) || { rels: 0, lv: Object.fromEntries(SRR_LEVELS.map((l) => [l, 0])), recs: 0 };
+      for (const it of Array.isArray(r.rels) ? r.rels : []) {
+        // ((review) as the edit note counts them ("Done: added N credit relationships"): new ones, not the links of works
+        if (!it || it.k !== 'n' || (it.et === 'work' && (it.lt === 'performance' || it.lv === 'work'))) continue;
+        x.rels++;
+        if (it && SRR_LEVELS.includes(it.lv)) x.lv[it.lv]++;
+      }
+      if (r.rel && Number(r.rel.recs) > 0) x.recs = Number(r.rel.recs);
+      by.set(r.mbid, x);
+    }
+    const xs = [...by.values()];
+    const mm = (vals) => ({ mean: statMean(vals), median: statMedian(vals) });
+    const withRecs = xs.filter((x) => x.recs);
+    return {
+      n: xs.length, rels: mm(xs.map((x) => x.rels)), lv: Object.fromEntries(SRR_LEVELS.map((l) => [l, mm(xs.map((x) => x.lv[l]))])),
+      nRecs: withRecs.length, recs: mm(withRecs.map((x) => x.recs)), rpr: mm(withRecs.map((x) => x.lv.recording / x.recs)),
+    };
+  }
+  /** [Z-SRR] (3.91.0) The card "Per release": { n, rels, lv, nRecs, recs, rpr } (each { mean, median }) – this browser and "Global". */
+  function statPerReleaseHtml(p, sinceV = '') {
+    if (!p || !p.n) return `<p class="dci-sub">–</p>`;
+    const f = (v) => (v == null || !Number.isFinite(Number(v)) ? '–' : new Intl.NumberFormat(LANG, { maximumFractionDigits: 1 }).format(Number(v)));
+    const row = (label, v, cls = '') => `<tr${cls ? ` class="${cls}"` : ''}><th scope="row">${esc(label)}</th><td>${f(v && v.mean)}</td><td>${f(v && v.median)}</td></tr>`;
+    const lv = SRR_LEVELS.filter((l) => p.lv && p.lv[l] && (p.lv[l].mean || 0) > 0).map((l) => row(tr('stats.srr.onLevel', { level: tr(`level.${l}`) }), p.lv[l], 'dci-stats-srr-sub')).join('');
+    const since = sinceV && p.nRecs < p.n ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: sinceV }))}</p>` : '';
+    return `<p>${esc(tr('stats.srr.n', { n: statNum(p.n) }))}</p><table class="dci-stats-srct dci-stats-srr"><thead><tr><th scope="col"></th><th scope="col">${esc(tr('stats.srr.mean'))}</th>
+      <th scope="col">${esc(tr('stats.srr.median'))}</th></tr></thead><tbody>${row(tr('stats.srr.rels'), p.rels)}${lv}
+      ${p.nRecs ? `${row(tr('stats.srr.recs'), p.recs)}${row(tr('stats.srr.rpr'), p.rpr)}` : ''}</tbody></table>
+      ${p.nRecs && p.nRecs !== p.n ? `<p class="dci-sub">${esc(tr('stats.srr.recsN', { n: statNum(p.nRecs) }))}</p>` : ''}${since}`;
+  }
+
+  /**
    * [Z-STD] (3.45.0; Q-eo) The card "Sources" with its times: per source the releases, the time per release and per relationship –
    * the median or the average (a switch, remembered) – and of the releases with a supplement (they count in the source's row too).
    */
@@ -40741,6 +40823,7 @@
         <h5>${esc(tr('stats.places'))}</h5>${kv(top(m.places, 3))}`)}
       ${card('levels', `${kv(['recording', 'release', 'work', 'release_group'].map((k) => [k, m.lv.get(k) || 0]).filter(([, n]) => n), (k) => tr(`level.${k}`))}
         <p class="dci-sub">${esc(tr('stats.works', { n: statNum(m.works) }))}</p>`)}
+      ${ruleOn('S143') ? card('perrelease', statPerReleaseHtml(statPerRelease(recs), '3.91.0')) : ''}
       ${card('releases', `<h5>${esc(tr('stats.decade'))}</h5>${kv(top(m.decade))}<h5>${esc(tr('stats.format'))}</h5>${kv(top(m.format))}
         <h5>${esc(tr('stats.country'))}</h5>${kv(top(m.country))}<h5>${esc(tr('stats.label'))}</h5>${kv(top(m.label))}`)}
       ${card('when', `${daily ? `<h5>${esc(tr('stats.weekdays'))}</h5>${bars(m.weekday, wd)}<h5>${esc(tr('stats.hours'))}</h5>${bars(m.hour, hours)}
@@ -44449,6 +44532,9 @@
       .dci-stats-grid > .dci-stats-card { break-inside: avoid; display: block; width: 100%; box-sizing: border-box; margin: 0 0 calc(var(--u, 1px) * 10); }
       /* (the table of the sources across the columns) */
       .dci-stats-grid > .dci-stats-card[data-el="stats-sources"] { column-span: all; display: block; }
+      /* [Z-SRR] (3.91.0) per release: the levels below the relationships, indented */
+      .dci-stats-srr .dci-stats-srr-sub th { padding-left: calc(var(--u, 1px) * 14); font-weight: normal; }
+      .dci-stats-srr td { text-align: right; font-variant-numeric: tabular-nums; }
       .dci-stats-card h4 .dci-stats-cardhead { font: inherit; font-weight: 700; border: 0; background: none; padding: 0; color: inherit; cursor: pointer; text-align: left; }
       .dci-stats-card.dci-stats-folded h4 { margin: 0; display: flex; justify-content: space-between; gap: calc(var(--u, 1px) * 8); }
       .dci-stats-sum { font-weight: 400; }

@@ -625,6 +625,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   srr391: 3.91.0 (Z-SRR, S143): "Per release" in the group Releases – relationships 4 / 4, by level, recordings, per
+                                #     recording (average / median); Global from per_release and core.per_release; off
                                 #   dnda387: 3.87.0 (Z-DNDA): the drag & drop switches exactly below each other; narrow: the place above its switch
                                 #   statio: 3.76.0 (Z-SCV, S111): the statistics exported as JSON (whole) and CSV (a line per relationship, ";", BOM,
                                 #     release title, times on the first line, '=…), imported (the same id skipped, also twice in one

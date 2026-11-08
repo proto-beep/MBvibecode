@@ -34,5 +34,9 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   groups, language and script), the lengths of the recordings (median, average) and, from 3.61.0, the whole length of each release whose every track has a length (median, average; `releases`, `release_median_ms`, `release_mean_ms`) and the role credits (of the relationships with an
   instrument or vocal attribute). On the other days the section of before is kept (`--keep-core`) – the core pass also runs when it is missing or 6 days old; a failed
   core pass (at most 150 minutes) keeps it too, with a warning.
+  **Per release** (from Credits Importer 3.91.0, collected item Z-SRR): every run gives `per_release` – the credit relationships of each
+  release (all its submissions, from their "Done:" lines; also by level), as the average and the median of the releases; the core pass
+  adds `core.per_release` – the recordings of each of those releases (each once; not data tracks or a pregap) and the relationships on its
+  recordings per recording (average, median). Only numbers.
   Besides, every run counts the **"credited as"** of the relationships the script added with an artist, a label or a place
   (section `credits`). Still only numbers (and the names of types, languages, scripts, countries and towns).
