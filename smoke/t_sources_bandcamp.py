@@ -380,7 +380,8 @@ def case_linernotes():
        “about” text"; MusicBrainz artists of that name only as suggestions (nothing assigned); the date by the name in the
        date pool as a suggestion named for the liner notes.
     C) "Leave out the about text": the row hidden and the date out of the pool; ticked off again, both back.
-    D) With the companion: the row jumps to the name's line in the "about" text (only that sentence, no mark).
+    D) With the companion: the row jumps to the name's line in the "about" text (only that sentence; from Companion 1.14.0 its status mark
+       there, Z-BCAM).
     E) 3.17.6: the liner notes row shows that date as a suggestion (dashed, yellow) in its date cell; ✓ takes it."""
     import json
     import subprocess
@@ -485,14 +486,14 @@ console.log(JSON.stringify(out));
         print('B) Eintrag:', b1, '| Pool:', pool)
         results.append(b1 is not None and b1[1] == 'Liner Notes' and b1[3] == 'release' and b1[4] == ['From the “about” text'] and b1[5] >= 1
                        and b1[0] != 'linked' and ['Liner notes – Jane Roe', [2019, 5]] in pool)
-        # D) the jump: the sentence with the name, no mark in the about text
+        # D) the jump: the sentence with the name; ([Z-BCAM] Companion 1.14.0) its mark in the about text
         rid = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Jane Roe'); return g.querySelector('tr.dci-row').dataset.row; })()")
         pg.locator(f'tr[data-row="{rid}"] .dci-drole').click()
         poll(bc, "!!document.querySelector('.dci-bc-hl')")
         bc.wait_for_timeout(300)
         d1 = [bc.evaluate("[...document.querySelectorAll('.dci-bc-hl')].map(x => x.textContent).join('')"), bc.evaluate("document.querySelectorAll('.tralbum-about .dci-dg-mark').length")]
         print('D) Sprung:', d1)
-        results.append(d1 == ['— Jane Roe, Berlin, May 2019', 0])
+        results.append(d1 == ['— Jane Roe, Berlin, May 2019', 1])
         # C) leave out the about text
         H.src_menu(pg)
         pg.locator('[data-f=about-off]').check()
