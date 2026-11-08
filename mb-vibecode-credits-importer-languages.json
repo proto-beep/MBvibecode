@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.89.0",
+  "version": "3.90.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -1015,6 +1015,7 @@
     "note.misc": "Für diese Rolle hat MusicBrainz keine eigene Beziehung. Sie wird als „miscellaneous support“ mit der {src}-Rolle als Aufgabe übernommen; stell sie auf Überspringen, wenn du sie nicht willst.",
     "note.plateNone": "„Plated By“: MusicBrainz nennt Vinyl-Plating nur bei einem Artist und hat keinen mit diesem Namen – bewusst ausgelassen (Skip).",
     "log.plateNone": "{name}: „Plated By“ ausgelassen – kein Artist mit diesem Namen in MusicBrainz",
+    "log.ppsSynced": "Persönlicher Publisher {name}: seine Werke folgen den Writing-Credits seiner Personen",
     "type.skipped": "wird nicht übernommen",
     "type.choose": "Typ wählen …",
     "type.aria": "MusicBrainz-Beziehungstyp",

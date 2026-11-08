@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.89.0
+// @version      3.90.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.89.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.89.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.90.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.90.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.89.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.90.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -516,6 +516,7 @@
       "note.misc": "MusicBrainz has no specific relationship for this role. It is added as “miscellaneous support” with the {src} role as task; set it to Skip if you do not want it.",
       "note.plateNone": "“Plated By”: MusicBrainz credits vinyl plating only to an artist, and has none of this name – left out on purpose (Skip).",
       "log.plateNone": "{name}: “Plated By” left out – no artist of this name in MusicBrainz",
+      "log.ppsSynced": "Personal publisher {name}: its works follow the writing credits of its people",
       "type.skipped": "not applied",
       "type.choose": "Choose type …",
       "type.aria": "MusicBrainz relationship type",
@@ -3961,6 +3962,7 @@
     { id: 'S137', where: 'festivalHtml, festivalInMb', note: 'Festivals (3.88.0; collected item Z-EVR): MusicBrainz already has the festival\'s event for the release or all its recordings – a message where the hint was (and in the log) instead of the hint; for some recordings: the message names them, the hint stays for the others' },
     { id: 'S140', where: 'profileUrlOf (TEXT.parse, readLine)', note: 'Texts (3.89.0; collected item Z-FBH): a line of a profile alone below a name – "fb: x" (Facebook), "ig: x" / "insta: x" (Instagram), "tw: x" / "twitter: x" / "x: x", "sc: x" / "soundcloud: x", "yt: x" / "youtube: x", "bandcamp: x", a bare "@x" (Instagram) – is a web link of that name\'s entry (the last name of the line above), only in the background (for "Create …" and the search by links); the line is left out as such' },
     { id: 'S141', where: 'plateNone (refresh); R114, C046', note: 'Roles (3.89.0; collected item Z-PLT): "Plated By" is miscellaneous support with the task "vinyl plating" on the release, only for vinyl (else left out, S026); a company only as an artist of MusicBrainz – none of that name: left out on purpose (Skip, said at the row)' },
+    { id: 'S142', where: 'ppsSync (refresh), ppsWriters, ppsLoadRels, ppsHandSet', note: 'Works matrix (3.90.0; collected item Z-PPS): a publisher that MusicBrainz has as the personal publisher of writers (S014) follows their writing credits at every change, not only at the import – on where one of them writes (one is enough), off where none does; a cell of it set by hand stays, a source that names its tracks keeps them; no other personal publisher by itself' },
     { id: 'S139', where: 'entryNameHtml (ncy-all), ncyRowHtml (ncy-row, ncy-line), columnHeadHtml (mx-ncy)', note: 'Credited as (3.89.0; collected item Z-NCY): a click on the name of an entry puts the next of its spellings (the source\'s, its name, the name in MusicBrainz) as "credited as" on all its relationships – also those changed one by one; a small ⇄ beside each "credited as" (a row, a line of an entry\'s matrix, a column of the works matrix) clicks through them for that one only; the MusicBrainz name is an empty field' },
     { id: 'S138', where: 'rowDateSugg, performanceDateSugg', note: 'Dates (3.88.0; collected item Z-CAMD2): "video shot at" – or camera work on videos – of live recordings suggests the date of the performance of the same tracks (yellow, ✓ takes it), when a row of the column Performance has a date of the pool on all of them' },
     { id: 'S135', where: 'columnHeadHtml (mx-role-level), mxRoleNextLevel', note: 'Works matrix (3.87.0; collected item Z-ARL2): a role of a column that MusicBrainz also has on other levels (arranger, orchestrator …) has its level beside it – a click puts its rows on the next level (Recording, Release …); in the entry its level button goes on round (… Skip, Work), as for every role on several levels' },
@@ -28059,6 +28061,12 @@
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     plateNone(); // [Z-PLT] (3.89.0, S141)
+    // [Z-PPS] (3.90.0, S142) the personal publishers follow the writers (the matrix drawn again when a cell changed)
+    const pps = ppsSync();
+    if (pps.length) {
+      pps.forEach((name) => log('info', 'ppsSynced', { name }));
+      renderWorks();
+    }
     S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review)
     // [146] (3.36.0) the rows remembered soon after a change
     scheduleRemember();
@@ -30680,6 +30688,102 @@
   const matrixRel = (r, col = null) => MB_MATRIX_TYPES.includes(norm(r.type)) || r.entityType === 'label'
     || !!(col && col.rows.some((row) => norm(rowTypeName(row)) === norm(r.type)));
   const isPublisherCol = (col) => col.rows.some(isPublishingRow);
+
+  /**
+   * [Z-PPS] (3.90.0, S142) A publisher of the works matrix that MusicBrainz has as the personal publisher of writers (S014: the label's
+   * artists, at the release's date): its works always follow their writing credits (writer, composer, lyricist, librettist – in the
+   * dashboard or in MusicBrainz, of that work) – on where one of them writes, off where none does; a source that names the publisher's
+   * tracks itself keeps them; a work locked or with its credits skipped is left alone. ((review) A cell changed by hand – any way: a
+   * click, its menu, a drop, "on all tracks", the row's tracks – stays: what the column was after the last run is kept on its first
+   * publishing row (ppsOn, by track – and work on a track of several), a cell that differs from it is the hand's (ppsHand); both are
+   * kept with the rows.) → the names of the publishers whose cells changed
+   */
+  const ppsKey = (m, mrows) => (m.work && mrows.filter((x) => x.i === m.i).length > 1 ? `${m.i}|${m.work.gid}` : String(m.i));
+  /** [Z-PPS] (review) The writers (MBIDs) of a work of the matrix: the dashboard's rows of it (a cell taken out not) and MusicBrainz's. */
+  function ppsWriters(m) {
+    const ids = new Set();
+    for (const r of S.rows) {
+      if (r.level !== 'work' || !r.tracks.has(m.i) || !WRITER_TYPES.includes(norm(rowTypeName(r)))) continue;
+      if (m.work && r.excluded && r.excluded.has(`${m.i}|${m.work.gid}`)) continue;
+      const a = S.artists.get(r.artistKey);
+      if (a && a.mbid) ids.add(a.mbid);
+    }
+    const rels = !m.work ? [] : !m.work.planned ? m.work.rels || [] : m.work.origin === 'search' ? foundRelsOf(m.work.gid) : [];
+    rels.filter((x) => WRITER_TYPES.includes(norm(x.type || ''))).forEach((x) => ids.add(x.mbid));
+    return ids;
+  }
+  /** [Z-PPS] (review) The personal publishers' artists of a label added by hand (not looked up at the import): in the background, once. */
+  function ppsLoadRels(mbid) {
+    if (!S.ppsLoading) S.ppsLoading = new Set();
+    if (S.ppsLoading.has(mbid)) return;
+    S.ppsLoading.add(mbid);
+    // (a little later: at the import the evidence of S014 looks it up itself)
+    new Promise((res) => setTimeout(res, 3000)).then(() => (S.pubRels.has(mbid) ? null : mbWs(`label/${mbid}?inc=artist-rels`, { background: true }).then((data) => {
+      S.pubRels.set(mbid, ((data && data.relations) || []).filter((r) => r['target-type'] === 'artist' && r.artist && isPersonalPublisherRel(r))
+        .map((r) => ({ mbid: r.artist.id, name: r.artist.name, begin: r.begin || '', end: r.end || '' })));
+    }, () => S.pubRels.set(mbid, [])))).then(() => refresh());
+  }
+  function ppsSync() {
+    if (!ruleOn('S142') || !ruleOn('S014') || !S.rows.length || !S.pubRels || !S.mbTracks) return [];
+    const changed = [];
+    let mrows = null;
+    const writers = new Map();
+    for (const pc of matrixColumns()) {
+      if (pc.mbOnly || !pc.mbid || pc.entityType !== 'label' || !isPublisherCol(pc)) continue;
+      if (!S.pubRels.has(pc.mbid)) {
+        ppsLoadRels(pc.mbid);
+        continue;
+      }
+      const rels = S.pubRels.get(pc.mbid).filter(periodFits);
+      if (!rels.length) continue;
+      const rows = defaultRowsOf(pc).filter(isPublishingRow);
+      if (!rows.length || pc.rows.some((r) => isPublishingRow(r) && (r.notesTracks || r.dAllTracks === false))) continue;
+      mrows = mrows || matrixRows();
+      const keep = rows[0];
+      const before = keep.ppsOn instanceof Set ? keep.ppsOn : null;
+      if (!(keep.ppsHand instanceof Set)) keep.ppsHand = new Set();
+      const now = new Set();
+      let did = false;
+      const ev = pc.artist && pc.artist.pubEvidence && pc.artist.pubEvidence.evidence;
+      for (const m of mrows) {
+        const k = ppsKey(m, mrows);
+        const st = cellState(pc, m);
+        const pubs = st.active.filter(isPublishingRow);
+        let on = pubs.length > 0 || st.existing.length > 0;
+        // a cell other than after the last run: changed by hand
+        if (before && on !== before.has(k)) keep.ppsHand.add(k);
+        if (!(m.work && workLocked(m.work)) && !creditsSkipped(m.i) && !keep.ppsHand.has(k)) {
+          if (!writers.has(m.key)) writers.set(m.key, ppsWriters(m));
+          const hit = rels.filter((r) => writers.get(m.key).has(r.mbid));
+          if (hit.length && !on) {
+            rows.forEach((r) => {
+              addCell(r, m);
+              if (r.suggest && r.suggest.tracks) r.suggest.tracks.add(m.i); // (a suggestion as those S014 gave)
+            });
+            if (ev) ev.set(m.i, uniq(hit.map((r) => r.name)).join(', '));
+            on = true;
+            did = true;
+          } else if (!hit.length && pubs.length) {
+            pubs.forEach((r) => removeCell(r, m));
+            if (ev) ev.delete(m.i);
+            on = st.existing.length > 0;
+            did = true;
+          }
+        }
+        if (on) now.add(k);
+      }
+      keep.ppsOn = now;
+      if (did) changed.push(pc.name);
+    }
+    return changed;
+  }
+  /** [Z-PPS] (3.90.0) A publisher's cell set by hand: it stays as it is (also a work taken out on its own). */
+  function ppsHandSet(col, mrow) {
+    const keep = col && mrow && isPublisherCol(col) ? defaultRowsOf(col).filter(isPublishingRow)[0] : null;
+    if (!keep) return;
+    if (!(keep.ppsHand instanceof Set)) keep.ppsHand = new Set();
+    keep.ppsHand.add(ppsKey(mrow, matrixRows()));
+  }
   /** [Z-PUB] (3.64.0) A row of a publisher on the release (label – release "published" / "publishing"). */
   const isPublishedRow = (row) => ['published', 'publishing'].includes(norm(rowTypeName(row)));
 
@@ -33573,6 +33677,7 @@
           });
         }
         col.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
+        ppsHandSet(col, mrow); // [Z-PPS] (3.90.0)
         break;
       }
       case 'mx-sugg-ok':
@@ -33584,6 +33689,7 @@
           else removeCell(r, mrow);
           if (isPublishingRow(r)) r.pubTouched = true;
         });
+        ppsHandSet(col, mrow); // [Z-PPS] (3.90.0)
         log('info', act === 'mx-sugg-ok' ? 'matrixSuggOk' : 'matrixSuggNo', { name: col.name, track: trackLabel(mrow.track) });
         break;
       }
@@ -33716,6 +33822,7 @@
           });
         }
         c.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
+        mrows.forEach((m) => ppsHandSet(c, m)); // [Z-PPS] (3.90.0) by hand
         log('info', off ? 'matrixAllWorksOff' : 'matrixAllWorksOn', { col: c.name });
         break;
       }
