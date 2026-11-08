@@ -3020,4 +3020,34 @@ def case_statio():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_dnda387():
+    """Credits Importer 3.87.0 (collected item Z-DNDA): ⚙ Settings → Dates & tracks → "Drag & drop" – the five switches exactly below
+    each other: their left edges, the line between "adds" and "replaces" and their right edges the same in every row (until 3.86.0 each
+    switch right after its text). Narrow (520 px): the place above its switch."""
+    results = []
+    GEO = """[...document.querySelectorAll('[data-el=settings] [data-el=drop-grid] .dci-seg')].map(s => { const b = s.querySelectorAll('button');
+      const r = s.getBoundingClientRect(); return [Math.round(r.left), Math.round(b[0].getBoundingClientRect().right), Math.round(r.right), Math.round(r.top)]; })"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'dates')
+        g = pg.evaluate(GEO)
+        print('A)', g)
+        same = lambda k: len({x[k] for x in g}) == 1
+        results.append(len(g) == 5 and same(0) and same(1) and same(2))
+        pg.set_viewport_size({'width': 520, 'height': 900})
+        pg.wait_for_timeout(300)
+        n = pg.evaluate("""(() => { const p = document.querySelector('[data-el=drop-grid] .dci-drop-place').getBoundingClientRect();
+          const s = document.querySelector('[data-el=drop-grid] .dci-seg').getBoundingClientRect(); return s.top >= p.bottom - 1; })()""")
+        print('B)', n)
+        results.append(n)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
