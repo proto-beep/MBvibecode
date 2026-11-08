@@ -14,7 +14,7 @@ def case_compact():
        head (not pressed) switches to compact – pressed, ((3.73.0) compact is the default: nothing stored; until 3.72.0) stored "compact"
        (until 3.27.1: compact by default, "Compact | Full" above the entries); one line per row – the role as written
        → type and instrument, level, tracks in short, date (or "no date"), what is open in colour (yellow "Bass: which
-       instrument? electric bass guitar · double bass · acoustic bass guitar", [3.32.3] the possibilities to click); the
+       instrument? electric bass guitar · double bass · acoustic bass guitar" ([3.97.0] · bass guitar), [3.32.3] the possibilities to click); the
        fields of the full row and the "credited as" block hidden.
     B) A click on the line opens the full row (its type field focused); "▴ compact" closes it again.
     C) The tracks and the date of the compact line are still drop targets: a track group ("Side A", tracks 1–2) dropped
@@ -61,7 +61,7 @@ def case_compact():
         print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
         results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, None] and bass and ' '.join(bass[0]['text'].split()).startswith('▸ bass Recording all 4 tracks no date')
                        # [3.32.3] the question whole, its possibilities to click (item 102)
-                       and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar']] and not bass[0]['typeVisible'])
+                       and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar · bass guitar']] and not bass[0]['typeVisible'])
         # B) open, close
         rid = bass[0]['id']
         pg.click(f'tr[data-row="{rid}"] .dci-cl-role')

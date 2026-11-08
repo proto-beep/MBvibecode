@@ -304,10 +304,10 @@ def case_quickswitch():
           return [!!q.querySelector('.dci-quick-h strong'), q.querySelectorAll('.dci-quick-grid > .dci-qbtn-wrap').length, st.borderTopStyle, st.borderTopLeftRadius,
             q.querySelector('[data-qs-toggle=S045]').textContent.replace(/\\s+/g, ' ').trim()]; })()""")
         print('A) Schalter:', a, '| Kasten:', box)
-        # ([3.79.0] D026 and S114, both off; [3.82.0] S122, off)
+        # ([3.79.0] D026 and S114, both off; [3.82.0] S122, off; [3.97.0] S155, off and locked)
         results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False], ['S078', True],
-                             ['D026', False], ['S114', False], ['S122', False]]
-                       and box[:4] == [True, 11, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
+                             ['D026', False], ['S114', False], ['S122', False], ['S155', False]]
+                       and box[:4] == [True, 12, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)
@@ -520,7 +520,7 @@ def case_wqedit():
         c0 = pg.evaluate(ASK)
         pg.click('#dci-rules [data-redit-open=Q002]')
         pg.wait_for_timeout(200)
-        pg.fill('#dci-rules [data-redit=Q002] [data-redit-f=options]', 'electric guitar\nacoustic guitar\nresonator guitar')
+        pg.fill('#dci-rules [data-redit=Q002] [data-redit-f=options]', 'electric guitar\nacoustic guitar\nguitar\nresonator guitar')
         pg.click('#dci-rules [data-redit-save]')
         pg.wait_for_timeout(600)
         c1 = pg.evaluate(ASK)
@@ -534,8 +534,9 @@ def case_wqedit():
         pg.wait_for_timeout(200)
         c3 = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.Q002")
         print('C) Frage vorher:', c0, '| nachher:', c1, '| leeres Wort:', c2, '| gespeichert:', c3)
-        results.append(c0 == ['electric guitar', 'acoustic guitar'] and c1 == ['electric guitar', 'acoustic guitar', 'resonator guitar']
-                       and c2.startswith('Q002: the field “base”') and c3['set'] == {'options': ['electric guitar', 'acoustic guitar', 'resonator guitar']})
+        # ([3.97.0, Z-QGTR] guitar itself a choice too)
+        results.append(c0 == ['electric guitar', 'acoustic guitar', 'guitar'] and c1 == ['electric guitar', 'acoustic guitar', 'guitar', 'resonator guitar']
+                       and c2.startswith('Q002: the field “base”') and c3['set'] == {'options': ['electric guitar', 'acoustic guitar', 'guitar', 'resonator guitar']})
         # D) Q003: chorus master out, creative direction up, a choice added
         pg.click('#dci-rules [data-redit-open=Q003]')
         pg.wait_for_timeout(200)
@@ -608,7 +609,7 @@ def case_wqedit():
         pg.wait_for_timeout(700)
         f1 = [pg.evaluate("localStorage.getItem('dci-mapping-changes')"), pg.evaluate(TEST, 'Bass [Stand-Up]'), pg.evaluate(ASK)]
         print('F) ↺ alle:', f1[0], '|', f1[1][:100], '|', f1[2])
-        results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['electric guitar', 'acoustic guitar'])
+        results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['electric guitar', 'acoustic guitar', 'guitar'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

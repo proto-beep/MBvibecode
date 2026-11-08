@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.96.0
+// @version      3.97.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.96.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.96.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.97.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.97.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.96.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.97.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -723,6 +723,9 @@
       "livecom.notice.liveOther.one": "Track {list}: MusicBrainz has another comment “{text}” – not overwritten",
       "livecom.notice.liveOther.other": "Tracks {list}: MusicBrainz has another comment “{text}” – not overwritten",
       "footer.hint": "Nothing is submitted. You review the changes in the editor and click “Enter edit” yourself.",
+      "foot.runBusy": "Working …",
+      "foot.runDone": "All imports and checks done",
+      "foot.runCount": "{done} of {of} requests to MusicBrainz done (of those known so far)",
       "panic.button.one": "Emergency: link only the new work",
       "panic.button.other": "Emergency: link only the {n} new works",
       "panic.title": "Discards all unsaved changes in the relationship editor and stages only the links to works created here.",
@@ -1936,6 +1939,9 @@
       "matrix.suggestPartLang": "language {n} of {of}",
       "matrix.suggestIfNotOwn": "if not accepted: the defaults stay ({what})",
       "matrix.suggestRowTitle": "Suggested from the works of the artists – not filled in until “Accept” in the head of the matrix",
+      "matrix.suggestRowTitle2": "Suggested from the works of the artists: {what} – not filled in until “Accept” in the head of the matrix; the label says what is filled in",
+      "matrix.labelRoTitle": "Work type and lyrics languages of this work in MusicBrainz",
+      "matrix.instrumentalAuto": "[No lyrics] because the title says “instrumental” (rule S153); a language you choose replaces it",
       "matrix.creditsAll": "All artists credited as:",
       "matrix.clearCreditsAll": "MusicBrainz names for all",
       "matrix.addColumnHead": "Add a column",
@@ -1954,6 +1960,7 @@
       "wnote.quoteShort": "Quotes → {title}",
       "wnote.needOwnShort": "needs a work of its own",
       "log.worksSuggestTaken": "New works: {what} – the suggestion taken (each work can still be changed)",
+      "log.worksDefaultsOwn": "New works: {what} – the defaults chosen by hand (the suggestion is not used)",
       "matrix.colAll": "all works",
       "matrix.colAllTitle": "Switch this column on for every work shown",
       "log.matrixColumn": "Matrix column added: {name} ({role})",
@@ -2636,6 +2643,8 @@
       "quick.D026": "Photographs of the concert → the concert’s date",
       "quick.S114": "Heading of a group above its members → the group as performer too",
       "quick.S122": "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp (not only YouTube)",
+      "quick.S155": "Several models of one instrument → each role credit on its own",
+      "quick.S155.locked": "Cannot be switched on yet: MusicBrainz holds an instrument once per relationship and takes no second relationship that differs only in its role credit – the models are joined in one role credit (“Juno 6, Multipoly”)",
       "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
       "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
       "rules.roles": "Roles",
@@ -3815,7 +3824,10 @@
    */
   const DEFAULT_OFF_RULES = MAP.DEFAULT_OFF_RULES;
 
+  /** [Z-MSYN] (3.97.0) Rules that cannot be switched on (S155: MusicBrainz does not allow it yet) – off, their switch greyed. */
+  const LOCKED_RULES = new Set(['S155']);
   function ruleOn(id) {
+    if (LOCKED_RULES.has(id)) return false;
     return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
   }
   /**
@@ -3829,6 +3841,7 @@
 
   /** [3.31.7] Switches a built-in rule on or off (stored with the other switched rules). */
   function setRuleOn(id, on) {
+    if (LOCKED_RULES.has(id)) return;
     if (DEFAULT_OFF_RULES.has(id)) {
       if (on) rulesOff().add(`+${id}`);
       else rulesOff().delete(`+${id}`);
@@ -4018,6 +4031,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S155', where: 'msynMerge, msynCreditsOf, msynApply (planImport)', note: 'Instruments (3.97.0; collected item Z-MSYN): off – several models of one instrument of an entry on a recording ("Synthesizer (Juno 6)", "Synthesizer (Multipoly)") are one instrument with their role credits joined by commas ("Juno 6, Multipoly"), per recording, for every instrument and also with "One row each". On: each role credit a relationship of its own – MusicBrainz does not allow it (an instrument once per relationship, no second relationship that differs only in its role credit), so it cannot be switched on yet' },
+    { id: 'S153', where: 'rowOpts (INSTRUMENTAL_RE)', note: 'New works (3.97.0; collected item Z-WTS2): a track whose title says "instrumental" ("(Instrumental)", "Instrumental Version") – its new work gets the lyrics language [No lyrics] while its languages are not chosen by hand' },
     { id: 'S081', where: 'workSuggestion, workSuggestHtml', note: 'New works (3.52.0): a work type and a lyrics language suggested from the works of the artists in MusicBrainz that the works matrix reads (from 3 works on) – each the one of more than half of them, "no work type" and "no lyrics language" too (the languages of a work together); a value without such a majority is not suggested. Yellow in the head of the matrix and at the rows: "Accept" fills it in for all new works (each can still be changed); not accepted, neither type nor language of it is filled in' },
     // [3.51.0] collected item Z-PCR
     { id: 'S080', where: 'sourceCreditFor, withoutAreaTail', note: 'Places and labels (3.51.0): the town or country after a comma in the name at the source – "Sound Development Studio, Zürich" – is no "credited as" when the rest is MusicBrainz\'s name ("Sound Development Studio": none) or the end is the area the source gives (the name without it); kept when it is part of MusicBrainz\'s name ("Studio, Zürich" for "Studio Zürich")' },
@@ -5279,6 +5294,11 @@
    * [Q013] (3.42.3) Whether a row's instrument question asks: its instrument is still the family word – or, for a question whose
    * first answer is set at once (`preset`: "Horns" → horn, or brass), one of its answers.
    */
+  /**
+   * [Z-QGTR] (3.97.0) The question answered with its own word ("guitar" for "Guitar"): by this question's id ((review) a row whose
+   * role became another question's word is asked again).
+   */
+  const keptBase = (row, q) => !!q && row.baseKept === q.id && norm(row.primaryText) === q.base;
   const questionAsks = (q, row) => norm(row.primaryText) === q.base || (!!q.preset && q.options.some((o) => norm(o) === norm(row.primaryText)));
 
   /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
@@ -11638,6 +11658,8 @@
   let lastMbRequest = 0;
   // [3.15.0] requests of the dashboard waiting or running; background requests (works of artists) wait for them
   let mbForeground = 0;
+  // [Z-FOOT] (3.97.0) the requests to MusicBrainz since the dashboard was last idle: started and done (the progress in the footer)
+  const RUN = { started: 0, done: 0, active: false, finished: false, timer: null, idleTimer: null, idleMs: 1500 };
   function mbWs(path, { background = false } = {}) {
     const run = async () => {
       for (let attempt = 0; attempt < 4; attempt++) {
@@ -11658,6 +11680,9 @@
     };
     const p = mbQueue.then(run, run);
     mbQueue = p.catch(() => {});
+    RUN.started++;
+    scheduleRun();
+    p.then(() => { RUN.done++; scheduleRun(); }, () => { RUN.done++; scheduleRun(); });
     if (!background) {
       mbForeground++;
       p.then(() => { mbForeground--; }, () => { mbForeground--; });
@@ -13345,6 +13370,14 @@
     // [Z-CWR] (3.56.0, S082) works with a more exact type than writer for a person: work gid|artist MBID
     const exactOnWork = ruleOn('S082') ? writerExactPairs() : new Set();
     S.writerExact = exactOnWork;
+    // [Z-MSYN] (3.97.0, S155) the attributes of each row once; the role credits of rows that are one relationship joined
+    const attrsCache = new Map();
+    const attrsOf = (row, lt) => {
+      const k = `${row.id}|${lt.gid}`;
+      if (!attrsCache.has(k)) attrsCache.set(k, buildAttrs(row, lt));
+      return attrsCache.get(k);
+    };
+    const msynCredits = msynCreditsOf(S.rows, attrsOf);
     for (const row of S.rows) {
       const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null, exact: 0, locked: 0 };
       rowInfo.set(row.id, info);
@@ -13365,7 +13398,7 @@
       let attrs = [];
       let noteText = '';
       if (lt) {
-        const r = buildAttrs(row, lt);
+        const r = attrsOf(row, lt);
         if (r.error) info.issues.push(r.error);
         else ({ attrs, noteText } = r);
       }
@@ -13426,8 +13459,7 @@
       const planTarget = (target) => {
         // Rows that differ only in their date (several single dates, D013) are relationships of their own
         const baseKey = `${target.gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
-        const rowDate = row.dateKeyed ? formatDateValue(rowDateInfo(row, lt).value) : '';
-        const key = rowDate ? `${baseKey}|d:${rowDate}` : baseKey;
+        const key = planKeyOf(target.gid, artist, lt, attrs, row);
         // [Z-NWA] (3.57.0, S083) an existing work: not supplemented – what MusicBrainz has counts as there, the rest is left out
         // ((review) a hidden medium is not counted; what was entered from here already counts as applied)
         if (target.kind === 'work' && workLocked(target.work)) {
@@ -13452,7 +13484,8 @@
         }
         planned.add(key);
         if (target.track && !inMedium(target.track.idx)) return;
-        const item = { kind: 'credit', row, artist, lt, attrs, noteText, target, key, credit: row.credit.trim(), date: rowDateInfo(row, lt).value };
+        // ([Z-MSYN] 3.97.0) the role credits of the other rows of this relationship too
+        const item = { kind: 'credit', row, artist, lt, attrs: msynApply(attrs, msynCredits.get(key)), noteText, target, key, credit: row.credit.trim(), date: rowDateInfo(row, lt).value };
         const staged = S.staged.get(key);
         // Staged before: only a change in the dashboard (date, credits) makes it an update.
         if (staged && staged.sig === itemSig(item)) {
@@ -13612,6 +13645,75 @@
   /** [E4] Items that may be joined: a new instrument or voice of an entry on a recording, the release or its group. */
   function joinable(it) {
     return joinableKind(it) && joinOn(it.artist);
+  }
+
+  /**
+   * [Z-MSYN] (3.97.0, S155) Several models of one instrument of an entry on a recording ("Synthesizer (Juno 6)", "Synthesizer
+   * (Multipoly)"): MusicBrainz holds an instrument once in a relationship and takes no second relationship that differs only in its
+   * role credit – one instrument, their role credits joined by commas ("Juno 6, Multipoly"), for every instrument; per recording, so
+   * a track with other models gets its own. S155 ("each role credit on its own", the old way) is off and cannot be switched on while
+   * MusicBrainz does not allow it.
+   */
+  const msynMerge = () => !ruleOn('S155');
+  /**
+   * The key of a planned relationship: target, entry, type, attributes ("drums (drum set)", "task=…"), and the date of a row whose
+   * dates are relationships of their own (D013). ([Z-MSYN] 3.97.0 a function of its own: the rows are grouped by it before.)
+   */
+  function planKeyOf(gid, artist, lt, attrs, row) {
+    const attrKey = attrs.map((a) => (a.text_value != null ? `${norm(a.type.name)}=${norm(a.text_value)}` : norm(a.type.name))).sort().join(',');
+    const baseKey = `${gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
+    const rowDate = row.dateKeyed ? formatDateValue(rowDateInfo(row, lt).value) : '';
+    return rowDate ? `${baseKey}|d:${rowDate}` : baseKey;
+  }
+  /**
+   * [Z-MSYN] The role credits of the rows that are one relationship (the same entry, instrument, target, date and other attributes –
+   * the second was left out before, its role credit lost): key → type id → their role credits in the order of the rows.
+   */
+  function msynCreditsOf(rows, attrsOf) {
+    const out = new Map();
+    if (!msynMerge()) return out;
+    const lists = new Map();
+    for (const row of rows) {
+      if (row.level === 'skip' || !['recording', 'release', 'release_group'].includes(row.level)) continue;
+      const artist = S.artists.get(row.artistKey);
+      const lt = currentLinkType(row);
+      if (!artist || !artist.mbid || !lt || !['instrument', 'vocal'].includes(norm(lt.name))) continue;
+      const r = attrsOf(row, lt);
+      const root = primaryRootOf(lt);
+      if (!r || r.error || !root || rowDateInfo(row, lt).error) continue;
+      const prim = r.attrs.filter((a) => a.type.id !== root.id && (a.type.root_id === root.id || a.type.parent_id === root.id));
+      if (!prim.length) continue;
+      const gids = row.level === 'release' ? [releaseMbid] : row.level === 'release_group' ? (S.releaseGroup ? [S.releaseGroup.id] : [])
+        : [...row.tracks].map((i) => S.mbTracks[i]).filter(Boolean).map((t) => t.recordingGid);
+      for (const gid of gids) {
+        const key = planKeyOf(gid, artist, lt, r.attrs, row);
+        if (!lists.has(key)) lists.set(key, []);
+        lists.get(key).push(prim);
+      }
+    }
+    for (const [key, list] of lists) {
+      if (list.length < 2) continue;
+      const m = new Map();
+      list.flat().forEach((a) => {
+        const c = String(a.credited_as || '').trim();
+        if (!m.has(a.type.id)) m.set(a.type.id, []);
+        if (c && !m.get(a.type.id).some((x) => norm(x) === norm(c))) m.get(a.type.id).push(c);
+      });
+      out.set(key, m);
+    }
+    return out;
+  }
+  /** [Z-MSYN] The attributes of a row with the role credits of all rows of its relationship ("Juno 6, Multipoly"). */
+  function msynApply(attrs, m) {
+    if (!m) return attrs;
+    return attrs.map((a) => {
+      const list = m.get(a.type.id);
+      if (!list) return a;
+      const x = { ...a };
+      if (list.length) x.credited_as = list.join(', ');
+      else delete x.credited_as;
+      return x;
+    });
   }
 
   /** [E4] (3.35.0) Items of the kind that is joined (whether it is joined now or not – a single one keeps its jkey). */
@@ -14055,6 +14157,64 @@
       S.logEl.querySelector('ol').insertAdjacentHTML('beforeend', logItemHtml(entry));
       scrollLog();
     }
+    scheduleRun(); // [Z-FOOT] (3.97.0)
+  }
+
+  /**
+   * [Z-FOOT] (3.97.0) The run in the footer: left in its line a chip with the latest step of the log (yellow while the dashboard reads
+   * or compares – a step of the import, a request to MusicBrainz waiting or running –, the whole text in its tooltip), filled as far
+   * as the requests known so far are done, and a thin line along the top of the footer as long; when all is done (after a moment
+   * without work) the chip is green – "All imports and checks done" – and stays, the line goes.
+   */
+  function scheduleRun() {
+    // (a step logged before the requests' counter exists: nothing to show yet)
+    try {
+      if (RUN.timer) return;
+    } catch {
+      return;
+    }
+    RUN.timer = setTimeout(() => {
+      RUN.timer = null;
+      renderRun();
+    }, 0);
+  }
+  const runBusy = () => !!S.busy || RUN.started > RUN.done;
+  function renderRun() {
+    const active = runBusy();
+    if (active) {
+      if (RUN.idleTimer) clearTimeout(RUN.idleTimer);
+      RUN.idleTimer = null;
+      RUN.active = true;
+      RUN.finished = false;
+    } else if (RUN.active && !RUN.idleTimer) {
+      // (between two steps of an import nothing may run for a moment: done only after a while without work)
+      RUN.idleTimer = setTimeout(() => {
+        RUN.idleTimer = null;
+        if (runBusy()) return;
+        Object.assign(RUN, { active: false, finished: true, started: 0, done: 0 });
+        drawRun();
+      }, RUN.idleMs);
+    }
+    drawRun();
+  }
+  function drawRun() {
+    if (!S.overlay) return;
+    const box = $('foot-run');
+    const line = $('foot-line');
+    if (!box || !line) return;
+    const busy = RUN.active;
+    const pct = busy ? (RUN.started ? Math.round((100 * RUN.done) / RUN.started) : 0) : 100;
+    const last = S.log.length ? logText(S.log[S.log.length - 1]) : '';
+    const text = busy ? (S.busy ? tr(S.busy.key, S.busy.params) : last) || tr('foot.runBusy') : tr('foot.runDone');
+    box.hidden = !busy && !RUN.finished;
+    box.classList.toggle('dci-foot-run-busy', busy);
+    box.classList.toggle('dci-foot-run-done', !busy && RUN.finished);
+    box.style.setProperty('--run', `${pct}%`);
+    box.querySelector('.dci-foot-run-t').textContent = text;
+    box.title = busy ? `${text}${RUN.started ? `\n${tr('foot.runCount', { done: RUN.done, of: RUN.started })}` : ''}` : `${text}${last ? `\n${last}` : ''}`;
+    box.dataset.pct = String(pct);
+    line.hidden = !busy;
+    line.style.setProperty('--run', `${pct}%`);
   }
 
   function scrollLog() {
@@ -14256,7 +14416,7 @@
 
   function rulesTables() {
     const cell = (c) => `<td>${esc(String(c))}</td>`;
-    const onCell = (id) => `<td><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id }))}"></td>`;
+    const onCell = (id) => `<td><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''}${LOCKED_RULES.has(id) ? ' disabled' : ''} aria-label="${esc(tr('rules.onAria', { id }))}"></td>`;
     const row = (id, cells) => `<tr data-rid="${esc(id || '')}">${id ? onCell(id) : '<td></td>'}${cells.map(cell).join('')}</tr>`;
     const head = (cells, toggle = true) => `<thead><tr>${toggle ? `<th>${esc(tr('rules.on'))}</th>` : ''}${cells.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>`;
     const roles = roleRules(RULE_PROBE);
@@ -15340,11 +15500,14 @@
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
     const one = (id) => {
       const on = ruleOn(id);
-      return `<span class="dci-qbtn-wrap"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}" title="${esc(`${id}: ${notes.get(id) || ''}`)}">
+      // [Z-MSYN] (3.97.0) a switch that cannot be switched on yet: greyed, with why
+      const locked = LOCKED_RULES.has(id);
+      return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
         <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel">${esc(tr(`quick.${id}`))}</span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
-      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div><div class="dci-quick-grid">${QUICK_SWITCHES.map(one).join('')}</div></div>`;
+      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div><div class="dci-quick-grid">${QUICK_SWITCHES.map(one).join('')}</div>${QUICK_SWITCHES.filter((id) => LOCKED_RULES.has(id))
+        .map((id) => `<p class="dci-sub dci-qlocked-note" data-qs-note="${esc(id)}">${esc(`${id}: ${tr(`quick.${id}.locked`)}`)}</p>`).join('')}</div>`;
   }
 
   /** Redraws the parts of the rules window that depend on the rules. */
@@ -18685,6 +18848,7 @@
   function setBusy(key, params = {}) {
     S.busy = key ? { key, params } : null;
     renderBusy();
+    scheduleRun(); // [Z-FOOT] (3.97.0)
   }
 
   function renderBusy() {
@@ -24745,9 +24909,10 @@
     const lt = currentLinkType(r);
     const q = questionRuleFor(r);
     const instr = (x, text = x) => ({ act: 'instr-pick', attr: 'instr', value: x, text });
-    if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base) return q.options.map((x) => instr(x));
-    // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?")
-    if (q && q.preset && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
+    if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base && !keptBase(r, q)) return q.options.map((x) => instr(x));
+    // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?"); ([Z-QGTR] 3.97.0) also the
+    // instrument of the word itself chosen ("guitar" for "Guitar")
+    if (q && (q.preset || keptBase(r, q)) && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
     const g = r.instrGuess;
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
       return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
@@ -27971,7 +28136,7 @@
     if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || !questionAsks(q, row)) return '';
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
     // [Q013] (3.42.3) an answer set at once: the others to choose ("Horns" is set as horn – or as: brass)
-    if (q.preset && norm(row.primaryText) !== q.base) {
+    if ((q.preset && norm(row.primaryText) !== q.base) || keptBase(row, q)) {
       const others = q.options.filter((o) => norm(o) !== norm(row.primaryText));
       return `<div class="dci-bass-ask" data-question="${q.id}" data-preset="1">${esc(tr('instrAsk.preset', { name: row.base, set: row.primaryText, credit: q.credit }))} ${others.map(pick).join(' · ')}</div>`;
     }
@@ -28089,6 +28254,9 @@
     const artist = S.artists.get(row.artistKey);
     row.primaryText = name;
     row.primaryTouched = true;
+    // [Z-QGTR] (3.97.0) the answer is the instrument of the word itself ("guitar" for "Guitar"): the question is answered
+    const q = questionRuleFor(row);
+    row.baseKept = q && norm(name) === q.base ? q.id : null;
     refreshRowDetails(row);
     log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: name, credit: row.roleCredit || '' });
     // [164] (3.37.13) a word one slip off the instrument: said once in the log too
@@ -28254,7 +28422,7 @@
       if (!hasDateInput(row.date) && rowDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
       // [3.32.3] the questions whole and to click (item 102)
-      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base && !keptBase(row, q)) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
@@ -30588,7 +30756,7 @@
       return;
     }
     rows.forEach((r) => r.tracks.forEach((i) => {
-      if (!S.workRowOpts.has(i)) S.workRowOpts.set(i, { ...rowOpts(i), typeId: String(song.id), typeAuto: 'S020' });
+      if (!S.workRowOpts.has(i)) S.workRowOpts.set(i, { ...storedOpts(rowOpts(i)), typeId: String(song.id), typeAuto: 'S020' });
     }));
   }
 
@@ -32813,21 +32981,86 @@
       <select data-f="work-lang-add" data-scope="${scope}" aria-label="${esc(tr('matrix.langAdd'))}">${workOptionsHtml(S.workOptions.languages, '').replace(`>${esc(tr('works.none'))}<`, `>${esc(tr('matrix.langAdd'))}<`)}</select></span>`;
   }
 
-  const rowOpts = (i) => S.workRowOpts.get(i) || { typeId: S.workDefaults.typeId, languageIds: [...S.workDefaults.languageIds] };
+  /** [Z-WTS2] (3.97.0) The key of a new work's options: its track (the track's one work), "4.2" for a part of the track. */
+  const optsKey = (i, plan) => (plan && plan.part != null ? String(plan.gid).replace(/^pending:/, '') : i);
+  /** [Z-WTS2] A key of the page ("4", "4.2") as a key of S.workRowOpts. */
+  const optsKeyOf = (v) => (String(v).includes('.') ? String(v) : Number(v));
+  /** [Z-WTS2] (3.97.0, S153) A title of a track without lyrics ("(Instrumental)", "Instrumental Version"). */
+  const INSTRUMENTAL_RE = /\binstrumental\b/i;
+  const NO_LYRICS_ID = '486';
 
-  /** Work type and lyrics languages of a row in short ("Song · English"), and the selects when opened. */
-  function rowOptsHtml(i) {
-    const opts = rowOpts(i);
+  /**
+   * The work type and lyrics languages of a new work: its own choice, else the defaults. [Z-WTS2] (3.97.0) by its key (optsKey): a part
+   * of a medley or of songs starts from its track's, a part of a suite without a type (Q-bv); a type that only S020 set keeps following
+   * the default languages (a language added to the defaults reaches it); a title saying "instrumental" gets [No lyrics] (S153) while
+   * its languages are not chosen by hand.
+   */
+  function rowOpts(key) {
+    const part = typeof key === 'string' && key.includes('.');
+    const i = part ? Number(key.split('.')[0]) : Number(key);
+    const own = S.workRowOpts.get(part ? key : i);
+    let o;
+    // ((review) a stored type of S020 alone – or a stored copy that held S153's [No lyrics] – takes the default languages; S153 below again)
+    if (own) o = (own.typeAuto || own.langAuto) && !own.langTouched ? { ...own, languageIds: [...S.workDefaults.languageIds], langAuto: null } : own;
+    else if (part) {
+      const base = rowOpts(i);
+      const plan = planOf(i, `pending:${key}`);
+      o = { typeId: plan && !plan.medley && !plan.songs ? '' : base.typeId, languageIds: [...base.languageIds], typeAuto: base.typeAuto || null, langAuto: base.langAuto || null };
+    } else o = { typeId: S.workDefaults.typeId, languageIds: [...S.workDefaults.languageIds] };
+    if (!o.langTouched && !o.langAuto && ruleOn('S153') && S.workOptions.languages.some((l) => String(l.id) === NO_LYRICS_ID)) {
+      const title = part ? ((planOf(i, `pending:${key}`) || {}).title || '') : ((S.mbTracks[i] || {}).title || '');
+      if (INSTRUMENTAL_RE.test(title)) o = { ...o, languageIds: [NO_LYRICS_ID], langAuto: 'S153' };
+    }
+    return o;
+  }
+
+  /** [Z-WTS2] (3.97.0, review) Options to store: the languages S153 gave are no choice (stored as the defaults, S153 decides again). */
+  const storedOpts = (o) => (o.langAuto && !o.langTouched ? { ...o, languageIds: [...S.workDefaults.languageIds], langAuto: null } : o);
+
+  /** [Z-WTS2] (3.97.0) A language of a work of MusicBrainz (ISO 639-3) by its name: the page's languages, the built-in list. */
+  function langNameOfCode(code) {
+    const known = Object.values((getMB().linkedEntities || {}).language || {}).find((x) => x && x.iso_code_3 === code);
+    if (known && known.name) return known.name;
+    const f = FALLBACK_LANGUAGES.find(([, , c]) => c === code);
+    return f ? f[1] : code;
+  }
+  /** [Z-WTS2] (3.97.0) The label of a work: "[Song · English, German]" ("–" without a type). */
+  function workLabelText(typeName, langs) {
+    if (!typeName && !langs.length) return `[${tr('matrix.optsNone')}]`;
+    return `[${typeName || '–'}${langs.length ? ` · ${langs.join(', ')}` : ''}]`;
+  }
+  /**
+   * [Z-WTS2] (3.97.0) The label of a work of MusicBrainz beside its title, only shown: its type and lyrics languages as MusicBrainz has
+   * them (a work found by a search may not say its languages: left out).
+   */
+  function workLabelRoHtml(w) {
+    if (!w) return '';
+    const langs = Array.isArray(w.languages) ? w.languages.map((c) => langNameOfCode(String(c))) : [];
+    if (!w.type && !langs.length && !Array.isArray(w.languages)) return '';
+    const text = !w.type && !langs.length ? `[${tr('matrix.noType')}]` : workLabelText(w.type || '', langs);
+    return ` <span class="dci-mx-wlabel dci-mx-wlabel-ro" title="${esc(tr('matrix.labelRoTitle'))}">${esc(text)}</span>`;
+  }
+
+  /**
+   * Work type and lyrics languages of a new work: [Z-WTS2] (3.97.0) a label beside its title ("[Song · English]" – what is filled in),
+   * a click opens the selects below the line; by its key (the track, or "4.2" for a part).
+   */
+  function rowOptsHtml(key) {
+    const opts = rowOpts(key);
+    const part = typeof key === 'string';
     const typeName = (S.workOptions.types.find((t) => String(t.id) === String(opts.typeId)) || {}).name || '';
     const langName = (id) => (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || id;
-    const open = S.mxOptsOpen.has(i);
-    // [Z-WTS] (3.52.0) a work without its own choice: the suggestion not taken yet, yellow with "?" (nothing of it is filled in)
-    const sg = !S.workRowOpts.has(i) && S.workSuggest ? suggestionText(S.workSuggest) : '';
-    const btn = `<button type="button" class="dci-textbtn dci-mx-optsbtn" data-act="mx-opts" aria-expanded="${open}" title="${esc(tr('matrix.optsTitle'))}">${open ? '▾' : '▸'} ${esc([typeName, ...opts.languageIds.map(langName)].filter(Boolean).join(' · ') || tr('matrix.optsNone'))}</button>${typeAutoHtml(opts)}`;
-    const hint = sg ? ` <span class="dci-mx-wtsrow" title="${esc(tr('matrix.suggestRowTitle'))}">${esc(sg)}?</span>` : '';
-    const panel = open ? `<div class="dci-row-opts"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
-      <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${i}`)}</label></div>` : '';
-    return { btn, panel, hint };
+    const open = S.mxOptsOpen.has(key);
+    // [Z-WTS] (3.52.0) a work without its own choice: the suggestion not taken yet, yellow with "?" (nothing of it is filled in);
+    // ([Z-WTS2] 3.97.0) only the mark at the label – what the label says is filled in
+    const ownChoice = S.workRowOpts.has(key) || (part && S.workRowOpts.has(Number(key.split('.')[0])));
+    const sg = !ownChoice && S.workSuggest ? suggestionText(S.workSuggest) : '';
+    const hint = sg ? `<span class="dci-mx-wtsrow" title="${esc(tr('matrix.suggestRowTitle2', { what: sg }))}">?</span>` : '';
+    const autoMark = opts.langAuto ? ` <span class="dci-sub dci-ruleref" title="${esc(tr('matrix.instrumentalAuto'))}">${esc(opts.langAuto)}</span>` : '';
+    const btn = ` <button type="button" class="dci-textbtn dci-mx-wlabel" data-act="mx-opts" data-wkey="${esc(String(key))}" aria-expanded="${open}" title="${esc(tr('matrix.optsTitle'))}">${esc(workLabelText(typeName, opts.languageIds.map(langName)))}</button>${hint}${typeAutoHtml(opts)}${autoMark}`;
+    const panel = open ? `<div class="dci-row-opts" data-wkey="${esc(String(key))}"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
+      <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${key}`)}</label></div>` : '';
+    return { btn, panel, hint: '' };
   }
 
   /**
@@ -32851,7 +33084,7 @@
     const line = (inner) => `<div class="dci-mx-line">${inner}${cskip}${linkAttrsToggleHtml(mrow)}</div>`;
     const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
-      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}`)}${linkAttrsHtml(mrow)}`;
+      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}`)}${linkAttrsHtml(mrow)}`;
     }
     if (work && work.planned) {
       const plan = planOf(i, work.gid);
@@ -32859,8 +33092,10 @@
       // [Z-SU] (3.41.1) a part of a suite: "part 2 of 3", its name; undone with the suite (above the matrix)
       if (plan && plan.part != null) {
         const n = (S.workParts.get(i) || []).length;
-        const what = pending ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
-          : `<span class="dci-badge dci-badge-plan">${esc(tr('works.plannedFound'))}</span> ${mbLink(work)}`;
+        // [Z-WTS2] (3.97.0) each part its own type and languages
+        const po = pending ? rowOptsHtml(optsKey(i, plan)) : { btn: workLabelRoHtml(work), panel: '' };
+        const what = pending ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>${po.btn}`
+          : `<span class="dci-badge dci-badge-plan">${esc(tr('works.plannedFound'))}</span> ${mbLink(work)}${po.btn}`;
         const pk = plan.songs ? 'songs' : plan.medley ? 'medley' : 'suite';
         const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr(`${pk}.partTitle`, { name: plan.suiteName || '' }))}">${esc(tr(`${pk}.partOf`, { k: plan.k, n }))}</span> ` : '';
         // [Z-SU] (3.41.3) a medley: one work again
@@ -32868,17 +33103,17 @@
         // (3.41.4, review) a work of MusicBrainz found for the part: offered
         const pick = pending && plan.offer ? ` <button type="button" class="dci-small" data-act="part-pick" data-pgid="${esc(plan.gid)}" title="${esc(tr('suite.partPickTitle'))}">${esc(tr('suite.partPick', { title: plan.offer.title }))}</button>
           <a class="dci-mblink" href="/work/${esc(plan.offer.gid)}" target="_blank" rel="noopener" aria-label="${esc(plan.offer.title)}"><span class="dci-src dci-src-mb">MB</span></a>` : '';
-        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}`)}${linkAttrsHtml(mrow)}`;
+        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}`)}${linkAttrsHtml(mrow)}${po.panel}`;
       }
       const o = pending ? rowOptsHtml(i) : { btn: '', panel: '', hint: '' };
       const badge = pending
-        ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
-        : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}`;
+        ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>${o.btn}`
+        : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}`;
       // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
       const mParts = pending ? medleyParts(i) : [];
       const sk = songParts(i).length ? 'songs' : 'medley'; // [Z-YTW] (3.80.0)
       const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr(`${sk}.splitTitle`, { list: mParts.join(' · ') }))}">${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
-      return `${head}${line(`${badge} ${unplan} ${o.btn}${o.hint}${split}`)}${linkAttrsHtml(mrow)}
+      return `${head}${line(`${badge} ${unplan}${split}`)}${linkAttrsHtml(mrow)}
         <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
     const search = S.workSearch.get(i);
@@ -32916,11 +33151,10 @@
     const menuOpen = S.mxNewMenu === i;
     return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
         <span class="dci-split"><button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pendingShort'))}</button><button type="button"
-          class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.hint}${split}${state}${cskip}</div>
+          class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.btn}${split}${state}${cskip}</div>
       ${menuOpen ? `<div class="dci-mx-newmenu" role="group" aria-label="${esc(tr('matrix.newMenu'))}">
         <button type="button" class="dci-textbtn" data-act="work-search">${esc(tr('works.searchMb'))}</button>
-        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>
-        ${o.btn}${o.panel}</div>` : ''}
+        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button></div>` : ''}${o.panel}
       ${found}`;
   }
 
@@ -33181,7 +33415,8 @@
     if (plan.entity) return plan.entity;
     const re = getMB().relationshipEditor;
     // (the parts of a suite: no type of their own – Q-bv; [Z-SUW] (3.41.6) the suite itself is created in MusicBrainz's form first)
-    const opts = plan.part != null ? { ...rowOpts(i), typeId: '' } : rowOpts(i);
+    // ([Z-WTS2] 3.97.0) a part by its own options (a suite's part still without a type by default)
+    const opts = rowOpts(optsKey(i, plan));
     const known = (getMB().linkedEntities || {}).language || {};
     const language = (id) => known[id] || {
       entityType: 'language', id: Number(id), name: (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || '',
@@ -33637,6 +33872,17 @@
   const suggestionKey = (sg) => (sg ? `${sg.typeId}|${sg.langIds ? sg.langIds.join('+') : '-'}` : '');
   /** [Z-WTS] (review) The works of an artist read: the suggestion differs from the one drawn (the matrix is drawn again for it). */
   const suggestionChanged = () => ruleOn('S081') && suggestionKey(workSuggestion()) !== (S.workSuggestRaw || '');
+  /**
+   * [Z-WTS2] (3.97.0) The defaults chosen by hand ("⚙ Defaults", or "Change …" of the suggestion): they answer the suggestion shown – it
+   * goes, with its marks at the works; the defaults are filled in (before, the suggestion stayed and its marks looked like the values).
+   */
+  function defaultsByHand() {
+    S.workDefaults.typeAccepted = true;
+    if (S.workSuggestShown) {
+      S.workSuggestDone = S.workSuggestShown;
+      log('info', 'worksDefaultsOwn', { what: defaultsSummary() });
+    }
+  }
   /** [Z-WTS] The suggestion in words: "no work type · [No lyrics]" (a part without a majority left out). */
   function suggestionText(sg) {
     const typeName = sg.typeId === undefined ? '' : sg.typeId === '' ? tr('matrix.noType') : (S.workOptions.types.find((x) => String(x.id) === sg.typeId) || {}).name || '';
@@ -34583,7 +34829,8 @@
         if (!S.wattrOpenAll) S.wattrOpen.clear();
         break;
       case 'mx-opts': {
-        const i = Number(btn.closest('tr[data-work]').dataset.work);
+        // ([Z-WTS2] 3.97.0) by the work's key (a part of a track its own)
+        const i = optsKeyOf(btn.dataset.wkey != null ? btn.dataset.wkey : btn.closest('tr[data-work]').dataset.work);
         if (S.mxOptsOpen.has(i)) S.mxOptsOpen.delete(i);
         else S.mxOptsOpen.add(i);
         break;
@@ -34808,21 +35055,26 @@
         break;
       }
       case 'mx-type': {
-        const i = workIndexOf(el);
-        S.workRowOpts.set(i, { ...rowOpts(i), typeId: el.value, typeAuto: null });
+        const box = el.closest('[data-wkey]');
+        const i = box ? optsKeyOf(box.dataset.wkey) : workIndexOf(el);
+        S.workRowOpts.set(i, { ...storedOpts(rowOpts(i)), typeId: el.value, typeAuto: null });
         scheduleRemember();
-        return true;
+        // ((3.97.0, review) drawn again: the label says what is filled in)
+        break;
       }
       case 'work-lang-add': {
         if (!el.value) return true;
         const scope = el.dataset.scope;
         if (scope === 'default') {
           if (!S.workDefaults.languageIds.includes(el.value)) S.workDefaults.languageIds.push(el.value);
+          defaultsByHand();
         } else {
-          const i = Number(scope.split(':')[1]);
+          const i = optsKeyOf(scope.split(':')[1]);
           const o = rowOpts(i);
-          if (!o.languageIds.includes(el.value)) o.languageIds.push(el.value);
-          S.workRowOpts.set(i, { ...o, langTouched: true });
+          // ([Z-WTS2] 3.97.0) a language chosen by hand replaces [No lyrics] of an instrumental title (S153)
+          const ids = o.langAuto ? [] : [...o.languageIds];
+          if (!ids.includes(el.value)) ids.push(el.value);
+          S.workRowOpts.set(i, { ...o, languageIds: ids, langTouched: true, langAuto: null });
         }
         break;
       }
@@ -38473,10 +38725,11 @@
         const scope = btn.dataset.scope;
         if (scope === 'default') {
           S.workDefaults.languageIds = S.workDefaults.languageIds.filter((x) => x !== btn.dataset.id);
+          defaultsByHand();
         } else {
-          const i = Number(scope.split(':')[1]);
+          const i = optsKeyOf(scope.split(':')[1]);
           const o = rowOpts(i);
-          S.workRowOpts.set(i, { ...o, languageIds: o.languageIds.filter((x) => x !== btn.dataset.id), langTouched: true });
+          S.workRowOpts.set(i, { ...o, languageIds: o.languageIds.filter((x) => x !== btn.dataset.id), langTouched: true, langAuto: null });
         }
         renderWorks();
         break;
@@ -38955,6 +39208,7 @@
       case 'work-type':
         S.workDefaults.typeId = el.value;
         S.workDefaults.typeAuto = null;
+        defaultsByHand();
         scheduleRemember();
         break;
 
@@ -39690,12 +39944,14 @@
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
         <footer class="dci-foot">
+          <div class="dci-foot-line" data-el="foot-line" aria-hidden="true" hidden></div>
           <div class="dci-livecom" data-el="livecom" hidden></div>
           <div class="dci-foot-bar">
             <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
               <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
               <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
             </span>
+            <span class="dci-foot-run" data-el="foot-run" role="status" hidden><span class="dci-foot-run-t"></span></span>
             <div class="dci-sum" data-el="sum"></div>
             <span class="dci-foot-chips" data-el="foot-chips" role="status" aria-live="polite"></span>
             <div class="dci-foot-actions">
@@ -41708,7 +41964,7 @@
       out.push({ q: 'guess', a: other ? 'other' : sp === 'typo' ? 'typo' : sp === 'same' ? 'same' : 'similar' });
     }
     const q = questionRuleFor(row);
-    if (q && norm(row.primaryText) && norm(row.primaryText) !== q.base && (q.options || []).some((o) => norm(o) === norm(row.primaryText))) out.push({ q: q.id, a: row.primaryText });
+    if (q && norm(row.primaryText) && (norm(row.primaryText) !== q.base || keptBase(row, q)) && (q.options || []).some((o) => norm(o) === norm(row.primaryText))) out.push({ q: q.id, a: row.primaryText });
     const tq = typeQuestionFor(row);
     if (tq && row.typeAnswer != null) {
       const o = tq.options[row.typeAnswer];
@@ -43896,6 +44152,9 @@
     // (the yellow grounds written as colours: as the suggestions)
     `${DK_OV} .dci-waiting, ${DK_OV} input.dci-from-dg, ${DK_OV} .dci-row.dci-unmapped > td, ${DK_OV} .dci-foot-chip-warn { background: var(--sugg-bg); border-color: var(--sugg-line); }`,
     `${DK_OV} .dci-waiting, ${DK_OV} .dci-foot-chip-warn, ${DK_OV} input.dci-from-dg { color: var(--sugg-ink); }`,
+    // [Z-FOOT] (3.97.0) the run in the footer
+    `${DK_OV} .dci-foot-run { color: var(--sugg-ink); border-color: var(--sugg-line); background: linear-gradient(to right, #5a4a1c var(--run, 0%), var(--sugg-bg) var(--run, 0%)); }`,
+    `${DK_OV} .dci-foot-run.dci-foot-run-done { color: #bfe8cc; border-color: #3f7d55; background: #1f3a29; }`,
     `${DK_OV} input.dci-from-dg.dci-rc-dbr { background: #22314d; border-color: #6f9be0; color: #dce8ff; }`,
   // ((3.49.0) each rule on one line, as the rest of the dark sheet – its lines are its rules)
   ].map((x) => x.replace(/\s*\n\s*/g, ' ')).join('\n');
@@ -44218,6 +44477,9 @@
       #dci-rules .dci-qbtn { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin: 0; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9);
         border: 1px solid #c8c5d6; border-right: 0; border-radius: 4px 0 0 4px; background: #fff; color: #55526a; font: inherit; text-align: left; cursor: pointer; }
       #dci-rules .dci-qbtn:hover { border-color: #8e88c2; }
+      #dci-rules .dci-qlocked { opacity: 0.55; }
+      #dci-rules .dci-qlocked .dci-qbtn { cursor: not-allowed; }
+      #dci-rules .dci-qlocked-note { margin: 0; padding: 0 calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 8); }
       #dci-rules .dci-qbtn:focus-visible { outline: 2px solid #5b55a0; outline-offset: 1px; }
       #dci-rules .dci-qled { flex: 0 0 auto; position: relative; width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 16); border-radius: 999px; background: #d6d3e2; transition: background 0.15s; }
       #dci-rules .dci-qled::after { content: ''; position: absolute; top: calc(var(--u, 1px) * 2); left: calc(var(--u, 1px) * 2); width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12);
@@ -44638,6 +44900,9 @@
       .dci-mx-line .dci-small { padding: 0 calc(var(--u, 1px) * 6); }
       .dci-mx-line .dci-badge { font-size: calc(var(--u, 1px) * 11); }
       .dci-mx-optsbtn { color: var(--purple-d); }
+      .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 11.5); text-decoration: none; white-space: nowrap; }
+      .dci-mx-wlabel-ro { color: var(--muted, #6b6880); }
+      .dci-mx-wlabel + .dci-mx-wtsrow { margin-left: calc(var(--u, 1px) * 2); }
       .dci-wattr-sum { margin-left: auto; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-wattr-tgl { color: var(--purple-d); }
       .dci-wpill { min-width: calc(var(--u, 1px) * 22); height: calc(var(--u, 1px) * 20); padding: 0 calc(var(--u, 1px) * 4); border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--muted);
@@ -45610,7 +45875,13 @@
       /* [169] (3.38.4) the footer: the live comments, then one line – ▲▼, the summary, its chips, the actions with "Stage …" at the
          right –, wrapped by the width of the dashboard (not of the screen); narrower than about 1,100 px the checkboxes are in
          "⚙ Options ▾" */
-      .dci-foot { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); container-type: inline-size; }
+      .dci-foot { position: relative; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); container-type: inline-size; }
+      /* [Z-FOOT] (3.97.0) the run: a chip with the latest step (yellow, filled as far as done; green when all is done) and a line on top */
+      .dci-foot-line { position: absolute; top: -1px; left: 0; right: 0; height: 2px; background: linear-gradient(to right, #d9a400 var(--run, 0%), transparent var(--run, 0%)); pointer-events: none; transition: background-size 0.3s; }
+      .dci-foot-run { position: relative; display: inline-block; flex: 1 1 calc(var(--u, 1px) * 70); min-width: 0; max-width: calc(var(--u, 1px) * 300); overflow: hidden; border: 1px solid #e8d48a; border-radius: 999px; padding: 1px calc(var(--u, 1px) * 8);
+        font-size: calc(var(--u, 1px) * 12); line-height: 1.5; white-space: nowrap; text-overflow: ellipsis; color: #7a5a00; background: linear-gradient(to right, #f6e4a2 var(--run, 0%), #fff8db var(--run, 0%)); }
+      .dci-foot-run-t { overflow: hidden; text-overflow: ellipsis; }
+      .dci-foot-run.dci-foot-run-done { color: #1d5b36; border-color: #b5dbc2; background: #e6f3ea; font-weight: 600; }
       .dci-foot-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
       .dci-sum { min-width: 0; }
       .dci-sum-new[title] { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }

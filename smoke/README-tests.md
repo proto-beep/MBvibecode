@@ -424,6 +424,9 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
+                                #   wts397: 3.97.0 (Z-WTS2, S153): the label "[Song · English]" beside each work (what is filled in, a click
+                                #     changes it; a part of a medley its own); a "?" for the suggestion; defaults chosen by hand answer it;
+                                #     "(Instrumental)" → [No lyrics]; a work of MusicBrainz only shown ("[no work type]")
                                 #   snw383: 3.83.0 (Z-SNW): three answers for works of the same title, the edit note names them, the switch
                                  #     (review: Esc cancels the question, "Reset" of the topic)
                                 #   wts: 3.52.0 (Z-WTS): the suggestion of a work type and a language from the works of the artists (yellow, "Accept");
@@ -576,6 +579,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   foot397: 3.97.0 (Z-FOOT): the run in the footer – a yellow chip with the latest step, filled as far as the
+                                #     requests are done, a 2-px line on top; done: green "All imports and checks done" (stays), the line gone,
+                                #     the footer no higher; dark colours
                                 #   head393: 3.93.0: tracks in short "1, 3–5, 7, 8" / "2, 3" (Z-TRR); "Reading …" not covered by the sticky
                                 #     bar (Z-BCST); "Script Companion: …" (Z-CNAME). From 3.93.0 the other files expect two tracks one by one
                                 #     ("tracks 2, 3", "Tracks A1, B1") where they had "2–3", "A1–B1"
@@ -765,6 +771,11 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   qgtr397: 3.97.0 (Z-QGTR): "Guitar" also offers guitar, "Bass" bass guitar, "Horns" wind instruments; the
+                                #     family itself chosen answers the question (no "?")
+                                #   msyn397: 3.97.0 (Z-MSYN, S155): two models of one instrument on a recording – one instrument credited
+                                #     "juno 6, multipoly" (before the second row was left out), per track, also with "One row each"; the
+                                #     quick switch S155 off and greyed with its note
                                 #   arr394: 3.94.0 (Z-ARRL, Z-ARRD, S150): Discogs "Arranged By" on the works (entry among "Writing credits and
                                 #     arrangements of the works", "arranger · Work" clicks back to Recording → Release → Work); "[Strings]" on the
                                 #     recordings; a text "All songs were arranged by" on the works, "Arranged by" alone not (review: nor a song
@@ -809,6 +820,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
                                 #     and not wider than its cell, at 100 % and A+ ×3
                                 #   chipask: 3.37.14 (163): compact – "? bass ▾" lists electric bass guitar · double bass · acoustic bass guitar
+                                #     (from 3.97.0 · bass guitar)
                                 #     (focus on the first, visible), double bass chosen: "double bass “bass”" without "?"; "? Taischigoto ▾", Esc
                                 #     closes (focus on ▾), taishōgoto chosen; "? Directed By ▾" conductor; the chip's name opens the full matrix
                                 #   chipinfo: 3.38.6 (163b): ⓘ after a chip's name with its applied notes as tooltip – none while "?"; "Buddha

@@ -1116,7 +1116,7 @@ def case_flagcols():
 def case_chipask():
     """Credits Importer 3.37.14 (collected item 163): in an entry compact as a
     matrix a chip with a question has ▾ – its answers below it.
-    A) "Bass" (Q001): "? bass" with ▾ – electric bass guitar · double bass · acoustic bass guitar; "double bass" chosen: the
+    A) "Bass" (Q001): "? bass" with ▾ – electric bass guitar · double bass · acoustic bass guitar ([3.97.0] · bass guitar); "double bass" chosen: the
        chip "double bass “bass”" without "?" and without ▾, the list closed, all rows of the line double bass.
     B) "Taischigoto" (no instrument of MusicBrainz): "? Taischigoto" ▾ – taishōgoto · other instruments “taischigoto” ·
        miscellaneous support …; Esc closes the list (the focus back on ▾); taishōgoto chosen: "taishōgoto “taischigoto”".
@@ -1174,7 +1174,7 @@ def case_chipask():
             a2 = pg.evaluate(CHIPS, 'Low Man')
             bass2 = next((c for c in a2 or [] if 'double bass' in c['name']), None)
             print('A) vorher:', a0, '| ▾:', a1, focus, vis, '| double bass:', a2)
-            results.append(bool(bass) and bass['q'] and [c['menu'] for c in a1 if c['line'] == bass['line']][0] == ['electric bass guitar', 'double bass', 'acoustic bass guitar']
+            results.append(bool(bass) and bass['q'] and [c['menu'] for c in a1 if c['line'] == bass['line']][0] == ['electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar']
                            and focus == 'electric bass guitar' and vis is True
                            and bool(bass2) and bass2['name'] == 'double bass “bass”' and not bass2['q'] and not bass2['menu'] and not any(c['menu'] for c in a2))
             # B) Taischigoto, Esc
@@ -2369,5 +2369,181 @@ def case_arr394():
     finally:
         H.ws_release = orig_ws
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_qgtr397():
+    """Credits Importer 3.97.0 (collected item Z-QGTR): the questions of an instrument family also offer the family itself.
+    A) Chips ▾: "Guitar" (Q002) – electric guitar · acoustic guitar · guitar; "Bass" (Q001) – … · bass guitar; "Horns" (Q013, horn
+       set at once) – brass · wind instruments.
+    B) "guitar" chosen for "Guitar": the chip "guitar" without "?" (the question answered – until 3.96.0 the word itself kept asking),
+       ▾ offers the others (as for "Horns"); staged: guitar without a role credit.
+    C) "wind instruments" chosen for "Horns": "wind instruments “horns”"."""
+    H.ENTRIES_VIEW = 'matrix'
+    H.attr(9152, 'horn', 14, 14)
+    H.attr(9153, 'brass', 14, 14)
+    H.attr(9154, 'wind instruments', 14, 14)
+    H.attr(9155, 'bass guitar', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = [('Low Man', 'Guitar, Bass, Horns', 3081)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    CHIPS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('.dci-em-cl .dci-em-chip')].map(c => ({ name: c.querySelector('.dci-em-chipname').textContent.replace(/\\s+/g, ' ').trim(),
+        q: !!c.querySelector('[data-act=em-chipask]'), line: c.dataset.line })) : null; }"""
+    MENU = "() => [...document.querySelectorAll('.dci-em-chipmenu button')].map(b => b.textContent.trim())"
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity0.name === 'Low Man').map(r => (r.attributes && r.attributes.__tree ? r.attributes.__tree : [])
+      .map(a => (a.type ? a.type.name : '') + (a.credited_as ? ' “' + a.credited_as + '”' : ''))).flat().filter((x, i, a) => a.indexOf(x) === i).sort())()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            low = sec_sel(pg, 'Low Man')
+
+            def menu_of(word):
+                c = next((x for x in pg.evaluate(CHIPS, 'Low Man') or [] if word in x['name'].lower()), None)
+                if not c or not c['q'] and word != 'horn':
+                    return c, None
+                btn = pg.locator(f'{low} .dci-em-chip[data-line="{c["line"]}"] [data-act=em-chipask]')
+                if not btn.count():
+                    return c, None
+                btn.click(); pg.wait_for_timeout(400)
+                m = pg.evaluate(MENU)
+                pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+                return c, m
+            a0 = pg.evaluate(CHIPS, 'Low Man')
+            g, mg = menu_of('guitar')
+            ba, mb = menu_of('bass')
+            print('A)', a0, '| Guitar:', mg, '| Bass:', mb)
+            results.append(mg == ['electric guitar', 'acoustic guitar', 'guitar'] and mb == ['electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar'])
+            pg.click(f'{low} .dci-em-chip[data-line="{g["line"]}"] [data-act=em-chipask]'); pg.wait_for_timeout(400)
+            pg.click(f'{low} .dci-em-chipmenu [data-act=instr-pick][data-instr="guitar"]'); pg.wait_for_timeout(500)
+            b0 = pg.evaluate(CHIPS, 'Low Man')
+            g2 = next((x for x in b0 if x['name'].startswith('guitar') or x['name'] == '? guitar'), None)
+            print('B)', b0)
+            # (like "Horns": ▾ stays for the other answers, the "?" goes)
+            results.append(bool(g2) and g2['name'] == 'guitar')
+            # the Horns chip: horn set at once, its ▾ (no "?") offers brass and wind instruments
+            h = next((x for x in b0 if 'horn' in x['name']), None)
+            mh = None
+            if h:
+                pg.locator(f'{low} .dci-em-chip[data-line="{h["line"]}"] .dci-em-chipname').first.evaluate('x => 0')
+                btn = pg.locator(f'{low} .dci-em-chip[data-line="{h["line"]}"] [data-act=em-chipask]')
+                if btn.count():
+                    btn.click(); pg.wait_for_timeout(400)
+                    mh = pg.evaluate(MENU)
+                    if 'wind instruments' in (mh or []):
+                        pg.click(f'{low} .dci-em-chipmenu [data-act=instr-pick][data-instr="wind instruments"]'); pg.wait_for_timeout(500)
+            c0 = pg.evaluate(CHIPS, 'Low Man')
+            print('C)', h, mh, c0)
+            results.append(mh == ['brass', 'wind instruments'] and any(x['name'] == 'wind instruments “horns”' for x in c0))
+            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            d0 = pg.evaluate(STAGED)
+            print('D)', d0)
+            results.append('guitar' in d0 and 'wind instruments “horns”' in d0)
+            print('Fehler:', errs)
+            results.append(not errs)
+        finally:
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_msyn397():
+    """Credits Importer 3.97.0 (collected item Z-MSYN; rule S155, off and greyed): several models of one instrument of an entry on a
+    recording – one instrument, the role credits joined by commas.
+    Synth Man: "Synthesizer [Juno 6]" on tracks 1–2, "Synthesizer [Multipoly]" on tracks 1–3; Guitar Man: "Electric Guitar
+    [Telecaster]" and "Electric Guitar [Les Paul]" on track 4.
+    A) Matrix (joined): tracks 1–2 one synthesizer “juno 6, multipoly” each, track 3 synthesizer “multipoly” (until 3.96.0 the second
+       row of the same relationship was left out – tracks 1–2 only “juno 6”); track 4 one electric guitar “Telecaster, Les Paul”.
+    B) "Join the instruments … " off (⚙ Settings, stored): the same – the models of one instrument are still one relationship.
+    C) Mapping rules: the quick switch S155 "… each role credit on its own" – off, disabled, its note below the switches; a click
+       changes nothing; its checkbox in the list disabled."""
+    CREDITS = [('Synth Man', 'Synthesizer [Juno 6]', 3091, '1 to 2'), ('Synth Man', 'Synthesizer [Multipoly]', 3091, '1 to 3'),
+               ('Guitar Man', 'Electric Guitar [Telecaster]', 3092, '4'), ('Guitar Man', 'Electric Guitar [Les Paul]', 3092, '4')]
+    for n, _r, i, _t in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in CREDITS}
+    rec_no = {g: k + 1 for k, g in enumerate(H.REC)}
+
+    def summary(rels):
+        return sorted((names.get(r['a']) or names.get(r['b']) or '?', rec_no.get(r['b']) or rec_no.get(r['a']) or 0, tuple(sorted(r['attrs'])))
+                      for r in rels if (names.get(r['a']) or names.get(r['b'])))
+    # (the details of Discogs in lower case as before – "juno 6")
+    want = [('Guitar Man', 4, ('electric guitar [Telecaster, Les Paul]',)), ('Synth Man', 1, ('synthesizer [juno 6, multipoly]',)),
+            ('Synth Man', 2, ('synthesizer [juno 6, multipoly]',)), ('Synth Man', 3, ('synthesizer [multipoly]',))]
+    results = []
+    with sync_playwright() as p:
+        H.BROWSER = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx, pg, errs, mx, _label = staged_by(None, 'matrix')
+            a0 = summary(mx)
+            print('A) verbunden:', a0)
+            results.append(a0 == want)
+            ctx.close()
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(H.BROWSER)
+            ctx.add_init_script(script="try { localStorage.setItem('dci-join', 'false'); } catch (e) {}")
+            pg, errs2 = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            pg.click('[data-act=apply]'); pg.wait_for_timeout(1500)
+            b0 = summary(pg.evaluate(ADDED))
+            print('B) einzeln:', b0)
+            results.append(b0 == want)
+            # C) the quick switch in "Mapping rules"
+            pg.click('.dci-head [data-act=rules]')
+            pg.wait_for_selector('#dci-rules [data-rsect=roles]')
+            pg.wait_for_timeout(300)
+            QS = """(() => { const b = document.querySelector('#dci-rules [data-qs-toggle=S155]'); const n = document.querySelector('#dci-rules [data-qs-note=S155]');
+              const c = document.querySelector('#dci-rules input[data-rule-on=S155]');
+              return b ? [b.getAttribute('aria-pressed'), b.disabled, b.textContent.replace(/\\s+/g, ' ').trim(), n ? n.textContent : '', c ? c.disabled : null, c ? c.checked : null] : null; })()"""
+            c0 = pg.evaluate(QS)
+            if c0:
+                pg.evaluate("document.querySelector('#dci-rules [data-qs-toggle=S155]').click()")
+                pg.wait_for_timeout(300)
+            c1 = pg.evaluate(QS)
+            print('C)', c0, c1)
+            results.append(bool(c0) and c0[0] == 'false' and c0[1] is True and 'each role credit on its own' in c0[2] and 'Cannot be switched on yet' in c0[3]
+                           and c0[4] is True and c0[5] is False and c1 == c0)
+            print('Fehler:', errs, errs2)
+            results.append(not errs and not errs2)
+        finally:
+            H.discogs_release = orig
+            H.BROWSER.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
