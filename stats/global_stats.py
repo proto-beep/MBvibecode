@@ -157,6 +157,7 @@ class Stats:
         self.facts = {}
         self.edit_rel = defaultdict(set)
         self.sub_releases = set()
+        self.release_rec_rels = {}  # [3.91.0] release → relationships on its recordings
 
     def edit_row(self, raw):
         # id, editor, type, status, autoedit, open_time, …
@@ -277,12 +278,18 @@ class Stats:
                 last = p[0]
         # [3.55.0] (review) the release of a submission: the one most of its edits are linked with (MusicBrainz links a relationship of a
         # recording or a work also with every release of it – not those)
+        sub_rel = []
         for eds in sub_edits:
             c = Counter(r for e in eds for r in self.edit_rel.get(e, ()))
+            top2 = c.most_common(2)
+            # [3.91.0] (review) a tie (recordings also on another release): no release for the numbers per release
+            sub_rel.append(top2[0][0] if top2 and (len(top2) == 1 or top2[0][1] > top2[1][1]) else None)
             if c:
                 self.sub_releases.add(c.most_common(1)[0][0])
+        # [3.91.0, Z-SRR] per release (all its submissions): its credit relationships, also by level ("Done:")
+        per_rel = defaultdict(Counter)
         sources, supps, done, levels = Counter(), Counter(), Counter(), Counter()
-        for _, mon, ver, text in subs:
+        for k, (_, mon, ver, text) in enumerate(subs):
             by_version[ver]['submissions'] += 1
             by_month[mon]['submissions'] += 1
             src = None
@@ -297,6 +304,10 @@ class Stats:
                 done['credit relationships'] += int(m.group(1))
                 for n, lv in LEVEL_RE.findall(m.group(3)):
                     levels[lv] += int(n)
+                if sub_rel[k] is not None:
+                    per_rel[sub_rel[k]]['all'] += int(m.group(1))
+                    for n, lv in LEVEL_RE.findall(m.group(3)):
+                        per_rel[sub_rel[k]][lv] += int(n)
                 src = src or kind_from_done(m.group(2))
             for rx, what in ((LINKED_RE, 'works linked'), (FILLED_RE, 'role credits added'), (DATES_RE, 'dates added')):
                 mm = rx.search(text)
@@ -314,6 +325,12 @@ class Stats:
         out['supplements'] = dict(supps.most_common())
         out['done'] = dict(done.most_common())
         out['done_by_level'] = dict(levels.most_common())
+        # [3.91.0, Z-SRR] the average and the median of the releases (numbers only); the relationships on the recordings of each for the core pass
+        vals = list(per_rel.values())
+        mm = lambda xs: {'mean': mean(xs), 'median': median(xs)}
+        out['per_release'] = {'n': len(vals), 'rels': mm([c['all'] for c in vals]),
+                              'by_level': {lv: mm([c[lv] for c in vals]) for lv in ('recording', 'release', 'work', 'release group') if any(c[lv] for c in vals)}}
+        self.release_rec_rels = {r: c['recording'] for r, c in per_rel.items()}
         # [3.55.0, Z-ALI] "credited as" of the relationships the script added with an artist, a label or a place
         facts = self.script_facts()
         out['credits'] = {'credited_as': {'n': sum(1 for f in facts if f[4] and f[5]), 'of': sum(1 for f in facts if f[4])}}
@@ -328,7 +345,8 @@ class Stats:
         """[3.55.0] What the core pass needs (a file of the run, not committed)."""
         facts = self.script_facts()
         return {'artists': [[a, f[1]] for f in facts for a in f[0]], 'attrs': [list(map(list, f[3])) for f in facts if f[3]],
-                'releases': sorted(self.sub_releases), 'recordings': sorted({r for f in facts for r in f[2]})}
+                'releases': sorted(self.sub_releases), 'recordings': sorted({r for f in facts for r in f[2]}),
+                'release_rec_rels': sorted([r, n] for r, n in self.release_rec_rels.items())}
 
 
 # --- [3.55.0, Z-AGS] the core pass: MusicBrainz's mbdump.tar.bz2 (once a week) -------------------------------------------------
@@ -365,6 +383,9 @@ class Core:
         self.attrs = facts.get('attrs', [])
         self.want_rel = set(facts.get('releases', []))
         self.want_rec = set(facts.get('recordings', []))
+        # [3.91.0, Z-SRR] the relationships on the recordings of each release; its tracks (not data tracks) as its recordings
+        self.rec_rels = {int(r): int(n) for r, n in facts.get('release_rec_rels', [])}
+        self.rel_tracks = defaultdict(set)  # release → its recordings (distinct; not data tracks, not a pregap)
         self.area = {}  # area id → (name, type)
         self.artist = {}  # artist id → [type id, gender id, begin year, end year, ended, area, begin area]
         self.names = {k: {} for k in ('artist_type', 'gender', 'language', 'script', 'release_group_primary_type', 'release_group_secondary_type')}
@@ -419,6 +440,8 @@ class Core:
             r = self.medium_rel.get(num(f[3]))
             # ((review) a data track (is_data_track, f[11]) has no length of music: not counted)
             if r is not None and not (len(f) > 11 and f[11] == b't'):
+                if num(f[4]) != 0 and num(f[2]) is not None:
+                    self.rel_tracks[r].add(num(f[2]))
                 acc = self.rel_len.setdefault(r, [0, True])
                 ln = num(f[8])
                 if ln and ln > 0:
@@ -471,6 +494,8 @@ class Core:
             langs[nm['language'].get(lang, '') or '-'] += 1
             scripts[nm['script'].get(scr, '') or '-'] += 1
         lens = list(self.lengths.values())
+        known = [r for r in self.rec_rels if self.rel_tracks.get(r)]
+        nrec = {r: len(self.rel_tracks[r]) for r in known}
         # [3.61.0, Z-RDU2] the whole length of the releases whose every track has a length
         rel_lens = [t for t, whole in self.rel_len.values() if whole and t > 0]
         # role credits: of the relationships with an instrument or vocal attribute, those with one of them credited
@@ -487,6 +512,10 @@ class Core:
             'lengths': {'recordings': len(lens), 'median_ms': median(lens), 'mean_ms': mean(lens),
                         'releases': len(rel_lens), 'release_median_ms': median(rel_lens), 'release_mean_ms': mean(rel_lens)},
             'role_credits': {'n': cred, 'of': base},
+            # [3.91.0, Z-SRR] per release: its recordings, and the relationships on them per recording (the releases with tracks)
+            'per_release': {'n': len(known), 'recordings': {'mean': mean(list(nrec.values())), 'median': median(list(nrec.values()))},
+                            'rels_per_recording': {'mean': mean([self.rec_rels[r] / nrec[r] for r in known]),
+                                                   'median': median([self.rec_rels[r] / nrec[r] for r in known])}},
         }
 
 

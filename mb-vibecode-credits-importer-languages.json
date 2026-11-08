@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.90.0",
+  "version": "3.91.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2162,6 +2162,8 @@
     "textMark.dateMatrix": "Credits Importer: „{date}“ ist in der Datums-Matrix",
     "textMark.dateRow": "Credits Importer: „{date}“ ist das Datum einer Zeile",
     "textMark.tracks": "Credits Importer: Die Track-Gruppe „{name}“ ist in der Datums-Matrix",
+    "textMark.ded": "Credits Importer: eine übernommene Widmung oder Hommage ({name})",
+    "stats.srr.recsN": "Aufnahmen und je Aufnahme: aus {n} Releases",
     "log.srcOff": "{site}: {name} – {role} abgeschaltet („Überspringen“)",
     "log.srcOn": "{site}: {name} – {role} wieder angeschaltet",
     "log.clickToggle": "Ein Klick auf eine Marke schaltet den Credit um: {state}",
@@ -2476,7 +2478,15 @@
     "settings.drop.add": "Ablegen fügt hinzu (⇧ ersetzt)",
     "settings.drop.replace": "Ablegen ersetzt (⇧ fügt hinzu)",
     "arq.evTracks": "{n} Track(s)",
-    "log.matrixRoleLevel": "Werke-Matrix: {role} von {col} auf {level}"
+    "log.matrixRoleLevel": "Werke-Matrix: {role} von {col} auf {level}",
+    "stats.more.perrelease": "Je Release",
+    "stats.srr.n": "Releases: {n}",
+    "stats.srr.mean": "Mittelwert",
+    "stats.srr.median": "Median",
+    "stats.srr.rels": "Beziehungen",
+    "stats.srr.onLevel": "auf {level}",
+    "stats.srr.recs": "Aufnahmen",
+    "stats.srr.rpr": "Beziehungen je Aufnahme"
   },
   "es": {
     "title": "Credits Importer",
