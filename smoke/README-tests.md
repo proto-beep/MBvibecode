@@ -789,6 +789,11 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   align3100: 3.100.0 (Z-ALIGN): an entry's roles as one table – the head once, the ticks of all roles below each other, attributes
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
+                                #   insts3103: 3.103.0 (Z-INSTS, S169, S170): five instruments without tracks – suggestion, "on the release" (rows on the release, one
+                                #     automatic row on the recordings), the common group "woodwind" with guest, back and forth (two states, "solo" kept), staged, S170 off
+                                #   instsrem3103: 3.103.0 (Z-INSTS, review): "on the release" remembered – the page loaded again: on the release again; per track back
+                                #   evcol3103: 3.103.0 (Z-EVCOL, Z-ATTR3, Z-ARHL, D032): an emptied event column stays grey (✕ takes it away, a tick fills it again),
+                                #     attributes three side by side, the yellow frame of "＋ Another role", a row on the release keeps the date of its tracks
                                 #   detail3102: 3.102.0 (Z-UNCR, Z-PLAYS, Z-LNTR, Z-LITI, Z-DATP; S167, S168, R117): Detail "A Concert" – [Uncredited] on Skip
                                 #     ("Take anyway" at the entry or per role, "Take all uncredited"), the date of the notes a performance, "I played …" asked
                                 #     only for an instrument no one is credited with (taken for the person), liner notes with translator, "Little Instruments"
@@ -1053,6 +1058,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   artnav: Companion 1.15.0 (Z-CPVA): ‹ › in the cover miniature – the release's three images ("1 / 3" … after the last
+                                #     the first), others of the page left out, the box not moved, a click on the image as before; one image: no arrows
                                 #   marksrelease: 3.72.0 (Z-TST, the former t_release.py): marks after "Apply", the release page checks what arrived
                                 #     (✓ / ✗ with its tooltip), the marks go when it is closed and come back when it is opened again; 0) the former
                                 #     t_basic.py: 14 entries, "Import complete", the marks before "Apply"
