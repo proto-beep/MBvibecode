@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.97.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.98.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.98.0
+
+- **A new work instead of the linked one** (Z-WNEW, rule S156): a work linked in MusicBrainz has a greyed "＋ New" beside it – a click plans a new work of the same title for the track (an arrangement of a traditional tune is a work of its own). The new work gets the attributes of the old link (live, medley …), "arrangement of" the old work is suggested, and the old link is removed in the relationship editor once the new one is staged. "↺ keep linked work" takes it back.
+- **"arrangement of" to confirm** (Z-WNEW, Z-MDLY): a suggested "arrangement of" is yellow with ✓ below the title; only confirmed it is staged – before "Stage" a message (and the log) says how many are not confirmed yet. Several works of that title: a list, the one with the most recordings first ("Alpha – 3 recordings").
+- **Medleys by the release's separators** (Z-MDLY, rule S157): "/" also without spaces ("Alpha/Beta"); ✎ beside "＋ New works" shows the separators of the release – others can be added ("+", "&" …) and removed; words like "AC/DC", "24/7", "w/", "n/a", fractions stay whole (mapping MEDLEY_EXCEPTIONS). The titles of the parts come from MusicBrainz. "Medleys: split n titles" splits every such title at once.
+- **Traditional tunes arranged** (Z-MDLY): for a track whose writer is [traditional] and that has arrangers, a part with works of that title in MusicBrainz stays a new work with "arrangement of" suggested. An arrangement of that title that MusicBrainz has already is offered instead ("an arrangement exists … link it instead"): found among the arrangements of those works (1), the works of the arrangers, the release's artists and the writers (2), and – only when the credits name arrangers – the works of the performers' recordings of that title (3).
+- **Disambiguation of new arrangement works** (Z-ARRDIS, rule S158): new works of traditional tunes with arrangers get "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ sets it, the text can be changed), set when the works are staged; afterwards a small box on the page names them. Other arrangements (classical music …) not yet.
 
 ### Import 3.97.0
 
