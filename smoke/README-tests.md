@@ -331,6 +331,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   dat3104: 3.104.0 (D033): "May, 6. 7, 2007", "May 6. 7. 2007", "6. 7. Mai 2007" – May 6–7; "6. 7. 2007" still July 6 (Node)
                                 #   datp3102: 3.102.0 (Z-DATP, D031): "This was recorded by Norwegian State radio, at … on September 11th 1983." – performance
                                 #     ("recorded" more than 80 characters before the date); the sentence before does not count (Node)
                                 #   dat399: 3.99.0 (Z-DAT3): "November 18 & 19 & 20, 2014" a period; "18 and 19 and 21 June 2015" three dates (Node)

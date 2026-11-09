@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.103.0
+// @version      3.104.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.103.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.103.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.104.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.104.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.103.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.104.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5895,6 +5895,7 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D033', note: 'Several days with a dot after the day and only a space between them, with the month written out (3.104.0): "Recorded May, 6. 7, 2007" · "May 6. 7. 2007" · "6. 7. Mai 2007" – as D013 (consecutive days one period); without a month name ("6. 7. 2007") it stays a date of day and month' },
     { id: 'D032', note: 'A row put on the release level whose column in the date matrix has neither a date marked "release level" nor one for all tracks (3.103.0; collected item Z-EVCOL): the dates of the column (each a row of its own) – until 3.102.0 none, and the row joined the release\'s rows without a date' },
     { id: 'D031', note: 'The word naming the group of a date in the whole sentence before it (3.102.0; collected item Z-DATP): "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983." – "recorded" more than 80 characters before the date (until 3.101.0 only those 80 counted); at most 300 characters' },
     { id: 'D030', note: 'One date for several groups (3.95.0; collected item Z-DPD): "composed and produced between February 2025 and April 2026" is one entry of the date pool named for all its groups ("Production · Composition 1") in each of their columns – changed in the pool, for all; changed in a cell of one column, that cell gets a date of its own' },
@@ -5952,12 +5953,33 @@
   const DAYLIST = `${DAYP}(?:\\s*(?:,|(?:and|&|und|y|et)(?=\\s))\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
   // [3.31.2] days with commas only ("November 7, 8, 2016", collected item 114) – only right before the month and year (D013)
   const DAYLIST_C = `${DAYP}(?:\\s*,\\s*${DAYP})+`;
+  // [D033] (3.104.0) days with a dot and a space only ("May, 6. 7, 2007", "6. 7. Mai 2007") – only beside a month name
+  // ((review) a space between the days, at most seven; before the month every day with its dot – "6. 7. Mai", not "track 3. 4 May")
+  const DAYLIST_D = '\\d{1,2}\\.(?:\\s+\\d{1,2}\\.){0,5}\\s+\\d{1,2}(?:\\.|(?!\\d))';
+  const DAYLIST_DF = '\\d{1,2}\\.(?:\\s+\\d{1,2}\\.){1,6}';
+  // ((review) not a number of a volume, a part, a track … before the month ("Vol. 1. 2. May 2007"), not inside a longer list of numbers
+  const D033_NOT = '(?<![\\d.])(?<!\\d\\.\\s{1,3})(?<!\\b(?:vol|no|nr|op|cd|disc|track|tracks|teil|part|side|seite|nummer)\\.?\\s{1,3})';
+  /**
+   * [D033] The days of a list with dots: only days one after another ("6. 7.") – others are mostly a number before a date ("CD 2. 12
+   * May"; left to the other rules: 'pass'); impossible days too. After a name ("Guitar: Brian May 6. 7. 2007") no month: 'pass'.
+   */
+  function d033(y, mo, text, m = null, monthFirst = false) {
+    if (monthFirst && m && !/,/.test(m[0].slice(0, m[0].indexOf(m[2])))) {
+      const before = String(m.input || '').slice(Math.max(0, m.index - 40), m.index);
+      const hinted = DATE_HINTS.some(([, re]) => new RegExp(re.source, 'i').test(before));
+      if (!hinted && /\p{Lu}[\p{L}'’.-]*\s+$/u.test(before)) return 'pass';
+    }
+    const v = multiDays(y, mo, text);
+    return v && v.consecutive ? v : 'pass';
+  }
 
   /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
   const DATE_MATCHERS = [
     // ([3.37.8] also with a comma after the month: "June, 26, 1993", collected item 158 – D004, D006, D007, D013)
     { id: 'D013', re: `${P.M},?\\s+(${DAYLIST}|${DAYLIST_C}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
     { id: 'D013', re: `(${DAYLIST}|${DAYLIST_C})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
+    { id: 'D033', re: `${P.M},?\\s+(${DAYLIST_D}),?\\s+${P.Y}`, make: (m) => d033(m[3], monthNo(m[1]), m[2], m, true) },
+    { id: 'D033', re: `${D033_NOT}(${DAYLIST_DF})${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => d033(m[3], monthNo(m[2]), m[1]) },
     // [3.28.5] the days of a date in numbers: "19 & 20. 01. 2009", "19./20.01.2009" (collected item 64a)
     { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
     { id: 'D007', re: `${P.M},?\\s+${P.D}${P.TO}${P.M},?\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
@@ -6109,6 +6131,8 @@
         const b = a + m[0].length;
         if (!m[0] || !free(a, b)) continue;
         const v = mt.make(m, { usOrder });
+        // ((3.104.0, review) 'pass': not this rule's – the text stays for the others
+        if (v === 'pass') continue;
         taken.push([a, b]);
         if (!v || v === 'skip') continue;
         // The keyword closest before the date (or inside it) suggests the group; [D019] only in its own sentence
