@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.98.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.99.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.99.0 · 2026-11-08
+
+- **Z-COLW:** the front cell of a matrix row wrapped in `.dci-mx-fw` (max-width 440 px, as the head's front card); `.dci-mx-suiterow td > *` max 860 px and sticky – the table (`width: max-content`) no longer takes the one-line width of long titles or of the suite question.
+- **Z-MDLY2:** `S.medleyMark`, `medleyMarked`, `planNewWork` (new; `work-pending` and `works-pending-all` split marked tracks); the row's button `medley-mark` and the head's `medley-split-all` are switches (`aria-pressed`, `.dci-mx-split-on`); `dropWorkChoices` clears the marks.
+- **Z-ARRUI:** `arrSuggHtml` – one line (`.dci-mx-arrwho`, the list or the link, ↗ `.dci-mx-arropen`), flat boxes `.dci-mx-arrsugg` / `.dci-mx-arrok` (not the round mark).
+- **Z-ARRDIS2:** `arrComJobAdd` (at staging, `dci-arrcom-job:<release>` in localStorage), `initArrComArm` (armed by "Enter edit"), `runArrComJob` (release page: `/ws/js/release` – the works of the recordings with that title and disambiguation), `arrNotice` with links.
+- **Z-APOS:** `typoQuotes` (new, exported) for the titles of new works (`planPendingWork`, `splitMedley`, `wnewOn`, `pendingWorkEntity`); `norm` folds ’ ‘ ʼ to '.
+- **Z-TRADC:** `creditOf` – no credit for a special purpose artist (`isSpecialArtist`) in `dispatchAddRelationship` and both update paths of `applyPlan` (the credit belongs to the target entity).
+- **Z-JUNO:** `roleCreditForInner` – a detail that `gearKind` knows is written by `modelSpelling` (S152).
+- **Z-DAT3:** `DAYLIST` allows "and"/"&" between more than two days (D013).
+- **Review:** the answer of the question about same-named works and `offerNewWorksForWaiting` use `planNewWork` (marked medleys split there too); `planNewWork` plans one work before the split ("↺ one work" goes back to it); `creditsToFill` and the planned item give no credit to a special purpose artist ("fill role credits", preview, edit note); `normKey` (new; the spelling of 3.98.0) for the stored keys of `entryIdOf` and `srcOffKey` – what was remembered with ’ in a name is found again; `mx-arr-cand` updates ↗ to the work picked; Z-JUNO sets the details only (a task and S009/S084 as before); `typoQuotes` pairs no quotes when the first word is an elision ('Til, 'Tis, 'Cause …), MusicBrainz's form gets it too; the job of the disambiguations drops items older than a day and clears jobs done, run out or never entered, its line in the language's quotation marks (`arrcom.noticeLine`); `DAYP` ends where the number ends ("1 and 2 and 12.2014" is no list of days); unused texts `arrsugg.part`, `medley.splitAllTitle` removed. `t_works_more.py medley` D: joined, the track keeps the work "＋ New" planned; `t_ui_settings.py statsmore`: the runs of weeks and months as the calendar has them (a Monday: two weeks).
+- **Tests:** `t_works_more.py colw399`, `t_notes_dates.py dat399` (new; fail on 3.98.0); `arrdis398` (D: the box after "Enter edit", E: [traditional] without credit), `mdly398` (switches, one line, `typoQuotes`), `medley`, `wts397`, `t_sources_bandcamp.py` (the songs' switch), `t_entries.py msyn397` ("Juno 6, Multipoly").
 
 ## Import 3.98.0 · 2026-11-08
 

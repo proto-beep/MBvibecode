@@ -906,4 +906,29 @@ def case_camd385():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dat399():
+    """Credits Importer 3.99.0 (collected item Z-DAT3, D013): "and"/"&" between more than two days.
+    "Recorded: November 18 & 19 & 20, 2014 at the Alchemia Club, Krakow." → 2014-11-18 – 2014-11-20 (until 3.98.0 only 2014);
+    "18 and 19 and 21 June 2015" → three dates; "November 18 & 19, 2014", "November 7, 8, 2016" as before; (review) "1 and 2 and
+    12.2014" no list of days (December 2014), "19 & 20 & 21.01.2009" 19–21 January."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const f = (v) => [v.year, v.month, v.day].join('-');
+console.log(JSON.stringify(['Recorded: November 18 & 19 & 20, 2014 at the Alchemia Club, Krakow.', '18 and 19 and 21 June 2015', 'November 18 & 19, 2014', 'November 7, 8, 2016',
+  '1 and 2 and 12.2014', '19 & 20 & 21.01.2009']
+  .map((t) => { const d = m.findDates(t)[0]; return d ? [d.text, f(d.value.begin), f(d.value.end), d.multi ? d.multi.length : 0] : null; })));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
+    print('A)', out)
+    ok = out == [['November 18 & 19 & 20, 2014', '2014-11-18', '2014-11-20', 0], ['18 and 19 and 21 June 2015', '2015-6-18', '2015-6-18', 3],
+                 ['November 18 & 19, 2014', '2014-11-18', '2014-11-19', 0], ['November 7, 8, 2016', '2016-11-7', '2016-11-8', 0],
+                 # ((review) a day of a list ends where its number ends: no 1–2 December; the dotted form as before)
+                 ['12.2014', '2014-12-', '2014-12-', 0], ['19 & 20 & 21.01.2009', '2009-1-19', '2009-1-21', 0]]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())

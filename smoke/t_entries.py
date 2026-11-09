@@ -2499,8 +2499,9 @@ def case_msyn397():
         return sorted((names.get(r['a']) or names.get(r['b']) or '?', rec_no.get(r['b']) or rec_no.get(r['a']) or 0, tuple(sorted(r['attrs'])))
                       for r in rels if (names.get(r['a']) or names.get(r['b'])))
     # (the details of Discogs in lower case as before – "juno 6")
-    want = [('Guitar Man', 4, ('electric guitar [Telecaster, Les Paul]',)), ('Synth Man', 1, ('synthesizer [juno 6, multipoly]',)),
-            ('Synth Man', 2, ('synthesizer [juno 6, multipoly]',)), ('Synth Man', 3, ('synthesizer [multipoly]',))]
+    # ([3.99.0, Z-JUNO] models of the mapping in Discogs's brackets as written: "Juno 6", "Multipoly")
+    want = [('Guitar Man', 4, ('electric guitar [Telecaster, Les Paul]',)), ('Synth Man', 1, ('synthesizer [Juno 6, Multipoly]',)),
+            ('Synth Man', 2, ('synthesizer [Juno 6, Multipoly]',)), ('Synth Man', 3, ('synthesizer [Multipoly]',))]
     results = []
     with sync_playwright() as p:
         H.BROWSER = p.chromium.launch(args=H.LAUNCH_ARGS)
