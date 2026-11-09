@@ -584,8 +584,8 @@ def case_gondola():
                 ask2 = pg.evaluate("""(() => { const d = document.querySelector('.dci-bass-ask[data-question=Q013]'); return d ? [...d.querySelectorAll('button')].map(x => x.textContent.trim()) : null; })()""")
                 horn = [r for r in g2.get('Matt Glassmeyer', []) if r[3] == '8']
                 print('C) Frage:', ask, '| brass gewählt:', horn, '| danach:', ask2)
-                results.append(bool(ask) and ask['text'].startswith('“horns” is set as horn (credited “horns”) – or as:') and ask['btns'] == ['brass']
-                               and [r[1:3] for r in horn] == [['brass', 'horns']] and ask2 == ['horn'])
+                results.append(bool(ask) and ask['text'].startswith('“horns” is set as horn (credited “horns”) – or as:') and ask['btns'] == ['brass', 'wind instruments']
+                               and [r[1:3] for r in horn] == [['brass', 'horns']] and ask2 == ['horn', 'wind instruments'])  # ([3.97.0] Z-QGTR)
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

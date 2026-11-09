@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "3.96.0",
+  "version": "3.97.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
-  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122"]},
+  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155"]},
   "CHECKBOX_DETAILS": [
     "additional",
     "guest",
@@ -20,10 +20,10 @@
     {"id":"W007","where":"wordingRuleFor, roleCreditFor","note":"\"Recording\", \"Recorded By\", \"Engineer [Recording]\", \"Live Recording By\" … are the MusicBrainz relationship recording (recording engineer), without role credit","phrases":["recording","recorded by","recorded-by","recording engineer","engineer recording","engineered by recording","recording by","tracking","tracked by","engineer tracking","live recording by","live recording","live recorded by","recorded live by","live recording engineer"],"credit":""}
   ],
   "QUESTION_RULES": [
-    {"id":"Q001","base":"bass","credit":"bass","options":["electric bass guitar","double bass","acoustic bass guitar"],"note":"Plain \"Bass\": which bass?"},
-    {"id":"Q002","base":"guitar","credit":"guitar","options":["electric guitar","acoustic guitar"],"note":"Plain \"Guitar\": which guitar?"},
+    {"id":"Q001","base":"bass","credit":"bass","options":["electric bass guitar","double bass","acoustic bass guitar","bass guitar"],"note":"Plain \"Bass\": which bass? (3.97.0, Z-QGTR: or bass guitar, the family)"},
+    {"id":"Q002","base":"guitar","credit":"guitar","options":["electric guitar","acoustic guitar","guitar"],"note":"Plain \"Guitar\": which guitar? (3.97.0, Z-QGTR: or guitar itself)"},
     {"id":"Q004","base":"bass guitar","credit":"bass guitar","options":["bass guitar","electric bass guitar","acoustic bass guitar"],"note":"Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar"},
-    {"id":"Q013","base":"horns","credit":"horns","options":["horn","brass"],"preset":"horn","note":"\"Horns\" (3.42.3, Q-dh, Q-dm): horn credited \"horns\" – set at once – or brass credited \"horns\" (a horn section)"}
+    {"id":"Q013","base":"horns","credit":"horns","options":["horn","brass","wind instruments"],"preset":"horn","note":"\"Horns\" (3.42.3, Q-dh, Q-dm): horn credited \"horns\" – set at once – or brass credited \"horns\" (a horn section); (3.97.0, Z-QGTR) or wind instruments credited \"horns\" (brass and saxophones)"}
   ],
   "TYPE_QUESTIONS": [
     {"id":"Q003","base":"directed by","rule":"R097","note":"\"Directed By\": conductor, chorus master, creative direction or miscellaneous support (task \"director\")? Nothing is assumed","options":[{"type":"conductor","level":"recording"},{"type":"chorus master","level":"recording"},{"type":"creative direction","level":"release_group"},{"type":"misc","level":"recording","task":"director","label":"miscellaneous support (task “director”)"}]},
@@ -942,6 +942,7 @@
     "S078",
     "D026",
     "S114",
-    "S122"
+    "S122",
+    "S155"
   ]
 }

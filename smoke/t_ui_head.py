@@ -1646,4 +1646,61 @@ Tracks 2-3: John Roe – piano"""
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_foot397():
+    """Credits Importer 3.97.0 (collected item Z-FOOT): the run in the footer.
+    A) While the import reads and compares: left in the footer's line a yellow chip with the latest step (the whole text and the
+       requests done in its tooltip), filled as far as done, and the 2-px line along the top of the footer (its width the same share).
+    B) All done: the chip green "All imports and checks done" – it stays; the line is gone; the footer as high as before (one line).
+    C) Dark: the chip in the dark colours."""
+    STATE = """(() => { const c = document.querySelector('.dci-foot [data-el=foot-run]'); const l = document.querySelector('.dci-foot [data-el=foot-line]');
+      if (!c) return null; const r = c.getBoundingClientRect(); const bar = document.querySelector('.dci-foot-bar').getBoundingClientRect();
+      return { hidden: c.hidden, busy: c.classList.contains('dci-foot-run-busy'), done: c.classList.contains('dci-foot-run-done'), text: c.textContent.trim(),
+        title: c.title, pct: c.dataset.pct || '', bg: getComputedStyle(c).backgroundImage.slice(0, 60), color: getComputedStyle(c).color,
+        line: l ? !l.hidden : null, lineH: l ? l.getBoundingClientRect().height : 0, leftOfSum: r.right <= document.querySelector('.dci-sum').getBoundingClientRect().left + 1,
+        inBar: r.top >= bar.top - 1 && r.bottom <= bar.bottom + 1 }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        seen = []
+        for _ in range(60):
+            st = pg.evaluate(STATE)
+            if st and not st['hidden'] and st['busy']:
+                seen.append(st)
+                if len(seen) >= 2:
+                    break
+            pg.wait_for_timeout(150)
+        a0 = seen[-1] if seen else None
+        print('A) arbeitet:', a0)
+        results.append(bool(a0) and a0['busy'] and a0['line'] and a0['lineH'] == 2 and a0['text'] and a0['text'] in a0['title'] and a0['inBar'] and a0['leftOfSum']
+                       and a0['color'] == 'rgb(122, 90, 0)')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_for(pg, "(c => !!c && c.classList.contains('dci-foot-run-done'))(document.querySelector('.dci-foot [data-el=foot-run]'))", 60)
+        pg.wait_for_timeout(300)
+        b0 = pg.evaluate(STATE)
+        # the footer's line no higher with the chip than without it
+        h = pg.evaluate("""(() => { const bar = document.querySelector('.dci-foot-bar'); const c = document.querySelector('[data-el=foot-run]');
+          const with_ = bar.getBoundingClientRect().height; c.hidden = true; const without = bar.getBoundingClientRect().height; c.hidden = false; return [with_, without]; })()""")
+        print('B) fertig:', b0, h)
+        results.append(bool(b0) and b0['done'] and not b0['busy'] and not b0['hidden'] and b0['text'] == 'All imports and checks done' and b0['line'] is False
+                       and b0['pct'] == '100' and h[0] == h[1])
+        ctx2 = H.new_context(b)
+        ctx2.add_init_script(script="try { localStorage.setItem('dci-theme-window', JSON.stringify('dark')); } catch (e) {}")
+        pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.wait_for(pg2, "(c => !!c && c.classList.contains('dci-foot-run-done'))(document.querySelector('.dci-foot [data-el=foot-run]'))", 90)
+        c0 = pg2.evaluate(STATE)
+        print('C) dunkel:', c0['color'])
+        results.append(c0['color'] == 'rgb(191, 232, 204)')
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
