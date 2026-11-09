@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.101.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.102.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.102.0 · 2026-11-08
+
+- **Dates (Z-DATP, D031 – new):** `findDates` takes the group's word from the whole sentence before the date (`sentenceStartAt`, at most 300 characters; with D019), before from the 80 characters before it.
+- **Uncredited (Z-UNCR, S167 – new):** `addCreditRows` puts a row with the note `uncredited` on Skip (`row.uncrOff`, `row.uncrLevel`); `remapRow` keeps it there (and its level for later); `uncrHtml` (new; `[data-el=uncr]` at the top of the entry – one "Take anyway" when all its roles are such, else one button a role – and "Take all uncredited"), `uncrTake` (new); handlers `uncr-take`, `uncr-all`.
+- **"I played …" (Z-PLAYS, S168 – new):** `TEXT.parse` returns `firstPerson` (sentences "I (also) played X", their instruments read by `playRoles`; not "played with …"); carried by `toRelease` (text), the Bandcamp release (album and about) and `addNotesCompanies` (Discogs notes: `rel.firstPerson`). `playsAsks` (new; after `mergePersonCopyrights`: the instruments no row has, the person suggested who plays the others of the sentence), `playsHtml` (new; above the entries next to the festival box, `[data-el=plays]`), `playsTake` (new; a manual row a instrument on the selected tracks); handlers `plays-take`, `plays-no`; `S.playsAsk`.
+- **Register:** `DETAIL_FLAGS` translator also with "by" and a bracket ("Translation By (English)"); R117 Little Instruments (special: instrument, other instruments, credited as written).
+- **Abbreviations (Z-ABBR2, S166):** `row.abbrAsk` (the readings; no instrument until answered), `abbrAskHtml` (new; in the role cell and `lineAskHtml`, buttons `instr-pick`), `pickInstrument` notes the answer; `computePlan`/row info `issue.abbrAsk` while unanswered; the note `note.abbrAlt` only without the question (S166 off).
+- **Texts:** `uncr.*`, `plays.*`, `abbr.ask`, `abbr.chosen`, `issue.abbrAsk`, `log.uncrTaken`, `log.playsTaken` (en, de).
+- **Review:** `uncrSkip` (new) once a row's level is settled (after the producer and media choices; also in `suppRow`), `uncrPending`; a level chosen by hand (`levelOf`, "bulk-level") takes it (`uncrTaken`; `setLevel` redraws the entry); `uncrTake` places the level as `unskipEntry` does (scope, works matrix skipped, source/about/notes off) and redraws the works matrix; "Take all uncredited" leaves skipped entries alone; `remapRow` follows S167 switched off or on; the roles in the box without their details. D031 not past another date before it (`findDates`: a year or a date between the word and the date ends the search; the 80 characters as before). The "I played" pattern starts at a whole-word "I" (no quadratic scan), its sentence shown whole, an instrument with tracks of its own not asked; sentences of the about text and the notes asked only while those are taken (`from`; `about-off`, `notes-off` ask anew); `playsRefresh` (new) after `finishRemember` (rows remembered count) and after each answer, the person chosen kept (`plays-who`); `playsPeople` (new) – the release's artists offered too (`addEntryByMbid`), the one artist of the release suggested; `abbrAskFor`, `abbrOpen` (new) – an instrument typed answers it as well (the question redrawn), `pickPrimary` gives none before the answer, the readings in the closed line (`clineHtml`) and at the chip (`chipAnswers`).
+- **Tests:** `t_entries.py detail3102`, `t_text_basics.py abbr3102`, `t_notes_dates.py datp3102` – new (with the review's cases); fail on 3.101.0.
 
 ## Import 3.101.0 · 2026-11-08
 
