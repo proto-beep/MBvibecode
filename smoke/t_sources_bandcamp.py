@@ -1689,16 +1689,18 @@ Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
         unrec = pg.evaluate("[...document.querySelectorAll('[data-el=unrecognized] li, .dci-unrec li')].map(x => x.textContent.trim())")
         print('B)', len([x for x in ign if 'list of songs' in x]), '|', unrec)
         results.append(len([x for x in ign if 'list of songs' in x]) == 4 and not any('Nuska' in x for x in unrec))
-        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-split]')", 60)
-        c0 = pg.evaluate("(b => [b.textContent.trim(), b.title])(document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-split]'))")
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-mark]')", 60)
+        c0 = pg.evaluate("(b => [b.textContent.trim(), b.title])(document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=medley-mark]'))")
         # (the works of the band read first: the comparison with the works of the artists ends with a line in the log)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /works of the artists|Works of the artists|artists’ works/i.test(li.textContent))", 30)
-        pg.locator('.dci-matrix tr[data-work="0"] [data-act=medley-split]').evaluate('b => b.click()')
+        # ([3.99.0, Z-MDLY2] a switch: the parts come with "＋ New")
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=medley-mark]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=work-pending]').evaluate('b => b.click()')
         H.wait_for(pg, "document.querySelectorAll('.dci-matrix tr[data-work=\"0\"] [data-act=part-pick]').length > 0", 30)
         c1 = pg.evaluate(PARTS)
         c2 = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'songs of the description' in x]
         print('C)', c0, '\n  ', c1, c2)
-        results.append(c0 == ['Split into 3 works (songs)', 'The songs the description lists, each a work of its own, linked in their order: Approach to Anywhere · Nuska · Melting Fish']
+        results.append(c0 == ['Split into 3 works (songs)', 'Switch: when “＋ New” or “＋ New works” plans this track, each part becomes a work of its own: Approach to Anywhere · Nuska · Melting Fish']
                        and c1 == [['song 1 of 3', 'Approach to Anywhere', []], ['song 2 of 3', 'Nuska', ['Link “Nuska”']], ['song 3 of 3', 'Melting Fish', []]]
                        and c2 == ['Track 1.1: split into the 3 songs of the description'])
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.98.0
+// @version      3.99.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.98.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.98.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.99.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.99.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,14 +41,18 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.98.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.99.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
   const IS_NODE_TEST = typeof module !== 'undefined' && module.exports && typeof window === 'undefined';
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
+  // ([Z-APOS] 3.99.0) ’ ‘ ʼ compare as ' ("Patsy Geary's" finds "Patsy Geary’s")
+  const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[’‘ʼ]/g, "'").replace(/\s+/g, ' ').trim();
+  // ((3.99.0, review) the keys stored in the browser (entries remembered per release, sources switched off) as until 3.98.0 – without
+  // the apostrophes made one: what was remembered before is found again)
+  const normKey = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[c]);
@@ -1959,7 +1963,7 @@
       "wnew.off": "keep linked work",
       "wnew.offTitle": "Keep the link to “{title}” – no new work",
       "arrsugg.of": "arrangement of",
-      "arrsugg.part": "{title}:",
+      "arrsugg.openTitle": "Open “{title}” in MusicBrainz",
       "arrsugg.recordings.one": "{n} recording",
       "arrsugg.recordings.other": "{n} recordings",
       "arrsugg.pickAria": "Which work is arranged",
@@ -1969,7 +1973,8 @@
       "arrsugg.undoTitle": "Take the confirmation back (not staged)",
       "medley.splitAll.one": "Medleys: split {n} title",
       "medley.splitAll.other": "Medleys: split {n} titles",
-      "medley.splitAllTitle": "Each title with a separator into works of its own, linked as a medley: {list}",
+      "medley.markTitle": "Switch: when “＋ New” or “＋ New works” plans this track, each part becomes a work of its own: {list}",
+      "medley.splitAllTitle2": "Switch for every title with a separator: when “＋ New works” plans them, each part becomes a work of its own, linked as a medley: {list}",
       "medley.sepsTitle": "The separators of medley titles for this release: {list} – “/” also without spaces; words like “AC/DC” or “24/7” stay whole (mapping MEDLEY_EXCEPTIONS)",
       "medley.sepAdd": "Add a separator (Enter)",
       "arrsugg.exists": "· an arrangement exists:",
@@ -5784,7 +5789,7 @@
     { id: 'D010', note: 'A year alone: 1998' },
     { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016")' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016"); (3.99.0) "and"/"&" between more than two days ("November 18 & 19 & 20, 2014")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     // [3.32.0] collected item 97d
     { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
@@ -5845,10 +5850,12 @@
     return { ...single(values[0]), multi: values.map(single), days: values };
   }
 
-  const DAYP = '\\d{1,2}(?:st|nd|rd|th|er|\\.)?';
+  // ((3.99.0, review) a day ends with its suffix, a dot or where the number ends: "1 and 2 and 12.2014" is no list of days of December)
+  const DAYP = '\\d{1,2}(?:st|nd|rd|th|er|\\.|(?!\\d))';
 
   // [3.7.0] also "June 16/17 2018", "16/17 June 2018" (Bandcamp)
-  const DAYLIST = `${DAYP}(?:\\s*,\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
+  // ([Z-DAT3] 3.99.0) also "and"/"&" between more than two days: "November 18 & 19 & 20, 2014"
+  const DAYLIST = `${DAYP}(?:\\s*(?:,|(?:and|&|und|y|et)(?=\\s))\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
   // [3.31.2] days with commas only ("November 7, 8, 2016", collected item 114) – only right before the month and year (D013)
   const DAYLIST_C = `${DAYP}(?:\\s*,\\s*${DAYP})+`;
 
@@ -10205,7 +10212,7 @@
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
-      titleParts, medleySplit, headingKind, suiteOffers, trackPartsOf,
+      titleParts, medleySplit, typoQuotes, headingKind, suiteOffers, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
     };
     return;
@@ -10433,6 +10440,7 @@
     const gap = () => { if (mbid) initReleaseGap(mbid).catch((e) => console.warn('[Discogs-Credits] release gap', e)); };
     // [3.32.10] comments of live recordings waiting for the relationships of this release (item 113)
     if (mbid) runLiveJob(mbid, { tries: 5 });
+    if (mbid) runArrComJob(mbid, { tries: 5 }); // [Z-ARRDIS2] (3.99.0) the disambiguations of new arrangement works, after "Enter edit"
     // [E8] (3.38.0) the statistics of a submission waiting for MusicBrainz's confirmation
     if (mbid) runStatJob(mbid, { tries: 5, final: true });
     const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
@@ -11107,7 +11115,72 @@
     el.innerHTML = html;
     el.dataset.html = html;
   }
-  /** [Z-ARRDIS] (3.98.0) After staging: a small box on the page with the new works that got their disambiguation. */
+  /**
+   * [Z-ARRDIS2] (3.99.0) The new arrangement works with a disambiguation waiting for "Enter edit": a job of the release in the browser's
+   * storage (title, disambiguation, recording) – armed when the edit is entered, run on the release page once MusicBrainz has the works
+   * (linked to their recordings with that title and that disambiguation); then the box names them, with their links.
+   */
+  const ARRCOM_JOB_PREFIX = 'dci-arrcom-job:';
+  function arrComJobAdd(items) {
+    if (!items.length) return;
+    const key = `${ARRCOM_JOB_PREFIX}${String(releaseMbid).toLowerCase()}`;
+    const job = readJson('localStorage', key, null);
+    // ((review) items of an earlier day left over (never entered) are dropped
+    const old = job && !job.done && Date.now() - (job.at || 0) < 24 * 3600 * 1000 ? job.items || [] : [];
+    const all = [...old, ...items.filter((x) => !old.some((o) => o.rec === x.rec && norm(o.title) === norm(x.title)))];
+    writeJson('localStorage', key, { at: Date.now(), armedAt: 0, items: all });
+  }
+  function initArrComArm(mbid) {
+    const key = `${ARRCOM_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const arm = (e) => {
+      const t = e.target;
+      const form = t && (t.tagName === 'FORM' ? t : t.closest && t.closest('form'));
+      if (!form || !form.querySelector('#edit-note-text, textarea[name$="edit_note"]')) return;
+      if (e.type === 'click' && !(t.closest('button[type=submit], input[type=submit]'))) return;
+      const job = readJson('localStorage', key, null);
+      if (!job || job.done || (job.armedAt && Date.now() - job.armedAt < 5000)) return;
+      writeJson('localStorage', key, { ...job, armedAt: Date.now() });
+    };
+    document.addEventListener('submit', arm, true);
+    document.addEventListener('click', arm, true);
+  }
+  async function runArrComJob(mbid, { tries = 1 } = {}) {
+    const key = `${ARRCOM_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const job = readJson('localStorage', key, null);
+    // ((review) a job done, run out or never entered for a day goes)
+    if (job && (job.done || (job.armedAt && Date.now() - job.armedAt > LIVE_JOB_MAX_MS) || (!job.armedAt && Date.now() - (job.at || 0) > 24 * 3600 * 1000))) {
+      writeJson('localStorage', key, null);
+      return false;
+    }
+    if (!job || !job.armedAt) return false;
+    for (let t = 0; t < tries; t++) {
+      if (t) await new Promise((r) => setTimeout(r, 3000));
+      let data = null;
+      try {
+        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        data = res.ok ? await res.json() : null;
+      } catch {
+        data = null;
+      }
+      if (!data) continue;
+      const works = [];
+      (data.mediums || []).forEach((m) => (m.tracks || []).forEach((tr0) => {
+        const rec = tr0.recording;
+        if (rec) (rec.relationships || []).filter((r) => r.linkTypeID === 278 && r.target).forEach((r) => works.push({ rec: rec.gid, ...r.target }));
+      }));
+      const found = job.items.map((x) => {
+        const w = works.find((y) => (!x.rec || y.rec === x.rec) && norm(y.name) === norm(x.title) && String(y.comment || '').trim() === x.comment);
+        return w ? { title: w.name, comment: x.comment, gid: w.gid } : null;
+      }).filter(Boolean);
+      if (found.length < job.items.length && t < tries - 1) continue;
+      writeJson('localStorage', key, { ...job, done: true });
+      arrNotice(found);
+      return true;
+    }
+    return false;
+  }
+
+  /** [Z-ARRDIS] (3.98.0) The box with the new works that got their disambiguation ([Z-ARRDIS2] 3.99.0: after "Enter edit", linked). */
   function arrNotice(done) {
     if (!done.length) return;
     let box = document.getElementById('dci-arrcom-notice');
@@ -11134,7 +11207,18 @@
     uniq(done.map((d) => d.comment)).forEach((c) => {
       const line = document.createElement('div');
       line.className = 'dci-arrcom-line';
-      line.textContent = tr('arrcom.noticeLine', { comment: c, list: done.filter((d) => d.comment === c).map((d) => d.title).join(', ') });
+      line.appendChild(document.createTextNode(tr('arrcom.noticeLine', { comment: c, list: '' })));
+      done.filter((d) => d.comment === c).forEach((d, k) => {
+        if (k) line.appendChild(document.createTextNode(', '));
+        const a = document.createElement(d.gid ? 'a' : 'span');
+        if (d.gid) {
+          a.href = `/work/${d.gid}`;
+          a.target = '_blank';
+          a.rel = 'noopener';
+        }
+        a.textContent = d.title;
+        line.appendChild(a);
+      });
       box.appendChild(line);
     });
   }
@@ -12284,6 +12368,12 @@
   const itemSig = (it) => JSON.stringify([it.date || null, it.credit || '',
     (it.attrs || []).map((a) => [a.type.id, a.credited_as || '', a.text_value != null ? String(a.text_value) : ''])]);
 
+  /**
+   * [Z-TRADC] (3.99.0) The credit of an entity: none for a special purpose artist ([traditional], [unknown], [anonymous] … – never
+   * "Traditional", "trad.", "Anon." from the source).
+   */
+  const creditOf = (ent, credit) => (ent && ent.entityType === 'artist' && isSpecialArtist(ent.gid, ent.name) ? '' : credit);
+
   function dispatchAddRelationship(source, target, linkTypeID, attrs, credit, date = null, enteredFirst = false, linkOrder = 0) {
     const mb = getMB();
     const re = mb.relationshipEditor;
@@ -12305,7 +12395,7 @@
         editsPending: false,
         entity0: backward ? target : source,
         entity1: backward ? source : target,
-        ...relFields(attrs, credit, date, backward),
+        ...relFields(attrs, creditOf(target, credit), date, backward), // (the credit is the target's: the artist of a work, say)
         id: typeof re.getRelationshipStateId === 'function' ? re.getRelationshipStateId() : fallbackRelId--,
         // [Z-SU] (3.41.1) the order of the works of a recording (and of the parts of a work); 0: none
         linkOrder: Number(linkOrder) || 0,
@@ -12867,8 +12957,11 @@
       const name = photographerName(raw, row);
       if (name) return name;
     }
+    // [Z-JUNO] (3.99.0, S152) a model or brand of the mapping in Discogs's brackets ("Synthesizer [Juno 6]"): written as a model
+    // ("Juno 6", "Nord Stage 2"), not in lower case
+    // ((review) the details only: a task ("Sound Design [Juno 6]" → "Juno 6 sound design") and the other rules as before)
     // [S011]; [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
-    const details = raw ? creditCasing(currentLinkType(row))(raw) : '';
+    const details = !raw ? '' : ruleOn('S152') && gearKind(raw) ? modelSpelling(raw) : creditCasing(currentLinkType(row))(raw);
     // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept; (3.34.28) noted at the row
     // only for a role the register does not know (miscellaneous support)
     const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: !(row.notes || []).includes('unknownRole') })) : '';
@@ -13311,7 +13404,9 @@
     // Text attributes (e.g. the task of design) that the existing relationship does not have yet
     const texts = (item.attrs || []).filter((a) => a.text_value != null && norm(a.text_value) && !norm((ex.texts || {})[norm(a.type.name)] || ''))
       .map((a) => ({ type: a.type, value: a.text_value }));
-    const target = norm(item.credit) && !norm(ex.target) ? item.credit : '';
+    // ((3.99.0, review; Z-TRADC) never a credit for a special purpose artist)
+    const special = item.artist && item.artist.mbid && isSpecialArtist(item.artist.mbid, item.artist.mbName || item.artist.name);
+    const target = !special && norm(item.credit) && !norm(ex.target) ? item.credit : '';
     return attrs.length || texts.length || target ? { attrs, texts, target } : null;
   }
 
@@ -13632,7 +13727,9 @@
         planned.add(key);
         if (target.track && !inMedium(target.track.idx)) return;
         // ([Z-MSYN] 3.97.0) the role credits of the other rows of this relationship too
-        const item = { kind: 'credit', row, artist, lt, attrs: msynApply(attrs, msynCredits.get(key)), noteText, target, key, credit: row.credit.trim(), date: rowDateInfo(row, lt).value };
+        const item = { kind: 'credit', row, artist, lt, attrs: msynApply(attrs, msynCredits.get(key)), noteText, target, key,
+          // ((3.99.0, review; Z-TRADC) no credit for a special purpose artist – also not in the preview and the edit note)
+          credit: artist.mbid && isSpecialArtist(artist.mbid, artist.mbName || artist.name) ? '' : row.credit.trim(), date: rowDateInfo(row, lt).value };
         const staged = S.staged.get(key);
         // Staged before: only a change in the dashboard (date, credits) makes it an update.
         if (staged && staged.sig === itemSig(item)) {
@@ -14184,6 +14281,7 @@
   S.log = readJson('sessionStorage', LOG_KEY, []);
   // [3.32.10] "Enter edit" arms the comments of live recordings waiting for this release (item 113)
   initLiveJobArm(releaseMbid, (level, key, params) => log(level, key, params));
+  initArrComArm(releaseMbid); // [Z-ARRDIS2] (3.99.0)
   // [E8] (3.38.0) "Enter edit": what is submitted, for the statistics once MusicBrainz has it
   initStatJobArm(releaseMbid, () => statSnapshot(), (level, key, params) => log(level, key, params));
   // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
@@ -20904,7 +21002,7 @@
     return o;
   }
   /** An entry by what it is at the source (or, added by hand, in MusicBrainz) – the same in every import. */
-  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${norm(a.rawName || a.name || a.placeholder || '')}`);
+  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${normKey(a.rawName || a.name || a.placeholder || '')}`);
   /** The line of the source a row comes from (the same line in every import gives the same key). */
   function rowBaseKey(r) {
     const a = S.artists.get(r.artistKey);
@@ -22766,7 +22864,7 @@
       return;
     }
     if (!confirm(tr('msg.waitingAsk', { n: free.length, dupes }))) return;
-    free.forEach((i) => planPendingWork(i));
+    free.forEach((i) => planNewWork(i));
     renderWorks();
     refresh();
   }
@@ -23013,7 +23111,7 @@
           // ((3.83.0, review) changed there: the entities as staged (not as edited), its type the dashboard's
           const base = edited ? { ...current, entity0: prev.state.entity0, entity1: prev.state.entity1 } : current;
           const backward = !(base.entity0 && base.entity0.id === src.id && base.entity0.entityType === src.entityType);
-          const newState = { ...base, linkTypeID: it.lt.id, ...relFields(it.attrs, it.credit, it.date, backward) };
+          const newState = { ...base, linkTypeID: it.lt.id, ...relFields(it.attrs, creditOf(backward ? base.entity0 : base.entity1, it.credit), it.date, backward) };
           re.dispatch({
             type: 'update-relationship-state', sourceEntity: src, batchSelectionCount: null,
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
@@ -23048,7 +23146,7 @@
           // ((3.83.0, review) changed there: type and entities as staged (not as edited)
           const base = edited ? { ...current, linkTypeID: old.linkTypeID, entity0: old.entity0, entity1: old.entity1 } : current;
           const backward = !(base.entity0 && base.entity0.id === src.id && base.entity0.entityType === src.entityType);
-          const newState = { ...base, ...relFields(it.attrs, it.credit, it.date, backward) };
+          const newState = { ...base, ...relFields(it.attrs, creditOf(backward ? base.entity0 : base.entity1, it.credit), it.date, backward) };
           re.dispatch({
             type: 'update-relationship-state', sourceEntity: src, batchSelectionCount: null,
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
@@ -23259,10 +23357,11 @@
       const c = plan.entity && plan.entity.comment;
       if (!c || S.arrComDone.has(plan.gid) || !S.staged.has(`link|${(S.mbTracks[i] || {}).recordingGid}|${plan.gid}`)) continue;
       S.arrComDone.add(plan.gid);
-      arrDone.push({ title: plan.title, comment: c });
+      arrDone.push({ title: plan.title, comment: c, rec: (S.mbTracks[i] || {}).recordingGid || '' });
       log('ok', 'arrComSet', { title: plan.title, comment: c });
     }
-    arrNotice(arrDone);
+    // ([Z-ARRDIS2] 3.99.0) the box only once "Enter edit" has created the works: a job of this release, armed by "Enter edit"
+    arrComJobAdd(arrDone);
     renderWorks();
     await verifyStagedDates(stagedDates);
 
@@ -23679,6 +23778,7 @@
     for (const [i, p] of [...S.workPlan]) if (!p || p.origin !== 'created') S.workPlan.delete(i);
     // ([Z-WNEW] 3.98.0, review) the works replaced (not those whose link is removed already)
     for (const [i, r] of [...(S.workReplace || [])]) if (!r.removed) S.workReplace.delete(i);
+    if (S.medleyMark) S.medleyMark.clear(); // [Z-MDLY2] (3.99.0)
     [S.linkAttrOn, S.linkAttrOff, S.mxRemoved, S.workRowOpts, S.mxColDate, S.liveComChoice].forEach((m) => { if (m && m.clear) m.clear(); });
     if (S.mxCollapsed) S.mxCollapsed.clear();
     if (S.mxCreditSkip) S.mxCreditSkip.clear(); // [Z-WSK] (3.64.0)
@@ -26600,7 +26700,7 @@
    */
   function srcOffKey(row) {
     const a = S.artists.get(row.artistKey);
-    return a && S.source ? `${S.source.id}|${norm(a.rawName || a.name || a.placeholder || '')}|${norm(row.raw)}` : '';
+    return a && S.source ? `${S.source.id}|${normKey(a.rawName || a.name || a.placeholder || '')}|${normKey(row.raw)}` : '';
   }
 
   // (the key of 3.17.1 is taken over into the new one and goes)
@@ -29606,7 +29706,8 @@
     const langName = opts.languageIds.map((id) => (S.workOptions.languages.find((x) => String(x.id) === String(id)) || {}).name).filter(Boolean).join(', ');
     const sourceUrl = noteSourceUrl();
     const params = buildWorkSeed({
-      title: workTitleOf(track.title),
+      // ((3.99.0, review; Z-APOS) also in MusicBrainz's form
+      title: typoQuotes(workTitleOf(track.title)),
       typeId: opts.typeId,
       languageIds: opts.languageIds,
       writers,
@@ -30777,13 +30878,14 @@
    */
   function arrSuggHtml(i, r, n) {
     const part = r.part ? (worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) || {}).title : '';
-    const who = part ? `${tr('arrsugg.part', { title: part })} ` : '';
+    // ([Z-ARRUI] 3.99.0) one line: "Part → arrangement of [list ▾] ↗ ✓" – the list instead of a second link, ↗ the chosen work
+    const who = part ? `${part} → ` : '';
     const link = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.found.title)}</a>`;
     const cands = r.candidates || [];
     const count = (c) => (c.recordings != null ? ` – ${tr('arrsugg.recordings', { n: c.recordings })}` : '');
     const pick = !r.confirmed && cands.length > 1 ? ` <select data-f="mx-arr-cand" data-n="${n}" aria-label="${esc(tr('arrsugg.pickAria'))}">${cands.map((c) => `<option value="${esc(c.gid)}" ${c.gid === r.found.gid ? 'selected' : ''}>${esc(`${c.title}${c.disambiguation ? ` (${c.disambiguation})` : ''}${count(c)}`)}</option>`).join('')}</select>` : '';
     if (r.confirmed) {
-      return `<span class="dci-mx-wnote dci-mx-mark dci-mx-arrok" data-wnote="arrsugg" data-wstate="ok" title="${esc(tr('arrsugg.okTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link} ✓
+      return `<span class="dci-mx-wnote dci-mx-arrok" data-wnote="arrsugg" data-wstate="ok" title="${esc(tr('arrsugg.okTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link} ✓
         <button type="button" class="dci-textbtn" data-act="arr-undo" data-n="${n}" title="${esc(tr('arrsugg.undoTitle'))}">↺</button></span>`;
     }
     const only = cands.length === 1 ? count(cands[0]) : '';
@@ -30791,7 +30893,8 @@
     const ex = r.existing ? ` <span class="dci-mx-arrexist" title="${esc(tr(r.existing.stage > 1 ? 'arrsugg.existsWorkTitle' : 'arrsugg.existsTitle', { title: r.existing.title, stage: r.existing.stage }))}">${esc(tr(r.existing.stage > 1 ? 'arrsugg.existsWork' : 'arrsugg.exists'))}
       <a class="dci-mblink" href="/work/${esc(r.existing.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.existing.title)}</a>${r.existing.disambiguation ? ` <span class="dci-disamb">(${esc(r.existing.disambiguation)})</span>` : ''}
       <button type="button" class="dci-small" data-act="arr-existing" data-n="${n}">${esc(tr('arrsugg.useExisting'))}</button></span>` : '';
-    return `<span class="dci-mx-wnote dci-mx-mark dci-mx-arrsugg" data-wnote="arrsugg" data-wstate="ask" title="${esc(tr('arrsugg.askTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link}${esc(only)}?${pick}
+    const open = `<a class="dci-mx-arropen" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener" title="${esc(tr('arrsugg.openTitle', { title: r.found.title }))}" aria-label="${esc(tr('arrsugg.openTitle', { title: r.found.title }))}">↗</a>`;
+    return `<span class="dci-mx-wnote dci-mx-arrsugg" data-wnote="arrsugg" data-wstate="ask" title="${esc(tr('arrsugg.askTitle', { title: r.found.title }))}"><span class="dci-mx-arrwho">${esc(who)}${esc(tr('arrsugg.of'))}</span> ${pick ? `${pick.trim()} ${open}` : `${link}${esc(only)}`}?
       <button type="button" class="dci-small dci-wts-ok" data-act="arr-ok" data-n="${n}" title="${esc(tr('arrsugg.okBtnTitle'))}">✓</button>${ex}</span>`;
   }
   /** [Z-WNEW] [Z-MDLY] (3.98.0, review) A suggestion whose work is still there (a part joined, linked or split anew: gone). */
@@ -33427,9 +33530,11 @@
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
+    // [Z-MDLY2] (3.99.0) a switch: marked, its parts become new works when "＋ New" or "＋ New works" plans them (not before)
     const mParts = medleyParts(i);
     const sk = songParts(i).length ? 'songs' : 'medley'; // [Z-YTW] (3.80.0)
-    const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr(`${sk}.splitTitle`, { list: mParts.join(' · ') }))}">${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
+    const marked = medleyMarked(i);
+    const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split${marked ? ' dci-mx-split-on' : ''}" data-act="medley-mark" aria-pressed="${marked}" title="${esc(tr('medley.markTitle', { list: mParts.join(' · ') }))}">${marked ? '✓ ' : ''}${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
     // [Z-WMX] (3.52.0) "＋ New ▾": a new work, and in its menu the search, the form, its type and languages (before: four buttons and links)
     const menuOpen = S.mxNewMenu === i;
     return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
@@ -33710,7 +33815,7 @@
       artists: [], attributes: [], authors: [], comment: arrComFor(i, plan.gid), editsPending: false, entityType: 'work', gid: '',
       id: typeof re.getRelationshipStateId === 'function' ? re.getRelationshipStateId() : fallbackRelId--,
       iswcs: [], languages: opts.languageIds.map((id) => ({ language: language(id) })), last_updated: null,
-      name: plan.title, other_artists: [], typeID: opts.typeId ? Number(opts.typeId) : null, _fromBatchCreateWorksDialog: true,
+      name: typoQuotes(plan.title), other_artists: [], typeID: opts.typeId ? Number(opts.typeId) : null, _fromBatchCreateWorksDialog: true,
     };
     return plan.entity;
   }
@@ -33726,7 +33831,7 @@
     planPendingWork(i);
     const plan = S.workPlan.get(i);
     plan.flags = new Set(mbLinkAttrs(old));
-    plan.title = workTitleOf(old.title) || plan.title;
+    plan.title = typoQuotes(workTitleOf(old.title)) || plan.title;
     arrangementSuggest(i, [{ gid: old.gid, title: old.title }], 'wnew');
     arrDupCheck(i);
     log('info', 'wnewOn', { track: trackLabel(S.mbTracks[i]), title: old.title });
@@ -33894,9 +33999,21 @@
     return null;
   }
 
+  /**
+   * [Z-APOS] (3.99.0) The title of a new work with typographic apostrophes: ' → ’ ("Patsy Geary’s", "’Twas", "Rock ’n’ Roll"); a word or
+   * words in ' … ' → ‘…’ ("the ‘Kesh’ Jig"). Only the sign ' is changed.
+   */
+  function typoQuotes(title) {
+    let t = String(title || '');
+    // short elisions between spaces stay apostrophes ('n', 'em)
+    // ((review) "'Til the Mornin'": an elision first ('til, 'tis, 'cause …) – apostrophes, no quotation
+    t = t.replace(/(^|[\s([“"—–-])'([^'\s]{3,}(?:\s+[^'\s]+)*)'(?=$|[\s)\].,;:!?”"—–-])/g,
+      (m, a, b) => (/^(?:til|tis|twas|twere|cause|cos|round|bout|em|nuff|kay)\b/i.test(b) ? m : `${a}‘${b}’`));
+    return t.replace(/'/g, '’');
+  }
   function planPendingWork(i) {
     const track = S.mbTracks[i];
-    S.workPlan.set(i, { gid: `pending:${i}`, title: workTitleOf(track.title), origin: 'pending', flags: new Set(), date: null, dateOpen: false });
+    S.workPlan.set(i, { gid: `pending:${i}`, title: typoQuotes(workTitleOf(track.title)), origin: 'pending', flags: new Set(), date: null, dateOpen: false });
     log('info', 'workPending', { track: trackLabel(track), title: track.title });
   }
 
@@ -34118,7 +34235,7 @@
     S.workPlan.delete(i);
     S.suiteSeq += 1;
     S.workParts.set(i, parts.map((title, k) => ({
-      gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(songs ? [] : ['medley']), medley: true,
+      gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title: typoQuotes(title), part: title, k: k + 1, origin: 'pending', flags: new Set(songs ? [] : ['medley']), medley: true,
       ...(songs ? { songs: true } : {}), ...(k === 0 && before ? { before } : {}),
     })));
     log('info', songs ? 'songsSplit' : 'medleySplit', { track: trackLabel(S.mbTracks[i]), n: parts.length });
@@ -34404,6 +34521,17 @@
       <span class="dci-sub">${esc(own ? tr('matrix.suggestIfNotOwn', { what: defaultsSummary() }) : tr('matrix.suggestIfNot'))}</span></div>`;
   }
 
+  /** [Z-MDLY2] (3.99.0) A track without a work marked to become several works (its parts) when it is planned. */
+  const medleyMarked = (i) => !!(S.medleyMark && S.medleyMark.has(i));
+  /** [Z-MDLY2] (3.99.0) Planning a new work for a track: its parts when it is marked, else one work. */
+  function planNewWork(i) {
+    if (medleyMarked(i) && medleyParts(i).length > 1) {
+      // ((review) planned as one work first: "↺ one work" goes back to it, not to no work)
+      planPendingWork(i);
+      splitMedley(i);
+      S.medleyMark.delete(i);
+    } else planPendingWork(i);
+  }
   /** [Z-MDLY] (3.98.0) The tracks without a work whose title has parts (not split yet). */
   const medleyTracks = () => S.mbTracks.filter((t) => matrixTrack(t) && !S.workParts.has(t.idx) && !S.workPlan.has(t.idx) && medleyParts(t.idx).length > 1).map((t) => t.idx);
   /**
@@ -34417,7 +34545,8 @@
     const editor = S.medleySepsOpen ? `<span class="dci-mx-seps" data-el="medley-seps">${seps.map((x) => `<span class="dci-lang-chip">${esc(x)}<button type="button" class="dci-iconbtn" data-act="medley-sep-del" data-sep="${esc(x)}" aria-label="${esc(tr('common.remove'))}">×</button></span>`).join('')}
       <input type="text" data-f="mx-medley-sep" size="4" placeholder="+" aria-label="${esc(tr('medley.sepAdd'))}" title="${esc(tr('medley.sepAdd'))}"></span>` : '';
     if (!n && !S.medleySepsOpen) return ` <button type="button" class="dci-textbtn dci-mx-sepbtn" data-act="medley-seps" aria-expanded="false" title="${esc(tr('medley.sepsTitle', { list: seps.join('  ') }))}">✎ ${esc(seps.join(' '))}</button>`;
-    return ` <span class="dci-mx-medleys">${n ? `<button type="button" class="dci-small" data-act="medley-split-all" title="${esc(tr('medley.splitAllTitle', { list: medleyTracks().map((i) => S.mbTracks[i].title).slice(0, 8).join(' · ') }))}">${esc(tr('medley.splitAll', { n }))}</button>` : ''}
+    const on = !!n && medleyTracks().every((i) => medleyMarked(i));
+    return ` <span class="dci-mx-medleys">${n ? `<button type="button" class="dci-small dci-mx-split${on ? ' dci-mx-split-on' : ''}" data-act="medley-split-all" aria-pressed="${on}" title="${esc(tr('medley.splitAllTitle2', { list: medleyTracks().map((i) => S.mbTracks[i].title).slice(0, 8).join(' · ') }))}">${on ? '✓ ' : ''}${esc(tr('medley.splitAll', { n }))}</button>` : ''}
       <button type="button" class="dci-textbtn dci-mx-sepbtn" data-act="medley-seps" aria-expanded="${!!S.medleySepsOpen}" title="${esc(tr('medley.sepsTitle', { list: seps.join('  ') }))}">✎ ${esc(seps.join(' '))}</button>${editor}</span>`;
   }
 
@@ -34899,7 +35028,8 @@
       missing.forEach((x) => { const same = sameNamed(x.idx); if (same.length) S.dupAnyway.set(x.idx, same.map((w) => ({ gid: w.gid, title: w.title }))); });
       log('info', 'dupAll', { n: a.dupes.length });
     }
-    if (a.act === 'pending') take.forEach((x) => planPendingWork(x.idx));
+    // ((3.99.0, review) a track switched to split becomes its parts here too)
+    if (a.act === 'pending') take.forEach((x) => planNewWork(x.idx));
     else {
       S.workQueue = take.map((x) => x.idx);
       S.workRun = { created: [] };
@@ -35005,7 +35135,7 @@
       if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
     });
     return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -35566,6 +35696,13 @@
         const r = arrById(i, el.dataset.n);
         const c = r && (r.candidates || []).find((x) => x.gid === el.value);
         if (c) Object.assign(r, { found: { gid: c.gid, title: c.title }, title: c.title, picked: true });
+        // ((3.99.0, review) ↗ opens the work picked)
+        const open = c && el.closest('.dci-mx-arrsugg') && el.closest('.dci-mx-arrsugg').querySelector('.dci-mx-arropen');
+        if (open) {
+          open.href = `/work/${c.gid}`;
+          open.title = tr('arrsugg.openTitle', { title: c.title });
+          open.setAttribute('aria-label', open.title);
+        }
         break;
       }
       case 'mx-type': {
@@ -39211,7 +39348,7 @@
         const same = sameNamed(i);
         if (same.length && !confirm(tr('matrix.dupWarn', { title: same.map((w) => w.title).join(', ') }))) break;
         if (same.length) (S.dupAnyway || (S.dupAnyway = new Map())).set(i, same.map((w) => ({ gid: w.gid, title: w.title })));
-        planPendingWork(i);
+        planNewWork(i); // ([Z-MDLY2] 3.99.0) its parts when marked
         renderWorks();
         refresh();
         break;
@@ -39227,7 +39364,7 @@
           if (b0) b0.focus({ preventScroll: true });
           break;
         }
-        missing.forEach((x) => planPendingWork(x.idx));
+        missing.forEach((x) => planNewWork(x.idx)); // ([Z-MDLY2] 3.99.0) the marked ones as their parts
         renderWorks();
         refresh();
         break;
@@ -39310,11 +39447,25 @@
         break;
       }
       // [Z-MDLY] (3.98.0) every title with a separator a medley; the separators of the release
-      case 'medley-split-all':
-        medleyTracks().forEach((i) => splitMedley(i));
+      // [Z-MDLY2] (3.99.0) a switch: all titles with a separator marked (or none) – split when "＋ New works" plans them
+      case 'medley-split-all': {
+        const list = medleyTracks();
+        if (!S.medleyMark) S.medleyMark = new Set();
+        const all = list.length && list.every((i) => S.medleyMark.has(i));
+        list.forEach((i) => (all ? S.medleyMark.delete(i) : S.medleyMark.add(i)));
         renderWorks();
-        refresh();
         break;
+      }
+      case 'medley-mark': {
+        const i = workIndexOf(btn);
+        if (!S.medleyMark) S.medleyMark = new Set();
+        if (S.medleyMark.has(i)) S.medleyMark.delete(i);
+        else S.medleyMark.add(i);
+        renderWorks();
+        const again = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="medley-mark"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       case 'medley-seps':
         S.medleySepsOpen = !S.medleySepsOpen;
         renderWorks();
@@ -45425,6 +45576,11 @@
       #dci-overlay.dci-inline .dci-mx-hs-bottom { bottom: var(--dci-foot-h, 0px); }
       .dci-mx-end { height: 1px; }
       .dci-table.dci-matrix { min-width: 0; width: max-content; border-collapse: separate; border-spacing: 0; }
+      /* [Z-COLW] (3.99.0) the column of tracks and works no wider than this – long titles and their buttons wrap; the question of a suite
+         (a row over all columns) wraps within the visible width instead of widening the first column */
+      .dci-matrix .dci-mx-fw, .dci-matrix thead .dci-mx-front > .dci-mx-frontcard { max-width: calc(var(--u, 1px) * 440); }
+      .dci-matrix .dci-mx-fw .dci-mx-title { flex-wrap: wrap; }
+      .dci-mx-suiterow td > * { max-width: calc(var(--u, 1px) * 860); position: sticky; left: calc(var(--u, 1px) * 8); }
       .dci-matrix th, .dci-matrix td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
       .dci-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--soft); text-align: left; }
       .dci-matrix .dci-mx-front { position: sticky; left: 0; z-index: 1; background: #fff; min-width: calc(var(--u, 1px) * 330); max-width: calc(var(--u, 1px) * 420); text-align: left; font-weight: normal; }
@@ -45501,11 +45657,19 @@
       .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 11.5); text-decoration: none; white-space: nowrap; }
       .dci-mx-wlabel-ro { color: var(--muted, #6b6880); }
       .dci-mx-wnew { opacity: 0.5; }
+      .dci-mx-split-on { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
       .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
       .dci-mx-wnew:hover, .dci-mx-wnew:focus-visible { opacity: 1; }
       .dci-mx-wrepl { text-decoration: none; }
-      .dci-mx-arrsugg { background: var(--sugg-bg); border: 1px solid var(--sugg-line); border-radius: 3px; color: var(--sugg-ink, #6b4e00); padding: 0 calc(var(--u, 1px) * 4); }
+      /* [Z-ARRUI] (3.99.0) a flat box in one line, wrapping as a whole (not word by word) */
+      .dci-mx-arrsugg, .dci-mx-arrok { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); max-width: 100%; box-sizing: border-box;
+        border-radius: 3px; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); line-height: 1.4; }
+      .dci-mx-arrsugg { background: var(--sugg-bg); border: 1px solid var(--sugg-line); color: var(--sugg-ink, #6b4e00); }
+      .dci-mx-arrok { background: #e6f3ea; border: 1px solid #b5dbc2; }
+      .dci-mx-arrwho { white-space: nowrap; font-weight: 600; }
+      .dci-mx-arrsugg select { max-width: calc(var(--u, 1px) * 300); font-size: inherit; }
+      .dci-mx-arropen { text-decoration: none; }
       .dci-mx-arrok { color: #1d5b36; }
       .dci-mx-arrexist { margin-left: calc(var(--u, 1px) * 6); }
       .dci-mx-wlabel + .dci-mx-wtsrow { margin-left: calc(var(--u, 1px) * 2); }

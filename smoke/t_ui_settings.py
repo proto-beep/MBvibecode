@@ -1271,7 +1271,13 @@ def case_statsmore():
                        and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
         results.append(ok('releases', '1980s 1', '1990s 1', 'CD 2', 'Vinyl 1', 'JP 1', 'CA 1', 'ECM 1', 'Intakt 1'))
         # ([3.61.0, Z-STL] the streaks in one line)
-        results.append(cols == [7, 24] and ok('when', 'In a row (now / longest): days 2 / 2 · weeks 1 / 1 · months 1 / 1', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
+        # ((3.99.0) the submissions of today, yesterday and three days ago: in one week or two (a Monday to Wednesday: two), in one
+        # month or two (the 1st to the 3rd) – the runs as the calendar has them)
+        import datetime as dt
+        td = dt.date.today()
+        ds = [td, td - dt.timedelta(1), td - dt.timedelta(3)]
+        nw, nm = len({d - dt.timedelta(d.weekday()) for d in ds}), len({(d.year, d.month) for d in ds})
+        results.append(cols == [7, 24] and ok('when', f'In a row (now / longest): days 2 / 2 · weeks {nw} / {nw} · months {nm} / {nm}', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
                                              'Fastest: 24 s per relationship (A, 5 relationships)'))
         results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
                        and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')

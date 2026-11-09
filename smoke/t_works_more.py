@@ -686,7 +686,7 @@ def case_medley():
     B) Clicked: "medley 1 of 2" Alpha (a new work), "medley 2 of 2" Beta – a new work, (3.41.4, review) Writer Z's work "Beta" of
        MusicBrainz offered at it ("Link “Beta”"; until 3.41.3 taken by itself), "↺ one work"; the log says so; "Link “Beta”" links it.
     C) Staged: the recording of track 3 with "Alpha" (order 1) and "Beta" (order 2), both with "medley".
-    D) "↺ one work": the track without work again (the split offered again)."""
+    D) "↺ one work": the track with one new work again ((3.99.0, review) "＋ New" planned it), the split offered again."""
     H.TITLES[2] = 'Alpha / Beta'
     WZ = H.ARTISTS[3009][0]
     BETA = H.uid('cccccccc', 95)
@@ -709,14 +709,16 @@ def case_medley():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]')", 60)
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-mark]')", 60)
         pg.wait_for_timeout(500)
-        a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]'))"),
+        a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-mark]'))"),
               pg.evaluate("document.querySelectorAll('[data-el=works] .dci-mx-suite').length")]
         print('A)', a0)
-        results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Each part a work of its own, linked as a medley in the order of the title: Alpha · Beta' and a0[2] == 0)
+        results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Switch: when “＋ New” or “＋ New works” plans this track, each part becomes a work of its own: Alpha · Beta' and a0[2] == 0)
         # ([3.52.0] clicked through the page: scrolled into view, the button may end up below the log of the harness)
-        pg.locator('.dci-matrix tr[data-work="2"] [data-act=medley-split]').evaluate('b => b.click()')
+        # ([3.99.0, Z-MDLY2] a switch: the parts come with "＋ New")
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=medley-mark]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('.dci-matrix tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /MusicBrainz has works for/.test(li.textContent))", 30)
         pg.wait_for_timeout(500)
         b0 = [pg.evaluate(ROWS), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'medley' in x or 'MusicBrainz has works' in x],
@@ -735,7 +737,8 @@ def case_medley():
         pg.locator('.dci-matrix tr[data-work="2"] [data-act=medley-join]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
         d0 = pg.evaluate(ROWS)
         print('D)', d0)
-        results.append(d0 == [['', '', ['Split into 2 works (medley)']]])
+        # ((3.99.0, review) "＋ New" planned the track: joined, it is that one new work again, the split offered again)
+        results.append(d0 == [['', 'Alpha / Beta', ['Split into 2 works (medley)']]])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -747,7 +750,8 @@ def case_mdly398():
     Track 2 "Alpha/Beta" (no spaces), track 3 "AC/DC Song", track 4 "Gamma + Delta"; Traditional wrote, The Band arranged (Discogs).
     MusicBrainz has two works "Alpha" by [traditional] – A1 with 3 recordings, A2 with 1 and an arrangement "Alpha" of another band.
     A) In the head: "Medleys: split 1 title" (track 2; "AC/DC" is an exception, "+" no separator yet), "✎ /".
-    B) ✎, "+" added: "split 2 titles"; clicked: track 2 → Alpha · Beta, track 4 → Gamma · Delta (the titles of MusicBrainz).
+    B) ✎, "+" added: "split 2 titles"; clicked: ([3.99.0] a switch – "✓", nothing split yet) "＋ New works": track 2 → Alpha · Beta,
+       track 4 → Gamma · Delta (the titles of MusicBrainz).
     C) Alpha (a traditional tune with arrangers): a new work, "arrangement of" suggested in yellow – A1 first ("3 recordings"), A2 in its
        list – and "an arrangement exists: Alpha (Other Band arrangement)" (stage 1, the arrangements of A2).
     D) "link it instead": the part linked to that arrangement, the suggestion gone.
@@ -809,14 +813,19 @@ def case_mdly398():
             pg.press('[data-el=works] [data-f=mx-medley-sep]', 'Enter'); pg.wait_for_timeout(400)
             b0 = pg.evaluate(HEAD)
             pg.locator('[data-el=works] [data-act=medley-split-all]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            b2 = [pg.evaluate(PARTS, 1), pg.evaluate("(b => b ? [b.getAttribute('aria-pressed'), b.textContent.trim()] : null)(document.querySelector('[data-el=works] [data-act=medley-split-all]'))")]
+            # ([3.99.0, Z-MDLY2] a switch: nothing split until "＋ New works")
+            pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(600)
             b1 = [pg.evaluate(PARTS, 1), pg.evaluate(PARTS, 2), pg.evaluate(PARTS, 3)]
-            print('B)', b0, b1)
-            results.append(b0 == ['Medleys: split 2 titles', '✎ / +'] and b1 == [['Alpha', 'Beta'], ['AC/DC Song'], ['Gamma', 'Delta']])
+            print('B)', b0, b2, b1)
+            results.append(b0 == ['Medleys: split 2 titles', '✎ / +'] and b2 == [['Alpha/Beta'], ['true', '✓ Medleys: split 2 titles']]
+                           and b1 == [['Alpha', 'Beta'], ['AC/DC Song'], ['Gamma', 'Delta']])
             pg.evaluate("document.activeElement && document.activeElement.blur && document.activeElement.blur()")
             H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"1\"] [data-act=arr-existing]')", 60)
             c0 = pg.evaluate(SUGG)
             print('C)', c0)
-            results.append(bool(c0) and c0[0].startswith('Alpha: arrangement of MBAlpha') and c0[1][0].startswith('Alpha – 3 recordings') and 'reel' in c0[1][1] and c0[2]
+            # ([3.99.0, Z-ARRUI] one line: "Alpha → arrangement of [list] ↗ ✓" – the list instead of a second link)
+            results.append(bool(c0) and c0[0].startswith('Alpha → arrangement of Alpha – 3 recordings') and '↗' in c0[0] and 'MBAlpha (Other' in c0[0] and c0[1][0].startswith('Alpha – 3 recordings') and 'reel' in c0[1][1] and c0[2]
                            and 'Other Band arrangement' in c0[0])
             pg.locator('.dci-matrix tr[data-work="1"] [data-act=arr-existing]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
             d0 = [pg.evaluate(PARTS, 1), pg.evaluate(SUGG), pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work=\"1\"] .dci-mblink')].map(a => a.getAttribute('href'))")]
@@ -831,12 +840,15 @@ def case_mdly398():
 global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
 const m = require(process.argv[1]);
 const T = ['Alpha/Beta', 'AC/DC Song', 'Jam w/Friends', 'Song (Live/Remix)', '24/7 Blues / Night', 'Hip-Hop Medley', '1/2 Time', 'Mr. Brown + St. Louis'];
-console.log(JSON.stringify([T.map((t) => m.medleySplit(t, ['/', '+', '-'])), m.titleParts('Alpha/Beta'), m.titleParts('Phase 2 / Phase 3')]));
+console.log(JSON.stringify([T.map((t) => m.medleySplit(t, ['/', '+', '-'])), m.titleParts('Alpha/Beta'), m.titleParts('Phase 2 / Phase 3'),
+  ["Patsy Geary's", "'Twas", "Rock 'n' Roll", "the 'Kesh' Jig", "Say 'Hello Again' Now", "'Til the Mornin'", "Lovin' You 'Til the Mornin'"].map(m.typoQuotes)]));
 """
     js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
     e0 = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-300:]}
     print('E)', e0)
-    results.append(e0 == [[['Alpha', 'Beta'], [], [], [], ['24/7 Blues', 'Night'], [], [], ['Mr. Brown', 'St. Louis']], [], ['Phase 2', 'Phase 3']])
+    # ([3.99.0, Z-APOS] new works: ' → ’, quotes ‘…’; (review) an elision first or a dropped g last is no quotation)
+    results.append(e0 == [[['Alpha', 'Beta'], [], [], [], ['24/7 Blues', 'Night'], [], [], ['Mr. Brown', 'St. Louis']], [], ['Phase 2', 'Phase 3'],
+                          ['Patsy Geary’s', '’Twas', 'Rock ’n’ Roll', 'the ‘Kesh’ Jig', 'Say ‘Hello Again’ Now', '’Til the Mornin’', 'Lovin’ You ’Til the Mornin’']])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
@@ -845,7 +857,9 @@ def case_arrdis398():
     Traditional wrote, The Band arranged (Discogs); tracks 2–4 get new works ("＋ New works").
     A) In the footer: "Disambiguation “The Band arrangement” for the new arrangement works (3 new works · tracks …)?" ✓ ✕.
     B) ✓: the text field "The Band arrangement" (changed to "The Band arr.").
-    C) Staged: the three new works carry the disambiguation; a small box on the page names them; the log says so."""
+    C) Staged: the three new works carry the disambiguation; the log says so; ([3.99.0] no box yet – a job of the release waits).
+    D) (3.99.0, Z-ARRDIS2) "Enter edit", then the release page: MusicBrainz has the works – the box names them with their links.
+    E) (3.99.0, Z-TRADC) [traditional] writes the new works without the credit "Traditional"."""
     TRAD = '9be7f096-97ec-4615-8957-8d40b5dcbc41'
     H.ARTISTS[3093] = (TRAD, '[traditional]')
     H.ARTISTS[3094] = (H.uid('dddddddd', 94), 'The Band')
@@ -890,13 +904,68 @@ def case_arrdis398():
             c0 = [pg.evaluate(STAGED), pg.evaluate("(document.getElementById('dci-arrcom-notice') || {}).textContent || ''"),
                   [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'disambiguation' in x]]
             print('C)', c0)
+            # ([3.99.0, Z-ARRDIS2] no box yet: the works exist only after "Enter edit" – a job of the release waits for it)
+            job = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-arrcom-job:{H.REL}') || 'null')")
             results.append(c0[0] == [['Song Four', 'The Band arr.'], ['Song Three', 'The Band arr.'], ['Song Two', 'The Band arr.']]
-                           and '“The Band arr.”: Song Two, Song Three, Song Four' in c0[1] and len(c0[2]) >= 3)
-            print('Fehler:', errs)
-            results.append(not errs)
+                           and c0[1] == '' and len(c0[2]) >= 3 and bool(job) and len(job['items']) == 3 and not job['armedAt'])
+            # D) "Enter edit" (armed), the release page: MusicBrainz has the works – the box names them with their links
+            W = [H.uid('cdcdcdcd', 60 + k) for k in range(4)]
+            tracks = [{'number': str(k + 1), 'recording': {'gid': g, 'comment': '', 'relationships':
+                       ([{'linkTypeID': 278, 'target': {'gid': W[k], 'name': H.TITLES[k], 'comment': 'The Band arr.'}}] if k else [])}} for k, g in enumerate(H.REC)]
+            H.WS_JS_RELEASE.clear()
+            H.WS_JS_RELEASE.update({'gid': H.REL, 'mediums': [{'position': 1, 'tracks': tracks}], 'releaseGroup': {'secondaryTypeIDs': []}})
+            rp, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}')
+            rp.evaluate("(job) => { job.armedAt = Date.now(); localStorage.setItem('dci-arrcom-job:%s', JSON.stringify(job)); }" % H.REL, job)
+            rp.reload()
+            H.wait_for(rp, "!!document.getElementById('dci-arrcom-notice')", 20)
+            d0 = rp.evaluate("(() => { const n = document.getElementById('dci-arrcom-notice'); return [n.textContent, [...n.querySelectorAll('a')].map(a => a.getAttribute('href'))]; })()")
+            job2 = rp.evaluate(f"JSON.parse(localStorage.getItem('dci-arrcom-job:{H.REL}') || 'null')")
+            print('D)', d0, bool(job2 and job2.get('done')))
+            results.append('“The Band arr.”: Song Two, Song Three, Song Four' in d0[0] and d0[1] == [f'/work/{W[1]}', f'/work/{W[2]}', f'/work/{W[3]}'] and bool(job2 and job2.get('done')))
+            H.WS_JS_RELEASE.clear()
+            # E) (3.99.0, Z-TRADC) [traditional] as the writer of the new works: no credit "Traditional" (Discogs's name)
+            e0 = pg.evaluate("""(() => MB.relationshipEditor.state.added.filter(r => [r.entity0.gid, r.entity1.gid].includes('%s'))
+              .map(r => [r.entity0_credit || '', r.entity1_credit || '']))()""" % TRAD)
+            print('E)', e0)
+            results.append(len(e0) >= 3 and all(c == ['', ''] for c in e0))
+            print('Fehler:', errs, errs2)
+            results.append(not errs and not errs2)
             b.close()
     finally:
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_colw399():
+    """Credits Importer 3.99.0 (collected items Z-COLW, Z-APOS): the column of tracks and works no wider than 440 px.
+    Track 2 "The Kesh Jig / Give Us a Drink of Water / The Flower of the Flock / Famous Ballymote", track 3 "Patsy Geary's / Coleman's Cross".
+    A) The first column of the works matrix at most 460 px (until 3.98.0 as wide as its longest line); the titles wrap.
+    B) "＋ New works": the new work of track 3 is "Patsy Geary’s / Coleman’s Cross" (’ instead of '); staged with that name."""
+    H.TITLES[1] = 'The Kesh Jig / Give Us a Drink of Water / The Flower of the Flock / Famous Ballymote'
+    H.TITLES[2] = "Patsy Geary's / Coleman's Cross"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        a0 = pg.evaluate("Math.max(...[...document.querySelectorAll('.dci-matrix th.dci-mx-front')].map(t => t.getBoundingClientRect().width))")
+        print('A)', a0)
+        results.append(a0 <= 460)
+        pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+        b0 = pg.evaluate("(tr => (tr.querySelector('.dci-mx-line strong') || {}).textContent)(document.querySelector('.dci-matrix tr[data-work=\"2\"]'))")
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        b1 = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && !r.entity1.gid).map(r => r.entity1.name).filter(n => /Geary/.test(n))")
+        print('B)', b0, b1)
+        results.append(b0 == 'Patsy Geary’s / Coleman’s Cross' and b1 == ['Patsy Geary’s / Coleman’s Cross'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
@@ -1293,7 +1362,8 @@ def case_wts397():
         rows = {x[0]: x[1:] for x in b0[1]}
         results.append(not b0[0] and rows['1'][0] == ['[Song]'] and rows['1'][1] == [] and rows['3'][0] == ['[Song]'] and rows['2'][0] == ['[Song · [No lyrics]]']
                        and b0[2] == ['New works: Song – the defaults chosen by hand (the suggestion is not used)'])
-        pg.locator('.dci-matrix tr[data-work="1"] [data-act=medley-split]').evaluate('b => b.click()'); pg.wait_for_timeout(800)
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=medley-mark]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(800)
         c0 = pg.evaluate(LABELS)
         pg.locator('.dci-matrix tr[data-work="1"] .dci-mx-wlabel').nth(1).evaluate('b => b.click()'); pg.wait_for_timeout(300)
         pg.select_option('.dci-matrix tr[data-work="1"] .dci-row-opts select[data-f=mx-type]', ''); pg.wait_for_timeout(300)
