@@ -327,6 +327,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   dat399: 3.99.0 (Z-DAT3): "November 18 & 19 & 20, 2014" a period; "18 and 19 and 21 June 2015" three dates (Node)
                                 #   camd385: 3.85.0 (Z-CAMD): "Cameras: …" on a live recording gets the performance dates (S129 off: none)
                                 #   artkinds: 3.73.0 (Z-CPI, D025): the kinds of the artwork – a painting to the illustration, a cover photo to the
                                 #     photography, design without; the cell's "for:" changed; photos at the concert: the pool entry "Photography By"; off
@@ -426,6 +427,7 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
+                                #   colw399: 3.99.0 (Z-COLW, Z-APOS): the first column at most 460 px with long titles; "Patsy Geary’s" for the new work
                                 #   mdly398: 3.98.0 (Z-MDLY, S157): "Alpha/Beta" split ("/" without spaces), "AC/DC" whole, "+" added by ✎ –
                                 #     "Medleys: split n"; a traditional tune arranged: "arrangement of" suggested (most recordings first), an
                                 #     existing arrangement found (stage 1) and linked instead; in Node medleySplit (spaces, brackets, exceptions)

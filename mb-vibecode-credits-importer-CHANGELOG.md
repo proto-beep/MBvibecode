@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.98.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.99.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.99.0
+
+- **The first column of the works matrix** (Z-COLW): at most 440 px wide – long titles and their buttons wrap; the question of a suite wraps within the visible width instead of widening the column (before, it could take most of the window and push the people's columns out of sight).
+- **Medleys only with "＋ New works"** (Z-MDLY2): "Medleys: split n titles" in the head and "Split into n works" in a row are switches (✓ when on); the parts appear as new works only when "＋ New works" (or "＋ New" of the row) plans the track.
+- **"arrangement of" in one line** (Z-ARRUI): a flat yellow box – "Part → arrangement of [list ▾] ↗ ✓" – the list instead of a second link, ↗ opens the chosen work; it wraps as a whole.
+- **The box of disambiguations after "Enter edit"** (Z-ARRDIS2): the new arrangement works exist only once the edit is entered – the box now appears on the release page afterwards and links the works MusicBrainz created.
+- **Apostrophes in new works** (Z-APOS): ' becomes ’ ("Patsy Geary’s", "’Twas", "Rock ’n’ Roll"), words in ' … ' become ‘…’; ' and ’ compare as equal (searching works, names).
+- **Special purpose artists without a credit** (Z-TRADC): [traditional], [unknown], [anonymous] … never get a credit like "Traditional" from the source.
+- **Models in Discogs's brackets** (Z-JUNO): "Synthesizer [Juno 6]" is credited "Juno 6" (models and brands of the mapping as written, S152), not "juno 6".
+- **Several days with "&"** (Z-DAT3, D013): "Recorded: November 18 & 19 & 20, 2014" is the period 2014-11-18 – 2014-11-20 (before only 2014).
+- **Also fixed:** medleys switched on are split also after the question about same-named works; "↺ one work" after a split brings the planned work back; "fill role credits" gives no credit to special purpose artists either; releases remembered with ’ in a name are found again; ↗ of "arrangement of" follows the work picked; "Sound Design [Juno 6]" keeps its task ("Juno 6 sound design"); "'Til the Mornin'" becomes "’Til the Mornin’", not a quotation; "1 and 2 and 12.2014" is no list of days.
 
 ### Import 3.98.0
 

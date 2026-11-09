@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.98.0",
+  "version": "3.99.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2515,7 +2515,7 @@
     "wnew.off": "verknüpftes Werk behalten",
     "wnew.offTitle": "Die Verknüpfung mit „{title}“ behalten – kein neues Werk",
     "arrsugg.of": "arrangement of",
-    "arrsugg.part": "{title}:",
+    "arrsugg.openTitle": "„{title}“ in MusicBrainz öffnen",
     "arrsugg.recordings.one": "{n} Aufnahme",
     "arrsugg.recordings.other": "{n} Aufnahmen",
     "arrsugg.pickAria": "Welches Werk arrangiert wird",
@@ -2525,7 +2525,8 @@
     "arrsugg.undoTitle": "Bestätigung zurücknehmen (nicht vorgemerkt)",
     "medley.splitAll.one": "Medleys: {n} Titel aufteilen",
     "medley.splitAll.other": "Medleys: {n} Titel aufteilen",
-    "medley.splitAllTitle": "Jeder Titel mit einem Trenner in eigene Werke, als Medley verknüpft: {list}",
+    "medley.markTitle": "Schalter: Wenn „＋ New“ oder „＋ New works“ diesen Track anlegt, wird jeder Teil ein eigenes Werk: {list}",
+    "medley.splitAllTitle2": "Schalter für jeden Titel mit Trenner: Wenn „＋ New works“ sie anlegt, wird jeder Teil ein eigenes Werk, als Medley verknüpft: {list}",
     "medley.sepsTitle": "Die Trenner von Medley-Titeln für dieses Release: {list} – „/“ auch ohne Leerzeichen; Wörter wie „AC/DC“ oder „24/7“ bleiben ganz (Mapping MEDLEY_EXCEPTIONS)",
     "medley.sepAdd": "Trenner hinzufügen (Enter)",
     "arrsugg.exists": "· ein Arrangement gibt es schon:",
