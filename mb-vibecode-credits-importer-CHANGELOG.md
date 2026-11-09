@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.105.0 | 1.16.0 |
+| 2026-11-08 | 3.88.0 – 3.106.0 | 1.16.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.106.0
+
+- **Compared with MusicBrainz** (collected item Z-DSUP): what the import brings – Discogs, Bandcamp, any pasted text or other site, dates from the pool, the matrix or typed by hand – is compared with the relationships MusicBrainz already has for a linked person on this release; the entry says so at its top, yellow ("Compared with MusicBrainz"), and its rows, matrix lines and chips are marked yellow – in every view.
+- **Dates supplemented** (rule S172): a relationship MusicBrainz has without a date gets "add the date"; one with the same date less precisely "more precisely"; another date the lowest common denominator of both ("2007-05-06" and "2007-06": 2007); none in common is only said. MusicBrainz more precise: nothing. "Take" per role (or "Take all dates offered") edits MusicBrainz's relationship in the editor.
+- **Conflicts shown** (rule S173): a person MusicBrainz has with other instruments or voices on this release than the source – "Only on MusicBrainz: drums" (yellow; in the matrix a line of its own, in the compact view a line of chips) – and the roles only in the source are held on Skip until "Add anyway" (or "Add all conflicts"). The same role is never a conflict; all tracks are taken together.
+- **More precise instruments** (rule S174): MusicBrainz "saxophone", the source "tenor saxophone" – no conflict but an update ("Update" edits MusicBrainz's relationship; its other attributes, credits and dates stay). Several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks go on the release, MusicBrainz keeps saxophone on the recordings. MusicBrainz more precise than the source: nothing is added.
 
 ### Import 3.105.0
 

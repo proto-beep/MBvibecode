@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.105.0, Companion 1.6.0 – 1.16.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.106.0, Companion 1.6.0 – 1.16.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.106.0 · 2026-11-08
+
+- **Index:** `addExistingArtistRels` also fills `existing.list` (target, MBID, type id and name, attributes, `attrKey`, begin, end, ended); `dsupOf` (by MBID, made once per index).
+- **S172 (new):** `dsupDateOf` (add / refine / change – the common prefix of both – / differs), `dsupDatesOf` (per entry: its rows' dates against `dsupRelsOf` – the same person, type and instrument on the row's targets: release, release group, recordings), `S.dsupDateTake` (keys taken), `S.dsupDone` (staged); `computePlan`: an exact relationship of MusicBrainz with a date taken → an item `relDate`.
+- **S173, S174 (new):** `attrChain` (an attribute's names up the tree, cached per index), `dsupMain`, `isAncestorOf`, `dsupEntry` (per linked entry: the roles of instruments and voices against MusicBrainz's – same / covered (MusicBrainz more precise) / update (less precise) / other; what only MusicBrainz has; each row once, `dsupSeen`: `dsupHold` {kind conflict | covered | update, level} on Skip, `dsupRel` several more precise ones without tracks put on the release), `dsupScan` (in `refresh`, drawn again when its signature changes), `dsupTake` (`dsupUpd` for an update); `levelOf` ends a hold, `remapRow` keeps it; `computePlan`: an update taken → an item `relAttr` on the targets where MusicBrainz has the less precise one.
+- **Staging:** `relDate` / `relAttr` edit MusicBrainz's relationship (`update-relationship-state`, status edited): the dates, or the instrument replaced (its other attributes kept).
+- **View:** `dsupHtml` (top of the entry: only on MusicBrainz, the roles held with "Add anyway" / "Update", on the release, the dates grouped per row with "Take"; "Add all conflicts", "Take all dates offered"), `dsupMbOnlyRows` (matrix), the compact line `[data-el=mbonly]`, `dsupMark` (`.dci-dsup-mark` on rows, matrix lines, chips); handlers `dsup-take`, `dsup-all`, `dsup-date`, `dsup-dates-all`.
+- **Texts:** `dsup.*`, `log.dsupTaken`, `log.dsupDated`, `log.dsupUpdated` (en, de).
+- **Review:** each row compared once (`dsupSeen` also for the same and those without a conflict) and never held once changed by hand (`primaryTouched`, `levelTouched`) – no hold while typing; the scan's signature without the dates' texts (their box drawn again in place); a held row by the kind it had (`dsupHold.rk`); plain "Vocals" / "Instruments" covered by MusicBrainz's more precise ones; begin and end compared each as they are (open ends stay), `ended` set; "Add all conflicts" takes conflicts only; a rule switched off releases its holds (`remapRow`); the hold fields not remembered (`ROW_OWN_FIELDS`); a role taken gets its column's date (`matrixDateForLevel`); a second update of the same relationship of MusicBrainz adds to it (`S.dsupEdited`); dates edited named in the edit note; only instruments go on the release.
+- **Tests:** `t_entries.py dsup3106` (with the review's typing case) – new; fails on 3.105.0.
 
 ## Import 3.105.0 · 2026-11-08
 
