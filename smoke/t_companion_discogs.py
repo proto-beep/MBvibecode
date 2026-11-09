@@ -721,7 +721,8 @@ def case_artnav():
     """Companion 1.15.0 (Credits Importer 3.103.0, collected item Z-CPVA): ‹ › in the cover miniature – the release's images of the page (the
     cover, two more of the release – one in the page's data with escaped slashes –; an image of another release and one of an artist
     left out): "1 / 3"; › twice: the second, the third ("3 / 3"); › once more: the first again; ‹: the third. The arrows do not move the
-    box and open nothing; a click on the image opens Discogs's image view as before. One image only: no arrows."""
+    box and open nothing; a click on the image opens Discogs's image view as before. One image only: no arrows. ([Z-CPVA2] 1.16.0) The
+    second image shown: a click opens that one (the image itself, its image of the page having no link of its own)."""
     import base64
     enc = lambda src: '/'.join(base64.b64encode(src.encode()).decode()[i:i + 16] for i in range(0, len(base64.b64encode(src.encode()).decode()), 16)) + '.jpeg'
     url = lambda src: f'https://i.discogs.com/sig{len(src)}/rs:fit/g:sm/q:90/h:150/w:150/{enc(src)}'
@@ -772,6 +773,14 @@ def case_artnav():
             clicked = dg.evaluate("window.__clicked")
             print('B)', kept, clicked)
             results.append(kept[1] == '1 / 3' and clicked == [f'/release/{H.DISCOGS_ID}-Test-Band-Testalbum/image/1'])
+            # ([Z-CPVA2] 1.16.0) the second image shown: a click opens it (not the first) – its own image of the page has no link: the image itself
+            box.locator('.dci-art-next').click()
+            dg.wait_for_timeout(150)
+            with dg.context.expect_page(timeout=5000) as pop:
+                box.locator('.dci-art-img').click()
+            opened = pop.value.url
+            print('   Z-CPVA2:', opened, dg.evaluate("window.__clicked"))
+            results.append(opened == IMGS[0] and dg.evaluate("window.__clicked") == clicked)
             print('Fehler:', errs, dgerr)
             results.append(not _real_errs(errs) and not _real_errs(dgerr))
             b.close()
