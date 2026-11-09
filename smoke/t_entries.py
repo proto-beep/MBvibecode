@@ -140,7 +140,7 @@ def case_join():
 # the blocks of an entry: head, event heads, lines (instrument or role, role credit, flags ticked, ticks, status, rows)
 BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null;
-  return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: (h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-bac').forEach(x => x.remove()); return c.textContent; })(b.querySelector('.dci-em-bhead')).replace(/\\s+/g, ' ').trim(),
+  return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: (h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-bac, .dci-insts-seg').forEach(x => x.remove()); return c.textContent; })(b.querySelector('.dci-em-bhead')).replace(/\\s+/g, ' ').trim(),
     tip: b.querySelector('.dci-em-bhead strong').title,
     ev: (() => { const heads = [...b.closest('table').querySelectorAll('thead th.dci-em-ev')]; const ln = b.querySelector('tr.dci-em-line'); const cells = ln ? [...ln.querySelectorAll('td.dci-em-c-ev')] : [];
       return heads.filter((h, i) => cells[i] && !cells[i].classList.contains('dci-em-c-none')); })().map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
@@ -434,7 +434,7 @@ def case_compact():
     acoustic guitar ·
        drums (drum set) “drums”; Part Man – ① electric guitar, ② (track 2) piano.
     B) The piano chip dragged onto the line of ① with ⇧ Shift ([3.78.0] Z-DND; without it the role is in both): piano moves there –
-       one line ① with both (in the order of the source); ② is gone.
+       one line ① with both (in the order of the source); ② is gone ([Z-EVCOL] 3.103.0: it stays, empty, until taken away with ✕).
     C) ✕ on acoustic guitar (Multi Man): out of ① – "Taken out: acoustic guitar".
     D) "by role" for Solo Man: a line per role with its events.
     E) ▸ in the head of Multi Man: its full matrix here; ▾ compact again; a chip clicked: the full matrix, at its line.
@@ -469,7 +469,9 @@ def case_compact():
             pg.wait_for_timeout(500)
             b_part = pg.evaluate(CLINES, 'Part Man')
             print('B) gezogen:', [(l['head'], l['chips']) for l in b_part['lines']])
-            results.append([(l['head'], l['chips']) for l in b_part['lines']] == [('① Recording no date all 4 tracks', ['piano', 'electric guitar'])])
+            # ([Z-EVCOL] 3.103.0) the event left empty stays (grey, ✕) until taken away
+            results.append([(l['head'], l['chips']) for l in b_part['lines']][0] == ('① Recording no date all 4 tracks', ['piano', 'electric guitar'])
+                           and len(b_part['lines']) == 2 and b_part['lines'][1]['chips'] == [] and b_part['lines'][1]['head'].startswith('②'))
             multi = sec_sel(pg, 'Multi Man')
             pg.click(f'{multi} .dci-em-chip:has-text("acoustic guitar") [data-act=em-chipout]')
             pg.wait_for_timeout(500)
@@ -2945,6 +2947,326 @@ def case_detail3102():
             H.LINKED[k] = v
         for _n, _r, i in CR:
             H.ARTISTS.pop(i, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_insts3103():
+    """Credits Importer 3.103.0 (collected item Z-INSTS, rules S169, S170): Discogs names Jane Roe with five instruments without tracks
+    (soprano and tenor saxophone, flute, bass clarinet, little instruments), Sax Two with soprano saxophone and flute, both as guest.
+    A) Jane Roe: "💡 5 instruments without tracks …" with "Put them on the release"; Sax Two (two): no suggestion, the switch
+       "Instruments: per track | on the release" ("per track" pressed).
+    B) "Put them on the release": Jane Roe's five rows on the release (no release-level date in the matrix: the date they had); one automatic
+       row on the recordings – instrument without an instrument (a little instrument has no group with the others: "instruments"),
+       all 4 tracks, its note; the suggestion gone, "on the release" pressed.
+    C) Sax Two "on the release": the automatic row "woodwind" (their group in MusicBrainz's tree; not named by Discogs: said), with
+       "guest" (both have it).
+    D) Back and forth three times (Jane Roe; "solo" ticked on the automatic row before): always the same rows – per track no automatic
+       row, on the release one (with "solo" kept).
+    E) Staged (on the release): Jane Roe instrument–release 5 times, instrument–recording 4 times without an instrument ("solo");
+       Sax Two's recordings "woodwind" with guest.
+    F) The quick switch S170 off: Jane Roe's … and Sax Two's automatic row "instruments" (no instrument)."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9140, 'woodwind', 14, 14)
+    H.ATTRS[9106]['parent_id'] = 9140
+    for i, n, par in ((9124, 'other instruments', 14), (9131, 'soprano saxophone', 9106), (9132, 'tenor saxophone', 9106), (9133, 'bass clarinet', 9140),
+                      (9142, 'flute', 9140)):
+        H.attr(i, n, 14, par)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CR = [('Jane Roe', 'Soprano Saxophone, Tenor Saxophone, Flute, Bass Clarinet, Little Instruments', 3301),
+          ('Sax Two', 'Soprano Saxophone [Guest], Flute [Guest]', 3302)]
+    for n, _r, i in CR:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CR]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ENT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const bar = g.querySelector('[data-el=insts]');
+      return { sugg: !!(bar && bar.querySelector('.dci-insts-sugg')), seg: [...g.querySelectorAll('[data-act=insts-set][aria-pressed=true]')].map(b => b.dataset.insts),
+        notes: [...g.querySelectorAll('.dci-insts-note')].map(n => n.textContent.trim()),
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+          const pr = tr.querySelector('[data-f=primary]'); return [t ? (t.options[t.selectedIndex] || {}).text : '', lv ? lv.dataset.level : '', pr ? pr.value : '',
+          (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), [...tr.querySelectorAll('[data-f=flag]:checked, [data-f=flags]:checked')].map(c => c.value)]; }) }; }"""
+    ADDED = """MB.relationshipEditor.state.added.map((r) => [r.linkTypeID, ((r.entity0 || {}).name || ''), (r.entity1 || {}).entityType || '',
+      ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName).sort().join(','), r.begin_date ? [r.begin_date.year, r.begin_date.month, r.begin_date.day].join('-') : ''])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            jr, st = pg.evaluate(ENT, 'Jane Roe'), pg.evaluate(ENT, 'Sax Two')
+            print('A)', jr, st)
+            results.append(bool(jr) and jr['sugg'] and jr['seg'] == ['track'] and len(jr['rows']) == 5 and bool(st) and not st['sugg'] and st['seg'] == ['track'])
+            pg.click(f"{sec_sel(pg, 'Jane Roe')} .dci-insts-sugg [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            jr2 = pg.evaluate(ENT, 'Jane Roe')
+            print('B)', jr2)
+            rel5 = [r for r in jr2['rows'] if r[1] == 'release']
+            auto = [r for r in jr2['rows'] if r[1] == 'recording']
+            results.append(not jr2['sugg'] and jr2['seg'] == ['release'] and len(rel5) == 5 and all(r[0] == 'instrument' for r in rel5)
+                           and len(auto) == 1 and auto[0][0] == 'instrument' and auto[0][2] == '' and auto[0][3] == '4 of 4 tracks' and len(jr2['notes']) == 1)
+            pg.click(f"{sec_sel(pg, 'Sax Two')} [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            st2 = pg.evaluate(ENT, 'Sax Two')
+            print('C)', st2)
+            a2 = [r for r in st2['rows'] if r[1] == 'recording']
+            results.append(len(a2) == 1 and a2[0][2] == 'woodwind' and 'guest' in a2[0][4] and any('“woodwind”' in n for n in st2['notes']))
+            # D) "solo" ticked on Jane Roe's automatic row, then back and forth three times
+            jsec = sec_sel(pg, 'Jane Roe')
+            states = []
+            auto_row = pg.evaluate(f"""(() => {{ const tr = [...document.querySelectorAll('{jsec} tr.dci-row')].find(t => t.querySelector('[data-act=level][data-level=recording][aria-pressed=true]'));
+              const c = tr && tr.querySelector('[data-f=flag][value=solo], [data-f=flags][value=solo]'); if (c) c.click(); return !!c; }})()""")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            for k in range(3):
+                pg.click(f"{jsec} [data-act=insts-set][data-insts=track]")
+                H.wait_still(pg, "document.body.innerHTML", 10, 150)
+                t1 = pg.evaluate(ENT, 'Jane Roe')
+                pg.click(f"{jsec} [data-act=insts-set][data-insts=release]")
+                H.wait_still(pg, "document.body.innerHTML", 10, 150)
+                t2 = pg.evaluate(ENT, 'Jane Roe')
+                states.append((len(t1['rows']), sorted(set(r[1] for r in t1['rows'])), len(t2['rows']), [r[4] for r in t2['rows'] if r[1] == 'recording']))
+            print('D)', auto_row, states)
+            results.append(auto_row and all(x == (5, ['recording'], 6, [['solo']]) for x in states))
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate(ADDED)
+            mine = [x for x in added if x[1] in ('Jane Roe', 'Sax Two')]
+            print('E)', mine)
+            jrel = [x for x in mine if x[1] == 'Jane Roe' and x[0] == 44]
+            jrec = [x for x in mine if x[1] == 'Jane Roe' and x[0] == 148]
+            srec = [x for x in mine if x[1] == 'Sax Two' and x[0] == 148]
+            results.append(len(jrel) == 5 and len(jrec) == 4 and all(x[3] == 'solo' for x in jrec) and len(srec) == 4 and all(x[3] == 'guest,woodwind' for x in srec))
+            print('Fehler:', errs)
+            results.append(not errs)
+            # F) the quick switch S170 off: "instruments" for Sax Two
+            ctx2 = H.new_context(b)
+            pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg2.on('dialog', lambda d: d.accept())
+            pg2.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S170']))")
+            pg2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg2)
+            H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg2, "document.body.innerHTML", 10, 300)
+            pg2.click(f"{sec_sel(pg2, 'Sax Two')} [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg2, "document.body.innerHTML", 10, 200)
+            f = pg2.evaluate(ENT, 'Sax Two')
+            print('F)', f)
+            results.append(bool(f) and [r[2] for r in f['rows'] if r[1] == 'recording'] == [''] and not errs2)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        for _n, _r, i in CR:
+            H.ARTISTS.pop(i, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_evcol3103():
+    """Credits Importer 3.103.0 (collected items Z-EVCOL, Z-ATTR3, Z-ARHL; rule D032) in the matrix: Discogs names Pia Note with "Piano" and
+    "Liner Notes"; the notes "Tracks 1 and 2 recorded March 1, 2001. Tracks 3 and 4 recorded March 3, 2001."
+    A) Her events: ① the recordings, ② the release without a date (liner notes).
+    B) Piano unticked in ①: the column stays – grey, "✕" in its head; ticked again: an event as before (no grey column).
+    C) Unticked again and ✕: the column is gone.
+    D) The attributes together: at most three side by side (a grid of three columns).
+    E) "＋ Another role" → instrument: its line framed yellow until an instrument is there, then not.
+    F) (D032) in the full view, the date matrix applied (piano: a row for tracks 1–2 on March 1, one for 3–4 on March 3), the piano of
+       tracks 3–4 put on the release: March 3 kept – not without a date beside the liner notes (until 3.102.0 it joined them)."""
+    import copy
+    orig = H.discogs_release
+    lts0 = copy.deepcopy(H.LTS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_type'))
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.ARTISTS[3311] = (H.uid('dddddddd', 3311), 'Pia Note')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Pia Note', 'anv': '', 'role': 'Piano, Liner Notes', 'tracks': '', 'id': 3311, 'join': ''}]
+        d['companies'] = []
+        d['notes'] = 'Tracks 1 and 2 recorded March 1, 2001. Tracks 3 and 4 recorded March 3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    HEADS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('thead th[data-evhead]')].map(th => [th.classList.contains('dci-em-evghost'), th.textContent.replace(/\\s+/g, ' ').trim()]) : null; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            sec = sec_sel(pg, 'Pia Note')
+            if not pg.locator(f'{sec} table.dci-em-one').count():
+                pg.click(f'{sec} [data-act=em-wide]')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            h0 = pg.evaluate(HEADS, 'Pia Note')
+            print('A)', h0)
+            results.append(bool(h0) and len(h0) == 2 and not any(x[0] for x in h0) and 'no date' in h0[1][1].lower())
+            piano = f"{sec} tr.dci-em-line:has(input[data-f=em-primary]) input[data-f=em-tick]"
+            ev1 = pg.evaluate(f"document.querySelector('{sec} thead th[data-evhead]').dataset.evhead")
+            pg.locator(f'{piano}[data-ev="{ev1}"]').uncheck()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            h1 = pg.evaluate(HEADS, 'Pia Note')
+            pg.locator(f'{piano}[data-ev="{ev1}"]').check()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            h2 = pg.evaluate(HEADS, 'Pia Note')
+            print('B)', h1, h2)
+            results.append(bool(h1) and len(h1) == 2 and h1[0][0] and not h1[1][0] and pg.locator(f'{sec} th.dci-em-evghost').count() == 0 and h2 == h0)
+            pg.locator(f'{piano}[data-ev="{ev1}"]').uncheck()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.click(f'{sec} th.dci-em-evghost [data-act=em-ghost-drop]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            h3 = pg.evaluate(HEADS, 'Pia Note')
+            print('C)', h3)
+            results.append(bool(h3) and len(h3) == 1 and not any(x[0] for x in h3))
+            grid = pg.evaluate(f"(() => {{ const g = document.querySelector('{sec} .dci-em-flaggrid'); return g ? getComputedStyle(g).gridTemplateColumns.split(' ').length : 0; }})()")
+            print('D)', grid)
+            results.append(grid == 3)
+            pg.evaluate(f"document.querySelector('{sec} [data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=instrument]').first.click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            e1 = pg.locator(f'{sec} tr.dci-arhl').count()
+            inp = pg.locator(f'{sec} tr.dci-arhl input[data-f=primary], {sec} tr.dci-arhl input[data-f=em-primary]').first
+            inp.fill('guitar')
+            inp.press('Tab')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            e2 = pg.locator(f'{sec} tr.dci-arhl').count()
+            print('E)', e1, e2)
+            results.append(e1 >= 1 and e2 == 0)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+        # F) the full view: the piano of the second date put on the release keeps its date
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            sec = sec_sel(pg, 'Pia Note')
+            pg.click('[data-act=dm-apply]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.locator(f'{sec} tr.dci-row:has([data-f=primary]) [data-act=level][data-level=release]').last.click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Pia Note' && (r.entity1 || {}).entityType === 'release')
+              .map((r) => [r.linkTypeID, r.begin_date ? [r.begin_date.year, r.begin_date.month, r.begin_date.day].join('-') : ''])""")
+            print('F)', added)
+            results.append(sorted(added) == [[24, ''], [44, '2001-3-3']] and not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+        H.ARTISTS.pop(3311, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_instsrem3103():
+    """Credits Importer 3.103.0 (Z-INSTS, review): "on the release" remembered – Jane Roe's five instruments put on the release, the page
+    loaded again: on the release again (five rows there, one automatic row on the recordings, "on the release" pressed); "per track":
+    the five on the recordings again, no automatic row."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0, rem0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), H.REMEMBER
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9124, 'other instruments'), (9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9133, 'bass clarinet'), (9142, 'flute')):
+        H.attr(i, n, 14, 14)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Jane Roe')
+    H.REMEMBER = True
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Jane Roe', 'anv': '', 'role': 'Soprano Saxophone, Tenor Saxophone, Flute, Bass Clarinet, Little Instruments', 'tracks': '', 'id': 3301, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    LV = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [[...g.querySelectorAll('[data-act=insts-set][aria-pressed=true]')].map(b => b.dataset.insts),
+        [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); return lv ? lv.dataset.level : ''; })] : null; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+
+            def load():
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1500)
+            load()
+            pg.click(f"{sec_sel(pg, 'Jane Roe')} [data-act=insts-set][data-insts=release]")
+            pg.wait_for_timeout(1600)
+            before = pg.evaluate(LV, 'Jane Roe')
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+            after = pg.evaluate(LV, 'Jane Roe')
+            pg.click(f"{sec_sel(pg, 'Jane Roe')} [data-act=insts-set][data-insts=track]")
+            pg.wait_for_timeout(400)
+            back = pg.evaluate(LV, 'Jane Roe')
+            print('vorher:', before, '| nachher:', after, '| je Track:', back)
+            want = [['release'], ['release'] * 5 + ['recording']]
+            results.append(before == want and after == want and back == [['track'], ['recording'] * 5])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.REMEMBER = rem0
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        H.ARTISTS.pop(3301, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

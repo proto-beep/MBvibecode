@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.102.0, Companion 1.6.0 – 1.14.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.103.0, Companion 1.6.0 – 1.15.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,23 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.103.0 · 2026-11-08
+
+- **Z-INSTS (S169, S170 – new):** `instsRows`, `instsAvail`, `instsGroup` (the lowest common ancestor of the instruments in `idx().atById` by `parent_id`; '' for the root, a "string" group with piano or keyboards, S170 off), `instsReleaseDates` (the column's cells marked `rel`), `instsSet` / `instsToRelease` / `instsToTrack` (`row.instsPrev` – level, date, tracks, `levelTouched`, `dateKeyed` – restored exactly; copies of a row for further release dates `instsCopy`; the automatic row `instsAuto` from `copyRowForEvent`, without the source's words – `dBase` null, so `remapRow` leaves it –, kept in `a.instsAutoRow` while "per track"), `instsSegHtml` (the block head of the first instruments' block in `emBlockHtml`), `instsBarHtml` (top of the entry: the suggestion `INSTS_SUGGEST` = 4, the switch where no matrix shows it; `a.instsNo`), the automatic row's tag in `emLineHtml` and its note in the row; handlers `insts-set`, `insts-no`. S170 in QUICK_SWITCHES (on).
+- **Z-EVCOL:** `S.emGhost` (per entry: the events emptied), `emGhostWatch` (around `emTick` off and `setLevel`), `emGhostDrop` (handler `em-ghost-drop`); `entryModel` adds them as `ghost` events (sorted with the others, in every block); `evHeadHtml` (grey head with ✕), the tick cells `.dci-em-c-ghost`, `evShortHtml` and the compact line (`.dci-em-clghost`, not a drop target); `emTick` takes an empty column's level, tracks and date. **D032 (new):** `applyMatrixColumn` – on the release level without dates marked "release level" or for all tracks: the column's dates of the row's tracks (else all of them).
+- **Z-ATTR3:** `.dci-em-flaggrid` (a grid of three columns) in the attributes' cell of the joint view.
+- **Z-ARHL:** `row.arhl` (set by `arqPick` and `addRoleRow`), `arhlOn` (ends once the row has a type and, where the type has an instrument or voice, a valid one); `.dci-arhl` on the row, the matrix line, kept current in `refresh` and `updateEntryMatrixStatus`.
+- **For Companion 1.15.0:** the labels `artPrev`, `artNext` in the status map.
+- **Texts:** `em.ghost*`, `insts.*`, `log.instsRelease`, `log.instsTrack`, `quick.S170`, `dgStatus.artPrev`, `dgStatus.artNext` (en, de).
+- **Review:** "on the release" remembered per entry (`insts`, `instsNo` in the snapshot; the moved rows stored as they are per track – their type on the recordings –, the automatic row and the copies not; `ROW_OWN_FIELDS` + `instsPrev`, `instsAuto`, `instsCopy`, `instsWas`, `arhl`; restored by `instsToRelease`); `copyRowForEvent` and the matrix's copies drop those fields; `instsToTrack` takes every automatic row and copy and leaves a row on Skip there (its level to come back to in `entrySkip`, `scopeLevel`, `srcOffLevel` …); `instsToRelease` again while on the release takes the rows put per track meanwhile; `instsAutoFollow` (new; also from `remapRow`, S170 switched): the group, the type and guest / additional follow the rows – what was changed by hand stays; a moved row's matrix date becomes its own (not split by D032); the switch stays while on the release with S169 off. D032 only for a row that had a date of the matrix, only the dates of its tracks. A ghost is no open event, no drop target, not counted for `S.evShared`; `lineKeyOf` keeps the automatic row a line of its own. Companion: `artworkList` once per page state (`artCache`), only this release's images (an unreadable address only as the cover), the larger of two; the image shown stays when the list changes.
+- **Tests:** `t_entries.py insts3103`, `instsrem3103` (review: remembered), `evcol3103`, `t_companion_discogs.py artnav` – new; fail on 3.102.0. `t_rules_window.py quickswitch`: 14 switches (S170, on). `t_entries.py matrix` (the heads without the switch), `compact` B (the event left empty stays).
+
+## Companion 1.15.0 · 2026-11-08
+
+Z-CPVA.
+
+- **`artworkList`** (new): the release's images on the page – the cover, `img` of i.discogs.com, addresses in the page's scripts (escaped slashes too) – one each (the source the address carries, base64 after the options; another release's, an artist's or a label's left out); **`artShow`** (new): the image of the miniature, the counter; `renderArtwork` keeps the image chosen while the list is the same; `.dci-art-nav` (‹ › and the counter, hidden with one image) – not a handle for moving the box.
 
 ## Import 3.102.0 · 2026-11-08
 
