@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.101.0
+// @version      3.102.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.101.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.101.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.102.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.102.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.101.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.102.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1600,6 +1600,24 @@
       "solo.flag": "Attribute “solo”",
       "solo.flagTitle": "This person's instrument on these tracks with the attribute “solo”",
       "solo.none": "Nothing",
+      "uncr.all": "Not named on the release ({src}: uncredited) – on Skip:",
+      "uncr.some": "Not named on the release ({src}: uncredited) – on Skip:",
+      "uncr.take": "Take anyway",
+      "uncr.takeOne": "Take “{role}” anyway",
+      "uncr.takeOneTitle": "This role of the person on its level, though the release does not name it",
+      "uncr.takeAll": "Take all uncredited",
+      "uncr.allTitle": "Every role marked uncredited on this release on its level (this release only)",
+      "plays.title": "Played by whom?",
+      "plays.hint": "“{line}” – no one is credited with: {list}",
+      "plays.who": "Person …",
+      "plays.take": "Take (all tracks)",
+      "plays.no": "Ignore",
+      "plays.noWho": "Choose the person first.",
+      "abbr.ask": "“{abbr}” is an abbreviation – which instrument?",
+      "abbr.chosen": "“{abbr}” (abbreviation):",
+      "issue.abbrAsk": "choose the instrument “{abbr}” stands for",
+      "log.uncrTaken": "Taken though uncredited: {n} roles ({list})",
+      "log.playsTaken": "From the notes for {name}: {list}",
       "log.ensembleApplied": "Only those named play on the tracks of “{line}”",
       "log.soloAnswered": "“{line}”: {ans}",
       "artl.why.bandcamp": "the album is on its Bandcamp page “{page}”",
@@ -4129,7 +4147,9 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
-    { id: 'S166', where: 'INSTRUMENT_ABBR, abbrWords, abbrList, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-ABBR): instrument abbreviations of jazz lists and booklets (mapping INSTRUMENT_ABBR: "tpt" trumpet, "b" bass, "d" drums, "ts" tenor saxophone …) – only in short form: in brackets after a name, in a terse lineup ("Nate Wooley tpt", "Ken Filiano (b)"), in the lines of a duo or trio; one of two readings ("tb": trombone or tuba) the one the person plays elsewhere in the text, else the first, the others named at the row' },
+    { id: 'S168', where: 'TEXT.parse (firstPerson), playsAsks, playsHtml', note: 'Texts (3.102.0; collected item Z-PLAYS): "At the time I played soprano and tenor sax." – a sentence of the one who writes: left out when its instruments are credited already; an instrument no one is credited with is asked above the entries – whose it is (the people of the release offered, the one who plays the others of the sentence first), taken on all tracks, or not' },
+    { id: 'S167', where: 'addCreditRows, remapRow, uncrHtml, uncrTake', note: 'Credits (3.102.0; collected item Z-UNCR): a credit Discogs marks [Uncredited] (not named on the release) is on Skip until it is taken – at the entry when all roles of the person are such ("Take anyway"), else at each role; "Take all uncredited" for the whole release (this release only)' },
+    { id: 'S166', where: 'INSTRUMENT_ABBR, abbrWords, abbrList, TEXT.parse (readLine0), abbrAskHtml', note: 'Texts (3.101.0; collected item Z-ABBR): instrument abbreviations of jazz lists and booklets (mapping INSTRUMENT_ABBR: "tpt" trumpet, "b" bass, "d" drums, "ts" tenor saxophone …) – only in short form: in brackets after a name, in a terse lineup ("Nate Wooley tpt", "Ken Filiano (b)"), in the lines of a duo or trio; one of two readings ("tb": trombone or tuba) the one the person plays elsewhere in the text, else (3.102.0, Z-ABBR2) asked at the row – not staged before the answer' },
     { id: 'S165', where: 'TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): left out without a word – a label\'s catalogue number ("CIMP #384"), an address ("Redwood, NY 13679", "P.O. Box"), a statement of how the label records ("recorded live to two-track … no compression, no overdubs")' },
     { id: 'S164', where: 'TEXT.parse (readLine0), loadSeries, seriesLinked', note: 'Texts (3.101.0; collected item Z-CIMP): "Spirit Room Series Vol.247", "Series: X No. 12" – the release part of that series with its number; MusicBrainz\'s series of that name suggested (no "Create series" – a series named in a text only), the row taken once one is chosen or its MBID given' },
     { id: 'S163', where: 'TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): "Cover art: The Weight by Kara D. Rusch" – the artist of the cover (artwork credited "cover art"), the title of the picture left out' },
@@ -4404,6 +4424,8 @@
     } },
       // [Z-PLT] (3.89.0, R114) "Plated By": miscellaneous support, the task "vinyl plating" (roleCreditForInner), only for vinyl (mediumOfRow)
       R114: { run: () => out(['misc'], { ...rel }) },
+      // [Z-LITI] (3.102.0, R117) "Little Instruments": other instruments, credited as written ("little instruments")
+      R117: { run: () => out(['instrument'], { primaryCands: ['other instruments'], credit: true }) },
       // [Z-SYN] (3.81.0, R113, T065) a model of a synthesizer, drum machine or sampler ("Juno 101", "TR-808", "MPC"): MusicBrainz's
       // instrument of that name first, else the kind; the model as written as role credit
       // ([Z-IMD] 3.92.0, S146) another instrument played on the model ("Nord stage2 [Wurlitzer]"): the model's kind, not that instrument
@@ -5852,6 +5874,7 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D031', note: 'The word naming the group of a date in the whole sentence before it (3.102.0; collected item Z-DATP): "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983." – "recorded" more than 80 characters before the date (until 3.101.0 only those 80 counted); at most 300 characters' },
     { id: 'D030', note: 'One date for several groups (3.95.0; collected item Z-DPD): "composed and produced between February 2025 and April 2026" is one entry of the date pool named for all its groups ("Production · Composition 1") in each of their columns – changed in the pool, for all; changed in a cell of one column, that cell gets a date of its own' },
     { id: 'D029', note: 'The date of the production is the recording\'s too (3.95.0; collected item Z-PRD): with no date of the recording in the text, a date after "produced" / "production" also goes to Performance (the recordings and their instruments) – not the date of "composed"; a date of the recording wins' },
     { id: 'D028', note: 'Dates of composition and production (3.84.0; collected item Z-BTW): "composed", "produced", "production" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined ("Recorded at …, produced by …, 12 March 1969" stays Performance; "composed and produced between …" both)' },
@@ -6067,7 +6090,20 @@
         taken.push([a, b]);
         if (!v || v === 'skip') continue;
         // The keyword closest before the date (or inside it) suggests the group; [D019] only in its own sentence
-        const before = src.slice(Math.max(0, a - 80, ruleOn('D019') ? sentenceStartAt(src, a) : 0), b);
+        // [Z-DATP] (3.102.0, D031) the whole sentence before it (at most 300 characters) – until 3.101.0 the 80 characters before it
+        const near = Math.max(0, a - 80, ruleOn('D019') ? sentenceStartAt(src, a) : 0);
+        let from = near;
+        if (ruleOn('D031') && ruleOn('D019')) {
+          // ((review) not past another date: "Recorded … on 3 May 1983 … toured Europe through 1984" – 1984 no recording date)
+          from = Math.max(0, a - 300, sentenceStartAt(src, a));
+          const yr = /\b(?:1[89]|20)\d\d\b|\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g;
+          let y;
+          const base = from;
+          const part = src.slice(base, a);
+          while ((y = yr.exec(part))) from = Math.max(from, Math.min(near, base + y.index + y[0].length));
+          for (const [, e] of taken) if (e < a && e > from) from = Math.min(near, e);
+        }
+        const before = src.slice(from, b);
         // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
         const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
         const segStart = before.length - seg.length;
@@ -6925,6 +6961,7 @@
       const ensembles = []; // [Z-CIMP] (3.101.0, S162) "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)"
       const series = []; // [Z-CIMP] (3.101.0, S164) "Spirit Room Series Vol.247"
       const abbrAsk = []; // [Z-ABBR] (3.101.0, S166) abbreviations of two readings, decided at the end
+      const firstPerson = []; // [Z-PLAYS] (3.102.0, S168) "I played soprano and tenor sax."
       // ((review) at the start of the line only – not "Melody Gardot – arrangements", "Vocals on tracks 2, 4 …, arranged by X", "Track 2
       // arranged by X")
       const WORK_ARR = /^(?:all\s+)?(?:(?:of\s+)?the\s+)?(?:songs|tracks|compositions|tunes|pieces|melodies|works|music)\b(?!\s*\d)[^.;:]*?\b(?:arrang|orchestrat)/i;
@@ -9410,6 +9447,23 @@
       // [Z-MEM] (3.79.0, S113) a member the text gives an instrument or a voice elsewhere: no question (the instruments say it)
       const playing = new Set(credits.filter((c) => !c.member && c.who && c.who.name && playable(c.role)).map((c) => norm(c.who.name)));
       for (let k = credits.length - 1; k >= 0; k--) if (credits[k].member && !credits[k].memberGroup && playing.has(norm(credits[k].who.name))) credits.splice(k, 1);
+      // [Z-PLAYS] (3.102.0, S168) the instruments of the one who writes ("At the time I played soprano and tenor sax."): decided in the dashboard
+      // with the credits of the release – credited already: nothing; else asked
+      if (ruleOn('S168')) {
+        const FP = /(?<![\p{L}'’])I\s+(?:also\s+|then\s+|still\s+)?(?:played|play|was playing)\s+(?!with\b|in\b|on\b|at\b|for\b|together\b|live\b|there\b|it\b|them\b|this\b|that\b)(?:the\s+|my\s+)?([^.!?;\n]{2,80})/gu;
+        const src = String(text || '');
+        let fm;
+        while ((fm = FP.exec(src))) {
+          const tail = fm[1].match(/\s+(?:on|in|at|with|for|during|throughout|from|back|then|too|as well)\b.*$/i);
+          // ((review) an instrument with tracks of its own ("drums on track 3", "on “Title”") is no instrument of all tracks: not asked
+          if (tail && /^\s+on\s+(?:tracks?\b|songs?\b|sides?\b|cuts?\b|[“"'‘]|\d)/i.test(tail[0])) continue;
+          const obj = clean(tail ? fm[1].slice(0, tail.index) : fm[1]);
+          const roles = obj ? playRoles(obj) : null;
+          if (!roles || !roles.length) continue;
+          const st = Math.max(src.lastIndexOf('\n', fm.index), ...['. ', '! ', '? ', '; '].map((x) => { const k = src.lastIndexOf(x, fm.index); return k < 0 ? -1 : k + 1; })) + 1;
+          firstPerson.push({ roles, line: clean(src.slice(st, fm.index + fm[0].length)) });
+        }
+      }
       // [Z-CIMP] (3.101.0, S162) duos, trios … on their tracks: only the people named play there – the lineup without tracks of its own loses
       // those tracks for everyone else; a name as written in short ("K.Filiano", "T.H.Bynum") is the person of the lineup it stands for; the
       // instrument in brackets the one played there (the person's other instruments not on those tracks). SOLO: asked in the dashboard.
@@ -9484,9 +9538,9 @@
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
     }
 
     /**
@@ -9530,6 +9584,7 @@
         companies: res.companies,
         series: (res.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
         ensembles: res.ensembles || [], // [Z-CIMP] (3.101.0, S162)
+        firstPerson: res.firstPerson || [], // [Z-PLAYS] (3.102.0, S168)
         unrecognized: res.unrecognized,
         ignored: res.ignored,
         stackAlt: res.stackAlt || [], // [S058] (3.38.12)
@@ -9803,6 +9858,7 @@
           ...[...trackUnrec.keys()].flatMap((i) => trackAltUnrec.get(i) || trackUnrec.get(i))] : null,
         series: (album.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
         ensembles: album.ensembles || [], // [Z-CIMP] (3.101.0, S162)
+        firstPerson: [...(album.firstPerson || []), ...((aboutRes && aboutRes.firstPerson) || []).map((x) => ({ ...x, from: 'about' }))], // [Z-PLAYS] (3.102.0, S168)
         unrecognized,
         ignored,
         covers,
@@ -13359,6 +13415,7 @@
 
   function pickPrimary(row) {
     if (!row.primaryCands.length) return '';
+    if (row.abbrAsk && abbrOpen(row)) return ''; // [Z-ABBR2] (3.102.0, review) not before the answer
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
     if (root) {
@@ -13488,7 +13545,11 @@
           if (!m.notes || !m.notes.includes('rsocOff')) row.notes = [...(row.notes || []), 'rsocOff'];
         } else row.rsocOff = false;
       }
-      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out || row.rsocOff) {
+      // [Z-UNCR] (3.102.0, S167; review) switched off: taken; on: on Skip again (unless taken)
+      if (row.uncrOff && !ruleOn('S167')) row.uncrOff = false;
+      else if (!row.uncrOff && ruleOn('S167') && !row.uncrTaken && (row.notes || []).includes('uncredited')) row.uncrOff = true;
+      if (row.uncrOff) row.uncrLevel = lv;
+      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out || row.rsocOff || row.uncrOff) {
         if (row.srcOff) row.srcOffLevel = lv;
         if (row.aboutHidden) row.aboutLevel = lv;
         if (row.notesHidden) row.notesLevel = lv;
@@ -13928,6 +13989,7 @@
       }
       const lt = currentLinkType(row);
       if (!lt) info.issues.push(tr('issue.chooseType'));
+      if (abbrOpen(row)) info.issues.push(tr('issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0)
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
       if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
       if (lt && artist && artist.company && artist.entityType && row.company && row.entityType && row.entityType !== artist.entityType) info.issues.push(tr('issue.kindMismatch'));
@@ -20608,6 +20670,7 @@
     row.suppName = S.supp.source.name;
     if (!company && info.c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
     if (!company && info.c.abbrAlt) Object.assign(row, { abbr: info.c.abbr, abbrAlt: info.c.abbrAlt }); // [Z-ABBR] (3.101.0, S166)
+    if (!company) abbrAskFor(row, info.c); // [Z-ABBR2] (3.102.0, S166; review)
     if (!company && info.c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
     if (!company && S.supp.source === BANDCAMP) askTranslation(row);
@@ -20620,6 +20683,7 @@
     if (company ? companyLeftOutForMedium(row, info.r, S.supp.rel || {}, info.r.line || info.r.role) : leftOutForMedium(row, S.supp.rel || {}, (info.c.lines || [])[0] || info.c.role.raw, !!S.supp.source.nameSearch)) return null;
     if (!releaseLevelChosen(row) || noMediaFor(row)) return null;
     suggestCommissioned(row);
+    uncrSkip(row); // [Z-UNCR] (3.102.0, S167; review)
     return row;
   }
 
@@ -21127,6 +21191,7 @@
       // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
       const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
       res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames });
+      rel.firstPerson = (res.firstPerson || []).map((x) => ({ ...x, from: 'notes' })); // [Z-PLAYS] (3.102.0, S168) the Discogs notes
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
       return;
@@ -21840,6 +21905,7 @@
       if (c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
       if (c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
       if (c.abbrAlt) Object.assign(row, { abbr: c.abbr, abbrAlt: c.abbrAlt }); // [Z-ABBR] (3.101.0, S166; review)
+      abbrAskFor(row, c); // [Z-ABBR2] (3.102.0, S166)
       // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
       if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
@@ -21884,9 +21950,25 @@
       }
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
       suggestCommissioned(row);
+      uncrSkip(row); // [Z-UNCR] (3.102.0, S167; review: once its level is settled)
       S.rows.push(row);
     }
   }
+
+  /** [Z-ABBR2] (3.102.0, S166) An abbreviation of two readings: asked at the row – no instrument (and nothing staged) before the answer. */
+  function abbrAskFor(row, c) {
+    if (!c.abbrAlt || !c.abbrAlt.length || !ruleOn('S166')) return;
+    row.abbrAsk = { abbr: c.abbr, options: uniq([String(c.role.raw || '').toLowerCase(), ...c.abbrAlt]), chose: '' };
+    row.primaryText = '';
+  }
+  /** Still to be answered (an instrument typed or chosen by hand answers it too). */
+  const abbrOpen = (row) => !!row.abbrAsk && !row.abbrAsk.chose && !(row.primaryTouched && norm(row.primaryText));
+  /** [Z-UNCR] (3.102.0, S167) [Uncredited] (not named on the release): on Skip until it is taken. */
+  function uncrSkip(row) {
+    if (!ruleOn('S167') || row.uncrTaken || !(row.notes || []).includes('uncredited') || row.level === 'skip') return;
+    Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip' });
+  }
+  const uncrPending = (r) => !!r.uncrOff && r.level === 'skip';
 
   /**
    * A company of the source (label, place, area – a group of groupCompanies) as an entry with its rows, as the import makes it (moved
@@ -21983,6 +22065,7 @@
       // [Z-CIMP] (3.101.0, S162) "track 7 SOLO: …" asked at the person; duos … applied by the text (logged)
       S.ensAsk = (rel.ensembles || []).filter((e) => e.kind === 'solo').map((e, k) => ({ ...e, id: `ens${k}` }));
       (rel.ensembles || []).filter((e) => e.applied).forEach((e) => log('info', 'ensembleApplied', { line: e.line }));
+      S.playsAsk = []; // [Z-PLAYS] (3.102.0, S168) made once the rows are there
       // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
       setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
@@ -22168,6 +22251,8 @@
         if (seq !== importSeq) return;
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
+        // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
+        if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
         setWorkNotes(S.workNotesRel);
@@ -24056,7 +24141,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -25298,7 +25383,7 @@
   function lineAskHtml(l) {
     // [3.35.0] the first row not taken out (a question of a row taken out says nothing)
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
-    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l), levelKeptHtml(l)].join('');
+    return [unmappedHtml(r), instrumentAskHtml(r), abbrAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l), levelKeptHtml(l)].join('');
   }
 
   /**
@@ -25543,6 +25628,8 @@
     // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?"); ([Z-QGTR] 3.97.0) also the
     // instrument of the word itself chosen ("guitar" for "Guitar")
     if (q && (q.preset || keptBase(r, q)) && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
+    // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings: its readings at the chip
+    if (abbrOpen(r)) return r.abbrAsk.options.map((x) => instr(x));
     const g = r.instrGuess;
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
       return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
@@ -26077,6 +26164,7 @@
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${a.artl ? artlNoteHtml(a) : ''}
         ${(S.ensAsk || []).length ? soloAskHtml(a) : ''}
+        ${S.rows.some((r) => r.artistKey === a.key && uncrPending(r)) ? uncrHtml(a) : ''}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -26262,8 +26350,8 @@
 
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
-      // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named
-      + (row.abbrAlt && row.abbrAlt.length ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
+      // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named (3.102.0: asked – abbrAskHtml – while S166 is on)
+      + (row.abbrAlt && row.abbrAlt.length && !row.abbrAsk ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
 ;
     const asType = row.company || row.other ? `<div class="dci-sub">${esc(tr('role.asEntity', { type: tr(`entity.${row.entityType}`) }))}</div>` : '';
     if (row.manual) {
@@ -28782,6 +28870,14 @@
    * [137d] (3.34.20) A word MusicBrainz does not know as an instrument: "did you mean" its similar instruments · other
    * instruments credited as written (the one chosen pressed); with none like it, what was given.
    */
+  /** [Z-ABBR2] (3.102.0, S166) "“tb” (an abbreviation): trombone · tuba" – the row is staged once one is chosen. */
+  function abbrAskHtml(row) {
+    const q = row.abbrAsk;
+    if (!q || row.level === 'skip') return '';
+    const btns = q.options.map((n) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(n)}" aria-pressed="${norm(row.primaryText) === norm(n)}">${esc(n)}</button>`).join(' · ');
+    return `<div class="dci-bass-ask dci-abbr-ask" data-el="abbr-ask">${esc(tr(abbrOpen(row) ? 'abbr.ask' : 'abbr.chosen', { abbr: q.abbr }))} ${btns}</div>`;
+  }
+
   function instrGuessHtml(row) {
     const g = row.instrGuess;
     if (!g || row.level === 'skip') return '';
@@ -28888,6 +28984,7 @@
     const artist = S.artists.get(row.artistKey);
     row.primaryText = name;
     row.primaryTouched = true;
+    if (row.abbrAsk) row.abbrAsk.chose = name; // [Z-ABBR2] (3.102.0)
     // [Z-QGTR] (3.97.0) the answer is the instrument of the word itself ("guitar" for "Guitar"): the question is answered
     const q = questionRuleFor(row);
     row.baseKept = q && norm(name) === q.base ? q.id : null;
@@ -28976,7 +29073,7 @@
     return `
       <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
-        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
@@ -29058,6 +29155,8 @@
       // [3.32.3] the questions whole and to click (item 102)
       if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base && !keptBase(row, q)) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
+      // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings
+      if (abbrOpen(row)) parts.push(clineAskHtml('instr', tr('abbr.ask', { abbr: row.abbrAsk.abbr }), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
@@ -32207,6 +32306,113 @@
     const text = tr(!a.company ? 'artl.asArtist' : a.mbid ? 'artl.asLabel' : 'artl.asLabelOpen', { why });
     const btn = a.company ? tr('artl.toArtist') : tr('artl.toLabel');
     return `<p class="dci-sub dci-artl" data-el="artl">${esc(text)} <button type="button" class="dci-textbtn" data-act="artl-toggle" title="${esc(tr(a.company ? 'artl.toArtistTitle' : 'artl.toLabelTitle'))}">${esc(btn)}</button></p>`;
+  }
+
+  // --- [Z-UNCR] (3.102.0, S167) credits Discogs marks [Uncredited]: on Skip until taken
+  /** At the entry: all its roles uncredited – one "Take anyway"; some – each role with its button; "Take all uncredited" of the release. */
+  function uncrHtml(a) {
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.manual);
+    const off = rows.filter(uncrPending);
+    const all = off.length === rows.length;
+    // ((review) the role without its details: "Producer", not "Producer [Uncredited]")
+    const name = (r) => (r.primaryText || String(r.raw || '').replace(/\s*\[[^\]]*\]/g, '').trim() || rowTypeName(r));
+    const per = all ? '' : ` ${uniq(off.map(name)).map((n) => `<button type="button" class="dci-small" data-act="uncr-take" data-rows="${esc(off.filter((r) => name(r) === n).map((r) => r.id).join(','))}"
+      title="${esc(tr('uncr.takeOneTitle', { role: n }))}">${esc(tr('uncr.takeOne', { role: n }))}</button>`).join(' ')}`;
+    const many = S.rows.filter((r) => uncrPending(r) && !r.entrySkip).length > off.length;
+    return `<div class="dci-note dci-uncr" data-el="uncr"><span>${esc(tr(all ? 'uncr.all' : 'uncr.some', { src: sourceLabel(entrySource(a)) }))}</span>${all
+      ? ` <button type="button" class="dci-small" data-act="uncr-take" data-rows="${esc(off.map((r) => r.id).join(','))}">${esc(tr('uncr.take'))}</button>` : per}${many
+      ? ` <button type="button" class="dci-textbtn" data-act="uncr-all" title="${esc(tr('uncr.allTitle'))}">${esc(tr('uncr.takeAll'))}</button>` : ''}</div>`;
+  }
+  /** Rows taken anyway: their level back – placed by what holds now (the works matrix skipped, the scope), as unskipEntry does. */
+  function uncrTake(rows) {
+    for (const r of rows) {
+      if (!uncrPending(r)) continue;
+      const lv = r.uncrLevel || r.defaultLevel || 'recording';
+      const touched = !!r.levelTouched;
+      Object.assign(r, { uncrOff: false, uncrTaken: true });
+      if (r.srcOff) r.srcOffLevel = lv;
+      else if (r.aboutHidden) r.aboutLevel = lv;
+      else if (r.notesHidden) r.notesLevel = lv;
+      else if (S.worksSkip && lv === 'work') {
+        levelOf(r, 'skip');
+        r.mxSkipped = true;
+      } else if (S.scope !== 'all' && (S.scope === 'work') !== (lv === 'work')) {
+        levelOf(r, 'skip');
+        r.scopeLevel = lv;
+      } else levelOf(r, lv);
+      r.levelTouched = touched;
+    }
+    if (rows.length) log('info', 'uncrTaken', { n: rows.length, list: uniq(rows.map((r) => (S.artists.get(r.artistKey) || {}).name).filter(Boolean)).join(', ') });
+  }
+
+  // --- [Z-PLAYS] (3.102.0, S168) "I played …" of the one who writes: an instrument no one is credited with, asked above the entries
+  /** The questions made anew (after the import, an answer, the notes or about text switched): the answers given stay. */
+  function playsRefresh() {
+    const before = S.playsAsk || [];
+    const had = before.length;
+    S.playsAsk = ruleOn('S168') && S.release ? playsAsks(S.release).map((q) => {
+      const old = before.find((x) => x.line === q.line);
+      return old ? { ...q, who: old.who || q.who, done: old.done } : q;
+    }) : [];
+    return had || S.playsAsk.length;
+  }
+  /** The people offered: the entries, then the release's artists not among them ("mb:<MBID>"). */
+  function playsPeople() {
+    const ents = [...S.artists.values()].filter((a) => !a.company && !a.other);
+    const rc = (S.releaseCredit || []).filter((p) => p.mbid && !ents.some((a) => a.mbid === p.mbid));
+    return [...ents.map((a) => ({ value: a.key, name: a.mbName || a.name, mbid: a.mbid })), ...rc.map((p) => ({ value: `mb:${p.mbid}`, name: p.name, mbid: p.mbid }))];
+  }
+  /** The questions of the import: per sentence the instruments not credited, the people offered (the one who plays the others first). */
+  function playsAsks(rel) {
+    const known = (w) => {
+      const p = parseRoleNotation(w)[0];
+      const m = p ? mapRole(p.base, p.mods) : null;
+      const cands = [w, ...((m && m.primaryCands) || [])].map(norm);
+      return S.rows.some((r) => !r.company && ['instrument', 'vocal'].includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))
+        && [r.primaryText, r.base, r.raw].some((x) => x && cands.includes(norm(x))));
+    };
+    const people = [...S.artists.values()].filter((a) => !a.company && !a.other && S.rows.some((r) => r.artistKey === a.key));
+    const rcPeople = (S.releaseCredit || []).filter((p) => p.mbid);
+    return (rel.firstPerson || []).filter((fp) => !(fp.from === 'about' && (S.aboutOff || !ruleOn('S049'))) && !(fp.from === 'notes' && S.notesOff)).map((fp, k) => {
+      const news = fp.roles.filter((w) => !known(w));
+      if (!news.length) return null;
+      const credited = fp.roles.filter(known);
+      const who = people.find((a) => credited.some((w) => S.rows.some((r) => r.artistKey === a.key && [r.primaryText, r.base, r.raw].some((x) => x && norm(x).includes(norm(w).split(' ').pop())))));
+      // ((review) else the one artist of the release (the one who writes, mostly), as an entry or by its MBID
+      const solo = !who && rcPeople.length === 1 ? rcPeople[0] : null;
+      const soloEnt = solo && people.find((a) => a.mbid === solo.mbid);
+      return { id: `fp${k}`, line: fp.line, roles: news, who: who ? who.key : soloEnt ? soloEnt.key : solo ? `mb:${solo.mbid}` : '', done: '' };
+    }).filter(Boolean);
+  }
+  function playsHtml() {
+    const list = (S.playsAsk || []).filter((x) => !x.done);
+    if (!list.length) return '';
+    const people = playsPeople();
+    return `<div class="dci-festival dci-plays" role="note" data-el="plays">${list.map((q) => `<p><strong>${esc(tr('plays.title'))}</strong> ${esc(tr('plays.hint', { line: q.line, list: q.roles.join(', ') }))}</p>
+      <div class="dci-festival-offers" data-plays="${esc(q.id)}"><select data-f="plays-who" data-plays="${esc(q.id)}" aria-label="${esc(tr('plays.who'))}"><option value="">${esc(tr('plays.who'))}</option>${people.map((o) => `<option value="${esc(o.value)}"${o.value === q.who ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>
+      <button type="button" class="dci-small" data-act="plays-take" data-plays="${esc(q.id)}">${esc(tr('plays.take'))}</button>
+      <button type="button" class="dci-textbtn" data-act="plays-no" data-plays="${esc(q.id)}">${esc(tr('plays.no'))}</button></div>`).join('')}</div>`;
+  }
+  /** Taken: a row of each instrument for the person, on all tracks (the release's artist not yet an entry: its entry made). */
+  async function playsTake(q) {
+    if (/^mb:/.test(q.who || '')) {
+      const mbid = q.who.slice(3);
+      for (const w of q.roles) await addEntryByMbid(mbid, w);
+      q.done = 'taken';
+      log('info', 'playsTaken', { name: playsPeople().find((o) => o.mbid === mbid)?.name || mbid, list: q.roles.join(', ') });
+      return true;
+    }
+    const a = S.artists.get(q.who);
+    if (!a) return false;
+    for (const w of q.roles) {
+      const r = makeRow(a.key, { manual: true, company: null });
+      applyRoleText(r, w);
+      r.tracks = new Set(selIdx());
+      S.rows.push(r);
+    }
+    q.done = 'taken';
+    log('info', 'playsTaken', { name: a.mbName || a.name, list: q.roles.join(', ') });
+    return true;
   }
 
   // --- [Z-CIMP] (3.101.0, S162) "track 7 SOLO: T.Fujiwara (d)": asked at the person
@@ -36957,6 +37163,8 @@
     if (level !== 'skip') delete row.tcpWorksOnly;
     // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
     delete row.entrySkip;
+    // ([Z-UNCR] 3.102.0, review) uncredited taken by a level of its own
+    if (level !== 'skip' && row.uncrOff) Object.assign(row, { uncrOff: false, uncrTaken: true });
     const toOrFromWork = level === 'work' || row.level === 'work';
     // [Q-cn] (3.41.15, review) taken off "Skip" that a question's answer set: the question is asked again
     if (level !== 'skip' && row.typeAnswer != null) {
@@ -36974,6 +37182,7 @@
   }
 
   function setLevel(row, level) {
+    const uncr = uncrPending(row);
     const toOrFromWork = levelOf(row, level);
     if (matrixDateForLevel(row)) {
       renderGroups();
@@ -36982,6 +37191,8 @@
     } else if (toOrFromWork) {
       renderGroups();
       renderWorks();
+    } else if (uncr && !row.uncrOff) {
+      renderGroups(); // ([Z-UNCR] 3.102.0, review) the note at the entry follows
     } else {
       rerenderRow(row);
     }
@@ -38150,6 +38361,39 @@
         }
         break;
       // [Z-ARTL] (3.100.0, S159) the label credited for the artwork as an artist again, or as the label
+      // [Z-UNCR] (3.102.0, S167) uncredited taken anyway – these rows, or all of the release
+      case 'uncr-take':
+      case 'uncr-all': {
+        const ids = new Set(String(btn.dataset.rows || '').split(','));
+        uncrTake(S.rows.filter((r) => uncrPending(r) && (act === 'uncr-all' ? !r.entrySkip : ids.has(String(r.id)))));
+        renderGroups();
+        renderWorks();
+        refresh();
+        break;
+      }
+      // [Z-PLAYS] (3.102.0, S168) an instrument of "I played …" taken for the person chosen, or not
+      case 'plays-take':
+      case 'plays-no': {
+        const q = (S.playsAsk || []).find((x) => x.id === btn.dataset.plays);
+        if (!q) break;
+        const sel = S.overlay.querySelector(`[data-f="plays-who"][data-plays="${q.id}"]`);
+        if (sel) q.who = sel.value;
+        const after = (ok) => {
+          if (!ok) {
+            showMessage('info', 'plays.noWho');
+            return;
+          }
+          playsRefresh(); // ((review) the other questions asked anew: an instrument taken now is credited
+          renderSource();
+          renderGroups();
+          refresh();
+        };
+        if (act === 'plays-no') {
+          q.done = 'no';
+          after(true);
+        } else playsTake(q).then(after, (e) => showMessage('error', 'raw', { text: e.message }));
+        break;
+      }
       // [Z-CIMP] (3.101.0, S162) the answer to "track 7 SOLO: …"
       case 'solo-ans':
         soloAnswer(btn.dataset.ens, btn.dataset.ans);
@@ -38731,6 +38975,7 @@
           delete r.mxSkipped;
           r.level = btn.dataset.level;
           r.levelTouched = true;
+          if (r.level !== 'skip' && r.uncrOff) Object.assign(r, { uncrOff: false, uncrTaken: true }); // ([Z-UNCR] 3.102.0, review)
           resolveRowType(r);
           if (!primaryIsValid(r) || !norm(r.primaryText)) r.primaryText = pickPrimary(r);
         }
@@ -40218,10 +40463,18 @@
     }
     if (f === 'about-off') {
       setAboutOff(el.checked);
+      if (playsRefresh()) renderSource(); // ([Z-PLAYS] 3.102.0, review) its "I played …" asked or not
       return;
     }
     if (f === 'notes-off') {
       setNotesOff(el.checked);
+      if (playsRefresh()) renderSource();
+      return;
+    }
+    // ([Z-PLAYS] 3.102.0, review) the person chosen kept through a redraw
+    if (f === 'plays-who') {
+      const q = (S.playsAsk || []).find((x) => x.id === el.dataset.plays);
+      if (q) q.who = el.value;
       return;
     }
     if (f === 'work-groups-pool') {
@@ -40341,6 +40594,11 @@
         updateMark(row);
         updateHint(row);
         updateVoiceCredit(row);
+        // ([Z-ABBR2] 3.102.0, review) the question of an abbreviation follows the instrument typed
+        if (row.abbrAsk) {
+          const ask = el.closest('tr') && el.closest('tr').querySelector('[data-el=abbr-ask]');
+          if (ask) ask.outerHTML = abbrAskHtml(row) || '<span hidden></span>';
+        }
         refresh();
         break;
       case 'credit':
@@ -46946,6 +47204,7 @@
       .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
+      .dci-uncr { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-solo-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-arq-sub { margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
       /* [Z-ALIGN] (3.100.0) one table per entry: its head stays on top while its lines scroll, each block a thin heading row */
