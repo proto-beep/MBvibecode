@@ -982,8 +982,8 @@ def case_wts():
     """Credits Importer 3.52.0 (collected item Z-WTS; Q-ft, Q-fu, Q-ge): a work type and a lyrics language for all new works, suggested from
     the works of the artists the works matrix reads anyway (here the release artist: 3 Song in English, 1 Aria in [No lyrics]).
     A) Yellow below the head: "New works – suggested: Song · English", "from 3 of 4 works of Test Band in MusicBrainz", "Accept", and
-       "if not accepted: neither type nor language is filled in"; each track without a work says "Song · English?" (yellow, its tooltip:
-       not filled in until "Accept").
+       "if not accepted: neither type nor language is filled in"; each track without a work has a yellow "?" at its label ([3.97.0] its
+       tooltip names the suggestion – until 3.96.0 "Song · English?": not filled in until "Accept").
     B) Not accepted: the new works are staged without a type and without a language.
     C) "Accept" (another page): the line and the hints go, the log says so; the defaults (popover of the head) hold Song and English; the new
        works are staged as Song in English.
@@ -1031,7 +1031,7 @@ def case_wts():
         print('A)', a0, '\n  ', a1)
         results.append(a0 is not None and a0[0] == 'Song · English' and 'from the works of Test Band in MusicBrainz: type 3 of 4 · language 3 of 4' in a0[1] and 'mx-wts-accept' in a0[2]
                        and a0[1].endswith('if not accepted: neither type nor language is filled in') and a0[3] == 'rgb(255, 248, 219)'
-                       and [x[1] for x in a1] == ['Song · English?'] * 3 and all('not filled in until “Accept”' in x[2] for x in a1))
+                       and [x[1] for x in a1] == ['?'] * 3 and all('Song · English – not filled in until “Accept”' in x[2] for x in a1))
         b0 = stage(pg)
         print('B) nicht angenommen:', b0)
         results.append(len(b0) == 3 and all(x[1] is None and x[2] == [] for x in b0))
@@ -1080,6 +1080,80 @@ console.log(JSON.stringify([f([w('', 'zxx'), w('', 'zxx'), w('', 'zxx'), w('Song
                            {'typeId': '17', 'langIds': ['120', '486'], 'nType': 2, 'nLang': 2, 'of': 3, 'ofLang': 3}, {'typeId': '17', 'langIds': ['120'], 'nType': 3, 'nLang': 3, 'of': 3, 'ofLang': 3}])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_wts397():
+    """Credits Importer 3.97.0 (collected item Z-WTS2; rule S153): the work type and lyrics languages of each work as a label beside it.
+    Track 2 "Alpha / Beta", track 3 "Gamma (Instrumental)"; the works of Test Band suggest "Song · English" (as in wts).
+    A) Beside "＋ New ▾" of each track without a work: the label "[work type · languages]" (what is filled in) with a yellow "?" (its
+       tooltip names the suggestion); track 3: "[– · [No lyrics]]" with S153; the work of track 1 (MusicBrainz): "[no work type]", only
+       shown.
+    B) "Song" chosen in the defaults by hand: the suggestion and the "?" go (until 3.96.0 they stayed and looked like the values), the log
+       says so; the labels say "[Song]", track 3 "[Song · [No lyrics]]".
+    C) Track 2 split (medley): each part its own label "[Song]"; part 2 set to no type and English by its label.
+    D) Staged: Alpha Song without a language, Beta without a type in English, Gamma Song in [No lyrics], track 4 Song."""
+    TB = H.uid('dddddddd', 61)
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    H.ARTIST_WORKS.update({TB: [{'id': H.uid('cccccccc', 130 + k), 'title': f'Elsewhere {k}', 'type': t, 'languages': [lg], 'aliases': []}
+                                for k, (t, lg) in enumerate([('Song', 'eng'), ('Song', 'eng'), ('Aria', 'zxx'), ('Song', 'eng')])]})
+    H.TITLES[1] = 'Alpha / Beta'
+    H.TITLES[2] = 'Gamma (Instrumental)'
+    H.attr(757, 'medley', 757)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (757,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    LABELS = """[...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => [tr.dataset.work,
+      [...tr.querySelectorAll('.dci-mx-wlabel')].map(x => x.textContent.trim() + (x.tagName === 'SPAN' ? ' (ro)' : '')),
+      [...tr.querySelectorAll('.dci-mx-wtsrow')].map(x => x.textContent.trim() + ' ' + x.title),
+      [...tr.querySelectorAll('.dci-ruleref')].map(x => x.textContent.trim())])"""
+    LINE = "!!document.querySelector('[data-el=works] [data-el=works-suggest]')"
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && !r.entity1.gid).map(r => [r.entity1.name, r.entity1.typeID,
+      (r.entity1.languages || []).map(l => l.language.id)]).sort())()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(400)
+        a0 = [pg.evaluate(LINE), pg.evaluate(LABELS)]
+        print('A)', a0)
+        rows = {x[0]: x[1:] for x in a0[1]}
+        results.append(a0[0] and rows['0'][0] == ['[no work type] (ro)'] and rows['0'][1] == []
+                       and rows['1'][0] == ['[work type · languages]'] and len(rows['1'][1]) == 1 and rows['1'][1][0].startswith('? ') and 'Song · English' in rows['1'][1][0]
+                       and rows['2'][0] == ['[– · [No lyrics]]'] and 'S153' in rows['2'][2] and rows['3'][0] == ['[work type · languages]'])
+        pg.locator('[data-el=works] [data-act=mx-defaults]').first.evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.select_option('[data-el=works] select[data-f=work-type]', '17'); pg.wait_for_timeout(400)
+        pg.locator('[data-el=works] [data-act=mx-defaults]').first.evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        b0 = [pg.evaluate(LINE), pg.evaluate(LABELS), [x for x in pg.evaluate(LOGS) if 'chosen by hand' in x]]
+        print('B)', b0)
+        rows = {x[0]: x[1:] for x in b0[1]}
+        results.append(not b0[0] and rows['1'][0] == ['[Song]'] and rows['1'][1] == [] and rows['3'][0] == ['[Song]'] and rows['2'][0] == ['[Song · [No lyrics]]']
+                       and b0[2] == ['New works: Song – the defaults chosen by hand (the suggestion is not used)'])
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=medley-split]').evaluate('b => b.click()'); pg.wait_for_timeout(800)
+        c0 = pg.evaluate(LABELS)
+        pg.locator('.dci-matrix tr[data-work="1"] .dci-mx-wlabel').nth(1).evaluate('b => b.click()'); pg.wait_for_timeout(300)
+        pg.select_option('.dci-matrix tr[data-work="1"] .dci-row-opts select[data-f=mx-type]', ''); pg.wait_for_timeout(300)
+        pg.select_option('.dci-matrix tr[data-work="1"] .dci-row-opts select[data-f=work-lang-add]', '120'); pg.wait_for_timeout(300)
+        c1 = [x for x in pg.evaluate(LABELS) if x[0] == '1']
+        print('C)', c0, '\n  ', c1)
+        results.append([x[1] for x in c0 if x[0] == '1'] == [['[Song]'], ['[Song]']] and [x[1] for x in c1] == [['[Song]'], ['[– · English]']])
+        pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+        d0 = pg.evaluate(STAGED)
+        print('D)', d0)
+        results.append(d0 == [['Alpha', 17, []], ['Beta', None, [120]], ['Gamma (Instrumental)', 17, [486]], ['Song Four', 17, []]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 def case_snw383():
