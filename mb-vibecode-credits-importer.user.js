@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.97.0
+// @version      3.98.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.97.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.97.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.98.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.98.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.97.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.98.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1953,6 +1953,58 @@
       "matrix.attrAdd": "attribute",
       "matrix.newMenu": "More for a new work: search, form, work type and languages",
       "works.pendingShort": "New",
+      "wnew.onTitle": "A new work of the same title instead of “{title}” (an arrangement is a work of its own): it gets the attributes of this link, “arrangement of” “{title}” is suggested, and this link is removed when the new one is staged",
+      "wnew.replaces": "instead of “{title}”",
+      "wnew.replacesTitle": "Replaces the work “{title}” of MusicBrainz: its link to this recording is removed in the relationship editor when the new work is staged",
+      "wnew.off": "keep linked work",
+      "wnew.offTitle": "Keep the link to “{title}” – no new work",
+      "arrsugg.of": "arrangement of",
+      "arrsugg.part": "{title}:",
+      "arrsugg.recordings.one": "{n} recording",
+      "arrsugg.recordings.other": "{n} recordings",
+      "arrsugg.pickAria": "Which work is arranged",
+      "arrsugg.askTitle": "Suggested: the new work is an arrangement of “{title}” – staged only once confirmed with ✓",
+      "arrsugg.okBtnTitle": "Confirm: “arrangement of” is staged",
+      "arrsugg.okTitle": "Confirmed: “arrangement of” “{title}” is staged",
+      "arrsugg.undoTitle": "Take the confirmation back (not staged)",
+      "medley.splitAll.one": "Medleys: split {n} title",
+      "medley.splitAll.other": "Medleys: split {n} titles",
+      "medley.splitAllTitle": "Each title with a separator into works of its own, linked as a medley: {list}",
+      "medley.sepsTitle": "The separators of medley titles for this release: {list} – “/” also without spaces; words like “AC/DC” or “24/7” stay whole (mapping MEDLEY_EXCEPTIONS)",
+      "medley.sepAdd": "Add a separator (Enter)",
+      "arrsugg.exists": "· an arrangement exists:",
+      "arrsugg.existsTitle": "MusicBrainz has an arrangement of this title already: “{title}” (check {stage}) – link it instead of a new work",
+      "msg.wnewRemovedAlready": "The link to “{title}” is removed in the relationship editor already – to keep it, undo the removal there.",
+      "log.wnewRemovedAlready": "Track {track}: the link to “{title}” is removed in the relationship editor already – not taken back here",
+      "arrsugg.existsWork": "· a work of this title exists:",
+      "arrsugg.existsWorkTitle": "MusicBrainz has a work of this title among the works of the people of this release: “{title}” (check {stage}) – if it is this arrangement, link it instead of a new work",
+      "arrsugg.useExisting": "link it instead",
+      "arrcom.text": "{names} arrangement",
+      "arrcom.what.one": "{n} new work · track {tracks}",
+      "arrcom.what.other": "{n} new works · tracks {tracks}",
+      "arrcom.offer": "Disambiguation “{text}” for the new arrangement works ({what})?",
+      "arrcom.yes": "✓ Set it",
+      "arrcom.offerTitle": "New works of traditional tunes with arrangers: an arrangement is a work of its own – its disambiguation names the arrangers (rule S158)",
+      "arrcom.on": "Disambiguation of the new arrangement works:",
+      "arrcom.onTitle": "Set on the new works when they are staged; change the text if needed",
+      "arrcom.noTitle": "No disambiguation for the new arrangement works",
+      "arrcom.textAria": "Disambiguation of the new arrangement works",
+      "arrcom.noticeTitle": "MB x Vibecode: Credits Importer – disambiguation of new arrangement works",
+      "arrcom.noticeLine": "“{comment}”: {list}",
+      "log.arrComYes": "The new arrangement works get their disambiguation",
+      "log.arrComNo": "The new arrangement works get no disambiguation",
+      "log.arrComSet": "New work “{title}”: disambiguation “{comment}”",
+      "log.arrExisting": "Track {track}: the existing arrangement “{title}” linked instead of a new work",
+      "msg.arrUnconfirmed.one": "{n} “arrangement of” is not confirmed yet – it is not staged (✓ in the works matrix).",
+      "msg.arrUnconfirmed.other": "{n} “arrangement of” are not confirmed yet – they are not staged (✓ in the works matrix).",
+      "log.wnewOn": "Track {track}: a new work instead of “{title}” (its link removed when staged)",
+      "log.wnewOff": "Track {track}: the work “{title}” stays linked",
+      "log.wnewRemoved": "Track {track}: the link to “{title}” removed in the relationship editor",
+      "log.wnewNoLink": "Track {track}: the link to “{title}” was not found in the relationship editor – remove it by hand",
+      "log.arrConfirmed": "Track {track}: “arrangement of” “{title}” confirmed",
+      "log.arrUnconfirmed": "Track {track}: “arrangement of” “{title}” not confirmed",
+      "log.arrNotStaged.one": "{n} “arrangement of” is not confirmed yet – it is not staged (✓ in the works matrix)",
+      "log.arrNotStaged.other": "{n} “arrangement of” are not confirmed yet – they are not staged (✓ in the works matrix)",
       "works.searchMb": "Search MusicBrainz …",
       "wnote.coverShort": "Cover · {by}",
       "wnote.arrangedShort": "Arrangement · {by}",
@@ -4031,6 +4083,9 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S158', where: 'arrComProposals, renderArrComments, arrComFor (pendingWorkEntity), arrNotice', note: 'Arrangement works (3.98.0; collected item Z-ARRDIS): the new works of tracks whose writer is [traditional] and that have arrangers get the disambiguation "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ takes it, its text can be changed), set when the new works are staged; afterwards a small box on the page names the works. Only new works; other arrangements (classical music …) not yet' },
+    { id: 'S157', where: 'medleySplit, medleySeps, medleyHeadHtml, tradArrangers, arrDupCheck, arrDupCheck2; MEDLEY_EXCEPTIONS', note: 'Medleys (3.98.0; collected item Z-MDLY): the parts of a title by the separators of the release ("/" also without spaces; ✎ in the head of the works matrix, several possible), the words of MEDLEY_EXCEPTIONS kept whole ("AC/DC", "24/7", "w/", fractions); the titles of MusicBrainz first; "Medleys: split n" splits every such title. A part of a traditional tune with arrangers (writer [traditional]) stays a new work with "arrangement of" the works of that title suggested (yellow, the one with the most recordings first, staged only once confirmed); an arrangement of that title found in MusicBrainz – among the arrangements of those works (1), the works of the arrangers, artists and writers (2), the works of the performers\' recordings of that title when the credits name arrangers (3) – is offered instead' },
+    { id: 'S156', where: 'wnewOn, wnewOff, removeReplacedLinks (applyPlan), arrangementSuggest', note: 'Works matrix (3.98.0; collected item Z-WNEW): a work linked in MusicBrainz has a greyed "＋ New" – a new work of the same title instead (an arrangement of a traditional tune is a work of its own): it gets the attributes of the old link, "arrangement of" the old work is suggested (yellow, staged only once confirmed with ✓), and the old link is removed in the relationship editor once the new one is staged; "↺" keeps the linked work' },
     { id: 'S155', where: 'msynMerge, msynCreditsOf, msynApply (planImport)', note: 'Instruments (3.97.0; collected item Z-MSYN): off – several models of one instrument of an entry on a recording ("Synthesizer (Juno 6)", "Synthesizer (Multipoly)") are one instrument with their role credits joined by commas ("Juno 6, Multipoly"), per recording, for every instrument and also with "One row each". On: each role credit a relationship of its own – MusicBrainz does not allow it (an instrument once per relationship, no second relationship that differs only in its role credit), so it cannot be switched on yet' },
     { id: 'S153', where: 'rowOpts (INSTRUMENTAL_RE)', note: 'New works (3.97.0; collected item Z-WTS2): a track whose title says "instrumental" ("(Instrumental)", "Instrumental Version") – its new work gets the lyrics language [No lyrics] while its languages are not chosen by hand' },
     { id: 'S081', where: 'workSuggestion, workSuggestHtml', note: 'New works (3.52.0): a work type and a lyrics language suggested from the works of the artists in MusicBrainz that the works matrix reads (from 3 works on) – each the one of more than half of them, "no work type" and "no lyrics language" too (the languages of a work together); a value without such a majority is not suggested. Yellow in the head of the matrix and at the rows: "Accept" fills it in for all new works (each can still be changed); not accepted, neither type nor language of it is filled in' },
@@ -4453,6 +4508,7 @@
 
   // [T002] (S011)
   const GENERIC_WORDS = MAP.GENERIC_WORDS;
+  const MEDLEY_EXCEPTIONS = MAP.MEDLEY_EXCEPTIONS; // [Z-MDLY] (3.98.0)
   // [T052] (3.34.28) Proper names MusicBrainz's instruments do not hold, written with their capitals in role credits (S052)
   const PROPER_WORDS = MAP.PROPER_WORDS;
 
@@ -10149,7 +10205,7 @@
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
-      titleParts, headingKind, suiteOffers, trackPartsOf,
+      titleParts, medleySplit, headingKind, suiteOffers, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
     };
     return;
@@ -10998,6 +11054,89 @@
       const m = /^(?:(\d+)\.)?([A-Za-z]*)(\d+)$/.exec(String(p).trim());
       return m ? `${Number(m[1] || 1)}|${m[2].toUpperCase()}|${Number(m[3])}` : String(p);
     })).size;
+  }
+
+  /**
+   * [Z-ARRDIS] (3.98.0, S158) The new works of tracks whose writer is [traditional] and that have arrangers: their disambiguation
+   * "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer, left of the live comments
+   * (✓ takes it, the text can be changed), set on the new works when they are staged; afterwards a small box names them.
+   */
+  function arrComProposals() {
+    if (!ruleOn('S158') || S.worksSkip) return [];
+    const out = [];
+    for (const t of S.mbTracks) {
+      if (!matrixTrack(t)) continue;
+      const arr = tradArrangers(t.idx);
+      if (!arr.length) continue;
+      const auto = tr('arrcom.text', { names: arr.join(' & ') });
+      // ((review) only works not staged yet: a work in the editor keeps what it was staged with)
+      worksForTrack(t.idx).filter((w) => w.planned && isPending(w.gid) && !S.staged.has(`link|${t.recordingGid}|${w.gid}`))
+        .forEach((w) => out.push({ i: t.idx, gid: w.gid, title: w.title, auto }));
+    }
+    return out;
+  }
+  const arrComText = (auto) => ((S.arrComTexts && S.arrComTexts.has(auto)) ? S.arrComTexts.get(auto) : auto);
+  /** [Z-ARRDIS] The disambiguation of a new work (when accepted), else ''. */
+  function arrComFor(i, gid) {
+    if (S.arrComOffer !== 'yes') return '';
+    const p = arrComProposals().find((x) => x.i === i && x.gid === gid);
+    return p ? arrComText(p.auto).trim() : '';
+  }
+  function renderArrComments() {
+    const el = S.overlay && $('arrcom');
+    if (!el) return;
+    const list = S.arrComOffer === 'no' ? [] : arrComProposals();
+    el.hidden = !list.length;
+    if (!list.length) {
+      el.innerHTML = '';
+      el.dataset.html = '';
+      return;
+    }
+    if (el.contains(document.activeElement) && document.activeElement.dataset.f === 'arrcom-text') return;
+    const groups = uniq(list.map((x) => x.auto));
+    const tracks = uniq(list.map((x) => x.i));
+    const what = tr('arrcom.what', { n: list.length, tracks: trackListLabel(tracks) });
+    const fields = groups.map((g) => `<input type="text" data-f="arrcom-text" data-auto="${esc(g)}" value="${esc(arrComText(g))}" size="28" aria-label="${esc(tr('arrcom.textAria'))}">`).join(' ');
+    const html = S.arrComOffer === 'yes'
+      ? `<div class="dci-livecom-offer" title="${esc(tr('arrcom.onTitle'))}"><span>${esc(tr('arrcom.on'))}</span> ${fields} <span class="dci-sub">${esc(what)}</span>
+        <button type="button" class="dci-small" data-act="arrcom-no" title="${esc(tr('arrcom.noTitle'))}">✕</button></div>`
+      : `<div class="dci-livecom-offer" title="${esc(tr('arrcom.offerTitle'))}"><span>${esc(tr('arrcom.offer', { text: arrComText(groups[0]), what }))}</span>
+        <button type="button" class="dci-small" data-act="arrcom-yes">${esc(tr('arrcom.yes'))}</button>
+        <button type="button" class="dci-small" data-act="arrcom-no">${esc(tr('livecom.offerNo'))}</button></div>`;
+    if (el.dataset.html === html) return;
+    el.innerHTML = html;
+    el.dataset.html = html;
+  }
+  /** [Z-ARRDIS] (3.98.0) After staging: a small box on the page with the new works that got their disambiguation. */
+  function arrNotice(done) {
+    if (!done.length) return;
+    let box = document.getElementById('dci-arrcom-notice');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dci-arrcom-notice';
+      box.setAttribute('role', 'status');
+      box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:100000;max-width:520px;max-height:70vh;overflow:auto;color-scheme:light;background:#fff;border:1px solid #b9b5cf;border-radius:4px;'
+        + 'box-shadow:0 2px 8px rgba(40,30,80,.2);padding:8px 12px;font:13px/1.4 system-ui,sans-serif;color:#24213a';
+      document.body.appendChild(box);
+    }
+    box.innerHTML = '';
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;gap:12px;font-weight:600';
+    head.textContent = tr('arrcom.noticeTitle');
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.textContent = '✕';
+    x.setAttribute('aria-label', tr('common.close'));
+    x.style.cssText = 'border:0;background:none;cursor:pointer;color:inherit';
+    x.addEventListener('click', () => box.remove());
+    head.appendChild(x);
+    box.appendChild(head);
+    uniq(done.map((d) => d.comment)).forEach((c) => {
+      const line = document.createElement('div');
+      line.className = 'dci-arrcom-line';
+      line.textContent = tr('arrcom.noticeLine', { comment: c, list: done.filter((d) => d.comment === c).map((d) => d.title).join(', ') });
+      box.appendChild(line);
+    });
   }
 
   /** [3.32.10] A small box on the page with what was done (red: what was left out or went wrong). */
@@ -12421,7 +12560,8 @@
   function worksForTrack(i) {
     const t = S.mbTracks[i];
     if (!t) return [];
-    const works = t.works.map((w) => ({ ...w, planned: false }));
+    // [Z-WNEW] (3.98.0, S156) a linked work replaced by a new work of the same title: its link is removed when staged
+    const works = t.works.filter((w) => !replacedWork(i, w.gid)).map((w) => ({ ...w, planned: false }));
     // [Z-SU] (3.41.1) the parts of a suite: a work each, in their order
     const parts = S.workParts.get(i);
     if (parts) {
@@ -12432,6 +12572,9 @@
     if (planned && !works.some((w) => w.gid === planned.gid)) works.push({ ...planned, planned: true });
     return works;
   }
+
+  /** [Z-WNEW] (3.98.0) The linked work of a track that a new work replaces (by its MBID; any when none is given). */
+  const replacedWork = (i, gid) => { const r = S.workReplace && S.workReplace.get(i); return !!r && (gid == null || r.gid === gid); };
 
   /** [Z-SU] (3.41.1) The plan of a planned work of a track: one of its parts, or its one work. */
   function planOf(i, gid) {
@@ -13309,7 +13452,8 @@
           const ps = (S.workParts.get(i) || []).filter((p) => p.suite === sw.key);
           if (ps.length) return ps.map((p) => [i, p]);
           const t = S.mbTracks[i];
-          return t && t.works.length === 1 ? [[i, { gid: t.works[0].gid, title: t.works[0].title, origin: 'mb' }]] : [];
+          const tw = t ? t.works.filter((w) => !replacedWork(i, w.gid)) : []; // ([Z-WNEW] 3.98.0, review)
+          return tw.length === 1 ? [[i, { gid: tw[0].gid, title: tw[0].title, origin: 'mb' }]] : [];
         });
         // [Z-NWA] (3.57.0, S083) a suite MusicBrainz has (found and chosen) gets no parts added (a new suite: its parts, also existing ones)
         if (workLocked({ ...sw, planned: true })) continue;
@@ -13339,8 +13483,11 @@
     // is found in MusicBrainz and the track has a work (new ones too)
     for (const [i, list] of S.worksSkip ? [] : S.workRels || []) {
       for (const r of list) {
+        // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm: only once confirmed (✓)
+        if (r.confirm && !r.confirmed) continue;
         const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
-        const w = worksForTrack(i)[0];
+        // ([Z-MDLY] 3.98.0) the work of a part of the track (by its key "4.2"), else the track's work
+        const w = r.part ? worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) : worksForTrack(i)[0];
         if (!lt || !w || r.state !== 'found' || !r.found) continue;
         // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
         // nor what MusicBrainz has already)
@@ -20883,6 +21030,9 @@
     };
     return {
       plan: [...S.workPlan].filter(([, p]) => p && (p.origin === 'search' || p.origin === 'pending')).map(([i, p]) => [i, encField(keep(p))]),
+      // ([Z-WNEW] [Z-MDLY] 3.98.0, review) the works replaced and the suggestions of "arrangement of"
+      replace: [...(S.workReplace || [])].map(([i, r]) => [i, { gid: r.gid, title: r.title, removed: !!r.removed }]),
+      arrs: [...(S.workRels || [])].map(([i, l]) => [i, l.filter((r) => r.confirm).map((r) => encField({ ...r }))]).filter(([, l]) => l.length),
       on: encField([...S.linkAttrOn].filter(([, v]) => v && v.size)),
       off: encField([...S.linkAttrOff].filter(([, v]) => v && v.size)),
       fills: [...S.dateFills].map(([k, f]) => [k, encField({ ...f, fromCol: f.fromCol ? colKeyOut(f.fromCol) : null })]),
@@ -20906,6 +21056,19 @@
       if (!(p.flags instanceof Set)) p.flags = new Set(p.flags || []);
       S.workPlan.set(i, p);
       count();
+    });
+    // ([Z-WNEW] [Z-MDLY] 3.98.0, review) the works replaced and the suggestions of "arrangement of" with their plans
+    (w.replace || []).forEach(([i, r]) => {
+      if (!(i < S.mbTracks.length) || !r || !r.gid) return;
+      if (!S.workReplace) S.workReplace = new Map();
+      if (!S.workReplace.has(i)) S.workReplace.set(i, { gid: r.gid, title: r.title || '', removed: !!r.removed });
+    });
+    (w.arrs || []).forEach(([i, l]) => {
+      if (!(i < S.mbTracks.length) || !Array.isArray(l)) return;
+      if (!S.workRels) S.workRels = new Map();
+      const cur = S.workRels.get(i) || [];
+      l.map((x) => decField(x)).filter((r) => r && r.found && !cur.some((c) => c.id === r.id)).forEach((r) => cur.push(r));
+      if (cur.length) S.workRels.set(i, cur);
     });
     [['on', S.linkAttrOn], ['off', S.linkAttrOff]].forEach(([k, map]) => {
       if (w[k]) decField(w[k]).forEach(([key, v]) => { if (!map.has(key)) { map.set(key, v instanceof Set ? v : new Set(v || [])); count(); } });
@@ -22618,6 +22781,9 @@
       return 0;
     }
     let { items, removals } = computePlan();
+    // [Z-WNEW] [Z-MDLY] (3.98.0) "arrangement of" not confirmed: said, not staged
+    const unconf = only ? 0 : arrUnconfirmed();
+    if (unconf) log('warn', 'arrNotStaged', { n: unconf });
     if (only) {
       items = items.filter(only);
       removals = [];
@@ -22646,6 +22812,7 @@
     const applyBtn = S.overlay.querySelector('[data-act="apply"]');
     applyBtn.disabled = true;
     clearMessages();
+    if (unconf) showMessage('info', 'msg.arrUnconfirmed', { n: unconf }); // ((3.98.0, review) after clearing the messages)
     setBusy('busy.apply', { n: items.length });
     log('info', 'applyStart', { n: items.length });
 
@@ -23084,6 +23251,18 @@
         log('error', 'stageFailed', { text: r.staged.text, error: e.message });
       }
     }
+    removeReplacedLinks(re); // [Z-WNEW] (3.98.0)
+    // [Z-ARRDIS] (3.98.0) the new works staged with their disambiguation – named once
+    if (!S.arrComDone) S.arrComDone = new Set();
+    const arrDone = [];
+    for (const [i, plan] of planEntries()) {
+      const c = plan.entity && plan.entity.comment;
+      if (!c || S.arrComDone.has(plan.gid) || !S.staged.has(`link|${(S.mbTracks[i] || {}).recordingGid}|${plan.gid}`)) continue;
+      S.arrComDone.add(plan.gid);
+      arrDone.push({ title: plan.title, comment: c });
+      log('ok', 'arrComSet', { title: plan.title, comment: c });
+    }
+    arrNotice(arrDone);
     renderWorks();
     await verifyStagedDates(stagedDates);
 
@@ -23498,6 +23677,8 @@
   /** (3.40.17, review) "Start afresh": the works chosen, their attributes, dates and options, the columns taken out or folded, the live comments. */
   function dropWorkChoices() {
     for (const [i, p] of [...S.workPlan]) if (!p || p.origin !== 'created') S.workPlan.delete(i);
+    // ([Z-WNEW] 3.98.0, review) the works replaced (not those whose link is removed already)
+    for (const [i, r] of [...(S.workReplace || [])]) if (!r.removed) S.workReplace.delete(i);
     [S.linkAttrOn, S.linkAttrOff, S.mxRemoved, S.workRowOpts, S.mxColDate, S.liveComChoice].forEach((m) => { if (m && m.clear) m.clear(); });
     if (S.mxCollapsed) S.mxCollapsed.clear();
     if (S.mxCreditSkip) S.mxCreditSkip.clear(); // [Z-WSK] (3.64.0)
@@ -28877,6 +29058,7 @@
     } else S.footMsgs.rounds = null;
     // [3.32.9] the disambiguation comments of live recordings (item 113)
     renderLiveComments();
+    renderArrComments(); // [Z-ARRDIS] (3.98.0)
     S.footMsgs.waiting = waiting.size ? { text: tr('msg.waitingHint', { n: waiting.size }), chip: tr('footer.chipWaiting', { n: waiting.size }) } : null;
     renderFootChips();
     S.plan = items;
@@ -29917,7 +30099,9 @@
   function setWorkNotes(rel) {
     S.textCovers = new Map();
     S.textQuotes = new Map();
-    S.workRels = new Map();
+    // ([Z-WNEW] [Z-MDLY] 3.98.0, review) the suggestions to confirm stay through another import (they belong to the works matrix)
+    const keep = [...(S.workRels || new Map())].map(([i, l]) => [i, l.filter((r) => r.confirm)]).filter(([, l]) => l.length);
+    S.workRels = new Map(keep);
     if (rel) addWorkNotes(rel);
   }
   /**
@@ -30587,6 +30771,37 @@
       refresh();
     }
   }
+  /**
+   * [Z-WNEW] [Z-MDLY] (3.98.0) "arrangement of" to confirm: yellow with ✓ until confirmed (not staged before), the work of MusicBrainz
+   * linked; several candidates a list ("Title – n recordings"); confirmed: marked, "↺" takes it back. A part names its title.
+   */
+  function arrSuggHtml(i, r, n) {
+    const part = r.part ? (worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) || {}).title : '';
+    const who = part ? `${tr('arrsugg.part', { title: part })} ` : '';
+    const link = `<a class="dci-mblink" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.found.title)}</a>`;
+    const cands = r.candidates || [];
+    const count = (c) => (c.recordings != null ? ` – ${tr('arrsugg.recordings', { n: c.recordings })}` : '');
+    const pick = !r.confirmed && cands.length > 1 ? ` <select data-f="mx-arr-cand" data-n="${n}" aria-label="${esc(tr('arrsugg.pickAria'))}">${cands.map((c) => `<option value="${esc(c.gid)}" ${c.gid === r.found.gid ? 'selected' : ''}>${esc(`${c.title}${c.disambiguation ? ` (${c.disambiguation})` : ''}${count(c)}`)}</option>`).join('')}</select>` : '';
+    if (r.confirmed) {
+      return `<span class="dci-mx-wnote dci-mx-mark dci-mx-arrok" data-wnote="arrsugg" data-wstate="ok" title="${esc(tr('arrsugg.okTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link} ✓
+        <button type="button" class="dci-textbtn" data-act="arr-undo" data-n="${n}" title="${esc(tr('arrsugg.undoTitle'))}">↺</button></span>`;
+    }
+    const only = cands.length === 1 ? count(cands[0]) : '';
+    // [Z-MDLY] (3.98.0) an arrangement of that title exists in MusicBrainz: offered instead of a new work
+    const ex = r.existing ? ` <span class="dci-mx-arrexist" title="${esc(tr(r.existing.stage > 1 ? 'arrsugg.existsWorkTitle' : 'arrsugg.existsTitle', { title: r.existing.title, stage: r.existing.stage }))}">${esc(tr(r.existing.stage > 1 ? 'arrsugg.existsWork' : 'arrsugg.exists'))}
+      <a class="dci-mblink" href="/work/${esc(r.existing.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.existing.title)}</a>${r.existing.disambiguation ? ` <span class="dci-disamb">(${esc(r.existing.disambiguation)})</span>` : ''}
+      <button type="button" class="dci-small" data-act="arr-existing" data-n="${n}">${esc(tr('arrsugg.useExisting'))}</button></span>` : '';
+    return `<span class="dci-mx-wnote dci-mx-mark dci-mx-arrsugg" data-wnote="arrsugg" data-wstate="ask" title="${esc(tr('arrsugg.askTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link}${esc(only)}?${pick}
+      <button type="button" class="dci-small dci-wts-ok" data-act="arr-ok" data-n="${n}" title="${esc(tr('arrsugg.okBtnTitle'))}">✓</button>${ex}</span>`;
+  }
+  /** [Z-WNEW] [Z-MDLY] (3.98.0, review) A suggestion whose work is still there (a part joined, linked or split anew: gone). */
+  const arrLive = (i, r) => !r.confirm || (r.part ? worksForTrack(i).some((x) => x.planned && isPending(x.gid) && String(x.gid).replace(/^pending:/, '') === r.part)
+    : worksForTrack(i).some((x) => x.planned && isPending(x.gid)));
+  /** [Z-WNEW] [Z-MDLY] (3.98.0) The suggestions of "arrangement of" not confirmed yet (not staged). */
+  const arrUnconfirmed = () => [...(S.workRels || new Map())].flatMap(([i, l]) => l.filter((r) => r.confirm && !r.confirmed && arrLive(i, r))).length;
+  /** [Z-WNEW] [Z-MDLY] (3.98.0, review) A suggestion by its id (the list may change meanwhile). */
+  const arrById = (i, id) => ((S.workRels && S.workRels.get(i)) || []).find((r) => String(r.id) === String(id)) || null;
+
   /** [Z-EXC] Below the title of a track in the works matrix: its cover, its quote, its arrangement (and the work found for it). */
   function workNotesHtml(i) {
     // [Z-WMX] (3.52.0) short marks – "Cover · The Blackbyrds", "Quotes → Space Is the Place ✓" –, the whole sentence in the tooltip (and
@@ -30598,7 +30813,13 @@
       const full = tr(c.arranged ? 'wnote.arranged' : 'wnote.cover', { by: c.by });
       out.push(`<span class="dci-mx-wnote dci-mx-mark dci-mx-mark-cover" data-wnote="cover" title="${esc(full)}">${esc(tr(c.arranged ? 'wnote.arrangedShort' : 'wnote.coverShort', { by: c.by }))}${sr(full)}</span>`);
     }
-    for (const r of (S.workRels && S.workRels.get(i)) || []) {
+    const rels = (S.workRels && S.workRels.get(i)) || [];
+    for (const r of rels) {
+      // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm
+      if (r.confirm) {
+        if (arrLive(i, r)) out.push(arrSuggHtml(i, r, r.id));
+        continue;
+      }
       const label = tr(r.kind === 'arrangement' ? 'wnote.arrangementOf' : 'wnote.quotesFrom', { title: r.title, by: (r.by || []).join(', ') || '–' });
       const short = tr(r.kind === 'arrangement' ? 'wnote.arrangementShort' : 'wnote.quoteShort', { title: r.title });
       const searchUrl = `/search?query=${encodeURIComponent(r.title)}&type=work&method=indexed`;
@@ -32281,7 +32502,61 @@
   // artist of the release has it).
   /** [Z-SU] (3.41.0) The parts of a title: "Phase 2 / Phase 3" → ["Phase 2", "Phase 3"] (" / " with spaces; "AC/DC" stays one); else []. */
   function titleParts(title) {
+    // ((3.98.0, review) suites keep " / " – the separators of the release are for medleys: medleySplit)
     const parts = String(title || '').split(/\s+\/\s+/).map((x) => x.trim()).filter(Boolean);
+    return parts.length > 1 ? parts : [];
+  }
+  /**
+   * [Z-MDLY] (3.98.0) Words with a "/" that are no separator (mapping MEDLEY_EXCEPTIONS: "AC/DC", "24/7", "w/", fractions …) – built
+   * when first needed ((review) not at the start: the functions of the suites run in Node before the state exists).
+   */
+  function medleyExcRe() {
+    if (medleyExcRe.cache !== undefined) return medleyExcRe.cache;
+    const list = (MEDLEY_EXCEPTIONS || []).filter(Boolean);
+    // a word that ends with a letter or digit ends there; "w/" may be followed by a name ("w/Friends")
+    const one = (x) => `${x}${/[\p{L}\p{N}]$/u.test(x.replace(/\\[a-z]\+?|[()?:+*]/gi, '')) ? '(?![\\p{L}\\p{N}])' : ''}`;
+    try {
+      medleyExcRe.cache = list.length ? new RegExp(`(?<![\\p{L}\\p{N}])(?:${list.map(one).join('|')})`, 'giu') : null;
+    } catch {
+      medleyExcRe.cache = null;
+    }
+    return medleyExcRe.cache;
+  }
+  /** [Z-MDLY] (3.98.0) The separators of medley titles for this release (✎ in the head of the works matrix; "/" by default). */
+  const MEDLEY_SEPS_KEY = 'dci-medley-seps';
+  function medleySeps() {
+    if (!S.medleySeps) {
+      const stored = remembering() ? readJson('localStorage', `${MEDLEY_SEPS_KEY}:${releaseMbid}`, null) : null;
+      S.medleySeps = Array.isArray(stored) ? stored.map(String) : ['/'];
+    }
+    return S.medleySeps;
+  }
+  function setMedleySeps(list) {
+    S.medleySeps = uniq(list.map((x) => String(x)).filter((x) => x.trim()));
+    if (remembering()) writeJson('localStorage', `${MEDLEY_SEPS_KEY}:${releaseMbid}`, S.medleySeps);
+  }
+  /**
+   * [Z-MDLY] (3.98.0) The parts of a title by the release's separators ([] for one part): "/" with or without spaces, any other only with
+   * spaces around it ("Hip-Hop", "Mr. Brown" stay whole); nothing inside brackets ("(Live/Remix)"), the exceptions of the mapping whole.
+   */
+  function medleySplit(title, seps = null) {
+    if (!seps) {
+      try {
+        seps = medleySeps();
+      } catch {
+        seps = ['/'];
+      }
+    }
+    const masks = [];
+    const mask = (m) => { masks.push(m); return `\u0000${masks.length - 1}\u0000`; };
+    let t = String(title || '').replace(/\([^()]*\)|\[[^[\]]*\]/g, mask);
+    const exc = medleyExcRe();
+    if (exc) t = t.replace(exc, mask);
+    const alts = seps.map((x) => x.trim()).filter(Boolean)
+      .map((x) => (x === '/' ? '\\s*\\/\\s*' : `\\s+${x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+`));
+    if (!alts.length) return [];
+    const unmask = (x) => { let y = x; for (let k = 0; k < 3 && /\u0000\d+\u0000/.test(y); k++) y = y.replace(/\u0000(\d+)\u0000/g, (m, n) => masks[Number(n)]); return y; };
+    const parts = t.split(new RegExp(alts.join('|'))).map((x) => unmask(x).trim()).filter(Boolean);
     return parts.length > 1 ? parts : [];
   }
   /** [Z-SU] (3.41.0) The parts of a track of the source: its sub-tracks, else the parts of its title. */
@@ -33084,7 +33359,10 @@
     const line = (inner) => `<div class="dci-mx-line">${inner}${cskip}${linkAttrsToggleHtml(mrow)}</div>`;
     const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
-      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}`)}${linkAttrsHtml(mrow)}`;
+      // [Z-WNEW] (3.98.0, S156) "＋ New" greyed: a new work of the same title instead of the one linked (an arrangement, say)
+      const wnew = ruleOn('S156') && track.works.length === 1 && !S.workPlan.has(i) && !S.workParts.has(i)
+        ? ` <button type="button" class="dci-small dci-mx-wnew" data-act="wnew-on" data-gid="${esc(work.gid)}" title="${esc(tr('wnew.onTitle', { title: work.title }))}">＋ ${esc(tr('works.pendingShort'))}</button>` : '';
+      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}${wnew}`)}${linkAttrsHtml(mrow)}`;
     }
     if (work && work.planned) {
       const plan = planOf(i, work.gid);
@@ -33110,10 +33388,15 @@
         ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>${o.btn}`
         : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}`;
       // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
-      const mParts = pending ? medleyParts(i) : [];
+      // ((3.98.0, review) not a work that replaces a linked one: its old link would not be removed)
+      const mParts = pending && !replacedWork(i) ? medleyParts(i) : [];
       const sk = songParts(i).length ? 'songs' : 'medley'; // [Z-YTW] (3.80.0)
       const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr(`${sk}.splitTitle`, { list: mParts.join(' · ') }))}">${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
-      return `${head}${line(`${badge} ${unplan}${split}`)}${linkAttrsHtml(mrow)}
+      // [Z-WNEW] (3.98.0) the work of MusicBrainz it replaces: named, its link removed when staged; "↺" keeps it
+      const rp = pending && S.workReplace && S.workReplace.get(i);
+      const repl = rp ? ` <span class="dci-sub dci-mx-wrepl" title="${esc(tr('wnew.replacesTitle', { title: rp.title }))}">${esc(tr('wnew.replaces', { title: rp.title }))}</span>
+        <button type="button" class="dci-textbtn" data-act="wnew-off" title="${esc(tr('wnew.offTitle', { title: rp.title }))}">↺ ${esc(tr('wnew.off'))}</button>` : '';
+      return `${head}${line(`${badge} ${rp ? '' : unplan}${repl}${split}`)}${linkAttrsHtml(mrow)}
         <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
     const search = S.workSearch.get(i);
@@ -33423,12 +33706,192 @@
       frequency: 2, iso_code_1: null, iso_code_2b: null, iso_code_2t: null, iso_code_3: Number(id) === 486 ? 'zxx' : null,
     };
     plan.entity = {
-      artists: [], attributes: [], authors: [], comment: '', editsPending: false, entityType: 'work', gid: '',
+      // ([Z-ARRDIS] 3.98.0) a new arrangement of a traditional tune: "The Bothy Band arrangement" when accepted
+      artists: [], attributes: [], authors: [], comment: arrComFor(i, plan.gid), editsPending: false, entityType: 'work', gid: '',
       id: typeof re.getRelationshipStateId === 'function' ? re.getRelationshipStateId() : fallbackRelId--,
       iswcs: [], languages: opts.languageIds.map((id) => ({ language: language(id) })), last_updated: null,
       name: plan.title, other_artists: [], typeID: opts.typeId ? Number(opts.typeId) : null, _fromBatchCreateWorksDialog: true,
     };
     return plan.entity;
+  }
+
+  /**
+   * [Z-WNEW] (3.98.0, S156) A new work of the same title in place of the work linked in MusicBrainz (an arrangement of a traditional
+   * tune is a work of its own): the new work gets the attributes of the old link (live, medley …), "arrangement of" the old work is
+   * suggested (yellow – only with ✓ staged), and the old link is removed when the new one is staged.
+   */
+  function wnewOn(i, old) {
+    if (!S.workReplace) S.workReplace = new Map();
+    S.workReplace.set(i, { gid: old.gid, title: old.title, removed: false });
+    planPendingWork(i);
+    const plan = S.workPlan.get(i);
+    plan.flags = new Set(mbLinkAttrs(old));
+    plan.title = workTitleOf(old.title) || plan.title;
+    arrangementSuggest(i, [{ gid: old.gid, title: old.title }], 'wnew');
+    arrDupCheck(i);
+    log('info', 'wnewOn', { track: trackLabel(S.mbTracks[i]), title: old.title });
+  }
+  function wnewOff(i, quiet = false) {
+    const r = S.workReplace && S.workReplace.get(i);
+    if (!r) return true;
+    // ((review) the old link is removed in the editor already: not taken back here – said)
+    if (r.removed) {
+      showMessage('warn', 'msg.wnewRemovedAlready', { title: r.title });
+      log('warn', 'wnewRemovedAlready', { track: trackLabel(S.mbTracks[i]), title: r.title });
+      return false;
+    }
+    S.workReplace.delete(i);
+    if (!quiet) S.workPlan.delete(i);
+    const list = (S.workRels && S.workRels.get(i)) || [];
+    const keep = list.filter((x) => x.from !== 'wnew');
+    if (keep.length) S.workRels.set(i, keep);
+    else if (S.workRels) S.workRels.delete(i);
+    if (!quiet) log('info', 'wnewOff', { track: trackLabel(S.mbTracks[i]), title: r.title });
+    return true;
+  }
+
+  /**
+   * [Z-WNEW] [Z-MDLY] (3.98.0) "arrangement of" suggested for the new work of a track (or of its part): the candidates (works of
+   * MusicBrainz of the same title, the first one with the most recordings) – yellow until confirmed with ✓; not confirmed, not staged.
+   */
+  function arrangementSuggest(i, candidates, from, part = null) {
+    if (!S.workRels) S.workRels = new Map();
+    const list = (S.workRels.get(i) || []).filter((x) => !(x.from === from && (x.part || null) === part));
+    const c = candidates.filter((x) => x && x.gid);
+    if (c.length) {
+      S.arrSeq = (S.arrSeq || 0) + 1;
+      list.push({ kind: 'arrangement', title: c[0].title, by: [], state: 'found', found: { gid: c[0].gid, title: c[0].title }, candidates: c,
+        confirm: true, confirmed: false, from, part, id: S.arrSeq });
+    }
+    if (list.length) S.workRels.set(i, list);
+    else S.workRels.delete(i);
+  }
+
+  /**
+   * [Z-MDLY] [Z-WNEW] (3.98.0) The duplicate check of new arrangements, stage 1: each candidate read with its recordings (their number
+   * orders the candidates – the most first) and its arrangements; an arrangement of the same title there is an existing one – offered
+   * instead of a new work. ((stages 2 and 3 – arrDupCheck2))
+   */
+  async function arrDupCheck(i) {
+    const rels = ((S.workRels && S.workRels.get(i)) || []).filter((r) => r.confirm && !r.checked);
+    for (const r of rels) {
+      r.checked = true;
+      const title = r.part ? (worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) || {}).title : (S.workPlan.get(i) || {}).title;
+      for (const c of r.candidates || []) {
+        try {
+          const w = await mbWsIdle(`work/${c.gid}?inc=recording-rels+work-rels`);
+          const rs = (w && w.relations) || [];
+          c.recordings = rs.filter((x) => x['target-type'] === 'recording').length;
+          const arr = rs.filter((x) => x['target-type'] === 'work' && x.work && norm(x.type) === 'arrangement' && x.direction === 'forward'
+            && (norm(x.work.title) === norm(title || '') || norm(x.work.title) === norm(c.title)));
+          if (arr.length && !r.existing) r.existing = { gid: arr[0].work.id, title: arr[0].work.title, disambiguation: arr[0].work.disambiguation || '', stage: 1 };
+        } catch {
+          // (not answered: no count, nothing found)
+        }
+      }
+      (r.candidates || []).sort((a, b) => (b.recordings || 0) - (a.recordings || 0));
+      if (r.candidates && r.candidates.length && !r.confirmed && !r.picked) Object.assign(r, { found: { gid: r.candidates[0].gid, title: r.candidates[0].title }, title: r.candidates[0].title });
+      if (!r.existing) await arrDupCheck2(i, r, title);
+    }
+    if (rels.length && S.overlay) {
+      renderWorksBackground();
+      refresh();
+    }
+  }
+  /**
+   * [Z-MDLY] (3.98.0) Stages 2 and 3 of the duplicate check: (2) the works of the arrangers, the release's artists and the writers that
+   * the matrix has read – one of the same title that is none of the candidates; (3) only with arrangers in the credits, for this track:
+   * the recordings of its performers (their recording relationships) of the same title and the works of those recordings. A hit is an
+   * existing arrangement, offered instead of a new work.
+   */
+  async function arrDupCheck2(i, r, title) {
+    const key = norm(title || '');
+    if (!key) return;
+    const base = new Set((r.candidates || []).map((c) => c.gid));
+    const hit = (w) => w && w.gid && !base.has(w.gid) && (norm(w.title) === key || (w.aliases || []).some((x) => norm(x) === key));
+    const arrangerIds = S.rows.filter((x) => x.level !== 'skip' && norm(rowTypeName(x)) === 'arranger').map((x) => (S.artists.get(x.artistKey) || {}).mbid).filter(Boolean);
+    const ids = uniq([...arrangerIds, ...(S.releaseCredit || []).map((x) => x.mbid), ...writerEntriesOf(i).map((a) => a.mbid)].filter((x) => x && x !== TRAD_MBID));
+    for (const id of ids) {
+      const e = S.artistWorks && S.artistWorks.get(id);
+      const w = e && [...e.works.values()].find(hit);
+      if (w) {
+        r.existing = { gid: w.gid, title: w.title, disambiguation: w.disambiguation || '', stage: 2 };
+        return;
+      }
+    }
+    if (!arrangerIds.length) return;
+    const t = S.mbTracks[i];
+    const performers = uniq(S.rows.filter((x) => x.level !== 'skip' && PERFORMING_TYPES.includes(norm(rowTypeName(x))) && (!x.tracks || !x.tracks.size || x.tracks.has(i)))
+      .map((x) => (S.artists.get(x.artistKey) || {}).mbid).filter((x) => x && !arrangerIds.includes(x)));
+    if (!S.perfRecs) S.perfRecs = new Map();
+    for (const id of performers) {
+      try {
+        if (!S.perfRecs.has(id)) {
+          const a = await mbWsIdle(`artist/${id}?inc=recording-rels`);
+          S.perfRecs.set(id, ((a && a.relations) || []).filter((x) => x.recording).map((x) => x.recording));
+        }
+        const recs = S.perfRecs.get(id).filter((x) => x.id !== (t && t.recordingGid) && norm(x.title).includes(key)).slice(0, 5);
+        for (const rec of recs) {
+          const d = await mbWsIdle(`recording/${rec.id}?inc=work-rels`);
+          const w = ((d && d.relations) || []).filter((x) => x.work).map((x) => ({ gid: x.work.id, title: x.work.title, disambiguation: x.work.disambiguation || '' })).find(hit);
+          if (w) {
+            r.existing = { ...w, stage: 3 };
+            return;
+          }
+        }
+      } catch {
+        // (not answered: nothing found)
+      }
+    }
+  }
+
+  /**
+   * [Z-WNEW] (3.98.0) After staging: the old link of a replaced work is removed in the relationship editor (once the new work's link is
+   * staged); found by recording, work and type "performance" among the editor's relationships.
+   */
+  function removeReplacedLinks(re) {
+    let n = 0;
+    for (const [i, r] of S.workReplace || []) {
+      if (r.removed) continue;
+      const t = S.mbTracks[i];
+      const plan = S.workPlan.get(i);
+      if (!t || !plan || !S.staged.has(`link|${t.recordingGid}|${plan.gid}`)) continue;
+      const st = findLinkState(re.state, t.recordingGid, r.gid);
+      if (!st) {
+        log('warn', 'wnewNoLink', { track: trackLabel(t), title: r.title });
+        continue;
+      }
+      try {
+        re.dispatch({ type: 'remove-relationship', relationship: st });
+        r.removed = true;
+        n++;
+        log('ok', 'wnewRemoved', { track: trackLabel(t), title: r.title });
+      } catch (e) {
+        log('error', 'stageFailed', { text: r.title, error: e.message });
+      }
+    }
+    return n;
+  }
+  /** [Z-WNEW] (3.98.0) The editor's relationship recording → work ("performance") of the given gids, or null. */
+  function findLinkState(root, recGid, workGid, maxSteps = 400000) {
+    const perf = idx().performanceLt;
+    const seen = new Set();
+    const stack = [root];
+    let steps = 0;
+    while (stack.length && steps < maxSteps) {
+      const v = stack.pop();
+      steps++;
+      if (!v || typeof v !== 'object' || seen.has(v)) continue;
+      seen.add(v);
+      if ('linkTypeID' in v && v.entity0 && v.entity1) {
+        const gids = [v.entity0.gid, v.entity1.gid];
+        if (gids.includes(recGid) && gids.includes(workGid) && (!perf || v.linkTypeID === perf.id)) return v;
+        continue;
+      }
+      if (v instanceof Map || v instanceof Set || Array.isArray(v)) v.forEach((x) => stack.push(x));
+      else Object.keys(v).forEach((k) => stack.push(v[k]));
+    }
+    return null;
   }
 
   function planPendingWork(i) {
@@ -33632,9 +34095,12 @@
   /** [Z-SU] (3.41.3) The parts of a track that is in no suite accepted: its sub-tracks or the parts of its title ([] without). */
   function medleyParts(i) {
     const t = S.mbTracks[i];
-    if (!t || t.works.length) return [];
+    if (!t || t.works.some((w) => !replacedWork(i, w.gid))) return [];
     const songs = songParts(i);
     if (songs.length) return songs;
+    // ([Z-MDLY] 3.98.0) the titles of MusicBrainz first (its spelling), else the source's parts
+    const mb = medleySplit(t.title);
+    if (mb.length > 1) return mb;
     const src = (S.srcTracks || [])[i] || null;
     return trackPartsOf(src && src.title ? src : { title: t.title });
   }
@@ -33666,6 +34132,18 @@
     log('info', 'medleyJoined', { track: trackLabel(S.mbTracks[i]) });
   }
 
+  /** [Z-MDLY] [Z-ARRDIS] (3.98.0) The artist [traditional] of MusicBrainz. */
+  const TRAD_MBID = '9be7f096-97ec-4615-8957-8d40b5dcbc41';
+  /**
+   * [Z-MDLY] [Z-ARRDIS] (3.98.0) The arrangers of a track whose writer is [traditional] (their names as in MusicBrainz) – its new
+   * works are arrangements of the tunes; [] otherwise.
+   */
+  function tradArrangers(i) {
+    if (!ruleOn('S157') || !writerEntriesOf(i).some((a) => a.mbid === TRAD_MBID)) return [];
+    return uniq(S.rows.filter((r) => r.level !== 'skip' && (!r.tracks || !r.tracks.size || r.tracks.has(i)) && norm(rowTypeName(r)) === 'arranger')
+      .map((r) => S.artists.get(r.artistKey)).filter(Boolean).map((a) => a.mbName || a.name).filter(Boolean));
+  }
+
   /**
    * [Z-SU] (3.41.3) Each new part looked up in MusicBrainz among the works of the track's writers (Q-cb): one work of exactly that
    * title – for a part of a suite also "Suite, Part", "Suite: Part" or the part alone –; (3.41.4, review) offered at the part
@@ -33690,6 +34168,13 @@
           hits = []; // (not answered: a new work, as without a hit)
         }
         const same = hits.filter((w) => norm(w.title) === norm(title) || (w.aliases || []).some((x) => norm(x) === norm(title)));
+        // [Z-MDLY] (3.98.0) a traditional tune arranged: the part a new work, "arrangement of" the tune suggested (all of that title)
+        if (same.length && tradArrangers(i).length && S.workParts.get(i) === ps && p.origin === 'pending' && !p.suite) {
+          arrangementSuggest(i, same.map((w) => ({ gid: w.gid, title: w.title, disambiguation: w.disambiguation || '' })), 'mdly', String(p.gid).replace(/^pending:/, ''));
+          found += 1;
+          arrDupCheck(i);
+          break;
+        }
         if (same.length === 1 && S.workParts.get(i) === ps && p.origin === 'pending') {
           p.offer = { gid: same[0].gid, title: same[0].title };
           found += 1;
@@ -33917,6 +34402,23 @@
       <button type="button" class="dci-small dci-wts-ok" data-act="mx-wts-accept">${esc(tr('matrix.suggestAccept'))}</button>
       <button type="button" class="dci-small" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}">${esc(tr('matrix.suggestChange'))}</button>
       <span class="dci-sub">${esc(own ? tr('matrix.suggestIfNotOwn', { what: defaultsSummary() }) : tr('matrix.suggestIfNot'))}</span></div>`;
+  }
+
+  /** [Z-MDLY] (3.98.0) The tracks without a work whose title has parts (not split yet). */
+  const medleyTracks = () => S.mbTracks.filter((t) => matrixTrack(t) && !S.workParts.has(t.idx) && !S.workPlan.has(t.idx) && medleyParts(t.idx).length > 1).map((t) => t.idx);
+  /**
+   * [Z-MDLY] (3.98.0) Beside "＋ New works": "Medleys: split n" – every title with a separator split into works of its own (a medley) –
+   * and ✎ with the separators of the release ("/" also without spaces; several possible; the exceptions of the mapping stay whole).
+   */
+  function medleyHeadHtml() {
+    if (!ruleOn('S157')) return '';
+    const n = medleyTracks().length;
+    const seps = medleySeps();
+    const editor = S.medleySepsOpen ? `<span class="dci-mx-seps" data-el="medley-seps">${seps.map((x) => `<span class="dci-lang-chip">${esc(x)}<button type="button" class="dci-iconbtn" data-act="medley-sep-del" data-sep="${esc(x)}" aria-label="${esc(tr('common.remove'))}">×</button></span>`).join('')}
+      <input type="text" data-f="mx-medley-sep" size="4" placeholder="+" aria-label="${esc(tr('medley.sepAdd'))}" title="${esc(tr('medley.sepAdd'))}"></span>` : '';
+    if (!n && !S.medleySepsOpen) return ` <button type="button" class="dci-textbtn dci-mx-sepbtn" data-act="medley-seps" aria-expanded="false" title="${esc(tr('medley.sepsTitle', { list: seps.join('  ') }))}">✎ ${esc(seps.join(' '))}</button>`;
+    return ` <span class="dci-mx-medleys">${n ? `<button type="button" class="dci-small" data-act="medley-split-all" title="${esc(tr('medley.splitAllTitle', { list: medleyTracks().map((i) => S.mbTracks[i].title).slice(0, 8).join(' · ') }))}">${esc(tr('medley.splitAll', { n }))}</button>` : ''}
+      <button type="button" class="dci-textbtn dci-mx-sepbtn" data-act="medley-seps" aria-expanded="${!!S.medleySepsOpen}" title="${esc(tr('medley.sepsTitle', { list: seps.join('  ') }))}">✎ ${esc(seps.join(' '))}</button>${editor}</span>`;
   }
 
   /** [Z-WMX] (3.52.0) In the corner of the matrix: "All artists credited as: ↺ MusicBrainz names for all" (before: in the tools above). */
@@ -34440,7 +34942,7 @@
           ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
         <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
           ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
-          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}
+          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}
           <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
       ${!skipped && !folded && S.mxHelpOpen ? `<div class="dci-wh-pop dci-wh-helppop" data-el="works-help"><p>${esc(tr('matrix.explain'))}</p></div>` : ''}
@@ -35052,6 +35554,18 @@
       case 'mx-credit': {
         const c = matrixColumns().find((x) => x.key === el.dataset.col);
         if (c) c.rows.forEach((r) => Object.assign(r, { credit: el.value.trim(), creditTouched: true }));
+        break;
+      }
+      case 'mx-medley-sep':
+        if (el.value.trim()) setMedleySeps([...medleySeps(), el.value]);
+        el.value = '';
+        break;
+      // [Z-MDLY] (3.98.0) another candidate for "arrangement of"
+      case 'mx-arr-cand': {
+        const i = workIndexOf(el);
+        const r = arrById(i, el.dataset.n);
+        const c = r && (r.candidates || []).find((x) => x.gid === el.value);
+        if (c) Object.assign(r, { found: { gid: c.gid, title: c.title }, title: c.title, picked: true });
         break;
       }
       case 'mx-type': {
@@ -36806,6 +37320,13 @@
         renderLiveComments();
         break;
       }
+      // [Z-ARRDIS] (3.98.0) the disambiguation of new arrangement works taken – or not
+      case 'arrcom-yes':
+      case 'arrcom-no':
+        S.arrComOffer = act === 'arrcom-yes' ? 'yes' : 'no';
+        log('info', act === 'arrcom-yes' ? 'arrComYes' : 'arrComNo');
+        renderArrComments();
+        break;
       case 'livecom-yes':
       case 'livecom-no':
         S.liveComOffer = act === 'livecom-yes' ? 'yes' : 'no';
@@ -38788,6 +39309,73 @@
         if (b) b.focus({ preventScroll: true });
         break;
       }
+      // [Z-MDLY] (3.98.0) every title with a separator a medley; the separators of the release
+      case 'medley-split-all':
+        medleyTracks().forEach((i) => splitMedley(i));
+        renderWorks();
+        refresh();
+        break;
+      case 'medley-seps':
+        S.medleySepsOpen = !S.medleySepsOpen;
+        renderWorks();
+        break;
+      case 'medley-sep-del':
+        setMedleySeps(medleySeps().filter((x) => x !== btn.dataset.sep));
+        renderWorks();
+        break;
+      // [Z-MDLY] (3.98.0) the existing arrangement linked instead of a new work (no "arrangement of" then)
+      case 'arr-existing': {
+        const i = workIndexOf(btn);
+        const list = (S.workRels && S.workRels.get(i)) || [];
+        const r = arrById(i, btn.dataset.n);
+        if (!r || !r.existing) break;
+        if (r.part) {
+          const pp = (S.workParts.get(i) || []).find((x) => String(x.gid).replace(/^pending:/, '') === r.part);
+          if (pp) {
+            Object.assign(pp, { gid: r.existing.gid, title: r.existing.title, origin: 'search' });
+            delete pp.offer;
+            delete pp.entity;
+          }
+        } else {
+          const plan = S.workPlan.get(i);
+          S.workPlan.set(i, { ...(plan || {}), gid: r.existing.gid, title: r.existing.title, origin: 'search', flags: plan ? plan.flags : new Set(), date: null, dateOpen: false });
+        }
+        list.splice(list.indexOf(r), 1);
+        if (!list.length) S.workRels.delete(i);
+        log('info', 'arrExisting', { track: trackLabel(S.mbTracks[i]), title: r.existing.title });
+        renderWorks();
+        refresh();
+        break;
+      }
+      // [Z-WNEW] [Z-MDLY] (3.98.0) "arrangement of" confirmed – or taken back
+      case 'arr-ok':
+      case 'arr-undo': {
+        const i = workIndexOf(btn);
+        const r = arrById(i, btn.dataset.n);
+        if (!r) break;
+        r.confirmed = act === 'arr-ok';
+        log('info', r.confirmed ? 'arrConfirmed' : 'arrUnconfirmed', { track: trackLabel(S.mbTracks[i]), title: r.found.title });
+        renderWorks();
+        refresh();
+        break;
+      }
+      // [Z-WNEW] (3.98.0, S156) a new work instead of the linked one – and back
+      case 'wnew-on': {
+        const i = workIndexOf(btn);
+        const t = S.mbTracks[i];
+        const old = t && t.works.find((w) => w.gid === btn.dataset.gid);
+        if (!old) break;
+        wnewOn(i, old);
+        renderWorks();
+        refresh();
+        break;
+      }
+      case 'wnew-off': {
+        wnewOff(workIndexOf(btn));
+        renderWorks();
+        refresh();
+        break;
+      }
       case 'work-unplan': {
         const i = workIndexOf(btn);
         const removed = S.workPlan.get(i);
@@ -38795,6 +39383,8 @@
         if (removed && removed.origin === 'created') {
           writeJson('localStorage', CREATED_KEY, readCreatedWorks().filter((x) => !(x.i === i && x.gid === removed.gid)));
         }
+        // [Z-WNEW] (3.98.0) the linked work comes back – ((review) not once its link is removed in the editor)
+        if (replacedWork(i) && !wnewOff(i, true)) break;
         S.workPlan.delete(i);
         log('info', 'workUnplanned', { track: trackLabel(S.mbTracks[i]) });
         renderWorks();
@@ -39170,6 +39760,14 @@
         }
         renderLiveComments();
         if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
+        break;
+      }
+      // [Z-ARRDIS] (3.98.0) the text of the disambiguation of new arrangement works
+      case 'arrcom-text': {
+        if (!S.arrComTexts) S.arrComTexts = new Map();
+        S.arrComTexts.set(el.dataset.auto, el.value.trim());
+        el.blur();
+        renderArrComments();
         break;
       }
       case 'livecom-text': {
@@ -39945,7 +40543,7 @@
         <div class="dci-preview" data-el="preview" hidden></div>
         <footer class="dci-foot">
           <div class="dci-foot-line" data-el="foot-line" aria-hidden="true" hidden></div>
-          <div class="dci-livecom" data-el="livecom" hidden></div>
+          <div class="dci-comrow"><div class="dci-arrcom" data-el="arrcom" hidden></div><div class="dci-livecom" data-el="livecom" hidden></div></div>
           <div class="dci-foot-bar">
             <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
               <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
@@ -44902,6 +45500,14 @@
       .dci-mx-optsbtn { color: var(--purple-d); }
       .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 11.5); text-decoration: none; white-space: nowrap; }
       .dci-mx-wlabel-ro { color: var(--muted, #6b6880); }
+      .dci-mx-wnew { opacity: 0.5; }
+      .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
+      .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
+      .dci-mx-wnew:hover, .dci-mx-wnew:focus-visible { opacity: 1; }
+      .dci-mx-wrepl { text-decoration: none; }
+      .dci-mx-arrsugg { background: var(--sugg-bg); border: 1px solid var(--sugg-line); border-radius: 3px; color: var(--sugg-ink, #6b4e00); padding: 0 calc(var(--u, 1px) * 4); }
+      .dci-mx-arrok { color: #1d5b36; }
+      .dci-mx-arrexist { margin-left: calc(var(--u, 1px) * 6); }
       .dci-mx-wlabel + .dci-mx-wtsrow { margin-left: calc(var(--u, 1px) * 2); }
       .dci-wattr-sum { margin-left: auto; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-wattr-tgl { color: var(--purple-d); }
@@ -45192,6 +45798,10 @@
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
       /* [3.32.9] the comments of live recordings above "Stage …" (item 113) */
       .dci-livecom { margin: 0; }
+      /* [Z-ARRDIS] (3.98.0) the comments of new arrangement works left of the live comments (or in their place) */
+      .dci-comrow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--u, 1px) * 8); }
+      .dci-comrow > .dci-livecom { flex: 1 1 auto; min-width: 0; }
+      .dci-arrcom .dci-livecom-offer input { min-width: calc(var(--u, 1px) * 180); }
       .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
       .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }

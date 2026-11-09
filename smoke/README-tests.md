@@ -382,6 +382,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   wnew398: 3.98.0 (Z-WNEW, S156): "＋ New" greyed at a linked work – a new work instead, "↺ keep linked work";
+                                #     staged: the old link removed, "arrangement of" only after ✓ (the log says it waits)
                                 #   pps390: 3.90.0 (Z-PPS, S142): Pub Co (Writer W's personal publisher) follows Writer W – on with track 3, off with
                                 #     track 2; its cell of track 1 off by hand stays; "on all tracks" stays (review); off
                                 #   arl387: 3.87.0 (Z-ARL2, Z-AWB2): the level of "arranger" in the column head – onto the recordings; no "all works" in the ▾ menu; S135 off
@@ -424,6 +426,11 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
+                                #   mdly398: 3.98.0 (Z-MDLY, S157): "Alpha/Beta" split ("/" without spaces), "AC/DC" whole, "+" added by ✎ –
+                                #     "Medleys: split n"; a traditional tune arranged: "arrangement of" suggested (most recordings first), an
+                                #     existing arrangement found (stage 1) and linked instead; in Node medleySplit (spaces, brackets, exceptions)
+                                #   arrdis398: 3.98.0 (Z-ARRDIS, S158): "The Band arrangement" offered in the footer, changed, set on the new works
+                                #     when staged; the box on the page names them
                                 #   wts397: 3.97.0 (Z-WTS2, S153): the label "[Song · English]" beside each work (what is filled in, a click
                                 #     changes it; a part of a medley its own); a "?" for the suggestion; defaults chosen by hand answer it;
                                 #     "(Instrumental)" → [No lyrics]; a work of MusicBrainz only shown ("[no work type]")

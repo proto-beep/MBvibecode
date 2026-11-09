@@ -1667,4 +1667,65 @@ def case_pps390():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_wnew398():
+    """Credits Importer 3.98.0 (collected item Z-WNEW; rule S156): a new work in place of the work linked in MusicBrainz.
+    Track 1 "Song One" is linked to the work "Song One" (MusicBrainz).
+    A) Its line has a greyed "＋ New".
+    B) Clicked: a new work "Song One" for the track, "instead of “Song One”", "↺ keep linked work"; below the title the yellow
+       suggestion "arrangement of MB Song One?" with ✓. "↺" brings the linked work back; "＋ New" again.
+    C) Staged without ✓: the new work linked to the recording, the old link removed in the relationship editor, no "arrangement of";
+       the message says one "arrangement of" is not confirmed.
+    D) ✓, staged again: "Song One" of MusicBrainz – arrangement – the new work."""
+    H.lt(350, H.uid('1aaa0000', 350), 'arrangement', 'work', 'work')
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    ROW = """(() => { const tr = [...document.querySelectorAll('.dci-matrix tr[data-work="0"]')]; return tr.map(t => ({
+      wnew: !!t.querySelector('[data-act=wnew-on]'), op: (b => b ? getComputedStyle(b).opacity : null)(t.querySelector('[data-act=wnew-on]')),
+      newWork: !!t.querySelector('.dci-badge-plan'), repl: (t.querySelector('.dci-mx-wrepl') || {}).textContent || '',
+      off: !!t.querySelector('[data-act=wnew-off]'), sugg: (t.querySelector('[data-wnote=arrsugg]') || {}).textContent || '',
+      ok: !!t.querySelector('[data-act=arr-ok]') })); })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"0\"] [data-act=wnew-on]')", 60)
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(ROW)
+        print('A)', a0)
+        results.append(len(a0) == 1 and a0[0]['wnew'] and a0[0]['op'] == '0.5' and not a0[0]['newWork'])
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-on]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        b0 = pg.evaluate(ROW)
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-off]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        b1 = pg.evaluate(ROW)
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-on]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        print('B)', b0, '\n  ↺:', b1)
+        results.append(len(b0) == 1 and b0[0]['newWork'] and 'instead of “Song One”' in b0[0]['repl'] and b0[0]['off'] and b0[0]['ok']
+                       and 'arrangement of' in b0[0]['sugg'] and 'Song One' in b0[0]['sugg'] and '?' in b0[0]['sugg'] and b1 == a0)
+        pg.evaluate(f"""() => {{ const re = MB.relationshipEditor;
+      re.state = {{ ...re.state, existingRels: [{{ id: 9101, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'Song One' }},
+        entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
+        attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
+        STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 || r.linkTypeID === 350).map(r => [r.linkTypeID, r.entity0.gid || r.entity0.name, r.entity1.gid || ('new:' + r.entity1.name)]))()"""
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+        c0 = [pg.evaluate(STAGED), pg.evaluate("window.__removed.map(r => r.id)"), ' | '.join(x for x in pg.locator('#dci-log li').all_inner_texts() if 'arrangement of' in x)]
+        print('C)', c0)
+        results.append([x for x in c0[0] if x[0] == 278 and x[1] == H.REC[0]] == [[278, H.REC[0], 'new:Song One']] and not [x for x in c0[0] if x[0] == 350]
+                       and c0[1] == [9101] and '1 “arrangement of” is not confirmed yet' in c0[2])
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=arr-ok]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        d0 = [x for x in pg.evaluate(STAGED) if x[0] == 350]
+        print('D)', d0)
+        # (MusicBrainz's direction: the work arranged first, its arrangement second)
+        results.append(d0 == [[350, H.WORK1, 'new:Song One']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
