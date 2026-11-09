@@ -2831,4 +2831,121 @@ def case_artl3100():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_detail3102():
+    """Credits Importer 3.102.0 (collected items Z-DATP, Z-UNCR, Z-PLAYS, Z-LNTR, Z-LITI; rules D031, S167, S168, R117): Detail – "A Concert"
+    as Discogs lists it: "Double Bass [Uncredited] – Barry Guy, Johnny Dyani", "Drums [Uncredited] – John Stevens (2)", "Trombone [Uncredited] –
+    Paul Rutherford (2)", "Soprano Saxophone, Tenor Saxophone – Frode Gjerstad", (for the test) Barry Guy also "Producer", "Liner Notes
+    [Translation By (English)] – Sebastian Scotney", "Little Instruments – Pat Person"; the notes "This was recorded by Norwegian State radio,
+    at the Hennie-Onstad art centre outside Oslo on September 11th 1983. The first time I played with Rutherford and Guy. At the time I played
+    soprano and tenor sax." and (for the test) "On the second part I also played bass clarinet and tenor sax."
+    A) Johnny Dyani (only uncredited): on Skip, at the entry "Not named on the release (Discogs: uncredited) – on Skip:" with "Take anyway";
+       Barry Guy: his producer row as before, double bass on Skip with "Take “double bass” anyway"; "Take all uncredited" offered.
+    B) "Take anyway" at Johnny Dyani: his row on the recording, Barry Guy's still on Skip; (review) Paul Rutherford's level clicked by hand:
+       no note any more; "Take all uncredited": none on Skip, no such note.
+    C) The pool: September 11th 1983 a performance date (until 3.101.0 "recorded" was too far before the date).
+    D) "I played soprano and tenor sax": nothing asked (credited); "bass clarinet": asked once above the entries, Frode Gjerstad chosen
+       (he plays the tenor sax of that sentence); taken: his row bass clarinet, the question gone.
+    E) Staged: Sebastian Scotney's liner notes with the attribute translator; Pat Person other instruments "Little Instruments"."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9124, 'other instruments'), (9130, 'trombone'), (9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9133, 'bass clarinet')):
+        H.attr(i, n, 14, 14)
+    H.attr(9134, 'translator', 9134)
+    H.LTS[24]['attributes']['9134'] = {'min': 0, 'max': None}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CR = [('Barry Guy', 'Double Bass [Uncredited], Producer', 3201), ('Johnny Dyani', 'Double Bass [Uncredited]', 3202),
+          ('John Stevens (2)', 'Drums [Uncredited]', 3203), ('Paul Rutherford (2)', 'Trombone [Uncredited]', 3204),
+          ('Frode Gjerstad', 'Soprano Saxophone, Tenor Saxophone', 3205), ('Sebastian Scotney', 'Liner Notes [Translation By (English)]', 3206),
+          ('Pat Person', 'Little Instruments', 3207)]
+    for n, _r, i in CR:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n.replace(' (2)', ''))
+    NOTES = ('This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983. The first time '
+             'I played with Rutherford and Guy. At the time I played soprano and tenor sax. On the second part I also played bass clarinet and tenor sax.')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CR]
+        d['notes'] = NOTES
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ENT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const n = g.querySelector('[data-el=uncr]');
+      return { uncr: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '', btns: n ? [...n.querySelectorAll('button')].map(b => b.textContent.trim()) : [],
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+          const pr = tr.querySelector('[data-f=primary]'); return [t ? (t.options[t.selectedIndex] || {}).text : '', lv ? lv.dataset.level : '', pr ? pr.value : '']; }) }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            jd, bg = pg.evaluate(ENT, 'Johnny Dyani'), pg.evaluate(ENT, 'Barry Guy')
+            print('A)', jd, bg)
+            results.append(bool(jd) and jd['uncr'].startswith('Not named on the release (Discogs: uncredited) – on Skip:') and 'Take anyway' in jd['btns']
+                           and 'Take all uncredited' in jd['btns'] and all(r[1] in ('', 'skip') for r in jd['rows'])
+                           and bool(bg) and 'Take “double bass” anyway' in bg['btns'] and 'Take anyway' not in bg['btns']
+                           and any(r[0] == 'producer' and r[1] == 'recording' for r in bg['rows']) and any(r[1] == 'skip' for r in bg['rows']))
+            pg.click(f"{sec_sel(pg, 'Johnny Dyani')} [data-act=uncr-take]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            jd2, bg2 = pg.evaluate(ENT, 'Johnny Dyani'), pg.evaluate(ENT, 'Barry Guy')
+            # (review) a level clicked by hand takes it too: Paul Rutherford's box gone
+            pg.click(f"{sec_sel(pg, 'Paul Rutherford')} tr.dci-row [data-act=level][data-level=recording]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pr = pg.evaluate(ENT, 'Paul Rutherford')
+            pg.click(f"{sec_sel(pg, 'Barry Guy')} [data-act=uncr-all]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            after = [pg.evaluate(ENT, n) for n in ('Barry Guy', 'John Stevens', 'Paul Rutherford')]
+            print('B)', jd2, bg2, pr, after)
+            results.append(bool(jd2) and jd2['uncr'] == '' and jd2['rows'][0][1] == 'recording' and bool(bg2) and bg2['uncr'] != ''
+                           and bool(pr) and pr['uncr'] == '' and pr['rows'][0][1] == 'recording'
+                           and all(e and e['uncr'] == '' and all(r[1] == 'recording' for r in e['rows']) for e in after))
+            pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")
+            fmt = lambda d: '/'.join('-'.join(str(x) for x in (e['year'], e['month'], e['day']) if x) for e in (d['begin'], d['end']))
+            names = sorted((d['name'], fmt(d)) for d in pool)
+            print('C)', names)
+            results.append(any(n.startswith('Performance') and f == '1983-9-11/1983-9-11' for n, f in names))
+            asks = pg.evaluate("""[...document.querySelectorAll('[data-el=plays] [data-plays]:not(select):not(button)')].map(o => { const s = o.querySelector('select');
+              return [o.previousElementSibling ? o.previousElementSibling.textContent.trim() : '', s ? (s.selectedOptions[0] || {}).text : '']; })""")
+            print('D)', asks)
+            pg.click('[data-el=plays] [data-act=plays-take]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            fg = pg.evaluate(ENT, 'Frode Gjerstad')
+            gone = pg.evaluate("!document.querySelector('[data-el=plays]')")
+            print('   ', fg, gone)
+            results.append(len(asks) == 1 and 'bass clarinet' in asks[0][0] and 'soprano' not in asks[0][0].split('–')[-1] and asks[0][1] == 'Frode Gjerstad'
+                           and bool(fg) and any(r[2] == 'bass clarinet' for r in fg['rows']) and gone)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [r.linkTypeID, ((r.entity0 || {}).name || ''), ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName + (x.credited_as ? ' [' + x.credited_as + ']' : ''))])""")
+            print('E)', [x for x in added if x[1] in ('Sebastian Scotney', 'Pat Person')])
+            results.append(any(x[0] == 24 and x[1] == 'Sebastian Scotney' and 'translator' in x[2] for x in added)
+                           and any(x[0] == 148 and x[1] == 'Pat Person' and any(a.lower() == 'other instruments [little instruments]' for a in x[2]) for x in added))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        for _n, _r, i in CR:
+            H.ARTISTS.pop(i, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

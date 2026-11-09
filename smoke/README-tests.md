@@ -138,6 +138,7 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
 python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
                                 #   cimp3101: 3.101.0 (Z-CIMP, Z-RSOC; S160–S165): the back cover of CIMP #384 pasted – writers below the titles,
                                 #     duos restrict the lineup, SOLO asked, cover art / typesetting / hospitality, the series chosen, BMI on Skip (taken with S160)
+                                #   abbr3102: 3.102.0 (Z-ABBR2, S166): "Cy Moe tb" – trombone · tuba asked at the row, no instrument and not staged before the answer
                                 #   abbr3101: 3.101.0 (Z-ABBR, S166): abbreviations in short form, two readings, writer lines over two lines, series, catalogue numbers (Node)
                                 #   fbh389: 3.89.0 (Z-FBH, S140): "fb:", "ig:", "yt:", "bandcamp:", "sc:", "tw:", "@name" below a name – its links,
                                 #     the lines left out as profiles; found by the Facebook link, not shown
@@ -330,6 +331,8 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   datp3102: 3.102.0 (Z-DATP, D031): "This was recorded by Norwegian State radio, at … on September 11th 1983." – performance
+                                #     ("recorded" more than 80 characters before the date); the sentence before does not count (Node)
                                 #   dat399: 3.99.0 (Z-DAT3): "November 18 & 19 & 20, 2014" a period; "18 and 19 and 21 June 2015" three dates (Node)
                                 #   camd385: 3.85.0 (Z-CAMD): "Cameras: …" on a live recording gets the performance dates (S129 off: none)
                                 #   artkinds: 3.73.0 (Z-CPI, D025): the kinds of the artwork – a painting to the illustration, a cover photo to the
@@ -786,6 +789,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   align3100: 3.100.0 (Z-ALIGN): an entry's roles as one table – the head once, the ticks of all roles below each other, attributes
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
+                                #   detail3102: 3.102.0 (Z-UNCR, Z-PLAYS, Z-LNTR, Z-LITI, Z-DATP; S167, S168, R117): Detail "A Concert" – [Uncredited] on Skip
+                                #     ("Take anyway" at the entry or per role, "Take all uncredited"), the date of the notes a performance, "I played …" asked
+                                #     only for an instrument no one is credited with (taken for the person), liner notes with translator, "Little Instruments"
                                 #   artl3100: 3.100.0 (Z-ARTL, S159): "Artwork – Cyclical Dreams", a label of the release in MusicBrainz: the label, linked, label–release
                                 #     artwork staged; only in Discogs's labels: the label to choose; a person stays an artist; "As an artist instead" and back
                                 #   qgtr397: 3.97.0 (Z-QGTR): "Guitar" also offers guitar, "Bass" bass guitar, "Horns" wind instruments; the

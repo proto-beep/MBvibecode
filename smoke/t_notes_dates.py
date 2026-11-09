@@ -931,4 +931,28 @@ console.log(JSON.stringify(['Recorded: November 18 & 19 & 20, 2014 at the Alchem
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_datp3102():
+    """Credits Importer 3.102.0 (collected item Z-DATP, D031): the word naming the group of a date in the whole sentence before it –
+    "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983." a performance date
+    ("recorded" 85 characters before it; until 3.101.0 none); the sentence before does not count ("Mixed in May. Then on June 2, 1990 …"
+    stays without); (review) not past another date ("Recorded … on 3 May 1983, then … the summer of 1984 and … October 1985": 1984 and 1985
+    without)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const t = ['This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983. The first time I played with Rutherford and Guy.',
+  'It was mixed by the engineer of the radio station some time later. Then on June 2, 1990 the band went home.',
+  'Recorded at Studio X on 3 May 1983, then the band toured Europe through the whole of the summer of 1984 and Japan in October 1985.'];
+const a = t.map((x) => m.findDates(x).map((d) => d.hint || '').join(','));
+console.log(JSON.stringify(a));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
+    print('A)', out)
+    ok = out == ['performance', '', 'performance,,']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())
