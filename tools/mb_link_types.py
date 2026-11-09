@@ -9,6 +9,9 @@ Reads two files of the server's repository (a sparse checkout of just these is e
   - t/sql/initial.sql: the types of the server's test database – id, parent, the two entity types, deprecated –; types added
     later are not there: they keep their phrases, their entity types stay empty.
 Writes smoke/mb_link_types.json (default): { "source": {...}, "types": { id: {...} }, "attributes": { id: name } }.
+
+[3.100.0] Types added after the test database have no entity types there: those the importer uses get them from ADDED_LATER
+(as musicbrainz.org/relationships/<pair> lists them and as their descriptions name them), marked "later": true.
 """
 import json
 import os
@@ -62,6 +65,17 @@ def pot_entries(text):
         yield refs.split(), msgid
 
 
+# [3.100.0] types added after the test database: id → (entity0, entity1, parent) – label–release (musicbrainz.org/relationships/
+# label-release: misc → art direction, artwork → design → graphic design, illustration; photography; contracted tasks → produced
+# for), artist–release (artwork, design, illustration, translator), and the others their descriptions name
+ADDED_LATER = {
+    1170: ('label', 'release', None), 1171: ('label', 'release', 1170), 1172: ('label', 'release', 1171), 1173: ('label', 'release', 1170),
+    1174: ('label', 'release', None), 1175: ('label', 'release', None), 951: ('label', 'release', None), 950: ('label', 'recording', None),
+    993: ('artist', 'release', None), 928: ('artist', 'release', 993), 927: ('artist', 'release', 993), 871: ('artist', 'release', 54),
+    872: ('artist', 'work', 167), 1231: ('artist', 'event', None), 1241: ('artist', 'recording', None), 1303: ('event', 'label', None),
+}
+
+
 def main():
     src = sys.argv[1]
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, 'smoke', 'mb_link_types.json')
@@ -84,6 +98,10 @@ def main():
                 types.setdefault(i, {'id': i, 'parent': None, 'gid': '', 'type0': '', 'type1': '', 'deprecated': False})[field] = msgid
             elif table == 'link_attribute_type' and field == 'name':
                 attrs.setdefault(i, {'id': i, 'parent': None, 'root': None})['name'] = msgid
+    for i, (t0, t1, parent) in ADDED_LATER.items():
+        t = types.get(i)
+        if t and not t['type0']:
+            t.update({'type0': t0, 'type1': t1, 'parent': parent, 'later': True})
     try:
         commit = subprocess.run(['git', '-C', src, 'log', '-1', '--format=%H %cs'], capture_output=True, text=True).stdout.split()
     except OSError:
@@ -95,7 +113,8 @@ def main():
         json.dump(doc, f, ensure_ascii=False, indent=0, sort_keys=True)
         f.write('\n')
     typed = sum(1 for t in types.values() if t['type0'])
-    print(f'{len(types)} relationship types ({typed} with their entity types), {len(attrs)} attributes → {out}')
+    later = sum(1 for t in types.values() if t.get('later'))
+    print(f'{len(types)} relationship types ({typed} with their entity types, {later} of them added later), {len(attrs)} attributes → {out}')
 
 
 if __name__ == '__main__':
