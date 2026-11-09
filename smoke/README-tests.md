@@ -231,6 +231,7 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   rdst3105: 3.105.0 (Z-RDST, S171): "Recorded May, 6. 7, 2007 Studio des …" – the place without "at" by a word of places (Node)
                                 #   prd395: 3.95.0 (Z-PRD, Z-DPD; D029, D030): "composed and produced between …" – one pool entry "Production ·
                                 #     Composition 1" in Composition, Production and Performance (Jane Doe's performer row dated); "Edit date" in
                                 #     the cell of Composition (another year saved): its own date; "Recorded in 2024 …": Performance 2024 only;
@@ -790,6 +791,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   align3100: 3.100.0 (Z-ALIGN): an entry's roles as one table – the head once, the ticks of all roles below each other, attributes
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
+                                #   bzk3105: 3.105.0 (Z-BZK, Q014): "Bouzouki" – bouzouki · irish bouzouki · tzouras (full list and matrix), the one chosen
                                 #   insts3103: 3.103.0 (Z-INSTS, S169, S170): five instruments without tracks – suggestion, "on the release" (rows on the release, one
                                 #     automatic row on the recordings), the common group "woodwind" with guest, back and forth (two states, "solo" kept), staged, S170 off
                                 #   instsrem3103: 3.103.0 (Z-INSTS, review): "on the release" remembered – the page loaded again: on the release again; per track back
@@ -967,6 +969,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
                                 #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
                                 #     message with "Update script"
+                                #   gapwhy3105: 3.105.0 (Z-GAPL): developer mode – why the line is missing (no link recognized, Discogs broken off),
+                                #     no note with the line or without developer mode; the switch only in developer mode
                                 #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
                                 #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
                                 #   gapmore: 3.40.0 (AY): no line without credits or when nothing is missing (setting dci-gap-none, one missing, the
