@@ -758,8 +758,8 @@
 }
 },
 "source": {
-"commit": "bade3a567e20ec69323ac7850fca9d0ee113f87d",
-"date": "2026-10-21",
+"commit": "1bedfed82b794a23ced029d397da01f2bd4d4256",
+"date": "2026-11-03",
 "files": [
 "po/relationships.pot",
 "t/sql/initial.sql"
@@ -1515,73 +1515,79 @@
 "deprecated": false,
 "gid": "",
 "id": 1170,
+"later": true,
 "link_phrase": "{additional} artwork",
 "long_link_phrase": "provided {additional} artwork on",
 "name": "artwork",
 "parent": null,
 "reverse_link_phrase": "{additional} artwork",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1171": {
 "deprecated": false,
 "gid": "",
 "id": 1171,
+"later": true,
 "link_phrase": "{additional} design",
 "long_link_phrase": "provided {additional} design on",
 "name": "design",
-"parent": null,
+"parent": 1170,
 "reverse_link_phrase": "{additional} design",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1172": {
 "deprecated": false,
 "gid": "",
 "id": 1172,
+"later": true,
 "link_phrase": "{additional} graphic design",
 "long_link_phrase": "provided {additional} graphic design on",
 "name": "graphic design",
-"parent": null,
+"parent": 1171,
 "reverse_link_phrase": "{additional} graphic design",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1173": {
 "deprecated": false,
 "gid": "",
 "id": 1173,
+"later": true,
 "link_phrase": "{additional} illustration",
 "long_link_phrase": "provided {additional} illustration on",
 "name": "illustration",
-"parent": null,
+"parent": 1170,
 "reverse_link_phrase": "{additional} illustration",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1174": {
 "deprecated": false,
 "gid": "",
 "id": 1174,
+"later": true,
 "link_phrase": "{additional} art direction",
 "long_link_phrase": "provided {additional} art direction on",
 "name": "art direction",
 "parent": null,
 "reverse_link_phrase": "{additional} art direction",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1175": {
 "deprecated": false,
 "gid": "",
 "id": 1175,
+"later": true,
 "link_phrase": "{additional} photography",
 "long_link_phrase": "{entity1} has {additional} photography by {entity0}",
 "name": "photography",
 "parent": null,
 "reverse_link_phrase": "{additional} photography",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "1176": {
 "deprecated": false,
@@ -1947,13 +1953,14 @@
 "deprecated": false,
 "gid": "",
 "id": 1231,
+"later": true,
 "link_phrase": "{additional} artwork",
 "long_link_phrase": "provided {additional} artwork on",
 "name": "artwork",
 "parent": null,
 "reverse_link_phrase": "{additional} artwork",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "event"
 },
 "1232": {
 "deprecated": false,
@@ -2067,13 +2074,14 @@
 "deprecated": false,
 "gid": "",
 "id": 1241,
+"later": true,
 "link_phrase": "{additional} artwork",
 "long_link_phrase": "provided {additional} artwork on",
 "name": "artwork",
 "parent": null,
 "reverse_link_phrase": "{additional} artwork",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "recording"
 },
 "1242": {
 "deprecated": false,
@@ -2871,13 +2879,14 @@
 "deprecated": false,
 "gid": "",
 "id": 1303,
+"later": true,
 "link_phrase": "{additional} artwork",
 "long_link_phrase": "{entity1} provided {additional} artwork on {entity0}",
 "name": "artwork",
 "parent": null,
 "reverse_link_phrase": "{additional} artwork",
-"type0": "",
-"type1": ""
+"type0": "event",
+"type1": "label"
 },
 "1304": {
 "deprecated": false,
@@ -7524,25 +7533,27 @@
 "deprecated": false,
 "gid": "",
 "id": 871,
+"later": true,
 "link_phrase": "translated",
 "long_link_phrase": "{additional:additionally} translated",
 "name": "translator",
-"parent": null,
+"parent": 54,
 "reverse_link_phrase": "{additional} translator",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "release"
 },
 "872": {
 "deprecated": false,
 "gid": "",
 "id": 872,
+"later": true,
 "link_phrase": "{additional:additionally} translated",
 "long_link_phrase": "{additional:additionally} translated",
 "name": "translator",
-"parent": null,
+"parent": 167,
 "reverse_link_phrase": "{additional} translator",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "work"
 },
 "873": {
 "deprecated": false,
@@ -8244,25 +8255,27 @@
 "deprecated": false,
 "gid": "",
 "id": 927,
+"later": true,
 "link_phrase": "{additional} illustration",
 "long_link_phrase": "provided {additional} illustration on",
 "name": "illustration",
-"parent": null,
+"parent": 993,
 "reverse_link_phrase": "{additional} illustration",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "release"
 },
 "928": {
 "deprecated": false,
 "gid": "",
 "id": 928,
+"later": true,
 "link_phrase": "{additional} {assistant} design",
 "long_link_phrase": "provided {additional} {assistant} design on",
 "name": "design",
-"parent": null,
+"parent": 993,
 "reverse_link_phrase": "{additional} {assistant} design",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "release"
 },
 "929": {
 "deprecated": false,
@@ -8520,25 +8533,27 @@
 "deprecated": false,
 "gid": "",
 "id": 950,
+"later": true,
 "link_phrase": "contracted {co:co-}{executive:executive }production for",
 "long_link_phrase": "{entity1} was {co:co-}{executive:executive }produced for {entity0}",
 "name": "produced for",
 "parent": null,
 "reverse_link_phrase": "{co:co-}{executive:executive }produced for",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "recording"
 },
 "951": {
 "deprecated": false,
 "gid": "",
 "id": 951,
+"later": true,
 "link_phrase": "contracted {co:co-}{executive:executive }production for",
 "long_link_phrase": "{entity1} was {co:co-}{executive:executive }produced for {entity0}",
 "name": "produced for",
 "parent": null,
 "reverse_link_phrase": "{co:co-}{executive:executive }produced for",
-"type0": "",
-"type1": ""
+"type0": "label",
+"type1": "release"
 },
 "952": {
 "deprecated": false,
@@ -9060,13 +9075,14 @@
 "deprecated": false,
 "gid": "",
 "id": 993,
+"later": true,
 "link_phrase": "{additional} artwork",
 "long_link_phrase": "provided {additional} artwork on",
 "name": "artwork",
 "parent": null,
 "reverse_link_phrase": "{additional} artwork",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "release"
 },
 "994": {
 "deprecated": false,

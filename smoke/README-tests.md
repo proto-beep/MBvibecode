@@ -780,6 +780,11 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   align3100: 3.100.0 (Z-ALIGN): an entry's roles as one table – the head once, the ticks of all roles below each other, attributes
+                                #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
+                                #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
+                                #   artl3100: 3.100.0 (Z-ARTL, S159): "Artwork – Cyclical Dreams", a label of the release in MusicBrainz: the label, linked, label–release
+                                #     artwork staged; only in Discogs's labels: the label to choose; a person stays an artist; "As an artist instead" and back
                                 #   qgtr397: 3.97.0 (Z-QGTR): "Guitar" also offers guitar, "Bass" bass guitar, "Horns" wind instruments; the
                                 #     family itself chosen answers the question (no "?")
                                 #   msyn397: 3.97.0 (Z-MSYN, S155): two models of one instrument on a recording – one instrument credited
@@ -882,6 +887,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   artlbc3100: 3.100.0 (Z-ARTL, S159): "Artwork: Cyclical Dreams" on the label's Bandcamp page – the label, linked at once
                                 #   maya396: 3.96.0 (Z-SEI2, Z-AMP, Z-NORD): track pages with credits of their own ("Sei water Whale D" asked, nothing
                                 #     not recognized); "All Guitar Amplifier : Fender Twin Reverb '78" effects of Tsutomu Sonoda
                                 #   maya392: 3.92.0 (Z-FWC, Z-IMD, Z-TBL, Z-NCL, Z-GEAR, Z-LYR, Z-SPA, Z-WRAP, Z-ITY, Z-SEI; S144 – S149): two
