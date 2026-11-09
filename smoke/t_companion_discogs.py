@@ -717,4 +717,81 @@ def case_artworkbox():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_artnav():
+    """Companion 1.15.0 (Credits Importer 3.103.0, collected item Z-CPVA): ‹ › in the cover miniature – the release's images of the page (the
+    cover, two more of the release – one in the page's data with escaped slashes –; an image of another release and one of an artist
+    left out): "1 / 3"; › twice: the second, the third ("3 / 3"); › once more: the first again; ‹: the third. The arrows do not move the
+    box and open nothing; a click on the image opens Discogs's image view as before. One image only: no arrows."""
+    import base64
+    enc = lambda src: '/'.join(base64.b64encode(src.encode()).decode()[i:i + 16] for i in range(0, len(base64.b64encode(src.encode()).decode()), 16)) + '.jpeg'
+    url = lambda src: f'https://i.discogs.com/sig{len(src)}/rs:fit/g:sm/q:90/h:150/w:150/{enc(src)}'
+    IMGS = [url(f'discogs-database-images/R-{H.DISCOGS_ID}-1111-2.jpeg'), url(f'discogs-database-images/R-{H.DISCOGS_ID}-1111-3.jpeg'),
+            url('discogs-database-images/R-999-1111-1.jpeg'), url('discogs-database-images/A-5-1111-1.jpeg')]
+    orig = H.discogs_page
+
+    def page():
+        html = orig()
+        extra = (f'<div class="more"><img src="{IMGS[0]}" width="40"><img src="{IMGS[2]}" width="40"><img src="{IMGS[3]}" width="40"></div>'
+                 f'<script type="application/json" id="dsdata">{{"images":[{{"thumb":"{IMGS[1].replace("/", chr(92) + "/")}"}}]}}</script>')
+        return html.replace('<section id="release-tracklist">', extra + '<section id="release-tracklist">')
+    results = []
+    try:
+        H.discogs_page = page
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            dg, dgerr = H.open_discogs(ctx)
+            dg.wait_for_timeout(1000)
+            pg, errs = H.open_mb_edit(ctx)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            dg.wait_for_timeout(2500)
+            box = dg.locator('#dci-artwork')
+            state = lambda: dg.evaluate("(() => { const b = document.getElementById('dci-artwork'); const n = b.querySelector('.dci-art-nav');"
+                                        " return [n.hidden, b.querySelector('.dci-art-n').textContent, b.querySelector('img').getAttribute('src')]; })()")
+            r0 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
+            dg.evaluate("window.__clicked = []; document.querySelectorAll('a[href*=\"/image/\"]').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); window.__clicked.push(a.getAttribute('href')); }))")
+            seq = [state()]
+            for sel in ('.dci-art-next', '.dci-art-next', '.dci-art-next', '.dci-art-prev'):
+                box.locator(sel).click()
+                dg.wait_for_timeout(150)
+                seq.append(state())
+            r1 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
+            arrows_clicked = dg.evaluate("window.__clicked")
+            print('A)', seq, r0, r1, arrows_clicked)
+            cover = f'https://i.discogs.com/cover-{H.DISCOGS_ID}.png'
+            results.append([x[1] for x in seq] == ['1 / 3', '2 / 3', '3 / 3', '1 / 3', '3 / 3'] and not seq[0][0]
+                           and [x[2] for x in seq] == [cover, IMGS[0], IMGS[1], cover, IMGS[1]] and r0 == r1 and arrows_clicked == [])
+            # the status map comes again: the image chosen stays
+            box.locator('.dci-art-next').click()
+            dg.wait_for_timeout(2500)
+            kept = state()
+            box.locator('.dci-art-img').click()
+            dg.wait_for_timeout(200)
+            clicked = dg.evaluate("window.__clicked")
+            print('B)', kept, clicked)
+            results.append(kept[1] == '1 / 3' and clicked == [f'/release/{H.DISCOGS_ID}-Test-Band-Testalbum/image/1'])
+            print('Fehler:', errs, dgerr)
+            results.append(not _real_errs(errs) and not _real_errs(dgerr))
+            b.close()
+    finally:
+        H.discogs_page = orig
+    # one image only: no arrows (the former test of the box)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        dg.wait_for_timeout(2500)
+        one = dg.evaluate("document.querySelector('#dci-artwork .dci-art-nav').hidden")
+        print('C)', one)
+        results.append(one)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

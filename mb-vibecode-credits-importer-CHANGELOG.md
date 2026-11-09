@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.102.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.103.0 | 1.15.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.103.0
+
+- **Instruments per track or on the release** (Z-INSTS, rule S169): a person the source names with instruments but without tracks – "Instruments: per track | on the release" (in the head of the instruments' block, else at the top of the entry; suggested from four such instruments: "Put them on the release" / "Keep them per track"). On the release each instrument is a release relationship with the release's date (the release-level dates of its column in the date matrix, else the date it had); the recordings keep one automatic row without a specific instrument, with the date of the recordings – "performer" when voices are among them –, with "guest" or "additional" when all instruments have it. Switched back, the instruments are on the recordings again and the automatic row is gone; switched again, it comes back with its changes. Instruments the source names with tracks stay on their tracks.
+- **The instruments' common group** (S170, a quick switch, on by default): the automatic row names the lowest group of MusicBrainz's instrument tree all the instruments share – soprano and alto saxophone: saxophone; soprano saxophone and bass clarinet: the reeds; flute and bass clarinet: woodwind – and says so when the source does not name it. No group, the whole tree, or piano with strings: "instruments" (no instrument). Off: always "instruments".
+- **Event columns are kept** (Z-EVCOL): a column left empty by unticking its last role (or by a level chosen for it) stays, grey, until it is taken away with ✕ in its head – a role ticked there takes its level, tracks and date again; in the compact view such an event is a line of its own. A row put on the release whose column in the date matrix has no release-level date keeps the dates of its tracks (rule D032) instead of joining the release's rows without a date.
+- **Attributes together: three side by side** (Z-ATTR3): in the role matrix the attributes of a line stand at most three in a row, the others below them.
+- **A new role framed** (Z-ARHL): the row (or the matrix line) added with "＋ Another role" has a yellow frame until its role is there – a type, and an instrument or voice where the type has one.
+
+### COMPANION 1.15.0
+
+#### Added
+
+- **Browse the images in the cover miniature** (collected item Z-CPVA): with more than one image of the release on the Discogs page, ‹ › below the picture show the others, with a counter ("2 / 7"); after the last the first again. They only choose the picture – a click on it opens Discogs' image view as before. Images of other releases, of artists and labels on the page are left out.
 
 ### Import 3.102.0
 

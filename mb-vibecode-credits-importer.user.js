@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.102.0
+// @version      3.103.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.102.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.102.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.103.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.103.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.102.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.103.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1607,6 +1607,22 @@
       "uncr.takeOneTitle": "This role of the person on its level, though the release does not name it",
       "uncr.takeAll": "Take all uncredited",
       "uncr.allTitle": "Every role marked uncredited on this release on its level (this release only)",
+      "em.ghostTitle": "This event has no roles any more – tick a role here to put it back, ✕ takes the column away",
+      "em.ghostDrop": "Take this empty column away",
+      "em.ghostEmpty": "empty",
+      "insts.label": "Instruments:",
+      "insts.track": "per track",
+      "insts.release": "on the release",
+      "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
+      "insts.releaseTitle": "Each instrument on the release (with the release's date); on the recordings one row without a specific instrument (the instruments' group), with the date of the recordings",
+      "insts.sugg": "{n} instruments without tracks – not necessarily each on every track.",
+      "insts.toRelease": "Put them on the release",
+      "insts.keep": "Keep them per track",
+      "insts.auto": "Automatic – “on the release”: the person plays on the recordings, the instruments are on the release",
+      "insts.autoHint": "Automatic – “on the release”: “{group}” is the group of MusicBrainz's instrument tree the instruments share (the source does not name it)",
+      "insts.tag": "automatic",
+      "log.instsRelease": "{name}: {n} instruments on the release, one row on the recordings",
+      "log.instsTrack": "{name}: the instruments per track again",
       "plays.title": "Played by whom?",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
@@ -2090,6 +2106,8 @@
       "dgStatus.artwork": "Cover art from Discogs – click for the Discogs image view, drag to move",
       "dgStatus.artworkHide": "Hide the cover",
       "dgStatus.artworkShow": "Show the cover",
+      "dgStatus.artPrev": "Previous image",
+      "dgStatus.artNext": "Next image",
       "common.on": "on",
       "common.off": "off",
       "log.dgStatus": "Discogs status: {state}",
@@ -2754,6 +2772,7 @@
       "quick.S122": "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp (not only YouTube)",
       "quick.S155": "Several models of one instrument → each role credit on its own",
       "quick.S160": "Take rights societies (BMI, GEMA …) of the source",
+      "quick.S170": "“On the release”: the instruments' common group on the recordings (else “instruments”)",
       "quick.S155.locked": "Cannot be switched on yet: MusicBrainz holds an instrument once per relationship and takes no second relationship that differs only in its role credit – the models are joined in one role credit (“Juno 6, Multipoly”)",
       "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
       "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
@@ -4147,6 +4166,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S170', where: 'instsGroup', note: 'View (3.103.0; collected item Z-INSTS; a quick switch, on by default): the automatic row of "on the release" names the lowest group of MusicBrainz\'s instrument tree all the instruments share (soprano and alto saxophone: saxophone; soprano saxophone and bass clarinet: the reeds; flute and bass clarinet: woodwind; "wind instruments" too) – none, the whole tree or piano with strings: "instruments" (no instrument); a group the source does not name is said at the row. Off: always "instruments"' },
+    { id: 'S169', where: 'instsRows, instsSet, instsBarHtml, instsSegHtml', note: 'View (3.103.0; collected item Z-INSTS): the instruments of a person the source names without tracks – per track (each on all recordings, as before) or on the release ("Instruments: per track | on the release" per person; suggested from 4 such instruments): on the release each instrument with the date of the release (the release-level dates of its column in the date matrix, else the date it had), on the recordings one automatic row – the instruments\' common group (S170), "performer" when voices are among them – with the date of the recordings and "guest" or "additional" when all have it; switched back and forth: always one of the two states, the changes of the rows (also of the automatic one) kept' },
     { id: 'S168', where: 'TEXT.parse (firstPerson), playsAsks, playsHtml', note: 'Texts (3.102.0; collected item Z-PLAYS): "At the time I played soprano and tenor sax." – a sentence of the one who writes: left out when its instruments are credited already; an instrument no one is credited with is asked above the entries – whose it is (the people of the release offered, the one who plays the others of the sentence first), taken on all tracks, or not' },
     { id: 'S167', where: 'addCreditRows, remapRow, uncrHtml, uncrTake', note: 'Credits (3.102.0; collected item Z-UNCR): a credit Discogs marks [Uncredited] (not named on the release) is on Skip until it is taken – at the entry when all roles of the person are such ("Take anyway"), else at each role; "Take all uncredited" for the whole release (this release only)' },
     { id: 'S166', where: 'INSTRUMENT_ABBR, abbrWords, abbrList, TEXT.parse (readLine0), abbrAskHtml', note: 'Texts (3.101.0; collected item Z-ABBR): instrument abbreviations of jazz lists and booklets (mapping INSTRUMENT_ABBR: "tpt" trumpet, "b" bass, "d" drums, "ts" tenor saxophone …) – only in short form: in brackets after a name, in a terse lineup ("Nate Wooley tpt", "Ken Filiano (b)"), in the lines of a duo or trio; one of two readings ("tb": trombone or tuba) the one the person plays elsewhere in the text, else (3.102.0, Z-ABBR2) asked at the row – not staged before the answer' },
@@ -5874,6 +5895,7 @@
     // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
+    { id: 'D032', note: 'A row put on the release level whose column in the date matrix has neither a date marked "release level" nor one for all tracks (3.103.0; collected item Z-EVCOL): the dates of the column (each a row of its own) – until 3.102.0 none, and the row joined the release\'s rows without a date' },
     { id: 'D031', note: 'The word naming the group of a date in the whole sentence before it (3.102.0; collected item Z-DATP): "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983." – "recorded" more than 80 characters before the date (until 3.101.0 only those 80 counted); at most 300 characters' },
     { id: 'D030', note: 'One date for several groups (3.95.0; collected item Z-DPD): "composed and produced between February 2025 and April 2026" is one entry of the date pool named for all its groups ("Production · Composition 1") in each of their columns – changed in the pool, for all; changed in a cell of one column, that cell gets a date of its own' },
     { id: 'D029', note: 'The date of the production is the recording\'s too (3.95.0; collected item Z-PRD): with no date of the recording in the text, a date after "produced" / "production" also goes to Performance (the recordings and their instruments) – not the date of "composed"; a date of the recording wins' },
@@ -13516,6 +13538,11 @@
 
   /** Maps a row from Discogs again with the current rules; level, instrument and credits set by hand stay. */
   function remapRow(row) {
+    // ([Z-INSTS] 3.103.0, review) the automatic row of "on the release" follows its rows (S170 switched)
+    if (row.instsAuto) {
+      instsAutoFollow(row, S.rows.filter((r) => r.artistKey === row.artistKey && r.instsPrev));
+      return;
+    }
     // ([Z-DED] 3.67.0, review) a dedication keeps its types (its words are no role of the mapping)
     if (row.manual || row.other || row.dedication) return;
     let m;
@@ -21346,7 +21373,7 @@
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
   // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
   const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
-    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit']);
+    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'arhl']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -21422,15 +21449,24 @@
     const here = new Set(S.rows.map((r) => r.id));
     for (const r of S.rows) {
       if (r.supp) continue;
+      // ([Z-INSTS] 3.103.0, review) the automatic row and the copies come with "on the release" (remembered per entry); a row moved there
+      // is remembered as it is per track
+      if (r.instsAuto || r.instsCopy) continue;
       const fresh = S.freshRows.get(r.id);
-      const cur = rowFieldsOf(r);
+      const p0 = r.instsPrev;
+      let v = r;
+      if (p0) {
+        v = { ...r, level: p0.level, date: p0.date, dateOpen: p0.dateOpen, tracks: new Set(p0.tracks), levelTouched: p0.levelTouched, dateKeyed: p0.dateKeyed };
+        resolveRowType(v); // its type on the recordings
+      }
+      const cur = rowFieldsOf(v);
       if (fresh) {
         const d = {};
         new Set([...Object.keys(cur), ...Object.keys(fresh.f)]).forEach((k) => {
           if (cur[k] !== fresh.f[k]) d[k] = k in cur ? cur[k] : null;
         });
         // [3.36.1] a level chosen by hand always (also when it is the one of the source: a row already in MusicBrainz taken in again)
-        if (r.levelTouched && fresh.f.levelTouched !== 'true') d.level = cur.level;
+        if ((p0 ? p0.levelTouched : r.levelTouched) && fresh.f.levelTouched !== 'true') d.level = cur.level;
         rows.push(Object.keys(d).length ? { k: fresh.k, i: r.id, d } : { k: fresh.k, i: r.id });
         continue;
       }
@@ -21455,6 +21491,8 @@
       }
       if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
       if (a.artl && !a.company) x.artl = 'artist'; // ([Z-ARTL] 3.100.0, review) "As an artist instead" taken
+      if (a.insts === 'release') x.insts = 'release'; // ([Z-INSTS] 3.103.0, review)
+      if (a.instsNo) x.instsNo = true;
       return x;
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
@@ -21779,6 +21817,9 @@
         Object.assign(a, { ...a.artl.artist, company: false });
         S.rows.filter((r) => r.artistKey === a.key).forEach((r) => { delete r.artl; });
       }
+      // ([Z-INSTS] 3.103.0, review) the instruments on the release again; the suggestion declined
+      if (e.instsNo) a.instsNo = true;
+      if (e.insts === 'release' && a.insts !== 'release') instsToRelease(a);
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
         if (typeof e.match.region === 'string' && e.match.region) a.regionPick = { mbid: e.match.mbid, region: e.match.region }; // [Z-RG] (3.40.8, review)
@@ -22083,6 +22124,7 @@
       S.workGroupsOff = false;
       S.artists = new Map();
       S.rows = [];
+      S.emGhost = new Map(); // [Z-EVCOL] (3.103.0)
       S.festivals = []; // [3.37.8] (S056)
       S.festInMbSaid = null; // ([Z-EVR] 3.88.0, review)
       S.evNote = null; // ([Z-EVL] 3.92.0)
@@ -24854,7 +24896,7 @@
   /** [E4] The line of a row: rows of the same type, instrument or voice, role credit, additional / guest / solo and artist credit. */
   function lineKeyOf(row) {
     const lt = ltOf(row);
-    return lt ? [lt.name, norm(row.primaryText), norm(row.roleCredit), [...row.flags].sort().join(','), norm(row.credit)].join('|')
+    return lt ? [lt.name, norm(row.primaryText), norm(row.roleCredit), [...row.flags].sort().join(','), norm(row.credit), row.instsAuto ? 'auto' : ''].join('|')
       : `?|${norm(row.raw || row.base)}|${row.id}`;
   }
 
@@ -24938,14 +24980,52 @@
         blocks.push({ key: `l:${l.id}`, kind: kind || 'role', lines: [l] });
       }
     }
-    const shared = events.length <= S.evShared;
+    // [Z-EVCOL] (3.103.0) an event emptied by a tick or a level of a row: its column stays (grey, ✕ in its head) – filled again: a column as before
+    const ghosts = S.emGhost.get(a.key) || [];
+    for (let k = ghosts.length - 1; k >= 0; k--) {
+      const g = ghosts[k];
+      if (evByKey.has(g.key)) ghosts.splice(k, 1);
+      else {
+        const e = { key: g.key, level: g.level, tracks: new Set(g.tracks), date: g.date ? { ...g.date } : null, n: 0, ghost: true };
+        evByKey.set(g.key, e);
+        events.push(e);
+      }
+    }
+    if (ghosts.length) {
+      events.sort((x, y) => (rank[lvOf(x)] ?? 3) - (rank[lvOf(y)] ?? 3) || (lvOf(x) === 'recording' ? y.tracks.size - x.tracks.size : 0)
+        || (when(x) === when(y) ? 0 : !when(x) ? -1 : !when(y) ? 1 : when(x) < when(y) ? -1 : 1));
+      events.forEach((e, i) => { e.n = i + 1; });
+    }
+    const shared = events.filter((e) => !e.ghost).length <= S.evShared;
     for (const b of blocks) {
       const own = new Set(b.lines.flatMap((l) => [...l.ev.keys()]));
       const extra = S.emBlockEv.get(`${a.key}|${b.key}`) || new Set();
-      b.events = shared ? events : events.filter((e) => own.has(e.key) || extra.has(e.key));
+      b.events = shared ? events : events.filter((e) => own.has(e.key) || extra.has(e.key) || e.ghost);
       b.others = shared ? [] : events.filter((e) => !b.events.includes(e) && !e.skip);
     }
     return { lines, events, blocks, shared, join, evByKey };
+  }
+
+  /** [Z-EVCOL] (3.103.0) The events of an entry's rows before a change: those left empty after it stay as columns of their own. */
+  function emGhostWatch(a, rows, change) {
+    const keyOf = (r) => (r.level === 'skip' || r.level === 'work' ? '' : eventKeyOf(r));
+    const before = new Map();
+    if (a && mxOn(a)) rows.forEach((r) => { const k = keyOf(r); if (k && !before.has(k)) before.set(k, { key: k, level: r.level, tracks: [...r.tracks], date: r.date ? { ...r.date } : null }); });
+    const out = change();
+    if (!before.size) return out;
+    const list = S.emGhost.get(a.key) || [];
+    for (const [k, g] of before) {
+      if (S.rows.some((r) => r.artistKey === a.key && keyOf(r) === k) || list.some((x) => x.key === k)) continue;
+      list.push(g);
+    }
+    if (list.length) S.emGhost.set(a.key, list);
+    return out;
+  }
+  /** An empty event column taken away (✕ in its head). */
+  function emGhostDrop(a, key) {
+    const list = (S.emGhost.get(a.key) || []).filter((g) => g.key !== key);
+    if (list.length) S.emGhost.set(a.key, list);
+    else S.emGhost.delete(a.key);
   }
 
   /**
@@ -24962,6 +25042,10 @@
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' && !ruleOn('S101') ? tr('tracks.wholeRelease') : '';
     // [Z-CLV] (3.44.0) an event on "Skip": its number and the level as a button (a click takes it back)
     if (e.skip) return `<th class="dci-em-ev dci-em-evskip" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}</th>`;
+    // [Z-EVCOL] (3.103.0) an empty event: grey, its level and date as they were, ✕ takes the column away
+    if (e.ghost) return `<th class="dci-em-ev dci-em-evghost" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.ghostTitle'))}"><span class="dci-em-evn">${circled(e.n)}</span>
+      <span class="dci-sub">${esc(tr(`level.${e.level}`))}</span> <span class="dci-sub">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-em-evtr">${esc(tracks)}</span>` : ''}
+      <button type="button" class="dci-iconbtn dci-em-ghostx" data-act="em-ghost-drop" data-ev="${esc(e.key)}" title="${esc(tr('em.ghostDrop'))}" aria-label="${esc(tr('em.ghostDrop'))}">✕</button></th>`;
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
     return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('drop.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
@@ -25437,7 +25521,8 @@
     const allowed = new Set(allowedList);
     const flagBox = (f) => `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">`;
     // [3.36.6] a cell per attribute, below its word in the head (collected item 148); [Z-ALIGN] (3.100.0) or all in one cell
-    const flags = !flagNames ? `<td class="dci-em-c-flags">${allowedList.map((f) => `<label class="dci-em-flagl">${flagBox(f)}${esc(emFlagWord(f))}</label>`).join('')}</td>`
+    // [Z-ATTR3] (3.103.0) together: at most three side by side, the others below them
+    const flags = !flagNames ? `<td class="dci-em-c-flags"><div class="dci-em-flaggrid">${allowedList.map((f) => `<label class="dci-em-flagl">${flagBox(f)}${esc(emFlagWord(f))}</label>`).join('')}</div></td>`
       : (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? flagBox(f) : ''}</td>`).join('');
     const ticks = evCols.map((e) => {
       // [Z-ALIGN] (3.100.0) an event this block does not show ("＋ Event ▾" in its head adds it)
@@ -25446,7 +25531,7 @@
       if (e.skip) return `<td class="dci-em-c-ev dci-em-c-skip"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''} disabled title="${esc(tr('em.skipTick'))}"
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
       const ok = on || typeOnLevel(r, e.level);
-      return `<td class="dci-em-c-ev"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
+      return `<td class="dci-em-c-ev${e.ghost ? ' dci-em-c-ghost' : ''}"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
     }).join('');
     const open = S.emOpen.has(l.id);
@@ -25464,7 +25549,10 @@
     // [AE-2] (3.35.3) ⠿ drags the line to another place in its block (Alt+↑ / Alt+↓ too)
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
-    return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
+    // [Z-INSTS] (3.103.0) the automatic row of "on the release"
+    const autoRow = l.rows.find((x) => x.instsAuto);
+    if (autoRow) role += ` <span class="dci-tag dci-insts-tag" title="${esc(tr(autoRow.instsHint ? 'insts.autoHint' : 'insts.auto', { group: autoRow.instsHint || '' }))}">${esc(tr('insts.tag'))}</span>`;
+    return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}${l.rows.some(arhlOn) ? ' dci-arhl' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
         <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
@@ -25496,7 +25584,9 @@
     const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
     const roles = uniq(b.lines.flatMap((l) => l.rows).map(emRoleKey)).length;
     const addEv = !folded && b.others.length ? ` <select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select>` : '';
-    const head = `<tr class="dci-em-bhrow"><th colspan="${t.cols}" scope="rowgroup"><div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${roles > 1 ? emBlockAcHtml(a, b, title) : ''}${split}${addEv}</div></th></tr>`;
+    // [Z-INSTS] (3.103.0, S169) "Instruments: per track | on the release" in the head of the (first) block of instruments
+    const insts = (b.kind === 'instrument' || b.kind === 'vocal') && m.blocks.find((x) => x.kind === 'instrument' || x.kind === 'vocal') === b ? instsSegHtml(a) : '';
+    const head = `<tr class="dci-em-bhrow"><th colspan="${t.cols}" scope="rowgroup"><div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${roles > 1 ? emBlockAcHtml(a, b, title) : ''}${split}${addEv}${insts}</div></th></tr>`;
     if (folded) return `<tbody class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</tbody>`;
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
@@ -25526,7 +25616,7 @@
     const t = { flagNames, evCols, cols };
     // [AE-3] (3.35.4) the event opened (below the table)
     const o = S.emEvOpen.get(a.key);
-    const openEv = o ? evCols.find((e) => e.key === o.ev) || null : null;
+    const openEv = o ? evCols.find((e) => e.key === o.ev && !e.ghost) || null : null;
     const anyFlags = m.lines.some((l) => emFlagsOf(ltOf(l.rows[0])).length);
     const seg = anyFlags ? `<div class="dci-em-top"><span class="dci-sub">${esc(tr('em.attrMode'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.attrMode'))}">${['joint', 'split'].map((v) => `<button type="button"
       data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span></div>` : '';
@@ -25610,6 +25700,9 @@
     const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' && !ruleOn('S101') ? tr('tracks.wholeRelease') : '';
     if (e.skip) return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}`;
+    // [Z-EVCOL] (3.103.0) an empty event (a line of its own in the compact view too): ✕ takes it away
+    if (e.ghost) return `<span class="dci-em-evn">${circled(e.n)}</span> <span class="dci-sub">${esc(tr(`level.${e.level}`))} · ${esc(date || tr('cl.noDate'))}${tracks ? ` · ${esc(tracks)}` : ''} – ${esc(tr('em.ghostEmpty'))}</span>
+      <button type="button" class="dci-iconbtn dci-em-ghostx" data-act="em-ghost-drop" data-ev="${esc(e.key)}" title="${esc(tr('em.ghostDrop'))}" aria-label="${esc(tr('em.ghostDrop'))}">✕</button>`;
     return `<span class="dci-em-evn">${circled(e.n)}</span> ${evLevelBtn(e, a)}
       <span class="dci-cl-date${date ? ' dci-cl-has' : ''}" data-evdrop="${esc(e.key)}" title="${esc(tr('drop.evDateTitle'))}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
   }
@@ -25776,7 +25869,7 @@
         // [Z-CLV] (3.44.0) an event on "Skip": grey, no target for chips dragged onto it
         // ([Z-CIN] 3.69.0, S103) the instruments and roles one below the other, in a block of their own
         const stack = ruleOn('S103');
-        return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}${stack ? ' dci-em-clstack' : ''}" ${e.skip ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
+        return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}${e.ghost ? ' dci-em-clghost' : ''}${stack ? ' dci-em-clstack' : ''}" ${e.skip || e.ghost ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
           ${stack ? '<span class="dci-em-cllist">' : ''}${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
           : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}${stack ? '</span>' : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
@@ -25864,6 +25957,7 @@
     copyRuleTracks(row, c);
     delete c.mxOrigin;
     delete c.splitFrom;
+    ['instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'arhl'].forEach((k) => delete c[k]); // ([Z-INSTS] [Z-ARHL] 3.103.0, review)
     return c;
   }
 
@@ -25882,12 +25976,14 @@
     // [177] (3.38.10) the line as MusicBrainz names it
     const name = rowPhrase(rows[0]) || rows[0].primaryText || rows[0].raw;
     if (!on) {
-      inEv.forEach((r) => Object.assign(r, { level: 'skip', levelTouched: true }));
+      emGhostWatch(a, inEv, () => inEv.forEach((r) => Object.assign(r, { level: 'skip', levelTouched: true }))); // [Z-EVCOL] (3.103.0)
       log('info', 'emOut', { name: a.mbName || a.name, role: name });
       return;
     }
     if (inEv.length) return;
-    const src = S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+    // [Z-EVCOL] (3.103.0) an empty column: its level, tracks and date as they were
+    const src = S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey)
+      || (S.emGhost.get(a.key) || []).filter((g) => g.key === evKey).map((g) => ({ level: g.level, tracks: new Set(g.tracks), date: g.date }))[0];
     if (!src) return;
     const spare = rows.find((r) => r.level === 'skip' && !skippedEv(r));
     const row = spare || copyRowForEvent(rows[0]);
@@ -25979,6 +26075,7 @@
       const el = tr1.querySelector('[data-emstatus]');
       if (!el) return;
       const infos = tr1.dataset.rows.split(',').map((id) => ({ row: S.rows.find((r) => r.id === id), info: rowInfo.get(id) })).filter((x) => x.row && x.info && x.row.level !== 'skip');
+      tr1.classList.toggle('dci-arhl', infos.some((x) => arhlOn(x.row))); // [Z-ARHL] (3.103.0)
       const issues = uniq(infos.flatMap((x) => x.info.issues));
       const sum = (k) => infos.reduce((n, x) => n + (x.info[k] || 0), 0);
       el.className = 'dci-status';
@@ -26165,6 +26262,7 @@
         ${a.artl ? artlNoteHtml(a) : ''}
         ${(S.ensAsk || []).length ? soloAskHtml(a) : ''}
         ${S.rows.some((r) => r.artistKey === a.key && uncrPending(r)) ? uncrHtml(a) : ''}
+        ${a.company || a.other ? '' : instsBarHtml(a)}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -26350,6 +26448,8 @@
 
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
+      // [Z-INSTS] (3.103.0, S169) the automatic row of "on the release" (a group the source does not name: said)
+      + (row.instsAuto ? `<div class="dci-note dci-insts-note">${esc(tr(row.instsHint ? 'insts.autoHint' : 'insts.auto', { group: row.instsHint || '' }))}</div>` : '')
       // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named (3.102.0: asked – abbrAskHtml – while S166 is on)
       + (row.abbrAlt && row.abbrAlt.length && !row.abbrAsk ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
 ;
@@ -27820,7 +27920,12 @@
       } else if (r.level !== 'recording' && r.level !== 'work') {
         // Release level: the dates marked "release level" [3.10.0], else the dates for all tracks
         const rel = mine.filter((c) => c.rel);
-        parts = [{ dates: uniqEntries((rel.length ? rel : mine.filter((c) => !cellTracks(c))).map(cellEntry)), tracks: null }];
+        const whole = mine.filter((c) => !cellTracks(c));
+        // [Z-EVCOL] (3.103.0, D032) neither: the column's dates of its tracks (each a row) – not "no date" (it joined the release's rows without one)
+        const near = mine.filter((c) => { const t = cellTracks(c); return !t || !r.tracks || !r.tracks.size || [...t].some((i) => r.tracks.has(i)); });
+        // ((review) only a row that had a date of the matrix – one without a date stays so; the dates of its tracks only)
+        const d032 = !rel.length && !whole.length && ruleOn('D032') && r.date && r.date.mx && !r.instsPrev;
+        parts = [{ dates: uniqEntries((rel.length ? rel : d032 ? near : whole).map(cellEntry)), tracks: null }];
       } else {
         if (company) {
           // [S016] A studio named with track-limited dates was used only for those tracks
@@ -27853,7 +27958,7 @@
         let row = r;
         if (k > 0) {
           row = (spare.get(r.id) || []).shift() || { ...r, id: nextId('r'), flags: new Set(r.flags), suggested: new Set(r.suggested || []),
-            excluded: new Set(r.excluded || []), splitFrom: r.splitFrom || r.id, tracksOpen: false };
+            excluded: new Set(r.excluded || []), splitFrom: r.splitFrom || r.id, tracksOpen: false, instsPrev: undefined, instsAuto: undefined, instsCopy: undefined };
           row.mxOrigin = r.id;
           S.rows.splice(++at, 0, row);
         }
@@ -29071,7 +29176,7 @@
     // [3.27.0] the compact line (shown in the compact view while the row is closed) and, there, "▴" to close it again
     const rowOpen = S.rowOpen.has(row.id) ? ' dci-open' : '';
     return `
-      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
+      <tr class="dci-row dci-lv-${row.level}${arhlOn(row) ? ' dci-arhl' : ''}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
         <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
@@ -29624,6 +29729,7 @@
       if (!el) continue;
       const rowEl = el.closest('tr');
       if (rowEl) {
+        if (rowEl.classList.contains('dci-row')) rowEl.classList.toggle('dci-arhl', arhlOn(row)); // [Z-ARHL] (3.103.0)
         const allThere = row.existingAll || (info.existing > 0 && !info.ready && !info.noWork && !info.issues.length);
         rowEl.classList.toggle('dci-exists', allThere);
         rowEl.classList.toggle('dci-exists-some', !allThere && (info.existing > 0 || info.loose > 0) && info.ready > 0);
@@ -32308,6 +32414,171 @@
     return `<p class="dci-sub dci-artl" data-el="artl">${esc(text)} <button type="button" class="dci-textbtn" data-act="artl-toggle" title="${esc(tr(a.company ? 'artl.toArtistTitle' : 'artl.toLabelTitle'))}">${esc(btn)}</button></p>`;
   }
 
+  // --- [Z-INSTS] (3.103.0, S169, S170) many instruments of a person without tracks: per track, or on the release --------------------
+  const INSTS_SUGGEST = 4;
+  const instsKind = (r) => {
+    const lt = ltOf(r);
+    const n = lt ? norm(lt.name) : '';
+    return n === 'instrument' || n === 'vocal' ? n : '';
+  };
+  /** The rows "on the release" moves: the source's instruments and voices of the person without tracks of their own (on the recordings). */
+  function instsRows(a) {
+    return S.rows.filter((r) => r.artistKey === a.key && !r.instsAuto && !r.instsCopy && !r.manual && (r.instsPrev || (r.level === 'recording' && r.dAllTracks))
+      && instsKind(r));
+  }
+  const instsAvail = (a) => a.insts === 'release' || (ruleOn('S169') && uniq(instsRows(a).map(lineKeyOf)).length >= 2);
+  /**
+   * [S170] The lowest group of MusicBrainz's instrument tree all of them share ('' – "instruments": none, the whole tree, a group of
+   * strings with piano or keyboards in it).
+   */
+  function instsGroup(rows) {
+    if (!ruleOn('S170') || !rows.length) return '';
+    const lt = ltOf(rows[0]);
+    const root = lt && primaryRootOf(lt);
+    if (!root) return '';
+    const chains = rows.map((r) => {
+      const out = [];
+      let x = findChildAttr(root.id, r.primaryText);
+      for (let k = 0; x && x.id !== root.id && k < 30; k++) {
+        out.push(x);
+        x = x.parent_id ? idx().atById.get(x.parent_id) : null;
+      }
+      return out;
+    });
+    if (chains.some((c) => !c.length)) return '';
+    const common = chains[0].find((x) => chains.every((c) => c.some((y) => y.id === x.id)));
+    if (!common) return '';
+    if (/string/i.test(common.name) && rows.some((r) => /piano|keyboard|harpsichord|clavinet|clavichord|celesta|organ/i.test(r.primaryText || ''))) return '';
+    return common.name;
+  }
+  /** The release's dates for them: the dates marked "release level" in their column of the date matrix (none: each keeps its own). */
+  function instsReleaseDates(rows) {
+    const g = dateGroupOf(rows[0]);
+    if (!g) return [];
+    const list = dmClean().cells.filter((c) => c.col === g.key && c.rel && !c.alt).map(cellEntry).filter(Boolean);
+    return list.filter((e, k) => list.findIndex((x) => x.id === e.id) === k);
+  }
+  /** "on the release" ('release') or "per track" ('track'): one of the two states, whatever came before. */
+  function instsSet(a, mode) {
+    if (mode === 'release') instsToRelease(a);
+    else instsToTrack(a);
+  }
+  function instsToRelease(a) {
+    // ((review) again while on the release: the rows put per track meanwhile follow
+    const rows = instsRows(a).filter((r) => r.level === 'recording' && !r.instsPrev);
+    if (!rows.length) {
+      if (a.insts !== 'release' && S.rows.some((r) => r.artistKey === a.key && r.instsPrev)) a.insts = 'release';
+      return;
+    }
+    const rel = instsReleaseDates(rows);
+    const recDate = (rows.find((r) => r.date && hasDateInput(r.date)) || {}).date || null;
+    for (const r of rows) {
+      r.instsPrev = { level: r.level, date: r.date ? { ...r.date } : r.date, dateOpen: r.dateOpen, tracks: [...r.tracks], levelTouched: r.levelTouched, dateKeyed: r.dateKeyed };
+      levelOf(r, 'release');
+      r.levelTouched = true;
+      r.dateKeyed = true;
+      if (rel.length) Object.assign(r, { date: { ...fieldsFromDate(rel[0]), poolId: rel[0].id }, dateOpen: true });
+      else if (r.date && r.date.mx) r.date = { ...r.date, mx: false }; // ((review) its own now: the date matrix does not split it on the release
+      // several dates of the release: a row each
+      rel.slice(1).forEach((dt, k) => {
+        const c = copyRowForEvent(r);
+        Object.assign(c, { date: { ...fieldsFromDate(dt), poolId: dt.id }, dateOpen: true, instsCopy: r.id });
+        delete c.instsPrev;
+        S.rows.splice(S.rows.indexOf(r) + 1 + k, 0, c);
+      });
+    }
+    // one row on the recordings: the instruments' group (S170), "performer" with voices among them
+    const all = S.rows.filter((r) => r.artistKey === a.key && r.instsPrev);
+    let auto = S.rows.find((r) => r.instsAuto === a.key);
+    const placed = !!auto;
+    auto = auto || a.instsAutoRow;
+    if (!auto) {
+      auto = copyRowForEvent(rows.find((r) => instsKind(r) === 'instrument') || rows[0]);
+      Object.assign(auto, { manual: false, instsAuto: a.key, level: 'recording', levelTouched: true, dateKeyed: true, raw: '', base: '', mods: [], dBase: null,
+        primaryTouched: true, roleCredit: '', roleCreditTouched: true, credit: rows[0].credit || '', notes: [], flagMods: new Set(), flags: new Set(),
+        date: recDate ? { ...recDate, mx: false } : null, dateOpen: !!recDate, instsWas: null });
+      ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked'].forEach((k) => delete auto[k]);
+    }
+    instsAutoFollow(auto, all);
+    if (!placed) {
+      const last = S.rows.reduce((k, r, i) => (r.artistKey === a.key && all.includes(r) ? i : k), -1);
+      S.rows.splice(last + 1, 0, auto);
+    }
+    a.insts = 'release';
+    log('info', 'instsRelease', { name: a.mbName || a.name, n: rows.length });
+  }
+  /**
+   * The automatic row follows its rows: the group (S170), the type (performer with voices), guest / additional of all – what was
+   * changed in it by hand stays (a group typed, an attribute ticked or taken away).
+   */
+  function instsAutoFollow(auto, rows) {
+    if (!rows.length) return;
+    const vocal = rows.some((r) => instsKind(r) === 'vocal');
+    const group = vocal ? '' : instsGroup(rows);
+    const flags = ['guest', 'additional'].filter((f) => rows.every((r) => r.flags.has(f)));
+    const was = auto.instsWas;
+    if (!was || norm(auto.primaryText) === norm(was.group)) {
+      auto.primaryText = group;
+      auto.instsHint = group && !rows.some((r) => norm(r.raw).includes(norm(group))) ? group : '';
+    }
+    if (!was || was.vocal !== vocal) auto.types = vocal ? ['performer'] : ['instrument'];
+    ['guest', 'additional'].forEach((f) => {
+      if (was && auto.flags.has(f) !== was.flags.includes(f)) return;
+      if (flags.includes(f)) auto.flags.add(f);
+      else auto.flags.delete(f);
+    });
+    auto.instsWas = { group, vocal, flags };
+    auto.tracks = new Set(rows.flatMap((r) => r.instsPrev.tracks));
+    auto.suggested = new Set(auto.tracks);
+    resolveRowType(auto);
+  }
+  function instsToTrack(a) {
+    // ((review) every automatic row of the entry (also one ticked into another event), the copies; the rows moved – whatever came between
+    const autos = S.rows.filter((r) => r.instsAuto === a.key);
+    if (autos.length) a.instsAutoRow = autos[0]; // its changes come back with "on the release"
+    S.rows = S.rows.filter((r) => !(r.instsAuto === a.key || (r.artistKey === a.key && r.instsCopy)));
+    for (const r of S.rows.filter((x) => x.artistKey === a.key && x.instsPrev)) {
+      const p = r.instsPrev;
+      if (r.level === 'skip') {
+        // ((review) on Skip meanwhile (the entry, the scope, the source switched off, a tick): it stays so – the level it comes back to
+        if (r.entrySkip) r.entrySkip.level = p.level;
+        if (r.scopeLevel) r.scopeLevel = p.level;
+        if (r.srcOff) r.srcOffLevel = p.level;
+        if (r.aboutHidden) r.aboutLevel = p.level;
+        if (r.notesHidden) r.notesLevel = p.level;
+        if (r.uncrOff) r.uncrLevel = p.level;
+      } else levelOf(r, p.level);
+      Object.assign(r, { date: p.date ? { ...p.date } : null, dateOpen: p.dateOpen, tracks: new Set(p.tracks), levelTouched: r.level === 'skip' ? r.levelTouched : p.levelTouched,
+        dateKeyed: p.dateKeyed });
+      delete r.instsPrev;
+      refreshRowDetails(r);
+    }
+    if (a.insts !== 'release' && !autos.length) {
+      a.insts = 'track';
+      return;
+    }
+    a.insts = 'track';
+    log('info', 'instsTrack', { name: a.mbName || a.name });
+  }
+  /** "Instruments: per track | on the release". */
+  function instsSegHtml(a) {
+    if (!instsAvail(a)) return '';
+    const on = a.insts === 'release';
+    return ` <span class="dci-insts-seg"><span class="dci-sub">${esc(tr('insts.label'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('insts.label'))}">${['track', 'release'].map((v) => `<button type="button"
+      data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${esc(tr(`insts.${v}`))}</button>`).join('')}</span></span>`;
+  }
+  /** At the top of the entry: the suggestion (from four instruments without tracks), and the switch where no matrix shows it. */
+  function instsBarHtml(a) {
+    if (!instsAvail(a)) return '';
+    const n = uniq(instsRows(a).map(lineKeyOf)).length;
+    const sugg = !a.insts && !a.instsNo && n >= INSTS_SUGGEST;
+    const seg = mxEntry(a) ? '' : instsSegHtml(a);
+    if (!sugg && !seg) return '';
+    return `<div class="dci-insts-bar" data-el="insts">${sugg ? `<div class="dci-insts-sugg"><span>💡 ${esc(tr('insts.sugg', { n }))}</span>
+      <button type="button" class="dci-small" data-act="insts-set" data-insts="release">${esc(tr('insts.toRelease'))}</button>
+      <button type="button" class="dci-textbtn" data-act="insts-no">${esc(tr('insts.keep'))}</button></div>` : ''}${seg}</div>`;
+  }
+
   // --- [Z-UNCR] (3.102.0, S167) credits Discogs marks [Uncredited]: on Skip until taken
   /** At the entry: all its roles uncredited – one "Take anyway"; some – each role with its button; "Take all uncredited" of the release. */
   function uncrHtml(a) {
@@ -32656,6 +32927,7 @@
     // ((3.86.0, review) what was typed in the search of the question: the role, as typed into the row
     if (String(text).trim()) applyRoleText(r, String(text).trim());
     r.tracks = new Set(selIdx());
+    r.arhl = true; // [Z-ARHL] (3.103.0)
     S.rows.push(r);
     // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open; [3.35.0] compact: the entry opened
     if (mxCompact(artist)) S.emWide.add(artist.key);
@@ -32857,6 +33129,7 @@
       r.date = e && e.date && level !== 'work' && !(lt && lt.has_dates === false) ? { ...e.date } : null;
       // ((review) the date of "＋ New event" where the type has none (a work, a type without dates): said
       if (fresh && e === fresh && fresh.date && !r.date) log('warn', 'arqDateDropped', { type: name, level: tr(`level.${level}`) });
+      r.arhl = true; // [Z-ARHL] (3.103.0)
       S.rows.push(r);
       added.push(r);
     }
@@ -32878,6 +33151,15 @@
       const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="add-role"]`);
       if (b) b.focus({ preventScroll: true });
     }
+  }
+
+  /** [Z-ARHL] (3.103.0) A row of "＋ Another role" until its role is there (a type; an instrument or voice where the type has them). */
+  function arhlOn(row) {
+    if (!row || !row.arhl) return false;
+    const lt = currentLinkType(row);
+    const root = lt && primaryRootOf(lt);
+    if (lt && (!root || (norm(row.primaryText) && primaryIsValid(row)))) row.arhl = false;
+    return !!row.arhl;
   }
 
   /** [Z-ARL2] (3.87.0, S135) The rows of a role of a column (its type, its "additional"), copies with their own dates too. */
@@ -36594,7 +36876,7 @@
         }
       }
       // [173] (3.38.9) "multi": two imports of the same release open (companion 1.10.0)
-      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow',
+      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow', 'artPrev', 'artNext',
         'off', 'on', 'isOff', 'hover', 'multi']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
@@ -37183,7 +37465,8 @@
 
   function setLevel(row, level) {
     const uncr = uncrPending(row);
-    const toOrFromWork = levelOf(row, level);
+    // [Z-EVCOL] (3.103.0) its event left empty: a column of its own until taken away
+    const toOrFromWork = emGhostWatch(S.artists.get(row.artistKey), [row], () => levelOf(row, level));
     if (matrixDateForLevel(row)) {
       renderGroups();
       renderWorks();
@@ -37677,7 +37960,7 @@
     // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
     // (3.44.1, review) not the head of an event on "Skip"
     // ([Z-DND] 3.78.0) also the short line of an event and its date ("① Release · no date"), in both compact views
-    const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-bhrow, #dci-overlay tr.dci-em-line');
+    const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip):not(.dci-em-evghost), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-bhrow, #dci-overlay tr.dci-em-line');
     if (em) return { el: em, kind: em.matches('th, [data-evdrop], [data-emev]') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
@@ -38361,6 +38644,25 @@
         }
         break;
       // [Z-ARTL] (3.100.0, S159) the label credited for the artwork as an artist again, or as the label
+      // [Z-INSTS] (3.103.0, S169) the instruments per track or on the release; the suggestion declined
+      case 'insts-set':
+      case 'insts-no': {
+        if (!artist) break;
+        if (act === 'insts-no') artist.instsNo = true;
+        else instsSet(artist, btn.dataset.insts);
+        renderGroups();
+        renderWorks();
+        renderDates();
+        refresh();
+        break;
+      }
+      // [Z-EVCOL] (3.103.0) an empty event column taken away
+      case 'em-ghost-drop':
+        if (!artist) break;
+        emGhostDrop(artist, btn.dataset.ev);
+        rerenderGroup(artist);
+        refresh();
+        break;
       // [Z-UNCR] (3.102.0, S167) uncredited taken anyway – these rows, or all of the release
       case 'uncr-take':
       case 'uncr-all': {
@@ -41877,7 +42179,7 @@
   // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
   S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
-  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map(), emEvOpen: new Map() });
+  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map(), emEvOpen: new Map(), emGhost: new Map() });
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
@@ -47204,6 +47506,17 @@
       .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
+      .dci-arhl, tr.dci-row.dci-arhl, tr.dci-em-line.dci-arhl { outline: 2px solid #e0b400; outline-offset: -2px; background: #fffbe6; }
+      .dci-em-flaggrid { display: grid; grid-template-columns: repeat(3, max-content); column-gap: calc(var(--u, 1px) * 8); row-gap: calc(var(--u, 1px) * 2); }
+      .dci-em-flaggrid .dci-em-flagl { margin-right: 0; }
+      .dci-em-grid th.dci-em-evghost, .dci-em-grid td.dci-em-c-ghost { background: #ecebf0; color: #77748a; }
+      .dci-em-ghostx { margin-left: calc(var(--u, 1px) * 4); }
+      .dci-em-cl.dci-em-clghost { background: #f1f0f4; color: #77748a; }
+      .dci-insts-bar { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); align-items: center; margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-insts-sugg { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); align-items: center; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8);
+        background: #fff8db; border: 1px dashed #d8bd52; border-radius: 3px; color: #6b4e00; }
+      .dci-insts-seg { margin-left: calc(var(--u, 1px) * 8); font-weight: normal; }
+      .dci-insts-tag { font-size: calc(var(--u, 1px) * 11); color: #5b4fa8; border: 1px solid #c9c2ee; border-radius: 8px; padding: 0 calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 4); }
       .dci-uncr { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-solo-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-arq-sub { margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
