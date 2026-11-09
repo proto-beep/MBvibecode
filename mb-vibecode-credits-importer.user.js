@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.100.0
+// @version      3.101.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.100.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.100.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.101.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.101.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.100.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.101.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -759,6 +759,13 @@
       "manual.evPartAll": "{type} on all tracks",
       "log.evNote": "{text}",
       "ignored.why.trackTitle": "a track's title (or its position): the lines below are its credits",
+      "ignored.why.ensemble": "who plays on these tracks (a duo, trio …): only those named",
+      "ignored.why.artTitle": "the title of the cover's picture",
+      "ignored.why.series": "a series the release is part of",
+      "ignored.why.catno": "the label's catalogue number",
+      "ignored.why.address": "an address",
+      "ignored.why.statement": "the label's statement on how it records",
+      "ignored.why.releaseTitle": "the release's title above its track list",
       "ignored.why.gear": "equipment (microphones, amplifiers, interfaces, software): no credit",
       "log.evAsked": "Event {name}: {type} (on the recordings; the level changes with a click)",
       "works.missing.one": "{n} track has no work yet.",
@@ -1587,6 +1594,14 @@
       "artl.toArtistTitle": "Takes this entry back as an artist (most names credited for artwork are people)",
       "artl.toLabel": "As the label",
       "artl.toLabelTitle": "Makes this entry the label again, with the label–release relationships of its roles",
+      "solo.ask": "“{line}”:",
+      "solo.only": "Only this person on the track",
+      "solo.onlyTitle": "The others of the lineup do not play on these tracks",
+      "solo.flag": "Attribute “solo”",
+      "solo.flagTitle": "This person's instrument on these tracks with the attribute “solo”",
+      "solo.none": "Nothing",
+      "log.ensembleApplied": "Only those named play on the tracks of “{line}”",
+      "log.soloAnswered": "“{line}”: {ans}",
       "artl.why.bandcamp": "the album is on its Bandcamp page “{page}”",
       "artl.why.mb": "MusicBrainz has it as a label of this release",
       "artl.why.discogs": "Discogs lists it as a label or company of this release",
@@ -1657,6 +1672,9 @@
       "log.pubEvidence.one": "Publisher {name}: evidence for {n} work",
       "log.pubEvidence.other": "Publisher {name}: evidence for {n} works",
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
+      "note.rsocOff": "Rights societies are not taken (quick switch “Take rights societies” off): this one is on Skip – choose its level to take it.",
+      "note.seriesText": "A series named in the text: choose MusicBrainz's series above (or give its MBID) – the release is then part of it with its number.",
+      "note.abbrAlt": "“{abbr}” can also be: {list}",
       "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
       "note.seriesFromVideoNoDate": "Suggested: the video is on this series’ channel with its name in the title (rule S117). No single recording date was found in the description – please type the number (YYYY-MM-DD).",
       "note.seriesType": "MusicBrainz series of type “{type}” cannot be related to this release here.",
@@ -2717,6 +2735,7 @@
       "quick.S114": "Heading of a group above its members → the group as performer too",
       "quick.S122": "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp (not only YouTube)",
       "quick.S155": "Several models of one instrument → each role credit on its own",
+      "quick.S160": "Take rights societies (BMI, GEMA …) of the source",
       "quick.S155.locked": "Cannot be switched on yet: MusicBrainz holds an instrument once per relationship and takes no second relationship that differs only in its role credit – the models are joined in one role credit (“Juno 6, Multipoly”)",
       "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
       "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
@@ -4110,6 +4129,13 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S166', where: 'INSTRUMENT_ABBR, abbrWords, abbrList, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-ABBR): instrument abbreviations of jazz lists and booklets (mapping INSTRUMENT_ABBR: "tpt" trumpet, "b" bass, "d" drums, "ts" tenor saxophone …) – only in short form: in brackets after a name, in a terse lineup ("Nate Wooley tpt", "Ken Filiano (b)"), in the lines of a duo or trio; one of two readings ("tb": trombone or tuba) the one the person plays elsewhere in the text, else the first, the others named at the row' },
+    { id: 'S165', where: 'TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): left out without a word – a label\'s catalogue number ("CIMP #384"), an address ("Redwood, NY 13679", "P.O. Box"), a statement of how the label records ("recorded live to two-track … no compression, no overdubs")' },
+    { id: 'S164', where: 'TEXT.parse (readLine0), loadSeries, seriesLinked', note: 'Texts (3.101.0; collected item Z-CIMP): "Spirit Room Series Vol.247", "Series: X No. 12" – the release part of that series with its number; MusicBrainz\'s series of that name suggested (no "Create series" – a series named in a text only), the row taken once one is chosen or its MBID given' },
+    { id: 'S163', where: 'TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): "Cover art: The Weight by Kara D. Rusch" – the artist of the cover (artwork credited "cover art"), the title of the picture left out' },
+    { id: 'S162', where: 'TEXT.parse (readLine0, ensembles), soloAskHtml, soloAnswer', note: 'Texts (3.101.0; collected item Z-CIMP): "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)", TRIO, QUARTET … – only the people named play on those tracks: the lineup without tracks loses them for everyone else, a name in short is the person of the lineup it stands for, the instrument in brackets the one played there; "track 7 SOLO: X" is asked at the person – only this person on the track, the attribute "solo" there, or nothing' },
+    { id: 'S161', where: 'joinWriterLines, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): the writers below a track title – "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)", broken over two lines too – each a writer of that track (as Z-TCP), the publisher in the bracket that track\'s, the society the release\'s (S160); the release\'s title above a list whose first track has that title is left out' },
+    { id: 'S160', where: 'addCompanyEntry', note: 'Rights societies (3.101.0; collected item Z-RSOC; off by default, a quick switch): "Take rights societies" – BMI, GEMA … of the source (Discogs, texts, notes) as label–release "rights society"; off: their entry on Skip, with a note' },
     { id: 'S159', where: 'artlEvidence, artlApply, artlToLabel, artlToArtist, artlNoteHtml', note: 'Entries (3.100.0; collected item Z-ARTL): a name credited only for the artwork of the release (art direction, artwork, design, graphic design, illustration, photography) that is beyond doubt a label – the label whose Bandcamp page the album is on, a label of the release in MusicBrainz, a label or company Discogs lists for the release – becomes that label: its rows the label–release relationships of the same name, linked at once to MusicBrainz\'s label when it is known; "As an artist instead" takes it back (and again "As the label")' },
     { id: 'S158', where: 'arrComProposals, renderArrComments, arrComFor (pendingWorkEntity), arrNotice', note: 'Arrangement works (3.98.0; collected item Z-ARRDIS): the new works of tracks whose writer is [traditional] and that have arrangers get the disambiguation "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ takes it, its text can be changed), set when the new works are staged; afterwards a small box on the page names the works. Only new works; other arrangements (classical music …) not yet' },
     { id: 'S157', where: 'medleySplit, medleySeps, medleyHeadHtml, tradArrangers, arrDupCheck, arrDupCheck2; MEDLEY_EXCEPTIONS', note: 'Medleys (3.98.0; collected item Z-MDLY): the parts of a title by the separators of the release ("/" also without spaces; ✎ in the head of the works matrix, several possible), the words of MEDLEY_EXCEPTIONS kept whole ("AC/DC", "24/7", "w/", fractions); the titles of MusicBrainz first; "Medleys: split n" splits every such title. A part of a traditional tune with arrangers (writer [traditional]) stays a new work with "arrangement of" the works of that title suggested (yellow, the one with the most recordings first, staged only once confirmed); an arrangement of that title found in MusicBrainz – among the arrangements of those works (1), the works of the arrangers, artists and writers (2), the works of the performers\' recordings of that title when the credits name arrangers (3) – is offered instead' },
@@ -6533,6 +6559,55 @@
   // [E1] Lines such as "Mixed by X", "X – guitar, vocals", "Guitar: X, Y", "Tracks 3–5: …" become credits. Names have
   // no links: MusicBrainz entries of the same name are only suggested. What is not understood is kept as it is.
 
+  // [Z-ABBR] (3.101.0, S166) instrument abbreviations of jazz lists and booklets ("tpt", "b", "d", "ts") – only in short form: in brackets
+  // after a name, in a terse lineup ("Nate Wooley tpt"), in the lines of a duo or trio; each one the words the register knows, an
+  // ambiguous one ("tb": trombone or tuba) with its readings in order (mapping INSTRUMENT_ABBR)
+  const INSTRUMENT_ABBR = MAP.INSTRUMENT_ABBR;
+  const ABBR_MAP = new Map(Object.entries(INSTRUMENT_ABBR || {}).map(([k, v]) => [k.toLowerCase(), [].concat(v)]));
+  const abbrWords = (w) => ABBR_MAP.get(String(w || '').trim().toLowerCase().replace(/\.$/, '')) || null;
+  /** "tpt, flh" / "ts/ss" / "b": the words of each abbreviation, or null when one of them is none. */
+  const ABBR_NOT_NAME = /^(?:rhythm|rhythm section|reeds|brass|horns|strings|winds|woodwinds|personnel|line-?up|band|musicians|section|guests?|featuring|known|also|with|and)\b/i;
+  const abbrList = (t) => {
+    // ((review) an empty part – "Jools Holland and co" – is no list
+    const parts = String(t || '').trim().split(/\s*(?:,|\/|&|\+|\band\b)\s*/);
+    if (parts.some((x) => !x)) return null;
+    const out = parts.map((x) => ({ abbr: x, words: abbrWords(x) }));
+    return parts.length && parts.length <= 6 && out.every((x) => x.words) ? out : null;
+  };
+  // [Z-CIMP] (3.101.0, S161) a writer's line below a track title: "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)" – each name
+  // with its publisher and rights society in brackets
+  const WRITER_NOT_PERSON = /\b(?:music|musik|musique|publishing|publishers?|publications?|songs|tunes|inc|corp|corporation|ltd|llc|gmbh|co|company|verlag|editions?|edizioni|records|entertainment|group|rights)\b\.?/i;
+  const PUB_SOC = () => new RegExp(`\\(\\s*(?:([^()]*?\\S)\\s*[-–—/,]\\s*)?(${SOCIETY_ALT})\\s*\\)`, 'u');
+  /**
+   * [Z-CIMP] (3.101.0, S161) Writer lines broken over two lines joined again: one ending in "/" ("Tomas Fujiwara (Tomas Fujiwara-BMI) /"),
+   * a bracket of a publisher alone below ("(4WordSeaMusic-BMI)"), a name broken ("… / Tomas" + "Fujiwara (Tomas Fujiwara-BMI)").
+   */
+  function joinWriterLines(lines) {
+    const re = PUB_SOC();
+    const out = [];
+    for (let i = 0; i < lines.length; i++) {
+      let l = String(lines[i] || '');
+      while (i + 1 < lines.length) {
+        const t = l.trim();
+        const next = String(lines[i + 1] || '').trim();
+        if (!t || !next || !(re.test(t) || re.test(next))) break;
+        const lastSeg = t.split('/').pop().trim();
+        // ((review) never onto a title of the list ("1. Body And Soul" + "(Harms Inc.-ASCAP)"); a bracket below only for a list of writers
+        if (/^(?:\d{1,3}|[A-Z]{1,2}\d{1,2})[.):]?\s/.test(t)) break;
+        const cont = /\/$/.test(t) || (/^\(/.test(next) && re.test(next) && t.includes('/') && !/\)$/.test(lastSeg))
+          || (t.includes('/') && lastSeg && !/[()]/.test(lastSeg) && /^\p{Lu}[\p{L}'’.-]*$/u.test(lastSeg) && /^\p{Lu}[\p{L}'’.-]*\s*\(/u.test(next) && re.test(next));
+        if (!cont) break;
+        l = `${t} ${next}`;
+        i++;
+      }
+      out.push(l);
+    }
+    return out;
+  }
+
+  /** [Z-CIMP] (3.101.0, S164) A series a text names, as the sources give series (no link: searched by its name). */
+  const textSeriesOf = (x) => ({ id: 0, links: [], name: x.name, number: x.number, fromText: true });
+
   const TEXT = (() => {
     // A track list in front of a line or after it: "Tracks 3–5:", "(tracks 1, 4)", "on track 2", "(1, 3)"
     const SPEC = '[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b|\\bbis\\b)\\s*[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?)*';
@@ -6847,6 +6922,9 @@
       // arranged by maya ongaku")
       let curLine = '';
       const ampLines = []; // [Z-AMP] (3.96.0, S151)
+      const ensembles = []; // [Z-CIMP] (3.101.0, S162) "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)"
+      const series = []; // [Z-CIMP] (3.101.0, S164) "Spirit Room Series Vol.247"
+      const abbrAsk = []; // [Z-ABBR] (3.101.0, S166) abbreviations of two readings, decided at the end
       // ((review) at the start of the line only – not "Melody Gardot – arrangements", "Vocals on tracks 2, 4 …, arranged by X", "Track 2
       // arranged by X")
       const WORK_ARR = /^(?:all\s+)?(?:(?:of\s+)?the\s+)?(?:songs|tracks|compositions|tunes|pieces|melodies|works|music)\b(?!\s*\d)[^.;:]*?\b(?:arrang|orchestrat)/i;
@@ -8322,6 +8400,19 @@
         }
         const i0 = ignored.length;
         readLine0(raw);
+        // [Z-CIMP] (3.101.0, S165) a line not recognized that is the label's catalogue number ("CIMP #384", "ECM 1234"), its address ("Village
+        // Hall, Redwood, NY 13679-0129 USA", "P.O. Box 12"), its statement on how it records ("recorded live to two-track … no compression"): left
+        // out without a word ((review) only then – "Recorded at Systems Two, Brooklyn, NY 11234" is read as before)
+        if (ruleOn('S165') && unrecognized.length === u0 + 1 && unrecognized[u0] === line0 && credits.length === c0 && companies.length === k0) {
+          const ln = clean(raw);
+          const why = /^\p{Lu}[\p{Lu}\p{N}&.\s-]{1,15}?\s*(?:(?:#|No\.|Nr\.)\s*\d{1,6}|[-\s]?\d{3,6})[A-Z]?$/u.test(ln) && !/^(?:cd|lp|ep|disc|disk|side|dvd|tracks?|vol|part|op|bwv|kv|hob)\b/i.test(ln) ? 'catno'
+            : /\b(?:p\.?\s*o\.?\s*box|postfach)\b|,\s*\p{Lu}{2}\s+\d{5}(?:-\d{4})?\b|\b\d{5}(?:-\d{4})?\s+(?:usa|u\.s\.a\.)\b/iu.test(ln) ? 'address'
+              : /\brecorded\s+(?:live\s+)?(?:direct\s+)?to\s+(?:two|2)[\s-]?track\b|\b(?:no|without)\s+(?:overdubs|edits|editing|compression|limiting|eq|equalization|reverb|mixing)\b.*\b(?:no|without|or)\s+(?:overdubs|edits|editing|compression|limiting|eq|equalization|reverb|mixing)\b/iu.test(ln) ? 'statement' : '';
+          if (why) {
+            unrecognized.pop();
+            ignored.push({ text: line0, why });
+          }
+        }
         // ((review) the members: instruments and voices of the lines below it, not "Recorded by …"; a heading of the credits ends it)
         if (head && head === groupHead) credits.slice(c0).forEach((c) => { if (c.who && c.who.name && playable(c.role) && !head.members.includes(c.who.name)) head.members.push(c.who.name); });
         if (ignored.slice(i0).some((x) => x.why === 'heading')) groupHead = null;
@@ -8567,6 +8658,89 @@
         const before = prevBy;
         contWho = null;
         prevBy = null;
+        if (!sub) {
+          // [Z-CIMP] (3.101.0, S162) "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)", "tracks 3, 5 TRIO: …", "track 7 SOLO: T.Fujiwara (d)": who plays
+          // on those tracks (decided at the end, with the names of the lineup)
+          const ens = ruleOn('S162') ? line.match(/^(?:(?:tracks?|cuts?|titles?)\s+([\d\s,&–—-]+?|\d+(?:\s*(?:,|&|and|-|–)\s*\d+)*)\s+)?(solo|duo|duet|trio|quartet|quintet|sextet)\s*(?:\(\s*(?:tracks?\s+)?([\d\s,&–—-]+)\s*\))?\s*:\s*(.+)$/iu) : null;
+          const ensSpec = ens ? clean(ens[1] || ens[3] || '') : '';
+          const ensSet = ensSpec ? resolveTracks(ensSpec) : null;
+          if (ens && ensSet && ensSet.size) {
+            const who0 = ens[4].split(/\s*(?:\+|&|,|\band\b|\bwith\b)\s*/i).map(clean).filter(Boolean).map((x) => {
+              const b = x.match(/^(.+?)\s*\(([^()]+)\)\s*$/u);
+              return { name: clean(b ? b[1] : x), abbr: b ? clean(b[2]) : '' };
+            });
+            if (who0.length && who0.every((x) => looksLikeName(x.name) && /^\p{Lu}/u.test(x.name))) {
+              ensembles.push({ kind: ens[2].toLowerCase() === 'duet' ? 'duo' : ens[2].toLowerCase(), scope: { set: ensSet, spec: ensSpec }, who: who0, ...at() });
+              ignored.push({ text: line0, why: 'ensemble' });
+              return;
+            }
+          }
+          // [Z-CIMP] (3.101.0, S161) the writers of the track above: "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)" – each a
+          // writer of that track (as Z-TCP: writer or composer by the switch of the works matrix), the publisher in the bracket that track's
+          // (theirs), the society the release's (the quick switch of S160 decides)
+          if (ruleOn('S161') && trackBlock && PUB_SOC().test(line)) {
+            const re = PUB_SOC();
+            const segs = line.split(/\s+\/\s+|\s*\/\s*(?=\p{Lu})/u).map(clean).filter(Boolean);
+            const items = segs.map((sg) => {
+              const m2 = sg.match(new RegExp(`^(.+?)\\s*${re.source}\\s*$`, 'u'));
+              return m2 ? { name: clean(m2[1]), pub: clean(m2[2] || ''), soc: m2[3] } : { name: sg, pub: '', soc: '' };
+            });
+            // ((review) a person: no word of a company ("Warner Chappell Music (ASCAP)", "Thelonious Music Corp. (BMI)" are publishers)
+            const person = (n) => looksLikeName(n) && n.split(/\s+/).length <= 4 && n.split(/\s+/).every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || PROSE_PARTICLE.test(w))
+              && !isRole(cap(n)) && !SOCIETY_LINE.test(n) && !WRITER_NOT_PERSON.test(n);
+            if (items.length && items.every((x) => person(x.name)) && (items.length > 1 || items[0].pub)) {
+              const sc = trackBlock.scope;
+              items.forEach((x) => {
+                addCredit(x.name, 'Written-By', sc, { titleComposer: true });
+                // a publisher of its own name ("Tomas Fujiwara (Tomas Fujiwara-BMI)") is the writer's own publishing
+                if (x.pub && isCompanyRole('Published By')) companies.push({ who: who(x.pub), role: 'Published By', catno: '', tracks: tracksOf(sc), pubOf: x.name, ...at() });
+                if (x.soc) addSociety(societyName(x.soc));
+              });
+              trackBlock = null;
+              return;
+            }
+          }
+          // [Z-CIMP] (3.101.0, S163) "Cover art: The Weight by Kara D. Rusch": the artist of the cover, the title of the picture left out
+          const art = ruleOn('S163') ? line.match(/^((?:[Cc]over(?:\s+(?:art|artwork|painting|image|illustration|drawing|photo(?:graph)?))?|[Aa]rtwork|[Pp]ainting|[Ii]llustration))\s*[:–—-]\s*(\p{Lu}.*?)\s+by\s+(\p{Lu}.*?)\.?$/u) : null;
+          // ((a title in quotation marks or a line of several sentences: read as before – "Cover art: “Madison” 1988 by Albert Irvin, courtesy …")
+          // ((review) one sentence – initials do not end it ("Kara D. Rusch") –; the title no role ("Cover: Design by …"))
+          if (art && !/["“”‘’'«»(]/u.test(art[2]) && !/[;,]\s/.test(line) && clean(firstSentence(line)) === clean(line)
+            && !isRole(cap(art[2])) && !isRole(`${cap(art[2])} By`) && !/\b(?:design|layout|concept|photo|photos|photography|illustration|artwork|art|painting|drawing)\b/i.test(art[2])) {
+            const ns = names(art[3]).map(clean).filter((x) => looksLikeName(x) && !TEXT_NOT_NAME.test(x));
+            const role = isRole(cap(art[1])) ? cap(art[1]) : 'Artwork';
+            if (ns.length && ns.filter((x) => addCredit(x, role, trackBlock ? trackBlock.scope : null)).length) {
+              ignored.push({ text: clean(art[2]), why: 'artTitle' });
+              return;
+            }
+          }
+          // [Z-CIMP] (3.101.0, S164) "Spirit Room Series Vol.247", "Series: Jazz Masters No. 12": the release part of that series, with its number
+          const ser = ruleOn('S164') ? (line.match(/^(?:series\s*:\s*)?(\p{Lu}[\p{L}\p{N}'’&.\s-]{1,60}?\bseries)\s*,?\s*(?:vol(?:ume)?\.?|no\.?|nr\.?|number|#)\s*(\d{1,5}[a-z]?)\.?$/iu)
+            || line.match(/^series\s*:\s*(\p{Lu}[\p{L}\p{N}'’&.\s-]{1,60}?)\s*,?\s*(?:vol(?:ume)?\.?|no\.?|nr\.?|#)\s*(\d{1,5}[a-z]?)\.?$/iu)) : null;
+          if (ser) {
+            series.push({ name: clean(ser[1]), number: ser[2], ...at() });
+            ignored.push({ text: line0, why: 'series' });
+            return;
+          }
+          // [Z-ABBR] (3.101.0, S166) a terse lineup: "Nate Wooley tpt", "Ken Filiano (b)", "T. Fujiwara – d" – the abbreviations as their
+          // instruments (an ambiguous one decided at the end by the person's other credits)
+          // ((review) whole words only – no split inside a word (a long line of capitals took seconds) –, a short line
+          const ab = ruleOn('S166') && line.length <= 70 ? line.match(/^(\p{Lu}[\p{L}'’-]*\.?(?:\s+(?:\p{Lu}[\p{L}'’-]*\.?|van|von|de|der|da|di|del|la|le|du|y)|(?<=\.)\p{Lu}[\p{L}'’-]*\.?){0,4})\s*(?:[-–—:]\s*|\(\s*|\s+)([\p{Ll}\d][\p{Ll}\d.\s,/&+-]{0,30}?)\)?\.?$/u) : null;
+          const abl = ab && !isRole(cap(clean(ab[2]))) && !playRoles(clean(ab[2])) ? abbrList(ab[2]) : null;
+          // ((review) a person: two words or an initial and a surname ("T.Fujiwara"), no heading ("Rhythm: p, b, d", "Reeds", "Personnel")
+          const abName = ab ? clean(ab[1]) : '';
+          if (abl && looksLikeName(abName) && !isRole(cap(abName)) && /[\s.]\S/.test(abName) && !ABBR_NOT_NAME.test(abName)
+            && !CREDITS_HEADING.test(abName) && !bandNames.has(norm(abName))) {
+            const nm = abName;
+            let any = 0;
+            abl.forEach((x) => {
+              if (addCredit(nm, x.words[0], trackBlock ? trackBlock.scope : null, x.words.length > 1 ? { abbr: x.abbr, abbrAlt: x.words.slice(1) } : { abbr: x.abbr })) {
+                any++;
+                if (x.words.length > 1) abbrAsk.push(credits[credits.length - 1]);
+              }
+            });
+            if (any) return;
+          }
+        }
         // [Z-IGN] (3.48.0) no credits: a heading of the credits alone ("credits", "Personnel:"), Bandcamp's "released / published
         // January 13, 2022", a definition ("Intention (n.) /ɪnˈtɛnʃən/") and the line that explains it
         // ((3.48.0, review) each of them ends a block of publishers too; a heading the liner notes)
@@ -8617,7 +8791,19 @@
           const title = tm ? clean(tm[2] || tm[3] || '') : '';
           const quoted = !!(tm && tm[2]);
           // ((review) a title next to another one is a line of a tracklist ("1. Opening" / "2. Love"; "Love" / "Peace"): no block
-          if (title && title.split(/\s+/).length <= 12 && !titleLike(lineNear(curLi, -1)) && !titleLike(lineNear(curLi, 1))) {
+          // ([Z-CIMP] 3.101.0) the title of the release above a list whose first track has that title ("THE THROES" / "1. The Throes"): the line
+          // above is that title, not another track; the line of the release's title is left out as such
+          const prevL = lineNear(curLi, -1);
+          const nextL = lineNear(curLi, 1);
+          const titleOf = (x) => { const m2 = String(x || '').match(TITLE_LINE); return m2 ? norm(clean(m2[2] || m2[3] || '')) : ''; };
+          // (the line read may be held a moment – a block of lines: its own place in the text)
+          const here = String(allLines[curLi] || '').trim() === String(raw || '').trim() ? curLi : allLines.findIndex((x) => String(x || '').trim() === String(raw || '').trim());
+          const nextHere = here >= 0 ? lineNear(here, 1) : nextL;
+          if (ruleOn('S161') && title && !tm[1] && /^(?:\d{1,3}|[A-Z]{1,2}\d{1,2})[.):]?\s/.test(nextHere) && titleOf(nextHere) === norm(title) && exactTrack(title)) {
+            ignored.push({ text: line0, why: 'releaseTitle' });
+            return;
+          }
+          if (title && title.split(/\s+/).length <= 12 && (!titleLike(prevL) || (ruleOn('S161') && titleOf(prevL) === norm(title))) && !titleLike(nextL)) {
             let set = null;
             if (quoted) {
               const res = resolveTitles([title]);
@@ -9110,7 +9296,7 @@
       // ((review) only where a release of one track can take them: `songsOk` of the pasted text and the Bandcamp album – not the Discogs
       // notes, a track page, an album of many tracks)
       const songRead = ctx0 && (ctx0.songs || (ruleOn('S122') && ctx0.songsOk)) && ruleOn('S118') ? songLists(allLines1, !ctx0.songs) : { lines: allLines1, songs: [] };
-      const allLines = songRead.lines;
+      const allLines = ruleOn('S161') ? joinWriterLines(songRead.lines) : songRead.lines;
       // ([Z-TBL] the positions of the text in their order: "A1", "A2" … "B4" – the tracks 1 … 8)
       for (const l of allLines) {
         const p = (String(l).trim().match(/^([A-Z]{1,2}\d{1,2})(?=[.):]?(?:\s|$))/) || [])[1];
@@ -9224,13 +9410,83 @@
       // [Z-MEM] (3.79.0, S113) a member the text gives an instrument or a voice elsewhere: no question (the instruments say it)
       const playing = new Set(credits.filter((c) => !c.member && c.who && c.who.name && playable(c.role)).map((c) => norm(c.who.name)));
       for (let k = credits.length - 1; k >= 0; k--) if (credits[k].member && !credits[k].memberGroup && playing.has(norm(credits[k].who.name))) credits.splice(k, 1);
+      // [Z-CIMP] (3.101.0, S162) duos, trios … on their tracks: only the people named play there – the lineup without tracks of its own loses
+      // those tracks for everyone else; a name as written in short ("K.Filiano", "T.H.Bynum") is the person of the lineup it stands for; the
+      // instrument in brackets the one played there (the person's other instruments not on those tracks). SOLO: asked in the dashboard.
+      const fullTracks = trackCount > 0 ? [...Array(trackCount).keys()] : null;
+      const lineup = uniq(credits.filter((c) => c.who && c.who.name && playable(c.role)).map((c) => c.who.name));
+      const fullName = (short) => {
+        const sw = String(short || '').replace(/\./g, '. ').split(/\s+/).map((w) => w.replace(/\.$/, '')).filter(Boolean);
+        if (!sw.length) return null;
+        const exact = lineup.find((n) => norm(n) === norm(short));
+        if (exact) return exact;
+        // ((review) a surname alone ("Evans, LaFaro, Motian"): the one person of the lineup with it
+        if (sw.length === 1) {
+          const by = lineup.filter((n) => norm(n.split(/\s+/).pop()) === norm(sw[0]));
+          return by.length === 1 ? by[0] : null;
+        }
+        const hits = lineup.filter((n) => {
+          const fw = n.split(/\s+/);
+          if (fw.length < sw.length || norm(fw[fw.length - 1]) !== norm(sw[sw.length - 1])) return false;
+          const firsts = sw.slice(0, -1);
+          const given = fw.slice(0, -1);
+          return firsts.length === given.length && firsts.every((x, k) => (x.length <= 2 ? norm(given[k]).startsWith(norm(x)) : norm(given[k]) === norm(x)));
+        });
+        return hits.length === 1 ? hits[0] : null;
+      };
+      const ensOut = [];
+      const at0 = [line0, part0, pi0, n0];
+      for (const e of ensembles) {
+        [line0, part0, pi0, n0] = [e.line, e.part, e.pi, e.n];
+        const named = e.who.map((x) => ({ ...x, full: fullName(x.name) }));
+        if (e.kind === 'solo' || !fullTracks || named.some((x) => !x.full)) {
+          // ((review) a SOLO of someone of the lineup is asked; the others are not recognized – no longer also listed as left out
+          const asked = e.kind === 'solo' && named.every((x) => x.full);
+          if (asked) ensOut.push({ kind: e.kind, tracks: [...e.scope.set], spec: e.scope.spec, who: named.map((x) => ({ name: x.full, said: x.name, abbr: x.abbr })), line: e.line });
+          else {
+            const k = ignored.findIndex((x) => x.why === 'ensemble' && x.text === e.line);
+            if (k >= 0) ignored.splice(k, 1);
+            unrecognized.push(e.line);
+          }
+          continue;
+        }
+        const keep = new Set(named.map((x) => norm(x.full)));
+        for (const c of credits) {
+          if (!c.who || !playable(c.role) || !c.tracks) continue;
+          const own = c.tracks.all ? fullTracks : c.tracks.indexes || [];
+          const me = named.find((x) => norm(x.full) === norm(c.who.name));
+          // the instrument in brackets: the person's other instruments not on these tracks
+          const ab = me && me.abbr ? (abbrWords(me.abbr) || [me.abbr.toLowerCase()]) : null;
+          const plays = !ab || ab.some((w) => norm(w) === norm(c.base || c.role) || norm(c.base || c.role).endsWith(` ${norm(w)}`) || norm(w).endsWith(` ${norm(c.base || c.role)}`));
+          if (keep.has(norm(c.who.name)) && plays) continue;
+          if (keep.has(norm(c.who.name)) && !credits.some((o) => o !== c && o.who && norm(o.who.name) === norm(c.who.name) && playable(o.role)
+            && ab.some((w) => norm(w) === norm(o.base || o.role)))) continue;
+          const left = own.filter((i) => !e.scope.set.has(i));
+          if (left.length === own.length) continue;
+          c.tracks = left.length ? { indexes: left, spec: c.tracks.spec || '', unresolved: c.tracks.unresolved || [], ensembleCut: true } : { indexes: [], spec: '', unresolved: [], ensembleCut: true };
+        }
+        ensOut.push({ kind: e.kind, tracks: [...e.scope.set], spec: e.scope.spec, who: named.map((x) => ({ name: x.full, said: x.name, abbr: x.abbr })), line: e.line, applied: true });
+      }
+      [line0, part0, pi0, n0] = at0;
+      // ((no tracks left: the credit goes – the person plays only in the duos of others)
+      for (let k = credits.length - 1; k >= 0; k--) if (credits[k].tracks && credits[k].tracks.ensembleCut && !credits[k].tracks.indexes.length) credits.splice(k, 1);
+      // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the one the person plays elsewhere in the text, else the first (the others named
+      // at the row)
+      for (const c of abbrAsk) {
+        const alts = [c.base, ...(c.abbrAlt || [])];
+        const known = credits.find((o) => o !== c && o.who && norm(o.who.name) === norm(c.who.name) && !o.abbr && alts.some((w) => norm(w) === norm(o.base || '')));
+        if (known) {
+          const k = credits.indexOf(c);
+          if (k >= 0) credits.splice(k, 1);
+        }
+      }
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet] };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet] };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut };
     }
 
     /**
@@ -9272,7 +9528,8 @@
         tracks: ctx.tracks,
         credits: res.credits,
         companies: res.companies,
-        series: [],
+        series: (res.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
+        ensembles: res.ensembles || [], // [Z-CIMP] (3.101.0, S162)
         unrecognized: res.unrecognized,
         ignored: res.ignored,
         stackAlt: res.stackAlt || [], // [S058] (3.38.12)
@@ -9544,7 +9801,8 @@
         // (the album's lines and those of each track page, in the other reading where it has one)
         stackAltUnrec: album.stackAltUnrec || trackAltUnrec.size ? [...(album.stackAltUnrec || album.unrecognized),
           ...[...trackUnrec.keys()].flatMap((i) => trackAltUnrec.get(i) || trackUnrec.get(i))] : null,
-        series: [],
+        series: (album.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
+        ensembles: album.ensembles || [], // [Z-CIMP] (3.101.0, S162)
         unrecognized,
         ignored,
         covers,
@@ -9828,7 +10086,8 @@
         const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}`;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
-            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle });
+            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle,
+            ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}) }); // ([Z-ABBR] 3.101.0, review)
         }
         const entry = group.roles.get(rKey);
         // [Z-TCP] (3.60.0) a name in brackets after a title only while every credit of the role is one
@@ -13222,7 +13481,14 @@
       // (3.43.5, counter-review) the import's choice counts only while the rule still gives the level it was derived from (an own
       // rule "producer → skip/release" wins); rows skipped by "Skip works" (mxSkipped) or S046 stay skipped too
       const lv = row.levelImport && m.level === row.levelImportFrom ? row.levelImport : m.level;
-      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out) {
+      // ([Z-RSOC] 3.101.0, review) a rights society: on Skip while the quick switch "Take rights societies" is off, back with it on
+      if (row.company && /^rights societ/i.test(String(row.raw || ''))) {
+        if (!ruleOn('S160')) {
+          row.rsocOff = true;
+          if (!m.notes || !m.notes.includes('rsocOff')) row.notes = [...(row.notes || []), 'rsocOff'];
+        } else row.rsocOff = false;
+      }
+      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out || row.rsocOff) {
         if (row.srcOff) row.srcOffLevel = lv;
         if (row.aboutHidden) row.aboutLevel = lv;
         if (row.notesHidden) row.notesLevel = lv;
@@ -20341,6 +20607,7 @@
     row.supp = S.supp.source.short;
     row.suppName = S.supp.source.name;
     if (!company && info.c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
+    if (!company && info.c.abbrAlt) Object.assign(row, { abbr: info.c.abbr, abbrAlt: info.c.abbrAlt }); // [Z-ABBR] (3.101.0, S166)
     if (!company && info.c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
     if (!company && S.supp.source === BANDCAMP) askTranslation(row);
@@ -21572,6 +21839,7 @@
       if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
       if (c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
       if (c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
+      if (c.abbrAlt) Object.assign(row, { abbr: c.abbr, abbrAlt: c.abbrAlt }); // [Z-ABBR] (3.101.0, S166; review)
       // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
       if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
@@ -21663,6 +21931,8 @@
         row.notesFrom = r.notesLine;
       }
       if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
+      // [Z-RSOC] (3.101.0, S160) a rights society only with the quick switch "Take rights societies" (off by default): else on Skip, with a note
+      if (/^rights societ/i.test(String(r.role || '')) && !ruleOn('S160')) Object.assign(row, { level: 'skip', notes: [...(row.notes || []), 'rsocOff'], rsocOff: true });
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
       suggestCommissioned(row);
       S.rows.push(row);
@@ -21710,6 +21980,9 @@
       S.release = rel;
       // [Z-EXC] (3.49.0) the covers and quotes of the text (their works looked up once the rows are there)
       S.workNotesRel = rel;
+      // [Z-CIMP] (3.101.0, S162) "track 7 SOLO: …" asked at the person; duos … applied by the text (logged)
+      S.ensAsk = (rel.ensembles || []).filter((e) => e.kind === 'solo').map((e, k) => ({ ...e, id: `ens${k}` }));
+      (rel.ensembles || []).filter((e) => e.applied).forEach((e) => log('info', 'ensembleApplied', { line: e.line }));
       // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
       setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
@@ -22223,6 +22496,7 @@
         if (placeArea && !a.area && hits.length) a.area = placeArea;
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: x.asArtist ? 'artist' : type, similar: fit === 'similar', ...(x.viaAka ? { aka: a.aka } : {}),
+          ...(type === 'series' && x.type ? { type: x.type } : {}), // ([Z-CIMP] 3.101.0, review)
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
         // [3.22.2] areas: the area each one shown is part of (48)
         if (type === 'area') {
@@ -22432,12 +22706,13 @@
       Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '', matchTouched: true });
       if (artist.company) setCompanyEntityType(artist, e.entityType);
       else if (artist.other && artist.entityType === 'event') eventLinked(artist); // [Z-EVL] (3.88.0)
+      else if (artist.other && artist.entityType === 'series') seriesLinked(artist, e.typeName || ''); // [Z-CIMP] (3.101.0, S164)
       dropRegionCredit(artist);
       log('ok', 'artistManual', { name: artist.name, mb: e.name });
     } catch (err) {
       artist.error = err.message;
     }
-    if (artist.company) rerenderGroup(artist);
+    if (artist.company || (artist.other && artist.entityType === 'series')) rerenderGroup(artist);
     else updateGroupHeader(artist);
     refresh();
   }
@@ -24009,7 +24284,7 @@
       && !a.personHit && !a.aliasLater && !a.etcWait ? ' class="dci-create-miss"' : '';
     const searchType = a.other ? a.entityType : a.company ? (personPublisher(a) && a.personHit ? 'artist' : a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
-    const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button"${miss} data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
+    const createButtons = a.other ? (CREATABLE.includes(a.entityType) && !a.fromText ? `<button type="button"${miss} data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       // [3.22.0] areas are added by MusicBrainz's area editors only: no "Create", a hint (S028)
       // [S048] (3.31.5) a publisher with a person's name: "Create artist …" – only that when MusicBrainz has an artist of exactly
       // that name (no label for a person); otherwise beside "Create label …" (the name may be a company's)
@@ -25801,6 +26076,7 @@
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${a.artl ? artlNoteHtml(a) : ''}
+        ${(S.ensAsk || []).length ? soloAskHtml(a) : ''}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -25986,6 +26262,8 @@
 
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
+      // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named
+      + (row.abbrAlt && row.abbrAlt.length ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
 ;
     const asType = row.company || row.other ? `<div class="dci-sub">${esc(tr('role.asEntity', { type: tr(`entity.${row.entityType}`) }))}</div>` : '';
     if (row.manual) {
@@ -29982,7 +30260,7 @@
       const hit = x.mbid ? { mbid: x.mbid, name: x.name, type: x.type || '', disambiguation: '' } : (found.get((x.links || [])[0]) || [])[0];
       const type = hit ? norm(hit.type) : '';
       const owner = {
-        key: nextId('o'), dId: x.id, links: x.links, name: x.name, rawName: x.name, status: hit ? 'linked' : 'missing', other: true, srcSeries: true,
+        key: nextId('o'), dId: x.id, links: x.links, name: x.name, rawName: x.name, status: hit ? 'linked' : 'missing', other: true, srcSeries: true, ...(x.fromText ? { fromText: true } : {}),
         entityType: 'series', mbid: hit ? hit.mbid : null, mbName: hit ? hit.name : '', mbComment: hit ? hit.disambiguation : '',
         candidates: [], editing: false, error: '', anvs: [],
       };
@@ -30011,11 +30289,13 @@
         if (x.fromVideo) row.notes = [x.number ? 'seriesFromVideo' : 'seriesFromVideoNoDate'];
       } else {
         Object.assign(row, { level: 'skip', levelTouched: true, seriesType: hit ? hit.type : '' });
-        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : 'seriesMissing'];
+        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : x.fromText ? 'seriesText' : 'seriesMissing'];
       }
       S.rows.push(row);
       log(hit ? 'info' : 'warn', x.fromVideo ? 'seriesVideo' : 'series', { name: x.name, number: x.number || '–' });
       if (!hit && x.links && x.links.length) await loadSeriesLabel(owner);
+      // [Z-CIMP] (3.101.0, S164) a series of a text: MusicBrainz's series of that name suggested
+      if (!hit && x.fromText) await suggestByName([owner]);
     }
   }
 
@@ -31927,6 +32207,60 @@
     const text = tr(!a.company ? 'artl.asArtist' : a.mbid ? 'artl.asLabel' : 'artl.asLabelOpen', { why });
     const btn = a.company ? tr('artl.toArtist') : tr('artl.toLabel');
     return `<p class="dci-sub dci-artl" data-el="artl">${esc(text)} <button type="button" class="dci-textbtn" data-act="artl-toggle" title="${esc(tr(a.company ? 'artl.toArtistTitle' : 'artl.toLabelTitle'))}">${esc(btn)}</button></p>`;
+  }
+
+  // --- [Z-CIMP] (3.101.0, S162) "track 7 SOLO: T.Fujiwara (d)": asked at the person
+  const ensNamed = (e, a) => e.who.some((w) => [a.rawName, a.name, a.mbName].filter(Boolean).some((n) => norm(n) === norm(w.name)));
+  function soloAskHtml(a) {
+    if (a.company || a.other) return '';
+    return S.ensAsk.filter((e) => !e.done && ensNamed(e, a)).map((e) => `<div class="dci-note dci-solo-ask" data-el="solo-ask" data-ens="${esc(e.id)}">
+      <span>${esc(tr('solo.ask', { line: e.line }))}</span>
+      <button type="button" class="dci-small" data-act="solo-ans" data-ans="only" data-ens="${esc(e.id)}" title="${esc(tr('solo.onlyTitle'))}">${esc(tr('solo.only'))}</button>
+      <button type="button" class="dci-small" data-act="solo-ans" data-ans="solo" data-ens="${esc(e.id)}" title="${esc(tr('solo.flagTitle'))}">${esc(tr('solo.flag'))}</button>
+      <button type="button" class="dci-textbtn" data-act="solo-ans" data-ans="none" data-ens="${esc(e.id)}">${esc(tr('solo.none'))}</button></div>`).join('');
+  }
+  /** The answer: only this person plays on those tracks / the attribute "solo" on them / nothing. */
+  function soloAnswer(id, ans) {
+    const e = (S.ensAsk || []).find((x) => x.id === id);
+    if (!e) return;
+    e.done = ans;
+    const set = new Set(e.tracks);
+    const persons = [...S.artists.values()].filter((a) => !a.company && !a.other && ensNamed(e, a));
+    const keys = new Set(persons.map((a) => a.key));
+    const playing = (r) => r.level === 'recording' && ['instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)));
+    if (ans === 'only') {
+      for (const r of S.rows.filter((x) => playing(x) && !keys.has(x.artistKey) && [...x.tracks].some((i) => set.has(i)))) {
+        r.tracks = new Set([...r.tracks].filter((i) => !set.has(i)));
+        if (!r.tracks.size) Object.assign(r, { level: 'skip', levelTouched: true });
+      }
+    } else if (ans === 'solo') {
+      for (const r of S.rows.filter((x) => playing(x) && keys.has(x.artistKey) && [...x.tracks].some((i) => set.has(i)))) {
+        const lt = currentLinkType(r);
+        if (!lt || !allowedRoots(lt).some((x) => norm(x.attr.name) === 'solo')) continue;
+        const on = [...r.tracks].filter((i) => set.has(i));
+        const target = on.length < r.tracks.size ? cloneRow(r, { tracks: new Set(on) }) : r;
+        if (target !== r) r.tracks = new Set([...r.tracks].filter((i) => !set.has(i)));
+        target.flags.add('solo');
+      }
+    }
+    log('info', 'soloAnswered', { line: e.line, ans: tr(`solo.${ans === 'solo' ? 'flag' : ans}`) });
+  }
+
+  // --- [Z-CIMP] (3.101.0, S164) a series named in a text, once linked: the release (or its group) part of it, with its number
+  function seriesLinked(owner, typeName = '') {
+    if (!owner || !owner.srcSeries) return;
+    for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).some((k) => k === 'seriesText' || k === 'seriesMissing' || k === 'seriesType'))) {
+      // ((review) a series of recordings, works or events: no part of it for the release – on Skip with its note
+      if (typeName && !/^release(?: group)? series$/i.test(String(typeName))) {
+        Object.assign(r, { notes: ['seriesType'], seriesType: typeName, level: 'skip', levelTouched: true });
+        continue;
+      }
+      r.notes = [];
+      const rgSeries = /release group/i.test(String(typeName || ''));
+      Object.assign(r, { level: rgSeries && S.releaseGroup ? 'release_group' : 'release', levelTouched: true });
+      resolveRowType(r);
+      if (owner.dNumber) Object.assign(r, { roleCredit: owner.dNumber, roleCreditTouched: true });
+    }
   }
 
   /** A row given to the person back to the label entry. */
@@ -37816,6 +38150,12 @@
         }
         break;
       // [Z-ARTL] (3.100.0, S159) the label credited for the artwork as an artist again, or as the label
+      // [Z-CIMP] (3.101.0, S162) the answer to "track 7 SOLO: …"
+      case 'solo-ans':
+        soloAnswer(btn.dataset.ens, btn.dataset.ans);
+        renderGroups();
+        refresh();
+        break;
       case 'artl-toggle':
         if (artist && artist.artl) {
           if (artist.company) artlToArtist(artist);
@@ -38574,6 +38914,7 @@
         Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '', matchTouched: true });
         if (artist.company) setCompanyEntityType(artist, h.entityType);
         else if (artist.other && artist.entityType === 'event') eventLinked(artist); // [Z-EVL] (3.88.0)
+        else if (artist.other && artist.entityType === 'series') seriesLinked(artist, h.type || ''); // [Z-CIMP] (3.101.0, S164)
         dropRegionCredit(artist);
         // [Z-RG] (3.40.5) the area of a region (T059): credited as the region of the list (Q-ba) – a credit typed by hand stays;
         // (3.40.8, review) remembered with the area (sourceCreditFor keeps it)
@@ -38582,7 +38923,8 @@
           S.rows.filter((r) => r.artistKey === artist.key && !r.creditTouched).forEach((r) => { r.credit = h.region; });
         }
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
-        if (artist.company) rerenderGroup(artist);
+        // ([Z-CIMP] 3.101.0) a series: its row taken – drawn anew
+        if (artist.company || (artist.other && artist.entityType === 'series')) rerenderGroup(artist);
         // [3.31.5] a publisher matched with an artist (S048): its column in the works matrix follows
         if (artist.company && S.rows.some((r) => r.artistKey === artist.key && r.level === 'work')) renderWorks();
         else updateGroupHeader(artist);
@@ -46604,6 +46946,7 @@
       .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
+      .dci-solo-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-arq-sub { margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
       /* [Z-ALIGN] (3.100.0) one table per entry: its head stays on top while its lines scroll, each block a thin heading row */
       .dci-em-onewrap { max-height: 75vh; overflow: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }

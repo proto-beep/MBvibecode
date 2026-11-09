@@ -1851,4 +1851,211 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_cimp3101():
+    """Credits Importer 3.101.0 (collected items Z-CIMP, Z-ABBR, Z-RSOC; rules S160–S166): the back of "The Throes" (CIMP #384) pasted –
+    track titles with their writers below ("Ken Filiano (FlizmoMusic-BMI) / Nate Wooley" + "(4WordSeaMusic-BMI)"), the lineup, "track 2 DUO:
+    K.Filiano (b) + N.Wooley (tpt)", "track 3 SOLO: T.Fujiwara (d)", cover art, typesetting, hospitality, the series, the catalogue number,
+    the address.
+    A) Nothing not recognized; the duo, the series, the catalogue number, the address, the title of the cover's picture left out as such.
+    B) The lineup: Nate Wooley trumpet on tracks 1–3 (not in the duo of track 4), Taylor Ho Bynum cornet 1, 3, 4, Ken Filiano bass on all
+       four, Tomas Fujiwara drums 1, 3 (not in the duos); Kara D. Rusch artwork "cover art", Hillary J. Ryan design "typesetting", Susan Rusch
+       miscellaneous support "hospitality" – all on the release.
+    C) The works matrix: Ken Filiano and Nate Wooley writers of track 2, Taylor Ho Bynum of 1 and 4; FlizmoMusic publishes 2 and 4.
+    D) BMI (rights society): its entry on Skip with the note of the quick switch (S160 off by default).
+    E) The series: "Spirit Room Series", no "Create series", MusicBrainz's series of that name suggested; chosen – the release part of it,
+       number 247.
+    F) "track 3 SOLO": asked at Tomas Fujiwara; "Attribute “solo”" – his drums on track 3 with "solo" (a row of its own).
+    G) The quick switch "Take rights societies" on: BMI on the release, without the note."""
+    import copy
+    titles0, ac0, lts0, attrs0 = list(H.TITLES), list(H.RELEASE_AC), copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.TITLES[:] = ['The Throes', 'KFNW', 'Face To The Sun', 'KFTHB']
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3384), 'Nate Wooley + Taylor Ho Bynum Quartet', 'Nate Wooley + Taylor Ho Bynum Quartet', '')]
+    H.attr(9120, 'trumpet', 14, 14)
+    H.attr(9121, 'cornet', 14, 14)
+    H.lt(993, H.uid('1aaa0000', 993), 'artwork', 'artist', 'release', (1, 1150))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    SER = H.uid('5e5e5e5e', 1)
+    H.COMPANIES[9950] = ('series', SER, 'Spirit Room Series')
+    TEXT = """NATE WOOLEY + TAYLOR HO BYNUM QUARTET
+THE THROES
+1. The Throes
+Taylor Ho Bynum (ThobulousMusic-BMI)
+2. KFNW
+Ken Filiano (FlizmoMusic-BMI) / Nate Wooley
+(4WordSeaMusic-BMI)
+3. Face To The Sun
+Nate Wooley (4WordSeaMusic-BMI)
+4. KFTHB
+Ken Filiano (FlizmoMusic-BMI) / Taylor Ho Bynum
+(ThobulousMusic-BMI)
+Nate Wooley - trumpet
+Taylor Ho Bynum - cornet
+Ken Filiano - bass
+Tomas Fujiwara - drums
+track 2 DUO: K.Filiano (b) + N.Wooley (tpt)
+track 4 DUO: K.Filiano (b) + T.H.Bynum (cornet)
+track 3 SOLO: T.Fujiwara (d)
+Recorded at The Spirit Room, Rossie, NY, April 21, 2008
+Produced by Robert D. Rusch
+Cover art: The Weight by Kara D. Rusch
+Typesetting: Hillary J. Ryan
+Hospitality: Susan Rusch
+Spirit Room Series Vol.247
+CIMP #384
+CIMP Records, Village Hall, Redwood, NY 13679-0129 USA"""
+    GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+        return [t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('[data-f=credit-role], [data-f=role-credit], [data-f=rc]') || { value: '' }).value,
+          lv ? lv.dataset.level : '', (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), [...tr.querySelectorAll('[data-f=flag]:checked, [data-f=flags]:checked')].map(c => c.value)]; }),
+      [...g.querySelectorAll('.dci-note')].map(n => n.textContent.trim()), !!g.querySelector('[data-act=other-create]'), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()),
+      !!g.querySelector('[data-el=solo-ask]')]))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.fill('[data-f=text-origin]', 'Back cover')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(1500)
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")
+            print('A)', unrec, ign)
+            results.append(unrec == [] and {'track 2 DUO: K.Filiano (b) + N.Wooley (tpt)', 'Spirit Room Series Vol.247', 'CIMP #384', 'The Weight'} <= set(ign)
+                           and any('Redwood, NY' in x for x in ign))
+            g = {x[0]: x for x in pg.evaluate(GROUPS)}
+            for k, v in g.items():
+                print('   ', k, v[1:])
+            rows = lambda n: g.get(n, [n, [], [], False, [], False])[1]
+            print('B)', {n: rows(n) for n in ('Nate Wooley', 'Taylor Ho Bynum', 'Ken Filiano', 'Tomas Fujiwara', 'Kara D. Rusch', 'Hillary J. Ryan', 'Susan Rusch')})
+            n = lambda name: [r[3] for r in rows(name)]
+            results.append(n('Nate Wooley') == ['3 of 4 tracks'] and n('Taylor Ho Bynum') == ['3 of 4 tracks'] and n('Tomas Fujiwara') == ['2 of 4 tracks']
+                           and n('Ken Filiano') == ['4 of 4 tracks'] and rows('Kara D. Rusch')[0][:3] == ['artwork', 'cover art', 'release']
+                           and rows('Hillary J. Ryan')[0][:3] == ['design', 'typesetting', 'release'] and rows('Susan Rusch')[0][1:3] == ['hospitality', 'release'])
+            cols = pg.evaluate("""(() => { const out = {}; document.querySelectorAll('.dci-matrix th[data-colhead]').forEach((th) => {
+              const name = (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim();
+              if (out[name]) return;
+              out[name] = [...document.querySelectorAll(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`)].filter(c => c.classList.contains('dci-mx-on'))
+                .map(c => Number(c.closest('tr').dataset.work) + 1); }); return out; })()""")
+            print('C)', cols)
+            results.append(cols.get('Ken Filiano') == [2, 4] and cols.get('Nate Wooley') == [2, 3] and cols.get('Taylor Ho Bynum') == [1, 4] and cols.get('FlizmoMusic') == [2, 4])
+            bmi = g.get('BMI')
+            print('D)', bmi)
+            results.append(bool(bmi) and all(r[2] in ('', 'skip') for r in bmi[1]) and any('Rights societies are not taken' in n for n in bmi[2]))
+            ser = g.get('Spirit Room Series')
+            print('E)', ser)
+            sec = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Spirit Room Series').dataset.group")
+            pg.click(f'section[data-group="{sec}"] [data-act=name-use]')
+            pg.wait_for_timeout(500)
+            ser2 = {x[0]: x for x in pg.evaluate(GROUPS)}.get('Spirit Room Series')
+            print('   ', ser2)
+            results.append(bool(ser) and not ser[3] and ser[4] and any('series named in the text' in n for n in ser[2]) and bool(ser2) and ser2[1][0][2] == 'release')
+            tf = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Tomas Fujiwara').dataset.group")
+            ask = g.get('Tomas Fujiwara', [0, 0, 0, 0, 0, False])[5]
+            pg.click(f'section[data-group="{tf}"] [data-act=solo-ans][data-ans=solo]')
+            pg.wait_for_timeout(500)
+            f = {x[0]: x for x in pg.evaluate(GROUPS)}.get('Tomas Fujiwara')
+            print('F)', ask, f)
+            results.append(ask and bool(f) and [r[3:] for r in f[1]] == [['1 of 4 tracks', []], ['1 of 4 tracks', ['solo']]] and not f[5])
+            print('Fehler:', errs)
+            results.append(not errs)
+            # G) the quick switch "Take rights societies" on: BMI taken (on the release)
+            ctx2 = H.new_context(b)
+            pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg2.on('dialog', lambda d: d.accept())
+            pg2.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['+S160']))")
+            pg2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg2)
+            pg2.wait_for_timeout(500)
+            H.src_menu(pg2, 'text-open')
+            pg2.fill('[data-f=text-src]', TEXT)
+            pg2.click('[data-act=text-load]')
+            H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg2.wait_for_timeout(1000)
+            g2 = {x[0]: x for x in pg2.evaluate(GROUPS)}.get('BMI')
+            print('G)', g2)
+            results.append(bool(g2) and g2[1][0][2] == 'release' and not any('Rights societies are not taken' in n for n in g2[2]) and not errs2)
+            b.close()
+    finally:
+        H.TITLES[:] = titles0
+        H.RELEASE_AC[:] = ac0
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
+        H.COMPANIES.pop(9950, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_abbr3101():
+    """Credits Importer 3.101.0 (collected item Z-ABBR, rule S166; Z-CIMP S161, S164, S165) in Node: instrument abbreviations only in short form –
+    "Nate Wooley tpt" trumpet, "Ken Filiano (b)" bass, "Ann Lee - ts, ss" tenor and soprano saxophone; "Bo Diaz tb" with "Bo Diaz - tuba" elsewhere:
+    tuba (no second credit), "Cy Moe tb" alone: trombone, tuba named as the other reading; "Bass: Ken Filiano" and "Ann Lee - trumpet" as
+    before; the writer lines joined over two lines ("… / Tomas" + "Fujiwara (Tomas Fujiwara-BMI)"); "Jazz Masters Series No. 12" a series
+    with its number; "ECM 1234" and "P.O. Box 12, Oslo" left out as catalogue number and address."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated
+    || /^(piano|bass|guitar|drums|vocals|trumpet|trombone|tuba|tenor saxophone|soprano saxophone|cornet)$/i.test(p.base); };
+const isCompanyRole = (role) => /published|rights society|recorded at|part of series/i.test(role);
+const titles = ['Alpha', 'Beta'];
+const resolveTitles = (ts) => { const indexes = new Set(); const unresolved = []; ts.forEach((t) => { const i = titles.findIndex((x) => x.toLowerCase() === String(t).toLowerCase()); if (i >= 0) indexes.add(i); else unresolved.push(t); }); return { indexes, unresolved }; };
+const resolveTracks = (spec) => { const n = Number(String(spec).trim()); return n >= 1 && n <= 2 ? new Set([n - 1]) : null; };
+const text = ['Nate Wooley tpt', 'Ken Filiano (b)', 'Ann Lee - ts, ss', 'Bo Diaz - tuba', 'Bo Diaz tb', 'Cy Moe tb', 'Bass: Kim Bass', 'Pat Poe - trumpet',
+  '1. Alpha', 'Nate Wooley (4WordSeaMusic-BMI) / Tomas', 'Fujiwara (Tomas Fujiwara-BMI)', '2. Beta', 'Kim Bass (Bassy-BMI)',
+  'Jazz Masters Series No. 12', 'ECM 1234', 'P.O. Box 12, Oslo'].join('\n');
+const r = m.SOURCES.text.parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles, trackCount: 2, titleNames: titles });
+const tr = (w) => (w && w.all ? 'all' : w && w.indexes ? w.indexes.map((i) => i + 1).join(',') : '');
+console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.base || c.role, tr(c.tracks), (c.abbrAlt || []).join('/')]),
+  companies: r.companies.map((c) => [c.who.name, c.role, tr(c.tracks)]), series: r.series.map((x) => [x.name, x.number]), unrec: r.unrecognized,
+  ign: r.ignored.map((x) => [x.text, x.why]) }));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-500:]}
+    print(json.dumps(out, ensure_ascii=False, indent=0)[:3000])
+    cr = out.get('credits', [])
+    want = [['Nate Wooley', 'trumpet', 'all', ''], ['Ken Filiano', 'bass', 'all', ''], ['Ann Lee', 'tenor saxophone', 'all', ''], ['Ann Lee', 'soprano saxophone', 'all', ''],
+            ['Bo Diaz', 'tuba', 'all', ''], ['Cy Moe', 'trombone', 'all', 'tuba'], ['Kim Bass', 'bass', 'all', ''], ['Pat Poe', 'trumpet', 'all', ''],
+            ['Nate Wooley', 'Written', '1', ''], ['Tomas Fujiwara', 'Written', '1', ''], ['Kim Bass', 'Written', '2', '']]
+    norm = lambda x: [x[0], x[1].split('-')[0] if x[1].lower().startswith('written') else x[1].lower(), x[2], x[3]]
+    ok = [norm(c) for c in cr] == want if cr else False
+    ok = ok and ['Tomas Fujiwara', 'Published By', '1'] in out.get('companies', []) and ['4WordSeaMusic', 'Published By', '1'] in out.get('companies', []) \
+        and out.get('series') == [['Jazz Masters Series', '12']] and out.get('unrec') == [] \
+        and ['ECM 1234', 'catno'] in out.get('ign', []) and ['P.O. Box 12, Oslo', 'address'] in out.get('ign', [])
+    # (review) read as before: a studio with a ZIP code, a heading of abbreviations, a publisher's bracket below a title, a publisher under a
+    # title, a cover photographer with a particle; a long line of capitals read at once (no runaway pattern)
+    NODE2 = NODE.split('const text = ')[0] + r"""
+const text2 = ['Recorded at Systems Two, Brooklyn, NY 11234', 'Rhythm: p, b, d', '1. Alpha', '(Harms Inc.-ASCAP)', '2. Beta', 'Warner Chappell Music (ASCAP)',
+  'Cover photo: Pedro de Alcantara'].join('\n');
+const t0 = Date.now();
+m.SOURCES.text.parse('N' + 'O'.repeat(90) + '\n' + 'A'.repeat(160) + 'H!!!', { isRole, isCompanyRole, resolveTracks, resolveTitles, trackCount: 2, titleNames: titles });
+const ms = Date.now() - t0;
+const r2 = m.SOURCES.text.parse(text2, { isRole, isCompanyRole, resolveTracks, resolveTitles, trackCount: 2, titleNames: titles });
+console.log(JSON.stringify({ ms, credits: r2.credits.map((c) => [c.who.name, c.role]), companies: r2.companies.map((c) => [c.who.name, c.role]) }));
+"""
+    js2 = subprocess.run(['node', '-e', NODE2, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out2 = json.loads(js2.stdout) if not js2.returncode else {'error': js2.stderr[-500:]}
+    print('review:', out2)
+    c2 = out2.get('credits', [])
+    ok = ok and out2.get('ms', 9999) < 1000 and ['Systems Two', 'Recorded At'] in out2.get('companies', []) and not any(x[0] in ('Rhythm', 'Harms Inc.', 'Warner Chappell Music') for x in c2) \
+        and any(x[0] == 'Pedro de Alcantara' for x in c2)
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())
