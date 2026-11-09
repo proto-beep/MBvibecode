@@ -304,10 +304,16 @@ def case_quickswitch():
           return [!!q.querySelector('.dci-quick-h strong'), q.querySelectorAll('.dci-quick-grid > .dci-qbtn-wrap').length, st.borderTopStyle, st.borderTopLeftRadius,
             q.querySelector('[data-qs-toggle=S045]').textContent.replace(/\\s+/g, ' ').trim()]; })()""")
         print('A) Schalter:', a, '| Kasten:', box)
-        # ([3.79.0] D026 and S114, both off; [3.82.0] S122, off; [3.97.0] S155, off and locked; [3.101.0] S160, off; [3.103.0] S170, on)
-        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False], ['S078', True],
-                             ['D026', False], ['S114', False], ['S122', False], ['S155', False], ['S160', False], ['S170', True]]
-                       and box[:4] == [True, 14, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
+        # ([3.79.0] D026 and S114, both off; [3.82.0] S122, off; [3.97.0] S155, off and locked; [3.101.0] S160, off; [3.103.0] S170, on;
+        # [3.105.0] the order of their groups)
+        # ([Z-QSCAT] 3.105.0) in groups: dates · instruments and performers · attributes and credits · writers, rights and works · companies
+        groups = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-group')].map(g => [g.querySelector('.dci-quick-gh').textContent.trim(), [...g.querySelectorAll('[data-qs-goto]')].map(x => x.textContent.trim())])")
+        print('   Gruppen:', groups)
+        results.append(a == [['D022', True], ['D026', False], ['D023', False], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
+                             ['S021', True], ['S031', True], ['S160', False], ['S045', True], ['S122', False], ['S007', True]]
+                       and box[:4] == [True, 14, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name')
+                       and groups == [['Dates', ['D022', 'D026', 'D023']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
+                                      ['Attributes and credits', ['S021', 'S031']], ['Writers, rights and works', ['S160', 'S045', 'S122']], ['Companies and places', ['S007']]])
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)

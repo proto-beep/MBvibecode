@@ -1649,7 +1649,8 @@ Tracks 2-3: John Roe – piano"""
 def case_foot397():
     """Credits Importer 3.97.0 (collected item Z-FOOT): the run in the footer.
     A) While the import reads and compares: left in the footer's line a yellow chip with the latest step (the whole text and the
-       requests done in its tooltip), filled as far as done, and the 2-px line along the top of the footer (its width the same share).
+       requests done in its tooltip), filled as far as done, and the 2-px line along the top of the footer (its width the same share;
+       [Z-PROG] 3.105.0: 6 px).
     B) All done: the chip green "All imports and checks done" – it stays; the line is gone; the footer as high as before (one line).
     C) Dark: the chip in the dark colours."""
     STATE = """(() => { const c = document.querySelector('.dci-foot [data-el=foot-run]'); const l = document.querySelector('.dci-foot [data-el=foot-line]');
@@ -1676,7 +1677,7 @@ def case_foot397():
             pg.wait_for_timeout(150)
         a0 = seen[-1] if seen else None
         print('A) arbeitet:', a0)
-        results.append(bool(a0) and a0['busy'] and a0['line'] and a0['lineH'] == 2 and a0['text'] and a0['text'] in a0['title'] and a0['inBar'] and a0['leftOfSum']
+        results.append(bool(a0) and a0['busy'] and a0['line'] and a0['lineH'] == 6 and a0['text'] and a0['text'] in a0['title'] and a0['inBar'] and a0['leftOfSum']
                        and a0['color'] == 'rgb(122, 90, 0)')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         H.wait_for(pg, "(c => !!c && c.classList.contains('dci-foot-run-done'))(document.querySelector('.dci-foot [data-el=foot-run]'))", 60)

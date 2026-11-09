@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.104.0 | 1.15.0 |
+| 2026-11-08 | 3.88.0 – 3.105.0 | 1.16.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.105.0
+
+- **Why the line of the release page is missing** (Z-GAPL): in developer mode, ⚙ Settings → Sources has "Line of the release page: show why it is missing". With it on, a grey note stands where the line would be and gives the reason – switched off, no Discogs or Bandcamp link recognized among the page's external links, MusicBrainz's web service or the source not answering, Discogs saying no, no credits, nothing missing, hidden with ✕, an error – also in the console. MusicBrainz's "too many requests" is asked again twice.
+- **The line of the run 6 px high** (Z-PROG): the line along the top of the footer while the dashboard reads and checks.
+- **A new role yellow in every cell** (Z-ARHL2): the role's cell of a matrix line (which stays in place when the matrix scrolls) is yellow too.
+- **A place right after the date** (Z-RDST, rule S171): "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." – the name after the date of a sentence of recording, without "at", is the place where it was recorded when one of its words is a word of places (studio, hall, saal, kirche, church, club, theater, room, haus, also at the end of a word: Konzerthaus, Sendesaal).
+- **Which bouzouki?** (Z-BZK, question Q014): a plain "Bouzouki" asks for the bouzouki itself or any kind of it in MusicBrainz's instrument tree (irish bouzouki …), as "Bass" and "Guitar" do.
+- **The quick switches in groups** (Z-QSCAT): Dates · Instruments and performers · Attributes and credits · Writers, rights and works · Companies and places, each with a heading.
+
+### COMPANION 1.16.0
+
+#### Changed
+
+- **A click on the cover miniature opens the image shown** (collected item Z-CPVA2): after ‹ › the image chosen – its own on the page when it has a link there, else the image itself – instead of the first.
 
 ### Import 3.104.0
 

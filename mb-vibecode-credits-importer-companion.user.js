@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.15.0
+// @version      1.16.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.15.0';
+  const COMPANION_VERSION = '1.16.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -786,6 +786,21 @@
    * of the page's data – one address each (Discogs's image addresses carry their source: an image of another release, an artist or a
    * label left out).
    */
+  /** [1.16.0] (Z-CPVA2) An image address of Discogs: the address, its source ([R|A|L, id]) and the key of the image (the same in every size). */
+  function artKey(u) {
+    const url = String(u || '').replace(/\\u002F/gi, '/').replace(/\\\//g, '/').replace(/&amp;/g, '&').replace(/[\\"]+$/, '');
+    if (!/^https:\/\/i\.discogs\.com\/\S+$/.test(url)) return null;
+    const parts = url.replace(/^https:\/\/i\.discogs\.com\//, '').split(/[?#]/)[0].split('/');
+    const opt = parts.map((x) => /^(?:rs|g|q|h|w|f|sm|el|ex|ar):/.test(x)).lastIndexOf(true);
+    const rest = (opt >= 0 ? parts.slice(opt + 1) : parts).join('');
+    let src = '';
+    try {
+      src = atob(rest.replace(/\.[a-z]{3,4}$/i, '').replace(/-/g, '+').replace(/_/g, '/'));
+    } catch (e) { /* not encoded */ }
+    const kind = (src.match(/(?:^|\/)([RAL])-(\d+)-/) || []);
+    return { url, kind, key: kind[1] ? src.replace(/^.*\//, '') : rest };
+  }
+
   let artCache = null;
   function artworkList() {
     // ((review) once per page state: the list is made again only when the page has other images or scripts
@@ -795,19 +810,11 @@
     const og = artworkUrl();
     const seen = new Map();
     const add = (u) => {
-      const url = String(u || '').replace(/\\u002F/gi, '/').replace(/\\\//g, '/').replace(/&amp;/g, '&').replace(/[\\"]+$/, '');
-      if (!/^https:\/\/i\.discogs\.com\/\S+$/.test(url)) return;
-      const parts = url.replace(/^https:\/\/i\.discogs\.com\//, '').split(/[?#]/)[0].split('/');
-      const opt = parts.map((x) => /^(?:rs|g|q|h|w|f|sm|el|ex|ar):/.test(x)).lastIndexOf(true);
-      const rest = (opt >= 0 ? parts.slice(opt + 1) : parts).join('');
-      let src = '';
-      try {
-        src = atob(rest.replace(/\.[a-z]{3,4}$/i, '').replace(/-/g, '+').replace(/_/g, '/'));
-      } catch (e) { /* not encoded */ }
-      const kind = (src.match(/(?:^|\/)([RAL])-(\d+)-/) || []);
+      const k = artKey(u);
+      if (!k) return;
+      const { url, kind, key } = k;
       // ((review) only images of this release – one whose source is not readable only as the page's cover
       if (kind[1] ? kind[1] !== 'R' || (rid && kind[2] !== rid) : url !== og) return;
-      const key = kind[1] ? src.replace(/^.*\//, '') : rest;
       // ((review) the larger one of the same image
       const w = (u) => Number((u.match(/\/w:(\d+)\//) || [])[1] || 0);
       if (!seen.has(key) || w(url) > w(seen.get(key))) seen.set(key, url);
@@ -836,8 +843,25 @@
     nav.querySelector('.dci-art-n').textContent = `${i + 1} / ${list.length}`;
   }
 
-  /** Opens Discogs' own image view: the image link of the page, else its main image; else the image itself. */
-  function openDiscogsImages() {
+  /**
+   * Opens Discogs' own image view: the image link of the page, else its main image; else the image itself. [1.16.0] (Z-CPVA2) The
+   * image the miniature shows: the same image of the page (its link), else this image itself, large.
+   */
+  function openDiscogsImages(shown = '', index = 0) {
+    const k = shown ? artKey(shown) : null;
+    // ((review) by the miniature's own index – the list may have the same image in a larger size meanwhile
+    if (k && index > 0) {
+      const same = [...document.querySelectorAll('img[src*="i.discogs.com"]')].find((i) => !i.closest('#dci-artwork') && (artKey(i.currentSrc || i.src) || {}).key === k.key);
+      const target = same && same.closest('a[href], button, [role="button"]');
+      if (target) {
+        target.click();
+        return;
+      }
+      // ((review) the largest address of the page for this image
+      const big = artworkList().find((u) => (artKey(u) || {}).key === k.key) || shown;
+      window.open(big, '_blank', 'noopener');
+      return;
+    }
     const link = [...document.querySelectorAll('a[href*="/image/"], a[href$="/images"], a[href*="/images?"]')].find((a) => !a.closest('#dci-artwork'));
     if (link) {
       link.click();
@@ -883,7 +907,7 @@
           box.dataset.moved = '';
           return;
         }
-        openDiscogsImages();
+        openDiscogsImages(box.querySelector('img').getAttribute('src') || '', Number(box.dataset.i || 0));
       });
       makeArtMovable(box);
       box.querySelector('.dci-art-toggle').addEventListener('click', () => {

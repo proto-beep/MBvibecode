@@ -3090,7 +3090,8 @@ def case_evcol3103():
     B) Piano unticked in ①: the column stays – grey, "✕" in its head; ticked again: an event as before (no grey column).
     C) Unticked again and ✕: the column is gone.
     D) The attributes together: at most three side by side (a grid of three columns).
-    E) "＋ Another role" → instrument: its line framed yellow until an instrument is there, then not.
+    E) "＋ Another role" → instrument: its line framed yellow until an instrument is there, then not ([Z-ARHL2] 3.105.0: every cell of it
+       yellow, the role's cell too).
     F) (D032) in the full view, the date matrix applied (piano: a row for tracks 1–2 on March 1, one for 3–4 on March 3), the piano of
        tracks 3–4 put on the release: March 3 kept – not without a date beside the liner notes (until 3.102.0 it joined them)."""
     import copy
@@ -3156,13 +3157,15 @@ def case_evcol3103():
             pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=instrument]').first.click()
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             e1 = pg.locator(f'{sec} tr.dci-arhl').count()
+            # ([Z-ARHL2] 3.105.0) every cell yellow – the role's cell (it stays in place, white of its own) too
+            bg = pg.evaluate(f"[...document.querySelectorAll('{sec} tr.dci-em-line.dci-arhl > td')].map(td => getComputedStyle(td).backgroundColor)")
             inp = pg.locator(f'{sec} tr.dci-arhl input[data-f=primary], {sec} tr.dci-arhl input[data-f=em-primary]').first
             inp.fill('guitar')
             inp.press('Tab')
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             e2 = pg.locator(f'{sec} tr.dci-arhl').count()
-            print('E)', e1, e2)
-            results.append(e1 >= 1 and e2 == 0)
+            print('E)', e1, e2, bg)
+            results.append(e1 >= 1 and e2 == 0 and bool(bg) and all(c == 'rgb(255, 251, 230)' for c in bg))
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
@@ -3267,6 +3270,63 @@ def case_instsrem3103():
         for k, v in linked0.items():
             H.LINKED[k] = v
         H.ARTISTS.pop(3301, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_bzk3105():
+    """Credits Importer 3.105.0 (collected item Z-BZK, question Q014): Discogs's plain "Bouzouki" – which bouzouki? The bouzouki itself
+    and every kind of it in MusicBrainz's instrument tree (here irish bouzouki and tzouras), in the full list and in the matrix line;
+    irish bouzouki chosen: the instrument irish bouzouki, credited "bouzouki"."""
+    import copy
+    orig = H.discogs_release
+    attrs0 = copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_attribute_type'))
+    H.attr(9150, 'bouzouki', 14, 14)
+    H.attr(9151, 'irish bouzouki', 14, 9150)
+    H.attr(9152, 'tzouras', 14, 9150)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3321] = (H.uid('dddddddd', 3321), 'Bo Zou')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Bo Zou', 'anv': '', 'role': 'Bouzouki', 'tracks': '', 'id': 3321, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    results = []
+    try:
+        for view in ('legacy', 'matrix'):
+            with sync_playwright() as p:
+                H.ENTRIES_VIEW = view
+                b = p.chromium.launch(args=H.LAUNCH_ARGS)
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                sec = sec_sel(pg, 'Bo Zou')
+                opts = pg.evaluate(f"[...document.querySelectorAll('{sec} [data-question=Q014] [data-act=instr-pick], {sec} [data-cl-ask=instr] [data-value], {sec} .dci-em-chipask [data-instr]')].map(b => b.dataset.instr || b.dataset.value || b.textContent.trim())")
+                print(view, 'A)', opts)
+                ok = opts[:3] == ['bouzouki', 'irish bouzouki', 'tzouras']
+                if view == 'legacy':
+                    pg.click(f"{sec} [data-question=Q014] [data-act=instr-pick][data-instr='irish bouzouki']")
+                    H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                    got = pg.evaluate(f"[document.querySelector('{sec} [data-f=primary]').value, (document.querySelector('{sec} [data-f=credit], {sec} [data-f=role-credit]') || {{}}).value || '']")
+                    print('   B)', got)
+                    ok = ok and got[0] == 'irish bouzouki'
+                results.append(ok and not errs)
+                b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED['link_attribute_type'] = linked0
+        H.ARTISTS.pop(3321, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

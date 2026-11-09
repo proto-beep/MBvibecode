@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.104.0
+// @version      3.105.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.104.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.104.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.105.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.105.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.104.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.105.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1811,6 +1811,22 @@
       "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
       "settings.gapNone": "Also when nothing seems to be missing",
       "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
+      "gapWhy.head": "Line of the release page (developer mode):",
+      "gapWhy.start": "started – waiting for MusicBrainz and the source …",
+      "gapWhy.off": "switched off in ⚙ Settings → Sources.",
+      "gapWhy.path": "not a release page ({path}).",
+      "gapWhy.noLink": "no Discogs or Bandcamp link recognized among the {n} external links of the page.",
+      "gapWhy.ws": "MusicBrainz's web service did not answer (status {status}).",
+      "gapWhy.dgBroken": "the request to Discogs (release {id}) was broken off: {msg}",
+      "gapWhy.bcBroken": "the request to Bandcamp ({url}) was broken off: {msg}",
+      "gapWhy.dgFailed": "Discogs (release {id}) said no on {when} – asked again an hour later.",
+      "gapWhy.noCredits": "Discogs has no credits for this release (and no Bandcamp page has any).",
+      "gapWhy.bcNoCredits": "the Bandcamp page has no credits.",
+      "gapWhy.none": "nothing seems to be missing (⚙ Settings → Sources: “also when nothing is missing” shows the line then).",
+      "gapWhy.dismissed": "hidden with ✕ (until the number changes from {n}).",
+      "gapWhy.error": "stopped by an error: {msg}",
+      "settings.gapWhy": "Line of the release page: show why it is missing",
+      "settings.gapWhyTitle": "Developer mode: where the line would be, a grey note says why there is none (the setting off, no link recognized, MusicBrainz or the source not answering, nothing missing, hidden with ✕, an error); in the console too.",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
@@ -2773,6 +2789,12 @@
       "quick.S155": "Several models of one instrument → each role credit on its own",
       "quick.S160": "Take rights societies (BMI, GEMA …) of the source",
       "quick.S170": "“On the release”: the instruments' common group on the recordings (else “instruments”)",
+      "quick.group.dates": "Dates",
+      "quick.group.performers": "Instruments and performers",
+      "quick.group.credits": "Attributes and credits",
+      "quick.group.works": "Writers, rights and works",
+      "quick.group.companies": "Companies and places",
+      "quick.group.other": "Other",
       "quick.S155.locked": "Cannot be switched on yet: MusicBrainz holds an instrument once per relationship and takes no second relationship that differs only in its role credit – the models are joined in one role credit (“Juno 6, Multipoly”)",
       "typeAsk.askMember": "“{role}”: performer on the recordings (the level can be changed), or no relationship? – please choose:",
       "log.concertPhotoDate": "{name}: the concert’s date {date} (photographs of the concert, D026)",
@@ -4166,6 +4188,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S171', where: 'TEXT.parse (rdst)', note: 'Texts (3.105.0; collected item Z-RDST): "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." – a name right after the date of a sentence of recording, without "at", is the place where it was recorded when one of its words is one of places: studio, hall, saal, kirche, church, club, theater, room, haus (also at the end of a word: Konzerthaus, Sendesaal, Stadthalle) – read as "Recorded … at …"' },
     { id: 'S170', where: 'instsGroup', note: 'View (3.103.0; collected item Z-INSTS; a quick switch, on by default): the automatic row of "on the release" names the lowest group of MusicBrainz\'s instrument tree all the instruments share (soprano and alto saxophone: saxophone; soprano saxophone and bass clarinet: the reeds; flute and bass clarinet: woodwind; "wind instruments" too) – none, the whole tree or piano with strings: "instruments" (no instrument); a group the source does not name is said at the row. Off: always "instruments"' },
     { id: 'S169', where: 'instsRows, instsSet, instsBarHtml, instsSegHtml', note: 'View (3.103.0; collected item Z-INSTS): the instruments of a person the source names without tracks – per track (each on all recordings, as before) or on the release ("Instruments: per track | on the release" per person; suggested from 4 such instruments): on the release each instrument with the date of the release (the release-level dates of its column in the date matrix, else the date it had), on the recordings one automatic row – the instruments\' common group (S170), "performer" when voices are among them – with the date of the recordings and "guest" or "additional" when all have it; switched back and forth: always one of the two states, the changes of the rows (also of the automatic one) kept' },
     { id: 'S168', where: 'TEXT.parse (firstPerson), playsAsks, playsHtml', note: 'Texts (3.102.0; collected item Z-PLAYS): "At the time I played soprano and tenor sax." – a sentence of the one who writes: left out when its instruments are credited already; an instrument no one is credited with is asked above the entries – whose it is (the people of the release offered, the one who plays the others of the sentence first), taken on all tracks, or not' },
@@ -5452,7 +5475,38 @@
    * role became another question's word is asked again).
    */
   const keptBase = (row, q) => !!q && row.baseKept === q.id && norm(row.primaryText) === q.base;
-  const questionAsks = (q, row) => norm(row.primaryText) === q.base || (!!q.preset && q.options.some((o) => norm(o) === norm(row.primaryText)));
+  const questionAsks = (q, row) => norm(row.primaryText) === q.base || (!!q.preset && questionOptions(q).some((o) => norm(o) === norm(row.primaryText)));
+  /**
+   * [Z-BZK] (3.105.0) The choices of a question: as written, or ("children": true) the instrument itself and every kind of it in
+   * MusicBrainz's instrument tree ("bouzouki", "irish bouzouki" …) – the written ones while the tree is not there.
+   */
+  function questionOptions(q) {
+    if (!q || !q.children) return q ? q.options : [];
+    let ix = null;
+    try {
+      ix = idx();
+    } catch (e) {
+      return q.options; // ((review) MusicBrainz's types not loaded yet: the written ones
+    }
+    const cache = questionOptions.cache && questionOptions.cache.ix === ix ? questionOptions.cache : (questionOptions.cache = { ix, map: new Map() });
+    const ck = `${q.id}|${q.base}|${q.options.join('|')}`; // ((review) an own edit of the question counts
+    if (cache.map.has(ck)) return cache.map.get(ck);
+    const root = [...ix.atById.values()].find((a) => !a.parent_id && norm(a.name) === 'instrument');
+    const top = root ? findChildAttr(root.id, q.base) : null;
+    let list = q.options;
+    if (top) {
+      const out = [top.name];
+      const all = [...ix.atById.values()];
+      const walk = (id, depth) => all.filter((a) => a.parent_id === id).sort((x, y) => x.name.localeCompare(y.name)).forEach((a) => {
+        out.push(a.name);
+        if (depth < 4) walk(a.id, depth + 1);
+      });
+      walk(top.id, 0);
+      if (out.length > 1) list = uniq(out);
+    }
+    cache.map.set(ck, list);
+    return list;
+  }
 
   /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
   function questionRuleFor(row) {
@@ -6059,6 +6113,10 @@
 
   /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
   const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
+
+  // [3.37.9] photographs of the concert (collected item 159); ((3.105.0, review) here, before findDates: the release page reads texts
+  // with it and leaves the script before the rest is made)
+  const CONCERT_PHOTO = /\b(?:at|during|from)\s+the\s+(?:concert|gig|show|performance|festival)s?\b|\bin\s+concert\b|\b(?:live|concert|gig|stage)\s+(?:photos?|photographs?|photography|shots?|pictures?)\b|\bphotographed\s+live\b|\blive\b/i;
 
   /**
    * [Z-CPI] (3.73.0, review) The hint artwork of a photo's words: none without D025 (as until 3.72.0), none for photographs taken at a
@@ -7045,6 +7103,35 @@
           return `${x} [${kind}]`;
         }).join(', ');
       }).join(', ');
+      /**
+       * [Z-RDST] (3.105.0, S171) "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." – a name right after the date of a
+       * sentence of recording, one of its words a word of places: read as "… 2007 at Studio des deutschen Filmorchesters Babelsberg."
+       */
+      function rdstLine(line) {
+        if (!ruleOn('S171') || !/\b(?:recorded|aufgenommen|enregistr[ée]|grabado|registrato|tracked)\b/i.test(line)) return line;
+        // ((review) the word of places the first or last word of the name; at the end of a longer word only ("Konzerthaus", not "Bauhaus")
+        const PLACE_WORD = /^(?:studio|studios|hall|halle|saal|kirche|church|club|theater|theatre|room|haus)$/i;
+        const PLACE_END = /^\p{L}{4,}(?:haus|saal|halle|kirche|studio|studios|theater)$/iu;
+        const NOT_PLACE = /\b(?:by|and|und|with|feat|featuring|produced|producing|producer|engineer(?:ed)?|mix(?:ed)?|remix|master(?:ed)?|version|edit|street|avenue|straße|strasse)\b|&/i;
+        let out = line;
+        for (const dt of findDates(line).filter((x) => x.text && x.text.length >= 4).reverse()) {
+          const at = out.lastIndexOf(dt.text);
+          if (at < 0) continue;
+          const head = out.slice(0, at + dt.text.length);
+          // (the sentence before the date – the date's own dots ("6. 7, 2007") do not end it)
+          if (!/\b(?:recorded|aufgenommen|enregistr[ée]|grabado|registrato|tracked)\b[^.!?;]*$/i.test(out.slice(0, at))) continue;
+          const m = out.slice(head.length).match(/^,?\s+(?!(?:at|in|im|@|auf|à|au|en|a|by|von)\b)(\p{Lu}[^.!?;\n]{1,90}?)(\s*(?:[.!?;]|$))/iu);
+          if (!m || !/^\p{Lu}/u.test(m[1]) || NOT_PLACE.test(m[1])) continue;
+          const words = m[1].split(/[\s,/-]+/).map((w) => w.replace(/[’'"“”()]/g, '')).filter(Boolean);
+          const placeWord = (w) => PLACE_WORD.test(w) || PLACE_END.test(w);
+          if (words.length > 9 || !(placeWord(words[0]) || placeWord(words[words.length - 1]) || (words.length > 1 && placeWord(words[words.length - 2])))) continue;
+          const fixed = `${head} at ${m[1]}${m[2]}${out.slice(head.length + m[0].length)}`;
+          if (!rawOf.has(fixed)) rawOf.set(fixed, rawOf.get(line) || line);
+          out = fixed;
+          break;
+        }
+        return out;
+      }
       function tidyLines(lines) {
         if (!ruleOn('S144')) return lines;
         const keep = (t, raw) => {
@@ -9372,7 +9459,7 @@
         held.forEach(readLine);
       };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l)));
+      const allLines0 = tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine);
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -10824,7 +10911,16 @@
   function initReleasePageHook() {
     const mbid = (location.pathname.match(MBID_RE) || [])[0];
     // [172] (3.39.0) how many relationships of the Discogs credits MusicBrainz does not have yet (not while going on to the editor)
-    const gap = () => { if (mbid) initReleaseGap(mbid).catch((e) => console.warn('[Discogs-Credits] release gap', e)); };
+    const gap = () => {
+      if (!mbid) return;
+      try {
+        gapWhy('start');
+      } catch (e) { /* the note only */ }
+      initReleaseGap(mbid).catch((e) => {
+        console.warn('[Discogs-Credits] release gap', e);
+        gapWhy('error', { msg: String((e && e.message) || e) });
+      });
+    };
     // [3.32.10] comments of live recordings waiting for the relationships of this release (item 113)
     if (mbid) runLiveJob(mbid, { tries: 5 });
     if (mbid) runArrComJob(mbid, { tries: 5 }); // [Z-ARRDIS2] (3.99.0) the disambiguations of new arrangement works, after "Enter edit"
@@ -10862,6 +10958,25 @@
   // the credits of the Discogs notes are still not counted here (Q-g).
   const GAP_ON_KEY = 'dci-gap-on';
   const GAP_NONE_KEY = 'dci-gap-none';
+  // [Z-GAPL] (3.105.0) developer mode: why the line is not there – at its place, in grey (and in the console)
+  const GAP_WHY_KEY = 'dci-gap-why';
+  // (the release page leaves the script before DEV_KEY is made: its name here)
+  const gapWhyOn = () => readJson('localStorage', 'dci-dev', false) === true && readJson('localStorage', GAP_WHY_KEY, false) === true;
+  function gapWhy(key, vars = {}) {
+    if (!gapWhyOn()) return;
+    console.info('[Discogs-Credits] release gap:', key, vars);
+    const host = document.querySelector('#content') || document.body;
+    host.querySelectorAll('.dci-gapline, .dci-gapwhy').forEach((x) => x.remove());
+    const box = document.createElement('div');
+    box.className = 'dci-gapwhy';
+    box.setAttribute('role', 'note');
+    box.dataset.why = key;
+    box.setAttribute('style', 'margin:6px 0 10px;padding:4px 10px;border:1px dashed #b9b6c6;border-radius:4px;background:#f4f3f7;color:#555;font-size:12px;line-height:1.5;');
+    box.textContent = `${tr('gapWhy.head')} ${tr(`gapWhy.${key}`, vars)}`;
+    const head = host.querySelector('.releaseheader') || host.querySelector('h1');
+    if (head && head.parentNode) head.parentNode.insertBefore(box, head.nextSibling);
+    else host.prepend(box);
+  }
   const GAP_PREFIX = 'dci-gap:';
   const GAP_EXACT_PREFIX = 'dci-gap-exact:';
   // [AY] (3.40.0) "Count exactly": { links, at } for the relationship editor opened in the background (every tab sees it)
@@ -11085,7 +11200,12 @@
       rel = src.kind === 'discogs' ? await gapDiscogs(src.id, ws) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
     } catch (e) {
       // an answer that says no (429, 404, 5xx) is kept; a request broken off is not
-      if (!e || e.name === 'TypeError' || e.name === 'AbortError') return null;
+      gapRead.lastError = String((e && (e.message || e.name)) || e); // ([Z-GAPL] 3.105.0) for the developer mode's reason
+      if (!e || e.name === 'TypeError' || e.name === 'AbortError') {
+        // ((3.105.0, review) said in the console: before, a request blocked or broken off left no trace at all)
+        console.info('[Discogs-Credits] release gap: request broken off', src.kind, e);
+        return null;
+      }
       const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
       console.warn('[Discogs-Credits] release gap', src.kind, e);
       return { kept: { ...(prev || {}), failAt: Date.now(), failStatus: status }, changed: true, failed: true };
@@ -11099,15 +11219,24 @@
   }
 
   async function initReleaseGap(mbid) {
-    if (readJson('localStorage', GAP_ON_KEY, true) === false || !/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return;
+    if (readJson('localStorage', GAP_ON_KEY, true) === false) return gapWhy('off');
+    if (!/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return gapWhy('path', { path: location.pathname });
     // the page's own links first: a release page without a Discogs or Bandcamp link asks nothing
     // (the links read by the adapters: what is Discogs stays in DISCOGS)
     const box = document.querySelector('ul.external_links');
-    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs' || l.source === 'bandcamp')) return;
+    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs' || l.source === 'bandcamp')) {
+      return gapWhy('noLink', { n: box.querySelectorAll('a[href]').length });
+    }
     gapSweep();
-    const res = await fetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
-      + '+release-groups+release-group-level-rels+artist-credits&fmt=json', { credentials: 'same-origin' });
-    if (!res.ok) return;
+    // ([Z-GAPL] 3.105.0) MusicBrainz's "too many requests" (503, 429 – the page and other scripts ask too): asked again, twice
+    let res = null;
+    for (let k = 0; k < 3; k++) {
+      res = await fetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
+        + '+release-groups+release-group-level-rels+artist-credits&fmt=json', { credentials: 'same-origin' });
+      if (res.ok || (res.status !== 503 && res.status !== 429)) break;
+      await new Promise((r) => setTimeout(r, 1500 * (k + 1)));
+    }
+    if (!res.ok) return gapWhy('ws', { status: res.status });
     const ws = await res.json();
     const links = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource));
     const dLink = links.find((l) => l.source === 'discogs');
@@ -11116,16 +11245,17 @@
     let use = null;
     // [Z-AD] (3.40.2) Discogs read, without credits in its list: { notes } – Bandcamp steps in, the line says so (Q-ad)
     let dgEmpty = null;
+    let bcFailed = false;
     if (dLink) {
       const src = { kind: 'discogs', id: String(dLink.id), url: dLink.url };
       const key = `${GAP_PREFIX}${rel}`;
       const old = readJson('localStorage', key, null);
       const r = await gapRead(src, old && old.dId === src.id ? old : null, ws);
-      if (!r) return;
+      if (!r) return gapWhy('dgBroken', { id: src.id, msg: gapRead.lastError || '' });
       if (r.changed) writeJson('localStorage', key, { ...r.kept, dId: src.id });
       // Discogs did not answer: no line (Bandcamp steps in only when Discogs has nothing); (3.40.3, review) a release Discogs does
       // not have (404) has nothing
-      if (r.failed && r.kept.failStatus !== 404) return;
+      if (r.failed && r.kept.failStatus !== 404) return gapWhy('dgFailed', { id: src.id, when: new Date(r.kept.failAt || Date.now()).toLocaleString() });
       if (r.failed) dgEmpty = { missing: true };
       else if ((r.kept.credits || []).length) {
         use = {
@@ -11155,7 +11285,7 @@
       for (const l of bLinks.slice(0, 3)) {
         const src = { kind: 'bandcamp', id: String(l.id), url: l.url };
         const r = await gapRead(src, pages[src.id] || null, ws);
-        if (!r) return;
+        if (!r) return gapWhy('bcBroken', { url: src.url, msg: gapRead.lastError || '' });
         if (r.changed) {
           pages[src.id] = r.kept;
           changed = true;
@@ -11168,6 +11298,7 @@
       });
       if (changed) writeJson('localStorage', key, { at: Date.now(), pages });
       const ok = read.filter((x) => !x.failed && (x.kept.credits || []).length).sort((a, b) => b.kept.credits.length - a.kept.credits.length);
+      bcFailed = !ok.length && read.some((x) => x.failed); // ((3.105.0, review) said so – not "no credits")
       if (ok.length) {
         const best = ok[0];
         use = {
@@ -11181,7 +11312,10 @@
       }
     }
     // [AY] (3.40.0) nothing in it: no line (Q-o, Q-x)
-    if (!use) return;
+    if (!use) {
+      return gapWhy(dgEmpty && dgEmpty.missing ? 'dgMissing' : bcFailed ? 'bcFailed' : dLink ? 'noCredits' : bLinks.length ? 'bcNoCredits' : 'noLink',
+        { n: (ws.relations || []).filter((r) => r.url).length, id: dLink ? dLink.id : '', msg: gapRead.lastError || '' });
+    }
     const { src, kept } = use;
     const mb = gapMbNames(ws);
     const est = mb.incomplete ? null : gapEstimate(kept, mb);
@@ -11190,16 +11324,16 @@
     // [AY] (3.40.0) nothing missing – about none, or the dashboard counted none since the credits were read (review: and none of
     // its rows open – a name without a MusicBrainz entry is missing all the same): no line (Q-x), unless the setting says so
     const none = (est && est.total === 0) || !!(exact && exact.n === 0 && exact.open === 0 && (exact.at || 0) >= (kept.since || kept.at || 0));
-    if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return;
+    if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return gapWhy('none');
     // ✕: hidden until the number changes
-    if (est && kept.dismissed != null && kept.dismissed === est.total) return;
+    if (est && kept.dismissed != null && kept.dismissed === est.total) return gapWhy('dismissed', { n: est.total });
     showReleaseGap({ mbid, src, est, exact, notes: kept.notes, dismiss: use.dismiss, dgEmpty: use.dgEmpty || null, others: use.others || [] });
   }
 
   function showReleaseGap(opts) {
     const { mbid, src, est, exact, notes, dismiss, dgEmpty, others } = opts;
     const host = document.querySelector('#content') || document.body;
-    host.querySelectorAll('.dci-gapline').forEach((x) => x.remove());
+    host.querySelectorAll('.dci-gapline, .dci-gapwhy').forEach((x) => x.remove()); // ([Z-GAPL] 3.105.0) the note of the developer mode too
     const box = document.createElement('div');
     box.className = 'dci-gapline';
     box.setAttribute('role', 'note');
@@ -16148,6 +16282,9 @@
    * the rule, which says where it acts. The same switches as in the lists below (`dci-rules-off`).
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
+  // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
+  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031']],
+    ['works', ['S160', 'S045', 'S122']], ['companies', ['S007']]];
   function quickSwitchesHtml() {
     const notes = ruleNotes();
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
@@ -16159,7 +16296,9 @@
         <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel">${esc(tr(`quick.${id}`))}</span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
-      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div><div class="dci-quick-grid">${QUICK_SWITCHES.map(one).join('')}</div>${QUICK_SWITCHES.filter((id) => LOCKED_RULES.has(id))
+      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
+      ['other', QUICK_SWITCHES.filter((id) => !QUICK_GROUPS.some(([, ids]) => ids.includes(id)))]].filter(([, ids]) => ids.length)
+      .map(([g, ids]) => `<div class="dci-quick-group" data-qgroup="${g}"><div class="dci-quick-gh">${esc(tr(`quick.group.${g}`))}</div><div class="dci-quick-grid">${ids.map(one).join('')}</div></div>`).join('')}${QUICK_SWITCHES.filter((id) => LOCKED_RULES.has(id))
         .map((id) => `<p class="dci-sub dci-qlocked-note" data-qs-note="${esc(id)}">${esc(`${id}: ${tr(`quick.${id}.locked`)}`)}</p>`).join('')}</div>`;
   }
 
@@ -25741,10 +25880,10 @@
     const lt = currentLinkType(r);
     const q = questionRuleFor(r);
     const instr = (x, text = x) => ({ act: 'instr-pick', attr: 'instr', value: x, text });
-    if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base && !keptBase(r, q)) return q.options.map((x) => instr(x));
+    if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base && !keptBase(r, q)) return questionOptions(q).map((x) => instr(x));
     // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?"); ([Z-QGTR] 3.97.0) also the
     // instrument of the word itself chosen ("guitar" for "Guitar")
-    if (q && (q.preset || keptBase(r, q)) && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
+    if (q && (q.preset || keptBase(r, q)) && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(questionOptions(q).filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
     // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings: its readings at the chip
     if (abbrOpen(r)) return r.abbrAsk.options.map((x) => instr(x));
     const g = r.instrGuess;
@@ -26726,8 +26865,6 @@
     return S.datePool.find((x) => x.liner === liner.name) || null;
   }
 
-  // [3.37.9] photographs of the concert (collected item 159)
-  const CONCERT_PHOTO = /\b(?:at|during|from)\s+the\s+(?:concert|gig|show|performance|festival)s?\b|\bin\s+concert\b|\b(?:live|concert|gig|stage)\s+(?:photos?|photographs?|photography|shots?|pictures?)\b|\bphotographed\s+live\b|\blive\b/i;
 
   /** The one date of the concert: the Performance dates of the matrix (else of the pool), when there is only one. */
   function concertDate() {
@@ -28988,10 +29125,10 @@
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
     // [Q013] (3.42.3) an answer set at once: the others to choose ("Horns" is set as horn – or as: brass)
     if ((q.preset && norm(row.primaryText) !== q.base) || keptBase(row, q)) {
-      const others = q.options.filter((o) => norm(o) !== norm(row.primaryText));
+      const others = questionOptions(q).filter((o) => norm(o) !== norm(row.primaryText));
       return `<div class="dci-bass-ask" data-question="${q.id}" data-preset="1">${esc(tr('instrAsk.preset', { name: row.base, set: row.primaryText, credit: q.credit }))} ${others.map(pick).join(' · ')}</div>`;
     }
-    return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
+    return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${questionOptions(q).map(pick).join(' · ')}
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
@@ -29282,7 +29419,7 @@
       if (!hasDateInput(row.date) && rowDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
       // [3.32.3] the questions whole and to click (item 102)
-      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base && !keptBase(row, q)) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base && !keptBase(row, q)) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), questionOptions(q).map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings
       if (abbrOpen(row)) parts.push(clineAskHtml('instr', tr('abbr.ask', { abbr: row.abbrAsk.abbr }), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
@@ -42177,7 +42314,7 @@
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, ALIAS_MAX_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -43855,7 +43992,7 @@
       out.push({ q: 'guess', a: other ? 'other' : sp === 'typo' ? 'typo' : sp === 'same' ? 'same' : 'similar' });
     }
     const q = questionRuleFor(row);
-    if (q && norm(row.primaryText) && (norm(row.primaryText) !== q.base || keptBase(row, q)) && (q.options || []).some((o) => norm(o) === norm(row.primaryText))) out.push({ q: q.id, a: row.primaryText });
+    if (q && norm(row.primaryText) && (norm(row.primaryText) !== q.base || keptBase(row, q)) && questionOptions(q).some((o) => norm(o) === norm(row.primaryText))) out.push({ q: q.id, a: row.primaryText });
     const tq = typeQuestionFor(row);
     if (tq && row.typeAnswer != null) {
       const o = tq.options[row.typeAnswer];
@@ -44031,6 +44168,8 @@
         // [172] (3.39.0) the line of the release page; [AY] (3.40.0) of Bandcamp too, and when nothing seems to be missing (off, Q-x)
         row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapLine'), tr('settings.gapLineTitle'))),
         row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
+        // [Z-GAPL] (3.105.0) developer mode: why the line is not there
+        S.devMode ? row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))) : '',
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
@@ -44426,6 +44565,10 @@
       // [172] (3.39.0) the line of the release page (on unless switched off)
       writeJson('localStorage', GAP_ON_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.gapLine'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'gap-why') {
+      // [Z-GAPL] (3.105.0) off unless switched on (developer mode)
+      writeJson('localStorage', GAP_WHY_KEY, el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('settings.gapWhy'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'gap-none') {
       // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
       writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
@@ -44743,7 +44886,7 @@
     // [Z-STH, Z-GOF, Z-RDU] (3.53.0) when you work, "Global", the lengths of the recordings
     STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY, STATS_LEN_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
-    GAP_ON_KEY, GAP_NONE_KEY,
+    GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
@@ -46366,6 +46509,8 @@
       #dci-rules .dci-quick-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
         background: #f1effa; border-bottom: 1px solid #dddae8; border-radius: 4px 4px 0 0; }
       #dci-rules .dci-quick-h strong { font-size: calc(var(--u, 1px) * 13); }
+      #dci-rules .dci-quick-gh { font-size: calc(var(--u, 1px) * 11); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted, #6b6880); margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-quick-h + .dci-quick-group .dci-quick-gh { margin-top: calc(var(--u, 1px) * 2); }
       #dci-rules .dci-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 280), 1fr)); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
         padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 10); }
       #dci-rules .dci-qbtn-wrap { display: flex; align-items: stretch; min-width: 0; }
@@ -47531,6 +47676,8 @@
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
       .dci-arhl, tr.dci-row.dci-arhl, tr.dci-em-line.dci-arhl { outline: 2px solid #e0b400; outline-offset: -2px; background: #fffbe6; }
+      /* [Z-ARHL2] (3.105.0) every cell of it – the role's cell (sticky, white of its own) too */
+      tr.dci-row.dci-arhl > td, tr.dci-em-line.dci-arhl > td, .dci-em-grid tr.dci-em-line.dci-arhl > td.dci-em-c-role { background: #fffbe6; }
       .dci-em-flaggrid { display: grid; grid-template-columns: repeat(3, max-content); column-gap: calc(var(--u, 1px) * 8); row-gap: calc(var(--u, 1px) * 2); }
       .dci-em-flaggrid .dci-em-flagl { margin-right: 0; }
       .dci-em-grid th.dci-em-evghost, .dci-em-grid td.dci-em-c-ghost { background: #ecebf0; color: #77748a; }
@@ -47832,7 +47979,7 @@
          "⚙ Options ▾" */
       .dci-foot { position: relative; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); container-type: inline-size; }
       /* [Z-FOOT] (3.97.0) the run: a chip with the latest step (yellow, filled as far as done; green when all is done) and a line on top */
-      .dci-foot-line { position: absolute; top: -1px; left: 0; right: 0; height: 2px; background: linear-gradient(to right, #d9a400 var(--run, 0%), transparent var(--run, 0%)); pointer-events: none; transition: background-size 0.3s; }
+      .dci-foot-line { position: absolute; top: -1px; left: 0; right: 0; height: calc(var(--u, 1px) * 6); background: linear-gradient(to right, #d9a400 var(--run, 0%), transparent var(--run, 0%)); pointer-events: none; transition: background-size 0.3s; }
       .dci-foot-run { position: relative; display: inline-block; flex: 1 1 calc(var(--u, 1px) * 70); min-width: 0; max-width: calc(var(--u, 1px) * 300); overflow: hidden; border: 1px solid #e8d48a; border-radius: 999px; padding: 1px calc(var(--u, 1px) * 8);
         font-size: calc(var(--u, 1px) * 12); line-height: 1.5; white-space: nowrap; text-overflow: ellipsis; color: #7a5a00; background: linear-gradient(to right, #f6e4a2 var(--run, 0%), #fff8db var(--run, 0%)); }
       .dci-foot-run-t { overflow: hidden; text-overflow: ellipsis; }
