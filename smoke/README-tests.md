@@ -136,6 +136,9 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # release's artists ("artists") and its number of tracks ("tracks")
 
 python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
+                                #   cimp3101: 3.101.0 (Z-CIMP, Z-RSOC; S160–S165): the back cover of CIMP #384 pasted – writers below the titles,
+                                #     duos restrict the lineup, SOLO asked, cover art / typesetting / hospitality, the series chosen, BMI on Skip (taken with S160)
+                                #   abbr3101: 3.101.0 (Z-ABBR, S166): abbreviations in short form, two readings, writer lines over two lines, series, catalogue numbers (Node)
                                 #   fbh389: 3.89.0 (Z-FBH, S140): "fb:", "ig:", "yt:", "bandcamp:", "sc:", "tw:", "@name" below a name – its links,
                                 #     the lines left out as profiles; found by the Facebook link, not shown
                                 #   freetext: credits from a pasted text (3.2.0): "Name – roles", "Role: names", two clauses in a line, places
