@@ -2121,4 +2121,54 @@ def case_abbr3102():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_cimp3107():
+    """Credits Importer 3.107.0 (collected item Z-CIMP2, rule S161) in Node: the track list of "The Throes" (CIMP #384) as the text
+    recognition reads the cover – each title with its length ("1. The Throes 07:21"), its writers and publishers below (also broken over
+    two lines), the society misread ("FlizmoMusic-BM!)", "4WordSeaMusic-BMI}", "FlizmoMusic-BMI!)"), a number run into its title
+    ("9.... on a Stamp!?"; MusicBrainz: "… on a Stamp!?").
+    A) Every track its writers and their publishers, nothing not recognized, no publisher "Tomas Fujiwara (Tomas Fujiwara".
+    B) The list with writers only below every second title (the other titles alone, one after the other): those writers on their tracks,
+       the titles alone left out as titles (none not recognized)."""
+    import json
+    import subprocess
+    OCR = '1. The Throes 07:21\nTomas Fujiwara (Tomas Fujiwara-BMI)\n2. KFNW 03:12\nKen Filiano (FlizmoMusic-BMI) / Nate Wooley\n(4WordSeaMusic-BMI)\n3. Face to the Sun 07:51\nNate Wooley (4WordSeaMusic-BMI}\n4. KFTHB 08:48\nKen Filiano (FlizmoMusic-BM!) / Taylor Ho Bynum\n(ThobulousMusic-BMI)\n5. Narrows 14:31\nKen Filiano (FlizmoMusic-BMI!)\n6. NWTF 04:14\nNate Wooley (4WordSeaMusic-BMI) / Tomas\nFujiwara (Tomas Fujiwara-BMI)\n7. Ish 08:54\nTaylor Ho Bynum (ThobulousMusic-BMI)\n8. TFTHB 03:00\nTomas Fujiwara (Tomas Fujiwara-BMI) /\nTaylor Ho Bynum (ThobulousMusic-BM!)\n9.... on a Stamp!? 09:58\nTaylor Ho Bynum (ThobulousMusic-BMI)\n10. Back to My Steel 09:08\nNate Wooley (4WordSeaMusic-BMI)'
+    EVEN = '\n'.join(['1. The Throes 07:21', '2. KFNW 03:12', 'Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)', '3. Face to the Sun 07:51',
+                      '4. KFTHB 02:48', 'Ken Filiano (FlizmoMusic-BMI) / Taylor Ho Bynum (ThobulousMusic-BMI)', '5. Narrows 14:31'])
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated; };
+const isCompanyRole = (role) => /published|rights society|recorded at|part of series/i.test(role);
+const titles = ['The Throes', 'KFNW', 'Face to the Sun', 'KFTHB', 'Narrows', 'NWTF', 'Ish', 'TFTHB', '… on a Stamp!?', 'Back to My Steel'];
+const key = (t) => String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const resolveTitles = (ts) => { const indexes = new Set(); const unresolved = []; ts.forEach((t) => { const i = titles.findIndex((x) => key(x) === key(t)); if (i >= 0) indexes.add(i); else unresolved.push(t); }); return { indexes, unresolved }; };
+const resolveTracks = (spec) => { const n = Number(String(spec).trim()); return n >= 1 && n <= 10 ? new Set([n - 1]) : null; };
+const tr = (w) => (w && w.all ? 'all' : w && w.indexes ? w.indexes.map((i) => i + 1).join(',') : '');
+const out = JSON.parse(process.argv[2]).map((text) => { const r = m.SOURCES.text.parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles, trackCount: 10, titleNames: titles });
+  return { credits: r.credits.map((c) => [c.who.name, tr(c.tracks)]), pubs: r.companies.filter((c) => /published/i.test(c.role)).map((c) => [c.who.name, tr(c.tracks)]),
+    unrec: r.unrecognized, titles: r.ignored.filter((x) => x.why === 'trackTitle').length }; });
+console.log(JSON.stringify(out));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([OCR, EVEN])], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else [{'error': js.stderr[-800:]}]
+    print(json.dumps(out, ensure_ascii=False)[:3000])
+    a = out[0]
+    want = [['Tomas Fujiwara', '1'], ['Ken Filiano', '2'], ['Nate Wooley', '2'], ['Nate Wooley', '3'], ['Ken Filiano', '4'], ['Taylor Ho Bynum', '4'], ['Ken Filiano', '5'],
+            ['Nate Wooley', '6'], ['Tomas Fujiwara', '6'], ['Taylor Ho Bynum', '7'], ['Tomas Fujiwara', '8'], ['Taylor Ho Bynum', '8'], ['Taylor Ho Bynum', '9'], ['Nate Wooley', '10']]
+    pubs = [['Tomas Fujiwara', '1'], ['FlizmoMusic', '2'], ['4WordSeaMusic', '2'], ['4WordSeaMusic', '3'], ['FlizmoMusic', '4'], ['ThobulousMusic', '4'], ['FlizmoMusic', '5'],
+            ['4WordSeaMusic', '6'], ['Tomas Fujiwara', '6'], ['ThobulousMusic', '7'], ['Tomas Fujiwara', '8'], ['ThobulousMusic', '8'], ['ThobulousMusic', '9'], ['4WordSeaMusic', '10']]
+    ok_a = a.get('credits') == want and a.get('pubs') == pubs and a.get('unrec') == [] and a.get('titles') == 10
+    b = out[1] if len(out) > 1 else {}
+    ok_b = b.get('credits') == [['Ken Filiano', '2'], ['Nate Wooley', '2'], ['Ken Filiano', '4'], ['Taylor Ho Bynum', '4']] and b.get('unrec') == [] and b.get('titles') == 5
+    # (review) read as before: a publisher with a bracket of its own, a bracket that is no society, a title that is only a length
+    NODE2 = NODE.replace("const titles = ['The Throes'", "const titles = ['4:33', 'The Throes'")
+    js2 = subprocess.run(['node', '-e', NODE2, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'),
+                          json.dumps(['Publishers:\nChrysalis Music (UK) Ltd (PRS)', 'Thanks (Johnny - Cash)', '1. 4:33'])], capture_output=True, text=True)
+    out2 = json.loads(js2.stdout) if not js2.returncode else [{'error': js2.stderr[-800:]}]
+    print('review:', out2)
+    ok_c = len(out2) == 3 and ['Chrysalis Music (UK) Ltd', ''] in out2[0].get('pubs', []) and 'CASH' not in json.dumps(out2[1]) and out2[2].get('titles') == 1 and out2[2].get('unrec') == []
+    print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c else 'FEHLER', [ok_a, ok_b, ok_c])
+
 run_cases(globals())

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.106.0",
+  "version": "3.107.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -22,7 +22,7 @@
   "QUESTION_RULES": [
     {"id":"Q001","base":"bass","credit":"bass","options":["electric bass guitar","double bass","acoustic bass guitar","bass guitar"],"note":"Plain \"Bass\": which bass? (3.97.0, Z-QGTR: or bass guitar, the family)"},
     {"id":"Q002","base":"guitar","credit":"guitar","options":["electric guitar","acoustic guitar","guitar"],"note":"Plain \"Guitar\": which guitar? (3.97.0, Z-QGTR: or guitar itself)"},
-    {"id":"Q014","base":"bouzouki","credit":"bouzouki","options":["bouzouki","irish bouzouki"],"children":true,"note":"Plain \"Bouzouki\" (3.105.0; collected item Z-BZK): which bouzouki? – the bouzouki itself and every kind of it in MusicBrainz's instrument tree (as written while the tree is not there)"},
+    {"id":"Q014","base":"bouzouki","credit":"bouzouki","options":["bouzouki","irish bouzouki"],"children":true,"note":"Plain \"Bouzouki\" (3.105.0; collected item Z-BZK): which bouzouki? – the bouzouki itself and every kind of it in MusicBrainz's instrument tree (as written while the tree is not there); 3.107.0 (Z-ITREE): the kinds from the instruments' \"type of\" relationships"},
     {"id":"Q004","base":"bass guitar","credit":"bass guitar","options":["bass guitar","electric bass guitar","acoustic bass guitar"],"note":"Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar"},
     {"id":"Q013","base":"horns","credit":"horns","options":["horn","brass","wind instruments"],"preset":"horn","note":"\"Horns\" (3.42.3, Q-dh, Q-dm): horn credited \"horns\" – set at once – or brass credited \"horns\" (a horn section); (3.97.0, Z-QGTR) or wind instruments credited \"horns\" (brass and saxophones)"}
   ],
