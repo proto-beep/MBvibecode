@@ -955,4 +955,32 @@ console.log(JSON.stringify(a));
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_dat3104():
+    """Credits Importer 3.104.0 (D033): days with a dot and only a space between them, beside a month name – "Recorded May, 6. 7, 2007
+    Studio des deutschen Filmorchesters Babelsberg." 2007-05-06 – 2007-05-07 a performance date (until 3.103.0 only 2007); "May 6. 7.
+    2007", "6. 7. Mai 2007" the same; "6. 7. 2007" (no month name) still the 6th of July; "May 6, 7, 2007" as before (D013). (review) As
+    before: days not one after another ("6. 8. May 2007": the 8th), a number of a volume, a track … ("Vol. 1. 2. May 2007", "track 3. 4 May
+    2001": the 2nd, the 4th), a name ("Guitar: Brian May 1. 2. 2007": 1 February), impossible days ("May 31. 32, 2007": the year)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const f = (v) => [v.year, v.month, v.day].join('-');
+console.log(JSON.stringify(['Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg.', 'Recorded May 6. 7. 2007.', 'Aufgenommen am 6. 7. Mai 2007.',
+  'Recorded 6. 8. May 2007', 'Recorded 6. 7. 2007.', 'Recorded May 6, 7, 2007 at X.', 'Vol. 1. 2. May 2007', 'track 3. 4 May 2001', 'Guitar: Brian May 1. 2. 2007',
+  'May 31. 32, 2007']
+  .map((t) => { const d = m.findDates(t)[0]; return d ? [d.text, f(d.value.begin), f(d.value.end), d.multi ? d.multi.length : 0, d.hint] : null; })));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
+    print('A)', out)
+    ok = out == [['May, 6. 7, 2007', '2007-5-6', '2007-5-7', 0, 'performance'], ['May 6. 7. 2007', '2007-5-6', '2007-5-7', 0, 'performance'],
+                 ['6. 7. Mai 2007', '2007-5-6', '2007-5-7', 0, 'performance'], ['8. May 2007', '2007-5-8', '2007-5-8', 0, 'performance'],
+                 ['6. 7. 2007', '2007-7-6', '2007-7-6', 0, 'performance'], ['May 6, 7, 2007', '2007-5-6', '2007-5-7', 0, 'performance'],
+                 ['2. May 2007', '2007-5-2', '2007-5-2', 0, ''], ['4 May 2001', '2001-5-4', '2001-5-4', 0, ''], ['1. 2. 2007', '2007-2-1', '2007-2-1', 0, ''],
+                 ['2007', '2007--', '2007--', 0, '']]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())
