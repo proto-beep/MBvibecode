@@ -142,7 +142,8 @@ BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-gro
   if (!g) return null;
   return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: (h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-bac').forEach(x => x.remove()); return c.textContent; })(b.querySelector('.dci-em-bhead')).replace(/\\s+/g, ' ').trim(),
     tip: b.querySelector('.dci-em-bhead strong').title,
-    ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+    ev: (() => { const heads = [...b.closest('table').querySelectorAll('thead th.dci-em-ev')]; const ln = b.querySelector('tr.dci-em-line'); const cells = ln ? [...ln.querySelectorAll('td.dci-em-c-ev')] : [];
+      return heads.filter((h, i) => cells[i] && !cells[i].classList.contains('dci-em-c-none')); })().map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
     add: [...b.querySelectorAll('[data-f=em-addev] option')].filter(o => o.value).map(o => o.textContent.trim()),
     lines: [...b.querySelectorAll('tr.dci-em-line')].map(t => ({ line: t.dataset.line, n: t.dataset.rows.split(',').length, skip: t.classList.contains('dci-em-skip'),
       role: ((t.querySelector('[data-f=em-primary]') || {}).value) || t.querySelector('.dci-em-c-role').textContent.replace(/\\s+/g, ' ').trim(),
@@ -1070,7 +1071,7 @@ def case_flagcols():
     full matrix each attribute of the lines (add., guest, solo …) is a column of its own – its word centred over the checkboxes of
     every line (±2 px), not wider
     than its cell, at 100 % and at the largest text size (A+ ×3); until 3.36.5 one cell with fixed widths: the checkboxes 4, 11
-    and 18 px to the right of their words."""
+    and 18 px to the right of their words. [Z-ALIGN] (3.100.0) with "Attributes: separate" (Variante B)."""
     H.ENTRIES_VIEW = 'matrix'
     orig, rel = join_release()
     H.discogs_release = rel
@@ -1091,6 +1092,9 @@ def case_flagcols():
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1000)
+            # [Z-ALIGN] (3.100.0) a column per attribute: "Attributes: separate" (default: together in one column)
+            pg.click('[data-act=em-attr][data-attr=split] >> nth=0')
+            pg.wait_for_timeout(500)
             a1 = pg.evaluate(CHECK)
             for _ in range(3):
                 pg.click('[data-act=zoom-in]')
@@ -2544,6 +2548,286 @@ def case_msyn397():
         finally:
             H.discogs_release = orig
             H.BROWSER.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+# [Z-ALIGN] (3.100.0) a person with an instrument and three roles of their own (recording level), one at the release level
+ALIGN_CREDITS = [('Mix Man', 'Electric Guitar [Solo], Producer, Mixed By, Mastered By', 3075, '')]
+
+# the geometry of an entry's matrix: its tables, the words of its head, per line its role, the centre of each event cell (None:
+# the block does not show that event; '' no checkbox), its attributes (together: the words of the labels, separate: per column)
+ALIGN = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const tbl = g.querySelector('.dci-em-grid');
+  const cx = (el) => { const r = el.getBoundingClientRect(); return Math.round((r.left + r.width / 2) * 10) / 10; };
+  return { tables: g.querySelectorAll('.dci-em-grid').length, blocks: g.querySelectorAll('.dci-em-block').length,
+    head: [...tbl.querySelectorAll('thead th')].map(t => t.classList.contains('dci-em-ev') ? 'EV' : t.textContent.replace(/\\s+/g, ' ').trim()),
+    lines: [...tbl.querySelectorAll('tr.dci-em-line')].map(tr => ({ role: ((tr.querySelector('[data-f=em-primary]') || {}).value) || tr.querySelector('.dci-em-c-role').textContent.replace(/\\s+/g, ' ').trim(),
+      ev: [...tr.querySelectorAll('td.dci-em-c-ev')].map(td => td.classList.contains('dci-em-c-none') ? null : td.querySelector('input') ? cx(td.querySelector('input')) : ''),
+      joint: [...tr.querySelectorAll('td.dci-em-c-flags label')].map(l => (l.querySelector('input').checked ? '+' : '') + l.textContent.trim()),
+      split: [...tr.querySelectorAll('td.dci-em-c-flag')].map(td => { const c = td.querySelector('input'); return c ? (c.checked ? '+' : '') + c.value : ''; }) })),
+    store: localStorage.getItem('dci-em-attr') }; }"""
+
+
+def aligned(geo):
+    """Every event column: the checkboxes of all lines at the same place (±1 px); a cell of each line in each column."""
+    if not geo or not geo['lines']:
+        return False
+    n = len(geo['lines'][0]['ev'])
+    for i in range(n):
+        xs = [ln['ev'][i] for ln in geo['lines'] if len(ln['ev']) == n and isinstance(ln['ev'][i], float)]
+        if any(len(ln['ev']) != n for ln in geo['lines']) or not xs or max(xs) - min(xs) > 1:
+            return False
+    return True
+
+
+def case_align3100():
+    """Credits Importer 3.100.0 (collected item Z-ALIGN; with a screenshot: each role of an entry a table of its own, the event
+    and attribute columns of the blocks at other places – "so kann man es nicht Matrix nennen"): an entry's matrix is one table.
+    A) Mix Man (electric guitar with "solo", producer, mixer, mastering): one table, its head once ("Attributes" one column, two
+       events); each block a part of it; the ticks of all lines exactly below each other; the guitar's attributes together
+       (add. guest +solo).
+    B) "guest" ticked by its word: the guitar's rows get it.
+    C) The head stays on top while the table scrolls (its box made low).
+    D) "Attributes: separate" above the matrix: a column per attribute of the entry (add., guest, solo, assistant), ticks
+       still aligned; stored ("split"); ⚙ Settings → Staging shows "separate" pressed; "together" there: one column again,
+       nothing stored.
+    E) ⚙ Settings → Staging "Events shared … up to 1": each block shows its own events – still one table, a line has an empty
+       cell under an event of another block, aligned."""
+    orig = H.discogs_release
+    for n, _r, i, _t in ALIGN_CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in ALIGN_CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            a = pg.evaluate(ALIGN, 'Mix Man')
+            print('A)', a)
+            gtr = [ln for ln in (a or {}).get('lines', []) if ln['role'] == 'electric guitar']
+            results.append(bool(a) and a['tables'] == 1 and a['blocks'] >= 3 and 'Attributes' in a['head'] and a['head'].count('EV') == 2
+                           and len(a['lines']) >= 4 and aligned(a) and bool(gtr) and gtr[0]['joint'][:3] == ['add.', 'guest', '+solo']
+                           and a['store'] is None)
+            sec = sec_sel(pg, 'Mix Man')
+            pg.click(f'{sec} tr.dci-em-line:has([data-f=em-primary][value="electric guitar"]) td.dci-em-c-flags label:has([value=guest])')
+            pg.wait_for_timeout(400)
+            bl = pg.evaluate(BLOCKS, 'Mix Man')
+            gflags = [ln['flags'] for blk in (bl or []) for ln in blk['lines'] if ln['role'] == 'electric guitar']
+            print('B)', gflags)
+            results.append(gflags == [['guest', 'solo']] or gflags == [['solo', 'guest']])
+            c = pg.evaluate("""(sel) => { const w = document.querySelector(sel + ' .dci-em-onewrap'); if (!w) return null; w.style.maxHeight = '90px'; w.scrollTop = 40;
+              const th = w.querySelector('thead th'); return { scrolled: w.scrollTop, off: Math.round(th.getBoundingClientRect().top - w.getBoundingClientRect().top - w.clientTop) }; }""", sec)
+            print('C)', c)
+            results.append(bool(c) and c['scrolled'] > 0 and abs(c['off']) <= 1)
+            pg.evaluate("(sel) => { const w = document.querySelector(sel + ' .dci-em-onewrap'); w.style.maxHeight = ''; w.scrollTop = 0; }", sec)
+            pg.click(f'{sec} [data-act=em-attr][data-attr=split]')
+            pg.wait_for_timeout(500)
+            d = pg.evaluate(ALIGN, 'Mix Man')
+            words = [h for h in d['head'] if h in ('add.', 'guest', 'solo', 'co', 'executive', 'assistant', 'associate')] if d else []
+            H.open_settings(pg, 'staging')
+            pressed = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=em-attr]')].map(b => b.dataset.attr + ':' + b.getAttribute('aria-pressed'))")
+            print('D)', d and d['head'], d and [ln['split'] for ln in d['lines']], d and d['store'], pressed)
+            gs = [ln['split'] for ln in (d or {}).get('lines', []) if ln['role'] == 'electric guitar']
+            results.append(bool(d) and d['tables'] == 1 and 'Attributes' not in d['head'] and {'add.', 'guest', 'solo', 'assistant'} <= set(words)
+                           and aligned(d) and bool(gs) and '+guest' in gs[0] and '+solo' in gs[0] and d['store'] == '"split"' and pressed == ['joint:false', 'split:true'])
+            pg.click('[data-el=settings] [data-act=em-attr][data-attr=joint]')
+            pg.wait_for_timeout(500)
+            d2 = pg.evaluate(ALIGN, 'Mix Man')
+            print('D2)', d2 and d2['head'], d2 and d2['store'])
+            results.append(bool(d2) and 'Attributes' in d2['head'] and d2['store'] is None)
+            pg.fill('[data-set=ev-shared]', '1')
+            pg.press('[data-set=ev-shared]', 'Tab')
+            pg.wait_for_timeout(500)
+            e = pg.evaluate(ALIGN, 'Mix Man')
+            print('E)', e and [(ln['role'], ln['ev']) for ln in e['lines']], e and e['tables'])
+            nones = [ln['ev'].count(None) for ln in (e or {}).get('lines', [])]
+            results.append(bool(e) and e['tables'] == 1 and e['head'].count('EV') == 2 and aligned(e) and any(nones) and all(n < 2 for n in nones))
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_rwrt3100():
+    """Credits Importer 3.100.0 (collected item Z-RWRT): "＋ Another role" offers the writing roles on the release level – writer,
+    composer, lyricist, librettist (as on MusicBrainz, artist–release) – always, under "Writing" below the release's other types
+    (until 3.99.0 behind "+ n more"). Bob Producer: "composer" chosen there – a row "composer" on the release; staged: an
+    artist–release "composer" relationship."""
+    import copy
+    orig = H.discogs_release
+    lts0, linked0 = copy.deepcopy(H.LTS), copy.deepcopy(H.LINKED.get('link_type'))
+    for i, gid, name in ((54, 'ca7a474a-a1cd-4431-9230-56a17f553090', 'writer'), (55, '01ce32b0-d873-4baa-8025-714b45c0c754', 'composer'),
+                         (56, 'a2af367a-b040-46f8-af21-310f92dfe97b', 'lyricist'), (57, 'dd182715-ca2b-4e4b-80b1-d21742fda0dc', 'librettist')):
+        H.lt(i, gid, name, 'artist', 'release', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    sel = "[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes('Bob Producer'))"
+    ROWTYPES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes(name));
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => { const t = r.querySelector('[data-f=type]'); return [(t && t.selectedOptions[0] || {}).text || '', (r.querySelector('[data-act=level][aria-pressed=true]') || {}).dataset ? r.querySelector('[data-act=level][aria-pressed=true]').dataset.level : '']; }) : []; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            n0 = len(pg.evaluate(ROWTYPES, 'Bob Producer'))
+            pg.evaluate(f"{sel}.querySelector('[data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            col = pg.evaluate("""(() => { const c = document.querySelector('[data-el=arq] [data-arqlv=release] .dci-arq-colb'); if (!c) return null;
+              const kids = [...c.children]; const k = kids.findIndex(x => x.dataset.arqsub === 'writing');
+              return { sub: k < 0 ? null : kids[k].textContent.trim(), writing: k < 0 ? [] : kids.slice(k + 1).map(x => x.dataset.type), before: kids.slice(0, Math.max(k, 0)).map(x => x.dataset.type || x.textContent.trim()) }; })()""")
+            print('A)', col)
+            results.append(bool(col) and col['sub'] == 'Writing' and col['writing'] == ['writer', 'composer', 'lyricist', 'librettist']
+                           and not set(col['writing']) & set(col['before']))
+            pg.locator('[data-el=arq] [data-arqlv=release] [data-act=arq-pick][data-type=composer]').click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            rows = pg.evaluate(ROWTYPES, 'Bob Producer')[n0:]
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate("MB.relationshipEditor.state.added.map(r => r.linkTypeID)")
+            print('B)', rows, added)
+            results.append(rows == [['composer', 'release']] and 55 in added)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_artl3100():
+    """Credits Importer 3.100.0 (collected item Z-ARTL, rule S159): a label credited for the artwork ("Artwork: Cyclical Dreams" on
+    the label's Bandcamp page) – most such names are people, so only a label beyond doubt.
+    Discogs: "Artwork – Cyclical Dreams" (a label of the release in MusicBrainz), "Artwork – Other Label" (only in Discogs's labels),
+    "Artwork – Pat Person" (no label).
+    A) Cyclical Dreams: a label entry, linked to MusicBrainz's label at once, "Linked as the label: MusicBrainz has it as a label of
+       this release"; its row the label–release "artwork". Other Label: a label (not linked – MusicBrainz's label still to choose),
+       "As the label – Discogs lists it …". Pat Person stays an artist.
+    B) "As an artist instead": an artist again, its row artist–release "artwork"; "As the label": the label again.
+    C) Staged: a label–release "artwork" relationship of Cyclical Dreams.
+    D) (review) "＋ Another role" design while it is the label, then "As an artist instead": nothing of one kind staged with the other.
+    E) (review) "Linked Label", found through its Discogs link, stays an artist although the release has a label of that name."""
+    import copy
+    orig = H.discogs_release
+    lts0, linked0, labels0 = copy.deepcopy(H.LTS), copy.deepcopy(H.LINKED.get('link_type')), list(H.RELEASE_LABELS)
+    H.lt(993, H.uid('1aaa0000', 993), 'artwork', 'artist', 'release', (1,))
+    for i, name in ((1170, 'artwork'), (1171, 'design'), (1172, 'graphic design'), (1173, 'illustration'), (1174, 'art direction'), (1175, 'photography')):
+        H.lt(i, H.uid('1aaa0000', i), name, 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    LAB = H.uid('1abe1000', 1)
+    H.RELEASE_LABELS[:] = [(LAB, 'Cyclical Dreams')]
+    H.COMPANIES[9901] = ('label', LAB, 'Cyclical Dreams')
+    CR = [('Cyclical Dreams', 'Artwork', 3101), ('Other Label', 'Artwork', 3102), ('Pat Person', 'Artwork', 3103), ('Linked Label', 'Artwork', 3104)]
+    # ((review) an artist found through its Discogs link stays that artist, though MusicBrainz has a label of that name on the release
+    H.ARTISTS[3104] = (H.uid('dddddddd', 3104), 'Linked Label')
+    H.RELEASE_LABELS.append((H.uid('1abe1000', 2), 'Linked Label'))
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CR]
+        d['companies'] = []
+        d['labels'] = [{'name': 'Other Label', 'id': 9102, 'catno': 'OL 1'}]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ENT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const n = g.querySelector('[data-el=artl]');
+      return { kind: [...g.classList].find(c => c.startsWith('dci-kind-')), link: (g.querySelector('.dci-gmatch a[href*="/label/"], .dci-gmatch a[href*="/artist/"]') || {}).getAttribute ? (g.querySelector('.dci-gmatch a[href*="/label/"], .dci-gmatch a[href*="/artist/"]') || { getAttribute: () => '' }).getAttribute('href') : '',
+        note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '', types: [...g.querySelectorAll('tr.dci-row [data-f=type]')].map(t => (t.selectedOptions[0] || {}).text || '') }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            a = [pg.evaluate(ENT, n) for n in ('Cyclical Dreams', 'Other Label', 'Pat Person')]
+            print('A)', a)
+            results.append(bool(a[0]) and a[0]['kind'] == 'dci-kind-label' and a[0]['link'] == f'/label/{LAB}'
+                           and a[0]['note'].startswith('Linked as the label: MusicBrainz has it as a label of this release.') and 'As an artist instead' in a[0]['note']
+                           and a[0]['types'] == ['artwork']
+                           and bool(a[1]) and a[1]['kind'] == 'dci-kind-label' and a[1]['note'].startswith('As the label – Discogs lists it as a label or company of this release; choose')
+                           and bool(a[2]) and a[2]['kind'] == 'dci-kind-artist' and a[2]['note'] == '')
+            sec = sec_sel(pg, 'Cyclical Dreams')
+            pg.click(f'{sec} [data-act=artl-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            b1 = pg.evaluate(ENT, 'Cyclical Dreams')
+            pg.click(f'{sec} [data-act=artl-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            b2 = pg.evaluate(ENT, 'Cyclical Dreams')
+            print('B)', b1, b2)
+            results.append(bool(b1) and b1['kind'] == 'dci-kind-artist' and b1['note'].startswith('Credited as an artist') and 'As the label' in b1['note'] and b1['types'] == ['artwork']
+                           and b2 == a[0])
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate("MB.relationshipEditor.state.added.map(r => [r.linkTypeID, (r.entity0 || {}).gid, (r.entity1 || {}).gid])")
+            print('C)', [x for x in added if x[0] in (993, 1170)])
+            results.append(any(x[0] == 1170 and LAB in (x[1], x[2]) for x in added))
+            # D) (review) a role added while it is the label ("＋ Another role" → design), then "As an artist instead": no label type with
+            # the artist, no artist type with the label staged; E) Linked Label (found through its link) stays an artist
+            pg.evaluate(f"document.querySelector('{sec} [data-act=add-role]').click()")
+            H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+            pg.locator('[data-el=arq] [data-arqlv=release] [data-act=arq-pick][data-type=design]').click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            d1 = pg.evaluate(ENT, 'Cyclical Dreams')
+            pg.click(f'{sec} [data-act=artl-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            d2 = pg.evaluate(ENT, 'Cyclical Dreams')
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            kinds = pg.evaluate("MB.relationshipEditor.state.added.map(r => [r.linkTypeID, (r.entity0 || {}).entityType])")
+            e0 = pg.evaluate(ENT, 'Linked Label')
+            print('D)', d1, d2, [x for x in kinds if x[0] in (993, 1170, 1171, 928)], 'E)', e0)
+            results.append(bool(d1) and d1['types'] == ['artwork', 'design'] and bool(d2) and d2['kind'] == 'dci-kind-artist'
+                           and not any(x[0] in (1170, 1171) and x[1] == 'artist' for x in kinds) and not any(x[0] in (993, 928) and x[1] == 'label' for x in kinds)
+                           and bool(e0) and e0['kind'] == 'dci-kind-artist' and e0['note'] == '')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+        H.RELEASE_LABELS[:] = labels0
+        H.COMPANIES.pop(9901, None)
+        H.ARTISTS.pop(3104, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
