@@ -3330,4 +3330,155 @@ def case_bzk3105():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dsup3106():
+    """Credits Importer 3.106.0 (collected item Z-DSUP; rules S172, S173, S174): the import against what MusicBrainz has.
+    MusicBrainz: Drum Guy drums on track 1 (as always in these tests) and piano on track 2; Sax Man saxophone on all four recordings; Sax Two saxophone on
+    them; Fine Man tenor saxophone on them; Bass Man double bass on track 1 without a date. Discogs: Drum Guy Drums and Electric Guitar, Sax Man
+    Tenor Saxophone, Sax Two Tenor Saxophone and Alto Saxophone, Fine Man Saxophone, Bass Man Double Bass (all tracks); the notes
+    "Recorded March 1–3, 2001".
+    A) Drum Guy: "Compared with MusicBrainz – Only on MusicBrainz: piano (1×)", electric guitar held on Skip ("Add anyway"), drums not
+       (MusicBrainz has them). Fine Man: saxophone held (MusicBrainz more precise). Sax Man: "tenor saxophone instead of
+       saxophone" – "Update". Sax Two: tenor and alto saxophone on the release (MusicBrainz keeps saxophone on the recordings).
+    A2) (review) Drum Guy's drums typed into ("gui"): not held (a row changed by hand).
+    B) The date matrix applied: Bass Man "Date of double bass: MusicBrainz has none – add 2001-03" – "Take".
+    C) "Update", "Take", "Add anyway" and staged (the editor with MusicBrainz's relationships of Sax Man and Bass Man): Sax Man's four
+       relationships of MusicBrainz now tenor saxophone (edited, not added),
+       Bass Man's on track 1 with 2001-03, Drum Guy's electric guitar added; Fine Man nothing.
+    D) The matrix: compact, the line "only on MusicBrainz" with piano; full, a yellow line of its own."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.ATTRS[9107]['parent_id'] = 9106
+    H.attr(9132, 'tenor saxophone', 14, 9106)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    PEOPLE = [('Sax Man', 3331, 'Tenor Saxophone'), ('Sax Two', 3332, 'Tenor Saxophone, Alto Saxophone'), ('Fine Man', 3333, 'Saxophone'), ('Bass Man', 3334, 'Double Bass')]
+    for n, i, _r in PEOPLE:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+    rel_ = lambda i, name, attrs: {'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': attrs, 'attribute-values': {},
+                                   'artist': {'id': H.ARTISTS[i][0], 'name': name}, 'begin': '', 'end': ''}
+    for k, rec in enumerate(H.REC):
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [rel_(3331, 'Sax Man', ['saxophone']), rel_(3332, 'Sax Two', ['saxophone']), rel_(3333, 'Fine Man', ['tenor saxophone'])] \
+            + ([rel_(3334, 'Bass Man', ['double bass'])] if k == 0 else []) + ([{**rel_(3004, 'Drum Guy', ['piano']), 'artist': {'id': H.ARTISTS[3004][0], 'name': 'Drum Guy'}}] if k == 1 else [])
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Drum Guy', 'anv': '', 'role': 'Drums, Electric Guitar', 'tracks': '', 'id': 3004, 'join': ''}] \
+            + [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, i, r in PEOPLE]
+        d['companies'] = []
+        d['notes'] = 'Recorded March 1–3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('[data-el=dsup]');
+      return { lines: b ? [...b.querySelectorAll('.dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim()]) : [],
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const pr = tr.querySelector('[data-f=primary]');
+          return [pr ? pr.value : '', lv ? lv.dataset.level : '', tr.classList.contains('dci-dsup-mark')]; }) }; }"""
+    STATES = """(gids) => { const out = []; const seen = new WeakSet(); let steps = 0;
+      const names = (t) => { const o = []; const walk = (n) => { if (!n || typeof n !== 'object') return; if (n.value && n.value.type) o.push(n.value.typeName || n.value.type.name || ''); walk(n.left); walk(n.right); }; walk(t); return o.sort(); };
+      const visit = (v, d) => { if (!v || typeof v !== 'object' || seen.has(v) || d > 40 || steps++ > 400000) return; seen.add(v);
+        if (v.linkTypeID && v.entity0 && v.entity1 && gids.includes(v.entity0.gid)) out.push([v.entity0.name, v.entity1.gid, names(v.attributes), v.begin_date ? [v.begin_date.year, v.begin_date.month].join('-') : '', v._status]);
+        if (v instanceof Map) { v.forEach((x) => visit(x, d + 1)); return; } Object.keys(v).forEach((k) => visit(v[k], d + 1)); };
+      visit(MB.relationshipEditor.state, 0); return out; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            dg, sm, s2, fm = [pg.evaluate(BOX, n) for n in ('Drum Guy', 'Sax Man', 'Sax Two', 'Fine Man')]
+            print('A)', dg, '\n  ', sm, '\n  ', s2, '\n  ', fm)
+            results.append(bool(dg) and ['mbonly', 'Only on MusicBrainz: piano (1×)'] in dg['lines'] and any(l[0] == 'conflict' for l in dg['lines'])
+                           and any(r[1] == 'skip' and r[2] for r in dg['rows'])
+                           and bool(sm) and any(l[0] == 'update' and 'instead of “saxophone”' in l[1] for l in sm['lines'])
+                           and bool(s2) and sorted(r[0] for r in s2['rows'] if r[1] == 'release') == ['alto saxophone', 'tenor saxophone'] and sum(l[0] == 'release' for l in s2['lines']) == 2
+                           and bool(fm) and any(l[0] == 'covered' for l in fm['lines']) and all(r[1] == 'skip' for r in fm['rows']))
+            # (review) a role typed into is not held: Drum Guy's drums changed by hand stay on their level
+            dsec0 = sec_sel(pg, 'Drum Guy')
+            inp = pg.locator(f"{dsec0} tr.dci-row [data-f=primary]").first
+            inp.fill('gui')
+            pg.wait_for_timeout(900)
+            typed = pg.evaluate(BOX, 'Drum Guy')
+            inp.fill('drums (drum set)')
+            inp.press('Tab')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            print('A2)', typed)
+            results.append(any(r[0] == 'gui' and r[1] == 'recording' for r in typed['rows']))
+            pg.click('[data-act=dm-apply]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            bm = pg.evaluate(BOX, 'Bass Man')
+            print('B)', bm)
+            results.append(bool(bm) and any(l[0] == 'date-add' and 'add 2001-03' in l[1] for l in bm['lines']))
+            # the relationships of MusicBrainz as the relationship editor has them (the test's editor: "existingRels")
+            import json as _j
+            at = lambda i: {'type': {'gid': H.ATTRS[i]['gid'], 'id': i, 'name': H.ATTRS[i]['name']}, 'typeID': i, 'typeName': H.ATTRS[i]['name']}
+            ex = [{'id': 9100 + k, 'linkTypeID': 148, 'entity0': {'gid': H.ARTISTS[3331][0], 'entityType': 'artist', 'id': 3331, 'name': 'Sax Man'},
+                   'entity1': {'gid': rec, 'entityType': 'recording', 'id': 5001 + k, 'name': 'x'}, 'begin_date': None, 'end_date': None, 'ended': False,
+                   'attributes': {'__tree': [at(9106)]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0} for k, rec in enumerate(H.REC)]
+            ex.append({'id': 9200, 'linkTypeID': 148, 'entity0': {'gid': H.ARTISTS[3334][0], 'entityType': 'artist', 'id': 3334, 'name': 'Bass Man'},
+                       'entity1': {'gid': H.REC[0], 'entityType': 'recording', 'id': 5001, 'name': 'x'}, 'begin_date': None, 'end_date': None, 'ended': False,
+                       'attributes': {'__tree': [at(9102)]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0})
+            pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
+            pg.click(f"{sec_sel(pg, 'Sax Man')} [data-el=dsup] [data-act=dsup-take]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.click(f"{sec_sel(pg, 'Bass Man')} [data-el=dsup] [data-act=dsup-date]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.click(f"{sec_sel(pg, 'Drum Guy')} [data-el=dsup] [data-act=dsup-take]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(2000)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [((r.entity0 || {}).name || ''), r._status, ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName || x.type.name).sort().join(','),
+              r.begin_date ? [r.begin_date.year, r.begin_date.month].join('-') : ''])""")
+            print('C)', added)
+            sax = [x for x in added if x[0] == 'Sax Man']
+            bass = [x for x in added if x[0] == 'Bass Man' and x[1] == 2]
+            results.append(len(sax) == 4 and all(x[1] == 2 and x[2] == 'tenor saxophone' for x in sax) and len(bass) == 1 and bass[0][3] == '2001-3' and bass[0][2] == 'double bass'
+                           and not any(x[0] == 'Fine Man' for x in added) and sum(x[0] == 'Drum Guy' and x[2] == 'electric guitar' and x[1] == 1 for x in added) == 4)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            dsec = sec_sel(pg, 'Drum Guy')
+            wide = pg.evaluate(f"[...document.querySelectorAll('{dsec} tr.dci-em-mbonly')].map(t => t.textContent.replace(/\\s+/g, ' ').trim())")
+            pg.click('.dci-head [data-act=view-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            line = pg.evaluate(f"(() => {{ const l = document.querySelector('{dsec} [data-el=mbonly]'); return l ? l.textContent.replace(/\\s+/g, ' ').trim() : ''; }})()")
+            print('D)', line, wide)
+            results.append(line == 'only on MusicBrainz piano (1×)' and wide == ['only on MusicBrainz piano (1×)'] and not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear()
+        H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        for _n, i, _r in PEOPLE:
+            H.ARTISTS.pop(i, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

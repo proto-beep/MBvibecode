@@ -792,6 +792,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
                                 #   bzk3105: 3.105.0 (Z-BZK, Q014): "Bouzouki" – bouzouki · irish bouzouki · tzouras (full list and matrix), the one chosen
+                                #   dsup3106: 3.106.0 (Z-DSUP, S172–S174): against MusicBrainz – only on MusicBrainz, a conflict held, covered, an update,
+                                #     on the release, a date added; staged as edits of MusicBrainz's relationships; the matrix line and the compact chips
                                 #   insts3103: 3.103.0 (Z-INSTS, S169, S170): five instruments without tracks – suggestion, "on the release" (rows on the release, one
                                 #     automatic row on the recordings), the common group "woodwind" with guest, back and forth (two states, "solo" kept), staged, S170 off
                                 #   instsrem3103: 3.103.0 (Z-INSTS, review): "on the release" remembered – the page loaded again: on the release again; per track back
