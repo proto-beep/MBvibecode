@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.100.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.101.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.101.0
+
+- **Writers below the track titles** (Z-CIMP, rule S161): "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)" below "2. KFNW" – also broken over two lines – makes each name a writer of that track (writer or composer: the switch of the works matrix), the publisher in the bracket that track's publisher; the release's title above a list whose first track has that title is left out.
+- **Duos, trios, quartets** (S162): "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – only the people named play on that track: the lineup without tracks loses it for everyone else; names in short ("K.Filiano", "T.H.Bynum") are the people of the lineup. "track 7 SOLO: X" is asked at the person: only this person on the track, the attribute "solo" there, or nothing.
+- **Cover art, typesetting, hospitality** (S163; register R115, R116): "Cover art: The Weight by Kara D. Rusch" – artwork credited "cover art", the picture's title left out; "Typesetting" design credited "typesetting"; "Hospitality" miscellaneous support "hospitality" on the release.
+- **Series of a text** (S164): "Spirit Room Series Vol.247" – the release part of that series with number 247; MusicBrainz's series of that name suggested, an MBID can be given, no "Create series".
+- **Left out without a word** (S165): catalogue numbers ("CIMP #384", "ECM 1234"), addresses, a label's statement on how it records.
+- **Instrument abbreviations** (Z-ABBR, S166): "tpt", "b", "d", "ts", "flh" … (mapping INSTRUMENT_ABBR) – only in short form: in brackets after a name, in a terse lineup ("Nate Wooley tpt"), in the lines of duos; one of two readings ("tb": trombone or tuba) the person's instrument elsewhere in the text, else the first, the other named at the row.
+- **Rights societies only on request** (Z-RSOC, S160; quick switch, off by default): BMI, GEMA … of every source are no longer taken by themselves – their entry is on Skip with a note; the quick switch "Take rights societies" takes them.
 
 ### Import 3.100.0
 
