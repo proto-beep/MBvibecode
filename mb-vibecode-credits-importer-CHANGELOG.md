@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.106.0 | 1.16.0 |
+| 2026-11-08 | 3.88.0 – 3.107.0 | 1.16.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.107.0
+
+- **The instruments' tree as MusicBrainz has it** (collected item Z-ITREE): MusicBrainz's relationship editor lists its instruments flat – which one is a kind of which ("soprano saxophone" type of "saxophone") is only in the instruments' own relationships. The script now takes them from there: from a file the workflow "Global statistics" writes each week from MusicBrainz's data dump (with what changed since the week before), kept a week in the browser; an instrument it does not have yet, or no file at all, is asked of MusicBrainz and kept a month. This makes three things work on musicbrainz.org that only worked in the tests: the group of the automatic row of "on the release" (soprano, alto and tenor saxophone: saxophone), "MusicBrainz less precise – Update" and "MusicBrainz more precise" of the comparison, and the kinds of bouzouki asked for "Bouzouki".
+- **Dates for relationships MusicBrainz has** (Z-DSUP3): a role MusicBrainz already has goes on Skip at the import (nothing to add) – until now its date from the pools never reached it. Now "Apply" of the date pools gives those roles their dates as well; a role whose date adds to or changes MusicBrainz's comes back with it, in the box "Compared with MusicBrainz"; the others stay on Skip. A date MusicBrainz does not have is taken without a click (a click takes it back); the other changes still by "Take".
+- **"Only on MusicBrainz" only for instruments** (Z-DSUP2): shown only when the source names instruments or voices of the person – a producer credit is no conflict with MusicBrainz's drums.
+- **Why there is no comparison** (Z-DSUPWHY): in developer mode, ⚙ Settings → Sources has "Compared with MusicBrainz: show why an entry has no box" – a grey note at each entry without the box says why (not linked, no relationships of the person on MusicBrainz, none of the same type, level, tracks and instrument – with what MusicBrainz has –, no dates, nothing to change).
+- **The line of the release page with another script's links** (Z-GAPL2): every list of links of the page counts – a list another script puts above the release's own (with the same look) no longer hides the line. The developer note names the script it comes from and how many lists it read (Z-GAPL3).
+- **Track lists read from a cover** (Z-CIMP2): the writers and publishers below each title are found also when the text recognition gives the titles with their lengths ("1. The Throes 07:21"), a number run into its title ("9.... on a Stamp!?") and a misread society ("FlizmoMusic-BM!)", "4WordSeaMusic-BMI}"); a title with writers below is theirs whatever is above it; a numbered title of the release alone is left out as a title, not "not recognized".
 
 ### Import 3.106.0
 

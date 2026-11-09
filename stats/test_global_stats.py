@@ -88,7 +88,7 @@ def build(path, cut=None, skip=()):
             tar.addfile(ti, io.BytesIO(b))
 
 
-def build_core(path, cut=None):
+def build_core(path, cut=None, instruments=None, extra_ii=(), no_subtype=False):
     """[3.55.0] A small made-up mbdump.tar.bz2 (the tables of the core pass, their columns as in MusicBrainz)."""
     N = None
     art = lambda i, b, e, t, area, g, ended, barea: copy_line(i, 'g', 'n', 'n', b, N, N, e, N, N, t, area, g, '', 0, 'x', 't' if ended else 'f', barea, N)
@@ -97,8 +97,17 @@ def build_core(path, cut=None):
         ('artist', [art(501, 1930, 1990, 1, 1, 2, True, 2), art(502, 1965, 1972, 2, 3, N, True, 4), art(503, 1985, N, 1, 3, 1, False, N), art(900, 1900, N, 1, 1, 1, False, N)]),
         ('artist_type', [copy_line(1, 'Person', N, 0, N, 'g'), copy_line(2, 'Group', N, 0, N, 'g')]),
         ('gender', [copy_line(1, 'Male', N, 0, N, 'g'), copy_line(2, 'Female', N, 0, N, 'g')]),
+        # [3.107.0, Z-ITREE] instruments: soprano and tenor saxophone "type of" saxophone (link 51, link type 736), saxophone of woodwind;
+        # flute "related to" saxophone (link 52, another type: not in the tree)
+        ('instrument', instruments if instruments is not None else [
+            copy_line(1, 'g-wood', 'woodwind', 1, 0, 'x', '', ''), copy_line(2, 'g-sax', 'saxophone', 1, 0, 'x', '', ''),
+            copy_line(3, 'g-sop', 'soprano saxophone', 1, 0, 'x', '', ''), copy_line(4, 'g-ten', 'tenor saxophone', 1, 0, 'x', '', ''),
+            copy_line(5, 'g-flu', 'flute', 1, 0, 'x', '', '')]),
         ('iso_3166_1', [copy_line(1, 'US'), copy_line(3, 'DE')]),
+        ('l_instrument_instrument', [copy_line(1, 51, 2, 3, 0, 'x', 0, '', ''), copy_line(2, 51, 2, 4, 0, 'x', 0, '', ''),
+                                     copy_line(3, 51, 1, 2, 0, 'x', 0, '', ''), copy_line(4, 52, 5, 2, 0, 'x', 0, '', ''), *extra_ii]),
         ('language', [copy_line(120, 'eng', 'eng', 'en', 'English', 2, 'eng')]),
+        ('link', [copy_line(50, 1, N), copy_line(51, 737 if no_subtype else 736, N), copy_line(52, 738, N)]),
         ('link_attribute_type', [copy_line(3, N, 3, 0, 'g', 'vocal'), copy_line(4, 3, 3, 0, 'g', 'lead vocals'), copy_line(14, N, 14, 0, 'g', 'instrument'), copy_line(229, 14, 14, 0, 'g', 'guitar')]),
         ('medium', [copy_line(1, 701, 1, N), copy_line(2, 701, 2, N), copy_line(3, 702, 1, N), copy_line(4, 999, 1, N)]),
         ('recording', [copy_line(801, 'g', 'a', 1, 200000), copy_line(802, 'g', 'b', 1, 100000), copy_line(803, 'g', 'c', 1, N), copy_line(999, 'g', 'd', 1, 5)]),
@@ -137,6 +146,35 @@ def main():
         subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--input', src, '--out', out, '--dump', 'test', '--facts', facts], check=True)
         fx = json.load(open(facts))
         core_src = os.path.join(d, 'mbdump.tar.bz2')
+        build_core(core_src)
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out, '--dump', 'core-test'], check=True)
+        r2 = json.load(open(out))
+        # [3.107.0, Z-ITREE] the tree of instruments; a week later saxophone renamed, tenor saxophone gone, alto saxophone new, soprano
+        # saxophone also a kind of woodwind (moved; its changes on top of those of before); (review) a file of before that cannot be read; no
+        # "type of" at all: no file
+        itree = os.path.join(d, 'instruments.json')
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out,
+                        '--dump', 'core-test', '--instruments', itree], check=True)
+        t1 = json.load(open(itree))
+        build_core(core_src, instruments=[copy_line(1, 'g-wood', 'woodwind', 1, 0, 'x', '', ''), copy_line(2, 'g-sax', 'saxophones', 1, 0, 'x', '', ''),
+                                          copy_line(3, 'g-sop', 'soprano saxophone', 1, 0, 'x', '', ''), copy_line(5, 'g-flu', 'flute', 1, 0, 'x', '', ''),
+                                          copy_line(6, 'g-alt', 'alto saxophone', 1, 0, 'x', '', '')], extra_ii=[copy_line(5, 51, 1, 3, 0, 'x', 0, '', '')])
+        itree2 = os.path.join(d, 'instruments2.json')
+        old_t = os.path.join(d, 'old-instruments.json')
+        json.dump({**t1, 'changes': [{'dump': 'older', 'added': ['x'], 'removed': [], 'moved': [], 'renamed': []}]}, open(old_t, 'w'))
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out,
+                        '--dump', 'core-test-2', '--instruments', itree2, '--instruments-old', old_t], check=True)
+        t2 = json.load(open(itree2))
+        bad_old = os.path.join(d, 'bad-old.json')
+        json.dump({'format': 'mb-vibecode-instrument-tree', 'instruments': [['x']], 'subtype': [[0, 5]]}, open(bad_old, 'w'))
+        itree3 = os.path.join(d, 'instruments3.json')
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out,
+                        '--dump', 'core-test-3', '--instruments', itree3, '--instruments-old', bad_old], check=True, capture_output=True)
+        t3 = json.load(open(itree3)) if os.path.exists(itree3) else None
+        build_core(core_src, no_subtype=True)
+        itree4 = os.path.join(d, 'instruments4.json')
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out,
+                        '--dump', 'core-test-4', '--instruments', itree4], check=True, capture_output=True)
         build_core(core_src)
         subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--core', '--input', core_src, '--facts', facts, '--merge', out, '--dump', 'core-test'], check=True)
         r2 = json.load(open(out))
@@ -192,6 +230,15 @@ def main():
         ('per release', r['per_release'], {'n': 2, 'rels': {'mean': 2.0, 'median': 2.0},
                                            'by_level': {'recording': {'mean': 1.5, 'median': 1.5}, 'release': {'mean': 0.5, 'median': 0.5}}}),
         ('facts per release', fx['release_rec_rels'], [[701, 2], [702, 1]]),
+        # [3.107.0, Z-ITREE] (names sorted: flute, saxophone, soprano saxophone, tenor saxophone, woodwind; "related to" left out)
+        ('instruments', [t1['format'], t1['instruments'], t1['subtype'], t1['changes']],
+         ['mb-vibecode-instrument-tree', [['g-flu', 'flute'], ['g-sax', 'saxophone'], ['g-sop', 'soprano saxophone'], ['g-ten', 'tenor saxophone'],
+                                          ['g-wood', 'woodwind']], [[1, 2], [1, 3], [4, 1]], []]),
+        # (the second tree: saxophone renamed "saxophones", its link to tenor saxophone gone with it – soprano saxophone keeps saxophone)
+        ('instruments changed', [t2['subtype'], t2['changes']],
+         [[[2, 3], [4, 2], [4, 3]], [{'dump': 'core-test-2', 'added': ['alto saxophone'], 'removed': ['tenor saxophone'], 'moved': ['soprano saxophone'],
+                                      'renamed': ['saxophone → saxophones']}, {'dump': 'older', 'added': ['x'], 'removed': [], 'moved': [], 'renamed': []}]]),
+        ('instruments: an old file not read; no "type of"', [bool(t3) and len(t3['subtype']) == 3 and t3['changes'] == [], os.path.exists(itree4)], [True, False]),
         ('core per release', r2['core']['per_release'], {'n': 2, 'recordings': {'mean': 2.0, 'median': 2.0},
                                                         'rels_per_recording': {'mean': (2 / 3 + 1) / 2, 'median': (2 / 3 + 1) / 2}}),
     ]

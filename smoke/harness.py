@@ -86,6 +86,24 @@ def pdf_of(pages, w=420, h=420):
 
 
 RAW_REQUESTS = []
+# [3.107.0, Z-ITREE] the instruments' tree of the workflow (the data branch): made of the instruments of ATTRS (root 14) and these
+# "type of" pairs (parent attribute id, child attribute id); ITREE_OFF: not there (404) – MusicBrainz is asked instead
+# (/ws/2/instrument/<gid>?inc=instrument-rels: INSTRUMENT_RELS gid → [(parent or child gid, 'backward' when it is the parent)])
+ITREE_PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-instruments.json'
+ITREE_EDGES = []
+ITREE_OFF = [False]
+INSTRUMENT_RELS = {}
+INSTRUMENT_REQUESTS = []
+ITREE_REQUESTS = []
+
+
+def itree_file():
+    inst = sorted(((a['gid'], a['name']) for a in ATTRS.values() if a.get('root_id') == 14 and a['id'] != 14), key=lambda x: (x[1], x[0]))
+    at = {g: k for k, (g, _n) in enumerate(inst)}
+    gid = lambda i: ATTRS[i]['gid'] if i in ATTRS else None
+    pairs = [[at[gid(a)], at[gid(b)]] for a, b in ITREE_EDGES if gid(a) in at and gid(b) in at]
+    return json.dumps({'format': 'mb-vibecode-instrument-tree', 'version': 1, 'dump': 'test', 'instruments': [list(x) for x in inst], 'subtype': pairs,
+                       'changes': [{'dump': 'test', 'added': ['tzouras'], 'removed': [], 'moved': [], 'renamed': []}]})
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
 # [3.31.1] The script asks MusicBrainz's web service at most once every 1.1 s (MusicBrainz's rate limit). The test server
 # is local, so the tests use a short gap: an import takes about 1 s instead of 11 s. DCI_MB_GAP (milliseconds) sets it;
@@ -356,7 +374,7 @@ def bc_html(data, url, about_cut=None, credits_cut=None, released='January 1, 20
 
 # GM_xmlhttpRequest as a userscript manager gives it (with fetch); the calls are recorded in window.__gmXhr
 GM_XHR_SHIM = """window.__gmXhr = [];
-window.GM_xmlhttpRequest = (d) => { window.__gmXhr.push(d.url);
+window.GM_xmlhttpRequest = (d) => { if (/mb-vibecode-credits-importer-instruments\.json/.test(d.url)) window.__gmTree = (window.__gmTree || 0) + 1; else window.__gmXhr.push(d.url);
   fetch(d.url).then((r) => (d.responseType === 'blob' ? r.blob().then((b) => d.onload({ status: r.status, response: b }))
     : r.text().then((t) => d.onload({ status: r.status, responseText: t })))).catch(() => d.onerror && d.onerror()); };"""
 
@@ -851,6 +869,14 @@ def install_routes(ctx):
             return route.fulfill(body=mb_release_editor_page('edit'), content_type='text/html')
         if p == '/release/add':
             return route.fulfill(body=mb_release_editor_page('add'), content_type='text/html')
+        # [3.107.0, Z-ITREE] an instrument's "type of" relationships (when the tree of the workflow is not there)
+        m = re.match(r'/ws/2/instrument/([0-9a-f-]{36})$', p)
+        if m:
+            INSTRUMENT_REQUESTS.append(m.group(1))
+            name = next((a['name'] for a in ATTRS.values() if a['gid'] == m.group(1)), '')
+            rels = [{'type': 'subtype', 'type-id': '40b2bd3f-1457-3ceb-810d-57f87f0f74f0', 'direction': d, 'target-type': 'instrument',
+                     'instrument': {'id': g, 'name': next((a['name'] for a in ATTRS.values() if a['gid'] == g), '')}} for g, d in INSTRUMENT_RELS.get(m.group(1), [])]
+            return json_route(route, {'id': m.group(1), 'name': name, 'relations': rels})
         if p == f'/ws/2/release/{REL}':
             # [3.17.3] a test can let the next lookups of the release fail (MusicBrainz busy: 503)
             if WS_FAIL.get('release', 0) > 0:
@@ -984,8 +1010,11 @@ def install_routes(ctx):
     # [3.33.0] files on GitHub (RAW_GITHUB: path → text; others 404), e.g. the mapping file the script fetches itself
     def raw_github(route):
         u = urllib.parse.urlparse(route.request.url)
-        RAW_REQUESTS.append(route.request.url)
+        # ([3.107.0, Z-ITREE] the instruments' tree of the data branch counted apart: ITREE_REQUESTS)
+        (ITREE_REQUESTS if u.path == ITREE_PATH else RAW_REQUESTS).append(route.request.url)
         text = RAW_GITHUB.get(u.path)
+        if text is None and u.path == ITREE_PATH and not ITREE_OFF[0]:
+            text = itree_file()
         if text is None:
             return route.fulfill(status=404, body='404: Not Found', headers={'Access-Control-Allow-Origin': '*'})
         return route.fulfill(body=text, content_type='text/plain', headers={'Access-Control-Allow-Origin': '*'})

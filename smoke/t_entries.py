@@ -2969,11 +2969,11 @@ def case_insts3103():
     orig = H.discogs_release
     lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
     linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    # ([Z-ITREE] 3.107.0) flat as on MusicBrainz – the kinds in the instruments' tree of the workflow
     H.attr(9140, 'woodwind', 14, 14)
-    H.ATTRS[9106]['parent_id'] = 9140
-    for i, n, par in ((9124, 'other instruments', 14), (9131, 'soprano saxophone', 9106), (9132, 'tenor saxophone', 9106), (9133, 'bass clarinet', 9140),
-                      (9142, 'flute', 9140)):
-        H.attr(i, n, 14, par)
+    for i, n in ((9124, 'other instruments'), (9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9133, 'bass clarinet'), (9142, 'flute')):
+        H.attr(i, n, 14, 14)
+    H.ITREE_EDGES[:] = [(9140, 9106), (9106, 9131), (9106, 9132), (9140, 9133), (9140, 9142)]
     H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
@@ -3076,6 +3076,7 @@ def case_insts3103():
         H.LTS.update(lts0)
         H.ATTRS.clear()
         H.ATTRS.update(attrs0)
+        H.ITREE_EDGES.clear()
         for k, v in linked0.items():
             H.LINKED[k] = v
         for _n, _r, i in CR:
@@ -3282,8 +3283,9 @@ def case_bzk3105():
     attrs0 = copy.deepcopy(H.ATTRS)
     linked0 = copy.deepcopy(H.LINKED.get('link_attribute_type'))
     H.attr(9150, 'bouzouki', 14, 14)
-    H.attr(9151, 'irish bouzouki', 14, 9150)
-    H.attr(9152, 'tzouras', 14, 9150)
+    H.attr(9151, 'irish bouzouki', 14, 14)
+    H.attr(9152, 'tzouras', 14, 14)
+    H.ITREE_EDGES[:] = [(9150, 9151), (9150, 9152)]  # ([Z-ITREE] 3.107.0) flat as on MusicBrainz, the kinds in the tree
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.ARTISTS[3321] = (H.uid('dddddddd', 3321), 'Bo Zou')
 
@@ -3325,6 +3327,7 @@ def case_bzk3105():
         H.discogs_release = orig
         H.ATTRS.clear()
         H.ATTRS.update(attrs0)
+        H.ITREE_EDGES.clear()
         H.LINKED['link_attribute_type'] = linked0
         H.ARTISTS.pop(3321, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
@@ -3340,7 +3343,7 @@ def case_dsup3106():
        (MusicBrainz has them). Fine Man: saxophone held (MusicBrainz more precise). Sax Man: "tenor saxophone instead of
        saxophone" – "Update". Sax Two: tenor and alto saxophone on the release (MusicBrainz keeps saxophone on the recordings).
     A2) (review) Drum Guy's drums typed into ("gui"): not held (a row changed by hand).
-    B) The date matrix applied: Bass Man "Date of double bass: MusicBrainz has none – add 2001-03" – "Take".
+    B) The date matrix applied: Bass Man "Date of double bass: MusicBrainz has none – add 2001-03" – ([Z-DSUP3] 3.107.0) taken already.
     C) "Update", "Take", "Add anyway" and staged (the editor with MusicBrainz's relationships of Sax Man and Bass Man): Sax Man's four
        relationships of MusicBrainz now tenor saxophone (edited, not added),
        Bass Man's on track 1 with 2001-03, Drum Guy's electric guitar added; Fine Man nothing.
@@ -3349,8 +3352,8 @@ def case_dsup3106():
     orig = H.discogs_release
     lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
     linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
-    H.ATTRS[9107]['parent_id'] = 9106
-    H.attr(9132, 'tenor saxophone', 14, 9106)
+    H.attr(9132, 'tenor saxophone', 14, 14)
+    H.ITREE_EDGES[:] = [(9106, 9107), (9106, 9132)]  # ([Z-ITREE] 3.107.0) flat as on MusicBrainz, the kinds in the tree
     H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
@@ -3431,8 +3434,10 @@ def case_dsup3106():
             pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
             pg.click(f"{sec_sel(pg, 'Sax Man')} [data-el=dsup] [data-act=dsup-take]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            pg.click(f"{sec_sel(pg, 'Bass Man')} [data-el=dsup] [data-act=dsup-date]")
-            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            # ([Z-DSUP3] 3.107.0) a date MusicBrainz does not have is taken without a click
+            taken = pg.locator(f"{sec_sel(pg, 'Bass Man')} [data-el=dsup] [data-act=dsup-date]").first.get_attribute('aria-pressed')
+            print('B2)', taken)
+            results.append(taken == 'true')
             pg.click(f"{sec_sel(pg, 'Drum Guy')} [data-el=dsup] [data-act=dsup-take]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             pg.click('[data-act=apply]')
@@ -3472,6 +3477,7 @@ def case_dsup3106():
         H.LTS.update(lts0)
         H.ATTRS.clear()
         H.ATTRS.update(attrs0)
+        H.ITREE_EDGES.clear()
         H.MB_EXTRA.clear()
         H.MB_EXTRA.update(extra0)
         for k, v in linked0.items():
@@ -3480,5 +3486,232 @@ def case_dsup3106():
             H.ARTISTS.pop(i, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_itree3107():
+    """Credits Importer 3.107.0 (Z-ITREE): MusicBrainz's relationship editor has its instruments flat (all right below "instrument") –
+    which is a kind of which is in the instruments' tree (the workflow's file on the data branch, else MusicBrainz's "type of").
+    Reed Man: Soprano Saxophone, Tenor Saxophone (Discogs), "on the release".
+    A) No file of the workflow (404): MusicBrainz asked for the instruments (/ws/2/instrument/…?inc=instrument-rels) – the automatic row
+       "saxophone" (both "type of" saxophone); kept in this browser.
+    B) With the file (soprano and tenor saxophone below saxophone): "saxophone" without asking MusicBrainz; the file kept in this browser.
+    C) The kinds of bouzouki asked from the tree as well (irish bouzouki, tzouras – flat attributes).
+    (review) In A and B: Up Man's "Tenor Saxophone" against MusicBrainz's saxophone – an update, no conflict (not judged before the tree is there)."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9150, 'bouzouki'), (9151, 'irish bouzouki'), (9152, 'tzouras')):
+        H.attr(i, n, 14, 14)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    g = lambda i: H.ATTRS[i]['gid']
+    H.ARTISTS[3341] = (H.uid('dddddddd', 3341), 'Reed Man')
+    H.ARTISTS[3342] = (H.uid('dddddddd', 3342), 'Bo Zou')
+    H.ARTISTS[3343] = (H.uid('dddddddd', 3343), 'Up Man')
+    extra0 = copy.deepcopy(H.MB_EXTRA)
+    # ((review) MusicBrainz has Up Man's saxophone on the recordings: "tenor saxophone" an update – also while the tree comes from MusicBrainz
+    for rec in H.REC:
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [{'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': ['saxophone'],
+                                                       'attribute-values': {}, 'artist': {'id': H.ARTISTS[3343][0], 'name': 'Up Man'}, 'begin': '', 'end': ''}]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Reed Man', 'anv': '', 'role': 'Soprano Saxophone, Tenor Saxophone', 'tracks': '', 'id': 3341, 'join': ''},
+                             {'name': 'Bo Zou', 'anv': '', 'role': 'Bouzouki', 'tracks': '', 'id': 3342, 'join': ''},
+                             {'name': 'Up Man', 'anv': '', 'role': 'Tenor Saxophone', 'tracks': '', 'id': 3343, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    AUTO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; return [...g.querySelectorAll('tr.dci-row')].filter(tr => tr.querySelector('[data-act=level][data-level=recording][aria-pressed=true]'))
+        .map(tr => (tr.querySelector('[data-f=primary]') || { value: '?' }).value); }"""
+    OPTS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bo Zou');
+      return g ? [...g.querySelectorAll('[data-question=Q014] [data-act=instr-pick]')].map(b => b.dataset.instr) : null; })()"""
+    results = []
+
+    def run(ctx, label):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        pg.click(f"{sec_sel(pg, 'Reed Man')} [data-act=insts-set][data-insts=release]")
+        H.wait_for(pg, f"(({AUTO})('Reed Man') || []).join() === 'saxophone' && ({OPTS} || []).length >= 3", 20)
+        auto = pg.evaluate(AUTO, 'Reed Man')
+        opts = pg.evaluate(OPTS)
+        H.wait_for(pg, "!!document.querySelector('section.dci-group [data-el=dsup] [data-dsup=update]')", 20)
+        upd = pg.evaluate("[...document.querySelectorAll('section.dci-group [data-el=dsup] .dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim()])")
+        pg.wait_for_timeout(2500)  # (MusicBrainz's answers written to the browser after they stop)
+        kept = pg.evaluate("[localStorage.getItem('dci-itree') !== null, Object.keys(JSON.parse(localStorage.getItem('dci-itree-live') || '{}')).length]")
+        print(label, auto, opts, kept, upd, H.INSTRUMENT_REQUESTS, errs)
+        return auto, opts, kept, errs, upd
+
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            # A) no file: MusicBrainz asked
+            H.ITREE_OFF[0] = True
+            H.INSTRUMENT_RELS.update({g(9131): [(g(9106), 'backward')], g(9132): [(g(9106), 'backward')], g(9106): [(g(9131), 'forward'), (g(9132), 'forward')],
+                                      g(9150): [(g(9151), 'forward'), (g(9152), 'forward')]})
+            H.INSTRUMENT_REQUESTS.clear()
+            auto, opts, kept, errs, upd = run(H.new_context(b), 'A)')
+            asked = set(H.INSTRUMENT_REQUESTS)
+            upd_ok = lambda u: any(x[0] == 'update' and '“tenor saxophone” instead of “saxophone”' in x[1] for x in u) and not any(x[0] in ('conflict', 'mbonly') for x in u)
+            results.append(auto == ['saxophone'] and {g(9131), g(9132)} <= asked and not kept[0] and kept[1] >= 2 and upd_ok(upd) and not errs)
+            # B) the file of the workflow: nothing asked
+            H.ITREE_OFF[0] = False
+            H.ITREE_EDGES[:] = [(9106, 9131), (9106, 9132), (9150, 9151), (9150, 9152)]
+            H.INSTRUMENT_REQUESTS.clear()
+            auto2, opts2, kept2, errs2, upd2 = run(H.new_context(b), 'B)')
+            results.append(auto2 == ['saxophone'] and not H.INSTRUMENT_REQUESTS and kept2[0] and upd_ok(upd2) and not errs2)
+            # C) the kinds of bouzouki (both runs)
+            print('C)', opts, opts2)
+            results.append(all(o and {'bouzouki', 'irish bouzouki', 'tzouras'} <= set(o) for o in (opts, opts2)))
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        H.ITREE_OFF[0] = False
+        H.ITREE_EDGES.clear()
+        H.INSTRUMENT_RELS.clear()
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        H.ARTISTS.pop(3341, None)
+        H.ARTISTS.pop(3342, None)
+        H.ARTISTS.pop(3343, None)
+        H.MB_EXTRA.clear()
+        H.MB_EXTRA.update(extra0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dsup3107():
+    """Credits Importer 3.107.0 (collected items Z-DSUP3, Z-DSUP2, Z-DSUPWHY): the dates of the pools for relationships MusicBrainz has.
+    MusicBrainz: Wood Man trombone on all four recordings without a date; Same Man double bass on them with 2001-03; Prod Man piano on
+    track 1. Discogs: Wood Man Trombone, Same Man Double Bass, Prod Man Producer; the notes "Recorded March 1–3, 2001".
+    A) After the import: Wood Man's and Same Man's rows on Skip (MusicBrainz has them); Prod Man without the box (his source names no
+       instrument – no "only on MusicBrainz: piano").
+    B) The date matrix applied: Wood Man's row back on the recordings, "add 2001-03" taken without a click; Same Man's stays on Skip
+       (MusicBrainz has the date).
+    C) Staged (the editor with Wood Man's four relationships): the four edited with 2001-03, none added.
+    D) Developer mode, "show why an entry has no box": Prod Man's grey note names MusicBrainz's piano; Same Man's says his rows are all
+       MusicBrainz's already (on Skip) – compared once the pools are applied. (review) B2: a click takes the date back, another again."""
+    import copy
+    import json as _j
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9160, 'trombone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    PEOPLE = [('Wood Man', 3351, 'Trombone'), ('Same Man', 3352, 'Double Bass'), ('Prod Man', 3353, 'Producer')]
+    for n, i, _r in PEOPLE:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+    rel_ = lambda i, name, attrs, begin='': {'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': attrs, 'attribute-values': {},
+                                             'artist': {'id': H.ARTISTS[i][0], 'name': name}, 'begin': begin, 'end': begin}
+    for k, rec in enumerate(H.REC):
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [rel_(3351, 'Wood Man', ['trombone']), rel_(3352, 'Same Man', ['double bass'], '2001-03')] \
+            + ([rel_(3353, 'Prod Man', ['piano'])] if k == 0 else [])
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, i, r in PEOPLE]
+        d['companies'] = []
+        d['notes'] = 'Recorded March 1–3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-dsup[data-el=dsup]'); const w = g.querySelector('.dci-dsupwhy');
+      return { lines: b ? [...b.querySelectorAll('.dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim(), (l.querySelector('[data-act=dsup-date]') || { getAttribute: () => '' }).getAttribute('aria-pressed')]) : [],
+        why: w ? [w.dataset.why, w.textContent.trim()] : null,
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const pr = tr.querySelector('[data-f=primary]');
+          return [pr ? pr.value : '', lv ? lv.dataset.level : '']; }) }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            wm, sm, pm = [pg.evaluate(BOX, n) for n in ('Wood Man', 'Same Man', 'Prod Man')]
+            print('A)', wm, '\n  ', sm, '\n  ', pm)
+            results.append(bool(wm) and [r[1] for r in wm['rows']] == ['skip'] and bool(sm) and [r[1] for r in sm['rows']] == ['skip']
+                           and bool(pm) and pm['lines'] == [])
+            pg.click('[data-act=dm-apply]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            wm2, sm2 = pg.evaluate(BOX, 'Wood Man'), pg.evaluate(BOX, 'Same Man')
+            print('B)', wm2, '\n  ', sm2)
+            results.append([r[1] for r in wm2['rows']] == ['recording'] and any(l[0] == 'date-add' and 'add 2001-03' in l[1] and l[2] == 'true' for l in wm2['lines'])
+                           and [r[1] for r in sm2['rows']] == ['skip'] and sm2['lines'] == [])
+            # ((review) a click takes the date back, another takes it again
+            btn = f"{sec_sel(pg, 'Wood Man')} [data-el=dsup] [data-act=dsup-date]"
+            pg.click(btn)
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            back = pg.locator(btn).first.get_attribute('aria-pressed')
+            pg.click(btn)
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            again = pg.locator(btn).first.get_attribute('aria-pressed')
+            print('B2)', back, again)
+            results.append(back == 'false' and again == 'true')
+            at = lambda i: {'type': {'gid': H.ATTRS[i]['gid'], 'id': i, 'name': H.ATTRS[i]['name']}, 'typeID': i, 'typeName': H.ATTRS[i]['name']}
+            ex = [{'id': 9300 + k, 'linkTypeID': 148, 'entity0': {'gid': H.ARTISTS[3351][0], 'entityType': 'artist', 'id': 3351, 'name': 'Wood Man'},
+                   'entity1': {'gid': rec, 'entityType': 'recording', 'id': 5001 + k, 'name': 'x'}, 'begin_date': None, 'end_date': None, 'ended': False,
+                   'attributes': {'__tree': [at(9160)]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0} for k, rec in enumerate(H.REC)]
+            pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(2000)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [((r.entity0 || {}).name || ''), r._status, ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName || x.type.name).sort().join(','),
+              r.begin_date ? [r.begin_date.year, r.begin_date.month].join('-') : ''])""")
+            mine = [x for x in added if x[0] in ('Wood Man', 'Same Man')]
+            print('C)', mine)
+            results.append(len(mine) == 4 and all(x[:4] == ['Wood Man', 2, 'trombone', '2001-3'] for x in mine))
+            print('Fehler:', errs)
+            results.append(not errs)
+            # D) developer mode: why no box
+            ctx2 = H.new_context(b)
+            pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg2.on('dialog', lambda d: d.accept())
+            pg2.evaluate("localStorage.setItem('dci-dev', 'true'); localStorage.setItem('dci-dsup-why', 'true')")
+            pg2.reload()
+            pg2.add_script_tag(content=H.MAIN)
+            pg2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg2)
+            H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg2, "document.body.innerHTML", 10, 300)
+            pm3, sm3 = pg2.evaluate(BOX, 'Prod Man'), pg2.evaluate(BOX, 'Same Man')
+            print('D)', pm3['why'], sm3['why'])
+            results.append(bool(pm3['why']) and pm3['why'][0] == 'noMatch' and 'instrument piano on 1 recordings' in pm3['why'][1]
+                           and pm3['why'][1].startswith('MB x Vibecode: Credits Importer – compared with MusicBrainz (developer mode):')
+                           and bool(sm3['why']) and sm3['why'][0] == 'allThere' and 'all its 1 rows' in sm3['why'][1] and not errs2)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear()
+        H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        for _n, i, _r in PEOPLE:
+            H.ARTISTS.pop(i, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.106.0
+// @version      3.107.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.106.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.106.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.107.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.107.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.106.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.107.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1834,11 +1834,11 @@
       "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
       "settings.gapNone": "Also when nothing seems to be missing",
       "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
-      "gapWhy.head": "Line of the release page (developer mode):",
+      "gapWhy.head": "{script} – line of the release page (developer mode):",
       "gapWhy.start": "started – waiting for MusicBrainz and the source …",
       "gapWhy.off": "switched off in ⚙ Settings → Sources.",
       "gapWhy.path": "not a release page ({path}).",
-      "gapWhy.noLink": "no Discogs or Bandcamp link recognized among the {n} external links of the page.",
+      "gapWhy.noLink": "no Discogs or Bandcamp link recognized among the {n} external links of the page (lists of links: {boxes}).",
       "gapWhy.ws": "MusicBrainz's web service did not answer (status {status}).",
       "gapWhy.dgBroken": "the request to Discogs (release {id}) was broken off: {msg}",
       "gapWhy.bcBroken": "the request to Bandcamp ({url}) was broken off: {msg}",
@@ -1850,6 +1850,23 @@
       "gapWhy.error": "stopped by an error: {msg}",
       "settings.gapWhy": "Line of the release page: show why it is missing",
       "settings.gapWhyTitle": "Developer mode: where the line would be, a grey note says why there is none (the setting off, no link recognized, MusicBrainz or the source not answering, nothing missing, hidden with ✕, an error); in the console too.",
+      "settings.dsupWhy": "Compared with MusicBrainz: show why an entry has no box",
+      "settings.dsupWhyTitle": "Developer mode: at an entry without the box “Compared with MusicBrainz”, a grey note says why (rules off, not linked, no relationships of the person on MusicBrainz, none of the same type, level, tracks and instrument, no dates, nothing to change).",
+      "dsupWhy.head": "{script} – compared with MusicBrainz (developer mode):",
+      "dsupWhy.off": "the rules S172, S173 and S174 are switched off.",
+      "dsupWhy.company": "only people are compared (no label, place or other entry).",
+      "dsupWhy.noMbid": "the entry is not linked to a MusicBrainz artist.",
+      "dsupWhy.noIndex": "MusicBrainz's relationships of the release are not read yet.",
+      "dsupWhy.noRels": "MusicBrainz has no relationships of this person on this release, its recordings or its release group.",
+      "dsupWhy.noMatch": "no row stands for a relationship MusicBrainz has (the same type, level, tracks and instrument) – MusicBrainz: {mb}; here: {rows} rows, {existing} of them already on MusicBrainz (Skip).",
+      "dsupWhy.allThere": "all its {n} rows are relationships MusicBrainz has already (on Skip) – they are compared once the date pools are applied.",
+      "dsupWhy.noDates": "{n} rows stand for relationships MusicBrainz has, but none of them has a date (from the pools, the matrix or typed).",
+      "dsupWhy.same": "nothing to add or change: {n} rows compared, the dates are the same or MusicBrainz's are more precise.",
+      "dsupWhy.on": "{type} {main} on {n} {level}",
+      "dsupWhy.lv.release": "the release",
+      "dsupWhy.lv.release_group": "the release group",
+      "dsupWhy.lv.recording": "recordings",
+      "dsupWhy.lv.work": "works",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
@@ -4211,11 +4228,11 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
-    { id: 'S174', where: 'dsupScan, dsupTake, computePlan (relAttr)', note: 'MusicBrainz less precise (3.106.0; collected item Z-DSUP): MusicBrainz has a person with an instrument the source names more precisely ("saxophone" – "tenor saxophone") – no conflict, an update: "tenor saxophone instead of saxophone" offered at the entry (the relationship of MusicBrainz edited, its other attributes, credits and dates kept); several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks: they go on the release, MusicBrainz keeps the common group on the recordings; MusicBrainz more precise than the source: nothing is added' },
-    { id: 'S173', where: 'dsupScan, dsupHtml, dsupTake', note: 'Conflicts with MusicBrainz (3.106.0; collected item Z-DSUP): a linked person MusicBrainz has with other instruments or voices on this release than the source – "only on MusicBrainz: drums" shown at the entry (yellow, a line of its own in the matrix, a chip in the compact view), the roles only in the source held on Skip until "Add anyway" (or "Add all conflicts"); the same role is never a conflict; any source (texts, other sites), on all its tracks together' },
-    { id: 'S172', where: 'dsupDateOf, dsupDatesOf, computePlan (relDate)', note: 'Dates of relationships MusicBrainz has (3.106.0; collected item Z-DSUP): a row with a date (from the pool, the matrix or by hand) whose relationship MusicBrainz has – without a date: "add the date"; the same date less precise: "more precise"; another date: their lowest common denominator ("2007-05-06" and "2007-06": 2007); MusicBrainz more precise and the same: nothing – offered at the entry (yellow), "Take" edits the relationship of MusicBrainz' },
+    { id: 'S174', where: 'dsupScan, dsupTake, computePlan (relAttr)', note: 'MusicBrainz less precise (3.106.0; collected item Z-DSUP): MusicBrainz has a person with an instrument the source names more precisely ("saxophone" – "tenor saxophone") – no conflict, an update: "tenor saxophone instead of saxophone" offered at the entry (the relationship of MusicBrainz edited, its other attributes, credits and dates kept); several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks: they go on the release, MusicBrainz keeps the common group on the recordings; MusicBrainz more precise than the source: nothing is added. 3.107.0 (Z-ITREE): which instrument is a kind of which from the instruments\' tree (itreeAncestors) – MusicBrainz\'s attributes are flat' },
+    { id: 'S173', where: 'dsupScan, dsupHtml, dsupTake', note: 'Conflicts with MusicBrainz (3.106.0; collected item Z-DSUP): a linked person MusicBrainz has with other instruments or voices on this release than the source – "only on MusicBrainz: drums" shown at the entry (yellow, a line of its own in the matrix, a chip in the compact view), the roles only in the source held on Skip until "Add anyway" (or "Add all conflicts"); the same role is never a conflict; any source (texts, other sites), on all its tracks together. 3.107.0 (Z-DSUP2): "only on MusicBrainz" only when the source names instruments or voices of the person; (Z-DSUPWHY) developer mode: why an entry has no box (dsupWhyOf)' },
+    { id: 'S172', where: 'dsupDateOf, dsupDatesOf, computePlan (relDate)', note: 'Dates of relationships MusicBrainz has (3.106.0; collected item Z-DSUP): a row with a date (from the pool, the matrix or by hand) whose relationship MusicBrainz has – without a date: "add the date"; the same date less precise: "more precise"; another date: their lowest common denominator ("2007-05-06" and "2007-06": 2007); MusicBrainz more precise and the same: nothing – offered at the entry (yellow), "Take" edits the relationship of MusicBrainz. 3.107.0 (Z-DSUP3): a date MusicBrainz does not have is taken without a click (a click takes it back); the rows MusicBrainz has already (on Skip since the import) get the dates of the matrix too and come back when their date adds to or changes MusicBrainz\'s (dsupWithExisting)' },
     { id: 'S171', where: 'TEXT.parse (rdst)', note: 'Texts (3.105.0; collected item Z-RDST): "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." – a name right after the date of a sentence of recording, without "at", is the place where it was recorded when one of its words is one of places: studio, hall, saal, kirche, church, club, theater, room, haus (also at the end of a word: Konzerthaus, Sendesaal, Stadthalle) – read as "Recorded … at …"' },
-    { id: 'S170', where: 'instsGroup', note: 'View (3.103.0; collected item Z-INSTS; a quick switch, on by default): the automatic row of "on the release" names the lowest group of MusicBrainz\'s instrument tree all the instruments share (soprano and alto saxophone: saxophone; soprano saxophone and bass clarinet: the reeds; flute and bass clarinet: woodwind; "wind instruments" too) – none, the whole tree or piano with strings: "instruments" (no instrument); a group the source does not name is said at the row. Off: always "instruments"' },
+    { id: 'S170', where: 'instsGroup', note: 'View (3.103.0; collected item Z-INSTS; a quick switch, on by default): the automatic row of "on the release" names the lowest group of MusicBrainz\'s instrument tree all the instruments share (soprano and alto saxophone: saxophone; soprano saxophone and bass clarinet: the reeds; flute and bass clarinet: woodwind; "wind instruments" too) – none, the whole tree or piano with strings: "instruments" (no instrument); a group the source does not name is said at the row. Off: always "instruments". 3.107.0 (Z-ITREE): MusicBrainz\'s relationship editor has its instruments flat – the groups come from the instruments\' "type of" relationships (the workflow\'s file of the core dump, else MusicBrainz asked)' },
     { id: 'S169', where: 'instsRows, instsSet, instsBarHtml, instsSegHtml', note: 'View (3.103.0; collected item Z-INSTS): the instruments of a person the source names without tracks – per track (each on all recordings, as before) or on the release ("Instruments: per track | on the release" per person; suggested from 4 such instruments): on the release each instrument with the date of the release (the release-level dates of its column in the date matrix, else the date it had), on the recordings one automatic row – the instruments\' common group (S170), "performer" when voices are among them – with the date of the recordings and "guest" or "additional" when all have it; switched back and forth: always one of the two states, the changes of the rows (also of the automatic one) kept' },
     { id: 'S168', where: 'TEXT.parse (firstPerson), playsAsks, playsHtml', note: 'Texts (3.102.0; collected item Z-PLAYS): "At the time I played soprano and tenor sax." – a sentence of the one who writes: left out when its instruments are credited already; an instrument no one is credited with is asked above the entries – whose it is (the people of the release offered, the one who plays the others of the sentence first), taken on all tracks, or not' },
     { id: 'S167', where: 'addCreditRows, remapRow, uncrHtml, uncrTake', note: 'Credits (3.102.0; collected item Z-UNCR): a credit Discogs marks [Uncredited] (not named on the release) is on Skip until it is taken – at the entry when all roles of the person are such ("Take anyway"), else at each role; "Take all uncredited" for the whole release (this release only)' },
@@ -4224,7 +4241,7 @@
     { id: 'S164', where: 'TEXT.parse (readLine0), loadSeries, seriesLinked', note: 'Texts (3.101.0; collected item Z-CIMP): "Spirit Room Series Vol.247", "Series: X No. 12" – the release part of that series with its number; MusicBrainz\'s series of that name suggested (no "Create series" – a series named in a text only), the row taken once one is chosen or its MBID given' },
     { id: 'S163', where: 'TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): "Cover art: The Weight by Kara D. Rusch" – the artist of the cover (artwork credited "cover art"), the title of the picture left out' },
     { id: 'S162', where: 'TEXT.parse (readLine0, ensembles), soloAskHtml, soloAnswer', note: 'Texts (3.101.0; collected item Z-CIMP): "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)", TRIO, QUARTET … – only the people named play on those tracks: the lineup without tracks loses them for everyone else, a name in short is the person of the lineup it stands for, the instrument in brackets the one played there; "track 7 SOLO: X" is asked at the person – only this person on the track, the attribute "solo" there, or nothing' },
-    { id: 'S161', where: 'joinWriterLines, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): the writers below a track title – "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)", broken over two lines too – each a writer of that track (as Z-TCP), the publisher in the bracket that track\'s, the society the release\'s (S160); the release\'s title above a list whose first track has that title is left out' },
+    { id: 'S161', where: 'joinWriterLines, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): the writers below a track title – "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)", broken over two lines too – each a writer of that track (as Z-TCP), the publisher in the bracket that track\'s, the society the release\'s (S160); the release\'s title above a list whose first track has that title is left out. 3.107.0 (Z-CIMP2, listLine): a cover\'s list as read – the length after a title, "9.... Title", a society misread ("-BM!)", "-BMI}"); a title with its writers below is their block whatever is above it; a numbered title of the release alone is left out as a title; a writer with the publisher in a bracket is never a publisher' },
     { id: 'S160', where: 'addCompanyEntry', note: 'Rights societies (3.101.0; collected item Z-RSOC; off by default, a quick switch): "Take rights societies" – BMI, GEMA … of the source (Discogs, texts, notes) as label–release "rights society"; off: their entry on Skip, with a note' },
     { id: 'S159', where: 'artlEvidence, artlApply, artlToLabel, artlToArtist, artlNoteHtml', note: 'Entries (3.100.0; collected item Z-ARTL): a name credited only for the artwork of the release (art direction, artwork, design, graphic design, illustration, photography) that is beyond doubt a label – the label whose Bandcamp page the album is on, a label of the release in MusicBrainz, a label or company Discogs lists for the release – becomes that label: its rows the label–release relationships of the same name, linked at once to MusicBrainz\'s label when it is known; "As an artist instead" takes it back (and again "As the label")' },
     { id: 'S158', where: 'arrComProposals, renderArrComments, arrComFor (pendingWorkEntity), arrNotice', note: 'Arrangement works (3.98.0; collected item Z-ARRDIS): the new works of tracks whose writer is [traditional] and that have arrangers get the disambiguation "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ takes it, its text can be changed), set when the new works are staged; afterwards a small box on the page names the works. Only new works; other arrangements (classical music …) not yet' },
@@ -5523,11 +5540,20 @@
     if (top) {
       const out = [top.name];
       const all = [...ix.atById.values()];
-      const walk = (id, depth) => all.filter((a) => a.parent_id === id).sort((x, y) => x.name.localeCompare(y.name)).forEach((a) => {
-        out.push(a.name);
-        if (depth < 4) walk(a.id, depth + 1);
-      });
-      walk(top.id, 0);
+      // ([Z-ITREE] 3.107.0) its kinds in the instruments' tree (the attributes are flat on MusicBrainz), and the attribute's children
+      const kids = (a) => uniq([...(a.gid ? itreeKids(a.gid).map((g) => attrByGid(g)).filter(Boolean) : []), ...all.filter((x) => x.parent_id === a.id)])
+        .sort((x, y) => x.name.localeCompare(y.name));
+      const seen = new Set([top.id]);
+      const walk = (a, depth) => {
+        if (a.gid) itreeNeed(a.gid, false);
+        kids(a).forEach((x) => {
+          if (seen.has(x.id)) return;
+          seen.add(x.id);
+          out.push(x.name);
+          if (depth < 4) walk(x, depth + 1);
+        });
+      };
+      walk(top, 0);
       if (out.length > 1) list = uniq(out);
     }
     cache.map.set(ck, list);
@@ -6748,6 +6774,30 @@
    * [Z-CIMP] (3.101.0, S161) Writer lines broken over two lines joined again: one ending in "/" ("Tomas Fujiwara (Tomas Fujiwara-BMI) /"),
    * a bracket of a publisher alone below ("(4WordSeaMusic-BMI)"), a name broken ("… / Tomas" + "Fujiwara (Tomas Fujiwara-BMI)").
    */
+  /**
+   * [Z-CIMP2] (3.107.0, S161) A line of a printed track list as a cover's text recognition reads it: its length at the end left out
+   * ("2. KFNW 03:12"), a number run into its title set apart ("9.... on a Stamp!?" → "9. ... on a Stamp!?"), a society misread in its
+   * bracket as it is meant ("(FlizmoMusic-BM!)", "(4WordSeaMusic-BMI}", "(… -BMI!)" → "-BMI)").
+   */
+  function listLine(l) {
+    let t = String(l || '');
+    if (/^\s*(?:\d{1,3}|[A-Z]{1,2}\d{1,2})(?:[.):]|\s)/.test(t)) {
+      // ((review) a title that is only a length stays: "1. 4:33"; "A1 Title 3:45" without a sign after the position too
+      t = t.replace(/^(\s*\d{1,3})\.(\.{2,})/, '$1. $2').replace(/^(\s*\d{1,3})\.(?=[^\d\s.])/, '$1. ')
+        .replace(/^(\s*(?:\d{1,3}|[A-Z]{1,2}\d{1,2})[.):]?\s+\S.*?\S)\s+\(?\d{1,2}:\d{2}(?::\d{2})?\)?\s*$/, '$1');
+    }
+    // ((review) the society in capitals as printed – "(Johnny - Cash)" is no society
+    return t.replace(/\(([^()]*?\S)\s*([-–—/,])\s*([A-Z]{2,6})[!|}\]1]*\s*[)}\]!]?(?=\s*(?:\/|$))/g, (m, pub, sep, soc) => {
+      const fix = societyFix(soc);
+      return fix ? `(${pub}${sep}${fix})` : m;
+    });
+  }
+  /** A society's name as read (BMI, "BM" with its last letter lost) – null if it is none. */
+  function societyFix(soc) {
+    if (!societyFix.set) societyFix.set = new Set(RIGHTS_SOCIETIES.map(([a]) => String(a).toUpperCase()));
+    const u = String(soc || '').toUpperCase();
+    return societyFix.set.has(u) ? u : societyFix.set.has(`${u}I`) && u.length >= 2 ? `${u}I` : null;
+  }
   function joinWriterLines(lines) {
     const re = PUB_SOC();
     const out = [];
@@ -8467,8 +8517,10 @@
         }
         const m = t.match(SOCIETY_AFTER_NAME);
         const name = clean(m ? m[1] : t).replace(/[\s:–—-]+$/, '');
-        // a name, no sentence of a credit ("Recorded at …", "Mixed by …")
-        if (!looksLikeName(name) || !/^[\p{Lu}\p{N}]/u.test(name) || /\s(?:by|at|in|for|on)\s|:/i.test(` ${name} `)) return null;
+        // a name, no sentence of a credit ("Recorded at …", "Mixed by …"); ([Z-CIMP2] 3.107.0) no writer with the publisher in a bracket
+        // ("Tomas Fujiwara (Tomas Fujiwara-BMI)" below a title the list did not find: never the publisher "Tomas Fujiwara (Tomas Fujiwara";
+        // (review) a bracket of its own name stays: "Chrysalis Music (UK) Ltd")
+        if (!looksLikeName(name) || !/^[\p{Lu}\p{N}]/u.test(name) || /\s(?:by|at|in|for|on)\s|:/i.test(` ${name} `) || /\([^)]*$/.test(name)) return null;
         return { name, societies: m ? [m[2], m[3]].filter(Boolean).map(societyName) : [], scope: sc, unresolved };
       };
       const addPublisher = (item, block) => {
@@ -8999,7 +9051,10 @@
             ignored.push({ text: line0, why: 'releaseTitle' });
             return;
           }
-          if (title && title.split(/\s+/).length <= 12 && (!titleLike(prevL) || (ruleOn('S161') && titleOf(prevL) === norm(title))) && !titleLike(nextL)) {
+          // ([Z-CIMP2] 3.107.0, S161) a title with its writers' line right below it is that track's block, whatever is above it (a list of
+          // titles each with its writers: "1. The Throes" above "2. KFNW" / "Ken Filiano (FlizmoMusic-BMI) / …")
+          if (title && title.split(/\s+/).length <= 12 && (!titleLike(prevL) || (ruleOn('S161') && (titleOf(prevL) === norm(title) || PUB_SOC().test(nextL || ''))))
+            && !titleLike(nextL)) {
             let set = null;
             if (quoted) {
               const res = resolveTitles([title]);
@@ -9018,6 +9073,14 @@
               ignored.push({ text: line0, why: 'trackTitle' });
               return;
             }
+          }
+          // ([Z-CIMP2] 3.107.0, S161) a numbered line of the track list with a title of the release ("1. The Throes" above "2. KFNW"): left
+          // out as a title, no line not recognized
+          if (ruleOn('S161') && title && tm[1] && !quoted && !/[()]/.test(line) && exactTrack(title) && !isRole(cap(title))) {
+            trackPos = '';
+            trackBlock = null;
+            ignored.push({ text: line0, why: 'trackTitle' });
+            return;
           }
           trackPos = '';
         }
@@ -9492,7 +9555,7 @@
       // ((review) only where a release of one track can take them: `songsOk` of the pasted text and the Bandcamp album – not the Discogs
       // notes, a track page, an album of many tracks)
       const songRead = ctx0 && (ctx0.songs || (ruleOn('S122') && ctx0.songsOk)) && ruleOn('S118') ? songLists(allLines1, !ctx0.songs) : { lines: allLines1, songs: [] };
-      const allLines = ruleOn('S161') ? joinWriterLines(songRead.lines) : songRead.lines;
+      const allLines = ruleOn('S161') ? joinWriterLines(songRead.lines.map(listLine)) : songRead.lines;
       // ([Z-TBL] the positions of the text in their order: "A1", "A2" … "B4" – the tracks 1 … 8)
       for (const l of allLines) {
         const p = (String(l).trim().match(/^([A-Z]{1,2}\d{1,2})(?=[.):]?(?:\s|$))/) || [])[1];
@@ -10988,6 +11051,8 @@
   const GAP_WHY_KEY = 'dci-gap-why';
   // (the release page leaves the script before DEV_KEY is made: its name here)
   const gapWhyOn = () => readJson('localStorage', 'dci-dev', false) === true && readJson('localStorage', GAP_WHY_KEY, false) === true;
+  // [Z-DSUPWHY] (3.107.0) developer mode: why an entry has no box "Compared with MusicBrainz" – at its place, in grey
+  const DSUP_WHY_KEY = 'dci-dsup-why';
   function gapWhy(key, vars = {}) {
     if (!gapWhyOn()) return;
     console.info('[Discogs-Credits] release gap:', key, vars);
@@ -10998,7 +11063,8 @@
     box.setAttribute('role', 'note');
     box.dataset.why = key;
     box.setAttribute('style', 'margin:6px 0 10px;padding:4px 10px;border:1px dashed #b9b6c6;border-radius:4px;background:#f4f3f7;color:#555;font-size:12px;line-height:1.5;');
-    box.textContent = `${tr('gapWhy.head')} ${tr(`gapWhy.${key}`, vars)}`;
+    // ([Z-GAPL3] 3.107.0) which script says so
+    box.textContent = `${tr('gapWhy.head', { script: EDIT_NOTE_SCRIPT_NAME })} ${tr(`gapWhy.${key}`, vars)}`;
     const head = host.querySelector('.releaseheader') || host.querySelector('h1');
     if (head && head.parentNode) head.parentNode.insertBefore(box, head.nextSibling);
     else host.prepend(box);
@@ -11249,9 +11315,12 @@
     if (!/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return gapWhy('path', { path: location.pathname });
     // the page's own links first: a release page without a Discogs or Bandcamp link asks nothing
     // (the links read by the adapters: what is Discogs stays in DISCOGS)
-    const box = document.querySelector('ul.external_links');
-    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs' || l.source === 'bandcamp')) {
-      return gapWhy('noLink', { n: box.querySelectorAll('a[href]').length });
+    // ([Z-GAPL2] 3.107.0) every list of links of the page – the release's, its release group's and those other scripts put there with the same
+    // class (one of them above the release's own made the line go missing)
+    const boxes = [...document.querySelectorAll('ul.external_links')];
+    const hrefs = boxes.flatMap((b) => [...b.querySelectorAll('a[href]')].map((x) => x.href));
+    if (boxes.length && !sourceLinksOf(hrefs).some((l) => l.source === 'discogs' || l.source === 'bandcamp')) {
+      return gapWhy('noLink', { n: hrefs.length, boxes: boxes.length });
     }
     gapSweep();
     // ([Z-GAPL] 3.105.0) MusicBrainz's "too many requests" (503, 429 – the page and other scripts ask too): asked again, twice
@@ -12021,6 +12090,21 @@
   const GLOBAL_STATS_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json';
   const GLOBAL_STATS_CACHE_KEY = 'dci-stats-global';
   const GLOBAL_STATS_MAX_AGE = 24 * 3600 * 1000;
+  // [Z-ITREE] (3.107.0) MusicBrainz's instruments as a tree: its relationship editor lists them flat (each right below "instrument");
+  // which one is a kind of which ("soprano saxophone" type of "saxophone") is only in the instruments' own relationships (link type
+  // "subtype"). The workflow "Global statistics" writes them from the core dump each week to its data branch – that file is kept a week;
+  // an instrument it does not have (or no file at all): asked of MusicBrainz (/ws/2/instrument/<gid>?inc=instrument-rels), kept a month.
+  const ITREE_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-instruments.json';
+  const ITREE_KEY = 'dci-itree';
+  const ITREE_LIVE_KEY = 'dci-itree-live';
+  const ITREE_MAX_AGE = 7 * 24 * 3600 * 1000;
+  const ITREE_LIVE_AGE = 30 * 24 * 3600 * 1000;
+  const ITREE_SUBTYPE = '40b2bd3f-1457-3ceb-810d-57f87f0f74f0';
+  // tree: the file ({ dump, up, down, name: Maps by gid, changes }); live: what MusicBrainz said ({ gid: { at, up, down, names } });
+  // version: counts each change (the caches of the chains and the questions go with it)
+  const ITREE = { tree: null, loading: null, failed: false, err: '', live: null, asking: new Set(), version: 0, timer: null,
+    // ((review) MusicBrainz asked one instrument at a time (the user's own requests in between); an instrument not answered: not again for 5 minutes
+    queue: [], busy: false, missed: new Map(), saveTimer: null };
   // [Z-STH] (3.53.0; Q-fx) the statistics of when you work (hours, weekdays, streaks, the most active weekday): shown unless switched off
   const STATS_DAILY_KEY = 'dci-stats-daily';
   const statsDailyOn = () => readJson('localStorage', STATS_DAILY_KEY, true) !== false;
@@ -12999,6 +13083,8 @@
     filledDates: new Set(),
     // [Z-DSUP] (3.106.0) the dates offered and taken (key), those edited in the editor
     dsupDateTake: new Set(),
+    // [Z-DSUP3] (3.107.0) a date MusicBrainz does not have is taken without a click – those taken back by hand
+    dsupDateOff: new Set(),
     dsupDone: new Set(),
     dsupEdited: new Map(),
     // Attributes of the links recording → work: chosen on / off by hand (key "track|work"), staged additions
@@ -14346,7 +14432,7 @@
             const sug = x ? dsupDateOf(item.date, x) : null;
             const dkey = sug && sug.kind !== 'differs' ? `${baseKey}|${dsupDateText(sug.to)}` : '';
             if (dkey && S.dsupDone.has(dkey)) { info.applied++; return; }
-            if (dkey && S.dsupDateTake.has(dkey) && !seen.has(`rd|${dkey}`)) {
+            if (dkey && dsupTaken(dkey, sug.kind) && !seen.has(`rd|${dkey}`)) {
               seen.add(`rd|${dkey}`);
               items.push({ ...item, key: `rd|${dkey}`, relDate: { key: dkey, attrs: x.attrs, to: sug.to, kind: sug.kind } });
               info.ready++;
@@ -20199,6 +20285,7 @@
         });
       }));
       S.existing = indexExistingRelationships(ws);
+      itreeLoad(); // [Z-ITREE] (3.107.0) the instruments' tree: on its way while the import goes on
       // [E8] (3.38.0) the release for the statistics (its relationships before the import)
       S.statRel = statReleaseInfo(ws);
       // [E5a] (3.37.1) who is linked where in this release in MusicBrainz (their name suggestions come first)
@@ -26539,7 +26626,7 @@
         ${(S.ensAsk || []).length ? soloAskHtml(a) : ''}
         ${S.rows.some((r) => r.artistKey === a.key && uncrPending(r)) ? uncrHtml(a) : ''}
         ${a.company || a.other ? '' : instsBarHtml(a)}
-        ${a.other ? '' : dsupHtml(a)}
+        ${a.other ? '' : dsupBoxHtml(a)}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -28121,8 +28208,10 @@
   function applyMatrix() {
     const m = dmClean();
     const report = { filled: new Set(), split: [], limited: [], kept: [] };
-    // Entries still to choose ("choose": single days or period) wait
-    for (const g of DATE_GROUPS) applyMatrixColumn(g, m.cells.filter((c) => c.col === g.key && cellEntry(c) && !c.alt), report);
+    // Entries still to choose ("choose": single days or period) wait; ([Z-DSUP3] 3.107.0) the rows MusicBrainz has already too
+    dsupWithExisting(() => {
+      for (const g of DATE_GROUPS) applyMatrixColumn(g, m.cells.filter((c) => c.col === g.key && cellEntry(c) && !c.alt), report);
+    });
     m.cells.forEach((c) => { if (!c.alt) c.auto = false; });
     m.dirty = false;
     saveMatrix();
@@ -32698,8 +32787,188 @@
     return `<p class="dci-sub dci-artl" data-el="artl">${esc(text)} <button type="button" class="dci-textbtn" data-act="artl-toggle" title="${esc(tr(a.company ? 'artl.toArtistTitle' : 'artl.toLabelTitle'))}">${esc(btn)}</button></p>`;
   }
 
+  // --- [Z-ITREE] (3.107.0) the instruments' tree (S170, S173, S174, Q014) -------------------------------------------------------
+  /** The file of the workflow as the script uses it: Maps of the parents, the children and the names by gid; null if it is no tree. */
+  function itreeClean(d) {
+    if (!d || typeof d !== 'object' || d.format !== 'mb-vibecode-instrument-tree' || !Array.isArray(d.instruments) || !Array.isArray(d.subtype)) return null;
+    const inst = d.instruments.filter((x) => Array.isArray(x) && typeof x[0] === 'string' && typeof x[1] === 'string');
+    if (inst.length !== d.instruments.length || !inst.length) return null;
+    const up = new Map();
+    const down = new Map();
+    const name = new Map(inst.map(([g, n]) => [g, n]));
+    for (const pr of d.subtype) {
+      if (!Array.isArray(pr) || !inst[pr[0]] || !inst[pr[1]] || pr[0] === pr[1]) continue;
+      const [a, b] = [inst[pr[0]][0], inst[pr[1]][0]];
+      if (!up.has(b)) up.set(b, []);
+      up.get(b).push(a);
+      if (!down.has(a)) down.set(a, []);
+      down.get(a).push(b);
+    }
+    const changes = (Array.isArray(d.changes) ? d.changes : []).filter((c) => c && typeof c === 'object').slice(0, 12).map((c) => ({
+      dump: String(c.dump || ''), ...Object.fromEntries(['added', 'removed', 'moved', 'renamed'].map((k) => [k, (Array.isArray(c[k]) ? c[k] : []).map(String).slice(0, 200)])) }));
+    return { dump: String(d.dump || ''), generated: String(d.generated || ''), up, down, name, changes, raw: d };
+  }
+  /** The workflow's file: the copy of this browser (a week), else loaded – once; a change asks again what waits for it. */
+  function itreeLoad() {
+    if (ITREE.tree || ITREE.loading || ITREE.failed) return;
+    const now = Date.now();
+    let kept = null;
+    try {
+      kept = readJson('localStorage', ITREE_KEY, null);
+    } catch (e) { /* not reachable */ }
+    const copy = kept && kept.data ? itreeClean(kept.data) : null;
+    if (copy) ITREE.tree = copy;
+    if (copy && kept.at <= now && now - kept.at < ITREE_MAX_AGE) return;
+    ITREE.loading = httpGet(`${ITREE_URL}?t=${Math.floor(now / 3600000)}`).then((raw) => {
+      if (raw.length > 4e6) throw new Error('too large');
+      const d = JSON.parse(raw);
+      const tree = itreeClean(d);
+      if (!tree) throw new Error('no tree of instruments');
+      ITREE.tree = tree;
+      ITREE.err = '';
+      try {
+        writeJson('localStorage', ITREE_KEY, { at: Date.now(), data: d });
+      } catch (e) { /* the browser's storage full: kept for this page only */ }
+    }).catch((e) => {
+      // (not there yet – the workflow has not run – or no network: the copy of before, else MusicBrainz is asked instrument by instrument)
+      ITREE.failed = !ITREE.tree;
+      ITREE.err = String((e && e.message) || e);
+      console.info('[Discogs-Credits] tree of instruments:', ITREE.err, ITREE.tree ? '(the copy of before used)' : '(MusicBrainz asked instead)');
+    }).finally(() => {
+      ITREE.loading = null;
+      itreeChanged();
+    });
+  }
+  /** What MusicBrainz said of instruments (kept a month), read once. */
+  function itreeLive() {
+    if (ITREE.live) return ITREE.live;
+    let kept = null;
+    try {
+      kept = readJson('localStorage', ITREE_LIVE_KEY, null);
+    } catch (e) { /* not reachable */ }
+    const now = Date.now();
+    ITREE.live = new Map(Object.entries(kept && typeof kept === 'object' ? kept : {})
+      .filter(([, v]) => v && typeof v === 'object' && v.at <= now && now - v.at < ITREE_LIVE_AGE && Array.isArray(v.up) && Array.isArray(v.down)));
+    return ITREE.live;
+  }
+  /** Whether the tree knows this instrument (the file, else MusicBrainz's answer). */
+  const itreeKnows = (gid) => !!gid && ((ITREE.tree && ITREE.tree.name.has(gid)) || itreeLive().has(gid));
+  /**
+   * An instrument the tree should know: the file loaded (once); an instrument the file does not have (or no file) asked of MusicBrainz,
+   * and the ones it is a kind of after it (`up`: also further up). Nothing while the file is on its way.
+   */
+  function itreeNeed(gid, up = true) {
+    if (!gid || !MBID_RE.test(gid)) return;
+    itreeLoad();
+    if (ITREE.loading || itreeKnows(gid) || ITREE.asking.has(gid)) return;
+    if (Date.now() - (ITREE.missed.get(gid) || 0) < 5 * 60 * 1000) return;
+    ITREE.asking.add(gid);
+    ITREE.queue.push({ gid, up });
+    itreePump();
+  }
+  /** ((review) The next instrument asked of MusicBrainz – one at a time, after the requests the user waits for. */
+  function itreePump() {
+    if (ITREE.busy || !ITREE.queue.length) return;
+    ITREE.busy = true;
+    const { gid, up } = ITREE.queue.shift();
+    mbWsIdle(`instrument/${gid}?inc=instrument-rels`).then((j) => {
+      const rels = ((j && j.relations) || []).filter((r) => r.instrument && r.instrument.id && (r['type-id'] === ITREE_SUBTYPE || norm(r.type || '') === 'subtype'));
+      const names = Object.fromEntries(rels.map((r) => [r.instrument.id, String(r.instrument.name || '')]));
+      // ("subtype": the instrument of entity0 has the other as a kind of it – this one "type of" the other when it is entity1, backward)
+      const entry = { at: Date.now(), name: String((j && j.name) || ''), names,
+        up: rels.filter((r) => r.direction === 'backward').map((r) => r.instrument.id), down: rels.filter((r) => r.direction !== 'backward').map((r) => r.instrument.id) };
+      itreeLive().set(gid, entry);
+      // ((review) written once the answers stop coming (not the whole map after each)
+      clearTimeout(ITREE.saveTimer);
+      ITREE.saveTimer = setTimeout(() => {
+        try {
+          // (at most 1500 instruments: the oldest go first)
+          writeJson('localStorage', ITREE_LIVE_KEY, Object.fromEntries([...itreeLive().entries()].sort((x, y) => y[1].at - x[1].at).slice(0, 1500)));
+        } catch (e) { /* the browser's storage full: kept for this page only */ }
+      }, 2000);
+      if (up) entry.up.forEach((g) => itreeNeed(g, true));
+      // ((review) only an answer that tells something changes what is shown
+      if (entry.up.length || entry.down.length) itreeChanged();
+    }).catch((e) => {
+      ITREE.missed.set(gid, Date.now());
+      console.info('[Discogs-Credits] tree of instruments: MusicBrainz not asked', gid, e);
+    }).finally(() => {
+      ITREE.asking.delete(gid);
+      ITREE.busy = false;
+      if (!ITREE.asking.size) itreeChanged(); // (the last answer: the rows held while it was on its way are compared now)
+      itreePump();
+    });
+  }
+  /** ((review) Whether the tree is still on its way (the file, or MusicBrainz's answers): instruments are not judged meanwhile. */
+  const itreePending = () => !!ITREE.loading || ITREE.asking.size > 0;
+  // ((review) the file for the instruments it has, MusicBrainz's answer for the others
+  const itreeParents = (gid) => (ITREE.tree && ITREE.tree.name.has(gid) ? ITREE.tree.up.get(gid) || [] : (itreeLive().get(gid) || {}).up || []);
+  const itreeKids = (gid) => (ITREE.tree && ITREE.tree.name.has(gid) ? ITREE.tree.down.get(gid) || [] : (itreeLive().get(gid) || {}).down || []);
+  /** The instruments an instrument is a kind of, nearest first (each once, itself not) – asking for what is not known yet. */
+  function itreeAncestors(gid) {
+    const out = [];
+    let level = [gid];
+    const seen = new Set([gid]);
+    for (let k = 0; k < 10 && level.length; k++) {
+      level.forEach((g) => itreeNeed(g));
+      const next = [];
+      for (const g of level) {
+        for (const p of itreeParents(g)) {
+          if (seen.has(p)) continue;
+          seen.add(p);
+          out.push(p);
+          next.push(p);
+        }
+      }
+      level = next;
+    }
+    return out;
+  }
+  /** An attribute of MusicBrainz by its gid (the instrument of the same gid). */
+  function attrByGid(gid) {
+    let ix = null;
+    try {
+      ix = idx();
+    } catch (e) {
+      return null;
+    }
+    if (!attrByGid.map || attrByGid.ix !== ix) {
+      attrByGid.ix = ix;
+      attrByGid.map = new Map([...ix.atById.values()].filter((a) => a.gid).map((a) => [a.gid, a]));
+    }
+    return attrByGid.map.get(gid) || null;
+  }
+  /** The tree changed (the file came, MusicBrainz answered): its uses again – the automatic rows, the comparison, the questions. */
+  function itreeChanged() {
+    ITREE.version++;
+    attrChain.cache = null;
+    questionOptions.cache = null;
+    clearTimeout(ITREE.timer);
+    ITREE.timer = setTimeout(() => {
+      if (!S.overlay || !S.rows.length) return;
+      // ((review) of the automatic rows only the group's name (their tracks and attributes as they are)
+      for (const auto of S.rows.filter((r) => r.instsAuto)) {
+        const rows = S.rows.filter((r) => r.artistKey === auto.artistKey && r.instsPrev);
+        const was = auto.instsWas;
+        if (!rows.length || (was && was.vocal) || (was && norm(auto.primaryText) !== norm(was.group))) continue;
+        const group = instsGroup(rows);
+        if (norm(group) === norm(auto.primaryText)) continue;
+        auto.primaryText = group;
+        auto.instsHint = group && !rows.some((r) => norm(r.raw).includes(norm(group))) ? group : '';
+        if (was) was.group = group;
+        resolveRowType(auto);
+      }
+      const typing = document.activeElement && S.overlay.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (!typing) renderGroups();
+      refresh();
+    }, 300);
+  }
+
   // --- [Z-DSUP] (3.106.0, S172, S173, S174) what MusicBrainz has: dates supplemented, conflicts shown, instruments made more precise --
-  /** An instrument's or voice's names up the tree of MusicBrainz (itself first). */
+  /**
+   * An instrument's or voice's names up the tree of MusicBrainz (itself first, its root last) – [Z-ITREE] (3.107.0) an instrument's
+   * kinds from the instruments' tree (the attributes of the relationship editor are flat).
+   */
   function attrChain(name) {
     const n = norm(name);
     if (!n) return [];
@@ -32712,11 +32981,16 @@
     const cache = attrChain.cache && attrChain.cache.ix === ix ? attrChain.cache : (attrChain.cache = { ix, map: new Map() });
     if (cache.map.has(n)) return cache.map.get(n);
     const all = [...ix.atById.values()];
-    let a = all.find((x) => norm(x.name) === n && x.parent_id);
+    const first = all.find((x) => norm(x.name) === n && x.parent_id);
+    let a = first;
     const out = [];
     for (let k = 0; a && k < 30; k++) {
       out.push(norm(a.name));
       a = a.parent_id ? ix.atById.get(a.parent_id) : null;
+    }
+    if (first && out[out.length - 1] === 'instrument' && first.gid) {
+      const kinds = itreeAncestors(first.gid).map((g) => attrByGid(g)).filter(Boolean).map((x) => norm(x.name));
+      out.splice(1, 0, ...kinds.filter((x) => !out.includes(x)));
     }
     const list = out.length ? out : [n];
     cache.map.set(n, list);
@@ -32729,6 +33003,44 @@
   const dsupKinds = new Set(['instrument', 'vocal']);
   const dsupRowKind = (r) => instsKind(r);
 
+  /** [S172] Whether a date offered is taken: one MusicBrainz does not have ([Z-DSUP3] 3.107.0: unless taken back), the others by a click. */
+  const dsupTaken = (key, kind) => (kind === 'add' ? !S.dsupDateOff.has(key) : S.dsupDateTake.has(key));
+  /** [S172] Whether the row's date would add to or change a relationship MusicBrainz has (any offer, also one only shown). */
+  function dsupDateOffers(row) {
+    const lt = currentLinkType(row);
+    const v = lt && lt.has_dates !== false ? rowDateInfo(row, lt).value : null;
+    return !!v && dsupRelsOf(row).some((x) => { const sg = dsupDateOf(v, x); return !!sg && sg.kind !== 'differs'; });
+  }
+  /**
+   * [Z-DSUP3] (3.107.0) The rows MusicBrainz has already (on Skip since the import, `existingAll`) get the dates of the pools as well
+   * (`fn`: the matrix applied): awake for it, then back on Skip – unless their date adds to or changes MusicBrainz's (then they stay,
+   * offered in the box "Compared with MusicBrainz"). Their copies (one per date) the same.
+   */
+  function dsupWithExisting(fn) {
+    const woke = ruleOn('S172') ? S.rows.filter((r) => r.existingAll && r.level === 'skip' && r.levelBeforeSkip && r.levelBeforeSkip !== 'skip' && !r.entrySkip) : [];
+    woke.forEach((r) => {
+      r.level = r.levelBeforeSkip;
+      resolveRowType(r);
+    });
+    // ((review) the rows woken before (not changed by hand since) are decided again
+    const again = S.rows.filter((r) => r.dsupWoke && r.level !== 'skip' && !r.levelTouched && !r.primaryTouched);
+    again.forEach((r) => { r.existingAll = true; });
+    try {
+      fn();
+    } finally {
+      const ids = new Set([...woke, ...again].map((r) => r.id));
+      for (const r of S.rows.filter((x) => x.existingAll && x.level !== 'skip' && (ids.has(x.id) || ids.has(x.mxOrigin)))) {
+        if (dsupDateOffers(r)) {
+          r.existingAll = false;
+          r.dsupWoke = true;
+        } else {
+          r.levelBeforeSkip = r.level;
+          r.level = 'skip';
+          r.dsupWoke = false;
+        }
+      }
+    }
+  }
   /** [S172] A date of MusicBrainz and the row's: nothing, or { kind: add | refine | change | differs, mb, to } (parts as [y, m, d]). */
   function dsupDateOf(value, x) {
     if (!value || !(value.begin || value.end)) return null;
@@ -32838,8 +33150,9 @@
       return { c: 'other' };
     };
     const cls = new Map(rows.map((r) => [r, classOf(r)]));
-    // what only MusicBrainz has: none of the rows the same, more or less precise
-    for (const m of mbMains.values()) {
+    // what only MusicBrainz has: none of the rows the same, more or less precise – ([Z-DSUP2] 3.107.0) only when the source names
+    // instruments or voices of this person (its other roles – "producer" – are no conflict)
+    for (const m of rows.length ? mbMains.values() : []) {
       const matched = rows.some((r) => kindOf(r) === m.kind && (norm(r.primaryText) === m.name || isAncestorOf(norm(r.primaryText), m.name)
         || isAncestorOf(m.name, norm(r.primaryText)) || (!m.name && norm(r.primaryText)) || !norm(r.primaryText)));
       if (!matched) res.mbOnly.push({ name: m.name || tr(m.kind === 'vocal' ? 'dsup.plainVocal' : 'dsup.plainInstr'), kind: m.kind, n: m.targets.size });
@@ -32851,6 +33164,8 @@
     rows.forEach((r) => { const c = cls.get(r); if (c.c === 'update' && !r.dsupSeen && r.dAllTracks && r.level === 'recording' && kindOf(r) === 'instrument') byGroup.set(c.m, [...(byGroup.get(c.m) || []), r]); });
     for (const r of rows) {
       if (r.dsupSeen) continue;
+      // ((3.107.0, review) an instrument is judged once the instruments' tree is there (not by the flat attributes meanwhile)
+      if (kindOf(r) === 'instrument' && itreePending()) continue;
       // ((review) each row once – the same, or without a conflict, too: a row changed later is not held while it is typed into
       r.dsupSeen = true;
       const c = cls.get(r);
@@ -32889,7 +33204,7 @@
       if (S.overlay) {
         S.overlay.querySelectorAll('[data-el=dsup]').forEach((el) => {
           const a = S.artists.get((el.closest('[data-group]') || {}).dataset ? el.closest('[data-group]').dataset.group : '');
-          const html = a ? dsupHtml(a) : '';
+          const html = a ? dsupBoxHtml(a) : '';
           if (html && el.outerHTML !== html) el.outerHTML = html;
         });
       }
@@ -32916,6 +33231,43 @@
   const dsupMark = (r) => !!(r.dsupHold || r.dsupRel || r.dsupUpd != null || (S.artists.get(r.artistKey)?.dsupDates || []).some((x) => x.row === r));
 
   /** At the top of the entry (yellow): what only MusicBrainz has, the roles held, the updates and dates offered. */
+  /** The box "Compared with MusicBrainz" of an entry – ([Z-DSUPWHY] 3.107.0) without one, in developer mode, why not. */
+  const dsupBoxHtml = (a) => dsupHtml(a) || dsupWhyHtml(a);
+  /** [Z-DSUPWHY] (3.107.0) Why an entry has no box: [key, vars]. */
+  function dsupWhyOf(a) {
+    if (!(ruleOn('S172') || ruleOn('S173') || ruleOn('S174'))) return ['off'];
+    if (a.company || a.other) return ['company'];
+    if (!a.mbid) return ['noMbid'];
+    if (!S.existing || !S.existing.list) return ['noIndex'];
+    const mb = dsupOf(a.mbid);
+    if (!mb.length) return ['noRels'];
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.manual);
+    const live = rows.filter((r) => r.level !== 'skip');
+    const existing = rows.filter((r) => r.existingAll && r.level === 'skip').length;
+    const matched = live.filter((r) => dsupRelsOf(r).length);
+    // ((review) the rows MusicBrainz has already, on Skip: what is compared once a date comes
+    if (!matched.length && existing && existing === rows.length) return ['allThere', { n: existing }];
+    if (!matched.length) {
+      const recs = new Set(S.mbTracks.map((t) => t.recordingGid).filter(Boolean));
+      const lvOf = (x) => (x.target === releaseMbid ? 'release' : S.releaseGroup && x.target === S.releaseGroup.id ? 'release_group' : recs.has(x.target) ? 'recording' : 'work');
+      const groups = new Map();
+      mb.forEach((x) => {
+        const k = `${x.type}|${dsupMain(x)}|${lvOf(x)}`;
+        if (!groups.has(k)) groups.set(k, { x, lv: lvOf(x), n: new Set() });
+        groups.get(k).n.add(x.target);
+      });
+      const text = [...groups.values()].slice(0, 6).map((g) => tr('dsupWhy.on', { type: g.x.type, main: dsupMain(g.x), n: g.n.size, level: tr(`dsupWhy.lv.${g.lv}`) }).replace(/\s+/g, ' ')).join('; ');
+      return ['noMatch', { mb: text, rows: rows.length, existing }];
+    }
+    const dated = matched.filter((r) => { const lt = currentLinkType(r); return lt && lt.has_dates !== false && rowDateInfo(r, lt).value; });
+    if (!dated.length) return ['noDates', { n: matched.length }];
+    return ['same', { n: matched.length }];
+  }
+  function dsupWhyHtml(a) {
+    if (!S.devMode || readJson('localStorage', DSUP_WHY_KEY, false) !== true) return '';
+    const [key, vars] = dsupWhyOf(a);
+    return `<div class="dci-gapwhy dci-dsupwhy" data-el="dsup" data-why="${esc(key)}" role="note">${esc(`${tr('dsupWhy.head', { script: EDIT_NOTE_SCRIPT_NAME })} ${tr(`dsupWhy.${key}`, vars || {})}`)}</div>`;
+  }
   function dsupHtml(a) {
     // (as the rows are now – a role taken meanwhile is no longer held)
     const e0 = a.dsup;
@@ -32945,12 +33297,12 @@
       const n = keys.length > 1 ? ` (${keys.length}×)` : '';
       const text = (sg.kind === 'differs' ? tr('dsup.dateDiffers', { role: name(x.row), mb: dsupDateText(sg.mb), src: dsupDateText(sg.row) })
         : tr(`dsup.date.${sg.kind}`, { role: name(x.row), mb: dsupDateText(sg.mb), to: dsupDateText(sg.to) })) + n;
-      const taken = keys.every((k) => S.dsupDateTake.has(k));
+      const taken = keys.every((k) => dsupTaken(k, sg.kind));
       parts.push(`<div class="dci-dsup-l" data-dsup="date-${sg.kind}"><span>${esc(text)}</span>${sg.kind === 'differs' ? '' : ` <button type="button" class="dci-small" data-act="dsup-date" data-keys="${esc(keys.join('\n'))}" aria-pressed="${taken}">${esc(taken ? tr('dsup.dateTaken') : tr('dsup.takeDate'))}</button>`}</div>`);
     }
     const allHeld = S.rows.filter((r) => r.dsupHold && r.dsupHold.kind === 'conflict' && r.level === 'skip' && !r.entrySkip).length;
-    const allDates = [...S.artists.values()].reduce((n, x) => n + (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs' && !S.dsupDateTake.has(y.key)).length, 0);
-    const btns = (allHeld > e.held.filter((r) => r.dsupHold.kind === 'conflict').length || allDates > dates.filter((y) => y.sug.kind !== 'differs' && !S.dsupDateTake.has(y.key)).length) || allHeld + allDates > 1
+    const allDates = [...S.artists.values()].reduce((n, x) => n + (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs' && !dsupTaken(y.key, y.sug.kind)).length, 0);
+    const btns = (allHeld > e.held.filter((r) => r.dsupHold.kind === 'conflict').length || allDates > dates.filter((y) => y.sug.kind !== 'differs' && !dsupTaken(y.key, y.sug.kind)).length) || allHeld + allDates > 1
       ? `<div class="dci-dsup-all">${allHeld ? `<button type="button" class="dci-textbtn" data-act="dsup-all">${esc(tr('dsup.takeAll', { n: allHeld }))}</button>` : ''}
         ${allDates ? `<button type="button" class="dci-textbtn" data-act="dsup-dates-all">${esc(tr('dsup.takeAllDates', { n: allDates }))}</button>` : ''}</div>` : '';
     return `<div class="dci-note dci-dsup" data-el="dsup" role="note"><div class="dci-dsup-h">${esc(tr('dsup.head'))}</div>${parts.join('')}${btns}</div>`;
@@ -32984,14 +33336,19 @@
     const lt = ltOf(rows[0]);
     const root = lt && primaryRootOf(lt);
     if (!root) return '';
+    // ([Z-ITREE] 3.107.0) each instrument and what it is a kind of in the instruments' tree, nearest first (the relationship editor's
+    // attributes are flat: all right below "instrument"), then its attribute's parents as before
     const chains = rows.map((r) => {
-      const out = [];
-      let x = findChildAttr(root.id, r.primaryText);
+      const first = findChildAttr(root.id, r.primaryText);
+      if (!first) return [];
+      const out = [first];
+      if (first.gid) out.push(...itreeAncestors(first.gid).map((g) => attrByGid(g)).filter(Boolean));
+      let x = first.parent_id ? idx().atById.get(first.parent_id) : null;
       for (let k = 0; x && x.id !== root.id && k < 30; k++) {
         out.push(x);
         x = x.parent_id ? idx().atById.get(x.parent_id) : null;
       }
-      return out;
+      return out.filter((y, i) => out.findIndex((z) => z.id === y.id) === i);
     });
     if (chains.some((c) => !c.length)) return '';
     const common = chains[0].find((x) => chains.every((c) => c.some((y) => y.id === x.id)));
@@ -39207,8 +39564,18 @@
       case 'dsup-dates-all': {
         const keys = act === 'dsup-date' ? String(btn.dataset.keys || '').split('\n').filter(Boolean)
           : [...S.artists.values()].flatMap((x) => (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs').map((y) => y.key));
-        const off = act === 'dsup-date' && keys.every((k) => S.dsupDateTake.has(k)); // a second click: not taken again
-        keys.forEach((k) => (off ? S.dsupDateTake.delete(k) : S.dsupDateTake.add(k)));
+        // ([Z-DSUP3] 3.107.0) a date MusicBrainz does not have is taken already: the click takes it back (dsupDateOff)
+        const kinds = new Map([...S.artists.values()].flatMap((x) => (x.dsupDates || []).map((y) => [y.key, y.sug.kind])));
+        const off = act === 'dsup-date' && keys.every((k) => dsupTaken(k, kinds.get(k))); // a second click: not taken again
+        keys.forEach((k) => {
+          if (off) {
+            S.dsupDateTake.delete(k);
+            S.dsupDateOff.add(k);
+          } else {
+            S.dsupDateTake.add(k);
+            S.dsupDateOff.delete(k);
+          }
+        });
         S.dsupSig = '';
         renderGroups();
         refresh();
@@ -42723,7 +43090,7 @@
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, ALIAS_MAX_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, DSUP_WHY_KEY, ALIAS_MAX_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -44579,6 +44946,8 @@
         row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
         // [Z-GAPL] (3.105.0) developer mode: why the line is not there
         S.devMode ? row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))) : '',
+        // [Z-DSUPWHY] (3.107.0) developer mode: why an entry has no box "Compared with MusicBrainz"
+        S.devMode ? row(check('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'))) : '',
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
@@ -44978,6 +45347,15 @@
       // [Z-GAPL] (3.105.0) off unless switched on (developer mode)
       writeJson('localStorage', GAP_WHY_KEY, el.checked ? true : null);
       log('info', 'settingValue', { what: tr('settings.gapWhy'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'dsup-why') {
+      // [Z-DSUPWHY] (3.107.0) off unless switched on (developer mode)
+      writeJson('localStorage', DSUP_WHY_KEY, el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('settings.dsupWhy'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      S.dsupSig = '';
+      if (S.overlay) {
+        renderGroups();
+        refresh();
+      }
     } else if (k === 'gap-none') {
       // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
       writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
@@ -45295,7 +45673,7 @@
     // [Z-STH, Z-GOF, Z-RDU] (3.53.0) when you work, "Global", the lengths of the recordings
     STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY, STATS_LEN_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
-    GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY,
+    GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, DSUP_WHY_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
@@ -48097,6 +48475,8 @@
         background: #fff8db; border: 1px dashed #d8bd52; border-radius: 3px; color: #6b4e00; }
       .dci-insts-seg { margin-left: calc(var(--u, 1px) * 8); font-weight: normal; }
       .dci-insts-tag { font-size: calc(var(--u, 1px) * 11); color: #5b4fa8; border: 1px solid #c9c2ee; border-radius: 8px; padding: 0 calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 4); }
+      /* [Z-DSUPWHY] (3.107.0) developer mode: why an entry has no box */
+      .dci-dsupwhy { margin: calc(var(--u, 1px) * 4) 0; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border: 1px dashed #b9b6c6; border-radius: 4px; background: #f4f3f7; color: #555; font-size: 0.92em; line-height: 1.5; }
       .dci-dsup { background: #fff8db; border: 1px solid #e8d48a; border-left: 4px solid #e0b400; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); color: #4d3a00; }
       .dci-dsup-h { font-weight: 600; margin-bottom: calc(var(--u, 1px) * 2); }
       .dci-dsup-l { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; margin: calc(var(--u, 1px) * 2) 0; }
