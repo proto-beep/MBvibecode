@@ -1872,4 +1872,72 @@ def case_maya392(only396=False):
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_artlbc3100():
+    """Credits Importer 3.100.0 (collected item Z-ARTL, rule S159; the example of the collected item: "Artwork: Cyclical Dreams" on
+    cyclicaldreams.bandcamp.com): an album on a label's Bandcamp page credits that label for the artwork – the entry is the label,
+    linked to MusicBrainz's label with that page at once ("Linked as the label: the album is on its Bandcamp page “Cyclical
+    Dreams”"), its row label–release "artwork"; "Artwork: Kara Rusch" stays an artist."""
+    import copy
+    YUN = H.uid('dddddddd', 62)
+    LABEL = H.uid('eeeeeeee', 62)
+    PAGE = 'https://cyclicaldreams.bandcamp.com/'
+    ALBUM = PAGE + 'album/inner-space'
+    lts0, linked0, ac0 = copy.deepcopy(H.LTS), copy.deepcopy(H.LINKED.get('link_type')), list(H.RELEASE_AC)
+    H.lt(993, H.uid('1aaa0000', 993), 'artwork', 'artist', 'release', (1,))
+    H.lt(1170, H.uid('1aaa0000', 1170), 'artwork', 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.RELEASE_AC[:] = [(YUN, 'Space Man', 'Space Man', '')]
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Space Man', 'current': {'title': 'Inner Space', 'credits': 'Artwork: Cyclical Dreams\nArtwork: Kara Rusch', 'about': '',
+                                   'release_date': '01 Jan 2020 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]},
+                                  band='Cyclical Dreams')
+    for i, t in enumerate(H.TITLES):
+        H.BC_PAGES[f'{PAGE}track/song-{i + 1}'] = H.bc_page({'current': {'title': t, 'credits': ''}}, band='Cyclical Dreams')
+    orig_ws, orig_url = H.ws_release, H.ws_url
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+
+    def ws_url(query):
+        if PAGE in [x for x in __import__('urllib.parse').parse.parse_qs(query).get('resource', [])]:
+            return {'urls': [{'resource': PAGE, 'relations': [{'target-type': 'label', 'label': {'id': LABEL, 'name': 'Cyclical Dreams', 'disambiguation': ''}}]}]}
+        return orig_url(query)
+    H.ws_release, H.ws_url = ws, ws_url
+    ENT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const n = g.querySelector('[data-el=artl]'); const l = g.querySelector('.dci-gmatch a[href*="/label/"]');
+      return { kind: [...g.classList].find(c => c.startsWith('dci-kind-')), link: l ? l.getAttribute('href') : '', note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '',
+        types: [...g.querySelectorAll('tr.dci-row [data-f=type]')].map(t => (t.selectedOptions[0] || {}).text || '') }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            pg.wait_for_timeout(1000)
+            cd, kr = pg.evaluate(ENT, 'Cyclical Dreams'), pg.evaluate(ENT, 'Kara Rusch')
+            print('A)', cd, kr)
+            results.append(bool(cd) and cd['kind'] == 'dci-kind-label' and cd['link'] == f'/label/{LABEL}'
+                           and cd['note'].startswith('Linked as the label: the album is on its Bandcamp page “Cyclical Dreams”.') and cd['types'] == ['artwork']
+                           and bool(kr) and kr['kind'] == 'dci-kind-artist' and kr['note'] == '')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_release, H.ws_url = orig_ws, orig_url
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+        H.RELEASE_AC[:] = ac0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.99.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.100.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.100.0
+
+- **The roles of an entry as one matrix** (Z-ALIGN): the full view of an entry is one table – its head (role, role credit, credited as, attributes, the events) once, staying on top while the lines scroll; each role a thin heading row. All ticks of an event and all attributes stand exactly below each other (before, each role had a table of its own and its columns stood elsewhere). The attributes of a line together in one column, each with its word ("add. guest solo"), or – "Attributes: together | separate" above each matrix and in ⚙ Settings → Staging – a column per attribute; for all entries, remembered and in the profiles.
+- **Writing roles on the release** (Z-RWRT): "＋ Another role" shows writer, composer, lyricist, librettist (and translator) on the release level always, under "Writing" (before behind "+ n more").
+- **A label credited for the artwork** (Z-ARTL, rule S159): "Artwork: Cyclical Dreams" on the Bandcamp page of the label Cyclical Dreams is the label – linked to MusicBrainz's label at once, its roles the label–release relationships (art direction, artwork, design, graphic design, illustration, photography); also when MusicBrainz has it as a label of the release or Discogs lists it as a label or company. Only then – most such names are people; "As an artist instead" takes it back.
+- **Tests:** the list of MusicBrainz's relationship types knows the types added later (label–release artwork …, "produced for", translator).
 
 ### Import 3.99.0
 

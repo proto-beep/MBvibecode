@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.99.0
+// @version      3.100.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.99.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.99.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.100.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.100.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.99.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.100.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -472,6 +472,8 @@
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
       "match.viaMapping": "from the mapping file (by the video)",
+      "match.viaArtl": "the label of this release (credited for the artwork)",
+      "issue.kindMismatch": "a type of another kind of entity than the entry – choose the role again",
       "match.linkedShort": "✓ link",
       "match.manual": "set manually",
       "match.created": "newly created",
@@ -1295,6 +1297,8 @@
       "settings.evShared": "Events shared by all roles of an entry up to",
       "settings.evSharedAfter": "events",
       "settings.evSharedTitle": "More events than this: each block of an entry shows only its own (“＋ Event ▾” adds another one, blocks fold)",
+      "settings.emAttr": "Attributes in the full matrix of an entry",
+      "settings.emAttrTitle": "Together: one column, each attribute with its word. Separate: a column per attribute (wider). Also switchable above each matrix.",
       "settings.emShow": "Lines of a block shown before “▸ n more”",
       "settings.emBy": "An entry, compact, at first",
       "settings.aria.awMax": "At most works and recordings per artist",
@@ -1576,6 +1580,18 @@
       "role.pcFromCompany": "Discogs lists it as a label (“{name}”) – here the artist of the same name of this release ({where}); a suggestion",
       "role.pcAsLabel": "As the label instead",
       "role.pcAsLabelTitle": "Gives this row back to the label entry of Discogs (to link a label or another artist there)",
+      "artl.asLabel": "Linked as the label: {why}.",
+      "artl.asLabelOpen": "As the label – {why}; choose MusicBrainz’s label above.",
+      "artl.asArtist": "Credited as an artist – {why}.",
+      "artl.toArtist": "As an artist instead",
+      "artl.toArtistTitle": "Takes this entry back as an artist (most names credited for artwork are people)",
+      "artl.toLabel": "As the label",
+      "artl.toLabelTitle": "Makes this entry the label again, with the label–release relationships of its roles",
+      "artl.why.bandcamp": "the album is on its Bandcamp page “{page}”",
+      "artl.why.mb": "MusicBrainz has it as a label of this release",
+      "artl.why.discogs": "Discogs lists it as a label or company of this release",
+      "log.artlLabel": "“{name}” credited for the artwork as the label ({why})",
+      "log.artlArtist": "“{name}” as an artist again",
       "log.pcOfPerson": "℗ / © of “{name}”: Discogs lists it as a label, MusicBrainz has no label with its link – given to the artist of the same name ({where})",
       "log.pcAsLabel": "℗ / © of “{name}” given back to the label entry",
       "matrix.pubSelf": "A person as publisher: suggested on the works {name} writes ({n}) – tick others by hand",
@@ -2754,7 +2770,6 @@
       "em.joinTitle": "The instruments and voices of this entry in one block – joined in one relationship per recording and event when staged",
       "em.joinHint": "{n} instruments, each a block of its own –",
       "em.colRole": "Role · instrument (MusicBrainz)",
-      "em.colRoleOther": "Role → MusicBrainz",
       "em.colCredit": "Role credit",
       "em.flag.additional": "add.",
       "em.flag.guest": "guest",
@@ -2762,6 +2777,12 @@
       "em.noCredit": "none",
       "em.creditLabel": "Role credit of {name}",
       "em.colAc": "Credited as",
+      "em.colAttrs": "Attributes",
+      "em.attrMode": "Attributes:",
+      "em.attr.joint": "together",
+      "em.attr.split": "separate",
+      "em.attr.jointTitle": "The attributes of each role in one column, each with its word (for all entries)",
+      "em.attr.splitTitle": "A column for each attribute of the entry – they stand exactly below each other (for all entries)",
       "em.acLabel": "Credited as – {name}",
       "em.blockAcLabel": "Credited as – all roles of “{block}” of {name}",
       "em.blockAcTitle": "For all roles of this block at once (also those taken out), when the field is left or with Enter – ↶ Undo in the message; a role changed afterwards keeps its own. Empty: the MusicBrainz name ({name}).",
@@ -3055,6 +3076,7 @@
       "arq.lv.work": "the songs (writing)",
       "arq.lv.release_group": "all its releases",
       "arq.more": "+ {n} more",
+      "arq.writing": "Writing",
       "arq.newEvent": "＋ New event",
       "arq.newHead": "New event",
       "arq.newSub": "– a column of its own, on the level of the type you choose",
@@ -4088,6 +4110,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S159', where: 'artlEvidence, artlApply, artlToLabel, artlToArtist, artlNoteHtml', note: 'Entries (3.100.0; collected item Z-ARTL): a name credited only for the artwork of the release (art direction, artwork, design, graphic design, illustration, photography) that is beyond doubt a label – the label whose Bandcamp page the album is on, a label of the release in MusicBrainz, a label or company Discogs lists for the release – becomes that label: its rows the label–release relationships of the same name, linked at once to MusicBrainz\'s label when it is known; "As an artist instead" takes it back (and again "As the label")' },
     { id: 'S158', where: 'arrComProposals, renderArrComments, arrComFor (pendingWorkEntity), arrNotice', note: 'Arrangement works (3.98.0; collected item Z-ARRDIS): the new works of tracks whose writer is [traditional] and that have arrangers get the disambiguation "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ takes it, its text can be changed), set when the new works are staged; afterwards a small box on the page names the works. Only new works; other arrangements (classical music …) not yet' },
     { id: 'S157', where: 'medleySplit, medleySeps, medleyHeadHtml, tradArrangers, arrDupCheck, arrDupCheck2; MEDLEY_EXCEPTIONS', note: 'Medleys (3.98.0; collected item Z-MDLY): the parts of a title by the separators of the release ("/" also without spaces; ✎ in the head of the works matrix, several possible), the words of MEDLEY_EXCEPTIONS kept whole ("AC/DC", "24/7", "w/", fractions); the titles of MusicBrainz first; "Medleys: split n" splits every such title. A part of a traditional tune with arrangers (writer [traditional]) stays a new work with "arrangement of" the works of that title suggested (yellow, the one with the most recordings first, staged only once confirmed); an arrangement of that title found in MusicBrainz – among the arrangements of those works (1), the works of the arrangers, artists and writers (2), the works of the performers\' recordings of that title when the credits name arrangers (3) – is offered instead' },
     { id: 'S156', where: 'wnewOn, wnewOff, removeReplacedLinks (applyPlan), arrangementSuggest', note: 'Works matrix (3.98.0; collected item Z-WNEW): a work linked in MusicBrainz has a greyed "＋ New" – a new work of the same title instead (an arrangement of a traditional tune is a work of its own): it gets the attributes of the old link, "arrangement of" the old work is suggested (yellow, staged only once confirmed with ✓), and the old link is removed in the relationship editor once the new one is staged; "↺" keeps the linked work' },
@@ -6362,6 +6385,8 @@
         const id = Number(c.id) || 0;
         companies.push({ who: { id, name: cleanName(c.name), rawName: c.name, links: id ? [labelUrl(id)] : [] }, role, catno: String(c.catno || '').trim() });
       }
+      // [Z-ARTL] (3.100.0, S159) the labels of the release (a label credited for the artwork)
+      const labels = (d.labels || []).map((l) => ({ id: Number(l && l.id) || 0, name: cleanName((l && l.name) || '') })).filter((l) => l.name);
       const series = (d.series || []).filter((x) => x && x.id)
         .map((x) => ({ id: x.id, name: x.name, number: String(x.catno || ''), links: [labelUrl(x.id)] }));
       return {
@@ -6379,6 +6404,7 @@
         headings,
         credits,
         companies,
+        labels,
         series,
       };
     }
@@ -13636,6 +13662,9 @@
       }
       const lt = currentLinkType(row);
       if (!lt) info.issues.push(tr('issue.chooseType'));
+      // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
+      if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
+      if (lt && artist && artist.company && artist.entityType && row.company && row.entityType && row.entityType !== artist.entityType) info.issues.push(tr('issue.kindMismatch'));
       if (rowDateInfo(row, lt).error) info.issues.push(tr('issue.badDate'));
       let attrs = [];
       let noteText = '';
@@ -19597,6 +19626,8 @@
       S.mbReleasePerformers = (ws.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id);
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
       S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
+      // [Z-ARTL] (3.100.0, S159) with their names (a label credited for the artwork)
+      S.releaseLabelList = (ws['label-info'] || []).filter((li) => li && li.label && li.label.id).map((li) => ({ mbid: li.label.id, name: li.label.name || '' }));
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
@@ -21002,11 +21033,11 @@
     return o;
   }
   /** An entry by what it is at the source (or, added by hand, in MusicBrainz) – the same in every import. */
-  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${normKey(a.rawName || a.name || a.placeholder || '')}`);
+  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company && !a.artl ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${normKey(a.rawName || a.name || a.placeholder || '')}`);
   /** The line of the source a row comes from (the same line in every import gives the same key). */
   function rowBaseKey(r) {
     const a = S.artists.get(r.artistKey);
-    return JSON.stringify([a ? entryIdOf(a) : '', r.raw || '', r.base || '', r.dSpec || '', r.anv || '', r.company ? 1 : 0, r.dSplitFrom || '', r.artTask ? 1 : 0, r.fromAbout ? 1 : 0]);
+    return JSON.stringify([a ? entryIdOf(a) : '', r.raw || '', r.base || '', r.dSpec || '', r.anv || '', (r.artl ? r.artl.company : r.company) ? 1 : 0, r.dSplitFrom || '', r.artTask ? 1 : 0, r.fromAbout ? 1 : 0]);
   }
 
   /** [146] The rows at the end of an import, as the source gave them. */
@@ -21091,6 +21122,7 @@
         if (a.regionPick && a.regionPick.mbid === a.mbid) x.match.region = a.regionPick.region; // [Z-RG] (3.40.8, review)
       }
       if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
+      if (a.artl && !a.company) x.artl = 'artist'; // ([Z-ARTL] 3.100.0, review) "As an artist instead" taken
       return x;
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
@@ -21410,6 +21442,11 @@
       if (e.by) S.emBy.set(a.key, e.by);
       // [S060] (3.38.12) in capitals as taken (its rows came back with their credits)
       if (e.caseUp && caseSpellingOf(a) && !a.caseUp) setCaseUp(a, true, false);
+      // ([Z-ARTL] 3.100.0, review) an artist again, as taken (its rows came back with the artist's types)
+      if (e.artl === 'artist' && a.artl && a.company) {
+        Object.assign(a, { ...a.artl.artist, company: false });
+        S.rows.filter((r) => r.artistKey === a.key).forEach((r) => { delete r.artl; });
+      }
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
         if (typeof e.match.region === 'string' && e.match.region) a.regionPick = { mbid: e.match.mbid, region: e.match.region }; // [Z-RG] (3.40.8, review)
@@ -21817,6 +21854,8 @@
         if (seq !== importSeq) return;
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
+        // [Z-ARTL] (3.100.0, S159) a label credited for the artwork
+        if (artlApply()) renderGroups();
         // [S078] (3.50.0, review) once more with the entries linked: their MusicBrainz names and ids
         if (applyTrackArtistTracks()) renderGroups();
         // ([Z-PHN] 3.63.0, S091, review) a photographer named in a detail: once more with the names the entries have in MusicBrainz
@@ -23996,6 +24035,7 @@
       // [Z-KH] (3.40.11) compact "in the lines" (Q-bg): "✓ link", the whole text as its tooltip
       // [Z-KXS] (3.80.0, review) a series of the mapping file (by the video), not found through a link
       const okText = a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : a.viaMapping ? tr('match.viaMapping')
+        : a.artl && a.company && !a.matchTouched && a.artl.ev.mbid === a.mbid ? tr('match.viaArtl') // ([Z-ARTL] 3.100.0, review)
         : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) });
       const short = a.status === 'linked' && !a.viaAlias && S.emSide === 'lines' && mxCompact(a) && !mxEntry(a);
       return `<span class="dci-badge dci-badge-ok"${short ? ` title="${esc(okText)}"` : ''}>${esc(short ? tr('match.linkedShort') : okText)}</span>
@@ -24105,7 +24145,7 @@
   // [Z-ETC] (3.42.5; collected item Z-ETC, Q-dd) the kinds an entry not linked can be tried as, in this order: those a row of it has
   // a relationship for (a place "recorded at" only as a place)
   const ETC_KINDS = ['label', 'place', 'area', 'artist'];
-  const etcKinds = (a) => (a && a.company && !a.mbid ? ETC_KINDS.filter((k) => S.rows.some((r) => r.artistKey === a.key && r.typeOptions && (r.typeOptions[k] || []).length)) : []);
+  const etcKinds = (a) => (a && a.company && !a.mbid && !a.artl ? ETC_KINDS.filter((k) => S.rows.some((r) => r.artistKey === a.key && r.typeOptions && (r.typeOptions[k] || []).length)) : []);
   const kindTagHtml = (a) => {
     const { type } = groupKindOf(a);
     const text = tr(`entity.${type}`);
@@ -24998,7 +25038,18 @@
   }
 
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
-  function emLineHtml(a, b, l, flagNames, cols) {
+  /** [Z-ALIGN] (3.100.0) The word of an attribute in the matrix ("add.", "guest", "solo", else MusicBrainz's name). */
+  const emFlagWord = (f) => (['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f);
+
+  /** [Z-ALIGN] (3.100.0) The attributes a line of this type can carry, in MusicBrainz's order. */
+  const emFlagsOf = (lt) => (lt ? uniq(allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name))) : []);
+
+  /**
+   * A line of a block. [Z-ALIGN] (3.100.0) `flagNames` null: its attributes together in one cell, each with its word (Variante A);
+   * else a cell per attribute of the whole table (Variante B). `evCols` the event columns of the whole table: a cell without a
+   * tick where the block does not show the event.
+   */
+  function emLineHtml(a, b, l, flagNames, cols, evCols = b.events) {
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     const lt = ltOf(r);
     const root = lt && primaryRootOf(lt);
@@ -25022,10 +25073,15 @@
     // spelling on some tracks is a line of its own (lineKeyOf; F-176b)
     const ac = `<input type="text" data-f="em-ac" list="dci-ac-${esc(a.key)}" value="${esc(r.credit || '')}" placeholder="${esc(tr('credit.placeholder'))}"
       aria-label="${esc(tr('em.acLabel', { name }))}" title="${esc(tr('credit.placeholder'))}: ${esc(a.mbName || a.name)}">${ncyBtnHtml(a, 'ncy-line')}`;
-    const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
-    // [3.36.6] a cell per attribute, below its word in the head (collected item 148)
-    const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
-    const ticks = b.events.map((e) => {
+    const allowedList = emFlagsOf(lt);
+    const allowed = new Set(allowedList);
+    const flagBox = (f) => `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">`;
+    // [3.36.6] a cell per attribute, below its word in the head (collected item 148); [Z-ALIGN] (3.100.0) or all in one cell
+    const flags = !flagNames ? `<td class="dci-em-c-flags">${allowedList.map((f) => `<label class="dci-em-flagl">${flagBox(f)}${esc(emFlagWord(f))}</label>`).join('')}</td>`
+      : (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? flagBox(f) : ''}</td>`).join('');
+    const ticks = evCols.map((e) => {
+      // [Z-ALIGN] (3.100.0) an event this block does not show ("＋ Event ▾" in its head adds it)
+      if (!b.events.includes(e)) return '<td class="dci-em-c-ev dci-em-c-none"></td>';
       const on = l.ev.has(e.key);
       if (e.skip) return `<td class="dci-em-c-ev dci-em-c-skip"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''} disabled title="${esc(tr('em.skipTick'))}"
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
@@ -25049,13 +25105,17 @@
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
 
-  /** [E4] A block: its head ("19 instruments → instrument · joined from 19 rows · One row each"), its events, its lines. */
-  function emBlockHtml(a, m, b) {
+  /**
+   * [E4] A block: its head ("19 instruments → instrument · joined from 19 rows · One row each"), its lines. [Z-ALIGN] (3.100.0) a
+   * part (tbody) of the entry's one table – its head a thin row over all columns, "＋ Event ▾" in it (until 3.99.0 a table of its own:
+   * its columns stood elsewhere than those of the next block). `t` the table: { flagNames (null: together), evCols, cols }.
+   */
+  function emBlockHtml(a, m, b, t) {
     const r0 = b.lines[0].rows[0];
     const lt0 = ltOf(r0);
     const nRows = b.lines.reduce((n, l) => n + l.rows.length, 0);
@@ -25074,37 +25134,51 @@
     const folded = !m.shared && S.emFold.has(fk);
     const fold = m.shared ? '' : `<button type="button" class="dci-textbtn dci-em-fold" data-act="em-fold" data-block="${esc(b.key)}" aria-expanded="${!folded}" title="${esc(tr(folded ? 'em.unfold' : 'em.fold'))}">${folded ? '▸' : '▾'}</button> `;
     const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
-    // [Z-AK] (3.40.3) "Credited as" of the block: several roles (Q-ak; review: not one role in two spellings)
     const roles = uniq(b.lines.flatMap((l) => l.rows).map(emRoleKey)).length;
-    const head = `<div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${roles > 1 ? emBlockAcHtml(a, b, title) : ''}${split}</div>`;
-    if (folded) return `<div class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</div>`;
-    const flagNames = uniq(b.lines.flatMap((l) => {
-      const lt = ltOf(l.rows[0]);
-      return lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : [];
-    }));
-    // [3.36.6] additional / guest / solo a column each (until 3.36.5 one cell with fixed widths – the words in the head stood
-    // beside their checkboxes: their margins pushed them to the right, 4, 11 and 18 px, and "guest" ran into "solo"; collected item
-    // 148)
-    const cols = 3 + Math.max(1, flagNames.length) + b.events.length + (b.others.length ? 1 : 0) + 1;
+    const addEv = !folded && b.others.length ? ` <select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select>` : '';
+    const head = `<tr class="dci-em-bhrow"><th colspan="${t.cols}" scope="rowgroup"><div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${roles > 1 ? emBlockAcHtml(a, b, title) : ''}${split}${addEv}</div></th></tr>`;
+    if (folded) return `<tbody class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</tbody>`;
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
     // lines with a question or without a type are always shown
     const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l) || S.emOpen.has(l.id);
     const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
     const hidden = b.lines.filter((l) => !shown.includes(l));
-    // [AE-3] (3.35.4) the event opened in this block
+    const moreBtn = hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
+      : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : '';
+    return `<tbody class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
+      ${shown.map((l) => emLineHtml(a, b, l, t.flagNames, t.cols, t.evCols)).join('')}${moreBtn ? `<tr class="dci-em-morerow"><td colspan="${t.cols}">${moreBtn}</td></tr>` : ''}</tbody>`;
+  }
+
+  /**
+   * [Z-ALIGN] (3.100.0) An entry's matrix as one table: the head once (role, role credit, credited as, the attributes, the events –
+   * it stays on top while scrolling), each block a part of it; the attributes of a line together in one column (Variante A,
+   * default) or a column each for all attributes of the entry (Variante B: "Attributes: together | separate" above it, and in the
+   * settings). The event opened below the table.
+   */
+  function emTableHtml(a, m) {
+    if (!m.blocks.length) return ''; // ((review) an entry of works only)
+    const joint = S.emAttr !== 'split';
+    const open = m.blocks.filter((b) => m.shared || !S.emFold.has(`${a.key}|${b.key}`));
+    const flagNames = joint ? null : uniq(open.flatMap((b) => b.lines.flatMap((l) => emFlagsOf(ltOf(l.rows[0])))));
+    const evCols = m.shared ? m.events : m.events.filter((e) => open.some((b) => b.events.includes(e)));
+    const cols = 3 + (joint ? 1 : Math.max(1, flagNames.length)) + evCols.length + 1;
+    const t = { flagNames, evCols, cols };
+    // [AE-3] (3.35.4) the event opened (below the table)
     const o = S.emEvOpen.get(a.key);
-    const openEv = o && o.block === b.key ? b.events.find((e) => e.key === o.ev) || null : null;
-    const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
-    return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
-      <div class="dci-em-scroll"><table class="dci-em-grid">
-        <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
-          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key, a)).join('')}${addEv}<th scope="col"></th></tr></thead>
-        <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
-      </table></div>${openEv ? emEventHtml(a, openEv) : ''}
-      ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
-        : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : ''}
-    </div>`;
+    const openEv = o ? evCols.find((e) => e.key === o.ev) || null : null;
+    const anyFlags = m.lines.some((l) => emFlagsOf(ltOf(l.rows[0])).length);
+    const seg = anyFlags ? `<div class="dci-em-top"><span class="dci-sub">${esc(tr('em.attrMode'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.attrMode'))}">${['joint', 'split'].map((v) => `<button type="button"
+      data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span></div>` : '';
+    const flagHead = joint ? `<th class="dci-em-c-flags" scope="col">${esc(tr('em.colAttrs'))}</th>`
+      : (flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(emFlagWord(f)) : ''}</th>`).join('');
+    // (the fields of an event's date open in the head: the box lets them out – not cut off below a short table)
+    const dateOpen = !!(S.emEvDate && !S.emEvDate.inline && String(S.emEvDate.key || '').startsWith(`${a.key}|`));
+    return `${seg}<div class="dci-em-scroll dci-em-onewrap${dateOpen ? ' dci-em-dateopen' : ''}"><table class="dci-em-grid dci-em-one${joint ? ' dci-em-joint' : ' dci-em-split'}">
+        <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr('em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
+          ${flagHead}${evCols.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key, a)).join('')}<th scope="col"></th></tr></thead>
+        ${m.blocks.map((b) => emBlockHtml(a, m, b, t)).join('')}
+      </table></div>${openEv ? emEventHtml(a, openEv) : ''}`;
   }
 
   /**
@@ -25157,7 +25231,7 @@
     const m = entryModel(a, rows);
     const instr = m.lines.filter((l) => lineKindOf(l) === 'instrument').length;
     const joinBtn = !m.join && instr > 1 ? `<span class="dci-sub">${esc(tr('em.joinHint', { n: instr }))}</span> <button type="button" class="dci-small" data-act="em-join" title="${esc(tr('em.joinTitle'))}">${esc(tr('em.join'))}</button>` : '';
-    return `<div class="dci-em" data-em="${esc(a.key)}">${m.blocks.map((b) => emBlockHtml(a, m, b)).join('')}
+    return `<div class="dci-em" data-em="${esc(a.key)}">${emTableHtml(a, m)}
       ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
       <div class="dci-em-foot">${joinBtn}<span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
   }
@@ -25726,6 +25800,7 @@
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
+        ${a.artl ? artlNoteHtml(a) : ''}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
         ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -31754,6 +31829,106 @@
     return n;
   }
 
+  // --- [Z-ARTL] (3.100.0, S159) A label credited for the artwork ("Artwork: Cyclical Dreams" on the Bandcamp page of the label
+  // Cyclical Dreams): the label, linked, with its label–release relationships; most such names are people, so only beyond doubt.
+  const ARTL_TYPES = ['art direction', 'artwork', 'design', 'graphic design', 'illustration', 'photography', 'design/illustration'];
+  const artlFold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/^the /, '');
+  /** The label–release type of a row of the artwork (design/illustration: design). */
+  const artlLabelType = (r) => {
+    const t = norm(r.artl ? r.artl.types[0] || '' : rowTypeName(r) || '');
+    const want = t === 'design/illustration' ? 'design' : t;
+    return typesFor('release', 'label').find((lt) => norm(lt.name) === want) || null;
+  };
+  /**
+   * The label an entry's name is beyond doubt, { mbid, name, why, page } – the album is on that label's Bandcamp page, MusicBrainz
+   * has it as a label of the release, Discogs lists it as a label or company of the release; else null.
+   */
+  function artlEvidence(a) {
+    const n = artlFold(a.rawName || a.name);
+    if (!n) return null;
+    const band = S.release && S.release.band;
+    // ((review) only when MusicBrainz has a label with that page (a page MusicBrainz links to an artist is no label's)
+    if (band && !band.own && band.page && band.label && artlFold(band.page) === n) {
+      return { mbid: band.label.mbid, name: band.label.name, why: 'bandcamp', page: band.page };
+    }
+    const mb = (S.releaseLabelList || []).find((l) => artlFold(l.name) === n);
+    if (mb) return { mbid: mb.mbid, name: mb.name, why: 'mb' };
+    if (S.source === DISCOGS && S.release) {
+      const names = [...(S.release.labels || []).map((l) => l.name), ...(S.release.companies || []).map((c) => c.who && c.who.name)];
+      if (names.some((x) => artlFold(x) === n)) {
+        // the company entry of that name, linked to a label
+        const co = [...S.artists.values()].find((x) => x.company && !x.artl && x.mbid && x.entityType === 'label' && artlFold(x.rawName || x.name) === n);
+        return { mbid: co ? co.mbid : null, name: co ? co.mbName || co.name : a.rawName || a.name, why: 'discogs' };
+      }
+    }
+    return null;
+  }
+  /** After the entries were looked up: each entry credited only for the artwork whose name is a label beyond doubt becomes it. */
+  function artlApply() {
+    if (!ruleOn('S159')) return 0;
+    let n = 0;
+    for (const a of [...S.artists.values()]) {
+      if (a.company || a.other || a.manual || a.artl) continue;
+      // ((review) an artist found through its own link (Discogs, Bandcamp) or one of the release's artists is that artist
+      if (a.status === 'linked' && a.mbid && !a.matchTouched) continue;
+      if ((S.releaseCredit || []).some((c) => (a.mbid && c.mbid === a.mbid) || artlFold(c.name) === artlFold(a.rawName || a.name))) continue;
+      const rows = S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip');
+      if (!rows.length || !rows.every((r) => r.level === 'release' && ARTL_TYPES.includes(norm(rowTypeName(r) || '')) && artlLabelType(r))) continue;
+      const ev = artlEvidence(a);
+      if (!ev) continue;
+      a.artl = { ev, artist: artlMatchOf(a) };
+      artlToLabel(a);
+      log('info', 'artlLabel', { name: a.rawName || a.name, why: tr(`artl.why.${ev.why}`, { page: ev.page || '' }) });
+      n++;
+    }
+    return n;
+  }
+  /** The entry as the label: its rows the label–release types of the same name, linked to the label when MusicBrainz's is known. */
+  // ((review) the fields of the match of each side – kept for the way back)
+  const ARTL_MATCH = ['mbid', 'mbName', 'mbComment', 'status', 'candidates', 'matchTouched', 'spell', 'entityType', 'viaAlias', 'viaMapping', 'regionPick', 'nameHits', 'aliasHits'];
+  const artlMatchOf = (a) => Object.fromEntries(ARTL_MATCH.map((k) => [k, a[k]]));
+  function artlToLabel(a) {
+    const ev = a.artl.ev;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      if (!r.artl) r.artl = { types: r.types, typeOptions: r.typeOptions, entityType: r.entityType, company: !!r.company, linkTypeId: r.linkTypeId, level: r.level };
+      const lt = artlLabelType(r);
+      // ((review) a role the label has no relationship for (added as an artist: "composer") is on Skip while it is the label
+      if (!lt) {
+        Object.assign(r, { level: 'skip', company: true, entityType: 'label', linkTypeId: null });
+        continue;
+      }
+      Object.assign(r, { company: true, entityType: 'label', typeOptions: { ...(r.artl.typeOptions || {}), artist: r.artl.types, label: [lt.name] }, types: [lt.name], linkTypeId: null });
+      if (r.level !== 'skip') r.level = 'release';
+      resolveRowType(r);
+    }
+    // ((review) the label chosen before in this entry comes back; else MusicBrainz's label of the evidence; nothing of the artist's match stays
+    const lab = a.artl.label || { mbid: ev.mbid || null, mbName: ev.mbid ? ev.name : '', status: ev.mbid ? 'linked' : 'missing',
+      candidates: ev.mbid ? [{ mbid: ev.mbid, name: ev.name, entityType: 'label' }] : [], matchTouched: false };
+    Object.assign(a, Object.fromEntries(ARTL_MATCH.map((k) => [k, undefined])), { mbComment: '', spell: null, nameHits: null, candidates: [] }, lab,
+      { company: true, entityType: 'label' });
+  }
+  /** "As an artist instead": the entry and its rows as they were. */
+  function artlToArtist(a) {
+    a.artl.label = { ...artlMatchOf(a), entityType: 'label' };
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      // ((review) a row added while it was the label: the artist's type of its role, else on Skip
+      const o = r.artl || { types: (r.typeOptions && r.typeOptions.artist) || [], typeOptions: r.typeOptions, entityType: 'artist', company: false, level: (r.typeOptions && (r.typeOptions.artist || []).length) ? r.level : 'skip' };
+      Object.assign(r, { types: o.types, typeOptions: o.typeOptions, entityType: o.entityType, company: o.company, linkTypeId: null });
+      if (r.level !== 'skip' || o.level !== 'skip') r.level = o.level;
+      resolveRowType(r);
+    }
+    Object.assign(a, { ...a.artl.artist, company: false });
+  }
+  /** The line at such an entry: why it is the label, and the switch. */
+  function artlNoteHtml(a) {
+    const ev = a.artl.ev;
+    const why = tr(`artl.why.${ev.why}`, { page: ev.page || '' });
+    // (not linked: MusicBrainz's label still to choose – its search above)
+    const text = tr(!a.company ? 'artl.asArtist' : a.mbid ? 'artl.asLabel' : 'artl.asLabelOpen', { why });
+    const btn = a.company ? tr('artl.toArtist') : tr('artl.toLabel');
+    return `<p class="dci-sub dci-artl" data-el="artl">${esc(text)} <button type="button" class="dci-textbtn" data-act="artl-toggle" title="${esc(tr(a.company ? 'artl.toArtistTitle' : 'artl.toLabelTitle'))}">${esc(btn)}</button></p>`;
+  }
+
   /** A row given to the person back to the label entry. */
   function pcAsLabel(row) {
     const c = S.artists.get(row.pcFromKey);
@@ -31973,6 +32148,11 @@
     area: ['recorded in', 'mixed in', 'mastered in', 'produced in', 'composed in', 'engineered in', 'remixed in'],
   };
   const ARQ_LEVELS = ['recording', 'release', 'work', 'release_group'];
+  /**
+   * [Z-RWRT] (3.100.0) The writing roles (MusicBrainz's "writer" and its kinds): on the release level always shown, below the others
+   * under "Writing" (until 3.99.0 behind "+ n more" there – the release's own credits "Written by", "Composed by" were not found).
+   */
+  const ARQ_WRITING = ['writer', 'composer', 'lyricist', 'librettist', 'translator'];
   /** The kind of entity an entry's new rows are for. */
   const arqEntityType = (a) => (a.other ? a.entityType : a.company ? a.entityType || companyTypes(a)[0] || 'label' : 'artist');
   /** The events of an entry's matrix (not "Skip") – to tick. */
@@ -32031,13 +32211,17 @@
       const first = hit.filter((lt) => rank(lt) < 999).sort((x, y) => rank(x) - rank(y));
       const rest = hit.filter((lt) => rank(lt) === 999).sort((x, y) => x.name.localeCompare(y.name));
       const open = !!q || (S.arq && S.arq.more && S.arq.more.has(lv));
-      const shown = open ? [...first, ...rest] : [...first, ...rest].slice(0, Math.max(6, Math.min(first.length, 8)));
-      const hidden = first.length + rest.length - shown.length;
+      const writing = lv === 'release' && et === 'artist' && !open ? hit.filter((lt) => ARQ_WRITING.includes(norm(lt.name)))
+        .sort((x, y) => ARQ_WRITING.indexOf(norm(x.name)) - ARQ_WRITING.indexOf(norm(y.name))) : [];
+      const all2 = [...first, ...rest].filter((lt) => !writing.includes(lt));
+      const shown = open ? all2 : all2.slice(0, Math.max(6, Math.min(first.length, 8)));
+      const hidden = all2.length - shown.length;
       const off = arqNewReady() ? '' : ' disabled';
       const btn = (lt) => `<button type="button" class="dci-small dci-arq-type" data-act="arq-pick" data-level="${lv}" data-type="${esc(lt.name)}" title="${esc(mbPhraseOf(lt) || lt.name)}"${off}>${esc(lt.name)}</button>`;
       return `<div class="dci-arq-col" data-arqlv="${lv}" style="--arq-ink: var(--dci-lvl-${lv}, #736dab)">
         <div class="dci-arq-colh">${esc(tr(`level.${lv}`))}<small>${esc(tr(`arq.lv.${lv}`))}</small></div>
-        <div class="dci-arq-colb">${shown.map(btn).join('')}${hidden > 0 ? `<button type="button" class="dci-textbtn dci-arq-more" data-act="arq-more" data-level="${lv}">${esc(tr('arq.more', { n: hidden }))}</button>` : ''}</div></div>`;
+        <div class="dci-arq-colb">${shown.map(btn).join('')}${hidden > 0 ? `<button type="button" class="dci-textbtn dci-arq-more" data-act="arq-more" data-level="${lv}">${esc(tr('arq.more', { n: hidden }))}</button>` : ''}${writing.length
+          ? `<div class="dci-arq-sub" data-arqsub="writing">${esc(tr('arq.writing'))}</div>${writing.map(btn).join('')}` : ''}</div></div>`;
     }).filter(Boolean);
     return cols.length ? `<div class="dci-arq-cols" style="--arq-cols: ${cols.length}">${cols.join('')}</div>` : `<p class="dci-sub">${esc(tr('arq.none'))}</p>`;
   }
@@ -36948,7 +37132,7 @@
     // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
     // (3.44.1, review) not the head of an event on "Skip"
     // ([Z-DND] 3.78.0) also the short line of an event and its date ("① Release · no date"), in both compact views
-    const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
+    const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-bhrow, #dci-overlay tr.dci-em-line');
     if (em) return { el: em, kind: em.matches('th, [data-evdrop], [data-emev]') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
@@ -37631,6 +37815,16 @@
           refresh();
         }
         break;
+      // [Z-ARTL] (3.100.0, S159) the label credited for the artwork as an artist again, or as the label
+      case 'artl-toggle':
+        if (artist && artist.artl) {
+          if (artist.company) artlToArtist(artist);
+          else artlToLabel(artist);
+          log('info', artist.company ? 'artlLabel' : 'artlArtist', { name: artist.rawName || artist.name, why: tr(`artl.why.${artist.artl.ev.why}`, { page: artist.artl.ev.page || '' }) });
+          renderGroups();
+          refresh();
+        }
+        break;
       // [S057] (3.37.10) a ℗ / © row back to the label entry
       case 'pc-as-label':
         if (row) {
@@ -37915,6 +38109,24 @@
         rerenderGroup(artist);
         refresh();
         break;
+      // [Z-ALIGN] (3.100.0) the attributes together or a column each – for all entries, stored (in the settings and above each matrix)
+      case 'em-attr': {
+        const v = btn.dataset.attr === 'split' ? 'split' : 'joint';
+        if (S.emAttr === v) break;
+        S.emAttr = v;
+        writeJson('localStorage', EM_ATTR_KEY, v === 'split' ? 'split' : null);
+        log('info', 'settingValue', { what: tr('settings.emAttr'), value: tr(`em.attr.${v}`) });
+        // ((review) the focus back on the switch pressed
+        const inSet = !!btn.closest('[data-el=settings]');
+        const gk = (btn.closest('[data-group]') || { dataset: {} }).dataset.group;
+        renderGroups();
+        refresh();
+        if (S.settingsOpen) renderSettings();
+        const back = inSet ? S.overlay.querySelector(`[data-el=settings] [data-act=em-attr][data-attr="${v}"]`)
+          : gk ? S.overlay.querySelector(`[data-group="${gk}"] [data-act=em-attr][data-attr="${v}"]`) : null;
+        if (back) back.focus({ preventScroll: true });
+        break;
+      }
       case 'em-by-default':
         S.emByDefault = btn.dataset.by === 'role' ? 'role' : 'event';
         writeJson('localStorage', EM_BY_KEY, S.emByDefault === 'role' ? 'role' : null);
@@ -37948,7 +38160,7 @@
         const o = S.emEvOpen.get(artist.key);
         const block = (btn.closest('.dci-em-block') || {}).dataset;
         if (o && o.ev === btn.dataset.ev && (!block || o.block === block.block)) S.emEvOpen.delete(artist.key);
-        else if (block) S.emEvOpen.set(artist.key, { block: block.block, ev: btn.dataset.ev });
+        else S.emEvOpen.set(artist.key, { block: block ? block.block : '', ev: btn.dataset.ev });
         rerenderGroup(artist);
         const again = S.overlay.querySelector(`[data-group="${artist.key}"] .dci-em-evedit, [data-group="${artist.key}"] th[data-evhead] .dci-em-evtoggle[aria-expanded="false"]`);
         if (again && S.emEvOpen.has(artist.key)) again.scrollIntoView({ block: 'nearest' });
@@ -39037,7 +39249,8 @@
           S.arq.more.add(btn.dataset.level);
           // ((review) the focus on the first type it shows (its button is gone)
           const col = btn.closest('.dci-arq-col');
-          const k = col ? col.querySelectorAll('.dci-arq-type').length : 0;
+          // ((3.100.0, review) the types above the button – not the writing roles below it
+          const k = col ? [...col.querySelectorAll('.dci-arq-type')].filter((x) => x.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).length : 0;
           arqRedraw(artist);
           const types = S.overlay.querySelectorAll(`[data-group="${artist.key}"] [data-arqlv="${btn.dataset.level}"] .dci-arq-type`);
           if (types[k]) types[k].focus({ preventScroll: true });
@@ -41002,6 +41215,8 @@
   const EM_SHOW_KEY = 'dci-em-show';
   // [E4] (3.35.0) an entry, compact, at first: a line per event (default) or per role
   const EM_BY_KEY = 'dci-em-by';
+  // [Z-ALIGN] (3.100.0) the attributes of a line in the matrix: together in one column (default) or a column each ("split" stored)
+  const EM_ATTR_KEY = 'dci-em-attr';
   const clampInt = (v, lo, hi, def) => {
     const n = Math.round(Number(v));
     return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def;
@@ -41041,7 +41256,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY, 'dci-note-dup'],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
@@ -41065,6 +41280,7 @@
   Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map(), emEvOpen: new Map() });
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
+  S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
@@ -42937,6 +43153,9 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        // [Z-ALIGN] (3.100.0) the attributes in the full matrix: together in one column or a column each
+        row(`<span title="${esc(tr('settings.emAttrTitle'))}">${esc(tr('settings.emAttr'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emAttr'))}">${['joint', 'split'].map((v) => `<button type="button"
+          data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span>`),
         // [Z-SNW] (3.83.0) the edit note under a heading of its own
         `<h4 class="dci-set-h" data-el="set-editnote">${esc(tr('settings.editNoteHead'))}</h4>`,
         // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
@@ -43552,7 +43771,7 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', editNoteMode: 'full', noteDupWorks: true });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint', editNoteMode: 'full', noteDupWorks: true });
       // ([Z-SNW] 3.83.0, review) the edit note as the defaults write it (Full, works of the same title named)
       if (S.staged.size) writeEditNote();
       S.rows.forEach(updateHint);
@@ -43604,7 +43823,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, DED_BOX_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -43724,6 +43943,7 @@
     S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
     S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
     S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
+    S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
     S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
     S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
     S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
@@ -44040,7 +44260,7 @@
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true,
       // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
       // cleared, the running dashboard kept them until the next reload)
-      entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event',
+      entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint',
       // [Z-DM] (3.46.0, review) no colours of their own for the dark theme (the themes: their keys, read anew)
       darkColors: false, levelPaletteDark: {}, kindPaletteDark: {},
       // [Z-GST] (3.47.0) the statistics of this browser
@@ -46384,6 +46604,28 @@
       .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
       .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
+      .dci-arq-sub { margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
+      /* [Z-ALIGN] (3.100.0) one table per entry: its head stays on top while its lines scroll, each block a thin heading row */
+      .dci-em-onewrap { max-height: 75vh; overflow: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+      .dci-em-onewrap.dci-em-dateopen { max-height: none; overflow: visible; }
+      .dci-em-one thead th { position: sticky; top: 0; z-index: 3; background: #fff; }
+      .dci-em-one thead th.dci-em-ev { background: var(--soft); }
+      .dci-em-one thead th.dci-em-c-role { left: 0; z-index: 4; }
+      .dci-em-one thead th.dci-em-ev.dci-em-evopen { background: var(--date-bg); }
+      .dci-em-one tbody.dci-em-block { border: 0; border-radius: 0; background: none; }
+      .dci-em-one td.dci-em-c-role { white-space: nowrap; }
+      .dci-em-one td.dci-em-c-role .dci-em-raw, .dci-em-one td.dci-em-c-role .dci-mark { white-space: normal; }
+      .dci-em-one tr.dci-em-bhrow > th { padding: 0; background: var(--soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-weight: 400; text-align: left; }
+      .dci-em-one tr.dci-em-bhrow .dci-em-bhead { position: sticky; left: 0; width: max-content; max-width: calc(var(--u, 1px) * 900); border-bottom: 0;
+        padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
+      .dci-em-one tbody.dci-em-block:first-of-type tr.dci-em-bhrow > th { border-top: 0; }
+      .dci-em-one tr.dci-em-morerow > td { padding: 0; }
+      .dci-em-one tr.dci-em-morerow .dci-em-more { position: sticky; left: 0; }
+      .dci-em-one td.dci-em-c-none { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--row) 4px 5px); }
+      .dci-em-grid th.dci-em-c-flags, .dci-em-grid td.dci-em-c-flags { white-space: nowrap; }
+      .dci-em-flagl { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin-right: calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
+      .dci-em-flagl input { margin: 0; }
+      .dci-em-top { display: flex; align-items: center; justify-content: flex-end; gap: calc(var(--u, 1px) * 6); margin-bottom: calc(var(--u, 1px) * -4); }
       /* [Z-SB] (3.40.8) room below the last line for a scroll bar drawn over the content (macOS, Windows 11) */
       .dci-em-scroll.dci-barroom, .dci-tablewrap.dci-barroom, .dci-dm-grid.dci-barroom { padding-bottom: 16px; }
       .dci-em-grid { border-collapse: collapse; min-width: 100%; font-size: calc(var(--u, 1px) * 13); }

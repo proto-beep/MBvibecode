@@ -211,6 +211,10 @@ LINKED = {
 # --- MusicBrainz web service -------------------------------------------------------------------
 
 
+# [3.100.0] the labels of the release in MusicBrainz ("label-info"): (mbid, name)
+RELEASE_LABELS = []
+
+
 def ws_release(full=False):
     tracks = []
     for i, gid in enumerate(REC):
@@ -230,6 +234,7 @@ def ws_release(full=False):
     return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
+            **({'label-info': [{'catalog-number': '', 'label': {'id': g, 'name': n}} for g, n in RELEASE_LABELS]} if RELEASE_LABELS else {}),
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
             + MB_EXTRA.get(REL, []),
             'media': split_media(tracks, 'title') if full else [trim_medium(m) for m in split_media(tracks, 'title')]}
