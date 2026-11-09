@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.101.0 | 1.14.0 |
+| 2026-11-08 | 3.88.0 – 3.102.0 | 1.14.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.102.0
+
+- **Dates named in a long sentence** (Z-DATP, rule D031): "This was recorded by Norwegian State radio, at the Hennie-Onstad art centre outside Oslo on September 11th 1983." – the date is a performance date; the word naming its group counts in the whole sentence before the date (at most 300 characters), before only in the 80 characters before it.
+- **[Uncredited] on Skip until taken** (Z-UNCR, S167): a credit Discogs marks [Uncredited] (not named on the release) is on Skip. When all roles of a person are such, the entry says so at its top with "Take anyway"; otherwise each such role has its own button. "Take all uncredited" takes them all (this release only).
+- **"I played …" in the notes** (Z-PLAYS, S168): a sentence of the one who writes ("At the time I played soprano and tenor sax.") is left out when its instruments are credited already; an instrument no one is credited with is asked above the entries – whose it is (the one who plays the other instruments of that sentence suggested), taken on all tracks, or ignored.
+- **Translated liner notes** (Z-LNTR): "Liner Notes [Translation By (English)]" – liner notes with the attribute translator (the language in brackets no longer stops it).
+- **Little instruments** (Z-LITI, register R117): other instruments, credited "Little Instruments".
+- **Abbreviations of two readings asked** (Z-ABBR2, S166): "tb" (trombone or tuba) without the person's instrument elsewhere – "“tb” is an abbreviation – which instrument?" with both at the row; no instrument and nothing staged before the answer.
 
 ### Import 3.101.0
 

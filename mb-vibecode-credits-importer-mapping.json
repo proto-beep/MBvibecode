@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.101.0",
+  "version": "3.102.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -216,6 +216,7 @@
     {"id":"R114","kind":"special","note":"Plated By: miscellaneous support with the task “vinyl plating” on the release – only for vinyl (S026)","re":{"$re":"^(plated by|plating|plated)$","$flags":""},"types":["misc"],"level":"release"},
     {"id":"R115","kind":"simple","note":"Typesetting (3.101.0; collected item Z-CIMP): design credited \"typesetting\" on the release","re":{"$re":"^(typesetting|typeset by|typesetter)$","$flags":""},"types":["design"],"level":"release","credit":"typesetting"},
     {"id":"R116","kind":"simple","note":"Hospitality (3.101.0; collected item Z-CIMP): miscellaneous support with the task \"hospitality\" on the release","re":{"$re":"^(hospitality)$","$flags":""},"types":["misc","miscellaneous support"],"level":"release","credit":"hospitality"},
+    {"id":"R117","kind":"special","note":"Little instruments (3.102.0; collected item Z-LITI): other instruments credited as written (\"little instruments\")","re":{"$re":"^(little instruments|small instruments)$","$flags":""},"types":["instrument"],"level":"recording"},
     {"id":"R095","kind":"special","note":"Roles without an MB relationship type: added as \"misc\" with the Discogs role as task","re":{"$re":"^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|abridged by|adapted by \\(text\\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera|cameras|camera crew|camera operator|camera operators|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$","$flags":""},"types":["misc"],"level":"release"},
     {"id":"R096","note":"Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)","types":["instrument"],"level":"recording"}
   ],
@@ -504,7 +505,7 @@
     [{"$re":"^re-?master(ed|ing)?$","$flags":""},"re"],
     [{"$re":"^pre-?master(ed|ing)?$","$flags":""},"pre"],
     [{"$re":"^sub-?publish(er|ing|ed)?$","$flags":""},"sub"],
-    [{"$re":"^(translation|translated( by)?|translator)$","$flags":""},"translator"]
+    [{"$re":"^(translation|translated|translator)( by)?( \\([^)]*\\))?$","$flags":""},"translator"]
   ],
   "WORDING_SYNONYMS": {
     "composer": ["music"],

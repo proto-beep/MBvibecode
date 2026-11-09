@@ -2058,4 +2058,67 @@ console.log(JSON.stringify({ ms, credits: r2.credits.map((c) => [c.who.name, c.r
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_abbr3102():
+    """Credits Importer 3.102.0 (collected item Z-ABBR2, rule S166): an abbreviation of two readings asked at the row – "Cy Moe tb" pasted:
+    "“tb” is an abbreviation – which instrument?" with trombone · tuba, no instrument yet, the row not ready ("choose the instrument “tb” stands for"; until
+    3.101.0 trombone with a note naming tuba); tuba chosen: the instrument tuba, the row without that issue, the buttons still there (tuba
+    pressed). "Nate Wooley tpt" (one reading): no question. C) (review) "Di Roe tb", trombone typed into the field: answered as well."""
+    import copy
+    attrs0 = copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_attribute_type'))
+    for i, n in ((9120, 'trumpet'), (9130, 'trombone'), (9135, 'tuba')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const tr = g.querySelector('tr.dci-row'); const a = g.querySelector('[data-el=abbr-ask]'); const pr = tr && tr.querySelector('[data-f=primary]');
+      return { ask: a ? a.textContent.replace(/\\s+/g, ' ').trim() : '', pressed: a ? [...a.querySelectorAll('[aria-pressed=true]')].map(b => b.textContent.trim()) : [],
+        primary: pr ? pr.value : '', status: (g.querySelector('.dci-status') || { textContent: '' }).textContent.trim() }; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', 'Cy Moe tb\nNate Wooley tpt')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(1000)
+            cy, nw = pg.evaluate(ROW, 'Cy Moe'), pg.evaluate(ROW, 'Nate Wooley')
+            print('A)', cy, nw)
+            results.append(bool(cy) and cy['ask'].startswith('“tb” is an abbreviation – which instrument?') and 'trombone' in cy['ask'] and 'tuba' in cy['ask']
+                           and 'choose the instrument “tb” stands for' in cy['status'] and cy['primary'] == '' and bool(nw) and nw['ask'] == '' and nw['primary'] == 'trumpet')
+            sec = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Cy Moe').dataset.group")
+            pg.click(f'section[data-group="{sec}"] [data-el=abbr-ask] [data-act=instr-pick][data-instr=tuba]')
+            pg.wait_for_timeout(600)
+            cy2 = pg.evaluate(ROW, 'Cy Moe')
+            print('B)', cy2)
+            results.append(bool(cy2) and cy2['primary'] == 'tuba' and cy2['pressed'] == ['tuba'] and 'stands for' not in cy2['status'])
+            # C) (review) a second import of the text: the question again; the instrument typed into the field answers it too
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', 'Di Roe tb')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)
+            pg.wait_for_timeout(1000)
+            sec2 = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Di Roe').dataset.group")
+            pg.fill(f'section[data-group="{sec2}"] [data-f=primary]', 'trombone')
+            pg.press(f'section[data-group="{sec2}"] [data-f=primary]', 'Tab')
+            pg.wait_for_timeout(600)
+            dr = pg.evaluate(ROW, 'Di Roe')
+            print('C)', dr)
+            results.append(bool(dr) and dr['primary'] == 'trombone' and 'stands for' not in dr['status'] and dr['ask'].startswith('“tb” (abbreviation):'))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED['link_attribute_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
