@@ -1311,4 +1311,31 @@ def case_prd395():
         H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_rdst3105():
+    """Credits Importer 3.105.0 (collected item Z-RDST, rule S171): a place right after the date of a sentence of recording, without "at",
+    by a word of places – "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." Studio des deutschen Filmorchesters
+    Babelsberg (recorded at), "Recorded June 2010 Abbey Road Studios, London." Abbey Road Studios, "Recorded live March 3, 2001, Konzerthaus
+    Berlin." Konzerthaus Berlin (the word at the end of a word); not "Recorded 2001 Hans Meier played the drums." nor "Recorded 2001. Studio
+    work by X." (another sentence); (review) nor "Hall & Oates producing", "Church Street", "Producer Tom House", "Bauhaus", "In The Studio"; a
+    text with a photo of the concert read without an error (the release page)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const ctx = { isRole, isCompanyRole: (x) => /recorded at|recorded in/i.test(x), resolveTracks: () => null, resolveTitles: (ts) => ({ indexes: new Set(), unresolved: ts }), trackCount: 4 };
+console.log(JSON.stringify(['Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg.', 'Recorded June 2010 Abbey Road Studios, London.',
+  'Recorded live March 3, 2001, Konzerthaus Berlin.', 'Recorded 2001 Hans Meier played the drums.', 'Recorded 2001. Studio work by X.',
+  'Recorded 2001 Hall & Oates producing', 'Recorded live 1999, Church Street', 'Recorded 2019 Producer Tom House', 'Recorded live 1982 Bauhaus', 'Recorded 2007 In The Studio',
+  'Recorded live 2019. Photos taken 2019 live at the club by Jane Doe']
+  .map((t) => m.SOURCES.text.parse(t, ctx).companies.map((c) => [c.who.name, c.role]))));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
+    print('A)', out)
+    ok = out == [[['Studio des deutschen Filmorchesters Babelsberg', 'Recorded At']], [['Abbey Road Studios', 'Recorded At']], [['Konzerthaus Berlin', 'Recorded At']], [], [], [], [], [], [], [], []]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 run_cases(globals())

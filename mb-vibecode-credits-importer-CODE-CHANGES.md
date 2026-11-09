@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.104.0, Companion 1.6.0 – 1.15.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.105.0, Companion 1.6.0 – 1.16.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,24 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.105.0 · 2026-11-08
+
+- **Z-GAPL:** `GAP_WHY_KEY`, `gapWhyOn` (developer mode by the name of its key – the release page leaves the script before `DEV_KEY` is made), `gapWhy` (new; `.dci-gapwhy[data-why]` after the release header, also `console.info`): `start`, `off`, `path`, `noLink`, `ws`, `dgBroken`/`bcBroken` (`gapRead.lastError`), `dgFailed`, `noCredits`, `bcNoCredits`, `none`, `dismissed`, `error` – at every return of `initReleaseGap` that drew nothing; `showReleaseGap` takes the note away. The web service asked again on 503/429 (twice, 1.5 s and 3 s). The setting `gap-why` in Sources only with `S.devMode`; kept with the others of Sources.
+- **Z-PROG:** `.dci-foot-line` 6 px.
+- **Z-ARHL2:** `tr.dci-arhl > td` (also the sticky `td.dci-em-c-role`) yellow.
+- **Z-RDST (S171 – new):** `rdstLine` in `TEXT.parse` (after `tidyLines`): the last date of a sentence of recording (the words before it, the date's own dots not ending it) followed by a name of at most nine words with a word of places → " at " put in (`rawOf` keeps the line as written).
+- **Z-BZK:** question Q014 (`"children": true`); `questionOptions` (new; the instrument and its kinds by `parent_id` in `idx().atById`, four levels, cached per index; the written choices without the tree) in `questionAsks`, `chipAnswers`, `instrumentAskHtml`, `clineHtml`.
+- **Z-QSCAT:** `QUICK_GROUPS`; `quickSwitchesHtml` draws a `.dci-quick-group` with `.dci-quick-gh` each; QUICK_SWITCHES in the order of the groups.
+- **Texts:** `gapWhy.*`, `settings.gapWhy`, `settings.gapWhyTitle`, `quick.group.*` (en, de).
+- **Review:** `CONCERT_PHOTO` moved before `findDates` (the release page reads Bandcamp texts with it and leaves the script before line 26844: a `ReferenceError` there – new with S171); a request to Discogs or Bandcamp broken off is said in the console (`console.info`; before nothing at all); the reasons `dgMissing` and `bcFailed`; `gapWhy('start')` cannot stop the hook. S171 narrower: "recorded" only (not "live"), the word of places the first or (one of) the last words of the name, at the end of a longer word only from four letters before it, not with "by", "and", "&", role words, "street" …; the lookahead without case. `questionOptions` without MusicBrainz's types: the written choices; cached by the question's content; also in the statistics. The first group's heading (`.dci-quick-h + .dci-quick-group`). Companion: the click by the miniature's own index; the largest address of the image.
+- **Tests:** `t_start.py gapwhy3105`, `t_text_places.py rdst3105` (Node; with the review's strings), `t_entries.py bzk3105` – new; `t_entries.py evcol3103` E (every cell yellow), `t_rules_window.py quickswitch` (the groups), `t_ui_head.py foot397` (6 px), `t_companion_discogs.py artnav` (the image shown) – changed; all fail on 3.104.0.
+
+## Companion 1.16.0 · 2026-11-08
+
+Z-CPVA2.
+
+- **`artKey`** (new; out of `artworkList`): the address, its source and the key of an image; **`openDiscogsImages(shown)`**: an image after the first – the image of the page with the same key (its link or button clicked), else the image itself in a tab.
 
 ## Import 3.104.0 · 2026-11-08
 

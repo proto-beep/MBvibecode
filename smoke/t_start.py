@@ -1396,4 +1396,77 @@ def case_mediasel():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_gapwhy3105():
+    """Credits Importer 3.105.0 (collected item Z-GAPL): why the line of the release page is missing – developer mode only.
+    A) Developer mode and "show why it is missing" on, the page with a box of external links without Discogs or Bandcamp: a grey note
+       "… no Discogs or Bandcamp link recognized among the 1 external links of the page." (no line).
+    B) The Discogs link among them: the line as before, no note.
+    C) Discogs not reachable (the request broken off): "… the request to Discogs (release …) was broken off: …".
+    D) The setting on, developer mode off: no note (A again: nothing). ⚙ Settings → Sources: the switch only in developer mode."""
+    orig = H.mb_release_page
+    REL = H.REL
+    WHY = "(() => { const b = document.querySelector('.dci-gapwhy'); return b ? [b.dataset.why, b.textContent] : null; })()"
+
+    def page(links):
+        lis = ''.join(f'<li><a href="{u}">{u}</a></li>' for u in links)
+        return lambda: f'<!doctype html><html lang="en"><head><title>Testalbum</title></head><body><div id="content"><h1>Testalbum</h1></div><ul class="external_links">{lis}</ul></body></html>'
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            H.mb_release_page = page(['https://example.com/x'])
+            pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+            pr.evaluate("localStorage.setItem('dci-dev', 'true'); localStorage.setItem('dci-gap-why', 'true')")
+            pr.reload()
+            H.wait_for(pr, "!!document.querySelector('.dci-gapwhy[data-why=noLink]')", 20)
+            a = pr.evaluate(WHY)
+            print('A)', a)
+            results.append(bool(a) and a[1] == 'Line of the release page (developer mode): no Discogs or Bandcamp link recognized among the 1 external links of the page.'
+                           and not pr.locator('.dci-gapline').count())
+            H.mb_release_page = page([f'https://www.discogs.com/release/{H.DISCOGS_ID}-Test-Band-Testalbum'])
+            pr.reload()
+            H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+            bb = [pr.locator('.dci-gapline').count(), pr.evaluate(WHY)]
+            print('B)', bb)
+            results.append(bb == [1, None])
+            pr.evaluate(f"Object.keys(localStorage).filter(k => k.startsWith('dci-gap:')).forEach(k => localStorage.removeItem(k))")
+            pr.route('**/api.discogs.com/**', lambda r: r.abort())
+            pr.reload()
+            H.wait_for(pr, "!!document.querySelector('.dci-gapwhy[data-why=dgBroken]')", 30)
+            c = pr.evaluate(WHY)
+            print('C)', c)
+            results.append(bool(c) and c[1].startswith(f'Line of the release page (developer mode): the request to Discogs (release {H.DISCOGS_ID}) was broken off:'))
+            pr.unroute('**/api.discogs.com/**')
+            H.mb_release_page = page(['https://example.com/x'])
+            pr.evaluate("localStorage.removeItem('dci-dev')")
+            pr.reload()
+            pr.wait_for_timeout(2500)
+            dd = pr.evaluate(WHY)
+            print('D)', dd)
+            results.append(dd is None)
+            print('Fehler:', errs)
+            results.append(not errs)
+            # the switch in ⚙ Settings → Sources: only in developer mode
+            ctx2 = H.new_context(b)
+            pg, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.open_settings(pg, 'sources')
+            off = pg.locator('[data-el=settings] [data-set=gap-why]').count()
+            pg.evaluate("localStorage.setItem('dci-dev', 'true')")
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.open_settings(pg, 'sources')
+            on = pg.locator('[data-el=settings] [data-set=gap-why]').count()
+            print('   Schalter: ohne', off, 'mit', on)
+            results.append(off == 0 and on == 1)
+            b.close()
+    finally:
+        H.mb_release_page = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
