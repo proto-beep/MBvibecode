@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.107.0
+// @version      3.108.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.107.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.107.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.108.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.108.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.107.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.108.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -278,7 +278,8 @@
       "unrec.title.other": "{n} lines not recognized",
       "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
       "una.hint": "Click a word to give it an entry (⇧-click: the words up to it).",
-      "una.wordTitle": "Click: give this word an entry · ⇧-click: the words up to it",
+      "una.wordTitle": "Click: the group of words (a name, a label, a place …) · click it again: only this word · ⇧-click: the words up to it",
+      "una.knownTitle": "A name the release or its entries know already",
       "una.title": "An entry for the words chosen",
       "una.name": "Name",
       "una.kind": "Kind",
@@ -504,6 +505,10 @@
       "log.rowRestored": "Row brought back: {text}",
       "toolbar.onlyWorks": "only works",
       "toolbar.onlyWorksTitle": "Skips everything except the work relationships of the works matrix (composers, lyricists, writers, publishers, arrangers …)",
+      "msg.lvlRgKept.one": "Release group: 1 row stays where it was – MusicBrainz has no release group relationship of its role ({list}).",
+      "msg.lvlRgKept.other": "Release group: {n} rows stay where they were – MusicBrainz has no release group relationship of their roles ({list}).",
+      "msg.lvlRgNone": "Release group: MusicBrainz did not give the release group of this release – no row was moved (load the import again).",
+      "toolbar.rgTitle": "The rows whose role MusicBrainz has on the release group (most roles – instruments, voices – it has not: those stay)",
       "role.source": "{src}: {where}",
       "role.tracks": "track {list}",
       "role.wholeRelease": "{src}: whole release",
@@ -797,6 +802,12 @@
       "part.members.one": "a “member of band” relationship to {names}",
       "part.members.other": "{n} “member of band” relationships to {names}",
       "artistDlg.notInMb": "Not in MusicBrainz and therefore not linked: {list}.",
+      "part.performsAs": "“performs as” to {names}",
+      "artistDlg.aliasAsk": "Discogs has “{alias}” as another name of “{name}” – which of them is the person? (Answer before typing in the form: it is filled in anew.)",
+      "artistDlg.aliasFwd": "{name} performs as {alias}",
+      "artistDlg.aliasBack": "{alias} performs as {name}",
+      "artistDlg.aliasNone": "not taken",
+      "artistDlg.aliasGroup": "Other names of this group on Discogs that MusicBrainz has ({list}) – “performs as” is for people only: not filled in.",
       "artistDlg.loadFailed": "{src} data not loaded: {msg}",
       "artistDlg.check": "Check the form and click “Enter edit” at the bottom yourself. The dashboard then picks up the new artist automatically. Web links without a detected type must be assigned in the form.",
       "artistDlg.done": "Artist “{name}” has been created and is assigned in the dashboard.",
@@ -1039,6 +1050,9 @@
       "profile.export": "⇧ Export profiles",
       "profile.exportTitle": "Saves your own profiles as a file (to take them to another browser) – “Standard” is in every script",
       "profile.import": "⇩ Import profiles …",
+      "profile.new": "＋ New profile",
+      "profile.newTitle": "A new profile with the settings and quick switches of “{name}” – used at once; type its name",
+      "log.profileCopied": "New profile “{name}” – a copy of “{from}”",
       "profile.importTitle": "Adds the profiles of a file exported before (a name that is here already gets “(2)”); the active profile stays",
       "profile.exported": "{n} profiles saved as {file}",
       "profile.imported": "{n} profiles added from {file}",
@@ -1177,6 +1191,54 @@
       "conn.X012": "The comments of live recordings follow its format – “live, 2004‐03‐23: Iridium, New York, NY, USA”: the place's credit or name with city, US or Canadian state code and country, the date –, and its line “Seed live comments” is added to their edit note; the script itself is not needed.",
       "settings.t.texts": "Texts",
       "settings.t.connections": "ⓘ Connections",
+      "settings.t.musicbrainz": "ⓘ MusicBrainz",
+      "settings.t.developer": "Developer",
+      "dev.intro": "For reporting issues and improving the script – only while “Developer mode” is on (⚙ Settings → General).",
+      "dev.diag": "Diagnosis of the relationship editor (also in the log):",
+      "dev.stats": "Developer statistics …",
+      "dev.statsTitle": "Opens the statistics – the developer part is at their end",
+      "dev.tree": "The instruments' tree",
+      "dev.treeFile": "From the workflow's file of the dump {dump} (made {made}); {n} instruments asked of MusicBrainz besides.",
+      "dev.treeLive": "No file of the workflow ({err}) – {n} instruments asked of MusicBrainz.",
+      "dev.treeNone": "Not read yet (it is read with the first import).",
+      "dev.treeChanges": "What the dumps changed",
+      "dev.treeChange": "{dump}: {list}",
+      "dev.treeNoChange": "no change in the last weeks",
+      "dev.chg.added": "new: {names}",
+      "dev.chg.removed": "gone: {names}",
+      "dev.chg.moved": "moved: {names}",
+      "dev.chg.renamed": "renamed: {names}",
+      "mbdata.intro": "What the script takes from MusicBrainz and what it gives back. The other sources, scripts and tools are under “ⓘ Connections”.",
+      "mbdata.th.name": "Where",
+      "mbdata.th.rw": "Reads / writes",
+      "mbdata.th.what": "What",
+      "mbdata.rw.read": "reads",
+      "mbdata.rw.write": "writes",
+      "mbdata.rw.both": "reads and writes",
+      "mbdata.rw.stage": "reads, stages",
+      "mbdata.rw.form": "fills in",
+      "mbdata.more": "Details",
+      "mbdata.ws2.name": "MusicBrainz API (/ws/2)",
+      "mbdata.ws2.what": "The release with all its relationships (also those of its recordings and works), its release group; works, labels, artists, places, areas, events and instruments with their relationships; searches; entries found by their links.",
+      "mbdata.ws2.more": "release/<id>?inc=…-rels, release-group/<id>, work/<id>?inc=artist-rels, label/<id>, artist/<id>, place/<id>, area/<id>?inc=area-rels, event/<id>, instrument/<id>?inc=instrument-rels; searches for artists, labels, places, areas, events, works and series; url?resource=… for Discogs, Bandcamp and other links. One request a second, asked again when MusicBrainz is busy.",
+      "mbdata.wsjs.name": "MusicBrainz's own interface of its pages (/ws/js)",
+      "mbdata.wsjs.what": "The release with its relationships and recordings, the tracks of large releases, single entries – and, after “Enter edit”, the comments of live recordings (the only edits the script sends itself).",
+      "mbdata.wsjs.more": "/ws/js/release/<id>?inc=rels recordings, /ws/js/tracks/<id>, /ws/js/entity/<id>; /ws/js/edit/create: “Edit recording” (comment) with the edit note, as “Set recording comments for a release” does.",
+      "mbdata.editor.name": "The relationship editor",
+      "mbdata.editor.what": "MusicBrainz's types of relationships and their attributes (the instruments too), the release as the editor has it – and the relationships staged there. They are saved only by your “Enter edit”.",
+      "mbdata.editor.more": "MB.linkedEntities (link types, attribute types), MB.relationshipEditor (its state; staged: add, edit, the dates and attributes of relationships MusicBrainz has).",
+      "mbdata.page.name": "The release page",
+      "mbdata.page.what": "Its lists of external links – for the line that estimates what Discogs or Bandcamp credit and MusicBrainz lacks.",
+      "mbdata.page.more": "ul.external_links of the page (all of them); the release itself then from the API.",
+      "mbdata.forms.name": "MusicBrainz's forms",
+      "mbdata.forms.what": "“Create artist / label / place / series / event / work …” open MusicBrainz's own form, filled in (name, type, links, relationships, edit note). Saved only by you.",
+      "mbdata.forms.more": "/artist/create, /label/create, /place/create, /series/create, /event/create, /work/create with their fields in the address.",
+      "mbdata.dump.name": "MetaBrainz's data dumps",
+      "mbdata.dump.what": "Read by the GitHub workflow of the repository only, twice a week: the global statistics (numbers only) and the instruments' tree. The script reads their files from the repository's data branch.",
+      "mbdata.dump.more": "mbdump-edit.tar.bz2 (the script's edits and their notes), mbdump.tar.bz2 (artists, releases, recordings, instruments and their relationships) → stats/… on the branch “stats”.",
+      "mbdata.caa.name": "Cover Art Archive",
+      "mbdata.caa.what": "The release's images for “Text from cover art” (beta) – only when you open it.",
+      "mbdata.caa.more": "coverartarchive.org/release/<id> and its images (archive.org).",
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
       "keys.open": "Keyboard shortcuts",
@@ -2159,11 +2221,14 @@
       "sync.dgArtwork": "Artwork",
       "sync.dgArtworkTitle": "Keeps a small picture of the cover at the top of the connected Discogs tab, while it is connected; a click opens Discogs' image view",
       "log.dgArtwork": "Cover miniature on Discogs: {state}",
-      "dgStatus.artwork": "Cover art from Discogs – click for the Discogs image view, drag to move",
+      "dgStatus.artwork": "Cover art from Discogs – click: large in the page, drag to move",
       "dgStatus.artworkHide": "Hide the cover",
       "dgStatus.artworkShow": "Show the cover",
       "dgStatus.artPrev": "Previous image",
       "dgStatus.artNext": "Next image",
+      "dgStatus.artBig": "Click beside the image or Esc: back to the page",
+      "dgStatus.artTab": "Open the image in a new tab",
+      "dgStatus.artOnly": "Only this image",
       "common.on": "on",
       "common.off": "off",
       "log.dgStatus": "Discogs status: {state}",
@@ -6693,7 +6758,9 @@
           ...((x.members || []).map((m) => ({ ...m, isGroup: true }))),
           ...((x.groups || []).map((g) => ({ ...g, isGroup: false }))),
         ].filter((r) => r.id).map((r) => ({ id: r.id, name: cleanName(r.name), links: [artistUrl(r.id)], isGroup: r.isGroup, active: r.active }));
-        return { name: cleanName(x.name), type: personType(x), urls: (x.urls || []).map((u) => String(u || '').trim()), related };
+        // [Z-ALIAS] (3.108.0) its other names (Discogs's "Aliases") and its real name – for "performs as"
+        const aliases = (x.aliases || []).filter((a) => a && a.id).map((a) => ({ id: a.id, name: cleanName(a.name), links: [artistUrl(a.id)] }));
+        return { name: cleanName(x.name), type: personType(x), urls: (x.urls || []).map((u) => String(u || '').trim()), related, aliases, realname: cleanName(x.realname || '') };
       },
       /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
       async aliases(id) {
@@ -10677,7 +10744,7 @@
    * one of them (hosts). A new connection comes here first. What each does: the texts conn.<id>.
    */
   const CONNECTIONS = [
-    { id: 'X001', kind: 'site', name: 'MusicBrainz', home: 'https://musicbrainz.org/', hosts: ['musicbrainz.org'], perms: '@match …musicbrainz.org/release/* · unsafeWindow', since: '0.1.0' },
+    { id: 'X001', kind: 'site', name: 'MusicBrainz', home: 'https://musicbrainz.org/', hosts: ['musicbrainz.org', 'metabrainz.org'], perms: '@match …musicbrainz.org/release/* · unsafeWindow', since: '0.1.0' },
     { id: 'X002', kind: 'source', name: 'Discogs', home: 'https://www.discogs.com', hosts: ['discogs.com'], perms: '–', since: '0.1.0' },
     { id: 'X003', kind: 'source', name: 'Bandcamp', home: 'https://bandcamp.com/', hosts: ['bandcamp.com'], perms: '@connect bandcamp.com · GM_xmlhttpRequest', since: '3.3.0' },
     { id: 'X004', kind: 'source', name: '', home: '', hosts: [], perms: '–', since: '3.2.0' },
@@ -12801,6 +12868,7 @@
       quoteLt: findLt('work', 'work', 'lyrical quotation'),
       // Fallback IDs are the values currently used on musicbrainz.org.
       memberLtId: (findLt('artist', 'artist', 'member of band') || { id: 103 }).id,
+      isPersonLtId: (findLt('artist', 'artist', 'is person') || { id: 108 }).id, // [Z-ALIAS] (3.108.0) "performs as"
       // URL relationship types by name, e.g. "discogs" for the links of a source (sourceUrlLtId)
       findUrlLt: (type0, name) => findLt(type0, 'url', name),
     };
@@ -13236,7 +13304,7 @@
       // [Z-DSUP] (3.106.0) each relationship with its attributes and dates
       if (existing.list) {
         existing.list.push({ target: targetGid, mbid: e.id, typeId: r['type-id'] || '', type: norm(r.type || ''), attrs: (r.attributes || []).map(norm), attrKey: attrs,
-          begin: r.begin || '', end: r.end || '', ended: !!r.ended });
+          begin: r.begin || '', end: r.end || '', ended: !!r.ended, name: e.name || '' });
       }
     });
   }
@@ -24199,6 +24267,8 @@
       if (noteOk) log('info', 'noteWritten');
     }
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
+    // [Z-LIVE2] (3.108.0) remembered for this page: comments ticked after this staging still become the job (liveJobFollow)
+    S.liveStaged = true;
     saveLiveJob();
     log('ok', 'stageSummaryEdited', { added, updated, removed, replaced: replacedEdited.length + removedEdited.length, changed: changedInMb.length, remove: toRemove.length });
     if (round) {
@@ -24282,16 +24352,124 @@
   const unaName = (line, a, b) => unaWords(line).slice(Math.min(a, b), Math.max(a, b) + 1).join(' ')
     .replace(/^[\s“”"‘’'(\[«»•·,;:–—-]+/, '').replace(/[\s“”"‘’')\]«»•·,;:.!?–—-]+$/, '').trim();
 
+  /**
+   * [Z-UNA2] (3.108.0) The words of a line in groups of sense – a click takes the whole group: names (capitals, initials, particles:
+   * "Kara D. Rusch", "Ludwig van Beethoven"), with the word of a company or a place ("Sound Records", "Studio X", "St. Mary's Church"),
+   * words in quotation marks or in brackets; a role, a word in small letters, a sign each alone. [[a, b], …] (word indexes, both included).
+   */
+  const UNA_ORG = /^(?:records?|recordings|music|musik|publishing|label|productions?|studios?|hall|halle|saal|church|kirche|club|theat(?:er|re)|room|cent(?:er|re)|arena|house|haus|sound|audio|ltd|inc|gmbh|co)$/i;
+  const UNA_PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu|ten|ter|of|the|&|and)$/i;
+  function unaGroups(line) {
+    const words = unaWords(line);
+    const bare = (w) => w.replace(/^[“”"‘’'([«»]+/, '').replace(/[“”"‘’')\]«»,;:.!?]+$/, '');
+    const nameish = (w) => /^\p{Lu}/u.test(bare(w)) || /^\p{Lu}\.$/u.test(w);
+    const groups = [];
+    let i = 0;
+    while (i < words.length) {
+      const w = words[i];
+      // a name known already (an entry, MusicBrainz's relationships) first – also with a word of roles in it ("Drum Guy")
+      let kn = -1;
+      for (let j = Math.min(words.length - 1, i + 5); j > i && kn < 0; j--) {
+        if (unaKnown(words.slice(i, j + 1).map(bare).join(' '))) kn = j;
+      }
+      if (kn > i) {
+        groups.push([i, kn]);
+        i = kn + 1;
+        continue;
+      }
+      // in quotation marks or in brackets: up to the word that closes them
+      const open = /^[“"‘«([]/.exec(w);
+      if (open) {
+        const close = { '“': /[”"]$/, '"': /"$/, '‘': /[’']$/, '«': /»$/, '(': /\)[,;:.]?$/, '[': /\][,;:.]?$/ }[open[0]];
+        let j = i;
+        while (j < words.length - 1 && !close.test(j === i ? w.slice(1) : words[j])) j++;
+        if (j > i || close.test(w.slice(1))) {
+          groups.push([i, j]);
+          i = j + 1;
+          continue;
+        }
+      }
+      if (nameish(w) && !isKnownRole(bare(w))) {
+        let j = i;
+        // the next words of the name: capitals, initials, particles between capitals; not past a comma, a semicolon or a colon
+        while (j + 1 < words.length && !/[,;:]$/.test(words[j])) {
+          const n = words[j + 1];
+          if ((nameish(n) && !isKnownRole(bare(n))) || UNA_ORG.test(bare(n))) j++;
+          else if (UNA_PARTICLE.test(bare(n)) && j + 2 < words.length && nameish(words[j + 2]) && !/[,;:]$/.test(n)) j += 2;
+          else break;
+        }
+        groups.push([i, j]);
+        i = j + 1;
+        continue;
+      }
+      groups.push([i, i]);
+      i++;
+    }
+    return groups;
+  }
+  /** [Z-UNA2] (3.108.0) The kind a group of words suggests: a label, a place, else an artist. */
+  function unaKindOf(text) {
+    const ws = String(text || '').split(/\s+/).map((x) => x.replace(/[^\p{L}]/gu, ''));
+    if (ws.some((x) => /^(?:records?|recordings|music|musik|publishing|label|productions?|ltd|inc|gmbh)$/i.test(x))) return 'label';
+    if (ws.some((x) => /^(?:studios?|hall|halle|saal|church|kirche|club|theat(?:er|re)|room|cent(?:er|re)|arena)$/i.test(x))) return 'place';
+    return 'artist';
+  }
+  /**
+   * [Z-UNA2] (3.108.0) Whether a name is known already: an entry of the import, an artist, label or place MusicBrainz has in a
+   * relationship of this release, the release's artists.
+   */
+  // ((review) the known names normalized once – a set kept while the import, MusicBrainz's relationships and the release are the
+  // same (and at most 2 s, for names linked meanwhile): a long release's thousands of relationships are not walked per word)
+  let unaKnownCache = null;
+  function unaKnownSet() {
+    const c = unaKnownCache;
+    if (c && c.ex === S.existing && c.rel === S.release && c.n === S.artists.size && Date.now() - c.at < 2000) return c.set;
+    const set = new Set();
+    for (const a of S.artists.values()) {
+      set.add(norm(a.name));
+      if (a.mbName) set.add(norm(a.mbName));
+    }
+    if (S.existing && Array.isArray(S.existing.list)) S.existing.list.forEach((x) => { if (x.name) set.add(norm(x.name)); });
+    (S.release && Array.isArray(S.release.artists) ? S.release.artists : []).forEach((x) => set.add(norm(x.name || x)));
+    unaKnownCache = { ex: S.existing, rel: S.release, n: S.artists.size, at: Date.now(), set };
+    return set;
+  }
+  function unaKnown(text) {
+    const n = norm(text);
+    if (!n || n.length < 3) return false;
+    return unaKnownSet().has(n);
+  }
   function unaWordsHtml(line, li) {
     const sel = S.una && S.una.li === li && S.una.line === line ? [Math.min(S.una.a, S.una.b), Math.max(S.una.a, S.una.b)] : null;
     const done = (S.unaDone && S.unaDone.get(line)) || new Set();
+    // ([Z-UNA2] 3.108.0) the words in their groups: a group a span of its own (known names marked)
+    const groups = unaGroups(line);
+    const groupOf = new Map();
+    groups.forEach((g, k) => { for (let x = g[0]; x <= g[1]; x++) groupOf.set(x, k); });
     let w = -1;
-    return String(line).split(/(\s+)/).map((t) => {
-      if (!t || /^\s+$/.test(t)) return esc(t);
+    const parts = String(line).split(/(\s+)/);
+    const out = [];
+    let openG = -1;
+    parts.forEach((t) => {
+      if (!t || /^\s+$/.test(t)) {
+        out.push(esc(t));
+        return;
+      }
       w++;
+      const g = groupOf.get(w);
+      if (g !== openG) {
+        if (openG >= 0) out.push('</span>');
+        const [a, b] = groups[g];
+        const text = unaName(line, a, b);
+        const known = b > a && unaKnown(text);
+        out.push(`<span class="dci-una-g${b > a ? ' dci-una-multi' : ''}${known ? ' dci-una-known' : ''}" data-g="${a}-${b}"${known ? ` title="${esc(tr('una.knownTitle'))}"` : ''}>`);
+        openG = g;
+      }
       const on = sel && w >= sel[0] && w <= sel[1];
-      return `<span class="dci-una-w${on ? ' dci-una-sel' : ''}${done.has(w) ? ' dci-una-done' : ''}" data-act="una-word" data-li="${li}" data-w="${w}" title="${esc(tr('una.wordTitle'))}">${esc(t)}</span>`;
-    }).join('');
+      out.push(`<span class="dci-una-w${on ? ' dci-una-sel' : ''}${done.has(w) ? ' dci-una-done' : ''}" data-act="una-word" data-li="${li}" data-w="${w}" title="${esc(tr('una.wordTitle'))}">${esc(t)}</span>`);
+    });
+    if (openG >= 0) out.push('</span>');
+    return out.join('').replace(/(\s+)<\/span>/g, '</span>$1');
   }
 
   /** The tracks the line names (the text adapter's reading), or null. */
@@ -24321,8 +24499,18 @@
     const w = Number(btn.dataset.w);
     const line = (((S.release && S.release.unrecognized) || [])[li]) || '';
     if (!line) return;
-    if (extend && S.una && S.una.li === li && S.una.line === line) S.una.b = w;
-    else S.una = { li, line, a: w, b: w, kind: S.una ? S.una.kind : 'artist', role: '', tracks: 'line', remember: false, error: '' };
+    // ([Z-UNA2] 3.108.0) a click: the word's group; again on the group chosen: only this word; ⇧: up to it
+    const g = unaGroups(line).find(([a, b]) => w >= a && w <= b) || [w, w];
+    const same = S.una && S.una.li === li && S.una.line === line;
+    const isGroup = same && Math.min(S.una.a, S.una.b) === g[0] && Math.max(S.una.a, S.una.b) === g[1] && g[1] > g[0];
+    if (extend && same) S.una.b = w;
+    else {
+      const [a, b] = isGroup ? [w, w] : g;
+      const name = unaName(line, a, b);
+      // the kind its words suggest – a label, a place – the first time (one chosen by hand stays)
+      const kind = same && S.una.kindTouched ? S.una.kind : unaKindOf(name);
+      S.una = { li, line, a, b, kind, kindTouched: !!(same && S.una.kindTouched), role: '', tracks: 'line', remember: false, error: '' };
+    }
     if (S.una.kind !== 'artist' && !S.una.role) S.una.role = unaRoles(S.una.kind)[0] || '';
     S.una.name = unaName(line, S.una.a, S.una.b);
     S.unaOpen = true;
@@ -25864,9 +26052,16 @@
       role = `<input type="text" data-f="em-primary" list="dci-dl-${root.id}" value="${esc(r.primaryText)}" class="${valid ? '' : 'dci-invalid'}"
         aria-label="${esc(root.name)}" placeholder="${esc(root.name)}">${valid ? '' : `<span class="dci-mark dci-bad">${esc(markText(r))}</span>`}${wrote}`;
     } else {
-      // [177] (3.38.10) MusicBrainz's name, the source's role in the tooltip
+      // [177] (3.38.10) MusicBrainz's name, the source's role in the tooltip; ([Z-EMTYPE] 3.108.0) a choice of MusicBrainz's types of its
+      // level (by name: the line's rows on other levels follow) – the role can be changed by hand in the matrix too
       const label = roleLabel(r);
-      role = `<span class="dci-em-role" data-raw="${esc(r.raw)}" title="${esc(label.title)}">${esc(label.text)}</span>${lt ? '' : ` <span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}`;
+      const types = !skip && r.level !== 'skip' ? typesFor(r.level, r.entityType) : [];
+      // (a role without a type – "Artwork" unknown to the mapping – gets the choice too: its text first, empty, then the types)
+      role = types.length
+        ? `<select data-f="em-type" class="dci-em-role dci-em-typesel ${lt ? '' : 'dci-invalid'}" data-raw="${esc(r.raw)}" title="${esc(label.title)}" aria-label="${esc(tr('type.aria'))}">${
+          lt ? '' : `<option value="" selected>${esc(label.text)} → ${esc(tr('cl.noType'))}</option>`}${types
+          .map((x) => `<option value="${esc(x.name)}" ${lt && x.id === lt.id ? 'selected' : ''}>${esc(lt && x.id === lt.id ? label.text : mbPhraseOf(x, r) || x.name)}</option>`).join('')}</select>`
+        : `<span class="dci-em-role" data-raw="${esc(r.raw)}" title="${esc(label.title)}">${esc(label.text)}</span>${lt ? '' : ` <span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}`;
     }
     const credit = lt && canRoleCredit(lt)
       ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">${rcClearHtml()}` : '';
@@ -26393,6 +26588,20 @@
     const rows = lineRows(el);
     if (!rows.length) return true;
     if (f === 'em-bac') emBlockAc(a, rows, el.value);
+    else if (f === 'em-type') {
+      // [Z-EMTYPE] (3.108.0) the type chosen by hand: each row of the line by the type of that name on its level
+      if (!el.value) return true;
+      rows.forEach((r) => {
+        const lt = typesFor(r.level, r.entityType).find((x) => x.name === el.value);
+        if (!lt) return;
+        r.linkTypeId = lt.id;
+        r.types = [lt.name, ...r.types.filter((n) => norm(n) !== norm(lt.name))];
+        if (!primaryIsValid(r) || !norm(r.primaryText)) r.primaryText = pickPrimary(r);
+        r.statTypeHand = true;
+        refreshRowDetails(r);
+        autoGroupDate(r);
+      });
+    }
     else if (f === 'em-tick') emTick(a, rows, el.dataset.ev, el.checked);
     else if (f === 'em-flag') rows.forEach((r) => (el.checked ? r.flags.add(el.value) : r.flags.delete(el.value)));
     else if (f === 'em-primary') {
@@ -30395,6 +30604,13 @@
         cleanup();
         if (onCancel) onCancel();
       },
+      // ([Z-ALIAS] 3.108.0, review) the form filled in anew (an answer about an alias): in the window when it is open, else in the
+      // frame; the window opened later gets it too
+      load: (u) => {
+        url = u;
+        if (popup && !popup.closed) popup.location.href = u;
+        else frame.src = u;
+      },
       openWindow: () => {
         frame.src = 'about:blank';
         popup = window.open(url, 'dci-create', 'popup=yes,width=1100,height=900');
@@ -30432,6 +30648,8 @@
     const warnings = [];
     const rels = [];
     const notInMb = [];
+    const aliasGroup = [];
+    const aliasAsk = [];
     if (artist.dId && S.source.person) {
       try {
         setBusy('busy.discogsArtist', { name: artist.name });
@@ -30454,6 +30672,26 @@
             }
           }
         }
+        // [Z-ALIAS] (3.108.0) Discogs's other names of the artist that MusicBrainz has (by their Discogs link): "performs as" – the person
+        // by Discogs's real name ("Real Name" the new artist's: it performs as the other; the other's: the other performs as it); else asked
+        const aliases = person.aliases || [];
+        if (aliases.length) {
+          const found = new Map();
+          const urls = aliases.map((r) => r.links[0]);
+          for (let i = 0; i < urls.length; i += 50) {
+            (await lookupUrls(urls.slice(i, i + 50), 'artist')).forEach((v, k) => found.set(k, v));
+          }
+          const real = norm(person.realname || '');
+          for (const al of aliases) {
+            const matches = found.get(al.links[0]) || [];
+            if (matches.length !== 1) continue;
+            const m = { mbid: matches[0].mbid, name: matches[0].name, discogs: al.name };
+            if (person.type === 'group') aliasGroup.push(m);
+            else if (real && real === norm(person.name)) rels.push({ ...m, linkTypeId: x.isPersonLtId, backward: false, alias: true });
+            else if (real && real === norm(al.name)) rels.push({ ...m, linkTypeId: x.isPersonLtId, backward: true, alias: true });
+            else aliasAsk.push(m);
+          }
+        }
       } catch (e) {
         warnings.push(tr('artistDlg.loadFailed', { msg: e.message }));
       } finally {
@@ -30463,22 +30701,40 @@
     const type = person ? person.type : null;
     // [3.21.0] a name from a text: the web profiles found next to it (T032) as its links
     const web = !artist.dId && !person ? (artist.links || []).filter((u) => /^https?:\/\//i.test(u)) : [];
-    const params = buildArtistSeed({
+    // ([Z-ALIAS] 3.108.0) the answers of the dialog to "who is the person?" – the form opened again with them
+    const asked = new Map();
+    const seed = () => buildArtistSeed({
       name: artist.name,
       sourceUrl: srcUrlOf(artist),
       person: person || (web.length ? { urls: web } : null),
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
       sourceLinkTypeId: sourceUrlLtId('artist'),
-      rels,
+      rels: [...rels, ...aliasAsk.filter((m) => asked.get(m.mbid)).map((m) => ({ ...m, linkTypeId: x.isPersonLtId, backward: asked.get(m.mbid) === 'back', alias: true }))],
       editNote: srcUrlOf(artist) ? formEditNote([srcUrlOf(artist)], prefilledBy(true)) : '',
     });
+    const params = seed();
     const urlCount = params.filter(([k]) => /^edit-artist\.url\.\d+\.text$/.test(k)).length;
     const displayName = (person && person.name) || artist.name;
     const prefilled = [tr('part.name')];
     if (type) prefilled.push(tr('part.type', { type: tr(`type.${type}`) }));
     if (urlCount) prefilled.push(tr(web.length && !srcUrlOf(artist) ? 'part.webUrls' : 'part.urls', { n: urlCount }));
-    if (rels.length) prefilled.push(tr('part.members', { n: rels.length, names: rels.map((r) => r.name).join(', ') }));
+    const members = rels.filter((r) => !r.alias);
+    if (members.length) prefilled.push(tr('part.members', { n: members.length, names: members.map((r) => r.name).join(', ') }));
+    const performs = rels.filter((r) => r.alias);
+    if (performs.length) prefilled.push(tr('part.performsAs', { names: performs.map((r) => r.name).join(', ') }));
     const info = [`<p>${esc(tr('artistDlg.prefilled', { list: prefilled.join(', ') }))}</p>`];
+    // ([Z-ALIAS] 3.108.0) who is the person: the editor's choice
+    aliasAsk.forEach((m) => {
+      const name = (person && person.name) || artist.name;
+      const btn = (dir, key) => `<button type="button" class="dci-small" data-act="alias-dir" data-mbid="${esc(m.mbid)}" data-dir="${dir}" aria-pressed="${(asked.get(m.mbid) || '') === dir}">${esc(tr(key, { name, alias: m.name }))}</button>`;
+      info.push(`<p class="dci-alias-ask" data-alias="${esc(m.mbid)}">${esc(tr('artistDlg.aliasAsk', { alias: m.name, name }))}<br>${btn('fwd', 'artistDlg.aliasFwd')} ${btn('back', 'artistDlg.aliasBack')} ${btn('', 'artistDlg.aliasNone')}</p>`);
+    });
+    if (aliasGroup.length) info.push(`<p class="dci-muted">${esc(tr('artistDlg.aliasGroup', { list: aliasGroup.map((m) => m.name).join(', ') }))}</p>`);
+    S.aliasForm = aliasAsk.length ? { asked, reload: () => {
+      const u = `/artist/create?${toQuery(seed())}`;
+      if (S.subDialog && S.subDialog.load) S.subDialog.load(u);
+      else $('sub-frame').src = u;
+    } } : null;
     if (notInMb.length) {
       const links = notInMb.map((r) => `<a href="${esc(r.links[0])}" target="_blank" rel="noopener">${esc(r.name)}</a>`).join(', ');
       info.push(`<p class="dci-muted">${esc(tr('artistDlg.notInMb')).replace('{list}', links)}</p>`);
@@ -32222,6 +32478,17 @@
     const note = [editNoteBlock(), SEED_NOTE].filter(Boolean).join('\n\n');
     writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
     if (!quiet) log('info', 'liveSaved', { n: items.length });
+  }
+
+  /**
+   * [Z-LIVE2] (3.108.0) The ticked comments changed on the dashboard: the job follows them when one waits or when this page has
+   * staged already (until 3.107.0 only a waiting job – comments forgotten at the first staging and ticked afterwards were lost,
+   * because a staging without ticked comments writes no job). Logged once when the job is new.
+   */
+  function liveJobFollow() {
+    const had = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
+    if (!had && !S.liveStaged) return;
+    saveLiveJob({ quiet: !!had });
   }
 
   /**
@@ -37781,7 +38048,7 @@
         }
       }
       // [173] (3.38.9) "multi": two imports of the same release open (companion 1.10.0)
-      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow', 'artPrev', 'artNext',
+      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow', 'artPrev', 'artNext', 'artBig', 'artTab', 'artOnly',
         'off', 'on', 'isOff', 'hover', 'multi']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
@@ -39387,7 +39654,7 @@
         S.liveComOffer = act === 'livecom-yes' ? 'yes' : 'no';
         log('info', act === 'livecom-yes' ? 'liveOfferYes' : 'liveOfferNo');
         renderLiveComments();
-        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
+        liveJobFollow();
         break;
       // [3.26.0] the head in one line (item 30): the menu "Source ▾" and "+ Supplement"
       case 'srcmenu': {
@@ -39475,6 +39742,28 @@
         break;
       case 'profile-delete':
         deleteProfile(btn.dataset.id);
+        break;
+      // [Z-DEVTAB] (3.108.0) the diagnosis and the developer statistics from the tab "Developer"
+      case 'dev-diag':
+        if (DIAG.timer) stopDiag();
+        else startDiag();
+        renderLog();
+        renderSettings();
+        break;
+      case 'dev-stats':
+        // (as the head's button: the statistics below the head, ⚙ Settings closed; their developer part at the end)
+        S.statsOpen = true;
+        S.statsData = null;
+        S.settingsOpen = false;
+        S.resetOpen = false;
+        renderSettings();
+        if (rulesDocked() && rulesShown()) closeRules();
+        renderStats();
+        if ($('stats')) $('stats').scrollIntoView({ block: 'nearest' });
+        break;
+      // [Z-PROFNEW] (3.108.0) a new profile: a copy of the one in use
+      case 'profile-new':
+        newProfile();
         break;
       case 'profile-export':
         exportProfiles();
@@ -40186,7 +40475,13 @@
         else if (id) loadRelease(id, { source });
         break;
       }
-      case 'bulk-level':
+      case 'bulk-level': {
+        // ((review) [Z-LVLRG] without the release group of the release (its data not read) nothing could be staged there
+        if (btn.dataset.level === 'release_group' && !S.releaseGroup) {
+          showMessage('warn', 'msg.lvlRgNone');
+          break;
+        }
+        const rgKept = [];
         for (const r of S.rows) {
           // "Only works": everything is skipped except the work relationships of the works matrix
           // (writers, publishers, arrangers …), also those skipped before with "Skip"
@@ -40209,6 +40504,11 @@
           }
           if (btn.dataset.level === 'skip' && r.level !== 'skip') r.levelBeforeSkip = r.level;
           if ((r.work || r.company || r.other || r.existingAll) && btn.dataset.level !== 'skip') continue;
+          // [Z-LVLRG] (3.108.0) the release group: only the rows whose role MusicBrainz has there (the others stay where they are)
+          if (btn.dataset.level === 'release_group' && r.level !== 'release_group' && !findRowType(r, 'release_group')) {
+            if (r.level !== 'skip') rgKept.push(r);
+            continue;
+          }
           // A level chosen by hand: no longer "only hidden" by "Stage: only …", so staged relationships follow it
           delete r.scopeLevel;
           delete r.mxSkipped;
@@ -40218,9 +40518,14 @@
           resolveRowType(r);
           if (!primaryIsValid(r) || !norm(r.primaryText)) r.primaryText = pickPrimary(r);
         }
+        if (rgKept.length) {
+          S.messages = S.messages.filter((x) => x.key !== 'msg.lvlRgKept');
+          showMessage('info', 'msg.lvlRgKept', { n: rgKept.length, list: uniq(rgKept.map((r) => roleLabel(r).text || rowTypeName(r) || r.raw)).slice(0, 6).join(', ') });
+        }
         renderGroups();
         refresh();
         break;
+      }
       case 'tracks-toggle': {
         row.tracksOpen = !row.tracksOpen;
         btn.setAttribute('aria-expanded', String(row.tracksOpen));
@@ -41364,6 +41669,15 @@
       case 'apply':
         applyPlan();
         break;
+      // [Z-ALIAS] (3.108.0) who is the person – the form opened again with the answer
+      case 'alias-dir':
+        if (S.aliasForm) {
+          S.aliasForm.asked.set(btn.dataset.mbid, btn.dataset.dir || '');
+          const p0 = btn.closest('.dci-alias-ask');
+          if (p0) p0.querySelectorAll('[data-act=alias-dir]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+          S.aliasForm.reload();
+        }
+        break;
       case 'sub-close':
         if (S.subDialog) S.subDialog.cancel();
         break;
@@ -41686,7 +42000,7 @@
       if (!S.una) return;
       if (f === 'una-kind') {
         const name = S.overlay.querySelector('.dci-una-form [data-f="una-name"]');
-        Object.assign(S.una, { kind: el.value, role: unaRoles(el.value)[0] || '', error: '', ...(name ? { name: name.value } : {}) });
+        Object.assign(S.una, { kind: el.value, kindTouched: true, role: unaRoles(el.value)[0] || '', error: '', ...(name ? { name: name.value } : {}) });
         renderSource();
       } else if (f === 'una-role') S.una.role = el.value;
       else if (f === 'una-tracks') S.una.tracks = el.value;
@@ -41962,7 +42276,7 @@
           S.liveComChoice.set(rec, { ...c, on: el.checked });
         }
         renderLiveComments();
-        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
+        liveJobFollow();
         break;
       }
       // [Z-ARRDIS] (3.98.0) the text of the disambiguation of new arrangement works
@@ -41980,7 +42294,7 @@
           S.liveComChoice.set(rec, { ...c, text: el.value.trim() });
         }
         renderLiveComments();
-        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
+        liveJobFollow();
         break;
       }
       case 'discogs-pick': {
@@ -42709,7 +43023,7 @@
           <div class="dci-toolbar" data-el="toolbar" hidden>
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
-              ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
+              ${levelBtn('recording')}${levelBtn('release')}${levelBtn('release_group').replace('<button ', `<button title="${esc(tr('toolbar.rgTitle'))}" `)}${levelBtn('skip')}
             </div>
             <div class="dci-seg dci-onlyworks" role="group">
               <button type="button" data-act="bulk-level" data-level="only-works" title="${esc(tr('toolbar.onlyWorksTitle'))}">${esc(tr('toolbar.onlyWorks'))}</button>
@@ -43027,7 +43341,9 @@
   // [146] (3.36.0) "Cache" new: what is remembered per release
   // [189] (3.39.3) the statistics with a button of their own in the head (until 3.39.2 the tab "Statistics" after "Cache")
   // ([Z-QSP] 3.75.0) the profiles right after General
-  const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
+  // ([Z-CONN2] 3.108.0) what is taken from MusicBrainz; ([Z-DEVTAB] 3.108.0) the developer's settings – only in developer mode (settingTopics)
+  const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer'];
+  const settingTopics = () => SETTING_TOPICS.filter((k) => k !== 'developer' || S.devMode);
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -43090,7 +43406,10 @@
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, DSUP_WHY_KEY, ALIAS_MAX_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
+    // [Z-CONN2, Z-DEVTAB] (3.108.0)
+    musicbrainz: [],
+    developer: [GAP_WHY_KEY, DSUP_WHY_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -44945,9 +45264,7 @@
         row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapLine'), tr('settings.gapLineTitle'))),
         row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
         // [Z-GAPL] (3.105.0) developer mode: why the line is not there
-        S.devMode ? row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))) : '',
-        // [Z-DSUPWHY] (3.107.0) developer mode: why an entry has no box "Compared with MusicBrainz"
-        S.devMode ? row(check('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'))) : '',
+        // ([Z-DEVTAB] 3.108.0: the developer's switches are in the tab "Developer")
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
@@ -44966,6 +45283,18 @@
       ],
       // [3.25.0] where the script connects to other sites, tools and scripts (item 40)
       connections: () => [connectionsHtml()],
+      // [Z-CONN2] (3.108.0) what the script takes from MusicBrainz (and gives back)
+      musicbrainz: () => [mbDataHtml()],
+      // [Z-DEVTAB] (3.108.0) everything of developer mode in one tab (shown in developer mode only)
+      developer: () => [
+        `<p class="dci-sub">${esc(tr('dev.intro'))}</p>`,
+        row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
+        row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))),
+        row(check('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'))),
+        row(`${esc(tr('dev.diag'))} <button type="button" class="dci-small" data-act="dev-diag" aria-pressed="${!!DIAG.timer}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>`),
+        row(`<button type="button" class="dci-textbtn" data-act="dev-stats" title="${esc(tr('dev.statsTitle'))}">${esc(tr('dev.stats'))}</button>`),
+        devTreeHtml(),
+      ],
       discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
       works: () => [
         row(check('data-set="aw-on"', S.awOn, tr('settings.awOn'))),
@@ -45068,8 +45397,8 @@
       },
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
-    const tab = SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general';
-    const tabs = SETTING_TOPICS.map((key) => {
+    const tab = settingTopics().includes(S.settingsTab) ? S.settingsTab : 'general';
+    const tabs = settingTopics().map((key) => {
       const sel = !S.resetOpen && key === tab;
       return `<button type="button" role="tab" class="dci-set-tab" id="dci-set-tab-${key}" data-act="settings-topic" data-topic="${key}" aria-selected="${sel}"
         aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}">${esc(tr(`settings.t.${key}`))}</button>`;
@@ -45105,6 +45434,39 @@
   }
 
   /** [3.25.0] The tab "ⓘ Connections" (item 40): every site, tool and script the script works with (CONNECTIONS). */
+  /** [Z-DEVTAB] (3.108.0) The instruments' tree: where it comes from, and what the dumps changed. */
+  function devTreeHtml() {
+    const t = ITREE.tree;
+    const live = ITREE.live ? ITREE.live.size : 0;
+    const state = t ? tr('dev.treeFile', { dump: t.dump || '?', made: (t.generated || '').slice(0, 10) || '?', n: live })
+      : ITREE.failed ? tr('dev.treeLive', { err: ITREE.err || '–', n: live }) : tr('dev.treeNone');
+    const names = (xs) => xs.slice(0, 20).join(', ') + (xs.length > 20 ? ` … (${xs.length})` : '');
+    const changes = t ? t.changes.map((c) => {
+      const parts = ['added', 'removed', 'moved', 'renamed'].filter((k) => c[k].length).map((k) => tr(`dev.chg.${k}`, { names: names(c[k]) }));
+      return `<li>${esc(tr('dev.treeChange', { dump: c.dump, list: parts.join(' · ') }))}</li>`;
+    }) : [];
+    return `<div class="dci-set-row dci-devtree" data-el="dev-tree"><strong>${esc(tr('dev.tree'))}</strong> <span class="dci-sub">${esc(state)}</span>
+      ${t ? `<details${changes.length ? ' open' : ''}><summary>${esc(tr('dev.treeChanges'))}</summary>${changes.length ? `<ul>${changes.join('')}</ul>` : `<p class="dci-sub">${esc(tr('dev.treeNoChange'))}</p>`}</details>` : ''}</div>`;
+  }
+  /** [Z-CONN2] (3.108.0) What the script takes from MusicBrainz and gives back – one line each, its details folded. */
+  const MB_DATA = [
+    ['ws2', 'read', 'https://musicbrainz.org/doc/MusicBrainz_API'],
+    ['wsjs', 'both', 'https://github.com/metabrainz/musicbrainz-server'],
+    ['editor', 'stage', 'https://musicbrainz.org/doc/Relationship_Editor'],
+    ['page', 'read', 'https://musicbrainz.org/doc/Release'],
+    ['forms', 'form', 'https://musicbrainz.org/doc/How_to_Add_an_Artist'],
+    ['dump', 'read', 'https://data.metabrainz.org/pub/musicbrainz/data/fullexport/'],
+    ['caa', 'read', 'https://coverartarchive.org/'],
+  ];
+  function mbDataHtml() {
+    return `<p class="dci-sub">${esc(tr('mbdata.intro'))}</p>
+      <div class="dci-tablewrap"><table class="dci-conn dci-mbdata">
+        <thead><tr><th>${esc(tr('mbdata.th.name'))}</th><th>${esc(tr('mbdata.th.rw'))}</th><th>${esc(tr('mbdata.th.what'))}</th></tr></thead>
+        <tbody>${MB_DATA.map(([id, rw, home]) => `<tr data-mbdata="${id}"><td><a href="${esc(home)}" target="_blank" rel="noopener">${esc(tr(`mbdata.${id}.name`))}</a></td>
+          <td><span class="dci-tag dci-mbdata-rw" data-rw="${rw}">${esc(tr(`mbdata.rw.${rw}`))}</span></td>
+          <td>${esc(tr(`mbdata.${id}.what`))}<details><summary>${esc(tr('mbdata.more'))}</summary><code>${esc(tr(`mbdata.${id}.more`))}</code></details></td></tr>`).join('')}</tbody>
+      </table></div>`;
+  }
   function connectionsHtml() {
     const link = (c) => (c.home ? `<a href="${esc(c.home)}" target="_blank" rel="noopener">${esc(c.name || tr(`conn.${c.id}.name`))}</a>` : esc(c.name || tr(`conn.${c.id}.name`)));
     const row = (c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
@@ -45185,7 +45547,7 @@
     }
     const active = document.activeElement;
     // [3.25.0] also a button (a tab, "Cancel"): the focus stays where it was
-    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]`
+    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` // ([Z-PROFNEW] 3.108.0) a profile's name by its id
       : active.dataset.statsImport != null ? '[data-stats-import]' : active.dataset.profilesImport != null ? '[data-profiles-import]'
         : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}${active.dataset.kind ? `[data-kind="${active.dataset.kind}"]` : ''}${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` : '') : '';
     el.innerHTML = settingsHtml();
@@ -45397,6 +45759,13 @@
       S.liveCom = el.checked;
       writeJson('localStorage', LIVE_COM_KEY, el.checked || null);
       log('info', 'settingValue', { what: tr('settings.liveComments'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      // [Z-LIVE2] (3.108.0) switched on (or off) after a staging: the job follows
+      // (the settings open on other pages too, where there is no release: nothing to follow)
+      try {
+        if (releaseMbid) liveJobFollow();
+      } catch {
+        /* no release on this page */
+      }
       refresh();
     } else if (k === 'beta-ocr') {
       // [3.34.1] text from cover art (beta, item E3): the item in "Source ▾"
@@ -45965,9 +46334,31 @@
       ${id === 'std' ? '' : `<button type="button" class="dci-textbtn" data-act="profile-delete" data-id="${esc(id)}" aria-label="${esc(tr('profile.deleteAria', { name }))}">${esc(tr('profile.delete'))}</button>`}</li>`;
     return `<p class="dci-sub">${esc(tr('profile.explain'))}</p>
       <ul class="dci-proflist">${one('std', tr('profile.std'), 0)}${list.map((p) => one(p.id, p.name, p.at)).join('')}</ul>
-      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="profile-export" ${list.length ? '' : 'disabled'} title="${esc(tr('profile.exportTitle'))}">${esc(tr('profile.export'))}</button>
+      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="profile-new" title="${esc(tr('profile.newTitle', { name: profileNameOf(cur) }))}">${esc(tr('profile.new'))}</button>
+        <button type="button" class="dci-small" data-act="profile-export" ${list.length ? '' : 'disabled'} title="${esc(tr('profile.exportTitle'))}">${esc(tr('profile.export'))}</button>
         <label class="dci-filebtn" title="${esc(tr('profile.importTitle'))}">${esc(tr('profile.import'))} <input type="file" accept=".json,application/json" data-profiles-import></label></div>
       <div class="dci-sub" data-el="profile-status" aria-live="polite">${esc(S.profileStatus || '')}</div>`;
+  }
+  /**
+   * [Z-PROFNEW] (3.108.0) "＋ New profile" (⚙ Settings → Profiles): a copy of the profile in use ("Standard": the defaults) – named
+   * "Profile n · date time", used at once, its name field ready to type in. The settings stay as they are (they are the copy's).
+   */
+  function newProfile() {
+    const list = profilesRead();
+    const from = activeProfileId();
+    const at = Date.now();
+    const p = { id: `p${at.toString(36)}`, name: `Profile ${nextProfileNumber(list)} · ${stampOf(at)}`, at, ...profileSnapshot() };
+    list.push(p);
+    if (!profilesWrite(list)) return;
+    rawSet(PROFILE_KEY, JSON.stringify(p.id));
+    log('info', 'profileCopied', { name: p.name, from: profileNameOf(from) });
+    renderProfilePickers();
+    renderSettings();
+    const input = document.querySelector(`[data-f="profile-name"][data-id="${p.id}"]`);
+    if (input) {
+      input.focus();
+      input.select();
+    }
   }
   function exportProfiles() {
     const list = profilesRead();
@@ -47506,6 +47897,9 @@
       .dci-unrec .dci-una-w { cursor: pointer; border-radius: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 1); }
       .dci-unrec .dci-una-w:hover { background: var(--row); color: var(--ink); }
       .dci-unrec .dci-una-sel, .dci-unrec .dci-una-sel:hover { background: var(--purple); color: #fff; }
+      /* [Z-UNA2] (3.108.0) the groups of words: underlined; a name known already, green */
+      .dci-unrec .dci-una-multi { border-bottom: 1px dotted var(--muted, #888); }
+      .dci-unrec .dci-una-known { border-bottom: 2px solid #3a9b5c; }
       .dci-unrec .dci-una-done { text-decoration: line-through; color: var(--ok); }
       .dci-una-form { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 6) 0;
         padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line); border-radius: calc(var(--u, 1px) * 6); color: var(--ink); background: var(--soft); }
@@ -48486,6 +48880,8 @@
       .dci-dsup-tag { background: #fff1b8; border: 1px solid #e0c060; color: #6b4e00; border-radius: 8px; padding: 0 calc(var(--u, 1px) * 6); font-style: normal; }
       .dci-em-chip.dci-dsup-mark { box-shadow: 0 0 0 2px #e0b400; }
       .dci-uncr { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      /* [Z-UNCR2] (3.108.0) yellow, as everything that waits for a decision */
+      .dci-note.dci-uncr { background: #fff8db; border: 1px solid #e8d48a; border-left: 4px solid #e0b400; border-radius: 3px; color: #4d3a00; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-solo-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-arq-sub { margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
       /* [Z-ALIGN] (3.100.0) one table per entry: its head stays on top while its lines scroll, each block a thin heading row */
@@ -48516,6 +48912,7 @@
       .dci-em-grid thead th { font-size: calc(var(--u, 1px) * 12); font-weight: 600; border-bottom: 2px solid var(--line); vertical-align: bottom; }
       .dci-em-grid .dci-em-c-role { position: sticky; left: 0; background: #fff; min-width: calc(var(--u, 1px) * 200); z-index: 1; }
       .dci-em-c-role input { width: calc(var(--u, 1px) * 190); }
+      .dci-em-c-role select.dci-em-typesel { max-width: calc(var(--u, 1px) * 190); }
       .dci-em-c-credit input { width: calc(var(--u, 1px) * 130); }
       .dci-em-c-ac input { width: calc(var(--u, 1px) * 120); }
       .dci-em-c-ac { white-space: nowrap; }

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.107.0, Companion 1.6.0 – 1.16.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.108.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.108.0 · 2026-11-08
+
+- **Z-PROFNEW (new):** `newProfile()` – a copy by `profileSnapshot`, named "Profile n · stamp", active at once, its name input focused; the button `data-act="profile-new"` in ⚙ Settings → Profiles.
+- **Z-LVLRG:** the toolbar's `levelBtn('release_group')` (`toolbar.rgTitle`); `bulk-level` a block of its own: rows without `findRowType(r, 'release_group')` stay (`rgKept`), `msg.lvlRgKept` names their roles.
+- **Z-DEVTAB, Z-CONN2 (new):** `SETTING_TOPICS` with `musicbrainz` and `developer`; `settingTopics()` (developer only with `S.devMode`); `TOPIC_KEYS.developer` = `GAP_WHY_KEY`, `DSUP_WHY_KEY` (out of Sources); the developer body: dev mode, `gap-why`, `dsup-why`, `dev-diag` (a diagnosis to copy), `dev-stats`, `devTreeHtml()` (the instruments' tree: source, size, changes); `mbDataHtml()` with `MB_DATA` (ws2, wsjs, editor, page, forms, dump, caa).
+- **Z-ALIAS (new):** `DISCOGS.person` returns `aliases` and `realname`; `idx().isPersonLtId` ("is person", 108 when missing); `startArtistCreate`: `aliasGroup` (the aliases, those on MusicBrainz linked), `aliasAsk` (no clear direction: the editor answers – `alias-dir`, the sub-frame filled anew), a clear one in `rels` as "is person" (backward when the real name is the alias); `seed()` builds the parameters with the answers (`S.aliasForm = { asked, reload }`).
+- **Z-UNA2:** `UNA_ORG`, `UNA_PARTICLE`, `unaGroups(line)`, `unaKindOf`, `unaKnown`; `unaWordsHtml` wraps the groups (`.dci-una-g`, `.dci-una-multi`, `.dci-una-known`); `unaPick` – a click the group, again on it the word, ⇧ extends; the kind by `unaKindOf` unless `kindTouched` (set by `una-kind`).
+- **Z-EMTYPE:** `emLineHtml`: the role of a line not of a root a `<select data-f="em-type" class="dci-em-role dci-em-typesel">` of `typesFor(level, entityType)` by name (the chosen one with `roleLabel`'s text); `entryMatrixChange` `em-type`: each row of the line the type of that name on its level (`linkTypeId`, `types`, `pickPrimary`, `statTypeHand`, `refreshRowDetails`, `autoGroupDate`).
+- **Z-UNCR2:** CSS `.dci-note.dci-uncr` yellow.
+- **Z-LIVE2:** `S.liveStaged` (set at the staging before `saveLiveJob`); `liveJobFollow()` (new) – `saveLiveJob` when a job waits or the page staged already – in the handlers `livecom-on`, `livecom-text`, `livecom-yes`/`livecom-no` and the setting `live-comments` (until 3.107.0 only with a waiting job).
+- **Texts:** `profile.new`, `profile.newTitle`, `log.profileCopied`, `toolbar.rgTitle`, `msg.lvlRgKept.*`, `msg.lvlRgNone`, `artistDlg.aliasAsk`, `settings.t.musicbrainz`, `settings.t.developer`, `dev.*`, `mbdata.*`, `part.performsAs`, `artistDlg.alias*`, `una.knownTitle`, `una.wordTitle` changed (en, de); Companion labels `artBig`, `artTab`, `artOnly`, `dgStatus.artwork` changed.
+- **Review:** the alias answers reach the form opened in a window too (`S.subDialog.load`: the window when open, else the frame; `openWindow` with the last address) – before, the window had the first form and an answer with the window open filled a second form in the frame; the question says the form is filled in anew; the known names of `unaKnown` a set made once (`unaKnownSet`, kept while the import, MusicBrainz's relationships and the release are the same, at most 2 s) – not every relationship walked per word; "Release group" for all rows without the release's release group: nothing moved, `msg.lvlRgNone`; Companion: the answer of Discogs's API does not draw the box again when it was switched off meanwhile. Besides: `renderSettings` gives the focus back by `data-id` too (the new profile's name, not the first profile's); `unaGroups` takes a known name first, also with a word of roles in it ("Drum Guy"); `existing.list` with the target's `name`; a role without a type gets the choice in the matrix too; `msg.lvlRgKept` names the roles as shown; `metabrainz.org` (the data dump) in the connection MusicBrainz.
+- **Tests:** `t_ui_settings.py profnew3108`, `devtab3108`, `t_entries.py lvlrg3108`, `emtype3108`, `t_sources.py alias3108`, `t_text_places.py una3108`, `t_works_live.py live3108`, `t_companion_discogs.py artapi3108` – new; `t_ui_settings.py settabs` and the settings list (the tabs MusicBrainz, Developer), `t_start.py gapwhy3105` (its switch in Developer), `t_companion_discogs.py artnav` (the big view, one image greyed 1 / 1), `t_mapping.py mbnames` (the role a choice), `t_companion_discogs.py artworkbox` (a click: the image large, Esc), `t_coverart.py ocrsetting`, `t_ui_settings.py cache`, `stats` (the tab MusicBrainz), `t_entries.py arq386` (the chosen type of a matrix line) – changed; all fail on 3.107.0; the review's cases `alias3108` D and `lvlrg3108` B fail before its fixes (`artapi3108` B guards the box switched off).
 
 ## Import 3.107.0 · 2026-11-08
 
@@ -57,6 +71,14 @@ The comparisons were made with a small script: functions and constants of the ma
 - **Texts:** `gapWhy.*`, `settings.gapWhy`, `settings.gapWhyTitle`, `quick.group.*` (en, de).
 - **Review:** `CONCERT_PHOTO` moved before `findDates` (the release page reads Bandcamp texts with it and leaves the script before line 26844: a `ReferenceError` there – new with S171); a request to Discogs or Bandcamp broken off is said in the console (`console.info`; before nothing at all); the reasons `dgMissing` and `bcFailed`; `gapWhy('start')` cannot stop the hook. S171 narrower: "recorded" only (not "live"), the word of places the first or (one of) the last words of the name, at the end of a longer word only from four letters before it, not with "by", "and", "&", role words, "street" …; the lookahead without case. `questionOptions` without MusicBrainz's types: the written choices; cached by the question's content; also in the statistics. The first group's heading (`.dci-quick-h + .dci-quick-group`). Companion: the click by the miniature's own index; the largest address of the image.
 - **Tests:** `t_start.py gapwhy3105`, `t_text_places.py rdst3105` (Node; with the review's strings), `t_entries.py bzk3105` – new; `t_entries.py evcol3103` E (every cell yellow), `t_rules_window.py quickswitch` (the groups), `t_ui_head.py foot397` (6 px), `t_companion_discogs.py artnav` (the image shown) – changed; all fail on 3.104.0.
+
+## Companion 1.17.0 · 2026-11-08
+
+Z-CPVA3, Z-CPVA4.
+
+- **`ART_API`, `artApiLoad(rid, done)`** (new): the release's images from `api.discogs.com/releases/<id>` (their `uri` first in `artworkList`; the cache's signature with the number of the API's images).
+- **`artShow`:** ‹ › always there – one image: disabled, "1 / 1"; the big view follows.
+- **`artBigOpen(box)`** (new; the click on the miniature): `#dci-art-big` over the tab's width – ‹ ›, the count, ↗ (`dci-big-tab`, Discogs' page of the image), ✕; a click beside the image or Esc closes it. `openDiscogsImages` removed.
 
 ## Companion 1.16.0 · 2026-11-08
 

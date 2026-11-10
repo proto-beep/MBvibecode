@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.16.0
+// @version      1.17.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -46,7 +46,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.16.0';
+  const COMPANION_VERSION = '1.17.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -583,6 +583,13 @@
       #dci-artwork.dci-art-collapsed .dci-art-img, #dci-artwork.dci-art-collapsed .dci-art-nav { display: none; }
       #dci-artwork .dci-art-nav { display: flex; align-items: center; gap: 6px; font: 12px/1.4 sans-serif; color: #262430; align-self: center; }
       #dci-artwork .dci-art-nav[hidden] { display: none; }
+      #dci-artwork .dci-art-nav button:disabled { opacity: .45; cursor: default; }
+      /* [1.17.0] (Z-CPVA4) the image large in the page, as wide as the tab; above and below it a click goes back */
+      #dci-art-big { position: fixed; inset: 0; z-index: 2147483646; background: rgba(20, 18, 28, .82); overflow: auto; display: flex; flex-direction: column; align-items: center; }
+      #dci-art-big .dci-big-bar { position: sticky; top: 0; display: flex; align-items: center; gap: 8px; padding: 6px 10px; font: 13px/1.4 sans-serif; color: #fff; }
+      #dci-art-big .dci-big-bar button, #dci-art-big .dci-big-tab { border: 1px solid #8e8a9e; border-radius: 3px; background: #33303f; color: #fff; font: 14px/1 sans-serif; padding: 3px 8px; cursor: pointer; text-decoration: none; }
+      #dci-art-big .dci-big-bar button:disabled { opacity: .45; cursor: default; }
+      #dci-art-big .dci-big-img { width: 100%; height: auto; margin: auto 0; display: block; background: #fff; }
       #dci-artwork .dci-art-nav button { border: 1px solid #c8c5d6; border-radius: 3px; background: #f7f6fb; color: #262430; font: 13px/1 sans-serif; padding: 1px 6px; cursor: pointer; }
       html.dci-site-dark #dci-artwork .dci-art-nav { color: #ecebf2; }
       html.dci-site-dark #dci-artwork .dci-art-nav button { border-color: #4a4758; background: #33303f; color: #ecebf2; }
@@ -801,10 +808,31 @@
     return { url, kind, key: kind[1] ? src.replace(/^.*\//, '') : rest };
   }
 
+  /**
+   * [1.17.0] (Credits Importer 3.108.0, Z-CPVA3) The release's images from Discogs's API (its page holds only the first; the others come
+   * when its gallery is opened): asked once per release (one request), their addresses first in the list. Not reachable: the page's.
+   */
+  const ART_API = { id: '', list: null, loading: false };
+  function artApiLoad(rid, done) {
+    if (!rid || ART_API.loading || (ART_API.id === rid && ART_API.list)) return;
+    ART_API.loading = true;
+    ART_API.id = rid;
+    fetch(`https://api.discogs.com/releases/${rid}`, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        ART_API.list = ((d && d.images) || []).map((im) => String((im && (im.uri || im.resource_url)) || '')).filter((u) => /^https:\/\/i\.discogs\.com\//.test(u));
+      })
+      .catch(() => { ART_API.list = []; })
+      .finally(() => {
+        ART_API.loading = false;
+        artCache = null;
+        if (ART_API.list && ART_API.list.length > 1) done();
+      });
+  }
   let artCache = null;
   function artworkList() {
     // ((review) once per page state: the list is made again only when the page has other images or scripts
-    const sig = `${location.href}|${document.images.length}|${document.scripts.length}`;
+    const sig = `${location.href}|${document.images.length}|${document.scripts.length}|${ART_API.list ? ART_API.list.length : -1}`;
     if (artCache && artCache.sig === sig) return artCache.list;
     const rid = (location.pathname.match(/\/release\/(\d+)/) || [])[1] || '';
     const og = artworkUrl();
@@ -820,7 +848,9 @@
       if (!seen.has(key) || w(url) > w(seen.get(key))) seen.set(key, url);
     };
     add(og);
-    document.querySelectorAll('img[src*="i.discogs.com"]').forEach((i) => { if (!i.closest('#dci-artwork')) add(i.currentSrc || i.src); });
+    // ([1.17.0] Z-CPVA3) the API's images of this release (each in its order, after the cover of the page)
+    if (ART_API.list && ART_API.id === rid) ART_API.list.forEach(add);
+    document.querySelectorAll('img[src*="i.discogs.com"]').forEach((i) => { if (!i.closest('#dci-artwork, #dci-art-big')) add(i.currentSrc || i.src); });
     document.querySelectorAll('script:not([src])').forEach((sc) => {
       const t = sc.textContent || '';
       if (t.length > 4000000 || !t.includes('i.discogs.com')) return;
@@ -839,41 +869,69 @@
     const img = box.querySelector('img');
     if (img.getAttribute('src') !== list[i]) img.src = list[i];
     const nav = box.querySelector('.dci-art-nav');
-    nav.hidden = list.length < 2;
+    // ([1.17.0] Z-CPVA3) one image: the arrows greyed, "1 / 1"
+    nav.hidden = false;
+    nav.classList.toggle('dci-art-one', list.length < 2);
+    nav.querySelectorAll('button').forEach((b) => { b.disabled = list.length < 2; });
     nav.querySelector('.dci-art-n').textContent = `${i + 1} / ${list.length}`;
+    if (document.getElementById('dci-art-big')) artBigShow(i);
   }
 
   /**
-   * Opens Discogs' own image view: the image link of the page, else its main image; else the image itself. [1.16.0] (Z-CPVA2) The
-   * image the miniature shows: the same image of the page (its link), else this image itself, large.
+   * [1.17.0] (Credits Importer 3.108.0, Z-CPVA4) The image of the miniature large in the page – as wide as the tab (the companion is meant
+   * for a split view); ‹ › and "2 / 7" as in the miniature; a click beside the image or Esc closes it, ↗ opens it in a new tab.
    */
-  function openDiscogsImages(shown = '', index = 0) {
-    const k = shown ? artKey(shown) : null;
-    // ((review) by the miniature's own index – the list may have the same image in a larger size meanwhile
-    if (k && index > 0) {
-      const same = [...document.querySelectorAll('img[src*="i.discogs.com"]')].find((i) => !i.closest('#dci-artwork') && (artKey(i.currentSrc || i.src) || {}).key === k.key);
-      const target = same && same.closest('a[href], button, [role="button"]');
-      if (target) {
-        target.click();
-        return;
-      }
-      // ((review) the largest address of the page for this image
-      const big = artworkList().find((u) => (artKey(u) || {}).key === k.key) || shown;
-      window.open(big, '_blank', 'noopener');
-      return;
+  function artBigOpen(box) {
+    let big = document.getElementById('dci-art-big');
+    let labels = {};
+    try {
+      labels = JSON.parse(box.dataset.labels || '{}');
+    } catch (e) { /* none */ }
+    if (!big) {
+      big = document.createElement('div');
+      big.id = 'dci-art-big';
+      big.setAttribute('role', 'dialog');
+      big.setAttribute('aria-modal', 'true');
+      big.innerHTML = '<div class="dci-big-bar"><button type="button" class="dci-big-prev">‹</button><span class="dci-big-n"></span><button type="button" class="dci-big-next">›</button>'
+        + '<a class="dci-big-tab" target="_blank" rel="noopener">↗</a><button type="button" class="dci-big-close">✕</button></div><img class="dci-big-img" alt="">';
+      document.body.appendChild(big);
+      big.addEventListener('click', (e) => {
+        if (e.target.closest('.dci-big-img, .dci-big-tab')) return;
+        if (e.target.closest('.dci-big-prev')) return artShow(box, Number(box.dataset.i || 0) - 1);
+        if (e.target.closest('.dci-big-next')) return artShow(box, Number(box.dataset.i || 0) + 1);
+        artBigClose();
+      });
+      document.addEventListener('keydown', artBigKey, true);
     }
-    const link = [...document.querySelectorAll('a[href*="/image/"], a[href$="/images"], a[href*="/images?"]')].find((a) => !a.closest('#dci-artwork'));
-    if (link) {
-      link.click();
-      return;
+    big.title = labels.artBig || '';
+    big.querySelector('.dci-big-close').setAttribute('aria-label', labels.artBig || 'Close');
+    big.querySelector('.dci-big-tab').title = labels.artTab || '';
+    big.querySelector('.dci-big-prev').setAttribute('aria-label', labels.artPrev || 'Previous image');
+    big.querySelector('.dci-big-next').setAttribute('aria-label', labels.artNext || 'Next image');
+    artBigShow(Number(box.dataset.i || 0));
+  }
+  function artBigShow(i) {
+    const big = document.getElementById('dci-art-big');
+    const box = document.getElementById('dci-artwork');
+    if (!big || !box) return;
+    const list = JSON.parse(box.dataset.list || '[]');
+    const url = list[i] || box.querySelector('img').getAttribute('src') || '';
+    const img = big.querySelector('.dci-big-img');
+    if (img.getAttribute('src') !== url) img.src = url;
+    big.querySelector('.dci-big-tab').href = url;
+    big.querySelector('.dci-big-n').textContent = `${i + 1} / ${Math.max(1, list.length)}`;
+    big.querySelectorAll('.dci-big-prev, .dci-big-next').forEach((b) => { b.disabled = list.length < 2; });
+  }
+  function artBigClose() {
+    const big = document.getElementById('dci-art-big');
+    if (big) big.remove();
+    document.removeEventListener('keydown', artBigKey, true);
+  }
+  function artBigKey(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      artBigClose();
     }
-    const img = [...document.querySelectorAll('img[src*="discogs.com"]')].find((i) => !i.closest('#dci-artwork'));
-    if (img) {
-      (img.closest('a, button, [role="button"]') || img).click();
-      return;
-    }
-    const url = artworkUrl();
-    if (url) window.open(url, '_blank', 'noopener');
   }
 
   function renderArtwork(map) {
@@ -907,7 +965,8 @@
           box.dataset.moved = '';
           return;
         }
-        openDiscogsImages(box.querySelector('img').getAttribute('src') || '', Number(box.dataset.i || 0));
+        // ([1.17.0] Z-CPVA4) large in the page (no new tab): a click beside it or Esc back to the page
+        artBigOpen(box);
       });
       makeArtMovable(box);
       box.querySelector('.dci-art-toggle').addEventListener('click', () => {
@@ -924,6 +983,11 @@
     }
     box.dataset.labels = JSON.stringify(labels);
     const img = box.querySelector('img');
+    // [1.17.0] (Z-CPVA3) the release's images from Discogs's API (once): the box drawn again with them
+    artApiLoad((location.pathname.match(/\/release\/(\d+)/) || [])[1] || '', () => {
+      // ((review) the box switched off or gone while the API was asked: not drawn again
+      if (document.getElementById('dci-artwork')) renderArtwork(map);
+    });
     // [1.15.0] (Z-CPVA) the release's images: the one chosen stays while the list is the same
     const list = [...artworkList()];
     if (!list.length) list.push(url);

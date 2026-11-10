@@ -2150,7 +2150,8 @@ def case_arq386():
             pg.evaluate("document.querySelectorAll('[data-el=arq] [data-f=arq-ev]').forEach(x => { if (!x.checked) x.click(); })")
             pg.locator('[data-el=arq] [data-arqlv=recording] [data-act=arq-pick][data-type=producer]').click()
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            added = pg.evaluate(f"[...{sel('Solo Man')}.querySelectorAll('tr[data-rows]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /^producer/.test(t))")
+            # ([Z-EMTYPE] 3.108.0) the role of a line a choice: its chosen type
+            added = pg.evaluate(f"[...{sel('Solo Man')}.querySelectorAll('tr[data-rows]')].map(x => {{ const r = x.querySelector('select.dci-em-role'); return r ? r.selectedOptions[0].textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(); }}).filter(t => /^producer/.test(t))")
             print('B)', evs, added)
             results.append(len(evs) >= 1 and evs[0] and not any(evs[1:]) and len(added) == len(evs))
             results.append(not errs)
@@ -3713,5 +3714,137 @@ def case_dsup3107():
         for _n, i, _r in PEOPLE:
             H.ARTISTS.pop(i, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_lvlrg3108():
+    """Credits Importer 3.108.0 (collected item Z-LVLRG): "Level for all rows: … Release group". All rows on the release first; then
+    "Release group": the A&R row goes there (MusicBrainz has "artists and repertoire" on the release group), the others stay on the
+    release – a message names their roles. B) (review) MusicBrainz without the release group: no row moved, a warning."""
+    orig = H.discogs_release
+    H.ARTISTS[3361] = (H.uid('dddddddd', 3361), 'Rep Guy')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Rep Guy', 'anv': '', 'role': 'A&R', 'tracks': '', 'id': 3361, 'join': ''},
+                             {'name': 'Drum Guy', 'anv': '', 'role': 'Drums', 'tracks': '', 'id': 3004, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    LV = """[...document.querySelectorAll('tr.dci-row')].map(tr => [(tr.closest('section.dci-group').querySelector('.dci-gname strong') || {}).textContent.trim(),
+      (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || ''])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            btns = pg.evaluate("[...document.querySelectorAll('[data-el=toolbar] [data-act=bulk-level]')].map(b => b.dataset.level)")
+            pg.locator('[data-el=toolbar] [data-act=bulk-level][data-level=release]').evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            l1 = pg.evaluate(LV)
+            pg.locator('[data-el=toolbar] [data-act=bulk-level][data-level=release_group]').evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            l2 = pg.evaluate(LV)
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] li, .dci-messages li')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Release group:/.test(t))")
+            print('Knöpfe:', btns, '| Release:', l1, '| Release group:', l2, '|', msg, '| Fehler:', errs)
+            results.append(btns == ['recording', 'release', 'release_group', 'skip', 'only-works'] and ['Rep Guy', 'release'] in l1 and ['Rep Guy', 'release_group'] in l2
+                           and ['Drum Guy', 'release'] in l2 and len(msg) == 1 and 'drums' in msg[0].lower() and 'stays' in msg[0] and not errs)
+            ctx.close()
+            # B) (review) MusicBrainz without the release group of the release: no row moved, a warning
+            orig_ws = H.ws_release
+
+            def ws(full=False):
+                d = orig_ws(full)
+                d.pop('release-group', None)
+                return d
+            H.ws_release = ws
+            try:
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                H.wait_still(pg, "document.body.innerHTML", 10, 300)
+                before = pg.evaluate(LV)
+                pg.locator('[data-el=toolbar] [data-act=bulk-level][data-level=release_group]').evaluate('b => b.click()')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+                after = pg.evaluate(LV)
+                warn = pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] li, .dci-messages li')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /did not give the release group/.test(t))")
+                print('B) ohne Release group:', before == after, '|', warn, '| Fehler:', errs)
+                results.append(before == after and len(warn) == 1 and not errs)
+            finally:
+                H.ws_release = orig_ws
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.ARTISTS.pop(3361, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_emtype3108():
+    """Credits Importer 3.108.0 (collected items Z-EMTYPE, Z-UNCR2). A) In the matrix the role of a line is a choice of MusicBrainz's
+    types of its level (until 3.107.0 plain text – the role could not be changed there): "Artwork" (no type in the harness) shows
+    "Artwork → no type" first, the tooltip names the source's role; "design" chosen – the row has that type (the list view shows
+    it, the matrix again).
+    B) The note on uncredited roles is yellow (a rule of its own, not the grey note)."""
+    orig = H.discogs_release
+    H.ARTISTS[3361] = (H.uid('dddddddd', 3361), 'Art Guy')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Art Guy', 'anv': '', 'role': 'Artwork', 'tracks': '', 'id': 3361, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    SEL = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong') || {}).textContent.trim() === 'Art Guy');
+      const r = g && g.querySelector('.dci-em-role'); if (!r) return null;
+      return [r.tagName, r.tagName === 'SELECT' ? r.value : r.textContent.trim(), r.title, r.tagName === 'SELECT' ? [...r.options].map(o => o.value) : []]; })()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            a0 = pg.evaluate(SEL)
+            print('A) vorher:', a0 and a0[:3], '| Typen:', a0 and len(a0[3]))
+            ok_a0 = bool(a0) and a0[0] == 'SELECT' and a0[1] == '' and a0[3][0] == '' and 'Artwork' in a0[2] and 'design' in a0[3]
+            if ok_a0:
+                pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong') || {}).textContent.trim() === 'Art Guy');
+                  const r = g.querySelector('select.dci-em-typesel'); r.value = 'design'; r.dispatchEvent(new Event('change', { bubbles: true })); })()""")
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            a1 = pg.evaluate(SEL)
+            pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+            lst = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong') || {}).textContent.trim() === 'Art Guy');
+              if (!g) return null; const s = g.querySelector('[data-f=type]'); return s ? s.selectedOptions[0].textContent.trim() : g.textContent.replace(/\\s+/g, ' ').trim().slice(0, 300); })()""")
+            print('   nachher:', a1 and a1[:2], '| Liste:', lst)
+            ok_a = ok_a0 and bool(a1) and a1[1] == 'design' and bool(lst) and ('design' == lst or 'design “artwork”' in lst)
+            css = pg.evaluate("""(() => { for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; }
+              for (const r of rules) if (r.selectorText === '.dci-note.dci-uncr') return r.style.backgroundColor; } return null; })()""")
+            print('B) Hinweis:', css, '| Fehler:', errs)
+            ok_b = css == 'rgb(255, 248, 219)'
+            results += [ok_a, ok_b, not errs]
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.ARTISTS.pop(3361, None)
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
