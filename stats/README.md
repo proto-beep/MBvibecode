@@ -40,3 +40,12 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   recordings per recording (average, median). Only numbers.
   Besides, every run counts the **"credited as"** of the relationships the script added with an artist, a label or a place
   (section `credits`). Still only numbers (and the names of types, languages, scripts, countries and towns).
+- **The tree of instruments** (from Credits Importer 3.107.0, collected item Z-ITREE): MusicBrainz's relationship editor offers its
+  instruments as one flat list – which instrument is a kind of which (soprano saxophone "type of" saxophone) is only in the
+  relationships between the instruments themselves. The core pass also reads the tables `instrument`, `l_instrument_instrument` and
+  `link` and writes `stats/mb-vibecode-credits-importer-instruments.json` on the branch `stats`: every instrument (`[gid, name]`,
+  sorted by name) and every "type of" relationship (link type 736 "subtype": `[parent, child]`, as indexes into that list), with
+  `changes` – what the dump changed since the file of before (instruments new, gone, renamed, moved to another parent; the last 12
+  weeks with a change). The script reads it for the common group of several instruments, a more precise instrument than
+  MusicBrainz's and the kinds of an instrument (rules S170, S173, S174, Q014); a week's copy is kept in the browser. A run without the
+  file reads the core dump at once. Only MusicBrainz's public instrument data.

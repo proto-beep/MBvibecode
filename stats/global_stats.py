@@ -354,13 +354,21 @@ class Stats:
 CORE_TABLES = ('area', 'artist', 'artist_type', 'gender', 'iso_3166_1', 'language', 'link_attribute_type', 'medium', 'recording', 'release',
                'release_group', 'release_group_primary_type', 'release_group_secondary_type', 'release_group_secondary_type_join', 'script',
                # [3.61.0, Z-RDU2] the tracks: the whole length of each release (its media's tracks together)
-               'track')
+               'track',
+               # [3.107.0, Z-ITREE] the instruments and their "type of" relationships (l_instrument_instrument before link in the archive)
+               'instrument', 'l_instrument_instrument', 'link')
 CORE_NEEDED = ('area', 'artist', 'iso_3166_1', 'medium', 'release', 'release_group')
 ROOT_INSTRUMENT, ROOT_VOCAL = 14, 3
 AREA_COUNTRY = 1
 # (area types of a town: City, Municipality, District)
 TOWN_TYPES = (3, 4, 5)
 TOP = 40
+# [3.107.0, Z-ITREE] MusicBrainz's link type "subtype" between instruments: entity0 has entity1 as a subtype ("soprano saxophone" is a
+# "type of" "saxophone"); the file the script reads (the data branch), and how many weeks of changes it keeps
+SUBTYPE_LT = 736
+ITREE_FORMAT = 'mb-vibecode-instrument-tree'
+ITREE_NAME = 'mb-vibecode-credits-importer-instruments.json'
+ITREE_CHANGES = 12
 
 
 def median(xs):
@@ -400,6 +408,11 @@ class Core:
         self.rg_sec = defaultdict(list)
         self.want_rg = set()
         self.rows = Counter()
+        # [3.107.0, Z-ITREE] instrument id → (gid, name); the relationships between instruments (link, entity0, entity1); their links' types
+        self.instr = {}
+        self.ii = []
+        self.want_link = set()
+        self.link_type = {}
 
     def row(self, table, raw):
         f = raw.rstrip(b'\n').split(b'\t')
@@ -457,6 +470,45 @@ class Core:
             i = int(f[0])
             if i in self.want_rg:
                 self.rg_sec[i].append(num(f[1]))
+        # [3.107.0, Z-ITREE] instrument (id, gid, name, type, …); l_instrument_instrument (id, link, entity0, entity1, …); link (id, link_type, …)
+        elif table == 'instrument' and len(f) > 2:
+            self.instr[int(f[0])] = (f[1].decode('ascii', 'replace'), unescape(f[2].decode('utf-8', 'replace')))
+        elif table == 'l_instrument_instrument' and len(f) > 3:
+            self.ii.append((num(f[1]), num(f[2]), num(f[3])))
+            self.want_link.add(num(f[1]))
+        elif table == 'link' and len(f) > 1:
+            i = num(f[0])
+            if i in self.want_link:
+                self.link_type[i] = num(f[1])
+
+    def itree(self, dump, old=None):
+        """[3.107.0, Z-ITREE] The instruments with their "type of" relationships – and what changed since the file of before (`old`)."""
+        names = sorted(self.instr.values(), key=lambda x: (x[1].lower(), x[0]))
+        at = {g: k for k, (g, _n) in enumerate(names)}
+        pairs = sorted({(at[self.instr[e0][0]], at[self.instr[e1][0]]) for lk, e0, e1 in self.ii
+                        if self.link_type.get(lk) == SUBTYPE_LT and e0 in self.instr and e1 in self.instr and e0 != e1})
+        out = {'format': ITREE_FORMAT, 'version': 1, 'dump': dump, 'generated': dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+               'instruments': [[g, n] for g, n in names], 'subtype': [list(x) for x in pairs], 'changes': []}
+        changes = []
+        if isinstance(old, dict) and old.get('format') == ITREE_FORMAT and isinstance(old.get('instruments'), list):
+            changes = [c for c in (old.get('changes') or []) if isinstance(c, dict)]
+            def parents(d):
+                inst = d.get('instruments') or []
+                up = {g: set() for g, _n in inst}
+                for a, b in d.get('subtype') or []:
+                    if 0 <= a < len(inst) and 0 <= b < len(inst):
+                        up[inst[b][0]].add(inst[a][0])
+                return up, {g: n for g, n in inst}
+            o_up, o_name = parents(old)
+            n_up, n_name = parents(out)
+            added = sorted(n_name[g] for g in n_up if g not in o_up)
+            removed = sorted(o_name[g] for g in o_up if g not in n_up)
+            moved = sorted(n_name[g] for g in n_up if g in o_up and n_up[g] != o_up[g])
+            renamed = sorted(f'{o_name[g]} → {n_name[g]}' for g in n_up if g in o_name and o_name[g] != n_name[g])
+            if added or removed or moved or renamed:
+                changes.insert(0, {'dump': dump, 'added': added, 'removed': removed, 'moved': moved, 'renamed': renamed})
+        out['changes'] = changes[:ITREE_CHANGES]
+        return out
 
     def result(self):
         top = lambda c, n=TOP: dict(c.most_common(n))
@@ -519,7 +571,7 @@ class Core:
         }
 
 
-def run_core(stream, facts, dump):
+def run_core(stream, facts, dump, keep=None):
     core = Core(facts, dt.date.today().year)
     seen = []
     with tarfile.open(fileobj=stream, mode='r|') as tar:
@@ -542,6 +594,14 @@ def run_core(stream, facts, dump):
         print('warning: track gave no lengths (read before medium?) – the whole lengths of the releases are not counted', file=sys.stderr, flush=True)
     if missing:
         raise SystemExit(f'the core archive is not complete: {", ".join(missing)} – nothing written')
+    # [3.107.0, Z-ITREE] the instruments' tree for the script (kept by the caller); ((review) no instruments or no "type of" read: not kept)
+    if keep is not None:
+        # ((review) also none of them a "type of": a file without one would make the script ask nothing for a week
+        if not core.instr or not core.ii or not any(t == SUBTYPE_LT for t in core.link_type.values()):
+            print('warning: no instruments, or their relationships or links not read (in this order) – no tree of instruments written',
+                  file=sys.stderr, flush=True)
+        else:
+            keep['tree'] = core
     return {'dump': dump, **core.result()}
 
 
@@ -581,18 +641,41 @@ def main():
     ap.add_argument('--core', action='store_true', help='the core pass: mbdump.tar.bz2 (with --facts and --merge)')
     ap.add_argument('--merge', help='core pass: the result of the edit pass, its section "core" set')
     ap.add_argument('--keep-core', help='a result of before: its section "core" kept in --out (a run without the core pass)')
+    # [3.107.0, Z-ITREE]
+    ap.add_argument('--instruments', help='core pass: where to write the tree of instruments (the "type of" relationships)')
+    ap.add_argument('--instruments-old', help='core pass: the tree of instruments of before (its changes are kept, the new ones added)')
     a = ap.parse_args()
     opener = (bz2.open if a.input and a.input.endswith('.bz2') else open) if a.input else None
     if a.core:
         facts = json.load(open(a.facts, encoding='utf-8'))
+        keep = {} if a.instruments else None
         if a.input:
             with opener(a.input, 'rb') as fh:
-                core = run_core(fh, facts, a.dump)
+                core = run_core(fh, facts, a.dump, keep)
         else:
-            core = run_core(sys.stdin.buffer, facts, a.dump)
+            core = run_core(sys.stdin.buffer, facts, a.dump, keep)
         res = json.load(open(a.merge, encoding='utf-8'))
         res['core'] = core
         out = a.merge
+        if keep is not None:
+            res['core']['itree'] = bool(keep.get('tree'))  # ((review) the workflow does not read the core dump again at once without one
+        if keep and keep.get('tree'):
+            old = None
+            try:
+                old = json.load(open(a.instruments_old, encoding='utf-8')) if a.instruments_old else None
+            except (OSError, ValueError):
+                old = None
+            try:
+                tree = keep['tree'].itree(a.dump, old)
+            except (KeyError, IndexError, TypeError, ValueError) as e:
+                # ((review) a file of before that cannot be read: the tree without its changes (not the core section lost)
+                print(f'warning: the tree of before not read ({e}) – written without its changes', file=sys.stderr, flush=True)
+                tree = keep['tree'].itree(a.dump, None)
+            with open(a.instruments + '.tmp', 'w', encoding='utf-8') as fh:
+                json.dump(tree, fh, ensure_ascii=False, separators=(',', ':'))
+                fh.write('\n')
+            os.replace(a.instruments + '.tmp', a.instruments)
+            print(f'instruments: {len(tree["instruments"])}, type of: {len(tree["subtype"])}, changes: {len(tree["changes"])}', file=sys.stderr)
     else:
         if a.input:
             with opener(a.input, 'rb') as fh:

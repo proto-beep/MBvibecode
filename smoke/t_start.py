@@ -1422,7 +1422,9 @@ def case_gapwhy3105():
             H.wait_for(pr, "!!document.querySelector('.dci-gapwhy[data-why=noLink]')", 20)
             a = pr.evaluate(WHY)
             print('A)', a)
-            results.append(bool(a) and a[1] == 'Line of the release page (developer mode): no Discogs or Bandcamp link recognized among the 1 external links of the page.'
+            # ([Z-GAPL3] 3.107.0) with the script's name; ([Z-GAPL2]) how many lists of links
+            results.append(bool(a) and a[1] == 'MB x Vibecode: Credits Importer – line of the release page (developer mode): no Discogs or Bandcamp link recognized among'
+                           ' the 1 external links of the page (lists of links: 1).'
                            and not pr.locator('.dci-gapline').count())
             H.mb_release_page = page([f'https://www.discogs.com/release/{H.DISCOGS_ID}-Test-Band-Testalbum'])
             pr.reload()
@@ -1436,7 +1438,7 @@ def case_gapwhy3105():
             H.wait_for(pr, "!!document.querySelector('.dci-gapwhy[data-why=dgBroken]')", 30)
             c = pr.evaluate(WHY)
             print('C)', c)
-            results.append(bool(c) and c[1].startswith(f'Line of the release page (developer mode): the request to Discogs (release {H.DISCOGS_ID}) was broken off:'))
+            results.append(bool(c) and c[1].startswith(f'MB x Vibecode: Credits Importer – line of the release page (developer mode): the request to Discogs (release {H.DISCOGS_ID}) was broken off:'))
             pr.unroute('**/api.discogs.com/**')
             H.mb_release_page = page(['https://example.com/x'])
             pr.evaluate("localStorage.removeItem('dci-dev')")
@@ -1463,6 +1465,46 @@ def case_gapwhy3105():
             on = pg.locator('[data-el=settings] [data-set=gap-why]').count()
             print('   Schalter: ohne', off, 'mit', on)
             results.append(off == 0 and on == 1)
+            b.close()
+    finally:
+        H.mb_release_page = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_gapl3107():
+    """Credits Importer 3.107.0 (collected item Z-GAPL2): another script's list of links (the same class "external_links", above the release's
+    own – "Ame" with search links) does not hide the line: the Discogs link of the release's list below it counts. Without any Discogs or
+    Bandcamp link in all lists (developer mode): the note names the links of all of them."""
+    orig = H.mb_release_page
+    REL = H.REL
+
+    def page(own):
+        other = '<h2>Ame</h2><ul class="external_links"><li><a href="https://search.minc.or.jp/x">minc</a></li><li><a href="https://covers.musichoarders.xyz/?a=1">covers</a></li></ul>'
+        lis = ''.join(f'<li><a href="{u}">{u}</a></li>' for u in own)
+        return lambda: (f'<!doctype html><html lang="en"><head><title>Testalbum</title></head><body><div id="content"><h1>Testalbum</h1></div><div id="sidebar">{other}'
+                        f'<h2 class="external-links">External links</h2><ul class="external_links">{lis}</ul></div></body></html>')
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            H.mb_release_page = page([f'https://www.discogs.com/release/{H.DISCOGS_ID}', 'https://harmony.pulsewidth.org.uk/release?x=1'])
+            pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+            pr.evaluate("localStorage.setItem('dci-dev', 'true'); localStorage.setItem('dci-gap-why', 'true')")
+            pr.reload()
+            H.wait_for(pr, "!!document.querySelector('.dci-gapline') || !!document.querySelector('.dci-gapwhy:not([data-why=start])')", 30)
+            a = [pr.locator('.dci-gapline').count(), pr.evaluate("(document.querySelector('.dci-gapwhy') || {}).dataset ? document.querySelector('.dci-gapwhy').dataset.why : null")]
+            print('A)', a)
+            results.append(a == [1, None])
+            H.mb_release_page = page(['https://example.com/y'])
+            pr.reload()
+            H.wait_for(pr, "!!document.querySelector('.dci-gapwhy[data-why=noLink]')", 20)
+            t = pr.evaluate("document.querySelector('.dci-gapwhy').textContent")
+            print('B)', t)
+            results.append(t.endswith('among the 3 external links of the page (lists of links: 2).'))
+            print('Fehler:', errs)
+            results.append(not errs)
             b.close()
     finally:
         H.mb_release_page = orig
