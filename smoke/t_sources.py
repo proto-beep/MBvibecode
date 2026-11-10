@@ -926,4 +926,88 @@ def case_aliascap():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_alias3108():
+    """Credits Importer 3.108.0 (collected item Z-ALIAS): "Create artist …" fills in "performs as" for Discogs's aliases MusicBrainz has.
+    A) Pseudo Man (Discogs "Real Name": Real Person; alias Real Person, in MusicBrainz): "Real Person performs as Pseudo Man" – the
+       relationship "is person" backward; the dialog names it.
+    B) Plain Guy (no real name; alias Stage Name, in MusicBrainz): not filled in – the dialog asks who the person is; "Plain Guy performs
+       as Stage Name" chosen: the form again, with it (forward).
+    C) Some Group (a group; alias Other Group in MusicBrainz): only named, not filled in.
+    D) (review) B's answer reaches the form opened "in a window"; answered again with the window open, the window gets the new form
+       (the frame stays empty – no second form)."""
+    import urllib.parse
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+    orig_rel = H.discogs_release
+    for i, n in ((3041, 'Real Person'), (3043, 'Stage Name'), (3045, 'Other Group')):
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+
+    def rel():
+        d = orig_rel()
+        d['extraartists'] += [ex('Pseudo Man', 'Guitar', 3040), ex('Plain Guy', 'Bass', 3042), ex('Some Group', 'Drums', 3044)]
+        return d
+    H.discogs_release = rel
+    H.DG_API['/artists/3040'] = {'id': 3040, 'name': 'Pseudo Man', 'realname': 'Real Person', 'aliases': [{'id': 3041, 'name': 'Real Person'}]}
+    H.DG_API['/artists/3042'] = {'id': 3042, 'name': 'Plain Guy', 'aliases': [{'id': 3043, 'name': 'Stage Name'}]}
+    H.DG_API['/artists/3044'] = {'id': 3044, 'name': 'Some Group', 'aliases': [{'id': 3045, 'name': 'Other Group'}], 'members': [{'id': 3999, 'name': 'Nobody', 'active': True}]}
+    group = lambda pg, name: pg.evaluate(f"[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent === {name!r}).dataset.group")
+    q = lambda url: dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            out = {}
+            for name in ('Pseudo Man', 'Plain Guy', 'Some Group'):
+                pg.click(f'section[data-group="{group(pg, name)}"] [data-act=artist-create]')
+                pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+                url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+                info = pg.evaluate("document.querySelector('[data-el=sub-info]').textContent")
+                asks = pg.evaluate("[...document.querySelectorAll('[data-el=sub-info] [data-act=alias-dir]')].map(b => b.textContent)")
+                after = None
+                if asks:
+                    pg.click('[data-el=sub-info] [data-act=alias-dir][data-dir=fwd]')
+                    pg.wait_for_timeout(400)
+                    after = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+                    # D) (review) "open in window" after the answer: the window has it; answered again with the window open – the
+                    #    window loads the new form, the frame stays empty
+                    with ctx.expect_page() as pinfo:
+                        pg.click('[data-act=sub-window]')
+                    popup = pinfo.value
+                    popup.wait_for_load_state()
+                    win1 = popup.url
+                    pg.click('[data-el=sub-info] [data-act=alias-dir][data-dir=back]')
+                    pg.wait_for_timeout(800)
+                    win2, frame2 = popup.url, pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+                    popup.close()
+                    out['win'] = (q(win1), q(win2), frame2)
+                    print('D) Fenster:', {k: v for k, v in q(win1).items() if k.startswith('rels')}, {k: v for k, v in q(win2).items() if k.startswith('rels')}, '| Rahmen:', frame2)
+                pg.click('[data-act=sub-close]')
+                pg.wait_for_timeout(200)
+                out[name] = (q(url), ' '.join(info.split()), asks, q(after) if after else None)
+                print(name, {k: v for k, v in out[name][0].items() if k.startswith('rels')}, '|', out[name][1][:200], '|', asks, '|', {k: v for k, v in (out[name][3] or {}).items() if k.startswith('rels')})
+            a, bb, c = out['Pseudo Man'], out['Plain Guy'], out['Some Group']
+            results.append(a[0].get('rels.0.target') == H.ARTISTS[3041][0] and a[0].get('rels.0.type') == '108' and a[0].get('rels.0.backward') == '1'
+                           and '“performs as” to Real Person' in a[1] and not a[2])
+            results.append('rels.0.target' not in bb[0] and bb[2] == ['Plain Guy performs as Stage Name', 'Stage Name performs as Plain Guy', 'not taken']
+                           and bb[3] and bb[3].get('rels.0.target') == H.ARTISTS[3043][0] and bb[3].get('rels.0.type') == '108' and 'rels.0.backward' not in bb[3])
+            results.append(not any(v == H.ARTISTS[3045][0] for v in c[0].values()) and 'Other Group' in c[1] and not c[2])
+            w1, w2, f2 = out['win']
+            results.append(w1.get('rels.0.target') == H.ARTISTS[3043][0] and 'rels.0.backward' not in w1 and w2.get('rels.0.backward') == '1' and f2 == 'about:blank')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig_rel
+        for i in (3041, 3043, 3045):
+            H.ARTISTS.pop(i, None)
+        for k in ('/artists/3040', '/artists/3042', '/artists/3044'):
+            H.DG_API.pop(k, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

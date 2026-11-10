@@ -64,7 +64,7 @@ def case_ocrsetting():
         tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
         H.open_settings(pg, 'beta')
         sw = pg.locator('[data-el=settings] [data-set=beta-ocr]')
-        # [3.36.0] "Cache" between Beta and ⓘ Connections; [3.38.0] "Statistics" after "Cache"
+        # [3.36.0] "Cache" between Beta and ⓘ Connections; [3.38.0] "Statistics" after "Cache"; [Z-CONN2] (3.108.0) "MusicBrainz" after Connections
         a = [tabs[tabs.index('beta'):] if 'beta' in tabs else tabs, sw.is_checked(), pg.evaluate(item)]
         sw.check()
         pg.wait_for_timeout(300)
@@ -75,7 +75,7 @@ def case_ocrsetting():
         H.open_settings(pg, 'connections')
         conn = pg.evaluate("[...document.querySelectorAll('[data-conn=X013], [data-conn=X014]')].map(r => r.innerText.replace(/\\s+/g, ' ').slice(0, 60))")
         print('A) Reiter:', a, '| an:', b1, '| aus:', c1, '| Verbindungen:', conn)
-        results.append(a == [['beta', 'cache', 'connections'], False, None] and b1 == ['true', 'Text from cover art …beta'] and c1[0] is None and c1[1] is None
+        results.append(a == [['beta', 'cache', 'connections', 'musicbrainz'], False, None] and b1 == ['true', 'Text from cover art …beta'] and c1[0] is None and c1[1] is None
                        and len(conn) == 2 and conn[0].startswith('Cover Art Archive') and conn[1].startswith('Tesseract.js'))
         print('Fehler:', errs)
         results.append(not errs)

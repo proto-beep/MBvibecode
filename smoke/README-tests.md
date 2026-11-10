@@ -233,6 +233,8 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   una3108: 3.108.0 (Z-UNA2): the words of an unrecognized line grouped as names – a click the name, again the word,
+                                #     ⇧ extends, a company word chooses "company", known names marked
                                 #   rdst3105: 3.105.0 (Z-RDST, S171): "Recorded May, 6. 7, 2007 Studio des …" – the place without "at" by a word of places (Node)
                                 #   prd395: 3.95.0 (Z-PRD, Z-DPD; D029, D030): "composed and produced between …" – one pool entry "Production ·
                                 #     Composition 1" in Composition, Production and Performance (Jane Doe's performer row dated); "Edit date" in
@@ -478,6 +480,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
 python3 t_works_live.py         # [3.72.0, from t_works_more.py] Works: comments of live recordings
+                                #   live3108: 3.108.0 (Z-LIVE2): comments ticked after the first staging still become the job – the offer answered later,
+                                #     ticked again after a staging without them (untick: gone), the setting switched on afterwards; before a staging no job
                                 #   livedate: 3.62.0 (Z-PDT, Z-LVD, S089): "Performed in … on …" under Performance, the live comment without it before the matrix is applied, the hint naming it; off
                                 #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
@@ -661,6 +665,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   profnew3108: 3.108.0 (Z-PROFNEW): "+ New profile" – a copy of the settings, named, active, its name focused
+                                #   devtab3108: 3.108.0 (Z-DEVTAB, Z-CONN2): the tab Developer only in developer mode (its switches moved from Sources,
+                                #     diagnosis, statistics, the tree); the tab MusicBrainz with the data the script reads and their links
                                 #   srr391: 3.91.0 (Z-SRR, S143): "Per release" in the group Releases – relationships 4 / 4, by level, recordings, per
                                 #     recording (average / median); Global from per_release and core.per_release; off
                                 #   dnda387: 3.87.0 (Z-DNDA): the drag & drop switches exactly below each other; narrow: the place above its switch
@@ -790,6 +797,10 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   lvlrg3108: 3.108.0 (Z-LVLRG): "Level for all rows: Release group" – the A&R row there, the others stay, a message names them;
+                                #     (review) without the release's release group: nothing moved, a warning
+                                #   emtype3108: 3.108.0 (Z-EMTYPE, Z-UNCR2): the role of a matrix line a choice of the level's types ("artwork" → "design",
+                                #     the list follows); the note on uncredited roles yellow
                                 #   align3100: 3.100.0 (Z-ALIGN): an entry's roles as one table – the head once, the ticks of all roles below each other, attributes
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
@@ -888,6 +899,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
+                                #   alias3108: 3.108.0 (Z-ALIAS): "Create artist" from Discogs – an alias on MusicBrainz as "performs as", the direction
+                                #     asked when it is not clear, the form filled anew with the answer; the other aliases only shown; (review) the answer in the
+                                #     form opened in a window, a later answer loads the window (the frame stays empty)
                                 #   aliascap: 3.44.1 (Z-ALC): at most 2 alias lookups (⚙ Sources), the one with the most rows first, the message, "Discogs aliases …" at the third
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
                                 #     index tracks, "A1 to A3", grouping, S018); through the adapter in the dashboard: aliases, series and
@@ -1073,13 +1087,15 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   artapi3108: Companion 1.17.0 (Z-CPVA3): the release's images from Discogs' API – ‹ › through all of them, not only the
+                                #     page's first; (review) the box switched off while the API is asked stays off; artnav (1.17.0, Z-CPVA4): the big view over the tab (‹ ›, count, ↗, ✕, a click beside it closes), one image 1 / 1 greyed
                                 #   artnav: Companion 1.15.0 (Z-CPVA): ‹ › in the cover miniature – the release's three images ("1 / 3" … after the last
                                 #     the first), others of the page left out, the box not moved, a click on the image as before; one image: no arrows
                                 #   marksrelease: 3.72.0 (Z-TST, the former t_release.py): marks after "Apply", the release page checks what arrived
                                 #     (✓ / ✗ with its tooltip), the marks go when it is closed and come back when it is opened again; 0) the former
                                 #     t_basic.py: 14 entries, "Import complete", the marks before "Apply"
                                 #   artworkbox: 3.72.0 (Z-TST, the former t_artwork.py): the cover miniature on Discogs – shown when connected, its
-                                #     frame, a click, dragged and kept after reloading, folded, the switch, gone with the MusicBrainz page
+                                #     frame, a click (1.17.0: the image large in the page, Esc), dragged and kept after reloading, folded, the switch, gone with the MusicBrainz page
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.107.0 | 1.16.0 |
+| 2026-11-08 | 3.88.0 – 3.108.0 | 1.17.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -105,6 +105,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-11-08
 
+### Import 3.108.0
+
+- **New profiles** (collected item Z-PROFNEW): ⚙ Settings → Profiles has "+ New profile" – a copy of the settings as they are, named "Profile n · date", active at once; its name is ready to be typed over.
+- **"Level for all rows: Release group"** (Z-LVLRG): the bar of the entries has the release group as the fifth level. Rows whose role MusicBrainz has on the release group go there; the others stay where they are, and a message names their roles.
+- **A tab for developers and one for MusicBrainz** (Z-DEVTAB, Z-CONN2): with developer mode on, ⚙ Settings has the tab "Developer" with all its switches (the line of the release page, the comparison with MusicBrainz), a diagnosis to copy, the browser's statistics and what the instruments' tree knows. The new tab "MusicBrainz" names every kind of MusicBrainz data the script reads, with links (web service, the relationship editor's data, the edit pages, the data dump, the Cover Art Archive).
+- **Performs as** (Z-ALIAS): "Create artist" from Discogs gives the new artist the aliases Discogs has for the person – an alias that is an artist on MusicBrainz goes in as "performs as"; which name is the legal one, when Discogs does not make it clear, the editor answers in the form (the form is filled anew). The other aliases are only shown.
+- **Unrecognized lines as names** (Z-UNA2): the words of a line not recognized are grouped as names – "Mark Reid", "Abbey Road Studios", "Sony Music Publishing" – a click takes the whole name, a second click only the word, ⇧ adds the next word; a company word chooses "company" by itself. Names the import knows are marked.
+- **The role in the matrix changeable again** (Z-EMTYPE): the role of a matrix line is a choice of MusicBrainz's types of its level (it was plain text there – the type could be changed only in the list).
+- **The note on uncredited roles yellow** (Z-UNCR2): it asks for something, like the box "Compared with MusicBrainz".
+- **Disambiguation comments ticked after the staging** (Z-LIVE2): comments of live recordings forgotten at the first staging – or the setting switched on afterwards, or the offer answered later – are still entered after "Enter edit"; until now the staging without them had left nothing to follow.
+
 ### Import 3.107.0
 
 - **The instruments' tree as MusicBrainz has it** (collected item Z-ITREE): MusicBrainz's relationship editor lists its instruments flat – which one is a kind of which ("soprano saxophone" type of "saxophone") is only in the instruments' own relationships. The script now takes them from there: from a file the workflow "Global statistics" writes each week from MusicBrainz's data dump (with what changed since the week before), kept a week in the browser; an instrument it does not have yet, or no file at all, is asked of MusicBrainz and kept a month. This makes three things work on musicbrainz.org that only worked in the tests: the group of the automatic row of "on the release" (soprano, alto and tenor saxophone: saxophone), "MusicBrainz less precise – Update" and "MusicBrainz more precise" of the comparison, and the kinds of bouzouki asked for "Bouzouki".
@@ -129,6 +140,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 - **A place right after the date** (Z-RDST, rule S171): "Recorded May, 6. 7, 2007 Studio des deutschen Filmorchesters Babelsberg." – the name after the date of a sentence of recording, without "at", is the place where it was recorded when one of its words is a word of places (studio, hall, saal, kirche, church, club, theater, room, haus, also at the end of a word: Konzerthaus, Sendesaal).
 - **Which bouzouki?** (Z-BZK, question Q014): a plain "Bouzouki" asks for the bouzouki itself or any kind of it in MusicBrainz's instrument tree (irish bouzouki …), as "Bass" and "Guitar" do.
 - **The quick switches in groups** (Z-QSCAT): Dates · Instruments and performers · Attributes and credits · Writers, rights and works · Companies and places, each with a heading.
+
+### COMPANION 1.17.0
+
+#### Changed
+
+- **Every image of the release** (collected item Z-CPVA3): the miniature reads the release's images from Discogs' API (the page holds only the first) – ‹ › go through all of them; with one image they stay, greyed, with "1 / 1".
+- **The image large in the tab** (Z-CPVA4): a click on the miniature opens it over the whole width of the tab, with ‹ ›, the count, ↗ for Discogs' own page of the image and ✕; a click beside the image or Esc closes it. No new tab any more.
 
 ### COMPANION 1.16.0
 
