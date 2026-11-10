@@ -4089,4 +4089,162 @@ def case_instl3109():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_yell3110():
+    """Credits Importer 3.110.0 (collected item Z-YELL): what is open, counted and marked – must (orange: not staged without an answer)
+    and can (yellow: staged as suggested). Discogs: "Directed By" (Dir Ed; Q003, no type), "English Translation" (Tr Eng; liner notes
+    taken as a suggestion), "Bass" (Bass Guy; Q001, bass until chosen), "Producer" of No Link (not on MusicBrainz), Sax Two's soprano
+    saxophone and flute (Z-INSTS).
+    A) The footer: "● 2 must" (Dir Ed, No Link) and "● 2 can" (Tr Eng, Bass Guy); the entries' heads a dot each; Dir Ed's row orange,
+       Tr Eng's question yellow with ✓ / ✕.
+    B) "● 2 must" clicked: to the first one (flashing).
+    C) Tr Eng ✓: the answer taken (no suggestion any more), "● 1 can"; Dir Ed answered "creative direction": "● 1 must".
+    D) Sax Two "on the release", the soprano saxophone ticked on the recordings: a can more (the automatic row); ✓ – green with ↺,
+       not counted, kept for the release (with "Remember"); ↺ – open again.
+    E) ⚙ Settings → Staging "One counter": "● n open" alone.
+    F) The compact view: the entries stay folded, the dots at their heads, Bass Guy's compact line yellow.
+    G) The matrix view, compact: Bass Guy's chip yellow.
+    H) (review) Tr Eng's ✓ green with ↺ (it stays visible); the keys by the entry's MBID; the import repeated (with "Remember"): Tr Eng
+       confirmed still (green), not counted."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9131, 'soprano saxophone'), (9142, 'flute')):
+        H.attr(i, n, 14, 14)
+    H.attr(1018, 'translator', 1018)
+    H.LTS[24]['attributes']['1018'] = {'min': 0, 'max': None}
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.lt(9511, H.uid('1a1a1a1a', 9511), 'creative direction', 'artist', 'recording', (1,))
+    H.lt(9512, H.uid('1a1a1a1a', 9512), 'creative direction', 'artist', 'release_group', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CR = [('Dir Ed', 'Directed By', 3391), ('Tr Eng', 'English Translation', 3392), ('Bass Guy', 'Bass', 3393), ('Sax Two', 'Soprano Saxophone, Flute', 3394)]
+    for n, _r, i in CR:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CR] \
+            + [{'name': 'No Link', 'anv': '', 'role': 'Producer', 'tracks': '', 'id': 3395, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    FOOT = "[...document.querySelectorAll('[data-el=yell] .dci-yell-c')].map(c => [c.className.replace('dci-yell-c ', ''), c.querySelector('.dci-yell-n').textContent.trim()])"
+    DOTS = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('.dci-yell-dot')].map(d => d.className.replace('dci-yell-dot ', '') + ':' + d.textContent.trim())]).filter(x => x[1].length)"""
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name)"
+    MARK = """(name) => { const g = (%s)(name); return g ? [...g.querySelectorAll('.dci-yell-must, .dci-yell-can, .dci-yell-ok')].map(x => x.tagName.toLowerCase() + '.' + [...x.classList].filter(c => c.startsWith('dci-yell') || c.startsWith('dci-type-ask') || c.startsWith('dci-em-chip') || c === 'dci-row' || c === 'dci-em-line').join('.')
+      + (x.querySelector(':scope > .dci-yell-ctl, .dci-yell-ctl') ? '+ctl' : '')) : null; }""" % SEC
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            f0, d0 = pg.evaluate(FOOT), pg.evaluate(DOTS)
+            m0 = {n: pg.evaluate(MARK, n) for n in ('Dir Ed', 'Tr Eng', 'Bass Guy', 'No Link')}
+            print('A)', f0, d0, m0)
+            results.append(f0 == [['dci-yell-c-must', '● 2 must'], ['dci-yell-c-can', '● 2 can']]
+                           and dict(d0).get('Dir Ed') == ['dci-yell-dot-must:● 1'] and dict(d0).get('Tr Eng') == ['dci-yell-dot-can:● 1']
+                           and dict(d0).get('Bass Guy') == ['dci-yell-dot-can:● 1'] and dict(d0).get('No Link') == ['dci-yell-dot-must:● 1']
+                           and any('dci-yell-must' in x for x in m0['Dir Ed']) and any('dci-type-ask' in x and 'dci-yell-can' in x and x.endswith('+ctl') for x in m0['Tr Eng']))
+            # B)
+            pg.click('[data-el=yell] .dci-yell-c-must .dci-yell-n')
+            pg.wait_for_timeout(300)
+            fl = pg.evaluate("[...document.querySelectorAll('.dci-flash')].map(x => (x.closest('section.dci-group') || { querySelector: () => null }).querySelector('.dci-gname strong')?.textContent.trim())")
+            print('B)', fl)
+            results.append(len(fl) >= 1 and fl[0] in ('Dir Ed', 'No Link'))
+            # C)
+            pg.evaluate("(name) => (%s)(name).querySelector('.dci-yell-ctl [data-act=yell-ok]').click()" % SEC, 'Tr Eng')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            f1 = pg.evaluate(FOOT)
+            pre = pg.evaluate("(name) => !!(%s)(name).querySelector('.dci-type-preset')" % SEC, 'Tr Eng')
+            pg.evaluate("(name) => [...(%s)(name).querySelectorAll('[data-act=type-pick]')].find(b => b.textContent.trim() === 'creative direction').click()" % SEC, 'Dir Ed')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            f2 = pg.evaluate(FOOT)
+            print('C)', f1, pre, f2)
+            green = pg.evaluate("(name) => { const q = (%s)(name).querySelector('.dci-type-ask'); return !!q && q.classList.contains('dci-yell-ok') && !!q.querySelector('[data-act=yell-undo]'); }" % SEC, 'Tr Eng')
+            print('   grün:', green)
+            results.append(f1 == [['dci-yell-c-must', '● 2 must'], ['dci-yell-c-can', '● 1 can']] and not pre and green
+                           and f2 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 1 can']])
+            # D)
+            pg.click(f"{sec_sel(pg, 'Sax Two')} [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            # the soprano saxophone also on the recordings: its row's level clicked (a row of its own on all tracks)
+            sop = pg.evaluate("""(name) => { const g = (%s)(name); const tr = [...g.querySelectorAll('tr.dci-row')].find(t => (t.querySelector('[data-f=primary]') || {}).value === 'soprano saxophone');
+              return tr ? tr.dataset.row : null; }""" % SEC, 'Sax Two')
+            if sop:
+                pg.click(f'tr.dci-row[data-row="{sop}"] [data-act=level][data-level=recording]')
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            f3 = pg.evaluate(FOOT)
+            m3 = pg.evaluate(MARK, 'Sax Two')
+            ok_btn = pg.evaluate("(name) => { const b = (%s)(name).querySelector('.dci-yell-ctl [data-act=yell-ok]'); if (b) b.click(); return !!b; }" % SEC, 'Sax Two')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            f4 = pg.evaluate(FOOT)
+            m4 = pg.evaluate(MARK, 'Sax Two')
+            kept = pg.evaluate(f"localStorage.getItem('dci-yell:{H.REL}')")
+            undo = pg.evaluate("(name) => { const b = (%s)(name).querySelector('.dci-yell-ctl [data-act=yell-undo]'); if (b) b.click(); return !!b; }" % SEC, 'Sax Two')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            f5 = pg.evaluate(FOOT)
+            print('D)', sop, f3, m3, ok_btn, f4, m4, kept, undo, f5)
+            results.append(f3 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 2 can']] and ok_btn
+                           and f4 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 1 can']] and any('dci-yell-ok' in x for x in m4)
+                           and bool(kept) and 'auto:dddddddd-' in kept and 'p:dddddddd-' in kept and undo and f5 == f3)
+            # E)
+            H.open_settings(pg, 'staging')
+            pg.check('[data-f=yell-one]')
+            pg.wait_for_timeout(300)
+            f6 = pg.evaluate(FOOT)
+            pg.uncheck('[data-f=yell-one]')
+            pg.wait_for_timeout(300)
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(200)
+            print('E)', f6)
+            results.append(f6 == [['dci-yell-c-all', '● 3 open']])
+            # F)
+            pg.locator('.dci-head [data-act=view-toggle]').evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            d7 = pg.evaluate(DOTS)
+            chip = pg.evaluate("(name) => { const g = (%s)(name); const c = g && g.querySelector('.dci-em-chip, tr.dci-row'); return c ? c.className : null; }" % SEC, 'Bass Guy')
+            print('F)', d7, chip)
+            results.append(dict(d7).get('Bass Guy') == ['dci-yell-dot-can:● 1'] and bool(chip) and 'dci-yell-can' in chip)
+            # G)
+            H.open_settings(pg, 'appearance')
+            mx = pg.evaluate("(() => { const b = document.querySelector('[data-el=settings] [data-act=entries-view][data-view=matrix]'); if (b) b.click(); return !!b; })()")
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            chip2 = pg.evaluate("(name) => { const g = (%s)(name); const c = g && g.querySelector('.dci-em-chip'); return c ? c.className : null; }" % SEC, 'Bass Guy')
+            print('G)', mx, chip2)
+            results.append(mx and bool(chip2) and 'dci-yell-can' in chip2)
+            # H)
+            pg.click('[data-el=source] [data-act=repeat-open]')
+            pg.wait_for_timeout(200)
+            pg.click('[data-el=repeat] [data-act=repeat-do]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            f8 = pg.evaluate(FOOT)
+            tr8 = pg.evaluate("(name) => { const g = (%s)(name); const q = g && g.querySelector('.dci-yell-ok'); return q ? q.className : null; }" % SEC, 'Tr Eng')
+            print('H)', f8, tr8)
+            results.append(bool(tr8) and 'dci-yell-ok' in tr8 and f8 and f8[1][1] == '● 1 can')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
