@@ -524,4 +524,102 @@ console.log(JSON.stringify([m.liveTracksText(['2', '3', '4', '6', '3'], false), 
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_live3108():
+    """Credits Importer 3.108.0 (collected item Z-LIVE2): the disambiguation comments forgotten at the first staging can still be
+    switched on afterwards (until 3.107.0 a staging without ticked comments wrote no job, and ticking them later changed nothing).
+    A) The setting off, the offer not answered, staged: no job; then ✓ on the dashboard – the job holds tracks 2 and 3.
+    B) The setting on: before any staging, ticking makes no job; all unticked and staged: no job; ticked again afterwards – the job
+       holds tracks 2 and 3 and the log says "saved" once; unticked again – the job is gone.
+    C) The setting switched on in ⚙ Settings after a staging with it off: the job is there."""
+    PLACE = H.COMPANIES[1002][1]
+    NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
+    H.PLACE_AREAS[PLACE] = NYC
+    H.AREA_INFO.update({NYC: {'name': 'New York', 'type': 'City', 'parent': NYS}, NYS: {'name': 'New York', 'type': 'Subdivision', 'iso2': ['US-NY'], 'parent': US},
+                        US: {'name': 'United States', 'type': 'Country', 'iso1': ['US']}})
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        for m in d['media']:
+            for t in m['tracks']:
+                if t['position'] == 3:
+                    t['recording']['disambiguation'] = 'live'
+                if t['position'] == 4:
+                    t['recording']['disambiguation'] = 'demo version'
+        return d
+
+    H.ws_release = ws
+    JOB = f"JSON.parse(localStorage.getItem('dci-live-job:{H.REL}') || 'null')"
+    ITEMS = f"(() => {{ const j = JSON.parse(localStorage.getItem('dci-live-job:{H.REL}') || 'null'); return j ? j.items.map(x => x.pos) : null; }})()"
+    TICK = """(on) => { let n = 0; document.querySelectorAll('[data-el=livecom] tr[data-livecom-group] [data-f=livecom-on], [data-el=livecom] tr[data-livecom]:not(.dci-livecom-sub) [data-f=livecom-on]').forEach(el => {
+      if (el.disabled || el.checked === on) return; el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true })); n++; }); return n; }"""
+    SAVED = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /saved for .Enter edit.|after .Enter edit./i.test(t)).length"
+
+    def stage(pg):
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(1500)
+
+    def opened(ctx):
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        return pg, errs
+
+    results, errs_all = [], []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        # A) the offer answered after the staging
+        ctx = H.new_context(b)
+        pg, errs = opened(ctx)
+        offer = pg.locator('[data-act=livecom-yes]').count()
+        stage(pg)
+        a0 = pg.evaluate(JOB)
+        pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(600)
+        a1 = pg.evaluate(ITEMS)
+        print('A) Angebot:', offer, '| nach Staging:', a0, '| nach ✓:', a1)
+        ok_a = offer == 1 and a0 is None and a1 == ['2', '3']
+        errs_all += errs
+        ctx.close()
+        # B) the setting on, all unticked at the staging
+        ctx = H.new_context(b)
+        ctx.add_init_script("try { localStorage.setItem('dci-live-comments', 'true'); } catch (e) {}")
+        pg, errs = opened(ctx)
+        n_off = pg.evaluate(TICK, False); pg.wait_for_timeout(300)
+        n_on = pg.evaluate(TICK, True); pg.wait_for_timeout(300)
+        b0 = pg.evaluate(JOB)
+        pg.evaluate(TICK, False); pg.wait_for_timeout(300)
+        stage(pg)
+        b1 = pg.evaluate(JOB)
+        saved0 = pg.evaluate(SAVED)
+        pg.evaluate(TICK, True); pg.wait_for_timeout(600)
+        b2 = pg.evaluate(ITEMS)
+        saved1 = pg.evaluate(SAVED)
+        pg.evaluate(TICK, False); pg.wait_for_timeout(600)
+        b3 = pg.evaluate(JOB)
+        print('B) aus/an:', n_off, n_on, '| vor Staging:', b0, '| nach Staging:', b1, '| angehakt:', b2, '| Protokoll:', saved0, saved1, '| wieder aus:', b3)
+        ok_b = n_off >= 1 and n_on >= 1 and b0 is None and b1 is None and b2 == ['2', '3'] and saved1 == saved0 + 1 and b3 is None
+        errs_all += errs
+        ctx.close()
+        # C) the setting switched on after the staging
+        ctx = H.new_context(b)
+        pg, errs = opened(ctx)
+        stage(pg)
+        c0 = pg.evaluate(JOB)
+        H.open_settings(pg, 'staging')
+        pg.locator('[data-el=settings] [data-set=live-comments]').check(); pg.wait_for_timeout(800)
+        c1 = pg.evaluate(ITEMS)
+        print('C) nach Staging:', c0, '| Einstellung an:', c1)
+        ok_c = c0 is None and c1 == ['2', '3']
+        errs_all += errs
+        b.close()
+    print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| Fehler:', errs_all)
+    results += [ok_a, ok_b, ok_c, not errs_all]
+    H.ws_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
