@@ -659,8 +659,8 @@ def case_marksrelease():
 def case_artworkbox():
     """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_artwork.py (until 3.71.0 compared with an old log), with its
     checks: the cover miniature on Discogs – none before the connection; connected: fixed, the cover's image, a frame of 3 px in
-    MusicBrainz's colours, still at the top after scrolling (72 px); a click opens Discogs's image view; dragged 300 px left and
-    200 px down it moves without opening it, after reloading it is at the same place; folded: no image, the button "🖼"; the switch
+    MusicBrainz's colours, still at the top after scrolling (72 px); a click opens Discogs's image view ([Z-CPVA4] 1.17.0: the image
+    large in the page, Esc closes it); dragged 300 px left and 200 px down it moves without opening it, after reloading it is at the same place; folded: no image, the button "🖼"; the switch
     "Artwork" off: gone, on: there again; the MusicBrainz page closed: gone."""
     results = []
     with sync_playwright() as p:
@@ -684,16 +684,21 @@ def case_artworkbox():
         results.append(a == [0, 1, 'https://i.discogs.com/cover-1234.png', 'fixed', ['3px', True], 72])
         dg.evaluate("window.__clicked = []; document.querySelectorAll('a[href*=\"/image/\"]').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); window.__clicked.push(a.getAttribute('href')); }))")
         box.locator('.dci-art-img').click(); dg.wait_for_timeout(200)
+        # ([Z-CPVA4] 1.17.0) the click shows the image large in the page – Discogs's image view no longer opens; Esc closes it
         clicked = dg.evaluate("window.__clicked")
-        print('B) Klick öffnet Discogs-Bildansicht:', clicked)
-        results.append(clicked == ['/release/1234-Test-Band-Testalbum/image/1'])
+        big = dg.evaluate("(() => { const b = document.getElementById('dci-art-big'); return b ? b.querySelector('.dci-big-img').getAttribute('src') : null; })()")
+        dg.keyboard.press('Escape'); dg.wait_for_timeout(200)
+        closed = dg.evaluate("!document.getElementById('dci-art-big')")
+        print('B) Klick: groß im Tab, Discogs-Bildansicht, Esc schließt:', big, clicked, closed)
+        results.append(big == 'https://i.discogs.com/cover-1234.png' and clicked == [] and closed)
         # drag the box 300 px to the left and 200 px down: it moves, the cover view does not open, the place is kept
         r0 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
         dg.evaluate("window.__clicked = []")
         dg.mouse.move(r0[0] + 40, r0[1] + 40); dg.mouse.down(); dg.mouse.move(r0[0] - 100, r0[1] + 140, steps=8); dg.mouse.move(r0[0] - 260, r0[1] + 240, steps=8); dg.mouse.up()
         dg.wait_for_timeout(300)
         r1 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
-        moved_ok = abs((r0[0] - r1[0]) - 300) < 3 and abs((r1[1] - r0[1]) - 200) < 3 and dg.evaluate("window.__clicked") == []
+        moved_ok = abs((r0[0] - r1[0]) - 300) < 3 and abs((r1[1] - r0[1]) - 200) < 3 and dg.evaluate("window.__clicked") == [] \
+            and dg.evaluate("!document.getElementById('dci-art-big')")
         dg.reload(); H.with_companion(dg); dg.wait_for_timeout(3500)
         r2 = dg.evaluate("(() => { const b = document.getElementById('dci-artwork'); if (!b) return null; const r = b.getBoundingClientRect(); return [r.left, r.top]; })()")
         print('C) verschoben von', [round(x) for x in r0], 'nach', [round(x) for x in r1], '| nach Neuladen:', r2 and [round(x) for x in r2])
@@ -768,25 +773,36 @@ def case_artnav():
             box.locator('.dci-art-next').click()
             dg.wait_for_timeout(2500)
             kept = state()
+            # ([Z-CPVA4] 1.17.0) a click shows the image large in the page – no Discogs image view, no tab; Esc back
+            BIG = "(() => { const b = document.getElementById('dci-art-big'); return b ? [b.querySelector('.dci-big-img').getAttribute('src'), b.querySelector('.dci-big-n').textContent, b.querySelector('.dci-big-tab').getAttribute('href')] : null; })()"
             box.locator('.dci-art-img').click()
             dg.wait_for_timeout(200)
+            big1 = dg.evaluate(BIG)
+            dg.keyboard.press('Escape')
+            dg.wait_for_timeout(200)
+            gone1 = dg.evaluate(BIG)
             clicked = dg.evaluate("window.__clicked")
-            print('B)', kept, clicked)
-            results.append(kept[1] == '1 / 3' and clicked == [f'/release/{H.DISCOGS_ID}-Test-Band-Testalbum/image/1'])
-            # ([Z-CPVA2] 1.16.0) the second image shown: a click opens it (not the first) – its own image of the page has no link: the image itself
+            print('B)', kept, big1, gone1, clicked)
+            results.append(kept[1] == '1 / 3' and big1 == [cover, '1 / 3', cover] and gone1 is None and clicked == [])
+            # ([Z-CPVA2] 1.16.0 → 1.17.0) the second image shown: large it is that one, ↗ its address; › in the large view the third; ✕ back
             box.locator('.dci-art-next').click()
             dg.wait_for_timeout(150)
-            with dg.context.expect_page(timeout=5000) as pop:
-                box.locator('.dci-art-img').click()
-            opened = pop.value.url
-            print('   Z-CPVA2:', opened, dg.evaluate("window.__clicked"))
-            results.append(opened == IMGS[0] and dg.evaluate("window.__clicked") == clicked)
+            box.locator('.dci-art-img').click()
+            dg.wait_for_timeout(200)
+            big2 = dg.evaluate(BIG)
+            dg.click('#dci-art-big .dci-big-next')
+            dg.wait_for_timeout(200)
+            big3 = [dg.evaluate(BIG), state()[1]]
+            dg.click('#dci-art-big .dci-big-close')
+            dg.wait_for_timeout(200)
+            print('   Z-CPVA2/4:', big2, big3, dg.evaluate(BIG))
+            results.append(big2 == [IMGS[0], '2 / 3', IMGS[0]] and big3 == [[IMGS[1], '3 / 3', IMGS[1]], '3 / 3'] and dg.evaluate(BIG) is None and dg.evaluate("window.__clicked") == [])
             print('Fehler:', errs, dgerr)
             results.append(not _real_errs(errs) and not _real_errs(dgerr))
             b.close()
     finally:
         H.discogs_page = orig
-    # one image only: no arrows (the former test of the box)
+    # one image only: ([Z-CPVA3] 1.17.0) the arrows greyed, "1 / 1" (before: none)
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
@@ -796,11 +812,84 @@ def case_artnav():
         H.open_dashboard(pg)
         H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
         dg.wait_for_timeout(2500)
-        one = dg.evaluate("document.querySelector('#dci-artwork .dci-art-nav').hidden")
+        one = dg.evaluate("(() => { const n = document.querySelector('#dci-artwork .dci-art-nav'); return [n.hidden, [...n.querySelectorAll('button')].map(b => b.disabled), n.querySelector('.dci-art-n').textContent]; })()")
         print('C)', one)
-        results.append(one)
+        results.append(one == [False, [True, True], '1 / 1'])
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_artapi3108():
+    """Companion 1.17.0 (Credits Importer 3.108.0, Z-CPVA3, Z-CPVA4): the page holds only the cover – the other images of the release come
+    from Discogs's API (one request): "1 / 3"; ›: the API's second image; a click: large in the page (as wide as the tab), › there too;
+    a click beside the image: back to the page. B) (review) the cover switched off while the API is asked: not drawn again by its answer."""
+    import base64
+    enc = lambda src: '/'.join(base64.b64encode(src.encode()).decode()[i:i + 16] for i in range(0, len(base64.b64encode(src.encode()).decode()), 16)) + '.jpeg'
+    url = lambda src: f'https://i.discogs.com/sig{len(src)}/rs:fit/g:sm/q:90/h:600/w:600/{enc(src)}'
+    API = [url(f'discogs-database-images/R-{H.DISCOGS_ID}-2222-1.jpeg'), url(f'discogs-database-images/R-{H.DISCOGS_ID}-2222-2.jpeg')]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['images'] = [{'type': 'primary', 'uri': API[0], 'resource_url': API[0], 'width': 600, 'height': 600},
+                       {'type': 'secondary', 'uri': API[1], 'resource_url': API[1], 'width': 600, 'height': 598}]
+        return d
+    BIG = "(() => { const b = document.getElementById('dci-art-big'); if (!b) return null; const i = b.querySelector('.dci-big-img'); return [i.getAttribute('src'), b.querySelector('.dci-big-n').textContent, Math.round(i.getBoundingClientRect().width), document.documentElement.clientWidth]; })()"
+    results = []
+    try:
+        H.discogs_release = rel
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            dg, dgerr = H.open_discogs(ctx)
+            dg.wait_for_timeout(1000)
+            pg, errs = H.open_mb_edit(ctx)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            H.wait_for(dg, "(document.querySelector('#dci-artwork .dci-art-n') || {}).textContent === '1 / 3'", 20)
+            box = dg.locator('#dci-artwork')
+            box.locator('.dci-art-next').click()
+            dg.wait_for_timeout(150)
+            n2 = dg.evaluate("[document.querySelector('#dci-artwork .dci-art-n').textContent, document.querySelector('#dci-artwork img').getAttribute('src')]")
+            box.locator('.dci-art-img').click()
+            dg.wait_for_timeout(300)
+            b1 = dg.evaluate(BIG)
+            dg.click('#dci-art-big .dci-big-next')
+            dg.wait_for_timeout(200)
+            b2 = dg.evaluate(BIG)
+            dg.evaluate("document.getElementById('dci-art-big').dispatchEvent(new MouseEvent('click', { bubbles: true }))")
+            dg.wait_for_timeout(200)
+            gone = dg.evaluate(BIG)
+            print('A)', n2, b1, b2, gone, '| Fehler:', errs, dgerr)
+            results.append(n2 == ['2 / 3', API[0]] and b1 and b1[0] == API[0] and b1[1] == '2 / 3' and abs(b1[2] - b1[3]) <= 20
+                           and b2 and b2[0] == API[1] and b2[1] == '3 / 3' and gone is None and not _real_errs(errs) and not _real_errs(dgerr))
+            ctx.close()
+            # B) (review) the cover switched off while Discogs's API is still asked: the answer does not bring the box back
+            ctx = H.new_context(b)
+            held = []
+            dg, dgerr = H.open_discogs(ctx)
+            # (only the Discogs page's own requests held: the import reads the API too)
+            dg.route('https://api.discogs.com/releases/**', lambda route: held.append(route))
+            dg.wait_for_timeout(1000)
+            pg, errs = H.open_mb_edit(ctx)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            H.wait_for(dg, "!!document.getElementById('dci-artwork')", 20)
+            before = len(held)
+            H.nav_switch(pg, 'data-dg-artwork'); dg.wait_for_timeout(2500)
+            off = dg.evaluate("!!document.getElementById('dci-artwork')")
+            for r in held:
+                r.fallback()
+            dg.wait_for_timeout(2000)
+            back = dg.evaluate("!!document.getElementById('dci-artwork')")
+            print('B) gefragt:', before, '| aus:', off, '| nach der Antwort:', back, '| Fehler:', errs, dgerr)
+            results.append(before >= 1 and off is False and back is False and not _real_errs(errs) and not _real_errs(dgerr))
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

@@ -38,7 +38,8 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        # ([Z-CONN2] 3.108.0) "ⓘ MusicBrainz" after "ⓘ Connections"; "Developer" only in developer mode
+        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -55,7 +56,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('connections', True)] and k3 == [('general', True)])
+                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -183,7 +184,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -698,7 +699,7 @@ def case_cache():
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
             # [189] (3.39.3) no tab "Statistics" any more (their own button)
-            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            results.append(a['tabs'][-4:] == ['Beta', 'Cache', 'ⓘ Connections', 'ⓘ MusicBrainz'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -967,7 +968,7 @@ def case_stats():
         # ([3.61.0, Z-STL] the sentence in the tooltip of "Collecting: on")
         a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {title: ''}).title.startsWith('Statistics are being collected')]")
         print('A) Reiter:', tabs, '| leer, an:', a)
-        results.append(tabs[-2:] == ['cache', 'connections'] and 'statistics' not in tabs and a == [True, True])
+        results.append(tabs[-3:] == ['cache', 'connections', 'musicbrainz'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
         pg.click('[data-act=apply]')
         pg.wait_for_timeout(2500)
@@ -3118,5 +3119,106 @@ def case_srr391():
             b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_profnew3108():
+    """Credits Importer 3.108.0 (collected item Z-PROFNEW): "＋ New profile" in ⚙ Settings → Profiles – a copy of the profile in use.
+    A) "Profile 1" in use (full view, S078 off): "＋ New profile" → "Profile 2 · <date time>", in use at once, its name field focused;
+       the settings as before (full, S078 off); the log "a copy of “Profile 1”".
+    B) "Standard" chosen, "＋ New profile" → "Profile 3 · …" with the defaults (compact, S078 on); a setting changed there stays in it
+       ("Standard" unchanged)."""
+    H.RULES_OFF = ['S083', 'S078']
+    PROFS = "JSON.parse(localStorage.getItem('dci-profiles') || '[]').map(p => p.name)"
+    ACTIVE = "JSON.parse(localStorage.getItem('dci-profile') || 'null')"
+    STATE = """[document.getElementById('dci-overlay').classList.contains('dci-compact') ? 'compact' : 'full',
+      (JSON.parse(localStorage.getItem('dci-rules-off') || '[]')).includes('S078') ? 'S078 off' : 'S078 on']"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.open_settings(pg, 'profiles')
+            pg.click('[data-el=settings] [data-act=profile-new]')
+            pg.wait_for_timeout(500)
+            a = [pg.evaluate(PROFS), pg.evaluate(ACTIVE), pg.evaluate(STATE),
+                 pg.evaluate("document.activeElement && document.activeElement.dataset.f === 'profile-name' ? document.activeElement.value : null"),
+                 [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'a copy of' in x]]
+            print('A)', a)
+            results.append(len(a[0]) == 2 and a[0][0] == 'Profile 1' and a[0][1].startswith('Profile 2 · 20') and a[1] not in ('p1', 'std') and a[2] == ['full', 'S078 off']
+                           and a[3] == a[0][1] and any('a copy of “Profile 1”' in x for x in a[4]))
+            pg.select_option('#dci-profile', 'std')
+            pg.wait_for_timeout(800)
+            H.open_settings(pg, 'profiles')
+            pg.click('[data-el=settings] [data-act=profile-new]')
+            pg.wait_for_timeout(500)
+            p3 = pg.evaluate(ACTIVE)
+            b1 = [pg.evaluate(PROFS), pg.evaluate(STATE)]
+            H.open_settings(pg, 'appearance')
+            pg.locator('[data-el=settings] [data-set=ded-box]').evaluate('b => b.click()')
+            pg.wait_for_timeout(500)
+            b2 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE) == p3, pg.evaluate("JSON.parse(localStorage.getItem('dci-profiles')).find(p => p.name.startsWith('Profile 3')).values['dci-ded-box']")]
+            print('B)', b1, b2, '| Fehler:', errs)
+            results.append(len(b1[0]) == 3 and b1[0][2].startswith('Profile 3 · ') and b1[1] == ['compact', 'S078 on'] and len(b2[0]) == 3 and b2[1] and b2[2] == 'false' and not errs)
+            b.close()
+    finally:
+        H.RULES_OFF = ['S083']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_devtab3108():
+    """Credits Importer 3.108.0 (collected items Z-DEVTAB, Z-CONN2): the tabs "ⓘ MusicBrainz" and "Developer".
+    A) Without developer mode: "ⓘ MusicBrainz" after "ⓘ Connections" (seven lines – API, /ws/js, the relationship editor, the release page,
+       the forms, the dumps, the Cover Art Archive – each with its link, reads/writes and its details folded); no "Developer".
+    B) Developer mode: "Developer" last – developer mode, "Line of the release page: show why …", "Compared with MusicBrainz: show why …",
+       "Start diagnosis", "Developer statistics …", the instruments' tree (from the file of the dump "test", its change "tzouras");
+       Sources without the switches. "Start diagnosis" pressed; "Developer statistics …" opens the statistics."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'musicbrainz')
+        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(b => b.dataset.topic)")
+        rows = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] tr[data-mbdata]')].map(r => [r.dataset.mbdata, (r.querySelector('a') || {}).href || '',
+          (r.querySelector('[data-rw]') || {}).dataset.rw, !!r.querySelector('details:not([open]) summary')])""")
+        print('A)', tabs[-3:], rows)
+        results.append(tabs[-2:] == ['connections', 'musicbrainz'] and [r[0] for r in rows] == ['ws2', 'wsjs', 'editor', 'page', 'forms', 'dump', 'caa']
+                       and all(r[1].startswith('https://') and r[3] for r in rows) and dict((r[0], r[2]) for r in rows)['wsjs'] == 'both')
+        pg.evaluate("localStorage.setItem('dci-dev', 'true')")
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        H.open_settings(pg, 'sources')
+        src = pg.locator('[data-el=settings] [data-set=gap-why], [data-el=settings] [data-set=dsup-why]').count()
+        H.open_settings(pg, 'developer')
+        tabs2 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(b => b.dataset.topic)")
+        dev = pg.evaluate("""(() => { const s = document.querySelector('[data-el=settings]'); return ['dev-mode', 'gap-why', 'dsup-why'].map(k => !!s.querySelector(`[data-set=${k}]`))
+          .concat([!!s.querySelector('[data-act=dev-diag]'), !!s.querySelector('[data-act=dev-stats]'), (s.querySelector('[data-el=dev-tree]') || {}).textContent || '']); })()""")
+        pg.click('[data-el=settings] [data-act=dev-diag]')
+        pg.wait_for_timeout(300)
+        diag = pg.locator('[data-el=settings] [data-act=dev-diag]').get_attribute('aria-pressed')
+        pg.click('[data-el=settings] [data-act=dev-diag]')
+        pg.wait_for_timeout(300)
+        pg.click('[data-el=settings] [data-act=dev-stats]')
+        pg.wait_for_timeout(800)
+        stats = pg.evaluate("!!document.querySelector('[data-el=stats]') && !document.querySelector('[data-el=stats]').hidden")
+        tree = ' '.join(dev[5].split())
+        print('B)', src, tabs2[-3:], dev[:5], tree[:200], diag, stats, '| Fehler:', errs)
+        results.append(src == 0 and tabs2[-3:] == ['connections', 'musicbrainz', 'developer'] and dev[:5] == [True] * 5
+                       and 'dump test' in tree and 'tzouras' in tree and diag == 'true' and stats and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

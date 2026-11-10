@@ -1338,4 +1338,54 @@ console.log(JSON.stringify(['Recorded May, 6. 7, 2007 Studio des deutschen Filmo
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+
+def case_una3108():
+    """Credits Importer 3.108.0 (collected item Z-UNA2): the words of a line not recognized in groups of sense. "Kara D. Rusch made the
+    sounds at Fable Hall Studio with Drum Guy":
+    A) A click on "Kara" chooses "Kara D. Rusch" (the name with its initial), kind artist; a click again on "D." only "D.".
+    B) "Hall": "Fable Hall Studio", kind place (its words).
+    C) ⇧-click from "Kara" to "sounds" (the words up to it, as before). D) "Drum Guy" – an entry of the import – marked as known; the
+       words' tooltip names the click again and ⇧."""
+    TEXT = "Kara D. Rusch made the sounds at Fable Hall Studio with Drum Guy"
+
+    def word(pg, text, shift=False):
+        pg.evaluate("""([text, shift]) => { const el = [...document.querySelectorAll('.dci-unrec .dci-una-w')].find(x => x.textContent === text);
+          el.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: shift })); }""", [text, shift])
+        pg.wait_for_timeout(300)
+    FORM = """(() => { const f = document.querySelector('.dci-una-form'); return f ? [f.querySelector('[data-f=una-name]').value, f.querySelector('[data-f=una-kind]').value,
+      [...document.querySelectorAll('.dci-una-sel')].map(x => x.textContent)] : null; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Text read/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1000)
+        pg.evaluate("document.querySelector('.dci-unrec').open = true")
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+        word(pg, 'Kara')
+        a1 = pg.evaluate(FORM)
+        word(pg, 'D.')
+        a2 = pg.evaluate(FORM)
+        word(pg, 'Hall')
+        b1 = pg.evaluate(FORM)
+        word(pg, 'Kara')
+        word(pg, 'sounds', shift=True)
+        c1 = pg.evaluate(FORM)
+        known = pg.evaluate("[...document.querySelectorAll('.dci-unrec .dci-una-known')].map(x => x.textContent.trim())")
+        tip = pg.evaluate("(document.querySelector('.dci-unrec .dci-una-w') || {}).title || ''")
+        print('Zeilen:', unrec, '\nA)', a1, a2, '\nB)', b1, '\nC)', c1, '\nD)', known, tip, '| Fehler:', errs)
+        results.append(unrec == [TEXT] and a1 == ['Kara D. Rusch', 'artist', ['Kara', 'D.', 'Rusch']] and a2 and a2[2] == ['D.']
+                       and b1 == ['Fable Hall Studio', 'place', ['Fable', 'Hall', 'Studio']] and c1 and c1[2] == ['Kara', 'D.', 'Rusch', 'made', 'the', 'sounds']
+                       and known == ['Drum Guy'] and 'again' in tip and '⇧' in tip and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

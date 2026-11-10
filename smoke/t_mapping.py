@@ -987,7 +987,7 @@ def case_mbnames():
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1000)
             d = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
-              const r = g.querySelector('.dci-em-role'); return r ? [r.textContent.trim(), r.title] : null; })()""")
+              const r = g.querySelector('.dci-em-role'); return r ? [(r.tagName === 'SELECT' ? r.selectedOptions[0] : r).textContent.trim(), r.title] : null; })()""")
             pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
             chip = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
               const c = g.querySelector('.dci-em-chipname'); return c ? c.textContent.replace(/\\s+/g, ' ').trim() : null; })()""")
