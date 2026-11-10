@@ -1545,4 +1545,113 @@ def case_plt389():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_pldup3111():
+    """Credits Importer 3.111.0 (collected item Z-PLDUP, S175): Discogs lists "Recorded At – Loft, Köln" and "Mixed At – Tonart Studio,
+    Kerpen-Horrem" (on MusicBrainz "Tonart Studio Kerpen"); the notes: "Mixed in January 2016 at Tonart Studio." and "Recorded at
+    Tonart on November 9, 2016."
+    A) No entry "Tonart" or "Tonart Studio" of its own (until 3.110.0 "Tonart" – the notes' "recorded at" – searched as a new place);
+       Discogs's entry has mixed at and recorded at.
+    B) Its credits as the notes write it: mixed at "Tonart Studio", recorded at "Tonart".
+    C) (review) "Mastered at Sterling Road Studios" of the notes is not "Mastered At – Sterling Sound" of Discogs: an entry of its own."""
+    orig, comp0 = H.discogs_release, dict(H.COMPANIES)
+    H.COMPANIES[277541] = ('place', H.uid('eeeeeeee', 277), 'Tonart Studio Kerpen')
+    H.COMPANIES[2771] = ('place', H.uid('eeeeeeee', 278), 'Loft')
+
+    def rel():
+        d = orig()
+        d['notes'] = ('Recorded November 7, 8, 2016, at Loft Köln.\nMixed in January 2016 at Tonart Studio.\nRecorded at Tonart on November 9, 2016.\n'
+                      'Mastered at Sterling Road Studios.')
+        d['companies'] = [{'name': 'Loft, Köln', 'entity_type_name': 'Recorded At', 'id': 2771, 'catno': ''},
+                          {'name': 'Sterling Sound', 'entity_type_name': 'Mastered At', 'id': 2772, 'catno': ''},
+                          {'name': 'Tonart Studio, Kerpen-Horrem', 'entity_type_name': 'Mixed At', 'id': 277541, 'catno': ''}]
+        return d
+    H.discogs_release = rel
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            ent = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].map(g => g.querySelector('.dci-gname strong').textContent.trim()).filter(n => /Tonart|Loft|Sterling/.test(n))""")
+            rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Tonart Studio, Kerpen/.test(x.querySelector('.dci-gname strong').textContent));
+              return g ? [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.querySelector('[data-f=credit]') || {}).value]) : null; })()""")
+            print('A)', ent, '\\nB)', rows)
+            results.append(sorted(ent) == ['Loft, Köln', 'Sterling Road Studios', 'Sterling Sound', 'Tonart Studio, Kerpen-Horrem'])
+            results.append(bool(rows) and sorted(rows) == [['mixed at', 'Tonart Studio'], ['recorded at', 'Tonart']])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.COMPANIES.clear()
+        H.COMPANIES.update(comp0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_lcnote3111():
+    """Credits Importer 3.111.0 (collected item Z-LCNOTE, S176): Discogs gives "Label Code: LC 12345".
+    A) The release's label Sony on MusicBrainz without a code: a note "… Sony has no label code on MusicBrainz", ＋ to Sony's edit page
+       with ?dci-lc=12345.
+    B) Sony with LC 999: "… Sony has LC 999 on MusicBrainz".
+    C) Sony with LC 12345: no note.
+    D) Two labels without a code, the notes "LC 12345 (Other Label)": Other Label's note; without the bracket: one note, no ＋."""
+    orig, ws0, rl0 = H.discogs_release, H.ws_release, list(H.RELEASE_LABELS)
+    state = {'codes': {}, 'notes': ''}
+
+    def rel():
+        d = orig()
+        d['identifiers'] = [{'type': 'Label Code', 'value': 'LC 12345'}]
+        if state['notes']:
+            d['notes'] = state['notes']
+        return d
+
+    def ws(full=False):
+        d = ws0(full)
+        for li in d.get('label-info', []):
+            c = state['codes'].get(li['label']['name'])
+            if c:
+                li['label']['label-code'] = c
+        return d
+    H.discogs_release, H.ws_release = rel, ws
+    NOTE = """[...document.querySelectorAll('[data-el=lcnote] p')].map(p => [p.textContent.replace(/\\s+/g, ' ').trim(), (p.querySelector('.dci-lc-add') || {}).getAttribute?.('href') || ''])"""
+    results = []
+
+    def run(label, labels, codes, notes=''):
+        H.RELEASE_LABELS[:] = labels
+        state['codes'], state['notes'] = codes, notes
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            n = pg.evaluate(NOTE)
+            print(label, n, errs)
+            b.close()
+            return n, errs
+    try:
+        sony, other = (H.uid('eeeeeeee', 1), 'Sony'), (H.uid('eeeeeeee', 9), 'Other Label')
+        a, ea = run('A)', [sony], {})
+        results.append(len(a) == 1 and 'LC 12345' in a[0][0] and 'Sony has no label code' in a[0][0] and a[0][1] == f'/label/{sony[0]}/edit?dci-lc=12345' and not ea)
+        bb, eb = run('B)', [sony], {'Sony': 999})
+        results.append(len(bb) == 1 and 'Sony has LC 999' in bb[0][0] and not eb)
+        c, ec = run('C)', [sony], {'Sony': 12345})
+        results.append(c == [] and not ec)
+        d1, e1 = run('D1)', [sony, other], {}, 'Distributed by X. LC 12345 (Other Label)')
+        d2, e2 = run('D2)', [sony, other], {})
+        results.append(len(d1) == 1 and 'Other Label has no label code' in d1[0][0] and d1[0][1].startswith(f'/label/{other[0]}/edit')
+                       and len(d2) == 1 and 'no label of this release' in d2[0][0] and d2[0][1] == '' and not e1 and not e2)
+    finally:
+        H.discogs_release, H.ws_release = orig, ws0
+        H.RELEASE_LABELS[:] = rl0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

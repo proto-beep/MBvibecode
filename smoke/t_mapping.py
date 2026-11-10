@@ -1855,4 +1855,61 @@ def case_engtr3109():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_engrr3111():
+    """Credits Importer 3.111.0 (collected item Z-ENGRR, S018, R044): the tasks of an engineer joined in one detail. Discogs: "Engineer
+    [Recording & Remix]" (Eng Rr), "Engineer [Mix and Mastering]" (Eng Mm), "Engineer [Recording / Overdubs]" (Eng Ro), "Engineer
+    [Remix]" (Eng Rx), "Engineer [Live & Studio]" (Eng Ls: no tasks – one row).
+    A) Eng Rr: recording and remixer (until 3.110.0 one row engineer); Eng Mm: mix and mastering; Eng Ro: recording and recording
+       (overdubs) – two rows; Eng Rx: remixer; Eng Ls: one row (engineer). No role credit for the tasks."""
+    import copy
+    lts0 = copy.deepcopy(H.LTS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_type'))
+    H.lt(153, H.uid('1a1a1a1a', 153), 'remixer', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Eng Rr', 'Engineer [Recording & Remix]', 3521), ('Eng Mm', 'Engineer [Mix and Mastering]', 3522), ('Eng Ro', 'Engineer [Recording / Overdubs]', 3523),
+               ('Eng Rx', 'Engineer [Remix]', 3524), ('Eng Ls', 'Engineer [Live & Studio]', 3525)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '', (r.querySelector('[data-f=role-credit]') || {}).value || ''])])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            g = pg.evaluate(ROWS)
+            for n, _r, _i in CREDITS:
+                print('A)', n, g.get(n))
+            types = lambda n: sorted(t for t, _c in g.get(n, []))
+            # (the harness has no type engineer: those rows without a type)
+            results.append(types('Eng Rr') == ['recording', 'remixer'] and types('Eng Mm') == ['mastering', 'mix'] and len(g.get('Eng Ro', [])) == 2
+                           and g['Eng Ro'][0][0] == 'recording' and types('Eng Rx') == ['remixer'] and len(g.get('Eng Ls', [])) == 1
+                           and all(not c for n in ('Eng Rr', 'Eng Mm', 'Eng Rx') for _t, c in g.get(n, [])))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
