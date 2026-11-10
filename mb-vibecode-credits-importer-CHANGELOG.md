@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.109.0 | 1.17.0 |
+| 2026-11-08 | 3.88.0 – 3.110.0 | 1.17.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.110.0
+
+- **What is open, at a glance** (collected item Z-YELL): the footer counts the open points in two classes – "● n must" (orange): questions that must be answered, the roles are not staged until then (a role without a type, a word MusicBrainz does not know, an entry not linked, roles not credited on Skip, conflicts and updates of "Compared with MusicBrainz", "I played …", "arrangement of" to confirm, the suggested work type and language – these two are not taken without a click, nothing else waits for them) – and "● n can" (yellow): suggestions staged as they are (a question with its answer set until answered such as "Bass", a translation taken as liner notes, words written small, suggestions on works, the automatic row of "on the release" where instruments are ticked too). Each counter goes to the next point with a click, ‹ › back and forth; at 0 it is green. ⚙ Settings → Staging can show one counter instead.
+- The places are marked: orange or yellow at the row, the question, the matrix line or the chip; each entry's head has a dot with its number – the compact view stays folded and shows what is open in it. A suggestion has ✓ (confirmed: green, not counted, ↺ opens it again) and ✕ (taken back: the lyrics for a translation, the words as written, the automatic row out of that event). A question is done by its answer only.
+- A new import opens what was confirmed again – unless "Remember" (⚙ Settings → Cache) is on: then it is kept per release.
 
 ### Import 3.109.0
 
