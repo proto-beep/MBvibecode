@@ -37,6 +37,8 @@ env:
   BASE: https://data.metabrainz.org/pub/musicbrainz/data/fullexport
   DATA_BRANCH: stats
   OUT: stats/mb-vibecode-credits-importer-global.json
+  # [3.107.0, Z-ITREE] the instruments' "type of" relationships for the script (from the core dump, with the changes of the last weeks)
+  TREE: stats/mb-vibecode-credits-importer-instruments.json
 
 jobs:
   stats:
@@ -56,10 +58,14 @@ jobs:
           echo "dump=$DUMP" >> "$GITHUB_OUTPUT"
           OLD=''
           echo '{}' > "$RUNNER_TEMP/old.json"
+          echo '{}' > "$RUNNER_TEMP/old-instruments.json"
+          NOTREE=1
           if git fetch -q --depth 1 origin "$DATA_BRANCH" 2>/dev/null; then
             OLD=$(git show "FETCH_HEAD:$OUT" 2>/dev/null | python3 -c "import json,sys;print(json.load(sys.stdin).get('dump',''))" 2>/dev/null || true)
             # [3.55.0] the result of before (its section "core" is kept when the core dump is not read)
             git show "FETCH_HEAD:$OUT" > "$RUNNER_TEMP/old.json" 2>/dev/null || echo '{}' > "$RUNNER_TEMP/old.json"
+            # [3.107.0, Z-ITREE] the tree of before (its changes are kept); none yet: the core dump is read now
+            if git show "FETCH_HEAD:$TREE" > "$RUNNER_TEMP/old-instruments.json" 2>/dev/null; then NOTREE=0; else echo '{}' > "$RUNNER_TEMP/old-instruments.json"; fi
           elif git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
             # ((3.55.0, review) the data branch is there but could not be read: not run on without it)
             echo "the branch $DATA_BRANCH could not be fetched"; exit 1
@@ -75,7 +81,16 @@ jobs:
           f = lambda x: d.datetime.strptime(x[:8], '%Y%m%d')
           try: print(1 if (f(os.environ['DUMP']) - f(c.get('dump') or '')).days >= 6 else 0)
           except ValueError: print(1)" "$RUNNER_TEMP/old.json" 2>/dev/null || echo 1)
-          if [ "$(date -u +%u)" = 7 ] || [ "${{ inputs.core }}" = true ] || [ "$STALE" = 1 ]; then echo "core=1" >> "$GITHUB_OUTPUT"; fi
+          # [3.107.0, Z-ITREE] no tree of instruments yet: the core dump now – ((review) unless the last core pass found none and is younger
+          # than two days (a dump without any tree is not read on every run)
+          FRESH=$(DUMP="$DUMP" python3 -c "
+          import datetime as d, json, os, sys
+          c = (json.load(open(sys.argv[1])) or {}).get('core') or {}
+          f = lambda x: d.datetime.strptime(x[:8], '%Y%m%d')
+          try: print(1 if c.get('itree') is False and (f(os.environ['DUMP']) - f(c.get('dump') or '')).days < 2 else 0)
+          except ValueError: print(0)" "$RUNNER_TEMP/old.json" 2>/dev/null || echo 0)
+          if [ "$NOTREE" = 1 ] && [ "$FRESH" = 1 ]; then NOTREE=0; fi
+          if [ "$(date -u +%u)" = 7 ] || [ "${{ inputs.core }}" = true ] || [ "$STALE" = 1 ] || [ "$NOTREE" = 1 ]; then echo "core=1" >> "$GITHUB_OUTPUT"; fi
       - name: Read the edit dump
         if: steps.dump.outputs.skip != '1'
         env:
@@ -94,7 +109,8 @@ jobs:
         env:
           DUMP: ${{ steps.dump.outputs.dump }}
         run: |
-          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --core --facts "$RUNNER_TEMP/facts.json" --merge "$RUNNER_TEMP/global.json" --dump "$DUMP"
+          curl -fsSL --retry 3 "$BASE/$DUMP/mbdump.tar.bz2" | lbzip2 -dc | python3 stats/global_stats.py --core --facts "$RUNNER_TEMP/facts.json" --merge "$RUNNER_TEMP/global.json" --dump "$DUMP" \
+            --instruments "$RUNNER_TEMP/instruments.json" --instruments-old "$RUNNER_TEMP/old-instruments.json"
       - name: The core dump failed
         if: steps.core.outcome == 'failure'
         run: echo "::warning::The core dump could not be read – the section \"core\" of before is kept"
@@ -119,6 +135,8 @@ jobs:
             mkdir -p stats
             cp "$RUNNER_TEMP/global.json" "$OUT"
             git add "$OUT"
+            # [3.107.0, Z-ITREE] the tree of instruments, when the core dump was read
+            if [ -s "$RUNNER_TEMP/instruments.json" ]; then cp "$RUNNER_TEMP/instruments.json" "$TREE"; git add "$TREE"; fi
             git diff --cached --quiet && exit 0
             git commit -q -m "Global statistics: dump $DUMP"
             git push -q origin "HEAD:$DATA_BRANCH" && exit 0

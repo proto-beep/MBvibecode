@@ -136,6 +136,8 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # release's artists ("artists") and its number of tracks ("tracks")
 
 python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
+                                #   cimp3107: 3.107.0 (Z-CIMP2, S161) Node: the track list of CIMP #384 as Tesseract reads the cover (lengths, misread
+                                #     societies, "9...."): every track's writers and publishers; writers only below every second title: titles left out
                                 #   cimp3101: 3.101.0 (Z-CIMP, Z-RSOC; S160–S165): the back cover of CIMP #384 pasted – writers below the titles,
                                 #     duos restrict the lineup, SOLO asked, cover art / typesetting / hospitality, the series chosen, BMI on Skip (taken with S160)
                                 #   abbr3102: 3.102.0 (Z-ABBR2, S166): "Cy Moe tb" – trombone · tuba asked at the row, no instrument and not staged before the answer
@@ -792,6 +794,10 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     together ("add. guest solo") or a column each ("Attributes: separate", stored, in ⚙ Settings), the head sticky; blocks with their own events
                                 #   rwrt3100: 3.100.0 (Z-RWRT): "＋ Another role" – writer, composer, lyricist, librettist on the release level under "Writing"; composer staged
                                 #   bzk3105: 3.105.0 (Z-BZK, Q014): "Bouzouki" – bouzouki · irish bouzouki · tzouras (full list and matrix), the one chosen
+                                #   itree3107: 3.107.0 (Z-ITREE): the instruments flat as on MusicBrainz – without the workflow's file MusicBrainz asked
+                                #     (instrument-rels), the automatic row "saxophone"; with the file nothing asked; the kinds of bouzouki from the tree
+                                #   dsup3107: 3.107.0 (Z-DSUP3, Z-DSUP2, Z-DSUPWHY): a role MusicBrainz has (on Skip) gets the pool's date – back with "add" taken,
+                                #     staged as edits; one with the date already stays; a producer: no "only on MusicBrainz"; developer mode: why no box
                                 #   dsup3106: 3.106.0 (Z-DSUP, S172–S174): against MusicBrainz – only on MusicBrainz, a conflict held, covered, an update,
                                 #     on the release, a date added; staged as edits of MusicBrainz's relationships; the matrix line and the compact chips
                                 #   insts3103: 3.103.0 (Z-INSTS, S169, S170): five instruments without tracks – suggestion, "on the release" (rows on the release, one
@@ -971,8 +977,10 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
                                 #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
                                 #     message with "Update script"
+                                #   gapl3107: 3.107.0 (Z-GAPL2): another script's list of links above the release's own – the line all the same; no
+                                #     link in any list: the note counts the links of all lists
                                 #   gapwhy3105: 3.105.0 (Z-GAPL): developer mode – why the line is missing (no link recognized, Discogs broken off),
-                                #     no note with the line or without developer mode; the switch only in developer mode
+                                #     no note with the line or without developer mode; the switch only in developer mode; 3.107.0: with the script's name
                                 #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
                                 #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
                                 #   gapmore: 3.40.0 (AY): no line without credits or when nothing is missing (setting dci-gap-none, one missing, the
