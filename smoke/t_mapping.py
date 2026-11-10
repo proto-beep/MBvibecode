@@ -1749,4 +1749,110 @@ console.log(JSON.stringify({ p: texts.map(P), dates }));
     print('Ergebnis:', 'OK' if a and b and c else 'FEHLER', [a, b, c])
 
 
+def case_engtr3109():
+    """Credits Importer 3.109.0 (collected item Z-ENGTR, Q007, R004): a translation from every source is asked – liner notes with the
+    attribute translator taken at once (a suggestion), the lyrics on the works. Discogs: "English Translation" (Tr Eng), "Translated By
+    [German]" (Tr De), "Übersetzung" for track 2 (Tr Ue), "Translation (French)" (Tr Fr).
+    A) All four: liner notes on the release, "translator" ticked, no role credit (no language anywhere); the question stays with
+       "liner notes (translator)" and "translator (lyrics)" (until 3.108.0 only Bandcamp asked: translator on the works, "English
+       Translation" not known).
+    B) Tr Eng "translator (lyrics)": a suggestion on every work (no tracks named), the reason in the tooltip; Tr Ue: set on track 2's
+       work only; Tr Ue "liner notes (translator)" again in its column of the works matrix: back on the release.
+    C) Staged: Tr De and Tr Fr liner notes with translator, without a role credit."""
+    import copy
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(1018, 'translator', 1018)
+    H.LTS[24]['attributes']['1018'] = {'min': 0, 'max': None}
+    H.lt(9531, H.uid('1a1a1a1a', 9531), 'translator', 'artist', 'work', (1,))
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Tr Eng', 'English Translation', 3511, ''), ('Tr De', 'Translated By [German]', 3512, ''), ('Tr Ue', 'Übersetzung', 3513, '2'),
+               ('Tr Fr', 'Translation (French)', 3514, '')]
+    for n, _r, i, _t in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      { ask: [...g.querySelectorAll('.dci-type-ask [data-act=type-pick]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
+        preset: !!g.querySelector('.dci-type-ask.dci-type-preset'),
+        rows: [...g.querySelectorAll('tr.dci-row')].map(r => ({ type: ((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '',
+        level: ([...r.querySelectorAll('[data-act=level][aria-pressed=true]')][0] || { dataset: {} }).dataset.level || '',
+        flags: [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value), credit: (r.querySelector('[data-f=role-credit]') || {}).value ?? null }))}])))()"""
+    COLS = """(() => { const out = {};
+  document.querySelectorAll('.dci-matrix th[data-colhead]').forEach((th) => {
+    const name = (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim();
+    out[name] = [...document.querySelectorAll(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`)].filter(c => c.classList.contains('dci-mx-on'))
+      .map(c => (Number(c.closest('tr').dataset.work) + 1) + (c.classList.contains('dci-mx-sugg') ? 's' : ''));
+  }); return out; })()"""
+    PICK = """([name, label]) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const b = g && [...g.querySelectorAll('.dci-type-ask [data-act=type-pick]')].find(x => x.textContent.trim().startsWith(label)); if (b) b.click(); return !!b; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+            pg.wait_for_timeout(400)
+            g = pg.evaluate(ROWS)
+            for k in [c[0] for c in CREDITS]:
+                print('A)', k, g.get(k))
+            ok = lambda e: bool(e) and e['preset'] and e['ask'][:1] == ['liner notes (translator) suggested'] and e['ask'][1:] == ['translator (lyrics)'] \
+                and len(e['rows']) == 1 and e['rows'][0]['type'] == 'liner notes' and e['rows'][0]['level'] == 'release' \
+                and e['rows'][0]['flags'] == ['translator'] and not e['rows'][0]['credit']
+            results.append(all(ok(g.get(c[0])) for c in CREDITS))
+            # B)
+            pg.evaluate(PICK, ['Tr Eng', 'translator (lyrics)'])
+            pg.wait_for_timeout(500)
+            pg.evaluate(PICK, ['Tr Ue', 'translator (lyrics)'])
+            pg.wait_for_timeout(500)
+            c1 = pg.evaluate(COLS)
+            key = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(th => th.textContent.includes('Tr Eng'))?.dataset.colhead || ''")
+            title = pg.evaluate(f"[...document.querySelectorAll('.dci-mx-cell[data-col=\"{key}\"] .dci-mxchip-sugg')].map(c => c.title).join(' | ')")
+            print('B) Spalten:', {k: v for k, v in c1.items() if k.startswith('Tr ')}, '| Titel:', title)
+            ok_b = c1.get('Tr Eng') == ['1s', '2s', '3s', '4s'] and c1.get('Tr Ue') == ['2'] and 'the translation named without tracks' in title
+            # the question in the works matrix's column: back to the liner notes
+            back = pg.evaluate("""() => { const th = [...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(t => t.textContent.includes('Tr Ue'));
+              const b = th && [...th.querySelectorAll('[data-act=mx-type-pick]')].find(x => x.textContent.trim().startsWith('liner notes')); if (b) b.click(); return !!b; }""")
+            pg.wait_for_timeout(500)
+            ue = (pg.evaluate(ROWS).get('Tr Ue') or {'rows': [{}]})['rows'][0]
+            c2 = pg.evaluate(COLS)
+            print('   Tr Ue wieder liner notes:', back, ue, '| Spalten:', sorted(k for k in c2 if k.startswith('Tr ')))
+            results.append(ok_b and back and ue.get('type') == 'liner notes' and ue.get('level') == 'release' and ue.get('flags') == ['translator']
+                           and 'Tr Ue' not in c2)
+            # C)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [r.linkTypeID, ((r.entity0 || {}).name || ''), ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName + (x.credited_as ? ' [' + x.credited_as + ']' : ''))])""")
+            mine = [x for x in added if x[1] in ('Tr De', 'Tr Fr')]
+            print('C)', mine)
+            results.append(sorted(mine) == [[24, 'Tr De', ['translator']], [24, 'Tr Fr', ['translator']]])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
