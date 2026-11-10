@@ -5,7 +5,7 @@
   "MB x Vibecode: Import Discogs credits"
  ],
  "dump": "20261104-002222",
- "generated": "2026-11-08T07:35:56Z",
+ "generated": "2026-11-10T07:54:07Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits, releases or URLs; \"editors\" is how many different ones",
  "totals": {
@@ -422,6 +422,7 @@
     "mean": 7.282641304754423,
     "median": 6.090909090909091
    }
-  }
+  },
+  "itree": true
  }
 }
