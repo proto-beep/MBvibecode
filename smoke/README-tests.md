@@ -613,7 +613,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   foot397: 3.97.0 (Z-FOOT): the run in the footer – a yellow chip with the latest step, filled as far as the
                                 #     requests are done, a 2-px line on top; done: green "All imports and checks done" (stays), the line gone,
-                                #     the footer no higher; dark colours
+                                #     the footer no higher (from 3.112.0 measured without the Z-YELL counters, which the notes' dates now
+                                #     give this release); dark colours
                                 #   head393: 3.93.0: tracks in short "1, 3–5, 7, 8" / "2, 3" (Z-TRR); "Reading …" not covered by the sticky
                                 #     bar (Z-BCST); "Script Companion: …" (Z-CNAME). From 3.93.0 the other files expect two tracks one by one
                                 #     ("tracks 2, 3", "Tracks A1, B1") where they had "2–3", "A1–B1"
@@ -805,7 +806,9 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   "Edit relationships" (one line, below only when narrow); the check itself (detector); review: in the order
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
-python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #     their own, switched off
+                                #   sort3112: 3.112.0 (Z-SORT, Z-SCOPE): "Order:" – by kind (headings, instruments first), by name, by level ("Skipped" last), kept,
+                                #     switched off; "Works: with | only | without", "with" again at a new import
                                 #   yell3110: 3.110.0 (Z-YELL): "● n must" and "● n can" in the footer, the dots at the heads, the marks; the jump; ✓ of a
                                 #     translation, an answer; the automatic row ✓ (green, ↺, kept for the release); one counter; compact and matrix chips
                                 #   emcell3109: 3.109.0 (Z-EMCELL, Z-EMSCR, Z-EMNOTE): ticks in the events a block does not show (where MusicBrainz has
@@ -1149,6 +1152,7 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     video, a description coming later gets its marks, folded by the user stays folded
 
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
+                                #   gapbtn3112: 3.112.0 (Z-GAPBTN): "Count exactly" / "Import credits …" round buttons on the release page
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key
                                 #     the code names in English, no left-over translations, no foreign
                                 #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations;

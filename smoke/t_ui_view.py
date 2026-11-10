@@ -426,13 +426,12 @@ def case_ui301():
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
         # D)
+        # ([Z-SCOPE] 3.112.0) no "only works" any more; "Works: with | only | without" in the line, its label beside it
         d1 = pg.evaluate("""(() => { const ow = document.querySelector('[data-act=bulk-level][data-level=only-works]');
-      const lv = document.querySelector('[data-act=bulk-level][data-level=skip]'); const st = document.querySelector('.dci-scope > .dci-sub');
-      const sb = document.querySelector('.dci-scope button'); const c = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
-      return [ow.parentElement === lv.parentElement, getComputedStyle(ow).boxShadow, Math.round(Math.abs(c(st) - c(sb))),
-        Math.round(ow.getBoundingClientRect().left - lv.getBoundingClientRect().right)]; })()""")
-        print('D) only works – in der Ebenen-Gruppe, Schatten, „Stage:“ Abweichung, Abstand:', d1)
-        results.append(not d1[0] and 'rgb(138, 79, 158)' in d1[1] and d1[2] <= 2 and d1[3] >= 4)
+      const st = document.querySelector('.dci-scope-label'); const sb = document.querySelector('.dci-scope button'); const c = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
+      return [!!ow, Math.round(Math.abs(c(st) - c(sb))), [...document.querySelectorAll('.dci-scope button')].map(b => b.textContent.trim()), st.textContent.trim()]; })()""")
+        print('D) only works da, „Works:“ Abweichung, Knöpfe:', d1)
+        results.append(not d1[0] and d1[1] <= 2 and d1[2] == ['with', 'only', 'without'] and d1[3] == 'Works:')
         # E) in the page, inside a wide page
         pg.evaluate("document.getElementById('content').style.width = '2400px'")
         H.open_settings(pg, 'appearance')
@@ -540,9 +539,9 @@ def case_rows():
         removed = pg.evaluate("window.__removed.map(r => r.entity0.name)")
         n_after = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Bob Producer').length")
         print('2) Bob Producer im Editor vorher/nachher:', n_before, n_after, '| herausgenommen:', removed)
-        # 3) "Skip" all, then "only works": work relationships come back, all else stays skipped
+        # 3) "Skip" all, then ([Z-SCOPE] 3.112.0) "Works: only" (was "only works"): work relationships come back, all else stays skipped
         pg.click('[data-act=bulk-level][data-level=skip]'); pg.wait_for_timeout(300)
-        pg.click('[data-act=bulk-level][data-level=only-works]'); pg.wait_for_timeout(500)
+        pg.click('[data-act=scope][data-scope=work]'); pg.wait_for_timeout(500)
         levels = pg.evaluate("""[...document.querySelectorAll('.dci-group')].map(g => g.querySelector('.dci-gname strong').textContent + ':' +
       ([...g.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(x => x.dataset.level).join(',') || (g.querySelector('.dci-work-note') ? 'work' : '-')))""")
         print('3) Ebenen nach „nur Werke“:', levels)
@@ -564,7 +563,7 @@ def case_rows():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.click('[data-act=bulk-level][data-level=only-works]'); pg.wait_for_timeout(500)
+        pg.click('[data-act=scope][data-scope=work]'); pg.wait_for_timeout(500)
         print('4) Ohne vorheriges Übernehmen, Plan:', pg.inner_text('[data-el=sum]').replace('\n', ' ')[:120])
         pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
         kinds = pg.evaluate("[...new Set(MB.relationshipEditor.state.added.map(r => r.linkTypeID))].sort((a, b) => a - b)")
