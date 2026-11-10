@@ -801,6 +801,8 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   yell3110: 3.110.0 (Z-YELL): "● n must" and "● n can" in the footer, the dots at the heads, the marks; the jump; ✓ of a
+                                #     translation, an answer; the automatic row ✓ (green, ↺, kept for the release); one counter; compact and matrix chips
                                 #   emcell3109: 3.109.0 (Z-EMCELL, Z-EMSCR, Z-EMNOTE): ticks in the events a block does not show (where MusicBrainz has
                                 #     the type), a line emptied stays grey and free, the bars above and below a wide matrix (⇧ + wheel), the block's head
                                 #     at the left edge, the automatic row of "on the release" yellow, the compact view's drop targets

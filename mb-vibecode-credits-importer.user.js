@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.109.0
+// @version      3.110.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.109.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.109.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.110.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.110.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.109.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.110.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1773,6 +1773,32 @@
       "settings.editNoteHead": "Edit note",
       "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
       "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
+      "yell.must": "● {n} must",
+      "yell.can": "● {n} can",
+      "yell.all": "● {n} open",
+      "yell.mustTitle": "Questions that must be answered: until then these roles are not staged (orange). A click goes to the next one",
+      "yell.canTitle": "Suggestions that can be confirmed: they are staged as suggested (yellow) – ✓ confirms one, ✕ takes it back. A click goes to the next one",
+      "yell.allTitle": "Open: questions to answer (orange, not staged until answered) and suggestions to confirm (yellow, staged as suggested). A click goes to the next one",
+      "yell.next": "Next open point",
+      "yell.prev": "Open point before",
+      "yell.dot.must": "{n} questions to answer in this entry",
+      "yell.dot.can": "{n} suggestions to confirm in this entry",
+      "yell.doneTitle": "Confirmed",
+      "yell.undo": "Open it again",
+      "yell.ok.preset": "Yes, the liner notes (confirms the answer)",
+      "yell.no.preset": "No: the lyrics (translator on the works)",
+      "yell.ok.case": "Confirm: written small as suggested",
+      "yell.no.case": "Keep the words as written",
+      "yell.ok.auto": "Confirm: the automatic row stays in this event",
+      "yell.no.auto": "Take the automatic row out of this event",
+      "yell.kind.preset": "translation as liner notes",
+      "yell.kind.case": "words written small",
+      "yell.kind.auto": "automatic row of “on the release”",
+      "log.yellOk": "Confirmed: {what}",
+      "log.yellNo": "Taken back: {what}",
+      "log.yellUndo": "Opened again: {what}",
+      "settings.yellOne": "One counter of open points (not “must” and “can” apart)",
+      "settings.yellOneTitle": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (can, yellow) – apart, or in one counter",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
       "matrix.langAdd": "add a language …",
@@ -14872,7 +14898,7 @@
   S.rememberRead = remembering();
   // the stores of one release (the key ends with its MBID), and those of all releases in one (keyed by the MBID)
   // [3.37.5] 'ocr': the window "Text from cover art" as it was left (item 155)
-  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember', 'ocr'];
+  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember', 'ocr', 'yell'];
   const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
   const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames'];
   // the maps while nothing is remembered: the choices hold in this tab only
@@ -16960,6 +16986,271 @@
   }
 
   /** The next (or previous) incomplete row: scrolled into view, with what is missing highlighted. */
+  // --- [Z-YELL] (3.110.0) What is open: must (orange) – not staged without an answer –, can (yellow) – staged as suggested ---------
+  /**
+   * Everything open of the dashboard as items { cls: 'must' | 'can', kind, key, rows, row, a, ok (✓ / ✕ at it), done }. Must: a question
+   * of a role without a type, a word MusicBrainz does not know, an entry not linked, roles not credited on Skip, conflicts and updates
+   * of "Compared with MusicBrainz", "I played …", "arrangement of" to confirm, the suggestion of work type and language (Z-WTS: only
+   * these two are not taken without a click). Can: a question with its answer set until answered (bass, voice), a translation taken
+   * as liner notes, words written small, suggestions on works, the automatic row of "on the release" where instruments are ticked too.
+   * Questions are done by an answer only; suggestions by ✓ (S.yellDone, kept per release with "Remember") or ✕ (the suggestion taken back).
+   * ((review) the keys of what can be confirmed by what stays from one import to the next – the entry's MBID or name, the role as
+   * written –, not by the ids of the dashboard; rows of one line in several events are one item)
+   */
+  const yellEntryKey = (a) => a.mbid || (a.dId ? `d${a.dId}` : '') || norm(a.rawName || a.name);
+  function yellItems() {
+    const out = [];
+    const byKey = new Map();
+    const done = S.yellDone || new Set();
+    const add = (cls, kind, key, extra = {}) => {
+      const had = byKey.get(key);
+      if (had) {
+        if (extra.row) had.rows.push(extra.row);
+        return;
+      }
+      const it = { cls, kind, key, ...extra, rows: extra.row ? [extra.row] : [], done: !!extra.ok && done.has(key) };
+      byKey.set(key, it);
+      out.push(it);
+    };
+    const skipped = new Map([...S.artists.values()].map((a) => [a.key, entrySkipped(a)]));
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (!a || skipped.get(a.key) || r.level === 'skip') continue;
+      const ak = yellEntryKey(a);
+      const tq = typeQuestionFor(r);
+      const pk = `p:${ak}|${norm(r.raw)}`;
+      if (tq && r.typeAnswer == null) add((r.types || []).length ? 'can' : 'must', 'question', `q:${r.id}`, { row: r, a });
+      // a translation taken as liner notes: open until ✓ / ✕ (or answered); confirmed: green, ↺ opens it again
+      else if (tq && (r.typePreset || (r.askTranslation && done.has(pk)))) add('can', 'preset', pk, { row: r, a, ok: true });
+      const iq = !tq && questionRuleFor(r);
+      const lt = iq && currentLinkType(r);
+      // ((review) an instrument question answered with its own word or one of its answers set at once is no open question)
+      if (lt && primaryRootOf(lt) && questionAsks(iq, r) && !keptBase(r, iq) && !(iq.preset && norm(r.primaryText) !== iq.base)) add('can', 'question', `i:${r.id}`, { row: r, a });
+      if (r.instrGuess && r.instrGuess.chose !== 'misc' && !(norm(r.primaryText) && primaryIsValid(r))) add('must', 'question', `g:${r.id}`, { row: r, a });
+      // ((review) only while words are written small – "kept as written" is no suggestion any more)
+      if (r.level !== 'work' && ((r.creditPhrases || []).length || (r.creditLowered || []).length) && caseNoteHtml(r)) {
+        add('can', 'case', `case:${ak}|${norm(r.raw)}|${r.level}`, { row: r, a, ok: true });
+      }
+      if (r.level === 'work' && r.suggest && r.suggest.tracks && [...r.suggest.tracks].some((i) => !(r.confirmed && r.confirmed.has(i)))) add('can', 'sugg', `s:${r.id}`, { row: r, a });
+    }
+    for (const a of S.artists.values()) {
+      if (skipped.get(a.key)) continue;
+      const ak = yellEntryKey(a);
+      const rows = S.rows.filter((r) => r.artistKey === a.key);
+      if (!a.mbid && rows.some((r) => r.level !== 'skip')) add('must', 'link', `link:${a.key}`, { a });
+      if (rows.some(uncrPending)) add('must', 'uncr', `uncr:${a.key}`, { a });
+      if (rows.some((r) => r.dsupHold && r.level === 'skip' && ['conflict', 'update'].includes(r.dsupHold.kind))) add('must', 'dsup', `dsup:${a.key}`, { a });
+      rows.filter((r) => r.instsAuto && r.level !== 'skip' && r.level !== 'work').forEach((r) => {
+        const ev = eventKeyOf(r);
+        if (emAutoCovered(a, ev).length) add('can', 'auto', `auto:${ak}|${ev}`, { row: r, a, ev, ok: true });
+      });
+    }
+    (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
+    [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
+    if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
+    return out;
+  }
+
+  /** [Z-YELL] (3.110.0) The elements of the rows (lines and chips of the matrix by `data-rows`), once per paint ((review) not per item). */
+  function yellIndex() {
+    const ov = S.overlay;
+    const rows = new Map();
+    ov.querySelectorAll('tr.dci-em-line[data-rows], .dci-em-chip[data-rows], .dci-em-cl[data-rows]').forEach((x) => x.dataset.rows.split(',').forEach((id) => {
+      if (!rows.has(id)) rows.set(id, []);
+      rows.get(id).push(x);
+    }));
+    return { rows };
+  }
+  /**
+   * [Z-YELL] (3.110.0) The place of an item in the dashboard (the element shown), or null; `strict` false: else the entry's head.
+   * (review) the boxes of an entry marked at their first line (the box itself is drawn anew when its HTML differs).
+   */
+  function yellEl(it, ix = yellIndex(), strict = false) {
+    const ov = S.overlay;
+    if (!ov) return null;
+    const seen = (el) => !!el && el.getClientRects().length > 0;
+    const sec = it.a ? ov.querySelector(`section[data-group="${it.a.key}"]`) : null;
+    const byRow = (id) => [ov.querySelector(`tr.dci-row[data-row="${id}"]`), ...(ix.rows.get(id) || [])].find(seen) || null;
+    const byRows = () => it.rows.map((r) => byRow(r.id)).find(Boolean) || null;
+    const inRows = (sel) => it.rows.flatMap((r) => [...ov.querySelectorAll(`[data-row="${r.id}"] ${sel}`)]).find(seen);
+    let el = null;
+    if (it.kind === 'preset') el = inRows('.dci-type-ask') || byRows();
+    else if (it.kind === 'case') el = inRows('.dci-case-note') || byRows();
+    else if (it.kind === 'sugg') el = [...ov.querySelectorAll(`.dci-mx-cell[data-col="k:${it.a.key}"] .dci-mxchip-sugg`)].find(seen) || ov.querySelector(`th[data-colhead="k:${it.a.key}"]`);
+    else if (it.kind === 'auto') {
+      // ((review) the cell of its event)
+      const box = sec && [...sec.querySelectorAll('td.dci-em-c-autohl')].find((td) => seen(td) && (td.querySelector('input[data-ev]') || { dataset: {} }).dataset.ev === it.ev);
+      el = box || byRows();
+    } else if (it.rows.length) el = byRows();
+    else if (it.kind === 'link') el = sec && sec.querySelector(`[data-match="${it.a.key}"]`);
+    else if (it.kind === 'uncr') el = sec && sec.querySelector('[data-el=uncr] > span');
+    else if (it.kind === 'dsup') el = sec && sec.querySelector('[data-el=dsup] .dci-dsup-h');
+    else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
+    else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
+    else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
+    if (el && it.kind === 'arr') el = el.closest('.dci-mx-arrsugg') || el;
+    if (seen(el)) return el;
+    if (strict) return null;
+    return seen(sec) ? sec.querySelector('.dci-ghead') || sec : null;
+  }
+
+  let yellRaf = 0;
+  function yellSoon() {
+    if (yellRaf || !S.overlay) return;
+    yellRaf = requestAnimationFrame(() => {
+      yellRaf = 0;
+      yellPaint();
+    });
+  }
+  const YELL_MARKS = ['dci-yell-must', 'dci-yell-can', 'dci-yell-ok'];
+  /** [Z-YELL] (3.110.0) The counters in the footer, the marks (orange, yellow, ✓ / ✕ at a suggestion), the dots at the entries' heads. */
+  function yellPaint() {
+    const ov = S.overlay;
+    if (!ov) return;
+    const items = yellItems();
+    S.yellList = items;
+    renderYell(items);
+    // ((review) all places found first, then written: one layout, not one per item)
+    const ix = yellIndex();
+    const found = items.map((it) => {
+      const el = yellEl(it, ix);
+      return { it, el: el && !el.matches('section, .dci-ghead') ? el : null };
+    });
+    const want = new Map();
+    found.forEach(({ it, el }) => { if (el) want.set(el, it.done ? 'dci-yell-ok' : `dci-yell-${it.cls}`); });
+    ov.querySelectorAll('.dci-yell-must, .dci-yell-can, .dci-yell-ok').forEach((x) => {
+      if (!want.has(x)) x.classList.remove(...YELL_MARKS);
+    });
+    want.forEach((cls, el) => {
+      YELL_MARKS.filter((c) => c !== cls).forEach((c) => el.classList.remove(c));
+      el.classList.add(cls);
+    });
+    // ✓ / ✕ / ↺: kept where they are (a button with the focus keeps it), else made
+    const old = new Map([...ov.querySelectorAll('.dci-yell-ctl')].map((c) => [`${c.dataset.yell}|${c.dataset.state}`, c]));
+    const keep = new Set();
+    for (const { it, el } of found) {
+      if (!el || !it.ok) continue;
+      let host = it.kind === 'auto' ? (el.closest('tr.dci-em-line') || el).querySelector('.dci-em-c-role') || el : el;
+      // ((review) never right into a row of a table)
+      if (host.tagName === 'TR') host = host.querySelector('.dci-em-c-role, .dci-c-role') || host.firstElementChild;
+      if (!host) continue;
+      const state = it.done ? 'done' : 'open';
+      const had = old.get(`${it.key}|${state}`);
+      // ((review) a note's own text stays as it is: ✓ / ✕ right after the note of words written small, not in it)
+      const beside = it.kind === 'case';
+      if (had && (beside ? had.previousElementSibling === host : had.parentElement === host)) {
+        keep.add(had);
+        continue;
+      }
+      const ctl = document.createElement('span');
+      ctl.className = 'dci-yell-ctl';
+      ctl.dataset.yell = it.key;
+      ctl.dataset.state = state;
+      ctl.innerHTML = it.done
+        ? `<span class="dci-yell-tick" title="${esc(tr('yell.doneTitle'))}">✓</span><button type="button" class="dci-iconbtn" data-act="yell-undo" title="${esc(tr('yell.undo'))}" aria-label="${esc(tr('yell.undo'))}">↺</button>`
+        : `<button type="button" class="dci-iconbtn dci-yell-yes" data-act="yell-ok" title="${esc(tr(`yell.ok.${it.kind}`))}" aria-label="${esc(tr(`yell.ok.${it.kind}`))}">✓</button><button type="button" class="dci-iconbtn dci-yell-no" data-act="yell-no" title="${esc(tr(`yell.no.${it.kind}`))}" aria-label="${esc(tr(`yell.no.${it.kind}`))}">✕</button>`;
+      if (beside) host.after(ctl);
+      else host.appendChild(ctl);
+      keep.add(ctl);
+    }
+    old.forEach((c) => { if (!keep.has(c)) c.remove(); });
+    // the entries' heads: a dot with the number (an entry folded or compact shows that something is open in it)
+    const perEntry = new Map();
+    items.filter((it) => it.a && !it.done).forEach((it) => {
+      const c = perEntry.get(it.a.key) || { must: 0, can: 0 };
+      c[it.cls] += 1;
+      perEntry.set(it.a.key, c);
+    });
+    // (beside the name, not in it: what reads the name stays as it was)
+    ov.querySelectorAll('section[data-group] .dci-gname').forEach((head) => {
+      const c = perEntry.get(head.closest('section[data-group]').dataset.group) || { must: 0, can: 0 };
+      const html = ['must', 'can'].filter((cls) => c[cls]).map((cls) => `<span class="dci-yell-dot dci-yell-dot-${cls}" title="${esc(tr(`yell.dot.${cls}`, { n: c[cls] }))}">● ${c[cls]}</span>`).join('');
+      let box = head.nextElementSibling && head.nextElementSibling.matches('.dci-yell-dots') ? head.nextElementSibling : null;
+      if (!html) {
+        if (box) box.remove();
+        return;
+      }
+      if (!box) {
+        box = document.createElement('span');
+        box.className = 'dci-yell-dots';
+        head.after(box);
+      }
+      if (box.innerHTML !== html) box.innerHTML = html;
+    });
+  }
+  /** [Z-YELL] (3.110.0) "● n must ‹ ›" and "● n can ‹ ›" in the footer – or one counter (⚙ Settings → Staging); green at 0. */
+  function renderYell(items) {
+    const box = S.overlay && $('yell');
+    if (!box) return;
+    const open = items.filter((x) => !x.done);
+    const cnt = (cls) => open.filter((x) => cls === 'all' || x.cls === cls).length;
+    const one = (cls) => {
+      const n = cnt(cls);
+      const nav = (act, sym) => `<button type="button" class="dci-iconbtn" data-act="${act}" data-cls="${cls}" title="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}" aria-label="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}"${n ? '' : ' disabled'}>${sym}</button>`;
+      return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}">${nav('yell-prev', '‹')}<button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}"${n ? '' : ' disabled'}>${esc(tr(`yell.${cls}`, { n }))}</button>${nav('yell-next', '›')}</span>`;
+    };
+    const html = S.yellOne ? one('all') : `${one('must')}${one('can')}`;
+    if (box.dataset.html !== html) {
+      box.innerHTML = html;
+      box.dataset.html = html;
+    }
+  }
+  /** [Z-YELL] (3.110.0) To the next (or the one before) open item of a class: shown in the middle, flashing. */
+  function gotoYell(cls, step) {
+    const list = (S.yellList || yellItems()).filter((x) => !x.done && (cls === 'all' || x.cls === cls)).sort((x, y) => (x.cls === y.cls ? 0 : x.cls === 'must' ? -1 : 1));
+    if (!list.length) return;
+    S.yellIdx = S.yellIdx || {};
+    const k = S.yellIdx[cls];
+    const i = ((k == null || k < 0 ? (step > 0 ? -1 : 0) : k) + step + list.length) % list.length;
+    S.yellIdx[cls] = i;
+    const it = list[i];
+    // a row of the full view not shown (its entry folded, the row closed): opened – the compact view stays as it is
+    if (it.row && S.view !== 'compact' && !yellEl(it, yellIndex(), true)) revealRow(it.row);
+    const el = yellEl(it);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('dci-flash');
+    setTimeout(() => el.classList.remove('dci-flash'), 2500);
+  }
+  /** [Z-YELL] (3.110.0) ✓ / ✕ / ↺ of a suggestion. */
+  function yellAnswer(key, what) {
+    const it = (S.yellList || yellItems()).find((x) => x.key === key);
+    if (!it) return;
+    if (what === 'undo') {
+      S.yellDone.delete(key);
+      if (it.kind === 'preset') it.rows.forEach((r) => { if (r.typeAnswer === 0) r.typePreset = true; });
+    } else if (it.kind === 'preset') {
+      // the translation's question answered: ✓ the liner notes as taken (green, ↺ opens it again), ✕ the other answer (the lyrics)
+      it.rows.forEach((r) => {
+        const q = typeQuestionFor(r);
+        const other = q ? q.options.findIndex((o, i) => i !== r.typeAnswer) : -1;
+        pickType(r, what === 'ok' ? r.typeAnswer : other);
+      });
+      if (what === 'ok') S.yellDone.add(key);
+    } else if (what === 'ok') S.yellDone.add(key);
+    else if (it.kind === 'case') {
+      // ✕: every word written small kept as written (each row of the item)
+      it.rows.forEach((r) => [...(r.creditPhrases || []), ...(r.creditLowered || [])].forEach((w) => caseKeep(r, w, true)));
+    } else if (it.kind === 'auto') {
+      // ✕: the automatic row out of that event (the instruments ticked there say it)
+      const rows = S.rows.filter((r) => r.artistKey === it.a.key && r.instsAuto && r.level !== 'skip' && eventKeyOf(r) === it.ev);
+      if (rows.length) emTick(it.a, rows, it.ev, false);
+      rerenderGroup(it.a);
+    }
+    yellSave();
+    log('info', what === 'undo' ? 'yellUndo' : what === 'ok' ? 'yellOk' : 'yellNo', { what: tr(`yell.kind.${it.kind}`) });
+    refresh();
+  }
+  /** [Z-YELL] (3.110.0) What was confirmed with ✓: kept per release only with "Remember" (⚙ Settings → Cache); a new import opens it again. */
+  function yellSave() {
+    if (!remembering() || !releaseMbid) return;
+    writeJson('localStorage', `dci-yell:${releaseMbid}`, S.yellDone && S.yellDone.size ? [...S.yellDone] : null);
+  }
+  function yellLoad() {
+    const list = remembering() && releaseMbid ? readJson('localStorage', `dci-yell:${releaseMbid}`, []) : [];
+    S.yellDone = new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string') : []);
+  }
+
   function gotoIncomplete(step) {
     const ids = S.incompleteIds || [];
     if (!ids.length) return;
@@ -22538,6 +22829,7 @@
       S.artists = new Map();
       S.rows = [];
       S.emGhost = new Map(); // [Z-EVCOL] (3.103.0)
+      yellLoad(); // [Z-YELL] (3.110.0) what was confirmed: open again unless remembered
       S.festivals = []; // [3.37.8] (S056)
       S.festInMbSaid = null; // ([Z-EVR] 3.88.0, review)
       S.evNote = null; // ([Z-EVL] 3.92.0)
@@ -26596,6 +26888,7 @@
    * staged comes from them as before.
    */
   function emTick(a, rows, evKey, on) {
+    if (!rows.length) return; // ((Z-YELL 3.110.0, review) nothing to tick: the state changed meanwhile)
     // [Z-CLV] (3.44.1, review) a row of an event on "Skip": ✕ takes it out of that event (it stays on Skip, "taken out")
     if (String(evKey).startsWith('skip|')) {
       if (!on) rows.filter((r) => skippedEv(r) && `skip|${r.emSkipEv}` === evKey).forEach((r) => { delete r.emSkipEv; });
@@ -30165,6 +30458,7 @@
   }
 
   function renderGroups() {
+    yellSoon(); // [Z-YELL] (3.110.0)
     dropStaleEntrySkip();
     const all = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
     // [Z-SK] (3.40.15) with "Remove skipped entries from the dashboard": those skipped with "⊘ Skip" in a line at the bottom
@@ -30256,6 +30550,7 @@
       [w.scrollLeft, w.scrollTop] = wraps[k];
     });
     emBarsSoon();
+    yellSoon(); // [Z-YELL] (3.110.0) the marks drawn again
     if (again) {
       const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
       const el = again.edit ? fresh.querySelector(`.dci-em-evedit [data-f="${q(again.f)}"]${again.i ? `[data-i="${q(again.i)}"]` : ''}`)
@@ -30285,6 +30580,7 @@
   }
 
   function rerenderRow(row) {
+    yellSoon(); // [Z-YELL] (3.110.0) the marks drawn again (after the row)
     // [E4] (3.34.30) a row of an entry shown as a matrix: the entry is drawn anew (its lines follow the row)
     const ra = S.artists.get(row.artistKey);
     if (mxOn(ra) && (mxEntry(ra) || mxCompact(ra))) {
@@ -30442,6 +30738,7 @@
   function refresh() {
     if (!S.overlay) return;
     emBarsSoon(); // [Z-EMSCR] (3.109.0)
+    yellSoon(); // [Z-YELL] (3.110.0)
     // [Z-FEV] (3.85.0, review) the festival hint above the entries drawn again when its event came or went (by hand too)
     if ((S.festivals || []).length) {
       const sig = S.festivals.map((f) => (festivalEvent(f) ? 1 : 0)).join('');
@@ -37155,6 +37452,7 @@
   }
 
   function renderWorks() {
+    yellSoon(); // [Z-YELL] (3.110.0)
     S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) "cover" set by itself worked out anew
     // [3.36.4] the choices of the works matrix remembered too (soon after a change)
     scheduleRemember();
@@ -40663,6 +40961,18 @@
       case 'inc-prev':
         gotoIncomplete(act === 'inc-next' ? 1 : -1);
         break;
+      // [Z-YELL] (3.110.0) the open items: to the next one, ✓ / ✕ / ↺ of a suggestion
+      case 'yell-next':
+      case 'yell-prev':
+        gotoYell(btn.dataset.cls || 'all', act === 'yell-next' ? 1 : -1);
+        break;
+      case 'yell-ok':
+      case 'yell-no':
+      case 'yell-undo': {
+        const ctl = btn.closest('[data-yell]');
+        if (ctl) yellAnswer(ctl.dataset.yell, act.slice(5));
+        break;
+      }
       case 'rule-info':
       case 'rule-goto': {
         // The rules window with this row's Discogs role in the test field (and at the rule clicked); [3.30.2] as a window
@@ -42277,6 +42587,13 @@
       return;
     }
     // [Z-SNW] (3.83.0) works of the same title in the edit note
+    if (f === 'yell-one') {
+      S.yellOne = el.checked;
+      writeJson('localStorage', 'dci-yell-one', el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('settings.yellOne'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      yellPaint();
+      return;
+    }
     if (f === 'note-dup') {
       S.noteDupWorks = el.checked;
       writeJson('localStorage', 'dci-note-dup', el.checked ? null : false);
@@ -43287,6 +43604,7 @@
             </span>
             <span class="dci-foot-run" data-el="foot-run" role="status" hidden><span class="dci-foot-run-t"></span></span>
             <div class="dci-sum" data-el="sum"></div>
+            <span class="dci-yell" data-el="yell" role="status"></span>
             <span class="dci-foot-chips" data-el="foot-chips" role="status" aria-live="polite"></span>
             <div class="dci-foot-actions">
               <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
@@ -43640,7 +43958,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup'],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
@@ -43673,6 +43991,8 @@
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
+  S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
+  S.yellDone = new Set();
   S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
@@ -45561,6 +45881,8 @@
         row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
           data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
         row(check('data-f="note-dup"', S.noteDupWorks, tr('settings.noteDup'), tr('settings.noteDupTitle'))),
+        // [Z-YELL] (3.110.0) what is open: two counters (must, can) or one
+        row(check('data-f="yell-one"', S.yellOne, tr('settings.yellOne'), tr('settings.yellOneTitle'))),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -46222,7 +46544,7 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint', editNoteMode: 'full', noteDupWorks: true });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint', editNoteMode: 'full', noteDupWorks: true, yellOne: false });
       // ([Z-SNW] 3.83.0, review) the edit note as the defaults write it (Full, works of the same title named)
       if (S.staged.size) writeEditNote();
       S.rows.forEach(updateHint);
@@ -46282,6 +46604,8 @@
     // (3.43.4, review) the edit note Full | Simple (was left out: "Simple" came back after a reload); [Z-SNW] (3.83.0, review) works of
     // the same title named in it
     EDIT_NOTE_KEY, 'dci-note-dup',
+    // [Z-YELL] (3.110.0) one counter of what is open, not two
+    'dci-yell-one',
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups
@@ -46401,6 +46725,7 @@
     S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
+    S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true;
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
     S.levelPalette = levelPaletteRead();
@@ -49423,6 +49748,31 @@
       .dci-sum-sep { color: var(--muted); }
       .dci-sum .dci-incomplete { white-space: nowrap; }
       .dci-foot-chips { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
+      /* [Z-YELL] (3.110.0) what is open: must orange, can yellow, confirmed green; the counters in the footer, the dots at the heads */
+      #dci-overlay .dci-yell-must:not(tr) { box-shadow: 0 0 0 2px #eb743b; }
+      #dci-overlay .dci-yell-can:not(tr) { box-shadow: 0 0 0 2px var(--sugg-line); }
+      #dci-overlay .dci-yell-ok:not(tr) { box-shadow: 0 0 0 2px #3c9a5f; }
+      #dci-overlay tr.dci-yell-must > :first-child { box-shadow: inset 4px 0 0 #eb743b; }
+      #dci-overlay tr.dci-yell-can > :first-child { box-shadow: inset 4px 0 0 var(--sugg-line); }
+      #dci-overlay tr.dci-yell-ok > :first-child { box-shadow: inset 4px 0 0 #3c9a5f; }
+      .dci-yell-ctl { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin-left: calc(var(--u, 1px) * 4); vertical-align: middle; }
+      .dci-yell-ctl .dci-yell-yes, .dci-yell-tick { color: #2f7d4a; font-weight: 700; }
+      .dci-yell-ctl .dci-yell-no { color: #b23b2e; }
+      .dci-yell-dots { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-self: center; }
+      .dci-yell-dot { margin-left: calc(var(--u, 1px) * 6); font-size: 0.85em; font-weight: 600; white-space: nowrap; }
+      .dci-yell-dot-must { color: #c4571f; }
+      .dci-yell-dot-can { color: #a17400; }
+      .dci-yell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); font-size: 0.92em; }
+      .dci-yell:empty { display: none; }
+      .dci-yell-c { display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; padding: 0 calc(var(--u, 1px) * 2); white-space: nowrap; }
+      .dci-yell-c-must, .dci-yell-c-all { border-color: #eb743b; background: #fde9df; color: #8a3410; }
+      .dci-yell-c-can { border-color: var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-yell-c.dci-yell-zero { border-color: #3c9a5f; background: #e5f4ea; color: #1f5c35; }
+      .dci-yell-c .dci-yell-n, .dci-yell-c .dci-iconbtn { color: inherit; }
+      #dci-overlay .dci-yell-c .dci-iconbtn { border: 0; background: none; min-width: 0; width: auto; height: auto; padding: 0 calc(var(--u, 1px) * 1); font-size: 0.85em; line-height: 1; }
+      #dci-overlay .dci-yell-c .dci-yell-n { padding: 0; text-decoration: none; }
+      .dci-yell-c .dci-iconbtn:disabled { opacity: 0.35; }
+      .dci-yell-c .dci-yell-n { font-weight: 600; }
       .dci-foot-chips:empty { display: none; }
       .dci-foot-chip { border: 1px solid; border-radius: 999px; padding: 1px calc(var(--u, 1px) * 8); font: inherit; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; white-space: nowrap; cursor: pointer; }
       .dci-foot-chip-warn { background: #fff8db; color: #7a5a00; border-color: #e8d48a; }
