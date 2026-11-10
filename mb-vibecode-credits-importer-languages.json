@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.112.0",
+  "version": "3.113.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -305,6 +305,15 @@
     "em.ghostDrop": "Diese leere Spalte entfernen",
     "em.ghostEmpty": "leer",
     "insts.label": "Instrumente:",
+    "insts.commonTitle": "Gemeinsame Stufe hinzufügen: {what} – eine Zeile auf den Aufnahmen neben den Instrumenten (sie bleiben)",
+    "insts.commonRemove": "Die Zeile der gemeinsamen Stufe ({what}) wieder herausnehmen",
+    "insts.commonVocals": "vocals",
+    "insts.commonPerformer": "performer",
+    "insts.commonAll": "instruments",
+    "log.instsCommon": "{name}: die gemeinsame Stufe der Instrumente hinzugefügt – {what}",
+    "log.instsCommonOff": "{name}: die Zeile der gemeinsamen Stufe herausgenommen",
+    "settings.instsCommon": "⑃ anbieten – die gemeinsame Stufe der Instrumente eines Eintrags als Zeile",
+    "settings.instsCommonTitle": "Neben „Instrumente: pro Track | auf dem Release“: eine Zeile der Stufe, die alle teilen (Saxophone und eine Flöte: woodwind)",
     "insts.track": "je Track",
     "insts.release": "auf dem Release",
     "insts.trackTitle": "Jedes Instrument auf allen Recordings (wie die Quelle sie ohne Tracks nennt)",
