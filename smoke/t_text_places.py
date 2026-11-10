@@ -266,8 +266,9 @@ def case_medium():
        Misery Loves Co." (also the studio, which is only for the vinyl), "Mastered by Max Vinyl (vinyl)", "Lacquer cut by Lou
        Lacquer", "Vinyl master: Vic Master". "Vinyl LP mastering and digital mastering by Dana Digital at Sound House": Dana
        Digital keeps the digital mastering (without "digital" as role credit), Sound House stays.
-    B) "Translated by Ana Ruiz" (Bandcamp): no type until chosen, the question offers liner notes (suggested) and translator
-       (lyrics); liner notes puts it on the release.
+    B) "Translated by Ana Ruiz" (Bandcamp): (Z-ENGTR 3.109.0) liner notes on the release at once, no role credit (until 3.108.0 no
+       type until chosen, the task "translation"); the question offers liner notes (translator; suggested) and translator (lyrics) and
+       stays; liner notes clicked keeps it.
     C) The reasons: "Thanks Mom." – thanks; the vinyl lines – "for Vinyl LP – this release: Digital Media"."""
     H.attr(9120, 'trumpet', 14, 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
@@ -335,8 +336,8 @@ Thanks Mom."""
             pg.wait_for_timeout(500)
         after = (pg.evaluate(ROWS).get('Ana Ruiz') or [['']])[0]
         print('B) Ana Ruiz:', ana[:2], ana[3][:90], '| Wahl:', opts, '| nach „liner notes“:', after[:3], after[4])
-        ok_b = ana[1] in ('Choose type …', '') and 'mostly the translation of the liner notes' in ana[3] \
-            and opts == [['liner notes suggested', True], ['translator (lyrics)', False]] and after[1] == 'liner notes' and after[2] == 'translation' and after[4] == 'Release'
+        ok_b = ana[1] == 'liner notes' and ana[2] == '' and ana[4] == 'Release' and 'mostly the translation of the liner notes' in ana[3] \
+            and opts == [['liner notes (translator) suggested', True], ['translator (lyrics)', False]] and after[1] == 'liner notes' and after[2] == '' and after[4] == 'Release'
         # C)
         why = dict(ign)
         ok_c = why.get('Thanks Mom.') == '– thanks' \

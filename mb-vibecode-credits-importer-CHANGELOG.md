@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.108.0 | 1.17.0 |
+| 2026-11-08 | 3.88.0 – 3.109.0 | 1.17.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.109.0
+
+- **Every cell of the matrix a tick** (collected item Z-EMCELL): with more events than the blocks share, a block showed only its own events – the cells of the others were striped, with nothing to tick. Now each of them is a tick where MusicBrainz has the line's type on that event's level: ticked, the role is added to that event (its level, tracks and date); a tick taken away takes it out again, so a tick moved is a level changed. New events still come by "＋ Event". All ticks of a line taken away: the line stays, grey, its ticks free – counted like ✕; a tick brings it back. Instruments "on the release" (Z-INSTS) stay there when an instrument is ticked on the recordings as well; the automatic row's tick of that event turns yellow, its tooltip names the instruments ticked there too.
+- **Compact view: where a chip can go** (Z-EMCELL, variant B): while a chip is dragged, the entry's other events where it is not are dashed as targets; an event whose level has no such type is faint and takes no drop.
+- **Bars to scroll the matrix sideways** (Z-EMSCR): a wide matrix has a bar above its head and one at the bottom of the window while the table goes on below it; all move together with the table. ⇧ Shift + wheel scrolls it sideways too.
+- **Notes stay in view** (Z-EMNOTE): the rows over the whole width of the matrix – questions, the heads of the blocks, "+ n more", "only on MusicBrainz" – stay at the left edge when the table is scrolled sideways (they were cut off).
+- **A question answered keeps the level** (Z-INSTL): answering a question of a role ("Voice": other vocals “voice”) no longer puts a row back on the recordings when it is on the release and MusicBrainz has its type there.
+- **Translations asked from every source** (Z-ENGTR): "English Translation", "Translated By", "Translation (French)", "Übersetzung", "Traducción", "Traduction" … – from Discogs, Bandcamp and any text – are liner notes with the attribute translator at once (a suggestion); the question stays: "translator (lyrics)" puts the person on the works – of the tracks the source names, without tracks a suggestion on every work (✓ keeps it, × takes it out); the works matrix's column has the question too. No role credit, and the language is kept nowhere (MusicBrainz has it only on the work itself). Until now only Bandcamp asked, nothing was taken until answered, and "English Translation" was not known.
 
 ### Import 3.108.0
 

@@ -138,17 +138,18 @@ def case_join():
 
 
 # the blocks of an entry: head, event heads, lines (instrument or role, role credit, flags ticked, ticks, status, rows)
+# ([Z-EMCELL] 3.109.0) a block's events: its own columns, not the ticks of the others' (dci-em-c-other)
 BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null;
   return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: (h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-bac, .dci-insts-seg').forEach(x => x.remove()); return c.textContent; })(b.querySelector('.dci-em-bhead')).replace(/\\s+/g, ' ').trim(),
     tip: b.querySelector('.dci-em-bhead strong').title,
     ev: (() => { const heads = [...b.closest('table').querySelectorAll('thead th.dci-em-ev')]; const ln = b.querySelector('tr.dci-em-line'); const cells = ln ? [...ln.querySelectorAll('td.dci-em-c-ev')] : [];
-      return heads.filter((h, i) => cells[i] && !cells[i].classList.contains('dci-em-c-none')); })().map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+      return heads.filter((h, i) => cells[i] && !cells[i].classList.contains('dci-em-c-none') && !cells[i].classList.contains('dci-em-c-other')); })().map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle, button.dci-em-evdate, .dci-em-evdatebox').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
     add: [...b.querySelectorAll('[data-f=em-addev] option')].filter(o => o.value).map(o => o.textContent.trim()),
     lines: [...b.querySelectorAll('tr.dci-em-line')].map(t => ({ line: t.dataset.line, n: t.dataset.rows.split(',').length, skip: t.classList.contains('dci-em-skip'),
       role: ((t.querySelector('[data-f=em-primary]') || {}).value) || t.querySelector('.dci-em-c-role').textContent.replace(/\\s+/g, ' ').trim(),
       wrote: (t.querySelector('.dci-em-raw') || { textContent: '' }).textContent.trim(), credit: (t.querySelector('[data-f=em-credit]') || { value: '-' }).value,
-      flags: [...t.querySelectorAll('[data-f=em-flag]')].filter(c => c.checked).map(c => c.value), ticks: [...t.querySelectorAll('[data-f=em-tick]')].map(c => c.checked),
+      flags: [...t.querySelectorAll('[data-f=em-flag]')].filter(c => c.checked).map(c => c.value), ticks: [...t.querySelectorAll('td:not(.dci-em-c-other) > [data-f=em-tick]')].map(c => c.checked),
       status: (t.querySelector('[data-emstatus]') || { textContent: '' }).textContent.trim() })) })); }"""
 
 
@@ -3844,6 +3845,247 @@ def case_emtype3108():
         H.discogs_release = orig
         H.ARTISTS.pop(3361, None)
         H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_emcell3109():
+    """Credits Importer 3.109.0 (collected items Z-EMCELL, Z-EMSCR, Z-EMNOTE): Cell Lu – "Piano" track 1, "Vocals" track 2, "Drums"
+    track 3, "Producer", "Liner Notes" (five events: more than shared, each block its own); Sax Two – "Soprano Saxophone [Guest], Flute [Guest]".
+    A) Cells of events a block does not show are ticks where MusicBrainz has the type on the event's level (until 3.108.0 striped,
+       nothing to tick): piano at ① (all tracks), ③ (track 2), ⑤ (release); liner notes only at ⑤ (no liner notes on recordings).
+    B) Piano ticked at ①: on all tracks too (its track 1 stays).
+    C) Both ticks of the piano taken away: the line stays, grey, its ticks free; ticked at ③ again: piano on track 2.
+    D) Z-EMSCR (narrow window): a bar above the head as wide as the table; moved, the table follows; ⇧ + wheel scrolls sideways.
+       Z-EMNOTE: the block's head stays at the left edge of the box, not wider than it.
+    E) Sax Two "on the release", then the soprano saxophone ticked on the recordings: the automatic row's tick there yellow, its
+       tooltip names the soprano saxophone.
+    F) The compact view: a chip of the piano dragged – the events where it is not and that can have it are targets (dashed), the
+       liner notes' chip: the recordings are no target; the drag ended: none."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9131, 'soprano saxophone'), (9142, 'flute')):
+        H.attr(i, n, 14, 14)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3371] = (H.uid('dddddddd', 3371), 'Cell Lu')
+    H.ARTISTS[3372] = (H.uid('dddddddd', 3372), 'Sax Two')
+    CR = [('Cell Lu', 'Piano', '1', 3371), ('Cell Lu', 'Vocals', '2', 3371), ('Cell Lu', 'Drums', '3', 3371), ('Cell Lu', 'Producer', '', 3371),
+          ('Cell Lu', 'Liner Notes', '', 3371), ('Sax Two', 'Soprano Saxophone [Guest], Flute [Guest]', '', 3372)]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, t, i in CR]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong') || {}).textContent.trim() === name)"
+    GRID = """([sec, name]) => { const g = (%s)(name); const t = g && g.querySelector('table.dci-em-one'); if (!t) return null;
+      const nm = (tr) => { const p = tr.querySelector('[data-f=em-primary]'); if (p && p.value) return p.value; const r = tr.querySelector('.dci-em-role');
+        return !r ? '' : r.tagName === 'SELECT' ? (r.selectedOptions[0] || {}).text || '' : r.textContent; };
+      return [...t.querySelectorAll('tr.dci-em-line')].map(tr => [nm(tr),
+        tr.classList.contains('dci-em-skip'), [...tr.querySelectorAll('td.dci-em-c-ev')].map(td => { const c = td.querySelector('input');
+          return (td.classList.contains('dci-em-c-other') ? 'o' : td.classList.contains('dci-em-c-none') ? '-' : '') + (c ? (c.checked ? 'X' : '.') + (c.disabled ? 'D' : '') : '')
+            + (td.classList.contains('dci-em-c-autohl') ? '!' : ''); })]); }""" % SEC
+    TICK = """([name, line, i]) => { const g = (%s)(name); const nm = (tr) => { const p = tr.querySelector('[data-f=em-primary]'); if (p && p.value) return p.value;
+      const r = tr.querySelector('.dci-em-role'); return !r ? '' : r.tagName === 'SELECT' ? (r.selectedOptions[0] || {}).text || '' : r.textContent; };
+      const tr = [...g.querySelectorAll('tr.dci-em-line')].find(tr => nm(tr) === line); const c = tr.querySelectorAll('td.dci-em-c-ev')[i].querySelector('input'); c.click(); return c.checked; }""" % SEC
+    grid = lambda pg, n: {r[0]: r[1:] for r in pg.evaluate(GRID, ['', n]) or []}
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g0 = grid(pg, 'Cell Lu')
+            print('A)', g0)
+            results.append(g0.get('piano') == [False, ['o.', 'X', 'o.', '.', 'o.']] and g0.get('liner notes') == [False, ['-', '-', '-', '-', 'X']]
+                           and g0.get('producer') == [False, ['X', 'o.', 'o.', 'o.', 'o.']])
+            # B)
+            pg.evaluate(TICK, ['Cell Lu', 'piano', 0])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            g1 = grid(pg, 'Cell Lu')
+            print('B)', g1.get('piano'))
+            results.append(g1.get('piano', [0, []])[1][:2] == ['X', 'X'])
+            # C)
+            pg.evaluate(TICK, ['Cell Lu', 'piano', 0])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            pg.evaluate(TICK, ['Cell Lu', 'piano', 1])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            g2 = grid(pg, 'Cell Lu')
+            pi = g2.get('piano') or [False, []]
+            free = [k for k, c in enumerate(pi[1]) if c and 'D' not in c and c.strip('o') in ('.',)]
+            ix = next((k for k, c in enumerate(pi[1]) if c == 'o.'), None)
+            print('C) leer:', pi, '| frei:', free)
+            ok_c = pi[0] is True and 'X' not in ''.join(pi[1]) and len(free) >= 3 and ix is not None
+            if ix is not None:
+                pg.evaluate(TICK, ['Cell Lu', 'piano', ix])
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            g3 = grid(pg, 'Cell Lu')
+            head = pg.evaluate("[...document.querySelectorAll('table.dci-em-one thead th')].map(th => th.textContent.replace(/\\s+/g, ' ').trim())")
+            print('   wieder:', g3.get('piano'), head)
+            p3 = g3.get('piano') or [True, []]
+            evs = [h for h in head if 'Recording' in h or 'Release' in h]
+            ok_c = ok_c and p3[0] is False and sum(c.count('X') for c in p3[1]) == 1
+            results.append(ok_c)
+            # D)
+            pg.click('#dci-log [data-act=log-hide], #dci-log button:has-text("Hide")') if pg.locator('#dci-log button:has-text("Hide")').count() else None
+            pg.set_viewport_size({'width': 700, 'height': 800})
+            pg.wait_for_timeout(600)
+            ST = """(name) => { const g = (%s)(name); const w = g.querySelector('.dci-em-onewrap'); const top = g.querySelector('.dci-em-hbar-top'); const h = g.querySelector('.dci-em-bhead');
+              const wr = w.getBoundingClientRect(), hr = h.getBoundingClientRect();
+              return { sw: w.scrollWidth, cw: w.clientWidth, sl: w.scrollLeft, top: top ? [top.hidden, top.firstElementChild.style.width, top.scrollLeft] : null,
+                head: [Math.round(hr.left - wr.left), Math.round(hr.width)] }; }""" % SEC
+            d0 = pg.evaluate(ST, 'Cell Lu')
+            pg.evaluate("(name) => { const t = (%s)(name).querySelector('.dci-em-hbar-top'); t.scrollLeft = 150; t.dispatchEvent(new Event('scroll')); }" % SEC, 'Cell Lu')
+            pg.wait_for_timeout(300)
+            d1 = pg.evaluate(ST, 'Cell Lu')
+            pg.evaluate("(name) => { const w = (%s)(name).querySelector('.dci-em-onewrap td.dci-em-c-ev'); w.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, shiftKey: true, bubbles: true, cancelable: true })); }" % SEC, 'Cell Lu')
+            pg.wait_for_timeout(300)
+            d2 = pg.evaluate(ST, 'Cell Lu')
+            # (review) a tick draws the entry anew: the box stays where it was scrolled to, the bar shown
+            pg.evaluate(TICK, ['Cell Lu', 'drums (drum set)', 4])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            d3 = pg.evaluate(ST, 'Cell Lu')
+            print('D)', d0, d1, d2, d3)
+            results.append(d0['sw'] > d0['cw'] and d0['top'] and d0['top'][0] is False and d0['top'][1] == f"{d0['sw']}px"
+                           and d1['sl'] == 150 and d2['sl'] == 250 and abs(d1['head'][0]) <= 2 and d1['head'][1] <= d1['cw']
+                           and d3['sl'] == 250 and d3['top'] and d3['top'][0] is False and d3['top'][2] == 250)
+            pg.set_viewport_size({'width': 1280, 'height': 900})
+            pg.wait_for_timeout(400)
+            # E)
+            pg.click(f"{sec_sel(pg, 'Sax Two')} [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            s0 = grid(pg, 'Sax Two')
+            print('E) vorher:', s0)
+            rec = next((k for k, c in enumerate(s0.get('soprano saxophone', [0, []])[1]) if c in ('.', 'o.')), None)
+            if rec is not None:
+                pg.evaluate(TICK, ['Sax Two', 'soprano saxophone', rec])
+                H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            s1 = grid(pg, 'Sax Two')
+            tip = pg.evaluate("(name) => ((%s)(name).querySelector('td.dci-em-c-autohl') || {}).title || ''" % SEC, 'Sax Two')
+            print('   nachher:', s1, '|', tip)
+            auto = [v for k, v in s1.items() if k not in ('soprano saxophone', 'flute')]
+            results.append(rec is not None and any('X!' in v[1] for v in auto) and 'soprano saxophone' in tip
+                           and not any('!' in c for k, v in s0.items() for c in v[1]))
+            # F)
+            pg.click('.dci-head [data-act=view-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            DRAG = """([name, line]) => { const g = (%s)(name); const chip = [...g.querySelectorAll('.dci-em-chip[data-drag=em-chip]')].find(c => c.querySelector('.dci-em-chipname').textContent.trim().startsWith(line));
+              if (!chip) return null; chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+              const out = [...g.querySelectorAll('.dci-em-cl[data-emev]')].map(x => (x.classList.contains('dci-em-cltarget') ? 'T' : x.classList.contains('dci-em-clnot') ? 'N' : '-'));
+              chip.dispatchEvent(new DragEvent('dragend', { bubbles: true })); return out; }""" % SEC
+            f1 = pg.evaluate(DRAG, ['Cell Lu', 'piano'])
+            f2 = pg.evaluate(DRAG, ['Cell Lu', 'liner notes'])
+            left = pg.evaluate("document.querySelectorAll('.dci-em-cltarget, .dci-em-clnot').length")
+            print('F)', f1, f2, left)
+            results.append(bool(f1) and f1.count('T') >= 3 and f1.count('-') >= 1 and bool(f2) and f2.count('N') >= 3 and f2.count('T') == 0 and left == 0)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_instl3109():
+    """Credits Importer 3.109.0 (collected item Z-INSTL): Discogs names Jane Voice with "Voice, Soprano Saxophone, Flute" without tracks.
+    "Instruments: on the release" – her three rows on the release; the question of "Voice" (Q011) answered "other vocals “voice”": the row
+    stays on the release (MusicBrainz has vocal on the release; until 3.108.0 the answer's level, the recordings, came back); "vocals" the
+    same. A row on the recordings answered: stays there. (review) Only a level put there: "Directed By" (Q003, its rule's level the recordings)
+    answered "creative direction" goes to the release group, as before (MusicBrainz has it on the recordings too)."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    for i, n in ((9131, 'soprano saxophone'), (9142, 'flute')):
+        H.attr(i, n, 14, 14)
+    H.attr(9125, 'other vocals', 3, 3)
+    H.lt(9511, H.uid('1a1a1a1a', 9511), 'creative direction', 'artist', 'recording', (1,))
+    H.lt(9512, H.uid('1a1a1a1a', 9512), 'creative direction', 'artist', 'release_group', (1,))
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.lt(9057, H.uid('ffffffff', 9057), 'vocal', 'artist', 'release', (3, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CR = [('Jane Voice', 'Voice, Soprano Saxophone, Flute', 3381), ('Joe Voice', 'Voice', 3382), ('Poe Voice', 'Directed By', 3383)]
+    for n, _r, i in CR:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CR]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    VOICE = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => (t.querySelector('.dci-drole') || { dataset: {} }).dataset.raw.trim() === 'Voice'); if (!tr) return null;
+      const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const pr = tr.querySelector('[data-f=primary]');
+      return [lv ? lv.dataset.level : '', pr ? pr.value : '', [...tr.querySelectorAll('.dci-type-ask [data-act=type-pick]')].map(b => b.textContent.trim())]; }"""
+    PICK = """([name, label]) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const tr = [...g.querySelectorAll('tr.dci-row')].find(t => (t.querySelector('.dci-drole') || { dataset: {} }).dataset.raw.trim() === 'Voice');
+      const b = [...tr.querySelectorAll('.dci-type-ask [data-act=type-pick]')].find(x => x.textContent.trim() === label); if (b) b.click(); return !!b; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.click(f"{sec_sel(pg, 'Jane Voice')} [data-act=insts-set][data-insts=release]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            v0 = pg.evaluate(VOICE, 'Jane Voice')
+            ok1 = pg.evaluate(PICK, ['Jane Voice', 'other vocals “voice”'])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            v1 = pg.evaluate(VOICE, 'Jane Voice')
+            ok2 = pg.evaluate(PICK, ['Jane Voice', 'vocals'])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            v2 = pg.evaluate(VOICE, 'Jane Voice')
+            pg.evaluate(PICK, ['Joe Voice', 'other vocals “voice”'])
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            j1 = pg.evaluate(VOICE, 'Joe Voice')
+            POE = """() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Poe Voice');
+              const tr = g && g.querySelector('tr.dci-row'); if (!tr) return null; const lv = () => (tr.isConnected ? tr : g.querySelector('tr.dci-row')).querySelector('[data-act=level][aria-pressed=true]');
+              const before = (lv() || { dataset: {} }).dataset.level; const b = [...tr.querySelectorAll('.dci-type-ask [data-act=type-pick]')].find(x => x.textContent.trim() === 'creative direction');
+              if (b) b.click(); return [before, !!b]; }"""
+            po0 = pg.evaluate(POE)
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            po1 = pg.evaluate("""() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Poe Voice');
+              const tr = g && g.querySelector('tr.dci-row'); const lv = tr && tr.querySelector('[data-act=level][aria-pressed=true]'); return lv ? lv.dataset.level : ''; }""")
+            print('Jane:', v0, ok1, v1, ok2, v2, '| Joe:', j1, '| Poe:', po0, po1)
+            results.append(bool(v0) and v0[0] == 'release' and ok1 and v1[:2] == ['release', 'other vocals'] and ok2 and v2[0] == 'release'
+                           and bool(j1) and j1[:2] == ['recording', 'other vocals'] and bool(po0) and po0 == ['recording', True] and po1 == 'release_group')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

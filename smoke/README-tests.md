@@ -250,6 +250,7 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
                                 #   medium: the medium of the release decides (3.21.4): vinyl mastering, "(vinyl)", lacquer cut on Digital Media left out
                                 #     with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
+                                #     (3.109.0: liner notes with translator at once, no role credit; the question stays)
                                 #   initials: name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
                                 #     → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
                                 #   placedate: 3.32.5: "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th
@@ -512,6 +513,9 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   engtr3109: 3.109.0 (Z-ENGTR): "English Translation", "Translated By [German]", "Übersetzung", "Translation (French)" from
+                                #     Discogs – liner notes with translator at once, no role credit; "translator (lyrics)": a suggestion on every work
+                                #     (no tracks) or the work of the track named; back to the liner notes from the works matrix's column; staged with translator
                                 #   z384: 3.84.0 (Node; Z-WPR, Z-BTW, Z-DEDN, review): "All tracks written, performed and recorded by", the
                                 #     artist name in brackets (not "(Tenor)", "(Jr.)", "(CD2)" …), a dedication inside a credit keeps it,
                                 #     composed in / produced in, the period for Composition and Production, a recording's word wins
@@ -797,6 +801,10 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   emcell3109: 3.109.0 (Z-EMCELL, Z-EMSCR, Z-EMNOTE): ticks in the events a block does not show (where MusicBrainz has
+                                #     the type), a line emptied stays grey and free, the bars above and below a wide matrix (⇧ + wheel), the block's head
+                                #     at the left edge, the automatic row of "on the release" yellow, the compact view's drop targets
+                                #   instl3109: 3.109.0 (Z-INSTL): "Voice" answered on the release stays there (on the recordings: there)
                                 #   lvlrg3108: 3.108.0 (Z-LVLRG): "Level for all rows: Release group" – the A&R row there, the others stay, a message names them;
                                 #     (review) without the release's release group: nothing moved, a warning
                                 #   emtype3108: 3.108.0 (Z-EMTYPE, Z-UNCR2): the role of a matrix line a choice of the level's types ("artwork" → "design",
