@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.108.0
+// @version      3.109.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.108.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.108.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.109.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.109.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.108.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.109.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1594,6 +1594,7 @@
       "cover.from": "From the cover art · {what}",
       "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
+      "matrix.translationReason": "the translation named without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
       "matrix.colMenu": "Column: date, all works, publishers",
@@ -2978,6 +2979,8 @@
       "em.flagLabel": "{flag}: {name}",
       "em.tickLabel": "{name} in event {n}",
       "em.tickNo": "MusicBrainz has no “{type}” on the level {level}",
+      "em.tickOther": "A tick adds the role to event {n} (its level, tracks and date)",
+      "em.autoCovered": "The automatic row of “on the release” – ticked here as well: {list}. It stays; look whether it is still needed",
       "em.wrote": "written “{raw}”",
       "em.detail": "rows",
       "em.detailTitle": "The rows of this line with all their fields (type, level, date, tracks …)",
@@ -3473,7 +3476,7 @@
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
-      "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
+      "typeAsk.askTranslation": "“{role}”: mostly the translation of the liner notes – taken so (liner notes, translator) –, sometimes of the lyrics:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.askVoice": "“{role}”: plain vocals (MusicBrainz has no role credit for them), or other vocals or lead vocals credited “voice”? – please choose:",
@@ -13627,6 +13630,8 @@
     if (row.ruleId === 'R113') return norm(row.primaryText) === norm(row.base) ? '' : modelSpelling(row.base); // ([Z-NORD] 3.96.0)
     // [Z-PLT] (3.89.0) "Plated By" – of a person or (as an artist) a company: the task "vinyl plating"
     if (row.ruleId === 'R114' || row.ruleId === 'C046') return 'vinyl plating';
+    // [Z-ENGTR] (3.109.0) a translation (Q007): no role credit – neither the word nor its language ("English Translation")
+    if (row.askTranslation) return '';
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
     // [S052] (3.34.27) in lower case ("Chaims" → chaims); [164] (3.37.13) a similar instrument too, unless the word is one
     // slip off it (a typo) or the same word ("Taischigoto" → taishōgoto credited "taischigoto"; "Sxaophone" → saxophone without)
@@ -13963,7 +13968,13 @@
       resolveRowType(row);
     } else if (o) {
       Object.assign(row, { types: [o.type], creditFromRole: optionCredit(o, row) });
+      // [Z-ENGTR] (3.109.0, review) an answer taken as a suggestion: its level (the rule's own level came back above)
+      if (!row.levelTouched && row.typePreset) row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
       resolveRowType(row);
+      // [Z-ENGTR] (3.109.0) with its attributes ("translator"), its details of a language used
+      row.optFlags = (o.flags || []).map(norm);
+      row.optFlags.forEach((f) => row.flags.add(f));
+      if (row.askTranslation && (row.mods || []).length) row.consumed = uniq([...(row.consumed || []), ...row.mods.map(norm)]);
       // [Q006] with its instrument or voice
       if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
     } else if (!tq) {
@@ -20832,11 +20843,29 @@
     sp.mismatch = sp.source.usesMbTracks || sp.rel.tracks.length === S.mbTracks.length ? null : { n: sp.rel.tracks.length, m: S.mbTracks.length };
   }
 
-  /** [3.21.4] "Translated By", "Translation", "Translator" alone in Bandcamp credits: asked (Q007) instead of translator. */
+  /** [Z-ENGTR] (3.109.0) A detail that only names a language ("Translated By [English]"): no role credit, kept nowhere. */
+  const TRANSLATION_LANG = /^(english|german|french|spanish|italian|portuguese|dutch|swedish|norwegian|danish|finnish|icelandic|polish|czech|slovak|hungarian|romanian|greek|turkish|russian|ukrainian|japanese|chinese|korean|arabic|hebrew|catalan|basque|galician|irish|welsh|estonian|latvian|lithuanian|slovenian|croatian|serbian|bulgarian)$/;
+  /**
+   * [3.21.4] "Translated By", "Translation", "Translator" alone in Bandcamp credits: asked (Q007) instead of translator.
+   * [Z-ENGTR] (3.109.0) From every source, also with a language ("English Translation", "Translation (French)", a detail
+   * "[English]") and in other languages ("Übersetzung", "Traducción" – R004): its first answer (`presetAnswer`, liner notes with
+   * the attribute translator) is taken at once as a suggestion; "translator (lyrics)" goes to the works.
+   */
   function askTranslation(row) {
-    if (row.ruleId !== 'R004' || (row.mods || []).length) return;
+    if (row.ruleId !== 'R004' || row.company) return;
+    const mods = (row.mods || []).map(norm);
+    if (mods.length && !mods.every((m) => TRANSLATION_LANG.test(m))) return;
+    if (mods.length) row.consumed = uniq([...(row.consumed || []), ...mods]);
     row.askTranslation = true;
-    blankForQuestion(row);
+    const q = typeQuestionFor(row);
+    if (q && q.presetAnswer != null && row.typeAnswer == null && q.options[q.presetAnswer]) {
+      // ((review) the level of a suggestion is not one chosen by hand: the row can still be skipped as one MusicBrainz has, and goes
+      // back to the rule's level when the question is switched off)
+      const touched = !!row.levelTouched;
+      pickType(row, q.presetAnswer, { quiet: true });
+      row.levelTouched = touched;
+      row.typePreset = true;
+    } else blankForQuestion(row);
     refreshRowDetails(row);
   }
 
@@ -21084,7 +21113,7 @@
     if (!company) abbrAskFor(row, info.c); // [Z-ABBR2] (3.102.0, S166; review)
     if (!company && info.c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
-    if (!company && S.supp.source === BANDCAMP) askTranslation(row);
+    if (!company) askTranslation(row); // [Z-ENGTR] (3.109.0) from every source
     // [3.34.25] the same questions as in the import (the mapping is the same for every source)
     if (!company) {
       askVoice(row);
@@ -22316,7 +22345,7 @@
       if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
       row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
       // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
-      if (source === BANDCAMP) askTranslation(row);
+      askTranslation(row); // [Z-ENGTR] (3.109.0) from every source
       // [137d] (3.34.20) "Voice" asks (Q011; [137e] 3.34.25 from every source); a word MusicBrainz does not know as an instrument
       // asks for similar ones; [137f] so does the instrument of an instrument technician
       askVoice(row);
@@ -26026,6 +26055,15 @@
       <button type="button" class="dci-textbtn" data-act="em-keptok" data-row="${r.id}">${esc(tr('em.keptOk'))}</button></div>`;
   }
 
+  /**
+   * [Z-EMCELL] (3.109.0) The instruments and voices of an entry ticked in an event besides its automatic row of "on the release"
+   * (Z-INSTS): their names – the automatic row may say the same there.
+   */
+  function emAutoCovered(a, evKey) {
+    return uniq(S.rows.filter((x) => x.artistKey === a.key && !x.instsAuto && x.level !== 'skip' && x.level !== 'work' && ['instrument', 'vocal'].includes(instsKind(x))
+      && eventKeyOf(x) === evKey).map((x) => x.primaryText || rowPhrase(x) || x.raw).filter(Boolean));
+  }
+
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
   /** [Z-ALIGN] (3.100.0) The word of an attribute in the matrix ("add.", "guest", "solo", else MusicBrainz's name). */
   const emFlagWord = (f) => (['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f);
@@ -26076,14 +26114,24 @@
     // [Z-ATTR3] (3.103.0) together: at most three side by side, the others below them
     const flags = !flagNames ? `<td class="dci-em-c-flags"><div class="dci-em-flaggrid">${allowedList.map((f) => `<label class="dci-em-flagl">${flagBox(f)}${esc(emFlagWord(f))}</label>`).join('')}</div></td>`
       : (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? flagBox(f) : ''}</td>`).join('');
+    const autoLine = l.rows.some((x) => x.instsAuto);
     const ticks = evCols.map((e) => {
-      // [Z-ALIGN] (3.100.0) an event this block does not show ("＋ Event ▾" in its head adds it)
-      if (!b.events.includes(e)) return '<td class="dci-em-c-ev dci-em-c-none"></td>';
+      // [Z-ALIGN] (3.100.0) an event this block does not show ("＋ Event ▾" in its head adds it); [Z-EMCELL] (3.109.0) a tick where
+      // MusicBrainz has the line's type on the event's level (a tick adds the role to that event, as in the block's own columns)
+      if (!b.events.includes(e)) {
+        return e.skip || e.ghost || !typeOnLevel(r, e.level) ? '<td class="dci-em-c-ev dci-em-c-none"></td>'
+          : `<td class="dci-em-c-ev dci-em-c-other"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"
+            title="${esc(tr('em.tickOther', { n: e.n }))}"></td>`;
+      }
       const on = l.ev.has(e.key);
       if (e.skip) return `<td class="dci-em-c-ev dci-em-c-skip"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''} disabled title="${esc(tr('em.skipTick'))}"
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
       const ok = on || typeOnLevel(r, e.level);
-      return `<td class="dci-em-c-ev${e.ghost ? ' dci-em-c-ghost' : ''}"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
+      // [Z-EMCELL] (3.109.0) the automatic row of "on the release" (Z-INSTS) where an instrument of the entry is ticked too: yellow, why
+      // in its tooltip (it stays – a hint to look at)
+      const cover = on && autoLine ? emAutoCovered(a, e.key) : [];
+      const coverTitle = cover.length ? ` title="${esc(tr('em.autoCovered', { list: cover.join(', ') }))}"` : '';
+      return `<td class="dci-em-c-ev${e.ghost ? ' dci-em-c-ghost' : ''}${cover.length ? ' dci-em-c-autohl' : ''}"${coverTitle}><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
     }).join('');
     const open = S.emOpen.has(l.id);
@@ -26106,7 +26154,7 @@
     if (autoRow) role += ` <span class="dci-tag dci-insts-tag" title="${esc(tr(autoRow.instsHint ? 'insts.autoHint' : 'insts.auto', { group: autoRow.instsHint || '' }))}">${esc(tr('insts.tag'))}</span>`;
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}${l.rows.some(arhlOn) ? ' dci-arhl' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
         <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
-      </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
+      </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}"><div class="dci-em-stick">${ask}</div></td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
 
@@ -26151,7 +26199,7 @@
     // [Z-DSUP] (3.106.0, S173) below the first block of instruments and voices: the roles only on MusicBrainz
     const mbOnly = insts || ((b.kind === 'instrument' || b.kind === 'vocal') && m.blocks.find((x) => x.kind === 'instrument' || x.kind === 'vocal') === b) ? dsupMbOnlyRows(a, t.cols) : '';
     return `<tbody class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
-      ${shown.map((l) => emLineHtml(a, b, l, t.flagNames, t.cols, t.evCols)).join('')}${mbOnly}${moreBtn ? `<tr class="dci-em-morerow"><td colspan="${t.cols}">${moreBtn}</td></tr>` : ''}</tbody>`;
+      ${shown.map((l) => emLineHtml(a, b, l, t.flagNames, t.cols, t.evCols)).join('')}${mbOnly}${moreBtn ? `<tr class="dci-em-morerow"><td colspan="${t.cols}"><div class="dci-em-stick">${moreBtn}</div></td></tr>` : ''}</tbody>`;
   }
 
   /**
@@ -26178,11 +26226,14 @@
       : (flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(emFlagWord(f)) : ''}</th>`).join('');
     // (the fields of an event's date open in the head: the box lets them out – not cut off below a short table)
     const dateOpen = !!(S.emEvDate && !S.emEvDate.inline && String(S.emEvDate.key || '').startsWith(`${a.key}|`));
-    return `${seg}<div class="dci-em-scroll dci-em-onewrap${dateOpen ? ' dci-em-dateopen' : ''}"><table class="dci-em-grid dci-em-one${joint ? ' dci-em-joint' : ' dci-em-split'}">
+    // [Z-EMSCR] (3.109.0) a bar to scroll the table sideways above its head and one at the bottom of the window while the table goes on
+    // below it (emBarsSync shows them when the table is wider than its box)
+    const bar = (w) => `<div class="dci-em-hbar dci-em-hbar-${w}" data-hbar="${w}" aria-hidden="true" hidden><div></div></div>`;
+    return `${seg}${bar('top')}<div class="dci-em-scroll dci-em-onewrap${dateOpen ? ' dci-em-dateopen' : ''}"><table class="dci-em-grid dci-em-one${joint ? ' dci-em-joint' : ' dci-em-split'}">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr('em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
           ${flagHead}${evCols.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key, a)).join('')}<th scope="col"></th></tr></thead>
         ${m.blocks.map((b) => emBlockHtml(a, m, b, t)).join('')}
-      </table></div>${openEv ? emEventHtml(a, openEv) : ''}`;
+      </table></div>${bar('bottom')}${openEv ? emEventHtml(a, openEv) : ''}`;
   }
 
   /**
@@ -26442,6 +26493,26 @@
       ${emSideHtml(a, notes)}</div>`;
   }
 
+  /**
+   * [Z-EMCELL] (3.109.0, variant B) A chip of the compact view dragged: the entry's other events where it is not show as faint targets
+   * (dashed); those whose level has no such type in MusicBrainz are no target.
+   */
+  function emChipTargets(src) {
+    const a = artistOf(src);
+    const box = src.closest('[data-group]');
+    if (!a || !box) return;
+    const m = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work'));
+    const l = m.lines.find((x) => x.id === src.dataset.id);
+    if (!l) return;
+    const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
+    const byKey = new Map(m.events.map((e) => [e.key, e]));
+    box.querySelectorAll('.dci-em-cl[data-emev]').forEach((x) => {
+      const e = byKey.get(x.dataset.emev);
+      if (!e || l.ev.has(e.key)) return;
+      x.classList.add(typeOnLevel(r, e.level) ? 'dci-em-cltarget' : 'dci-em-clnot');
+    });
+  }
+
   /** [E4] (3.35.0) A chip dragged onto another event's line: its rows there (moved; ⇧ Shift: in both). */
   function emMoveChip(a, lineId, fromEv, toEv, both) {
     if (fromEv === toEv) return false;
@@ -26682,6 +26753,97 @@
 
   /** [E4] A row's entry drawn anew soon (several changes at once, e.g. the answer of a line for all its rows). */
   const emSoon = new Set();
+  /**
+   * [Z-EMSCR] (3.109.0) The bars of the entries' matrices: as wide as their table (shown only when it is wider than its box), the one at
+   * the bottom only while the table goes on below the window; [Z-EMNOTE] (3.109.0) the width of the box for the notes in it (they stay
+   * at its left edge when it is scrolled sideways).
+   */
+  let emBarsRaf = 0;
+  let emBarsWin = false;
+  // ((review) a box or its table changing width (a font, the log closed, a scrollbar): the bars follow; the wheel only on them
+  let emBarsRo = null;
+  const emBarsSeen = new WeakSet();
+  function emBarsSoon() {
+    if (emBarsRaf || !S.overlay) return;
+    emBarsRaf = requestAnimationFrame(() => {
+      emBarsRaf = 0;
+      emBarsSync();
+    });
+  }
+  function emBarsSync() {
+    if (!S.overlay) return;
+    const body = inPage() ? null : $('body');
+    const viewBottom = body ? body.getBoundingClientRect().bottom : window.innerHeight;
+    if (!emBarsRo && typeof ResizeObserver !== 'undefined') emBarsRo = new ResizeObserver(() => emBarsSoon());
+    // ((review) all read first, then written: one layout, not one per box)
+    const seen = [...S.overlay.querySelectorAll('.dci-em-onewrap')].map((w) => {
+      const prev = w.previousElementSibling;
+      const next = w.nextElementSibling;
+      const r = w.getBoundingClientRect();
+      return { w, top: prev && prev.matches('.dci-em-hbar') ? prev : null, bottom: next && next.matches('.dci-em-hbar') ? next : null,
+        sw: w.scrollWidth, cw: w.clientWidth, sl: w.scrollLeft, over: !w.classList.contains('dci-em-dateopen') && w.scrollWidth > w.clientWidth + 1,
+        below: r.bottom > viewBottom && r.top < viewBottom - 40 };
+    });
+    for (const x of seen) {
+      if (!emBarsSeen.has(x.w)) {
+        emBarsSeen.add(x.w);
+        if (emBarsRo) {
+          emBarsRo.observe(x.w);
+          if (x.w.firstElementChild) emBarsRo.observe(x.w.firstElementChild);
+        }
+        [x.w, x.top, x.bottom].forEach((el) => el && el.addEventListener('wheel', onEmWheel, { passive: false }));
+      }
+      const emw = `${x.cw}px`;
+      if (x.w.style.getPropertyValue('--dci-emw') !== emw) x.w.style.setProperty('--dci-emw', emw);
+      [x.top, x.bottom].forEach((bar) => {
+        if (!bar) return;
+        const hide = !x.over || (bar === x.bottom && !x.below);
+        if (bar.hidden !== hide) bar.hidden = hide;
+        if (hide) return;
+        if (bar.firstElementChild.style.width !== `${x.sw}px`) bar.firstElementChild.style.width = `${x.sw}px`;
+        if (bar.style.width !== emw) bar.style.width = emw;
+        if (Math.abs(bar.scrollLeft - x.sl) > 1) emBarSet(bar, x.sl);
+      });
+    }
+  }
+  /** ((review) A bar moved from here: its own scroll event does not move the table back (only when it moves at all). */
+  function emBarSet(bar, left) {
+    const before = bar.scrollLeft;
+    bar.dataset.prog = '1';
+    bar.scrollLeft = left;
+    if (bar.scrollLeft === before) delete bar.dataset.prog;
+  }
+  /** [Z-EMSCR] (3.109.0) A matrix or one of its bars scrolled sideways: the others follow; the page scrolled: the bottom bar shown or not. */
+  function onEmScroll(e) {
+    const t = e.target;
+    if (!(t instanceof Element)) {
+      emBarsSoon();
+      return;
+    }
+    if (t.matches('.dci-em-onewrap')) {
+      [t.previousElementSibling, t.nextElementSibling].forEach((x) => {
+        if (x && x.matches('.dci-em-hbar') && !x.hidden && Math.abs(x.scrollLeft - t.scrollLeft) > 1) emBarSet(x, t.scrollLeft);
+      });
+      emBarsSoon(); // ((review) a bar of an old width: made as wide as the table again
+    } else if (t.matches('.dci-em-hbar')) {
+      if (t.dataset.prog) {
+        delete t.dataset.prog;
+        return;
+      }
+      const w = t.dataset.hbar === 'top' ? t.nextElementSibling : t.previousElementSibling;
+      if (w && w.matches('.dci-em-onewrap') && Math.abs(w.scrollLeft - t.scrollLeft) > 1) w.scrollLeft = t.scrollLeft;
+    } else emBarsSoon();
+  }
+  /** [Z-EMSCR] (3.109.0) ⇧ Shift + the wheel over a matrix: sideways (where the browser does not do it itself). */
+  function onEmWheel(e) {
+    if (!e.shiftKey || e.deltaX || !e.deltaY || !(e.target instanceof Element)) return;
+    const hit = e.target.closest('.dci-em-onewrap, .dci-em-hbar');
+    const w = !hit ? null : hit.matches('.dci-em-onewrap') ? hit : hit.dataset.hbar === 'top' ? hit.nextElementSibling : hit.previousElementSibling;
+    if (!w || w.scrollWidth <= w.clientWidth + 1) return;
+    e.preventDefault();
+    w.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+  }
+
   function rerenderGroupSoon(a) {
     emSoon.add(a.key);
     if (emSoon.size > 1) return;
@@ -29677,11 +29839,25 @@
   }
 
   /** [Q003] The type chosen in a type question: its level, and for "misc" the task; [3.32.3] also from the compact line. */
-  function pickType(row, i) {
+  function pickType(row, i, { quiet = false } = {}) {
     const q = row && typeQuestionFor(row);
     const o = q && q.options[i];
     if (!o) return;
+    // [Z-ENGTR] (3.109.0, review) the answer given again: confirmed (a suggestion taken at once), nothing else changes – the works
+    // confirmed with ✓ stay so
+    if (row.typeAnswer === i && !quiet) {
+      delete row.typePreset;
+      if (row.level === 'work') renderWorks();
+      else rerenderRow(row);
+      refresh();
+      return;
+    }
     row.typeAnswer = i;
+    delete row.typePreset; // [Z-ENGTR] (3.109.0) answered: no suggestion any more
+    // [Z-ENGTR] (3.109.0) an answer's attributes ("translator" of liner notes); those of an answer before are taken out
+    (row.optFlags || []).forEach((f) => row.flags.delete(f));
+    row.optFlags = (o.flags || []).map(norm);
+    row.optFlags.forEach((f) => row.flags.add(f));
     // [Q-cn] (3.41.8) an answer that skips the role ("Host": skip the role, Q012): the row on "Skip", its type kept
     if (o.level === 'skip') {
       // (3.41.15, review) no type either (an answer before is gone): taken again, the row is asked again
@@ -29703,18 +29879,36 @@
     }
     delete row.scopeLevel;
     delete row.mxSkipped;
+    // [Z-INSTL] (3.109.0) the level the row is on stays when MusicBrainz has the answer's type there ("Voice" answered on a row
+    // put on the release – Z-INSTS – stays on the release; until 3.108.0 the answer's own level, the recordings, was taken)
+    // ((review) only a level put there by hand or by "on the release" – not the rule's own level ("Poems" on the release answered
+    // "spoken vocals": the recordings) nor one an answer before gave
+    const placed = !!row.instsPrev || (row.levelTouched && row.level !== row.defaultLevel && row.level !== row.answerLevel);
+    const keepLevel = placed && row.level && row.level !== 'skip' && row.level !== o.level && o.level !== 'work'
+      && typesFor(row.level, row.entityType || 'artist').some((t) => t.name === o.type);
     // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
-    row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
+    const wasWork = row.level === 'work';
+    if (!keepLevel) row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
+    row.answerLevel = row.level;
     row.levelTouched = true;
     resolveRowType(row);
     // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
     if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
     // [Q011] (3.34.20) plain vocals: no voice
     if (o.plain) Object.assign(row, { primaryText: '', primaryTouched: true });
+    // [Z-ENGTR] (3.109.0) works without tracks named at the source ("translator (lyrics)"): a suggestion on every work (as S024)
+    if (row.suggest && row.suggest.source === row.optSuggest) delete row.suggest;
+    row.optSuggest = o.suggestAll || '';
+    if (o.suggestAll && row.level === 'work' && row.dAllTracks !== false && !(row.suggest && row.suggest.tracks)) {
+      row.suggest = { source: o.suggestAll, tracks: new Set(row.tracks) };
+      row.confirmed = new Set();
+    }
     refreshRowDetails(row);
+    if (quiet) return;
     log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
-    // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
-    if (row.level === 'work') {
+    // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again; [Z-ENGTR] (3.109.0)
+    // from the works back to its entry the same ("translator (lyrics)" → "liner notes (translator)")
+    if (row.level === 'work' || wasWork) {
       renderGroups();
       renderWorks();
     } else rerenderRow(row);
@@ -29740,7 +29934,8 @@
     if (!q || row.level === 'skip') return '';
     const pick = (o, i) => `<button type="button" class="dci-textbtn${o.suggested ? ' dci-type-sugg' : ''}" data-act="type-pick" data-opt="${i}" aria-pressed="${row.typeAnswer === i}"${o.suggested ? ` title="${esc(tr('typeAsk.suggestedTitle'))}"` : ''}>${esc(o.label || o.type)}${o.suggested ? ` <span class="dci-similar">${esc(tr('typeAsk.suggested'))}</span>` : ''}</button>`;
     const chosen = row.typeAnswer != null;
-    return `<div class="dci-bass-ask dci-type-ask" data-question="${q.id}">${esc(tr(chosen ? 'typeAsk.chosen' : q.ask || 'typeAsk.ask', { role: row.raw || row.base }))}
+    // [Z-ENGTR] (3.109.0) a first answer taken at once (`presetAnswer`) is a suggestion: the question stays as it was
+    return `<div class="dci-bass-ask dci-type-ask${row.typePreset ? ' dci-type-preset' : ''}" data-question="${q.id}">${esc(tr(chosen && !row.typePreset ? 'typeAsk.chosen' : q.ask || 'typeAsk.ask', { role: row.raw || row.base }))}
       ${q.options.map(pick).join(' · ')}${chosen ? '' : `<span class="dci-sub">${esc(tr(q.pending || 'typeAsk.pending'))}</span>`}</div>`;
   }
 
@@ -30050,10 +30245,17 @@
       const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : holder.dataset.evhead ? 'data-evhead' : 'data-block') : '';
       again = { f: act.dataset.f, attr, id: holder ? holder.getAttribute(attr) : '', ev: act.dataset.ev || '' };
     }
+    // [Z-EMSCR] (3.109.0, review) the matrix's box keeps where it was scrolled to (a tick far right: not back to the left edge)
+    const wraps = [...section.querySelectorAll('.dci-em-onewrap')].map((w) => [w.scrollLeft, w.scrollTop]);
     const tmp = document.createElement('div');
     tmp.innerHTML = groupHtml(a);
     const fresh = tmp.firstElementChild;
     section.replaceWith(fresh);
+    fresh.querySelectorAll('.dci-em-onewrap').forEach((w, k) => {
+      if (!wraps[k]) return;
+      [w.scrollLeft, w.scrollTop] = wraps[k];
+    });
+    emBarsSoon();
     if (again) {
       const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
       const el = again.edit ? fresh.querySelector(`.dci-em-evedit [data-f="${q(again.f)}"]${again.i ? `[data-i="${q(again.i)}"]` : ''}`)
@@ -30239,6 +30441,7 @@
 
   function refresh() {
     if (!S.overlay) return;
+    emBarsSoon(); // [Z-EMSCR] (3.109.0)
     // [Z-FEV] (3.85.0, review) the festival hint above the entries drawn again when its event came or went (by hand too)
     if ((S.festivals || []).length) {
       const sig = S.festivals.map((f) => (festivalEvent(f) ? 1 : 0)).join('');
@@ -33578,7 +33781,7 @@
   function dsupMbOnlyRows(a, cols) {
     const e = a.dsup;
     if (!e || !e.mbOnly.length) return '';
-    return e.mbOnly.map((m) => `<tr class="dci-em-line dci-em-mbonly dci-dsup-mark" data-mbonly="${esc(m.name)}"><td colspan="${cols}"><span class="dci-tag dci-dsup-tag">${esc(tr('dsup.mbOnlyTag'))}</span> ${esc(tr('dsup.onTracks', { name: m.name, n: m.n }))}</td></tr>`).join('');
+    return e.mbOnly.map((m) => `<tr class="dci-em-line dci-em-mbonly dci-dsup-mark" data-mbonly="${esc(m.name)}"><td colspan="${cols}"><div class="dci-em-stick"><span class="dci-tag dci-dsup-tag">${esc(tr('dsup.mbOnlyTag'))}</span> ${esc(tr('dsup.onTracks', { name: m.name, n: m.n }))}</div></td></tr>`).join('');
   }
 
   // --- [Z-INSTS] (3.103.0, S169, S170) many instruments of a person without tracks: per track, or on the release --------------------
@@ -35777,7 +35980,8 @@
         const date = r.date && hasDateInput(r.date) ? ` · ${formatDateValue(validateDateFields(r.date).value) || ''}` : '';
         const why = !sugg.includes(r) ? (r.notesFrom && r.notesTracks && r.notesTracks.has(mrow.i) ? ` – ${tr('matrix.notesReason', { text: r.notesFrom })}` : '')
           : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
-          : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
+          : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}`
+          : r.suggest.source === 'translation' ? ` – ${tr('matrix.translationReason')}` : '';
         const label = rowPhrase(r) || rowTypeName(r);
         // [Z-NWA] (3.57.0, S083) an existing work: what the matrix suggests is not added – struck through, the cell locked
         if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr(cskip ? 'matrix.creditSkipped' : 'matrix.workLocked')}`);
@@ -35918,6 +36122,10 @@
       const b = (lv) => `<button type="button" data-act="mx-pub-level" data-row="${esc(String(r.id))}" data-level="${lv}" aria-pressed="${r.level === lv}" title="${esc(tr(lv === 'work' ? 'matrix.pubLevelWork' : 'matrix.pubLevelRelease', { what }))}">${esc(tr(`level.${lv}`))}</button>`;
       return `<span class="dci-seg dci-mx-publevel" role="group" aria-label="${esc(tr('matrix.pubLevel', { what }))}">${b('work')}${b('release')}</span>`;
     }).join('')}</div>` : '';
+    // [Z-ENGTR] (3.109.0) a translation answered "the lyrics" (Q007): its question in the column, to take it back to the liner notes
+    const askRows = col.rows.filter((r) => r.askTranslation && !r.splitFrom && typeQuestionFor(r));
+    const typeAsk = askRows.length ? `<div class="dci-mx-typeask">${askRows.map((r) => typeQuestionFor(r).options.map((o, i) => `<button type="button" class="dci-textbtn"
+      data-act="mx-type-pick" data-row="${esc(String(r.id))}" data-opt="${i}" aria-pressed="${r.typeAnswer === i}">${esc(o.label || o.type)}</button>`).join(' · ')).join('<br>')}</div>` : '';
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
     // [S050] (3.32.5) a role of the column read with a typo corrected (its rows are not in the entry)
@@ -35927,7 +36135,7 @@
       <div class="dci-mx-colname">${columnKindTag(col)}${name}</div>
       <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
-      ${pubLevels}
+      ${pubLevels}${typeAsk}
       <span class="dci-mx-creditw"><input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">${col.artist && !col.mbOnly ? ncyBtnHtml(col.artist, 'mx-ncy', ` data-col="${esc(col.key)}"`) : ''}</span>
       ${ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
         // [Z-AWB] (3.86.0, S133) the column's role(s) for every work at once – and off again; a track group dropped on it: exactly its works
@@ -39116,7 +39324,8 @@
     // [E4] (3.35.0) a role chip of a compact line: onto the line of another event of the same entry
     if (d.kind === 'em-chip') {
       const ev = t.closest('.dci-em-cl[data-emev]');
-      return ev && ev.dataset.emev !== S.dmDrag.ev && ev.closest('[data-group]') === S.dmDrag.group ? { el: ev, kind: 'em-chip-ev' } : null;
+      // ([Z-EMCELL] 3.109.0) not onto an event whose level has no such type
+      return ev && ev.dataset.emev !== S.dmDrag.ev && ev.closest('[data-group]') === S.dmDrag.group && !ev.classList.contains('dci-em-clnot') ? { el: ev, kind: 'em-chip-ev' } : null;
     }
     if (d.kind !== 'date' && d.kind !== 'cell') return null;
     const onDate = t.closest('.dci-dm-cell:not(.dci-dm-choose) .dci-dm-date');
@@ -39235,7 +39444,10 @@
     if (!src || !S.overlay.contains(src)) return;
     S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null, list: src.dataset.list || null };
     // [E4] (3.35.0) a role chip: its event and its entry
-    if (S.dmDrag.kind === 'em-chip') Object.assign(S.dmDrag, { ev: src.dataset.ev, group: src.closest('[data-group]') });
+    if (S.dmDrag.kind === 'em-chip') {
+      Object.assign(S.dmDrag, { ev: src.dataset.ev, group: src.closest('[data-group]') });
+      emChipTargets(src);
+    }
     // [AE-2] (3.35.3) a line of the matrix: its block and its entry
     if (S.dmDrag.kind === 'em-line') Object.assign(S.dmDrag, { block: src.dataset.block, group: src.closest('[data-group]') });
     try {
@@ -39449,6 +39661,7 @@
     S.dmDrag = null;
     if (!S.overlay) return;
     S.overlay.classList.remove('dci-dm-dragging', 'dci-dm-drag-date', 'dci-dm-drag-tg', 'dci-dm-drag-pool');
+    S.overlay.querySelectorAll('.dci-em-cltarget, .dci-em-clnot').forEach((x) => x.classList.remove('dci-em-cltarget', 'dci-em-clnot')); // [Z-EMCELL]
     // [3.35.3] also the class of any other kind ("dci-dm-drag-em-chip", "dci-dm-drag-em-line")
     [...S.overlay.classList].filter((c) => c.startsWith('dci-dm-drag-')).forEach((c) => S.overlay.classList.remove(c));
     S.overlay.querySelectorAll('.dci-em-after').forEach((x) => x.classList.remove('dci-em-after'));
@@ -41783,6 +41996,12 @@
         break;
       }
       // [Z-PUB] (3.64.0, S094) a publishing row of a label: on its works or on the release
+      case 'mx-type-pick': {
+        // [Z-ENGTR] (3.109.0) the question of a translation in the works matrix's column
+        const r = S.rows.find((x) => String(x.id) === btn.dataset.row);
+        if (r) pickType(r, Number(btn.dataset.opt));
+        break;
+      }
       case 'mx-pub-level': {
         const r = S.rows.find((x) => String(x.id) === btn.dataset.row);
         if (!r || !['work', 'release'].includes(btn.dataset.level) || r.level === btn.dataset.level) break;
@@ -43112,6 +43331,13 @@
     overlay.addEventListener('paste', onPaste);
     overlay.addEventListener('keydown', onKeydown);
     overlay.addEventListener('dragstart', onDragStart);
+    // [Z-EMSCR] (3.109.0) the matrices' bars (scroll does not bubble: caught on the way down)
+    overlay.addEventListener('scroll', onEmScroll, true);
+    if (!emBarsWin) {
+      emBarsWin = true;
+      window.addEventListener('scroll', () => emBarsSoon(), { passive: true });
+      window.addEventListener('resize', () => emBarsSoon(), { passive: true });
+    }
     overlay.addEventListener('dragover', onDragOver);
     overlay.addEventListener('drop', onDrop);
     overlay.addEventListener('dragend', dmDragEnd);
@@ -48895,12 +49121,25 @@
       .dci-em-one td.dci-em-c-role { white-space: nowrap; }
       .dci-em-one td.dci-em-c-role .dci-em-raw, .dci-em-one td.dci-em-c-role .dci-mark { white-space: normal; }
       .dci-em-one tr.dci-em-bhrow > th { padding: 0; background: var(--soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-weight: 400; text-align: left; }
-      .dci-em-one tr.dci-em-bhrow .dci-em-bhead { position: sticky; left: 0; width: max-content; max-width: calc(var(--u, 1px) * 900); border-bottom: 0;
+      .dci-em-one tr.dci-em-bhrow .dci-em-bhead { position: sticky; left: 0; width: max-content; max-width: min(calc(var(--u, 1px) * 900), calc(var(--dci-emw, 100%) - 24px)); border-bottom: 0;
         padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
       .dci-em-one tbody.dci-em-block:first-of-type tr.dci-em-bhrow > th { border-top: 0; }
       .dci-em-one tr.dci-em-morerow > td { padding: 0; }
       .dci-em-one tr.dci-em-morerow .dci-em-more { position: sticky; left: 0; }
       .dci-em-one td.dci-em-c-none { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--row) 4px 5px); }
+      /* [Z-EMCELL] (3.109.0) a tick in an event the block does not show yet; the automatic row where instruments are ticked too */
+      .dci-em-one td.dci-em-c-other input { opacity: .6; }
+      .dci-em-one td.dci-em-c-other input:hover, .dci-em-one td.dci-em-c-other input:focus { opacity: 1; }
+      .dci-em-one td.dci-em-c-autohl { background: var(--sugg-bg); box-shadow: inset 0 0 0 1px var(--sugg-line); }
+      #dci-overlay.dci-dm-drag-em-chip .dci-em-cl.dci-em-cltarget { outline: 1px dashed var(--purple, #736dab); outline-offset: -1px; background: rgba(115, 109, 171, .07); }
+      #dci-overlay.dci-dm-drag-em-chip .dci-em-cl.dci-em-clnot { opacity: .5; }
+      /* [Z-EMSCR] (3.109.0) the bars to scroll a matrix sideways: above its head, at the bottom of the window */
+      .dci-em-hbar { overflow-x: auto; overflow-y: hidden; height: calc(var(--u, 1px) * 14); margin: 0 1px; }
+      .dci-em-hbar > div { height: 1px; }
+      .dci-em-hbar-bottom { position: sticky; bottom: 0; z-index: 3; background: rgba(255, 255, 255, .92); border-top: 1px solid var(--line); }
+      .dci-em-hbar[hidden] { display: none; }
+      /* [Z-EMNOTE] (3.109.0) the notes over the whole width stay at the left edge of the box when it is scrolled sideways */
+      .dci-em-onewrap .dci-em-stick { position: sticky; left: 0; max-width: calc(var(--dci-emw, 100%) - 24px); box-sizing: border-box; }
       .dci-em-grid th.dci-em-c-flags, .dci-em-grid td.dci-em-c-flags { white-space: nowrap; }
       .dci-em-flagl { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin-right: calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
       .dci-em-flagl input { margin: 0; }
