@@ -169,9 +169,9 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             # C1) aliases
             ag = group(pg, 'Alias Guy')
             alias = pg.evaluate(f"[...document.querySelectorAll('section[data-group=\"{ag}\"] [data-act=alias-use]')].map(b => b.dataset.mbid)")
-            src_link = pg.evaluate(f"(() => {{ const a = document.querySelector('section[data-group=\"{ag}\"] .dci-dglink'); return [a.href, a.textContent]; }})()")
+            src_link = pg.evaluate(f"(() => {{ const a = document.querySelector('section[data-group=\"{ag}\"] .dci-idlink'); return [a.href, a.textContent.trim()]; }})()")
             print('C1) Alias:', alias, '| Protokoll:', [x[9:] for x in logs if 'Alias Guy' in x][-1:], '| Link:', src_link)
-            ok1 = alias == [H.ARTISTS[3021][0]] and src_link == ['https://www.discogs.com/artist/3020', 'Discogs↗']  # [3.28.0] only the tag (item 61)
+            ok1 = alias == [H.ARTISTS[3021][0]] and src_link == ['https://www.discogs.com/artist/3020', 'Discogs artist ↗']  # [3.28.0] only the tag (item 61); [Z-SRCTAG] 3.127.0 a text link
             # C2) series with its parent label, and its form
             sg = group(pg, 'Test Series')
             slabel = pg.evaluate(f"(() => {{ const s = document.querySelector('section[data-group=\"{sg}\"] .dci-series-label'); return s ? [...s.querySelectorAll('a')].map(a => [a.href, a.textContent]) : null; }})()")
@@ -469,7 +469,9 @@ def case_supp():
   (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked, tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
     MARKS = """(name, role) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === role);
-  return tr ? [...tr.querySelectorAll('.dci-srcmark')].map(m => m.textContent.trim()) : 'no row'; }"""
+  // ([Z-SRCTAG] 3.127.0) the badges of the row's sources (DG, BC …) and the marks of what differs
+  const SH = { dg: 'DG', bc: 'BC', yt: 'YT', text: 'TXT', mb: 'MB', ocr: 'OCR' };
+  return tr ? [...tr.querySelectorAll('.dci-srcmarks [data-src], .dci-srcmark')].map(m => m.dataset.src ? SH[m.dataset.src] : m.textContent.trim()) : 'no row'; }"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -504,7 +506,7 @@ def case_supp():
             and kinds.get(('new entry', 'Test Band')) == (True, 'all') and kinds.get(('more tracks', 'Keys Guy'), (None, ''))[0] is False \
             and '1, 2' in kinds.get(('more tracks', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'See you on tour.') not in kinds \
             and any(k == 'not recognized' for k, *_ in items) and summary.startswith('confirmed: 1 · new: 3 · differing: 1 · not recognized: 1') \
-            and m_bass == ['DG', 'BC'] and m_keys == ['DG', 'BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
+            and m_bass == ['DG', 'BC'] and m_keys == ['BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
             and any('via the Bandcamp link: Test Band' in h for h in hints)
         results.append(b_ok)
         # C) Test Band unticked, take over

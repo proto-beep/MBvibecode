@@ -737,10 +737,10 @@ def case_suppnav3116():
     similar only on the same tracks: here a new role) and "Bass Man – bass" (Tray).
     A) "＋ Supplement": the message at the top "2 new · 3 there already or very similar" (no button with it), in the window (which
        stays open); the log has the supplement's line; the list offers Anna Neu and Writer Z's writer (both chosen), nothing else.
-    B) Taken over: "📷 2 ‹ ›" in the footer; 📷 at the heads of Anna Neu, Drum Guy, Bob Producer, Bass Man and Writer Z, not of
+    B) Taken over: "🖼️ 2 ‹ ›" in the footer; 🖼️ at the heads of Anna Neu, Drum Guy, Bob Producer, Bass Man and Writer Z, not of
        Keys Guy; › goes to Anna Neu (flashing); "From the cover art · Back" at Anna Neu, "… · Tray" at Bass Man (a line said again),
        (review) "… · Booklet" at Writer Z (his row on the works).
-    C) "📷 Only from images": only the entries with 📷 shown; off: all again.
+    C) "🖼️ Only from images": only the entries with 🖼️ shown; off: all again.
     D) The same images again with only "Drum Guy – drums": "nothing new – 1 there already or very similar. Nothing was changed.";
        nothing to take over."""
     import copy
@@ -789,8 +789,8 @@ def case_suppnav3116():
         b2 = pg.evaluate("(f => f ? (f.closest('section.dci-group').querySelector('.dci-gname strong') || {}).textContent : null)(document.querySelector('.dci-flash'))")
         # the image a line comes from, at the head of its entry (as for the rows of an import of the cover art)
         b3 = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(s => s.querySelector('.dci-gcoverfrom')).map(s => [(s.querySelector('.dci-gname strong') || {}).textContent, s.querySelector('.dci-gcoverfrom').textContent.trim()]).sort()")
-        print('B) Fußzeile:', b1[0], '| 📷 an:', b1[1], '| › zu:', b2, '| Bild:', b3)
-        results.append(b1[0] == '📷 2' and b1[1] == ['Anna Neu', 'Bass Man', 'Bob Producer', 'Drum Guy', 'Writer Z'] and b2 == 'Anna Neu'
+        print('B) Fußzeile:', b1[0], '| 🖼️ an:', b1[1], '| › zu:', b2, '| Bild:', b3)
+        results.append(b1[0] == '🖼️ 2' and b1[1] == ['Anna Neu', 'Bass Man', 'Bob Producer', 'Drum Guy', 'Writer Z'] and b2 == 'Anna Neu'
                        and dict(b3).get('Anna Neu', '').startswith('From the cover art · Back') and dict(b3).get('Bass Man', '').startswith('From the cover art · Tray')
                        and dict(b3).get('Writer Z', '').startswith('From the cover art · Booklet'))
         all0 = pg.evaluate(SECS)
@@ -859,7 +859,7 @@ def case_tcpmulti3117():
         NAMES = "[...document.querySelectorAll('section.dci-group')].map(s => (s.querySelector('.dci-gname strong') || {}).textContent)"
         names = pg.evaluate(NAMES)
         print('A) Einträge:', names)
-        # (the writer's row from the cover art is his: 📷 at his entry)
+        # (the writer's row from the cover art is his: 🖼️ at his entry)
         wcol = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(s => (s.querySelector('.dci-gname strong') || {}).textContent === 'Bass Man' && s.querySelector('.dci-ocr-dot')).length")
         print('   Bass Man in den Werken:', wcol)
         results.append('Man' not in names and 'Guy' in names and wcol == 1)

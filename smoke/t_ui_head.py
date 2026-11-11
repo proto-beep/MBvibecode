@@ -157,9 +157,85 @@ def case_head():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_srctag3127():
+    """Credits Importer 3.127.0 (collected items Z-SRCTAG, Z-ICONS, Z-SKIPVIS; rule S201): the badges of the sources.
+    A) After each entry's name the badge of Discogs (its logo, white on black; a link to the release) – all badges the same square;
+       Drum Guy's drums are in MusicBrainz: MusicBrainz too (head and row); no badges at the rows while an entry has one source; "Skip ⤼" a framed grey button; the tooltip of an entry's counter names it.
+    B) A track "Song Three (Guitar Guy Remix)": Guitar Guy has Discogs and MusicBrainz in his head; his rows each their own badge – the
+       remix MusicBrainz (a link to the recording), the guitar Discogs.
+    C) ⚙ Settings → Appearance → Symbols: Text – the badges as words ("DG", "MB"); Emojis again – the logos.
+    D) ⚙ Settings → Connections names the icons (X018: Dashboard Icons by Homarr Labs, Apache License 2.0; Simple Icons).
+    E) (review) The dark theme: Discogs's black logo on a light square."""
+    H.TITLES[2] = 'Song Three (Guitar Guy Remix)'
+    H.lt(153, '7950be4d-13a3-48e7-906b-5af562e39544', 'remixer', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    BADGES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const b = (x) => [x.dataset.src, x.getAttribute('href') || x.dataset.act || '', x.textContent.trim(), !!x.querySelector('img')];
+  return { head: [...g.querySelectorAll('.dci-gname .dci-sbs [data-src]')].map(b),
+    rows: [...g.querySelectorAll('.dci-sbs-row')].map(r => [...r.querySelectorAll('[data-src]')].map(x => x.dataset.src)),
+    rowHrefs: [...g.querySelectorAll('.dci-sbs-row [data-src]')].map(x => [x.dataset.src, x.getAttribute('href') || '']) }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        # A)
+        drum = pg.evaluate(BADGES, 'Drum Guy')
+        sizes = pg.evaluate("[...new Set([...document.querySelectorAll('.dci-gname .dci-sb')].filter(x => x.getClientRects().length).map(x => { const r = x.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); }))]")
+        dgbg = pg.evaluate("(() => { const x = document.querySelector('.dci-gname .dci-sb-dg'); return x ? getComputedStyle(x).backgroundColor : ''; })()")
+        skip = pg.evaluate("(() => { const x = document.querySelector('.dci-gskip:not(.dci-gskip-back)'); const cs = getComputedStyle(x); return [x.textContent.trim(), cs.borderTopStyle, cs.backgroundColor]; })()")
+        dots = pg.evaluate("[...document.querySelectorAll('.dci-yell-dot')].map(x => x.title).filter(t => /entry/.test(t))")
+        print('A) Drum Guy:', drum, '| Größen:', sizes, '| DG:', dgbg, '| Skip:', skip, '| Zähler:', dots[:2])
+        one = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelectorAll('.dci-gname .dci-sbs [data-src]').length === 1).map(g => [g.querySelector('.dci-gname strong').textContent.trim(), g.querySelectorAll('.dci-sbs-row').length])")
+        print('   eine Quelle:', one)
+        # (Drum Guy's drums are in MusicBrainz already: Discogs and MusicBrainz; an entry of one source has no badges at its rows)
+        results.append(bool(drum) and [x[0] for x in drum['head']] == ['dg', 'mb'] and drum['head'][0][1].startswith('https://www.discogs.com/release/') and drum['head'][0][3]
+                       and drum['rows'] == [['dg', 'mb']] and bool(one) and all(n == 0 for _, n in one) and sizes == ['20x20'] and dgbg == 'rgb(17, 17, 17)' and skip == ['Skip ⤼', 'solid', 'rgb(242, 243, 245)']
+                       and bool(dots) and all('“Skip ⤼”' in t for t in dots))
+        # B)
+        gg = pg.evaluate(BADGES, 'Guitar Guy')
+        print('B) Guitar Guy:', gg)
+        results.append(bool(gg) and [x[0] for x in gg['head']] == ['dg', 'mb'] and sorted(gg['rows']) == [['dg'], ['mb']]
+                       and ['mb', f'/recording/{H.REC[2]}'] in gg['rowHrefs'])
+        # C)
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-act=emoji-mode][data-mode=text]')
+        pg.wait_for_timeout(600)
+        words = pg.evaluate(BADGES, 'Guitar Guy')
+        pg.click('[data-act=emoji-mode][data-mode=emoji]')
+        pg.wait_for_timeout(600)
+        back = pg.evaluate(BADGES, 'Guitar Guy')
+        print('C) Text:', words['head'], '| zurück:', back['head'])
+        results.append([x[2] for x in words['head']] == ['DG', 'MB'] and not any(x[3] for x in words['head']) and all(x[3] for x in back['head']))
+        # E) ((review) the dark theme: the black logo on a light square)
+        H.open_settings(pg, 'appearance')
+        pg.evaluate("[...document.querySelectorAll('[data-act=theme-set][data-theme=dark]')].forEach(b => b.click())")
+        pg.wait_for_timeout(600)
+        dark = pg.evaluate("(() => { const x = document.querySelector('.dci-gname .dci-sb-dg'); const lt = x.querySelector('.dci-sb-lt'), dk = x.querySelector('.dci-sb-dk'); return [getComputedStyle(x).backgroundColor, getComputedStyle(lt).display, getComputedStyle(dk).display]; })()")
+        print('E) dunkel:', dark)
+        results.append(dark == ['rgb(242, 242, 242)', 'none', 'block'])
+        pg.evaluate("[...document.querySelectorAll('[data-act=theme-set][data-theme=light]')].forEach(b => b.click())")
+        pg.wait_for_timeout(300)
+        # D)
+        H.open_settings(pg, 'connections')
+        conn = pg.evaluate("(() => { const r = document.querySelector('tr[data-conn=X018]'); return r ? r.textContent.replace(/\\s+/g, ' ') : ''; })()")
+        print('D) X018:', conn[:160])
+        results.append('Dashboard Icons by Homarr Labs (Apache License 2.0)' in conn and 'Simple Icons' in conn)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_entryhead():
     """Credits Importer 3.28.0: the head of an entry and the bar below "Import credits …" (collected items 61, 66).
-    A) Only the tag of the source links to it (with ↗; its tooltip names the source's name) – the name is not repeated.
+    A) Only the tag of the source links to it (with ↗; its tooltip names the source's name) – the name is not repeated. [Z-SRCTAG] 3.127.0: the
+       badge of Discogs after the name (a link to the release), the artist's page a text link "Discogs artist ↗".
     B) How the dashboard credits the entry: [3.32.2] the head shows the release's spelling "B. Man*" (Discogs credits Bass
        Man as "B. Man" on this release; collected item 100), its tooltip "Discogs: Bass Man", no chip "as “B. Man”" (until
        3.32.1: the name "Bass Man" and the chip) – [3.37.11] the chip "artist credit in MusicBrainz: “B. Man” (the Discogs
@@ -183,8 +259,8 @@ def case_entryhead():
     H.discogs_release = rel
     HEAD = """(name) => { const nm = (s) => { const x = s.querySelector('.dci-gname strong'); return x.dataset.name || x.textContent.trim(); };
   const g = [...document.querySelectorAll('section.dci-group')].find(s => nm(s) === name);
-  if (!g) return null; const a = g.querySelector('.dci-dglink'); const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
-  return { link: a ? [a.textContent, a.getAttribute('href'), a.title] : null, chip: c && !c.hidden ? [c.textContent.trim(), c.title] : null,
+  if (!g) return null; const a = g.querySelector('.dci-idlink'); const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
+  return { link: a ? [a.textContent, a.getAttribute('href'), a.title] : null, badges: [...g.querySelectorAll('.dci-gname .dci-sbs [data-src]')].map(x => [x.dataset.src, x.getAttribute('href') || '']), chip: c && !c.hidden ? [c.textContent.trim(), c.title] : null,
     shown: [st.textContent.trim(), st.title || (st.closest('button.dci-ncy-name') || {}).title || ''] }; }"""
     results = []
     with sync_playwright() as p:
@@ -200,7 +276,9 @@ def case_entryhead():
         # A)
         a1 = head('Guitar Guy')
         print('A) Guitar Guy:', a1)
-        results.append(a1['link'] == ['Discogs↗', 'https://www.discogs.com/artist/3002', 'Open on Discogs: Guitar Guy'] and a1['chip'] is None)
+        # ([Z-SRCTAG] 3.127.0) the badge of Discogs after the name (the release), the artist's page a text link
+        results.append(a1['link'] == ['Discogs artist ↗', 'https://www.discogs.com/artist/3002', 'Open on Discogs: Guitar Guy'] and a1['chip'] is None
+                       and [x[0] for x in a1['badges']] == ['dg'] and a1['badges'][0][1].startswith('https://www.discogs.com/release/'))
         # B)
         b1 = head('Bass Man')
         sec = "section.dci-group:has(.dci-gname strong[data-name='Bass Man'])"
