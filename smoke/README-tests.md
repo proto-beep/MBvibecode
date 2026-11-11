@@ -104,6 +104,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
                                 #   ocrc3120: 3.120.0 (Z-OCRC, S187, Node): "C1978 – Fantasy Records", "C 1978 X" → © 1978; digits after the name stay
+                                #   prodfor3122r: 3.122.0 (review, Node, DISCOGS.toRelease): "Producer [Assistant, For Radio Bremen (2)]", "Executive-Producer [For …]",
+                                #     two "For", no label for "For The Album …", "Production Manager", "Mixed By"; no second VARA Radio; "RSD", "Cassette Store Day"
                                 #   dtrk3121r: 3.121.0 (review of Z-DTRK, Node): the place below "1-1 to 1-2 recorded …" on 1-1, 1-2; not below "… produced by X";
                                 #     "In Memory Of …" no place
                                 #   studio3120r: 3.120.0 (review, Node): a studio that is a place of the text keeps its art credit; "Cover Photography", "Design [Graphic]";
@@ -293,6 +295,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   rsd3122: 3.122.0 (Z-RSD, S192): "Record Store Day" in the format – 2025-11-28 "Record Store Day Black Friday 2025",
+                                #     2025-04-12 "Record Store Day 2025" linked; 2025-08-10 suggested only; "Limited Edition" no series
+                                #   prodfor3122: 3.122.0 (Z-PRODFOR, S191): "Producer [Session Originally Produced For VARA Radio By]" (tracks 3 to 4) – producers
+                                #     without credit, VARA Radio a label "produced for" on the recordings; "Executive Producer [For Radio Bremen]" on the release
                                 #   pldup3111: 3.111.0 (Z-PLDUP): "Tonart Studio" / "Tonart" of the notes = "Tonart Studio, Kerpen-Horrem" of Discogs – no second
                                 #     place, credited as the notes write it, "recorded at" a row of Discogs's place
                                 #   lcnote3111: 3.111.0 (Z-LCNOTE): the label code of Discogs and the labels of MusicBrainz – missing, another, the same,

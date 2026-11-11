@@ -1654,4 +1654,114 @@ def case_lcnote3111():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_prodfor3122():
+    """Credits Importer 3.122.0 (collected item Z-PRODFOR, S191): Discogs 31535431 (Albert Ayler), "Producer [Session Originally Produced
+    For VARA Radio By] – Aad Bos, Michiel De Ruyter (tracks: 3 to 4)" and "Executive Producer [For Radio Bremen] – Jane Roe".
+    A) Aad Bos and Michiel De Ruyter producers on tracks 3–4, no role credit (until 3.121.0 "session originally produced for VARA
+       radio by" as their credit).
+    B) VARA Radio one label entry (searched by its name: MusicBrainz's "VARA" suggested) with "produced for" on the recordings 3–4 (its
+       tracks known); Radio Bremen "produced for" on the release (executive)."""
+    VARA = H.uid('eeeeeeee', 3122)
+    H.MB_SEARCH['label'] = [{'id': VARA, 'name': 'VARA Radio', 'disambiguation': 'Dutch broadcaster', 'score': 100}]
+    H.lt(950, H.uid('1a1a1a1a', 950), 'produced for', 'label', 'recording', ())
+    H.lt(951, H.uid('1a1a1a1a', 951), 'produced for', 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i, tracks='': {'name': name, 'anv': '', 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+        d['extraartists'] = d['extraartists'] + [ex('Aad Bos', 'Producer [Session Originally Produced For VARA Radio By]', 3412, '3 to 4'),
+                                                 ex('Michiel De Ruyter', 'Producer [Session Originally Produced For VARA Radio By]', 3413, '3 to 4'),
+                                                 ex('Jane Roe', 'Executive Producer [For Radio Bremen]', 3414)]
+        return d
+
+    H.discogs_release = rel
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '',
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {}).text : '',
+    ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '', (tr.dataset.tracks || '')]; }) }])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1200)
+        g = pg.evaluate(GROUPS)
+        for k in ('Aad Bos', 'Michiel De Ruyter', 'Jane Roe', 'VARA Radio', 'Radio Bremen'):
+            print('  ', k, g.get(k))
+        tracks = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'VARA Radio');
+          return g ? g.innerText.replace(/\\s+/g, ' ') : ''; })()""")
+        prod = [g.get(n, {'rows': []})['rows'] for n in ('Aad Bos', 'Michiel De Ruyter')]
+        results.append(all(len(r) == 1 and r[0][0] == 'producer' and r[0][2] == '' for r in prod))
+        vara = g.get('VARA Radio') or {'rows': [], 'kind': ''}
+        bremen = g.get('Radio Bremen') or {'rows': [], 'kind': ''}
+        print('   VARA:', tracks[:300])
+        results.append(vara['kind'] == 'label' and [r[:2] for r in vara['rows']] == [['produced for', 'recording']] and ('3–4' in tracks or '3-4' in tracks or '2 of 4' in tracks))
+        results.append(bremen['kind'] == 'label' and [r[:2] for r in bremen['rows']] == [['produced for', 'release']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_rsd3122():
+    """Credits Importer 3.122.0 (collected item Z-RSD, S192): Discogs's format "Vinyl, LP, Limited Edition – Record Store Day".
+    A) Released 2025-11-28 (Black Friday): the series "Record Store Day Black Friday 2025" of MusicBrainz linked at once, the release
+       part of it (until 3.121.0 no series).
+    B) Released 2025-04-12 (April): "Record Store Day 2025" at once.
+    C) Released 2025-08-10: no series chosen – an entry "Record Store Day 2025" with MusicBrainz's series of that year suggested;
+       "Limited Edition" gives no series."""
+    BF, R25, R24 = H.uid('5e5e5e5e', 1), H.uid('5e5e5e5e', 2), H.uid('5e5e5e5e', 3)
+    H.MB_SEARCH['series'] = [{'id': BF, 'name': 'Record Store Day Black Friday 2025', 'type': 'Release series', 'disambiguation': '', 'score': 100},
+                             {'id': R25, 'name': 'Record Store Day 2025', 'type': 'Release series', 'disambiguation': '', 'score': 100},
+                             {'id': R24, 'name': 'Record Store Day 2024', 'type': 'Release series', 'disambiguation': '', 'score': 100}]
+    H.lt(741, H.uid('1a1a1a1a', 741), 'part of', 'release', 'series', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+    when = {'d': ''}
+
+    def rel():
+        d = orig()
+        d['formats'] = [{'name': 'Vinyl', 'qty': '1', 'text': 'Record Store Day', 'descriptions': ['LP', 'Album', 'Limited Edition']}]
+        d['released'] = when['d']
+        return d
+
+    H.discogs_release = rel
+    SER = """[...document.querySelectorAll('section.dci-group')].filter(g => /Record Store|Limited/.test(g.querySelector('.dci-gname strong').textContent)).map(g => [
+      g.querySelector('.dci-gname strong').textContent.trim(), (g.querySelector('.dci-mblink') || {}).href || '', [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '')])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run, d in (('A', '2025-11-28'), ('B', '2025-04-12'), ('C', '2025-08-10')):
+            when['d'] = d
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda dl: dl.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            g = pg.evaluate(SER)
+            print(f'{run})', d, g)
+            if run == 'A':
+                results.append(len(g) == 1 and g[0][0] == 'Record Store Day Black Friday 2025' and BF in g[0][1] and g[0][3] == ['release'])
+            elif run == 'B':
+                results.append(len(g) == 1 and g[0][0] == 'Record Store Day 2025' and R25 in g[0][1] and g[0][3] == ['release'])
+            else:
+                results.append(len(g) == 1 and g[0][0] == 'Record Store Day 2025' and not g[0][1] and any('Record Store Day 2025' in x for x in g[0][2])
+                               and any('Black Friday 2025' in x for x in g[0][2]))
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

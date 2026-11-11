@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.121.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.122.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,13 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.122.0 · 2026-11-08
+
+- **Z-PRODFOR (S191):** `PROD_FOR`; `DISCOGS.toRelease` `add`: a producer role (co-, executive) with "for X" in a detail – the credit without that detail, a company `{ role: 'Produced For' | 'Co-produced For' | 'Executive Produced For', entity: 'label', tracks }` once per name and role (`prodFor`, tracks joined); mapping C026 (existing, "produced for"), new C050 co-produced for (`flags: ['co']`), C051 executive produced for (`flags: ['executive']`); `addCompanyEntry`: with its tracks known, level and default level recording.
+- **Z-RSD (S192):** `FORMAT_SERIES_NAMES`, `FORMAT_SERIES`; `DISCOGS.toRelease` adds a series `{ fromFormat, base, date }` for each store day of the format words (none a Discogs series of that name has); `loadSeries` → `formatSeriesResolve` (search `series:(… AND year)`; `blackFridayOf`; Black Friday → the "Black Friday" series, April or another day than Record Store Day → "<name> <year>"; else `fromText`, suggested by `suggestByName`); `log.formatSeries`.
+- **Tests:** `t_notes_companies.py prodfor3122`, `t_notes_companies.py rsd3122`, `t_text_lists.py prodfor3122r` – new; fail on 3.121.0.
+- **Review:** S191 only for the producer itself ("Producer", "Co-producer", "Executive Producer", also "Executive-Producer"; not "Production Manager"), only "(Session) (Originally) Produced For X (By)" and "For X" without words of a track, side, album or version (`prodForName`), every such detail a label; the producer's other details kept ("Producer [Assistant]"); a company Discogs lists itself as "Produced For" not twice; joined tracks keep both specs. S192 also "RSD"; a date of Discogs without its day takes MusicBrainz's of the same year; Black Friday only for Record Store Day; a series not chosen has the note `note.seriesFormat` (not "named in the text"). Known: such a series is searched twice (the resolver, then the suggestions); a text's "Produced for X (1, 3)" now starts on the recordings too.
 
 ## Import 3.121.0 · 2026-11-08
 
