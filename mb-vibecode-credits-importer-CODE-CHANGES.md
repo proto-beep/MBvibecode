@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.126.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.127.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.127.0 · 2026-11-08
+
+- **Z-SRCTAG (S201):** `SRC_ICONS` (square 40 px PNGs as data URIs: dg white, dgd black, bc, yt, mb); `rowOrigins` (the import's source of a row – `entrySource` –, a supplement's `supp`/`suppOcr`, `confirmedBy`, `suppTook`, `ocrSeen`, `rmxTitle` → mb, a relationship MusicBrainz has – `existingAll`, `S.rowInfo` existing/exact – → mb), `entryOrigins`, `originLink` (the release's URL at its source or the supplement's, `/recording/…` / `/work/…` / `/release/…`, the actions `src-text` and `ocr-open`), `srcBadgeHtml`, `entryOriginsHtml` (after `entryNameHtml`), `rowOriginsHtml` (rows – `srcMarksHtml` –, the lines and chips of the entry matrix; only with more than one source), `identityLinkHtml` (in `.dci-gmatch`, also when `matchHtml` is drawn again); the source tag before is drawn only with S201 off; `refresh` draws the entries again when the rows MusicBrainz has change (`S.originMbSig`). Case `src-text` opens the text window.
+- **Emojis (Z-SRCTAG):** `EMOJI`, `emo(k)`; `EMOJI_TEXT_KEY` (`dci-emoji-text`, topic appearance), `setEmojiText` (the overlay's class `dci-emtext` for the CSS mark of OCR lines), the segment `data-act="emoji-mode"`; 📷 → 🖼️ (code, CSS, `ocrnav.only` without its emoji – it is put in front by the code).
+- **Z-ICONS:** CONNECTIONS X018 (Dashboard Icons, Simple Icons; kind library); README table.
+- **Z-SKIPVIS:** CSS of `.dci-gskip` (a framed grey button; `#dci-overlay .dci-gskip.dci-textbtn:not(.dci-gskip-back)`), `group.skip` "Skip ⤼" (de/es/fr too), `yell.dot.must` / `yell.dot.can` name it.
+- **Tests:** `t_ui_head.py srctag3127` – new; fails on 3.126.0. Adjusted: `t_ui_head.py entryhead`, `t_sources.py adapter` and `supp` (the badges at the rows: only with more than one source), `t_sources_bandcamp.py bcspell` (the badge of Bandcamp) and `labelpage`, `t_ui_settings.py settabs` and `conngroups` (X018), `t_ui_view.py` (the label "Skip ⤼"), `t_coverart.py` (🖼️).
+- **Review:** Discogs's badge in the dark theme above the dark copy of the light rules (light square, black logo); the setting in `SETTINGS_KEYS` (profiles, "Reset all"); text read from images is 🖼️ also as a supplement that said a row again or as the import itself (`suppKey`, `mainKey` – `statSourceKind`), never 📄; each badge links the document of its rows (a supplement's own address; 📄 of a supplement opens the supplement's form with its text – `S.suppSources` keeps it); the MusicBrainz badges once the plan is new (after `S.rowInfo`); the switch draws the works matrix and the source box again too, the CSS mark of OCR lines in all three places, not twice beside a badge; the sources worked out once per drawing (`S.originMemo`, `renderGroups` → `renderGroupsNow`); the opened rows of a matrix line without the line's badges again (`emDetailRows`); `aria-label` on the badges, a badge without a link no pointer; a click on a badge no jump of the companion (`compactSourceEl`); Spanish and French texts of the counters.
 
 ## Import 3.126.0 · 2026-11-08
 

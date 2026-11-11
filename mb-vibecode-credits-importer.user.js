@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.126.0
+// @version      3.127.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.126.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.126.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.127.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.127.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.126.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.127.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -207,7 +207,7 @@
       "ocrnav.label": "{n} rows from the cover art – to the next one",
       "ocrnav.prev": "Row from the cover art before",
       "ocrnav.next": "Next row from the cover art",
-      "ocrnav.only": "📷 Only from images",
+      "ocrnav.only": "Only from images",
       "ocrnav.onlyTitle": "Only the entries with lines from the cover art (added or said again by a supplement read from it)",
       "supp.selectAll": "select all",
       "supp.th.select": "Take over",
@@ -270,6 +270,7 @@
       "err.bandcampData": "No album data found on {url}.",
       "err.youtubeData": "No video description found on {url}.",
       "conn.X017": "Reads the page of a YouTube video whose address you enter as another source (or a supplement): its description is read as a text of credits.",
+      "conn.X018": "Icons: Dashboard Icons by Homarr Labs (Apache License 2.0); Discogs icon via Simple Icons. Logos and brand names belong to their owners. The badges of the sources in the dashboard – embedded in the script, nothing is loaded.",
       "stats.src.youtube": "YouTube",
       "err.pageHttp": "The page answered with HTTP {status}: {url}",
       "err.pageNet": "The page could not be loaded (blocked or offline): {url}",
@@ -486,13 +487,13 @@
       "log.ncyAll": "{name}: credited as “{value}” on all its relationships",
       "group.addRole": "+ Another role for {name}",
       "group.addRoleOne": "＋ Another role",
-      "group.skip": "⊘ Skip",
+      "group.skip": "Skip ⤼",
       "group.skipTitle": "All rows of this entry on “Skip”: nothing of it is staged (“↺ Take again” brings their levels back)",
       "group.unskip": "↺ Take again",
-      "group.unskipTitle": "All rows of this entry back on the levels they had before “⊘ Skip”",
+      "group.unskipTitle": "All rows of this entry back on the levels they had before “Skip ⤼”",
       "group.skippedN.one": "{n} skipped entry",
       "group.skippedN.other": "{n} skipped entries",
-      "group.skippedTitle": "Entries skipped with “⊘ Skip” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "group.skippedTitle": "Entries skipped with “Skip ⤼” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
       "log.entrySkipped.one": "{name} skipped: {n} row on “Skip”",
       "log.entrySkipped.other": "{name} skipped: {n} rows on “Skip”",
       "log.entryTaken.one": "{name} taken again: {n} row back on its level",
@@ -1166,8 +1167,33 @@
       "settings.emSide.besideTitle": "The relationships to stage, the notes and “＋ Another role” in a column beside the lines of a compact entry (default).",
       "settings.emSide.lines": "in the lines",
       "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
+      "settings.emoji": "Symbols:",
+      "settings.emojiTitle": "Emojis, or a word in their place: the badges of the sources (Discogs, Bandcamp, YouTube, MusicBrainz, a pasted text, text from images) and 🖼️, 📄, 💡, 🏷, ⌚. ⚠ and ⚙ stay.",
+      "settings.emoji.emoji": "Emojis",
+      "settings.emoji.text": "Text",
+      "emoji.ocr": "OCR",
+      "emoji.text": "Text",
+      "emoji.tip": "Tip:",
+      "emoji.label": "Label:",
+      "emoji.date": "date",
+      "srcbadge.dg": "DG",
+      "srcbadge.bc": "BC",
+      "srcbadge.yt": "YT",
+      "srcbadge.mb": "MB",
+      "srcbadge.text": "Text",
+      "srcbadge.ocr": "OCR",
+      "srcbadge.name.dg": "Discogs",
+      "srcbadge.name.bc": "Bandcamp",
+      "srcbadge.name.yt": "YouTube",
+      "srcbadge.name.mb": "MusicBrainz (already there, or its track titles)",
+      "srcbadge.name.text": "the pasted text",
+      "srcbadge.name.ocr": "text read from images",
+      "srcbadge.title": "From {src} – click to open it",
+      "srcbadge.from": "From {src}",
+      "srcbadge.identity": "{src} artist",
+      "srcbadge.identityCo": "{src} entry",
       "settings.skipHide": "Remove skipped entries from the dashboard",
-      "settings.skipHideTitle": "Entries skipped with “⊘ Skip” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
+      "settings.skipHideTitle": "Entries skipped with “Skip ⤼” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
       "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
@@ -1888,8 +1914,8 @@
       "yell.kind.date": "date of the notes",
       "yell.next": "Next open point",
       "yell.prev": "Open point before",
-      "yell.dot.must": "{n} questions to answer in this entry",
-      "yell.dot.can": "{n} suggestions to confirm in this entry",
+      "yell.dot.must": "{n} questions to answer in this entry – or skip the whole entry: “Skip ⤼”",
+      "yell.dot.can": "{n} suggestions to confirm in this entry – or skip the whole entry: “Skip ⤼”",
       "yell.doneTitle": "Confirmed",
       "yell.undo": "Open it again",
       "yell.ok.preset": "Yes, the liner notes (confirms the answer)",
@@ -4457,6 +4483,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S201', where: 'rowOrigins, entryOriginsHtml, rowOriginsHtml, srcBadgeHtml, identityLinkHtml; SRC_ICONS', note: 'Display (3.127.0; collected item Z-SRCTAG): where an entry comes from – a badge per source after its name (Discogs – its notes too –, Bandcamp, YouTube, MusicBrainz for a relationship it has or a remixer of its titles, 📄 a pasted text, 🖼️ text from images), each a link to that source (the text window, the window of the text from images, the recording); at the rows only when the entry has more than one. The entry at its source a text link ("Discogs-Artist ↗") beside the MusicBrainz link. Off: the source tag as before' },
     { id: 'S200', where: 'remixParts, remixTitleCredits, rmxHtml, rmxTake; REMIX_WORDS', note: 'Remixes (3.126.0; collected item Z-RMXTITLE): a title of MusicBrainz ending in "(X Remix)", "(X Dub)", "(X Rework)", "[Remix by X & Y]" (REMIX_WORDS, extendable in the mapping) – X a remixer of that recording, searched by its name and on Skip until taken at its entry (a question that may be answered); with the track it remixes on the release (its title without the brackets) "remix of" (recording – recording) at the remixer\'s entry, also when the source credits the remixer already' },
     { id: 'S199', where: 'TEXT.parse (commissionLine, joinBroken), addCompanyEntry, suggestByName, datesWithContext, findFestivals; COMMISSIONER_WORDS, REMIX_WORDS', note: 'Texts (3.125.0; collected item Z-EXCEPTC): "All tracks except \'Heavy Industry\' and \'Industrial Unrest\' were / composed and commissioned for the 2025 Roadburn Festival." (a sentence over two lines read as one) – "commissioned" on the works of those tracks (remixes left out: their work is the original\'s), a label searched by its name ("Roadburn Festival"; MusicBrainz\'s names like it suggested, "Create …"), the year before the name its date (begin and end). "composed for X" / "written for X" is a commission when X has a word of COMMISSIONER_WORDS (Festival, Biennale, Proms, Radio, Foundation …) – else a dedication (S107); such a festival is not left out (S007) nor a festival recording (S056), its year no date of the composition' },
     { id: 'S198', where: 'TEXT.parse (siteHosts), siteOf, siteHintRun, siteNoteHtml', note: 'Texts (3.124.0; collected item Z-WEBDOM): a line only of web addresses is left out as before (now also a line only of an address in lower case with any ending: "castlesin.space"); a site that is a linked entry\'s own – its letters the name ("castlesin.space": Castles in Space) or its start ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for it yet: a note at the entry with a link to its page for editing in MusicBrainz, the address filled in (MusicBrainz\'s addresses of the entry looked up once)' },
@@ -11467,6 +11494,9 @@
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF of the text from cover art)', since: '3.34.6' },
     // [Z-YT] (3.41.13) the description of a video
     { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
+    // [Z-ICONS] (3.127.0) the logos of the sources' badges, embedded
+    { id: 'X018', kind: 'library', name: 'Dashboard Icons', home: 'https://dashboardicons.com/', more: [{ name: 'Simple Icons', home: 'https://simpleicons.org/' }],
+      hosts: ['dashboardicons.com', 'simpleicons.org'], perms: '– (embedded in the script, nothing is loaded)', since: '3.127.0' },
   ];
 
   /**
@@ -17280,6 +17310,22 @@
   /** [3.39.1] The tag of a source in its colours: Discogs dark, Bandcamp its blue, a pasted text grey (collected item 185). */
   const srcTagClass = (src) => (src === BANDCAMP ? 'dci-src-bc' : src === TEXT ? 'dci-src-tx' : 'dci-src-dg');
 
+  /**
+   * [Z-ICONS] (3.127.0) The logos of the sources, square (40 px, each logo fitted in the middle – all badges the same size): Dashboard
+   * Icons by Homarr Labs (Apache License 2.0), the Discogs icon via Simple Icons; the logos and brand names belong to their owners
+   * (⚙ Settings → Connections, the README). Discogs white on black (`dgd`: black, for the dark theme); YouTube never recoloured.
+   */
+  const SRC_ICONS = {
+    dg: 'data:image/png;base64,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',
+    dgd: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAFJUlEQVR42u2YaYiVVRjHf90ZW0YdTalcCq0pE9OpiEoGyi20xaCF+lrQB8ckUtJ0MFPKL2lEWBomhhlBamQIVoa5kDUWhpilWS7jJOW0kI7j2sy9ffm98PBy7/XOxAiFBw73vOee5X/+z3oOnC//83LBv5jbBbgeuAsYDVQDVwAZ4FfgO2C9dQ/w97k6VC/gGaARyJVYG53TqzMZvBCYBswNfbuAr2TsJNBmfwaoAPoAtwFDU8y3lrppeYnjqoCNwFV+fwB8DpQB1wEjgauBS/3/KHAA2Am8LfjxwNL2gCu1jAyi2gE8Bcx287Qo/7S2pfp3A891ROfLSwC30fb7KvzjwHD7tgMbgCbFmqzXCmSBy4Ea65eCjer1KvAJ8HFHmLsmMLAMmKKocrI3VcV/D/glD5uHgVXAdOCJPOyND2MHdsSFNDl5jeCSxd4BaoFNKUDfy+b6POK/MrV+LbAQWB4O06U9Ip6leH4C1gIL7F+ky3jNuT8CK9S7HkCl45qBxTLTBTgU1r4ReAM45cFv1spnAnNKYa+np2pTjNv9TsSVsPImMBFYHUQf62ngC+CisPY41WVJMJ6ndeI59z4rg7Uq+GcychOwT9Etcsw8ASwIa3ykIWT1fQ8o6tP+30eDQE+wCxgC9FVK9wMTgJfOZtWHPc0MQ1RO+uttLwdeCEy9AnTLs1ZlYG+ozL0e3NUM2w1KKtHFop6lOkxKFtgTRNsITArgHnNemYC6WSvDRhVh/KRw6OeD+sxU3DlgWASUSQEcq4i26mZQtLfYXgHcY3uxUaKrYbAZaLE2C7ASOAG87LoPAyudf7s+NmvSUW97bDGAY+w75CT0cTVObgJG2T/NsVmNJF1OAWccM8u+O4Aj9tcAv/v/YON5xsyoIMCE3mMh7rYC/YGDslUBbHFMRQFwEWRXf9fKag/gh2CxrcAAmU7cUEGAl/nb5kKnQgRoEhAmCqRCF8B9wKOpvmxqTjfXSnT3iKqQTWFoVzaTLpkC/S15QJ9tTqbYdxpgk6ItB/4ywUw27Asctz2iQD65uQiAO0OU6RskVWkkygQMBdHvDGJoDIc4KPATsjRcHTqujhUqlzimArhb4zgGDAL+COs3BPXZWQzgBnVhgHEWgW11bH/dDqZKCbv5QFYEK59vexPQW7dUb3TJGlX6hwhWsAwLDjlx1Pt1KTldzsQQeweHg3YPjrq7BoDOPDrq/bbrQtZTFxx4dTEd3B30sMyb2VDZ2Kzu1eigD+guEpVozpN0zBUUwIvArV4NvgkhcJ/JwiDgN9ksWqarvJsMRwmjEzScHPBQGD/cvs1GjPm6lJjVzDYJSLKkiapQTuBr7a8rxYX0CIvPCEnCajdZkrLehQF4rEfNtmtDepWsuTIkDVPCHaakdOuoieMc4EnFdK3pU50MJ+Ve4GIvRD3VvSQStXiRf1axnlEiA4FH/F7otSHjPkfak/Inadc6s411qQOVpRhr0NrrgyEk9VNV5N3QNwX40HZToZS/WBkYFnsrj1MeLSNLgz7FutfccbKsJ+nUcfuWhbFVHX1ZGCWAakUWY3ZicRvNftqCa8m5dj8zpCH2b/HSNS4Y2uhwte1QyaenDwLb8rB2ssD9ZJtqMjl14xvVGa9bVYp8jawNAG5QJeLTR6N+9IBGMMJ7B8DPMre3MwDuCN7+IPC1YFrCu0u5zrufF6iq1JV2nlbcKaW3FtjQzue3qZ39/JbPFQ3yAXOMYSt5wGwCvlX51xsSz9kD5vnynyr/AIC80pIg2/0YAAAAAElFTkSuQmCC',
+    bc: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAADFklEQVR42u2WS2gdVRjH/9935t65z7mkD0xQbBalbooEUahSdxZaqVaIWBojakhLdemDdimUSrNzqW0Xgo9WJSiIUbsoaEGUFrQoKsWCYC9NxJbc3Jv7mDnn+1wkKUiTMJced/NfDoeZ3/y/x/8AmTJlypQp052I+jrNBhCH6u79D26YOHpRmo0ujCl4IRFnqVAOer9dOj137KWDtz6Z/lcIUAGXqlTZ8+wpjXsAU+DNKmZoEsfzH7392n8epwdkQBXVxw/syt8zPKK9bhfEfgCti7lcC9rfff1q78rlRv8lpqVjZmCzGTpxpk5huBHOMZj5juFUBUSiqt3Zo2Mb7N/1BKp9OkgEqKK27/lxM7DpLlhrvcABgEjMlShYPP/ppJ27loC4zyFhBkSRu3s4HDz+/jzgAigYROwBThAEIu3W9dkjY8Nu4aYsu9pvDyqi0YOvcKlUgBPxArcEEnOpGjS/PDPuGjdkpc/TDwkzIIJw2/1ReceuN6W1EMOYvB84sZQP83H96o+tcx9fWNkStyGkeVdt9NAUmAH1uIGdChVK3Pzs3XHptHU199YHZAOIoPjAo4PFkUcO62IzhmFP7jlLxWLQ++PnmcULX/wKYkDc6hjr9AfIBIhGJ0+qtQICe3NPIJTLc2P61CG19tYaSw/IBlBBaefu+wrbRp7QTtuCjZ+l7CSmcjXfufz96c6lb+pLfe76AFxuVioUqbZv4j3ttgWG2Gv6q6Ax/c7rqRJwzUh77OmHc/dufUjjXuwt0pyLuRLl2z+cf6P3+0/zK1siPeCyeyYa4Mre8Q+l3bQg8jQYKjDM0unEjemTU6nvEKu6t/e5p3KbBrcgSfxGWrkWtL79/OXkr6vdNO7dHnVECDYP5Qanzv5DTCWI+ok0FQGzaJLMXz8yNuRuzllg9cW8voOqiJ58ccJUahGss94iTTTmSi1onfvkBXdj1i5VSvovcbh1e7W8c89bstiw/m7KIhSGhaT+5y8LMx/MrBVpqQCjZw6foDAspOmNfi4ElC+i+dXZSWktrBlpmTJlypQp0/+jfwE2J1f1GGB5eQAAAABJRU5ErkJggg==',
+    yt: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAACoklEQVR42u2XzUsVYRTGf/OR3Yt1M+wSQgolRKFIlK4kWtTaj40L1/ofmCYt+kNctlIIr9I/0CY3Fxd+UAgWKCQhN8zUq9533tNierkfOTozXcpwHjjMHWbmvM89z3le3gMJEiRIcLFh1d7Ir9+P4Vov3G+Huy1wuxluZeBmIzSnoakBGi9B2oWUAw02uBbYFtgalAblwbGCwxIUj2G/CDv7UPgB2wXY3ILP67D2Hj68g51aDieyvQbWG3guIH8z5uDldbCss8qZg0kB8aCk4EjBkQclExo8E2EXr/ymMpfJr+BIQN7Cq1MJ9kJGQEpQjEKgHlGCooA8gaZKTnblzVN4IKBNL4XrYqteZrAF9DN4FEiwAx6GJmYgArbtRx1IdkB3IME26DAvhs6aToPWfrhu7IqaNdugM5BgFtpDE3Rd/zo8DNPT0NoKSvkVdZzYBG/AnUCCGWiJnNm2YWgIFhdhfBxSKd+rMWU/lcMefA3tPNf1ryMjIkqJaC0iIrK8LDIwUP2eZYV28yF8D6xgA1yJ1UCO48urFHR2wuwszM1BV1dZ9pCo5VBF0IVUfAtafl8aw/T1QT4PU1OQzfrPQxiotv/t835YqCKo4DB2JhFfTmOO+Xno7obRUdjeLnfZWWlABxI8hr1Y5DzPl9d1YWUFBgehvx+WliLvjbUcqggewLeT/sWZvec4UCjAxAT09EAuV65kSJOYNQ+gUOOLMnZhKwv3IlVPa5iZgbEx2Nwsu9rzYomxC1uBDxdgyhy1Qu+H6XTsPa8yzJp5eB0o8QasRpa4WIws52kSb8BKoMSrsBiJnOlBreuypQjoVcj/VwfW3478s/Di3B75/+XQlIPJk4amWGNnCjKX4eqfjp1f4NM6rC3Ax1BjZ4IECRJcQPwEDY21XrmDXnAAAAAASUVORK5CYII=',
+    mb: 'data:image/png;base64,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',
+  };
+  // [Z-SRCTAG] (3.127.0) the emojis of the dashboard, or a word each (⚙ Settings → Appearance; ⚠ and ⚙ stay)
+  const EMOJI = { ocr: ['🖼️', 'emoji.ocr'], text: ['📄', 'emoji.text'], tip: ['💡', 'emoji.tip'], label: ['🏷', 'emoji.label'], date: ['⌚', 'emoji.date'] };
+  const emo = (k) => (S.emojiText ? tr(EMOJI[k][1]) : EMOJI[k][0]);
+
   /** [3.13.2] Another source was loaded: the open rules window follows. */
   function refreshRulesWindow() {
     const el = document.getElementById('dci-rules');
@@ -17929,7 +17975,7 @@
       perEntry.set(it.a.key, c);
     });
     // (beside the name, not in it: what reads the name stays as it was)
-    // [Z-SUPPNAV] (3.116.0) the entries with lines from the cover art (📷 at the head; "only from images" shows only them)
+    // [Z-SUPPNAV] (3.116.0) the entries with lines from the cover art (🖼️ at the head; "only from images" shows only them)
     const ocrRows = ocrNavRows(false);
     const ocrEntries = new Set(ocrRows.map((r) => r.artistKey));
     ov.querySelectorAll('section[data-group]').forEach((sec) => sec.classList.toggle('dci-has-ocr', ocrEntries.has(sec.dataset.group)));
@@ -17942,7 +17988,7 @@
       const key = head.closest('section[data-group]').dataset.group;
       const c = perEntry.get(key) || { must: 0, can: 0 };
       const html = ['must', 'can'].filter((cls) => c[cls]).map((cls) => `<span class="dci-yell-dot dci-yell-dot-${cls}" title="${esc(tr(`yell.dot.${cls}`, { n: c[cls] }))}">● ${c[cls]}</span>`).join('')
-        + (ocrEntries.has(key) ? `<span class="dci-yell-dot dci-ocr-dot" title="${esc(tr('ocrnav.entry'))}">📷</span>` : '');
+        + (ocrEntries.has(key) ? `<span class="dci-yell-dot dci-ocr-dot" title="${esc(tr('ocrnav.entry'))}">${esc(emo('ocr'))}</span>` : '');
       let box = head.nextElementSibling && head.nextElementSibling.matches('.dci-yell-dots') ? head.nextElementSibling : null;
       if (!html) {
         if (box) box.remove();
@@ -17975,18 +18021,18 @@
   }
   /**
    * [Z-SUPPNAV] (3.116.0) The rows from the cover art: `onlyNew` – those a supplement read from it brought (found with ‹ ›), else
-   * also those it said again (marked 📷 too).
+   * also those it said again (marked 🖼️ too).
    */
   const ocrNavRows = (onlyNew) => S.rows.filter((r) => r.suppOcr || (!onlyNew && (r.ocrSeen || []).length));
-  /** [Z-SUPPNAV] (3.116.0) "📷 n ‹ ›" in the footer: the new rows from the cover art (none: nothing). */
+  /** [Z-SUPPNAV] (3.116.0) "🖼️ n ‹ ›" in the footer: the new rows from the cover art (none: nothing). */
   function ocrNavHtml() {
     const n = ocrNavRows(true).length;
     if (!n) return '';
     const nav = (act, sym, key) => `<button type="button" class="dci-iconbtn" data-act="${act}" title="${esc(tr(key))}" aria-label="${esc(tr(key))}">${sym}</button>`;
     return `<span class="dci-yell-c dci-ocrnav-c" title="${esc(tr('ocrnav.title'))}">${nav('ocr-prev', '‹', 'ocrnav.prev')}<button type="button" class="dci-textbtn dci-yell-n" data-act="ocr-next"
-      aria-label="${esc(tr('ocrnav.label', { n }))}">📷 ${n}</button>${nav('ocr-next', '›', 'ocrnav.next')}</span>`;
+      aria-label="${esc(tr('ocrnav.label', { n }))}">${esc(emo('ocr'))} ${n}</button>${nav('ocr-next', '›', 'ocrnav.next')}</span>`;
   }
-  /** [Z-SUPPNAV] (3.116.0) "📷 Only from images" beside the filter of the missing entries – while there are rows from the cover art. */
+  /** [Z-SUPPNAV] (3.116.0) "🖼️ Only from images" beside the filter of the missing entries – while there are rows from the cover art. */
   function renderOcrFilter(n) {
     const box = S.overlay && $('ocr-filter');
     if (!box) return;
@@ -17995,7 +18041,7 @@
       S.overlay.classList.remove('dci-only-ocr');
     }
     // ((review) drawn once – its state set in place: the focus stays)
-    const html = n ? `<label class="dci-check" title="${esc(tr('ocrnav.onlyTitle'))}"><input type="checkbox" data-f="filter-ocr"> ${esc(tr('ocrnav.only'))}</label>` : '';
+    const html = n ? `<label class="dci-check" title="${esc(tr('ocrnav.onlyTitle'))}"><input type="checkbox" data-f="filter-ocr"> ${esc(`${emo('ocr')} ${tr('ocrnav.only')}`)}</label>` : '';
     if (box.dataset.html !== html) {
       box.innerHTML = html;
       box.dataset.html = html;
@@ -22049,14 +22095,15 @@
       setBusy('busy.supp', { source: source.name });
       const rel = await source.release(id, { ...sourceContext(), input });
       if (S.supp) dropSupplementMarks(S.supp);
-      // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 📷, the images of its lines ((review) kept beside those
+      // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 🖼️, the images of its lines ((review) kept beside those
       // of a supplement read before)
       S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '', typed, ocr: !!(input && input.ocr) };
       if (input && input.ocrLines) {
         const was = S.ocrSuppLines;
         S.ocrSuppLines = { text: input.ocrLines.text, lines: new Map([...((was && was.lines) || []), ...input.ocrLines.lines]) };
       }
-      S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url });
+      // ([Z-SRCTAG] 3.127.0, review) a text: its words (the badge 📄 shows them); read from images: so marked (🖼️)
+      S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
       await compareSupplement();
       const n = (kind) => S.supp.items.filter((it) => it.kind === kind).length;
       log('info', 'suppLoaded', { name: source.name, confirmed: S.supp.confirmed, added: n('role') + n('entry'), differ: n('differ'), unrec: n('unrec') });
@@ -22138,7 +22185,7 @@
       const row = same || near;
       if (!row) return { kind: 'role' };
       if (near) kin.add(near);
-      // [Z-SUPPNAV] (3.116.0) a line of the cover art that says what is there already: the row shows it (📷, its cut-out)
+      // [Z-SUPPNAV] (3.116.0) a line of the cover art that says what is there already: the row shows it (🖼️, its cut-out)
       if (sp.ocr) row.ocrSeen = uniq([...(row.ocrSeen || []), info.line].filter(Boolean));
       if (sameTracks(row.tracks, new Set(info.tracks))) {
         if (!row.confirmedBy) row.confirmedBy = new Set();
@@ -22491,7 +22538,7 @@
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
     row.suppName = S.supp.source.name;
-    // [Z-SUPPNAV] (3.116.0) from the cover art: 📷, counted and found in the footer, its lines' cut-outs
+    // [Z-SUPPNAV] (3.116.0) from the cover art: 🖼️, counted and found in the footer, its lines' cut-outs
     if (S.supp.ocr) Object.assign(row, { suppOcr: true, ocrSeen: company ? [info.r.line || info.r.role] : (info.c.lines || []).slice() });
     if (!company && info.c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
     if (!company && info.c.abbrAlt) Object.assign(row, { abbr: info.c.abbr, abbrAlt: info.c.abbrAlt }); // [Z-ABBR] (3.101.0, S166)
@@ -22663,7 +22710,24 @@
   }
 
   /** The marks of a row: its source, and the second source when it says the same (or other tracks). */
+  /** ((3.127.0, review) the rows of a line of the entry matrix, opened: its badges are at the line already) */
+  function emDetailRows(rows) {
+    S.inEmDetail = true;
+    try {
+      return rows.map(rowHtml).join('');
+    } finally {
+      S.inEmDetail = false;
+    }
+  }
   function srcMarksHtml(row) {
+    // [Z-SRCTAG] (3.127.0, S201) the badges of the row's sources (when its entry has more than one), what differs as before
+    if (ruleOn('S201')) {
+      const a = S.inEmDetail ? null : S.artists.get(row.artistKey);
+      const mark = (text, title, cls = '') => `<span class="dci-srcmark${cls}" title="${esc(title)}">${esc(text)}</span>`;
+      const more = [...(row.differ ? [mark(`${row.differ.short} ≠`, tr('supp.badgeDiffer', { name: row.differ.name, tracks: trackSetText(row.differ.tracks, row.differ.all) }), ' dci-srcmark-differ')] : [])];
+      const html = `${rowOriginsHtml([row], a)}${more.join('')}`;
+      return html ? `<div class="dci-srcmarks">${html}</div>` : '';
+    }
     if (!S.suppSources.size) return '';
     const mark = (text, title, cls = '') => `<span class="dci-srcmark${cls}" title="${esc(title)}">${esc(text)}</span>`;
     const out = [];
@@ -22673,7 +22737,7 @@
     if (row.differ) out.push(mark(`${row.differ.short} ≠`, tr('supp.badgeDiffer', { name: row.differ.name, tracks: trackSetText(row.differ.tracks, row.differ.all) }), ' dci-srcmark-differ'));
     if (row.suppTook) out.push(mark(`${row.suppTook.short} ✓`, tr('supp.badgeAdded', { name: row.suppTook.name }), ' dci-srcmark-supp'));
     // [Z-SUPPNAV] (3.116.0) from the cover art (new) or said again by it
-    if (row.suppOcr || (row.ocrSeen || []).length) out.push(mark('📷', tr(row.suppOcr ? 'ocrnav.markNew' : 'ocrnav.markSeen'), ' dci-srcmark-ocr'));
+    if (row.suppOcr || (row.ocrSeen || []).length) out.push(mark(emo('ocr'), tr(row.suppOcr ? 'ocrnav.markNew' : 'ocrnav.markSeen'), ' dci-srcmark-ocr'));
     return `<div class="dci-srcmarks">${out.join('')}</div>`;
   }
   const sourceByShort = (sh) => Object.values(SOURCES).find((x) => x.short === sh) || { name: sh };
@@ -27996,9 +28060,9 @@
     const autoRow = l.rows.find((x) => x.instsAuto);
     if (autoRow) role += ` <span class="dci-tag dci-insts-tag" title="${esc(tr(autoRow.instsHint ? 'insts.autoHint' : 'insts.auto', { group: autoRow.instsHint || '' }))}">${esc(tr('insts.tag'))}</span>`;
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}${l.rows.some(arhlOn) ? ' dci-arhl' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
+        <td class="dci-em-c-role">${grip}${role}${ruleOn('S201') ? rowOriginsHtml(l.rows, S.artists.get(l.rows[0].artistKey)) : ''}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}"><div class="dci-em-stick">${ask}</div></td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
-        <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
+        <table class="dci-table dci-rows"><tbody>${emDetailRows(l.rows)}</tbody></table></td></tr>` : ''}`;
   }
 
   /**
@@ -28252,7 +28316,7 @@
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -28808,6 +28872,116 @@
       ? `<ul class="dci-skipped-list">${list.map((a) => `<li>${kindTagHtml(a)}<strong>${esc(a.name || a.rawName || '')}</strong> <button type="button" class="dci-textbtn dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button></li>`).join('')}</ul>` : ''}`;
   }
 
+
+  // --- [Z-SRCTAG] (3.127.0) Where an entry and its rows come from: a badge per source after the name (a logo, or a word), each a link
+  // to it – Discogs (its notes too), Bandcamp, YouTube, MusicBrainz (a relationship it has, a remixer of its titles), a pasted text,
+  // text from images. At a row only when the entry has more than one.
+  const SRC_KEY_OF = { DG: 'dg', BC: 'bc', YT: 'yt', TXT: 'text' };
+  const SRC_SHORT_OF = { dg: 'DG', bc: 'BC', yt: 'YT', text: 'TXT' };
+  const SRC_ORDER = ['dg', 'bc', 'yt', 'mb', 'text', 'ocr'];
+  /** ((review) a supplement's key: a text read from images is "ocr", not "text") */
+  const suppKey = (sh) => (sh === 'TXT' && (S.suppSources.get('TXT') || {}).ocr ? 'ocr' : SRC_KEY_OF[sh] || 'text');
+  /** The key of the import's own source of an entry (a text read from images: "ocr"). */
+  const mainKey = (a) => {
+    const src = entrySource(a) || {};
+    if (a && a.src) return suppKey(src.short);
+    return statSourceKind() === 'ocr' ? 'ocr' : SRC_KEY_OF[src.short] || 'text';
+  };
+  /** The sources of a row, in that order. */
+  function rowOrigins(row) {
+    const memo = S.originMemo;
+    if (memo && memo.has(row)) return memo.get(row);
+    const a = S.artists.get(row.artistKey) || {};
+    const out = new Set();
+    if (row.rmxTitle) out.add('mb');
+    else if (row.supp) out.add(row.suppOcr ? 'ocr' : suppKey(row.supp));
+    else if (!row.manual && S.release) out.add(mainKey(a));
+    (row.confirmedBy ? [...row.confirmedBy] : []).forEach((sh) => out.add(suppKey(sh)));
+    if (row.suppTook) out.add(suppKey(row.suppTook.short));
+    if ((row.ocrSeen || []).length) out.add('ocr');
+    const info = S.rowInfo && S.rowInfo.get(row.id);
+    if (row.existingAll || (info && (info.existing > 0 || info.exact > 0))) out.add('mb');
+    const res = SRC_ORDER.filter((k) => out.has(k));
+    if (memo) memo.set(row, res);
+    return res;
+  }
+  /** The sources of an entry: those of its rows ((review) kept for one drawing: S.originMemo, made by renderGroups). */
+  const entryOrigins = (a) => {
+    const memo = S.originMemo;
+    const key = `e:${a.key}`;
+    if (memo && memo.has(key)) return memo.get(key);
+    const ks = new Set(S.rows.filter((r) => r.artistKey === a.key).flatMap(rowOrigins));
+    const res = SRC_ORDER.filter((k) => ks.has(k));
+    if (memo) memo.set(key, res);
+    return res;
+  };
+  /** Where a badge leads: the release at its source, the text window, the window of the text from images, MusicBrainz's page. */
+  function originLink(k, rows) {
+    // ((review) the import's own document, or the supplement's – by the rows of the badge)
+    const own = rows.some((r) => !r.supp && !r.manual && !r.rmxTitle && mainKey(S.artists.get(r.artistKey)) === k && !(S.artists.get(r.artistKey) || {}).src);
+    if (k === 'text') return own ? { act: 'src-text' } : { act: 'src-text', supp: true };
+    if (k === 'ocr') return { act: 'ocr-open' };
+    if (k === 'mb') {
+      // (a remixer of a title: its recording; else what the row's relationship is on)
+      const r = rows.find((x) => x.rmxTitle) || rows.find((x) => rowOrigins(x).includes('mb')) || rows[0];
+      const i = r && r.tracks && r.tracks.size ? Math.min(...r.tracks) : null;
+      const t = i != null ? S.mbTracks[i] : null;
+      if (r && t && (r.rmxTitle || r.level === 'recording')) return { href: `/recording/${t.recordingGid}` };
+      if (r && t && r.level === 'work' && (t.works || [])[0]) return { href: `/work/${t.works[0].gid}` };
+      return { href: releaseMbid ? `/release/${releaseMbid}` : '' };
+    }
+    const short = SRC_SHORT_OF[k];
+    if (own && S.release && S.source && S.source.short === short) return { href: S.release.url || '' };
+    const sp = S.suppSources && S.suppSources.get(short);
+    return { href: (sp && sp.url) || (S.release && S.source && S.source.short === short ? S.release.url || '' : '') };
+  }
+  /** A badge: the logo in its square (Discogs white on black, black in the dark theme), 📄 / 🖼️, or a word (⚙ Settings → Appearance). */
+  function srcBadgeHtml(k, rows, row = false) {
+    const name = tr(`srcbadge.${k}`);
+    const title = tr('srcbadge.title', { src: tr(`srcbadge.name.${k}`) });
+    const inner = S.emojiText ? esc(name) : k === 'text' ? '📄' : k === 'ocr' ? '🖼️'
+      : k === 'dg' ? `<img class="dci-sb-lt" src="${SRC_ICONS.dg}" alt="${esc(name)}"><img class="dci-sb-dk" src="${SRC_ICONS.dgd}" alt="${esc(name)}">`
+        : `<img src="${SRC_ICONS[k]}" alt="${esc(name)}">`;
+    const cls = `dci-sb dci-sb-${k}${S.emojiText ? ' dci-sb-word' : ''}${row ? ' dci-sb-row' : ''}`;
+    const link = originLink(k, rows);
+    const label = `aria-label="${esc(title)}"`;
+    if (link.href) return `<a class="${cls}" href="${esc(link.href)}" target="_blank" rel="noopener" title="${esc(title)}" ${label} data-src="${k}">${inner}</a>`;
+    if (link.act) return `<button type="button" class="${cls}" data-act="${link.act}"${link.supp ? ' data-supp="1"' : ''} title="${esc(title)}" ${label} data-src="${k}">${inner}</button>`;
+    return `<span class="${cls} dci-sb-nolink" title="${esc(tr('srcbadge.from', { src: tr(`srcbadge.name.${k}`) }))}" ${label} data-src="${k}">${inner}</span>`;
+  }
+  /** The badges after an entry's name. */
+  function entryOriginsHtml(a) {
+    if (!S.release) return '';
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    const ks = entryOrigins(a);
+    return ks.length ? `<span class="dci-sbs" data-el="origins">${ks.map((k) => srcBadgeHtml(k, rows.filter((r) => rowOrigins(r).includes(k)))).join('')}</span>` : '';
+  }
+  /** The badges of a row (or of the rows of a line): only when its entry has more than one source. */
+  function rowOriginsHtml(rows, a) {
+    if (!S.release || !a || entryOrigins(a).length < 2) return '';
+    const ks = SRC_ORDER.filter((k) => rows.some((r) => rowOrigins(r).includes(k)));
+    return ks.length ? `<span class="dci-sbs dci-sbs-row" data-el="row-origins">${ks.map((k) => srcBadgeHtml(k, rows.filter((r) => rowOrigins(r).includes(k)), true)).join('')}</span>` : '';
+  }
+  /** The entry at its source as a text link ("Discogs-Artist ↗"; the badges say where it comes from). */
+  function identityLinkHtml(a) {
+    const aSrc = entrySource(a);
+    if (!a.dId || !(a.links || [])[0] || !aSrc) return '';
+    const label = tr(a.company ? 'srcbadge.identityCo' : 'srcbadge.identity', { src: aSrc.name });
+    return ` <a class="dci-idlink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}">${esc(label)} ↗</a>`;
+  }
+
+  /** [Z-SRCTAG] (3.127.0) Emojis or words: stored, the overlay's class (its CSS marks), everything drawn anew. */
+  function setEmojiText(on) {
+    S.emojiText = !!on;
+    writeJson('localStorage', EMOJI_TEXT_KEY, S.emojiText || null);
+    if (S.overlay) S.overlay.classList.toggle('dci-emtext', S.emojiText);
+    renderGroups();
+    renderWorks();
+    renderSource();
+    if (S.settingsOpen) renderSettings();
+    refresh();
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -28826,16 +29000,16 @@
     const notes = `${arrLinesHtml(allRows)}${workNote && !inLines ? (compact ? `<p class="dci-sub dci-work-note" title="${esc(tr('group.workNote'))}">${esc(tr('group.workNoteShort'))}</p>`
       : `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>`) : ''}${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}`;
     const aSrc = entrySource(a);
-    const sourceLink = a.dId && (a.links || [])[0]
-      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
+    // [Z-SRCTAG] (3.127.0) the badges of its sources after the name; the entry at its source a text link beside the MusicBrainz link
+    const sourceLink = a.dId && (a.links || [])[0] ? (ruleOn('S201') ? '' : `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`)
       // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}</div>
-          <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}</div>
+          <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -32113,6 +32287,16 @@
   }
 
   function renderGroups() {
+    // [Z-SRCTAG] ((3.127.0, review) S201) the sources of rows and entries worked out once for this drawing
+    S.originMemo = ruleOn('S201') ? new Map() : null;
+    if (S.overlay) S.overlay.classList.toggle('dci-s201', ruleOn('S201'));
+    try {
+      renderGroupsNow();
+    } finally {
+      S.originMemo = null;
+    }
+  }
+  function renderGroupsNow() {
     yellSoon(); // [Z-YELL] (3.110.0)
     renderSortBox(); // [Z-SORT] (3.112.0)
     dropStaleEntrySkip();
@@ -32230,7 +32414,7 @@
     // [Z-ETC] (3.42.5) with its note while a search waits
     section.querySelectorAll('.dci-etc-wait').forEach((x) => x.remove());
     if (tag) tag.outerHTML = kindTagHtml(a);
-    section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
+    section.querySelector(`[data-match="${a.key}"]`).innerHTML = `${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}`;
     const spell = section.querySelector(`[data-spell="${a.key}"]`);
     if (spell) spell.innerHTML = spellHtml(a);
     // [Z-CP] (3.40.7) ⧉ only while no MusicBrainz entry is chosen
@@ -32457,6 +32641,16 @@
     S.removals = removals;
     S.rowInfo = rowInfo;
     sendDiscogsStatus(rowInfo);
+    // [Z-SRCTAG] (3.127.0, S201) the rows MusicBrainz has (their badge "MB"; (review) once the plan's rowInfo is new): the entries drawn again
+    // when that changed
+    if (ruleOn('S201')) {
+      const sig = S.rows.filter((r) => rowOrigins(r).includes('mb')).map((r) => r.id).join(',');
+      if (sig !== (S.originMbSig || '')) {
+        const had = S.originMbSig != null;
+        S.originMbSig = sig;
+        if (had || sig) renderGroups();
+      }
+    }
     S.waiting = waiting;
     // [169] (3.38.4) the rounds and the tracks waiting for a work: chips in the line of the summary (renderFootChips)
     if (!S.footMsgs) S.footMsgs = {};
@@ -36079,7 +36273,7 @@
     const sugg = !a.insts && !a.instsNo && n >= INSTS_SUGGEST;
     const seg = mxEntry(a) ? '' : instsSegHtml(a);
     if (!sugg && !seg) return '';
-    return `<div class="dci-insts-bar" data-el="insts">${sugg ? `<div class="dci-insts-sugg"><span>💡 ${esc(tr('insts.sugg', { n }))}</span>
+    return `<div class="dci-insts-bar" data-el="insts">${sugg ? `<div class="dci-insts-sugg"><span>${esc(emo('tip'))} ${esc(tr('insts.sugg', { n }))}</span>
       <button type="button" class="dci-small" data-act="insts-set" data-insts="release">${esc(tr('insts.toRelease'))}</button>
       <button type="button" class="dci-textbtn" data-act="insts-no">${esc(tr('insts.keep'))}</button></div>` : ''}${seg}</div>`;
   }
@@ -36210,7 +36404,7 @@
       const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}" target="_blank" rel="noopener"
         title="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}" aria-label="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}">＋</a>` : '';
       const text = !n.label ? tr('lc.none', { code: n.code }) : n.other ? tr('lc.other', { name: n.label.name, code: n.code, other: n.other }) : tr('lc.missing', { name: n.label.name, code: n.code });
-      return `<p class="dci-sub">🏷 ${esc(text)}${add}</p>`;
+      return `<p class="dci-sub">${esc(emo('label'))} ${esc(text)}${add}</p>`;
     }).join('')}</div>`;
   }
 
@@ -38191,7 +38385,7 @@
         if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr(cskip ? 'matrix.creditSkipped' : 'matrix.workLocked')}`);
         if (exactHere && norm(rowTypeName(r)) === 'writer') return chip('cwr', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, tr('matrix.writerExact'));
         // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
-        return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
+        return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? `<sup>${esc(emo('date'))}</sup>` : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
       }),
     ].join('');
@@ -38206,7 +38400,7 @@
     const fills = (locked ? [] : fillsOfCell(col, mrow)).map(([key, f]) => {
       const staged = S.filledDates.has(key);
       const label = workTypePhrase(f.type, col.entityType) || f.type;
-      return `<span class="dci-mx-fill" title="${esc(tr(staged ? 'matrix.fillStaged' : 'matrix.fillTitle', { type: label }))}">⌚ ${esc(roleCode(f.type, false, label))} ${esc(formatDateValue(validateDateFields(f.date).value) || '')}${staged ? ' ✓'
+      return `<span class="dci-mx-fill" title="${esc(tr(staged ? 'matrix.fillStaged' : 'matrix.fillTitle', { type: label }))}">${esc(emo('date'))} ${esc(roleCode(f.type, false, label))} ${esc(formatDateValue(validateDateFields(f.date).value) || '')}${staged ? ' ✓'
         : `<button type="button" class="dci-iconbtn" data-act="mx-fill-remove" data-key="${esc(key)}" aria-label="${esc(tr('matrix.fillRemove'))}" title="${esc(tr('matrix.fillRemove'))}">×</button>`}</span>`;
     }).join('');
     const fillable = !locked && datelessExisting(col, mrow, st).length ? ' data-fill="1"' : '';
@@ -40787,6 +40981,7 @@
     ? (ruleOn('S104') ? compactSourceEl(target) : target.closest('tr.dci-row, tr[data-work], .dci-ghead')) : null);
   /** ([Z-CMK] 3.69.0, review) a chip: its rows; the white field of a compact line: the line; its other buttons and fields: nothing. */
   function compactSourceEl(target) {
+    if (target.closest('.dci-sb')) return null; // ([Z-SRCTAG] 3.127.0, review) a badge of a source is a link of its own
     const el = target.closest('tr.dci-row, tr[data-work], .dci-ghead, .dci-em-chip[data-rows], .dci-em-cl, tr.dci-em-line');
     if (el && el.matches('.dci-em-cl, tr.dci-em-line') && target.closest('button, input, select, textarea, a, label')) return null;
     return el;
@@ -42614,6 +42809,14 @@
           if (again) again.focus({ preventScroll: true });
         }
         break;
+      case 'emoji-mode': {
+        // [Z-SRCTAG] (3.127.0) emojis or words
+        const text = btn.dataset.mode === 'text';
+        if (text === !!S.emojiText) break;
+        setEmojiText(text);
+        log('info', 'settingValue', { what: tr('settings.emoji'), value: tr(`settings.emoji.${text ? 'text' : 'emoji'}`) });
+        break;
+      }
       case 'em-side': {
         // [Z-KH] (3.40.11) the notes of compact entries beside their lines or in them
         const side = btn.dataset.side === 'lines' ? 'lines' : 'beside';
@@ -44050,7 +44253,7 @@
           S.suppSources.delete(S.supp.source.short);
           // What was taken over stays, with its mark
           if (S.rows.some((r) => r.supp === S.supp.source.short || (r.suppTook && r.suppTook.short === S.supp.source.short))) {
-            S.suppSources.set(S.supp.source.short, { name: S.supp.source.noteName, url: S.supp.url });
+            S.suppSources.set(S.supp.source.short, { ...(S.suppSources.get(S.supp.source.short) || {}), name: S.supp.source.noteName, url: S.supp.url, ocr: !!S.supp.ocr });
           }
           S.supp = null;
         }
@@ -44110,6 +44313,16 @@
         repeatImport(keep);
         break;
       }
+      // [Z-SRCTAG] (3.127.0) the badge of a pasted text: its window open, in view
+      case 'src-text':
+        // ((review) a supplement's text: the form of the supplement with its text)
+        if (btn.dataset.supp) {
+          const sp = S.suppSources.get('TXT') || {};
+          S.textForm = { text: sp.text || '', origin: sp.origin || '', supp: true };
+        } else if (!S.textForm || S.textForm.supp) S.textForm = { text: (S.textInput && S.textInput.text) || '', origin: (S.textInput && S.textInput.origin) || '' };
+        renderSource();
+        (() => { const f = S.overlay.querySelector('[data-f="text-src"]'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } })();
+        break;
       case 'text-open':
         S.textForm = S.textForm ? null : { text: (S.textInput && S.textInput.text) || '', origin: (S.textInput && S.textInput.origin) || '' };
         renderSource();
@@ -45709,6 +45922,7 @@
       document.addEventListener('dragend', () => { if (S.dmDrag) setTimeout(() => { if (S.dmDrag) dmDragEnd(); }, 0); }, true);
     }
     S.overlay = overlay;
+    overlay.classList.toggle('dci-emtext', !!S.emojiText); // [Z-SRCTAG] (3.127.0)
     S.footOptsOpen = false;
     applyView();
     applyScale();
@@ -45937,6 +46151,8 @@
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   // [Z-KH] (3.40.11) compact entries: the notes beside the lines (default) or in them ("lines": stored)
   const EM_SIDE_KEY = 'dci-em-side';
+  // [Z-SRCTAG] (3.127.0) a word for each emoji ("text": stored true; default the emojis)
+  const EMOJI_TEXT_KEY = 'dci-emoji-text';
   // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard (off by default; on: stored true)
   const SKIP_HIDE_KEY = 'dci-skip-hide';
   // [Z-SU] (3.41.1) the parts of a suite named "Suite: Part" (default) or "Suite, Part" ("comma": stored)
@@ -45985,7 +46201,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
+    appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
@@ -46025,6 +46241,7 @@
   S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
+  S.emojiText = readJson('localStorage', EMOJI_TEXT_KEY, false) === true; // [Z-SRCTAG] (3.127.0)
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false; // [Z-DEDQ] (3.74.0) the box of the dedications: on unless switched off
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
@@ -47815,6 +48032,9 @@
         // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
         row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
           data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
+        // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
+        row(`<span title="${esc(tr('settings.emojiTitle'))}">${esc(tr('settings.emoji'))}</span> <span class="dci-seg dci-seg-small" role="group" data-el="emoji-mode" aria-label="${esc(tr('settings.emoji'))}">${['emoji', 'text'].map((v) => `<button type="button"
+          data-act="emoji-mode" data-mode="${v}" aria-pressed="${!!S.emojiText === (v === 'text')}">${esc(tr(`settings.emoji.${v}`))}</button>`).join('')}</span>`),
         // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
         row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
         // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
@@ -48577,6 +48797,7 @@
         renderGroups();
         refresh();
       }
+      if (S.emojiText) setEmojiText(false); // [Z-SRCTAG] (3.127.0)
       // [Z-SK] (3.40.15) skipped entries in their place again
       if (S.skipHide) {
         S.skipHide = false;
@@ -48660,7 +48881,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, EMOJI_TEXT_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -48788,6 +49009,8 @@
     S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
     S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
     S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
+    S.emojiText = readJson('localStorage', EMOJI_TEXT_KEY, false) === true; // [Z-SRCTAG] (3.127.0)
+    if (S.overlay) S.overlay.classList.toggle('dci-emtext', S.emojiText);
     S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
     S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
     S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
@@ -50613,11 +50836,15 @@
       .dci-toolbar { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); flex-wrap: wrap; margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 16); }
       .dci-only-missing .dci-group:not(.dci-st-missing):not(.dci-st-ambiguous),
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
-      /* [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art; 📷 at their lines in the matrix and compact view */
+      /* [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art; 🖼️ at their lines in the matrix and compact view */
       #dci-overlay.dci-only-ocr .dci-group:not(.dci-has-ocr) { display: none; }
       #dci-overlay.dci-only-ocr .dci-sortblock:not(:has(.dci-group.dci-has-ocr)) { display: none; }
       #dci-overlay tr.dci-em-line.dci-ocr-line .dci-em-c-role::after, #dci-overlay .dci-em-chip.dci-ocr-line::after,
-      #dci-overlay .dci-em-cl.dci-ocr-line::after { content: ' 📷'; font-size: 0.85em; }
+      #dci-overlay .dci-em-cl.dci-ocr-line::after { content: ' 🖼️'; font-size: 0.85em; }
+      #dci-overlay.dci-emtext tr.dci-em-line.dci-ocr-line .dci-em-c-role::after, #dci-overlay.dci-emtext .dci-em-chip.dci-ocr-line::after,
+      #dci-overlay.dci-emtext .dci-em-cl.dci-ocr-line::after { content: ' OCR'; font-size: 0.75em; font-weight: 700; } /* [Z-SRCTAG] (3.127.0) */
+      /* ((review) with the badges of the sources the line shows its 🖼️ there – not twice) */
+      #dci-overlay.dci-s201 tr.dci-em-line.dci-ocr-line:has(.dci-sbs-row) .dci-em-c-role::after, #dci-overlay.dci-s201 .dci-em-chip.dci-ocr-line:has(.dci-sbs-row)::after { content: none; }
       .dci-ocr-dot { margin-left: calc(var(--u, 1px) * 6); }
       .dci-ocr-suppnote { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: 6px; background: var(--sugg-bg, #fff8db); }
 
@@ -51042,6 +51269,30 @@
       .dci-src-tx { background: #6b6b6b; }
       a.dci-dglink .dci-src-bc + .dci-dglink-ico { color: #4f8794; }
       .dci-src-mb { background: var(--purple); }
+      /* [Z-SRCTAG] (3.127.0) the badges of the sources: all the same square, the logo in the middle (Discogs white on black, black in the
+         dark theme); a word instead with ⚙ Settings → Appearance → Symbols: Text */
+      #dci-overlay .dci-sbs { display: inline-flex; gap: calc(var(--u, 1px) * 3); margin-left: calc(var(--u, 1px) * 8); vertical-align: middle; }
+      #dci-overlay .dci-sbs-row { margin-left: calc(var(--u, 1px) * 6); gap: calc(var(--u, 1px) * 2); }
+      #dci-overlay .dci-sb { display: inline-flex; align-items: center; justify-content: center; width: calc(var(--u, 1px) * 20); height: calc(var(--u, 1px) * 20);
+        padding: 0; margin: 0; border: 1px solid #c9ccd3; border-radius: 3px; background: #fff; box-sizing: border-box; overflow: hidden; cursor: pointer;
+        font: 700 calc(var(--u, 1px) * 9)/1 system-ui, sans-serif; color: #333; text-decoration: none; vertical-align: middle; }
+      #dci-overlay .dci-sb img { width: calc(var(--u, 1px) * 16); height: calc(var(--u, 1px) * 16); display: block; }
+      #dci-overlay .dci-sb-row { width: calc(var(--u, 1px) * 16); height: calc(var(--u, 1px) * 16); }
+      #dci-overlay .dci-sb-row img { width: calc(var(--u, 1px) * 13); height: calc(var(--u, 1px) * 13); }
+      #dci-overlay .dci-sb-text, #dci-overlay .dci-sb-ocr { font-size: calc(var(--u, 1px) * 12); }
+      #dci-overlay .dci-sb-row.dci-sb-text, #dci-overlay .dci-sb-row.dci-sb-ocr { font-size: calc(var(--u, 1px) * 10); }
+      #dci-overlay .dci-sb-dg { background: #111; border-color: #111; color: #fff; }
+      #dci-overlay .dci-sb .dci-sb-dk { display: none; }
+      /* ((review) above the dark copy of the rules before) */
+      html.dci-dk-overlay #dci-overlay .dci-sbs .dci-sb.dci-sb-dg { background: #f2f2f2; border-color: #f2f2f2; color: #111; }
+      html.dci-dk-overlay #dci-overlay .dci-sbs .dci-sb-dg .dci-sb-lt { display: none; }
+      html.dci-dk-overlay #dci-overlay .dci-sbs .dci-sb-dg .dci-sb-dk { display: block; }
+      #dci-overlay .dci-sb-word { width: auto; min-width: calc(var(--u, 1px) * 20); padding: 0 calc(var(--u, 1px) * 3); }
+      #dci-overlay .dci-sb-row.dci-sb-word { min-width: calc(var(--u, 1px) * 16); font-size: calc(var(--u, 1px) * 8); }
+      #dci-overlay .dci-sb:hover, #dci-overlay .dci-sb:focus-visible { border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple); }
+      #dci-overlay .dci-sb.dci-sb-nolink { cursor: default; }
+      #dci-overlay .dci-sb.dci-sb-nolink:hover { border-color: #c9ccd3; box-shadow: none; }
+      #dci-overlay .dci-idlink { margin-left: calc(var(--u, 1px) * 8); font-size: 0.92em; white-space: nowrap; }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
       /* [3.28.0] only the tag links to the source (↗), the credit of the entry as a chip (item 61) */
       a.dci-dglink { text-decoration: none; display: inline-flex; align-items: center; gap: 2px; }
@@ -51661,9 +51912,12 @@
       /* [Z-RI] (3.40.16) */
       .dci-repeat-btn span[aria-hidden] { margin-right: calc(var(--u, 1px) * 4); }
       .dci-repeat-opts { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); margin: calc(var(--u, 1px) * 4) 0; }
+      /* [Z-SKIPVIS] (3.127.0) "Skip ⤼" a framed grey button, darker under the mouse */
       .dci-gskip { white-space: nowrap; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #6d6a7c;
         text-decoration: none; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; }
-      .dci-gskip:hover, .dci-gskip:focus-visible { border-color: var(--err); color: var(--err); }
+      #dci-overlay .dci-gskip.dci-textbtn:not(.dci-gskip-back) { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 9); border: 1px solid #8a8f98; border-radius: 5px;
+        background: #f2f3f5; color: #333; font-weight: 600; line-height: 1.4; text-decoration: none; }
+      #dci-overlay .dci-gskip.dci-textbtn:not(.dci-gskip-back):hover, #dci-overlay .dci-gskip.dci-textbtn:not(.dci-gskip-back):focus-visible { background: #dfe1e5; border-color: #6b7079; color: #222; }
       .dci-gskip.dci-gskip-back, .dci-skipped-list .dci-gskip-back { border-color: var(--purple); color: var(--purple-d); }
       .dci-gskip.dci-gskip-back:hover, .dci-gskip.dci-gskip-back:focus-visible { background: var(--date-bg); color: var(--purple-d); }
       .dci-group.dci-gskipped > :not(.dci-ghead), .dci-group.dci-gskipped .dci-ghead > :not(.dci-ghead-r) { opacity: 0.45; }

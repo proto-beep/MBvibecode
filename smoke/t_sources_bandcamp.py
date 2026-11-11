@@ -579,7 +579,7 @@ def case_labelpage():
   match: (g.querySelector('.dci-gmatch .dci-badge') || { textContent: '' }).textContent.trim(),
   sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
   page: (g.querySelector('.dci-pageof') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(),
-  pageLink: (g.querySelector('.dci-pageof a') || { href: '' }).href, mbLink: (g.querySelector('.dci-gname .dci-mblink, .dci-gmatch .dci-mblink') || { href: '' }).href })))()"""
+  pageLink: (g.querySelector('.dci-pageof a') || { href: '' }).href, badges: [...g.querySelectorAll('.dci-gname .dci-sbs [data-src]')].map(x => x.dataset.src), mbLink: (g.querySelector('.dci-gname .dci-mblink, .dci-gmatch .dci-mblink') || { href: '' }).href })))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -656,7 +656,8 @@ console.log(JSON.stringify({ names, own: id('Test Band', 'The Test Band'), frien
         yd = g.get('Yunclas') or {'sugg': [], 'match': '', 'head': ''}
         others = {k: v['sugg'] for k, v in g.items() if k != 'Yunclas' and v['sugg']}
         print('C) Yunclas (Discogs):', yd['head'], '|', yd['match'], '| Vorschläge:', yd['sugg'], '| andere mit Vorschlägen:', others)
-        ok_c = 'Discogs' in yd['head'] and 'no MB artist with this Discogs link' in yd['match'] and yd['sugg'][:2] == ['Yunclas in this release: release artist', 'Yunclas (Spanish rapper)'] \
+        # ([Z-SRCTAG] 3.127.0) the source a badge in the head, its page a text link "Discogs artist ↗" beside the match
+        ok_c = yd.get('badges') == ['dg'] and 'no MB artist with this Discogs link' in yd['match'] and yd['sugg'][:2] == ['Yunclas in this release: release artist', 'Yunclas (Spanish rapper)'] \
             and not others
         results.append(ok_c)
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
@@ -927,7 +928,8 @@ def case_bcspell():
        "The source (Bandcamp) credits …", the name's tooltip "Bandcamp: Robert Rich" and "* – credited so in the source (Bandcamp)";
        the log "Artist credits from the spellings of the source (Bandcamp, *)"; the word "Discogs" nowhere in the head.
     B) The tag "Bandcamp" (the link to his Bandcamp page) in Bandcamp's blue (#629aa9, white letters) – Discogs' tag stays dark;
-       its tooltip "Open on Bandcamp: Robert Rich". 3.39.6 (Q-i): a darker blue #3a7a89 (legible), #629aa9 its rim.
+       its tooltip "Open on Bandcamp: Robert Rich". 3.39.6 (Q-i): a darker blue #3a7a89 (legible), #629aa9 its rim. [Z-SRCTAG] 3.127.0:
+       the badge of Bandcamp after the name (a link to the album), his page a text link "Bandcamp artist ↗" beside the MusicBrainz link.
     C) 3.39.2 (collected items 186, 187): "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" from Bandcamp –
        its album's artist is the release's (one name, not two): his instruments, lap steel guitar (T001), "objects" asked as
        percussion “objects” · other instruments “objects” (T058); no entry for the line, nothing not recognized."""
@@ -961,11 +963,12 @@ def case_bcspell():
 
     H.ws_release = ws
     HEAD = """(() => [...document.querySelectorAll('section.dci-group')].map(g => { const n = g.querySelector('.dci-gname');
-      const tag = n.querySelector('.dci-dglink .dci-src'); const chip = n.querySelector('.dci-gcredit-anv');
+      const tag = g.querySelector('.dci-idlink'); const chip = n.querySelector('.dci-gcredit-anv');
+      const badges = [...n.querySelectorAll('.dci-sbs [data-src]')].map(x => [x.dataset.src, x.getAttribute('href') || '']);
       const name = n.querySelector('strong');
       // ([3.89.0] Z-NCY: the name a button that clicks through its spellings – its title holds the name's)
       return { name: name.textContent.trim(), nameTitle: name.title || (name.closest('button.dci-ncy-name') || {}).title || '', chip: chip ? chip.textContent.trim() : '', chipTitle: chip ? chip.title : '',
-        tag: tag ? [tag.textContent.trim(), tag.className, getComputedStyle(tag).backgroundColor, getComputedStyle(tag).color, tag.closest('a').title, getComputedStyle(tag).boxShadow] : null,
+        tag: tag ? [tag.textContent.trim(), tag.getAttribute('href'), tag.title] : null, badges,
         text: n.textContent + ' ' + [...n.querySelectorAll('[title]')].map(x => x.title).join(' ') }; }))()"""
     results = []
     with sync_playwright() as p:
@@ -988,11 +991,10 @@ def case_bcspell():
                        and rr.get('nameTitle', '').startswith('Bandcamp: Robert Rich') and '* – credited so in the source (Bandcamp)' in rr.get('nameTitle', '')
                        and logs == ['Artist credits from the spellings of the source (Bandcamp, *): RR (Robert Rich)']
                        and 'Discogs' not in rr.get('text', 'Discogs'))
-        t = rr.get('tag') or ['', '', '', '', '', '']
-        print('B) Marke:', t)
-        # (3.39.6, Q-i) a darker blue, legible, the logo's blue as its rim
-        results.append(t[0] == 'Bandcamp' and 'dci-src-bc' in t[1] and t[2] == 'rgb(58, 122, 137)' and t[3] == 'rgb(255, 255, 255)'
-                       and t[4] == 'Open on Bandcamp: Robert Rich' and 'rgb(98, 154, 169)' in t[5])
+        t = rr.get('tag') or ['', '', '']
+        print('B) Link:', t, '| Marken:', rr.get('badges'))
+        # ([Z-SRCTAG] 3.127.0) the badge of Bandcamp (its logo, a link to the album) after the name; the entry's page a text link
+        results.append(t[0] == 'Bandcamp artist ↗' and t[2] == 'Open on Bandcamp: Robert Rich' and rr.get('badges') == [['bc', ALBUM]])
         # C) the line "With …" (a page of its own: the head of A has a spelling of all roles)
         album('With Apple Logic, Sequential PX, flutes, lap steel, bells and objects')
         pg, errs2 = H.open_mb_edit(H.new_context(b), companion=False, gm_xhr=True)
