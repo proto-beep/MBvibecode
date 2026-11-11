@@ -426,7 +426,8 @@ def case_supp():
        from Bandcamp and no marks are shown before a click.
     B) "＋ Bandcamp …": the list "Supplements from Bandcamp" – a new role for an entry (Guitar Guy, trumpet on track 2), new
        entries (Anna Viola, all tracks; Test Band, found via its Bandcamp link), a row that differs (Keys Guy, synth: Discogs track 2,
-       Bandcamp 1–2; not selected: Discogs stays), a line not recognized; Bass Man's bass is confirmed: marks DG BC.
+       Bandcamp 1–2; not selected: Discogs stays; from 3.116.0 marked "more tracks", Z-SUPPMSG), a line not recognized; Bass Man's bass is
+       confirmed: marks DG BC.
     C) Test Band unticked, "Take over selected": Guitar Guy gets the trumpet row (mark BC), Anna Viola becomes an entry
        with a name suggestion; Test Band, the differing row and the line not recognized stay in the list.
     D) Staged: the edit note names the album ("Also from"), what came only from Bandcamp and where the sources differ.
@@ -500,8 +501,8 @@ def case_supp():
         print('B)', summary, '\n  ', items, '\n   Hinweise:', hints, '| Bass Man:', m_bass, '| Keys Guy:', m_keys)
         kinds = {(k, n): (sel, t) for k, n, sel, t in items}
         b_ok = kinds.get(('new role', 'Guitar Guy')) == (True, '2') and kinds.get(('new entry', 'Anna Viola')) == (True, 'all') \
-            and kinds.get(('new entry', 'Test Band')) == (True, 'all') and kinds.get(('differs', 'Keys Guy'), (None, ''))[0] is False \
-            and '1, 2' in kinds.get(('differs', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'See you on tour.') not in kinds \
+            and kinds.get(('new entry', 'Test Band')) == (True, 'all') and kinds.get(('more tracks', 'Keys Guy'), (None, ''))[0] is False \
+            and '1, 2' in kinds.get(('more tracks', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'See you on tour.') not in kinds \
             and any(k == 'not recognized' for k, *_ in items) and summary.startswith('confirmed: 1 · new: 3 · differing: 1 · not recognized: 1') \
             and m_bass == ['DG', 'BC'] and m_keys == ['DG', 'BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
             and any('via the Bandcamp link: Test Band' in h for h in hints)
@@ -519,7 +520,7 @@ def case_supp():
         left = pg.evaluate(SUPP)
         print('C) Guitar Guy Trumpet:', m_gg, '| Anna Viola:', anna, '| bleibt:', [(k, n) for k, n, *_ in left])
         c_ok = m_gg == ['BC'] and anna and anna[0][0] == 'missing' and anna[0][1] == ['Anna Viola (violist)'] \
-            and [(k, n) for k, n, *_ in left] == [('differs', 'Keys Guy'), ('new entry', 'Test Band'), ('not recognized', '–')]
+            and [(k, n) for k, n, *_ in left] == [('more tracks', 'Keys Guy'), ('new entry', 'Test Band'), ('not recognized', '–')]
         results.append(c_ok)
         # D) staged: the edit note
         pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Anna Viola').querySelector('[data-act=name-use]').click()")
