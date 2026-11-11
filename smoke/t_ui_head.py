@@ -1651,7 +1651,8 @@ def case_foot397():
     A) While the import reads and compares: left in the footer's line a yellow chip with the latest step (the whole text and the
        requests done in its tooltip), filled as far as done, and the 2-px line along the top of the footer (its width the same share;
        [Z-PROG] 3.105.0: 6 px).
-    B) All done: the chip green "All imports and checks done" – it stays; the line is gone; the footer as high as before (one line).
+    B) All done: the chip green "All imports and checks done" – it stays; the line is gone; the footer as high as before (one line;
+       3.112.0: measured without the [Z-YELL] counters, which together with the chip need a second line in the test window).
     C) Dark: the chip in the dark colours."""
     STATE = """(() => { const c = document.querySelector('.dci-foot [data-el=foot-run]'); const l = document.querySelector('.dci-foot [data-el=foot-line]');
       if (!c) return null; const r = c.getBoundingClientRect(); const bar = document.querySelector('.dci-foot-bar').getBoundingClientRect();
@@ -1683,9 +1684,12 @@ def case_foot397():
         H.wait_for(pg, "(c => !!c && c.classList.contains('dci-foot-run-done'))(document.querySelector('.dci-foot [data-el=foot-run]'))", 60)
         pg.wait_for_timeout(300)
         b0 = pg.evaluate(STATE)
-        # the footer's line no higher with the chip than without it
+        # the footer's line no higher with the chip than without it ([Z-YELLDATE] 3.112.0: the notes' dates now give this release
+        # [Z-YELL] counters; chip and counters together do not fit one line of the test window, so the counters are hidden here)
         h = pg.evaluate("""(() => { const bar = document.querySelector('.dci-foot-bar'); const c = document.querySelector('[data-el=foot-run]');
-          const with_ = bar.getBoundingClientRect().height; c.hidden = true; const without = bar.getBoundingClientRect().height; c.hidden = false; return [with_, without]; })()""")
+          const y = document.querySelector('.dci-foot [data-el=yell]'); const yd = y ? y.style.display : ''; if (y) y.style.display = 'none';
+          const with_ = bar.getBoundingClientRect().height; c.hidden = true; const without = bar.getBoundingClientRect().height; c.hidden = false;
+          if (y) y.style.display = yd; return [with_, without]; })()""")
         print('B) fertig:', b0, h)
         results.append(bool(b0) and b0['done'] and not b0['busy'] and not b0['hidden'] and b0['text'] == 'All imports and checks done' and b0['line'] is False
                        and b0['pct'] == '100' and h[0] == h[1])

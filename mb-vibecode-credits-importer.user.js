@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.111.0
+// @version      3.112.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.111.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.111.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.112.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.112.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.111.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.112.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1775,16 +1775,54 @@
       "settings.editNoteHead": "Edit note",
       "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
       "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
-      "yell.must": "● {n} must",
+      "yell.must": "● {n}",
       "lc.missing": "Label code: Discogs gives LC {code} – {name} has no label code on MusicBrainz",
       "lc.other": "Label code: Discogs gives LC {code} – {name} has LC {other} on MusicBrainz",
       "lc.none": "Label code: Discogs gives LC {code} – no label of this release on MusicBrainz has it (which label it belongs to is not clear)",
       "lc.addTitle": "Edit {name} on MusicBrainz with the label code {code} filled in (you check and save it)",
-      "yell.can": "● {n} can",
-      "yell.all": "● {n} open",
+      "sort.label": "Order:",
+      "sort.title": "The order of the entries: as in the source, by kind (instruments first), by name, by kind of entry, by level – within a block as in the source",
+      "sort.mode.source": "as in the source",
+      "sort.mode.kind": "by kind",
+      "sort.mode.alpha": "by name",
+      "sort.mode.etype": "by kind of entry",
+      "sort.mode.level": "by level",
+      "sort.kind.instruments": "Instruments",
+      "sort.kind.vocals": "Vocals",
+      "sort.kind.performing": "Performing",
+      "sort.kind.writing": "Writing and arranging",
+      "sort.kind.production": "Production",
+      "sort.kind.technical": "Technical",
+      "sort.kind.artwork": "Artwork and notes",
+      "sort.kind.places": "Places",
+      "sort.kind.rights": "Rights and distribution",
+      "sort.kind.other": "Other",
+      "sort.level.recording": "Recordings",
+      "sort.level.release": "Release",
+      "sort.level.release_group": "Release group",
+      "sort.level.work": "Works",
+      "sort.level.skip": "Skipped",
+      "sort.etype.artist": "Artists",
+      "sort.etype.label": "Labels",
+      "sort.etype.place": "Places",
+      "sort.etype.area": "Areas",
+      "sort.etype.series": "Series",
+      "sort.etype.event": "Events",
+      "sort.etype.instrument": "Instruments",
+      "sort.etype.company": "Not looked up yet",
+      "sort.etype.other": "Others",
+      "log.sortMode": "Order of the entries: {mode}",
+      "settings.sortOn": "Offer the order of the entries (“Order:” in the line “Level for all rows”)",
+      "settings.sortOnTitle": "Off: the entries always in the source's order, no choice",
+      "yell.can": "● {n}",
+      "yell.all": "● {n}",
       "yell.mustTitle": "Questions that must be answered: until then these roles are not staged (orange). A click goes to the next one",
       "yell.canTitle": "Suggestions that can be confirmed: they are staged as suggested (yellow) – ✓ confirms one, ✕ takes it back. A click goes to the next one",
       "yell.allTitle": "Open: questions to answer (orange, not staged until answered) and suggestions to confirm (yellow, staged as suggested). A click goes to the next one",
+      "yell.mustLabel": "{n} questions to answer (must) – to the next one",
+      "yell.canLabel": "{n} suggestions to confirm (can) – to the next one",
+      "yell.allLabel": "{n} open points – to the next one",
+      "yell.kind.date": "date of the notes",
       "yell.next": "Next open point",
       "yell.prev": "Open point before",
       "yell.dot.must": "{n} questions to answer in this entry",
@@ -1978,11 +2016,11 @@
       "notice.changelog": "Changelog",
       "notice.close": "Close this message",
       "log.noticeClosed": "Update notice of {version} closed",
-      "scope.label": "Stage:",
-      "scope.all": "all relationships",
-      "scope.work": "only work relationships",
-      "scope.nonwork": "only non-work relationships",
-      "scope.title": "Sets everything else to Skip (links to works included); “all relationships” brings it back.",
+      "scope.label": "Works:",
+      "scope.all": "with",
+      "scope.work": "only",
+      "scope.nonwork": "without",
+      "scope.title": "A filter of the works: all relationships (with), only those of works (only) or all but those (without) – the rest is on Skip until “with” brings it back; each import starts with “with”.",
       "log.scope": "Stage: {mode}",
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
       "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
@@ -11565,10 +11603,12 @@
       + (others || []).map((o) => `<li>${esc(o.n == null ? tr('gap.bc.otherFailed', { page: String(o.url).replace(/^https?:\/\//, '') })
         : tr('gap.bc.other', { page: String(o.url).replace(/^https?:\/\//, ''), n: o.n }))}</li>`).join('');
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
+    // [Z-GAPBTN] (3.112.0) "Count exactly" (outlined) and "Import credits …" (filled): small round buttons, not underlined text
+    const pill = 'border:1px solid #736dab;border-radius:999px;padding:1px 10px;margin-left:6px;cursor:pointer;font:inherit;font-size:0.92em;line-height:1.5;vertical-align:baseline;';
     box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
       <span data-gap-text>${esc(text)}${esc(exactText)}</span>
-      <button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${btn}text-decoration:underline;">${esc(tr('gap.count'))}</button>
-      <button type="button" data-gap="import" style="${btn}text-decoration:underline;">${esc(tr('gap.import'))}</button>
+      <button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${pill}background:#fff;color:#4a2f99;">${esc(tr('gap.count'))}</button>
+      <button type="button" data-gap="import" style="${pill}background:#736dab;color:#fff;border-color:#736dab;">${esc(tr('gap.import'))}</button>
       <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}float:right;">✕</button>
       <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;">${parts}<li>${esc(tr(bc ? 'gap.bc.how' : 'gap.how'))}</li></ul>`;
     box.querySelector('[data-gap=parts]').addEventListener('click', (e) => {
@@ -17118,6 +17158,10 @@
     (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
     [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
+    // [Z-YELLDATE] (3.112.0) the dates of the notes placed in the date matrix as suggestions (they wait for "✓ Apply" there)
+    try {
+      (dm().cells || []).filter((c) => c.auto).forEach((c) => add('can', 'date', `date:${c.id}`, { cell: c.id }));
+    } catch (e) { /* no date matrix */ }
     return out;
   }
 
@@ -17158,6 +17202,7 @@
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
+    else if (it.kind === 'date') el = ov.querySelector(`[data-dmcell="${it.cell}"]`);
     if (el && it.kind === 'arr') el = el.closest('.dci-mx-arrsugg') || el;
     if (seen(el)) return el;
     if (strict) return null;
@@ -17257,7 +17302,7 @@
     const one = (cls) => {
       const n = cnt(cls);
       const nav = (act, sym) => `<button type="button" class="dci-iconbtn" data-act="${act}" data-cls="${cls}" title="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}" aria-label="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}"${n ? '' : ' disabled'}>${sym}</button>`;
-      return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}">${nav('yell-prev', '‹')}<button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}"${n ? '' : ' disabled'}>${esc(tr(`yell.${cls}`, { n }))}</button>${nav('yell-next', '›')}</span>`;
+      return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}">${nav('yell-prev', '‹')}<button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}" aria-label="${esc(tr(`yell.${cls}Label`, { n }))}"${n ? '' : ' disabled'}>${esc(tr(`yell.${cls}`, { n }))}</button>${nav('yell-next', '›')}</span>`;
     };
     const html = S.yellOne ? one('all') : `${one('must')}${one('can')}`;
     if (box.dataset.html !== html) {
@@ -17267,7 +17312,17 @@
   }
   /** [Z-YELL] (3.110.0) To the next (or the one before) open item of a class: shown in the middle, flashing. */
   function gotoYell(cls, step) {
-    const list = (S.yellList || yellItems()).filter((x) => !x.done && (cls === 'all' || x.cls === cls)).sort((x, y) => (x.cls === y.cls ? 0 : x.cls === 'must' ? -1 : 1));
+    // ((review) in the order of the page (an order of the entries chosen), must first with one counter
+    const ix0 = yellIndex();
+    const at = new Map();
+    const list = (S.yellList || yellItems()).filter((x) => !x.done && (cls === 'all' || x.cls === cls));
+    list.forEach((x) => at.set(x, yellEl(x, ix0)));
+    const pos = (x, y) => {
+      const [a, b] = [at.get(x), at.get(y)];
+      if (!a || !b || a === b) return a ? -1 : b ? 1 : 0;
+      return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    };
+    list.sort((x, y) => (x.cls === y.cls ? pos(x, y) : x.cls === 'must' ? -1 : 1));
     if (!list.length) return;
     S.yellIdx = S.yellIdx || {};
     const k = S.yellIdx[cls];
@@ -17276,6 +17331,12 @@
     const it = list[i];
     // a row of the full view not shown (its entry folded, the row closed): opened – the compact view stays as it is
     if (it.row && S.view !== 'compact' && !yellEl(it, yellIndex(), true)) revealRow(it.row);
+    // ([Z-YELLDATE] 3.112.0, review) a date of the notes: "Dates & tracks" opened
+    if (it.kind === 'date' && !yellEl(it, yellIndex(), true) && !poolsOpen()) {
+      S.poolsOpen = true;
+      S.poolsForce = null;
+      renderDates();
+    }
     const el = yellEl(it);
     if (!el) return;
     el.scrollIntoView({ block: 'center' });
@@ -22919,6 +22980,8 @@
       S.rows = [];
       S.emGhost = new Map(); // [Z-EVCOL] (3.103.0)
       yellLoad(); // [Z-YELL] (3.110.0) what was confirmed: open again unless remembered
+      S.scope = 'all'; // [Z-SCOPE] (3.112.0) the works' filter back on "with" at each import
+      if (S.overlay) S.overlay.querySelectorAll('[data-act="scope"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scope === 'all')));
       S.festivals = []; // [3.37.8] (S056)
       S.festInMbSaid = null; // ([Z-EVR] 3.88.0, review)
       S.evNote = null; // ([Z-EVL] 3.92.0)
@@ -29410,6 +29473,7 @@
    */
   function renderDates() {
     if (!S.overlay) return;
+    yellSoon(); // ([Z-YELLDATE] 3.112.0, review) a date applied: counted again
     syncPickMode();
     const el = $('dates');
     el.hidden = !S.initialized;
@@ -30546,8 +30610,86 @@
     });
   }
 
+  // --- [Z-SORT] (3.112.0) The order of the entries: the source's, by kind (instruments first), by name, by kind of entry, by level ----
+  const SORT_MODES = ['source', 'kind', 'alpha', 'etype', 'level'];
+  // (a function: the lists of types it uses are defined further down)
+  const sortKinds = () => [
+    ['instruments', ['instrument']],
+    ['vocals', ['vocal']],
+    ['performing', ['performer', 'conductor', 'performing orchestra', 'orchestra', 'chorus master', 'concertmaster']],
+    ['writing', [...WRITER_TYPES, ...ARRANGER_TYPES]],
+    ['production', ['producer', 'co-producer', 'executive producer', 'programming', 'remixer', 'compiler', 'mix-dj', 'audio director']],
+    ['technical', ['engineer', 'mix', 'recording', 'mastering', 'sound', 'audio', 'balance', 'editor', 'lacquer cut', 'transfer', 'sound effects', 'field recordist']],
+    ['artwork', [...ARTL_TYPES, 'liner notes', 'booklet editor', 'graphic design', 'art direction', 'creative direction']],
+  ];
+  const SORT_KIND_NAMES = ['instruments', 'vocals', 'performing', 'writing', 'production', 'technical', 'artwork'];
+  const sortOn = () => S.sortOn !== false;
+  const sortMode = () => (sortOn() && SORT_MODES.includes(S.sortMode) ? S.sortMode : 'source');
+  /** The kind of a row (its type), its rank: instruments first; places and the companies' roles after the people's. */
+  function sortKindOfRow(r) {
+    const t = norm(rowTypeName(r) || (r.types || [])[0] || '');
+    if (!t) return 'other';
+    const k = sortKinds().find(([, list]) => list.includes(t));
+    if (k) return k[0];
+    if (/ (at|in)$/.test(t)) return 'places';
+    if (/copyright|publish|licen|distribut|manufactur|market|press|printed|glass/.test(t)) return 'rights';
+    return 'other';
+  }
+  const SORT_KIND_ORDER = [...SORT_KIND_NAMES, 'places', 'rights', 'other'];
+  const SORT_LEVEL_ORDER = ['recording', 'release', 'release_group', 'work', 'skip'];
+  /** An entry's key of the order chosen (its block): the first kind of its rows, its level with most rows, its kind of entry. */
+  function sortKeyOf(a, mode) {
+    const all = S.rows.filter((r) => r.artistKey === a.key);
+    const rows = all.filter((r) => r.level !== 'skip');
+    if (mode === 'kind') return (rows.length ? rows : all).map(sortKindOfRow).sort((x, y) => SORT_KIND_ORDER.indexOf(x) - SORT_KIND_ORDER.indexOf(y))[0] || 'other';
+    if (mode === 'level') {
+      if (!rows.length || entrySkipped(a)) return 'skip';
+      const n = new Map();
+      rows.forEach((r) => n.set(r.level, (n.get(r.level) || 0) + 1));
+      return [...n].sort((x, y) => y[1] - x[1] || SORT_LEVEL_ORDER.indexOf(x[0]) - SORT_LEVEL_ORDER.indexOf(y[0]))[0][0];
+    }
+    if (mode === 'etype') return a.company ? (a.entityType || 'company') : a.other ? 'other' : 'artist';
+    return '';
+  }
+  const SORT_ETYPE_ORDER = ['artist', 'label', 'place', 'area', 'series', 'event', 'instrument', 'company', 'other'];
+  const sortRank = (mode, key) => (mode === 'kind' ? SORT_KIND_ORDER : mode === 'level' ? SORT_LEVEL_ORDER : SORT_ETYPE_ORDER).indexOf(key);
+  /**
+   * Entries in the order chosen as HTML: within a block the source's order; a block with a small heading (by kind, by level, by kind of
+   * entry); "skipped" last by level.
+   */
+  function sortedGroupsHtml(list) {
+    const mode = sortMode();
+    if (mode === 'source') return list.map(groupHtml).join('');
+    if (mode === 'alpha') return [...list].sort((x, y) => String(x.mbName || x.name || '').localeCompare(String(y.mbName || y.name || ''), undefined, { sensitivity: 'base' })).map(groupHtml).join('');
+    const keyed = list.map((a, i) => ({ a, i, k: sortKeyOf(a, mode) }));
+    keyed.sort((x, y) => sortRank(mode, x.k) - sortRank(mode, y.k) || x.i - y.i);
+    // ((review) each block in a box of its own: a block with no entry shown (filters) hides its heading too
+    const blocks = [];
+    keyed.forEach(({ a, k }) => {
+      if (!blocks.length || blocks[blocks.length - 1].k !== k) blocks.push({ k, list: [] });
+      blocks[blocks.length - 1].list.push(a);
+    });
+    return blocks.map((bk) => `<div class="dci-sortblock" data-sortkey="${esc(bk.k)}"><h4 class="dci-sorthead" data-sorthead="${esc(bk.k)}">${esc(tr(`sort.${mode}.${bk.k}`))}</h4>
+      ${bk.list.map(groupHtml).join('')}</div>`).join('');
+  }
+  /** The choice of the order in the line "Level for all rows" (⚙ Settings → Appearance can switch it off). */
+  function renderSortBox() {
+    const box = S.overlay && $('sort-box');
+    if (!box) return;
+    // ((review) drawn only when it changes: a choice made with the keys keeps its focus, an open list stays open)
+    const html = sortOn() ? `<label class="dci-sortsel">${esc(tr('sort.label'))} <select data-f="sort-mode" title="${esc(tr('sort.title'))}">
+      ${SORT_MODES.map((m) => `<option value="${m}">${esc(tr(`sort.mode.${m}`))}</option>`).join('')}</select></label>` : '';
+    if (box.dataset.html !== html) {
+      box.innerHTML = html;
+      box.dataset.html = html;
+    }
+    const sel = box.querySelector('select');
+    if (sel && sel.value !== sortMode()) sel.value = sortMode();
+  }
+
   function renderGroups() {
     yellSoon(); // [Z-YELL] (3.110.0)
+    renderSortBox(); // [Z-SORT] (3.112.0)
     dropStaleEntrySkip();
     const all = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
     // [Z-SK] (3.40.15) with "Remove skipped entries from the dashboard": those skipped with "⊘ Skip" in a line at the bottom
@@ -30556,7 +30698,7 @@
     renderSkippedList(skipped);
     // [Z-ARRL] (3.94.0) entries with relationships of works only: together above the works matrix, the last of the entries
     const wonly = withRows.filter((a) => !a.company && !a.other && workOnlyEntry(a));
-    $('groups').innerHTML = withRows.filter((a) => !a.company && !a.other && !wonly.includes(a)).map(groupHtml).join('');
+    $('groups').innerHTML = sortedGroupsHtml(withRows.filter((a) => !a.company && !a.other && !wonly.includes(a)));
     const wel = $('workonly');
     wel.hidden = !wonly.length;
     wel.innerHTML = wonly.length
@@ -30572,7 +30714,7 @@
     const el = $('companies');
     el.hidden = !companies.length;
     el.innerHTML = companies.length
-      ? `<h3>${esc(tr('companies.title'))}</h3><p class="dci-muted">${esc(tr('companies.explain'))}</p>${companies.map(groupHtml).join('')}`
+      ? `<h3>${esc(tr('companies.title'))}</h3><p class="dci-muted">${esc(tr('companies.explain'))}</p>${sortedGroupsHtml(companies)}`
       : '';
     // ([Z-FRM] 3.74.0, review) the frame of the entries only with entries in it
     const frame = S.overlay && S.overlay.querySelector('[data-el="entries-frame"]');
@@ -30640,6 +30782,10 @@
     });
     emBarsSoon();
     yellSoon(); // [Z-YELL] (3.110.0) the marks drawn again
+    // ([Z-SORT] 3.112.0, review) an entry that now belongs to another block of the order (its level changed): all drawn anew
+    const blk = fresh.closest('.dci-sortblock');
+    const sm = sortMode();
+    if (blk && ['kind', 'level', 'etype'].includes(sm) && blk.dataset.sortkey !== sortKeyOf(a, sm)) renderGroups();
     if (again) {
       const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
       const el = again.edit ? fresh.querySelector(`.dci-em-evedit [data-f="${q(again.f)}"]${again.i ? `[data-i="${q(again.i)}"]` : ''}`)
@@ -39260,6 +39406,18 @@
       }
     }
     S.scope = mode;
+    // [Z-SCOPE] (3.112.0) "Works: only" (it took the place of the button "only works"): the work relationships put on Skip with "Level
+    // for all rows: Skip" come back too
+    if (mode === 'work') {
+      for (const r of S.rows) {
+        if (r.level !== 'skip' || r.levelBeforeSkip !== 'work' || r.entrySkip) continue;
+        // ((review) back on Skip with "with" – the filter changes no row for good)
+        r.scopeLevel = 'skip';
+        r.level = 'work';
+        delete r.mxSkipped;
+        resolveRowType(r);
+      }
+    }
     if (mode !== 'all') {
       for (const r of S.rows) {
         if (r.level === 'skip') continue;
@@ -39279,6 +39437,8 @@
   /** [3.35.4] A row on another level, without drawing (setLevel; the event of an entry's matrix, AE-3): whether it was or is on works. */
   function levelOf(row, level) {
     delete row.scopeLevel;
+    // ([Z-SCOPE] 3.112.0, review) a level chosen: not "Skip for all rows" any more ("Works: only" takes back only those)
+    if (!row.existingAll) delete row.levelBeforeSkip;
     // [Z-CLV] (3.44.0) a level chosen another way: no event on "Skip" any more (emEventSkip sets it again after this)
     delete row.emSkipEv;
     delete row.mxSkipped;
@@ -42750,6 +42910,14 @@
       return;
     }
     // [Z-SNW] (3.83.0) works of the same title in the edit note
+    if (f === 'sort-on') {
+      S.sortOn = el.checked;
+      writeJson('localStorage', 'dci-sort-on', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.sortOn'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
+      refresh();
+      return;
+    }
     if (f === 'yell-one') {
       S.yellOne = el.checked;
       writeJson('localStorage', 'dci-yell-one', el.checked ? true : null);
@@ -42957,6 +43125,14 @@
         break;
       case 'filter-unmapped':
         S.overlay.classList.toggle('dci-only-unmapped', el.checked);
+        break;
+      // [Z-SORT] (3.112.0) the order of the entries (kept)
+      case 'sort-mode':
+        S.sortMode = SORT_MODES.includes(el.value) ? el.value : 'source';
+        writeJson('localStorage', 'dci-sort', S.sortMode === 'source' ? null : S.sortMode);
+        log('info', 'sortMode', { mode: tr(`sort.mode.${S.sortMode}`) });
+        renderGroups();
+        refresh();
         break;
       case 'filter-missing':
         S.onlyMissing = el.checked;
@@ -43724,14 +43900,14 @@
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('release_group').replace('<button ', `<button title="${esc(tr('toolbar.rgTitle'))}" `)}${levelBtn('skip')}
             </div>
-            <div class="dci-seg dci-onlyworks" role="group">
-              <button type="button" data-act="bulk-level" data-level="only-works" title="${esc(tr('toolbar.onlyWorksTitle'))}">${esc(tr('toolbar.onlyWorks'))}</button>
-            </div>
-            <span data-el="medium-filter"></span>
+            <!-- [Z-SCOPE] (3.112.0) the works as a filter (it changes no row; back on "with": as before) – it takes the place of "only works" and
+              of the line "Stage:"; [Z-SORT] (3.112.0) the order of the entries -->
+            <span class="dci-sub dci-scope-label">${esc(tr('scope.label'))}</span>
             <div class="dci-seg dci-scope" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
-              <span class="dci-sub">${esc(tr('scope.label'))}</span>
               ${['all', 'work', 'nonwork'].map((m) => `<button type="button" data-act="scope" data-scope="${m}" aria-pressed="${(S.scope || 'all') === m}">${esc(tr(`scope.${m}`))}</button>`).join('')}
             </div>
+            <span data-el="sort-box"></span>
+            <span data-el="medium-filter"></span>
             <label class="dci-check"><input type="checkbox" data-f="filter-missing" ${S.onlyMissing ? 'checked' : ''}> ${esc(tr('toolbar.onlyMissing'))}</label>
             <label class="dci-check dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
             <span class="dci-legend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('legend.exists'))}
@@ -44111,7 +44287,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
+    appearance: ['dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -44155,6 +44331,8 @@
   // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
   S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
+  S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false; // [Z-SORT] (3.112.0)
+  S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
   S.yellDone = new Set();
   S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
@@ -45917,6 +46095,8 @@
         row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
+        // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
+        row(check('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'))),
         // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
         ...['window', 'page'].map((where) => {
           const label = tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow');
@@ -46649,6 +46829,7 @@
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'appearance') {
       setScale(1);
+      Object.assign(S, { sortOn: true, sortMode: 'source' }); // [Z-SORT] (3.112.0, review)
       S.dedBox = true; // ([Z-DEDQ] 3.74.0, review)
       if (S.place !== 'window') setPlace('window');
       // ([Z-CPV] 3.73.0) the compact view is the default
@@ -46769,6 +46950,8 @@
     EDIT_NOTE_KEY, 'dci-note-dup',
     // [Z-YELL] (3.110.0) one counter of what is open, not two
     'dci-yell-one',
+    // [Z-SORT] (3.112.0) the choice of the order and whether it is offered
+    'dci-sort-on', 'dci-sort',
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups
@@ -46889,6 +47072,8 @@
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
     S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true;
+    S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false;
+    S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
     S.levelPalette = levelPaletteRead();
@@ -49921,6 +50106,12 @@
       .dci-yell-ctl { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin-left: calc(var(--u, 1px) * 4); vertical-align: middle; }
       .dci-yell-ctl .dci-yell-yes, .dci-yell-tick { color: #2f7d4a; font-weight: 700; }
       .dci-yell-ctl .dci-yell-no { color: #b23b2e; }
+      /* [Z-SORT] (3.112.0) the headings of the blocks of an order; the choice */
+      .dci-sorthead { margin: calc(var(--u, 1px) * 10) 0 calc(var(--u, 1px) * 4); font-size: 0.9em; font-weight: 600; color: var(--muted, #6b6880); text-transform: uppercase; letter-spacing: 0.04em; }
+      .dci-sortsel select { font: inherit; }
+      .dci-sortblock:not(:has(section.dci-group:not([hidden]))) { display: none; }
+      #dci-overlay.dci-only-missing .dci-sortblock:not(:has(.dci-group:is(.dci-st-missing, .dci-st-ambiguous):not(.dci-all-skip))) { display: none; }
+      .dci-scope-label { margin-left: calc(var(--u, 1px) * 6); }
       /* [Z-LCNOTE] (3.111.0) the note on a label code */
       .dci-lcnote { background: var(--sugg-bg); border: 1px solid var(--sugg-line); border-radius: 4px; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; }
       .dci-lcnote p { margin: 0; }

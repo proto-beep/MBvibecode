@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.111.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.112.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.112.0 · 2026-11-08
+
+- **Z-SCOPE:** the toolbar: the button `bulk-level` "only-works" removed (its handler stays), the seg `.dci-scope` ("Works:", `.dci-scope-label`) beside the levels; `scope.*` texts in all four languages ("with", "only", "without"); `setScope('work')` brings back the rows put on Skip by "Skip" for all (`levelBeforeSkip === 'work'`, not an entry skipped); `loadRelease`: `S.scope = 'all'` and its buttons.
+- **Z-SORT (new):** `SORT_MODES`, `sortKinds()` (a function: `WRITER_TYPES`, `ARRANGER_TYPES`, `ARTL_TYPES` are defined further down), `sortKindOfRow` (places "… at/in", rights, other), `sortKeyOf(a, mode)` (the first kind of its rows; the level with most rows, Skip when all are; the kind of entry), `sortedGroupsHtml(list)` (the source's order within a block, `.dci-sorthead`), `renderSortBox()` (`[data-el=sort-box]`, `data-f="sort-mode"`); `renderGroups` sorts the people and the companies. Settings: `dci-sort` (kept), `dci-sort-on` (Appearance, `data-f="sort-on"`), both in the profiles and the reset.
+- **Z-GAPBTN:** `renderGapLine`: `pill` – "Count exactly" outlined, "Import credits …" filled.
+- **Z-YELLSHORT / Z-YELLDATE:** `yell.must`, `yell.can`, `yell.all` "● {n}", their words in `yell.*Label` (aria-label); `yellItems`: the auto cells of the date matrix (`dm().cells`, `c.auto`) as can items `date`, `yellEl` – `[data-dmcell]`.
+- **Review:** "Works: only" puts the works of "Skip" back with `scopeLevel: 'skip'` (so "with" puts them on Skip again), `levelOf` forgets `levelBeforeSkip` (a level chosen by hand); the choice of the order drawn only when it changes (focus, an open list); its settings reset with Appearance (not Staging); `renderDates` counts again (`yellSoon`), `gotoYell` opens "Dates & tracks" for a date and goes in the order of the page; each block of an order in `.dci-sortblock` (hidden with no entry shown – filters, a row removed), `rerenderGroup` draws all anew when the entry belongs to another block now.
+- **Texts:** `sort.*`, `log.sortMode`, `settings.sortOn`, `settings.sortOnTitle`, `yell.*Label`, `yell.kind.date` (en, de); `scope.*` (en, de, es, fr).
+- **Tests:** `t_entries.py sort3112` (A–E, with the review's "Skip", "only", "with"), `t_static.py gapbtn3112` – new; `t_entries.py yell3110` (short counters, the two dates of the notes), `t_entries.py lvlrg3108` (no "only-works"), `t_ui_view.py ui301` D ("Works:") and `rows` ("Works: only" after "Skip") – changed; the new ones fail on 3.111.0.
 
 ## Import 3.111.0 · 2026-11-08
 
