@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.114.0
+// @version      3.115.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.114.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.114.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.115.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.115.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.114.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.115.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1239,7 +1239,7 @@
       "mbdata.dump.what": "Read by the GitHub workflow of the repository only, twice a week: the global statistics (numbers only) and the instruments' tree. The script reads their files from the repository's data branch.",
       "mbdata.dump.more": "mbdump-edit.tar.bz2 (the script's edits and their notes), mbdump.tar.bz2 (artists, releases, recordings, instruments and their relationships) → stats/… on the branch “stats”.",
       "mbdata.caa.name": "Cover Art Archive",
-      "mbdata.caa.what": "The release's images for “Text from cover art” (beta) – only when you open it.",
+      "mbdata.caa.what": "The release's images for “Text from cover art” – only when you open it.",
       "mbdata.caa.more": "coverartarchive.org/release/<id> and its images (archive.org).",
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
@@ -1826,10 +1826,10 @@
       "yell.can": "● {n}",
       "yell.all": "● {n}",
       "yell.mustTitle": "Questions that must be answered: until then these roles are not staged (orange). A click goes to the next one",
-      "yell.canTitle": "Suggestions that can be confirmed: they are staged as suggested (yellow) – ✓ confirms one, ✕ takes it back. A click goes to the next one",
+      "yell.canTitle": "Suggestions that may be confirmed: they are staged as suggested (yellow) – ✓ confirms one, ✕ takes it back. A click goes to the next one",
       "yell.allTitle": "Open: questions to answer (orange, not staged until answered) and suggestions to confirm (yellow, staged as suggested). A click goes to the next one",
       "yell.mustLabel": "{n} questions to answer (must) – to the next one",
-      "yell.canLabel": "{n} suggestions to confirm (can) – to the next one",
+      "yell.canLabel": "{n} suggestions to confirm (may) – to the next one",
       "yell.allLabel": "{n} open points – to the next one",
       "yell.kind.date": "date of the notes",
       "yell.next": "Next open point",
@@ -1850,8 +1850,8 @@
       "log.yellOk": "Confirmed: {what}",
       "log.yellNo": "Taken back: {what}",
       "log.yellUndo": "Opened again: {what}",
-      "settings.yellOne": "One counter of open points (not “must” and “can” apart)",
-      "settings.yellOneTitle": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (can, yellow) – apart, or in one counter",
+      "settings.yellOne": "One counter of open points (not “must” and “may” apart)",
+      "settings.yellOneTitle": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (may, yellow) – apart, or in one counter",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
       "matrix.langAdd": "add a language …",
@@ -1925,7 +1925,7 @@
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
       "launcher.ocr": "… from cover art",
-      "launcher.ocrTitle": "Import the credits from the cover art (beta): the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can supplement it",
+      "launcher.ocrTitle": "Import the credits from the cover art: the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can supplement it",
       "ocrStart.hint": "The import of this release has not started – the text read from the cover art will be its source.",
       "ms.2.16.0": "Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date",
       "ms.2.17.0": "Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note",
@@ -2366,6 +2366,8 @@
       "log.languagesVersion": "The languages file is of version {version}, the script of {script} – please update the script",
       "log.languagesMissing": "The languages file ({file}) is missing – the dashboard speaks English",
       "settings.t.beta": "Beta",
+      "settings.ocrHead": "Text from cover art",
+      "settings.betaNone": "No beta functions at the moment",
       "settings.t.cache": "Cache",
       "settings.t.statistics": "Statistics",
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
@@ -2660,7 +2662,6 @@
       "stats.dev.guess.other": "other instruments",
       "stats.dev.guess.misc": "miscellaneous support",
       "stats.dev.dupesN": "Relationships MusicBrainz had already, not staged again: {n}",
-      "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
       "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
       "settings.remember": "Remember changes and import settings per release",
       "settings.rememberTitle": "On: a release imported again from the same source comes back as you left it – its rows (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, the MusicBrainz entity chosen by hand), the date pool, track pool and date matrix, the source and media chosen, “Skip works”, “Leave out the about text”, the credits switched off on the source pages, the frames of its images. Off: none of it is stored or read (what is stored stays until it is forgotten).",
@@ -2673,11 +2674,11 @@
       "settings.rememberAll": "all data of the script in this browser: {size}",
       "settings.rememberAsk.one": "Forget everything remembered for {n} release ({size})? The lists of works created through the dashboard stay.",
       "settings.rememberAsk.other": "Forget everything remembered for {n} releases ({size})? The lists of works created through the dashboard stay.",
-      "settings.betaOcr": "Text from cover art (beta)",
-      "settings.betaOcrTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
-      "settings.betaOcrWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
+      "settings.ocrOn": "Use the text from cover art",
+      "settings.ocrOnTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
+      "settings.ocrOnWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
       "settings.ocrPreload": "Load the images ticked ahead",
-      "settings.ocrPreloadTitle": "Text from cover art (beta): the first 24 images ticked are loaded in the background while you choose, two at a time – the frames and the reading then start at once. An image unticked leaves the queue. Off: they are loaded after “Next”.",
+      "settings.ocrPreloadTitle": "Text from cover art: the first 24 images ticked are loaded in the background while you choose, two at a time – the frames and the reading then start at once. An image unticked leaves the queue. Off: they are loaded after “Next”.",
       "ocr.menu": "Text from cover art …",
       "ocr.menuTitle": "Read the credits printed on the back cover or in the booklet (the images of this release on the Cover Art Archive)",
       "ocr.title": "Text from cover art",
@@ -2756,6 +2757,8 @@
       "ocr.copied": "The text is in the clipboard",
       "ocr.supp": "＋ Supplement the import with it",
       "ocr.import": "Import this text",
+      "ocr.importReplaceTitle": "Replaces the import: this text becomes the source, the rows of the source loaded now go (asks first)",
+      "ocr.importReplaceAsk": "“Import this text” replaces the import of {source}: its rows go and this text becomes the source. “＋ Supplement the import with it” keeps them.\n\nReplace the import?",
       "ocr.errNoLib": "The text recognition could not be loaded ({url}) – the page or the browser may not allow it.",
       "ocr.errImage": "The image could not be read.",
       "log.ocrOpen": "Text from cover art: the images of release {mbid}",
@@ -2779,13 +2782,13 @@
       "ocr.allShown": "All shown ({n})",
       "ocr.more": "Load {n} more ({left} not shown yet)",
       "ocr.auto": "Auto-select",
-      "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Beta); off, its ticks go again.",
+      "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Sources); off, its ticks go again.",
       "settings.ocrAuto": "Auto-select the images with credits",
-      "settings.ocrAutoTitle": "Text from cover art (beta): back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
+      "settings.ocrAutoTitle": "Text from cover art: back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
       "hint.full": "Try the full view: every role with all its fields at once – this symbol switches",
       "hint.close": "Hide this hint",
       "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
-      "settings.ocrFrontTitle": "Text from cover art (beta): while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
+      "settings.ocrFrontTitle": "Text from cover art: while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
       "ocr.own": "Your own images",
       "ocr.chooseFiles": "Choose images or PDFs …",
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
@@ -2834,11 +2837,11 @@
       "ocr.ownDiscogs": "from Discogs",
       "log.ocrPdfAdded": "Text from cover art: {name} – {n} pages, {text} with a text of their own",
       "conn.kind.library": "Library",
-      "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
-      "conn.X014": "Text from cover art (beta): the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
+      "conn.X013": "Text from cover art (⚙ Settings → Sources): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
+      "conn.X014": "Text from cover art: the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
       "conn.X015.name": "Images by their address",
-      "conn.X015": "Text from cover art (beta): an image whose address you enter is read from its site – the userscript manager (@connect *) lets the script fetch it; Tampermonkey asks once for each new site. Only the addresses you enter.",
-      "conn.X016": "Text from cover art (beta): opens a booklet as PDF in this browser – a page with a text of its own is read from it, a scanned page with the text recognition; loaded from cdn.jsdelivr.net the first time a PDF is added.",
+      "conn.X015": "Text from cover art: an image whose address you enter is read from its site – the userscript manager (@connect *) lets the script fetch it; Tampermonkey asks once for each new site. Only the addresses you enter.",
+      "conn.X016": "Text from cover art: opens a booklet as PDF in this browser – a page with a text of its own is read from it, a scanned page with the text recognition; loaded from cdn.jsdelivr.net the first time a PDF is added.",
       "mapping.changesN.one": "your changes: {n}",
       "mapping.changesN.other": "your changes: {n}",
       "mapping.badPattern": "The pattern cannot be used: {why}",
@@ -6869,7 +6872,7 @@
         const data = await getJson(`artists/${id}`);
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
       },
-      // [3.34.7] Discogs images for the text from cover art (beta), only on request: the API gives their addresses only to a
+      // [3.34.7] Discogs images for the text from cover art, only on request: the API gives their addresses only to a
       // signed-in app, so they come from the release's page on discogs.com
       /** A Discogs release in an address ('' if none). */
       releaseIdInUrl: (u) => (String(u || '').match(/^https?:\/\/(?:www\.)?discogs\.com\/(?:[a-z]{2}\/)?release\/(\d+)/i) || [])[1] || '',
@@ -10869,12 +10872,12 @@
     { id: 'X013', kind: 'site', name: 'Cover Art Archive', home: 'https://coverartarchive.org/', hosts: ['coverartarchive.org', 'archive.org'],
       perms: '@connect coverartarchive.org · @connect archive.org · GM_xmlhttpRequest', since: '3.34.1' },
     { id: 'X014', kind: 'library', name: 'Tesseract.js', home: 'https://github.com/naptha/tesseract.js', hosts: ['cdn.jsdelivr.net'],
-      perms: '– (loaded into the page from cdn.jsdelivr.net, only with the beta switched on)', since: '3.34.1' },
+      perms: '– (loaded into the page from cdn.jsdelivr.net, only when the text from cover art is used)', since: '3.34.1' },
     // [3.34.5] images by their address in the text from cover art (collected item 123): any site you enter
     { id: 'X015', kind: 'site', name: '', home: '', hosts: ['*'], perms: '@connect * · GM_xmlhttpRequest (only the addresses you enter)', since: '3.34.5' },
     // [3.34.6] booklets as PDF
     { id: 'X016', kind: 'library', name: 'pdf.js', home: 'https://github.com/mozilla/pdf.js', hosts: ['cdn.jsdelivr.net'],
-      perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
+      perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF of the text from cover art)', since: '3.34.6' },
     // [Z-YT] (3.41.13) the description of a video
     { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
   ];
@@ -17438,14 +17441,18 @@
   }
 
   // --- [3.34.1] Text from cover art (beta; collected item E3) -------------------------------------------------------------
-  //  ⚙ Settings → Beta switches it on; then "Source ▾" has "Text from cover
+  //  ⚙ Settings → Sources switches it on; then "Source ▾" has "Text from cover
   // art …": the images of the release on the Cover Art Archive (Back, Booklet, Liner and Tray ticked), read in this browser
   // with Tesseract.js (loaded from jsDelivr at the first use, the language data then kept by the browser), the text
   // corrected (℗ read as ©, dashes, empty lines – the test of 2026-10-28) and checked, then imported like a pasted text or
   // as a supplement. Nothing is uploaded.
 
-  const BETA_OCR_KEY = 'dci-beta-ocr';
-  S.betaOcr = readJson('localStorage', BETA_OCR_KEY, false) === true;
+  // [Z-BETAOFF] (3.115.0) out of the beta: on unless switched off in ⚙ Settings → Sources (stored only when off); the beta's
+  // switch of before is forgotten (it was off unless switched on)
+  const OCR_ON_KEY = 'dci-ocr-on';
+  const OCR_BETA_OLD_KEY = 'dci-beta-ocr';
+  S.ocrOn = readJson('localStorage', OCR_ON_KEY, true) !== false;
+  if (readJson('localStorage', OCR_BETA_OLD_KEY, null) !== null) writeJson('localStorage', OCR_BETA_OLD_KEY, null);
   S.ocr = null;
   const CAA_URL = 'https://coverartarchive.org/release/';
   const TESSERACT_VERSION = '5.1.1';
@@ -17527,7 +17534,7 @@
 
   let tesseractLoading = null;
 
-  /** Tesseract.js, loaded once from jsDelivr (only now: nothing is loaded while the beta is off or unused). */
+  /** Tesseract.js, loaded once from jsDelivr (only now: nothing is loaded while the text from cover art is off or unused). */
   function loadTesseract() {
     // (into the page: pageWindow, as MB's own objects)
     const w = pageWindow;
@@ -18062,7 +18069,7 @@
 
   // --- [3.34.10] Loading the images: how far, and ahead in the background (collected item 128):
   // each image shows how much of it has come (%, MB) on its tile, beside the frames and in the list while reading; the images
-  // ticked are loaded ahead, two at a time (⚙ Settings → Beta, on by default); one unticked leaves the queue, and one being
+  // ticked are loaded ahead, two at a time (⚙ Settings → Sources, on by default); one unticked leaves the queue, and one being
   // loaded ahead stops.
   // [3.34.15] (collected item 128b): loading ahead is off by default and takes at most the first
   // OCR_PRELOAD_MAX images ticked; after "Next" (the frames, the reading) all images ticked are loaded, two at a time, the one
@@ -18143,7 +18150,7 @@
   }
 
   // --- [3.34.15] No images ticked at first; "Auto-select" ticks those that mostly have credits (collected item 136): a switch in the
-  // window and in ⚙ Settings → Beta, one state; switched on, the release's back covers, booklets, liners and trays and the PDF pages
+  // window and in ⚙ Settings → Sources, one state; switched on, the release's back covers, booklets, liners and trays and the PDF pages
   // whose own text has credits are ticked at once (and
   // each time the window opens); switched off, the ticks it set go again (those changed by hand stay).
 
@@ -18413,7 +18420,7 @@
   // --- [3.34.17] The frames remembered (collected item 133): for each release and image its frames
   // (as parts of the image, 0 … 1 – they fit the 1200 px copy and the original alike, and another size no longer drops
   // them), how it is turned and "the whole image"; the images themselves are loaded anew. The last OCR_FRAMES_MAX releases;
-  // "Delete stored import …" forgets those of its release, ⚙ Settings → Beta → Reset (and resetting all settings) all of them.
+  // "Delete stored import …" forgets those of its release, ⚙ Settings → Sources → Reset (and resetting all settings) all of them.
 
   const OCR_FRAMES_KEY = 'dci-ocr-frames';
   const OCR_FRAMES_MAX = 50;
@@ -18685,7 +18692,7 @@
     openOcr();
   }
 
-  /** ⚙ Settings → Beta → Reset, "Reset all settings": what was stored of the window for every release goes. */
+  /** ⚙ Settings → Sources → Reset, "Reset all settings": what was stored of the window for every release goes. */
   function ocrStateDropAll() {
     try {
       const keys = [];
@@ -18776,7 +18783,7 @@
 
   let ocrResize = null;
 
-  /** [3.37.5] Hidden (kept as it is, stored while remembering); `discard`: gone (the beta switched off, reset, "Start over"). */
+  /** [3.37.5] Hidden (kept as it is, stored while remembering); `discard`: gone (switched off, reset, "Start over"). */
   function closeOcr(discard = false) {
     const o = S.ocr;
     if (o) {
@@ -18937,7 +18944,8 @@
   }
   /** A frame of the companion: added, changed (read again) or taken out. */
   function cocrReceive(msg) {
-    if (!ruleOn('S178')) return;
+    // ([Z-BETAOFF] 3.115.0, review) the text from cover art switched off: no window
+    if (!ruleOn('S178') || !S.ocrOn) return;
     const id = String(msg.frameId || '').slice(0, 80);
     if (!id) return;
     if (msg.action === 'remove') {
@@ -19113,6 +19121,8 @@
       showMessage('error', 'msg.textEmpty');
       return;
     }
+    // [Z-OCRSUPP] (3.115.0) an import there: replacing it only when confirmed (supplementing keeps it)
+    if (!supp && S.release && S.rows.length && !confirm(tr('ocr.importReplaceAsk', { source: sourceLabel(S.source) }))) return;
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
     // [E8] (3.38.0) for the statistics
     S.statOcr = statOcrInfo(text, supp);
@@ -19128,7 +19138,8 @@
     if (supp) loadSupplement(TEXT, textSig(text), { text, origin });
     else {
       S.textInput = { text, origin };
-      loadRelease(textSig(text), { source: TEXT });
+      // ([Z-OCRSUPP] 3.115.0) asked above already: not a second time
+      loadRelease(textSig(text), { source: TEXT, confirmed: true });
     }
   }
 
@@ -19182,7 +19193,7 @@
           : `<span class="dci-sub">${esc(tr(im.missing ? 'ocr.missingCard' : im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
     // [3.34.5] "All images" (collected item 125): on – all, off – none, half – some
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.filter((im) => !im.missing).length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
-    // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Beta)
+    // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Sources)
     const auto = o.images.length ? `<button type="button" class="dci-small dci-ocr-auto" data-ocr="auto" aria-pressed="${S.ocrAuto}" title="${esc(tr('ocr.autoTitle'))}">${esc(tr('ocr.auto'))}</button>` : '';
     // [3.34.16] "All shown" while some are not shown
     const allShown = left && shown.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-shown ${shown.every((im) => im.sel) ? 'checked' : ''}> ${esc(tr('ocr.allShown', { n: shown.length }))}</label>` : '';
@@ -19417,8 +19428,10 @@
           return done.length ? `<button type="button" class="dci-small dci-ocr-clean" data-ocr="clean-all" aria-pressed="${on}" title="${esc(tr('ocr.cleanTitle'))}">${esc(tr('ocr.cleanAll'))}</button>
             <span class="dci-sub" data-ocr-cleann="all">${esc(ocrCleanNote(on, done.reduce((a, r) => a + ocrCleanCount(r), 0)))}</span>` : '';
         })()}<span></span>
-        ${canSupp ? `<button type="button" class="dci-small" data-ocr="supp">${esc(tr('ocr.supp'))}</button>` : ''}
-        <button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button></div>`;
+        ${canSupp ? `<button type="button" class="dci-small" data-ocr="import" title="${esc(tr('ocr.importReplaceTitle'))}">${esc(tr('ocr.import'))}</button>
+          <button type="button" class="dci-apply dci-small" data-ocr="supp">${esc(tr('ocr.supp'))}</button>`
+    // [Z-OCRSUPP] (3.115.0) with an import there, supplementing it is the main button; importing (it replaces the source) asks first
+    : `<button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button>`}</div>`;
   }
 
   // --- [3.34.9] A larger view of an image when the mouse rests on its small one (collected item 129): the tiles stay alike, each
@@ -19851,7 +19864,7 @@
     const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
       : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : o.step === 'frames' ? ocrFramesHtml() : ocrPickHtml();
     const cur = o.step === 'frames' ? ocrCurrent().img : null;
-    el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
+    el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))}</h2>
         <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
         ${o.step === 'list' ? '' : `<button type="button" class="dci-textbtn dci-ocr-restart" data-ocr="restart" title="${esc(tr('ocr.restartTitle'))}">${esc(tr('ocr.restart'))}</button>`}
@@ -23298,6 +23311,8 @@
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // ([Z-OCRSUPP] 3.115.0, review) the window of the text from cover art open at its result: its buttons as the import now is
+        if (S.ocr && !S.ocr.hidden && S.ocr.step === 'result') renderOcr();
         // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
         setWorkNotes(S.workNotesRel);
         // [Z-TBY] (3.59.0, S087) the groups above their members: whether MusicBrainz has them as members (in the background)
@@ -25322,7 +25337,7 @@
           <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
         </div>
         ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
-        ${S.betaOcr ? item('ocr-open', `${esc(tr('ocr.menu'))}<span class="dci-beta-tag">beta</span>`, '', tr('ocr.menuTitle')) : ''}
+        ${S.ocrOn ? item('ocr-open', esc(tr('ocr.menu')), '', tr('ocr.menuTitle')) : ''}
         ${item('srcorder-toggle', `${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}`, `aria-expanded="${S.srcOrderOpen}"`)}
         ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} ${esc(tr('srcmenu.bcSettings'))}`, `aria-expanded="${S.bcOpen}"`)}
         ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
@@ -42221,6 +42236,8 @@
         if (S.settingsOpen) onlyHint('settings');
         break;
       case 'settings-topic': {
+        // ([Z-BETAOFF] 3.115.0, review) a tab greyed out (Beta) opens nothing – it keeps its tooltip
+        if (btn.getAttribute('aria-disabled') === 'true') break;
         // [3.25.0] a tab: its topic (remembered)
         S.settingsTab = btn.dataset.topic;
         S.resetOpen = false;
@@ -43752,7 +43769,7 @@
     // [3.25.0] the tabs of the settings: arrows, Home, End
     const tabBtn = e.target.closest && e.target.closest('.dci-set-tab');
     if (tabBtn && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
-      const all = [...tabBtn.parentElement.querySelectorAll('.dci-set-tab')];
+      const all = [...tabBtn.parentElement.querySelectorAll('.dci-set-tab:not([aria-disabled="true"])')];
       const i = all.indexOf(tabBtn);
       const to = e.key === 'Home' ? 0 : e.key === 'End' ? all.length - 1 : (i + (['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 1) + all.length) % all.length;
       e.preventDefault();
@@ -43943,7 +43960,7 @@
    */
   function ocrKeepOnTop() {
     const o = document.getElementById('dci-ocr');
-    // [138b] (3.34.23) unless switched off in ⚙ Settings → Beta: then it is a window like the others
+    // [138b] (3.34.23) unless switched off in ⚙ Settings → Sources: then it is a window like the others
     if (!o || o.hidden || !S.ocrFront) return;
     o.style.zIndex = String(++topZ);
     const peek = document.getElementById('dci-ocr-peek');
@@ -44515,7 +44532,9 @@
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY,
+      // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
+      OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
     musicbrainz: [],
     developer: [GAP_WHY_KEY, DSUP_WHY_KEY],
@@ -44525,7 +44544,8 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
-    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
+    // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
+    beta: [],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY, STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY],
@@ -46386,6 +46406,16 @@
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
+        // [Z-BETAOFF] (3.115.0) the text from cover art, out of the beta: on at first
+        `<h4 class="dci-set-h" data-el="set-ocr">${esc(tr('settings.ocrHead'))}</h4>`,
+        row(check('data-set="ocr-on"', S.ocrOn, tr('settings.ocrOn'), tr('settings.ocrOnTitle'))),
+        `<p class="dci-sub">${esc(tr('settings.ocrOnWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }))}</p>`,
+        // [3.34.10] loading the images ticked ahead (collected item 128), while it is on
+        S.ocrOn ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
+        // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
+        S.ocrOn ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
+        // [138b] (3.34.23) the window in front of the dashboard
+        S.ocrOn ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
       ],
       // [3.25.0] pasted texts and the credits texts of Bandcamp
       texts: () => [
@@ -46470,18 +46500,8 @@
           <span class="dci-seg dci-seg-small" role="group" aria-labelledby="dci-drop-${p}">${['add', 'replace'].map((v) => `<button type="button"
           data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`).join('')}</div>`,
       ],
-      // [3.34.1] functions to try out
-      beta: () => [
-        `<p class="dci-sub">${esc(tr('settings.betaHint'))}</p>`,
-        row(check('data-set="beta-ocr"', S.betaOcr, tr('settings.betaOcr'), tr('settings.betaOcrTitle'))),
-        `<p class="dci-sub">${esc(tr('settings.betaOcrWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }))}</p>`,
-        // [3.34.10] loading the images ticked ahead (collected item 128), while the beta is on
-        S.betaOcr ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
-        // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
-        S.betaOcr ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
-        // [138b] (3.34.23) the window in front of the dashboard
-        S.betaOcr ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
-      ],
+      // [3.34.1] functions to try out ([Z-BETAOFF] 3.115.0: none at the moment – the tab is greyed out)
+      beta: () => [`<p class="dci-sub">${esc(tr('settings.betaNone'))}</p>`],
       // [146] (3.36.0) remembered per release
       cache: () => {
         const z = storageSizes();
@@ -46517,11 +46537,18 @@
       },
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
+    // ([Z-BETAOFF] 3.115.0, review) "Beta" chosen before: General, and forgotten
+    if (S.settingsTab === 'beta') {
+      S.settingsTab = 'general';
+      writeJson('localStorage', SETTINGS_TAB_KEY, null);
+    }
     const tab = settingTopics().includes(S.settingsTab) ? S.settingsTab : 'general';
     const tabs = settingTopics().map((key) => {
       const sel = !S.resetOpen && key === tab;
+      // [Z-BETAOFF] (3.115.0) a topic without settings at the moment: greyed out, its tooltip says why
+      const off = key === 'beta';
       return `<button type="button" role="tab" class="dci-set-tab" id="dci-set-tab-${key}" data-act="settings-topic" data-topic="${key}" aria-selected="${sel}"
-        aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}">${esc(tr(`settings.t.${key}`))}</button>`;
+        aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}"${off ? ` aria-disabled="true" title="${esc(tr('settings.betaNone'))}"` : ''}>${esc(tr(`settings.t.${key}`))}</button>`;
     }).join('');
     const pane = S.resetOpen ? resetHtml()
       : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
@@ -46887,11 +46914,11 @@
         /* no release on this page */
       }
       refresh();
-    } else if (k === 'beta-ocr') {
-      // [3.34.1] text from cover art (beta, item E3): the item in "Source ▾"
-      S.betaOcr = el.checked;
-      writeJson('localStorage', BETA_OCR_KEY, el.checked || null);
-      log('info', 'settingValue', { what: tr('settings.betaOcr'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'ocr-on') {
+      // [3.34.1] text from cover art (item E3): the item in "Source ▾"; [Z-BETAOFF] (3.115.0) on at first, stored when off
+      S.ocrOn = el.checked;
+      writeJson('localStorage', OCR_ON_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.ocrOn'), value: tr(el.checked ? 'common.on' : 'common.off') });
       if (!el.checked) closeOcr(true);
       renderSource();
       renderLauncher();
@@ -47094,7 +47121,18 @@
       }
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
+      // [Z-BETAOFF] (3.115.0) the text from cover art: on again, its switches as at first (its window stays)
+      // ((review) its window as the switches now are: no image loaded ahead, the ticks of "Auto-select" gone; the frames and the
+      // windows kept per release stay – "Reset all settings" forgets them)
+      if (S.ocrAuto) ocrSetAuto(false);
+      Object.assign(S, { ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true });
+      if (S.ocr) {
+        S.ocr.images.forEach((im) => { if (im.ahead) ocrPreloadDrop(im); });
+        renderOcr();
+      }
+      ocrKeepOnTop();
       renderSource();
+      renderLauncher();
     } else if (t === 'texts') {
       // [3.25.0] the web links next to names moved here from "Sources"
       S.webLinksShow = false;
@@ -47134,16 +47172,6 @@
     } else if (t === 'cache') {
       // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
       Object.assign(S, { rememberOn: false, rememberMax: 50 });
-    } else if (t === 'beta') {
-      S.betaOcr = false;
-      S.ocrPreload = false;
-      S.ocrAuto = false;
-      S.ocrFront = true;
-      // [3.37.5] the window kept and stored goes too
-      closeOcr(true);
-      ocrStateDropAll();
-      renderSource();
-      renderLauncher();
     }
     syncSharedSwitches();
     renderSettings();
@@ -47165,7 +47193,7 @@
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, DSUP_WHY_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
-    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
+    OCR_ON_KEY, OCR_BETA_OLD_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
@@ -47199,7 +47227,7 @@
     REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY, STATS_DAILY_KEY,
     STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
     // ((review) a window's state, and the frames of the cover art kept per release – no settings)
-    'dci-log-open', OCR_FRAMES_KEY]);
+    'dci-log-open', OCR_FRAMES_KEY, OCR_BETA_OLD_KEY]);
   const profileKeys = () => SETTINGS_KEYS.filter((k) => !PROFILE_NOT.has(k));
   const profileQuick = () => QUICK_SWITCHES.slice();
   const rawGet = (k) => { try { return window.localStorage.getItem(k); } catch { return null; } };
@@ -47273,7 +47301,7 @@
     S.devMode = readJson('localStorage', DEV_KEY, false) === true;
     S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
     S.rulesRowPlace = readJson('localStorage', RULES_ROW_KEY, 'window') === 'symbol' ? 'symbol' : 'window';
-    S.betaOcr = readJson('localStorage', BETA_OCR_KEY, false) === true;
+    S.ocrOn = readJson('localStorage', OCR_ON_KEY, true) !== false;
     S.ocrPreload = readJson('localStorage', OCR_PRELOAD_KEY, false) === true;
     S.ocrAuto = readJson('localStorage', OCR_AUTO_KEY, false) === true;
     S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
@@ -47364,7 +47392,7 @@
       if (S.overlay) placeRules();
       if (!S.devMode && DIAG.timer) stopDiag();
       renderLog();
-      if (!S.betaOcr) closeOcr(true);
+      if (!S.ocrOn) closeOcr(true);
       else ocrKeepOnTop();
       applyWorkGroups({ quiet: true });
       if (S.overlay) renderSource();
@@ -47632,7 +47660,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true,
@@ -47741,7 +47769,7 @@
    * the window (its text replaces the source or supplements it).
    */
   async function openFromCoverArt() {
-    if (!S.betaOcr) return;
+    if (!S.ocrOn) return;
     await openDashboard({ ocrFirst: true });
     // [3.37.5] (kept: as it was left)
     openOcr();
@@ -48057,8 +48085,8 @@
     bar.querySelector('#dci-open').title = tr('launcher.shortcut');
     const ocrBtn = bar.querySelector('#dci-open-ocr');
     if (ocrBtn) {
-      ocrBtn.hidden = !S.betaOcr;
-      ocrBtn.innerHTML = `${esc(tr('launcher.ocr'))}<span class="dci-beta-tag">beta</span>`;
+      ocrBtn.hidden = !S.ocrOn;
+      ocrBtn.textContent = tr('launcher.ocr');
       ocrBtn.title = tr('launcher.ocrTitle');
     }
     // [Z-LS] (3.40.14) symbols: the words as tooltip and label
@@ -48090,7 +48118,7 @@
   function openSettingsAt(topic, focusSel = '') {
     S.settingsOpen = true;
     S.resetOpen = false;
-    if (topic && SETTING_TOPICS.includes(topic)) {
+    if (topic && SETTING_TOPICS.includes(topic) && topic !== 'beta') {
       S.settingsTab = topic;
       writeJson('localStorage', SETTINGS_TAB_KEY, topic === 'general' ? null : topic);
     }
@@ -48597,7 +48625,6 @@
       #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
       #dci-open-ocr:hover { background: #ecebf6; }
       #dci-open:has(+ #dci-open-ocr:not([hidden])) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-      #dci-open-ocr .dci-beta-tag { margin-left: 6px; }
       #dci-launch-status { color: #4b4585; }
       #dci-launcher .dci-textbtn { border: 0; background: none; color: #4b4585; text-decoration: underline; cursor: pointer; font: inherit; }
       #dci-notice { position: relative; max-width: 80ch; margin: 0 0 12px; padding: 10px 36px 10px 14px; border: 1px solid #c8c5d6; border-left: 4px solid #736dab;
@@ -48662,7 +48689,6 @@
       }
       #dci-rules[hidden] { display: none; }
       /* [3.34.1] "Text from cover art" (beta, item E3): a window of its own above the dashboard */
-      .dci-beta-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: #736dab; color: #fff; font-size: 0.78em; font-weight: 600; line-height: 1.5; vertical-align: 1px; }
       #dci-ocr {
         --u: calc(var(--dci-fs, 13px) / 13);
         /* [3.34.14] placed and sized by makeMovable (kind "ocr"): the same size in every step, its size changed at the corner */
@@ -49767,6 +49793,9 @@
       .dci-set-tab { font: inherit; text-align: left; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); border: 1px solid transparent; border-radius: 4px 0 0 4px;
         background: transparent; color: var(--purple-d); cursor: pointer; white-space: nowrap; }
       .dci-set-tab:hover { background: #f1f0f8; }
+      /* [Z-BETAOFF] (3.115.0, review) a topic without settings at the moment */
+      #dci-overlay .dci-set-tab[aria-disabled="true"] { color: var(--muted); opacity: 0.55; cursor: default; }
+      #dci-overlay .dci-set-tab[aria-disabled="true"]:hover { background: transparent; }
       .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: calc(var(--u, 1px) * -14 - 1px); position: relative; z-index: 1; }
       .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
       .dci-set-resetall { align-self: flex-start; }
