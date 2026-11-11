@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.19.0
+// @version      1.20.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -49,7 +49,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.19.0';
+  const COMPANION_VERSION = '1.20.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -454,6 +454,7 @@
       // (an import whose marks are switched off shows none – not another one's)
       const lives = liveMaps();
       const map = lives.length ? lives[0].map : null;
+      // ([1.20.0] Z-CPNOLINK: the kept marks only as switched on in the dashboard – "Keep marks")
       const use = map || keptMap();
       const sig = use && use.enabled ? `${!!map}|${use.ts}|${use.pageId}|${use.mbRelease || ''}` : '';
       return { lives, map, use, sig, art: !!map && !!map.artwork && !!side.artwork };
@@ -1147,8 +1148,10 @@
     ensureStyle();
     document.addEventListener('click', (e) => {
       const a = e.target.closest && e.target.closest('a.popupImage[href], .package-photo a[href*="bcbits.com"]');
-      // ((review) only on an album's or a track's page
+      // ((review) only on an album's or a track's page; [1.20.0] (Z-CPNOLINK) only with a dashboard of this release open – else
+      // Bandcamp's own view of the images, with its arrows)
       if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !bcArtPage()) return;
+      if (!cocrCtxFn || !cocrCtxFn().liveMaps().length) return;
       const box = bcArtBox();
       const list = JSON.parse(box.dataset.list || '[]');
       const i = list.indexOf(String(a.href || '').replace(/^http:/, 'https:'));

@@ -229,6 +229,9 @@ LINKED = {
 # --- MusicBrainz web service -------------------------------------------------------------------
 
 
+# [3.124.0] (Z-WEBDOM) the web addresses of an artist or a label in MusicBrainz: mbid → [url]
+ENTITY_URLS = {}
+
 # [3.100.0] the labels of the release in MusicBrainz ("label-info"): (mbid, name)
 RELEASE_LABELS = []
 
@@ -252,7 +255,8 @@ def ws_release(full=False):
     return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
-            **({'label-info': [{'catalog-number': '', 'label': {'id': g, 'name': n}} for g, n in RELEASE_LABELS]} if RELEASE_LABELS else {}),
+            # ([3.124.0] Z-CATNO: a third value, its catalogue number)
+            **({'label-info': [{'catalog-number': x[2] if len(x) > 2 else '', 'label': {'id': x[0], 'name': x[1]}} for x in RELEASE_LABELS]} if RELEASE_LABELS else {}),
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
             + MB_EXTRA.get(REL, []),
             'media': split_media(tracks, 'title') if full else [trim_medium(m) for m in split_media(tracks, 'title')]}
@@ -885,9 +889,11 @@ def install_routes(ctx):
             return json_route(route, ws_release())
         m = re.match(r'/ws/2/label/([0-9a-f-]{36})', p)
         if m:
-            return json_route(route, {'id': m.group(1), 'relations': [r for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1) and False] or [
+            # [3.124.0] (Z-WEBDOM) its web addresses in MusicBrainz (ENTITY_URLS: mbid → [url])
+            return json_route(route, {'id': m.group(1), 'relations': ([r for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1) and False] or [
                 {'target-type': 'artist', 'type': PP_TYPE, 'direction': 'backward', 'begin': r.get('begin'), 'end': r.get('end'),
-                 'artist': {'id': r['artist'], 'name': r['name']}} for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1)]})
+                 'artist': {'id': r['artist'], 'name': r['name']}} for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1)])
+                + [{'target-type': 'url', 'type': 'official homepage', 'url': {'resource': x}} for x in ENTITY_URLS.get(m.group(1), [])]})
         m = re.match(r'/ws/2/artist/([0-9a-f-]{36})', p)
         if m:
             # [3.39.9] "member of band" (BAND_MEMBERS: group → [member mbids]) in both directions
@@ -901,7 +907,8 @@ def install_routes(ctx):
             ARTIST_LOOKUPS.append((a, u.query))
             return json_route(route, {'id': a, **ARTIST_INFO.get(a, {}), 'relations': [
                 {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
-                for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band})
+                for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band
+                + [{'target-type': 'url', 'type': 'official homepage', 'url': {'resource': x}} for x in ENTITY_URLS.get(a, [])]})
         m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
         if m:
             return json_route(route, ws_work(m.group(1)))

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.123.0
+// @version      3.124.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.123.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.123.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.124.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.124.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.123.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.124.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -794,7 +794,7 @@
       "ignored.why.ensemble": "who plays on these tracks (a duo, trio …): only those named",
       "ignored.why.artTitle": "the title of the cover's picture",
       "ignored.why.series": "a series the release is part of",
-      "ignored.why.catno": "the label's catalogue number",
+      "ignored.why.catno": "the release’s catalogue number",
       "ignored.why.address": "an address",
       "ignored.why.statement": "the label's statement on how it records",
       "ignored.why.releaseTitle": "the release’s title – a title line, no credit",
@@ -3612,6 +3612,17 @@
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
       "typeAsk.askTranslation": "“{role}”: mostly the translation of the liner notes – taken so (liner notes, translator) –, sometimes of the lyrics:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
+      "ignored.why.members": "the members of {band}: {names} – each with the roles of the line; MusicBrainz keeps the members on the band (its own page)",
+      "typeAsk.askSoundscapes": "“Soundscapes”: effects credited “soundscapes”, sound effects, or miscellaneous support credited “soundscapes”?",
+      "members.note": "Members per the text: {names}",
+      "members.edit": "edit the band in MusicBrainz ↗",
+      "site.note": "Website per the text: {host} – not in MusicBrainz yet.",
+      "site.edit": "add it in MusicBrainz ↗",
+      "log.siteHint": "{name}: the website {host} of the text is not in MusicBrainz yet – a note at the entry",
+      "ignored.why.dedication": "a dedication – in the box “Dedications & tributes”",
+      "dedbox.create": "Create …",
+      "dedbox.createTitle": "Create the artist “{name}” in MusicBrainz (a new tab) – then give its MBID here",
+      "yell.kind.ded": "dedication not sure",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.askVoice": "“{role}”: plain vocals (MusicBrainz has no role credit for them), or other vocals or lead vocals credited “voice”? – please choose:",
       "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
@@ -4436,6 +4447,11 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S198', where: 'TEXT.parse (siteHosts), siteOf, siteHintRun, siteNoteHtml', note: 'Texts (3.124.0; collected item Z-WEBDOM): a line only of web addresses is left out as before (now also a line only of an address in lower case with any ending: "castlesin.space"); a site that is a linked entry\'s own – its letters the name ("castlesin.space": Castles in Space) or its start ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for it yet: a note at the entry with a link to its page for editing in MusicBrainz, the address filled in (MusicBrainz\'s addresses of the entry looked up once)' },
+    { id: 'S197', where: 'TEXT.parse, renderDedBox, yellItems', note: 'Dedications (3.124.0; collected item Z-INMEM): a line only of a dedication ("In memory of Kyle Bunell-Cooke.", "Dedicated to the memory of …") is no line not recognized – the box "Dedications & tributes" has it; one MusicBrainz does not know has "Create …" there (an artist of that name, in a new tab); each suggestion of the box counts as a question that may be answered (yellow)' },
+    { id: 'S196', where: 'TEXT.parse (catnoOf)', note: 'Texts (3.124.0; collected item Z-CATNO): a line that is only the release\'s catalogue number in MusicBrainz ("CiS216", also "CIS-216", "cis 216": case, spaces, hyphens and dots aside, one character may differ) – left out as such (before: not recognized)' },
+    { id: 'S195', where: 'TEXT.parse (qpLine), R118, Q015', note: 'Texts (3.124.0; collected item Z-QPBAND): "Qien Pudiera are Camila Chapelle and Lucia Reyes : electronics, field recordings, …" – the release\'s artist before "are": each member gets all the roles (MusicBrainz keeps the members on the band: listed as a note, "left out on purpose", with the band); "Special guest(s) A (and B) : roles" – the roles with the attribute guest; "synthesizer improvisations" is the synthesizer' },
+    { id: 'S194', where: 'TEXT.parse (cpyLine)', note: 'Texts (3.124.0; collected item Z-CPYEAR): "Copyright 2026 Castles In Space." is © 2026, "Phonographic Copyright 2026 X" ℗ 2026 – written out instead of the signs' },
     { id: 'S193', where: 'mbsSearch, mbsKindHtml, switchEntryKind', note: 'Entries (3.123.0; collected item Z-MBSEARCH): the field "MB artist URL or MBID" of an entry also searches – a name typed there gives MusicBrainz\'s entries of the entry\'s kind of that name (or other names), the first 3 (Settings → Sources: 1 – 25) and "+ more"; an URL or MBID as before. Before the field the kind – artist, label, place, area: another one lets the link go (a linked entry after a question) and re-maps the rows (the types of their roles for that kind, a role it has none for on Skip; back, the rows as they were)' },
     { id: 'S192', where: 'DISCOGS.toRelease (series), formatSeriesResolve, FORMAT_SERIES', note: 'Series (3.122.0; collected item Z-RSD): "Record Store Day" (also "Cassette Store Day", "Love Record Stores", "National Album Day") in Discogs\'s format – the release part of MusicBrainz\'s series of that day and year: on Black Friday "Record Store Day Black Friday 2025", in April "Record Store Day 2025", for the others the one of the year; with no such date MusicBrainz\'s series of that name and year are suggested. Other format words ("Limited Edition", "Reissue", "Box Set") are no series' },
     { id: 'S191', where: 'DISCOGS.toRelease (credits), addCompanyEntry, C026, C050, C051', note: 'Producers (3.122.0; collected item Z-PRODFOR): "Producer [Session Originally Produced For VARA Radio By]", generally "for X" in the details of a producer – the person a producer (the details left out), X a label searched by its name with "produced for" (contracted production; co-, executive) – on the release, on the recordings when the credit names its tracks; the level can be changed' },
@@ -7399,6 +7415,22 @@
      * a profile (webProfile) with the text before it (the name it belongs to is the last one there); e-mail addresses,
      * Linktree and every other address are left out.
      */
+    /** [Z-WEBDOM] (3.124.0, S198) The hosts of the web addresses of a text, no profile of a social site ("castlesin.space"). */
+    function siteHosts(s) {
+      const out = [];
+      const src = String(s || '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ');
+      WEB_ADDRESS.lastIndex = 0;
+      let m;
+      while ((m = WEB_ADDRESS.exec(src))) {
+        let u = m[0].replace(/[.,;:!?)\]]+$/, '');
+        if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+        let host = '';
+        try { host = new URL(u).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { continue; }
+        if (host && !SOCIAL_HOSTS.test(host) && !out.includes(host)) out.push(host);
+      }
+      return out;
+    }
+
     function takeUrls(s) {
       const src = String(s || '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ');
       const links = [];
@@ -7718,6 +7750,16 @@
       // [S073] (3.42.3) the titles of the release and its tracks (no person)
       const titleKeys = new Set((titleNames || []).map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
+      const catKey = (x) => String(x || '').toLowerCase().replace(/[\s.\-–_/]+/g, '');
+      const catKeys = ((ctx0 && ctx0.catnos) || []).map(catKey).filter((k) => k.length >= 3);
+      const catnoOf = (unit) => {
+        const t = clean(unit).replace(/[.,;:]+$/, '');
+        if (!catKeys.length || !/\d/.test(t) || t.length > 24 || t.split(/\s+/).length > 3) return false;
+        const k = catKey(t);
+        // ((review) one character off only from five on, and the digits the same: "001" is no "2001", "LP1" no "LP 2")
+        const digits = (x) => x.replace(/\D+/g, '');
+        return catKeys.some((c) => c === k || (c.length >= 5 && digits(c) === digits(k) && editDistance(k, c, 1) <= 1));
+      };
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
       const addPlaceholder = (said, role0, scope, extra = {}) => {
         const { role, typos } = readRole(role0);
@@ -9706,15 +9748,36 @@
             ignored.push({ text: whole, why: 'nowhere' });
             continue;
           }
+          // [Z-INMEM] (3.124.0, S197) a dedication alone ("In memory of Kyle Bunell-Cooke."): the box "Dedications & tributes" has it
+          // ((review) only with the dedications and their box on; the name starts with a capital, no clause after it)
+          if (ruleOn('S197') && ruleOn('S097') && ruleOn('S109')
+            && /^(?:[Dd]edicated\s+to\s+the\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+[Mm]emoriam:?)\s+\p{Lu}[^.;:,]*\.?$/u.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'dedication' });
+            continue;
+          }
+          // [Z-CATNO] (3.124.0, S196) the release's catalogue number alone ("CiS216"): case, spaces, hyphens and dots aside, one
+          // character may differ
+          if (ruleOn('S196') && catnoOf(unit)) {
+            ignored.push({ text: whole, why: 'catno' });
+            continue;
+          }
           // [3.30.8] about the package ("Including a 52 p. booklet.")
           if (TEXT_PACKAGE.test(clean(unit))) {
             ignored.push({ text: whole, why: 'package' });
             continue;
           }
+          // [Z-WEBDOM] ((3.124.0, review) S198) a line only of an address in lower case with any ending ("castlesin.space"): a website
+          // – the endings of WEB_ADDRESS stay the known ones (names like "Studio.One", "A.Club" are no addresses)
+          const bareSite = clean(unit).match(/^(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24})\/?$/);
+          if (ruleOn('S198') && bareSite) {
+            ignored.push({ text: whole, why: 'web', sites: [bareSite[1]] });
+            continue;
+          }
           const web = takeUrls(unit);
           // only addresses, or a word for them ("Contact: info@…", "Web: …")
           if (!web.text || !/\p{L}{2}/u.test(web.text) || (web.cut && WEB_LABEL.test(web.text))) {
-            ignored.push({ text: whole, why: 'web' });
+            // [Z-WEBDOM] (3.124.0, S198) the sites of the line (not the profiles of social sites): one may be an entry's own
+            ignored.push({ text: whole, why: 'web', ...(ruleOn('S198') ? { sites: siteHosts(unit) } : {}) });
             continue;
           }
           const c0 = credits.length;
@@ -10002,8 +10065,70 @@
         }
         return out;
       };
+      // [Z-CPYEAR] (3.124.0, S194) "Copyright 2026 Castles In Space." → "© 2026 Castles In Space."; "Phonographic Copyright 2026 X" → "℗ 2026 X"
+      // ((review) only with a holder after the year: "Copyright 2026" alone stays as it is)
+      const cpyLine = (l) => (!ruleOn('S194') ? l : String(l || '').replace(/(^|[.;]\s+)(Phonographic\s+)?Copyright\s+(?:©|\(c\)|℗|\(p\))?\s*((?:19|20)\d{2})\b(?=\s+\p{L})/giu,
+        (m, pre, ph, y) => `${pre}${ph ? '℗' : '©'} ${y}`));
+      /**
+       * [Z-QPBAND] (3.124.0, S195) "Qien Pudiera are Camila Chapelle and Lucia Reyes : electronics, …" – the release's artist (the band)
+       * before "are": its members with their roles ("Camila Chapelle and Lucia Reyes : …"; the members kept as a note: MusicBrainz has
+       * them on the band); "Special guest(s) A (and B) : roles" – the roles with the attribute guest; "synthesizer improvisations" is
+       * the synthesizer.
+       */
+      const QP_MEMBERS = /^\s*(.+?)\s+(?:are|is|consists\s+of)\s+(.+?)\s*:\s+(.+)$/i;
+      const QP_GUESTS = /^\s*(?:(?:very\s+)?special\s+)?guests?\s*:?\s+(.+?)\s*:\s+(.+)$/i;
+      // ((review) split only outside brackets and not before a number ("trumpet (tracks 2, 4)", "on tracks 2 and 4"); "[Guest]" before
+      // the tracks of a part ("vocals [Guest] (3)", "trumpet [Guest] on tracks 2, 4")
+      const qpSplit = (x) => {
+        const out = [];
+        let depth = 0;
+        let cur = '';
+        const str = String(x);
+        for (let i = 0; i < str.length; i++) {
+          const ch = str[i];
+          if (ch === '(' || ch === '[') depth++;
+          if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
+          const rest = str.slice(i);
+          const sep = depth === 0 && (rest.match(/^\s*,\s*(?!\d)/) || rest.match(/^\s+(?:and|&)\s+(?!\d)/));
+          if (sep && !/\bon\s+(?:tracks?|songs?)\b[^,]*$/i.test(cur)) {
+            out.push(cur);
+            cur = '';
+            i += sep[0].length - 1;
+            continue;
+          }
+          cur += ch;
+        }
+        out.push(cur);
+        return out.map((p) => p.trim()).filter(Boolean);
+      };
+      const qpRoles = (roles, guest) => qpSplit(String(roles).replace(/\s+improvi[sz]ations?\b/gi, '')).map((x) => {
+        if (!guest || /\[\s*guest/i.test(x)) return x;
+        const k = x.search(/\s*\([^()]*\)\s*$|\s+on\s+(?:tracks?|songs?)\b/i);
+        return k < 0 ? `${x} [Guest]` : `${x.slice(0, k)} [Guest]${x.slice(k)}`;
+      }).join(', ');
+      // ((review) names only – capitals, particles: "joined by Jane Doe", "Vocals", "Musicians" are none)
+      const qpPerson = (n) => looksLikeName(n) && n.split(/\s+/).length <= 4
+        && n.split(/\s+/).every((w) => /^\p{Lu}/u.test(w) || /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu)$/i.test(w));
+      const qpLine = (l) => {
+        if (!ruleOn('S195')) return l;
+        let line = String(l || '');
+        let m = line.match(QP_MEMBERS);
+        if (m && isTheBand(m[1])) {
+          const members = m[2].split(/\s*,\s*|\s+(?:and|&)\s+/).map((x) => clean(x)).filter(Boolean);
+          if (members.length && members.every(qpPerson)) {
+            ignored.push({ text: line.trim(), why: 'members', band: clean(m[1]), names: members.join(', ') });
+            line = `${m[2]} : ${qpRoles(m[3], false)}`;
+          }
+        }
+        m = line.match(QP_GUESTS);
+        const guests = m ? m[1].split(/\s*,\s*|\s+(?:and|&)\s+/).map((x) => clean(x)).filter(Boolean) : [];
+        if (m && guests.length && guests.every(qpPerson) && !isRoleKnown(m[1])) line = `${m[1]} : ${qpRoles(m[2], true)}`;
+        else if (m0Improv.test(line)) line = line.replace(/(\S)\s+improvi[sz]ations?\b/gi, '$1');
+        return line;
+      };
+      const m0Improv = /^[^:]+\s:\s.*\bimprovi[sz]ations?\b/i;
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine).map(licLine));
+      const allLines0 = discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(cpyLine).map(qpLine).map(rdstLine).map(licLine));
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -17490,6 +17615,8 @@
     (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
     [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
+    // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
+    if (ruleOn('S197') && dedBoxShown()) (S.dedSugg || []).forEach((x) => add('can', 'ded', `ded:${x.key}`, { dk: x.key }));
     // [Z-YELLDATE] (3.112.0) the dates of the notes placed in the date matrix as suggestions (they wait for "✓ Apply" there)
     try {
       (dm().cells || []).filter((c) => c.auto).forEach((c) => add('can', 'date', `date:${c.id}`, { cell: c.id }));
@@ -17534,6 +17661,7 @@
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
+    else if (it.kind === 'ded') el = [...ov.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find((x) => x.dataset.key === it.dk);
     else if (it.kind === 'date') el = ov.querySelector(`[data-dmcell="${it.cell}"]`);
     if (el && it.kind === 'arr') el = el.closest('.dci-mx-arrsugg') || el;
     if (seen(el)) return el;
@@ -21350,6 +21478,8 @@
       S.mbReleasePerformers = (ws.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id);
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
       S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
+      // [Z-CATNO] (3.124.0, S196) its catalogue numbers (a line of a text that is one is no credit)
+      S.releaseCatnos = uniq((ws['label-info'] || []).map((li) => li && li.label && li.label.id && String(li['catalog-number'] || '').trim()).filter(Boolean));
       // [Z-ARTL] (3.100.0, S159) with their names (a label credited for the artwork)
       S.releaseLabelList = (ws['label-info'] || []).filter((li) => li && li.label && li.label.id).map((li) => ({ mbid: li.label.id, name: li.label.name || '',
         code: li.label['label-code'] != null && li.label['label-code'] !== '' ? String(Number(li.label['label-code'])) : null })); // [Z-LCNOTE] (3.111.0) its label code
@@ -21365,6 +21495,7 @@
       S.tcpHits = null;
       S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up: of this release
       S.dedSugg = []; // [Z-DEDQ] (3.74.0) its suggestions too
+      S.siteHints = null; // [Z-WEBDOM] ((3.124.0, review) looked up again: an address added in MusicBrainz meanwhile)
       S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
       // [Z-SNW] (3.83.0, review) the question about works of the same title and its answers: of the import before
@@ -21900,6 +22031,18 @@
    * the attribute translator) is taken at once as a suggestion; "translator (lyrics)" goes to the works.
    */
   function askTranslation(row) {
+    // [Z-QPBAND] (3.124.0, Q015) "Soundscapes": its first answer (effects credited "soundscapes") taken at once as a suggestion
+    if (row.ruleId === 'R118' && !row.company) {
+      const q = typeQuestionFor(row);
+      if (q && q.presetAnswer != null && row.typeAnswer == null && q.options[q.presetAnswer]) {
+        const touched = !!row.levelTouched;
+        pickType(row, q.presetAnswer, { quiet: true });
+        row.levelTouched = touched;
+        row.typePreset = true;
+        refreshRowDetails(row);
+      }
+      return;
+    }
     if (row.ruleId !== 'R004' || row.company) return;
     const mods = (row.mods || []).map(norm);
     if (mods.length && !mods.every((m) => TRANSLATION_LANG.test(m))) return;
@@ -22666,6 +22809,8 @@
       titleNames: uniq([S.releaseTitleMb || '', ...tracks.map((t) => t.title)].filter(Boolean)),
       // [Z-OCRTITLE] (3.117.0, S181) the release's title in MusicBrainz: a line of it is no credit
       releaseTitle: S.releaseTitleMb || (S.release && S.release.title) || '',
+      // [Z-CATNO] (3.124.0, S196) the release's catalogue numbers in MusicBrainz
+      catnos: S.releaseCatnos || [],
       // [Z-UNA] (3.42.4) your own rules of texts (a phrase, its kind and role)
       ownTexts: userRules().filter((u) => u.kind === 'text' && u.on !== false),
       // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
@@ -26671,6 +26816,70 @@
     return `${ncy(`<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`, title)}${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
+  /**
+   * [Z-QPBAND] (3.124.0, S195) The members a text names for this band ("Qien Pudiera are A and B : …"): MusicBrainz keeps them on the
+   * band itself – named here, with a link to its page for editing (a linked band).
+   */
+  /**
+   * [Z-WEBDOM] (3.124.0, S198) A site of the text ("castlesin.space") that is an entry's own – its letters the entry's name, or the
+   * start of it ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for the
+   * linked entry yet: a note with a link to the entry's page for editing (the address filled in). Looked up once per entry.
+   */
+  const siteKey = (x) => String(x || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+  // ((review) "official homepage" of each kind; an area's links need its own editor: none)
+  const SITE_LINK_TYPE = { artist: 183, label: 219, place: 363 };
+  function siteOf(a) {
+    if (!ruleOn('S198') || !a || !a.mbid || a.other || !SITE_LINK_TYPE[entryKind(a)]) return null;
+    const all = [...((S.release && S.release.ignored) || []), ...((S.supp && S.supp.rel && S.supp.rel.ignored) || [])];
+    const name = siteKey(a.mbName || a.name);
+    if (name.length < 5) return null;
+    for (const x of all) {
+      for (const host of (x && x.why === 'web' && x.sites) || []) {
+        const parts = host.split('.');
+        const whole = siteKey(host);
+        const bare = siteKey(parts.slice(0, -1).join('.'));
+        if (whole === name || (bare.length >= 6 && name.startsWith(bare))) return host;
+      }
+    }
+    return null;
+  }
+  function siteHintRun(a) {
+    const host = siteOf(a);
+    if (!host) return;
+    const key = `${a.mbid}|${host}`;
+    S.siteHints = S.siteHints || new Map();
+    if (S.siteHints.has(key)) return;
+    S.siteHints.set(key, 'checking');
+    const path = entityPath(entryKind(a) === 'artist' ? 'artist' : entryKind(a));
+    mbWs(`${path}/${a.mbid}?inc=url-rels`, { background: true }).then((ws) => {
+      const has = ((ws && ws.relations) || []).some((r) => r.url && r.url.resource && (() => {
+        try { return new URL(r.url.resource).hostname.toLowerCase().replace(/^www\./, '') === host; } catch (e) { return false; }
+      })());
+      S.siteHints.set(key, has ? 'present' : 'missing');
+      if (!has) {
+        log('info', 'siteHint', { name: a.mbName || a.name, host });
+        rerenderGroup(a);
+      }
+    }).catch(() => S.siteHints.set(key, 'failed'));
+  }
+  function siteNoteHtml(a) {
+    const host = siteOf(a);
+    if (!host || !S.siteHints || S.siteHints.get(`${a.mbid}|${host}`) !== 'missing') return '';
+    const kind = entryKind(a) === 'artist' ? 'artist' : entryKind(a);
+    const path = entityPath(kind);
+    const url = `/${path}/${a.mbid}/edit?${toQuery([[`edit-${path}.url.0.text`, `https://${host}/`], [`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]])}`;
+    return ` <span class="dci-sub dci-sitehint" data-el="sitehint">${esc(tr('site.note', { host }))} <a href="${esc(url)}" target="_blank" rel="noopener">${esc(tr('site.edit'))}</a></span>`;
+  }
+
+  function membersNoteHtml(a) {
+    if (!ruleOn('S195') || a.company) return '';
+    const all = [...((S.release && S.release.ignored) || []), ...((S.supp && S.supp.rel && S.supp.rel.ignored) || [])];
+    const m = all.find((x) => x && x.why === 'members' && norm(x.band) === norm(a.name));
+    if (!m) return '';
+    const edit = a.mbid ? ` <a href="/artist/${esc(a.mbid)}/edit" target="_blank" rel="noopener">${esc(tr('members.edit'))}</a>` : '';
+    return ` <span class="dci-sub dci-members" data-el="members">${esc(tr('members.note', { names: m.names }))}${edit}</span>`;
+  }
+
   function creditChipHtml(a) {
     // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …" – [3.37.11] it says that
     // MusicBrainz gets it as the artist credit (collected item 161)
@@ -28288,7 +28497,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
@@ -31860,6 +32069,8 @@
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     plateNone(); // [Z-PLT] (3.89.0, S141)
+    // [Z-WEBDOM] (3.124.0, S198) the linked entries whose site the text names: MusicBrainz's addresses of each looked up once
+    if (ruleOn('S198')) S.artists.forEach((a) => siteHintRun(a));
     // [Z-DATEORDER] ((3.121.0, review) S190) a date changed elsewhere asks or answers a row of another entry: the entries drawn again
     {
       const sig = [...dateOrderMap()].filter(([id, q]) => { const r = S.rows.find((x) => x.id === id); return r && r.dateOrderOk !== q.sig; }).map(([id, q]) => `${id}:${q.sig}`).join(',');
@@ -33428,6 +33639,7 @@
       return `<div class="dci-dedsugg" data-key="${esc(x.key)}" role="group" aria-label="${esc(`${x.phrase} ${x.name}`)}">
         <div><strong>“${esc(x.phrase)} ${esc(x.name)}”</strong> <span class="dci-sub" title="${esc(x.sentence)}">${esc(tr(x.hits.length ? 'dedbox.several' : x.needTrack ? 'dedbox.noTrack' : 'dedbox.none', { where: x.where }))}</span></div>
         <div class="dci-dedrow">${dedKindSeg('ded-sugg-kind', x.kind, `data-key="${esc(x.key)}"`)}${hits}${dedFieldsHtml(x.key, lvl, tr('dedbox.mbidTitle'), x, x.kind)}
+          ${ruleOn('S197') && !x.hits.length && !x.needTrack ? `<a class="dci-textbtn" data-el="ded-create" href="/artist/create?${toQuery([['edit-artist.name', x.name]])}" target="_blank" rel="noopener" title="${esc(tr('dedbox.createTitle', { name: x.name }))}">${esc(tr('dedbox.create'))}</a>` : ''}
           <button type="button" class="dci-textbtn" data-act="ded-dismiss" data-key="${esc(x.key)}" title="${esc(tr('dedbox.dismissTitle'))}">✕ ${esc(tr('dedbox.dismiss'))}</button></div></div>`;
     }).join('');
     const form = S.dedForm ? `<div class="dci-dedsugg dci-dedform" role="group" aria-label="${esc(tr(`dedbox.${S.dedForm.kind}`))}">
