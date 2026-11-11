@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.114.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.115.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.115.0 · 2026-11-08
+
+- **Z-BETAOFF:** `OCR_ON_KEY` (`dci-ocr-on`, stored only as `false`; default on) replaces `BETA_OCR_KEY` (`dci-beta-ocr`, removed once at start, listed in `SETTINGS_KEYS` as `OCR_BETA_OLD_KEY`); `S.betaOcr` → `S.ocrOn`; the rows of the text from cover art in the pane `sources` (heading `set-ocr`, `data-set="ocr-on"`), their keys in `TOPIC_KEYS.sources`, their defaults in `resetTopic('sources')`; `beta` has no keys, its pane a line, its tab `disabled` with a tooltip (skipped by the arrow keys, never the chosen tab); `.dci-beta-tag` no longer written (window head, menu item, page button); "(beta)" out of the texts in all languages.
+- **Z-OCRSUPP:** `ocrResultHtml` – with rows there the supplement button is `dci-apply` and the import button plain; `ocrImport(false)` with rows there asks (`ocr.importReplaceAsk`).
+- **Z-MAY:** `yell.canTitle`, `yell.canLabel`, `settings.yellOne` (en) say "may"; keys and classes stay (`can`).
+- **Texts:** `settings.ocrHead`, `settings.ocrOn` (was `settings.betaOcr`; `…Title`, `…What` likewise), `settings.betaNone`, `ocr.importReplaceTitle`, `ocr.importReplaceAsk`; `settings.betaHint` removed.
+- **Review:** the tab "Beta" `aria-disabled` (not `disabled`: its tooltip shows in every browser; a click and the arrow keys pass it), greyed out by CSS; a tab "Beta" chosen before is forgotten, `openSettingsAt` never opens it; `OCR_BETA_OLD_KEY` in `PROFILE_NOT`; the reset of Sources sets the open window as the switches are (the ticks of "Auto-select" and the images loaded ahead go) and keeps the frames and windows kept per release (only "Reset all settings" forgets them; `OCR_FRAMES_KEY` out of `TOPIC_KEYS.sources`); the window drawn anew when an import is done (its buttons); `sourceLabel` in the question; `cocrReceive` nothing while switched off; `ocr.importReplace*` in Spanish and French; "may" in `settings.yellOneTitle`; the switch "Use the text from cover art" (the heading names it); the CSS of `.dci-beta-tag` removed.
 
 ## Import 3.114.0 · Companion 1.18.0 · 2026-11-08
 

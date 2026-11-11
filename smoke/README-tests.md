@@ -630,7 +630,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   focusfields: 3.72.0 (Z-TST, the former t_focus.py): typing in every date field keeps cursor and text
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
                                 #     Mapping rules, Log | Statistics, ⌨, ⚙ | ✕): symbols with names (words only when wide), no language / place / switches in
-                                #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
+                                #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head; from 3.115.0 with "Text from cover art …"); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
                                 #     3.36.5: no ⓘ among the symbols
                                 #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
@@ -709,7 +709,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
                                 #     3.25.0: the topics as tabs, one shown at a time
                                 #   pressed (until 3.36.4 "bridge", 3.30.4 – 3.34.3): 3.36.5 (147, 149): ⚙, the rules symbol, the log and ⌨ pressed while
-                                #     open (tinted), no bridge any more, A−, A+, ⤢ never pressed, no ⓘ; the content of every tab joined by the tab
+                                #     open (tinted), no bridge any more, A−, A+, ⤢ never pressed, no ⓘ; the content of every tab (from 3.115.0 not "Beta",
+                                #     greyed out) joined by the tab
                                 #     (100 % and 90 %), as high as it can be (ⓘ Connections at the top, its tab in the middle; a short one just low
                                 #     enough), its corner square only where the tab joins at the top; switches show their choice filled purple
                                 #     ("Entries: Matrix | Legacy", "by event | by role")
@@ -803,7 +804,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
 
-python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each other – statistics, settings, the import (window, page), the bar of
+python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each other – statistics, settings (from 3.115.0 not the greyed tab Beta), the import (window, page), the bar of
                                 #   "Edit relationships" (one line, below only when narrow); the check itself (detector); review: in the order
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
@@ -812,7 +813,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     their own, switched off
                                 #   sort3112: 3.112.0 (Z-SORT, Z-SCOPE): "Order:" – by kind (headings, instruments first), by name, by level ("Skipped" last), kept,
                                 #     switched off; "Works: with | only | without", "with" again at a new import
-                                #   yell3110: 3.110.0 (Z-YELL): "● n must" and "● n can" in the footer, the dots at the heads, the marks; the jump; ✓ of a
+                                #   yell3110: 3.110.0 (Z-YELL): "● n must" and "● n can" (from 3.115.0 "may" in tooltip and label, Z-MAY) in the footer, the dots at the heads, the marks; the jump; ✓ of a
                                 #     translation, an answer; the automatic row ✓ (green, ↺, kept for the release); one counter; compact and matrix chips
                                 #   emcell3109: 3.109.0 (Z-EMCELL, Z-EMSCR, Z-EMNOTE): ticks in the events a block does not show (where MusicBrainz has
                                 #     the type), a line emptied stays grey and free, the bars above and below a wide matrix (⇧ + wheel), the block's head
@@ -1037,9 +1038,13 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   mediasel: media choice before the import (three media): all = as before, media 2-3 without the release level,
                                 #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
-python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
-                                #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only
-                                #     while it is on (stored); the connections X013, X014; [3.38.0] the tabs from "Beta": Cache, Statistics, ⓘ Connections
+python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.114 a beta): ⚙ Settings → Sources, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   ocrsupp3115: 3.115.0 (Z-OCRSUPP): with Discogs imported "＋ Supplement" is the main button; "Import this text" asks
+                                #     (naming Discogs) – "Cancel" changes nothing, "OK" replaces the import (one question, not two)
+                                #   ocrsetting: (from 3.115.0, Z-BETAOFF) "Text from cover art" on at first in ⚙ Settings → Sources, the item without
+                                #     "beta", the tab "Beta" greyed out (tooltip, a click opens nothing, passed by the arrows), the beta's old switch forgotten; off stored,
+                                #     the item and the page button gone; the topic's reset: on again; the connections X013, X014 (until 3.114: the
+                                #     beta's switch off by default, the item only while on)
                                 #   ocrpick: the images of the release – Back, Booklet, Tray ticked, Front and Medium not ("rarely has credits"),
                                 #     English (German too with a German dashboard), the count on the button, Escape; a release without images
                                 #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
@@ -1054,8 +1059,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     3.37.5: E) opened again as it was left (the three texts), "↺ Start over" first
                                 #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
-                                #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
-                                #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
+                                #   ocrstart: 3.34.8: "… from cover art" (from 3.115.0 at first, without "beta"), joined to "Import credits …"; the dashboard without the
+                                #     import (nothing of Discogs), the message, the window; the read text the source; switched off (Sources): gone
                                 #   ocrpeek: 3.34.9: tiles alike with the whole image; the larger view after a pause (1200 px image, its
                                 #     proportions, 480 px), gone on leaving; an own narrow file larger; in the frames step too
                                 #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
@@ -1069,7 +1074,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
                                 #   ocrremember: 3.34.17: two frames on the Back, the Booklet turned and whole – stored; opened again:
                                 #     "Back 2 frames", read as left; the 1200 px copy: the frames fit (×0.8); forgotten with "Delete stored
-                                #     import …" and the reset of Beta
+                                #     import …" (until 3.114 also with the reset of Beta; from 3.115.0 the reset of Sources keeps them)
                                 #     3.37.5: B) "↺ Start over" first – the frames stored stay
                                 #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
