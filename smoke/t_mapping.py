@@ -1912,4 +1912,55 @@ def case_engrr3111():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_descon3120():
+    """Credits Importer 3.120.0 (collected item Z-DESCON, S186, R062): "Design Concept [Graphic Concept]" (fuhrer vienna) is graphic design
+    without a role credit (until 3.119.0 design credited "graphic concept design concept"); "Design [Graphic]" (Des Graph) the same;
+    "Design Concept" alone (Des Con) stays design credited "concept"; "Graphic Design" (Graph Des) graphic design as before (R072)."""
+    import copy
+    lts0 = copy.deepcopy(H.LTS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_type'))
+    H.lt(125, H.uid('1a1a1a1a', 125), 'graphic design', 'artist', 'release', (1, 1150))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('fuhrer vienna', 'Design Concept [Graphic Concept]', 3531), ('Des Graph', 'Design [Graphic]', 3532), ('Des Con', 'Design Concept', 3533),
+               ('Graph Des', 'Graphic Design', 3534)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '', (r.querySelector('[data-f=role-credit]') || {}).value || ''])])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            g = pg.evaluate(ROWS)
+            print('A)', {n: g.get(n) for n, _r, _i in CREDITS})
+            results.append(g.get('fuhrer vienna') == [['graphic design', '']] and g.get('Des Graph') == [['graphic design', '']]
+                           and g.get('Des Con') == [['design', 'concept']] and g.get('Graph Des') == [['graphic design', '']])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.LINKED['link_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

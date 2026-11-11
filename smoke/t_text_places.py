@@ -1143,6 +1143,48 @@ Tsinder Ash - Juno 101, Korg Minilogue, Roland TR-808, Appalachian/Hammered Dulc
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_studio3120():
+    """Credits Importer 3.120.0 (collected item Z-STUDIO, S188), from a pasted text: "Art & Design by William Mazza Studio" – a studio
+    credited for the art – is a label with the rows artwork and design on the release (until 3.119.0 a person with the roles "Art" and
+    "Design By"); "Graphic Design by Red Studios" a label with graphic design; "Photography by Jane Roe" stays a person (photography)."""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '',
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {}).text : '',
+    ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '']; }) }])))()"""
+    for i, n in ((1170, 'artwork'), (1171, 'design'), (1172, 'graphic design')):
+        H.lt(i, H.uid('1a1a1a1a', i), n, 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """Art & Design by William Mazza Studio
+Graphic Design by Red Studios
+Photography by Jane Roe"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        g = pg.evaluate(GROUPS)
+        for k, v in g.items():
+            print('  ', k, v)
+        wm = g.get('William Mazza Studio') or {'rows': [], 'kind': ''}
+        results.append(wm['kind'] == 'label' and sorted(wm['rows']) == [['artwork', 'release'], ['design', 'release']])
+        rs = g.get('Red Studios') or {'rows': [], 'kind': ''}
+        results.append(rs['kind'] == 'label' and rs['rows'] == [['graphic design', 'release']])
+        jr = g.get('Jane Roe') or {'rows': [], 'kind': ''}
+        results.append(jr['kind'] != 'label' and [r[0] for r in jr['rows']] == ['photography'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_btw384():
     """Credits Importer 3.84.0 (collected items Z-WPR, Z-BTW, Z-DEDN, Z-PGF; rules S126 – S128, D007, C045): the text of a Bandcamp
     album (cyclicaldreams, "Inner Space"), pasted.
