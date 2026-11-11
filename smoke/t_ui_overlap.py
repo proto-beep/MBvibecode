@@ -181,7 +181,8 @@ def case_settings():
         H.open_dashboard(pg)
         pg.wait_for_timeout(800)
         H.open_settings(pg)
-        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
+        # ([Z-BETAOFF] 3.115.0) not a tab greyed out (Beta)
+        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab:not([aria-disabled=true])')].map(t => t.dataset.topic)")
         for w in (1500, 1000):
             pg.set_viewport_size({'width': w, 'height': 1100})
             for t in tabs:

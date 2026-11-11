@@ -1,4 +1,4 @@
-"""Text from cover art (beta; Credits Importer 3.34.1, collected item E3): ⚙ Settings → Beta, "Source ▾ → Text from cover art …",
+"""Text from cover art (Credits Importer 3.34.1, collected item E3; until 3.114 a beta): ⚙ Settings → Sources, "Source ▾ → Text from cover art …",
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
@@ -27,8 +27,10 @@ DIALOG = """(() => { const el = document.getElementById('dci-ocr'); if (!el) ret
 
 
 def beta_on(ctx, auto=True):
-    """The beta on; [3.34.15] with "Auto-select" on (no image is ticked otherwise) unless auto=False."""
-    ctx.add_init_script("localStorage.setItem('dci-beta-ocr', 'true');" + ("localStorage.setItem('dci-ocr-auto', 'true');" if auto else ''))
+    """[3.34.15] "Auto-select" on (no image is ticked otherwise) unless auto=False; ([Z-BETAOFF] 3.115.0) the text from cover art
+    is on at first – until 3.114 this switched the beta on."""
+    if auto:
+        ctx.add_init_script("localStorage.setItem('dci-ocr-auto', 'true');")
 
 
 def drag_img(pg, x0, y0, x1, y1):
@@ -49,39 +51,54 @@ def drag_img(pg, x0, y0, x1, y1):
 
 
 def case_ocrsetting():
-    """⚙ Settings → Beta (between "Dates & tracks" and "ⓘ Connections"): "Text from cover art (beta)" is off – "Source ▾" has no item
-    for it; switched on (stored): the item "Text from cover art … beta"; off again: gone. The connections name the Cover Art Archive
-    (X013) and Tesseract.js (X014)."""
+    """[3.34.1] The switch of the text from cover art; [Z-BETAOFF] (3.115.0) out of the beta.
+    A) Nothing stored: ⚙ Settings → Sources has "Text from cover art" on (with its switches below it); "Source ▾" has the item
+       "Text from cover art …" without "beta"; the tab "Beta" greyed out with its tooltip, a click opens nothing, the arrow keys pass it; the switch of the
+       beta of before ("dci-beta-ocr") is forgotten at start.
+    B) Switched off: stored (false), the item and "… from cover art" gone. C) "↺ Defaults of this topic" (Sources): on again,
+       nothing stored, the item back. The connections name the Cover Art Archive (X013) and Tesseract.js (X014)."""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
+        ctx.add_init_script("if (!sessionStorage.getItem('t-once')) { sessionStorage.setItem('t-once', '1'); localStorage.setItem('dci-beta-ocr', 'true'); }")
         pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         item = "(() => { const b = document.querySelector('#dci-overlay .dci-srcmenu [data-act=ocr-open]'); return b ? b.textContent.trim() : null; })()"
-        H.open_settings(pg)
-        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
-        H.open_settings(pg, 'beta')
-        sw = pg.locator('[data-el=settings] [data-set=beta-ocr]')
-        # [3.36.0] "Cache" between Beta and ⓘ Connections; [3.38.0] "Statistics" after "Cache"; [Z-CONN2] (3.108.0) "MusicBrainz" after Connections
-        a = [tabs[tabs.index('beta'):] if 'beta' in tabs else tabs, sw.is_checked(), pg.evaluate(item)]
-        sw.check()
-        pg.wait_for_timeout(300)
-        b1 = [pg.evaluate("localStorage.getItem('dci-beta-ocr')"), pg.evaluate(item)]
+        btn = "(() => { const b = document.getElementById('dci-open-ocr'); return !!b && !b.hidden; })()"
+        H.open_settings(pg, 'sources')
+        sw = pg.locator('[data-el=settings] [data-set=ocr-on]')
+        a = [sw.is_checked(), pg.evaluate(item), pg.evaluate(btn), pg.evaluate("localStorage.getItem('dci-beta-ocr')"),
+             pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-set=ocr-preload], [data-el=settings] [data-set=ocr-auto], [data-el=settings] [data-set=ocr-front]')].length"),
+             pg.evaluate("(() => { const t = document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]'); return [t.getAttribute('aria-disabled'), t.title, getComputedStyle(t).cursor]; })()")]
+        # ((review) a click on it opens nothing)
+        pg.click('[data-el=settings] .dci-set-tab[data-topic=beta]', force=True)
+        pg.wait_for_timeout(200)
+        a.append(pg.evaluate("document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]').dataset.topic"))
+        pg.focus('[data-el=settings] .dci-set-tab[data-topic=dates]')
+        pg.keyboard.press('ArrowDown')
+        pg.wait_for_timeout(200)
+        a.append(pg.evaluate("document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]').dataset.topic"))
+        H.open_settings(pg, 'sources')
+        sw = pg.locator('[data-el=settings] [data-set=ocr-on]')
         sw.uncheck()
         pg.wait_for_timeout(300)
-        c1 = [pg.evaluate("localStorage.getItem('dci-beta-ocr')"), pg.evaluate(item)]
+        b1 = [pg.evaluate("localStorage.getItem('dci-ocr-on')"), pg.evaluate(item), pg.evaluate(btn)]
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=sources]')
+        pg.wait_for_timeout(400)
+        c1 = [pg.evaluate("localStorage.getItem('dci-ocr-on')"), pg.locator('[data-el=settings] [data-set=ocr-on]').is_checked(), pg.evaluate(item), pg.evaluate(btn)]
         H.open_settings(pg, 'connections')
         conn = pg.evaluate("[...document.querySelectorAll('[data-conn=X013], [data-conn=X014]')].map(r => r.innerText.replace(/\\s+/g, ' ').slice(0, 60))")
-        print('A) Reiter:', a, '| an:', b1, '| aus:', c1, '| Verbindungen:', conn)
-        results.append(a == [['beta', 'cache', 'connections', 'musicbrainz'], False, None] and b1 == ['true', 'Text from cover art …beta'] and c1[0] is None and c1[1] is None
+        print('A) an:', a, '| aus:', b1, '| zurückgesetzt:', c1, '| Verbindungen:', conn)
+        results.append(a == [True, 'Text from cover art …', True, None, 3, ['true', 'No beta functions at the moment', 'default'], 'sources', 'cache']
+                       and b1 == ['false', None, False] and c1 == [None, True, 'Text from cover art …', True]
                        and len(conn) == 2 and conn[0].startswith('Cover Art Archive') and conn[1].startswith('Tesseract.js'))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
-
 
 def case_ocrpick():
     """The images of the release: in the order of the Cover Art Archive, Back,
@@ -595,13 +612,13 @@ def case_ocrdiscogs():
 
 def case_ocrstart():
     """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124).
-    A) Beta off: no such button; beta on: "… from cover art" with "beta", joined to "Import credits …".
+    A) ([Z-BETAOFF] 3.115.0: on at first) "… from cover art" (until 3.114 with "beta"), joined to "Import credits …".
     B) A click: the dashboard without the import (nothing asked of Discogs, nothing imported), a message that offers "Start
        import", and the window of the text recognition with the release's images; "Load Discogs images (r1234)" from the
        release's links (asked of MusicBrainz).
     C) Read and "Import this text": the release is loaded with the text as its source ("Cover Art Archive images (Back, Booklet,
        Tray), read with text recognition") – still nothing of Discogs; the message is gone.
-    D) The beta switched off in ⚙ Settings → Beta: the button goes."""
+    D) Switched off in ⚙ Settings → Sources (until 3.114 Beta): the button goes."""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -609,6 +626,7 @@ def case_ocrstart():
         ctx0 = H.new_context(b)
         pg0, errs0 = H.open_mb_edit(ctx0, companion=False)
         pg0.wait_for_selector('#dci-open', timeout=20000)
+        pg0.wait_for_timeout(500)
         a0 = pg0.evaluate("(() => { const b = document.getElementById('dci-open-ocr'); return !!b && !b.hidden && b.offsetParent !== null; })()")
         ctx = H.new_context(b)
         beta_on(ctx)
@@ -621,7 +639,7 @@ def case_ocrstart():
         a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-open'), b = document.getElementById('dci-open-ocr'); const r1 = o.getBoundingClientRect(), r2 = b.getBoundingClientRect();
           return [b.firstChild.textContent.trim(), !!b.querySelector('.dci-beta-tag'), Math.round(r2.left - r1.right), getComputedStyle(o).borderTopRightRadius]; })()""")
         print('A) Beta aus – Knopf:', a0, '| an:', a1)
-        results.append(not a0 and a1 == ['… from cover art', True, -1, '0px'])
+        results.append(a0 and a1 == ['… from cover art', False, -1, '0px'])
         pg.click('#dci-open-ocr')
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=15000)
         pg.wait_for_selector('#dci-ocr [data-ocr-discogs]', timeout=15000)
@@ -644,14 +662,70 @@ def case_ocrstart():
         dg = [u for u in reqs if 'discogs.com' in u]
         print('C) Quelle:', c1[0][:120], '| Einträge:', c1[1][:6], '| Hinweis noch da:', c1[2], '| Ergänzen vorher:', c0, '| Discogs:', dg[:3])
         results.append('Cover Art Archive images (Back, Booklet, Tray), read with text recognition' in c1[0] and 'j4vaman' in c1[1] and not c1[2] and not c0 and not dg)
-        H.open_settings(pg, 'beta')
-        pg.uncheck('[data-el=settings] [data-set=beta-ocr]')
+        H.open_settings(pg, 'sources')
+        pg.uncheck('[data-el=settings] [data-set=ocr-on]')
         pg.wait_for_timeout(300)
         d1 = pg.evaluate("document.getElementById('dci-open-ocr').hidden")
         print('D) Beta aus – Knopf weg:', d1)
         results.append(d1)
         print('Fehler:', errs0, errs)
         results.append(not errs0 and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrsupp3115():
+    """Credits Importer 3.115.0 (collected item Z-OCRSUPP): supplementing comes first.
+    A) Discogs imported, the text read: "＋ Supplement the import with it" is the main button (filled), "Import this text" plain, its
+       tooltip says it replaces the import.
+    B) "Import this text": the question names Discogs; "Cancel": nothing happens – the window stays, Discogs stays the source.
+    C) Asked again, "OK": the text replaces the import (the source is the text read)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        asked = []
+        answer = {'ok': False}
+
+        def on_dialog(d):
+            asked.append(d.message)
+            if answer['ok']:
+                d.accept()
+            else:
+                d.dismiss()
+        pg.on('dialog', on_dialog)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        src0 = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()")
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        a = pg.evaluate("""(() => { const s = document.querySelector('#dci-ocr [data-ocr=supp]'), i = document.querySelector('#dci-ocr [data-ocr=import]');
+          return [s.classList.contains('dci-apply'), i.classList.contains('dci-apply'), i.title, !!(s.compareDocumentPosition(i) & Node.DOCUMENT_POSITION_PRECEDING)]; })()""")
+        print('A) Knöpfe:', a)
+        results.append(a[0] and not a[1] and a[2].startswith('Replaces the import') and a[3])
+        pg.click('#dci-ocr [data-ocr=import]')
+        pg.wait_for_timeout(800)
+        b1 = [asked[:], pg.evaluate("!!document.querySelector('#dci-ocr [data-ocr-text]')"),
+              pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()") == src0]
+        print('B) gefragt:', [m[:70] for m in b1[0]], '| Fenster und Quelle wie vorher:', b1[1:])
+        results.append(len(b1[0]) == 1 and b1[0][0].startswith('“Import this text” replaces the import of Discogs') and b1[1] and b1[2] and 'Discogs' in src0)
+        answer['ok'] = True
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        c1 = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()")
+        print('C) Quelle:', c1[:120], '| gefragt:', [m[:90] for m in asked])
+        results.append(len(asked) == 2 and 'read with text recognition' in c1)
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
@@ -722,7 +796,7 @@ def case_ocrload():
     A) The window opened: the previews counted ("Previews: 0 of 5 loaded") until they are there; the three images ticked are
        loaded ahead, two at a time – Back and Booklet "loading …", Tray "waiting to load"; Front and Medium nothing.
     B) Tray unticked: out of the queue, never asked for; Booklet unticked while it loads ahead: it stops; Back comes: "loaded".
-    C) ⚙ Settings → Beta "Load the images ticked ahead" off ([3.34.15] the default – on for A and B): opened again ([3.37.5] as it
+    C) ⚙ Settings → Sources "Load the images ticked ahead" off ([3.34.15] the default – on for A and B): opened again ([3.37.5] as it
        was left, so "↺ Start over" first), nothing is loaded ahead; the frames step loads the image itself and shows it loading in the view, then draws it; [3.34.15] after
        "Next" the others ticked come too, two at a time, the one shown first (Back, Booklet loading, the Tray waiting)."""
     results = []
@@ -763,7 +837,7 @@ def case_ocrload():
         pg.click('#dci-ocr [data-ocr=close]')
         # C) loading ahead off
         held.clear()
-        H.open_settings(pg, 'beta')
+        H.open_settings(pg, 'sources')
         c0 = pg.evaluate("[!!document.querySelector('[data-el=settings] [data-set=ocr-preload]'), document.querySelector('[data-el=settings] [data-set=ocr-preload]').checked]")
         pg.uncheck('[data-el=settings] [data-set=ocr-preload]')
         pg.wait_for_timeout(200)
@@ -864,7 +938,7 @@ def case_ocrwindow():
     D) [3.34.18] It stays above the dashboard (collected item 138): a click into the dashboard, the rules opened as a window of
        their own (⚙ → Appearance: in a window), a click into them and into the log – the window is still in front (the point at
        its head is its own, its z-index the highest).
-    E) [3.34.23] ⚙ Settings → Beta "Keep “Text from cover art” in front of the dashboard" (138b; on by default) switched off: a
+    E) [3.34.23] ⚙ Settings → Sources "Keep “Text from cover art” in front of the dashboard" (138b; on by default) switched off: a
        click into the dashboard brings the dashboard in front of it (stored false); on again: the window in front at once."""
     results = []
     FOOT = "(() => { const w = document.getElementById('dci-ocr'); const f = w.querySelector('.dci-ocr-foot').getBoundingClientRect(); const r = w.getBoundingClientRect(); return [Math.round(f.top), Math.round(f.bottom), [r.left, r.top, r.width, r.height].map(Math.round)]; })()"
@@ -954,10 +1028,10 @@ def case_ocrwindow():
         docked = pg.evaluate("document.getElementById('dci-rules').classList.contains('dci-rules-docked')")
         print('D) vorn:', top, '| Log:', log, '| Regeln angedockt:', docked, '| z-index (OCR, Dashboard, Regeln, Log):', zs)
         results.append(all(top) and not docked and int(zs[0]) > max(int(z) for z in zs[1:] if z and z != 'auto'))
-        # E) [3.34.23] ⚙ Settings → Beta "Keep … in front" off (138b): a click into the dashboard brings it in front; on again: the
+        # E) [3.34.23] ⚙ Settings → Sources "Keep … in front" off (138b): a click into the dashboard brings it in front; on again: the
         #    window in front at once
         H.open_settings(pg)
-        pg.locator('[data-el=settings] .dci-set-tab[data-topic=beta]').evaluate('b => b.click()')
+        pg.locator('[data-el=settings] .dci-set-tab[data-topic=sources]').evaluate('b => b.click()')
         pg.wait_for_timeout(150)
         sw = pg.locator('[data-el=settings] [data-set=ocr-front]')
         e0 = sw.is_checked()
@@ -1037,7 +1111,7 @@ def case_ocrauto():
     B) "Auto-select": pressed, Back, Booklet, Tray ticked (Front and Medium not), stored.
     C) The Booklet unticked and the Front ticked by hand; "Auto-select" off: the Back and the Tray untick again – the Booklet stays
        unticked, the Front ticked.
-    D) ⚙ Settings → Beta "Auto-select the images with credits" switched on while the window is open: the window's switch is
+    D) ⚙ Settings → Sources "Auto-select the images with credits" switched on while the window is open: the window's switch is
        pressed and the images are ticked at once ([3.37.5] the window as it was left: the Front ticked by hand stays); closed and
        opened again: as it was left.
     E) 30 booklet pages, loading ahead on: two load, 22 more wait, the last 6 are not loaded ahead."""
@@ -1074,7 +1148,7 @@ def case_ocrauto():
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
         # the settings below the window: clicked there directly
         H.open_settings(pg)
-        pg.locator('[data-el=settings] .dci-set-tab[data-topic=beta]').evaluate('b => b.click()')
+        pg.locator('[data-el=settings] .dci-set-tab[data-topic=sources]').evaluate('b => b.click()')
         pg.wait_for_timeout(150)
         pg.locator('[data-el=settings] [data-set=ocr-auto]').evaluate('x => x.click()')
         pg.wait_for_timeout(200)
@@ -1221,7 +1295,8 @@ def case_ocrremember():
        "Booklet the whole image" (before it is loaded); read: the Back's two
        frames as drawn, the Booklet whole and turned.
     C) The 1200 px copy chosen: the frames fit it (×0.8), the Booklet still turned.
-    D) "Delete stored import …" forgets them; ⚙ Settings → Beta → Reset forgets all."""
+    D) "Delete stored import …" forgets them; ([Z-BETAOFF] 3.115.0, review) ⚙ Settings → Sources → Reset keeps them (until 3.114
+       the reset of "Beta" forgot all)."""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1282,12 +1357,12 @@ def case_ocrremember():
         pg.wait_for_timeout(1500)
         d1 = pg.evaluate(STORE)
         pg.evaluate("localStorage.setItem('dci-ocr-frames', JSON.stringify({ 'x': { t: 1, imgs: { 'caa:1': { f: [], turn: 1, mode: 'frames' } } } }))")
-        H.open_settings(pg, 'beta')
-        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=beta]')
+        H.open_settings(pg, 'sources')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=sources]')
         pg.wait_for_timeout(300)
         d2 = pg.evaluate(STORE)
-        print('D) vergessen:', d1, '| Beta zurückgesetzt:', d2)
-        results.append(d1 is None and d2 is None)
+        print('D) vergessen:', d1, '| Quellen zurückgesetzt:', d2)
+        results.append(d1 is None and d2 == {'x': {'t': 1, 'imgs': {'caa:1': {'f': [], 'turn': 1, 'mode': 'frames'}}}})
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
