@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.17.0
+// @version      1.18.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -28,6 +28,8 @@
 // @grant        GM_listValues
 // @grant        GM_addValueChangeListener
 // @grant        GM_openInTab
+// @grant        GM_xmlhttpRequest
+// @connect      i.discogs.com
 // @noframes
 // @run-at       document-idle
 // ==/UserScript==
@@ -46,7 +48,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.17.0';
+  const COMPANION_VERSION = '1.18.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -264,6 +266,9 @@
         dropBeats(id);
         GM_setValue('statusMapIndex', (GM_getValue('statusMapIndex') || []).filter((x) => x !== id));
         pingStatus(id);
+      } else if (msg.type === 'ocr-frame-remove') {
+        // [1.18.0] (Z-COCR) a frame taken out in the dashboard: out of the large image of the Discogs tab too
+        GM_setValue('cocrRemove', { frameId: String(msg.frameId || ''), ts: Date.now() });
       } else if (msg.type === 'reset-settings') {
         // "Defaults" in the dashboard: every Discogs tab (now or when opened next) forgets the cover's place and folding
         GM_setValue('artReset', Date.now());
@@ -286,6 +291,13 @@
       if (newValue && newValue.mbRelease && mbRelease && String(newValue.mbRelease) !== mbRelease) return;
       // [1.8.1] ⊘ on Bandcamp: a credit off or on again
       if (newValue && ['focus-row', 'hover-track', 'toggle-credit'].includes(newValue.type)) send(newValue);
+    });
+    // [1.18.0] (Z-COCR) a frame of the large image for the text from cover art – a key of its own ((review) a large image, not
+    // overwritten by a mark's message), only to the import it is for, emptied once taken
+    GM_addValueChangeListener('cocrCrop', (name, oldValue, v) => {
+      if (!v || !v.mbRelease || !mbRelease || String(v.mbRelease) !== mbRelease) return;
+      send(v);
+      setTimeout(() => { if ((GM_getValue('cocrCrop') || {}).ts === v.ts) GM_deleteValue('cocrCrop'); }, 1500);
     });
 
     status();
@@ -321,6 +333,11 @@
     window.addEventListener('pagehide', () => GM_deleteValue(`tab:${tabId}`));
 
     const report = (cmd, found) => GM_setValue('result', { id: cmd.id, found, ts: Date.now() });
+    // [1.18.0] (Z-COCR) the frames of the large image: which dashboards are open for this release; a frame taken out there
+    if (side.id === 'discogs') {
+      cocrCtxFn = () => ({ liveMaps, currentReleaseId });
+      GM_addValueChangeListener('cocrRemove', (name, oldValue, v) => { if (v && v.frameId) cocrRemove(String(v.frameId), false); });
+    }
 
     const handle = async (cmd) => {
       if (cmd.type === 'reload') {
@@ -590,6 +607,17 @@
       #dci-art-big .dci-big-bar button, #dci-art-big .dci-big-tab { border: 1px solid #8e8a9e; border-radius: 3px; background: #33303f; color: #fff; font: 14px/1 sans-serif; padding: 3px 8px; cursor: pointer; text-decoration: none; }
       #dci-art-big .dci-big-bar button:disabled { opacity: .45; cursor: default; }
       #dci-art-big .dci-big-img { width: 100%; height: auto; margin: auto 0; display: block; background: #fff; }
+      /* [1.18.0] (Z-COCR) the frames for the text recognition */
+      #dci-art-big .dci-big-wrap { position: relative; width: 100%; margin: auto 0; }
+      #dci-art-big .dci-big-wrap .dci-big-img { margin: 0; }
+      #dci-art-big .dci-cocr-layer { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }
+      #dci-art-big .dci-cocr-frame { position: absolute; border: 2px solid #f2c94c; background: rgba(242, 201, 76, .12); cursor: move; box-sizing: border-box; }
+      #dci-art-big .dci-cocr-n { position: absolute; left: 0; top: 0; background: #f2c94c; color: #222; font: 12px/1.4 sans-serif; padding: 0 5px; }
+      #dci-art-big .dci-cocr-x { position: absolute; right: 0; top: 0; border: 0; background: #b23b2e; color: #fff; font: 12px/1.4 sans-serif; padding: 0 5px; cursor: pointer; }
+      #dci-art-big .dci-cocr-h { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #f2c94c; cursor: nwse-resize; }
+      #dci-art-big .dci-cocr-note { font: 12px/1.4 sans-serif; color: #ddd; margin-left: 8px; }
+      #dci-art-big .dci-cocr-note.dci-cocr-warn { color: #ffd479; }
+      #dci-art-big .dci-cocr-note a { color: #9ecbff; }
       #dci-artwork .dci-art-nav button { border: 1px solid #c8c5d6; border-radius: 3px; background: #f7f6fb; color: #262430; font: 13px/1 sans-serif; padding: 1px 6px; cursor: pointer; }
       html.dci-site-dark #dci-artwork .dci-art-nav { color: #ecebf2; }
       html.dci-site-dark #dci-artwork .dci-art-nav button { border-color: #4a4758; background: #33303f; color: #ecebf2; }
@@ -860,6 +888,209 @@
     return artCache.list;
   }
 
+  // ---------------------------------------------------------------------------
+  // [1.18.0] (Credits Importer 3.114.0, Z-COCR) Frames for the text from cover art: drawn on the large image (drag across it; inside a
+  // frame: move it; at its corner: change it; ✕: take it out); each frame is cut out and sent at once to the dashboard of the release,
+  // which reads it and adds its text to its window of the text from cover art (✕ there takes it out here too)
+  // ---------------------------------------------------------------------------
+  const cocr = { frames: [], n: 0, drag: null, ctx: null, images: new Map() };
+  const COCR_DE = /^de\b/i.test(navigator.language || '');
+  const cocrText = {
+    hint: COCR_DE ? 'Rahmen für die Texterkennung: über das Bild ziehen – jeder Rahmen geht sofort ins Import-Dashboard.' : 'Frames for the text recognition: drag across the image – each frame goes to the import dashboard at once.',
+    del: COCR_DE ? 'Rahmen herausnehmen' : 'Take out the frame',
+    noTab: COCR_DE ? 'Kein Import-Dashboard für dieses Release offen.' : 'No import dashboard open for this release.',
+    open: COCR_DE ? 'Release auf MusicBrainz öffnen und Import starten' : 'Open the release on MusicBrainz and start the import',
+    notLinked: COCR_DE ? 'Dieses Discogs-Release ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Discogs release is linked to no release on MusicBrainz.',
+    search: COCR_DE ? 'Auf MusicBrainz suchen' : 'Search on MusicBrainz',
+    failed: COCR_DE ? 'Der Ausschnitt ließ sich nicht schneiden (das Bild war nicht zu laden).' : 'The frame could not be cut out (the image could not be loaded).',
+  };
+  /** The image as a bitmap of its own pixels (Discogs's images allow it, else through the userscript manager). */
+  function cocrBitmap(url) {
+    if (!cocr.images.has(url)) {
+      cocr.images.set(url, (async () => {
+        let blob = null;
+        try {
+          const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          if (r.ok) blob = await r.blob();
+        } catch (e) { /* not allowed: below */ }
+        if (!blob && typeof GM_xmlhttpRequest === 'function') {
+          blob = await new Promise((ok) => GM_xmlhttpRequest({ method: 'GET', url, responseType: 'blob', onload: (x) => ok(x.status === 200 ? x.response : null), onerror: () => ok(null), ontimeout: () => ok(null) }));
+        }
+        if (!blob) throw new Error('image');
+        return createImageBitmap(blob);
+      })());
+      // ((review) a failure is not kept: tried again with the next frame
+      cocr.images.get(url).catch(() => cocr.images.delete(url));
+    }
+    return cocr.images.get(url);
+  }
+  /** The frame cut out (its pixels as the image has them, at most 4000 px wide) and sent. */
+  async function cocrSend(f, action) {
+    // ((review) to the dashboard the frame was first sent to; none open: nothing sent (the note says so)
+    if (!f.mbRelease) f.mbRelease = cocrMbRelease();
+    if (!f.mbRelease) return;
+    const base = { type: 'ocr-crop', action, frameId: f.id, n: f.n, imgN: f.imgN, releaseId: cocrCtx() ? cocrCtx().currentReleaseId() : '', mbRelease: f.mbRelease, ts: Date.now() };
+    if (action === 'remove') {
+      GM_setValue('cocrCrop', base);
+      return;
+    }
+    try {
+      const bmp = await cocrBitmap(f.url);
+      const sx = Math.round(f.x * bmp.width);
+      const sy = Math.round(f.y * bmp.height);
+      const sw = Math.max(1, Math.round(f.w * bmp.width));
+      const sh = Math.max(1, Math.round(f.h * bmp.height));
+      const k = Math.min(1, 4000 / sw, 4000 / sh);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(sw * k));
+      c.height = Math.max(1, Math.round(sh * k));
+      c.getContext('2d').drawImage(bmp, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      if (!cocr.frames.includes(f)) return;
+      GM_setValue('cocrCrop', { ...base, dataUrl: c.toDataURL('image/png') });
+      f.sent = true;
+      cocrNote('');
+    } catch (e) {
+      cocrNote(cocrText.failed);
+    }
+  }
+  /** The dashboard's context of this page (set by the Discogs side). */
+  let cocrCtxFn = null;
+  const cocrCtx = () => (cocrCtxFn ? cocrCtxFn() : null);
+  const cocrMbRelease = () => {
+    const c = cocrCtx();
+    const m = c && c.liveMaps()[0];
+    return (m && m.map && m.map.mbRelease) || '';
+  };
+  /** No dashboard open for the release: a note – a link that opens the release on MusicBrainz with the import, or a search. */
+  const cocrLookups = new Map();
+  async function cocrCheckTab() {
+    const c = cocrCtx();
+    if (!c || c.liveMaps().length) {
+      cocrNote('');
+      return;
+    }
+    const discogs = `https://www.discogs.com/release/${c.currentReleaseId()}`;
+    // ((review) looked up once per release; MusicBrainz not answering (503 …) is no "not linked"
+    if (!cocrLookups.has(discogs)) {
+      cocrLookups.set(discogs, (async () => {
+        const r = await fetch(`https://musicbrainz.org/ws/2/url?resource=${encodeURIComponent(discogs)}&inc=release-rels&fmt=json`);
+        if (r.status === 404) return '';
+        if (!r.ok) throw new Error(String(r.status));
+        const d = await r.json();
+        const rel = (d.relations || []).find((x) => x.release && x.release.id);
+        return rel ? rel.release.id : '';
+      })());
+      cocrLookups.get(discogs).catch(() => cocrLookups.delete(discogs));
+    }
+    let mbid = '';
+    try {
+      mbid = await cocrLookups.get(discogs);
+    } catch (e) {
+      cocrNote(cocrText.noTab);
+      return;
+    }
+    if (mbid) {
+      cocrNote(cocrText.noTab, `https://musicbrainz.org/release/${mbid}/edit-relationships#dci-import&src=${encodeURIComponent(discogs)}`, cocrText.open);
+    } else {
+      const title = (document.querySelector('h1') || {}).textContent || '';
+      // ((review) the title as words (no signs of the search: "AC/DC", ":")
+      const words = title.replace(/[\\/:+\-!(){}[\]^"~*?|&]+/g, ' ').replace(/\s+/g, ' ').trim();
+      cocrNote(cocrText.notLinked, `https://musicbrainz.org/search?type=release&query=${encodeURIComponent(words)}`, cocrText.search);
+    }
+  }
+  function cocrNote(text, href, label) {
+    const big = document.getElementById('dci-art-big');
+    const el = big && big.querySelector('.dci-cocr-note');
+    if (!el) return;
+    el.textContent = text || cocrText.hint;
+    el.classList.toggle('dci-cocr-warn', !!text);
+    if (href) {
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = label;
+      el.append(' ', a);
+    }
+  }
+  /** The frames of the image shown, on it. */
+  function cocrDraw() {
+    const big = document.getElementById('dci-art-big');
+    const layer = big && big.querySelector('.dci-cocr-layer');
+    if (!layer) return;
+    const url = big.querySelector('.dci-big-img').getAttribute('src');
+    layer.innerHTML = cocr.frames.filter((f) => f.url === url).map((f) => `<div class="dci-cocr-frame" data-cocr="${f.id}" style="left:${f.x * 100}%;top:${f.y * 100}%;width:${f.w * 100}%;height:${f.h * 100}%">
+      <span class="dci-cocr-n">${f.n}</span><button type="button" class="dci-cocr-x" title="${cocrText.del}" aria-label="${cocrText.del}">✕</button><span class="dci-cocr-h"></span></div>`).join('');
+  }
+  function cocrRemove(id, tell) {
+    const f = cocr.frames.find((x) => x.id === id);
+    if (!f) return;
+    cocr.frames = cocr.frames.filter((x) => x !== f);
+    cocrDraw();
+    if (tell) cocrSend(f, 'remove');
+  }
+  /** Drawing, moving, changing a frame (pointer). */
+  function cocrPointerDown(e) {
+    if (e.button !== 0) return; // ((review) only the main button
+    const layer = e.currentTarget;
+    const r = layer.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    const x = e.target.closest('.dci-cocr-x');
+    const el = e.target.closest('.dci-cocr-frame');
+    e.preventDefault();
+    e.stopPropagation();
+    if (x && el) {
+      cocrRemove(el.dataset.cocr, true);
+      return;
+    }
+    const url = layer.closest('#dci-art-big').querySelector('.dci-big-img').getAttribute('src');
+    let f = el ? cocr.frames.find((y) => y.id === el.dataset.cocr) : null;
+    let mode = 'move';
+    if (!f) {
+      const box = document.getElementById('dci-artwork');
+      const list = box ? JSON.parse(box.dataset.list || '[]') : [];
+      f = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, n: ++cocr.n, imgN: Math.max(1, list.indexOf(url) + 1), url, x: px, y: py, w: 0, h: 0, sent: false };
+      cocr.frames.push(f);
+      mode = 'new';
+    } else if (e.target.closest('.dci-cocr-h')) mode = 'size';
+    cocr.drag = { f, mode, px, py, start: { x: f.x, y: f.y, w: f.w, h: f.h }, r };
+    layer.setPointerCapture(e.pointerId);
+  }
+  function cocrPointerMove(e) {
+    const d = cocr.drag;
+    if (!d) return;
+    if (!(e.buttons & 1)) {
+      cocrPointerUp();
+      return;
+    }
+    const px = Math.min(1, Math.max(0, (e.clientX - d.r.left) / d.r.width));
+    const py = Math.min(1, Math.max(0, (e.clientY - d.r.top) / d.r.height));
+    const f = d.f;
+    if (d.mode === 'new') Object.assign(f, { x: Math.min(px, d.px), y: Math.min(py, d.py), w: Math.abs(px - d.px), h: Math.abs(py - d.py) });
+    else if (d.mode === 'size') Object.assign(f, { w: Math.max(0.01, Math.min(1 - f.x, d.start.w + px - d.px)), h: Math.max(0.01, Math.min(1 - f.y, d.start.h + py - d.py)) });
+    else Object.assign(f, { x: Math.min(1 - f.w, Math.max(0, d.start.x + px - d.px)), y: Math.min(1 - f.h, Math.max(0, d.start.y + py - d.py)) });
+    cocrDraw();
+  }
+  function cocrPointerUp() {
+    const d = cocr.drag;
+    cocr.drag = null;
+    if (!d) return;
+    const f = d.f;
+    // a click without a frame: nothing
+    if (d.mode === 'new' && (f.w < 0.01 || f.h < 0.01)) {
+      cocr.frames = cocr.frames.filter((x) => x !== f);
+      cocr.n -= 1;
+      cocrDraw();
+      return;
+    }
+    const moved = ['x', 'y', 'w', 'h'].some((k) => Math.abs(f[k] - d.start[k]) > 0.002);
+    if (d.mode !== 'new' && !moved) return;
+    cocrDraw();
+    cocrSend(f, d.mode === 'new' ? 'add' : 'change');
+    cocrCheckTab();
+  }
+
   /** [1.15.0] (Z-CPVA) The image the miniature shows (‹ ›: the others, after the last the first again); the counter "2 / 7". */
   function artShow(box, k) {
     const list = JSON.parse(box.dataset.list || '[]');
@@ -893,10 +1124,18 @@
       big.setAttribute('role', 'dialog');
       big.setAttribute('aria-modal', 'true');
       big.innerHTML = '<div class="dci-big-bar"><button type="button" class="dci-big-prev">‹</button><span class="dci-big-n"></span><button type="button" class="dci-big-next">›</button>'
-        + '<a class="dci-big-tab" target="_blank" rel="noopener">↗</a><button type="button" class="dci-big-close">✕</button></div><img class="dci-big-img" alt="">';
+        + '<a class="dci-big-tab" target="_blank" rel="noopener">↗</a><button type="button" class="dci-big-close">✕</button><span class="dci-cocr-note"></span></div>'
+        // [1.18.0] (Z-COCR) the frames over the image
+        + '<div class="dci-big-wrap"><img class="dci-big-img" alt=""><div class="dci-cocr-layer"></div></div>';
       document.body.appendChild(big);
+      const layer = big.querySelector('.dci-cocr-layer');
+      layer.addEventListener('pointerdown', cocrPointerDown);
+      layer.addEventListener('pointermove', cocrPointerMove);
+      layer.addEventListener('pointerup', cocrPointerUp);
+      layer.addEventListener('pointercancel', cocrPointerUp);
+      layer.addEventListener('lostpointercapture', () => { if (cocr.drag) cocrPointerUp(); });
       big.addEventListener('click', (e) => {
-        if (e.target.closest('.dci-big-img, .dci-big-tab')) return;
+        if (e.target.closest('.dci-big-img, .dci-big-tab, .dci-big-wrap, .dci-cocr-note')) return;
         if (e.target.closest('.dci-big-prev')) return artShow(box, Number(box.dataset.i || 0) - 1);
         if (e.target.closest('.dci-big-next')) return artShow(box, Number(box.dataset.i || 0) + 1);
         artBigClose();
@@ -909,6 +1148,8 @@
     big.querySelector('.dci-big-prev').setAttribute('aria-label', labels.artPrev || 'Previous image');
     big.querySelector('.dci-big-next').setAttribute('aria-label', labels.artNext || 'Next image');
     artBigShow(Number(box.dataset.i || 0));
+    cocrNote('');
+    cocrCheckTab();
   }
   function artBigShow(i) {
     const big = document.getElementById('dci-art-big');
@@ -921,8 +1162,11 @@
     big.querySelector('.dci-big-tab').href = url;
     big.querySelector('.dci-big-n').textContent = `${i + 1} / ${Math.max(1, list.length)}`;
     big.querySelectorAll('.dci-big-prev, .dci-big-next').forEach((b) => { b.disabled = list.length < 2; });
+    cocrDraw();
   }
   function artBigClose() {
+    // ((Z-COCR 1.18.0, review) a frame being drawn: finished as it is
+    if (cocr.drag) cocrPointerUp();
     const big = document.getElementById('dci-art-big');
     if (big) big.remove();
     document.removeEventListener('keydown', artBigKey, true);

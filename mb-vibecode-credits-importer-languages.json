@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.113.0",
+  "version": "3.114.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -616,6 +616,11 @@
     "ocr.state.read": "wird gelesen",
     "ocr.state.done": "fertig",
     "ocr.resultHint": "Korrigiere, was falsch gelesen wurde – der Text wird dann genauso ausgewertet wie ein eingefügter Text. Eine im Text angeklickte Zeile wird im Bild daneben markiert.",
+    "ocr.cocrName": "Discogs, Bild {img}: Rahmen {n}",
+    "ocr.cocrDel": "Diesen Rahmen herausnehmen (hier und im Companion auf Discogs)",
+    "log.cocrIn": "Text vom Cover: Rahmen {n} von Discogs hinzugefügt",
+    "log.cocrChanged": "Text vom Cover: Rahmen {n} von Discogs geändert – neu gelesen",
+    "log.cocrOut": "Text vom Cover: ein Rahmen von Discogs herausgenommen",
     "ocr.small": "Nur {w} × {h} px – vergrößert gelesen; Namen können falsch herauskommen.",
     "ocr.textOf": "Text von {what}",
     "ocr.unsure": "Mit wenig Sicherheit gelesen (ein Klick markiert es und zeigt es im Bild):",

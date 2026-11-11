@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.113.0 | 1.17.0 |
+| 2026-11-08 | 3.88.0 – 3.114.0 | 1.17.0 – 1.18.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,10 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.114.0, Companion 1.18.0
+
+- **Frames for the text from cover art, drawn on Discogs** (collected item Z-COCR): in the companion's large image of a Discogs release, drag across it for a frame (move it, change it at its corner, ✕ takes it out). Each frame goes to the dashboard at once: its window "Text from cover art" opens and reads it, frame after frame – also from other images, all below each other; a frame changed is read again, the texts of the others (and what was corrected in them) stay. ✕ at a frame in the window takes it out there and in the large image, and the other way round. The text is checked and imported from that window as before (Import, + Supplement). With no dashboard open, the large image says so with a link that opens the release on MusicBrainz and starts the import – or, for a Discogs release linked to none, a search on MusicBrainz.
 
 ### Import 3.113.0
 
