@@ -686,7 +686,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     file; records not readable left out, the statistics still drawn), a wrong file, the log ("rejected")
                                 #   profiles: 3.75.0 (Z-QSP, Z-QTA, S110): "Profile 1" from what is stored, the choice in the bar, "Standard" with the
                                 #     dashboard open, a change under Standard makes a profile, rename, export, import ("(2)"), the log [-]/[E]/[I],
-                                #     the active one deleted, "Reset all" deleting all
+                                #     the active one deleted, "Reset all" deleting all (from 3.114.0 the import file given again when the settings
+                                #     were drawn anew just then – a flaky step, on 3.113.0 too)
                                 #   statstime: 3.45.0 (Z-STD): pauses not counted (threshold in ⚙ Cache), work in the record; the times per source, Median | Average; review: the pause right before "Enter edit", the script's scrolling no work, the second record on a page, releases counted once, Average pooled, the field normalised
                                 #   theme: 3.46.0 (Z-DM): the dark theme – as a window and in the page (Auto | Light | Dark, Auto live), the light theme unchanged, contrast ≥ 3 in the dark one, colours of their own for it, ↺; review: the dark stylesheet only when needed (written = read), white text on text colours, the tags beside the dark pickers, „Reset all“
                                 #   globalstats: 3.47.0 (Z-GST): This browser | Global – the file of the workflow, once a day, "Load again", without network the copy, Reset all; review: a file with gaps, keyboard focus, a copy older than a day
@@ -1107,6 +1108,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   cocr3114: 3.114.0 / 1.18.0 (Z-COCR): frames in the large image read in the dashboard's window, added, ✕ both ways, no dashboard
                                 #   artapi3108: Companion 1.17.0 (Z-CPVA3): the release's images from Discogs' API – ‹ › through all of them, not only the
                                 #     page's first; (review) the box switched off while the API is asked stays off; artnav (1.17.0, Z-CPVA4): the big view over the tab (‹ ›, count, ↗, ✕, a click beside it closes), one image 1 / 1 greyed
                                 #   artnav: Companion 1.15.0 (Z-CPVA): ‹ › in the cover miniature – the release's three images ("1 / 3" … after the last

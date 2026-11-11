@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.113.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.114.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.114.0 · Companion 1.18.0 · 2026-11-08
+
+- **Z-COCR (new, S178), Companion:** `cocr*` – the large image's frames (`.dci-big-wrap`, `.dci-cocr-layer`, `.dci-cocr-frame`; `cocrPointerDown/Move/Up`: drawn, moved, changed at the corner, ✕), `cocrSend` (the frame cut out of the image's own pixels – `fetch`, else `GM_xmlhttpRequest`, `createImageBitmap` – at most 4000 px wide, as PNG, through `fromDiscogs` `{ type: 'ocr-crop', action: add | change | remove, frameId, n, imgN }`), `cocrCheckTab` (no dashboard for the release: the release on MusicBrainz looked up by the Discogs link – `#dci-import&src=…` – or a search), `cocrNote`, `cocrRemove`; the MusicBrainz side forwards `ocr-crop` and answers `ocr-frame-remove` with `cocrRemove` (GM value, every Discogs tab); `@grant GM_xmlhttpRequest`, `@connect i.discogs.com`; `COMPANION_VERSION` 1.18.0.
+- **Z-COCR, Importer:** `ocrReadOne(res, recognizer, alive)` (out of `ocrRun`: one image read), `cocrReceive` (the window opened, an own image `cocr-<frameId>` with its result added or replaced, read in turn – `cocrQueue`, `cocrRead` with a reader of its own; the window stays on its result after the release's images are listed), `cocrDrop` (here or from the companion; here: `toDiscogs({ type: 'ocr-frame-remove' })`), ✕ `data-ocr-cocr-del` in `ocrResultHtml`; companion message `ocr-crop`.
+- **Texts:** `ocr.cocrName`, `ocr.cocrDel`, `log.cocrIn`, `log.cocrChanged`, `log.cocrOut` (en, de); S178 new. The companion's own texts (English, German by the browser's language).
+- **Review:** a frame reaches only the dashboard of its own release (`mbRelease` sent with it and compared exactly, on the MusicBrainz side and in `cocrReceive`; nothing sent while no dashboard is open); a crop of more than 12 MB is refused; the window stays on reading or on its result when the release's images are listed or their listing fails; the frame's size limited in width and height; a failed image is fetched anew next time (`cocrBitmap`); the release looked up once per Discogs release, a 503 gives the note without the link, the search text cleaned; drawing only with the main button, ended when the pointer is lost or the large image closes (`artBigClose`); the GM value removed after 1.5 s.
+- **Tests:** `t_companion_discogs.py cocr3114` (A–D: a frame read, a second added – the first's correction kept –, ✕ in the window and in the large image, no dashboard: the note and its link) – new; fails on 3.113.0 / 1.17.0.
 
 ## Import 3.113.0 · 2026-11-08
 

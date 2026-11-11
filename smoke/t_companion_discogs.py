@@ -892,4 +892,76 @@ def case_artapi3108():
         H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_cocr3114():
+    """Credits Importer 3.114.0, Companion 1.18.0 (collected item Z-COCR, S178): frames for the text from cover art drawn in the
+    companion's large image on Discogs.
+    A) The large image: a frame dragged across it – sent at once: the dashboard's window of the text from cover art opens with
+       "Discogs, image 1: frame 1" and its text (until 3.113.0 / 1.17.0 nothing to draw).
+    B) A second frame: added below, the first one's text (corrected by hand) stays.
+    C) ✕ at the first in the window: gone there and in the large image; ✕ at the second in the large image: gone in the window.
+    D) The MusicBrainz page closed, a frame drawn in the large image still open: it says that no dashboard is open – the release is
+       linked to none on MusicBrainz here: "Search on MusicBrainz"."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        # an image of real size (the harness serves 1 × 1 px)
+        big_png = H.png_of(200, 150)
+        ctx.route('https://i.discogs.com/**', lambda route: route.fulfill(body=big_png, content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        dg, dgerr = H.open_discogs(ctx)
+        dg.wait_for_timeout(1500)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.evaluate("window.__ocrTexts = [{ text: 'Bass – Frame Guy' }, { text: 'Drums – Second Guy' }]")
+        dg.wait_for_timeout(2500)
+        dg.locator('#dci-artwork .dci-art-img').click()
+        dg.wait_for_timeout(300)
+
+        def frame(x0, y0, x1, y1):
+            r = dg.evaluate("(() => { const r = document.querySelector('#dci-art-big .dci-cocr-layer').getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()")
+            dg.mouse.move(r[0] + r[2] * x0, r[1] + r[3] * y0)
+            dg.mouse.down()
+            dg.mouse.move(r[0] + r[2] * (x0 + x1) / 2, r[1] + r[3] * (y0 + y1) / 2, steps=4)
+            dg.mouse.move(r[0] + r[2] * x1, r[1] + r[3] * y1, steps=4)
+            dg.mouse.up()
+        SECTS = """[...document.querySelectorAll('#dci-ocr .dci-ocr-res')].map(s => [s.querySelector('h3').textContent.replace('✕', '').trim(),
+          [...s.querySelectorAll('textarea')].map(t => t.value).join('|')])"""
+        frame(0.1, 0.1, 0.6, 0.4)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-ocr .dci-ocr-res textarea')].some(t => /Frame Guy/.test(t.value))", 20)
+        a = pg.evaluate(SECTS)
+        nf = dg.evaluate("document.querySelectorAll('#dci-art-big .dci-cocr-frame').length")
+        print('A)', a, nf)
+        results.append(a == [['Discogs, image 1: frame 1', 'Bass – Frame Guy']] and nf == 1)
+        pg.evaluate("""(() => { const t = document.querySelector('#dci-ocr .dci-ocr-res textarea'); t.value = 'Bass – Frame Guy (corrected)'; t.dispatchEvent(new Event('input', { bubbles: true })); })()""")
+        frame(0.2, 0.5, 0.8, 0.9)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-ocr .dci-ocr-res textarea')].some(t => /Second Guy/.test(t.value))", 20)
+        b2 = pg.evaluate(SECTS)
+        print('B)', b2)
+        results.append(b2 == [['Discogs, image 1: frame 1', 'Bass – Frame Guy (corrected)'], ['Discogs, image 1: frame 2', 'Drums – Second Guy']])
+        pg.locator('#dci-ocr [data-ocr-cocr-del]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1500)
+        c1 = [pg.evaluate(SECTS), dg.evaluate("[...document.querySelectorAll('#dci-art-big .dci-cocr-frame .dci-cocr-n')].map(n => n.textContent)")]
+        dg.locator('#dci-art-big .dci-cocr-frame .dci-cocr-x').first.click()
+        pg.wait_for_timeout(1500)
+        c2 = pg.evaluate(SECTS)
+        print('C)', c1, c2)
+        results.append(c1 == [[['Discogs, image 1: frame 2', 'Drums – Second Guy']], ['2']] and c2 == [])
+        errs0 = list(errs)  # (closing the page: the harness's synchronous request of its storage is refused – not the script's)
+        pg.close()
+        dg.wait_for_timeout(12000)
+        # the large image still open: a frame drawn now finds no dashboard
+        frame(0.3, 0.3, 0.7, 0.7)
+        dg.wait_for_timeout(2500)
+        d = dg.evaluate("(() => { const n = document.querySelector('#dci-art-big .dci-cocr-note'); const a = n && n.querySelector('a'); return [n ? n.textContent : null, a ? a.getAttribute('href') : null]; })()")
+        print('D)', d)
+        results.append(bool(d[0]) and ('No import dashboard' in d[0] or 'linked to no release' in d[0]) and bool(d[1]) and 'musicbrainz.org' in d[1])
+        print('Fehler:', errs0, dgerr)
+        results.append(not errs0 and not dgerr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
