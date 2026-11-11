@@ -782,6 +782,9 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     styles" Combined (sources in the tooltip) | Separate, remembered
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
+                                #   mbsearch3123r: 3.123.0 (review): a Discogs artist made a label and linked – after a reload still that label with its row
+                                #   mbsearch3123: 3.123.0 (Z-MBSEARCH, S193): a name in the entry's field searched – 3 hits, "+ 2 more"; the kind label: row
+                                #     "design" of the label, a label hit linked; linked, back to artist after a question; 1 hit at first from the settings
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
                                 #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the

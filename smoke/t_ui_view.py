@@ -454,7 +454,7 @@ def case_ui301():
 def case_suggstack():
     """Import 3.15.2/3.15.3: the suggestions of an entry without a match are a block right below its red mark.
     A pasted text names "John Smith"; MusicBrainz has eight artists of that name.
-    A) The head line: the red mark, the field and the buttons; below it the suggestions as a block of their own, side by side
+    A) The head line: the red mark, ([Z-MBSEARCH] 3.123.0) the kind of the entry, the field and the buttons; below it the suggestions as a block of their own, side by side
        and wrapping into more lines (3.15.3; 3.15.2 had one per line); no explanation as visible text – it is the tooltip of
        the block and of each suggestion.
     B) Five suggestions are shown, then a clearly visible "+ 3 more" (a button of its own); a click shows all eight and
@@ -487,7 +487,7 @@ def case_suggstack():
         h = pg.evaluate(HEAD)
         print('A) Reihenfolge:', h['order'], '| darunter:', h['below'], '| Fluss:', h['flow'], '| Zeilen:', h['lines'])
         print('   Tooltip:', h['tip'][:90], '| sichtbarer Erklärtext:', 'Same name in MusicBrainz' in h['text'])
-        results.append(h['order'][:2] == ['mark', 'input:artist-input'] and h['order'][-1] == 'stack' and h['below'] and h['flow'] == 'row wrap'
+        results.append(h['order'][:3] == ['mark', 'select:match-kind', 'input:artist-input'] and h['order'][-1] == 'stack' and h['below'] and h['flow'] == 'row wrap'
                        and h['lines'] == 1 and 'Same name in MusicBrainz' in h['tip'] and 'Same name in MusicBrainz' not in h['text'])
         # B) five, then "+ 3 more"
         style = pg.evaluate("(() => { const b = document.querySelector('[data-act=sugg-more]'); const cs = getComputedStyle(b); return [cs.fontWeight, cs.borderTopStyle, cs.borderTopWidth]; })()")
@@ -1398,6 +1398,131 @@ def case_lognarrow():
         hint = pg.evaluate("document.querySelector('#dci-log [data-log-f=place]').title")
         print('D) 500 px:', d, '| Hinweis:', hint[:60], '| Fehler:', errs)
         results.append('dci-log-dock-above' in d['cls'] and 'Not enough room' in hint and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_mbsearch3123():
+    """Credits Importer 3.123.0 (collected item Z-MBSEARCH, S193): "Design by Jane Nine", pasted; MusicBrainz has five artists "Jane Nine"
+    and a label "Jane Nine Design".
+    A) "Jane Nine" typed into the entry's field, Enter: MusicBrainz's artists of that name – 3 shown, "+ 2 more" shows the others (until
+       3.122.0 "not an MBID").
+    B) The kind "label" before the field: the entry a label, its row "design" on the release; the label searched in the field and
+       chosen: linked to it.
+    C) Linked, "Change", the kind "artist": a question (accepted) – the link let go, the entry an artist again with its row as before.
+    D) Settings: 1 hit at first – a search shows one and "+ 1 more"."""
+    IDS = [H.uid('dddddddd', 3123 + k) for k in range(5)]
+    LAB = H.uid('eeeeeeee', 3123)
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': 'Jane Nine', 'disambiguation': f'designer no. {k + 1}', 'score': 100} for k, g in enumerate(IDS)]
+    H.MB_SEARCH['label'] = [{'id': LAB, 'name': 'Jane Nine Design', 'type': 'Production', 'disambiguation': '', 'score': 100}]
+    H.lt(1171, H.uid('1a1a1a1a', 1171), 'design', 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    SEC = "[...document.querySelectorAll('section.dci-group')].find(s => /Jane Nine/.test(s.querySelector('.dci-gname strong').textContent))"
+    STATE = f"""(() => {{ const g = {SEC}; if (!g) return null; const m = g.querySelector('.dci-gmatch');
+      return {{ kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', hits: [...g.querySelectorAll('.dci-mbs li')].length, more: (g.querySelector('[data-act=mbs-more]') || {{}}).textContent || '',
+        sel: (g.querySelector('[data-f=match-kind]') || {{}}).value || '', link: (g.querySelector('.dci-mblink') || {{}}).href || '',
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => {{ const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {{}}).text : '', ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '']; }}) }}; }})()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        dialogs = []
+        pg.on('dialog', lambda d: (dialogs.append(d.message), d.accept()))
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Design by Jane Nine')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        sec = lambda: pg.locator('section.dci-group', has=pg.locator('.dci-gname strong', has_text='Jane Nine')).first
+
+        def search(q):
+            sec().locator('[data-f=artist-input]').fill(q)
+            sec().locator('[data-f=artist-input]').press('Enter')
+            H.wait_for(pg, f"(() => {{ const g = {SEC}; return !!g && !!g.querySelector('.dci-mbs') && !g.querySelector('.dci-mbs .dci-badge'); }})()", 20)
+            pg.wait_for_timeout(200)
+        search('Jane Nine')
+        a1 = pg.evaluate(STATE)
+        sec().locator('[data-act=mbs-more]').click(); pg.wait_for_timeout(300)
+        a2 = pg.evaluate(STATE)
+        print('A)', a1, '| mehr:', a2['hits'], a2['more'])
+        results.append(a1['hits'] == 3 and a1['more'] == '+ 2 more' and a1['kind'] != 'label' and a2['hits'] == 5 and not a2['more'])
+        # B) a label
+        dialogs.clear()  # (the question of loading the text)
+        sec().locator('[data-f=match-kind]').select_option('label'); pg.wait_for_timeout(800)
+        b1 = pg.evaluate(STATE)
+        search('Jane Nine')
+        sec().locator('[data-act=mbs-use]').first.click(); pg.wait_for_timeout(600)
+        b2 = pg.evaluate(STATE)
+        print('B)', b1, '→', b2)
+        results.append(b1['kind'] == 'label' and b1['rows'] == [['design', 'release']] and not dialogs and LAB in b2['link'] and b2['kind'] == 'label')
+        # C) linked: back to an artist after a question
+        sec().locator('[data-act=artist-edit]').first.click(); pg.wait_for_timeout(300)
+        sec().locator('[data-f=match-kind]').select_option('artist'); pg.wait_for_timeout(800)
+        c1 = pg.evaluate(STATE)
+        print('C)', c1, '| Rückfrage:', dialogs)
+        results.append(len(dialogs) == 1 and 'Jane Nine Design' in dialogs[0] and c1['kind'] != 'label' and not c1['link'] and [r[0] for r in c1['rows']] == ['design'])
+        # D) one hit at first
+        pg.evaluate("localStorage.setItem('dci-mb-hits', '1')")
+        search('Jane Nine')
+        d1 = pg.evaluate(STATE)
+        print('D)', d1['hits'], d1['more'])
+        results.append(d1['hits'] == 1 and d1['more'] == '+ 1 more')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_mbsearch3123r():
+    """Credits Importer 3.123.0 (review of Z-MBSEARCH, S193): Discogs credits "Design – Jane Nine" (an artist not in MusicBrainz); made a
+    label by hand and linked to MusicBrainz's label "Jane Nine Design" – after a reload of the page and the dashboard opened again
+    the entry is that label, linked, with its row "design" (until the review an artist with a label's rows)."""
+    LAB = H.uid('eeeeeeee', 3124)
+    H.MB_SEARCH['label'] = [{'id': LAB, 'name': 'Jane Nine Design', 'type': 'Production', 'disambiguation': '', 'score': 100}]
+    H.lt(1171, H.uid('1a1a1a1a', 1171), 'design', 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = d['extraartists'] + [{'name': 'Jane Nine', 'anv': '', 'role': 'Design', 'tracks': '', 'id': 3416, 'join': ''}]
+        return d
+
+    H.discogs_release = rel
+    SEC = "[...document.querySelectorAll('section.dci-group')].find(s => /Jane Nine/.test(s.querySelector('.dci-gname strong').textContent))"
+    STATE = f"""(() => {{ const g = {SEC}; if (!g) return null;
+      return {{ kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', link: (g.querySelector('.dci-mblink') || {{}}).href || '',
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => {{ const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {{}}).text : '', ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '']; }}) }}; }})()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        sec = lambda: pg.locator('section.dci-group', has=pg.locator('.dci-gname strong', has_text='Jane Nine')).first
+        sec().locator('[data-f=match-kind]').select_option('label'); pg.wait_for_timeout(800)
+        sec().locator('[data-f=artist-input]').fill('Jane Nine')
+        sec().locator('[data-f=artist-input]').press('Enter')
+        H.wait_for(pg, f"(() => {{ const g = {SEC}; return !!g && !!g.querySelector('[data-act=mbs-use]'); }})()", 20)
+        sec().locator('[data-act=mbs-use]').first.click(); pg.wait_for_timeout(800)
+        a = pg.evaluate(STATE)
+        done = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+        pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {done}", 60)
+        pg.wait_for_timeout(1200)
+        b2 = pg.evaluate(STATE)
+        print('vorher:', a, '| nach dem Neuladen:', b2)
+        results.append(a['kind'] == 'label' and LAB in a['link'] and bool(b2) and b2['kind'] == 'label' and LAB in b2['link'] and b2['rows'] == [['design', 'release']])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
