@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.117.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.118.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.118.0 · 2026-11-08
+
+- **Z-LICCOURT, Z-LICART (S183):** `licLine` (TEXT.parse, after `rdstLine`): "Licensed (by) (the) courtesy of …" and "Licensed from …" → "Licensed From: …" (read as the company role C003 – label or artist licensor; "the" before a capital left out). The test page's types: `smoke/mb_link_types.json` 1010 licensor artist – release (`later`; `tools/mb_link_types.py` `ADDED_LATER`).
+- **Z-PCSPLIT (S184):** `sentencesOf` – the parts of a ℗ / © line (T033) each by their sentences; a first sentence that is ℗ / © splits off even when what follows is no credit.
+- **Z-BCLBL (S185):** `BANDCAMP.toRelease` `linkPage` – a company with the name of the label's page (not the artist's own: `band.own`) gets the page as link and id; `resolveArtists` compares its MusicBrainz label's spelling apart from case (`foldWord`) when the link is the release's own page.
+- **Tests:** `t_text_lists.py liccourt3118`, `t_sources_bandcamp.py bclbl3118` – new; fail on 3.117.0.
+- **Review:** `licLine` only for the courtesy forms ("Licensed from X" was read before), at the start of a line or a sentence; the names end before a further clause (", Licensed to …" read on its own, "for the UK territory", "under …" left out), nothing rewritten for "the artist" and other words in small letters; `sentencesOf` takes "All rights reserved" out of a ℗ / © line and leaves out what goes with it ("Made in …", "Printed in …", "Unauthorised …", "A … Company") – before, it was part of the name; `linkPage` only for a label's roles (℗ / ©, licensed, label), a company linked to the page and not found by it is searched by its name as before (`bcPage`), the page's name and the label's compared the same way (letters and digits).
 
 ## Import 3.117.0 · 2026-11-08
 

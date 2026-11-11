@@ -113,6 +113,8 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
                                 #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
                                 #   placecredit: 3.51.0 (Z-PCR, the area after a comma)
+                                #   liccourt3118: 3.118.0 (Z-LICCOURT, Z-PCSPLIT): "℗ … © 2026 WEWANTSOUNDS. Licensed Courtesy of James Quinlan and the Don
+                                #     Cherry Estate." – ℗, ©, two licensors; "© … See you on tour." the © alone; "by courtesy of", "Licensed to", "Courtesy of"
                                 #   tcplabel3117: 3.117.0 (Z-TCPMULTI, Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP, Z-OCRTITLE, Z-OCRP): both sides of a label – "(Scott - Carter)",
                                 #     5'54 / 533 / 7'26, the title line left out, "(H. Bullock)" below, a title over two lines, "P1978"; a publisher's bracket,
                                 #     "Boeing 747", "Jean-Luc", "Ortega y Gasset" as they are
@@ -951,6 +953,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   bclbl3118: 3.118.0 (Z-BCLBL, S185; Node): on a label's page "© 2026 WEWANTSOUNDS" linked to the page; not on the artist's
+                                #     own page, not another name
                                 #   artlbc3100: 3.100.0 (Z-ARTL, S159): "Artwork: Cyclical Dreams" on the label's Bandcamp page – the label, linked at once
                                 #   maya396: 3.96.0 (Z-SEI2, Z-AMP, Z-NORD): track pages with credits of their own ("Sei water Whale D" asked, nothing
                                 #     not recognized); "All Guitar Amplifier : Fender Twin Reverb '78" effects of Tsutomu Sonoda
