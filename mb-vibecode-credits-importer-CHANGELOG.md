@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.124.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.125.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,10 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.125.0
+
+- **Works commissioned by a festival** (collected item Z-EXCEPTC; rule S199): "All tracks except 'Heavy Industry' and 'Industrial Unrest' were composed and commissioned for the 2025 Roadburn Festival." – also when the sentence is broken over two lines – gives "Roadburn Festival" as a label with "commissioned" on the works of the other tracks (a remix keeps no work: its tracks are left out), dated 2025 to 2025 (the year is no date of the composition). MusicBrainz's labels of a similar name ("Roadburn Records") are suggested, "Create label …" is at hand. "Composed for X" or "written for X" is a commission when X is a festival, biennale, proms, radio, broadcaster, foundation, council, museum or gallery (a list in the mapping file, `COMMISSIONER_WORDS`); for a person it stays a dedication. Such a festival is no longer left out as an event, nor offered as a festival recording.
 
 ### Import 3.124.0, Companion 1.20.0
 

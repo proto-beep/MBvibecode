@@ -1,6 +1,7 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4), kindcycle (3.42.5), unaremember, kindrace, ownrulekind (3.42.8); `python3 t_text_places.py <case> …` runs only those."""
+import re
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1314,6 +1315,71 @@ Copyright 2026 Castles In Space."""
             results.append(not errs)
             pg.close()
             ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_exceptc3125():
+    """Credits Importer 3.125.0 (collected item Z-EXCEPTC, S199): Bandcamp's "Industrial Growth", its tracks "This Machine", "The Wire",
+    "Heavy Industry", "Industrial Unrest", "This Machine (TVAM Remix)"; the text (a sentence over two lines):
+    "All tracks except 'Heavy Industry' and 'Industrial Unrest' were" / "composed and commissioned for the 2025 Roadburn Festival."
+    A) An entry "Roadburn Festival" (a label, not left out as a festival): "commissioned" on the works of tracks 1 and 2 – not 3, 4
+       (named), not 5 (a remix) – dated 2025 (until 3.124.0 both lines not recognized); no date of the composition, no festival
+       recording.
+    B) MusicBrainz has only "Roadburn Records": suggested (similar, by the name without "Festival"), "Create label …" at hand.
+    C) "Composed for the Holland Festival" (no "commissioned"): a commission too (COMMISSIONER_WORDS), no dedication;
+       "Written for Jane Roe" stays a dedication."""
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 6)]
+    H.TITLES[:] = ['This Machine', 'The Wire', 'Heavy Industry', 'Industrial Unrest', 'This Machine (TVAM Remix)']
+    RR = H.uid('1abe1000', 3125)
+    H.MB_SEARCH['label'] = [{'id': RR, 'name': 'Roadburn Records', 'disambiguation': '', 'score': 90}]
+    H.lt(890, H.uid('1a1a1a1a', 890), 'commissioned', 'label', 'work', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """All tracks except 'Heavy Industry' and 'Industrial Unrest' were
+composed and commissioned for the 2025 Roadburn Festival.
+'The Wire' was composed for the Holland Festival.
+Written for Jane Roe."""
+    MX = """(() => { const cols = {}; document.querySelectorAll('.dci-matrix thead th[data-colhead]').forEach(th => {
+  const n = th.querySelector('.dci-mx-name'); if (!n) return;
+  cols[th.dataset.colhead] = { name: n.textContent.trim(), roles: [...th.querySelectorAll('.dci-mx-role')].map(x => x.textContent.trim()),
+    date: [...th.querySelectorAll('.dci-mx-datechip')].map(x => x.textContent.trim()), works: [] }; });
+  document.querySelectorAll('.dci-matrix tbody tr[data-work]').forEach(tr => tr.querySelectorAll('td.dci-mx-on[data-col]').forEach(td => {
+    if (cols[td.dataset.col]) cols[td.dataset.col].works.push(Number(tr.dataset.work) + 1); }));
+  return Object.fromEntries(Object.values(cols).map(c => [c.name, [c.roles, c.date, c.works]])); })()"""
+    GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? { kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid),
+    create: !!g.querySelector('[data-act=company-create]') } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_ok(pg, "[...document.querySelectorAll('section.dci-group')].some(g => /Roadburn Festival/.test(g.textContent) && g.querySelector('[data-act=name-use]'))", 15)
+        pg.wait_for_timeout(1200)
+        log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent)")
+        mx = pg.evaluate(MX)
+        rb, hf = pg.evaluate(GROUP, 'Roadburn Festival'), pg.evaluate(GROUP, 'Holland Festival')
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.trim())")
+        ded = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox]')].map(x => x.textContent.replace(/\\s+/g, ' '))")
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin.year])")
+        print('A) Matrix:', mx, '| nicht erkannt:', unrec, '| Pool:', pool)
+        ok_a = (mx.get('Roadburn Festival') == [['commissioned'], ['2025'], [1, 2]] and unrec == ['Written for Jane Roe.']
+                and not any(y == 2025 for _, y in pool) and not any(re.search('festival', l, re.I) and re.search('Not taken over|Festival recording', l) for l in log))
+        results.append(ok_a)
+        print('B) Roadburn Festival:', rb)
+        results.append(bool(rb) and rb['kind'] == 'label' and RR in rb['sugg'] and rb['create'])
+        print('C) Holland Festival:', mx.get('Holland Festival'), hf, '| Widmungen:', ded)
+        results.append(mx.get('Holland Festival') == [['commissioned'], [], [2]] and bool(hf) and RR not in hf['sugg']
+                       and any('Jane Roe' in d for d in ded) and not any('Festival' in d for d in ded))
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
