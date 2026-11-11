@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.121.0 | 1.17.0 – 1.19.0 |
+| 2026-11-08 | 3.88.0 – 3.122.0 | 1.17.0 – 1.19.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.122.0
+
+- **Produced for a broadcaster** (collected item Z-PRODFOR; rule S191): "Producer [Session Originally Produced For VARA Radio By] – Aad Bos, Michiel De Ruyter (tracks: 16 to 21)", generally "for X" in the details of a producer – the persons producers (without those details), X a label (broadcasters are labels in MusicBrainz) searched by its name with "produced for" (contracted production; co- and executive as attributes): on the recordings when the credit names its tracks, else on the release – the level can be changed.
+- **Record Store Day** (Z-RSD, S192): "Record Store Day" in Discogs's format (also Cassette Store Day, Love Record Stores, National Album Day) – the release part of MusicBrainz's series of that day: released on Black Friday 2025 "Record Store Day Black Friday 2025", in April "Record Store Day 2025"; with another date the series of that year are suggested. "Limited Edition", "Box Set", "Reissue" and the like look for no series.
 
 ### Import 3.121.0
 

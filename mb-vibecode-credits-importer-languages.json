@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.121.0",
+  "version": "3.122.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -362,6 +362,7 @@
     "abbr.ask": "„{abbr}“ ist eine Abkürzung – welches Instrument?",
     "abbr.chosen": "„{abbr}“ (Abkürzung):",
     "issue.abbrAsk": "Instrument wählen, für das „{abbr}“ steht",
+    "log.formatSeries": "Serie aus dem Format: {name} (Datum der Veröffentlichung {date})",
     "dateOrder.askRec": "{date}: vor der Aufnahme derselben Tracks ({other}) – Mix und Mastering kommen nach der Aufnahme. Datum behalten?",
     "dateOrder.askMix": "{date}: vor dem Mix derselben Tracks ({other}) – das Mastering kommt nach dem Mix. Datum behalten?",
     "dateOrder.keep": "{date} behalten",
@@ -1928,6 +1929,7 @@
     "note.seriesMissing": "Keine MusicBrainz-Serie hat diesen Discogs-Link, daher wird die Serie nur angezeigt und nicht übernommen.",
     "note.rsocOff": "Verwertungsgesellschaften werden nicht übernommen (Quick Switch „Verwertungsgesellschaften übernehmen“ aus): diese steht auf Überspringen – ihre Ebene wählen, um sie zu übernehmen.",
     "note.seriesText": "Eine im Text genannte Serie: oben die Serie von MusicBrainz wählen (oder ihre MBID angeben) – das Release ist dann mit seiner Nummer Teil davon.",
+    "note.seriesFormat": "Eine Serie aus dem Format der Veröffentlichung (Record Store Day …) ohne ein Datum, das sie bestimmt: MusicBrainz' Serie oben wählen (oder ihre MBID angeben).",
     "note.abbrAlt": "„{abbr}“ kann auch sein: {list}",
     "note.seriesType": "MusicBrainz-Serien der Art „{type}“ lassen sich hier nicht mit dem Release verknüpfen.",
     "log.series": "Discogs-Serie {name} ({number})",
@@ -5321,7 +5323,9 @@
     "dateOrder.drop": "quitar la fecha",
     "issue.dateOrder": "la fecha es anterior a la grabación o a la mezcla – mantenerla o quitarla",
     "log.dateOrderKept": "{name} ({role}): {date} mantenida, aunque anterior a {other}",
-    "log.dateOrderDropped": "{name} ({role}): {date} quitada (anterior a {other})"
+    "log.dateOrderDropped": "{name} ({role}): {date} quitada (anterior a {other})",
+    "log.formatSeries": "Serie del formato: {name} (fecha de la publicación {date})",
+    "note.seriesFormat": "Una serie nombrada en el formato de la publicación (Record Store Day …) sin una fecha que diga cuál: elige arriba la serie de MusicBrainz (o da su MBID)."
   },
   "fr": {
     "title": "Credits Importer",
@@ -7754,6 +7758,8 @@
     "dateOrder.drop": "retirer la date",
     "issue.dateOrder": "la date précède l’enregistrement ou le mixage – la garder ou la retirer",
     "log.dateOrderKept": "{name} ({role}) : {date} gardée, bien qu’avant {other}",
-    "log.dateOrderDropped": "{name} ({role}) : {date} retirée (avant {other})"
+    "log.dateOrderDropped": "{name} ({role}) : {date} retirée (avant {other})",
+    "log.formatSeries": "Série d’après le format : {name} (date de la parution {date})",
+    "note.seriesFormat": "Une série nommée dans le format de la parution (Record Store Day …) sans date qui dise laquelle : choisir la série de MusicBrainz ci-dessus (ou donner son MBID)."
   }
 }
