@@ -896,6 +896,38 @@ def case_liccourt3118():
 
 
 
+def case_ocrc3120():
+    """Credits Importer 3.120.0 (collected item Z-OCRC, S187), in Node: "C1978 – Fantasy Records" and "C 1978 Fantasy Records" (a cover's ©
+    read as C) are © 1978 Fantasy Records; "C 2000 Watt Amp 5" (digits after the name) and "Cole 1978 X" stay as they are."""
+    g = read([{'text': t} for t in ['C1978 – Fantasy Records', 'C 1978 Fantasy Records', 'C 2000 Watt Amp 5', 'Cole 1978 X']])
+    for x in g or []:
+        print('  ', x)
+    ok = g is not None and [x['companies'] for x in g[:2]] == [[['Fantasy Records', 'Copyright (c)']]] * 2 \
+        and not g[2]['companies'] and not g[3]['companies'] and g[2]['unrecognized'] == ['C 2000 Watt Amp 5']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
+def case_studio3120r():
+    """Credits Importer 3.120.0 (review of Z-STUDIO, S188, and Z-DESCON, S186), in Node: a studio this text names as a place too
+    ("Recorded at Foo Studios, London." / "Photography by Foo Studios") keeps its art role as a credit (a recording studio is no label);
+    "Cover Photography by Bar Studio" a label with photography, "Design [Graphic] by Baz Studio" with graphic design. R062 takes
+    "graphic" only for a design role with nothing else in its details: "Art Direction [Graphic Design]" stays art direction (R080),
+    "Logo Design [Graphic]" design credited "logo" (R101), "Design [Graphic, Cover]" stays R077."""
+    g = read([{'text': t} for t in ['Recorded at Foo Studios, London.\nPhotography by Foo Studios', 'Cover Photography by Bar Studio', 'Design [Graphic] by Baz Studio']])
+    for x in g or []:
+        print('  ', x)
+    ok = g is not None and g[0]['credits'] == [['Foo Studios', 'Photography By']] and g[0]['companies'] == [['Foo Studios', 'Recorded At']] \
+        and g[1]['companies'] == [['Bar Studio', 'Photography By', 'label']] and g[2]['companies'] == [['Baz Studio', 'Graphic Design By', 'label']]
+    js = subprocess.run(['node', '-e', """const m = require(process.argv[1]); console.log(JSON.stringify([['Design Concept', ['Graphic Concept']], ['Art Direction', ['Graphic Design']],
+      ['Logo Design', ['Graphic']], ['Design', ['Graphic', 'Cover']]].map(([b, d]) => { const r = m.mapRole(b, d); return [r.rule, r.types[0], r.credit || '']; })));""",
+                         str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    roles = json.loads(js.stdout) if not js.returncode else None
+    print('   R062:', roles)
+    ok2 = roles == [['R062', 'graphic design', ''], ['R080', 'art direction', ''], ['R101', 'design', 'logo'], ['R077', 'design', '']]
+    print('Ergebnis:', 'OK' if ok and ok2 else 'FEHLER', [ok, ok2])
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all
