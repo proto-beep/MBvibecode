@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.121.0",
+  "version": "3.122.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -81,6 +81,8 @@
     [{"$re":"^art direction by","$flags":""},{"id":"C047","label":["art direction"],"artist":["art direction"],"level":"release"}],
     [{"$re":"^graphic design by","$flags":""},{"id":"C048","label":["graphic design"],"artist":["graphic design"],"level":"release"}],
     [{"$re":"^illustration by","$flags":""},{"id":"C049","label":["illustration"],"artist":["illustration"],"level":"release"}],
+    [{"$re":"^co-produced for","$flags":""},{"id":"C050","label":["produced for"],"level":"release","prefer":"label","flags":["co"]}],
+    [{"$re":"^executive produced for","$flags":""},{"id":"C051","label":["produced for"],"level":"release","prefer":"label","flags":["executive"]}],
     [{"$re":"^(recorded|overdubbed) in","$flags":""},{"id":"C038","area":["recorded in"],"level":"recording"}],
     [{"$re":"^mixed in","$flags":""},{"id":"C039","area":["mixed in"],"level":"recording"}],
     [{"$re":"^mastered in","$flags":""},{"id":"C040","area":["mastered in"],"level":"release"}],

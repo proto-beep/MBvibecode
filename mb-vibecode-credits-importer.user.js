@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.121.0
+// @version      3.122.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.121.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.121.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.122.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.122.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.121.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.122.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1754,6 +1754,7 @@
       "abbr.ask": "“{abbr}” is an abbreviation – which instrument?",
       "abbr.chosen": "“{abbr}” (abbreviation):",
       "issue.abbrAsk": "choose the instrument “{abbr}” stands for",
+      "log.formatSeries": "Series from the format: {name} (the release's date {date})",
       "dateOrder.askRec": "{date}: before the recording of the same tracks ({other}) – a mix or mastering comes after the recording. Keep the date?",
       "dateOrder.askMix": "{date}: before the mix of the same tracks ({other}) – mastering comes after the mix. Keep the date?",
       "dateOrder.keep": "keep {date}",
@@ -1905,6 +1906,7 @@
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
       "note.rsocOff": "Rights societies are not taken (quick switch “Take rights societies” off): this one is on Skip – choose its level to take it.",
       "note.seriesText": "A series named in the text: choose MusicBrainz's series above (or give its MBID) – the release is then part of it with its number.",
+      "note.seriesFormat": "A series named in the format of the release (Record Store Day …) without a date that tells which: choose MusicBrainz's series above (or give its MBID).",
       "note.abbrAlt": "“{abbr}” can also be: {list}",
       "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
       "note.seriesFromVideoNoDate": "Suggested: the video is on this series’ channel with its name in the title (rule S117). No single recording date was found in the description – please type the number (YYYY-MM-DD).",
@@ -4422,6 +4424,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S192', where: 'DISCOGS.toRelease (series), formatSeriesResolve, FORMAT_SERIES', note: 'Series (3.122.0; collected item Z-RSD): "Record Store Day" (also "Cassette Store Day", "Love Record Stores", "National Album Day") in Discogs\'s format – the release part of MusicBrainz\'s series of that day and year: on Black Friday "Record Store Day Black Friday 2025", in April "Record Store Day 2025", for the others the one of the year; with no such date MusicBrainz\'s series of that name and year are suggested. Other format words ("Limited Edition", "Reissue", "Box Set") are no series' },
+    { id: 'S191', where: 'DISCOGS.toRelease (credits), addCompanyEntry, C026, C050, C051', note: 'Producers (3.122.0; collected item Z-PRODFOR): "Producer [Session Originally Produced For VARA Radio By]", generally "for X" in the details of a producer – the person a producer (the details left out), X a label searched by its name with "produced for" (contracted production; co-, executive) – on the release, on the recordings when the credit names its tracks; the level can be changed' },
     { id: 'S190', where: 'dateOrderIssue, dateOrderHtml', note: 'Dates (3.121.0; collected item Z-DATEORDER): a mix, remix, edit, overdub or mastering – of a person, a place, an area … – dated wholly before the recording of the same tracks, or a mastering before their mix: a question that must be answered (orange) names both dates – keep the date (staged with it) or remove it; the row is not staged before' },
     { id: 'S189', where: 'TEXT.parse (discTrackLines), tracksInText', note: 'Notes and texts (3.121.0; collected item Z-DTRK): a line that begins with its tracks as the source numbers them – medium and track, also across media ("1-1 to 1-6 recorded September 3rd, 1964", "1-10 to 2-4 recorded …") – gives its date and credits those tracks (until 3.120.0 all tracks); the line of a place right below it ("Live at Club Montmartre, Copenhagen, Denmark"), without tracks or a year of its own, belongs to it' },
     { id: 'S188', where: 'TEXT.parse (addCredit)', note: 'Texts (3.120.0; collected item Z-STUDIO): a name ending in "Studio" or "Studios" credited for the art ("Art & Design by William Mazza Studio") is a label (a design studio): artwork, design, graphic design, illustration, art direction and photography as label–release relationships (C033, C034, C035, C047 – C049) – until 3.119.0 a person' },
@@ -5387,6 +5391,15 @@
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = MAP.TEXT_COMPANY_RE;
+  // [Z-RSD] (3.122.0, S192) the store days of Discogs's format words, a MusicBrainz series each year ("Record Store Day 2025",
+  // "Record Store Day Black Friday 2025")
+  const FORMAT_SERIES_NAMES = ['Record Store Day', 'Cassette Store Day', 'Love Record Stores', 'National Album Day'];
+  // ((review) also Discogs's "RSD", "RSD Black Friday")
+  const FORMAT_SERIES = new RegExp(`\\b(${FORMAT_SERIES_NAMES.join('|')}|RSD)\\b`, 'gi');
+  // [Z-PRODFOR] (3.122.0, S191) "… Produced For VARA Radio By", "For X" in the details of a producer: X
+  // ((review) only "(Session) (Originally) Produced For X (By)" and "For X": no words of a track, side, album, version after it)
+  const PROD_FOR = /^(?:(?:[Ss]ession\s+)?(?:[Oo]riginally\s+)?[Pp]roduced\s+)?[Ff]or\s+(\p{Lu}[^[\]]*?)(?:\s+[Bb]y)?\s*$/u;
+  const prodForName = (x) => !/\b(?:track|side|disc|album|version|film|single|session|edition|remaster)s?\b|["“”]/i.test(String(x || ''));
   // [Z-DTRK] (3.121.0, S189) a line that begins with its tracks as the source numbers them, media and track ("1-1 to 1-6 recorded …",
   // "1-10 to 2-4 recorded …"), and the line of a place right below it ("Live at Club Montmartre, Copenhagen, Denmark")
   const DTRK_LEAD = /^\s*(\d{1,2}-\d{1,3}(?:\s*(?:\bto\b|\bthru\b|\bthrough\b|–|—|&|,|\band\b)\s*\d{1,2}-\d{1,3})*)\s+(?=(?:recorded|rec\.|mixed|mastered|overdubbed|live|performed|produced|engineered)\b)/i;
@@ -6816,8 +6829,25 @@
         const roles = parseRoleNotation(ea.role);
         // A credit without a role still names the person
         if (!roles.length) credits.push({ who, role: '', base: '', details: [], credited, tracks: where });
-        for (const r of roles) credits.push({ who, role: r.raw, base: r.base, details: r.mods, credited, tracks: where });
+        for (const r of roles) {
+          // [Z-PRODFOR] (3.122.0, S191) "Producer [Session Originally Produced For VARA Radio By]": the person a producer (without the
+          // details), the company after "for" a label the recordings were produced for (contracted production; co-, executive)
+          // ((review) only the producer itself – also "Executive-Producer" –, every "for X"; its other details kept: "Producer [Assistant,
+          // For Radio Bremen]" stays an assistant producer)
+          const pfs = ruleOn('S191') && /^(?:co-?\s*|executive[\s-]+)?produc(?:er|ed\s+by)$/i.test(String(r.base || '').trim())
+            ? (r.mods || []).map((x) => String(x).match(PROD_FOR)).filter((m) => m && prodForName(m[1])) : [];
+          if (pfs.length) {
+            const base = String(r.base || '').trim();
+            const det = (r.mods || []).filter((x) => !pfs.some((m) => m.input === String(x)));
+            credits.push({ who, role: det.length ? `${base} [${det.join(', ')}]` : base, base, details: det, credited, tracks: where });
+            const kind = /^co-?/i.test(base) ? 'Co-produced For' : /^executive/i.test(base) ? 'Executive Produced For' : 'Produced For';
+            pfs.forEach((m) => prodFor.push({ who: { id: 0, name: cleanName(m[1]), rawName: m[1], links: [] }, role: kind, catno: '', tracks: where.all ? null : where, entity: 'label' }));
+            continue;
+          }
+          credits.push({ who, role: r.raw, base: r.base, details: r.mods, credited, tracks: where });
+        }
       };
+      const prodFor = [];
       for (const ea of d.extraartists || []) {
         const spec = String(ea.tracks || '').trim();
         if (spec) {
@@ -6835,10 +6865,27 @@
         const id = Number(c.id) || 0;
         companies.push({ who: { id, name: cleanName(c.name), rawName: c.name, links: id ? [labelUrl(id)] : [] }, role, catno: String(c.catno || '').trim() });
       }
+      // [Z-PRODFOR] (3.122.0, S191) a label named after "for" once per role (two producers of the same session); its tracks joined
+      for (const c of prodFor) {
+        // ((review) Discogs lists it under "Companies, etc." too: that entry only)
+        if (companies.some((x) => !x.prodFor && norm(x.who.name) === norm(c.who.name) && /produced for$/i.test(x.role))) continue;
+        const same = companies.find((x) => x.prodFor && norm(x.who.name) === norm(c.who.name) && x.role === c.role);
+        if (!same) companies.push({ ...c, prodFor: true });
+        else if (same.tracks && (!c.tracks || !c.tracks.indexes)) same.tracks = null;
+        else if (same.tracks && c.tracks) same.tracks = { ...same.tracks, indexes: uniq([...same.tracks.indexes, ...c.tracks.indexes]), spec: uniq([same.tracks.spec, c.tracks.spec].filter(Boolean)).join(', ') };
+      }
       // [Z-ARTL] (3.100.0, S159) the labels of the release (a label credited for the artwork)
       const labels = (d.labels || []).map((l) => ({ id: Number(l && l.id) || 0, name: cleanName((l && l.name) || '') })).filter((l) => l.name);
       const series = (d.series || []).filter((x) => x && x.id)
         .map((x) => ({ id: x.id, name: x.name, number: String(x.catno || ''), links: [labelUrl(x.id)] }));
+      // [Z-RSD] (3.122.0, S192) a store day named in the format ("Record Store Day", "Cassette Store Day", …): its series of the year
+      // of the release's date (only these names: "Limited Edition", "Reissue" … are no series)
+      if (ruleOn('S192')) {
+        const words = (d.formats || []).flatMap((f) => [...(f.descriptions || []), f.text || '']).join(' · ');
+        uniq([...words.matchAll(FORMAT_SERIES)].map((m) => (/^rsd$/i.test(m[1]) ? 'Record Store Day' : FORMAT_SERIES_NAMES.find((n) => norm(n) === norm(m[1])) || m[1])))
+          .filter((n) => !series.some((x) => norm(x.name).startsWith(norm(n))))
+          .forEach((n) => series.push({ id: 0, name: n, base: n, number: '', links: [], fromFormat: true, date: String(d.released || '') }));
+      }
       return {
         source: 'discogs',
         id: String(releaseId != null ? releaseId : d.id),
@@ -23553,6 +23600,11 @@
       // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
       if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
       if (some && !row.tracks.size) continue;
+      // [Z-PRODFOR] (3.122.0, S191) produced for: on the release, on the recordings when its tracks are known (a click changes it)
+      if (some && ruleOn('S191') && /^(?:co-produced|executive produced|produced) for$/i.test(String(r.role || '')) && row.level === 'release' && findRowType(row, 'recording')) {
+        Object.assign(row, { level: 'recording', defaultLevel: 'recording' });
+        resolveRowType(row);
+      }
       row.suggested = new Set(row.tracks);
       // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
       // item 97c)
@@ -32515,7 +32567,42 @@
       <span class="dci-sub">${esc(tr(info.mbid ? 'seriesLabel.onCreate' : 'seriesLabel.noMb'))}</span></div>`;
   }
 
+  /** [Z-RSD] (3.122.0, S192) Black Friday of a year: the day after the fourth Thursday of November. */
+  const blackFridayOf = (y) => 1 + ((4 - new Date(Date.UTC(y, 10, 1)).getUTCDay() + 7) % 7) + 22;
+  /**
+   * [Z-RSD] (3.122.0, S192) The series of a store day of the format for the release's date: on Black Friday the one named so ("Record
+   * Store Day Black Friday 2025"); in April for Record Store Day, any day for the others, the one of the year ("Record Store Day 2025");
+   * otherwise none chosen – MusicBrainz's series of that day and year are suggested.
+   */
+  async function formatSeriesResolve(x) {
+    // ((review) a date of Discogs without its day ("2025", "2025-11-00"): MusicBrainz's of the same year when it has one
+    const dg = parseDate(x.date);
+    const mb = S.releaseDateMb || null;
+    const date = dg && !dg.day && mb && mb.day && mb.year === dg.year ? mb : dg || mb;
+    const y = date && date.year;
+    x.fromText = true;
+    if (!y) return;
+    x.name = `${x.base} ${y}`;
+    let items = [];
+    try {
+      const data = await mbWs(`series?query=${encodeURIComponent(`series:(${luceneWords(x.name)})`)}&limit=25`);
+      items = (data && data.series) || [];
+    } catch (e) {
+      console.warn('[Discogs-Credits] series search failed', e);
+      return;
+    }
+    const ofYear = items.filter((it) => norm(it.name).startsWith(norm(x.base)) && new RegExp(`\\b${y}\\b`).test(it.name));
+    const bf = norm(x.base) === 'record store day' && date.month === 11 && date.day === blackFridayOf(y);
+    const hit = bf ? ofYear.find((it) => /black\s+friday/i.test(it.name))
+      : (norm(x.base) !== 'record store day' || date.month === 4) ? ofYear.find((it) => norm(it.name) === norm(x.name)) : null;
+    if (hit) {
+      Object.assign(x, { mbid: hit.id, name: hit.name, type: hit.type || 'Release series', fromText: false });
+      log('info', 'formatSeries', { name: hit.name, date: formatDateValue({ begin: date, end: date }) });
+    }
+  }
+
   async function loadSeries(list) {
+    for (const x of list) if (x.fromFormat) await formatSeriesResolve(x); // [Z-RSD] (3.122.0, S192)
     let found = new Map();
     // [Z-KXS] (3.80.0, S117) a series known by its MBID (from the mapping) needs no lookup
     const byUrl = list.filter((x) => !x.mbid && (x.links || [])[0]);
@@ -32557,7 +32644,7 @@
         if (x.fromVideo) row.notes = [x.number ? 'seriesFromVideo' : 'seriesFromVideoNoDate'];
       } else {
         Object.assign(row, { level: 'skip', levelTouched: true, seriesType: hit ? hit.type : '' });
-        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : x.fromText ? 'seriesText' : 'seriesMissing'];
+        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : x.fromFormat ? 'seriesFormat' : x.fromText ? 'seriesText' : 'seriesMissing'];
       }
       S.rows.push(row);
       log(hit ? 'info' : 'warn', x.fromVideo ? 'seriesVideo' : 'series', { name: x.name, number: x.number || '–' });
@@ -35511,7 +35598,7 @@
   // --- [Z-CIMP] (3.101.0, S164) a series named in a text, once linked: the release (or its group) part of it, with its number
   function seriesLinked(owner, typeName = '') {
     if (!owner || !owner.srcSeries) return;
-    for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).some((k) => k === 'seriesText' || k === 'seriesMissing' || k === 'seriesType'))) {
+    for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).some((k) => k === 'seriesText' || k === 'seriesFormat' || k === 'seriesMissing' || k === 'seriesType'))) {
       // ((review) a series of recordings, works or events: no part of it for the release – on Skip with its note
       if (typeName && !/^release(?: group)? series$/i.test(String(typeName))) {
         Object.assign(r, { notes: ['seriesType'], seriesType: typeName, level: 'skip', levelTouched: true });

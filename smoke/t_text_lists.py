@@ -950,6 +950,38 @@ def case_dtrk3121r():
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_prodfor3122r():
+    """Credits Importer 3.122.0 (review of Z-PRODFOR, S191, and Z-RSD, S192), in Node, DISCOGS.toRelease: "Producer [Assistant, For Radio
+    Bremen (2)]" stays an assistant producer (Radio Bremen a label); "Executive-Producer [For Atlantic]" executive; "Producer [For VARA,
+    For BBC]" both; "Producer [For The Album \"Foo\"]", "Production Manager [For EMI]", "Mixed By [For X Records]" no label; VARA Radio
+    listed under "Companies, etc." as "Produced For" not twice. Format "RSD Black Friday" and "Cassette Store Day": both series, no
+    "Limited Edition", "Reissue"."""
+    js = subprocess.run(['node', '-e', r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+const M = require(process.argv[1]);
+const tl = []; for (let i = 1; i <= 22; i++) tl.push({ position: String(i), title: 'T' + i, type_: 'track' });
+const ex = (name, id, role, tracks = '') => ({ name, id, role, tracks, anv: '', join: '' });
+const d = { id: 1, title: 'x', tracklist: tl, extraartists: [ex('Aad Bos', 11, 'Producer [Session Originally Produced For VARA Radio By]', '16 to 21'),
+  ex('Pete', 13, 'Producer [Assistant, For Radio Bremen (2)]'), ex('Exec', 14, 'Executive-Producer [For Atlantic]'), ex('Two', 21, 'Producer [For VARA, For BBC]'),
+  ex('Al', 20, 'Producer [For The Album "Foo"]'), ex('PM', 19, 'Production Manager [For EMI]'), ex('Mix', 18, 'Mixed By [For X Records]')],
+  companies: [{ name: 'VARA Radio', id: 99, entity_type_name: 'Produced For', catno: '' }],
+  formats: [{ name: 'Vinyl', descriptions: ['LP', 'Limited Edition', 'Reissue'], text: 'RSD Black Friday' }, { name: 'Cassette', descriptions: ['Cassette Store Day'], text: '' }], released: '2025-11-28' };
+const r = M.DISCOGS.toRelease(d, 1);
+console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role]), companies: r.companies.map((c) => [c.who.name, c.role]), series: r.series.map((x) => x.name) }));
+""", str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    print('  ', g)
+    cr = dict((n, r) for n, r in (g or {}).get('credits', []))
+    co = (g or {}).get('companies', [])
+    ok = g is not None and cr.get('Pete') == 'Producer [Assistant]' and cr.get('Aad Bos') == 'Producer' and cr.get('Exec') == 'Executive-Producer' and cr.get('Two') == 'Producer' \
+        and sorted(n for n, r in co if r.endswith('For')) == ['Atlantic', 'BBC', 'Radio Bremen', 'VARA', 'VARA Radio'] and [n for n, r in co].count('VARA Radio') == 1 \
+        and ['Atlantic', 'Executive Produced For'] in co and not any(n in ('The Album "Foo"', 'EMI', 'X Records') for n, r in co) \
+        and sorted(g['series']) == ['Cassette Store Day', 'Record Store Day']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all
