@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.119.0",
+  "version": "3.120.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -78,6 +78,9 @@
     [{"$re":"^designed (by|at)","$flags":""},{"id":"C033","label":["design"],"artist":["design"],"level":"release"}],
     [{"$re":"^artwork by","$flags":""},{"id":"C034","label":["artwork"],"artist":["artwork"],"level":"release"}],
     [{"$re":"^photography by","$flags":""},{"id":"C035","label":["photography"],"artist":["photography"],"level":"release"}],
+    [{"$re":"^art direction by","$flags":""},{"id":"C047","label":["art direction"],"artist":["art direction"],"level":"release"}],
+    [{"$re":"^graphic design by","$flags":""},{"id":"C048","label":["graphic design"],"artist":["graphic design"],"level":"release"}],
+    [{"$re":"^illustration by","$flags":""},{"id":"C049","label":["illustration"],"artist":["illustration"],"level":"release"}],
     [{"$re":"^(recorded|overdubbed) in","$flags":""},{"id":"C038","area":["recorded in"],"level":"recording"}],
     [{"$re":"^mixed in","$flags":""},{"id":"C039","area":["mixed in"],"level":"recording"}],
     [{"$re":"^mastered in","$flags":""},{"id":"C040","area":["mastered in"],"level":"release"}],
