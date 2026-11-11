@@ -2900,9 +2900,12 @@ def case_profiles():
             pg.click('[data-el=settings] [data-act=profile-export]')
         path = dl.value.path()
         data = json.loads(open(path, encoding='utf-8').read())
-        pg.set_input_files('[data-el=settings] [data-profiles-import]', path)
-        # ([3.77.0] Z-FLK) the profiles imported (the file is read in the background), not a time
-        H.wait_ok(pg, "(JSON.parse(localStorage.getItem('dci-profiles') || '[]') || []).length >= 4", 15)
+        # ([3.77.0] Z-FLK) the profiles imported (the file is read in the background), not a time; (3.114.0) the file given once more
+        # when the settings were drawn anew just then (the input replaced: no import, nothing in the log) – about one run in three
+        for _ in range(3):
+            pg.set_input_files('[data-el=settings] [data-profiles-import]', path)
+            if H.wait_ok(pg, "(JSON.parse(localStorage.getItem('dci-profiles') || '[]') || []).length >= 4", 6):
+                break
         e1 = [pg.evaluate(PROFS), e0['opts'], [x['name'] for x in data['profiles']], data['format']]
         H.open_settings(pg, 'general')
         pg.click('[data-el=settings] .dci-iolog > summary')
