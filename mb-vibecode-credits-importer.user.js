@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.125.0
+// @version      3.126.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.125.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.125.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.126.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.126.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.125.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.126.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -363,6 +363,7 @@
       "wnote.error": "the search failed – look for it by hand",
       "preview.arrangementOf": "arrangement of “{title}”",
       "preview.quotesFrom": "quotes lyrics from “{title}”",
+      "preview.remixOf": "remix of “{title}”",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -1705,6 +1706,13 @@
       "uncr.all": "Not named on the release ({src}: uncredited) – on Skip:",
       "uncr.some": "Not named on the release ({src}: uncredited) – on Skip:",
       "uncr.take": "Take anyway",
+      "rmx.ask": "Remixer only from the title {titles} (MusicBrainz) – take it?",
+      "rmx.take": "Take as remixer",
+      "rmx.takeTitle": "The title names this artist as the remixer: the role is staged (with “remix of” the original track, when it is on this release)",
+      "rmx.of": "{remix} is a remix of {orig}",
+      "rmx.ofTake": "Add “remix of”",
+      "rmx.ofTaken": "✓ “remix of” added",
+      "rmx.ofTitle": "The recording of the remix linked to the recording it remixes (MusicBrainz's “remix of”) – click again to leave it out",
       "uncr.takeOne": "Take “{role}” anyway",
       "uncr.takeOneTitle": "This role of the person on its level, though the release does not name it",
       "uncr.takeAll": "Take all uncredited",
@@ -1775,6 +1783,7 @@
       "log.dateOrderKept": "{name} ({role}): {date} kept, though before {other}",
       "log.dateOrderDropped": "{name} ({role}): {date} removed (before {other})",
       "log.uncrTaken": "Taken though uncredited: {n} roles ({list})",
+      "log.rmxTaken": "Taken as the remixer from the title: {name} ({n} roles)",
       "log.playsTaken": "From the notes for {name}: {list}",
       "log.ensembleApplied": "Only those named play on the tracks of “{line}”",
       "log.soloAnswered": "“{line}”: {ans}",
@@ -3623,6 +3632,7 @@
       "dedbox.create": "Create …",
       "dedbox.createTitle": "Create the artist “{name}” in MusicBrainz (a new tab) – then give its MBID here",
       "yell.kind.ded": "dedication not sure",
+      "yell.kind.rmx": "remixer from a title",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.askVoice": "“{role}”: plain vocals (MusicBrainz has no role credit for them), or other vocals or lead vocals credited “voice”? – please choose:",
       "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
@@ -4447,6 +4457,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S200', where: 'remixParts, remixTitleCredits, rmxHtml, rmxTake; REMIX_WORDS', note: 'Remixes (3.126.0; collected item Z-RMXTITLE): a title of MusicBrainz ending in "(X Remix)", "(X Dub)", "(X Rework)", "[Remix by X & Y]" (REMIX_WORDS, extendable in the mapping) – X a remixer of that recording, searched by its name and on Skip until taken at its entry (a question that may be answered); with the track it remixes on the release (its title without the brackets) "remix of" (recording – recording) at the remixer\'s entry, also when the source credits the remixer already' },
     { id: 'S199', where: 'TEXT.parse (commissionLine, joinBroken), addCompanyEntry, suggestByName, datesWithContext, findFestivals; COMMISSIONER_WORDS, REMIX_WORDS', note: 'Texts (3.125.0; collected item Z-EXCEPTC): "All tracks except \'Heavy Industry\' and \'Industrial Unrest\' were / composed and commissioned for the 2025 Roadburn Festival." (a sentence over two lines read as one) – "commissioned" on the works of those tracks (remixes left out: their work is the original\'s), a label searched by its name ("Roadburn Festival"; MusicBrainz\'s names like it suggested, "Create …"), the year before the name its date (begin and end). "composed for X" / "written for X" is a commission when X has a word of COMMISSIONER_WORDS (Festival, Biennale, Proms, Radio, Foundation …) – else a dedication (S107); such a festival is not left out (S007) nor a festival recording (S056), its year no date of the composition' },
     { id: 'S198', where: 'TEXT.parse (siteHosts), siteOf, siteHintRun, siteNoteHtml', note: 'Texts (3.124.0; collected item Z-WEBDOM): a line only of web addresses is left out as before (now also a line only of an address in lower case with any ending: "castlesin.space"); a site that is a linked entry\'s own – its letters the name ("castlesin.space": Castles in Space) or its start ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for it yet: a note at the entry with a link to its page for editing in MusicBrainz, the address filled in (MusicBrainz\'s addresses of the entry looked up once)' },
     { id: 'S197', where: 'TEXT.parse, renderDedBox, yellItems', note: 'Dedications (3.124.0; collected item Z-INMEM): a line only of a dedication ("In memory of Kyle Bunell-Cooke.", "Dedicated to the memory of …") is no line not recognized – the box "Dedications & tributes" has it; one MusicBrainz does not know has "Create …" there (an artist of that name, in a new tab); each suggestion of the box counts as a question that may be answered (yellow)' },
@@ -5433,7 +5444,50 @@
   const COMMISSION_BEFORE_NAME = /\b(?:[Cc]ommissioned\s+(?:for|by)|(?:[Cc]omposed|[Ww]ritten|[Cc]reated)\s+(?:(?:[Ee]specially|[Ss]pecially)\s+)?for)\s+(?:[Tt]he\s+)?(?:(?:19|20)\d{2}\s+)?(?:\p{Lu}[\p{L}'’.&-]*\s+){0,4}$/u;
   // [Z-RMXTITLE] (3.125.0) the words of a remix in a track's title ("This Machine (TVAM Remix)"): no work of its own
   const REMIX_WORDS = MAP.REMIX_WORDS;
-  const remixTitle = (t) => { const m = String(t || '').match(/\(([^()]*)\)\s*$/); return !!m && m[1].trim().split(/\s+/).some((w) => REMIX_WORDS.has(w.toLowerCase())); };
+  const remixTitle = (t) => { const m = String(t || '').match(/[([]([^()[\]]*)[)\]]\s*$/); return !!m && m[1].trim().split(/\s+/).some((w) => REMIX_WORDS.has(w.toLowerCase())); };
+  /**
+   * [Z-RMXTITLE] (3.126.0, S200) Words around the name of a remixer that name no one ("Extended Club Remix", "2009 Stereo Remix", "The Remix",
+   * "Disco Dub"): REMIX_FILLER of the mapping, numbers and ordinals too.
+   */
+  const REMIX_FILLER = MAP.REMIX_FILLER;
+  const rmxFiller = (w) => REMIX_FILLER.has(String(w).toLowerCase()) || /^(?:\d+(?:st|nd|rd|th)?|\d{2}"?|'\d{2})$/i.test(w);
+  /** A title without "(feat. X)" at its end – the title a remix and its original share. */
+  const remixBase = (t) => String(t || '').replace(/\s*[([](?:feat\.?|ft\.?|featuring|with)\s[^()[\]]*[)\]]\s*$/i, '').trim();
+  /**
+   * [Z-RMXTITLE] (3.126.0, S200) "This Machine (TVAM Remix)", "Song [Remix by A & B]": the title it remixes and the remixers' names
+   * (none: "(Remix)", "(Extended Dub)") – null when the brackets at the end hold no word of REMIX_WORDS. ((review) only the part after a dash
+   * ("Radio Edit - TVAM Remix"), "feat. Y" left out, filler words off both ends; two names only when each has two words or more ("Jane Roe &
+   * John Doe"; "Above & Beyond" one name).)
+   */
+  function remixParts(title) {
+    const m = String(title || '').match(/^(.*?)\s*[([]([^()[\]]+)[)\]]\s*$/);
+    if (!m || !m[1].trim()) return null;
+    const inner = m[2].trim().split(/\s+[-–—/:]\s+/).pop();
+    const by = inner.match(/^(?:re-?mix(?:ed)?|rework(?:ed)?|dub(?:bed)?)\s+by\s+(.+)$/i);
+    let names = '';
+    if (by) names = by[1];
+    else {
+      const ws = inner.split(/\s+/);
+      let k = -1;
+      ws.forEach((w, i) => { if (REMIX_WORDS.has(w.toLowerCase())) k = i; });
+      if (k < 0) return null;
+      names = ws.slice(0, k).join(' ');
+    }
+    names = names.replace(/\s+(?:feat\.?|ft\.?|featuring)\s.*$/i, '');
+    const clean = (n) => {
+      const ws = n.replace(/['’]s$/i, '').split(/\s+/).filter(Boolean);
+      while (ws.length && rmxFiller(ws[0])) ws.shift();
+      while (ws.length && (rmxFiller(ws[ws.length - 1]) || REMIX_WORDS.has(ws[ws.length - 1].toLowerCase()))) ws.pop();
+      return ws.join(' ').replace(/['’]s$/i, '');
+    };
+    const parts = String(names).split(/\s*(?:,|\bvs\.?(?=\s))\s*/i).flatMap((n) => {
+      const two = n.split(/\s+(?:&|and)\s+/i);
+      return two.length > 1 && two.every((x) => x.trim().split(/\s+/).length >= 2) ? two : [n];
+    });
+    const list = parts.map(clean).filter((x) => /\p{L}/u.test(x));
+    return { base: m[1].trim(), names: list };
+  }
+
   // [Z-PRODFOR] (3.122.0, S191) "… Produced For VARA Radio By", "For X" in the details of a producer: X
   // ((review) only "(Session) (Originally) Produced For X (By)" and "For X": no words of a track, side, album, version after it)
   const PROD_FOR = /^(?:(?:[Ss]ession\s+)?(?:[Oo]riginally\s+)?[Pp]roduced\s+)?[Ff]or\s+(\p{Lu}[^[\]]*?)(?:\s+[Bb]y)?\s*$/u;
@@ -11032,7 +11086,8 @@
       const gKey = who.id ? `id:${who.id}` : who.placeholder ? `ph:${norm(who.name)}` : `name:${norm(who.name)}`;
       if (!groups.has(gKey)) {
         // [S060] (3.38.12) a name in capitals in normal case (F-4), the source's spelling kept ("in capitals" in the head)
-        const nc = who.placeholder || c.initialsFor ? { name: who.name, from: '' } : personCaseOf(who.name);
+        // ([Z-RMXTITLE] 3.126.0) a remixer of a title as MusicBrainz writes it ("TVAM")
+        const nc = who.placeholder || c.initialsFor || c.rmxTitle ? { name: who.name, from: '' } : personCaseOf(who.name);
         if (!nc.from && who.caseFrom) nc.from = who.caseFrom;
         groups.set(gKey, { dId: who.id || 0, name: nc.name, ...(nc.from ? { caseFrom: nc.from } : {}), rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
@@ -11064,7 +11119,7 @@
         const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}`;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
-            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle,
+            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle,
             ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}) }); // ([Z-ABBR] 3.101.0, review)
         }
         const entry = group.roles.get(rKey);
@@ -11080,6 +11135,8 @@
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
         if (c.workArr) entry.workArr = true; // [Z-ARRL] (3.94.0, S150)
+        // [Z-RMXTITLE] (3.126.0, S200; review) only from titles while every credit of the role is one (a credit of the source is taken as it is)
+        if (!c.rmxTitle) entry.rmxTitle = false;
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
         // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
@@ -11479,6 +11536,7 @@
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
       titleParts, medleySplit, typoQuotes, headingKind, suiteOffers, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
+      remixParts, // [Z-RMXTITLE] (3.126.0, review)
     };
     return;
   }
@@ -13562,6 +13620,9 @@
       // [Z-EXC] (3.49.0) an arrangement of a work; lyrics quoted from another work
       arrangementLt: findLt('work', 'work', 'arrangement'),
       quoteLt: findLt('work', 'work', 'lyrical quotation'),
+      // [Z-RMXTITLE] (3.126.0) a recording that is a remix of another ("remix of", 230)
+      remixLt: findLt('recording', 'recording', 'remix'),
+      remixerLt: findLt('artist', 'recording', 'remixer'),
       // Fallback IDs are the values currently used on musicbrainz.org.
       memberLtId: (findLt('artist', 'artist', 'member of band') || { id: 103 }).id,
       isPersonLtId: (findLt('artist', 'artist', 'is person') || { id: 108 }).id, // [Z-ALIAS] (3.108.0) "performs as"
@@ -14626,7 +14687,9 @@
       // [Z-DSUP] (3.106.0) held: its level kept; ((review) its rule switched off: released
       if (row.dsupHold && !ruleOn(row.dsupHold.kind === 'conflict' ? 'S173' : 'S174')) delete row.dsupHold;
       if (row.dsupHold) row.dsupHold.level = lv;
-      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out || row.rsocOff || row.uncrOff || row.dsupHold) {
+      // [Z-RMXTITLE] ((3.126.0, review) S200) a remixer of a title not taken yet: kept on Skip (also with the rule off), its level to come back to
+      if (row.rmxOff) row.rmxLevel = lv;
+      if (row.srcOff || row.aboutHidden || row.notesHidden || row.mxSkipped || row.s046Out || row.rsocOff || row.uncrOff || row.dsupHold || row.rmxOff) {
         if (row.srcOff) row.srcOffLevel = lv;
         if (row.aboutHidden) row.aboutLevel = lv;
         if (row.notesHidden) row.notesLevel = lv;
@@ -15043,6 +15106,28 @@
         if (stagedLink && stagedLink.sig === itemSig(item)) continue;
         items.push(item);
       }
+    }
+
+    // [Z-RMXTITLE] (3.126.0, S200) a remix "remix of" the track it remixes (both on the release): once taken at its remixer's entry
+    for (const x of ruleOn('S200') ? S.remixOf || [] : []) {
+      const lt = idx().remixLt;
+      const t = S.mbTracks[x.i];
+      const o = x.j != null ? S.mbTracks[x.j] : null;
+      if (!x.taken || !lt || !t || !o || t.recordingGid === o.recordingGid || !x.key || !S.artists.get(x.key)) continue;
+      if (S.existing && S.existing.loose && (S.existing.loose.has(`${t.recordingGid}|${o.recordingGid}|${lt.gid}`) || S.existing.loose.has(`${o.recordingGid}|${t.recordingGid}|${lt.gid}`))) continue;
+      const key = `rrel|remix|${t.recordingGid}|${o.recordingGid}`;
+      planned.add(key);
+      if (!inMedium(x.i)) continue;
+      const stagedLink = S.staged.get(key);
+      if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) continue;
+      seen.add(key);
+      const item = {
+        kind: 'rec-rel', lt, attrs: [], noteText: '', key, credit: '', fromGid: t.recordingGid, fromTitle: t.title, toGid: o.recordingGid, toTitle: o.title, toTrack: o,
+        date: null, update: stagedLink || null,
+        target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+      };
+      if (stagedLink && stagedLink.sig === itemSig(item)) continue;
+      items.push(item);
     }
 
     // [Z-CWR] (3.56.0, S082) works with a more exact type than writer for a person: work gid|artist MBID
@@ -17710,6 +17795,8 @@
       const rows = S.rows.filter((r) => r.artistKey === a.key);
       if (!a.mbid && rows.some((r) => r.level !== 'skip')) add('must', 'link', `link:${a.key}`, { a });
       if (rows.some(uncrPending)) add('must', 'uncr', `uncr:${a.key}`, { a });
+      // [Z-RMXTITLE] (3.126.0, S200) a remixer of a title, a "remix of" not taken: may be answered
+      if (ruleOn('S200') && (rows.some(rmxAsk) || remixOfFor(a).some((x) => !x.taken))) add('can', 'rmx', `rmx:${a.key}`, { a });
       if (rows.some((r) => r.dsupHold && r.level === 'skip' && ['conflict', 'update'].includes(r.dsupHold.kind))) add('must', 'dsup', `dsup:${a.key}`, { a });
       rows.filter((r) => r.instsAuto && r.level !== 'skip' && r.level !== 'work').forEach((r) => {
         const ev = eventKeyOf(r);
@@ -17761,6 +17848,7 @@
     } else if (it.rows.length) el = byRows();
     else if (it.kind === 'link') el = sec && sec.querySelector(`[data-match="${it.a.key}"]`);
     else if (it.kind === 'uncr') el = sec && sec.querySelector('[data-el=uncr] > span');
+    else if (it.kind === 'rmx') el = sec && sec.querySelector('[data-el=rmx]');
     else if (it.kind === 'dsup') el = sec && sec.querySelector('[data-el=dsup] .dci-dsup-h');
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
@@ -23277,6 +23365,7 @@
       // ([Z-WNEW] [Z-MDLY] 3.98.0, review) the works replaced and the suggestions of "arrangement of"
       replace: [...(S.workReplace || [])].map(([i, r]) => [i, { gid: r.gid, title: r.title, removed: !!r.removed }]),
       arrs: [...(S.workRels || [])].map(([i, l]) => [i, l.filter((r) => r.confirm).map((r) => encField({ ...r }))]).filter(([, l]) => l.length),
+      rmxOf: (S.remixOf || []).filter((x) => x.taken && x.j != null).map((x) => [x.i, x.j]), // ([Z-RMXTITLE] 3.126.0, review) the "remix of" taken
       on: encField([...S.linkAttrOn].filter(([, v]) => v && v.size)),
       off: encField([...S.linkAttrOff].filter(([, v]) => v && v.size)),
       fills: [...S.dateFills].map(([k, f]) => [k, encField({ ...f, fromCol: f.fromCol ? colKeyOut(f.fromCol) : null })]),
@@ -23307,6 +23396,7 @@
       if (!S.workReplace) S.workReplace = new Map();
       if (!S.workReplace.has(i)) S.workReplace.set(i, { gid: r.gid, title: r.title || '', removed: !!r.removed });
     });
+    (w.rmxOf || []).forEach(([i, j]) => { const x = (S.remixOf || []).find((y) => y.i === i && y.j === j); if (x) x.taken = true; }); // ([Z-RMXTITLE] 3.126.0, review)
     (w.arrs || []).forEach(([i, l]) => {
       if (!(i < S.mbTracks.length) || !Array.isArray(l)) return;
       if (!S.workRels) S.workRels = new Map();
@@ -23742,6 +23832,7 @@
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
       suggestCommissioned(row);
       uncrSkip(row); // [Z-UNCR] (3.102.0, S167; review: once its level is settled)
+      if (c.rmxTitle) rmxSkip(row); // [Z-RMXTITLE] (3.126.0, S200)
       S.rows.push(row);
     }
   }
@@ -23837,6 +23928,93 @@
     Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip' });
   }
   const uncrPending = (r) => !!r.uncrOff && r.level === 'skip';
+  /** [Z-RMXTITLE] (3.126.0, S200) A remixer only from a track's title: on Skip until it is taken (a question that may be answered). */
+  function rmxSkip(row) {
+    if (!ruleOn('S200') || row.level === 'skip') return;
+    Object.assign(row, { rmxTitle: true, rmxOff: true, rmxLevel: row.level, level: 'skip' });
+  }
+  const rmxPending = (r) => !!r.rmxOff && r.level === 'skip';
+  /**
+   * [Z-RMXTITLE] (3.126.0, S200) The remixers MusicBrainz's titles name ("(TVAM Remix)"): a credit "Remix" on that track for each one
+   * the source does not credit with a remix of it already; S.remixOf – each remix with the track it remixes (its title without the
+   * brackets, on the release), for "remix of".
+   */
+  function remixTitleCredits(credits) {
+    S.remixOf = [];
+    if (!ruleOn('S200')) return credits || [];
+    const out = [...(credits || [])];
+    S.mbTracks.forEach((t, i) => {
+      if (S.mediaSel && !inSelection(i)) return;
+      const p = remixParts(t.title);
+      if (!p || !p.names.length) return;
+      // ((review) "A (feat. X)" is "A"; never the same recording)
+      const j = S.mbTracks.findIndex((u, k) => k !== i && u.recordingGid !== t.recordingGid && !remixParts(u.title) && norm(remixBase(u.title)) === norm(remixBase(p.base)));
+      for (const name of p.names) {
+        // ((review) the name or the name it is credited as ("Tim Vam" as "TVAM"); "Engineer [Remix]" a remix too; a person of the source
+        // credited otherwise: the title's credit joins that entry)
+        const same = (c) => c.who && [c.who.name, c.credited].some((n) => n && nameKey(n) === nameKey(name));
+        const remixRole = (c) => /re-?mix/i.test([c.role, ...(c.details || [])].join(' '));
+        const credited = (credits || []).some((c) => same(c) && remixRole(c) && (!c.tracks || c.tracks.all || (c.tracks.indexes || []).includes(i)));
+        const known = (credits || []).find(same);
+        if (!credited) out.push({ who: known ? known.who : { name }, role: 'Remix', tracks: { indexes: [i], spec: String(t.number || i + 1) }, rmxTitle: true, line: t.title });
+        S.remixOf.push({ i, j: j >= 0 ? j : null, name, credited, taken: false, key: null });
+      }
+    });
+    return out;
+  }
+  /** The entry of each remixer (by its name), once the entries are made. */
+  function remixOfAssign() {
+    for (const x of S.remixOf || []) {
+      const named = (e, r) => [e.name, e.rawName, r && r.anv].some((n) => n && nameKey(n) === nameKey(x.name));
+      const row = S.rows.find((r) => r.tracks.has(x.i) && (r.rmxTitle || (r.types || []).includes('remixer')) && named(S.artists.get(r.artistKey) || {}, r));
+      const a = (row && S.artists.get(row.artistKey)) || [...S.artists.values()].find((e) => !e.company && named(e, null));
+      x.key = a ? a.key : null;
+    }
+  }
+  /** ((review) "remix of" MusicBrainz has already, either way: not asked) */
+  const remixOfInMb = (x) => {
+    const lt = idx().remixLt;
+    const t = S.mbTracks[x.i];
+    const o = x.j != null ? S.mbTracks[x.j] : null;
+    const L = S.existing && S.existing.loose;
+    return !!(lt && t && o && L && (L.has(`${t.recordingGid}|${o.recordingGid}|${lt.gid}`) || L.has(`${o.recordingGid}|${t.recordingGid}|${lt.gid}`)));
+  };
+  const remixOfFor = (a) => (ruleOn('S200') ? (S.remixOf || []).filter((x) => x.key === a.key && x.j != null && !remixOfInMb(x)) : []);
+  /** ((review) a remixer of a title MusicBrainz has as the remixer of those recordings already: no question) */
+  function rmxInMb(r) {
+    const a = S.artists.get(r.artistKey) || {};
+    const lt = idx().remixerLt;
+    const L = S.existing && S.existing.loose;
+    return !!(a.mbid && lt && L && r.tracks.size && [...r.tracks].every((i) => S.mbTracks[i] && L.has(`${S.mbTracks[i].recordingGid}|${a.mbid}|${lt.gid}`)));
+  }
+  const rmxAsk = (r) => rmxPending(r) && !rmxInMb(r);
+  const rmxTrackLabel = (i) => { const t = S.mbTracks[i] || {}; return `${trackListLabel([i])} “${t.title || ''}”`; };
+  /** At the entry: the remixer from the title(s) to take; each remix with its "remix of" the original (taken or not). */
+  function rmxHtml(a) {
+    const off = S.rows.filter((r) => r.artistKey === a.key && rmxAsk(r));
+    const tracks = uniq(off.flatMap((r) => [...r.tracks])).sort((x, y) => x - y);
+    const ask = off.length ? `<div><span>${esc(tr('rmx.ask', { titles: tracks.map((i) => `“${(S.mbTracks[i] || {}).title || ''}”`).join(', ') }))}</span>
+      <button type="button" class="dci-small" data-act="rmx-take" data-key="${esc(a.key)}" title="${esc(tr('rmx.takeTitle'))}">${esc(tr('rmx.take'))}</button></div>` : '';
+    const lines = remixOfFor(a).map((x) => `<div class="dci-rmxof" data-el="rmxof"><span>${esc(tr('rmx.of', { remix: rmxTrackLabel(x.i), orig: rmxTrackLabel(x.j) }))}</span>
+      <button type="button" class="dci-small" data-act="rmxof-toggle" data-n="${S.remixOf.indexOf(x)}" aria-pressed="${x.taken}" title="${esc(tr('rmx.ofTitle'))}">${esc(x.taken ? tr('rmx.ofTaken') : tr('rmx.ofTake'))}</button></div>`).join('');
+    return ask || lines ? `<div class="dci-note dci-rmx" data-el="rmx">${ask}${lines}</div>` : '';
+  }
+  /** "Take": the rows of the remixer back on their level (as uncrTake), its "remix of" taken too. */
+  function rmxTake(a) {
+    const rows = S.rows.filter((r) => r.artistKey === a.key && rmxPending(r));
+    for (const r of rows) {
+      const lv = r.rmxLevel || r.defaultLevel || 'recording';
+      const touched = !!r.levelTouched;
+      r.rmxOff = false;
+      if (S.scope !== 'all' && S.scope === 'work') {
+        levelOf(r, 'skip');
+        r.scopeLevel = lv;
+      } else levelOf(r, lv);
+      r.levelTouched = touched;
+    }
+    remixOfFor(a).forEach((x) => { x.taken = true; });
+    log('info', 'rmxTaken', { name: a.mbName || a.name, n: rows.length });
+  }
 
   /**
    * A company of the source (label, place, area – a group of groupCompanies) as an entry with its rows, as the import makes it (moved
@@ -24009,7 +24187,8 @@
 
       // [S026] entries whose credits were all left out for a medium the release does not have
       const leftOutKeys = new Set();
-      for (const g of groupCredits(placeholderCredits(rel.credits))) {
+      // [Z-RMXTITLE] (3.126.0, S200) the remixers MusicBrainz's titles name
+      for (const g of groupCredits(placeholderCredits(remixTitleCredits(rel.credits)))) {
         const artist = newPersonEntry(g);
         S.artists.set(artist.key, artist);
         addCreditRows(artist, g, rel, source, leftOutKeys);
@@ -24019,6 +24198,7 @@
       S.stackAlt = rel.stackAlt || [];
       S.stackAltUnrec = rel.stackAltUnrec || null;
       for (const g of groupCompanies(rel.companies)) addCompanyEntry(g, rel, leftOutKeys);
+      remixOfAssign(); // [Z-RMXTITLE] (3.126.0, S200)
       // [3.7.0] A company with an area ("Loft, Cologne") is a place, when its roles allow one
       for (const c of S.artists.values()) {
         if (c.company && c.area && !c.entityType && companyTypes(c).includes('place')) setCompanyEntityType(c, 'place');
@@ -25134,6 +25314,7 @@
     const date = it.date ? ` [${formatDateValue(it.date) || tr('date.endedOnly')}]` : '';
     // [Z-EXC] (3.49.0) a work with the work it arranges or quotes
     if (it.kind === 'work-rel') return `${it.fromTitle} → ${it.toTitle} (${it.lt.name})`;
+    if (it.kind === 'rec-rel') return `${it.fromTitle} → ${it.toTitle} (${it.lt.link_phrase || it.lt.name})`; // [Z-RMXTITLE] (3.126.0)
     // [177] (3.38.10) the relationship as MusicBrainz names it ("recording of", "guest piano", "co-producer")
     if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${mbPhraseOf(it.lt, { level: it.target.kind }, it.attrs || []) || it.lt.name})${date}`;
     // [Z-SU] (3.41.2) a part of a suite
@@ -25535,6 +25716,30 @@
             S.appliedKeys.add(it.key);
             // ((3.49.0, review) counted for the edit note – taken off again when it is taken out of the editor)
             S.noteStats.workRels = (S.noteStats.workRels || 0) + 1;
+          }
+          added++;
+          log('ok', 'staged', { text });
+        } catch (e) {
+          errors.push(`${text}: ${e.message}`);
+          log('error', 'error', { text: `${text}: ${e.message}` });
+        }
+        continue;
+      }
+      // [Z-RMXTITLE] (3.126.0, S200) a remix and the recording it remixes: the remix is entity0 ("is a remix of")
+      if (it.kind === 'rec-rel') {
+        const from = recordings.get(it.fromGid);
+        const to = recordings.get(it.toGid) || (await fetchJsEntity(it.toGid).catch(() => null));
+        if (!from || !to) {
+          notLoaded.set(it.target.track.medium, (notLoaded.get(it.target.track.medium) || 0) + 1);
+          log('warn', 'skippedNotLoaded', { text });
+          continue;
+        }
+        try {
+          const st = dispatchAddRelationship(from, to, it.lt.id, [], '', null, false);
+          if (st) {
+            S.staged.set(it.key, { state: st, source: from, sig: itemSig(it), text, rowId: null, track: it.target.track.idx, noteKind: 'recording' });
+            S.appliedKeys.add(it.key);
+            S.noteStats.recording = (S.noteStats.recording || 0) + 1; // ((review) counted in the edit note)
           }
           added++;
           log('ok', 'staged', { text });
@@ -28637,6 +28842,7 @@
         ${a.artl ? artlNoteHtml(a) : ''}
         ${(S.ensAsk || []).length ? soloAskHtml(a) : ''}
         ${S.rows.some((r) => r.artistKey === a.key && uncrPending(r)) ? uncrHtml(a) : ''}
+        ${ruleOn('S200') ? rmxHtml(a) : ''}
         ${a.company || a.other ? '' : instsBarHtml(a)}
         ${a.other ? '' : dsupBoxHtml(a)}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
@@ -32420,7 +32626,7 @@
         return a.type.name;
       }).join(', ');
       // (the phrase names the attributes already: in brackets only credited names and texts it does not have – a task "cover")
-      const phrase = it.kind === 'work-link' || it.kind === 'suite-part' || it.kind === 'work-rel' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
+      const phrase = it.kind === 'work-link' || it.kind === 'suite-part' || it.kind === 'work-rel' || it.kind === 'rec-rel' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
       const credText = [...it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })),
         ...it.attrs.filter((a) => a.text_value != null && !norm(phrase).includes(norm(a.text_value))).map((a) => `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`)].join(', ');
       const line = it.kind === 'work-link'
@@ -32429,6 +32635,7 @@
         : it.kind === 'suite-part' ? [tr('preview.suitePart', { suite: it.suiteTitle, n: it.linkOrder }) + (attrText ? ` (${attrText})` : '')]
         // [Z-EXC] (3.49.0)
         : it.kind === 'work-rel' ? [tr(it.rel === 'arrangement' ? 'preview.arrangementOf' : 'preview.quotesFrom', { title: it.toTitle })]
+        : it.kind === 'rec-rel' ? [tr('preview.remixOf', { title: it.toTitle })] // [Z-RMXTITLE] (3.126.0)
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
           // [177] (3.38.10) as MusicBrainz names it, with its attributes; credited names and texts in brackets
@@ -40841,6 +41048,7 @@
     delete row.entrySkip;
     // ([Z-UNCR] 3.102.0, review) uncredited taken by a level of its own
     if (level !== 'skip' && row.uncrOff) Object.assign(row, { uncrOff: false, uncrTaken: true });
+    if (level !== 'skip' && row.rmxOff) row.rmxOff = false; // ([Z-RMXTITLE] 3.126.0)
     if (level !== 'skip' && row.dsupHold) { delete row.dsupHold; row.dsupTaken = true; } // ([Z-DSUP] 3.106.0)
     const toOrFromWork = level === 'work' || row.level === 'work';
     // [Q-cn] (3.41.15, review) taken off "Skip" that a question's answer set: the question is asked again
@@ -40859,7 +41067,7 @@
   }
 
   function setLevel(row, level) {
-    const uncr = uncrPending(row) || !!row.dsupHold;
+    const uncr = uncrPending(row) || !!row.dsupHold || rmxPending(row);
     // [Z-EVCOL] (3.103.0) its event left empty: a column of its own until taken away
     const toOrFromWork = emGhostWatch(S.artists.get(row.artistKey), [row], () => levelOf(row, level));
     if (matrixDateForLevel(row)) {
@@ -42129,6 +42337,21 @@
         refresh();
         break;
       // [Z-UNCR] (3.102.0, S167) uncredited taken anyway – these rows, or all of the release
+      // [Z-RMXTITLE] (3.126.0, S200) the remixer of a title taken (with its "remix of"); a "remix of" on or off
+      case 'rmx-take': {
+        const a = S.artists.get(btn.dataset.key);
+        if (a) rmxTake(a);
+        renderGroups();
+        refresh();
+        break;
+      }
+      case 'rmxof-toggle': {
+        const x = (S.remixOf || [])[Number(btn.dataset.n)];
+        if (x) x.taken = !x.taken;
+        renderGroups();
+        refresh();
+        break;
+      }
       case 'uncr-take':
       case 'uncr-all': {
         const ids = new Set(String(btn.dataset.rows || '').split(','));
@@ -42771,6 +42994,7 @@
           r.level = btn.dataset.level;
           r.levelTouched = true;
           if (r.level !== 'skip' && r.uncrOff) Object.assign(r, { uncrOff: false, uncrTaken: true }); // ([Z-UNCR] 3.102.0, review)
+          if (r.level !== 'skip' && r.rmxOff) r.rmxOff = false; // ([Z-RMXTITLE] 3.126.0)
           resolveRowType(r);
           if (!primaryIsValid(r) || !norm(r.primaryText)) r.primaryText = pickPrimary(r);
         }
