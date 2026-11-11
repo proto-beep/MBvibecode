@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.18.0
+// @version      1.19.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -30,6 +30,7 @@
 // @grant        GM_openInTab
 // @grant        GM_xmlhttpRequest
 // @connect      i.discogs.com
+// @connect      bcbits.com
 // @noframes
 // @run-at       document-idle
 // ==/UserScript==
@@ -48,7 +49,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.18.0';
+  const COMPANION_VERSION = '1.19.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -334,8 +335,10 @@
 
     const report = (cmd, found) => GM_setValue('result', { id: cmd.id, found, ts: Date.now() });
     // [1.18.0] (Z-COCR) the frames of the large image: which dashboards are open for this release; a frame taken out there
-    if (side.id === 'discogs') {
+    // [1.19.0] (Credits Importer 3.119.0, Z-COCRBC) on Bandcamp too
+    if (side.id === 'discogs' || side.id === 'bandcamp') {
       cocrCtxFn = () => ({ liveMaps, currentReleaseId });
+      if (side.id === 'bandcamp') bcArtInit();
       GM_addValueChangeListener('cocrRemove', (name, oldValue, v) => { if (v && v.frameId) cocrRemove(String(v.frameId), false); });
     }
 
@@ -900,7 +903,8 @@
     del: COCR_DE ? 'Rahmen herausnehmen' : 'Take out the frame',
     noTab: COCR_DE ? 'Kein Import-Dashboard für dieses Release offen.' : 'No import dashboard open for this release.',
     open: COCR_DE ? 'Release auf MusicBrainz öffnen und Import starten' : 'Open the release on MusicBrainz and start the import',
-    notLinked: COCR_DE ? 'Dieses Discogs-Release ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Discogs release is linked to no release on MusicBrainz.',
+    notLinked: isBandcamp ? (COCR_DE ? 'Diese Bandcamp-Seite ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Bandcamp page is linked to no release on MusicBrainz.')
+      : COCR_DE ? 'Dieses Discogs-Release ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Discogs release is linked to no release on MusicBrainz.',
     search: COCR_DE ? 'Auf MusicBrainz suchen' : 'Search on MusicBrainz',
     failed: COCR_DE ? 'Der Ausschnitt ließ sich nicht schneiden (das Bild war nicht zu laden).' : 'The frame could not be cut out (the image could not be loaded).',
   };
@@ -909,13 +913,20 @@
     if (!cocr.images.has(url)) {
       cocr.images.set(url, (async () => {
         let blob = null;
-        try {
-          const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
-          if (r.ok) blob = await r.blob();
-        } catch (e) { /* not allowed: below */ }
-        if (!blob && typeof GM_xmlhttpRequest === 'function') {
-          blob = await new Promise((ok) => GM_xmlhttpRequest({ method: 'GET', url, responseType: 'blob', onload: (x) => ok(x.status === 200 ? x.response : null), onerror: () => ok(null), ontimeout: () => ok(null) }));
-        }
+        const get = async (u) => {
+          let b = null;
+          try {
+            const r = await fetch(u, { mode: 'cors', credentials: 'omit' });
+            if (r.ok) b = await r.blob();
+          } catch (e) { /* not allowed: below */ }
+          if (!b && typeof GM_xmlhttpRequest === 'function') {
+            b = await new Promise((ok) => GM_xmlhttpRequest({ method: 'GET', url: u, responseType: 'blob', onload: (x) => ok(x.status === 200 ? x.response : null), onerror: () => ok(null), ontimeout: () => ok(null) }));
+          }
+          return b;
+        };
+        // ([1.19.0] Z-COCRBC, review) Bandcamp: the image as uploaded ("_0") for the cut-out, else the one shown ("_10")
+        if (/bcbits\.com\/img\/.+_10\.\w+$/.test(url)) blob = await get(url.replace(/_10(\.\w+)$/, '_0$1'));
+        if (!blob) blob = await get(url);
         if (!blob) throw new Error('image');
         return createImageBitmap(blob);
       })());
@@ -929,7 +940,8 @@
     // ((review) to the dashboard the frame was first sent to; none open: nothing sent (the note says so)
     if (!f.mbRelease) f.mbRelease = cocrMbRelease();
     if (!f.mbRelease) return;
-    const base = { type: 'ocr-crop', action, frameId: f.id, n: f.n, imgN: f.imgN, releaseId: cocrCtx() ? cocrCtx().currentReleaseId() : '', mbRelease: f.mbRelease, ts: Date.now() };
+    // ([1.19.0] Z-COCRBC) the site the frame is from
+    const base = { type: 'ocr-crop', action, frameId: f.id, n: f.n, imgN: f.imgN, releaseId: cocrCtx() ? cocrCtx().currentReleaseId() : '', site: isBandcamp ? 'bandcamp' : 'discogs', mbRelease: f.mbRelease, ts: Date.now() };
     if (action === 'remove') {
       GM_setValue('cocrCrop', base);
       return;
@@ -969,7 +981,12 @@
       cocrNote('');
       return;
     }
-    const discogs = `https://www.discogs.com/release/${c.currentReleaseId()}`;
+    // ([1.19.0] Z-COCRBC) the Bandcamp album or track: its address
+    const discogs = isBandcamp ? String(c.currentReleaseId() || '') : `https://www.discogs.com/release/${c.currentReleaseId()}`;
+    if (!discogs) {
+      cocrNote(cocrText.noTab);
+      return;
+    }
     // ((review) looked up once per release; MusicBrainz not answering (503 …) is no "not linked"
     if (!cocrLookups.has(discogs)) {
       cocrLookups.set(discogs, (async () => {
@@ -977,7 +994,9 @@
         if (r.status === 404) return '';
         if (!r.ok) throw new Error(String(r.status));
         const d = await r.json();
-        const rel = (d.relations || []).find((x) => x.release && x.release.id);
+        // ((review) Bandcamp: the release it is the download or stream of, before one it sells as a medium
+        const rels = (d.relations || []).filter((x) => x.release && x.release.id);
+        const rel = (isBandcamp && rels.find((x) => /download|stream/i.test(x.type || ''))) || rels[0];
         return rel ? rel.release.id : '';
       })());
       cocrLookups.get(discogs).catch(() => cocrLookups.delete(discogs));
@@ -992,7 +1011,9 @@
     if (mbid) {
       cocrNote(cocrText.noTab, `https://musicbrainz.org/release/${mbid}/edit-relationships#dci-import&src=${encodeURIComponent(discogs)}`, cocrText.open);
     } else {
-      const title = (document.querySelector('h1') || {}).textContent || '';
+      // ((review) Bandcamp: the artist too, as Discogs's heading has it
+      const title = isBandcamp ? ['#name-section h3 a, #name-section h3 span', '#name-section .trackTitle, h2.trackTitle'].map((q) => (document.querySelector(q) || {}).textContent || '').join(' ')
+        : (document.querySelector('h1') || {}).textContent || '';
       // ((review) the title as words (no signs of the search: "AC/DC", ":")
       const words = title.replace(/[\\/:+\-!(){}[\]^"~*?|&]+/g, ' ').replace(/\s+/g, ' ').trim();
       cocrNote(cocrText.notLinked, `https://musicbrainz.org/search?type=release&query=${encodeURIComponent(words)}`, cocrText.search);
@@ -1089,6 +1110,55 @@
     cocrDraw();
     cocrSend(f, d.mode === 'new' ? 'add' : 'change');
     cocrCheckTab();
+  }
+
+  /**
+   * [1.19.0] (Credits Importer 3.119.0, Z-COCRBC) Bandcamp: every artwork of the page – the album's and those of the media to buy
+   * (their photos) – large in the companion's view with its frames, a click on one of them opens it there (in place of Bandcamp's own
+   * large image; ↗ opens it in a tab). The images: the addresses of the page's large views ("_10"; the cut-out from "_0", as uploaded), in their order.
+   */
+  const bcArtPage = () => { const h = bandcampPage(); return !!(h.album || h.trackUrl); };
+  function bcArtList() {
+    const seen = [];
+    // ((review) not the artist's photo of the page's side column
+    document.querySelectorAll('a.popupImage[href], #tralbumArt a[href*="bcbits.com"], .package-photo a[href*="bcbits.com"]').forEach((a) => {
+      if (a.closest('.bio-pic, #bio-container, #dci-art-big')) return;
+      const u = String(a.href || '').replace(/^http:/, 'https:');
+      if (/bcbits\.com\/img\//.test(u) && !seen.includes(u)) seen.push(u);
+    });
+    return seen;
+  }
+  function bcArtBox() {
+    let box = document.getElementById('dci-artwork');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dci-artwork';
+      box.hidden = true;
+      box.style.display = 'none'; // (a holder of the list only: the miniature is Discogs's)
+      box.innerHTML = '<img alt=""><span class="dci-art-nav"><span class="dci-art-n"></span></span>';
+      document.body.appendChild(box);
+    }
+    box.dataset.list = JSON.stringify(bcArtList());
+    return box;
+  }
+  function bcArtInit() {
+    if (bcArtInit.done) return;
+    bcArtInit.done = true;
+    ensureStyle();
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest && e.target.closest('a.popupImage[href], .package-photo a[href*="bcbits.com"]');
+      // ((review) only on an album's or a track's page
+      if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !bcArtPage()) return;
+      const box = bcArtBox();
+      const list = JSON.parse(box.dataset.list || '[]');
+      const i = list.indexOf(String(a.href || '').replace(/^http:/, 'https:'));
+      if (i < 0) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      box.dataset.i = String(i);
+      box.querySelector('img').src = list[i];
+      artBigOpen(box);
+    }, true);
   }
 
   /** [1.15.0] (Z-CPVA) The image the miniature shows (‹ ›: the others, after the last the first again); the counter "2 / 7". */

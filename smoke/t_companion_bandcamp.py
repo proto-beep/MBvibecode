@@ -632,6 +632,89 @@ def case_multibc():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_cocrbc3119():
+    """Credits Importer 3.119.0, Companion 1.19.0 (collected item Z-COCRBC, S178): frames for the text from cover art on Bandcamp.
+    Bandcamp is the source of a digital release; its page has the album's art and a photo of a medium to buy.
+    A) A click on the photo: the companion's large image (not Bandcamp's), "2 / 2", the frames' hint; ‹ goes to the album's art.
+    B) A frame drawn on the photo: the dashboard's window of the text from cover art opens with "Bandcamp, image 2: frame 1" and its
+       text.
+    C) ✕ at the frame in the window: gone in the large image too. D) A click with Ctrl stays Bandcamp's (no large image)."""
+    BAND = 'https://testband.bandcamp.com'
+    ALBUM = f'{BAND}/album/testalbum'
+    ART = 'https://f4.bcbits.com/img/a0111111111_10.jpg'
+    PHOTO = 'https://f4.bcbits.com/img/0022222222_10.jpg'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    page = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Test Band – guitar'}, 'trackinfo': TRACKS}, ALBUM)
+    page = page.replace('<div id="name-section">', f'<div id="tralbumArt"><a class="popupImage" href="{ART}"><img src="{ART.replace("_10", "_7")}" alt=""></a></div>'
+                        f'<div class="package-photo"><a class="popupImage" href="{PHOTO}"><img src="{PHOTO.replace("_10", "_7")}" alt=""></a></div><div id="name-section">', 1)
+    H.BC_PAGES[ALBUM] = page
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SECTS = """[...document.querySelectorAll('#dci-ocr .dci-ocr-res')].map(s => [s.querySelector('h3').textContent.replace('✕', '').trim(),
+      [...s.querySelectorAll('textarea')].map(t => t.value).join('|')])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        png = H.png_of(200, 150)
+        ctx.route('https://f4.bcbits.com/**', lambda route: route.fulfill(body=png, content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        bc, bcerr = H.open_bandcamp(ctx, ALBUM)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        pg.evaluate("window.__ocrTexts = [{ text: 'Liner notes – Photo Guy' }]")
+        bc.wait_for_timeout(1500)
+        bc.click('.package-photo a.popupImage')
+        bc.wait_for_selector('#dci-art-big .dci-cocr-layer', timeout=5000)
+        a = bc.evaluate("[document.querySelector('#dci-art-big .dci-big-n').textContent, document.querySelector('#dci-art-big .dci-big-img').getAttribute('src'), document.querySelector('#dci-art-big .dci-cocr-note').textContent]")
+        bc.click('#dci-art-big .dci-big-prev')
+        a.append(bc.evaluate("document.querySelector('#dci-art-big .dci-big-img').getAttribute('src')"))
+        bc.click('#dci-art-big .dci-big-next')
+        print('A)', a)
+        results.append(a[0] == '2 / 2' and a[1] == PHOTO and 'Frames for the text recognition' in a[2] and a[3] == ART)
+        r = bc.evaluate("(() => { const r = document.querySelector('#dci-art-big .dci-cocr-layer').getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()")
+        bc.mouse.move(r[0] + r[2] * 0.1, r[1] + r[3] * 0.1)
+        bc.mouse.down()
+        bc.mouse.move(r[0] + r[2] * 0.4, r[1] + r[3] * 0.3, steps=4)
+        bc.mouse.move(r[0] + r[2] * 0.7, r[1] + r[3] * 0.5, steps=4)
+        bc.mouse.up()
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-ocr .dci-ocr-res textarea')].some(t => /Photo Guy/.test(t.value))", 20)
+        b1 = pg.evaluate(SECTS)
+        print('B)', b1)
+        results.append(b1 == [['Bandcamp, image 2: frame 1', 'Liner notes – Photo Guy']])
+        pg.locator('#dci-ocr [data-ocr-cocr-del]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1500)
+        c1 = [pg.evaluate(SECTS), bc.evaluate("document.querySelectorAll('#dci-art-big .dci-cocr-frame').length")]
+        print('C)', c1)
+        results.append(c1 == [[], 0])
+        bc.keyboard.press('Escape')
+        bc.wait_for_timeout(300)
+        bc.evaluate("document.addEventListener('click', (e) => { if (e.target.closest('a.popupImage')) e.preventDefault(); })")
+        bc.click('#tralbumArt a.popupImage', modifiers=['Control'])
+        bc.wait_for_timeout(500)
+        d1 = bc.evaluate("!!document.getElementById('dci-art-big')")
+        print('D) Strg:', d1)
+        results.append(not d1)
+        print('Fehler:', errs, bcerr)
+        results.append(not [e for e in errs + bcerr if 'Synchronous XHR in page dismissal' not in e])
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_ytview():
     """Credits Importer 3.42.8 / Companion 1.11.0 (collected item Z-YTC; Q-de): the YouTube view – a release that links only to a video
     (loaded at once, Z-YTL), its description as YouTube draws it (folded, "…more"):
