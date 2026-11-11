@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.116.0",
+  "version": "3.117.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -29,6 +29,10 @@
     "ignored.why.software": "Musiksoftware – kein Instrument und keine Beziehung von MusicBrainz (T056)",
     "ignored.why.permission": "eine Genehmigung – kein Credit",
     "ignored.why.releaseArtist": "der Artist des Releases – eine Titelzeile, kein Credit",
+    "tcp.surnameAsk": "{word}: welche Person dieses Namens?",
+    "tcp.surnameBadge": "mehrere dieses Namens",
+    "log.tcpSurnameOne": "„{word}“ nach einem Titel: {name} (die einzige Person dieses Namens im Dashboard oder am Release)",
+    "log.tcpSurnameAsk": "„{word}“ nach einem Titel: mehrere Personen dieses Namens – {list}; am Eintrag gefragt",
     "gap.none": "Discogs: Seine Credits scheinen schon in MusicBrainz zu sein (nach Namen gezählt).",
     "gap.missing.one": "Discogs: Etwa {n} Beziehung seiner Credits ist noch nicht in MusicBrainz.",
     "gap.missing.other": "Discogs: Etwa {n} Beziehungen seiner Credits sind noch nicht in MusicBrainz.",
@@ -2733,7 +2737,7 @@
     "ignored.why.catno": "die Katalognummer des Labels",
     "ignored.why.address": "eine Adresse",
     "ignored.why.statement": "die Erklärung des Labels, wie es aufnimmt",
-    "ignored.why.releaseTitle": "der Titel des Release über seiner Trackliste",
+    "ignored.why.releaseTitle": "der Titel des Releases – eine Titelzeile, kein Credit",
     "ignored.why.gear": "Ausrüstung (Mikrofone, Verstärker, Interfaces, Software): kein Credit",
     "matrix.suggestRowTitle2": "Vorgeschlagen aus den Werken der Künstler: {what} – erst mit „Accept“ im Kopf der Matrix eingetragen; das Label zeigt, was eingetragen wird",
     "matrix.labelRoTitle": "Werktyp und Sprachen des Texts dieses Werks in MusicBrainz",

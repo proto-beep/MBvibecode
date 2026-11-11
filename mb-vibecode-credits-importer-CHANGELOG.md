@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.116.0 | 1.17.0 – 1.18.0 |
+| 2026-11-08 | 3.88.0 – 3.117.0 | 1.17.0 – 1.18.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.117.0
+
+- **Track lists as a cover prints them** (collected items Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP; rule S180): the length after a title also as 5'54, 5’54, 5'54", 5.54 or digits alone ("(G. T'Nig) 533"); the composers on the line below their track ("1. You ain't no friend of mine! 645" / "(H. Bullock)"); a title over two or more lines ("2. Tell me, where did we go 506" / "wrong ? (Idris Muhammad)") – each joined when it makes a track of the release.
+- **Several names in the brackets** (Z-TCPMULTI, S179): also apart with " - ", "~", "|", "•", "·", "et", "y" – "Disco man (Scott - Carter)" are two writers. A surname alone is the person of the dashboard or of the release's artist credit with that last name: one – the credit joins that entry; several – the entry asks which one; none – as before (looked up in MusicBrainz, else only its works).
+- **The release's title** (Z-OCRTITLE, S181): a line that is only the release's title ("YOU AIN'T NO FRIEND OF MINE |") is left out as such, not "not recognized".
+- **℗ read as P** (Z-OCRP, S182): "P1978 – Fantasy Records" is ℗ 1978 Fantasy Records.
 
 ### Import 3.116.0
 

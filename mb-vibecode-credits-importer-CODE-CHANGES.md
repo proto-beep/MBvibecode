@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.116.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.117.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.117.0 · 2026-11-08
+
+- **Z-TCPLEN (S180):** `TCP_LEN_MARKED`, `TCP_LEN_BARE`; `listLine` takes out a length with a sign and digits after a closing bracket; the `tcp` match of `readLine0` takes them after the bracket.
+- **Z-TCPNEXT, Z-TCPWRAP (S180):** `trackListLines` (TEXT.parse, after `joinWriterLines`): a numbered line whose title – alone, or with up to three following lines, each line's length taken out – is a track of the release (`resolveTitles`, `prefix: false`), with its names in brackets on the same or the next line (`titleComposerParts`; no society: `PUB_SOC`, `SOCIETY_LINE`), becomes one line "N. Title (Names)".
+- **Z-TCPMULTI (S179):** `titleComposerParts` also splits at " - ", "~", "|", "•", "·" (not a dash inside a word) and "et", "y"; `tcpSurnames` (after the import's `resolveArtists` and after a supplement's): an entry of one word whose rows are all names after titles (`tcpSingle`) – one person of the dashboard or of `S.releaseCredit` with that last name: its rows join that entry (or it is linked); several (with MBIDs): `status: 'ambiguous'`, `tcpSurname` (the question `tcp.surnameAsk`, the badge `tcp.surnameBadge`); its rows `tcpChecked`, no `tcpSingle` (S092 leaves them: `checkTitleComposerSingles` only rows still `tcpSingle`).
+- **Z-OCRTITLE (S181):** `releaseTitle` in `sourceContext`; `readLine0` leaves a line of it out (`ignored` `releaseTitle`).
+- **Z-OCRP (S182):** in `trackListLines` "P1978", "P 1978", "(P)1978" before a name at the start of a line become "℗ 1978".
+- **Texts:** `tcp.surnameAsk`, `tcp.surnameBadge`, `log.tcpSurnameOne`, `log.tcpSurnameAsk`, `ignored.why.releaseTitle` (en, de); S179 – S182 new.
+- **Tests:** `t_text_lists.py tcplabel3117` (both sides of the label, what is not joined), `t_coverart.py tcpmulti3117` ("(Man - Guy)": Bass Man; Guy asked, Drum Guy chosen) – new; fail on 3.116.0.
+- **Review:** `tcpSurnames` asks only when every person of that name is in MusicBrainz (else nothing decided: S092), skips entries linked by hand and rows S092 checked meanwhile (after a supplement it runs before S092's look-ups), rebases `tcpSingle`/`tcpChecked` (a remembered release keeps the join), moves rows as a name of initials does (credited as written, `S.entryMoved`, the entry's spellings) and clears the search's leftovers when it links; "change" beside its question; a "Lyrics by …" below a title of an "except" list belongs to that title (`titleBlock`); `listLine` takes no "5.54" (a date) and no year after the bracket ("(Remix) 2005"), `TCP_LEN_BARE` no year; " - " splits names only with a space on both sides; a bracket of its own below a title only of names of two words or the release's artists (not "(Berlin)"); S182 only before a name without digits. Known: a joined line keeps no cut-out of the cover art.
 
 ## Import 3.116.0 · 2026-11-08
 

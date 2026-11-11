@@ -842,6 +842,40 @@ def case_tcpread2():
 
 
 
+def case_tcplabel3117():
+    """Credits Importer 3.117.0 (collected items Z-TCPMULTI, Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP, Z-OCRTITLE, Z-OCRP; rules S179 – S182), in Node:
+    the labels of "You Ain't No Friend Of Mine!" as the cover's reading gives them.
+    A) Side A: "(Scott - Carter)" two names; lengths 5'54 and 533 (after the bracket) and 7'26 left out.
+    B) Side B: the release's title "YOU AIN'T NO FRIEND OF MINE |" left out as such; "(H. Bullock)" on the line below its track; a title
+       over two lines with its length in between ("… where did we go 506" / "wrong ? (Idris Muhammad)"); "P1978 – Fantasy Records" ℗.
+    C) Not joined: a track line and a publisher's bracket below it ("(Harms Inc.-ASCAP)"); "7. Boeing 747" keeps its number (the track
+       is "Boeing 747") and gets "(Jane Roe)" below it; a name with a dash in it stays one ("(Jean-Luc Ponty)"); "Ortega y Gasset" one name."""
+    titles = ['Disco Man', 'Seesaw', 'The Doc', 'You Ain’t No Friend of Mine!', 'Tell Me, Where Did We Go Wrong?', 'Big Foot', 'Boeing 747', 'Alpha', 'Gamma']
+    a = "1. Disco man (Scott - Carter) 5'54\n2. Seesaw (G. T'Nig) 533\n3. The doc (Mike Wolff) 7'26"
+    b = ("YOU AIN'T NO FRIEND OF MINE |\n1. You ain't no friend of mine! 645\n(H. Bullock)\n2. Tell me, where did we go 506\nwrong ? (Idris Muhammad)\n"
+         "3. Big foot (Sakinah Muhammad) 7'47\nP1978 – Fantasy Records")
+    c = "1. Alpha\n(Harms Inc.-ASCAP)\n\n7. Boeing 747\n(Jane Roe)\n\n9. Gamma (Jean-Luc Ponty; José Ortega y Gasset)"
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: trackSet(c.tracks || 14), trackCount: c.count || 0, releaseTitle: c.releaseTitle || '', "
+                        "resolveTitles: c.titles ? ((ts) => { const k = (x) => String(x).toLowerCase().replace(/[^a-z0-9]+/g, ''); const ix = new Set(); const un = []; ts.forEach((t) => { const i = c.titles.findIndex((x) => k(x) === k(t)); if (i >= 0) ix.add(i); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null,")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.tracks && x.tracks.indexes ? x.tracks.indexes.map((i) => i + 1).join(',') : x.tracks && x.tracks.set ? [...x.tracks.set].map((i) => i + 1).join(',') : 'all']),")
+    base = {'titles': titles, 'count': len(titles), 'releaseTitle': 'You Ain’t No Friend of Mine!'}
+    cases = [dict(base, text=a), dict(base, text=b), dict(base, text=c)]
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(cases)], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for x in g or []:
+        print('  ', x)
+    ok = g is not None and g[0]['credits'] == [['Scott', '1'], ['Carter', '1'], ["G. T'Nig", '2'], ['Mike Wolff', '3']] and not g[0]['unrecognized'] \
+        and g[1]['credits'] == [['H. Bullock', '4'], ['Idris Muhammad', '5'], ['Sakinah Muhammad', '6']] and ['Fantasy Records', 'Phonographic Copyright (p)'] in [x[:2] for x in g[1]['companies']] \
+        and ['releaseTitle', "YOU AIN'T NO FRIEND OF MINE |"] in g[1]['ignored'] and not g[1]['unrecognized'] \
+        and ['Jean-Luc Ponty', '9'] in g[2]['credits'] and ['José Ortega y Gasset', '9'] in g[2]['credits'] and ['Jane Roe', '7'] in g[2]['credits'] \
+        and not any(x[0].startswith('Harms') for x in g[2]['credits']) and '(Harms Inc.-ASCAP)' in g[2]['unrecognized']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all
