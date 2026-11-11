@@ -982,6 +982,30 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_rmx3126r():
+    """Credits Importer 3.126.0 (review of Z-RMXTITLE, S200), in Node – remixParts: the names of remixers in titles. "(Stereo Remix)",
+    "(2009 Stereo Remix)", "(The Remix)", "(In Dub)", "(Disco Dub)", "(Acoustic Remix)", "(2nd Remix)", "(Remix)", "(Extended Mix)",
+    "(Radio Edit)", "(Live)" no name; "(Extended TVAM Remix)" TVAM; "(Radio Edit - TVAM Remix)" TVAM; "(Above & Beyond Remix)" one name;
+    "[Remix by Jane Roe & John Doe]" two; "(X feat. Y Remix)" X; "(Moby's Remix)" Moby; "(Dub Syndicate Remix)" Dub Syndicate."""
+    titles = ['A (Stereo Remix)', 'A (2009 Stereo Remix)', 'A (The Remix)', 'A (In Dub)', 'A (Disco Dub)', 'A (Acoustic Remix)', 'A (2nd Remix)',
+              'A (Remix)', 'A (Extended Mix)', 'A (Radio Edit)', 'A (Live)', 'A (Extended TVAM Remix)', 'A (Radio Edit - TVAM Remix)',
+              'A (Above & Beyond Remix)', 'A [Remix by Jane Roe & John Doe]', 'A (X feat. Y Remix)', "A (Moby's Remix)", 'A (Dub Syndicate Remix)']
+    want = [[]] * 7 + [[], None, None, None, ['TVAM'], ['TVAM'], ['Above & Beyond'], ['Jane Roe', 'John Doe'], ['X'], ['Moby'], ['Dub Syndicate']]
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+console.log(JSON.stringify(JSON.parse(process.argv[2]).map((t) => { const p = m.remixParts(t); return p ? p.names : null; })));
+"""
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(titles)], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    got = json.loads(js.stdout) if not js.returncode else None
+    for t, g, w in zip(titles, got or [], want):
+        print('  ', t, '→', g, '' if g == w else f'(erwartet {w})')
+    ok = got == want
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_exc3125r():
     """Credits Importer 3.125.0 (review of Z-EXCEPTC, S199), in Node – tracks "A", "Salt and Pepper", "This Is Us", "A (X Remix)":
     lower-case credit lines one below the other stay apart; "Music by Jane Doe, written for Radio Birdman" keeps Jane Doe's credit;
