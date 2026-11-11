@@ -983,4 +983,55 @@ console.log(JSON.stringify(['Recorded May, 6. 7, 2007 Studio des deutschen Filmo
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_dtrk3121():
+    """Credits Importer 3.121.0 (collected item Z-DTRK, S189): the notes of Discogs 31535431 (Albert Ayler), shortened – two media
+    (1-1 … 1-3, 2-1), each date line begins with its tracks as Discogs numbers them, across the media too:
+    "1-1 to 1-2 recorded September 3rd, 1964" / "Live at Club Montmartre, Copenhagen, Denmark" / "1-3 to 2-1 recorded November 9, 1964
+    in Hilversum, The Netherlands".
+    A) Performance: 1964-09-03 on tracks 1-1, 1-2 and 1964-11-09 on 1-3, 2-1 (until 3.120.0 both on all tracks).
+    B) Club Montmartre – the place line right below a date line belongs to it: recorded at on 1-1, 1-2 (until 3.120.0 all tracks)."""
+    H.MEDIA = [3, 1]
+    POS = ['1-1', '1-2', '1-3', '2-1']
+    NOTES = """1-1 to 1-2 recorded September 3rd, 1964
+Live at Club Montmartre, Copenhagen, Denmark
+1-3 to 2-1 recorded November 9, 1964 in Hilversum, The Netherlands"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        for t, pos in zip(d['tracklist'], POS):
+            t['position'] = pos
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    PLACES = """[...document.querySelectorAll('section.dci-group')].filter(g => /Montmartre/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+        ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), (r.querySelector('.dci-tracks, [data-f=tracks]') || r).textContent.replace(/\\s+/g, ' ').trim().slice(0, 60)])])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        tgs = {g['id']: g for g in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-track-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        cells = sorted((c['col'], pool[c['date']]['begin'].get('month'), pool[c['date']]['begin'].get('day'), [tgs[t]['tracks'] for t in c['tgs']]) for c in mx.get('cells', []))
+        print('A) Matrix:', cells)
+        results.append(cells == [('performance', 9, 3, [[0, 1]]), ('performance', 11, 9, [[2, 3]])])
+        places = pg.evaluate(PLACES)
+        print('B) Ort:', places)
+        results.append(len(places) == 1 and [r[0] for r in places[0][1]] == ['Recorded At'] and '1-1' in places[0][1][0][1] and '1-3' not in places[0][1][0][1])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
