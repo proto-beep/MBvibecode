@@ -730,6 +730,98 @@ def case_ocrsupp3115():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_suppnav3116():
+    """Credits Importer 3.116.0 (collected items Z-SUPPMSG, Z-SUPPNAV): a supplement read from the cover art says what it brings and
+    can be found in the dashboard. Discogs imported; the images say "Drum Guy – drums", "Produced by Bob Produser" (one letter
+    off), "Anna Neu – piano" (Back), "Written by Writer Z" (Booklet; Discogs: Composed By on track 3 – (review) a writer is very
+    similar only on the same tracks: here a new role) and "Bass Man – bass" (Tray).
+    A) "＋ Supplement": the message at the top "2 new · 3 there already or very similar" (no button with it), in the window (which
+       stays open); the log has the supplement's line; the list offers Anna Neu and Writer Z's writer (both chosen), nothing else.
+    B) Taken over: "📷 2 ‹ ›" in the footer; 📷 at the heads of Anna Neu, Drum Guy, Bob Producer, Bass Man and Writer Z, not of
+       Keys Guy; › goes to Anna Neu (flashing); "From the cover art · Back" at Anna Neu, "… · Tray" at Bass Man (a line said again),
+       (review) "… · Booklet" at Writer Z (his row on the works).
+    C) "📷 Only from images": only the entries with 📷 shown; off: all again.
+    D) The same images again with only "Drum Guy – drums": "nothing new – 1 there already or very similar. Nothing was changed.";
+       nothing to take over."""
+    import copy
+    texts = copy.deepcopy(TEXTS)
+    texts[0]['text'] = 'Drum Guy - drums\n\nProduced by Bob Produser\n\nAnna Neu - piano\n'
+    texts[1]['text'] = 'Written by Writer Z\n'
+    texts[2]['text'] = 'Bass Man - bass\n'
+    SECS = "[...document.querySelectorAll('section.dci-group')].filter(s => s.getClientRects().length).map(s => (s.querySelector('.dci-gname strong') || {}).textContent)"
+    OCRDOTS = "[...document.querySelectorAll('section.dci-group')].filter(s => s.querySelector('.dci-ocr-dot')).map(s => (s.querySelector('.dci-gname strong') || {}).textContent).sort()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=supp]')
+        H.wait_for(pg, "(n => !!n && !/Supplementing/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
+        pg.wait_for_timeout(500)
+        a = pg.evaluate("""[[...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /^Supplement from/.test(t)),
+          document.querySelector('#dci-ocr [data-el=ocr-suppnote]').textContent.trim(),
+          [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Supplement from Text: 3 confirmed, 2 new/.test(t)).length,
+          [...document.querySelectorAll('[data-el=supp] .dci-supp-row')].map(r => [r.querySelector('td:nth-child(3) strong') ? r.querySelector('td:nth-child(3) strong').textContent.trim() : '', r.className.replace('dci-supp-row ', ''), r.querySelector('input').checked])]""")
+        print('A) Meldung:', a[0], '| Fenster:', a[1], '| Protokoll:', a[2], '| Liste:', a[3])
+        want = 'Supplement from the cover art: 2 new · 3 there already or very similar.'
+        results.append(len(a[0]) == 1 and a[0][0].startswith(want) and not a[0][0].endswith('To the editor') and a[1].startswith(want) and a[2] == 1
+                       and sorted(a[3]) == [['Anna Neu', 'dci-supp-row-entry', True], ['Writer Z', 'dci-supp-row-role', True]])
+        pg.click('#dci-ocr [data-ocr=close]')
+        pg.click('[data-el=supp] [data-act=supp-apply]')
+        pg.wait_for_timeout(1500)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        b1 = [pg.evaluate("(c => c ? c.querySelector('.dci-yell-n').textContent.trim() : null)(document.querySelector('[data-el=yell] .dci-ocrnav-c'))"), pg.evaluate(OCRDOTS)]
+        if b1[0]:
+            pg.click('[data-el=yell] .dci-ocrnav-c [data-act=ocr-next].dci-yell-n')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate("(f => f ? (f.closest('section.dci-group').querySelector('.dci-gname strong') || {}).textContent : null)(document.querySelector('.dci-flash'))")
+        # the image a line comes from, at the head of its entry (as for the rows of an import of the cover art)
+        b3 = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(s => s.querySelector('.dci-gcoverfrom')).map(s => [(s.querySelector('.dci-gname strong') || {}).textContent, s.querySelector('.dci-gcoverfrom').textContent.trim()]).sort()")
+        print('B) Fußzeile:', b1[0], '| 📷 an:', b1[1], '| › zu:', b2, '| Bild:', b3)
+        results.append(b1[0] == '📷 2' and b1[1] == ['Anna Neu', 'Bass Man', 'Bob Producer', 'Drum Guy', 'Writer Z'] and b2 == 'Anna Neu'
+                       and dict(b3).get('Anna Neu', '').startswith('From the cover art · Back') and dict(b3).get('Bass Man', '').startswith('From the cover art · Tray')
+                       and dict(b3).get('Writer Z', '').startswith('From the cover art · Booklet'))
+        all0 = pg.evaluate(SECS)
+        pg.check('[data-el=ocr-filter] input[data-f=filter-ocr]')
+        pg.wait_for_timeout(300)
+        c1 = sorted(pg.evaluate(SECS))
+        pg.uncheck('[data-el=ocr-filter] input[data-f=filter-ocr]')
+        pg.wait_for_timeout(300)
+        c2 = pg.evaluate(SECS)
+        print('C) nur Bilder:', c1, '| aus:', len(c2), 'von', len(all0))
+        results.append(c1 == b1[1] and len(c2) == len(all0) and 'Keys Guy' in all0)
+        # D) the window again (kept at its result), its texts changed by hand: only Drum Guy
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=10000)
+        boxes = pg.locator('#dci-ocr [data-ocr-text]')
+        for k in range(boxes.count()):
+            boxes.nth(k).fill('Drum Guy - drums' if k == 0 else '')
+        pg.click('#dci-ocr [data-ocr=supp]')
+        H.wait_for(pg, "(n => !!n && /nothing new/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate("""[document.querySelector('#dci-ocr [data-el=ocr-suppnote]').textContent.trim(),
+          [...document.querySelectorAll('[data-el=msgs] .dci-msg')].filter(m => /nothing new/.test(m.textContent)).length,
+          document.querySelectorAll('[data-el=supp] .dci-supp-row').length, !!document.querySelector('[data-el=supp] [data-act=supp-apply]')]""")
+        print('D) nichts Neues:', d1)
+        results.append(d1[0] == 'Supplement from the cover art: nothing new – 1 there already or very similar. Nothing was changed.' and d1[1] == 1 and d1[2] == 0 and not d1[3])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_ocrpeek():
     """[3.34.9] Images in their proportions, larger on mouse-over (collected item 129).
     A) The tiles of the images are alike (square), each image whole in its tile (contain, nothing cut off).

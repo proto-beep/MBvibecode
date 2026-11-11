@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.115.0 | 1.17.0 – 1.18.0 |
+| 2026-11-08 | 3.88.0 – 3.116.0 | 1.17.0 – 1.18.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.116.0
+
+- **What a supplement brings** (collected item Z-SUPPMSG): after "＋ Supplement …" (any source) a message at the top (its counts also in the log) and – for the cover art – in its window, which now stays open: "2 new · 1 with more tracks · 3 there already or very similar", or "nothing new – … Nothing was changed.". Very similar counts as there: for the text from cover art a name with one letter off ("Bob Produser" – "Bob Producer"; the list shows how it was written), and writer and composer on the same tracks ("Written by" – "Composed By"). A difference that only adds tracks is marked "more tracks" in its list (chosen by hand, as before).
+- **Finding what came from the images** (Z-SUPPNAV): rows a supplement read from the cover art added are marked 📷 (the source marks), the entries with them too (📷 beside the name), and the rows it said again; "📷 n ‹ ›" in the footer goes from one new row to the next; "📷 Only from images" beside "Only missing" shows only those entries. The image a line comes from is named at its entry ("From the cover art · Back", ⓘ its cut-out), as for an import of the cover art.
 
 ### Import 3.115.0
 

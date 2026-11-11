@@ -933,7 +933,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
                                 #     another one by hand without remembering, "Cancel" (the message as before)
                                 #   supp: a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
-                                #     (new role, new entries with suggestions, "differs", not recognized), marks DG BC / BC ≠, take over
+                                #     (new role, new entries with suggestions, "differs" – from 3.116.0 "more tracks" when it only adds tracks –, not recognized), marks DG BC / BC ≠, take over
                                 #     selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
                                 #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0)
                                 #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
@@ -1039,6 +1039,10 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
 python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.114 a beta): ⚙ Settings → Sources, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   suppnav3116: 3.116.0 (Z-SUPPMSG, Z-SUPPNAV): "＋ Supplement" from the cover art – the message (top, window; no button) "2 new ·
+                                #     3 there already or very similar" (one letter off; a writer on other tracks than the composer is new), 📷 at the entries,
+                                #     "📷 2 ‹ ›", the image at the entry (also of a row on the works), "📷 Only from images"; the same again: "nothing new …
+                                #     Nothing was changed."
                                 #   ocrsupp3115: 3.115.0 (Z-OCRSUPP): with Discogs imported "＋ Supplement" is the main button; "Import this text" asks
                                 #     (naming Discogs) – "Cancel" changes nothing, "OK" replaces the import (one question, not two)
                                 #   ocrsetting: (from 3.115.0, Z-BETAOFF) "Text from cover art" on at first in ⚙ Settings → Sources, the item without
