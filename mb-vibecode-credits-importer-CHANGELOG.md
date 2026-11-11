@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.117.0 | 1.17.0 – 1.18.0 |
+| 2026-11-08 | 3.88.0 – 3.118.0 | 1.17.0 – 1.18.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.118.0
+
+- **Licensed courtesy of** (collected items Z-LICCOURT, Z-LICART; rule S183): "Licensed Courtesy of James Quinlan and the Don Cherry Estate", "Licensed by courtesy of X", "Licensed from X" – a licensor each ("the" left out): James Quinlan beside his ℗ (licensed / licensed from, as MusicBrainz has it for artists too), the Don Cherry Estate looked up as a label.
+- **℗ / © end with their sentence** (Z-PCSPLIT, S184): "© 2026 WEWANTSOUNDS. Licensed …" – the © is read, and what follows on its own (before, a sentence after it that was no credit took the © into "not recognized").
+- **The label's own Bandcamp page** (Z-BCLBL, S185): on a label's page (an album of another artist) a company named as the page ("© 2026 WEWANTSOUNDS" on wewantsounds.bandcamp.com) is linked to it – MusicBrainz's label with that page is taken, its spelling apart from case.
 
 ### Import 3.117.0
 

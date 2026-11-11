@@ -876,6 +876,26 @@ def case_tcplabel3117():
 
 
 
+def case_liccourt3118():
+    """Credits Importer 3.118.0 (collected items Z-LICCOURT, Z-PCSPLIT; rules S183, S184), in Node: Bandcamp's credits of Wewantsounds.
+    A) "℗ 2026 James Quinlan © 2026 WEWANTSOUNDS. Licensed Courtesy of James Quinlan and the Don Cherry Estate.": ℗ James Quinlan,
+       © WEWANTSOUNDS, a licensor each: James Quinlan, Don Cherry Estate ("the" left out).
+    B) "© 2026 WEWANTSOUNDS. See you on tour.": the © read, the sentence after it alone not recognized.
+    C) "Licensed by courtesy of Sony Music Entertainment" a licensor; "Licensed to Ace Records" and "Courtesy of Blue Note Records" as before."""
+    texts = ['℗ 2026 James Quinlan © 2026 WEWANTSOUNDS. Licensed Courtesy of James Quinlan and the Don Cherry Estate. ', '© 2026 WEWANTSOUNDS. See you on tour.',
+             'Licensed by courtesy of Sony Music Entertainment\nLicensed to Ace Records\nCourtesy of Blue Note Records']
+    g = read([{'text': t} for t in texts])
+    for x in g or []:
+        print('  ', x)
+    # (the licensors among the credits or the companies: this test's role check of companies does not know "licensed")
+    co = lambda k: sorted([x[:2] for x in g[k]['companies']] + [x[:2] for x in g[k]['credits']])
+    ok = g is not None and co(0) == sorted([['James Quinlan', 'Phonographic Copyright (p)'], ['WEWANTSOUNDS', 'Copyright (c)'], ['James Quinlan', 'Licensed From'], ['Don Cherry Estate', 'Licensed From']]) \
+        and not g[0]['unrecognized'] and co(1) == [['WEWANTSOUNDS', 'Copyright (c)']] and g[1]['unrecognized'] == ['See you on tour'] \
+        and co(2) == sorted([['Sony Music Entertainment', 'Licensed From'], ['Ace Records', 'Licensed to']]) and 'Courtesy of Blue Note Records' in g[2]['unrecognized']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all

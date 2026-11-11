@@ -915,13 +915,14 @@
 "deprecated": false,
 "gid": "",
 "id": 1010,
+"later": true,
 "link_phrase": "licensed",
 "long_link_phrase": "licensed",
 "name": "licensor",
 "parent": null,
 "reverse_link_phrase": "licensed from",
-"type0": "",
-"type1": ""
+"type0": "artist",
+"type1": "release"
 },
 "1011": {
 "deprecated": false,
