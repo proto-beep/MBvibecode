@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.115.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.116.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.116.0 · 2026-11-08
+
+- **Z-SUPPMSG:** `suppSummary` (after `compareSupplement` in `loadSupplement`): the counts new (`role`, `entry`), more (`differ` with `more`), other tracks, there (`sp.confirmed`), not recognized – `showMessage` (`raw`), `S.ocr.suppNote` in the window (`ocrResultHtml`, `[data-el=ocr-suppnote]`); `suppEntryFor(…, near)` takes a name one letter off (text from cover art only); `compare` also finds a row of the same kind on the same tracks (`SUPP_WRITING`, `suppSameKind`); a `differ` that only adds named tracks is `more` (chip `supp.kind.more`). `ocrImport(true)` keeps the window open (`supp.msgBusy` until the summary).
+- **Z-SUPPNAV:** `S.supp.ocr` (`loadSupplement(TEXT, …, { ocr: true })`), `row.suppOcr` and `row.ocrSeen` (the lines: `suppRow`, `compare`; removed by `dropSupplementMarks`), `S.ocrSuppLines` (`ocrLineOrigins` of the supplement) – `suppOcrHits` in `coverFromHtml` and `coverFromEntryHtml`; 📷 in `srcMarksHtml`; `ocrNavRows`, `ocrNavHtml` (in `renderYell`), `gotoOcr` (`ocr-next`, `ocr-prev`; the order of the page as `gotoYell`), `renderOcrFilter` (`[data-el=ocr-filter]`, `filter-ocr`, `S.onlyOcr`, `.dci-only-ocr`); in `yellPaint` the sections `.dci-has-ocr`, the lines `.dci-ocr-line` (📷 by CSS in the matrix and compact view) and 📷 beside the entry's dots.
+- **Texts:** `supp.msgSome`, `supp.msgNothing`, `supp.msgBusy`, `supp.msg.*`, `supp.fromCover`, `supp.written`, `supp.kind.more`, `ocrnav.*` (en, de).
+- **Review:** "more tracks" not ticked, only for tracks the supplement names (a credit for all tracks would spread a per-track row – `t_sources supp`); the message without the button "To the editor"; writer ↔ composer only (no lyricist, librettist), only on the same tracks, each row once; the near name only for the text from cover art, without a link, one word of four letters at least with its first letter and digits the same, the written name shown in the list; `suppOcr`, `ocrSeen` in `ROW_OWN_FIELDS`, `S.ocrSuppLines` cleared with a new import, merged with those of an earlier supplement and set only once it loaded; the window's buttons disabled while it supplements (no second run), its note cleared on an error, an early end, a new reading and "Back"; `dci-has-ocr` kept by `updateGroupHeader`; `dropSupplementMarks` keeps the lines of rows taken over; the lines marked only where it changes; the filter's box drawn once (focus kept); the images of an entry's rows on the works too; no second log line.
+- **Tests:** `t_coverart.py suppnav3116` (A–D) – new; fails on 3.115.0.
 
 ## Import 3.115.0 · 2026-11-08
 

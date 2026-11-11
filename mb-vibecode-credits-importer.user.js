@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.115.0
+// @version      3.116.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.115.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.115.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.116.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.116.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.115.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.116.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -188,6 +188,27 @@
       "supp.remove": "remove",
       "supp.title": "Supplements from {name}",
       "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
+      "supp.msgSome": "Supplement from {name}: {list}. What to take over is in the list “Supplements from …” of the dashboard.",
+      "supp.written": "written “{name}”",
+      "supp.kind.more": "more tracks",
+      "supp.fromCover": "the cover art",
+      "supp.msgNothing": "Supplement from {name}: nothing new – {list}. Nothing was changed.",
+      "supp.msgBusy": "Supplementing the import …",
+      "supp.msg.new": "{n} new",
+      "supp.msg.more": "{n} with more tracks",
+      "supp.msg.differ": "{n} with other tracks",
+      "supp.msg.same": "{n} there already or very similar",
+      "supp.msg.unrec": "{n} not recognized",
+      "supp.msg.none": "no credit in it",
+      "ocrnav.markNew": "From the cover art (added by a supplement)",
+      "ocrnav.markSeen": "The cover art says this too (a supplement read from it)",
+      "ocrnav.entry": "Lines from the cover art in this entry",
+      "ocrnav.title": "What a supplement read from the cover art added. A click goes to the next one",
+      "ocrnav.label": "{n} rows from the cover art – to the next one",
+      "ocrnav.prev": "Row from the cover art before",
+      "ocrnav.next": "Next row from the cover art",
+      "ocrnav.only": "📷 Only from images",
+      "ocrnav.onlyTitle": "Only the entries with lines from the cover art (added or said again by a supplement read from it)",
       "supp.selectAll": "select all",
       "supp.th.select": "Take over",
       "supp.th.kind": "Kind",
@@ -13389,6 +13410,7 @@
     busy: null,
     launchStatus: null,
     onlyMissing: false,
+    onlyOcr: false, // [Z-SUPPNAV] (3.116.0)
     log: [],
     logEl: null,
     // Edit note: what the script did in this session
@@ -17296,9 +17318,20 @@
       perEntry.set(it.a.key, c);
     });
     // (beside the name, not in it: what reads the name stays as it was)
+    // [Z-SUPPNAV] (3.116.0) the entries with lines from the cover art (📷 at the head; "only from images" shows only them)
+    const ocrRows = ocrNavRows(false);
+    const ocrEntries = new Set(ocrRows.map((r) => r.artistKey));
+    ov.querySelectorAll('section[data-group]').forEach((sec) => sec.classList.toggle('dci-has-ocr', ocrEntries.has(sec.dataset.group)));
+    // ((review) only where it changes)
+    const ocrEls = new Set(ocrRows.flatMap((r) => ix.rows.get(r.id) || []));
+    ov.querySelectorAll('.dci-ocr-line').forEach((x) => { if (!ocrEls.has(x)) x.classList.remove('dci-ocr-line'); });
+    ocrEls.forEach((x) => { if (!x.classList.contains('dci-ocr-line')) x.classList.add('dci-ocr-line'); });
+    renderOcrFilter(ocrRows.length);
     ov.querySelectorAll('section[data-group] .dci-gname').forEach((head) => {
-      const c = perEntry.get(head.closest('section[data-group]').dataset.group) || { must: 0, can: 0 };
-      const html = ['must', 'can'].filter((cls) => c[cls]).map((cls) => `<span class="dci-yell-dot dci-yell-dot-${cls}" title="${esc(tr(`yell.dot.${cls}`, { n: c[cls] }))}">● ${c[cls]}</span>`).join('');
+      const key = head.closest('section[data-group]').dataset.group;
+      const c = perEntry.get(key) || { must: 0, can: 0 };
+      const html = ['must', 'can'].filter((cls) => c[cls]).map((cls) => `<span class="dci-yell-dot dci-yell-dot-${cls}" title="${esc(tr(`yell.dot.${cls}`, { n: c[cls] }))}">● ${c[cls]}</span>`).join('')
+        + (ocrEntries.has(key) ? `<span class="dci-yell-dot dci-ocr-dot" title="${esc(tr('ocrnav.entry'))}">📷</span>` : '');
       let box = head.nextElementSibling && head.nextElementSibling.matches('.dci-yell-dots') ? head.nextElementSibling : null;
       if (!html) {
         if (box) box.remove();
@@ -17323,11 +17356,63 @@
       const nav = (act, sym) => `<button type="button" class="dci-iconbtn" data-act="${act}" data-cls="${cls}" title="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}" aria-label="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}"${n ? '' : ' disabled'}>${sym}</button>`;
       return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}">${nav('yell-prev', '‹')}<button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}" aria-label="${esc(tr(`yell.${cls}Label`, { n }))}"${n ? '' : ' disabled'}>${esc(tr(`yell.${cls}`, { n }))}</button>${nav('yell-next', '›')}</span>`;
     };
-    const html = S.yellOne ? one('all') : `${one('must')}${one('can')}`;
+    const html = (S.yellOne ? one('all') : `${one('must')}${one('can')}`) + ocrNavHtml();
     if (box.dataset.html !== html) {
       box.innerHTML = html;
       box.dataset.html = html;
     }
+  }
+  /**
+   * [Z-SUPPNAV] (3.116.0) The rows from the cover art: `onlyNew` – those a supplement read from it brought (found with ‹ ›), else
+   * also those it said again (marked 📷 too).
+   */
+  const ocrNavRows = (onlyNew) => S.rows.filter((r) => r.suppOcr || (!onlyNew && (r.ocrSeen || []).length));
+  /** [Z-SUPPNAV] (3.116.0) "📷 n ‹ ›" in the footer: the new rows from the cover art (none: nothing). */
+  function ocrNavHtml() {
+    const n = ocrNavRows(true).length;
+    if (!n) return '';
+    const nav = (act, sym, key) => `<button type="button" class="dci-iconbtn" data-act="${act}" title="${esc(tr(key))}" aria-label="${esc(tr(key))}">${sym}</button>`;
+    return `<span class="dci-yell-c dci-ocrnav-c" title="${esc(tr('ocrnav.title'))}">${nav('ocr-prev', '‹', 'ocrnav.prev')}<button type="button" class="dci-textbtn dci-yell-n" data-act="ocr-next"
+      aria-label="${esc(tr('ocrnav.label', { n }))}">📷 ${n}</button>${nav('ocr-next', '›', 'ocrnav.next')}</span>`;
+  }
+  /** [Z-SUPPNAV] (3.116.0) "📷 Only from images" beside the filter of the missing entries – while there are rows from the cover art. */
+  function renderOcrFilter(n) {
+    const box = S.overlay && $('ocr-filter');
+    if (!box) return;
+    if (!n && S.onlyOcr) {
+      S.onlyOcr = false;
+      S.overlay.classList.remove('dci-only-ocr');
+    }
+    // ((review) drawn once – its state set in place: the focus stays)
+    const html = n ? `<label class="dci-check" title="${esc(tr('ocrnav.onlyTitle'))}"><input type="checkbox" data-f="filter-ocr"> ${esc(tr('ocrnav.only'))}</label>` : '';
+    if (box.dataset.html !== html) {
+      box.innerHTML = html;
+      box.dataset.html = html;
+    }
+    const cb = box.querySelector('input');
+    if (cb && cb.checked !== !!S.onlyOcr) cb.checked = !!S.onlyOcr;
+  }
+  /** [Z-SUPPNAV] (3.116.0) To the next (or the one before) new row from the cover art, in the order of the page. */
+  function gotoOcr(step) {
+    const ix0 = yellIndex();
+    const list = ocrNavRows(true).map((r) => ({ r, it: { a: S.artists.get(r.artistKey), rows: [r], row: r, kind: 'ocr' } }));
+    if (!list.length) return;
+    const at = new Map(list.map((x) => [x, yellEl(x.it, ix0)]));
+    list.sort((x, y) => {
+      const [a, b] = [at.get(x), at.get(y)];
+      if (!a || !b || a === b) return a ? -1 : b ? 1 : 0;
+      return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    const k = S.ocrNavIdx;
+    const i = ((k == null || k < 0 ? (step > 0 ? -1 : 0) : k) + step + list.length) % list.length;
+    S.ocrNavIdx = i;
+    const { r, it } = list[i];
+    if (S.view !== 'compact' && !yellEl(it, yellIndex(), true)) revealRow(r);
+    const el = yellEl(it);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('dci-flash');
+    setTimeout(() => el.classList.remove('dci-flash'), 2500);
   }
   /** [Z-YELL] (3.110.0) To the next (or the one before) open item of a class: shown in the middle, flashing. */
   function gotoYell(cls, step) {
@@ -18885,6 +18970,7 @@
   async function ocrRun() {
     const o = S.ocr;
     const run = ++o.run;
+    o.suppNote = ''; // ([Z-SUPPMSG] 3.116.0, review) said of the texts before
     const chosen = ocrToRead();
     Object.assign(o, { step: 'run', error: '', results: chosen.map((img) => ({ img, status: 'wait', progress: 0, text: '', unsure: [], fixes: { pc: 0, dash: 0 } })) });
     renderOcr();
@@ -19126,16 +19212,23 @@
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
     // [E8] (3.38.0) for the statistics
     S.statOcr = statOcrInfo(text, supp);
-    // [130c] (3.34.22) the image and the place of each line, for the rows of this text (not of a supplement)
+    // [130c] (3.34.22) the image and the place of each line, for the rows of this text; [Z-SUPPNAV] (3.116.0) of a supplement too –
+    // its window stays open then and says what the supplement brought
     if (!supp) S.ocrLines = ocrLineOrigins(text);
-    closeOcr();
+    if (!supp || !S.initialized) closeOcr();
+    else {
+      // ((review) once at a time)
+      if (S.ocr.suppBusy) return;
+      Object.assign(S.ocr, { suppBusy: true, suppNote: tr('supp.msgBusy') });
+      renderOcr();
+    }
     // [3.34.8] opened with "… from cover art" (nothing imported yet): the release is loaded now, with this text as its source
     if (!S.initialized) {
       S.startText = { text, origin };
       initOnce();
       return;
     }
-    if (supp) loadSupplement(TEXT, textSig(text), { text, origin });
+    if (supp) loadSupplement(TEXT, textSig(text), { text, origin, ocr: true, ocrLines: ocrLineOrigins(text) });
     else {
       S.textInput = { text, origin };
       // ([Z-OCRSUPP] 3.115.0) asked above already: not a second time
@@ -19419,6 +19512,7 @@
         ${ocrMissingHtml()}
         ${busy.length ? `<div class="dci-ocr-busy" role="note" data-ocr-busy><strong>${esc(tr('ocr.busyTitle'))}</strong> ${busy.join(', ')}<br><span>${esc(tr('ocr.busyHint'))}</span></div>` : ''}
         <p class="dci-sub">${esc(tr('ocr.resultHint'))}</p>${o.results.map(sect).join('')}</div>
+      ${o.suppNote ? `<p class="dci-ocr-suppnote" role="status" data-el="ocr-suppnote">${esc(o.suppNote)}</p>` : ''}
       <div class="dci-ocr-foot"><button type="button" class="dci-textbtn" data-ocr="back">${esc(tr('ocr.back'))}</button>
         <button type="button" class="dci-textbtn" data-ocr="copy">${esc(tr('ocr.copy'))}</button>
         ${(() => {
@@ -19428,8 +19522,8 @@
           return done.length ? `<button type="button" class="dci-small dci-ocr-clean" data-ocr="clean-all" aria-pressed="${on}" title="${esc(tr('ocr.cleanTitle'))}">${esc(tr('ocr.cleanAll'))}</button>
             <span class="dci-sub" data-ocr-cleann="all">${esc(ocrCleanNote(on, done.reduce((a, r) => a + ocrCleanCount(r), 0)))}</span>` : '';
         })()}<span></span>
-        ${canSupp ? `<button type="button" class="dci-small" data-ocr="import" title="${esc(tr('ocr.importReplaceTitle'))}">${esc(tr('ocr.import'))}</button>
-          <button type="button" class="dci-apply dci-small" data-ocr="supp">${esc(tr('ocr.supp'))}</button>`
+        ${canSupp ? `<button type="button" class="dci-small" data-ocr="import" title="${esc(tr('ocr.importReplaceTitle'))}"${o.suppBusy ? ' disabled' : ''}>${esc(tr('ocr.import'))}</button>
+          <button type="button" class="dci-apply dci-small" data-ocr="supp"${o.suppBusy ? ' disabled' : ''}>${esc(tr('ocr.supp'))}</button>`
     // [Z-OCRSUPP] (3.115.0) with an import there, supplementing it is the main button; importing (it replaces the source) asks first
     : `<button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button>`}</div>`;
   }
@@ -20057,6 +20151,7 @@
     } else if (act === 'back') {
       S.ocr.step = 'pick';
       S.ocr.error = '';
+      S.ocr.suppNote = '';
       renderOcr();
     } else if (act === 'copy') {
       const { text } = ocrText();
@@ -21221,6 +21316,7 @@
     S.mediaSel = null;
     S.supp = null;
     S.suppSources = new Map();
+    S.ocrSuppLines = null; // [Z-SUPPNAV] (3.116.0, review)
     toDiscogs({ type: 'forget-release', mbRelease: releaseMbid });
     S.log = [];
     writeJson('sessionStorage', LOG_KEY, null);
@@ -21285,34 +21381,72 @@
   const rowRelText = (row) => [(row.types || [])[0] || '', row.primaryText || ''].filter(Boolean).join(' · ');
 
   /** The entry of the dashboard a name of the second source belongs to: the same MB entry, else the same name. */
-  function suppEntryFor(name, mbids, company) {
+  function suppEntryFor(name, mbids, company, near = false) {
     const list = [...S.artists.values()].filter((a) => !!a.company === company && !a.other && S.rows.some((r) => r.artistKey === a.key));
     const byMbid = mbids.length ? list.find((a) => a.mbid && mbids.includes(a.mbid)) : null;
     if (byMbid) return byMbid;
     const k = nameKey(name);
-    return list.find((a) => [a.name, a.rawName, a.mbName, ...(a.anvs || []), ...(a.dAliases || [])].some((n) => n && nameKey(n) === k)) || null;
+    const names = (a) => [a.name, a.rawName, a.mbName, ...(a.anvs || []), ...(a.dAliases || [])].filter(Boolean).map(nameKey);
+    const same = list.find((a) => names(a).includes(k));
+    if (same) return same;
+    // [Z-SUPPMSG] (3.116.0) very similar: one letter off ("Bob Produser" – "Bob Producer") – ((review) only for the text read from the
+    // cover art, without a link, of a person: one word of four letters at least off by one letter, its first letter and its digits the
+    // same – not "A. Smith" / "B. Smith", "Room 101" / "Room 102" –, one entry only)
+    if (!near || company || mbids.length) return null;
+    const ws = k.split(' ');
+    const close = (n) => {
+      const vs = n.split(' ');
+      if (vs.length !== ws.length) return false;
+      const off = vs.map((v, i) => [v, ws[i]]).filter(([v, w]) => v !== w);
+      if (off.length !== 1) return false;
+      const [v, w] = off[0];
+      return Math.min(v.length, w.length) >= 4 && v[0] === w[0] && !/\d/.test(v + w) && slipDistance(v, w) <= 1;
+    };
+    const hits = list.filter((a) => names(a).some(close));
+    return hits.length === 1 ? hits[0] : null;
   }
+  /** [Z-SUPPMSG] (3.116.0) Roles of the same kind for a supplement: writer, composer, lyricist, librettist ("Written-By" = composer). */
+  // ((review) only the general writer and the composer – a lyricist or librettist is another credit)
+  const SUPP_WRITING = ['writer', 'composer'];
+  const suppSameKind = (r, probe) => !r.company && !probe.company && norm((r.types || [])[0] || '') !== norm((probe.types || [])[0] || '')
+    && SUPP_WRITING.includes(norm((r.types || [])[0] || '')) && SUPP_WRITING.includes(norm((probe.types || [])[0] || ''));
 
   /** The tracks of a credit of the second source, in MusicBrainz (and in the media chosen for the import). */
   const suppTracks = (c) => (c.allTracks ? selIdx() : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i)));
 
   /** Reads the second source and compares it with the rows of the dashboard. */
   async function loadSupplement(source, id, input = null, typed = false) {
-    if (!S.release || !S.rows.length) return;
+    if (!S.release || !S.rows.length) {
+      if (input && input.ocr && S.ocr) Object.assign(S.ocr, { suppBusy: false, suppNote: '' });
+      return;
+    }
     try {
       clearMessages();
       setBusy('busy.supp', { source: source.name });
       const rel = await source.release(id, { ...sourceContext(), input });
       if (S.supp) dropSupplementMarks(S.supp);
-      S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '', typed };
+      // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 📷, the images of its lines ((review) kept beside those
+      // of a supplement read before)
+      S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '', typed, ocr: !!(input && input.ocr) };
+      if (input && input.ocrLines) {
+        const was = S.ocrSuppLines;
+        S.ocrSuppLines = { text: input.ocrLines.text, lines: new Map([...((was && was.lines) || []), ...input.ocrLines.lines]) };
+      }
       S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url });
       await compareSupplement();
       const n = (kind) => S.supp.items.filter((it) => it.kind === kind).length;
       log('info', 'suppLoaded', { name: source.name, confirmed: S.supp.confirmed, added: n('role') + n('entry'), differ: n('differ'), unrec: n('unrec') });
+      suppSummary();
       setBusy('');
     } catch (e) {
       setBusy('');
       showError(e);
+    }
+    // ((review) the window of the cover art: free again; nothing said when nothing came (an error is shown at the top)
+    if (input && input.ocr && S.ocr) {
+      S.ocr.suppBusy = false;
+      if (S.ocr.suppNote === tr('supp.msgBusy')) S.ocr.suppNote = '';
+      renderOcr();
     }
     renderSource();
     renderSupp();
@@ -21321,11 +21455,34 @@
     refresh();
   }
 
+  /**
+   * [Z-SUPPMSG] (3.116.0) What a supplement brings, said at the top, in the log and (the cover art) in its window: new, more tracks,
+   * other tracks, there already or very similar (nothing to do), not recognized – "Nothing new" when it brings nothing.
+   */
+  function suppSummary() {
+    const sp = S.supp;
+    if (!sp) return;
+    const n = (f) => sp.items.filter(f).length;
+    const c = { new: n((it) => it.kind === 'role' || it.kind === 'entry'), more: n((it) => it.kind === 'differ' && it.more),
+      differ: n((it) => it.kind === 'differ' && !it.more), same: sp.confirmed || 0, unrec: n((it) => it.kind === 'unrec') };
+    const list = ['new', 'more', 'differ', 'same', 'unrec'].filter((k) => c[k]).map((k) => tr(`supp.msg.${k}`, { n: c[k] })).join(' · ');
+    const nothing = !c.new && !c.more && !c.differ;
+    const name = sp.ocr ? tr('supp.fromCover') : sourceLabel(sp.source);
+    const text = tr(nothing ? 'supp.msgNothing' : 'supp.msgSome', { name, list: list || tr('supp.msg.none') });
+    sp.summary = { ...c, text, nothing };
+    showMessage(nothing ? 'info' : 'ok', 'raw', { text });
+    if (sp.ocr && S.ocr) {
+      S.ocr.suppNote = text;
+      renderOcr();
+    }
+  }
+
   /** Takes the marks of a supplement off the rows (its suggestions go; what was taken over stays). */
   function dropSupplementMarks(sp) {
     for (const r of S.rows) {
       if (r.confirmedBy) r.confirmedBy.delete(sp.source.short);
       if (r.differ && r.differ.short === sp.source.short) r.differ = null;
+      if (sp.ocr && !r.suppOcr) delete r.ocrSeen; // [Z-SUPPNAV] (3.116.0; (review) what was taken over keeps its lines)
     }
   }
 
@@ -21348,9 +21505,17 @@
         console.warn('[Credits-Importer] supplement links', e);
       }
     }
+    const kin = new Set();
     const compare = (a, probe, info) => {
-      const row = S.rows.find((r) => r.artistKey === a.key && suppSig(r) === suppSig(probe));
+      // [Z-SUPPMSG] (3.116.0) else a row of the same kind (writer – composer) on the same tracks: very similar ((review) only to say
+      // it is there – other tracks make it a new role; each row once)
+      const same = S.rows.find((r) => r.artistKey === a.key && suppSig(r) === suppSig(probe));
+      const near = same ? null : S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && !kin.has(r) && suppSameKind(r, probe) && sameTracks(r.tracks, new Set(info.tracks)));
+      const row = same || near;
       if (!row) return { kind: 'role' };
+      if (near) kin.add(near);
+      // [Z-SUPPNAV] (3.116.0) a line of the cover art that says what is there already: the row shows it (📷, its cut-out)
+      if (sp.ocr) row.ocrSeen = uniq([...(row.ocrSeen || []), info.line].filter(Boolean));
       if (sameTracks(row.tracks, new Set(info.tracks))) {
         if (!row.confirmedBy) row.confirmedBy = new Set();
         row.confirmedBy.add(short);
@@ -21358,11 +21523,14 @@
         return null;
       }
       row.differ = { short, tracks: info.tracks, all: info.all, name: sp.source.name };
-      return { kind: 'differ', rowId: row.id, firstTracks: trackSetText(row.tracks, row.dAllTracks) };
+      // [Z-SUPPMSG] (3.116.0) only tracks more than the row has (the supplement naming its tracks): "more tracks"; ((review) chosen by
+      // hand like any difference – not ticked)
+      const more = !info.all && info.tracks.length > row.tracks.size && [...row.tracks].every((i) => info.tracks.includes(i));
+      return { kind: 'differ', rowId: row.id, firstTracks: trackSetText(row.tracks, row.dAllTracks), more };
     };
     for (const g of groups) {
       const mbids = (linked.get((g.links || [])[0]) || []).map((c) => c.mbid);
-      const a = suppEntryFor(g.name, mbids, false);
+      const a = suppEntryFor(g.name, mbids, false, !!sp.ocr);
       const fresh = [];
       for (const c of g.roles.values()) {
         const tracks = suppTracks(c);
@@ -21687,6 +21855,8 @@
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
     row.suppName = S.supp.source.name;
+    // [Z-SUPPNAV] (3.116.0) from the cover art: 📷, counted and found in the footer, its lines' cut-outs
+    if (S.supp.ocr) Object.assign(row, { suppOcr: true, ocrSeen: company ? [info.r.line || info.r.role] : (info.c.lines || []).slice() });
     if (!company && info.c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
     if (!company && info.c.abbrAlt) Object.assign(row, { abbr: info.c.abbr, abbrAlt: info.c.abbrAlt }); // [Z-ABBR] (3.101.0, S166)
     if (!company) abbrAskFor(row, info.c); // [Z-ABBR2] (3.102.0, S166; review)
@@ -21810,7 +21980,8 @@
     const count = (kind) => sp.items.filter((it) => it.kind === kind).length;
     const selectable = sp.items.filter((it) => it.kind !== 'unrec');
     const nSel = selectable.filter((it) => it.sel).length;
-    const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
+    // ([Z-SUPPMSG] 3.116.0) "more tracks": a difference that only adds tracks
+    const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind === 'more' ? 'differ' : kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
     const mbCell = (it) => {
       if (it.kind === 'unrec') return esc(tr('supp.byHand'));
       if (it.kind === 'differ') return esc(tr(it.sel ? 'supp.differTake' : 'supp.differKeep', { name, first: S.source.name }));
@@ -21828,7 +21999,7 @@
       const tracks = it.kind === 'unrec' ? '–' : `${esc(trackSetText(it.tracks, it.all))}${it.kind === 'differ' ? ` <span class="dci-sub">(${esc(tr('supp.differWas', { first: S.source.name, tracks: it.firstTracks }))})</span>` : ''}`;
       return `<tr class="dci-supp-row dci-supp-row-${it.kind}" data-supp="${it.id}">
         <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${it.kind === 'unrec' ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${it.kind}`)}: ${it.name || it.line}`)}"></td>
-        <td>${chip(it.kind)}</td><td>${a && it.kind !== 'entry' ? `<strong>${esc(a.name)}</strong><div class="dci-sub">${esc(tr('supp.hasEntry'))}</div>` : who}</td>
+        <td>${chip(it.more ? 'more' : it.kind)}</td><td>${a && it.kind !== 'entry' ? `<strong>${esc(a.name)}</strong><div class="dci-sub">${esc(tr('supp.hasEntry'))}${it.name && nameKey(it.name) !== nameKey(a.name) ? ` · ${esc(tr('supp.written', { name: it.name }))}` : ''}</div>` : who}</td>
         <td class="dci-supp-line">${esc(it.line)}</td><td>${esc(it.rel || '–')}</td><td>${tracks}</td><td>${mbCell(it)}</td></tr>`;
     }).join('');
     const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') });
@@ -21859,6 +22030,8 @@
     (row.confirmedBy ? [...row.confirmedBy] : []).forEach((sh) => out.push(mark(sh, tr('supp.badgeConfirm', { name: sourceByShort(sh).name }), ' dci-srcmark-supp')));
     if (row.differ) out.push(mark(`${row.differ.short} ≠`, tr('supp.badgeDiffer', { name: row.differ.name, tracks: trackSetText(row.differ.tracks, row.differ.all) }), ' dci-srcmark-differ'));
     if (row.suppTook) out.push(mark(`${row.suppTook.short} ✓`, tr('supp.badgeAdded', { name: row.suppTook.name }), ' dci-srcmark-supp'));
+    // [Z-SUPPNAV] (3.116.0) from the cover art (new) or said again by it
+    if (row.suppOcr || (row.ocrSeen || []).length) out.push(mark('📷', tr(row.suppOcr ? 'ocrnav.markNew' : 'ocrnav.markSeen'), ' dci-srcmark-ocr'));
     return `<div class="dci-srcmarks">${out.join('')}</div>`;
   }
   const sourceByShort = (sh) => Object.values(SOURCES).find((x) => x.short === sh) || { name: sh };
@@ -22382,7 +22555,7 @@
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
   // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
   const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
-    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
+    'differ', 'confirmedBy', 'suppTook', 'suppOcr', 'ocrSeen', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -23148,6 +23321,7 @@
     S.groupCompact.clear();
       S.supp = null;
       S.suppSources = new Map();
+      S.ocrSuppLines = null; // [Z-SUPPNAV] (3.116.0, review)
       // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
       S.workSearch = new Map();
       if (S.searchRunning) S.searchCancel = true;
@@ -27745,7 +27919,15 @@
    * is in the image (the crops made at the import; collected item 130c).
    */
   function coverFromHtml(row) {
-    return row.supp ? '' : coverFromLine(coverHits(row.srcRefs), row.id, 'cover-crop', 4);
+    // [Z-SUPPNAV] (3.116.0) a row of a supplement read from the cover art, or one it said again: the cut-outs of those lines
+    const seen = suppOcrHits(row);
+    return row.supp && !seen.length ? '' : coverFromLine(uniq([...(row.supp ? [] : coverHits(row.srcRefs)), ...seen]), row.id, 'cover-crop', 4);
+  }
+  /** [Z-SUPPNAV] (3.116.0) The cut-outs of the lines of a supplement read from the cover art that a row comes from or says again. */
+  function suppOcrHits(row) {
+    const o = S.ocrSuppLines;
+    if (!o || !(row.ocrSeen || []).length) return [];
+    return uniq(row.ocrSeen.map(ocrLineKey).filter(Boolean)).flatMap((k) => o.lines.get(k) || []);
   }
 
   /**
@@ -27753,7 +27935,7 @@
    * all of them (six at most).
    */
   function coverFromEntryHtml(a, rows) {
-    const hits = coverHits(rows.filter((r) => !r.supp).flatMap((r) => r.srcRefs || []));
+    const hits = uniq([...coverHits(rows.filter((r) => !r.supp).flatMap((r) => r.srcRefs || [])), ...S.rows.filter((r) => r.artistKey === a.key).flatMap(suppOcrHits)]);
     return hits.length ? `<div class="dci-gcoverfrom">${coverFromLine(hits, `g:${a.key}`, 'cover-crop-entry', 6)}</div>` : '';
   }
   S.cropOpen = new Set();
@@ -30959,7 +31141,7 @@
     const section = S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
     // (3.40.15) the classes that do not follow the match kept (folded, text hidden, skipped)
-    const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
+    const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped', 'dci-has-ocr'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
     section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${keep}`;
     const tag = section.querySelector('.dci-kind-tag');
     // [Z-ETC] (3.42.5) with its note while a search waits
@@ -41518,6 +41700,11 @@
         gotoIncomplete(act === 'inc-next' ? 1 : -1);
         break;
       // [Z-YELL] (3.110.0) the open items: to the next one, ✓ / ✕ / ↺ of a suggestion
+      // [Z-SUPPNAV] (3.116.0)
+      case 'ocr-next':
+      case 'ocr-prev':
+        gotoOcr(act === 'ocr-next' ? 1 : -1);
+        break;
       case 'yell-next':
       case 'yell-prev':
         gotoYell(btn.dataset.cls || 'all', act === 'yell-next' ? 1 : -1);
@@ -43381,6 +43568,11 @@
         S.onlyMissing = el.checked;
         S.overlay.classList.toggle('dci-only-missing', el.checked);
         break;
+      // [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art
+      case 'filter-ocr':
+        S.onlyOcr = el.checked;
+        S.overlay.classList.toggle('dci-only-ocr', el.checked);
+        break;
       // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
       case 'repeat-keep':
         S.repeatKeep = el.value !== 'fresh';
@@ -44152,6 +44344,7 @@
             <span data-el="sort-box"></span>
             <span data-el="medium-filter"></span>
             <label class="dci-check"><input type="checkbox" data-f="filter-missing" ${S.onlyMissing ? 'checked' : ''}> ${esc(tr('toolbar.onlyMissing'))}</label>
+            <span data-el="ocr-filter"></span>
             <label class="dci-check dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
             <span class="dci-legend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('legend.exists'))}
               <span class="dci-swatch dci-swatch-some" aria-hidden="true"></span>${esc(tr('legend.existsSome'))}</span>
@@ -44222,6 +44415,7 @@
       <div class="dci-subdlg dci-media-dlg" data-el="links" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
+    overlay.classList.toggle('dci-only-ocr', !!S.onlyOcr);
     overlay.addEventListener('click', onClick);
     overlay.addEventListener('change', onChange);
     overlay.addEventListener('input', onInput);
@@ -49150,6 +49344,13 @@
       .dci-toolbar { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); flex-wrap: wrap; margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 16); }
       .dci-only-missing .dci-group:not(.dci-st-missing):not(.dci-st-ambiguous),
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
+      /* [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art; 📷 at their lines in the matrix and compact view */
+      #dci-overlay.dci-only-ocr .dci-group:not(.dci-has-ocr) { display: none; }
+      #dci-overlay.dci-only-ocr .dci-sortblock:not(:has(.dci-group.dci-has-ocr)) { display: none; }
+      #dci-overlay tr.dci-em-line.dci-ocr-line .dci-em-c-role::after, #dci-overlay .dci-em-chip.dci-ocr-line::after,
+      #dci-overlay .dci-em-cl.dci-ocr-line::after { content: ' 📷'; font-size: 0.85em; }
+      .dci-ocr-dot { margin-left: calc(var(--u, 1px) * 6); }
+      .dci-ocr-suppnote { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: 6px; background: var(--sugg-bg, #fff8db); }
 
       /* Entries as cards: a coloured bar, label and tinted header per kind (artist, label, place, other) */
       .dci-group { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
