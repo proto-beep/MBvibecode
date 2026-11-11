@@ -313,4 +313,19 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_gapbtn3112():
+    """Credits Importer 3.112.0 (collected item Z-GAPBTN): the line at the top of the release page – "Count exactly" and "Import
+    credits …" small round buttons (outlined, filled), not underlined text (until 3.111.0)."""
+    import os
+    import re
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mb-vibecode-credits-importer.user.js'), encoding='utf-8').read()
+    cnt = re.search(r'<button type="button" data-gap="count"[^>]*>', src)
+    imp = re.search(r'<button type="button" data-gap="import"[^>]*>', src)
+    pill = re.search(r"const pill = '([^']*)'", src)
+    print('count:', cnt and cnt.group(0)[:160], '\nimport:', imp and imp.group(0)[:160], '\npill:', pill and pill.group(1))
+    ok = bool(cnt and imp and pill) and 'underline' not in cnt.group(0) + imp.group(0) and '${pill}' in cnt.group(0) and '${pill}' in imp.group(0) \
+        and 'border-radius:999px' in pill.group(1) and 'background:#736dab' in imp.group(0) and 'background:#fff' in cnt.group(0)
+    print('Ergebnis:', 'OK' if ok else 'FEHLER')
+
+
 run_cases(globals())

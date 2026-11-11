@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.111.0 | 1.17.0 |
+| 2026-11-08 | 3.88.0 – 3.112.0 | 1.17.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.112.0
+
+- **One line for levels, works and order** (collected items Z-SCOPE, Z-SORT): the line "Level for all rows: Recording | Release | Release group | Skip" (an action: every row on that level) has beside it "Works: with | only | without" – a filter that changes no row: only the work relationships of the works matrix, or all but those, the rest on Skip until "with" brings it back; "only" also brings back the works put on Skip before. It takes the place of the button "only works" and of the line "Stage: all relationships | only work relationships | only non-work relationships". Each import starts with "with".
+- **The order of the entries** (Z-SORT): "Order:" in the same line – as in the source (as before), by kind (instruments first, then vocals, performing, writing and arranging, production, technical, artwork and notes …), by name, by kind of entry (labels, places … among the companies), by level (entries on Skip last, "Skipped"). By kind, kind of entry and level each block has a small heading; within a block the source's order; an entry is never split (an engineer's credit opens no second box). The choice is kept; ⚙ Settings → Appearance can switch it off.
+- **Buttons on the release page** (Z-GAPBTN): "Count exactly" (outlined) and "Import credits …" (filled) are small round buttons, not underlined text.
+- **Shorter counters** (Z-YELLSHORT): "● 2" (orange) and "● 4" (yellow) in the footer – what they count in their tooltip.
+- **Dates of the notes count** (Z-YELLDATE): the dates of the notes placed in the date matrix as suggestions count as "can" and are reached with ‹ ›.
 
 ### Import 3.111.0
 

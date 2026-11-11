@@ -3756,7 +3756,8 @@ def case_lvlrg3108():
             l2 = pg.evaluate(LV)
             msg = pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] li, .dci-messages li')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Release group:/.test(t))")
             print('Knöpfe:', btns, '| Release:', l1, '| Release group:', l2, '|', msg, '| Fehler:', errs)
-            results.append(btns == ['recording', 'release', 'release_group', 'skip', 'only-works'] and ['Rep Guy', 'release'] in l1 and ['Rep Guy', 'release_group'] in l2
+            # ([Z-SCOPE] 3.112.0) no "only works" any more: the works' filter does it
+            results.append(btns == ['recording', 'release', 'release_group', 'skip'] and ['Rep Guy', 'release'] in l1 and ['Rep Guy', 'release_group'] in l2
                            and ['Drum Guy', 'release'] in l2 and len(msg) == 1 and 'drums' in msg[0].lower() and 'stays' in msg[0] and not errs)
             ctx.close()
             # B) (review) MusicBrainz without the release group of the release: no row moved, a warning
@@ -4094,7 +4095,8 @@ def case_yell3110():
     and can (yellow: staged as suggested). Discogs: "Directed By" (Dir Ed; Q003, no type), "English Translation" (Tr Eng; liner notes
     taken as a suggestion), "Bass" (Bass Guy; Q001, bass until chosen), "Producer" of No Link (not on MusicBrainz), Sax Two's soprano
     saxophone and flute (Z-INSTS).
-    A) The footer: "● 2 must" (Dir Ed, No Link) and "● 2 can" (Tr Eng, Bass Guy); the entries' heads a dot each; Dir Ed's row orange,
+    A) The footer: "● 2 must" (Dir Ed, No Link) and "● 4 can" (Tr Eng, Bass Guy, the two dates of the notes – Z-YELLDATE 3.112.0;
+       since 3.112.0 "● 2" and "● 4", the words in the tooltip – Z-YELLSHORT); the entries' heads a dot each; Dir Ed's row orange,
        Tr Eng's question yellow with ✓ / ✕.
     B) "● 2 must" clicked: to the first one (flashing).
     C) Tr Eng ✓: the answer taken (no suggestion any more), "● 1 can"; Dir Ed answered "creative direction": "● 1 must".
@@ -4152,7 +4154,7 @@ def case_yell3110():
             f0, d0 = pg.evaluate(FOOT), pg.evaluate(DOTS)
             m0 = {n: pg.evaluate(MARK, n) for n in ('Dir Ed', 'Tr Eng', 'Bass Guy', 'No Link')}
             print('A)', f0, d0, m0)
-            results.append(f0 == [['dci-yell-c-must', '● 2 must'], ['dci-yell-c-can', '● 2 can']]
+            results.append(f0 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 4']]
                            and dict(d0).get('Dir Ed') == ['dci-yell-dot-must:● 1'] and dict(d0).get('Tr Eng') == ['dci-yell-dot-can:● 1']
                            and dict(d0).get('Bass Guy') == ['dci-yell-dot-can:● 1'] and dict(d0).get('No Link') == ['dci-yell-dot-must:● 1']
                            and any('dci-yell-must' in x for x in m0['Dir Ed']) and any('dci-type-ask' in x and 'dci-yell-can' in x and x.endswith('+ctl') for x in m0['Tr Eng']))
@@ -4173,8 +4175,8 @@ def case_yell3110():
             print('C)', f1, pre, f2)
             green = pg.evaluate("(name) => { const q = (%s)(name).querySelector('.dci-type-ask'); return !!q && q.classList.contains('dci-yell-ok') && !!q.querySelector('[data-act=yell-undo]'); }" % SEC, 'Tr Eng')
             print('   grün:', green)
-            results.append(f1 == [['dci-yell-c-must', '● 2 must'], ['dci-yell-c-can', '● 1 can']] and not pre and green
-                           and f2 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 1 can']])
+            results.append(f1 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 3']] and not pre and green
+                           and f2 == [['dci-yell-c-must', '● 1'], ['dci-yell-c-can', '● 3']])
             # D)
             pg.click(f"{sec_sel(pg, 'Sax Two')} [data-act=insts-set][data-insts=release]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
@@ -4195,8 +4197,8 @@ def case_yell3110():
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             f5 = pg.evaluate(FOOT)
             print('D)', sop, f3, m3, ok_btn, f4, m4, kept, undo, f5)
-            results.append(f3 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 2 can']] and ok_btn
-                           and f4 == [['dci-yell-c-must', '● 1 must'], ['dci-yell-c-can', '● 1 can']] and any('dci-yell-ok' in x for x in m4)
+            results.append(f3 == [['dci-yell-c-must', '● 1'], ['dci-yell-c-can', '● 4']] and ok_btn
+                           and f4 == [['dci-yell-c-must', '● 1'], ['dci-yell-c-can', '● 3']] and any('dci-yell-ok' in x for x in m4)
                            and bool(kept) and 'auto:dddddddd-' in kept and 'p:dddddddd-' in kept and undo and f5 == f3)
             # E)
             H.open_settings(pg, 'staging')
@@ -4208,7 +4210,7 @@ def case_yell3110():
             pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
             pg.wait_for_timeout(200)
             print('E)', f6)
-            results.append(f6 == [['dci-yell-c-all', '● 3 open']])
+            results.append(f6 == [['dci-yell-c-all', '● 5']])
             # F)
             pg.locator('.dci-head [data-act=view-toggle]').evaluate('b => b.click()')
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
@@ -4233,7 +4235,7 @@ def case_yell3110():
             f8 = pg.evaluate(FOOT)
             tr8 = pg.evaluate("(name) => { const g = (%s)(name); const q = g && g.querySelector('.dci-yell-ok'); return q ? q.className : null; }" % SEC, 'Tr Eng')
             print('H)', f8, tr8)
-            results.append(bool(tr8) and 'dci-yell-ok' in tr8 and f8 and f8[1][1] == '● 1 can')
+            results.append(bool(tr8) and 'dci-yell-ok' in tr8 and f8 and f8[1][1] == '● 3')
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
@@ -4244,6 +4246,91 @@ def case_yell3110():
         H.ATTRS.clear()
         H.ATTRS.update(attrs0)
         H.LINKED.update(linked0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_sort3112():
+    """Credits Importer 3.112.0 (collected items Z-SORT, Z-SCOPE): the order of the entries and the works' filter in the line "Level
+    for all rows" (the test release: Bass Man, Guitar Guy, Keys Guy, Drum Guy – instruments –, Photo Guy, Ann Rep, Bob Producer …).
+    A) "Order:" as in the source by default; "by kind": headings, "Instruments" first with the four players in the source's order,
+       no entry twice (until 3.111.0 no choice).
+    B) "by name": the entries by name, no heading.
+    C) "by level": Bob Producer on Skip – under "Skipped" at the end; the choice kept (dci-sort).
+    D) ⚙ Settings → Appearance "Offer the order …" off: no choice, the source's order.
+    E) "Works: with | only | without" (no "only works", no line "Stage:"); "only" chosen, the import repeated: "with" again; (review)
+       "Skip" for all, "only" (the works back), "with": all on Skip again."""
+    NAMES = """[...document.querySelectorAll('[data-el=groups] section.dci-group')].map(g => g.querySelector('.dci-gname strong').textContent.trim())"""
+    HEADS = """[...document.querySelectorAll('[data-el=groups] .dci-sorthead')].map(h => h.textContent.trim())"""
+    FIRST = """(() => { const out = []; let h = null; for (const el of document.querySelectorAll('[data-el=groups] .dci-sorthead, [data-el=groups] section.dci-group')) {
+      if (el.matches('.dci-sorthead')) h = el.textContent.trim(); else out.push([h, el.querySelector('.dci-gname strong').textContent.trim()]); } return out; })()"""
+    results = []
+    with sync_playwright() as p:
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        src = pg.evaluate(NAMES)
+        opts = pg.evaluate("[...document.querySelectorAll('[data-el=toolbar] [data-f=sort-mode] option')].map(o => o.value)")
+        sel0 = pg.evaluate("(document.querySelector('[data-f=sort-mode]') || {}).value")
+        pg.select_option('[data-f=sort-mode]', 'kind')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        k = pg.evaluate(FIRST)
+        heads = pg.evaluate(HEADS)
+        print('A) Quelle:', src, '| Optionen:', opts, sel0, '\n   nach Art:', k, heads)
+        inst = [n for h, n in k if h == 'Instruments']
+        results.append(opts == ['source', 'kind', 'alpha', 'etype', 'level'] and sel0 == 'source' and heads[:1] == ['Instruments']
+                       and inst == [n for n in src if n in inst] and len(inst) >= 3 and sorted(n for _h, n in k) == sorted(src) and len(heads) == len(set(heads)))
+        pg.select_option('[data-f=sort-mode]', 'alpha')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        al = pg.evaluate(NAMES)
+        print('B)', al, pg.evaluate(HEADS))
+        results.append(al == sorted(src, key=str.lower) and pg.evaluate(HEADS) == [])
+        pg.click("section.dci-group:has(.dci-gname strong:text-is('Bob Producer')) tr.dci-row [data-act=level][data-level=skip]")
+        pg.select_option('[data-f=sort-mode]', 'level')
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+        lv = pg.evaluate(FIRST)
+        kept = pg.evaluate("localStorage.getItem('dci-sort')")
+        print('C)', lv, kept)
+        results.append(lv[-1] == ['Skipped', 'Bob Producer'] and lv[0][0] == 'Recordings' and kept == '"level"')
+        H.open_settings(pg, 'appearance')
+        pg.uncheck('[data-f=sort-on]')
+        pg.wait_for_timeout(300)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        off = [pg.evaluate("!!document.querySelector('[data-f=sort-mode]')"), pg.evaluate(NAMES), pg.evaluate(HEADS)]
+        print('D)', off)
+        results.append(off[0] is False and off[1] == src and off[2] == [])
+        sc = pg.evaluate("[!!document.querySelector('[data-act=bulk-level][data-level=only-works]'), [...document.querySelectorAll('[data-act=scope]')].map(b => b.textContent.trim()), (document.querySelector('.dci-scope-label') || {}).textContent]")
+        pg.click('[data-act=scope][data-scope=work]')
+        pg.wait_for_timeout(400)
+        on = pg.evaluate("(document.querySelector('[data-act=scope][aria-pressed=true]') || {}).dataset?.scope")
+        pg.click('[data-el=source] [data-act=repeat-open]')
+        pg.wait_for_timeout(200)
+        pg.click('[data-el=repeat] [data-act=repeat-do]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        after = pg.evaluate("(document.querySelector('[data-act=scope][aria-pressed=true]') || {}).dataset?.scope")
+        print('E)', sc, on, after)
+        # (review) "Skip" for all, "only", "with": the works on Skip again (the filter changes no row for good)
+        pg.click('[data-act=bulk-level][data-level=skip]')
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=scope][data-scope=work]')
+        pg.wait_for_timeout(300)
+        mid = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead]')].length")
+        pg.click('[data-act=scope][data-scope=all]')
+        pg.wait_for_timeout(300)
+        back = pg.evaluate("MB.relationshipEditor ? [...document.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(b => b.dataset.level).filter(l => l !== 'skip').length : -1")
+        print('   Skip, nur, mit – Matrix-Spalten bei „nur“:', mid, '| danach nicht Skip:', back)
+        results.append(mid > 0 and back == 0)
+        results.append(sc[0] is False and sc[1] == ['with', 'only', 'without'] and sc[2] == 'Works:' and on == 'work' and after == 'all')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
