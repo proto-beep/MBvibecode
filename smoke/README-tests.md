@@ -108,6 +108,9 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #     two "For", no label for "For The Album …", "Production Manager", "Mixed By"; no second VARA Radio; "RSD", "Cassette Store Day"
                                 #   dtrk3121r: 3.121.0 (review of Z-DTRK, Node): the place below "1-1 to 1-2 recorded …" on 1-1, 1-2; not below "… produced by X";
                                 #     "In Memory Of …" no place
+                                #   exc3125r: 3.125.0 (review, Node): lower-case credit lines stay apart; "Music by X, written for Radio Y" keeps X;
+                                #     "commissioned by John Smith" no label; "Composed for the Holland Festival." all tracks but the remix;
+                                #     "All except 'Salt and Pepper' and 'This Is Us' were commissioned for the Roadburn Festival 2025" track 1, 2025
                                 #   qp3124r: 3.124.0 (review, Node): "J.Media" a name, "vocals (3)" of a guest on track 3, "Guest Vocals : X" no name with [Guest],
                                 #     no members of "joined by X", "Copyright 2026" alone, the catalogue number "001" (not "2001"), "castlesin.space" a website
                                 #   studio3120r: 3.120.0 (review, Node): a studio that is a place of the text keeps its art credit; "Cover Photography", "Design [Graphic]";
@@ -247,6 +250,9 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   exceptc3125: 3.125.0 (Z-EXCEPTC, S199): "All tracks except 'A' and 'B' were / composed and commissioned for the 2025
+                                #     Roadburn Festival." – a label "commissioned" on the works of tracks 1, 2 (not the remix), 2025, "Roadburn Records"
+                                #     suggested; "composed for the Holland Festival" a commission, "Written for Jane Roe" a dedication
                                 #   qpband3124: 3.124.0 (Z-QPBAND, Z-CPYEAR): "Qien Pudiera are A and B : …" – both all roles, the members a note; "Special guests" –
                                 #     guest, "soundscapes" effects credited so (Q015); "Copyright 2026 X" ©, "Phonographic Copyright" ℗
                                 #   cis3124: 3.124.0 (Z-CATNO, Z-INMEM, Z-WEBDOM): "CiS216" the catalogue number, "In memory of …" a dedication with "Create …",

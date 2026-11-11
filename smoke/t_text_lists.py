@@ -982,6 +982,41 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_exc3125r():
+    """Credits Importer 3.125.0 (review of Z-EXCEPTC, S199), in Node – tracks "A", "Salt and Pepper", "This Is Us", "A (X Remix)":
+    lower-case credit lines one below the other stay apart; "Music by Jane Doe, written for Radio Birdman" keeps Jane Doe's credit;
+    "This piece was commissioned by John Smith" no label; "Composed for the Holland Festival." at the start a commission (all tracks
+    but the remix); "All except 'Salt and Pepper' and 'This Is Us' were commissioned for the Roadburn Festival 2025" – track 1 only;
+    "All tracks composed by Jane Doe and commissioned by the BBC" no commission of a label "BBC"."""
+    titles = ['A', 'Salt and Pepper', 'This Is Us', 'A (X Remix)']
+    node = NODE.replace("artistNames: c.artists || [], titleNames: c.titles || [] });",
+                        "artistNames: c.artists || [], titleNames: c.titles || [], trackCount: c.titles ? c.titles.length : 0, trackTitles: c.titles || null, resolveTitles: c.titles ? ((ts) => { const ix = new Set(); const un = []; ts.forEach((t) => { const k = c.titles.findIndex((x) => x.toLowerCase() === t.toLowerCase()); if (k >= 0) ix.add(k); else un.push(t); }); return { indexes: ix, unresolved: un }; }) : null });")
+    node = node.replace("companies: r.companies.map((x) => [x.who.name, x.role, ...(x.entity ? [x.entity] : [])]),",
+                        "companies: r.companies.map((x) => [x.who.name, x.role, x.tracks ? [...(x.tracks.indexes || [])].map((i) => i + 1).join(',') : 'all', (x.date || {}).by || '']),")
+    cases = ['jane doe - guitar and vocals and the\nbob roe - drums and percussion',
+             'Music by Jane Doe, written for Radio Birdman',
+             'This piece was commissioned by John Smith',
+             'Composed for the Holland Festival.',
+             "All except 'Salt and Pepper' and 'This Is Us' were commissioned for the Roadburn Festival 2025",
+             'All tracks composed by Jane Doe and commissioned by the BBC']
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t, 'titles': titles} for t in cases])],
+                        capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for t, x in zip(cases, g or []):
+        print('  ', t.replace('\n', ' / '), '→', x['credits'], x['companies'], x['unrecognized'])
+    ok = g is not None
+    if ok:
+        ok = [x[0] for x in g[0]['credits']] == ['jane doe', 'bob roe'] or len({x[0] for x in g[0]['credits']}) == 2
+        ok = ok and any(x[0] == 'Jane Doe' for x in g[1]['credits']) \
+            and not any(x[1] == 'Commissioned By' for x in g[2]['companies']) \
+            and g[3]['companies'] == [['Holland Festival', 'Commissioned By', '1,2,3', '']] \
+            and g[4]['companies'] == [['Roadburn Festival', 'Commissioned By', '1', '2025']] \
+            and not any(x[0] == 'BBC' and x[1] == 'Commissioned By' and x[2] != 'all' for x in g[5]['companies']) and any(x[0] == 'Jane Doe' for x in g[5]['credits'])
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_qp3124r():
     """Credits Importer 3.124.0 (review of Z-QPBAND, Z-CPYEAR, Z-CATNO, Z-INMEM, Z-WEBDOM), in Node:
     names with a dot stay names ("Mixed by J.Media", "Mastered by Studio.One"); "Special guest John Smith : vocals (3)" – vocals
