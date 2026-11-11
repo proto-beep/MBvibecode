@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.118.0
+// @version      3.119.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.118.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.118.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.119.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.119.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.118.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.119.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2761,10 +2761,11 @@
       "ocr.state.done": "done",
       "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text. A line clicked in the text is marked in the image beside it.",
       "ocr.cocrName": "Discogs, image {img}: frame {n}",
-      "ocr.cocrDel": "Take out this frame (here and in the companion on Discogs)",
-      "log.cocrIn": "Text from cover art: frame {n} from Discogs added",
-      "log.cocrChanged": "Text from cover art: frame {n} from Discogs changed – read again",
-      "log.cocrOut": "Text from cover art: a frame from Discogs taken out",
+      "ocr.cocrNameBc": "Bandcamp, image {img}: frame {n}",
+      "ocr.cocrDel": "Take out this frame (here and in the companion’s large image)",
+      "log.cocrIn": "Text from cover art: frame {n} from {site} added",
+      "log.cocrChanged": "Text from cover art: frame {n} from {site} changed – read again",
+      "log.cocrOut": "Text from cover art: a frame from {site} taken out",
       "ocr.small": "Only {w} × {h} px – read enlarged; names can come out wrong.",
       "ocr.textOf": "Text of {what}",
       "ocr.unsure": "Read with little certainty (a click selects it and shows it in the image):",
@@ -4421,7 +4422,7 @@
     { id: 'S181', where: 'TEXT.parse (readLine0)', note: 'Texts (3.117.0; collected item Z-OCRTITLE): a line that is the release\'s title – also with signs a cover\'s reading put around it ("YOU AIN\'T NO FRIEND OF MINE |") – is no credit: left out as such' },
     { id: 'S180', where: 'listLine, TCP_LEN_MARKED, TEXT.parse (trackListLines, tcp)', note: 'Texts (3.117.0; collected items Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP): a track list as printed – the length also 5\'54, 5’54, 5\'54", 5.54 and digits alone (533 after the composers\' bracket, or when the title is a track without them); the composers in brackets on the line below the track ("1. You ain\'t no friend of mine! 645" / "(H. Bullock)"); a title over several lines ("2. Tell me, where did we go 506" / "wrong ? (Idris Muhammad)") – joined when they make a track of the release (up to four lines; not a society\'s bracket)' },
     { id: 'S179', where: 'titleComposerParts, tcpSurnames', note: 'Texts (3.117.0; collected item Z-TCPMULTI): names in the brackets after a title also apart with " - ", "~", "|", "•", "·", "et", "y" ("Disco man (Scott - Carter)": two names; "Jean-Luc" one); a surname alone the person of the dashboard or of the release\'s artist credit with that last name – one: its rows join that entry; several: the entry asks which one; none: as before (S092)' },
-    { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, + Supplement)' },
+    { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*, bcArt*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR; 3.119.0, Companion 1.19.0, Z-COCRBC: also every artwork of a Bandcamp page – the album\'s and the photos of the media to buy, opened by a click on one of them): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, + Supplement)' },
     { id: 'S177', where: 'instsCommonAdd, instsCommonBtnHtml', note: 'Instruments (3.113.0; collected item Z-INSTLCA): ⑃ beside "Instruments: per track | on the release" – a row of the lowest level of the instruments\' tree all of them share (saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments) on the recordings, beside them (they stay), with their tracks, date, guest / solo when all have it; only of those without tracks of their own (precise tracks need none); ⚙ Settings → Appearance can switch the button off' },
     { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
     { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place' },
@@ -19184,7 +19185,9 @@
     o.cocr = true;
     if (o.hidden) o.hidden = false;
     const im = ocrOwnImage('file', dataUrlBlob(msg.dataUrl));
-    Object.assign(im, { id: `cocr-${id}`, cocr: id, cocrRelease: String(msg.releaseId || ''), name: tr('ocr.cocrName', { n: Number(msg.n) || '', img: Number(msg.imgN) || '' }),
+    // ([Z-COCRBC] 3.119.0) from Bandcamp too
+    const bc = msg.site === 'bandcamp';
+    Object.assign(im, { id: `cocr-${id}`, cocr: id, cocrRelease: String(msg.releaseId || ''), cocrSite: bc ? 'bandcamp' : 'discogs', name: tr(bc ? 'ocr.cocrNameBc' : 'ocr.cocrName', { n: Number(msg.n) || '', img: Number(msg.imgN) || '' }),
       sel: true, frames: [] });
     const at = o.images.findIndex((x) => x.cocr === id);
     if (at >= 0) {
@@ -19199,7 +19202,7 @@
     if (o.step !== 'run') o.step = 'result';
     o.error = '';
     renderOcr();
-    log('info', at >= 0 ? 'cocrChanged' : 'cocrIn', { n: Number(msg.n) || '' });
+    log('info', at >= 0 ? 'cocrChanged' : 'cocrIn', { n: Number(msg.n) || '', site: bc ? 'Bandcamp' : 'Discogs' });
     cocrQueue = cocrQueue.then(() => cocrRead(res)).catch((e) => console.warn('[Credits Importer] frame', e));
   }
   /** One frame read (a reader of its own: frames come one by one, the others keep their text and its corrections). */
@@ -19246,14 +19249,17 @@
   };
   function cocrDrop(id, tell) {
     const o = S.ocr;
+    // ([Z-COCRBC] 3.119.0, review) the site of the frame
+    const im = o ? o.images.find((x) => x.cocr === id) : null;
+    const site = im && im.cocrSite === 'bandcamp' ? 'bandcamp' : 'discogs';
     if (o) {
       o.images.filter((x) => x.cocr === id).forEach(cocrRevoke);
       o.images = o.images.filter((x) => x.cocr !== id);
       o.results = o.results.filter((r) => !(r.img && r.img.cocr === id));
       renderOcr();
     }
-    if (tell) toDiscogs({ type: 'ocr-frame-remove', site: 'discogs', frameId: id, releaseId: companionReleaseId() || '', mbRelease: releaseMbid });
-    log('info', 'cocrOut', {});
+    if (tell) toDiscogs({ type: 'ocr-frame-remove', site, frameId: id, releaseId: companionReleaseId() || '', mbRelease: releaseMbid });
+    log('info', 'cocrOut', { site: site === 'bandcamp' ? 'Bandcamp' : 'Discogs' });
   }
 
   /** The text of all images (as checked in the window) and where it is from (the edit note names it). */
@@ -19267,7 +19273,7 @@
     const caa = done.filter((r) => ocrIsCaa(r.img));
     const files = uniq(done.filter((r) => r.img.src === 'file' && !r.img.cocr).map((r) => r.img.name));
     // ([Z-COCR] 3.114.0, review) frames of the companion: the Discogs release they are from
-    const crops = uniq(done.filter((r) => r.img.cocr).map((r) => r.img.cocrRelease || ''));
+    const crops = uniq(done.filter((r) => r.img.cocr).map((r) => `${r.img.cocrSite || 'discogs'}|${r.img.cocrRelease || ''}`));
     const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
     const discogs = uniq(done.filter((r) => r.img.src === 'discogs').map((r) => r.img.discogs));
     // [3.34.6] PDFs with their pages read
@@ -19279,7 +19285,12 @@
     const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
       files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
       ...discogs.map((id) => `images of Discogs release ${DISCOGS.releaseUrl(id)}`),
-      ...crops.map((id) => (id ? `frames of the images of Discogs release ${DISCOGS.releaseUrl(id)}` : 'frames of images of Discogs')),
+      // ([Z-COCRBC] 3.119.0) of a Bandcamp page too
+      ...crops.map((k) => {
+        const [site, id] = [k.slice(0, k.indexOf('|')), k.slice(k.indexOf('|') + 1)];
+        if (site === 'bandcamp') return id ? `frames of the images of the Bandcamp page ${id}` : 'frames of images of Bandcamp';
+        return id ? `frames of the images of Discogs release ${DISCOGS.releaseUrl(id)}` : 'frames of images of Discogs';
+      }),
       ...[...pdfs].map(([key, pages]) => `PDF ${key} (p. ${uniq(pages).join(', ')})`)].filter(Boolean);
     const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };

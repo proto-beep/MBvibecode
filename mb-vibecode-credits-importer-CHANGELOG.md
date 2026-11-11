@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.118.0 | 1.17.0 – 1.18.0 |
+| 2026-11-08 | 3.88.0 – 3.119.0 | 1.17.0 – 1.19.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,10 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.119.0, Companion 1.19.0
+
+- **Frames on Bandcamp's artworks** (collected item Z-COCRBC): in a Bandcamp tab of the companion a click on an artwork – the album's or a photo of a medium to buy – opens it in the companion's large image with ‹ › through all of them (with Ctrl, Shift or Alt Bandcamp's own view). Frames drawn there go to the dashboard's window of the text from cover art at once, as on Discogs ("Bandcamp, image 2: frame 1"); ✕ in either place takes a frame out of both. The companion asks once for the permission to load Bandcamp's images (`@connect bcbits.com`).
 
 ### Import 3.118.0
 

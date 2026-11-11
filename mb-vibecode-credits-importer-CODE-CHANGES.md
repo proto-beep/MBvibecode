@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.118.0, Companion 1.6.0 – 1.18.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.119.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,13 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.119.0 · Companion 1.19.0 · 2026-11-08
+
+- **Z-COCRBC, Companion:** `bcArtList` (the page's `a.popupImage` and package photos on `bcbits.com`, in order), `bcArtBox` (a hidden `#dci-artwork` holding the list for `artBigOpen`/`artShow`), `bcArtInit` (a click on an artwork – no modifier key – opens the large image there; set up with `cocrCtxFn` for the Bandcamp side too); `cocrSend` sends `site`; `cocrCheckTab` looks up the Bandcamp page's address (`currentReleaseId`) and searches by the page's title; `cocrText.notLinked` for Bandcamp; `@connect bcbits.com`; `COMPANION_VERSION` 1.19.0.
+- **Z-COCRBC, Importer:** `cocrReceive` – `cocrSite`, the name `ocr.cocrNameBc`; `ocrText` names the frames of a Bandcamp page; `ocr.cocrDel` without "on Discogs"; S178's note.
+- **Tests:** `t_companion_bandcamp.py cocrbc3119` (A–D) – new; fails on 3.118.0 / 1.18.0.
+- **Review:** only on an album's or a track's page (`bcArtPage`), not the artist's photo of the side column; no look-up without the page's release (`cocrCheckTab`); of several MusicBrainz releases with the Bandcamp address the download's or stream's first; the cut-out from the image as uploaded (`_0`, else `_10`); the search with the artist; the log names the site of a frame (`log.cocrIn`, `…Changed`, `…Out` with `{site}`), `cocrDrop` sends it. Known: photos of a package that Bandcamp shows only in its own gallery (not as links in the page) are not in the list; the large image has no translated labels on Bandcamp.
 
 ## Import 3.118.0 · 2026-11-08
 
