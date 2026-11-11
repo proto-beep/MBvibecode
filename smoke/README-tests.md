@@ -1155,6 +1155,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   copymarks2: companion 1.13.0 (Z-MCP): copied text without the marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
+                                #   cocrbc3119: 3.119.0 / 1.19.0 (Z-COCRBC): a click on a medium's photo opens the companion's large image (2 / 2, ‹ the album's art),
+                                #     a frame drawn goes to the window ("Bandcamp, image 2: frame 1"), ✕ there takes it out of the image; with Ctrl Bandcamp's own
                                 #   (Companion 1.14.0, Z-BCAM) bcview C: a mark in the "about" text; textmarks D: ◷ before a date line, ♥ before
                                 #     a dedication line of the "about" text
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
