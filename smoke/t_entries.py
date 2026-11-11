@@ -4092,7 +4092,7 @@ def case_instl3109():
 
 def case_yell3110():
     """Credits Importer 3.110.0 (collected item Z-YELL): what is open, counted and marked – must (orange: not staged without an answer)
-    and can (yellow: staged as suggested). Discogs: "Directed By" (Dir Ed; Q003, no type), "English Translation" (Tr Eng; liner notes
+    and can (yellow: staged as suggested; [Z-MAY] 3.115.0: "may" in its tooltip and label). Discogs: "Directed By" (Dir Ed; Q003, no type), "English Translation" (Tr Eng; liner notes
     taken as a suggestion), "Bass" (Bass Guy; Q001, bass until chosen), "Producer" of No Link (not on MusicBrainz), Sax Two's soprano
     saxophone and flute (Z-INSTS).
     A) The footer: "● 2 must" (Dir Ed, No Link) and "● 4 can" (Tr Eng, Bass Guy, the two dates of the notes – Z-YELLDATE 3.112.0;
@@ -4153,8 +4153,10 @@ def case_yell3110():
             H.wait_still(pg, "document.body.innerHTML", 10, 300)
             f0, d0 = pg.evaluate(FOOT), pg.evaluate(DOTS)
             m0 = {n: pg.evaluate(MARK, n) for n in ('Dir Ed', 'Tr Eng', 'Bass Guy', 'No Link')}
-            print('A)', f0, d0, m0)
-            results.append(f0 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 4']]
+            # ([Z-MAY] 3.115.0) the yellow ones are "may" (were "can")
+            t0 = pg.evaluate("(() => { const c = document.querySelector('[data-el=yell] .dci-yell-c-can'); return [c.title.split(':')[0], c.querySelector('.dci-yell-n').getAttribute('aria-label')]; })()")
+            print('A)', f0, d0, m0, t0)
+            results.append(f0 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 4']] and t0 == ['Suggestions that may be confirmed', '4 suggestions to confirm (may) – to the next one']
                            and dict(d0).get('Dir Ed') == ['dci-yell-dot-must:● 1'] and dict(d0).get('Tr Eng') == ['dci-yell-dot-can:● 1']
                            and dict(d0).get('Bass Guy') == ['dci-yell-dot-can:● 1'] and dict(d0).get('No Link') == ['dci-yell-dot-must:● 1']
                            and any('dci-yell-must' in x for x in m0['Dir Ed']) and any('dci-type-ask' in x and 'dci-yell-can' in x and x.endswith('+ctl') for x in m0['Tr Eng']))

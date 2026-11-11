@@ -99,7 +99,8 @@ def case_head():
         pg.click('[data-act=text-cancel]')
         print('B) zu:', b0, '| offen:', b1, b1f, '| Escape:', b2, '| Klick daneben offen:', b3, '| Text:', b4)
         results.append(not b0['open'] and b0['aria'] == 'false' and b1['open'] and b1['aria'] == 'true' and b1f == 'discogs-input'
-                       and b1['items'] == ['discogs-input', 'discogs-load', 'text-open', 'srcorder-toggle', 'bc-toggle', 'forget-open']
+                       # ([Z-BETAOFF] 3.115.0) "Text from cover art …" at first
+                       and b1['items'] == ['discogs-input', 'discogs-load', 'text-open', 'ocr-open', 'srcorder-toggle', 'bc-toggle', 'forget-open']
                        and b2 == [False, 'srcmenu', True] and b3 is False and b4 == [False, True, True])
         # C) + Supplement
         c0 = pg.evaluate("!!document.querySelector('.dci-suppbar')")
