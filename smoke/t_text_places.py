@@ -1319,6 +1319,63 @@ Copyright 2026 Castles In Space."""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_rmxtitle3126():
+    """Credits Importer 3.126.0 (collected item Z-RMXTITLE, S200): MusicBrainz's tracks "This Machine", "The Wire", "This Machine (TVAM
+    Remix)", "The Wire [Remix by Jane Roe & John Doe]"; the text "Remixed by John Doe (4)".
+    A) Entries "TVAM" and "Jane Roe" from the titles – their remixer rows on Skip, the question at the entry ("may", yellow in the
+       footer), MusicBrainz's "TVAM" suggested; John Doe credited by the text: no second row, only "remix of" to add (until 3.125.0
+       nothing of the titles).
+    B) "Take as remixer" at TVAM: its row on the recording of track 3, its "remix of" taken.
+    C) "Apply": "remix of" staged – the remix (track 3) entity0, the original (track 1) entity1, link type 230; John Doe's "remix of"
+       not taken: none of track 4."""
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 5)]
+    H.TITLES[:] = ['This Machine', 'The Wire', 'This Machine (TVAM Remix)', 'The Wire [Remix by Jane Roe & John Doe]']
+    TV = H.uid('a1a1a1a1', 3126)
+    H.ARTISTS[3126] = (TV, 'TVAM')
+    H.lt(153, '7950be4d-13a3-48e7-906b-5af562e39544', 'remixer', 'artist', 'recording', ())
+    H.lt(230, 'bfbdb55a-b857-473a-8f2e-a9c09e45c3f5', 'remix', 'recording', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = "Remixed by John Doe (4)"
+    GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? { rows: [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw, ((tr.className.match(/dci-lv-(\\w+)/) || [])[1]) || '', (tr.querySelector('[data-tcount]') || {textContent: ''}).textContent.trim()]),
+    ask: !!g.querySelector('[data-act=rmx-take]'), of: [...g.querySelectorAll('[data-act=rmxof-toggle]')].map(b => b.getAttribute('aria-pressed')),
+    ofText: [...g.querySelectorAll('[data-el=rmxof] span')].map(x => x.textContent.trim()),
+    sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid) } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        tv, jr, jd = (pg.evaluate(GROUP, n) for n in ('TVAM', 'Jane Roe', 'John Doe'))
+        can = pg.evaluate("(document.querySelector('.dci-yell-c-can .dci-yell-n') || {}).textContent || ''")
+        print('A) TVAM:', tv, '| Jane Roe:', jr, '| John Doe:', jd, '| kann:', can)
+        results.append(bool(tv and jr and jd) and tv['ask'] and [r[1] for r in tv['rows']] == ['skip'] and TV in tv['sugg'] and tv['of'] == ['false']
+                       and jr['ask'] and jr['of'] == ['false'] and not jd['ask'] and jd['of'] == ['false'] and len(jd['rows']) == 1
+                       and can.strip() not in ('', '0'))
+        pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'TVAM').querySelector('[data-act=rmx-take]').click()")
+        pg.wait_for_timeout(800)
+        tv2 = pg.evaluate(GROUP, 'TVAM')
+        print('B) TVAM nach Übernehmen:', tv2)
+        results.append(bool(tv2) and not tv2['ask'] and [r[1] for r in tv2['rows']] == ['recording'] and tv2['of'] == ['true'])
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        rr = pg.evaluate("window.__dispatched.filter(a => a.newRelationshipState && a.newRelationshipState.linkTypeID === 230).map(a => [a.newRelationshipState.entity0.gid, a.newRelationshipState.entity1.gid])")
+        print('C) remix of:', rr)
+        results.append(rr == [[H.REC[2], H.REC[0]]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_exceptc3125():
     """Credits Importer 3.125.0 (collected item Z-EXCEPTC, S199): Bandcamp's "Industrial Growth", its tracks "This Machine", "The Wire",
     "Heavy Industry", "Industrial Unrest", "This Machine (TVAM Remix)"; the text (a sentence over two lines):

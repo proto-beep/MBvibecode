@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.125.0",
+  "version": "3.126.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -301,6 +301,13 @@
     "uncr.all": "Auf dem Release nicht genannt ({src}: uncredited) – auf Überspringen:",
     "uncr.some": "Auf dem Release nicht genannt ({src}: uncredited) – auf Überspringen:",
     "uncr.take": "Trotzdem übernehmen",
+    "rmx.ask": "Remixer nur aus dem Titel {titles} (MusicBrainz) – übernehmen?",
+    "rmx.take": "Als Remixer übernehmen",
+    "rmx.takeTitle": "Der Titel nennt diesen Artist als Remixer: die Rolle wird übernommen (mit „remix of“ zum Originaltrack, wenn er auf diesem Release ist)",
+    "rmx.of": "{remix} ist ein Remix von {orig}",
+    "rmx.ofTake": "„remix of“ hinzufügen",
+    "rmx.ofTaken": "✓ „remix of“ hinzugefügt",
+    "rmx.ofTitle": "Die Aufnahme des Remixes mit der Aufnahme verknüpft, die sie remixt (MusicBrainz’ „remix of“) – erneut klicken, um es wegzulassen",
     "uncr.takeOne": "„{role}“ trotzdem übernehmen",
     "uncr.takeOneTitle": "Diese Rolle der Person auf ihrer Ebene, obwohl das Release sie nicht nennt",
     "uncr.takeAll": "Für alle Uncredited übernehmen",
@@ -371,6 +378,7 @@
     "log.dateOrderKept": "{name} ({role}): {date} behalten, obwohl vor {other}",
     "log.dateOrderDropped": "{name} ({role}): {date} entfernt (vor {other})",
     "log.uncrTaken": "Trotz uncredited übernommen: {n} Rollen ({list})",
+    "log.rmxTaken": "Als Remixer aus dem Titel übernommen: {name} ({n} Rollen)",
     "log.playsTaken": "Aus den Notes für {name}: {list}",
     "log.ensembleApplied": "Auf den Tracks von „{line}“ spielen nur die Genannten",
     "log.soloAnswered": "„{line}“: {ans}",
@@ -2701,6 +2709,7 @@
     "dedbox.create": "Anlegen …",
     "dedbox.createTitle": "Den Artist „{name}“ in MusicBrainz anlegen (neuer Tab) – dann hier seine MBID angeben",
     "yell.kind.ded": "Widmung nicht sicher",
+    "yell.kind.rmx": "Remixer aus einem Titel",
     "typeAsk.pendingSounds": "Bis zu deiner Wahl bleibt die Zeile Performer.",
     "typeAsk.askPoems": "„{role}“ allein: der Text der Werke, im Booklet abgedruckte Gedichte oder vorgelesene Gedichte? – bitte wählen:",
     "typeAsk.askPoemsRelease": "„{role}“ auf dem Release: der Text, vorgelesene Gedichte oder im Booklet abgedruckte Gedichte? – bitte wählen:",
@@ -2913,7 +2922,8 @@
     "log.yellNo": "Zurückgenommen: {what}",
     "log.yellUndo": "Wieder geöffnet: {what}",
     "settings.yellOne": "Ein Zähler für offene Punkte („muss“ und „kann“ nicht getrennt)",
-    "settings.yellOneTitle": "Die Fußzeile zählt, was offen ist: Fragen zum Beantworten (muss, orange) und Vorschläge zum Bestätigen (kann, gelb) – getrennt oder in einem Zähler"
+    "settings.yellOneTitle": "Die Fußzeile zählt, was offen ist: Fragen zum Beantworten (muss, orange) und Vorschläge zum Bestätigen (kann, gelb) – getrennt oder in einem Zähler",
+    "preview.remixOf": "Remix von „{title}“"
   },
   "es": {
     "title": "Credits Importer",
@@ -5347,6 +5357,7 @@
     "dedbox.create": "Crear …",
     "dedbox.createTitle": "Crear el artista «{name}» en MusicBrainz (una pestaña nueva) – luego dar aquí su MBID",
     "yell.kind.ded": "dedicatoria no segura",
+    "yell.kind.rmx": "remezclador de un título",
     "typeAsk.pendingSounds": "Hasta que elijas, la fila sigue como intérprete.",
     "typeAsk.askPoems": "«{role}» solo: ¿la letra de las obras, poemas impresos en el libreto o poemas recitados? – elige:",
     "typeAsk.askPoemsRelease": "«{role}» en la publicación: ¿la letra, poemas recitados o poemas impresos en el libreto? – elige:",
@@ -5372,7 +5383,16 @@
     "log.dateOrderKept": "{name} ({role}): {date} mantenida, aunque anterior a {other}",
     "log.dateOrderDropped": "{name} ({role}): {date} quitada (anterior a {other})",
     "log.formatSeries": "Serie del formato: {name} (fecha de la publicación {date})",
-    "note.seriesFormat": "Una serie nombrada en el formato de la publicación (Record Store Day …) sin una fecha que diga cuál: elige arriba la serie de MusicBrainz (o da su MBID)."
+    "note.seriesFormat": "Una serie nombrada en el formato de la publicación (Record Store Day …) sin una fecha que diga cuál: elige arriba la serie de MusicBrainz (o da su MBID).",
+    "rmx.ask": "Remezclador solo por el título {titles} (MusicBrainz): ¿tomarlo?",
+    "rmx.take": "Tomar como remezclador",
+    "rmx.takeTitle": "El título nombra a este artista como remezclador: se prepara el rol (con «remix of» de la pista original, si está en este lanzamiento)",
+    "rmx.of": "{remix} es un remix de {orig}",
+    "rmx.ofTake": "Añadir «remix of»",
+    "rmx.ofTaken": "✓ «remix of» añadido",
+    "rmx.ofTitle": "La grabación del remix enlazada con la grabación que remezcla («remix of» de MusicBrainz): vuelve a hacer clic para omitirlo",
+    "preview.remixOf": "remix de «{title}»",
+    "log.rmxTaken": "Tomado como remezclador por el título: {name} ({n} roles)"
   },
   "fr": {
     "title": "Credits Importer",
@@ -7806,6 +7826,7 @@
     "dedbox.create": "Créer …",
     "dedbox.createTitle": "Créer l’artiste « {name} » dans MusicBrainz (nouvel onglet) – puis donner ici son MBID",
     "yell.kind.ded": "dédicace pas sûre",
+    "yell.kind.rmx": "remixeur d’un titre",
     "typeAsk.pendingSounds": "Tant que rien n’est choisi, la ligne reste sur interprète.",
     "typeAsk.askPoems": "« {role} » seul : les paroles des œuvres, des poèmes imprimés dans le livret ou des poèmes lus à voix haute ? – veuillez choisir :",
     "typeAsk.askPoemsRelease": "« {role} » sur la parution : les paroles, des poèmes lus à voix haute ou des poèmes imprimés dans le livret ? – veuillez choisir :",
@@ -7831,6 +7852,15 @@
     "log.dateOrderKept": "{name} ({role}) : {date} gardée, bien qu’avant {other}",
     "log.dateOrderDropped": "{name} ({role}) : {date} retirée (avant {other})",
     "log.formatSeries": "Série d’après le format : {name} (date de la parution {date})",
-    "note.seriesFormat": "Une série nommée dans le format de la parution (Record Store Day …) sans date qui dise laquelle : choisir la série de MusicBrainz ci-dessus (ou donner son MBID)."
+    "note.seriesFormat": "Une série nommée dans le format de la parution (Record Store Day …) sans date qui dise laquelle : choisir la série de MusicBrainz ci-dessus (ou donner son MBID).",
+    "rmx.ask": "Remixeur seulement d’après le titre {titles} (MusicBrainz) – le prendre ?",
+    "rmx.take": "Prendre comme remixeur",
+    "rmx.takeTitle": "Le titre nomme cet artiste comme remixeur : le rôle est préparé (avec « remix of » de la piste originale, si elle est sur cette parution)",
+    "rmx.of": "{remix} est un remix de {orig}",
+    "rmx.ofTake": "Ajouter « remix of »",
+    "rmx.ofTaken": "✓ « remix of » ajouté",
+    "rmx.ofTitle": "L’enregistrement du remix lié à l’enregistrement qu’il remixe (« remix of » de MusicBrainz) – cliquez à nouveau pour l’omettre",
+    "preview.remixOf": "remix de « {title} »",
+    "log.rmxTaken": "Pris comme remixeur d’après le titre : {name} ({n} rôles)"
   }
 }
