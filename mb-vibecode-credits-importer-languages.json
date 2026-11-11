@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.110.0",
+  "version": "3.111.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2772,6 +2772,10 @@
     "una.wordTitle": "Klick: die Wortgruppe (ein Name, ein Label, ein Ort …) · noch ein Klick darauf: nur dieses Wort · ⇧-Klick: die Wörter bis hierher",
     "una.knownTitle": "Ein Name, den das Release oder seine Einträge schon kennen",
     "yell.must": "● {n} muss",
+    "lc.missing": "Label Code: Discogs nennt LC {code} – {name} hat auf MusicBrainz keinen Label Code",
+    "lc.other": "Label Code: Discogs nennt LC {code} – {name} hat auf MusicBrainz LC {other}",
+    "lc.none": "Label Code: Discogs nennt LC {code} – kein Label dieses Releases auf MusicBrainz hat ihn (zu welchem Label er gehört, ist nicht klar)",
+    "lc.addTitle": "{name} auf MusicBrainz bearbeiten, Label Code {code} eingetragen (du prüfst und speicherst)",
     "yell.can": "● {n} kann",
     "yell.all": "● {n} offen",
     "yell.mustTitle": "Fragen, die beantwortet werden müssen: bis dahin werden diese Rollen nicht übernommen (orange). Ein Klick springt zur nächsten",

@@ -281,6 +281,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   pldup3111: 3.111.0 (Z-PLDUP): "Tonart Studio" / "Tonart" of the notes = "Tonart Studio, Kerpen-Horrem" of Discogs – no second
+                                #     place, credited as the notes write it, "recorded at" a row of Discogs's place
+                                #   lcnote3111: 3.111.0 (Z-LCNOTE): the label code of Discogs and the labels of MusicBrainz – missing, another, the same,
+                                #     two labels (the notes' bracket, else only the note)
                                 #   plt389: 3.89.0 (Z-PLT; R114, C046, S141): "Plated By" – a person misc "vinyl plating" on a vinyl release, a
                                 #     company without an artist of its name on Skip (said); on a CD both left out with the reason
                                 #   camd388: 3.88.0 (Z-CAMD2, S138): "video shot at" of a live recording – the performance's date suggested, ✓
@@ -513,6 +517,7 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   engrr3111: 3.111.0 (Z-ENGRR): "Engineer [Recording & Remix]" → recording, remixer; "[Mix and Mastering]", "[Recording / Overdubs]", "[Remix]"
                                 #   engtr3109: 3.109.0 (Z-ENGTR): "English Translation", "Translated By [German]", "Übersetzung", "Translation (French)" from
                                 #     Discogs – liner notes with translator at once, no role credit; "translator (lyrics)": a suggestion on every work
                                 #     (no tracks) or the work of the track named; back to the liner notes from the works matrix's column; staged with translator

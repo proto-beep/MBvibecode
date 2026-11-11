@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.110.0
+// @version      3.111.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -15,6 +15,8 @@
 // @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
 // @match        *://musicbrainz.org/release/*
 // @match        *://*.musicbrainz.org/release/*
+// @match        *://musicbrainz.org/label/*/edit*
+// @match        *://*.musicbrainz.org/label/*/edit*
 // @match        https://harmony.pulsewidth.org.uk/release/actions*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_openInTab
@@ -27,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.110.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.110.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.111.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.111.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.110.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.111.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1774,6 +1776,10 @@
       "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
       "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
       "yell.must": "● {n} must",
+      "lc.missing": "Label code: Discogs gives LC {code} – {name} has no label code on MusicBrainz",
+      "lc.other": "Label code: Discogs gives LC {code} – {name} has LC {other} on MusicBrainz",
+      "lc.none": "Label code: Discogs gives LC {code} – no label of this release on MusicBrainz has it (which label it belongs to is not clear)",
+      "lc.addTitle": "Edit {name} on MusicBrainz with the label code {code} filled in (you check and save it)",
       "yell.can": "● {n} can",
       "yell.all": "● {n} open",
       "yell.mustTitle": "Questions that must be answered: until then these roles are not staged (orange). A click goes to the next one",
@@ -4027,8 +4033,14 @@
    * [S018] An engineer with several tasks ("Engineer [Mix, Recording]") is one role per task – mix and recording –
    * each with the other details ("Engineer [Mix, Recording, Assistant]" → both assistant).
    */
-  function splitEngineerTasks(role) {
-    if (!/^(engineer|engineered by|engineering)$/i.test(role.base) || !ruleOn('S018')) return [role];
+  function splitEngineerTasks(role0) {
+    if (!/^(engineer|engineered by|engineering)$/i.test(role0.base) || !ruleOn('S018')) return [role0];
+    // [Z-ENGRR] (3.111.0) tasks joined in one detail: "Engineer [Recording & Remix]", "[Mix and Mastering]", "[Recording / Mix]"
+    const mods = role0.mods.flatMap((m) => {
+      const parts = String(m).split(/\s*[&+/]\s*|\s+and\s+/i).map((x) => x.trim()).filter(Boolean);
+      return parts.length > 1 && parts.every((x) => ENGINEER_TASK_RE.test(x)) ? parts : [m];
+    });
+    const role = mods.length === role0.mods.length ? role0 : { ...role0, mods };
     const tasks = role.mods.filter((m) => ENGINEER_TASK_RE.test(m.trim()));
     if (tasks.length < 2) return [role];
     const rest = role.mods.filter((m) => !tasks.includes(m));
@@ -4200,7 +4212,7 @@
     { id: 'S015', where: 'tracksInText, applyMatrixColumn, applyDateToTracks (date dropped onto a row)', note: 'Track groups: a date whose sentence names tracks ("Tracks 1 to 5 recorded …", "tracks 6, 8 and 10", "A1 to A3", "side B", "CD2, tracks 1–5", "Disc 2" for the whole medium) goes into the date matrix with that track group and only onto those tracks; rows covering more tracks are split, rows with a date of their own stay' },
     { id: 'S016', where: 'studiosInText, applyMatrixColumn', note: 'A studio of "Companies, etc." named in the same sentence gets exactly these tracks and this date; other studios are left alone by that date' },
     { id: 'S017', where: 'wordingCredit', note: 'A Discogs spelling that differs from the MusicBrainz instrument only in spaces or hyphens is no role credit ("Flugel Horn" → flugelhorn, "Hand Claps" → handclaps)' },
-    { id: 'S018', where: 'splitEngineerTasks', note: 'An engineer with several tasks is one role per task: "Engineer [Mix, Recording]" → mix and recording (each with the other details, e.g. "Assistant")' },
+    { id: 'S018', where: 'splitEngineerTasks', note: 'An engineer with several tasks is one role per task: "Engineer [Mix, Recording]" → mix and recording (each with the other details, e.g. "Assistant"); Z-ENGRR (3.111.0) also joined in one detail: "Engineer [Recording & Remix]" → recording and remixer' },
     { id: 'S020', where: 'applySongDefault', note: 'Music and lyrics in one credit (R098): new works of these tracks get the work type "Song" (the default for all new works when the credit is for the whole release); a type chosen by hand stays' },
     { id: 'S021', where: 'applyLiveDefault, linkAttrsOf, liveHint', note: '"live" is preselected on new links recording → work (a new work, or a work linked here) when the release group is marked Live in MusicBrainz, Discogs calls the release live (format, "recorded live" in the notes), or the track title says so ("(live)", "[live]", "(live at …)", "– live"), or a "Live Recording By" credit names the track (the whole release without track list); unticking takes it back. Links that exist in MusicBrainz keep their attributes: "live" is only offered there ("li?")' },
     { id: 'S022', where: 'notesTrackCredits, matchEntry, applyNotesTrackCredits', note: 'Track lists in the Discogs notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", "Tracks 1, 4 & 6 published by Z"): a track group in the pool; when the name is an entry of the dashboard (compared generously: case, accents, spaces, hyphens, punctuation, "&"/"and", Ltd./GmbH/Inc. …, one typo; as a last step without generic words like Publishing, Music, Verlag – marked "similar"), its work-level roles get these tracks as a suggestion (dashed, ✓ keeps, × takes out), ahead of the personal publisher evidence (S014). Credits Discogs gives on these tracks already are left alone; unknown names only give the track group' },
@@ -4322,6 +4334,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
+    { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place' },
     { id: 'S174', where: 'dsupScan, dsupTake, computePlan (relAttr)', note: 'MusicBrainz less precise (3.106.0; collected item Z-DSUP): MusicBrainz has a person with an instrument the source names more precisely ("saxophone" – "tenor saxophone") – no conflict, an update: "tenor saxophone instead of saxophone" offered at the entry (the relationship of MusicBrainz edited, its other attributes, credits and dates kept); several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks: they go on the release, MusicBrainz keeps the common group on the recordings; MusicBrainz more precise than the source: nothing is added. 3.107.0 (Z-ITREE): which instrument is a kind of which from the instruments\' tree (itreeAncestors) – MusicBrainz\'s attributes are flat' },
     { id: 'S173', where: 'dsupScan, dsupHtml, dsupTake', note: 'Conflicts with MusicBrainz (3.106.0; collected item Z-DSUP): a linked person MusicBrainz has with other instruments or voices on this release than the source – "only on MusicBrainz: drums" shown at the entry (yellow, a line of its own in the matrix, a chip in the compact view), the roles only in the source held on Skip until "Add anyway" (or "Add all conflicts"); the same role is never a conflict; any source (texts, other sites), on all its tracks together. 3.107.0 (Z-DSUP2): "only on MusicBrainz" only when the source names instruments or voices of the person; (Z-DSUPWHY) developer mode: why an entry has no box (dsupWhyOf)' },
     { id: 'S172', where: 'dsupDateOf, dsupDatesOf, computePlan (relDate)', note: 'Dates of relationships MusicBrainz has (3.106.0; collected item Z-DSUP): a row with a date (from the pool, the matrix or by hand) whose relationship MusicBrainz has – without a date: "add the date"; the same date less precise: "more precise"; another date: their lowest common denominator ("2007-05-06" and "2007-06": 2007); MusicBrainz more precise and the same: nothing – offered at the entry (yellow), "Take" edits the relationship of MusicBrainz. 3.107.0 (Z-DSUP3): a date MusicBrainz does not have is taken without a click (a click takes it back); the rows MusicBrainz has already (on Skip since the import) get the dates of the matrix too and come back when their date adds to or changes MusicBrainz\'s (dsupWithExisting)' },
@@ -4509,7 +4523,9 @@
       R040: { run: () => out(['sound effects', 'engineer'], { level: 'release', credit: !is(/^sound effects$/) }) },
       R041: { test: () => is(/^balance engineer$/) || (engineer && has('balance')), run: () => out(['balance', 'engineer'], { flags: engFlags() }) },
       R042: { test: () => is(/^audio engineer$/) || (engineer && has('audio')), run: () => out(['audio', 'engineer'], { flags: engFlags() }) },
-      R043: { test: () => engineer, run: () => out(['engineer'], { flags: engFlags() }) },
+      // [Z-ENGRR] (3.111.0) "Engineer [Remix]" (also a part of "Engineer [Recording & Remix]") is the remixer
+      R044: { test: () => is(/^(remix|remixed by|remixer|remix by)$/) || (engineer && has('remix', 'remixed', 'remixing')), run: () => out(['remixer'], { level: 'recording' }) },
+      R043: { test: () => engineer && !(ruleOn('R044') && has('remix', 'remixed', 'remixing')), run: () => out(['engineer'], { flags: engFlags() }) },
       R046: { test: () => is(/^(editor|edited by|editing|edited)$/) && textEditor, run: () => {
       consumed.add(textEditor);
       return out(['miscellaneous support'], { level: 'release', credit: textEditor });
@@ -6717,6 +6733,8 @@
         credits,
         companies,
         labels,
+        // [Z-LCNOTE] (3.111.0, S176) the label codes Discogs gives ("Label Code: LC 12345"), as numbers
+        labelCodes: uniq((d.identifiers || []).filter((x) => /label\s*code/i.test(String((x && x.type) || ''))).map((x) => lcNumber(x.value)).filter(Boolean)),
         series,
       };
     }
@@ -10513,9 +10531,10 @@
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
-        ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), refs: [] });
+        ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}), refs: [] });
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
       if (!same) continue;
+      if (c.anv && !same.anv) same.anv = c.anv; // [Z-PLDUP] (3.111.0)
       if (c.notesLine) same.notesLine = c.notesLine;
       if (!c.fromAbout) delete same.fromAbout;
       if (!c.fromNotes) delete same.fromNotes;
@@ -12522,6 +12541,52 @@
    * with Credits Importer" – "Edit relationships" in a new tab, the dashboard starts by itself and loads the Discogs
    * release or Bandcamp album Harmony looked up (also before MusicBrainz has the link).
    */
+  /** [Z-LCNOTE] (3.111.0) A label code as a number: "LC 01234", "LC-1234", "1234" → "1234"; else ''. */
+  function lcNumber(v) {
+    const m = String(v || '').match(/(?:^\s*|\bLC[\s:.-]*)0*(\d{1,6})\b/i);
+    return m && Number(m[1]) > 0 ? String(Number(m[1])) : '';
+  }
+  /**
+   * [Z-LCNOTE] (3.111.0, S176) A label's edit page opened by ＋ of the dashboard's note on a label code ("?dci-lc=12345"): the code put
+   * into the empty field "Label code" (marked; the editor checks and saves it).
+   */
+  function initLabelCodeSeed() {
+    const code = lcNumber(new URLSearchParams(location.search).get('dci-lc'));
+    if (!code) return;
+    let tries = 0;
+    const fill = () => {
+      const el = document.querySelector('input[name="edit-label.label_code"], #id-edit-label\\.label_code');
+      if (!el) {
+        if (++tries < 40) setTimeout(fill, 250);
+        return;
+      }
+      // another code there: not overwritten – only marked, the code of Discogs in its tooltip
+      if (String(el.value || '').trim()) {
+        el.style.outline = '2px solid #f2c94c';
+        el.title = `Credits Importer: Discogs gives LC ${code}`;
+        el.scrollIntoView({ block: 'center' });
+        return;
+      }
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      if (set && set.set) set.set.call(el, code);
+      else el.value = code;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.style.outline = '2px solid #f2c94c';
+      el.title = 'Credits Importer: label code from Discogs';
+      el.scrollIntoView({ block: 'center' });
+      // ((review) a form drawn anew by the page afterwards: filled once more if it is empty again
+      if (tries < 100) {
+        tries = 100;
+        setTimeout(() => {
+          const again = document.querySelector('input[name="edit-label.label_code"], #id-edit-label\\.label_code');
+          if (again && !String(again.value || '').trim()) fill();
+        }, 1500);
+      }
+    };
+    fill();
+  }
+
   function initHarmonyHook() {
     const params = new URLSearchParams(location.search);
     const mbid = (String(params.get('release_mbid') || '').match(MBID_RE) || [])[0];
@@ -12583,6 +12648,11 @@
   // "Edit relationships with Credits Importer"
   if (HARMONY_HOST_RE.test(location.hostname)) {
     if (/^\/release\/actions/i.test(location.pathname)) initHarmonyHook();
+    return;
+  }
+  // [Z-LCNOTE] (3.111.0) a label's edit page opened by ＋ of the note on a label code: the code filled in; nothing else
+  if (/^\/label\/[0-9a-f-]{36}\/edit\/?$/i.test(location.pathname)) {
+    initLabelCodeSeed();
     return;
   }
   const releaseMbid = (location.pathname.match(MBID_RE) || [])[0];
@@ -20668,7 +20738,8 @@
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
       S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
       // [Z-ARTL] (3.100.0, S159) with their names (a label credited for the artwork)
-      S.releaseLabelList = (ws['label-info'] || []).filter((li) => li && li.label && li.label.id).map((li) => ({ mbid: li.label.id, name: li.label.name || '' }));
+      S.releaseLabelList = (ws['label-info'] || []).filter((li) => li && li.label && li.label.id).map((li) => ({ mbid: li.label.id, name: li.label.name || '',
+        code: li.label['label-code'] != null && li.label['label-code'] !== '' ? String(Number(li.label['label-code'])) : null })); // [Z-LCNOTE] (3.111.0) its label code
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
@@ -21940,12 +22011,26 @@
     const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
     for (const c of ruleOn('S042') ? res.companies.filter(wanted) : []) {
       if (!looseName(c.who.name)) continue;
-      // [3.31.0] also written together or with a number as a word ("4WordSeaMusic" – Discogs: "Fourwordseamusic"; T046)
-      const same = rel.companies.filter((d) => sameCompanyName(d.who.name, c.who.name));
+      // [3.31.0] also written together or with a number as a word ("4WordSeaMusic" – Discogs: "Fourwordseamusic"; T046);
+      // [Z-PLDUP] (3.111.0) a place of the notes the same as one Discogs lists, more widely ("Tonart Studio" – "Tonart Studio,
+      // Kerpen-Horrem", "Tonart"): no second place; the notes' name is its credit (as the notes write it)
+      const isAt = /\sAt$/.test(String(c.role || ''));
+      let same = rel.companies.filter((d) => sameCompanyName(d.who.name, c.who.name));
+      // ((review) the credit only for a place found so – one the same as before (only the spelling differs) keeps Discogs's name)
+      let byPlace = false;
+      if (!same.length && isAt && ruleOn('S175')) {
+        same = rel.companies.filter((d) => /\sAt$/.test(String(d.role || '')) && samePlaceName(d.who, c.who.name));
+        byPlace = same.length > 0;
+      }
+      const placeCredit = (d) => {
+        if (!byPlace || !/\sAt$/.test(String(d.role || '')) || d.anv) return;
+        if (norm(c.who.name) !== norm(d.who.name)) d.anv = c.who.name;
+      };
       const sameRole = same.find((d) => norm(d.role) === norm(c.role));
       // the notes' spelling is searched in MusicBrainz too (T046)
       const alt = (d) => { if (d.who.name !== c.who.name && !(d.who.altNames || []).includes(c.who.name)) d.who.altNames = [...(d.who.altNames || []), c.who.name]; };
       if (sameRole) {
+        placeCredit(sameRole);
         // [S043] Discogs names the publisher for the whole release ("Published By – Flizmo Music"): the tracks the notes give
         // it go onto Discogs's entry ([3.31.6] set, ⓘ shows the line); [S053] (3.36.7) so does a place ("Recorded At – Goldsmiths
         // College" for the whole release, the notes: "A1 to B2 recorded … at Goldsmith's College, London"; collected item 150)
@@ -21959,7 +22044,10 @@
       }
       const who = same.length ? same[0].who : { id: 0, name: c.who.name, rawName: c.who.rawName || c.who.name, links: [], area: c.who.area || '' };
       if (same.length) alt(same[0]);
-      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
+      // [Z-PLDUP] (3.111.0) the same place with another role ("Recorded at Tonart" – Discogs: "Mixed At – Tonart Studio, …"): Discogs's
+      // place, credited as the notes write it
+      const anv = byPlace && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
+      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
@@ -22733,6 +22821,7 @@
     S.artists.set(company.key, company);
     for (const r of g.roles) {
       const row = makeRow(company.key, { raw: r.role, company });
+      if (r.anv) row.anv = r.anv; // [Z-PLDUP] (3.111.0) the place's name as the notes write it: its credit
       if (r.fromAbout) row.fromAbout = true;
       // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
       if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
@@ -25049,7 +25138,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -34327,6 +34416,60 @@
       return { id: `fp${k}`, line: fp.line, roles: news, who: who ? who.key : soloEnt ? soloEnt.key : solo ? `mb:${solo.mbid}` : '', done: '' };
     }).filter(Boolean);
   }
+  /**
+   * [Z-LCNOTE] (3.111.0, S176) The label code of the source and the labels of MusicBrainz: the release's labels (with their codes) and the
+   * labels linked in the dashboard (their codes looked up once). Per code of the source that no label has: the label it belongs to – named
+   * in brackets in the notes ("LC 12345 (Label X)"), else the only label without a code, else the only label – or none.
+   */
+  function lcNoteOf() {
+    const rel = S.release;
+    if (!rel || !ruleOn('S176')) return [];
+    const codes = uniq([...(rel.labelCodes || []), ...[...String(rel.notes || '').matchAll(/\bLC[\s:.-]*0*(\d{3,6})\b/gi)].map((m) => String(Number(m[1])))].filter((x) => x !== '0'));
+    if (!codes.length) return [];
+    S.lcCodes = S.lcCodes || new Map();
+    const pool = new Map();
+    (S.releaseLabelList || []).forEach((l) => pool.set(l.mbid, { mbid: l.mbid, name: l.name, code: l.code }));
+    for (const a of S.artists.values()) {
+      if (!a.company || a.entityType !== 'label' || !a.mbid || pool.has(a.mbid)) continue;
+      if (!S.lcCodes.has(a.mbid)) {
+        S.lcCodes.set(a.mbid, undefined);
+        mbWs(`label/${a.mbid}`, { background: true }).then((d) => {
+          S.lcCodes.set(a.mbid, d && d['label-code'] != null && d['label-code'] !== '' ? String(Number(d['label-code'])) : null);
+          renderSource();
+        }).catch(() => {
+          S.lcCodes.set(a.mbid, null);
+          renderSource();
+        });
+      }
+      pool.set(a.mbid, { mbid: a.mbid, name: a.mbName || a.name, code: S.lcCodes.get(a.mbid) });
+    }
+    const labels = [...pool.values()];
+    // a code still looked up: no note yet
+    if (labels.some((l) => l.code === undefined)) return [];
+    const named = new Map([...String(rel.notes || '').matchAll(/\bLC[\s:.-]*0*(\d{3,6})\b\s*[([]([^)\]]+)[)\]]/gi)].map((m) => [String(Number(m[1])), m[2].trim()]));
+    const out = [];
+    for (const code of codes) {
+      if (labels.some((l) => l.code === code)) continue;
+      const byName = named.has(code) ? labels.filter((l) => sameCompanyName(l.name, named.get(code))) : [];
+      // ((review) without the notes' bracket: only a label of the release itself – not a pressing plant or distributor linked below
+      const own = labels.filter((l) => (S.releaseLabelList || []).some((x) => x.mbid === l.mbid));
+      const free = own.filter((l) => !l.code);
+      const label = byName.length === 1 ? byName[0] : free.length === 1 ? free[0] : own.length === 1 ? own[0] : null;
+      out.push({ code, label, other: label && label.code ? label.code : null });
+    }
+    return out;
+  }
+  function lcNoteHtml() {
+    const notes = lcNoteOf();
+    if (!notes.length) return '';
+    return `<div class="dci-lcnote" data-el="lcnote">${notes.map((n) => {
+      const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}" target="_blank" rel="noopener"
+        title="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}" aria-label="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}">＋</a>` : '';
+      const text = !n.label ? tr('lc.none', { code: n.code }) : n.other ? tr('lc.other', { name: n.label.name, code: n.code, other: n.other }) : tr('lc.missing', { name: n.label.name, code: n.code });
+      return `<p class="dci-sub">🏷 ${esc(text)}${add}</p>`;
+    }).join('')}</div>`;
+  }
+
   function playsHtml() {
     const list = (S.playsAsk || []).filter((x) => !x.done);
     if (!list.length) return '';
@@ -35010,6 +35153,26 @@
    * with a number as a word ("4WordSeaMusic" – "Fourwordseamusic", "FlizmoMusic" – "Flizmo Music"), or without the words
    * for the kind of company; a name of such words only ("Music") is no match.
    */
+  /**
+   * [Z-PLDUP] (3.111.0, S175) A place of a text the same as one the source lists, more widely than sameCompanyName: without the case,
+   * the accents, the town after a comma, the words of places ("Studio", "Studios", "Recording", "Sound", "Tonstudio" …) and "the" –
+   * the same words, or the text's words the first ones of the source's ("Tonart" – "Tonart Studio, Kerpen-Horrem"); its other
+   * spellings too.
+   */
+  const PLACE_FILLER = /\b(?:the|at|studios?|recording|recordings|sound|sounds|tonstudio|tonstudios|studio[ns]?|estudios?|music|records)\b/giu;
+  function samePlaceName(who, name) {
+    const words = (x) => String(x || '').split(',')[0].normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(PLACE_FILLER, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);
+    // ((review) only the text's name the shorter one, with a word of three letters or more – no single letters or numbers alone
+    // ("Studio A" – "A&M Studios", "Sterling Sound" – "Sterling Road Studios": not the same)
+    const b = words(name).filter((w) => w.length > 1 || /\p{L}/u.test(w));
+    if (!b.some((w) => w.length >= 3 && /\p{L}/u.test(w))) return false;
+    return [who.name, who.rawName, ...(who.altNames || [])].filter(Boolean).some((n) => {
+      const a = words(n);
+      return a.length >= b.length && b.every((w, i) => a[i] === w);
+    });
+  }
+
   function sameCompanyName(x, y) {
     const [a1, b1] = [looseName(x), looseName(y)];
     if (!a1 || !b1) return false;
@@ -49758,6 +49921,10 @@
       .dci-yell-ctl { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); margin-left: calc(var(--u, 1px) * 4); vertical-align: middle; }
       .dci-yell-ctl .dci-yell-yes, .dci-yell-tick { color: #2f7d4a; font-weight: 700; }
       .dci-yell-ctl .dci-yell-no { color: #b23b2e; }
+      /* [Z-LCNOTE] (3.111.0) the note on a label code */
+      .dci-lcnote { background: var(--sugg-bg); border: 1px solid var(--sugg-line); border-radius: 4px; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-lcnote p { margin: 0; }
+      .dci-lc-add { margin-left: calc(var(--u, 1px) * 4); font-weight: 700; text-decoration: none; }
       .dci-yell-dots { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-self: center; }
       .dci-yell-dot { margin-left: calc(var(--u, 1px) * 6); font-size: 0.85em; font-weight: 600; white-space: nowrap; }
       .dci-yell-dot-must { color: #c4571f; }

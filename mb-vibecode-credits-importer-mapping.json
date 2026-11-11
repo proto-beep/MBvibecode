@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.110.0",
+  "version": "3.111.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -152,7 +152,7 @@
     {"id":"R041","kind":"special","note":"","re":{"$re":"^balance engineer$","$flags":""},"types":["balance","engineer"],"level":"recording"},
     {"id":"R042","kind":"special","note":"","re":{"$re":"^audio engineer$","$flags":""},"types":["audio","engineer"],"level":"recording"},
     {"id":"R043","kind":"special","note":"","re":null,"types":["engineer"],"level":"recording"},
-    {"id":"R044","kind":"simple","note":"","re":{"$re":"^(remix|remixed by|remixer|remix by)$","$flags":""},"types":["remixer"],"level":"recording"},
+    {"id":"R044","kind":"special","note":"\"Remix\", \"Remixed By\" and, Z-ENGRR (3.111.0), \"Engineer [Remix]\" (also a part of \"Engineer [Recording & Remix]\") are the remixer","re":{"$re":"^(remix|remixed by|remixer|remix by)$","$flags":""},"types":["remixer"],"level":"recording"},
     {"id":"R045","kind":"simple","note":"","re":{"$re":"^(programmed by|programming|programmer|drum programming|programmed|sequenced by)$","$flags":""},"types":["programming"],"level":"recording"},
     {"id":"R046","kind":"special","note":"","re":{"$re":"^(editor|edited by|editing|edited)$","$flags":""},"types":["miscellaneous support"],"level":"release"},
     {"id":"R047","kind":"simple","note":"","re":{"$re":"^(edited by|editing|edited)$","$flags":""},"types":["editor"],"level":"recording"},
@@ -521,7 +521,7 @@
     {"base":"juno","instrument":"analog synthesizer","credit":"Juno"},
     {"base":"roland juno","instrument":"analog synthesizer","credit":"Roland Juno"}
   ],
-  "ENGINEER_TASK_RE": {"$re":"^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing)$","$flags":"i"},
+  "ENGINEER_TASK_RE": {"$re":"^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing|remix|remixed|remixing)$","$flags":"i"},
   "TEXT_NAME_SEP": {"$re":"\\s*(?:,|&|\\+|\\/|;|\\band\\b|\\bund\\b|\\bet\\b)\\s*","$flags":"i"},
   "TEXT_MEMBERS": {"$re":"^(.+?)\\s+(?:are|is|consists? of|comprises?|features|were|was|sind|ist|besteht aus|son|es|sont|est)\\s*:?\\s+(.+)$","$flags":"i"},
   "TEXT_BAND_SELF": {"$re":"^(?:the\\s+)?(?:band|group|trio|quartet|quintet|duo|line-?up)$|^(?:we|this band|die band|wir)$","$flags":"i"},
