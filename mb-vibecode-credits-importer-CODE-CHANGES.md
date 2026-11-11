@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.122.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.123.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,12 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.123.0 · 2026-11-08
+
+- **Z-MBSEARCH (S193):** `MB_HITS_KEY` / `mbHits` (Settings → Sources, `data-set="mb-hits"`, 1 – 25, default 3; in the topic "sources" of profiles and "Reset all"); `mbsKindHtml` (the select `data-f="match-kind"` before `artist-input`, not for series, events …), `mbsHtml` (`data-el="mbs"`: hits, `mbs-use`, `mbs-more`), `mbsSearch` (`<kind>:(words) OR alias:(words)`, 25 at most), `mbsUse`; `artist-set` searches what is no MBID or URL; `switchEntryKind` (rows' types for the new kind by `kindTypesOf` – a company role's own types, `mapCompanyRole`, else the same names MusicBrainz has for it; for an artist the company role's artist types or `mapRole`; none → Skip; `kindSnap` per kind for the way back), then `suggestByName`; a linked entry after `mbs.kindAsk`. Placeholders of the field name the search.
+- **Tests:** `t_ui_view.py mbsearch3123`, `t_ui_view.py mbsearch3123r` – new; fail on 3.122.0. `t_ui_view.py suggstack` – the select before the field.
+- **Review:** an entry of another kind keeps the id of the kind the source gave it (`a.kindFrom` in `entryIdOf`, `rowBaseKey` from `kindSnap`), the kind is remembered per release (`entries[].kind`) and set again before its link – before, a reload gave an artist with a label's rows; only the last search of an entry and of its kind now is shown (a switch or a second search meanwhile: no error, no hits of another query), the suggestions of a kind switched away from again are dropped; a row the new kind has a type for leaves Skip with the level the rules give (`defaultLevel` too); no kind select on an entry of "as an artist / as the label" (Z-ARTL); the hits' disambiguation kept; the search cleared by "Cancel" and by an MBID; an address without "https://" ("discogs.com/artist/…") is no name; the path of the web service for other kinds (`entityPath`).
 
 ## Import 3.122.0 · 2026-11-08
 

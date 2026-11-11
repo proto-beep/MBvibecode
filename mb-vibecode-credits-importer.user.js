@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.122.0
+// @version      3.123.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.122.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.122.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.123.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.123.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.122.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.123.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -507,7 +507,7 @@
       "match.created": "newly created",
       "match.change": "change",
       "match.changeLabel": "change MB artist",
-      "match.placeholder": "MB artist URL or MBID",
+      "match.placeholder": "Name, or MB artist URL or MBID",
       "match.inputAria": "MusicBrainz artist for {name}",
       "match.apply": "Apply",
       "match.search": "Search MB",
@@ -981,7 +981,7 @@
       "credit.companyLabel": "Credited as",
       "issue.missingCompany": "MB label, place or artist missing",
       "match.noLinkCompany": "no MB label, place or artist with this {src} link",
-      "match.placeholderCompany": "URL or MBID of an MB label, place or artist",
+      "match.placeholderCompany": "Name, or URL or MBID of an MB label, place or artist",
       "match.createLabel": "Create label …",
       "match.createPlace": "Create place …",
       "match.areaNoCreate": "Areas are added by MusicBrainz's area editors only – choose one that was found, or enter its MBID.",
@@ -1454,7 +1454,19 @@
       "msg.urlNotHere": "URLs are not added here; use “External links” in the release editor.",
       "msg.noRelTypes": "MusicBrainz has no relationship type between the entity type “{type}” and a release, recording or work.",
       "msg.wrongEntityType": "This MBID is not of the type “{type}”.",
-      "match.placeholderOther": "URL or MBID of an MB {type}",
+      "match.placeholderOther": "Name, or URL or MBID of an MB {type}",
+      "mbs.kindAria": "Kind of the entry",
+      "mbs.kindTitle": "The kind of entry it is: another one re-maps its roles (a linked entry is let go, after a question)",
+      "mbs.hits": "MusicBrainz, {kind} “{q}”: {n} hits",
+      "mbs.none": "MusicBrainz has no {kind} “{q}”.",
+      "mbs.more": "+ {n} more",
+      "mbs.open": "Open in MusicBrainz",
+      "mbs.failed": "The search failed: {error}",
+      "mbs.kindAsk": "“{name}” is linked. Let the link go and change its kind to “{kind}”? Its roles are re-mapped.",
+      "settings.mbHits": "Hits of a search in an entry's field",
+      "settings.mbHitsTitle": "A name typed into the field of an entry's MusicBrainz link is searched: this many hits are shown at first and with each “+ more” (1 – 25)",
+      "log.mbsSearch": "{name}: searched MusicBrainz for the {kind} “{q}” – {n} hits",
+      "log.mbsKind": "{name}: now a {to} (was a {from}) – its roles re-mapped",
       "dir.label": "Direction",
       "dir.release": "this release",
       "dir.recording": "each selected recording",
@@ -4424,6 +4436,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S193', where: 'mbsSearch, mbsKindHtml, switchEntryKind', note: 'Entries (3.123.0; collected item Z-MBSEARCH): the field "MB artist URL or MBID" of an entry also searches – a name typed there gives MusicBrainz\'s entries of the entry\'s kind of that name (or other names), the first 3 (Settings → Sources: 1 – 25) and "+ more"; an URL or MBID as before. Before the field the kind – artist, label, place, area: another one lets the link go (a linked entry after a question) and re-maps the rows (the types of their roles for that kind, a role it has none for on Skip; back, the rows as they were)' },
     { id: 'S192', where: 'DISCOGS.toRelease (series), formatSeriesResolve, FORMAT_SERIES', note: 'Series (3.122.0; collected item Z-RSD): "Record Store Day" (also "Cassette Store Day", "Love Record Stores", "National Album Day") in Discogs\'s format – the release part of MusicBrainz\'s series of that day and year: on Black Friday "Record Store Day Black Friday 2025", in April "Record Store Day 2025", for the others the one of the year; with no such date MusicBrainz\'s series of that name and year are suggested. Other format words ("Limited Edition", "Reissue", "Box Set") are no series' },
     { id: 'S191', where: 'DISCOGS.toRelease (credits), addCompanyEntry, C026, C050, C051', note: 'Producers (3.122.0; collected item Z-PRODFOR): "Producer [Session Originally Produced For VARA Radio By]", generally "for X" in the details of a producer – the person a producer (the details left out), X a label searched by its name with "produced for" (contracted production; co-, executive) – on the release, on the recordings when the credit names its tracks; the level can be changed' },
     { id: 'S190', where: 'dateOrderIssue, dateOrderHtml', note: 'Dates (3.121.0; collected item Z-DATEORDER): a mix, remix, edit, overdub or mastering – of a person, a place, an area … – dated wholly before the recording of the same tracks, or a mastering before their mix: a question that must be answered (orange) names both dates – keep the date (staged with it) or remove it; the row is not staged before' },
@@ -11537,6 +11550,10 @@
   const ALIAS_MAX_KEY = 'dci-alias-max';
   const ALIAS_MAX_DEFAULT = 12;
   const aliasMax = () => clampInt(readJson('localStorage', ALIAS_MAX_KEY, ALIAS_MAX_DEFAULT), 0, 200, ALIAS_MAX_DEFAULT);
+  // [Z-MBSEARCH] (3.123.0, S193) the hits of a search in an entry's field shown at first (and with each "+ more")
+  const MB_HITS_KEY = 'dci-mb-hits';
+  const MB_HITS_DEFAULT = 3;
+  const mbHits = () => clampInt(readJson('localStorage', MB_HITS_KEY, MB_HITS_DEFAULT), 1, 25, MB_HITS_DEFAULT);
   const GAP_COUNT_HASH = 'dci-count';
   const GAP_COUNT_MAX_MS = 5 * 60 * 1000;
   const GAP_KEEP_MS = 7 * 24 * 3600 * 1000;
@@ -22866,11 +22883,13 @@
     return o;
   }
   /** An entry by what it is at the source (or, added by hand, in MusicBrainz) – the same in every import. */
-  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company && !a.artl ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${normKey(a.rawName || a.name || a.placeholder || '')}`);
+  // ([Z-MBSEARCH] 3.123.0, review) an entry of another kind by hand keeps the id of the kind the source gave it (a.kindFrom)
+  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${(a.kindFrom ? a.kindFrom !== 'artist' : a.company && !a.artl) ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${normKey(a.rawName || a.name || a.placeholder || '')}`);
   /** The line of the source a row comes from (the same line in every import gives the same key). */
   function rowBaseKey(r) {
     const a = S.artists.get(r.artistKey);
-    return JSON.stringify([a ? entryIdOf(a) : '', r.raw || '', r.base || '', r.dSpec || '', r.anv || '', (r.artl ? r.artl.company : r.company) ? 1 : 0, r.dSplitFrom || '', r.artTask ? 1 : 0, r.fromAbout ? 1 : 0]);
+    const orig = a && a.kindFrom && r.kindSnap && r.kindSnap[a.kindFrom]; // ([Z-MBSEARCH] 3.123.0, review) as the source gave it
+    return JSON.stringify([a ? entryIdOf(a) : '', r.raw || '', r.base || '', r.dSpec || '', r.anv || '', (r.artl ? r.artl.company : orig ? orig.company : r.company) ? 1 : 0, r.dSplitFrom || '', r.artTask ? 1 : 0, r.fromAbout ? 1 : 0]);
   }
 
   /** [146] The rows at the end of an import, as the source gave them. */
@@ -22965,6 +22984,7 @@
       }
       if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
       if (a.artl && !a.company) x.artl = 'artist'; // ([Z-ARTL] 3.100.0, review) "As an artist instead" taken
+      if (a.kindFrom && entryKind(a) !== a.kindFrom) x.kind = entryKind(a); // ([Z-MBSEARCH] 3.123.0, review) another kind by hand
       if (a.insts === 'release') x.insts = 'release'; // ([Z-INSTS] 3.103.0, review)
       if (S.rows.some((r) => r.instsCommon === a.key)) x.instsCommon = true; // ([Z-INSTLCA] 3.113.0, review)
       if (a.instsNo) x.instsNo = true;
@@ -23291,6 +23311,11 @@
       if (e.artl === 'artist' && a.artl && a.company) {
         Object.assign(a, { ...a.artl.artist, company: false });
         S.rows.filter((r) => r.artistKey === a.key).forEach((r) => { delete r.artl; });
+      }
+      // ([Z-MBSEARCH] 3.123.0, review) the kind chosen by hand (its rows came back with their types)
+      if (e.kind && MBS_KINDS.includes(e.kind) && !a.other && entryKind(a) !== e.kind) {
+        a.kindFrom = a.kindFrom || entryKind(a);
+        Object.assign(a, e.kind === 'artist' ? { company: false, entityType: null } : { company: true, entityType: e.kind });
       }
       // ([Z-INSTS] 3.103.0, review) the instruments on the release again; the suggestion declined
       if (e.instsNo) a.instsNo = true;
@@ -24402,7 +24427,7 @@
       } else if (e.entityType !== 'artist') {
         throw new Error(tr('msg.notArtist'));
       }
-      Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '', matchTouched: true });
+      Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '', matchTouched: true, mbs: null });
       if (artist.company) setCompanyEntityType(artist, e.entityType);
       else if (artist.other && artist.entityType === 'event') eventLinked(artist); // [Z-EVL] (3.88.0)
       else if (artist.other && artist.entityType === 'series') seriesLinked(artist, e.typeName || ''); // [Z-CIMP] (3.101.0, S164)
@@ -26131,6 +26156,115 @@
     return `<div class="dci-sugg-stack" title="${esc(heads.join(' · '))}">${shown.join('')}${more}</div>`;
   }
 
+  // --- [Z-MBSEARCH] (3.123.0, S193) the field of an entry's MusicBrainz link searches by name too; its kind can be changed ---------------
+  const MBS_KINDS = ['artist', 'label', 'place', 'area'];
+  const entryKind = (a) => (a.other ? a.entityType : a.company ? a.entityType || companyTypes(a)[0] || 'label' : 'artist');
+  /** The kind before the field: artist, label, place, area (not for a series, an event …: they keep theirs). */
+  function mbsKindHtml(a) {
+    if (!ruleOn('S193') || a.other || a.artl) return ''; // ((review) an entry of "as an artist / as the label" keeps its switch
+    const k = entryKind(a);
+    return `<select data-f="match-kind" aria-label="${esc(tr('mbs.kindAria'))}" title="${esc(tr('mbs.kindTitle'))}">${MBS_KINDS.map((x) => `<option value="${x}"${x === k ? ' selected' : ''}>${esc(tr(`entity.${x}`))}</option>`).join('')}</select> `;
+  }
+  /** The hits of a search (S193): the first ones, "+ more" the next ones. */
+  function mbsHtml(a) {
+    const m = a.mbs;
+    if (!m) return '';
+    if (m.busy) return `<div class="dci-mbs" data-el="mbs"><span class="dci-badge">${esc(tr('match.searching'))}</span></div>`;
+    if (m.error) return `<div class="dci-mbs dci-err" data-el="mbs">${esc(m.error)}</div>`;
+    if (!m.hits.length) return `<div class="dci-mbs dci-sub" data-el="mbs">${esc(tr('mbs.none', { q: m.q, kind: tr(`entity.${m.kind}`) }))}</div>`;
+    const more = m.hits.length - m.shown;
+    const li = (h) => `<li><button type="button" class="dci-textbtn" data-act="mbs-use" data-mbid="${esc(h.mbid)}">${esc(h.name)}</button>${h.info ? ` <span class="dci-sub">(${esc(h.info)})</span>` : ''}
+      <a href="/${entityPath(m.kind)}/${esc(h.mbid)}" target="_blank" rel="noopener" title="${esc(tr('mbs.open'))}">↗</a></li>`;
+    return `<div class="dci-mbs" data-el="mbs"><span class="dci-sub">${esc(tr('mbs.hits', { q: m.q, kind: tr(`entity.${m.kind}`), n: m.hits.length }))}</span>
+      <ul>${m.hits.slice(0, m.shown).map(li).join('')}</ul>${more > 0 ? `<button type="button" class="dci-textbtn" data-act="mbs-more">${esc(tr('mbs.more', { n: Math.min(mbHits(), more) }))}</button>` : ''}</div>`;
+  }
+  /** A name typed into the field: MusicBrainz's entries of the entry's kind of that name (or other names), 25 at most. */
+  async function mbsSearch(a, q) {
+    const kind = entryKind(a);
+    // ((review) only the last search of the entry, and of its kind now, is shown)
+    const m = { q, kind, hits: [], shown: mbHits(), busy: true, error: '' };
+    a.mbs = m;
+    a.error = '';
+    rerenderGroup(a);
+    try {
+      const words = luceneWords(q);
+      const path = entityPath(kind);
+      const query = words ? `${path}:(${words}) OR alias:(${words})` : `${path}:${lucenePhrase(q)}`;
+      const data = await mbWs(`${path}?query=${encodeURIComponent(query)}&limit=25`);
+      const items = (data && (kind === 'series' ? data.series : data[`${path}s`])) || [];
+      m.hits = items.filter((x) => x && x.id).map((x) => ({ mbid: x.id, name: x.name, type: x.type || '', disambiguation: x.disambiguation || '',
+        info: [x.type, (x.area && x.area.name) || x.country || '', x.disambiguation].filter(Boolean).join(', ') }));
+      if (a.mbs === m) log('info', 'mbsSearch', { name: a.name, q, kind: tr(`entity.${kind}`), n: m.hits.length });
+    } catch (e) {
+      m.error = tr('mbs.failed', { error: e.message || String(e) });
+    }
+    m.busy = false;
+    if (a.mbs !== m || entryKind(a) !== kind) return;
+    rerenderGroup(a);
+  }
+  /** A hit chosen: the entry linked to it (as "Apply" with its MBID). */
+  function mbsUse(a, mbid) {
+    const h = a.mbs && a.mbs.hits.find((x) => x.mbid === mbid);
+    if (!h) return;
+    Object.assign(a, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [{ mbid: h.mbid, name: h.name, entityType: a.mbs.kind }], editing: false, error: '', matchTouched: true, mbs: null });
+    if (a.company) setCompanyEntityType(a, entryKind(a));
+    else if (a.other && a.entityType === 'event') eventLinked(a);
+    else if (a.other && a.entityType === 'series') seriesLinked(a, h.type || '');
+    dropRegionCredit(a);
+    log('ok', 'artistManual', { name: a.name, mb: h.name });
+  }
+  /** The types of a row's role for another kind of entry: its own of that kind, else those of the same name MusicBrainz has for it. */
+  function kindTypesOf(r, kind) {
+    if (kind === 'artist') {
+      let types = r.company ? ((r.typeOptions && r.typeOptions.artist) || []) : r.types || [];
+      const m = mapRole(r.base || r.raw, r.mods || []);
+      const known = m && m.rule && !m.fallback;
+      if (!types.length && known) types = m.types || [];
+      return { types, typeOptions: r.typeOptions, level: known ? m.level : null };
+    }
+    const mc = mapCompanyRole(r.raw || '');
+    const opts = r.typeOptions && (r.typeOptions[kind] || []).length ? r.typeOptions : mc.rule ? mc.typeOptions : (r.typeOptions || {});
+    let types = (opts && opts[kind]) || [];
+    if (!types.length) {
+      const names = new Set(['release', 'recording', 'work', r.level].flatMap((lv) => typesFor(lv, kind).map((l) => norm(l.name))));
+      types = (r.types || []).filter((t) => names.has(norm(t)));
+    }
+    const artist = r.company ? ((r.typeOptions && r.typeOptions.artist) || []) : r.types || [];
+    return { types, typeOptions: { ...(opts || {}), [kind]: types, artist }, level: mc.rule ? mc.level : null };
+  }
+  /**
+   * Another kind for an entry (S193): its MusicBrainz link let go, its rows re-mapped – the types of their roles for that kind (a role it
+   * has none for on Skip); back to a kind it had, its rows as they were then.
+   */
+  function switchEntryKind(a, kind) {
+    const from = entryKind(a);
+    if (a.other || a.artl || kind === from || !MBS_KINDS.includes(kind)) return false;
+    a.kindFrom = a.kindFrom || from;
+    const rows = S.rows.filter((x) => x.artistKey === a.key);
+    rows.forEach((r) => {
+      r.kindSnap = { ...(r.kindSnap || {}), [from]: { types: r.types, typeOptions: r.typeOptions, entityType: r.entityType, company: r.company, level: r.level, defaultLevel: r.defaultLevel } };
+    });
+    Object.assign(a, { mbid: null, mbName: '', mbComment: '', status: 'missing', candidates: [], nameHits: null, aliasHits: null, personHit: null, editing: false, error: '', matchTouched: true, mbs: null });
+    if (kind === 'artist') Object.assign(a, { company: false, entityType: null });
+    else Object.assign(a, { company: true, entityType: kind });
+    for (const r of rows) {
+      const snap = r.kindSnap[kind];
+      if (snap) Object.assign(r, { types: snap.types, typeOptions: snap.typeOptions, entityType: snap.entityType, company: snap.company, level: snap.level, defaultLevel: snap.defaultLevel || r.defaultLevel, linkTypeId: null });
+      else {
+        const { types, typeOptions, level } = kindTypesOf(r, kind);
+        Object.assign(r, { types, typeOptions, entityType: kind, company: kind === 'artist' ? false : (r.company || true), linkTypeId: null });
+        // ((review) a role this kind has a type for leaves Skip (not one put there by hand); its level as the rules give it
+        if (!types.length) r.level = 'skip';
+        else if (level && (r.level === 'skip' ? !r.levelTouched : !findRowType(r, r.level))) Object.assign(r, { level, defaultLevel: level });
+        else if (level) r.defaultLevel = level;
+      }
+      resolveRowType(r);
+      refreshRowDetails(r);
+    }
+    log('info', 'mbsKind', { name: a.name, from: tr(`entity.${from}`), to: tr(`entity.${kind}`) });
+    return true;
+  }
+
   function matchHtml(a) {
     // [3.15.3] the suggestions as a block of their own below the head line (the red mark, the field, the buttons):
     // side by side first, in more lines when there are many
@@ -26154,13 +26288,13 @@
       : `<button type="button"${miss} data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
       <span class="dci-badge dci-badge-bad">${esc(tr(labelKey, { src: sourceLabel(entrySource(a)) }))}</span>
-      <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
+      ${mbsKindHtml(a)}<input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
       <button type="button" data-act="artist-set">${esc(tr('match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
       ${a.company && !a.other ? `<a href="/search?query=${encodeURIComponent(a.name)}&type=artist&method=indexed" target="_blank" rel="noopener">${esc(tr('match.searchArtist'))}</a>` : ''}
       ${createButtons}
       ${a.mbid ? `<button type="button" class="dci-textbtn" data-act="artist-cancel">${esc(tr('common.cancel'))}</button>` : ''}
-      ${a.error ? `<div class="dci-err">${esc(a.error)}</div>` : ''}`;
+      ${a.error ? `<div class="dci-err">${esc(a.error)}</div>` : ''}${mbsHtml(a)}`;
 
     if (a.status === 'pending') return `<span class="dci-badge">${esc(tr('match.searching'))}</span>`;
     if (a.editing) return editor('match.changeLabel');
@@ -42356,13 +42490,26 @@
       case 'artist-cancel':
         artist.editing = false;
         artist.error = '';
+        artist.mbs = null; // ([Z-MBSEARCH] 3.123.0, review)
         updateGroupHeader(artist);
         break;
       case 'artist-set': {
         const input = S.overlay.querySelector(`[data-match="${artist.key}"] [data-f="artist-input"]`);
-        setArtistManually(artist, input ? input.value : '');
+        const v = input ? input.value.trim() : '';
+        // [Z-MBSEARCH] (3.123.0, S193) a name (no MBID, no URL): searched
+        if (ruleOn('S193') && v && !MBID_RE.test(v) && !/^https?:\/\//i.test(v) && !/^[\w-]+(?:\.[\w-]+)+\//.test(v)) mbsSearch(artist, v).catch(showError);
+        else setArtistManually(artist, v);
         break;
       }
+      case 'mbs-use':
+        mbsUse(artist, btn.dataset.mbid);
+        rerenderGroup(artist);
+        refresh();
+        break;
+      case 'mbs-more':
+        if (artist.mbs) artist.mbs.shown += mbHits();
+        rerenderGroup(artist);
+        break;
       case 'artist-create':
         if (artist) startArtistCreate(artist);
         break;
@@ -43789,6 +43936,30 @@
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     if (!f) return;
+    // [Z-MBSEARCH] (3.123.0, S193) another kind for an entry: a linked one only after a question; then MusicBrainz's entries of its name
+    if (f === 'match-kind') {
+      const a = artistOf(el);
+      if (!a) return;
+      if (a.mbid && !confirm(tr('mbs.kindAsk', { name: a.mbName || a.name, kind: tr(`entity.${el.value}`) }))) {
+        el.value = entryKind(a);
+        return;
+      }
+      if (switchEntryKind(a, el.value)) {
+        renderGroups();
+        refresh();
+        // ((review) the suggestions of a kind switched away from again are dropped)
+        const kind = entryKind(a);
+        suggestByName([a]).then(() => {
+          if (entryKind(a) !== kind) {
+            a.nameHits = null;
+            return;
+          }
+          rerenderGroup(a);
+          refresh();
+        }).catch(showError);
+      }
+      return;
+    }
     // [Z-UNA] (3.42.4) the form of words not recognized: another kind offers its roles
     if (/^una-/.test(f)) {
       if (!S.una) return;
@@ -45246,7 +45417,7 @@
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY,
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -47120,6 +47291,8 @@
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
+        // [Z-MBSEARCH] (3.123.0, S193) the hits of a search in an entry's field
+        row(`<label title="${esc(tr('settings.mbHitsTitle'))}">${esc(tr('settings.mbHits'))} <input type="number" data-set="mb-hits" min="1" max="25" step="1" value="${mbHits()}"></label>`),
         // [Z-BETAOFF] (3.115.0) the text from cover art, out of the beta: on at first
         `<h4 class="dci-set-h" data-el="set-ocr">${esc(tr('settings.ocrHead'))}</h4>`,
         row(check('data-set="ocr-on"', S.ocrOn, tr('settings.ocrOn'), tr('settings.ocrOnTitle'))),
@@ -47665,6 +47838,12 @@
       writeJson('localStorage', STATS_IDLE_KEY, v === STATS_IDLE_DEFAULT ? null : v);
       el.value = String(v);
       log('info', 'settingValue', { what: tr('settings.statsIdle'), value: String(v) });
+    } else if (k === 'mb-hits') {
+      // [Z-MBSEARCH] (3.123.0, S193) 1 – 25; an emptied field is the default
+      const v = String(el.value).trim() === '' ? MB_HITS_DEFAULT : clampInt(el.value, 1, 25, MB_HITS_DEFAULT);
+      writeJson('localStorage', MB_HITS_KEY, v === MB_HITS_DEFAULT ? null : v);
+      el.value = String(v);
+      log('info', 'settingValue', { what: tr('settings.mbHits'), value: String(v) });
     } else if (k === 'alias-max') {
       // (3.44.1, review) an emptied field is the default, not 0
       const v = String(el.value).trim() === '' ? ALIAS_MAX_DEFAULT : clampInt(el.value, 0, 200, ALIAS_MAX_DEFAULT);
@@ -47927,8 +48106,8 @@
     'dci-insts-common',
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
-    // [Z-ALC] (3.44.1) the number of alias lookups
-    ALIAS_MAX_KEY];
+    // [Z-ALC] (3.44.1) the number of alias lookups; [Z-MBSEARCH] (3.123.0) of the hits of a search
+    ALIAS_MAX_KEY, MB_HITS_KEY];
 
   // --- [Z-QSP] (3.75.0, S110) profiles: the settings and the quick switches, "Standard" (the defaults) and your own ----------------
   // (not in a profile: the switches of the companion's pages, remembering releases, the statistics and how they are shown, what is
@@ -50719,6 +50898,8 @@
       .dci-cl-date.dci-cl-has { border-style: solid; background: var(--date-bg); color: var(--date-d); font-weight: 600; }
       .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
+      #dci-overlay .dci-mbs { flex-basis: 100%; margin: 2px 0 0; }
+      #dci-overlay .dci-mbs ul { margin: 2px 0 0 1.2em; padding: 0; }
       #dci-overlay .dci-dateorder-ask { border: 1px solid #eb743b; border-radius: 4px; padding: 1px 6px; }
       .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
       /* [3.32.3] a question of the compact line with its possibilities to click (item 102) */
