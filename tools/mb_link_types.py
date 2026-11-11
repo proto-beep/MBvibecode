@@ -73,6 +73,8 @@ ADDED_LATER = {
     1174: ('label', 'release', None), 1175: ('label', 'release', None), 951: ('label', 'release', None), 950: ('label', 'recording', None),
     993: ('artist', 'release', None), 928: ('artist', 'release', 993), 927: ('artist', 'release', 993), 871: ('artist', 'release', 54),
     872: ('artist', 'work', 167), 1231: ('artist', 'event', None), 1241: ('artist', 'recording', None), 1303: ('event', 'label', None),
+    # [Z-LICART] (3.118.0) licensed / licensed from of an artist
+    1010: ('artist', 'release', None),
 }
 
 
