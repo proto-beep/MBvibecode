@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.110.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.111.0, Companion 1.6.0 – 1.17.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.111.0 · 2026-11-08
+
+- **Z-ENGRR:** `splitEngineerTasks` splits a detail at "&", "+", "/", "and" when every part is an engineer task (`ENGINEER_TASK_RE`, now with remix, remixed, remixing; S018); R044 special (mapping `kind: special`): "Engineer [Remix]" → remixer; R043 not for remix.
+- **Z-PLDUP (S175):** `samePlaceName(who, name)` (new: without case, accents, the part after a comma, `PLACE_FILLER` words; the shorter name the first words of the longer; altNames too); `addNotesCompanies`: a place ("… At") of the notes not found by `sameCompanyName` is looked for so among Discogs's places; the same role: Discogs's entry credited as the notes write it (`anv`), another role: a new role of Discogs's entry with that `anv`; `groupCompanies` and `addCompanyEntry` carry `anv` to the row (its credit by `sourceCreditFor`).
+- **Z-LCNOTE (S176):** Discogs: `labelCodes` (identifiers "Label Code", `lcNumber`); `S.releaseLabelList` with `code` ("label-code" of the release's labels); `lcNoteOf()` – codes of the source and the notes, the labels of the release and those linked in the dashboard (`S.lcCodes`, `mbWs('label/…')` once), per code no label has: the label by the notes' bracket, the only one without a code, the only one; `lcNoteHtml()` in the source's panels (`data-el=lcnote`), ＋ `/label/<mbid>/edit?dci-lc=<code>`. `initLabelCodeSeed()` (new; `@match` label edit pages, before everything else at the top): the empty field "Label code" filled and marked (another code: only marked, the code in its tooltip).
+- **Review:** the notes' name a credit only for a place found by `samePlaceName` (`byPlace`) – one `sameCompanyName` finds (only the spelling differs: "Goldsmith's College") keeps Discogs's name; `samePlaceName` only with the text's name the shorter one and a word of three letters or more ("Sterling Road Studios" is not "Sterling Sound", "A&M Studios" not "Studio A"); the label of a note without the notes' bracket only one of the release itself (not a pressing plant or distributor linked in the dashboard), a failed lookup draws the note too; `lcNumber` also "LC: 12345", not 0; the label's edit page filled once more when the page draws its form anew; R043 takes "Engineer [Remix]" again when R044 is switched off.
+- **Texts:** `lc.missing`, `lc.other`, `lc.none`, `lc.addTitle` (en, de); S018, R044 say what changed; S175, S176 new.
+- **Tests:** `t_mapping.py engrr3111`, `t_notes_companies.py pldup3111` (A–C), `t_notes_companies.py lcnote3111` (A–D) – new; all fail on 3.110.0.
 
 ## Import 3.110.0 · 2026-11-08
 
