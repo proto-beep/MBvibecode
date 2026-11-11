@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.120.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.121.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,13 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.121.0 · 2026-11-08
+
+- **Z-DTRK (S189):** `DTRK_LEAD`, `DTRK_PLACE`; `tracksInText` reads a sentence that begins with media-and-track positions before a word of recording ("1-1 to 1-6 recorded …") – the dates of the notes get their track group (`datesWithContext`); TEXT.parse `discTrackLines` (before `venueBlocks`): such a line → "Tracks 1-1 to 1-6: …" (only when `resolveTracks` knows them), a place line right below without tracks or a year joined into it ("Recorded live at Club Montmartre, Copenhagen, Denmark, September 3rd, 1964").
+- **Z-DATEORDER (S190):** `dateStage` (0 recording – recording, recorded at/in, instrument, vocal, performer, performing orchestra, conductor, chorus master; 1 mix, remix, edit, overdub; 2 mastering), `dateOrderIssue` (the latest earlier-stage date on the same tracks – rows of the release cover all – that the row's date lies wholly before), `dateOrderOpen` (not kept: `row.dateOrderOk` the signature of both dates), `dateOrderHtml` in the open row, the compact line and the entry matrix's line, `dateOrderAnswer` (keep / `date: null`; logged `log.dateOrderKept` / `…Dropped`); `issue.dateOrder` keeps the row from being staged; `yellItems` counts it as a must question (`do:<row>`).
+- **Tests:** `t_notes_dates.py dtrk3121`, `t_dates_matrix.py dateorder3121`, `t_text_lists.py dtrk3121r` – new; fail on 3.120.0.
+- **Review:** `dateStage` – the recording's names first; "chorus master", "concertmaster", "booklet editor" no stage (mastering: "mastering", "mastered at/in/for", "glass mastered at"; edit: "editor", "edited at/in/for"); `dateOrderMap` computes all questions at once (the dated rows indexed by stage; cached until the next microtask, dropped when an answer removes a date) – before, each row scanned all rows several times per drawing; an earlier row with only an end date is not compared; a line of the entry's matrix answers only its rows with the question shown (`data-sig`), a row already kept is not cleared by "remove"; `refresh` draws the entries again when a question of another entry came or went (`S.dateOrderSig`); the compact line shows the question once, framed orange. `discTrackLines` joins the place line only after "recorded / mixed / mastered / overdubbed / performed" without a name ("1-1 to 1-6 produced by Teo Macero" / "Live at Birdland, New York" stay apart), and only a place – "Live …", "Recorded …", or with a comma (a city), not "In Memory Of …". Known: a place line below the last of several date lines (meant for all of them) goes to that last group only.
 
 ## Import 3.120.0 · 2026-11-08
 
