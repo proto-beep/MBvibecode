@@ -1185,6 +1185,139 @@ Photography by Jane Roe"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_qpband3124():
+    """Credits Importer 3.124.0 (collected items Z-QPBAND, S195, Q015, and Z-CPYEAR, S194), from a pasted text (Bandcamp, Rural Faune:
+    "O Colibri Mente"; the release's artist Qien Pudiera):
+    A) "Qien Pudiera are Camila Chapelle and Lucia Reyes : electronics, field Recordings, percussions, flutes and bells" – both get all
+       the roles (until 3.123.0 the line not recognized); the members are listed as left out on purpose ("the members of Qien
+       Pudiera").
+    B) "Special guest Christophe Bailleau : synthesizer improvisations and soundscapes" – synthesizer (guest) and effects credited
+       "soundscapes" (guest; the question Q014 answered by its suggestion); "Special guests" too.
+    C) "Copyright 2026 Castles In Space." – © (copyright) of the label; "Phonographic Copyright 2025 Signal To Noise" – ℗."""
+    for i, n, al in [(9201, 'electronic instruments', []), (9202, 'percussion', []), (9203, 'flute', []), (9204, 'bells', []), (9205, 'effects', [])]:
+        H.attr(i, n, 14, 14, aliases=al)
+    H.RELEASE_AC[:] = [(H.uid('abababab', 3124), 'Qien Pudiera', 'Qien Pudiera', '')]
+    H.lt(1191, H.uid('1a1a1a1a', 1191), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = """Qien Pudiera are Camila Chapelle and Lucia Reyes : electronics, field Recordings, percussions, flutes and bells
+Special guests Christophe Bailleau and Ana Paz : synthesizer improvisations and soundscapes
+Copyright 2026 Castles In Space.
+Phonographic Copyright 2025 Signal To Noise"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '',
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [t ? (t.options[t.selectedIndex] || {}).text : '',
+    (tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '',
+    [...tr.querySelectorAll('input[type=checkbox]:checked')].map(c => c.parentElement.textContent.trim()).join('+')]; }).sort() }])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 15, 300)
+        g = pg.evaluate(GROUPS)
+        for k, v in g.items():
+            print('  ', k, v)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.closest('li').textContent.replace(/\\s+/g, ' ').trim())")
+        print('   nicht erkannt:', unrec, '| weggelassen:', ign)
+        want = [['field recordist', '', '', ''], ['instrument', 'bells', '', ''], ['instrument', 'electronic instruments', 'electronics', ''],
+                ['instrument', 'flute', 'flutes', ''], ['instrument', 'percussion', '', '']]
+        ok_a = all((g.get(n) or {}).get('rows') == want for n in ('Camila Chapelle', 'Lucia Reyes')) and any('members of Qien Pudiera' in x and 'Lucia Reyes' in x for x in ign)
+        results.append(ok_a)
+        wb = [['instrument', 'effects', 'soundscapes', 'guest'], ['instrument', 'synthesizer', '', 'guest']]
+        results.append(all((g.get(n) or {}).get('rows') == wb for n in ('Christophe Bailleau', 'Ana Paz')))
+        results.append((g.get('Castles In Space') or {}).get('rows') == [['copyright', '', '', '']] and (g.get('Signal To Noise') or {}).get('rows') == [['phonographic copyright', '', '', '']])
+        results.append(not unrec)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cis3124():
+    """Credits Importer 3.124.0 (collected items Z-CATNO, S196; Z-INMEM, S197; Z-WEBDOM, S198), the credits of Bandcamp's
+    "Industrial Growth" (Warrington-Runcorn New Town Development Plan, Castles in Space CiS216), pasted; MusicBrainz has the release on
+    the label "Castles In Space" with the catalogue number "CIS-216".
+    A) "CiS216" left out as the catalogue number; "In memory of Kyle Bunell-Cooke." left out as a dedication – in the box a
+       suggestion with "Create …" (MusicBrainz has no such artist), counted as a question that may be answered; "castlesin.space"
+       and the other addresses left out as websites; nothing not recognized but the sentence of the festival (3.125.0).
+    B) Castles in Space linked (MusicBrainz's label of that name, the release's) – MusicBrainz has no address for it: a note "Website per the text:
+       castlesin.space" with a link to the label's page for editing, the address filled in (until 3.123.0 nothing).
+    C) Loaded again with "castlesin.space" in MusicBrainz for the label: no note."""
+    LAB = H.uid('1abe1000', 3124)
+    H.RELEASE_LABELS[:] = [(LAB, 'Castles In Space', 'CIS-216')]
+    H.MB_SEARCH['label'] = [{'id': LAB, 'name': 'Castles In Space', 'disambiguation': '', 'score': 100}]
+    H.lt(868, 'b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group', dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """© Castles in Space
+℗ Signal To Noise
+CiS216
+
+Written, performed and produced by Gordon Chapman-Fox.
+Mastered by Antony Ryan at RedRedPaw.
+
+Illustrations by Michael Cooke.
+
+In memory of Kyle Bunell-Cooke.
+
+warringtonruncorn.com
+castlesin.space
+roadburn.com
+
+All tracks published by Signal To Noise Publishing.
+Copyright 2026 Castles In Space."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run in ('A', 'C'):
+            H.ENTITY_URLS.clear()
+            if run == 'C':
+                H.ENTITY_URLS[LAB] = ['https://castlesin.space/']
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(2500)
+            # the label linked as MusicBrainz's suggestion of its name
+            cis = pg.locator('section.dci-group', has=pg.locator('.dci-gname strong', has_text='Castles in Space')).first
+            if cis.locator('[data-act=name-use]').count():
+                cis.locator('[data-act=name-use]').first.click()
+            pg.wait_for_timeout(1500)
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.trim())")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.closest('li').textContent.replace(/\\s+/g, ' ').trim())")
+            note = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Castles In Space/i.test(s.querySelector('.dci-gname strong').textContent));
+              const n = g && g.querySelector('[data-el=sitehint]'); return n ? [n.textContent.replace(/\\s+/g, ' ').trim(), n.querySelector('a').getAttribute('href')] : null; })()""")
+            ded = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].map(x => [x.querySelector('strong').textContent.trim(), !!x.querySelector('[data-el=ded-create]')])")
+            may = pg.evaluate("(document.querySelector('.dci-yell-c-can .dci-yell-n') || {}).textContent || ''")
+            print(f'{run}) nicht erkannt:', unrec, '\n   weggelassen:', ign, '\n   Hinweis:', note, '| Widmung:', ded, '| kann:', may)
+            if run == 'A':
+                results.append(any(x.startswith('CiS216') and 'catalogue number' in x for x in ign) and any(x.startswith('In memory of Kyle') and 'dedication' in x for x in ign)
+                               and any(x.startswith('castlesin.space') for x in ign) and not unrec)
+                results.append(['“In memory of Kyle Bunell-Cooke”', True] in ded and may.strip() not in ('', '0'))
+                results.append(bool(note) and 'castlesin.space' in note[0] and note[1].startswith(f'/label/{LAB}/edit?') and 'https%3A%2F%2Fcastlesin.space%2F' in note[1])
+            else:
+                results.append(note is None)
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_btw384():
     """Credits Importer 3.84.0 (collected items Z-WPR, Z-BTW, Z-DEDN, Z-PGF; rules S126 – S128, D007, C045): the text of a Bandcamp
     album (cyclicaldreams, "Inner Space"), pasted.

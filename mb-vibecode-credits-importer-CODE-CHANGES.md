@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.123.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.124.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.124.0 · Companion 1.20.0 · 2026-11-08
+
+- **Z-QPBAND (S195, R118, Q015):** TEXT.parse `qpLine` (after `cpyLine`, before `rdstLine`): `QP_MEMBERS` with the release's artist (`isTheBand`) – the line read as "A and B : roles", the members kept as `ignored` `{ why: 'members', band, names }`; `QP_GUESTS` – each role "[Guest]"; `qpRoles` drops "improvisation(s)". `membersNoteHtml` at the band's entry (a link to `/artist/<mbid>/edit`). Mapping: R118 soundscapes (instrument), Q015 (effects credited "soundscapes" – `presetAnswer` 0 –, sound effects, misc credited "soundscapes"); `askTranslation` takes Q015's first answer at once.
+- **Z-CPYEAR (S194):** `cpyLine` – "(Phonographic) Copyright (©|(c)|℗|(p)) YYYY" at the start of a line or sentence → "℗ / © YYYY".
+- **Z-CATNO (S196):** `S.releaseCatnos` (label-info), the context's `catnos`; TEXT.parse `catnoOf` (`editDistance` ≤ 1 on letters and digits) → `ignored` `catno`.
+- **Z-INMEM (S197):** TEXT.parse – a unit only of "in (loving) memory of / dedicated to the (loving) memory of / in memoriam" + name → `ignored` `dedication`; `renderDedBox`: "Create …" (`/artist/create?edit-artist.name=`) for a suggestion without hits and without a track to choose; `yellItems` `ded` (may), `yellEl` finds its suggestion.
+- **Z-WEBDOM (S198):** WEB_ADDRESS knows more endings (space, club, records, audio, media, eu …); `siteHosts` – the `ignored` `web` lines carry their hosts; `siteOf`, `siteHintRun` (once per entry and host: `<path>/<mbid>?inc=url-rels`), `siteNoteHtml` (`/<path>/<mbid>/edit?edit-<path>.url.0.text=…`); run from `refresh`.
+- **Companion 1.20.0 (Z-CPNOLINK):** `bcArtInit` – the click on an artwork taken only while `liveMaps()` has a dashboard of the release. (The marks were already only with one, or as kept by "Keep marks".)
+- **Tests:** `t_text_places.py qpband3124`, `t_text_places.py cis3124`, `t_companion_bandcamp.py cpnolink3124`, `t_text_lists.py qp3124r` – new; fail on 3.123.0 / Companion 1.19.0.
+- **Review:** WEB_ADDRESS keeps its known endings ("J.Media", "Studio.One", "A.Club" stay names) – a line only of an address in lower case with any ending is a website (`bareSite`); `qpSplit` splits the roles only outside brackets and not before a number, "[Guest]" goes before the tracks of a part ("vocals [Guest] (3)"); members and guests only names (`qpPerson`: capitals, particles; a guest no role word: "Guest Vocals : Jane Doe" as before); the dedication suggestions count as "can" (yellow) in the footer; the dedication-only line needs S097 and S109, a capital and no comma ("In memory of X, who played …" as before); `catnoOf`: one character off only from five on, the digits the same; `cpyLine` only with a holder after the year; the site's link with its type (official homepage: artist 183, label 219, place 363; no area), looked up again with each import (`S.siteHints`). `t_notes_companies.py dedbox` – "Create …" at a name MusicBrainz has none of. Harness: `ENTITY_URLS`, a catalogue number in `RELEASE_LABELS`.
 
 ## Import 3.123.0 · 2026-11-08
 

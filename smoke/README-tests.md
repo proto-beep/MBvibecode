@@ -108,6 +108,8 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #     two "For", no label for "For The Album …", "Production Manager", "Mixed By"; no second VARA Radio; "RSD", "Cassette Store Day"
                                 #   dtrk3121r: 3.121.0 (review of Z-DTRK, Node): the place below "1-1 to 1-2 recorded …" on 1-1, 1-2; not below "… produced by X";
                                 #     "In Memory Of …" no place
+                                #   qp3124r: 3.124.0 (review, Node): "J.Media" a name, "vocals (3)" of a guest on track 3, "Guest Vocals : X" no name with [Guest],
+                                #     no members of "joined by X", "Copyright 2026" alone, the catalogue number "001" (not "2001"), "castlesin.space" a website
                                 #   studio3120r: 3.120.0 (review, Node): a studio that is a place of the text keeps its art credit; "Cover Photography", "Design [Graphic]";
                                 #     R062 "graphic" only for a design role ("Art Direction [Graphic Design]" stays R080)
                                 #   tcpread: 3.60.0 (Z-TCP, Node): "2 Bonu (Oliver Lake)" and the like – each name writes its track
@@ -245,6 +247,10 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   qpband3124: 3.124.0 (Z-QPBAND, Z-CPYEAR): "Qien Pudiera are A and B : …" – both all roles, the members a note; "Special guests" –
+                                #     guest, "soundscapes" effects credited so (Q015); "Copyright 2026 X" ©, "Phonographic Copyright" ℗
+                                #   cis3124: 3.124.0 (Z-CATNO, Z-INMEM, Z-WEBDOM): "CiS216" the catalogue number, "In memory of …" a dedication with "Create …",
+                                #     "castlesin.space" a note at the linked label (none when MusicBrainz has it)
                                 #   studio3120: 3.120.0 (Z-STUDIO, S188): "Art & Design by William Mazza Studio" a label (artwork, design), "Graphic Design by
                                 #     Red Studios" a label (graphic design), "Photography by Jane Roe" a person
                                 #   una3108: 3.108.0 (Z-UNA2): the words of an unrecognized line grouped as names – a click the name, again the word,
@@ -1177,6 +1183,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   copymarks2: companion 1.13.0 (Z-MCP): copied text without the marks
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
+                                #   cpnolink3124: Companion 1.20.0 (Z-CPNOLINK): no dashboard of the release – a click on an artwork stays Bandcamp's;
+                                #     the dashboard opened afterwards – the companion's large image (the page not loaded again)
                                 #   cocrbc3119: 3.119.0 / 1.19.0 (Z-COCRBC): a click on a medium's photo opens the companion's large image (2 / 2, ‹ the album's art),
                                 #     a frame drawn goes to the window ("Bandcamp, image 2: frame 1"), ✕ there takes it out of the image; with Ctrl Bandcamp's own
                                 #   (Companion 1.14.0, Z-BCAM) bcview C: a mark in the "about" text; textmarks D: ◷ before a date line, ♥ before

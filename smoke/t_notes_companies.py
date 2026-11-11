@@ -1077,7 +1077,8 @@ def case_dedbox():
     entries "Peter Kowald", Ireland a country (a single word after "for": no track named).
     A) The entries, the box and the works matrix each in a narrow frame, the box between them; in it "dedicated to Cecil Taylor"
        (on the release group, added by itself); a suggestion "In memory of Peter Kowald" with both entries as buttons (the second
-       "(German painter)"); a suggestion "for Ireland" ("the work of which track?"); no "Create …" anywhere in the box.
+       "(German painter)"); a suggestion "for Ireland" ("the work of which track?"); "Create …" only at "In memory of Nobody Known"
+       (MusicBrainz has none of the name: 3.124.0, Z-INMEM – until 3.123.0 nowhere in the box).
     B) "Peter Kowald (German painter)": his row "dedicated to" on the release group, listed in the box, the suggestion gone.
     C) "for Ireland": the work of track 2 chosen, the MBID of the area pasted, "Add": a row of the area on the work of track 2.
     D) "＋ Dedication | Tribute" – the half "Tribute": a form; the link of Bass Man: his row "tribute to" on the release group.
@@ -1111,7 +1112,7 @@ def case_dedbox():
       return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()),
         sugg: [...b.querySelectorAll('.dci-dedsugg:not(.dci-dedform)')].map(x => [x.querySelector('strong').textContent.trim(), x.querySelector('.dci-sub').textContent.trim(),
           [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())]),
-        create: /create/i.test(b.textContent), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
+        create: [...b.querySelectorAll('.dci-dedsugg')].filter(x => x.querySelector('[data-el=ded-create]')).map(x => x.querySelector('strong').textContent.trim()), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
     FRAMES = """(() => { const f = (sel) => { const el = document.querySelector(sel); if (!el || el.hidden) return null; const cs = getComputedStyle(el);
       return [cs.borderTopWidth, cs.borderTopStyle, Math.round(el.getBoundingClientRect().top)]; };
       return [f('[data-el=entries-frame]'), f('[data-el=dedbox]'), f('[data-el=works]')]; })()"""
@@ -1138,7 +1139,7 @@ def case_dedbox():
             results.append(a and any(x.startswith('dedicated to Cecil Taylor on the release group') for x in a['list'])
                            and ['“In memory of Peter Kowald”', 'several entries of exactly that name in MusicBrainz – which one? (from the Discogs notes)',
                                 ['Peter Kowald', 'Peter Kowald (German painter)']] in a['sugg']
-                           and any(x[0] == '“for Ireland”' and x[1].startswith('the work of which track?') and not x[2] for x in a['sugg']) and not a['create']
+                           and any(x[0] == '“for Ireland”' and x[1].startswith('the work of which track?') and not x[2] for x in a['sugg']) and a['create'] == ['“In memory of Nobody Known”']
                            and all(x and x[0] == '1px' and x[1] == 'solid' for x in fr) and fr[0][2] < fr[1][2] < fr[2][2])
             # (review) what is typed stays when the kind is switched
             k1 = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find(x => /Ireland/.test(x.textContent)).dataset.key")
