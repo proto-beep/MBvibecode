@@ -422,7 +422,10 @@
         "ignored": [
           {
             "text": "www.example.com",
-            "why": "web"
+            "why": "web",
+            "sites": [
+              "example.com"
+            ]
           }
         ]
       }
@@ -436,7 +439,8 @@
         "ignored": [
           {
             "text": "contact: info@label.com",
-            "why": "web"
+            "why": "web",
+            "sites": []
           }
         ]
       }
@@ -450,7 +454,8 @@
         "ignored": [
           {
             "text": "Follow us: instagram.com/somelabel",
-            "why": "web"
+            "why": "web",
+            "sites": []
           }
         ]
       }

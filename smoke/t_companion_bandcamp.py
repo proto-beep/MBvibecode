@@ -894,4 +894,66 @@ https://kexp.org"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_cpnolink3124():
+    """Companion 1.20.0 (Credits Importer 3.124.0, collected item Z-CPNOLINK): a Bandcamp album page while no dashboard of its release is
+    open – a click on an artwork stays Bandcamp's (no large image of the companion, the click not taken; until 1.19.0 the companion's
+    large image); the dashboard opened afterwards (the page not loaded again): the companion's large image."""
+    BAND = 'https://testband.bandcamp.com'
+    ALBUM = f'{BAND}/album/testalbum'
+    ART = 'https://f4.bcbits.com/img/a0111111111_10.jpg'
+    PHOTO = 'https://f4.bcbits.com/img/0022222222_10.jpg'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    page = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Test Band – guitar'}, 'trackinfo': TRACKS}, ALBUM)
+    page = page.replace('<div id="name-section">', f'<div id="tralbumArt"><a class="popupImage" href="{ART}"><img src="{ART.replace("_10", "_7")}" alt=""></a></div>'
+                        f'<div class="package-photo"><a class="popupImage" href="{PHOTO}"><img src="{PHOTO.replace("_10", "_7")}" alt=""></a></div><div id="name-section">', 1)
+    H.BC_PAGES[ALBUM] = page
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    # Bandcamp's own handling, in the bubbling phase: whether the click came through untaken (and no navigation)
+    HOOK = "window.__taken = null; document.addEventListener('click', (e) => { if (e.target.closest('a.popupImage')) { window.__taken = e.defaultPrevented; e.preventDefault(); } });"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        png = H.png_of(200, 150)
+        ctx.route('https://f4.bcbits.com/**', lambda route: route.fulfill(body=png, content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        bc, bcerr = H.open_bandcamp(ctx, ALBUM)
+        bc.wait_for_timeout(2000)
+        bc.evaluate(HOOK)
+        bc.click('.package-photo a.popupImage')
+        bc.wait_for_timeout(800)
+        a = bc.evaluate("[!!document.querySelector('#dci-art-big'), window.__taken]")
+        print('A) ohne Dashboard: großes Bild, Klick genommen:', a)
+        results.append(a == [False, False])
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        bc.wait_for_timeout(1500)
+        bc.evaluate("window.__taken = null")
+        bc.click('.package-photo a.popupImage')
+        bc.wait_for_timeout(800)
+        b2 = bc.evaluate("[!!document.querySelector('#dci-art-big'), window.__taken]")
+        print('B) mit Dashboard:', b2)
+        # (the companion takes the click before Bandcamp sees it)
+        results.append(b2 == [True, None])
+        print('Fehler:', errs, bcerr)
+        results.append(not errs and not bcerr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -982,6 +982,40 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_qp3124r():
+    """Credits Importer 3.124.0 (review of Z-QPBAND, Z-CPYEAR, Z-CATNO, Z-INMEM, Z-WEBDOM), in Node:
+    names with a dot stay names ("Mixed by J.Media", "Mastered by Studio.One"); "Special guest John Smith : vocals (3)" – vocals
+    [Guest] on track 3; "Guest Vocals : Jane Doe" – no name "Jane Doe [Guest]"; "The band is joined by Jane Doe : vocals" – no members;
+    "Copyright 2026" alone not read as ©; the catalogue number "001": "2001" is none (left out as before: no letters), "001" is;
+    "In memory of John Doe, who played drums on track 3" no dedication-only line; "castlesin.space" a website."""
+    node = NODE.replace("artistNames: c.artists || [], titleNames: c.titles || [] });", "artistNames: c.artists || [], titleNames: c.titles || [], catnos: c.catnos || [] });")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : [])]),",
+                        "credits: r.credits.map((x) => [x.who.name, x.role, ...(x.tracks && x.tracks.spec ? [x.tracks.spec] : []), ...((x.details || []).length ? [x.details.join('+')] : [])]),")
+    cases = [{'text': 'Mixed by J.Media\nMastered by Studio.One'},
+             {'text': 'Special guest John Smith : vocals (3)'},
+             {'text': 'Guest Vocals : Jane Doe'},
+             {'text': 'The band is joined by Jane Doe : vocals', 'artists': ['The Band']},
+             {'text': 'Copyright 2026', 'catnos': ['001']},
+             {'text': '2001\n001', 'catnos': ['001']},
+             {'text': 'castlesin.space'}]
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(cases)], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for c, x in zip(cases, g or []):
+        print('  ', c['text'].replace('\n', ' / '), '→', x['credits'], x['companies'], x['unrecognized'], x['ignored'])
+    ok = g is not None
+    if ok:
+        ok = [x[0] for x in g[0]['credits']] == ['J.Media', 'Studio.One'] \
+            and any(x[0] == 'John Smith' and 'Guest' in (x[-1] if len(x) > 2 else '') for x in g[1]['credits']) and not g[1]['unrecognized'] \
+            and not any('[Guest]' in x[0] for x in g[2]['credits']) \
+            and not any(i[0] == 'members' for i in g[3]['ignored']) \
+            and not g[4]['companies'] \
+            and [i[1] for i in g[5]['ignored'] if i[0] == 'catno'] == ['001'] \
+            and [i[0] for i in g[6]['ignored']] == ['web']
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all

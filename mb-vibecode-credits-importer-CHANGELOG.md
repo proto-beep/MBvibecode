@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.123.0 | 1.17.0 – 1.19.0 |
+| 2026-11-08 | 3.88.0 – 3.124.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.124.0, Companion 1.20.0
+
+- **The members of a band and its guests** (collected item Z-QPBAND; rule S195): "Qien Pudiera are Camila Chapelle and Lucia Reyes : electronics, field recordings, percussions, flutes and bells" – both get all the roles (before: not recognized); MusicBrainz keeps the members on the band, so they are named at its entry ("Members per the text: …", a link to edit the band) and in the lines left out on purpose. "Special guest(s) A (and B) : roles" – the roles with the attribute guest; "synthesizer improvisations" is the synthesizer; "soundscapes" asks (Q015): effects credited "soundscapes" (taken as a suggestion), sound effects, or miscellaneous support credited "soundscapes".
+- **Copyright written out** (Z-CPYEAR, S194): "Copyright 2026 Castles In Space." is © 2026, "Phonographic Copyright 2026 X" ℗ 2026.
+- **The catalogue number** (Z-CATNO, S196): a line that is only the release's catalogue number in MusicBrainz ("CiS216" for "CIS-216": case, spaces, hyphens and dots aside, one character may differ) is left out as such.
+- **"In memory of …"** (Z-INMEM, S197): a line only of a dedication is no longer "not recognized" – the box "Dedications & tributes" has it; for a name MusicBrainz does not know it offers "Create …"; its suggestions count as questions that may be answered.
+- **A website of an entry** (Z-WEBDOM, S198): addresses like "castlesin.space" are left out as websites (more endings known); one that is a linked entry's own – its letters the name, or the start of it ("warringtonruncorn.com" for "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for it yet gives a note at the entry with a link to its page for editing, the address filled in.
+- **Companion 1.20.0** (Z-CPNOLINK): on Discogs and Bandcamp nothing without a dashboard of the page's release – Bandcamp's own view of the images stays (with its arrows) until a dashboard of the release is open; it starts without loading the page again.
 
 ### Import 3.123.0
 
