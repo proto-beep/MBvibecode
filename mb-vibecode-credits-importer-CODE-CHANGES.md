@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.119.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.120.0, Companion 1.6.0 – 1.19.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.120.0 · 2026-11-08
+
+- **Z-STUDIO (S188):** `STUDIO_ART_ROLES` (the art roles → the company roles "Artwork By", "Designed By", "Graphic Design By", "Illustration By", "Art Direction By", "Photography By"); `addCredit` (TEXT.parse): a name ending in "Studio(s)" with one of them – no band of the release, no place the source lists – is a company with `entity: 'label'`; mapping: COMPANY_ROLES C047 art direction, C048 graphic design, C049 illustration (label and artist, release).
+- **Z-DESCON (S186):** R062 – "design" with "graphic" in its details (not in its base) gives graphic design and design without the details as credit.
+- **Z-OCRC (S187):** `trackListLines` – "C1978", "C 1978", "(C)1978" at the start of a line before a name without digits → "© 1978".
+- **Z-GAPCENTER:** `showReleaseGap` – the box a flex row: the text `flex: 1 1 0`, centred; ✕ without float; the list of relationships on its own row.
+- **Tests:** `t_mapping.py descon3120`, `t_text_lists.py ocrc3120`, `t_text_lists.py studio3120r`, `t_start.py gapcenter3120`, `t_text_places.py studio3120` – new; fail on 3.119.0.
+- **Review:** R062 takes "graphic" only for a design role itself ("Design", "Design Concept", "Designed By") with nothing but "graphic" in its details – "Art Direction [Graphic Design]", "Artwork [Graphic Design]", "Logo Design [Graphic]", "Cover Design [Graphics]", "Design [Graphic, Cover]" as before; the rules of such a row name S186. S188: a studio the text names as a place too ("Recorded at Foo Studios") keeps its art roles as credits (`studioCredit`; before, the group became a label and lost the place); the roles also of a part of the package (`STUDIO_ART_PART`: "Cover Photography", "Sleeve Design"), "graphic" anywhere ("Design [Graphic]"). The release page's line a grid of three columns, the outer two as wide as each other – the text in the middle of the box, the buttons together at the end (`data-gap-btns`). Known: "C 1975 – Live At Leeds" is read as © (as "P1975 …" since 3.117.0); "P & C 1978 X" not yet.
 
 ## Import 3.119.0 · Companion 1.19.0 · 2026-11-08
 

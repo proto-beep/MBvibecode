@@ -1513,4 +1513,28 @@ def case_gapl3107():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_gapcenter3120():
+    """Credits Importer 3.120.0 (collected item Z-GAPCENTER): the line on the release page – its text in the middle of the box (review: the
+    columns beside it as wide as each other), the buttons beside it on the same line, ✕ at the end; the list of parts below, the whole width."""
+    REL = H.REL
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline [data-gap-text]')", 30)
+        g = pr.evaluate("""(() => { const box = document.querySelector('.dci-gapline'); const t = box.querySelector('[data-gap-text]');
+          const r = (x) => x.getBoundingClientRect(); const bt = r(t), bc = r(box.querySelector('[data-gap=count]')), bx = r(box.querySelector('[data-gap=close]'));
+          return { align: getComputedStyle(t).textAlign, sameLine: Math.abs((bt.top + bt.bottom) / 2 - (bc.top + bc.bottom) / 2) < 3, countRight: bc.left >= bt.right - 1,
+            closeLast: bx.left >= bc.right - 1, centred: t.getClientRects().length === 1 ? Math.abs((bt.left + bt.right) / 2 - (r(box).left + r(box).right) / 2) < 8 : true }; })()""")
+        pr.click('.dci-gapline [data-gap=parts]')
+        g['list'] = pr.evaluate("(() => { const box = document.querySelector('.dci-gapline'), ul = box.querySelector('[data-gap-parts]'); return !ul.hidden && ul.getBoundingClientRect().top > box.querySelector('[data-gap-text]').getBoundingClientRect().bottom - 1; })()")
+        print('A)', g)
+        results.append(g == {'align': 'center', 'sameLine': True, 'countRight': True, 'closeLast': True, 'centred': True, 'list': True})
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.119.0
+// @version      3.120.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.119.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.119.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.120.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.120.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.119.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.120.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4415,6 +4415,9 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S188', where: 'TEXT.parse (addCredit)', note: 'Texts (3.120.0; collected item Z-STUDIO): a name ending in "Studio" or "Studios" credited for the art ("Art & Design by William Mazza Studio") is a label (a design studio): artwork, design, graphic design, illustration, art direction and photography as label–release relationships (C033, C034, C035, C047 – C049) – until 3.119.0 a person' },
+    { id: 'S187', where: 'TEXT.parse (trackListLines)', note: 'Texts (3.120.0; collected item Z-OCRC): "C1978 – Fantasy Records", "C 1978 X", "(C)1978 X" at the start of a line – a cover\'s © read as C – are "© 1978 – …" (a name after it, without digits)' },
+    { id: 'S186', where: 'roleRules (R062)', note: 'Design (3.120.0; collected item Z-DESCON): a design role ("Design", "Design Concept", "Designed By") with only "graphic" in its details ("Design Concept [Graphic Concept]", "Design [Graphic]") – graphic design without a role credit (MusicBrainz has none for it); before, "Design Concept" took its details as the credit' },
     { id: 'S185', where: 'BANDCAMP.toRelease (linkPage), resolveArtists', note: 'Bandcamp (3.118.0; collected item Z-BCLBL): on a label\'s page (the album of another artist) a company of the credits named as the page ("© 2026 WEWANTSOUNDS" on wewantsounds.bandcamp.com) is linked to it – MusicBrainz\'s label with that page is taken, its spelling apart from case' },
     { id: 'S184', where: 'TEXT.parse (sentencesOf)', note: 'Texts (3.118.0; collected item Z-PCSPLIT): a ℗ / © with its name ends where its sentence ends ("© 2026 WEWANTSOUNDS. Licensed …") – what follows is read on its own; before, a sentence after it that was no credit took the ℗ / © with it into "not recognized"' },
     { id: 'S183', where: 'TEXT.parse (licLine)', note: 'Texts (3.118.0; collected items Z-LICCOURT, Z-LICART): "Licensed Courtesy of A and the B", "Licensed by courtesy of X", "Licensed from X" – a licensor each ("the" before a name left out): a label, or an artist where MusicBrainz has the artist (licensed / licensed from)' },
@@ -4649,8 +4652,15 @@
         return out(['vocal'], { primaryCands: ['spoken vocals'], credit: poem ? poem[1] : 'recitation' });
       } },
       R107: { run: () => out([], { notes: ['askType'] }) },
-      R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
+      // [Z-DESCON] (3.120.0, S186) with "graphic" in it ("Design Concept [Graphic Concept]"): graphic design, no credit (MusicBrainz has none
+      // for it); before, "Design Concept" took the details as its credit ("graphic concept design concept")
+      // (only "graphic" in its details: "Graphic Design" itself stays R072)
+      // ((review) only a design role itself with nothing but "graphic" in its details: "Art Direction [Graphic Design]", "Logo Design
+      // [Graphic]", "Design [Graphic, Cover]" stay as before)
+      R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && (!/\bgraphic/.test(allWords) || (ruleOn('S186') && /^(?:design(?:s|ed|er)?(?:\s+by)?|design\s+concept)$/i.test(String(b).trim())
+        && ms.length > 0 && ms.every((x) => /^graphics?(?:\s+(?:concept|design))?$/i.test(String(x).trim())))), run: () => {
       ms.forEach((x) => consumed.add(x));
+      if (/\bgraphic/.test(allWords)) return out(['graphic design', 'design'], { ...rel });
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
       // [S037] (3.28.4) the design of a part of the package keeps its whole name: "Cover Design", "Design [Cover]", "Artwork
       // [Cover Design]" → "cover design"; also sleeve, booklet, package(ing)
@@ -5368,6 +5378,13 @@
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = MAP.TEXT_COMPANY_RE;
+  // [Z-STUDIO] (3.120.0, S188) the art roles of a studio in a text → the company roles of the label–release relationships (C033 …)
+  // ((review) also of a part of the package: "Cover Photography", "Sleeve Design"; "graphic" anywhere: "Design [Graphic]")
+  const STUDIO_ART_PART = /^(?:cover|sleeve|package|packaging|booklet|album|inner|insert)\s+/i;
+  const STUDIO_ART_ROLES = [
+    [/^art\s*direct(?:ion|or)/i, 'Art Direction By'], [/\bgraphics?\b/i, 'Graphic Design By'], [/^illustrat/i, 'Illustration By'],
+    [/^(?:photograph|photos?$|photos?\s)/i, 'Photography By'], [/^(?:design|layout)/i, 'Designed By'], [/^art(?:work)?$/i, 'Artwork By'],
+  ];
 
   // [T014] Dates: month names (English, German, Spanish, French; D004)
   const MONTH_NAMES = MAP.MONTH_NAMES;
@@ -7597,6 +7614,17 @@
         // Smith", "Kexp's Kevin Suggs")
         const broadcaster = ruleOn('S121') && /^recorded(?:\s+live)?\s+by$/i.test(p.raw) && (TEXT_BROADCASTER || NO_MATCH).test(clean(name)) && !bandNames.has(norm(name))
           && !/\b(?:engineers?|technicians?|producers?|crew|team|staff)\b|['’]s\b/i.test(name);
+        // [Z-STUDIO] (3.120.0, S188) a studio credited for the art ("Art & Design by William Mazza Studio"): a label (a design studio) –
+        // its roles as the label–release relationships of the artwork (artwork, design, graphic design, illustration, art direction,
+        // photography), as for an artist
+        const studioRole = ruleOn('S188') && /\S\s+Studios?$/i.test(clean(name)) && !bandNames.has(norm(name)) && !placeNames.some((n) => norm(n) === norm(name))
+          ? (STUDIO_ART_ROLES.find(([re]) => re.test([String(p.base || p.raw).replace(/\s+by$/i, '').replace(STUDIO_ART_PART, '').trim(), ...(p.mods || [])].join(' '))) || [])[1] : null;
+        if (studioRole) {
+          // ((review) kept as a person's credit too: a studio that is a place of this text gets it back, see below)
+          companies.push({ who: who(name), role: studioRole, catno: '', tracks: null, ...at(), ...extra, entity: 'label', studioArt: norm(name),
+            studioCredit: { who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra } });
+          return true;
+        }
         if (broadcaster || isCompanyRoleKnown(p.raw)) {
           companies.push({ who: who(name), role: broadcaster ? 'Recorded By' : p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra, ...(broadcaster ? { entity: 'label' } : {}) });
           if (broadcaster) companies.push({ who: who(name), role: 'Broadcast By', catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra, entity: 'label', implied: true });
@@ -9796,6 +9824,8 @@
         let out = lines;
         // ((review) a name after it, without digits: not "P 2000 Watt Amplifier", "P1978 Catalogue No. 5")
         if (ruleOn('S182')) out = out.map((l) => String(l || '').replace(/^(\s*)(?:\(P\)|P)\s?((?:19|20)\d{2})(?=\s*[-–—:,]?\s+\p{Lu}[^\d]*$)/u, '$1℗ $2'));
+        // [Z-OCRC] (3.120.0, S187) the same for © read as C: "C1978 – X", "C 1978 X"
+        if (ruleOn('S187')) out = out.map((l) => String(l || '').replace(/^(\s*)(?:\(C\)|C)\s?((?:19|20)\d{2})(?=\s*[-–—:,]?\s+\p{Lu}[^\d]*$)/u, '$1© $2'));
         if (!ruleOn('S180') || !resolveTitles) return out;
         const NUM = /^([A-Za-z]?\d{1,3})[.):]?\s+(\S.*)$/u;
         const lenMarked = new RegExp(`\\s*[-–—]?\\s*\\(?${TCP_LEN_MARKED}\\)?\\s*\\.?$`, 'u');
@@ -10081,6 +10111,17 @@
       }
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
+      // [Z-STUDIO] ((review) S188) a studio this text names as a place too ("Recorded at Foo Studios", "Mixed in …"): its art roles stay
+      // the credits as written (a recording studio is no label; its rows would lose the place)
+      companies.filter((c) => c.studioArt).forEach((c) => {
+        const place = companies.some((y) => !y.studioArt && norm(clean((y.who && y.who.name) || '')) === c.studioArt && /\s(?:at|in)$/i.test(String(y.role || '').trim()));
+        if (place) {
+          companies.splice(companies.indexOf(c), 1);
+          credits.push(c.studioCredit);
+        }
+        delete c.studioArt;
+        delete c.studioCredit;
+      });
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
@@ -11763,7 +11804,11 @@
     box.className = 'dci-gapline';
     box.setAttribute('role', 'note');
     box.dataset.src = src.kind;
-    const style = 'margin:6px 0 10px;padding:6px 10px;border:1px solid #c9c2e8;border-left:4px solid #6b4bbf;border-radius:4px;background:#f7f5ff;color:#222;font-size:13px;line-height:1.5;';
+    // [Z-GAPCENTER] (3.120.0) a row: the text in the middle of its room (both ways), the buttons beside it, the list below
+    const style = 'margin:6px 0 10px;padding:6px 10px;border:1px solid #c9c2e8;border-left:4px solid #6b4bbf;border-radius:4px;background:#f7f5ff;color:#222;font-size:13px;line-height:1.5;'
+      // [Z-GAPCENTER] (3.120.0; review) three columns – ▸, the text, the buttons – with the outer two as wide as each other: the text in
+      // the middle of the box; the list of parts below, over the whole width
+      + 'display:grid;grid-template-columns:minmax(max-content,1fr) minmax(0,auto) minmax(max-content,1fr);align-items:center;column-gap:6px;';
     box.setAttribute('style', style);
     // a release of many tracks MusicBrainz does not answer in full: no number; the credits of the Discogs notes are not read here
     // [AY] (3.40.0) Bandcamp: a rough estimate, said so
@@ -11782,12 +11827,12 @@
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
     // [Z-GAPBTN] (3.112.0) "Count exactly" (outlined) and "Import credits …" (filled): small round buttons, not underlined text
     const pill = 'border:1px solid #736dab;border-radius:999px;padding:1px 10px;margin-left:6px;cursor:pointer;font:inherit;font-size:0.92em;line-height:1.5;vertical-align:baseline;';
-    box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
-      <span data-gap-text>${esc(text)}${esc(exactText)}</span>
-      <button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${pill}background:#fff;color:#4a2f99;">${esc(tr('gap.count'))}</button>
+    box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}justify-self:start;">▸</button>
+      <span data-gap-text style="min-width:0;text-align:center;">${esc(text)}${esc(exactText)}</span>
+      <span data-gap-btns style="justify-self:end;display:inline-flex;align-items:center;white-space:nowrap;"><button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${pill}background:#fff;color:#4a2f99;">${esc(tr('gap.count'))}</button>
       <button type="button" data-gap="import" style="${pill}background:#736dab;color:#fff;border-color:#736dab;">${esc(tr('gap.import'))}</button>
-      <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}float:right;">✕</button>
-      <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;">${parts}<li>${esc(tr(bc ? 'gap.bc.how' : 'gap.how'))}</li></ul>`;
+      <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}margin-left:6px;">✕</button></span>
+      <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;grid-column:1 / -1;">${parts}<li>${esc(tr(bc ? 'gap.bc.how' : 'gap.how'))}</li></ul>`;
     box.querySelector('[data-gap=parts]').addEventListener('click', (e) => {
       const ul = box.querySelector('[data-gap-parts]');
       ul.hidden = !ul.hidden;
@@ -14154,6 +14199,7 @@
       if ((row.mods || []).some((x) => CHECKBOX_DETAILS.includes(norm(x)) || ['additional', 'guest', 'solo'].includes(flagForDetail(x)))) ids.push('S002');
       if (/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+/i.test(base0) && !/design/i.test(base0)) ids.push('S003');
       if (row.ruleId === 'R062') ids.push('S004');
+      if (row.ruleId === 'R062' && ruleOn('S186') && /graphic/i.test((row.mods || []).join(' '))) ids.push('S186');
       if (row.ruleId === 'R063' && ruleOn('S090') && (row.mods || []).length) ids.push('S090');
       if (row.level === 'work' && ARRANGER_TYPES.includes(norm(row.types[0] || '')) && row.defaultLevel === 'recording') ids.push('S006');
       if (row.creditFromRole && remainingMods(row).length && !wr) ids.push('S009');

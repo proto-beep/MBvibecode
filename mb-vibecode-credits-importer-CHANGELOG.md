@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.119.0 | 1.17.0 – 1.19.0 |
+| 2026-11-08 | 3.88.0 – 3.120.0 | 1.17.0 – 1.19.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.120.0
+
+- **A design studio is a label** (collected item Z-STUDIO; rule S188): "Art & Design by William Mazza Studio" – a name ending in "Studio" or "Studios" credited for the art – is a label with the release's label relationships artwork and design (also graphic design, illustration, art direction, photography: new company rules C047 – C049), as for an artist; before, a person with the roles "Art" and "Design By".
+- **Design concept** (Z-DESCON, S186): "Design Concept [Graphic Concept]" is graphic design – without a role credit, which MusicBrainz has not for it.
+- **© read as C** (Z-OCRC, S187): "C1978 – Fantasy Records", "C 1978 X", "(C)1978 X" at the start of a line are © 1978 (as P1978 for ℗ in 3.117.0).
+- **The line on the release page** (Z-GAPCENTER): in "Discogs: about … relationships …" only the text is centred, the buttons stay beside it.
 
 ### Import 3.119.0, Companion 1.19.0
 

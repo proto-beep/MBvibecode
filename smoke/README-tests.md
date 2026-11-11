@@ -103,6 +103,9 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   ocrc3120: 3.120.0 (Z-OCRC, S187, Node): "C1978 – Fantasy Records", "C 1978 X" → © 1978; digits after the name stay
+                                #   studio3120r: 3.120.0 (review, Node): a studio that is a place of the text keeps its art credit; "Cover Photography", "Design [Graphic]";
+                                #     R062 "graphic" only for a design role ("Art Direction [Graphic Design]" stays R080)
                                 #   tcpread: 3.60.0 (Z-TCP, Node): "2 Bonu (Oliver Lake)" and the like – each name writes its track
                                 #   tcpread2: 3.60.0 (review): brackets that are no composers (a place, "Hidden Track", "Traditional", the band's members)
                                 #   namesroles: 3.59.0 (Z-TBY, Node): a group "The …", "Special guests:" a heading, two credits from one line
@@ -238,6 +241,8 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   studio3120: 3.120.0 (Z-STUDIO, S188): "Art & Design by William Mazza Studio" a label (artwork, design), "Graphic Design by
+                                #     Red Studios" a label (graphic design), "Photography by Jane Roe" a person
                                 #   una3108: 3.108.0 (Z-UNA2): the words of an unrecognized line grouped as names – a click the name, again the word,
                                 #     ⇧ extends, a company word chooses "company", known names marked
                                 #   rdst3105: 3.105.0 (Z-RDST, S171): "Recorded May, 6. 7, 2007 Studio des …" – the place without "at" by a word of places (Node)
@@ -522,6 +527,7 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   descon3120: 3.120.0 (Z-DESCON, S186): "Design Concept [Graphic Concept]" → graphic design without a role credit
                                 #   engrr3111: 3.111.0 (Z-ENGRR): "Engineer [Recording & Remix]" → recording, remixer; "[Mix and Mastering]", "[Recording / Overdubs]", "[Remix]"
                                 #   engtr3109: 3.109.0 (Z-ENGTR): "English Translation", "Translated By [German]", "Übersetzung", "Translation (French)" from
                                 #     Discogs – liner notes with translator at once, no role credit; "translator (lyrics)": a suggestion on every work
@@ -1009,6 +1015,7 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gapcenter3120: 3.120.0 (Z-GAPCENTER): the text of the line "Discogs: about … relationships" centred, the buttons beside it
                                 #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
                                 #     on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
                                 #     button and Ctrl+Alt+Enter → relationship editor with the dashboard, an error, "Add release" with a Bandcamp
