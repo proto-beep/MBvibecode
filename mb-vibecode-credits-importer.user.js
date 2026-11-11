@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.113.0
+// @version      3.114.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.113.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.113.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.114.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.114.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.113.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.114.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2734,6 +2734,11 @@
       "ocr.state.read": "reading",
       "ocr.state.done": "done",
       "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text. A line clicked in the text is marked in the image beside it.",
+      "ocr.cocrName": "Discogs, image {img}: frame {n}",
+      "ocr.cocrDel": "Take out this frame (here and in the companion on Discogs)",
+      "log.cocrIn": "Text from cover art: frame {n} from Discogs added",
+      "log.cocrChanged": "Text from cover art: frame {n} from Discogs changed – read again",
+      "log.cocrOut": "Text from cover art: a frame from Discogs taken out",
       "ocr.small": "Only {w} × {h} px – read enlarged; names can come out wrong.",
       "ocr.textOf": "Text of {what}",
       "ocr.unsure": "Read with little certainty (a click selects it and shows it in the image):",
@@ -4381,6 +4386,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, + Supplement)' },
     { id: 'S177', where: 'instsCommonAdd, instsCommonBtnHtml', note: 'Instruments (3.113.0; collected item Z-INSTLCA): ⑃ beside "Instruments: per track | on the release" – a row of the lowest level of the instruments\' tree all of them share (saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments) on the recordings, beside them (they stay), with their tracks, date, guest / solo when all have it; only of those without tracks of their own (precise tracks need none); ⚙ Settings → Appearance can switch the button off' },
     { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
     { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place' },
@@ -18755,12 +18761,15 @@
       const early = S.ocr.images.filter((im) => !ocrIsCaa(im));
       S.ocr.images = all;
       const rest = ocrTakeBack(early);
-      Object.assign(S.ocr, { images: [...all, ...rest], step: S.ocr.restoredStep || 'pick', restoreTried: true });
+      // ([Z-COCR] 3.114.0) frames of the companion read meanwhile: their texts stay shown ((review) also when a state is restored)
+      const crops = (S.ocr.results || []).filter((r) => r.img && r.img.cocr);
+      Object.assign(S.ocr, { images: [...all, ...rest], step: crops.length ? 'result' : S.ocr.restoredStep || 'pick', restoreTried: true });
+      crops.forEach((r) => { if (!S.ocr.results.includes(r)) S.ocr.results.push(r); });
       delete S.ocr.restoredStep;
       renderOcr();
     }, (e) => {
       if (!S.ocr) return;
-      Object.assign(S.ocr, { step: 'pick', listError: e.message || String(e) });
+      Object.assign(S.ocr, { step: (S.ocr.results || []).some((r) => r.img && r.img.cocr) ? 'result' : 'pick', listError: e.message || String(e) });
       renderOcr();
     });
   }
@@ -18804,6 +18813,68 @@
   }
 
   /** The images read one after the other with one Tesseract worker (the languages chosen); the text of each corrected. */
+  /**
+   * One image read (its parts: the frames, else the whole image) – of ocrRun, and ([Z-COCR] 3.114.0) of a frame from the companion
+   * read as it comes. false: no longer wanted (the window closed or read anew).
+   */
+  async function ocrReadOne(res, recognizer, alive) {
+    res.status = 'load';
+    renderOcr();
+    const direct = ocrDirect(res.img);
+    // [3.34.11] the canvas also for a page read from its own text: it stands beside the text
+    await ocrCanvas(res.img);
+    res.small = !direct && res.img.w < OCR_SMALL;
+    res.status = 'read';
+    renderOcr();
+    // [3.34.11] a part for each frame (else the whole image): its box on the canvas, its text, its words read uncertainly
+    const boxes = ocrBoxes(res.img);
+    // [3.34.12] also its lines and the words read uncertainly with their places on the canvas ({ text, box }), and a mark
+    const parts = boxes.map((box) => ({ box, text: '', unsure: [], unsureAt: [], lines: [], fixes: { pc: 0, dash: 0 }, view: null, mark: null }));
+    if (direct) {
+      (await ocrPdfText(res.img)).forEach((t, j) => {
+        if (parts[j]) Object.assign(parts[j], { raw: t.text, rawLines: t.lines });
+      });
+      res.direct = true;
+    } else {
+      const tess = await recognizer();
+      const pieces = ocrPieces(res.img);
+      const k = ocrPieceScale(res.img);
+      for (let j = 0; j < pieces.length; j++) {
+        const { data } = await tess.recognize(pieces[j]);
+        const { box } = parts[j];
+        // a place in the piece read (its pixels, enlarged k times) on the image's canvas
+        const at = (bb) => (bb && [bb.x0, bb.y0, bb.x1, bb.y1].every(Number.isFinite)
+          ? { x: box.x + bb.x0 / k, y: box.y + bb.y0 / k, w: Math.max(1, (bb.x1 - bb.x0) / k), h: Math.max(1, (bb.y1 - bb.y0) / k) } : null);
+        const { lines, words } = tessLayout(data);
+        const real = words.filter((w) => w && /[\p{L}\d]/u.test(String(w.text || '')));
+        const shaky = real.filter((w) => w.confidence < OCR_UNSURE);
+        Object.assign(parts[j], {
+          // [3.34.14] many words read uncertainly: a hint (collected item 135)
+          wordsN: real.length,
+          shakyN: shaky.length,
+          busy: shaky.length >= OCR_BUSY_MIN && shaky.length > real.length * OCR_BUSY_SHARE,
+          raw: String((data && data.text) || ''),
+          rawLines: lines.map((l) => ({ text: String(l.text || ''), box: at(l.bbox) })),
+          unsure: uniq(shaky.map((w) => String(w.text).trim())),
+          unsureAt: shaky.map((w) => ({ text: String(w.text).trim(), box: at(w.bbox) })).filter((w) => w.box),
+        });
+        if (!alive()) return false;
+      }
+    }
+    if (!alive()) return false;
+    parts.forEach((pt) => {
+      const clean = ocrClean(pt.raw || '');
+      // [3.34.12] the lines as in the text (corrected the same way), each with its place
+      const lines = (pt.rawLines || []).map((l) => ({ text: ocrClean(l.text).text, box: l.box })).filter((l) => l.text && l.box);
+      Object.assign(pt, { text: clean.text, fixes: clean.fixes, lines });
+      delete pt.raw;
+      delete pt.rawLines;
+    });
+    const fixes = { pc: parts.reduce((a, pt) => a + pt.fixes.pc, 0), dash: parts.reduce((a, pt) => a + pt.fixes.dash, 0) };
+    Object.assign(res, { parts, fixes, unsure: uniq(parts.flatMap((pt) => pt.unsure)), status: 'done', progress: 1 });
+    return true;
+  }
+
   async function ocrRun() {
     const o = S.ocr;
     const run = ++o.run;
@@ -18830,63 +18901,12 @@
       return worker;
     };
     try {
-      for (const res of o.results) {
+      // ((Z-COCR 3.114.0, review) a copy: a frame of the companion added meanwhile is read by itself)
+      for (const res of [...o.results]) {
         if (!alive()) return;
+        if (!o.results.includes(res)) continue;
         current = res;
-        res.status = 'load';
-        renderOcr();
-        const direct = ocrDirect(res.img);
-        // [3.34.11] the canvas also for a page read from its own text: it stands beside the text
-        await ocrCanvas(res.img);
-        res.small = !direct && res.img.w < OCR_SMALL;
-        res.status = 'read';
-        renderOcr();
-        // [3.34.11] a part for each frame (else the whole image): its box on the canvas, its text, its words read uncertainly
-        const boxes = ocrBoxes(res.img);
-        // [3.34.12] also its lines and the words read uncertainly with their places on the canvas ({ text, box }), and a mark
-        const parts = boxes.map((box) => ({ box, text: '', unsure: [], unsureAt: [], lines: [], fixes: { pc: 0, dash: 0 }, view: null, mark: null }));
-        if (direct) {
-          (await ocrPdfText(res.img)).forEach((t, j) => {
-            if (parts[j]) Object.assign(parts[j], { raw: t.text, rawLines: t.lines });
-          });
-          res.direct = true;
-        } else {
-          const tess = await recognizer();
-          const pieces = ocrPieces(res.img);
-          const k = ocrPieceScale(res.img);
-          for (let j = 0; j < pieces.length; j++) {
-            const { data } = await tess.recognize(pieces[j]);
-            const { box } = parts[j];
-            // a place in the piece read (its pixels, enlarged k times) on the image's canvas
-            const at = (bb) => (bb && [bb.x0, bb.y0, bb.x1, bb.y1].every(Number.isFinite)
-              ? { x: box.x + bb.x0 / k, y: box.y + bb.y0 / k, w: Math.max(1, (bb.x1 - bb.x0) / k), h: Math.max(1, (bb.y1 - bb.y0) / k) } : null);
-            const { lines, words } = tessLayout(data);
-            const real = words.filter((w) => w && /[\p{L}\d]/u.test(String(w.text || '')));
-            const shaky = real.filter((w) => w.confidence < OCR_UNSURE);
-            Object.assign(parts[j], {
-              // [3.34.14] many words read uncertainly: a hint (collected item 135)
-              wordsN: real.length,
-              shakyN: shaky.length,
-              busy: shaky.length >= OCR_BUSY_MIN && shaky.length > real.length * OCR_BUSY_SHARE,
-              raw: String((data && data.text) || ''),
-              rawLines: lines.map((l) => ({ text: String(l.text || ''), box: at(l.bbox) })),
-              unsure: uniq(shaky.map((w) => String(w.text).trim())),
-              unsureAt: shaky.map((w) => ({ text: String(w.text).trim(), box: at(w.bbox) })).filter((w) => w.box),
-            });
-            if (!alive()) return;
-          }
-        }
-        if (!alive()) return;
-        parts.forEach((pt) => {
-          const clean = ocrClean(pt.raw || '');
-          // [3.34.12] the lines as in the text (corrected the same way), each with its place
-          const lines = (pt.rawLines || []).map((l) => ({ text: ocrClean(l.text).text, box: l.box })).filter((l) => l.text && l.box);
-          Object.assign(pt, { text: clean.text, fixes: clean.fixes, lines });
-          delete pt.raw;
-          delete pt.rawLines;
-        });
-        const fixes = { pc: parts.reduce((a, pt) => a + pt.fixes.pc, 0), dash: parts.reduce((a, pt) => a + pt.fixes.dash, 0) };
-        Object.assign(res, { parts, fixes, unsure: uniq(parts.flatMap((pt) => pt.unsure)), status: 'done', progress: 1 });
+        if (!(await ocrReadOne(res, recognizer, alive))) return;
       }
       o.step = 'result';
       log('info', 'ocrDone', { n: o.results.length, langs: (langs.length ? langs : ['eng']).join('+') });
@@ -18903,6 +18923,109 @@
     if (alive()) renderOcr();
   }
 
+  // --- [Z-COCR] (3.114.0, S178) Frames drawn in the companion's large image of Discogs: each cut out there and read here as it comes,
+  // added to the window of the text from cover art; ✕ there takes it out (and its frame in the companion) ----------------------------
+  let cocrQueue = Promise.resolve();
+  /** An image as a blob: "data:image/png;base64,…". */
+  function dataUrlBlob(u) {
+    const [head, b64] = String(u).split(',');
+    const mime = (head.match(/^data:([^;]+)/) || [])[1] || 'image/png';
+    const bin = atob(b64 || '');
+    const a = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    return new Blob([a], { type: mime });
+  }
+  /** A frame of the companion: added, changed (read again) or taken out. */
+  function cocrReceive(msg) {
+    if (!ruleOn('S178')) return;
+    const id = String(msg.frameId || '').slice(0, 80);
+    if (!id) return;
+    if (msg.action === 'remove') {
+      if (!msg.mbRelease || String(msg.mbRelease).toLowerCase() === String(releaseMbid).toLowerCase()) cocrDrop(id, false);
+      return;
+    }
+    // ((review) only the dashboard of the release the companion names; an image of a sensible size
+    if (!msg.mbRelease || String(msg.mbRelease).toLowerCase() !== String(releaseMbid).toLowerCase()) return;
+    if (!/^data:image\/(?:png|jpeg|webp);base64,/.test(String(msg.dataUrl || '')) || String(msg.dataUrl).length > 12e6) return;
+    if (!S.overlay || S.overlay.hidden) showDashboard();
+    if (!S.ocr) openOcr();
+    const o = S.ocr;
+    if (!o) return;
+    o.cocr = true;
+    if (o.hidden) o.hidden = false;
+    const im = ocrOwnImage('file', dataUrlBlob(msg.dataUrl));
+    Object.assign(im, { id: `cocr-${id}`, cocr: id, cocrRelease: String(msg.releaseId || ''), name: tr('ocr.cocrName', { n: Number(msg.n) || '', img: Number(msg.imgN) || '' }),
+      sel: true, frames: [] });
+    const at = o.images.findIndex((x) => x.cocr === id);
+    if (at >= 0) {
+      cocrRevoke(o.images[at]); // ((review) the image it replaces let go
+      o.images[at] = im;
+    } else o.images.push(im);
+    const res = { img: im, status: 'wait', progress: 0, text: '', unsure: [], fixes: { pc: 0, dash: 0 } };
+    const old = o.results.findIndex((r) => r.img && r.img.cocr === id);
+    if (old >= 0) o.results[old] = res;
+    else o.results.push(res);
+    // ((review) while the images are read: that step stays (the frame is read by itself and shown with the others)
+    if (o.step !== 'run') o.step = 'result';
+    o.error = '';
+    renderOcr();
+    log('info', at >= 0 ? 'cocrChanged' : 'cocrIn', { n: Number(msg.n) || '' });
+    cocrQueue = cocrQueue.then(() => cocrRead(res)).catch((e) => console.warn('[Credits Importer] frame', e));
+  }
+  /** One frame read (a reader of its own: frames come one by one, the others keep their text and its corrections). */
+  async function cocrRead(res) {
+    const o = S.ocr;
+    if (!o || !o.results.includes(res)) return;
+    const langs = [...o.langs].map((c) => OCR_LANGS[c]).filter(Boolean);
+    let worker = null;
+    const alive = () => S.ocr === o && o.results.includes(res);
+    const recognizer = async () => {
+      if (!worker) {
+        const T = await loadTesseract();
+        worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
+          logger: (m) => {
+            if (m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
+              res.progress = m.progress;
+              renderOcrProgress();
+            }
+          },
+        });
+      }
+      return worker;
+    };
+    try {
+      await ocrReadOne(res, recognizer, alive);
+    } catch (e) {
+      if (alive()) {
+        o.error = (e && e.message) || String(e);
+        o.results = o.results.filter((r) => r !== res);
+        log('error', 'ocrFailed', { why: o.error });
+      }
+    } finally {
+      if (worker) Promise.resolve().then(() => worker.terminate()).catch(() => {});
+    }
+    if (alive() || S.ocr === o) renderOcr();
+  }
+  /** A frame taken out: its image and text go; `tell`: taken out here – its frame in the companion goes too. */
+  const cocrRevoke = (im) => {
+    if (im && im.local) {
+      try {
+        URL.revokeObjectURL(im.local);
+      } catch (e) { /* gone */ }
+    }
+  };
+  function cocrDrop(id, tell) {
+    const o = S.ocr;
+    if (o) {
+      o.images.filter((x) => x.cocr === id).forEach(cocrRevoke);
+      o.images = o.images.filter((x) => x.cocr !== id);
+      o.results = o.results.filter((r) => !(r.img && r.img.cocr === id));
+      renderOcr();
+    }
+    if (tell) toDiscogs({ type: 'ocr-frame-remove', site: 'discogs', frameId: id, releaseId: companionReleaseId() || '', mbRelease: releaseMbid });
+    log('info', 'cocrOut', {});
+  }
+
   /** The text of all images (as checked in the window) and where it is from (the edit note names it). */
   function ocrText() {
     const o = S.ocr;
@@ -18912,7 +19035,9 @@
     const text = done.map(textOf).join('\n\n');
     // [3.34.5] with own images: their files and addresses
     const caa = done.filter((r) => ocrIsCaa(r.img));
-    const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
+    const files = uniq(done.filter((r) => r.img.src === 'file' && !r.img.cocr).map((r) => r.img.name));
+    // ([Z-COCR] 3.114.0, review) frames of the companion: the Discogs release they are from
+    const crops = uniq(done.filter((r) => r.img.cocr).map((r) => r.img.cocrRelease || ''));
     const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
     const discogs = uniq(done.filter((r) => r.img.src === 'discogs').map((r) => r.img.discogs));
     // [3.34.6] PDFs with their pages read
@@ -18924,6 +19049,7 @@
     const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
       files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
       ...discogs.map((id) => `images of Discogs release ${DISCOGS.releaseUrl(id)}`),
+      ...crops.map((id) => (id ? `frames of the images of Discogs release ${DISCOGS.releaseUrl(id)}` : 'frames of images of Discogs')),
       ...[...pdfs].map(([key, pages]) => `PDF ${key} (p. ${uniq(pages).join(', ')})`)].filter(Boolean);
     const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };
@@ -19256,13 +19382,15 @@
 
   function ocrResultHtml() {
     const o = S.ocr;
+    // [Z-COCR] (3.114.0) ✕ at a frame of the companion: it goes, its frame there too
+    const cocrDel = (r) => (r.img && r.img.cocr ? ` <button type="button" class="dci-iconbtn" data-ocr-cocr-del="${esc(r.img.cocr)}" title="${esc(tr('ocr.cocrDel'))}" aria-label="${esc(tr('ocr.cocrDel'))}">✕</button>` : '');
     const canSupp = !!(S.release && S.rows.length);
     const sect = (r, i) => {
-      if (r.status !== 'done') return `<section class="dci-ocr-res"><h3>${esc(ocrTypes(r.img))}</h3><p class="dci-sub">${esc(tr(`ocr.state.${r.status}`))}</p></section>`;
+      if (r.status !== 'done') return `<section class="dci-ocr-res"><h3>${esc(ocrTypes(r.img))}${cocrDel(r)}</h3><p class="dci-sub">${esc(tr(`ocr.state.${r.status}`))}</p></section>`;
       const fixes = [r.fixes.pc ? tr('ocr.fixPc', { n: r.fixes.pc }) : '', r.fixes.dash ? tr('ocr.fixDash', { n: r.fixes.dash }) : ''].filter(Boolean);
       // [3.37.6] its switch "Remove nonsensical words and signs"
       return `<section class="dci-ocr-res" data-ocr-res="${i}">
-        <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
+        <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}${cocrDel(r)}</h3>
         <div class="dci-ocr-cleanbox"><button type="button" class="dci-small dci-ocr-clean" data-ocr-clean="${i}" aria-pressed="${!!r.clean}" title="${esc(tr('ocr.cleanTitle'))}">${esc(tr('ocr.clean'))}</button>
           <span class="dci-sub" data-ocr-cleann="${i}">${esc(ocrCleanNote(r.clean, ocrCleanCount(r)))}</span></div>
         ${r.small && r.img.w ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
@@ -19820,6 +19948,11 @@
         pt.view = null;
         ocrZoomDraw(zb.dataset.ocrZfor);
       } else ocrZoomBy(zb.dataset.ocrZfor, zb.dataset.ocrZ === 'in' ? 1.5 : 1 / 1.5);
+      return;
+    }
+    const cd = t.closest('[data-ocr-cocr-del]');
+    if (cd && S.ocr) {
+      cocrDrop(cd.dataset.ocrCocrDel, true); // [Z-COCR] (3.114.0)
       return;
     }
     const dg = t.closest('[data-ocr-discogs]');
@@ -39151,6 +39284,8 @@
           }
         }, 6000);
       }
+    } else if (msg.type === 'ocr-crop') {
+      cocrReceive(msg); // [Z-COCR] (3.114.0) a frame of the companion's large image
     } else if (msg.type === 'focus-row') {
       const row = S.rows.find((r) => r.id === msg.row);
       if (!row) return;
