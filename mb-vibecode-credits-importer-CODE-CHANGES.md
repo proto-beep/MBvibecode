@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.125.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.126.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,12 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.126.0 · 2026-11-08
+
+- **Z-RMXTITLE (S200):** `RMX_FILLER`, `remixParts` (the brackets at the end of a title: a word of `REMIX_WORDS`, the names before it, or "Remix by A & B"; the base title); `remixTitleCredits` (in `loadRelease` before `groupCredits`): a credit `{ role: 'Remix', rmxTitle: true }` on the track for each name not credited with a remix of it already, and `S.remixOf` `{ i, j, name, credited, taken, key }` (j: the track of the base title); `groupCredits` keeps the name as written and `rmxTitle`; `addCreditRows` → `rmxSkip` (`rmxOff`, `rmxLevel`); `remixOfAssign` (the entry of each remixer); `rmxHtml` at the entry (`data-el="rmx"`: `rmx-take`, `rmxof-toggle`), `rmxTake`; a level chosen by hand clears `rmxOff`; `yellItems` `rmx` (can). Plan: `rec-rel` items (`idx().remixLt`, "remix" recording – recording; not when MusicBrainz has it either way), staged with the remix as entity0; `describeItem`, the preview (`preview.remixOf`).
+- **Tests:** `t_text_places.py rmxtitle3126`, `t_text_lists.py rmx3126r` – new; fail on 3.125.0.
+- **Review:** a rule change (`remapRow`) keeps a remixer not taken on Skip (`rmxOff` among the reasons; `rmxLevel`) – before, any switched rule took it silently; a role of the source and of a title joined only "from titles" while every credit is (`rmxTitle` like `fromNotes`); credited also by the name it is credited as and "Engineer [Remix]", and a person the source credits otherwise gets the title's credit at that entry (its `who`); `remixParts` takes the part after a dash, drops "feat. Y", strips filler words at both ends (`REMIX_FILLER` in the mapping, numbers and ordinals) and splits "A & B" only when both have two words or more ("Above & Beyond" one name); the original found without "(feat. X)", never the same recording; no question for a "remix of" or a remixer MusicBrainz has (`remixOfInMb`, `rmxInMb`); "remix of" taken remembered with the release (`rmxOf`); a row taken by hand draws its entry again; staged "remix of" counted in the edit note; `remixTitle` (S199) reads square brackets too; German, Spanish and French texts.
 
 ## Import 3.125.0 · 2026-11-08
 

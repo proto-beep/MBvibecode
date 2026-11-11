@@ -250,6 +250,10 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   rmxtitle3126: 3.126.0 (Z-RMXTITLE, S200): "(TVAM Remix)", "[Remix by Jane Roe & John Doe]" – remixer entries on Skip
+                                #     with "Take as remixer", John Doe (credited) only "remix of"; staged: remix of track 1 (230, the remix entity0)
+                                #   (t_text_lists) rmx3126r: 3.126.0 (review, Node): remixParts – "(Stereo Remix)", "(The Remix)", "(Disco Dub)" no name; "(Radio Edit -
+                                #     TVAM Remix)" TVAM; "(Above & Beyond Remix)" one name; "[Remix by Jane Roe & John Doe]" two; "(Dub Syndicate Remix)"
                                 #   exceptc3125: 3.125.0 (Z-EXCEPTC, S199): "All tracks except 'A' and 'B' were / composed and commissioned for the 2025
                                 #     Roadburn Festival." – a label "commissioned" on the works of tracks 1, 2 (not the remix), 2025, "Roadburn Records"
                                 #     suggested; "composed for the Holland Festival" a commission, "Written for Jane Roe" a dedication

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.125.0",
+  "version": "3.126.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S122","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -927,6 +927,7 @@
   "TEXT_NOT_AREA": {"$re":"^(?:the|a|an|my|our|his|her|their|this|that|dolby|atmos|stereo|mono|surround|spatial|binaural|analog(?:ue)?|digital|hi-?res|one|real|collaboration|cooperation|association|memory|loving|honou?r|spring|summer|autumn|fall|winter|early|late|mid|session|sessions|studio|studios|house|home)\\b","$flags":"i"},
   "COMMISSIONER_WORDS": {"$set":["festival","fest","biennale","biennial","proms","radio","rundfunk","broadcasting","broadcaster","foundation","stiftung","fondation","fundación","council","museum","gallery"]},
   "REMIX_WORDS": {"$set":["remix","dub","rework"]},
+  "REMIX_FILLER": {"$set":["extended","club","vocal","instrumental","radio","original","official","re-edit","reedit","edit","mix","version","full","long","short","dance","stereo","mono","acoustic","alternate","alt","album","single","new","the","a","in","live","disco","deluxe","demo","digital","remastered","special","bonus","main","my","our"]},
   "WEB_ADDRESS": {"$re":"(?:https?:\\/\\/)?(?:www\\.)?(?:[a-z0-9-]+\\.)+(?:com|net|org|info|biz|io|me|fm|tv|co|app|ee|be|de|at|ch|fr|es|it|nl|uk|us|ca|au|jp|se|no|dk|fi|pl|pt|ie|ru|br|mx|ar|cl|nz|online|site|store|music|band|art|studio|world|live|xyz|link|page|social)(?![a-z0-9-])(?:\\/[^\\s,;()<>“”\"'\\]]*)?","$flags":"gi"},
   "WEB_LABEL": {"$re":"^(?:contact|kontakt|contacto|e-?mail|mail|correo|web|website|webseite|homepage|home page|site|site web|sitio web|info|infos|booking|follow(?:\\s+(?:us|me))?|more|more info|links?|shop|store|orders?|bestellungen|pedidos)\\b[\\s:.\\-–—]*(?:on|at|unter|en|sur)?[\\s:]*$","$flags":"i"},
   "SOCIAL_HOSTS": {"$re":"^(?:instagram\\.com|facebook\\.com|fb\\.com|twitter\\.com|x\\.com|soundcloud\\.com|youtube\\.com|tiktok\\.com|bsky\\.app|threads\\.net|mixcloud\\.com|vimeo\\.com|myspace\\.com|[a-z0-9-]+\\.bandcamp\\.com|open\\.spotify\\.com|music\\.apple\\.com|deezer\\.com|tidal\\.com|music\\.youtube\\.com|qobuz\\.com|music\\.amazon\\.[a-z.]+)$","$flags":"i"},

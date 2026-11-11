@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.125.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.126.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,10 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.126.0
+
+- **Remixers from the titles** (collected item Z-RMXTITLE; rule S200): a track title of MusicBrainz ending in "(TVAM Remix)", "(X Dub)", "(X Rework)" or "[Remix by A & B]" gives each named remixer an entry with the role "Remix" on that recording – searched by its name, on Skip until "Take as remixer" at the entry (a question that may be answered, yellow in the footer). A remixer the source credits already gets no second row. When the track it remixes is on the release (the title without the brackets), the entry offers "remix of" too – MusicBrainz's relationship between the two recordings, added with "Take as remixer" or on its own. The words are a list in the mapping file (`REMIX_WORDS`).
 
 ### Import 3.125.0
 
