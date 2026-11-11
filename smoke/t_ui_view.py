@@ -860,7 +860,7 @@ def case_entryskip():
         sum1 = pg.evaluate(SUM)
         logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'skipped:' in x]
         print('A) Köpfe/Knöpfe:', counts, '| vorher:', a0, sum0, '\n   ⊘:', a1, sum1, logs)
-        results.append(counts[0] == counts[1] and counts[0] > 3 and a0['btn'] == '⊘ Skip' and a0['right'] < 40 and a0['levels'] == ['recording']
+        results.append(counts[0] == counts[1] and counts[0] > 3 and a0['btn'] == 'Skip ⤼' and a0['right'] < 40 and a0['levels'] == ['recording']
                        and a1['btn'] == '↺ Take again' and a1['grey'] and a1['focus'] and a1['levels'] == ['skip'] and float(a1['op']) < 0.6
                        and int(sum1.split()[0]) < int(sum0.split()[0]) and logs == ['Bass Man skipped: 1 row on “Skip”'])
         pg.click(SEC.format('Bass Man') + ' [data-act=entry-unskip]')
@@ -876,7 +876,7 @@ def case_entryskip():
         pg.wait_for_timeout(300)
         b2 = [pg.evaluate(INFO, 'Bob Producer'), pg.evaluate(INFO, 'Bass Man'), pg.evaluate(SUM)]
         print('B) ⊘:', b1, '| ↺:', b2, sumb)
-        results.append(b1['levels'] == ['skip'] and b2[0]['levels'] == ['release'] and not b2[0]['grey'] and b2[0]['btn'] == '⊘ Skip'
+        results.append(b1['levels'] == ['skip'] and b2[0]['levels'] == ['release'] and not b2[0]['grey'] and b2[0]['btn'] == 'Skip ⤼'
                        and b2[1]['levels'] == ['recording'] and b2[2] == sumb)
         # C)
         pg.click(SEC.format('Bass Man') + ' [data-act=entry-skip]')
@@ -885,7 +885,7 @@ def case_entryskip():
         pg.wait_for_timeout(300)
         c0 = pg.evaluate(INFO, 'Bass Man')
         print('C)', c0)
-        results.append(c0['levels'] == ['recording'] and not c0['grey'] and c0['btn'] == '⊘ Skip')
+        results.append(c0['levels'] == ['recording'] and not c0['grey'] and c0['btn'] == 'Skip ⤼')
         # D)
         H.open_settings(pg, 'appearance')
         box = pg.locator('[data-el=settings] [data-set=skip-hide]')
@@ -927,7 +927,7 @@ def case_entryskip():
         pg.wait_for_timeout(400)
         e1 = [pg.evaluate(ES, 'Guitar Guy'), pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(x => x.textContent).filter(t => /Guitar Guy skipped/.test(t)).length")]
         print('E)', e0, e1)
-        results.append(e0 is not None and e0['centry'] and e0['parts'] == ['seg', '⊘ Skip'] and e1[0]['grey'] and e1[0]['parts'] == ['seg', '↺ Take again'] and e1[1] == 1)
+        results.append(e0 is not None and e0['centry'] and e0['parts'] == ['seg', 'Skip ⤼'] and e1[0]['grey'] and e1[0]['parts'] == ['seg', '↺ Take again'] and e1[1] == 1)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -964,7 +964,7 @@ def case_entryskipkeep():
         pg.wait_for_timeout(400)
         a1 = pg.evaluate(INFO, 'Bass Man')
         print('neu geladen:', a0, '| ↺:', a1)
-        results.append(a0 == ['↺ Take again', True, ['skip']] and a1 == ['⊘ Skip', False, ['recording']])
+        results.append(a0 == ['↺ Take again', True, ['skip']] and a1 == ['Skip ⤼', False, ['recording']])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.126.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.127.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.127.0
+
+- **Where an entry comes from** (collected item Z-SRCTAG; rule S201): after each entry's name a badge for each of its sources – Discogs (its notes too), Bandcamp, YouTube, MusicBrainz (a relationship it already has, a remixer of its track titles), 📄 a pasted text, 🖼️ text read from images. Each is a link to that source: the release at Discogs, Bandcamp or YouTube, the recording in MusicBrainz, the text window, the window of the text from images. When an entry has more than one source, each row shows its own. The entry's page at the source stays as a text link ("Discogs artist ↗") beside the MusicBrainz link.
+- **The logos** (Z-ICONS): Discogs (white on black, black in the dark theme), Bandcamp, YouTube and MusicBrainz – all badges the same square. Icons: Dashboard Icons by Homarr Labs (Apache License 2.0); Discogs icon via Simple Icons. Logos and brand names belong to their owners (⚙ Settings → Connections, X018).
+- **Emojis or words** (⚙ Settings → Appearance → Symbols: Emojis | Text, default emojis): with Text the badges read DG, BC, YT, MB, Text, OCR; 💡 "Tip:", 🏷 "Label:", ⌚ "date", 🖼️ "OCR". 🖼️ replaces 📷 everywhere; ⚠ and ⚙ stay.
+- **"Skip ⤼"** (Z-SKIPVIS): the button that skips a whole entry is a framed grey button, darker under the mouse; the tooltips of an entry's counters (questions, suggestions) mention it.
 
 ### Import 3.126.0
 

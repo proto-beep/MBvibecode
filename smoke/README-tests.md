@@ -650,6 +650,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   srctag3127: 3.127.0 (Z-SRCTAG, Z-ICONS, Z-SKIPVIS, S201): the badges of the sources after the name (the same square
+                                #     each; Discogs white on black, a link to the release), MusicBrainz for a relationship it has and a remixer of a title
+                                #     (a link to the recording), at the rows only with more than one source; "Skip ⤼"; Symbols: Text – "DG", "MB"; X018
                                 #   foot397: 3.97.0 (Z-FOOT): the run in the footer – a yellow chip with the latest step, filled as far as the
                                 #     requests are done, a 2-px line on top; done: green "All imports and checks done" (stays), the line gone,
                                 #     the footer no higher (from 3.112.0 measured without the Z-YELL counters, which the notes' dates now
@@ -672,7 +675,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head; from 3.115.0 with "Text from cover art …"); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
                                 #     3.36.5: no ⓘ among the symbols
-                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
+                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗; [3.127.0] the
+                                #     badge of Discogs, the artist's page a text link "Discogs artist ↗"), [3.32.2] the
                                 #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
                                 #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
                                 #     3.37.11: the chip "artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)", the * explained
