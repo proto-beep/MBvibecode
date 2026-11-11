@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.124.0
+// @version      3.125.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.124.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.124.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.125.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.125.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.124.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.125.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4447,6 +4447,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S199', where: 'TEXT.parse (commissionLine, joinBroken), addCompanyEntry, suggestByName, datesWithContext, findFestivals; COMMISSIONER_WORDS, REMIX_WORDS', note: 'Texts (3.125.0; collected item Z-EXCEPTC): "All tracks except \'Heavy Industry\' and \'Industrial Unrest\' were / composed and commissioned for the 2025 Roadburn Festival." (a sentence over two lines read as one) – "commissioned" on the works of those tracks (remixes left out: their work is the original\'s), a label searched by its name ("Roadburn Festival"; MusicBrainz\'s names like it suggested, "Create …"), the year before the name its date (begin and end). "composed for X" / "written for X" is a commission when X has a word of COMMISSIONER_WORDS (Festival, Biennale, Proms, Radio, Foundation …) – else a dedication (S107); such a festival is not left out (S007) nor a festival recording (S056), its year no date of the composition' },
     { id: 'S198', where: 'TEXT.parse (siteHosts), siteOf, siteHintRun, siteNoteHtml', note: 'Texts (3.124.0; collected item Z-WEBDOM): a line only of web addresses is left out as before (now also a line only of an address in lower case with any ending: "castlesin.space"); a site that is a linked entry\'s own – its letters the name ("castlesin.space": Castles in Space) or its start ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for it yet: a note at the entry with a link to its page for editing in MusicBrainz, the address filled in (MusicBrainz\'s addresses of the entry looked up once)' },
     { id: 'S197', where: 'TEXT.parse, renderDedBox, yellItems', note: 'Dedications (3.124.0; collected item Z-INMEM): a line only of a dedication ("In memory of Kyle Bunell-Cooke.", "Dedicated to the memory of …") is no line not recognized – the box "Dedications & tributes" has it; one MusicBrainz does not know has "Create …" there (an artist of that name, in a new tab); each suggestion of the box counts as a question that may be answered (yellow)' },
     { id: 'S196', where: 'TEXT.parse (catnoOf)', note: 'Texts (3.124.0; collected item Z-CATNO): a line that is only the release\'s catalogue number in MusicBrainz ("CiS216", also "CIS-216", "cis 216": case, spaces, hyphens and dots aside, one character may differ) – left out as such (before: not recognized)' },
@@ -5425,6 +5426,14 @@
   const FORMAT_SERIES_NAMES = ['Record Store Day', 'Cassette Store Day', 'Love Record Stores', 'National Album Day'];
   // ((review) also Discogs's "RSD", "RSD Black Friday")
   const FORMAT_SERIES = new RegExp(`\\b(${FORMAT_SERIES_NAMES.join('|')}|RSD)\\b`, 'gi');
+  // [Z-EXCEPTC] (3.125.0, S199) words of a name that gives commissions (a festival, a broadcaster …): "composed for X" is a commission
+  const COMMISSIONER_WORDS = MAP.COMMISSIONER_WORDS;
+  const COMMISSION_BEFORE_DATE = /\b(?:commissioned\s+(?:for|by)|(?:composed|written|created)\s+(?:(?:especially|specially)\s+)?for)\s+(?:the\s+)?$/i;
+  // ((review) a festival right after it, its year and name between: "composed for the 2025 Roadburn " before "Festival"
+  const COMMISSION_BEFORE_NAME = /\b(?:[Cc]ommissioned\s+(?:for|by)|(?:[Cc]omposed|[Ww]ritten|[Cc]reated)\s+(?:(?:[Ee]specially|[Ss]pecially)\s+)?for)\s+(?:[Tt]he\s+)?(?:(?:19|20)\d{2}\s+)?(?:\p{Lu}[\p{L}'’.&-]*\s+){0,4}$/u;
+  // [Z-RMXTITLE] (3.125.0) the words of a remix in a track's title ("This Machine (TVAM Remix)"): no work of its own
+  const REMIX_WORDS = MAP.REMIX_WORDS;
+  const remixTitle = (t) => { const m = String(t || '').match(/\(([^()]*)\)\s*$/); return !!m && m[1].trim().split(/\s+/).some((w) => REMIX_WORDS.has(w.toLowerCase())); };
   // [Z-PRODFOR] (3.122.0, S191) "… Produced For VARA Radio By", "For X" in the details of a producer: X
   // ((review) only "(Session) (Originally) Produced For X (By)" and "For X": no words of a track, side, album, version after it)
   const PROD_FOR = /^(?:(?:[Ss]ession\s+)?(?:[Oo]riginally\s+)?[Pp]roduced\s+)?[Ff]or\s+(\p{Lu}[^[\]]*?)(?:\s+[Bb]y)?\s*$/u;
@@ -5599,6 +5608,8 @@
         const after = DED_AFTER.exec(rest);
         if (!after || /^(?:the|a|an|this|that|these|all|more|free|sale|promo\w*|promotion|radio|airplay|dj|djs|christmas|xmas|use|info|details|example|fun|life|ever|now|you|your|our|my|everyone|everybody|kids|children|beginners|today|tonight|only|review|reviewers|rental|internal|private|personal)\b/i.test(after[1])) continue;
         if (after[1].includes(',')) continue;
+        // [Z-EXCEPTC] (3.125.0, S199) "composed for the Roadburn Festival": a commission (COMMISSIONER_WORDS), no dedication
+        if (ruleOn('S199') && after[1].toLowerCase().split(/[\s-]+/).some((w) => COMMISSIONER_WORDS.has(w))) continue;
         const tail = rest.slice(after[0].length, after[0].length + 60).split(/[.!?;\n]/)[0];
         if (/^[ \t]*(?:only|exclusive|market|release|edition|pressing)\b/i.test(tail) || /\b(?:aufgenommen|produziert|gemischt|veröffentlicht)\b/iu.test(tail)) continue;
         const work = /\b(?:written|composed|geschrieben|komponiert)[ \t]*$/u.test(before) || /^[ \t]*(?:geschrieben|komponiert)\b/iu.test(tail);
@@ -7750,6 +7761,69 @@
       // [S073] (3.42.3) the titles of the release and its tracks (no person)
       const titleKeys = new Set((titleNames || []).map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
+      /**
+       * [Z-EXCEPTC] (3.125.0, S199) A sentence of a commission: "commissioned for/by X", or "composed/written for X" with a word of
+       * COMMISSIONER_WORDS in X ("Festival", "Radio" …; for a person it stays a dedication) – its tracks: "All tracks (except 'A' and
+       * 'B')", or the scope of the line; remixes left out (their work is the original's); a year before X its date.
+       */
+      const commissionLine = (unit, scope) => {
+        const t = clean(unit).replace(/[.;]+$/, '');
+        // ((review) the verbs at the start of a sentence too; "commissioned by X" only for a name of COMMISSIONER_WORDS – a person
+        // ("commissioned by John Smith") stays with the credit handlers as before)
+        const m = t.match(/^(.*?)\b([Cc]ommissioned\s+(?:for|by)|(?:[Cc]omposed|[Ww]ritten|[Cc]reated)(?:\s+(?:[Ee]specially|[Ss]pecially))?\s+for)\s+(?:[Tt]he\s+)?(?:((?:19|20)\d{2})\s+)?(\p{Lu}[^,;]*?)(?:\s+(?:in\s+)?((?:19|20)\d{2}))?$/u);
+        if (!m) return false;
+        // (cut at " for ": "the BBC for the Proms" is the BBC's)
+        const name = clean(m[4].split(/\s+for\s+/)[0]);
+        if (/\s(?:and|&)\s/.test(name)) return false;
+        const words = name.toLowerCase().split(/[\s-]+/);
+        if (!words.some((w) => COMMISSIONER_WORDS.has(w)) || !looksLikeName(name) || words.length > 6) return false;
+        // ((review) only a lead that names the tracks: none, "All tracks (except 'A' and 'B') were (composed and)", quoted titles,
+        // "This piece was" – "Music by Jane Doe, written for Radio X" keeps its credit)
+        let lead = m[1].replace(/\s*(?:(?:[Cc]omposed|[Ww]ritten|[Cc]reated|[Rr]ecorded)\s+(?:and|&)\s*)$/, '').replace(/\s*\b(?:were|was|are|is|have\s+been|has\s+been)\s*$/i, '').trim();
+        lead = lead.replace(/^\(|\)$/g, '').trim();
+        const trackTitles = Array.isArray(ctx0.trackTitles) ? ctx0.trackTitles : Array.isArray(ctx0.tracks) ? ctx0.tracks.map((x) => x.title) : [];
+        const n = ctx0.trackTitles ? trackTitles.length : trackCount || 0;
+        const ALL = /^(?:all(?:\s+(?:the\s+|of\s+the\s+)?(?:tracks|songs|pieces|compositions|works|titles))?|everything)(?:\s+(?:on\s+)?(?:this|the)\s+(?:album|record|release))?/i;
+        const EX = /^\s*,?\s*(?:except(?:\s+for)?|but|apart\s+from|other\s+than|excluding)\s+(.+?)\s*,?$/i;
+        const quoted = (x) => [...String(x).matchAll(new RegExp(TEXT_TITLE_Q, 'gu'))].map((q) => clean(q[0].slice(1, -1))).filter(Boolean);
+        let set = null;
+        let ex = null;
+        const all = lead.match(ALL);
+        if (all) {
+          const rest = lead.slice(all[0].length);
+          ex = rest.trim() ? rest.match(EX) : null;
+          if ((rest.trim() && !ex) || !n) return false;
+          set = new Set([...Array(n).keys()]);
+          if (ex) {
+            // ((review) the quoted titles first: "'Salt and Pepper'" is one title
+            const q = quoted(ex[1]);
+            const titles = q.length ? q : ex[1].split(/\s*,\s*|\s+(?:and|&)\s+/).map((x) => clean(x.replace(/^["'‘’“”]+|["'‘’“”]+$/g, ''))).filter(Boolean);
+            const res = resolveTitles ? resolveTitles(titles) : null;
+            if (!res || (res.unresolved || []).length) return false;
+            res.indexes.forEach((i) => set.delete(i));
+          }
+        } else if (!lead) {
+          if (scope) set = new Set(scope.set);
+        } else if (/^["'‘“]/.test(lead) && resolveTitles) {
+          // ("'The Wire' was composed for …": the tracks of the titles named before – nothing else in the lead)
+          const titles0 = quoted(lead);
+          if (!titles0.length || clean(lead.replace(new RegExp(TEXT_TITLE_Q, 'gu'), '').replace(/\s*(?:,|and|&)\s*/g, ' ')).length) return false;
+          const res = resolveTitles(titles0);
+          if (!res || (res.unresolved || []).length || !res.indexes.size) return false;
+          set = new Set(res.indexes);
+        } else if (/^(?:it|this|the)(?:\s+(?:piece|work|album|record|release|composition|music|song|track|ep|lp))?$/i.test(lead)) {
+          if (scope) set = new Set(scope.set);
+        } else return false;
+        // (remixes: no work of their own – (review) also when no tracks are named, against the titles resolveTitles knows)
+        if (trackTitles.some(remixTitle)) {
+          if (!set && n) set = new Set([...Array(n).keys()]);
+          if (set) [...set].forEach((i) => { if (remixTitle(trackTitles[i])) set.delete(i); });
+        }
+        const year = m[3] || m[5] || '';
+        companies.push({ who: who(name), role: 'Commissioned By', catno: '', tracks: set ? { indexes: [...set], spec: ex ? `all but ${ex[1]}` : (scope ? scope.spec : '') } : null, ...at(),
+          entity: 'label', commissionFor: true, ...(year ? { date: { by: year, ey: year, ended: true } } : {}) });
+        return true;
+      };
       const catKey = (x) => String(x || '').toLowerCase().replace(/[\s.\-–_/]+/g, '');
       const catKeys = ((ctx0 && ctx0.catnos) || []).map(catKey).filter((k) => k.length >= 3);
       const catnoOf = (unit) => {
@@ -9537,6 +9611,8 @@
         // [S074] (3.43.0, review) tracks named by what they are not ("Produced by X except track 3", "Bass – X (not on track 3)",
         // "all other tracks mixed by Y"): not read – before, the tracks named were taken as the credit's
         if (ruleOn('S074') && EXCEPT_TRACKS.test(line) && new RegExp(`${TEXT_TRACK_WORDS}|\\(\\s*(?:except|not)\\b|\\b(?:except|not)\\s+\\d`, 'iu').test(line)) {
+          // [Z-EXCEPTC] (3.125.0, S199) a commission of all tracks but the titles named: read (commissionLine)
+          if (ruleOn('S199') && commissionLine(line, null)) return;
           unrecognized.push(line0);
           return;
         }
@@ -9746,6 +9822,12 @@
           }
           if (ruleOn('S072') && NOWHERE.test(clean(unit))) {
             ignored.push({ text: whole, why: 'nowhere' });
+            continue;
+          }
+          // [Z-EXCEPTC] (3.125.0, S199) "All tracks except 'A' and 'B' were composed and commissioned for the 2025 Roadburn
+          // Festival": a commission of the works of those tracks (not of remixes) – a label searched by its name, the year its date
+          if (ruleOn('S199') && commissionLine(unit, scope)) {
+            found++;
             continue;
           }
           // [Z-INMEM] (3.124.0, S197) a dedication alone ("In memory of Kyle Bunell-Cooke."): the box "Dedications & tributes" has it
@@ -10127,8 +10209,29 @@
         return line;
       };
       const m0Improv = /^[^:]+\s:\s.*\bimprovi[sz]ations?\b/i;
+      /**
+       * [Z-EXCEPTC] (3.125.0, S199) A sentence broken over two lines ("All tracks except 'A' and 'B' were" / "composed and commissioned
+       * for …"): a line of four words or more that ends in a word like "were", "and", "for", the next one starting small – read as one.
+       */
+      const joinBroken = (lines) => {
+        if (!ruleOn('S199')) return lines;
+        const out = [];
+        for (let i = 0; i < lines.length; i++) {
+          let l = String(lines[i] || '');
+          // ((review) only after a word that cannot end a sentence ("were", "and", "for" …), and neither line a credit (" - ", ":", a dash):
+          // lower-case credit lines one below the other stay apart
+          const credit = (x) => /[:–—]|\s-\s/.test(x);
+          while (i + 1 < lines.length && /\s(?:were|was|are|is|been|and|for|the|of|to|especially|specially)\s*$/.test(l) && l.trim().split(/\s+/).length >= 4
+            && /^\s*\p{Ll}/u.test(String(lines[i + 1] || '')) && !credit(l) && !credit(String(lines[i + 1] || ''))) {
+            l = `${l.replace(/\s+$/, '')} ${String(lines[i + 1]).trim()}`;
+            i++;
+          }
+          out.push(l);
+        }
+        return out;
+      };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(cpyLine).map(qpLine).map(rdstLine).map(licLine));
+      const allLines0 = joinBroken(discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(cpyLine).map(qpLine).map(rdstLine).map(licLine)));
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -10591,7 +10694,7 @@
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       // [S073] (3.42.3) the album's title and its tracks' are no persons (Z-BZ)
       const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, trackTitles: tracks.map((t) => t.title), artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -10599,7 +10702,7 @@
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, trackTitles: tracks.map((t) => t.title), artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
       // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
       // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
@@ -11014,7 +11117,8 @@
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
-        ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}), refs: [] });
+        ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}),
+        ...(c.date ? { date: c.date } : {}), refs: [] }); // ([Z-EXCEPTC] 3.125.0: the year of a commission)
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
       if (!same) continue;
       if (c.anv && !same.anv) same.anv = c.anv; // [Z-PLDUP] (3.111.0)
@@ -22836,7 +22940,7 @@
       const own = rel.tracks || [];
       // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
       const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
-      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames });
+      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames, trackTitles: own.map((t) => t.title || '') }); // ((Z-EXCEPTC 3.125.0, review) the titles resolveTitles knows
       rel.firstPerson = (res.firstPerson || []).map((x) => ({ ...x, from: 'notes' })); // [Z-PLAYS] (3.102.0, S168) the Discogs notes
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
@@ -23740,14 +23844,22 @@
    */
   function addCompanyEntry(g, rel, leftOutKeys) {
     // [S007]
+    const commissioned = (r) => norm(r.role) === 'commissioned by';
     if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
-      log('info', 'festivalSkipped', { name: g.name });
-      return null;
+      // [Z-EXCEPTC] (3.125.0, S199; review) a festival that commissioned works: that role kept (a label), its others left out
+      const kept = ruleOn('S199') ? g.roles.filter(commissioned) : [];
+      if (!kept.length) {
+        log('info', 'festivalSkipped', { name: g.name });
+        return null;
+      }
+      if (kept.length < g.roles.length) log('info', 'festivalSkipped', { name: g.name });
+      g = { ...g, roles: kept };
     }
     const company = {
       key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
       entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
       ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
+      ...(ruleOn('S199') && g.roles.some(commissioned) ? { commissionFor: true } : {}), // [Z-EXCEPTC] (3.125.0)
     };
     S.artists.set(company.key, company);
     for (const r of g.roles) {
@@ -23775,6 +23887,8 @@
         Object.assign(row, { level: 'recording', defaultLevel: 'recording' });
         resolveRowType(row);
       }
+      // [Z-EXCEPTC] (3.125.0, S199) the date the text gives the role ("the 2025 Roadburn Festival": 2025)
+      if (r.date && ruleOn('S199')) row.date = { by: '', bm: '', bd: '', ey: '', em: '', ed: '', ended: false, ...r.date, poolId: null };
       row.suggested = new Set(row.tracks);
       // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
       // item 97c)
@@ -24305,6 +24419,21 @@
           a.akaOk = hitsA.length > 0;
           for (const x of hitsA) if (!items.some((y) => y.id === x.id)) items.push({ ...x, viaAka: true });
         }
+        // [Z-EXCEPTC] (3.125.0, S199) a festival (or radio, foundation …) that commissioned works: its labels by the name without that
+        // word too ("Roadburn" of "Roadburn Festival": "Roadburn Records") – similar
+        // ((review) only a last word of the list is dropped – "Museum of Modern Art" stays whole; accents compared too)
+        const bareW = (w) => norm(w).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const commSet = new Set([...COMMISSIONER_WORDS].map(bareW));
+        const commCore = a.commissionFor && type === 'label' && ruleOn('S199') ? (() => {
+          const ws = String(a.name).trim().split(/\s+/).filter((w) => !/^(?:(?:19|20)\d{2}|the)$/i.test(w));
+          while (ws.length > 1 && commSet.has(bareW(ws[ws.length - 1]))) ws.pop();
+          return ws.join(' ');
+        })() : '';
+        if (commCore && norm(commCore) !== norm(a.name)) {
+          const cw = luceneWords(commCore);
+          const dataC = cw ? await mbWs(`label?query=${encodeURIComponent(`label:(${cw}) OR alias:(${cw})`)}&limit=25`) : null;
+          for (const x of (dataC && dataC.labels) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
+        }
         const looseKeys = new Set([a.name, ...(a.altNames || []), ...apart].map((n) => looseName(digitWords(n))).filter(Boolean));
         // [3.13.0] A name with an initial ("T. Snekkestad", "Torben S. Snekkestad"): MusicBrainz's search needs every
         // word, and "T" is no word of "Torben" – so the written-out words are searched too (nameFit decides)
@@ -24325,6 +24454,7 @@
           if (bare && bare !== a.name && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(withoutCompanyForm(n), bare) === 'same')) fits.push('similar');
           // [T046] the same written together or apart, a number as a word: similar
           if (a.company && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => looseKeys.has(looseName(digitWords(n))))) fits.push('similar');
+          if (commCore && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => norm(n) === norm(commCore) || norm(n).startsWith(`${norm(commCore)} `))) fits.push('similar');
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';
         };
         const isSociety = (x) => society && norm(x.type || '') === 'rights society';
@@ -24630,6 +24760,8 @@
     let m;
     while ((m = re.exec(text))) {
       const sentence = sentenceAround(text, m.index, m.index + m[0].length);
+      // [Z-EXCEPTC] (3.125.0, S199) a festival that commissioned the works ("composed for the 2025 Roadburn Festival") is no recording
+      if (ruleOn('S199') && COMMISSION_BEFORE_NAME.test(sentence.slice(0, sentence.indexOf(m[0])))) continue;
       const at = sentence.indexOf(m[0]);
       const name = festivalName(sentence.slice(0, Math.max(0, at)), m[0], sentence.slice(at + m[0].length));
       // (a place of that name is no festival: "Royal Festival Hall", "Festival Theatre")
@@ -29398,7 +29530,9 @@
         }
       }
       return { ...x, sentence, tracks, medium, studios: studiosInText(sentence).map((a) => a.key) };
-    });
+    // [Z-EXCEPTC] (3.125.0, S199) the year of a commission ("composed and commissioned for the 2025 Roadburn Festival") is the date of
+    // the commission (its row), not of the composition
+    }).filter((x) => !(ruleOn('S199') && COMMISSION_BEFORE_DATE.test(src.slice(Math.max(0, x.index - 60), x.index))));
   }
 
   /** Dates found in the Discogs notes (once per release) and in the text pasted into the date pool. */
