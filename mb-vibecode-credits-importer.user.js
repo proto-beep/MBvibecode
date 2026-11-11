@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.112.0
+// @version      3.113.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.112.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.112.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.113.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.113.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.112.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.113.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1676,6 +1676,15 @@
       "em.ghostDrop": "Take this empty column away",
       "em.ghostEmpty": "empty",
       "insts.label": "Instruments:",
+      "insts.commonTitle": "Add the common level: {what} – a row on the recordings beside the instruments (they stay)",
+      "insts.commonRemove": "Take the row of the common level ({what}) out again",
+      "insts.commonVocals": "vocals",
+      "insts.commonPerformer": "performer",
+      "insts.commonAll": "instruments",
+      "log.instsCommon": "{name}: the common level of the instruments added – {what}",
+      "log.instsCommonOff": "{name}: the row of the common level taken out",
+      "settings.instsCommon": "Offer ⑃ – the common level of an entry's instruments as a row",
+      "settings.instsCommonTitle": "Beside “Instruments: per track | on the release”: a row of the level all of them share (saxophones and a flute: woodwind)",
       "insts.track": "per track",
       "insts.release": "on the release",
       "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
@@ -4372,6 +4381,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S177', where: 'instsCommonAdd, instsCommonBtnHtml', note: 'Instruments (3.113.0; collected item Z-INSTLCA): ⑃ beside "Instruments: per track | on the release" – a row of the lowest level of the instruments\' tree all of them share (saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments) on the recordings, beside them (they stay), with their tracks, date, guest / solo when all have it; only of those without tracks of their own (precise tracks need none); ⚙ Settings → Appearance can switch the button off' },
     { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
     { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place' },
     { id: 'S174', where: 'dsupScan, dsupTake, computePlan (relAttr)', note: 'MusicBrainz less precise (3.106.0; collected item Z-DSUP): MusicBrainz has a person with an instrument the source names more precisely ("saxophone" – "tenor saxophone") – no conflict, an update: "tenor saxophone instead of saxophone" offered at the entry (the relationship of MusicBrainz edited, its other attributes, credits and dates kept); several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks: they go on the release, MusicBrainz keeps the common group on the recordings; MusicBrainz more precise than the source: nothing is added. 3.107.0 (Z-ITREE): which instrument is a kind of which from the instruments\' tree (itreeAncestors) – MusicBrainz\'s attributes are flat' },
@@ -22226,7 +22236,7 @@
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
   // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
   const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
-    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
+    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -22304,7 +22314,7 @@
       if (r.supp) continue;
       // ([Z-INSTS] 3.103.0, review) the automatic row and the copies come with "on the release" (remembered per entry); a row moved there
       // is remembered as it is per track
-      if (r.instsAuto || r.instsCopy) continue;
+      if (r.instsAuto || r.instsCopy || r.instsCommon) continue; // ([Z-INSTLCA] 3.113.0, review) ⑃ is made anew (instsCommon of the entry)
       const fresh = S.freshRows.get(r.id);
       const p0 = r.instsPrev;
       let v = r;
@@ -22345,6 +22355,7 @@
       if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
       if (a.artl && !a.company) x.artl = 'artist'; // ([Z-ARTL] 3.100.0, review) "As an artist instead" taken
       if (a.insts === 'release') x.insts = 'release'; // ([Z-INSTS] 3.103.0, review)
+      if (S.rows.some((r) => r.instsCommon === a.key)) x.instsCommon = true; // ([Z-INSTLCA] 3.113.0, review)
       if (a.instsNo) x.instsNo = true;
       return x;
     }).filter((x) => Object.keys(x).length > 1);
@@ -22673,6 +22684,7 @@
       // ([Z-INSTS] 3.103.0, review) the instruments on the release again; the suggestion declined
       if (e.instsNo) a.instsNo = true;
       if (e.insts === 'release' && a.insts !== 'release') instsToRelease(a);
+      if (e.instsCommon && !instsCommonOf(a)) instsCommonAdd(a); // ([Z-INSTLCA] 3.113.0, review) ⑃ again
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
         if (typeof e.match.region === 'string' && e.match.region) a.regionPick = { mbid: e.match.mbid, region: e.match.region }; // [Z-RG] (3.40.8, review)
@@ -25914,7 +25926,7 @@
   /** [E4] The line of a row: rows of the same type, instrument or voice, role credit, additional / guest / solo and artist credit. */
   function lineKeyOf(row) {
     const lt = ltOf(row);
-    return lt ? [lt.name, norm(row.primaryText), norm(row.roleCredit), [...row.flags].sort().join(','), norm(row.credit), row.instsAuto ? 'auto' : ''].join('|')
+    return lt ? [lt.name, norm(row.primaryText), norm(row.roleCredit), [...row.flags].sort().join(','), norm(row.credit), row.instsAuto ? 'auto' : row.instsCommon ? 'common' : ''].join('|')
       : `?|${norm(row.raw || row.base)}|${row.id}`;
   }
 
@@ -34129,7 +34141,7 @@
     if (!mbRels.length) return none;
     // ((review) a held row by the kind it had – on Skip its type is not resolved)
     const kindOf = (r) => dsupRowKind(r) || (r.dsupHold && r.dsupHold.rk) || '';
-    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.instsAuto && dsupKinds.has(kindOf(r)) && !r.manual);
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.instsAuto && !r.instsCommon && dsupKinds.has(kindOf(r)) && !r.manual);
     const res = { mbOnly: [], held: [], upd: [] };
     const mbMains = new Map();
     for (const x of mbRels) {
@@ -34325,7 +34337,7 @@
   };
   /** The rows "on the release" moves: the source's instruments and voices of the person without tracks of their own (on the recordings). */
   function instsRows(a) {
-    return S.rows.filter((r) => r.artistKey === a.key && !r.instsAuto && !r.instsCopy && !r.manual && (r.instsPrev || (r.level === 'recording' && r.dAllTracks))
+    return S.rows.filter((r) => r.artistKey === a.key && !r.instsAuto && !r.instsCopy && !r.instsCommon && !r.manual && (r.instsPrev || (r.level === 'recording' && r.dAllTracks))
       && instsKind(r));
   }
   const instsAvail = (a) => a.insts === 'release' || (ruleOn('S169') && uniq(instsRows(a).map(lineKeyOf)).length >= 2);
@@ -34371,6 +34383,8 @@
     else instsToTrack(a);
   }
   function instsToRelease(a) {
+    // ([Z-INSTLCA] 3.113.0) the row of ⑃: the automatic row on the recordings takes its place
+    S.rows = S.rows.filter((r) => r.instsCommon !== a.key);
     // ((review) again while on the release: the rows put per track meanwhile follow
     const rows = instsRows(a).filter((r) => r.level === 'recording' && !r.instsPrev);
     if (!rows.length) {
@@ -34467,12 +34481,69 @@
     a.insts = 'track';
     log('info', 'instsTrack', { name: a.mbName || a.name });
   }
+  // --- [Z-INSTLCA] (3.113.0, S177) ⑃ the common level of an entry's instruments as a row of its own -----------------------------
+  /** The instruments and voices it is made of: those without tracks of their own on the recordings (precise tracks need none). */
+  const instsCommonRows = (a) => instsRows(a).filter((r) => r.level === 'recording' && !r.instsPrev && r.dAllTracks);
+  /** ((review) Worth a row: two lines at least, and a level that is not already one of them ("saxophone" + "tenor saxophone"). */
+  function instsCommonWorth(rows) {
+    if (uniq(rows.map(lineKeyOf)).length < 2) return false;
+    const w = instsCommonWhat(rows);
+    return !(w.type === 'instrument' && w.group && rows.some((r) => norm(r.primaryText) === norm(w.group)));
+  }
+  const instsCommonOf = (a) => S.rows.find((r) => r.instsCommon === a.key);
+  const instsCommonOn = () => S.instsCommonOn !== false && ruleOn('S177');
+  /** What the row would be: the lowest group of the tree all share (S170) – "instruments" without one; "vocals" of voices only; performer of both. */
+  function instsCommonWhat(rows) {
+    const kinds = uniq(rows.map(instsKind));
+    if (kinds.length === 1 && kinds[0] === 'vocal') return { type: 'vocal', group: '' };
+    if (kinds.includes('vocal')) return { type: 'performer', group: '' };
+    return { type: 'instrument', group: instsGroup(rows) };
+  }
+  function instsCommonLabel(rows) {
+    const w = instsCommonWhat(rows);
+    return w.type === 'vocal' ? tr('insts.commonVocals') : w.type === 'performer' ? tr('insts.commonPerformer') : w.group || tr('insts.commonAll');
+  }
+  /** ⑃: a row of the common level on the recordings beside the instruments (they stay), with their tracks, date, guest / solo if all have it. */
+  function instsCommonAdd(a) {
+    const rows = instsCommonRows(a);
+    if (!instsCommonWorth(rows) || instsCommonOf(a)) return;
+    const w = instsCommonWhat(rows);
+    const base = rows.find((r) => instsKind(r) === (w.type === 'vocal' ? 'vocal' : 'instrument')) || rows[0];
+    const c = copyRowForEvent(base);
+    const date = (rows.find((r) => r.date && hasDateInput(r.date)) || {}).date || null;
+    Object.assign(c, { manual: false, instsCommon: a.key, level: 'recording', levelTouched: true, raw: '', base: '', mods: [], dBase: null,
+      types: [w.type], primaryText: w.group, primaryTouched: true, roleCredit: '', roleCreditTouched: true, notes: [], flagMods: new Set(), flags: new Set(),
+      tracks: new Set(rows.flatMap((r) => [...r.tracks])), date: date ? { ...date } : null, dateOpen: !!date });
+    c.suggested = new Set(c.tracks);
+    // ((review) nothing of the row it was copied from that would act on it: its updates of MusicBrainz, its sources, its words …)
+    ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked', 'instsAuto', 'instsCopy', 'instsPrev',
+      'dsupUpd', 'dsupTaken', 'dsupSeen', 'dsupHold', 'dsupRel', 'translatedBase', 'confirmedBy', 'differ', 'suppTook', 'supp', 'creditPhrases', 'creditLowered',
+      'roleCreditSuggest', 'keepCase', 'primaryCands', 's046', 's078'].forEach((k) => delete c[k]);
+    c.srcRefs = [];
+    ['guest', 'additional', 'solo'].filter((f) => rows.every((r) => r.flags.has(f))).forEach((f) => c.flags.add(f));
+    resolveRowType(c);
+    const last = S.rows.reduce((k, r, i) => (r.artistKey === a.key ? i : k), -1);
+    S.rows.splice(last + 1, 0, c);
+    log('info', 'instsCommon', { name: a.mbName || a.name, what: instsCommonLabel(rows) });
+  }
+  /** The button ⑃ (pressed while its row is there: a click takes it out again). */
+  function instsCommonBtnHtml(a) {
+    if (a.insts === 'release') return '';
+    const rows = instsCommonRows(a);
+    const had = instsCommonOf(a);
+    // ((review) switched off: only to take out a row there is
+    if (!had && (!instsCommonOn() || !instsCommonWorth(rows))) return '';
+    const label = had ? rowPhrase(had) || '' : instsCommonLabel(rows);
+    const title = tr(had ? 'insts.commonRemove' : 'insts.commonTitle', { what: label });
+    return ` <button type="button" class="dci-iconbtn dci-insts-common" data-act="insts-common" aria-pressed="${!!had}" title="${esc(title)}" aria-label="${esc(title)}">⑃</button>`;
+  }
+
   /** "Instruments: per track | on the release". */
   function instsSegHtml(a) {
-    if (!instsAvail(a)) return '';
+    if (!instsAvail(a)) return instsCommonBtnHtml(a).trim() ? ` <span class="dci-insts-seg">${instsCommonBtnHtml(a)}</span>` : '';
     const on = a.insts === 'release';
     return ` <span class="dci-insts-seg"><span class="dci-sub">${esc(tr('insts.label'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('insts.label'))}">${['track', 'release'].map((v) => `<button type="button"
-      data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${esc(tr(`insts.${v}`))}</button>`).join('')}</span></span>`;
+      data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${esc(tr(`insts.${v}`))}</button>`).join('')}</span>${instsCommonBtnHtml(a)}</span>`;
   }
   /** At the top of the entry: the suggestion (from four instruments without tracks), and the switch where no matrix shows it. */
   function instsBarHtml(a) {
@@ -40705,6 +40776,18 @@
         break;
       }
       // [Z-INSTS] (3.103.0, S169) the instruments per track or on the release; the suggestion declined
+      // [Z-INSTLCA] (3.113.0) ⑃ the common level: added, or taken out again
+      case 'insts-common': {
+        if (!artist) break;
+        if (instsCommonOf(artist)) {
+          S.rows = S.rows.filter((r) => r.instsCommon !== artist.key);
+          log('info', 'instsCommonOff', { name: artist.mbName || artist.name });
+        } else instsCommonAdd(artist);
+        renderGroups();
+        renderDates();
+        refresh();
+        break;
+      }
       case 'insts-set':
       case 'insts-no': {
         if (!artist) break;
@@ -42910,6 +42993,14 @@
       return;
     }
     // [Z-SNW] (3.83.0) works of the same title in the edit note
+    if (f === 'insts-common-on') {
+      S.instsCommonOn = el.checked;
+      writeJson('localStorage', 'dci-insts-common', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.instsCommon'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
+      refresh();
+      return;
+    }
     if (f === 'sort-on') {
       S.sortOn = el.checked;
       writeJson('localStorage', 'dci-sort-on', el.checked ? null : false);
@@ -44287,7 +44378,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
+    appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -44332,6 +44423,7 @@
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
   S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
   S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false; // [Z-SORT] (3.112.0)
+  S.instsCommonOn = readJson('localStorage', 'dci-insts-common', true) !== false; // [Z-INSTLCA] (3.113.0)
   S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
   S.yellDone = new Set();
   S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
@@ -46097,6 +46189,8 @@
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
         // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
         row(check('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'))),
+        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
+        row(check('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'))),
         // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
         ...['window', 'page'].map((where) => {
           const label = tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow');
@@ -46829,7 +46923,7 @@
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'appearance') {
       setScale(1);
-      Object.assign(S, { sortOn: true, sortMode: 'source' }); // [Z-SORT] (3.112.0, review)
+      Object.assign(S, { sortOn: true, sortMode: 'source', instsCommonOn: true }); // [Z-SORT] (3.112.0, review), [Z-INSTLCA] (3.113.0)
       S.dedBox = true; // ([Z-DEDQ] 3.74.0, review)
       if (S.place !== 'window') setPlace('window');
       // ([Z-CPV] 3.73.0) the compact view is the default
@@ -46952,6 +47046,8 @@
     'dci-yell-one',
     // [Z-SORT] (3.112.0) the choice of the order and whether it is offered
     'dci-sort-on', 'dci-sort',
+    // [Z-INSTLCA] (3.113.0) the button ⑃ offered
+    'dci-insts-common',
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups
@@ -47073,6 +47169,7 @@
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
     S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true;
     S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false;
+    S.instsCommonOn = readJson('localStorage', 'dci-insts-common', true) !== false;
     S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
@@ -50109,6 +50206,9 @@
       /* [Z-SORT] (3.112.0) the headings of the blocks of an order; the choice */
       .dci-sorthead { margin: calc(var(--u, 1px) * 10) 0 calc(var(--u, 1px) * 4); font-size: 0.9em; font-weight: 600; color: var(--muted, #6b6880); text-transform: uppercase; letter-spacing: 0.04em; }
       .dci-sortsel select { font: inherit; }
+      /* [Z-INSTLCA] (3.113.0) ⑃ */
+      .dci-insts-common { font-size: 1.1em; line-height: 1; }
+      .dci-insts-common[aria-pressed="true"] { background: var(--sugg-bg); border-color: var(--sugg-line); }
       .dci-sortblock:not(:has(section.dci-group:not([hidden]))) { display: none; }
       #dci-overlay.dci-only-missing .dci-sortblock:not(:has(.dci-group:is(.dci-st-missing, .dci-st-ambiguous):not(.dci-all-skip))) { display: none; }
       .dci-scope-label { margin-left: calc(var(--u, 1px) * 6); }

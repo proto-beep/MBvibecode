@@ -4334,4 +4334,103 @@ def case_sort3112():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_instlca3113():
+    """Credits Importer 3.113.0 (collected item Z-INSTLCA, S177): ⑃ the common level of an entry's instruments. Discogs: Sax Two
+    "Soprano Saxophone, Flute" (both woodwind), Voc Two "Lead Vocals, Backing Vocals", Track Guy "Piano" on track 1 and "Organ" on 2.
+    A) Sax Two: ⑃ beside "Instruments:", its tooltip "… woodwind …"; a click: a row woodwind on the recordings, all tracks, the two
+       instruments stay; ⑃ pressed; again: the row gone (until 3.112.0 no ⑃).
+    B) Voc Two: ⑃ "… vocals …": a row vocal without a voice.
+    C) Track Guy (tracks of their own): no ⑃. (review) The import repeated: the row of Voc Two there again, once, ⑃ pressed.
+    D) ⚙ Settings → Appearance "Offer ⑃" off: none."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9300, 'woodwind', 14, 14)
+    for i, n in ((9131, 'soprano saxophone'), (9142, 'flute')):
+        H.attr(i, n, 14, 9300)
+    for i, n in ((9401, 'piano'), (9402, 'organ')):
+        if i not in H.ATTRS:
+            H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CR = [('Sax Two', 'Soprano Saxophone, Flute', '', 3411), ('Voc Two', 'Lead Vocals, Backing Vocals', '', 3412), ('Track Guy', 'Piano', '1', 3413), ('Track Guy', 'Organ', '2', 3413)]
+    for n, _r, _t, i in CR:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, t, i in CR]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name)"
+    BTN = "(name) => { const b = (%s)(name)?.querySelector('[data-act=insts-common]'); return b ? [b.title, b.getAttribute('aria-pressed')] : null; }" % SEC
+    ROWS = """(name) => [...(%s)(name).querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '',
+      (r.querySelector('[data-f=primary]') || {}).value || '', ([...r.querySelectorAll('[data-act=level][aria-pressed=true]')][0] || { dataset: {} }).dataset.level || '',
+      r.querySelectorAll('.dci-trk input:checked, [data-f=track]:checked').length])""" % SEC
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            a0 = pg.evaluate(BTN, 'Sax Two')
+            r0 = pg.evaluate(ROWS, 'Sax Two')
+            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Sax Two')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            r1 = pg.evaluate(ROWS, 'Sax Two')
+            a1 = pg.evaluate(BTN, 'Sax Two')
+            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Sax Two')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            r2 = pg.evaluate(ROWS, 'Sax Two')
+            print('A)', a0, r0, '\n  ', r1, a1, '\n  ', r2)
+            results.append(bool(a0) and 'woodwind' in a0[0] and a0[1] == 'false' and len(r1) == len(r0) + 1 and r1[-1][:3] == ['instrument', 'woodwind', 'recording']
+                           and r1[:len(r0)] == r0 and a1 and a1[1] == 'true' and r2 == r0)
+            v0 = pg.evaluate(BTN, 'Voc Two')
+            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Voc Two')
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            v1 = pg.evaluate(ROWS, 'Voc Two')
+            print('B)', v0, v1)
+            results.append(bool(v0) and 'vocals' in v0[0] and v1[-1][0] == 'vocal' and v1[-1][1] == '' and len(v1) == 3)
+            t0 = pg.evaluate(BTN, 'Track Guy')
+            print('C)', t0)
+            results.append(t0 is None)
+            # (review) the import repeated (keeping what was changed): the row of Voc Two there again, once
+            pg.click('[data-el=source] [data-act=repeat-open]')
+            pg.wait_for_timeout(200)
+            pg.click('[data-el=repeat] [data-act=repeat-do]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            v2 = pg.evaluate(ROWS, 'Voc Two')
+            vb = pg.evaluate(BTN, 'Voc Two')
+            print('   wiederholt:', v2, vb)
+            results.append(len(v2) == 3 and v2[-1][:2] == ['vocal', ''] and bool(vb) and vb[1] == 'true')
+            H.open_settings(pg, 'appearance')
+            pg.uncheck('[data-f=insts-common-on]')
+            pg.wait_for_timeout(300)
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            d0 = pg.evaluate(BTN, 'Sax Two')
+            print('D)', d0)
+            results.append(d0 is None)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear()
+        H.LTS.update(lts0)
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED.update(linked0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.112.0 | 1.17.0 |
+| 2026-11-08 | 3.88.0 – 3.113.0 | 1.17.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,10 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.113.0
+
+- **⑃ The common level of the instruments** (collected item Z-INSTLCA): beside "Instruments: per track | on the release", ⑃ adds a row of the lowest level of the instruments' tree all of them share – saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments – on the recordings, beside the instruments (they stay), with their tracks and date, guest or solo when all have it. Only of the instruments without tracks of their own (precise tracks need none). Pressed while the row is there – a click takes it out again; with "on the release" the automatic row takes its place. ⚙ Settings → Appearance can switch the button off.
 
 ### Import 3.112.0
 
