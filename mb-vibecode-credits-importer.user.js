@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.117.0
+// @version      3.118.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.117.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.117.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.118.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.118.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.117.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.118.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4414,6 +4414,9 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S185', where: 'BANDCAMP.toRelease (linkPage), resolveArtists', note: 'Bandcamp (3.118.0; collected item Z-BCLBL): on a label\'s page (the album of another artist) a company of the credits named as the page ("© 2026 WEWANTSOUNDS" on wewantsounds.bandcamp.com) is linked to it – MusicBrainz\'s label with that page is taken, its spelling apart from case' },
+    { id: 'S184', where: 'TEXT.parse (sentencesOf)', note: 'Texts (3.118.0; collected item Z-PCSPLIT): a ℗ / © with its name ends where its sentence ends ("© 2026 WEWANTSOUNDS. Licensed …") – what follows is read on its own; before, a sentence after it that was no credit took the ℗ / © with it into "not recognized"' },
+    { id: 'S183', where: 'TEXT.parse (licLine)', note: 'Texts (3.118.0; collected items Z-LICCOURT, Z-LICART): "Licensed Courtesy of A and the B", "Licensed by courtesy of X", "Licensed from X" – a licensor each ("the" before a name left out): a label, or an artist where MusicBrainz has the artist (licensed / licensed from)' },
     { id: 'S182', where: 'TEXT.parse (trackListLines)', note: 'Texts (3.117.0; collected item Z-OCRP): "P1978 – Fantasy Records", "P 1978 X", "(P)1978 X" at the start of a line – a cover\'s ℗ read as P – are "℗ 1978 – …"' },
     { id: 'S181', where: 'TEXT.parse (readLine0)', note: 'Texts (3.117.0; collected item Z-OCRTITLE): a line that is the release\'s title – also with signs a cover\'s reading put around it ("YOU AIN\'T NO FRIEND OF MINE |") – is no credit: left out as such' },
     { id: 'S180', where: 'listLine, TCP_LEN_MARKED, TEXT.parse (trackListLines, tcp)', note: 'Texts (3.117.0; collected items Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP): a track list as printed – the length also 5\'54, 5’54, 5\'54", 5.54 and digits alone (533 after the composers\' bracket, or when the title is a track without them); the composers in brackets on the line below the track ("1. You ain\'t no friend of mine! 645" / "(H. Bullock)"); a title over several lines ("2. Tell me, where did we go 506" / "wrong ? (Idris Muhammad)") – joined when they make a track of the release (up to four lines; not a society\'s bracket)' },
@@ -7213,10 +7216,13 @@
       // [T054] (3.37.2) credits joined by » « • · | – each part a credit ("Role: Name" or "… by Name"; collected item 152)
       const bySign = line.split(TEXT_CREDIT_SEPS);
       if (bySign.length > 1 && bySign.every((u) => /^[^:]{1,40}:\s*\S/.test(u) || /\sby\s/i.test(` ${u} `))) return bySign.flatMap(sentencesOf);
+      // ([Z-PCSPLIT] 3.118.0, review) "All rights reserved" after a ℗ / © is no sentence of its own
+      if (ruleOn('S184') && PC_START.test(line)) line = line.replace(/[,.]?\s*all\s+rights\s+reserved\b\.?/giu, '.').replace(/\.\s*\.$/, '.').trim();
       // [T033] (3.37.2) ℗ / © a second time, after a name ("(P) 1998 loudsprecher (c) 1998 loudsprecher"; collected item 151)
       if (PC_START.test(line)) {
         const pcs = line.split(PC_AGAIN).map(clean).filter(Boolean);
-        if (pcs.length > 1 && pcs.every((u) => /\p{L}{2}/u.test(u.replace(PC_START, '').replace(/^\s*(?:(?:19|20)\d{2}\s*)?/, '')))) return pcs;
+        // ([Z-PCSPLIT] 3.118.0, S184: each again by its sentences – "© 2026 WEWANTSOUNDS. Licensed …")
+        if (pcs.length > 1 && pcs.every((u) => /\p{L}{2}/u.test(u.replace(PC_START, '').replace(/^\s*(?:(?:19|20)\d{2}\s*)?/, '')))) return ruleOn('S184') ? pcs.flatMap(sentencesOf) : pcs;
       }
       const out = [];
       let start = 0;
@@ -7231,6 +7237,11 @@
       }
       out.push(line.slice(start));
       const units = out.map(clean).filter(Boolean);
+      // [Z-PCSPLIT] (3.118.0, S184) "© 2026 WEWANTSOUNDS. Licensed …": a ℗ / © with its name ends where its sentence ends – what follows
+      // is read on its own (before, a sentence after it that was no credit took the ℗ / © with it into "not recognized")
+      // ((review) not for what goes with a ℗ / © anyway: "Made in Germany", "Unauthorised copying …", "A BMG Company")
+      const boiler = (u) => /^(?:made|printed|manufactured|pressed|produced)\s+in\b|^unauthori[sz]ed\b|^an?\s.*\b(?:company|division|unit|label)(?:\s+of\b.*)?\.?$/iu.test(u);
+      if (units.length > 1 && ruleOn('S184') && PC_START.test(units[0]) && !units.slice(1).some(creditLike)) return [units[0], ...units.slice(1).filter((u) => !boiler(u))];
       return units.length > 1 && units.slice(1).some(creditLike) ? units : [line];
     }
 
@@ -9844,8 +9855,22 @@
         }
         return res;
       };
+      /**
+       * [Z-LICCOURT] (3.118.0, S183) "Licensed Courtesy of James Quinlan and the Don Cherry Estate", "Licensed by courtesy of X",
+       * "Licensed from X": a licensor each ("Licensed From: …"; "the" before a name left out).
+       */
+      // ((review) only these forms – "Licensed from X" was read before –, at the start of a line or a sentence; the names end before
+      // a further clause ("…, Licensed to …", "… for the UK territory", "… under …"); not "the artist", "the original master tapes")
+      const licLine = (l) => (!ruleOn('S183') ? l : String(l || '').replace(/(^|[.;]\s+)Licen[cs]ed\s+(?:by\s+)?(?:the\s+)?courtesy\s+of\s+([^.;]+)/giu, (m, pre, who0) => {
+        const cut = who0.search(/,\s*(?=licen[cs]ed|distributed|manufactured|marketed|an?\s|the\s)|\s+(?:for|under|in|by\s+arrangement|on\s+behalf|excluding|except|worldwide)\b/iu);
+        const head = cut < 0 ? who0 : who0.slice(0, cut);
+        const who = head.replace(/(^|,\s*|\s(?:and|&)\s+)the\s+(?=\p{Lu})/gu, '$1').trim();
+        // (what follows: read on its own when it is a sentence of its own – ", Licensed to …" –, else left out – "for the UK territory")
+        const rest = cut < 0 ? '' : who0.slice(cut).replace(/^,?\s*/, '');
+        return !who || /^\p{Ll}/u.test(who) ? m : `${pre}Licensed From: ${who}${/^\p{Lu}/u.test(rest) ? `. ${rest}` : ''}`;
+      }));
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine);
+      const allLines0 = tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine).map(licLine);
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -10354,6 +10379,12 @@
       // the page of a label: the name is searched like any other, and the entry says whose page it is
       const linkBand = (w) => (!band.url || w.name !== band.name ? w : band.own ? { ...w, id: band.url, links: [band.url] }
         : { ...w, pageOf: { name: band.page, url: band.url } });
+      // [Z-BCLBL] (3.118.0, S185) a company of the credits named as the label's own page ("© 2026 WEWANTSOUNDS" on wewantsounds.bandcamp.com,
+      // a label's page): linked to it – MusicBrainz's label with that page is found by it (its spelling apart from case)
+      const pageKey = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, '');
+      // ((review) only for a role of a label: ℗ / ©, licensed, label)
+      const linkPage = (w, role) => (ruleOn('S185') && band.url && !band.own && band.page && w.name !== band.name && /copyright|phonographic|licen|label/i.test(role || '')
+        && pageKey(w.name) && pageKey(w.name) === pageKey(band.page) ? { ...w, id: band.url, links: [band.url] } : linkBand(w));
       return {
         source: 'bandcamp',
         id: url,
@@ -10370,7 +10401,7 @@
         bcTags: tags,
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
-        companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
+        companies: companies.map((c) => ({ ...c, who: linkPage(c.who, c.role) })),
         stackAlt: stackAlt.map((c) => ({ ...c, who: linkBand(c.who) })),
         // (the album's lines and those of each track page, in the other reading where it has one)
         stackAltUnrec: album.stackAltUnrec || trackAltUnrec.size ? [...(album.stackAltUnrec || album.unrecognized),
@@ -24062,7 +24093,10 @@
         const spelled = (c) => (a.company ? c.name : releaseCreditName(c.mbid));
         // [S060] (3.38.12) as the source writes it (a name in capitals before it was written in normal case: "KOKOROKO")
         const srcName = a.caseFrom || a.name;
-        const exact = a.candidates.filter((c) => spelled(c) === srcName);
+        // [Z-BCLBL] (3.118.0, S185) a company linked to the release's own Bandcamp page (a label's): its spelling apart from case
+        const pageOwn = ruleOn('S185') && a.company && S.release && url && String(S.release.url || '').startsWith(url);
+        const pk = (x) => foldWord(x).replace(/[^\p{L}\p{N}]+/gu, ''); // ((review) as the page's name was compared
+        const exact = a.candidates.filter((c) => (pageOwn ? pk(spelled(c)) === pk(srcName) : spelled(c) === srcName));
         // Shown in the entry to check by eye: the name at the source, in the release's artist credit, in MusicBrainz
         if (!a.company) a.spell = { src: srcName, srcName: source.name, release: spelled(exact[0] || a.candidates[0]), mb: (exact[0] || a.candidates[0]).name };
         if (exact.length) {
@@ -24100,7 +24134,9 @@
     const pubByName = (a) => a.company && ((ruleOn('S043') && S.rows.some((r) => r.artistKey === a.key && ['publishing', 'rights society'].includes(norm(rowTypeName(r)))))
       // [S057] (3.37.10) ℗ / © of a person's name (MusicBrainz knows no label with its Discogs link): artists and labels of that name
       || (a.dId && personCopyright(a)));
-    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a)) && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
+    // ([Z-BCLBL] 3.118.0, review) a company linked to the release's own Bandcamp page and not found by it: searched by its name as before
+    const bcPage = (a) => ruleOn('S185') && source === BANDCAMP && a.company && S.release && String(S.release.url || '').startsWith(String(a.dId || '#'));
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a) || bcPage(a)) && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);

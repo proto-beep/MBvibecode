@@ -1873,6 +1873,32 @@ def case_maya392(only396=False):
 
 
 
+def case_bclbl3118():
+    """Credits Importer 3.118.0 (collected item Z-BCLBL, rule S185), in Node: on a label's Bandcamp page (wewantsounds.bandcamp.com, the
+    album of another artist) "© 2026 WEWANTSOUNDS" is linked to the page – MusicBrainz's label with that page is found by it; on the
+    artist's own page, or with another name, it stays without a link."""
+    import json
+    import os
+    import subprocess
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mb-vibecode-credits-importer.user.js')
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const bc = m.SOURCES.bandcamp;
+const ctx = { isRole: () => false, isCompanyRole: (r) => /copyright|phonographic/i.test(r), resolveTracks: () => null, sig: () => 'x' };
+const data = (artist, credits) => ({ artist, current: { credits }, trackinfo: [{ track_num: 1, title: 'A' }] });
+const links = (artist, pageName, credits) => bc.toRelease(data(artist, credits), 'https://wewantsounds.bandcamp.com/album/a', [], ctx, { pageName })
+  .companies.map((c) => [c.who.name, c.who.id || '', (c.who.links || [])[0] || '']);
+console.log(JSON.stringify({ label: links('Don Cherry', 'Wewantsounds', '℗ 2026 James Quinlan © 2026 WEWANTSOUNDS'),
+  own: links('Wewantsounds', 'Wewantsounds', '© 2026 Other Label'), other: links('Don Cherry', 'Wewantsounds', '© 2026 Sony Music') }));
+"""
+    out = json.loads(subprocess.run(['node', '-e', node, script], capture_output=True, text=True, check=True).stdout)
+    print('  ', out)
+    page = 'https://wewantsounds.bandcamp.com/'
+    ok = out['label'] == [['James Quinlan', '', ''], ['WEWANTSOUNDS', page, page]] and out['own'] == [['Other Label', '', '']] and out['other'] == [['Sony Music', '', '']]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_artlbc3100():
     """Credits Importer 3.100.0 (collected item Z-ARTL, rule S159; the example of the collected item: "Artwork: Cyclical Dreams" on
     cyclicaldreams.bandcamp.com): an album on a label's Bandcamp page credits that label for the artwork – the entry is the label,
