@@ -1021,4 +1021,68 @@ def case_foldapply():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dateorder3121():
+    """Credits Importer 3.121.0 (collected item Z-DATEORDER, S190): the notes "Recorded September 3, 1964." and the mix or mastering
+    with a date of its own, "Apply" in the date matrix.
+    A) "Mixed August 1, 1964." – Mix Man's mix before the recording: an orange question at his row names both dates ("1964-08-01:
+       before the recording … (1964-09-03)"), the row says why it is not staged, the footer counts it as a question that must be
+       answered; "keep 1964-08-01": the question goes, the date stays (until 3.120.0 no question).
+    B) "Mixed October 10, 1964. Mastered September 20, 1964.": the mastering before the mix – asked at Master Man ("before the mix");
+       "remove the date": the question goes, his row has no date; the mix (after the recording) is not asked."""
+    import re
+    orig = H.discogs_release
+    notes = {'t': ''}
+
+    def rel():
+        d = orig()
+        d['notes'] = notes['t']
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['extraartists'] = d['extraartists'] + [ex('Mix Man', 'Mixed By', 3410), ex('Master Man', 'Mastered By', 3411)]
+        return d
+
+    H.discogs_release = rel
+    ASK = """((name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const q = [...g.querySelectorAll('.dci-dateorder-ask')].find(x => x.getClientRects().length);
+      return { ask: q ? q.textContent.replace(/\\s+/g, ' ').trim() : '', status: g.textContent.includes('keep it or remove it') }; })"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run in ('A', 'B'):
+            notes['t'] = 'Recorded September 3, 1964.\nMixed August 1, 1964.' if run == 'A' else 'Recorded September 3, 1964.\nMixed October 10, 1964.\nMastered September 20, 1964.'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.locator('[data-act=dm-apply]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(800)
+            who, other = ('Mix Man', 'Master Man') if run == 'A' else ('Master Man', 'Mix Man')
+            q = pg.evaluate(f"({ASK})('{who}')")
+            q2 = pg.evaluate(f"({ASK})('{other}')")
+            mustN = lambda: int((re.search(r'\d+', pg.evaluate("(document.querySelector('.dci-yell-c-must .dci-yell-n') || {}).textContent || '0'")) or ['0'])[0])
+            must = mustN()
+            print(f'{run}) Frage:', q, '| andere:', q2, '| muss:', must)
+            if run == 'A':
+                results.append(bool(q) and '1964-08-01: before the recording' in q['ask'] and '1964-09-03' in q['ask'] and q['status'] and not (q2 or {}).get('ask'))
+                pg.locator('section.dci-group .dci-dateorder-ask [data-act=dateorder-keep]').first.click()
+            else:
+                results.append(bool(q) and '1964-09-20: before the mix' in q['ask'] and '1964-10-10' in q['ask'] and not (q2 or {}).get('ask'))
+                pg.locator('section.dci-group .dci-dateorder-ask [data-act=dateorder-drop]').first.click()
+            pg.wait_for_timeout(600)
+            q3 = pg.evaluate(f"({ASK})('{who}')")
+            dated = pg.evaluate(f"""(() => {{ const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === '{who}');
+              return g ? g.innerText.replace(/\\s+/g, ' ') : ''; }})()""")
+            logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /kept, though|removed \\(before/.test(t))")
+            print('   danach:', q3, '| muss:', mustN(), '| Eintrag:', re.findall(r'.{20}1964.{10}', dated), '| Log:', logs)
+            results.append(bool(q3) and not q3['ask'] and not q3['status'] and (('1964-08-01' in dated) if run == 'A' else ('1964-09-20' not in dated)) and len(logs) == 1 and mustN() == must - 1)
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

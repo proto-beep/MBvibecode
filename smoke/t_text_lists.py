@@ -928,6 +928,28 @@ def case_studio3120r():
     print('Ergebnis:', 'OK' if ok and ok2 else 'FEHLER', [ok, ok2])
 
 
+def case_dtrk3121r():
+    """Credits Importer 3.121.0 (review of Z-DTRK, S189), in Node: "1-1 to 1-2 recorded September 3rd, 1964" / "Live at Club Montmartre,
+    Copenhagen, Denmark" – the place on 1-1, 1-2; "1-1 to 1-2 produced by Teo Macero" / "Live at Birdland, New York" – a producer, the
+    place not joined to his line (no "recorded live by"); "1-1 to 1-2 recorded May 1, 1964" / "In Memory Of John Coltrane" – no place."""
+    cases = ['1-1 to 1-2 recorded September 3rd, 1964\nLive at Club Montmartre, Copenhagen, Denmark',
+             '1-1 to 1-2 produced by Teo Macero\nLive at Birdland, New York',
+             '1-1 to 1-2 recorded May 1, 1964\nIn Memory Of John Coltrane']
+    node = NODE.replace("resolveTracks: trackSet(c.tracks || 14),", "resolveTracks: (spec) => (/^1-1\\s+to\\s+1-2$/.test(String(spec).trim()) ? Object.assign(new Set([0, 1]), { spec }) : null),")
+    node = node.replace("companies: r.companies.map((x) => [x.who.name, x.role, ...(x.entity ? [x.entity] : [])]),",
+                        "companies: r.companies.map((x) => [x.who.name, x.role, x.tracks ? [...(x.tracks.indexes || x.tracks.set || [])].join(',') : 'all']),")
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t} for t in cases])], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for t, x in zip(cases, g or []):
+        print('  ', t.replace('\n', ' / ')[:60], '→', x['credits'], x['companies'], x['unrecognized'])
+    ok = g is not None and g[0]['companies'] == [['Club Montmartre', 'Recorded At', '0,1']] \
+        and [c[:2] for c in g[1]['credits']] == [['Teo Macero', 'Produced By']] and not any('live' in c[1].lower() for c in g[1]['credits']) \
+        and not any('Memory' in c[0] for c in g[2]['companies'])
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_tbl392r():
     """Credits Importer 3.92.0 (review of Z-TBL, rule S145), in Node: the block of a track's title holds its "Name: roles" lines only.
     A tracklist above the credits ("1. Opening" …, "Side A" / "A1 Opening" …, bare titles) opens no block – the credits below are of all

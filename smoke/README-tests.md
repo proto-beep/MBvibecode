@@ -104,6 +104,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
                                 #   ocrc3120: 3.120.0 (Z-OCRC, S187, Node): "C1978 – Fantasy Records", "C 1978 X" → © 1978; digits after the name stay
+                                #   dtrk3121r: 3.121.0 (review of Z-DTRK, Node): the place below "1-1 to 1-2 recorded …" on 1-1, 1-2; not below "… produced by X";
+                                #     "In Memory Of …" no place
                                 #   studio3120r: 3.120.0 (review, Node): a studio that is a place of the text keeps its art credit; "Cover Photography", "Design [Graphic]";
                                 #     R062 "graphic" only for a design role ("Art Direction [Graphic Design]" stays R080)
                                 #   tcpread: 3.60.0 (Z-TCP, Node): "2 Bonu (Oliver Lake)" and the like – each name writes its track
@@ -351,6 +353,8 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   dtrk3121: 3.121.0 (Z-DTRK, S189): "1-1 to 1-2 recorded …" / "Live at Club Montmartre, …" / "1-3 to 2-1 recorded …" –
+                                #     the dates on those tracks (across media), the place below the date line recorded at on 1-1, 1-2
                                 #   dat3104: 3.104.0 (D033): "May, 6. 7, 2007", "May 6. 7. 2007", "6. 7. Mai 2007" – May 6–7; "6. 7. 2007" still July 6 (Node)
                                 #   datp3102: 3.102.0 (Z-DATP, D031): "This was recorded by Norwegian State radio, at … on September 11th 1983." – performance
                                 #     ("recorded" more than 80 characters before the date); the sentence before does not count (Node)
@@ -384,6 +388,8 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #     cells; a period of the pool: "⇢ 2 days" adds its days (log)
 
 python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
+                                #   dateorder3121: 3.121.0 (Z-DATEORDER, S190): a mix before the recording – a must question naming both dates, "keep";
+                                #     a mastering before the mix – "remove the date"; the counter of must questions one less
                                 #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
                                 #   dragdates: pool dates dragged onto rows / works matrix, dates joined into periods, pools loaded again, "Cover Art"
                                 #   pools: "Dates & tracks" folds (remembered), clear all track groups / dates (also other releases)

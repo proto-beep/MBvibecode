@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.120.0
+// @version      3.121.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.120.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.120.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.121.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.121.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.120.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.121.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1754,6 +1754,13 @@
       "abbr.ask": "“{abbr}” is an abbreviation – which instrument?",
       "abbr.chosen": "“{abbr}” (abbreviation):",
       "issue.abbrAsk": "choose the instrument “{abbr}” stands for",
+      "dateOrder.askRec": "{date}: before the recording of the same tracks ({other}) – a mix or mastering comes after the recording. Keep the date?",
+      "dateOrder.askMix": "{date}: before the mix of the same tracks ({other}) – mastering comes after the mix. Keep the date?",
+      "dateOrder.keep": "keep {date}",
+      "dateOrder.drop": "remove the date",
+      "issue.dateOrder": "the date lies before the recording or the mix – keep it or remove it",
+      "log.dateOrderKept": "{name} ({role}): {date} kept, though before {other}",
+      "log.dateOrderDropped": "{name} ({role}): {date} removed (before {other})",
       "log.uncrTaken": "Taken though uncredited: {n} roles ({list})",
       "log.playsTaken": "From the notes for {name}: {list}",
       "log.ensembleApplied": "Only those named play on the tracks of “{line}”",
@@ -4415,6 +4422,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S190', where: 'dateOrderIssue, dateOrderHtml', note: 'Dates (3.121.0; collected item Z-DATEORDER): a mix, remix, edit, overdub or mastering – of a person, a place, an area … – dated wholly before the recording of the same tracks, or a mastering before their mix: a question that must be answered (orange) names both dates – keep the date (staged with it) or remove it; the row is not staged before' },
+    { id: 'S189', where: 'TEXT.parse (discTrackLines), tracksInText', note: 'Notes and texts (3.121.0; collected item Z-DTRK): a line that begins with its tracks as the source numbers them – medium and track, also across media ("1-1 to 1-6 recorded September 3rd, 1964", "1-10 to 2-4 recorded …") – gives its date and credits those tracks (until 3.120.0 all tracks); the line of a place right below it ("Live at Club Montmartre, Copenhagen, Denmark"), without tracks or a year of its own, belongs to it' },
     { id: 'S188', where: 'TEXT.parse (addCredit)', note: 'Texts (3.120.0; collected item Z-STUDIO): a name ending in "Studio" or "Studios" credited for the art ("Art & Design by William Mazza Studio") is a label (a design studio): artwork, design, graphic design, illustration, art direction and photography as label–release relationships (C033, C034, C035, C047 – C049) – until 3.119.0 a person' },
     { id: 'S187', where: 'TEXT.parse (trackListLines)', note: 'Texts (3.120.0; collected item Z-OCRC): "C1978 – Fantasy Records", "C 1978 X", "(C)1978 X" at the start of a line – a cover\'s © read as C – are "© 1978 – …" (a name after it, without digits)' },
     { id: 'S186', where: 'roleRules (R062)', note: 'Design (3.120.0; collected item Z-DESCON): a design role ("Design", "Design Concept", "Designed By") with only "graphic" in its details ("Design Concept [Graphic Concept]", "Design [Graphic]") – graphic design without a role credit (MusicBrainz has none for it); before, "Design Concept" took its details as the credit' },
@@ -5378,6 +5387,12 @@
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = MAP.TEXT_COMPANY_RE;
+  // [Z-DTRK] (3.121.0, S189) a line that begins with its tracks as the source numbers them, media and track ("1-1 to 1-6 recorded …",
+  // "1-10 to 2-4 recorded …"), and the line of a place right below it ("Live at Club Montmartre, Copenhagen, Denmark")
+  const DTRK_LEAD = /^\s*(\d{1,2}-\d{1,3}(?:\s*(?:\bto\b|\bthru\b|\bthrough\b|–|—|&|,|\band\b)\s*\d{1,2}-\d{1,3})*)\s+(?=(?:recorded|rec\.|mixed|mastered|overdubbed|live|performed|produced|engineered)\b)/i;
+  // ((review) "Live at …" / "Recorded at …", or "at" / "in" with a place and its city: "In Memory Of …" is no place)
+  const DTRK_PLACE = /^\s*(?:[Rr]ecorded\s+)?([Ll]ive\s+)?([Aa]t|[Ii]n)\s+(\p{Lu}.*?)\s*\.?\s*$/u;
+  const DTRK_PLACE_OK = (line, m) => !!m && (/^\s*(?:[Rr]ecorded|[Ll]ive)\s/.test(line) || /,/.test(m[3])) && !/\b(?:memory|memoriam|hono(?:u)?r|tribute|concert)\b/i.test(m[3]);
   // [Z-STUDIO] (3.120.0, S188) the art roles of a studio in a text → the company roles of the label–release relationships (C033 …)
   // ((review) also of a part of the package: "Cover Photography", "Sleeve Design"; "graphic" anywhere: "Design [Graphic]")
   const STUDIO_ART_PART = /^(?:cover|sleeve|package|packaging|booklet|album|inner|insert)\s+/i;
@@ -9900,8 +9915,35 @@
         const rest = cut < 0 ? '' : who0.slice(cut).replace(/^,?\s*/, '');
         return !who || /^\p{Ll}/u.test(who) ? m : `${pre}Licensed From: ${who}${/^\p{Lu}/u.test(rest) ? `. ${rest}` : ''}`;
       }));
+      // [Z-DTRK] (3.121.0, S189) "1-1 to 1-6 recorded September 3rd, 1964" – the tracks as the source numbers them at the start of a
+      // line – read as "Tracks 1-1 to 1-6: …"; a place's line right below it, without tracks or a year of its own ("Live at Club Montmartre,
+      // Copenhagen, Denmark"), belongs to it: "Tracks 1-1 to 1-6: Recorded live at Club Montmartre, Copenhagen, Denmark, September 3rd, 1964"
+      const discTrackLines = (lines) => {
+        if (!ruleOn('S189') || !resolveTracks) return lines;
+        const out = [];
+        for (let i = 0; i < lines.length; i++) {
+          const l = String(lines[i] || '');
+          const m = l.match(DTRK_LEAD);
+          const set = m ? resolveTracks(m[1]) : null;
+          if (!set || !set.size) {
+            out.push(lines[i]);
+            continue;
+          }
+          let rest = l.slice(m[0].length).trim();
+          const next = String(lines[i + 1] || '');
+          const pm = next.match(DTRK_PLACE);
+          // ((review) only after a word of a recording, mix or mastering without a name ("produced by Teo Macero" stays its own line)
+          const vm = rest.match(/^(recorded|rec\.|mixed|mastered|overdubbed|performed)\s+(.*)$/i);
+          if (vm && !/\bby\b/i.test(rest) && DTRK_PLACE_OK(next, pm) && !DTRK_LEAD.test(next) && !/\b(?:19|20)\d{2}\b/.test(next) && !/\b(?:at|in)\s+\p{Lu}/u.test(rest)) {
+            rest = `${vm[1]}${pm[1] ? ' live' : ''} ${pm[2].toLowerCase()} ${pm[3]}, ${vm[2]}`;
+            i++;
+          }
+          out.push(`Tracks ${m[1]}: ${rest.charAt(0).toUpperCase()}${rest.slice(1)}`);
+        }
+        return out;
+      };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine).map(licLine);
+      const allLines0 = discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(rdstLine).map(licLine));
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -14738,6 +14780,7 @@
       const lt = currentLinkType(row);
       if (!lt) info.issues.push(tr('issue.chooseType'));
       if (abbrOpen(row)) info.issues.push(tr('issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0)
+      if (dateOrderOpen(row)) info.issues.push(tr('issue.dateOrder')); // [Z-DATEORDER] (3.121.0, S190) not staged before the answer
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
       if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
       if (lt && artist && artist.company && artist.entityType && row.company && row.entityType && row.entityType !== artist.entityType) info.issues.push(tr('issue.kindMismatch'));
@@ -17361,6 +17404,7 @@
       // ((review) an instrument question answered with its own word or one of its answers set at once is no open question)
       if (lt && primaryRootOf(lt) && questionAsks(iq, r) && !keptBase(r, iq) && !(iq.preset && norm(r.primaryText) !== iq.base)) add('can', 'question', `i:${r.id}`, { row: r, a });
       if (r.instrGuess && r.instrGuess.chose !== 'misc' && !(norm(r.primaryText) && primaryIsValid(r))) add('must', 'question', `g:${r.id}`, { row: r, a });
+      if (dateOrderOpen(r)) add('must', 'question', `do:${r.id}`, { row: r, a }); // [Z-DATEORDER] (3.121.0, S190)
       // ((review) only while words are written small – "kept as written" is no suggestion any more)
       if (r.level !== 'work' && ((r.creditPhrases || []).length || (r.creditLowered || []).length) && caseNoteHtml(r)) {
         add('can', 'case', `case:${ak}|${norm(r.raw)}|${r.level}`, { row: r, a, ok: true });
@@ -23389,6 +23433,83 @@
   }
   /** Still to be answered (an instrument typed or chosen by hand answers it too). */
   const abbrOpen = (row) => !!row.abbrAsk && !row.abbrAsk.chose && !(row.primaryTouched && norm(row.primaryText));
+
+  // --- [Z-DATEORDER] (3.121.0, S190) a mix or mastering dated before the recording of the same tracks (or a mastering before the mix) ----
+  /** The stage of a relationship type in the making of a recording: 0 recording, 1 mix (remix, edit, overdub), 2 mastering; -1 none. */
+  function dateStage(lt) {
+    const n = norm((lt && lt.name) || '');
+    // ((review) the names of the recording first; "chorus master", "concertmaster", "booklet editor" are no stage)
+    if (/^(?:recording|recorded (?:at|in)|instrument|vocal|performer|performing orchestra|conductor)$/.test(n)) return 0;
+    if (/(?:^|\s)master(?:ing|ed)\b|^glass master/.test(n)) return 2;
+    if (/\b(?:re)?mix|overdub|^(?:editor|edited (?:at|in|for))$/.test(n)) return 1;
+    return -1;
+  }
+  const dateKeyLow = (d) => (d ? d.year * 10000 + (d.month || 1) * 100 + (d.day || 1) : null);
+  const dateKeyHigh = (d) => (d ? d.year * 10000 + (d.month || 12) * 100 + (d.day || 31) : null);
+  /**
+   * The question of a row whose date lies wholly before the date of an earlier stage on the same tracks (mix before recording,
+   * mastering before mix or recording): { mine, other, kind: 'rec' | 'mix', sig } of the latest such date, or null. Rows of the release
+   * cover all tracks. Answered by keeping the date (row.dateOrderOk = sig) or removing it.
+   */
+  // ((review) all rows at once, once per task: the dated rows of each stage indexed, then each later one against the earlier ones; dropped
+  // at the next microtask and when an answer changes a date)
+  let dateOrderCache = null;
+  function dateOrderMap() {
+    if (dateOrderCache) return dateOrderCache;
+    const map = new Map();
+    if (ruleOn('S190')) {
+      const dated = [];
+      for (const r of S.rows) {
+        if (r.level === 'skip' || r.level === 'work') continue;
+        const lt = currentLinkType(r);
+        const st = dateStage(lt);
+        if (st < 0) continue;
+        const v = rowDateInfo(r, lt).value;
+        if (!v) continue;
+        // ((review) "until 1964-09-03" names no start: no earlier stage to compare with)
+        dated.push({ r, st, v, all: r.level === 'release' || r.level === 'release_group', lo: v.begin ? dateKeyLow(v.begin) : null, hi: dateKeyHigh(v.end || v.begin) });
+      }
+      const early = dated.filter((e) => e.st < 2 && e.lo);
+      for (const L of dated.filter((e) => e.st >= 1)) {
+        let worst = null;
+        for (const E of early) {
+          if (E.r === L.r || E.st >= L.st || !(L.hi < E.lo) || (worst && E.lo <= worst.lo)) continue;
+          if (!L.all && !E.all && ![...(E.r.tracks || [])].some((i) => L.r.tracks.has(i))) continue;
+          worst = E;
+        }
+        if (worst) map.set(L.r.id, { mine: L.v, other: worst.v, kind: worst.st === 0 ? 'rec' : 'mix', sig: `${formatDateValue(L.v)}|${formatDateValue(worst.v)}` });
+      }
+    }
+    dateOrderCache = map;
+    queueMicrotask(() => { dateOrderCache = null; });
+    return map;
+  }
+  const dateOrderIssue = (row) => (row ? dateOrderMap().get(row.id) || null : null);
+  const dateOrderOpen = (row) => {
+    const q = dateOrderIssue(row);
+    return !!q && row.dateOrderOk !== q.sig;
+  };
+  /** The question's text: "1964-05-01: before the recording of the same tracks (1964-09-03) – …". */
+  const dateOrderText = (q) => tr(q.kind === 'rec' ? 'dateOrder.askRec' : 'dateOrder.askMix', { date: formatDateValue(q.mine), other: formatDateValue(q.other) });
+  function dateOrderHtml(row) {
+    if (!dateOrderOpen(row)) return '';
+    const q = dateOrderIssue(row);
+    return `<div class="dci-bass-ask dci-dateorder-ask" data-el="dateorder-ask">${esc(dateOrderText(q))}
+      <button type="button" class="dci-textbtn" data-act="dateorder-keep" data-sig="${esc(q.sig)}">${esc(tr('dateOrder.keep', { date: formatDateValue(q.mine) }))}</button> · <button type="button" class="dci-textbtn" data-act="dateorder-drop" data-sig="${esc(q.sig)}">${esc(tr('dateOrder.drop'))}</button></div>`;
+  }
+  /** The answers: the date kept (the row is staged with it), or taken away. */
+  function dateOrderAnswer(row, keep, sig = null) {
+    const q = dateOrderIssue(row);
+    // ((review) only a row still asked, and (a line of the entry's matrix) with the dates of the question shown)
+    if (!q || row.dateOrderOk === q.sig || (sig && sig !== q.sig)) return;
+    if (keep) row.dateOrderOk = q.sig;
+    else {
+      row.date = null;
+      row.dateOpen = false;
+      dateOrderCache = null;
+    }
+    log('info', keep ? 'dateOrderKept' : 'dateOrderDropped', { name: (S.artists.get(row.artistKey) || {}).name || '', role: row.raw || '', date: formatDateValue(q.mine), other: formatDateValue(q.other) });
+  }
   /** [Z-UNCR] (3.102.0, S167) [Uncredited] (not named on the release): on Skip until it is taken. */
   function uncrSkip(row) {
     if (!ruleOn('S167') || row.uncrTaken || !(row.notes || []).includes('uncredited') || row.level === 'skip') return;
@@ -27029,7 +27150,9 @@
   function lineAskHtml(l) {
     // [3.35.0] the first row not taken out (a question of a row taken out says nothing)
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
-    return [unmappedHtml(r), instrumentAskHtml(r), abbrAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l), levelKeptHtml(l)].join('');
+    // ([Z-DATEORDER] 3.121.0) the first row of the line with a date before the recording
+    const dq = l.rows.find((x) => x.level !== 'skip' && dateOrderOpen(x));
+    return [unmappedHtml(r), instrumentAskHtml(r), abbrAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), dq ? dateOrderHtml(dq) : '', bothAskHtml(l), levelKeptHtml(l)].join('');
   }
 
   /**
@@ -27698,6 +27821,8 @@
     'voice-credit': (r) => Object.assign(r, { roleCredit: norm(r.base), roleCreditTouched: true }),
     'case-keep': (r, btn) => caseKeep(r, btn.dataset.word || '', true),
     'case-small': (r, btn) => caseKeep(r, btn.dataset.word || '', false),
+    'dateorder-keep': (r, btn) => dateOrderAnswer(r, true, btn.dataset.sig), // [Z-DATEORDER] (3.121.0)
+    'dateorder-drop': (r, btn) => { dateOrderAnswer(r, false, btn.dataset.sig); renderDates(); },
   };
 
   /** [E4] The status of the lines and the count of an entry (refresh): what is missing, new, in MusicBrainz, staged. */
@@ -28787,6 +28912,15 @@
           ends = multiMedium() && posMap.has(normPos(part)) ? [part] : part.split(/\s*-\s*/);
         }
         addRange(ends);
+      }
+    }
+    // [Z-DTRK] (3.121.0, S189) a line that begins with its tracks, numbered by medium ("1-1 to 1-6 recorded …"; no word for tracks)
+    const dLead = !named && ruleOn('S189') ? String(text).match(DTRK_LEAD) : null;
+    if (dLead) {
+      const t = tracksInText(`tracks ${dLead[1]}`, srcTracks);
+      if (t) {
+        named = true;
+        t.forEach((i) => out.add(i));
       }
     }
     // [3.28.6] a side alone at either end ("C1 to D": side D is one track, or all of its tracks; collected item 64b)
@@ -30944,7 +31078,7 @@
     return `
       <tr class="dci-row dci-lv-${row.level}${arhlOn(row) ? ' dci-arhl' : ''}${dsupMark(row) ? ' dci-dsup-mark' : ''}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
-        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}${dateOrderHtml(row)}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
@@ -31017,7 +31151,9 @@
     }
     if (!skip) {
       const flags = [];
-      if (info && info.issues && info.issues.length) flags.push(['bad', info.issues.join(', ')]);
+      // ((review) the question of a date before the recording is shown as itself, not again among the issues)
+      const issues = info && info.issues ? info.issues.filter((x) => !(dateOrderOpen(row) && x === tr('issue.dateOrder'))) : [];
+      if (issues.length) flags.push(['bad', issues.join(', ')]);
       if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
       const q = questionRuleFor(row);
       const tq = typeQuestionFor(row);
@@ -31028,6 +31164,8 @@
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings
       if (abbrOpen(row)) parts.push(clineAskHtml('instr', tr('abbr.ask', { abbr: row.abbrAsk.abbr }), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
+      // [Z-DATEORDER] (3.121.0, S190) a date before the recording (or the mix): keep or remove it
+      if (dateOrderOpen(row)) parts.push(`<span class="dci-cl-flag dci-cl-ask dci-dateorder-ask">${dateOrderHtml(row).replace(/^<div[^>]*>|<\/div>$/g, '')}</span>`);
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
@@ -31536,6 +31674,15 @@
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     plateNone(); // [Z-PLT] (3.89.0, S141)
+    // [Z-DATEORDER] ((3.121.0, review) S190) a date changed elsewhere asks or answers a row of another entry: the entries drawn again
+    {
+      const sig = [...dateOrderMap()].filter(([id, q]) => { const r = S.rows.find((x) => x.id === id); return r && r.dateOrderOk !== q.sig; }).map(([id, q]) => `${id}:${q.sig}`).join(',');
+      if (sig !== (S.dateOrderSig || '')) {
+        const had = S.dateOrderSig != null;
+        S.dateOrderSig = sig;
+        if (had) renderGroups();
+      }
+    }
     // [Z-DSUP] (3.106.0) the entries against what MusicBrainz has (drawn again when that changed)
     if (!S.dsupBusy) {
       S.dsupBusy = true;
@@ -42347,6 +42494,16 @@
         rerenderRow(row);
         refresh();
         break;
+      case 'dateorder-keep':
+      case 'dateorder-drop':
+        // [Z-DATEORDER] (3.121.0, S190)
+        if (!row) break;
+        dateOrderAnswer(row, act === 'dateorder-keep');
+        if (artist) rerenderGroup(artist);
+        else rerenderRow(row);
+        renderDates();
+        refresh();
+        break;
       case 'date-clear':
         row.date = null;
         row.dateOpen = false;
@@ -50475,6 +50632,7 @@
       .dci-cl-date.dci-cl-has { border-style: solid; background: var(--date-bg); color: var(--date-d); font-weight: 600; }
       .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
+      #dci-overlay .dci-dateorder-ask { border: 1px solid #eb743b; border-radius: 4px; padding: 1px 6px; }
       .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
       /* [3.32.3] a question of the compact line with its possibilities to click (item 102) */
       .dci-cl-askq { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }

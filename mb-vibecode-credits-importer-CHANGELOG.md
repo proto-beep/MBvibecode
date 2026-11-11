@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.120.0 | 1.17.0 – 1.19.0 |
+| 2026-11-08 | 3.88.0 – 3.121.0 | 1.17.0 – 1.19.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.121.0
+
+- **Tracks numbered by medium at the start of a line** (collected item Z-DTRK; rule S189): "1-1 to 1-6 recorded September 3rd, 1964", "1-10 to 2-4 recorded …" (across media too) – the date goes to those tracks only (before, to all tracks); a place on the line right below ("Live at Club Montmartre, Copenhagen, Denmark") belongs to it – recorded at on those tracks.
+- **A mix before the recording** (Z-DATEORDER, S190): a mix, remix, edit, overdub or mastering – of a person, a place, an area – dated wholly before the recording of the same tracks, or a mastering before their mix, asks at its row (orange, must): both dates are named; "keep" stages the row with its date, "remove the date" takes it away. Until answered the row is not staged.
 
 ### Import 3.120.0
 
