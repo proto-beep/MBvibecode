@@ -822,6 +822,62 @@ def case_suppnav3116():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_tcpmulti3117():
+    """Credits Importer 3.117.0 (collected item Z-TCPMULTI, rule S179): surnames alone in the brackets after a title, from the cover art as a
+    supplement of the Discogs import: "1. Song One (Man - Guy) 3'10".
+    A) "Man": one person of the dashboard with that last name (Bass Man) – the writer's row of track 1 joins his entry (no entry "Man").
+    B) "Guy": four of them (Guitar Guy, Keys Guy, Drum Guy, Photo Guy) – the entry "Guy" asks which one ("Guy: which person of that
+       name?", the four to choose); chosen: Drum Guy, linked."""
+    import copy
+    texts = copy.deepcopy(TEXTS)
+    texts[0]['text'] = "1. Song One (Man - Guy) 3'10\n"
+    texts[1]['text'] = ''
+    texts[2]['text'] = ''
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=supp]')
+        H.wait_for(pg, "(n => !!n && !/Supplementing/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
+        pg.click('#dci-ocr [data-ocr=close]')
+        pg.click('[data-el=supp] [data-act=supp-apply]')
+        pg.wait_for_timeout(2000)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        NAMES = "[...document.querySelectorAll('section.dci-group')].map(s => (s.querySelector('.dci-gname strong') || {}).textContent)"
+        names = pg.evaluate(NAMES)
+        print('A) Einträge:', names)
+        # (the writer's row from the cover art is his: 📷 at his entry)
+        wcol = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(s => (s.querySelector('.dci-gname strong') || {}).textContent === 'Bass Man' && s.querySelector('.dci-ocr-dot')).length")
+        print('   Bass Man in den Werken:', wcol)
+        results.append('Man' not in names and 'Guy' in names and wcol == 1)
+        sec = "[...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong') || {}).textContent === 'Guy')"
+        b1 = pg.evaluate("(s => s ? [s.querySelector('.dci-gmatch').innerText.replace(/\\s+/g, ' ').trim(), [...s.querySelectorAll('select[data-f=artist-pick] option')].map(o => o.textContent.trim()).slice(1)] : null)(%s)" % sec)
+        print('B) Frage:', b1)
+        results.append(bool(b1) and b1[0].startswith('Guy: which person of that name?') and 'several of that name' in b1[0] and sorted(b1[1]) == ['Drum Guy', 'Guitar Guy', 'Keys Guy', 'Photo Guy'])
+        pg.evaluate("(s => { const sel = s.querySelector('select[data-f=artist-pick]'); sel.value = [...sel.options].find(o => o.textContent.trim() === 'Drum Guy').value; sel.dispatchEvent(new Event('change', { bubbles: true })); })(%s)" % sec)
+        pg.wait_for_timeout(800)
+        b2 = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(s => (s.querySelector('.dci-gname strong') || {}).textContent === 'Guy').map(s => s.querySelector('.dci-gmatch').innerText.replace(/\\s+/g, ' ').trim())")
+        print('   gewählt:', b2)
+        results.append(len(b2) == 1 and 'Drum Guy' in b2[0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_ocrpeek():
     """[3.34.9] Images in their proportions, larger on mouse-over (collected item 129).
     A) The tiles of the images are alike (square), each image whole in its tile (contain, nothing cut off).

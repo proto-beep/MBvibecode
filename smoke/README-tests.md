@@ -113,6 +113,9 @@ python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Inte
                                 #   staged twice or with itself, no search without a writer, a failed search, a later import, a supplement)
                                 #   prose, trackartists: 3.50.0 (Z-PRO "with guests …", "SHelley"; Z-TAR the tracks of the track artists, S078)
                                 #   placecredit: 3.51.0 (Z-PCR, the area after a comma)
+                                #   tcplabel3117: 3.117.0 (Z-TCPMULTI, Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP, Z-OCRTITLE, Z-OCRP): both sides of a label – "(Scott - Carter)",
+                                #     5'54 / 533 / 7'26, the title line left out, "(H. Bullock)" below, a title over two lines, "P1978"; a publisher's bracket,
+                                #     "Boeing 747", "Jean-Luc", "Ortega y Gasset" as they are
                                 #   tbl392r: 3.92.0 (review of Z-TBL, S145; Node): no block of a tracklist ("1. Opening" …, "Side A" / "A1 …",
                                 #     bare titles), of a band's name above its members, of a position beyond the tracks; "Mixed by …" ends a block
                                 #   z381: 3.81.0 (Node; Z-OTR, Z-SYN, Z-SLD, Z-POR, Z-RAD, Z-YTT): "on track 2 & 6" per role; models as synthesizer /
@@ -1039,6 +1042,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
 python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.114 a beta): ⚙ Settings → Sources, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   tcpmulti3117: 3.117.0 (Z-TCPMULTI): "(Man - Guy)" from the cover art – Man is Bass Man's; Guy asks (four of that name),
+                                #     Drum Guy chosen
                                 #   suppnav3116: 3.116.0 (Z-SUPPMSG, Z-SUPPNAV): "＋ Supplement" from the cover art – the message (top, window; no button) "2 new ·
                                 #     3 there already or very similar" (one letter off; a writer on other tracks than the composer is new), 📷 at the entries,
                                 #     "📷 2 ‹ ›", the image at the entry (also of a row on the works), "📷 Only from images"; the same again: "nothing new …
