@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.134.0
+// @version      3.135.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.134.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.134.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.135.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.135.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.134.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.135.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -379,6 +379,8 @@
       "gap.exact.other": "The dashboard counted {n} new ones on {date}.",
       "gap.exactAfter.one": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
       "gap.exactAfter.other": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
+      "gap.exactRemoved.one": "{n} of them was taken out by you in the editor.",
+      "gap.exactRemoved.other": "{n} of them were taken out by you in the editor.",
       "gapWhy.afterEdit": "after “Enter edit” of the dashboard {n} of about {all} relationships of the credits are still missing – less than a fifth.",
       "log.gapAfterEdit": "“Enter edit”: for the line of the release page {n} relationships still missing, {open} rows open",
       "dgStatus.removed": "taken out in the relationship editor by you – not entered",
@@ -1871,6 +1873,16 @@
       "dgl.lineupTitle": "As the lineup says: everyone on all tracks with the lineup's instrument – the track credits left out",
       "log.dglFound": "Lineup and the credits of single tracks differ – proposed: {list}",
       "log.dglAnswer": "Lineup: {choice}",
+      "rmd.title.one": "Taken out in the editor last time: {n} credit",
+      "rmd.title.other": "Taken out in the editor last time: {n} credits",
+      "rmd.hint": "– imported again as the source gives it. Skip them again?",
+      "rmd.done": "– on Skip again.",
+      "rmd.keepTitle": "Keep this one (import it as the source gives it)",
+      "rmd.skip": "Skip them again",
+      "rmd.skipTitle": "All of them on Skip again, as at “Enter edit” last time",
+      "log.rmdFound": "Taken out in the editor last time: {n} – asked whether to skip them again",
+      "log.rmdSkipped": "Taken out in the editor last time: {n} on Skip again",
+      "yell.kind.rmd": "credits taken out in the editor last time",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
       "plays.take": "Take (all tracks)",
@@ -4640,6 +4652,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S223', where: 'afterEnterEdit, rowsRemovedInEditor, gapExactWrite, showReleaseGap, rmdStore, rmdRefresh, rmdAskHtml', note: 'Taken out in the editor (3.135.0; collected item Z-GAPREFRESH2): at "Enter edit" the relationships the dashboard staged and that were taken out in the relationship editor by hand count as still missing – the line of the release page says how many of them ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth (not those the dashboard takes back itself – Skip, ✕, another instrument); their credits (all of a row\'s relationships taken out; rows of the source) are kept for the release: the next import brings them back as the source gives them and asks once "Taken out in the editor last time: N credits – Skip them again?" (✓ all of them on Skip again, ✕ at one keeps it; no answer: imported as the source gives them)' },
     { id: 'S222', where: 'TEXT.parse (improvLine, IMPROV_LINE), IMPROV_TITLE, improvOf, improvMarkHtml, workFrontCell, roleCell, the compact line', note: 'Improvisations as works (3.133.0; collected item Z-IMPROV; a quick switch, on): "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous compositions by …", "Instant composing by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …" – composers of the works (as the other rules of composing), marked "improvisation" at their rows and at the tracks in the works matrix (the line quoted); a title on its own ("Improvisation III", "Impro 2") marks its track too. Off: such a line is left out ("improvisations") and no work is made of it. (S122 – lists of songs outside YouTube as a switch – removed in 3.133.0: S118 reads them in every free text)' },
     { id: 'S221', where: 'TEXT.parse (CONCERT_AT, concertKind), groupCompanies, addCompanyEntry, yellItems, applyLiveDefault', note: 'Concerts (3.132.0; collected item Z-CONCERTHINT): a sentence of a concert at a place ("Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus", "concierto en …", "concert au …") gives the place as "recorded at" – a yellow suggestion (✓ / ✕) – and "live" on the links to the works; a sentence of a story ("after the two first met at a concert at …") gives nothing but a line under "Mentioned dates"' },
     { id: 'S220', where: 'datesWithContext (mentionKind), dateFinds, mentionedChipHtml, findFestivals, festivalHtml', note: 'Mentioned only (3.132.0; collected items Z-FESTALL, Z-RELDATE): a date, a festival or a concert of a sentence that is not about the recording – a story ("after the two first met at a concert in July 2019"), a long sentence without words of a recording, a relative date in such a sentence – is suggested nowhere: the chip "Mentioned dates (n) ▾" at the right of "Dates & tracks" lists it with its sentence (and the date it is reckoned from), to be taken into the pool by hand; festivals are always recognized again (the hint says "only mentioned – check the context" for such a sentence; until 3.131.0 they were left out, S209)' },
@@ -12035,7 +12048,7 @@
   }
 
   /** Finds relationship states by id anywhere in MB's editor state (its structure is internal). */
-  function findRelationshipStates(root, ids, maxSteps = 400000) {
+  function findRelationshipStates(root, ids, maxSteps = 400000, out = null) {
     const found = new Map();
     const seen = new Set();
     const stack = [root];
@@ -12057,6 +12070,8 @@
         Object.keys(v).forEach((k) => stack.push(v[k]));
       }
     }
+    // ((3.135.0, review) the walk stopped before it had seen everything: what it did not reach is unknown, not gone)
+    if (out) out.cut = stack.length > 0 && found.size < ids.size;
     return found;
   }
 
@@ -12670,8 +12685,9 @@
    * [AY] (3.40.0) The dashboard's number of new relationships for the line of the release page (Discogs or Bandcamp); (review) open:
    * its rows that cannot be staged yet (no MusicBrainz entry, no type …) – relationships missing all the same.
    */
-  function gapExactWrite(mbid, p, n, open, afterEdit = false) {
-    writeJson('localStorage', gapExactKey(mbid, p.src), { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}), ...(afterEdit ? { afterEdit: true } : {}) });
+  function gapExactWrite(mbid, p, n, open, afterEdit = false, removed = 0) {
+    writeJson('localStorage', gapExactKey(mbid, p.src), { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}), ...(afterEdit ? { afterEdit: true } : {}),
+      ...(removed ? { removed } : {}) });
   }
   /** (3.40.3, review) The dashboard's number per source (Bandcamp's of its own: an import of the Discogs release does not take it). */
   const gapExactKey = (mbid, kind) => `${GAP_EXACT_PREFIX}${String(mbid).toLowerCase()}${kind && kind !== 'discogs' ? `:${kind}` : ''}`;
@@ -12937,7 +12953,9 @@
       : est.total ? tr(bc ? 'gap.bc.missing' : notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total })
         : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none'));
     const exactText = exact && exact.n != null ? ` ${tr(exact.afterEdit ? 'gap.exactAfter' : 'gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
-      + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '') : '';
+      + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '')
+      // [Z-GAPREFRESH2] (3.135.0, S223) "4 of them were taken out by you in the editor."
+      + (exact.afterEdit && exact.removed ? ` ${tr('gap.exactRemoved', { n: exact.removed })}` : '') : '';
     const parts = (est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
       .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '')
       // [Z-AE] (3.40.2) the other Bandcamp pages of the release
@@ -13927,10 +13945,30 @@
         const i = rowInfo.get(r.id);
         return i && i.issues.length && !(r.level === 'work' && S.worksSkip);
       }).length;
-      gapExactWrite(releaseMbid, S.gapExactSrc, items.length, open, true);
-      log('info', 'gapAfterEdit', { n: items.length, open });
+      // [Z-GAPREFRESH2] (3.135.0, S223) the relationships taken out in the editor by hand count as missing – said apart; their credits kept for
+      // the next import (asked there whether to skip them again)
+      const rels = { n: 0 };
+      let removed = new Set();
+      try {
+        // ((review) not what the dashboard takes back or changes itself – those are not missing)
+        const plan = computePlan();
+        const skip = new Set([...plan.removals.map((r) => r.staged), ...plan.items.flatMap((it) => [it.update, it.replaces && it.replaces.staged]).filter(Boolean)]);
+        removed = ruleOn('S223') ? rowsRemovedInEditor({ any: true, rels, skip }) : new Set();
+      } catch (e) { /* no editor state */ }
+      gapExactWrite(releaseMbid, S.gapExactSrc, items.length + rels.n, open, true, rels.n);
+      try {
+        rmdStore(removed);
+      } catch (e) { /* not kept */ }
+      log('info', 'gapAfterEdit', { n: items.length + rels.n, open });
+    } else if (ruleOn('S223') && releaseMbid) {
+      // ((review) without the line's number (another source, S218 off): the credits taken out by hand all the same
+      try {
+        const plan = computePlan();
+        const skip = new Set([...plan.removals.map((r) => r.staged), ...plan.items.flatMap((it) => [it.update, it.replaces && it.replaces.staged]).filter(Boolean)]);
+        rmdStore(rowsRemovedInEditor({ any: true, rels: { n: 0 }, skip }));
+      } catch (e) { /* not kept */ }
     }
-    // (relationships taken out in the editor by hand were taken out on purpose: not counted as missing)
+    // (S219: the companion marks the relationships taken out in the editor by hand grey – S223 counts them as missing on the release page)
     if (ruleOn('S219')) sendDiscogsStatus(computePlan().rowInfo, true);
   }
 
@@ -16478,7 +16516,7 @@
   // [3.37.5] 'ocr': the window "Text from cover art" as it was left (item 155)
   const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember', 'ocr', 'yell'];
   const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
-  const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames'];
+  const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames', 'dci-removed-in-editor']; // ([Z-GAPREFRESH2] 3.135.0, review) forgotten with the release
   // the maps while nothing is remembered: the choices hold in this tab only
   const relMem = {};
 
@@ -18647,6 +18685,7 @@
     }
     (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
     if (ruleOn('S217') && S.dgLineup && !S.dgLineup.done) add('must', 'dgl', 'dgl'); // [Z-DGLINEUP] (3.130.0, S217)
+    if (ruleOn('S223') && S.rmdAsk && !S.rmdAsk.done && S.rmdAsk.items.length) add('can', 'rmd', 'rmd'); // [Z-GAPREFRESH2] (3.135.0)
     [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
     // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
@@ -18696,6 +18735,7 @@
     else if (it.kind === 'dsup') el = sec && sec.querySelector('[data-el=dsup] .dci-dsup-h');
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'dgl') el = ov.querySelector('[data-el=dglineup] .dci-festival-offers');
+    else if (it.kind === 'rmd') el = ov.querySelector('[data-el=rmdask] .dci-festival-offers');
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
     else if (it.kind === 'ded') el = [...ov.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find((x) => x.dataset.key === it.dk);
@@ -22779,6 +22819,11 @@
     dropEntry(MEDIA_SEL_KEY);
     // [3.34.17] the frames drawn on its images; [3.37.5] the window "Text from cover art" kept (its store: forgetRelease)
     dropEntry(OCR_FRAMES_KEY);
+    // ([Z-GAPREFRESH2] [Z-WORKDATE-REM] 3.135.0, review) the credits taken out in the editor, the dates of linked works' links
+    dropEntry(RMD_KEY);
+    S.rmdAsk = null;
+    if (S.workDateOff) S.workDateOff.clear();
+    if (S.workDateOwn) S.workDateOwn.clear();
     closeOcr(true);
     S.datePool = [];
     S.trackPool = [];
@@ -24351,6 +24396,10 @@
       defaults: S.workDefaults && (S.workDefaults.typeId || (S.workDefaults.languageIds || []).length) ? { ...S.workDefaults } : null,
       tcp: S.tcpRole || null, // [Z-TCP] (3.60.0, review) the switch "Composer | Writer"
       creditSkip: S.mxCreditSkip && S.mxCreditSkip.size ? [...S.mxCreditSkip] : null, // [Z-WSK] (3.64.0, S093)
+      // [Z-WORKDATE-REM] (3.135.0) the dates of the links with works MusicBrainz has: × and the dates dropped onto them (by recording and work)
+      ...(S.workDateOff && S.workDateOff.size ? { wdOff: [...S.workDateOff] } : {}),
+      // ((review) without the id of the pool entry it came from – that entry is not the same in another import)
+      ...(S.workDateOwn && S.workDateOwn.size ? { wdOwn: [...S.workDateOwn].map(([k, f]) => { const x = { ...f }; delete x.poolId; return [k, encField(x)]; }) } : {}),
     };
   }
 
@@ -24363,6 +24412,17 @@
       const p = decField(t);
       if (!(p.flags instanceof Set)) p.flags = new Set(p.flags || []);
       S.workPlan.set(i, p);
+      count();
+    });
+    // [Z-WORKDATE-REM] (3.135.0) × and the dates dropped onto the links with works MusicBrainz has (what this import has stays)
+    (w.wdOff || []).forEach((k) => {
+      if (!k || S.workDateOff.has(k)) return;
+      S.workDateOff.add(k);
+      count();
+    });
+    (w.wdOwn || []).forEach(([k, f]) => {
+      if (!k || S.workDateOwn.has(k)) return;
+      S.workDateOwn.set(k, decField(f));
       count();
     });
     // ([Z-WNEW] [Z-MDLY] 3.98.0, review) the works replaced and the suggestions of "arrangement of" with their plans
@@ -25131,7 +25191,8 @@
       (rel.ensembles || []).filter((e) => e.applied).forEach((e) => log('info', 'ensembleApplied', { line: e.line }));
       S.playsAsk = []; // [Z-PLAYS] (3.102.0, S168) made once the rows are there
       S.dgLineup = null; // [Z-DGLINEUP] (3.130.0, S217)
-      S.removedRows = null; // [Z-CPREMOVED] (3.131.0)
+      S.cpRemovedRows = null; // [Z-CPREMOVED] (3.131.0)
+      S.rmdAsk = null; // [Z-GAPREFRESH2] (3.135.0)
       // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
       setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
@@ -25342,6 +25403,9 @@
         }
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
+        // [Z-GAPREFRESH2] (3.135.0, S223) the credits taken out in the editor last time: back as the source gives them – asked whether to skip them
+        // again ((review) after what was remembered: rows on Skip by then are not asked)
+        if (rmdRefresh()) renderSource();
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
@@ -27495,7 +27559,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${dgLineupHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${dgLineupHtml()}${rmdAskHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -27539,6 +27603,9 @@
     S.suiteAnswers.clear();
     S.suiteWorks.clear();
     S.suiteManual.clear(); // [Z-SUM] (3.41.11)
+    // ([Z-WORKDATE-REM] 3.135.0, review) the dates of linked works' links: remembered choices too
+    if (S.workDateOff) S.workDateOff.clear();
+    if (S.workDateOwn) S.workDateOwn.clear();
   }
 
   /**
@@ -37867,6 +37934,75 @@
       <div class="dci-festival-offers">${['precise', 'track', 'lineup'].map(btn).join(' ')}</div></div>`;
   }
 
+  // --- [Z-GAPREFRESH2] (3.135.0, S223) the credits taken out in the editor last time --------------------------------------------------
+  const RMD_KEY = 'dci-removed-in-editor';
+  /** At "Enter edit": the credits whose relationships were all taken out in the editor by hand, per release ({ [MBID]: [{ key, label }] }, the last 50). */
+  function rmdStore(rowIds) {
+    if (!releaseMbid) return;
+    const all = readJson('localStorage', RMD_KEY, {}) || {};
+    // ((review) rows of the source only (not added by hand, not of a supplement), by the key of their line and its occurrence (base#i)
+    const seen = new Set();
+    const list = S.rows.filter((r) => rowIds.has(r.id) && !r.manual && !r.supp && S.freshRows && S.freshRows.has(r.id)).map((r) => {
+      const a = S.artists.get(r.artistKey) || {};
+      return { key: S.freshRows.get(r.id).k, label: `${a.mbName || a.name || '?'} – ${rowPhrase(r) || r.raw || ''}` };
+    }).filter((x) => x.key && !seen.has(x.key) && seen.add(x.key));
+    delete all[releaseMbid];
+    if (list.length) all[releaseMbid] = list;
+    const keys = Object.keys(all);
+    keys.slice(0, Math.max(0, keys.length - 50)).forEach((k) => delete all[k]);
+    writeJson('localStorage', RMD_KEY, Object.keys(all).length ? all : null);
+  }
+  /** After an import: the rows of those credits (as the source gives them) – the question; none: nothing. */
+  function rmdRefresh() {
+    S.rmdAsk = null;
+    if (!ruleOn('S223') || !releaseMbid) return false;
+    const list = ((readJson('localStorage', RMD_KEY, {}) || {})[releaseMbid]) || [];
+    const keyOf = (r) => (S.freshRows && S.freshRows.get(r.id) ? S.freshRows.get(r.id).k : '');
+    const items = list.map((x) => ({ ...x, rows: S.rows.filter((r) => r.level !== 'skip' && keyOf(r) === x.key).map((r) => r.id) })).filter((x) => x.rows.length);
+    if (!items.length) return false;
+    S.rmdAsk = { items, done: false };
+    log('info', 'rmdFound', { n: items.length });
+    return true;
+  }
+  function rmdAskHtml() {
+    const q = S.rmdAsk;
+    if (!q || !ruleOn('S223') || !q.items.length) return '';
+    const n = q.items.length;
+    const li = q.items.map((x, k) => `<li>${esc(x.label)}${q.done ? '' : ` <button type="button" class="dci-iconbtn" data-act="rmd-keep" data-k="${k}" title="${esc(tr('rmd.keepTitle'))}" aria-label="${esc(tr('rmd.keepTitle'))}">✕</button>`}</li>`).join('');
+    return `<div class="dci-festival dci-plays dci-rmdask${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="rmdask"><p><strong>${esc(tr('rmd.title', { n }))}</strong> ${esc(tr(q.done ? 'rmd.done' : 'rmd.hint'))}</p>
+      <ul class="dci-dgl-list">${li}</ul>${q.done ? '' : `<div class="dci-festival-offers"><button type="button" class="dci-small" data-act="rmd-skip" title="${esc(tr('rmd.skipTitle'))}">✓ ${esc(tr('rmd.skip'))}</button></div>`}</div>`;
+  }
+  /** ✓: every credit of the list on Skip again. */
+  function rmdSkipAll() {
+    const q = S.rmdAsk;
+    if (!q) return;
+    const ids = new Set(q.items.flatMap((x) => x.rows));
+    S.rows.filter((r) => ids.has(r.id) && r.level !== 'skip').forEach((r) => {
+      levelOf(r, 'skip');
+      r.levelTouched = true;
+    });
+    q.done = true;
+    rmdForget(q.items.map((x) => x.key));
+    log('info', 'rmdSkipped', { n: q.items.length });
+  }
+  /** ((review) answered: those credits not asked again (until the next "Enter edit" keeps others) */
+  function rmdForget(keys) {
+    if (!releaseMbid) return;
+    const all = readJson('localStorage', RMD_KEY, {}) || {};
+    const left = (all[releaseMbid] || []).filter((x) => !keys.includes(x.key));
+    if (left.length) all[releaseMbid] = left;
+    else delete all[releaseMbid];
+    writeJson('localStorage', RMD_KEY, Object.keys(all).length ? all : null);
+  }
+  /** ✕ at a credit: kept as the source gives it (out of the list). */
+  function rmdKeep(k) {
+    const q = S.rmdAsk;
+    if (!q || q.done) return;
+    const [x] = q.items.splice(Number(k), 1);
+    if (x) rmdForget([x.key]);
+    if (!q.items.length) S.rmdAsk = null;
+  }
+
   function playsHtml() {
     const list = (S.playsAsk || []).filter((x) => !x.done);
     if (!list.length) return '';
@@ -42128,24 +42264,38 @@
    * [Z-CPREMOVED] (3.131.0, S219) The rows whose staged relationships were all taken out in the editor by hand (not by the dashboard):
    * their marks of the companion are grey ("taken out in the editor"), not red, until the next import.
    */
-  function rowsRemovedInEditor() {
+  function rowsRemovedInEditor({ any = false, rels = null, skip = null } = {}) {
     const out = new Set();
-    const mb = ruleOn('S219') ? getMB() : null;
+    const mb = ruleOn('S219') || any ? getMB() : null;
     const re = mb && mb.relationshipEditor;
-    // ((review) an older companion has no such mark: "staged" for it
-    if (!re || !re.state || !S.sync.companionVersion || compareVersions(S.sync.companionVersion, '1.21.0') < 0) return out;
+    // ((review) an older companion has no such mark: "staged" for it; [Z-GAPREFRESH2] (3.135.0) `any`: without the companion – to count them)
+    if (!re || !re.state || (!any && (!S.sync.companionVersion || compareVersions(S.sync.companionVersion, '1.21.0') < 0))) return out;
     const byRow = new Map();
     for (const st of S.staged.values()) {
       const id = st && st.state && st.state.id;
       if (typeof id !== 'number' || !st.rowId) continue;
+      // ([Z-GAPREFRESH2] 3.135.0, review) not what the dashboard takes back or changes itself (Skip, ✕, another instrument …); only rows still there
+      if (skip && skip.has(st)) continue;
+      if (rels) {
+        const row = S.rows.find((r) => r.id === st.rowId);
+        if (!row || row.level === 'skip') continue;
+      }
       if (!byRow.has(st.rowId)) byRow.set(st.rowId, []);
       byRow.get(st.rowId).push(id);
     }
     if (!byRow.size) return out;
     // ((review) the editor's state walked with a larger limit (once, at "Enter edit")
-    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat()), 2000000);
+    const walk = {};
+    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat()), 2000000, walk);
+    if (walk.cut) return out;
     const gone = (id) => { const x = cur.get(id); return !x || x._status === 3; };
-    byRow.forEach((ids, rowId) => { if (ids.every(gone)) out.add(rowId); });
+    const goneIds = new Set();
+    byRow.forEach((ids, rowId) => {
+      if (ids.every(gone)) out.add(rowId);
+      ids.filter(gone).forEach((id) => goneIds.add(id));
+    });
+    // [Z-GAPREFRESH2] (3.135.0) the relationships taken out by hand ((review) each one once – a joined relationship is staged per row)
+    if (rels) rels.n = goneIds.size;
     return out;
   }
   function sendDiscogsStatus(rowInfo = S.rowInfo, now = false) {
@@ -42163,12 +42313,13 @@
       // [Z-CPREMOVED] (3.131.0, S219) found at "Enter edit" (now) and kept for the sends after it ((review) not each time)
       if (now) {
         try {
-          S.removedRows = S.dgStatus ? rowsRemovedInEditor() : new Set();
+          S.cpRemovedRows = S.dgStatus ? rowsRemovedInEditor() : new Set();
         } catch (e) {
-          S.removedRows = new Set();
+          S.cpRemovedRows = new Set();
         }
       }
-      const removed = S.removedRows || new Set();
+      // ((3.135.0, review) its own field – S.removedRows is the list of rows removed with ✕)
+      const removed = S.cpRemovedRows || new Set();
       if (S.dgStatus) {
         for (const row of S.rows) {
           const a = S.artists.get(row.artistKey);
@@ -44203,6 +44354,20 @@
         break;
       }
       // [Z-DGLINEUP] (3.130.0, S217) the answer: more precise everywhere, per track, the lineup's
+      // [Z-GAPREFRESH2] (3.135.0, S223) ✓ skip them all again · ✕ keep this one
+      case 'rmd-skip':
+        rmdSkipAll();
+        renderSource();
+        renderGroups();
+        renderWorks(); // ((review) a credit of the works too
+        renderDates();
+        refresh();
+        break;
+      case 'rmd-keep':
+        rmdKeep(btn.dataset.k);
+        renderSource();
+        refresh();
+        break;
       case 'dgl-pick':
         dgLineupApply(btn.dataset.choice, true);
         renderSource();
