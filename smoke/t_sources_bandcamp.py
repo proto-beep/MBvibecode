@@ -4,6 +4,8 @@ Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
+import json  # noqa: E402
+import urllib.parse  # noqa: E402
 
 
 def case_bandcamp():
@@ -1414,6 +1416,96 @@ def case_tarbaby():
     results.append(read2 == ['Bandcamp read: 0 entries, 0 roles, 6 lines not recognized'] and not msgs2)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_membercreate3129():
+    """Credits Importer 3.129.0 (collected items Z-MEMBERBLOCK, Z-MEMBERCREATE; rules S211, S213): "Tarbaby are" / "" / "Orrin Evans piano" /
+    "Nasheet Waits drums" / "Zed Newman percussion" on the Bandcamp page of Tarbaby – MusicBrainz has Orrin Evans as a member of Tarbaby only.
+    A) Nothing not recognized; no entry "Tarbaby"; "Tarbaby are" left out as the heading of a group.
+    B) Nasheet Waits (linked by hand): "＋ member of Tarbaby ↗" – his edit page with "member of band" to Tarbaby (type 103, forward), drums as its attribute.
+    C) Zed Newman (not linked): a note at the entry; "Create artist" fills in "member of band" to Tarbaby with percussion. Orrin Evans: nothing.
+    D) Rule S213 off: no offer, "Create artist" without the group."""
+    PAGE = 'https://tarbaby.bandcamp.com/'
+    ALBUM = PAGE + 'album/members'
+    TITLES = ['One', 'Two', 'Three', 'Four']
+    H.TITLES[:] = TITLES
+    TB = H.uid('dddddddd', 3600)
+    who = {n: H.uid('dddddddd', 3601 + k) for k, n in enumerate(['Orrin Evans', 'Nasheet Waits'])}
+    H.RELEASE_AC[:] = [(TB, 'Tarbaby', 'Tarbaby', '')]
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for n, g in [('Tarbaby', TB), *who.items()]]
+    H.BAND_MEMBERS[TB] = [who['Orrin Evans']]
+    H.attr(9311, 'percussion', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = 'Tarbaby are\n\nOrrin Evans piano\nNasheet Waits drums\nZed Newman percussion'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Tarbaby', 'current': {'title': 'Members', 'credits': CREDITS, 'about': '',
+                                                                    'release_date': '17 Jun 2022 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    sec = lambda name: f"[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === {json.dumps(name)})"
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S213']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_for(pg, "[...document.querySelectorAll('.dci-msg')].some(m => /Tarbaby/.test(m.textContent))", 30)
+            pg.wait_for_timeout(1500)
+            # (Bandcamp: the entries asked by name – Nasheet Waits linked by hand)
+            css = "section.dci-group:has(.dci-gname strong:text-is('Nasheet Waits'))"
+            nb = pg.locator(f'{css} [data-act=name-use][data-mbid="{who["Nasheet Waits"]}"]')
+            if nb.count():
+                nb.first.click()
+            else:
+                if not pg.locator(f'{css} [data-f=artist-input]').count():
+                    pg.locator(f'{css} [data-act=artist-edit]').first.click()
+                    pg.wait_for_timeout(200)
+                pg.locator(f'{css} [data-f=artist-input]').fill(who['Nasheet Waits'])
+                pg.locator(f'{css} [data-act=artist-set]').first.click()
+            H.wait_for(pg, f"(() => {{ const g = {sec('Nasheet Waits')}; return !!(g && g.querySelector('.dci-mblink')); }})()", 20)
+            pg.wait_for_timeout(800)
+            names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(l => l.textContent.trim())")
+            mo = {n: pg.evaluate(f"(() => {{ const g = {sec(n)}; const e = g && g.querySelector('[data-el=memberof]'); return e ? [e.tagName, e.getAttribute('href') || '', e.textContent.trim()] : null; }})()")
+                  for n in ('Orrin Evans', 'Nasheet Waits', 'Zed Newman')}
+            pg.evaluate(f"{sec('Zed Newman')}.querySelector('[data-act=artist-create]').click()")
+            pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+            url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+            q = urllib.parse.urlparse(url)
+            b.close()
+            return names, unrec, ign, mo, (q.path, dict(urllib.parse.parse_qsl(q.query))), errs
+
+    names, unrec, ign, mo, (path, q), errs = run(False)
+    print('A) Einträge:', names, '| nicht erkannt:', unrec, '| ausgelassen:', ign)
+    results.append(not unrec and 'Tarbaby' not in names and 'Tarbaby are' in ign and {'Orrin Evans', 'Nasheet Waits', 'Zed Newman'} <= set(names))
+    print('B) Nasheet Waits:', mo['Nasheet Waits'])
+    nw = mo['Nasheet Waits'] or ['', '', '']
+    nq = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(nw[1]).query))
+    results.append(nw[0] == 'A' and urllib.parse.urlparse(nw[1]).path == f"/artist/{who['Nasheet Waits']}/edit" and nq.get('rels.0.target') == TB
+                   and nq.get('rels.0.type') == '103' and 'rels.0.backward' not in nq and nq.get('rels.0.attributes.0.type') == '9105' and 'Tarbaby' in nw[2])
+    print('C) Zed Newman:', mo['Zed Newman'], '| Orrin Evans:', mo['Orrin Evans'], '|', path, {k: v for k, v in q.items() if k.startswith('rels.')})
+    results.append(mo['Zed Newman'] is not None and mo['Zed Newman'][0] != 'A' and mo['Orrin Evans'] is None and path == '/artist/create'
+                   and q.get('rels.0.target') == TB and q.get('rels.0.type') == '103' and 'rels.0.backward' not in q
+                   and q.get('rels.0.attributes.0.type') == '9311' and not errs)
+    names2, _, _, mo2, (path2, q2), _ = run(True)
+    print('D) aus:', mo2, {k: v for k, v in q2.items() if k.startswith('rels.')})
+    results.append(not any(mo2.values()) and 'rels.0.target' not in q2)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 def case_titlecomposers():

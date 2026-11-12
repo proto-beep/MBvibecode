@@ -259,6 +259,11 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     with "Take as remixer", John Doe (credited) only "remix of"; staged: remix of track 1 (230, the remix entity0)
                                 #   (t_text_lists) text3128r: 3.128.0 (Node): prose "by", mixed and mastered at, track list lines, edition, translation, photos,
                                 #     "Supported by", signature
+                                #   (t_text_lists) members3129: 3.129.0 (Node; S211–S214): "HIBUSHIBIRE are" / "" / members, "speed guru" left out as
+                                #     fantasy; "Acid Mothers Temple & The Melting Paraiso U.F.O. -at the time of this live recording were:"; "Qien Pudiera are
+                                #     Camila Chapelle and Lucia Reyes"; 'Dedicated to ~Namba~ ~Bears"~' left out; "Bass/Vocal/Mermaid Mountain"
+                                #   (t_text_lists) members3129r: 3.129.0 (review, Node): "The songs are", "Live Sound Crew were:" no heading; tildes between names
+                                #     stay; "Buddha machine" and "… on the Pacific coast" no fantasy
                                 #   (t_text_lists) text3128rr: 3.128.0 (review, Node): two English halves no translation, "1. Song Two (Jane Doe) 5:32" no
                                 #     track list, an edition line with "cover art by" kept, "Supported by Jane Doe on drums" no label, "sophie" kept, a long list of instruments no prose
                                 #   (t_text_lists) rmx3126r: 3.126.0 (review, Node): remixParts – "(Stereo Remix)", "(The Remix)", "(Disco Dub)" no name; "(Radio Edit -
@@ -338,6 +343,8 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     instead of the hint (and in the log), on some the tracks named and the hint stays
                                 #   fev385: 3.85.0 (Z-FEV, Z-FPL, Z-EVA): the festival hint at the linked place, gone once the event is
                                 #     linked; at the place both named with "Place → Skip"; the event "recorded at" at once
+                                #   dedplace3129: 3.129.0 (Z-DEDPLACE, S214): "Dedicated to ~Namba~ ~Bears~." beside "Recorded live at Namba Bears" – a
+                                #     note in the box (a place of the release), no suggestion; off
                                 #   dedbox: 3.74.0 (Z-DEDQ, Z-FRM, S109): the box "Dedications & tributes" – frames, found, suggestions (several, none,
                                 #     no track), picked, MBID and level, "＋ Dedication | Tribute", the setting, off
                                 #   dedfor: 3.71.0 (Z-DED2, S107): "for …" in a sentence – an artist (release group), a country (the work of the track
@@ -1014,6 +1021,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     a work found by name offered, jazz in the tags → composer; off
                                 #   tcpsingle: 3.63.0 (Z-TCP2, S092): a single word in brackets – exactly one artist of that name an entry,
                                 #     else no entry and the works found offered (also by surname); off
+                                #   membercreate3129: 3.129.0 (Z-MEMBERBLOCK, Z-MEMBERCREATE, S211, S213): "Tarbaby are" / "" / members – "＋ member of
+                                #     Tarbaby ↗" at a member linked by hand (type 103, drums), "Create artist" of one not linked with it (percussion); off
                                 #   tarbaby: 3.59.0 (Z-TBY, S085–S087): the Tarbaby text on a label's page – names with roles without a dash, vocals by
                                 #     the start of a title, the group heading and "+" left out, an info on the member MusicBrainz lacks; off: six lines
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
