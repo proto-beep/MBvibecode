@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.131.0
+// @version      3.132.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.131.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.131.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.132.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.132.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.131.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.132.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1169,12 +1169,35 @@
       "festival.title": "Festival recording:",
       "festival.hint": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”), or one found below.",
       "festival.from": "From: “{line}”",
+      "festival.mention": "– only mentioned: check the context (nothing is set by itself)",
+      "concert.note": "A concert of the text: “{line}” – its place as where it was recorded (live), a suggestion",
+      "mention.chip": "Mentioned dates ({n})",
+      "mention.title": "Dates, festivals and concerts the text only mentions – suggested nowhere; a date can be taken into the date pool by hand",
+      "mention.intro": "Only mentioned in the text (a story, or a sentence not about the recording): nothing is set by itself. Check the sentence and take a date into the date pool when it belongs to the recording.",
+      "mention.from": "reckoned from “{text}” ({date})",
+      "mention.quote": "“{line}”",
+      "mention.festival": "Festival: {name}",
+      "mention.concert": "Concert: {place}",
+      "mention.toPool": "→ Date pool",
+      "mention.toPoolTitle": "Into the date pool (an entry of its own), to be dragged where it belongs",
+      "mention.inPool": "In the date pool",
+      "mention.whyShort.story": "story",
+      "mention.whyShort.relative": "relative date",
+      "mention.whyShort.long": "long sentence",
+      "mention.whyShort.festival": "festival",
+      "mention.whyShort.concert": "concert",
+      "mention.why.story": "A sentence of a story (another time or event) – not about the recording",
+      "mention.why.relative": "A relative date in a sentence not about the recording",
+      "mention.why.long": "A date without a word of its kind in a long sentence without a word of the recording",
+      "mention.why.festival": "A festival in a sentence not about the recording",
+      "mention.why.concert": "A concert in a sentence of a story",
       "festival.hintNone": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”).",
       "festival.offers": "Events of that name in MusicBrainz at that time (nothing is set – add the right one):",
       "festival.add": "+ {name} ({period})",
       "festival.addTitle": "Adds the event as an entry, as “Add entry manually” with its MBID does; choose its relationship there.",
       "log.festivalFound": "Festival recording in the text: “{name}” – events offered from MusicBrainz: {n}",
       "log.festivalFrom": "  … from the sentence “{line}”",
+      "log.mentionPooled": "Mentioned date {date} taken into the date pool",
       "log.festivalAdded": "Event added: {name}",
       "festival.inMb": "In MusicBrainz the release (or all its recordings) is already linked with the event “{name}” – the festival hint is left out.",
       "festival.inMbSome": "In MusicBrainz tracks {tracks} are already linked with the event “{name}” – the hint below is for the other tracks.",
@@ -1727,6 +1750,7 @@
       "matrix.liveWhy.credit": "{src} credits “{role}” ({name}) for this track",
       "matrix.liveWhy.creditAll": "{src} credits “{role}” ({name}) for the whole release",
       "matrix.liveWhy.notesTracks": "the notes say these tracks were recorded live (“in live concert” …)",
+      "matrix.liveWhy.concert": "the text names a concert at {place}",
       "matrix.liveOfferRec": "Live recording – {reason}. This link exists in MusicBrainz without “live”: a click adds it (an edit). It is not set by itself.",
       "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
       "preview.attrFillTitle": "Link exists in MusicBrainz; the attributes are added",
@@ -1972,6 +1996,9 @@
       "yell.no.preset": "No: the lyrics (translator on the works)",
       "yell.ok.case": "Confirm: written small as suggested",
       "yell.no.case": "Keep the words as written",
+      "yell.kind.concert": "place of a concert",
+      "yell.ok.concert": "Confirm: recorded (live) at this place",
+      "yell.no.concert": "Leave the place of the concert out",
       "yell.ok.auto": "Confirm: the automatic row stays in this event",
       "yell.no.auto": "Take the automatic row out of this event",
       "yell.kind.preset": "translation as liner notes",
@@ -3156,6 +3183,7 @@
       "quick.S031": "Only the case differs → no “credited as”",
       "quick.S007": "Leave out festivals in “Companies, etc.”",
       "quick.D023": "Dates in the titles of the tracks",
+      "quick.D034": "Relative dates (“last September”) from a date of the text",
       "quick.S046": "“Performer” on tracks → the instruments on those tracks",
       "quick.D026": "Photographs of the concert → the concert’s date",
       "quick.S114": "Heading of a group above its members → the group as performer too",
@@ -4589,6 +4617,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S221', where: 'TEXT.parse (CONCERT_AT, concertKind), groupCompanies, addCompanyEntry, yellItems, applyLiveDefault', note: 'Concerts (3.132.0; collected item Z-CONCERTHINT): a sentence of a concert at a place ("Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus", "concierto en …", "concert au …") gives the place as "recorded at" – a yellow suggestion (✓ / ✕) – and "live" on the links to the works; a sentence of a story ("after the two first met at a concert at …") gives nothing but a line under "Mentioned dates"' },
+    { id: 'S220', where: 'datesWithContext (mentionKind), dateFinds, mentionedChipHtml, findFestivals, festivalHtml', note: 'Mentioned only (3.132.0; collected items Z-FESTALL, Z-RELDATE): a date, a festival or a concert of a sentence that is not about the recording – a story ("after the two first met at a concert in July 2019"), a long sentence without words of a recording, a relative date in such a sentence – is suggested nowhere: the chip "Mentioned dates (n) ▾" at the right of "Dates & tracks" lists it with its sentence (and the date it is reckoned from), to be taken into the pool by hand; festivals are always recognized again (the hint says "only mentioned – check the context" for such a sentence; until 3.131.0 they were left out, S209)' },
     { id: 'S219', where: 'rowsRemovedInEditor, sendDiscogsStatus, afterEnterEdit; companion 1.21.0', note: 'Marks of the companion (3.131.0; collected item Z-CPREMOVED): a credit whose relationships the dashboard staged and that were all taken out in the relationship editor by hand is "taken out in the editor" – a grey ✗ instead of the red one after "Enter edit", until the next import' },
     { id: 'S218', where: 'afterEnterEdit, gapExactWrite, the line of the release page (gapEstimate: all)', note: 'The line of the release page (3.131.0; collected item Z-GAPREFRESH): at "Enter edit" the dashboard counts once more what is still missing – the total now certain; on the release page, less than a fifth of the relationships of the credits still missing: no line (else "After “Enter edit” … still missing")' },
     { id: 'S217', where: 'dgLineupFind, dgLineupApply, dgLineupHtml, computePlan (issue)', note: 'Discogs (3.130.0; collected item Z-DGLINEUP): the lineup on the whole release and the same people\'s instruments on single tracks ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – two people of the lineup at least with track credits): a question that must be answered above the entries names who plays where – each one on all tracks except those the track credits give to others only – and where the instruments differ ("bass" in the lineup, "double bass" on tracks 2, 4). More precise everywhere (set until answered): the more precise instrument on all tracks, the track credits joined into the row; per track: the track credits as they are; the lineup\'s: everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit' },
@@ -6502,6 +6532,7 @@
     { id: 'D028', note: 'Dates of composition and production (3.84.0; collected item Z-BTW): "composed", "produced", "production" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined ("Recorded at …, produced by …, 12 March 1969" stays Performance; "composed and produced between …" both)' },
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
+    { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
 
@@ -6571,6 +6602,200 @@
     const v = multiDays(y, mo, text);
     return v && v.consecutive ? v : 'pass';
   }
+
+  // --- [Z-RELDATE] (3.132.0, D034) relative dates ----------------------------------------------------------------------------------
+  const REL_NUM = '(\\d{1,2}|an?|one|two|three|four|five|six|seven|eight|nine|ten|ein(?:em|en|er)?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)';
+  const REL_NUM_WORDS = new Map(Object.entries({
+    a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+    ein: 1, eine: 1, einem: 1, einen: 1, einer: 1, zwei: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10,
+    un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+    deux: 2, trois: 3, quatre: 4, cinq: 5, sept: 7, huit: 8, neuf: 9, dix: 10,
+  }));
+  const relNum = (t) => (/^\d+$/.test(t) ? Number(t) : REL_NUM_WORDS.get(String(t).toLowerCase()) || 0);
+  // the first month of a season (northern) and its length in months: spring March–May, summer June–August, autumn September–November,
+  // winter December–February
+  const SEASON_START = new Map(Object.entries({
+    spring: 3, frühling: 3, frühjahr: 3, primavera: 3, printemps: 3,
+    summer: 6, sommer: 6, verano: 6, été: 6,
+    autumn: 9, fall: 9, herbst: 9, otoño: 9, automne: 9,
+    winter: 12, invierno: 12, hiver: 12,
+  }));
+  const S_ = P.SEASON;
+  const M_ = P.M;
+  const N_ = REL_NUM;
+  /**
+   * The forms of D034 – [regex, { kind: 'month' | 'season' | 'year', dir: 'last' | 'next' | 'that', off (years), g (the group of the
+   * month, season or number) }]. "that September" is no form (which year?); "this year" alone neither (too often of the text's own time).
+   */
+  const REL_DATE_FORMS = [
+    // the month in a year before or after
+    [`${M_}\\s+(?:of\\s+)?(?:last|the\\s+previous|the\\s+preceding)\\s+year|${M_}\\s+(?:des\\s+)?(?:letzten|vergangenen|vorigen)\\s+Jahres|${M_}\\s+del\\s+año\\s+(?:pasado|anterior)|${M_}\\s+de\\s+l['’]année\\s+(?:dernière|précédente)`, { kind: 'month', dir: 'that', off: -1 }],
+    [`${M_}\\s+(?:of\\s+)?(?:the\\s+)?(?:next|following)\\s+year|${M_}\\s+des\\s+(?:folgenden|nächsten)\\s+Jahres|${M_}\\s+del\\s+año\\s+siguiente|${M_}\\s+de\\s+l['’]année\\s+suivante`, { kind: 'month', dir: 'that', off: 1 }],
+    // the month before or after
+    [`\\b(?<!\\bthe\\s)(?:last|this\\s+past)\\s+${M_}|\\b(?:im\\s+)?(?:letzten|vergangenen|vorigen)\\s+${M_}|\\b(?:el\\s+)?(?:pasado|último)\\s+(?:mes\\s+de\\s+)?${M_}|${M_}\\s+(?:pasado|último|dernier)\\b`, { kind: 'month', dir: 'last' }],
+    [`\\b(?:next|the\\s+following|the\\s+next)\\s+${M_}|\\b(?:im\\s+)?(?:folgenden|nächsten|darauffolgenden)\\s+${M_}|${M_}\\s+(?:siguiente|suivant|prochain)\\b`, { kind: 'month', dir: 'next' }],
+    // the season
+    [`\\b(?:last|this\\s+past|the\\s+previous|the\\s+preceding)\\s+${S_}|\\b(?:im\\s+)?(?:letzten|vergangenen|vorigen)\\s+${S_}|\\b(?:la|el)\\s+${S_}\\s+(?:pasad[oa]|anterior)|\\b(?:l['’]|le\\s+|au\\s+|à\\s+l['’]|en\\s+)?${S_}\\s+(?:dernier|passé)`, { kind: 'season', dir: 'last' }],
+    [`\\b(?:the\\s+following|the\\s+next|next)\\s+${S_}|\\b(?:im\\s+)?(?:folgenden|nächsten|darauffolgenden)\\s+${S_}|\\b(?:im\\s+)?${S_}\\s+(?:darauf|danach)|\\b(?:la|el)\\s+(?:siguiente\\s+${S_}|${S_}\\s+siguiente)|\\b(?:l['’]|le\\s+|au\\s+|à\\s+l['’])?${S_}\\s+(?:suivant|d['’]après)`, { kind: 'season', dir: 'next' }],
+    [`\\b(?:im\\s+)?${S_}\\s+(?:zuvor|davor)`, { kind: 'season', dir: 'that', off: -1 }],
+    [`\\b(?:that|that\\s+same|the\\s+same)\\s+${S_}|\\b(?:in\\s+jenem|im\\s+selben|im\\s+gleichen)\\s+${S_}|\\b(?:ese|esa|aquel|aquella)\\s+(?:mism[oa]\\s+)?${S_}|\\bcet?\\s+${S_}[-\\s]là`, { kind: 'season', dir: 'that' }],
+    // the year
+    [`\\b(?:earlier|later)\\s+(?:this|that|the\\s+same)\\s+year|\\b(?:that|the)\\s+same\\s+year|\\b(?:Anfang|Ende|Mitte|früher|später)\\s+(?:im\\s+Jahr|dieses|jenes|des\\s+(?:selben|gleichen))\\s*(?:Jahres)?|\\bim\\s+(?:selben|gleichen)\\s+Jahr|\\ba\\s+(?:principios|comienzos|finales)\\s+de\\s+(?:este|ese|aquel)\\s+(?:mismo\\s+)?año|\\b(?:más\\s+tarde|antes)\\s+(?:en\\s+)?(?:este|ese|aquel)\\s+(?:mismo\\s+)?año|\\b(?:ese|el)\\s+mismo\\s+año|\\b(?:plus\\s+tôt|plus\\s+tard|au\\s+début|à\\s+la\\s+fin)\\s+(?:de\\s+)?cette\\s+(?:même\\s+)?année|\\b(?:cette|la)\\s+même\\s+année`, { kind: 'year', off: 0 }],
+    [`\\b(?<!\\bthe\\s)(?:last|the\\s+previous|the\\s+preceding)\\s+year\\b|\\bthe\\s+year\\s+before\\b|\\b(?:letztes|voriges|vergangenes)\\s+Jahr\\b|\\bim\\s+(?:letzten|vergangenen|vorigen)\\s+Jahr\\b|\\bim\\s+Vorjahr\\b|\\bim\\s+Jahr\\s+(?:davor|zuvor)\\b|\\bel\\s+año\\s+(?:pasado|anterior)\\b|\\bl['’]année\\s+(?:dernière|précédente|passée|d['’]avant)`, { kind: 'year', off: -1 }],
+    [`\\b(?:next|the\\s+following|the\\s+next)\\s+year\\b|\\bthe\\s+year\\s+after\\b|\\bim\\s+(?:folgenden|nächsten|darauffolgenden)\\s+Jahr\\b|\\bim\\s+Jahr\\s+(?:darauf|danach)\\b|\\b(?:el|al)\\s+año\\s+siguiente\\b|\\bl['’]année\\s+(?:suivante|d['’]après)`, { kind: 'year', off: 1 }],
+    [`\\b${N_}\\s+years?\\s+(?:ago|earlier|before)\\b|\\bvor\\s+${N_}\\s+Jahre?n?\\b|\\b${N_}\\s+Jahre?\\s+(?:zuvor|davor|früher)\\b|\\bhace\\s+${N_}\\s+años?\\b|\\b${N_}\\s+años?\\s+antes\\b|\\bil\\s+y\\s+a\\s+${N_}\\s+ans?\\b|\\b${N_}\\s+ans?\\s+(?:plus\\s+tôt|auparavant|avant)\\b`, { kind: 'year', dir: 'back' }],
+    [`\\b${N_}\\s+years?\\s+(?:later|after)\\b|\\b${N_}\\s+Jahre?\\s+(?:später|danach|darauf)\\b|\\b${N_}\\s+años?\\s+(?:después|más\\s+tarde)\\b|\\b${N_}\\s+ans?\\s+(?:plus\\s+tard|après)\\b`, { kind: 'year', dir: 'on' }],
+  ];
+  /** The first group of a match that is set (the forms join several languages by "|", each with its own group). */
+  const relGroup = (m) => m.slice(1).find((x) => x != null) || '';
+
+  /**
+   * [Z-RELDATE] (3.132.0, D034) The date of a relative form, reckoned from the date of the text the finder gives (`o.relRef(index)`:
+   * { value, text } or null – none or two possible ones). 'skip' (the words kept from the other rules) when it cannot be reckoned:
+   * no date to reckon from, a month or a season "last"/"next" from a year without its month.
+   */
+  function relDate(m, o, spec) {
+    const ref = o && o.relRef ? o.relRef(m.index) : null;
+    const rb = ref && ref.value && ref.value.begin;
+    if (!rb || !rb.year) return 'skip';
+    const word = relGroup(m);
+    // ((review) "Last March" in the middle of a sentence is a title)
+    if (/^(?:Last|Next|This)\s/.test(m[0]) && /[\p{L},]\s*$/u.test(m.input.slice(Math.max(0, m.index - 3), m.index))) return 'pass';
+    const at = (y, v) => ({ ...v, rel: { text: ref.text, value: ref.value, words: m[0] } });
+    if (spec.kind === 'year') {
+      const n = spec.dir === 'back' ? -relNum(word) : spec.dir === 'on' ? relNum(word) : spec.off;
+      if ((spec.dir === 'back' || spec.dir === 'on') && !n) return 'skip';
+      const v = single(ymd(rb.year + n));
+      return v ? at(rb.year + n, v) : 'skip';
+    }
+    if (spec.kind === 'month') {
+      // ("the last may be …": "may" written small is no month here)
+      if (word === 'may') return 'pass';
+      const mo = monthNo(word);
+      if (!mo) return 'skip';
+      let y = rb.year + (spec.off || 0);
+      if (spec.dir === 'last' || spec.dir === 'next') {
+        if (!rb.month) return 'skip';
+        y = spec.dir === 'last' ? (mo < rb.month ? rb.year : rb.year - 1) : (mo > rb.month ? rb.year : rb.year + 1);
+      }
+      const v = single(ymd(y, mo));
+      return v ? at(y, v) : 'skip';
+    }
+    const start = SEASON_START.get(String(word).toLowerCase());
+    if (!start) return 'skip';
+    // ((review) "the melodies that fall into place": no season
+    if (spec.dir === 'that' && /^fall$/i.test(word)) return 'pass';
+    // the year a season begins in; its last month (winter: February of the next year)
+    const period = (y) => span(ymd(y, start), start === 12 ? ymd(y + 1, 2) : ymd(y, start + 2));
+    const key = (y, mo) => y * 12 + mo;
+    let y;
+    // ((review) the winter of a date in January or February began the year before)
+    if (spec.dir === 'that') y = rb.year + (spec.off || 0) - (start === 12 && rb.month && rb.month <= 2 ? 1 : 0);
+    else if (!rb.month) {
+      // a year only: the season of the year before or after it
+      y = rb.year + (spec.dir === 'last' ? -1 : 1);
+    } else if (spec.dir === 'last') {
+      // the last one that ended before the date
+      y = rb.year;
+      while (key(start === 12 ? y + 1 : y, start === 12 ? 2 : start + 2) >= key(rb.year, rb.month)) y--;
+    } else {
+      // the first one that begins after it
+      y = rb.year - 1;
+      while (key(y, start) <= key(rb.year, rb.month)) y++;
+    }
+    const v = period(y);
+    return v ? at(y, v) : 'skip';
+  }
+
+  /**
+   * [Z-RELDATE] (3.132.0, D034) The date a relative date of a text is reckoned from: the dates of its paragraph (not a date of a release
+   * or ℗ / ©, not one of its own kind), else the datelines of the text ("Berlin, June 2019" – a line of a date, with a place before it at
+   * most); exactly one date (as written) – otherwise null.
+   */
+  function relRefFinder(src, usOrder) {
+    const all = findDates(src, { usOrder, noRel: true }).filter((x) => !['issue', 'copyright'].includes(x.hint) && !x.multi);
+    const paras = [];
+    const re = /\n[ \t]*\n/g;
+    let last = 0;
+    let m;
+    while ((m = re.exec(src))) {
+      paras.push([last, m.index]);
+      last = m.index + m[0].length;
+    }
+    paras.push([last, src.length]);
+    const dateline = (x) => {
+      const ls = src.lastIndexOf('\n', x.index - 1) + 1;
+      const le = src.indexOf('\n', x.index) < 0 ? src.length : src.indexOf('\n', x.index);
+      const rest = (src.slice(ls, x.index) + src.slice(x.index + x.text.length, le)).replace(/[\s,.–—-]+/g, ' ').trim();
+      return !rest || (/^\p{Lu}/u.test(rest) && rest.split(' ').length <= 4);
+    };
+    const one = (list) => {
+      const kinds = uniq(list.map((x) => formatDateValue(x.value)));
+      return kinds.length === 1 ? { value: list[0].value, text: list[0].text } : null;
+    };
+    const lines = all.filter(dateline);
+    return (index) => {
+      const p = paras.find(([a, b]) => index >= a && index <= b) || [0, src.length];
+      const here = all.filter((x) => x.index >= p[0] && x.index < p[1]);
+      if (here.length) return one(here);
+      return lines.length ? one(lines) : null;
+    };
+  }
+
+  // --- [Z-RELDATE] [Z-FESTALL] [Z-CONCERTHINT] (3.132.0, S220, S221) a sentence about the recording – or one that only mentions ----------
+  /**
+   * Words of a sentence about the recording (stricter than FEST_RECORDING: "concert" alone is none – "we first met at a concert"; "played in"
+   * neither – "we played in Oslo for the first time").
+   */
+  const REC_SENTENCE = /\b(?:recorded|recording|recordings|rec\.|re-?recorded|captured|taped|tracked|filmed|documented|mixed|mastered|produced|engineered|sessions?|live\s+(?:at|from|in|during|on|beim|im|bei|på|op|au|à|en)|(?:this|the\s+present|our)\s+(?:live\s+)?(?:concert|performance|show|gig|set|album|record|recording|session|release)|studio|producer|(?:were|was)\s+cut|laid\s+down|went\s+into|mitschnitt|mitgeschnitten|aufgenommen|aufnahmen?|eingespielt|gemischt|gemastert|produziert|(?:dieses|unser)\s+konzert|(?:dieser|unser)\s+auftritt|(?:dieses|unser)\s+album|grabad[oa]s?|grabaci[oó]n|(?:este|nuestro)\s+(?:concierto|disco|álbum)|enregistr|(?:ce|notre)\s+(?:concert|disque|album)|mixag|inspelad|inspelat|inspelning|opgenomen|opname|registrat|registrazione|nagran)/iu;
+  /** Words of a story (another time, another event): "after the two first met at a concert in July 2019", "born in", "years ago". */
+  const STORY_SENTENCE = /\b(?:met|first\s+time|first\s+met|grew\s+up|(?:was|were)\s+born|born\s+in|passed\s+away|died|fell\s+in\s+love|friendship|childhood|nachdem|begegnet|begegneten|kennengelernt|kennenlernten|zum\s+ersten\s+mal|erstmals|geboren|gestorben|kindheit|conoc\p{L}*|por\s+primera\s+vez|naci[oó]|muri[oó]|infancia|rencontr\p{L}*|pour\s+la\s+premi[eè]re\s+fois|enfance|d[ée]c[ée]d[ée]\p{L}*)(?![\p{L}\p{N}])/iu;
+  const recSentence = (x) => REC_SENTENCE.test(String(x || ''));
+  /** A story not about the recording (S220). */
+  const storySentence = (x) => STORY_SENTENCE.test(String(x || '')) && !recSentence(x);
+  /**
+   * [Z-CONCERTHINT] (3.132.0, S221) "concert at X", "gig at X", "Konzert im Jazzhaus", "concierto en la Sala X", "concert au Théâtre X":
+   * the words of the concert, the preposition, the words after it (concertPlace makes the place of them).
+   */
+  // ((review) "show" only after a word that makes it a noun – "she shows at …" is none; "à l'Olympia" with the apostrophe)
+  const CONCERT_AT = /(?:\b(?:a|the|this|that|our|their|his|her|its|live)\s+shows?|\b(?:concerts?|gigs?|live\s+performances?|performances?|konzert(?:e|s)?|auftritt(?:e|s)?|conciertos?|actuaci[oó]n|recital))\s+(?:(?:held|given|played|recorded|that\s+took\s+place|which\s+took\s+place|took\s+place)\s+)?(at|im|in\s+der|in\s+den|en\s+el|en\s+la|en|au|à\s+la|à\s+l['’]|à|dans\s+le)(?:\s+|(?<=['’]))([^,;:!?()\n]{2,80})/giu;
+  /** ((review) a sentence of a concert to come, of a release party or of a famous concert of others: only mentioned) */
+  const CONCERT_MENTION = /\b(?:will|would|upcoming|next|tickets?|presale|tour\s+dates|release\s+(?:show|concert|party|gig)|celebrat\w*|inspired|legendary|famous|historic|wird|werden|karten|vorverkauf|entradas|billets)\b|\brecord-?release|\bplattentaufe/iu;
+  const CONCERT_PLACE_WORDS = /(?:studio|hall|halle|haus|saal|kirche|church|chapel|club|theat(?:re|er)|th[ée][aâ]tre|auditor|arena|ballroom|caf[eé]|venue|tavern|pub|lounge|cent(?:er|re)|zentrum|forum|keller|bühne|salle|sala|teatro|iglesia|[ée]glise|palais|palacio|kaikan|lodge|museum|museo|mus[ée]e|gallery|galerie|philharmon|opera|oper)/iu;
+  const CONCERT_PARTICLE = /^(?:de|del|la|le|les|des|du|di|der|von|van|of|the)$/;
+  /**
+   * The place of a match of CONCERT_AT: its words up to a word written small (particles aside), a month, a number – or ''. After "at" any
+   * name with a capital; after the others a word of places in it ("Konzert im Rahmen …", "im Juli" are none).
+   */
+  function concertPlace(m, again = false) {
+    const words = [];
+    // ((review) "St. Paul's Cathedral" keeps its abbreviation, "Studio 104" its number after a word of places; "and", "&" end it (two places
+    // are none); a lower-case "the" first is no part of it, "The Fillmore" keeps it)
+    const all = String(m[2] || '').trim().split(/\s+/);
+    if (all[0] === 'the') all.shift();
+    for (const w0 of all) {
+      const abbr = /^\p{Lu}\p{Ll}{0,2}\.$/u.test(w0);
+      const end = !abbr && /\.$/.test(w0);
+      const w = abbr ? w0 : w0.replace(/\.+$/, '');
+      const num = /^\d+$/.test(w) && words.length && CONCERT_PLACE_WORDS.test(words[words.length - 1]);
+      if ((/\d/.test(w) && !num) || monthNo(w) || w === '&' || (/^\p{Ll}/u.test(w) && !CONCERT_PARTICLE.test(w))) break;
+      if (w) words.push(w);
+      if (end) break;
+    }
+    while (words.length && CONCERT_PARTICLE.test(words[words.length - 1])) words.pop();
+    const name = words.join(' ');
+    // ((review) a date first: "Konzert im Dezember 2019 im Jazzhaus Freiburg" – the place after it)
+    if (!name && !again) {
+      const r = String(m[2] || '').match(/^\S+(?:\s+\d{1,4}\.?)*\s+(at|im|in\s+der|en|au)\s+([^,;:!?()\n]{2,80})$/u);
+      return r ? concertPlace(r, true) : '';
+    }
+    if (!name || !/^\p{Lu}/u.test(name) || words.length > 6) return '';
+    if (!/^at$/i.test(m[1]) && !CONCERT_PLACE_WORDS.test(name)) return '';
+    return name;
+  }
+  /** [Z-CONCERTHINT] (3.132.0, S221) What a sentence of a concert is: 'rec' (the recording's – a hint) or 'mention' (a story). */
+  // ((review) a word of a story wins – "after the two first met at a concert at X, they recorded this album" is a story of the concert)
+  const concertKind = (sentence) => (STORY_SENTENCE.test(sentence) || CONCERT_MENTION.test(sentence) ? 'mention' : 'rec');
 
   /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
   const DATE_MATCHERS = [
@@ -6654,6 +6879,9 @@
       return art && new RegExp(art.source, 'i').test(line) ? single(ymd(m[1])) : 'skip';
     } },
     { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
+    // [Z-RELDATE] (3.132.0, D034) relative dates, last: a date of the text (above) wins where they meet ("last summer 2019")
+    // ((review) word bounds that know letters with accents: "à la fin de cette année", "último septiembre")
+    ...REL_DATE_FORMS.map(([re, spec]) => ({ id: 'D034', re: re.replace(/\\b(?=\||$)/g, '(?![\\p{L}\\p{N}])').replace(/\\b/g, '(?<![\\p{L}\\p{N}])'), make: (m, o) => relDate(m, o, spec) })),
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
 
   /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
@@ -6720,20 +6948,23 @@
    * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
    * [D020] hints: every group of joined words ("mixed and mastered"), when more than one.
    */
-  function findDates(text, { usOrder = false } = {}) {
+  function findDates(text, { usOrder = false, noRel = false } = {}) {
     const src = String(text || '');
     const taken = [];
     const found = [];
     const free = (a, b) => !taken.some(([x, y]) => a < y && b > x);
+    // [Z-RELDATE] (3.132.0, D034) the dates relative ones are reckoned from (found once, when the first is met)
+    let relRef = null;
+    const relOpt = { usOrder, relRef: (i) => (relRef || (relRef = relRefFinder(src, usOrder)))(i) };
     for (const mt of DATE_MATCHERS) {
-      if (!ruleOn(mt.id)) continue;
+      if (!ruleOn(mt.id) || (noRel && mt.id === 'D034')) continue;
       mt.rx.lastIndex = 0;
       let m;
       while ((m = mt.rx.exec(src))) {
         const a = m.index;
         const b = a + m[0].length;
         if (!m[0] || !free(a, b)) continue;
-        const v = mt.make(m, { usOrder });
+        const v = mt.make(m, relOpt);
         // ((3.104.0, review) 'pass': not this rule's – the text stays for the others
         if (v === 'pass') continue;
         taken.push([a, b]);
@@ -6806,7 +7037,7 @@
         const doubled = ruleOn('D015') && /©\s*©/.test(seg);
         if (doubled) hint = 'copyright';
         found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
-          multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
+          multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive, ...(v.rel ? { rel: v.rel } : {}),
           hint: artHint(hint, hintWord, before), ...(artHint(hint, hintWord, before) === 'artwork' ? { art: artKindOf(hintWord) } : {}), hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
     }
@@ -8529,12 +8760,12 @@
             }
           }
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
-          const place = (verb, where) => {
+          const place = (verb, where, extra = {}) => {
             const n = where && clean(where.name);
             if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return false;
             // [S050] (3.32.5) "Recordd at X": the verb as it is read
             const { role, typos } = readRole(`${cap(verb)} At`);
-            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}) });
+            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}), ...extra });
             found++;
             return true;
           };
@@ -8726,6 +8957,26 @@
               rolesM.forEach((r) => { if (addCredit(nm, r, x.scope || cScope)) found++; });
             }
             return;
+          }
+          // [Z-CONCERTHINT] (3.132.0, S221) "Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus
+          // Freiburg": the place, recorded at – a suggestion (✓ / ✕) – and "live" on the links to the works; not in a sentence of a story ("after
+          // the two first met at a concert at …": a line under "Mentioned dates") nor where a verb of a recording comes first (read as usual)
+          if (ruleOn('S221') && !/^\s*(?:recorded|captured|taped|filmed|tracked|mixed|mastered|aufgenommen|grabad|enregistr)/iu.test(clause)) {
+            // ((review) every concert of the clause; its kind by its own sentence (as "Mentioned dates" reads it); the area only an area)
+            const re = new RegExp(CONCERT_AT.source, CONCERT_AT.flags);
+            let cm;
+            let any = false;
+            while ((cm = re.exec(clause))) {
+              const nm = concertPlace(cm);
+              const at0 = line0 ? line0.indexOf(cm[0]) : -1;
+              const sentence = clean(at0 >= 0 ? sentenceAround(line0, at0, at0 + cm[0].length) : clause);
+              if (!nm || concertKind(sentence) !== 'rec') continue;
+              const tail = clause.slice(cm.index + cm[0].length - cm[2].length);
+              const after = tail.slice(tail.indexOf(nm) + nm.length).replace(/^[\s,]+/, '');
+              const ar = /^\p{Lu}/u.test(after) ? areaOf(noDates(after.split(/\s+(?:on|am|el|le|in|im)\s+|[.;]/)[0])) : null;
+              if (place('recorded', { name: nm, area: ar ? [ar.name, ar.area].filter(Boolean).join(', ') : '' }, { concert: sentence.length > 200 ? `${sentence.slice(0, 200)} …` : sentence })) any = true;
+            }
+            if (any) return;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
           // each give the place ("Mixed and mastered at TQA.HQ (July 2026)")
@@ -11524,7 +11775,7 @@
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
         ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}),
-        ...(c.date ? { date: c.date } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), refs: [] }); // ([Z-EXCEPTC] 3.125.0: the year of a commission)
+        ...(c.date ? { date: c.date } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), ...(c.concert ? { concert: c.concert } : {}), refs: [] }); // ([Z-EXCEPTC] 3.125.0: the year of a commission)
       // ([Z-PHOTOS] 3.128.0) a role credit of the text ("photo of X"): two of one role joined
       else if (c.roleCredit && same.roleCredit !== c.roleCredit) same.roleCredit = [same.roleCredit, c.roleCredit].filter(Boolean).join(', ');
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
@@ -17766,7 +18017,7 @@
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
-  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031']],
+  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031']],
     ['works', ['S160', 'S045', 'S122']], ['companies', ['S007']]];
   function quickSwitchesHtml() {
     const notes = ruleNotes();
@@ -18259,6 +18510,8 @@
         add('can', 'case', `case:${ak}|${norm(r.raw)}|${r.level}`, { row: r, a, ok: true });
       }
       if (r.level === 'work' && r.suggest && r.suggest.tracks && [...r.suggest.tracks].some((i) => !(r.confirmed && r.confirmed.has(i)))) add('can', 'sugg', `s:${r.id}`, { row: r, a });
+      // [Z-CONCERTHINT] (3.132.0, S221) the place of a concert: ✓ / ✕ (✕ leaves the row out)
+      if (r.concert && ruleOn('S221')) add('can', 'concert', `concert:${ak}|${norm(r.raw)}`, { row: r, a, ok: true });
     }
     for (const a of S.artists.values()) {
       if (skipped.get(a.key)) continue;
@@ -18311,6 +18564,7 @@
     const inRows = (sel) => it.rows.flatMap((r) => [...ov.querySelectorAll(`[data-row="${r.id}"] ${sel}`)]).find(seen);
     let el = null;
     if (it.kind === 'preset') el = inRows('.dci-type-ask') || byRows();
+    else if (it.kind === 'concert') el = inRows('.dci-concert-note') || byRows();
     else if (it.kind === 'case') el = inRows('.dci-case-note') || byRows();
     else if (it.kind === 'sugg') el = [...ov.querySelectorAll(`.dci-mx-cell[data-col="k:${it.a.key}"] .dci-mxchip-sugg`)].find(seen) || ov.querySelector(`th[data-colhead="k:${it.a.key}"]`);
     else if (it.kind === 'auto') {
@@ -18377,7 +18631,7 @@
       const state = it.done ? 'done' : 'open';
       const had = old.get(`${it.key}|${state}`);
       // ((review) a note's own text stays as it is: ✓ / ✕ right after the note of words written small, not in it)
-      const beside = it.kind === 'case';
+      const beside = it.kind === 'case' || it.kind === 'concert';
       if (had && (beside ? had.previousElementSibling === host : had.parentElement === host)) {
         keep.add(had);
         continue;
@@ -18555,6 +18809,10 @@
     else if (it.kind === 'case') {
       // ✕: every word written small kept as written (each row of the item)
       it.rows.forEach((r) => [...(r.creditPhrases || []), ...(r.creditLowered || [])].forEach((w) => caseKeep(r, w, true)));
+    } else if (it.kind === 'concert') {
+      // ([Z-CONCERTHINT] 3.132.0) ✕: the place of the concert left out (its "live" with it)
+      it.rows.forEach((r) => setLevel(r, 'skip'));
+      renderWorks();
     } else if (it.kind === 'auto') {
       // ✕: the automatic row out of that event (the instruments ticked there say it)
       const rows = S.rows.filter((r) => r.artistKey === it.a.key && r.instsAuto && r.level !== 'skip' && eventKeyOf(r) === it.ev);
@@ -22420,6 +22678,7 @@
     S.srcOff = new Set();
     S.mediaSel = null;
     S.supp = null;
+    S.suppOpen = false; // ([Z-SUPPTOGGLE] 3.132.0, review) not open into the next import
     S.suppSources = new Map();
     S.ocrSuppLines = null; // [Z-SUPPNAV] (3.116.0, review)
     toDiscogs({ type: 'forget-release', mbRelease: releaseMbid });
@@ -22533,6 +22792,7 @@
       // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 🖼️, the images of its lines ((review) kept beside those
       // of a supplement read before)
       S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '', typed, ocr: !!(input && input.ocr) };
+      S.suppOpen = true; // [Z-SUPPTOGGLE] (3.132.0) the bar shows what was loaded; the button folds it
       if (input && input.ocrLines) {
         const was = S.ocrSuppLines;
         S.ocrSuppLines = { text: input.ocrLines.text, lines: new Map([...((was && was.lines) || []), ...input.ocrLines.lines]) };
@@ -24565,6 +24825,7 @@
       // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
       if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
       if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
+      if (r.concert) row.concert = r.concert; // [Z-CONCERTHINT] (3.132.0, S221) a suggestion of a concert's sentence
       if (r.roleCredit) Object.assign(row, { roleCredit: r.roleCredit, roleCreditTouched: true }); // [Z-PHOTOS] [Z-SUPPORTED] (3.128.0)
       // ([Z-SUPPORTED] 3.128.0, review) MusicBrainz has no relationship of a label for support: said at the row (an artist has one)
       if (ruleOn('S208') && /^supported by$/i.test(String(r.role || '').trim())) row.notes = [...(row.notes || []), 'supportLabel'];
@@ -24687,6 +24948,7 @@
       S.rowOpen.clear();
     S.groupCompact.clear();
       S.supp = null;
+      S.suppOpen = false; // ([Z-SUPPTOGGLE] 3.132.0, review)
       S.suppSources = new Map();
       S.ocrSuppLines = null; // [Z-SUPPNAV] (3.116.0, review)
       // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
@@ -25493,18 +25755,21 @@
       // [Z-EXCEPTC] (3.125.0, S199) a festival that commissioned the works ("composed for the 2025 Roadburn Festival") is no recording
       if (ruleOn('S199') && COMMISSION_BEFORE_NAME.test(sentence.slice(0, sentence.indexOf(m[0])))) continue;
       // [Z-FESTCTX] (3.128.0, S209) only a sentence about a recording ("recorded live at …"): a story of another album ("my dream became true at the
-      // 2017 … Festival") is none
-      if (ruleOn('S209') && !FEST_RECORDING.test(sentence)) continue;
+      // 2017 … Festival") is none – [Z-FESTALL] (3.132.0, S220) recognized again, marked as only mentioned (the hint says so, the chip
+      // "Mentioned dates" lists it; nothing is set by itself)
+      const notRec = !FEST_RECORDING.test(sentence) || storySentence(sentence);
+      if (notRec && ruleOn('S209') && !ruleOn('S220')) continue;
       const at = sentence.indexOf(m[0]);
       const name = festivalName(sentence.slice(0, Math.max(0, at)), m[0], sentence.slice(at + m[0].length));
       // (a place of that name is no festival: "Royal Festival Hall", "Festival Theatre")
       if (!/\p{Lu}/u.test(name) || seen.has(norm(name)) || TEXT_PLACE_WORDS.test(name)) continue;
       seen.add(norm(name));
       const date = (findDates(sentence, { usOrder: usDateOrder() })[0] || {}).value || null;
-      S.festivals.push({ name, date, offers: [], line: sentence.trim() });
+      S.festivals.push({ name, date, offers: [], line: sentence.trim(), index: m.index, ...(notRec && ruleOn('S220') ? { mention: true } : {}) });
     }
     if (!S.festivals.length) return;
     renderSource();
+    if (S.festivals.some((f) => f.mention)) renderDates(); // ((3.132.0, review) the chip "Mentioned dates" counts them
     for (const f of S.festivals) {
       if (f.date && f.date.begin && f.date.begin.year) {
         const words = f.name.split(' ').filter((w) => !/^\d{4}$/.test(w) && !FEST_PARTICLE.test(w)).join(' ');
@@ -25599,7 +25864,8 @@
   }
   /** [Z-FPL] (3.85.0, S131) The festival of the text a linked place is part of: its name in the festival's sentence (or the only ones). */
   function festivalOfPlace(a) {
-    const list = S.festivals || [];
+    // ([Z-FESTALL] 3.132.0) a festival only mentioned: none of its places
+    const list = (S.festivals || []).filter((f) => !f.mention);
     if (!ruleOn('S131') || !list.length || !isPlaceEntry(a)) return null;
     const fold = (x) => ` ${String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘`´]/g, "'").toLowerCase().replace(/[^\p{L}\p{N}']+/gu, ' ').trim()} `;
     // ((review) the place as whole words of the sentence ("Lodge" is not "Western Front Lodge")
@@ -25691,7 +25957,9 @@
         data-act="festival-add" data-mbid="${esc(o.mbid)}" title="${esc([o.comment, tr('festival.addTitle')].filter(Boolean).join(' – '))}" ${o.added ? 'disabled' : ''}>${esc(tr('festival.add', { name: o.name, period: o.period || '?' }))}</button>`).join(' ')}</div>` : '';
       // [Z-FESTCTX] (3.128.0) the sentence it comes from
       const from = f.line ? `<br><span class="dci-sub dci-festival-line">${esc(tr('festival.from', { line: f.line.length > 220 ? `${f.line.slice(0, 220)} …` : f.line }))}</span>` : '';
-      return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${from}</p>${offers}`;
+      // [Z-FESTALL] (3.132.0, S220) only mentioned: said so
+      const mention = f.mention ? ` <span class="dci-warn dci-festival-mention">${esc(tr('festival.mention'))}</span>` : '';
+      return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${mention}${from}</p>${offers}`;
     }).join('')}</div>`;
   }
 
@@ -27058,8 +27326,11 @@
     S.suiteManual.clear(); // [Z-SUM] (3.41.11)
   }
 
-  /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
-  const suppIsOpen = () => !!(S.release && S.rows.length && (S.suppOpen || S.supp || (S.textForm && S.textForm.supp)));
+  /**
+   * [3.26.0] The bar "Supplement with" shows on "+ Supplement". [Z-SUPPTOGGLE] (3.132.0) a loaded supplement opens it once, and it
+   * folds again on the button (before, a loaded supplement kept it open for good).
+   */
+  const suppIsOpen = () => !!(S.release && S.rows.length && (S.suppOpen || (S.textForm && S.textForm.supp)));
 
   /** [3.26.0] Closes the menu "Source ▾" without drawing the source anew (a field being used stays as it is). */
   function closeSrcMenu(focusBtn = false) {
@@ -29775,6 +30046,8 @@
       + (row.instsAuto ? `<div class="dci-note dci-insts-note">${esc(tr(row.instsHint ? 'insts.autoHint' : 'insts.auto', { group: row.instsHint || '' }))}</div>` : '')
       // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named (3.102.0: asked – abbrAskHtml – while S166 is on)
       + (row.abbrAlt && row.abbrAlt.length && !row.abbrAsk ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
+      // [Z-CONCERTHINT] (3.132.0, S221) the place of a concert of the text: a suggestion, its sentence quoted
+      + (row.concert && ruleOn('S221') ? `<div class="dci-note dci-concert-note">${esc(tr('concert.note', { line: row.concert }))}</div>` : '')
 ;
     const asType = row.company || row.other ? `<div class="dci-sub">${esc(tr('role.asEntity', { type: tr(`entity.${row.entityType}`) }))}</div>` : '';
     if (row.manual) {
@@ -30450,8 +30723,8 @@
   // [D021] (3.30.8) a medium in brackets right after a date: "May 26, 2016 (Disc 2)", "(CD 2)", "(LP 1)"
   const MEDIUM_AFTER_DATE = /^\s*\(\s*(?:disc|disk|cd|lp|dvd|sacd|vinyl|record|platte)\s*(\d{1,2})\s*\)/i;
 
-  function datesWithContext(src) {
-    return findDates(src, { usOrder: usDateOrder() }).map((x, i, all) => {
+  function datesWithContext(src, mentioned = null) {
+    const list = findDates(src, { usOrder: usDateOrder() }).map((x, i, all) => {
       const sentence = sentenceAround(src, x.index, x.index + x.text.length);
       let tracks = tracksInText(sentence);
       let medium = null;
@@ -30471,19 +30744,62 @@
       return { ...x, sentence, tracks, medium, studios: studiosInText(sentence).map((a) => a.key) };
     // [Z-EXCEPTC] (3.125.0, S199) the year of a commission ("composed and commissioned for the 2025 Roadburn Festival") is the date of
     // the commission (its row), not of the composition
-    }).filter((x) => !(ruleOn('S199') && COMMISSION_BEFORE_DATE.test(src.slice(Math.max(0, x.index - 60), x.index))))
+    }).filter((x) => !(ruleOn('S199') && COMMISSION_BEFORE_DATE.test(src.slice(Math.max(0, x.index - 60), x.index))));
+    const out = [];
+    for (const x of list) {
       // [Z-FESTCTX] (3.128.0, S209) a year alone in a long sentence of a story (another album: "my dream became true at the 2017 … Festival")
       // is no date of this release
-      .filter((x) => !(ruleOn('S209') && x.value && x.value.begin && !x.value.begin.month && String(x.sentence || '').split(/\s+/).length >= 20
-        && !FEST_RECORDING.test(x.sentence || '') && !/\b(?:mixed|mastered|produced|composed|written|performed|live|session|engineered|edited|remastered|gemischt|gemastert|produziert|komponiert|geschrieben)\b/i.test(x.sentence || '')));
+      const story = ruleOn('S209') && x.value && x.value.begin && !x.value.begin.month && String(x.sentence || '').split(/\s+/).length >= 20
+        && !FEST_RECORDING.test(x.sentence || '') && !/\b(?:mixed|mastered|produced|composed|written|performed|live|session|engineered|edited|remastered|gemischt|gemastert|produziert|komponiert|geschrieben)\b/i.test(x.sentence || '');
+      // [Z-RELDATE] (3.132.0, S220) … and what a sentence of the notes only mentions: listed apart ("Mentioned dates"), suggested nowhere
+      const why = mentioned && ruleOn('S220') ? (story ? 'story' : mentionWhy(x)) : '';
+      if (why) mentioned.push({ ...x, why });
+      else if (!story) out.push(x);
+    }
+    return out;
+  }
+
+  /**
+   * [Z-RELDATE] (3.132.0, S220) Why a date of the notes is only mentioned ('' when it is not): a story ("after the two first met at a concert in
+   * July 2019") not about the recording, a relative date in a sentence not about the recording, a date without a word of its group in a
+   * long sentence (twelve words or more) without a word of the recording.
+   */
+  function mentionWhy(x) {
+    const sentence = String(x.sentence || '');
+    if (storySentence(sentence)) return 'story';
+    // ((review) a story in the date's own part of the sentence: "Recorded in May 2019, after the band had met in 2010" – 2010 is the story's)
+    const at = sentence.indexOf(x.text);
+    if (at >= 0) {
+      const cut = /[,;–—]|\s(?:and|und|y|et|but|aber|pero|mais|while|während)\s/giu;
+      let a = 0;
+      let b = sentence.length;
+      let m;
+      while ((m = cut.exec(sentence))) {
+        if (m.index + m[0].length <= at) a = m.index + m[0].length;
+        else if (m.index >= at + x.text.length) {
+          b = m.index;
+          break;
+        }
+      }
+      if (STORY_SENTENCE.test(sentence.slice(a, b))) return 'story';
+    }
+    if (x.rel && !recSentence(sentence)) return 'relative';
+    // ((review) not with its tracks or studios named, nor at the start of its sentence – a dateline "Berlin, 12 May 2019 – with thanks …")
+    const before = at >= 0 ? sentence.slice(0, at).split(/\s+/).filter(Boolean).length : 0;
+    if (!x.hint && !(x.hints || []).length && !recSentence(sentence) && !(x.studios || []).length && !(x.tracks && x.tracks.size) && before > 3
+      && sentence.split(/\s+/).filter(Boolean).length >= 12) return 'long';
+    return '';
   }
 
   /** Dates found in the Discogs notes (once per release) and in the text pasted into the date pool. */
   function dateFinds() {
     const notes = String((S.release && S.release.notes) || '');
-    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}`;
+    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}`;
     if (S.notesDatesFor !== sig) {
-      S.notesDates = datesWithContext(notes);
+      // [Z-RELDATE] (3.132.0, S220) what the notes only mention: S.notesMentioned
+      const mentioned = [];
+      S.notesDates = datesWithContext(notes, mentioned);
+      S.notesMentioned = mentioned;
       S.notesDatesFor = sig;
     }
     return { notes: S.notesDates || [], text: datesWithContext(S.dateFindText || '') };
@@ -30896,6 +31212,81 @@
       <summary>${esc(tr('datefind.title'))}${n ? ` · ${esc(tr('datefind.inNotes', { n }))}` : ''}</summary>
       <textarea data-f="datefind" rows="2" placeholder="${esc(tr('datefind.placeholder'))}">${esc(S.dateFindText || '')}</textarea>
       <div data-el="datefind-list">${dateFindListHtml()}</div></details>`;
+  }
+
+  // --- [Z-RELDATE] [Z-FESTALL] [Z-CONCERTHINT] (3.132.0, S220) "Mentioned dates (n) ▾" -----------------------------------------------
+  /**
+   * What the notes only mention, one item per sentence of a date or (without a date of its own) of a festival or a concert: { key, kind
+   * ('date' | 'festival' | 'concert'), value (a date or null), sentence, why, rel ({ text, value } it is reckoned from), tags }.
+   */
+  function mentionedItems() {
+    if (!ruleOn('S220') || !S.release) return [];
+    const notes = String(S.release.notes || '');
+    dateFinds();
+    const dates = (S.notesMentioned || []).map((x, i) => ({ x, i })).filter(({ x }) => !(S.aboutOff && fromAboutText(x)));
+    const fests = (S.festivals || []).filter((f) => f.mention && !(S.aboutOff && fromAboutText(f)));
+    const sig = `${notes}|${ruleOn('S221')}`;
+    if (S.concertMentionsFor !== sig) {
+      S.concertMentionsFor = sig;
+      S.concertMentions = [];
+      if (ruleOn('S221')) {
+        const re = new RegExp(CONCERT_AT.source, CONCERT_AT.flags);
+        let m;
+        while ((m = re.exec(notes))) {
+          const place = concertPlace(m);
+          const sentence = sentenceAround(notes, m.index, m.index + m[0].length).trim();
+          if (place && concertKind(sentence) === 'mention' && !S.concertMentions.some((c) => c.place === place && c.sentence === sentence)) S.concertMentions.push({ place, sentence, index: m.index });
+        }
+      }
+    }
+    const concerts = (S.concertMentions || []).filter((c) => !(S.aboutOff && fromAboutText(c)));
+    const same = (a, b) => String(a || '').replace(/\s+/g, ' ').trim() === String(b || '').replace(/\s+/g, ' ').trim();
+    const tagsOf = (sentence) => [...fests.filter((f) => same(f.line, sentence)).map((f) => tr('mention.festival', { name: f.name })),
+      ...concerts.filter((c) => same(c.sentence, sentence)).map((c) => tr('mention.concert', { place: c.place }))];
+    // ((review) keys by the place in the notes, not by the place in the list – a pool entry keeps its item when rules change)
+    const items = dates.map(({ x }) => ({ key: `d${x.index}`, kind: 'date', value: x.value, text: x.text, sentence: String(x.sentence || '').trim(), why: x.why, rel: x.rel || null, tags: tagsOf(x.sentence) }));
+    fests.filter((f) => !dates.some(({ x }) => same(x.sentence, f.line))).forEach((f) => items.push({ key: `f${f.index}`, kind: 'festival', value: f.date, sentence: f.line, why: 'festival', rel: null,
+      tags: [tr('mention.festival', { name: f.name })] }));
+    concerts.filter((c) => !dates.some(({ x }) => same(x.sentence, c.sentence)) && !fests.some((f) => same(f.line, c.sentence))).forEach((c) => items.push({ key: `c${c.index}`, kind: 'concert', value: null,
+      sentence: c.sentence, why: 'concert', rel: null, tags: [tr('mention.concert', { place: c.place })] }));
+    return items;
+  }
+
+  /** The chip at the right of "Dates & tracks" (none without anything mentioned). */
+  function mentionChipHtml(items) {
+    if (!items.length) return '';
+    return `<button type="button" class="dci-textbtn dci-mention-btn" data-act="mention-toggle" aria-expanded="${!!S.mentionOpen}" aria-controls="dci-mention"
+      title="${esc(tr('mention.title'))}">${esc(tr('mention.chip', { n: items.length }))} ${S.mentionOpen ? '▴' : '▾'}</button>`;
+  }
+
+  /** Its list: the date, its sentence quoted, the date it is reckoned from – "→ Date pool" takes it in (a pool entry of its own). */
+  function mentionPanelHtml(items) {
+    if (!items.length) return '';
+    const li = (it) => {
+      const inPool = it.value && S.datePool.some((d) => d.found === `mention:${it.key}`);
+      const date = it.value ? `<code>${esc(formatDateValue(it.value))}</code>` : '';
+      const from = it.rel ? ` <span class="dci-sub dci-mention-rel">${esc(tr('mention.from', { text: it.rel.text, date: formatDateValue(it.rel.value) }))}</span>` : '';
+      const tags = it.tags.map((t) => `<span class="dci-tg-tag">${esc(t)}</span>`).join(' ');
+      const why = `<span class="dci-sub" title="${esc(tr(`mention.why.${it.why}`))}">${esc(tr(`mention.whyShort.${it.why}`))}</span>`;
+      const btn = it.value ? `<button type="button" class="dci-small" data-act="mention-pool" data-k="${esc(it.key)}" ${inPool ? 'disabled' : ''}
+        title="${esc(tr('mention.toPoolTitle'))}">${esc(tr(inPool ? 'mention.inPool' : 'mention.toPool'))}</button>` : '';
+      const s = it.sentence.length > 260 ? `${it.sentence.slice(0, 260)} …` : it.sentence;
+      return `<li data-mention="${esc(it.key)}">${date} ${tags} ${why}${from}<br><span class="dci-mention-line">${esc(tr('mention.quote', { line: s }))}</span> ${btn}</li>`;
+    };
+    return `<div class="dci-mention" id="dci-mention" data-el="mention" role="region" aria-label="${esc(tr('mention.title'))}">
+      <p class="dci-sub">${esc(tr('mention.intro'))}</p><ul class="dci-mention-list">${items.map(li).join('')}</ul></div>`;
+  }
+
+  /** "→ Date pool" of a mentioned date: a pool entry of its own (named as a found one), nowhere in the matrix. */
+  function mentionToPool(key) {
+    const it = mentionedItems().find((x) => x.key === key);
+    if (!it || !it.value || S.datePool.some((d) => d.found === `mention:${key}`)) return;
+    // ((review) an entry of its own – poolDateFor would give one of the same date found elsewhere, and the item would not know it)
+    const label = tr('datefind.poolName');
+    S.datePool.push({ id: newPoolId(), name: `${label} ${nextGroupNumber({ label })}`, begin: it.value.begin, end: it.value.end, ended: it.value.ended, found: `mention:${key}` });
+    savePool();
+    log('info', 'mentionPooled', { date: formatDateValue(it.value) });
+    renderDates();
   }
 
   /**
@@ -31650,6 +32041,9 @@
       tr('pools.nTracks', { n: S.trackPool.length }),
       tr('pools.nCells', { n: m.cells.length }),
     ].join(' · ');
+    // [Z-RELDATE] (3.132.0, S220) what the notes only mention: the chip "Mentioned dates (n) ▾" at the right, its list below the line
+    const mentioned = mentionedItems();
+    if (!mentioned.length) S.mentionOpen = false;
     // [178] (3.38.13) the whole line at the bottom of the block (collected item 178): the title with its arrow – ▲ open (the pools
     // above it), ▼ folded – and the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; folded, only this
     // line stays (until
@@ -31665,7 +32059,7 @@
           ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(trSrc('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
-        </span>` : ''}</span>
+        </span>` : ''}${mentionChipHtml(mentioned)}</span>
       </div>`;
     // [Z-TP] (3.42.1) the date pool and the track pool side by side, one below the other only when they do not fit in one line
     el.innerHTML = `${open ? `<div class="dci-pools-body">
@@ -31681,7 +32075,7 @@
       </div>` : S.poolsKeep && (S.datePool.length || S.trackPool.length)
         ? `<div class="dci-pools-kept dci-pools-pair"><div class="dci-pools-col">${datePoolHtml(true)}</div><div class="dci-pools-col">${trackPoolHtml(true)}</div></div>` : ''}
       ${S.poolClear ? poolClearHtml() : ''}
-      ${head}`;
+      ${head}${S.mentionOpen ? mentionPanelHtml(mentioned) : ''}`;
     refreshPoolSelects();
   }
 
@@ -34250,12 +34644,22 @@
   /** [S021] Why "live" is suggested for a track ('' if not). */
   function liveReason(i) {
     if (!ruleOn('S021')) return '';
-    return S.liveAuto.tracks.get(i) || S.liveAuto.release || '';
+    return S.liveAuto.tracks.get(i) || S.liveAuto.release || (concertLiveRow(i) ? 'concert' : '');
+  }
+  /**
+   * [Z-CONCERTHINT] (3.132.0, S221) The row of a concert's place that makes track i live – read each time ((review) it follows the row: left out
+   * by ✕, by its level or with its entry, back again; its tracks only).
+   */
+  function concertLiveRow(i) {
+    if (!ruleOn('S221')) return null;
+    return S.rows.find((r) => r.concert && r.level !== 'skip' && !entrySkipped(S.artists.get(r.artistKey) || {}) && (!r.tracks || !r.tracks.size || r.tracks.has(i))) || null;
   }
   /** [S021] The reason as text; a "Live Recording By" credit with its Discogs role and name. */
   function liveWhyText(i) {
     const reason = liveReason(i);
-    const c = reason === 'credit' ? (S.liveAuto.credits || new Map()).get(i) : reason === 'creditAll' ? S.liveAuto.releaseCredit : null;
+    const cr = reason === 'concert' && concertLiveRow(i);
+    const ca = cr && S.artists.get(cr.artistKey);
+    const c = reason === 'credit' ? (S.liveAuto.credits || new Map()).get(i) : reason === 'creditAll' ? S.liveAuto.releaseCredit : cr ? { place: (ca && (ca.mbName || ca.name)) || '' } : null;
     return tr(`matrix.liveWhy.${reason}`, c || { role: 'Live Recording By', name: '?' });
   }
   /** [S021] "li?": the track itself is a live recording (credit, title) or the release is live (group, format, notes). */
@@ -43274,9 +43678,20 @@
         renderSettings();
         S.overlay.querySelector('.dci-head [data-act="settings-open"]').focus();
         break;
+      // [Z-RELDATE] (3.132.0, S220) "Mentioned dates (n) ▾" and "→ Date pool"
+      case 'mention-toggle': {
+        S.mentionOpen = !S.mentionOpen;
+        renderDates();
+        const panel = S.mentionOpen && S.overlay.querySelector('[data-el=mention]');
+        if (panel) panel.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      case 'mention-pool':
+        mentionToPool(btn.dataset.k);
+        break;
       case 'supp-open': {
-        // open while a supplement is loaded (then the button only brings the bar into view)
-        const close = suppIsOpen() && !S.supp;
+        // [Z-SUPPTOGGLE] (3.132.0) folds also while a supplement is loaded
+        const close = suppIsOpen();
         S.suppOpen = !close;
         if (close && S.textForm && S.textForm.supp) S.textForm = null;
         renderSource();
@@ -52538,6 +52953,14 @@
       .dci-pools-body + .dci-pools-foot + .dci-pools-head, .dci-pools-kept + .dci-pools-head { margin-top: calc(var(--u, 1px) * 6); }
       .dci-pools-toggle:hover .dci-chev { background: var(--date-d); }
       .dci-pools-toggle:hover .dci-pools-title { text-decoration: underline; }
+      /* [Z-RELDATE] (3.132.0, S220) "Mentioned dates (n) ▾" at the right of "Dates & tracks", its list below the line */
+      .dci-mention-btn { margin-left: calc(var(--u, 1px) * 12); font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
+      .dci-mention { margin: calc(var(--u, 1px) * 4) 0 0 auto; max-width: calc(var(--u, 1px) * 760); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
+        border: 1px solid var(--line); border-radius: 6px; background: var(--soft); font-size: calc(var(--u, 1px) * 12); }
+      .dci-mention > p { margin: 0 0 calc(var(--u, 1px) * 4); }
+      .dci-mention-list { list-style: none; margin: 0; padding: 0; }
+      .dci-mention-list li { padding: calc(var(--u, 1px) * 4) 0; border-top: 1px solid var(--line); }
+      .dci-mention-line { font-style: italic; overflow-wrap: anywhere; }
       .dci-pools-tools { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); font-size: calc(var(--u, 1px) * 12); }
       .dci-pools-tools button:disabled { color: var(--muted); text-decoration: none; cursor: default; }
       .dci-pools-foot { display: flex; align-items: center; justify-content: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); flex-wrap: wrap;

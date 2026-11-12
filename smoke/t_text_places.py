@@ -1340,7 +1340,8 @@ def case_textlines3128():
     B) Francesca Pfeffer and Aina Lesan photography, credited "photo of Barry Guy" / "photo of Jordina Millà"; both supporters labels
        (MusicBrainz has no label relationship of support: switched to an artist – miscellaneous support credited "support"); FCM Studio a
        place mixed at and mastered at; RedRedPaw a place (no label).
-    C) No festival recording ("… my dream became true at the 2017 Ad Libitum … Festival" is another album's story), no date 2017 in the pool.
+    C) No festival recording ("… my dream became true at the 2017 Ad Libitum … Festival" is another album's story), no date 2017 in the pool;
+       (3.132.0, Z-FESTALL) the festival recognized, its hint "only mentioned", 2017 under "Mentioned dates".
     D) The log: each line left out with its reason; for a name without hits "MusicBrainz has no entry of this name"; the sentence of a date."""
     H.TITLES[:] = ['String Fables', 'Nuc', 'Duna', 'Decodification', 'Agora', 'Quart creixent', 'Plithorikós', 'Essential Sonances']
     H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 9)]
@@ -1412,10 +1413,12 @@ Supported by: Departament de Cultura de la Generalitat de Catalunya & Gesellscha
         gv = pg.evaluate(GROUP, 'Gesellschaft zur Verwetrung von Leistungsschutzrechten')
         print('B2) als Artist:', gv)
         results.append(bool(gv) and gv['kind'] == 'artist' and gv['chips'] == ['support'])
-        fest = pg.evaluate("document.querySelectorAll('.dci-festival').length")
+        # ([Z-FESTALL] 3.132.0) the festival recognized again, marked as only mentioned; 2017 under "Mentioned dates", not in the pool
+        fest = pg.evaluate("[document.querySelectorAll('.dci-festival p').length, document.querySelectorAll('.dci-festival-mention').length]")
         pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin.year])")
-        print('C) Festival-Hinweise:', fest, '| Pool:', pool)
-        results.append(fest == 0 and not any(y == 2017 for _, y in pool))
+        chip = pg.evaluate("(document.querySelector('[data-act=mention-toggle]') || {}).textContent || ''")
+        print('C) Festival-Hinweise:', fest, '| Pool:', pool, '| Chip:', chip)
+        results.append(fest == [1, 1] and not any(y == 2017 for _, y in pool) and 'Mentioned dates' in chip)
         log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.trim())")
         print('D)', [l for l in log if 'Left out:' in l][:3], [l for l in log if 'no entry of this name' in l][:2], [l for l in log if 'from the sentence' in l][-1:])
         results.append(sum('Left out:' in l and 'a line of the track list' in l for l in log) == 9 and any('Barry Guy: MusicBrainz has no entry of this name' in l for l in log)
@@ -1851,5 +1854,98 @@ def case_una3108():
                        and known == ['Drum Guy'] and 'again' in tip and '⇧' in tip and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_concert3132():
+    """Credits Importer 3.132.0 (collected item Z-CONCERTHINT, S221): a pasted text "Concert at Jazzclub Unterfahrt, Munich, 12 May 2019." –
+    A) the place Jazzclub Unterfahrt (area Munich) recorded at, a yellow suggestion (✓ / ✕ beside its note quoting the sentence); "Konzert im
+       Jazzhaus Freiburg" the same in German; the gig of a story ("After we first met at a gig at the Blue Note in 2010, …") no entry – a line
+       under "Mentioned dates" (Concert: Blue Note).
+    B) ✕ at the suggestion: the row of Jazzclub Unterfahrt left out."""
+    TEXT = """Concert at Jazzclub Unterfahrt, Munich, 12 May 2019.
+Anna Neu – piano
+After we first met at a gig at the Blue Note in 2010, we kept playing together whenever we could find the time for it."""
+    TEXT2 = """Konzert im Jazzhaus Freiburg am 3. Juni 2019.
+Anna Neu – Klavier"""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? { kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', rows: [...g.querySelectorAll('tr.dci-row')].map(r => [r.querySelector('.dci-drole').dataset.raw.trim(),
+    ((r.querySelector('.dci-concert-note') || {}).textContent || '').slice(0, 60), !!r.querySelector('[data-yell^="concert:"] [data-act=yell-no]'),
+    (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '']) } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2000)
+        u = pg.evaluate(ROWS, 'Jazzclub Unterfahrt')
+        blue = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].some(x => /Blue Note/.test(x.textContent))")
+        pg.click('[data-act=mention-toggle]')
+        pg.wait_for_timeout(300)
+        tags = pg.evaluate("[...document.querySelectorAll('[data-el=mention] .dci-tg-tag')].map(t => t.textContent.trim())")
+        print('A) Unterfahrt:', u, '| Blue Note:', blue, '| erwähnt:', tags)
+        results.append(bool(u) and u['kind'] == 'place' and u['rows'][0][0] == 'Recorded At' and u['rows'][0][1].startswith('A concert of the text: “Concert at Jazzclub')
+                       and u['rows'][0][2] and not blue and 'Concert: Blue Note' in tags)
+        pg.locator('[data-yell^="concert:"] [data-act=yell-no]').first.click()
+        pg.wait_for_timeout(500)
+        u2 = pg.evaluate(ROWS, 'Jazzclub Unterfahrt')
+        print('B) nach ✕:', u2)
+        results.append(bool(u2) and u2['rows'][0][3] == 'skip')
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT2)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)
+        pg.wait_for_timeout(2000)
+        f = pg.evaluate(ROWS, 'Jazzhaus Freiburg')
+        print('A2) Jazzhaus:', f)
+        results.append(bool(f) and f['rows'][0][0] == 'Recorded At' and f['rows'][0][2])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_concert3132r():
+    """Credits Importer 3.132.0 (review of Z-CONCERTHINT): a concert after a story's sentence in one line is the concert's ("The band first met in
+    2010. Concert at Jazzclub Unterfahrt, Munich."); a story with a verb of a recording stays a story ("After the two first met at a concert at the
+    Blue Note, they recorded this album." – no entry); "St. Paul's Cathedral" whole; "à l'Église Saint-Eustache"; a concert to come ("… will
+    celebrate the release with a show at Café Oto …") and "She shows at Gallery X" no entry; "Konzert im Dezember 2019 im Jazzhaus Freiburg" –
+    the second concert of the clause."""
+    TEXT = """The band first met in 2010. Concert at Jazzclub Unterfahrt, Munich.
+After the two first met at a concert at the Blue Note, they recorded this album.
+Concert at St. Paul's Cathedral, London.
+Concert à l'Église Saint-Eustache, Paris.
+The band will celebrate the release with a show at Café Oto on 12 May.
+She shows at Gallery X.
+Konzert im Dezember 2019 im Jazzhaus Freiburg.
+Anna Neu – piano"""
+    NAMES = "[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), !!g.querySelector('.dci-concert-note')])"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2000)
+        names = dict(pg.evaluate(NAMES))
+        print('A)', names)
+        results.append(all(names.get(n) for n in ('Jazzclub Unterfahrt', "St. Paul's Cathedral", 'Église Saint-Eustache', 'Jazzhaus Freiburg'))
+                       and not any(re.search(r'Blue Note|Café Oto|Gallery', n) for n in names))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
