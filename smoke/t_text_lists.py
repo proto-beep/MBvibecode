@@ -982,6 +982,86 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role])
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_text3128r():
+    """Credits Importer 3.128.0 (collected items Z-PROSE, Z-MASTERAT, Z-MIXMASTERAT, Z-TRACKLINE, Z-TITLELINE, Z-LIMITED, Z-BILING, Z-PHOTOS,
+    Z-SUPPORTED, Z-PROSETEXT; S202–S208), in Node – each line on its own:
+    A) "… to be replaced by newer tracks more in keeping with …" no credit (left out as prose); B) "Mixing & Mastering by Ferran Conangla at
+    FCM Studio, Barcelona" – FCM Studio mixed at and mastered at; C) "1. String Fables 9,14", "5. Agora 7, 49", "Total Time: 59,41",
+    "3. Flying Teapot - including: …" (a title of the release) left out as a track list; D) "Limited to 100 copies." left out (edition);
+    E) "Inspelad live på Skjul Fyra Sex i Göteborg/recorded live at Skjul Fyra Sex in Gothenburg, Sweden." – recorded at Skjul Fyra Sex,
+    the Swedish half left out (translation); F) "Photos: Barry Guy by Francesca Pfeffer, Jordina Millà by Aina Lesan" – two photographers,
+    credited "photo of …"; G) "Supported by: Departament de Cultura … & Gesellschaft …" – two labels, credited "support"; H) "Liner notes:
+    Maciej Lewenstein" and "Maciej Lewenstein" below – its signature."""
+    titles = ['String Fables', 'Nuc', 'Flying Teapot - Including: In a Session Not C ~ IAO Chant From the Melting Paraiso U.F.O.', 'Decodification', 'Agora']
+    node = NODE.replace("artistNames: c.artists || [], titleNames: c.titles || [] });",
+                        "artistNames: c.artists || [], titleNames: c.titles || [], trackTitles: c.titles || null, trackCount: (c.titles || []).length });")
+    node = node.replace("companies: r.companies.map((x) => [x.who.name, x.role, ...(x.entity ? [x.entity] : [])]),",
+                        "companies: r.companies.map((x) => [x.who.name, x.role, x.roleCredit || '']), ignoredWhy: r.ignored.map((x) => x.why),")
+    node = node.replace("credits: r.credits.map((x) => [x.who.name, x.role",
+                        "credits: r.credits.map((x) => [x.who.name, x.role, x.roleCredit || ''")
+    cases = ['A few of the tracks originally performed at Roadburn have been lost along the way, to be replaced by newer tracks more in keeping with the rest of the album’s mood.',
+             'Mixing & Mastering by Ferran Conangla at FCM Studio, Barcelona',
+             '1. String Fables 9,14\n5. Agora 7, 49\nTotal Time: 59,41\n3. Flying Teapot - including: In A session Not C ~ IAO Chant From The Melting Paraiso U.F.O.',
+             'Limited to 100 copies.',
+             'Inspelad live på Skjul Fyra Sex i Göteborg/recorded live at Skjul Fyra Sex in Gothenburg, Sweden.',
+             'Photos: Barry Guy by Francesca Pfeffer, Jordina Millà by Aina Lesan',
+             'Supported by: Departament de Cultura de la Generalitat de Catalunya & Gesellschaft zur Verwetrung von Leistungsschutzrechten',
+             'Liner notes: Maciej Lewenstein\nMaciej Lewenstein']
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t, 'titles': titles} for t in cases])],
+                        capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for t, x in zip(cases, g or []):
+        print('  ', t[:60].replace('\n', ' / '), '→', x['credits'], x['companies'], x['ignoredWhy'], x['unrecognized'])
+    ok = g is not None
+    if ok:
+        co = lambda k: [c[:2] for c in g[k]['companies']]
+        ok = (not g[0]['credits'] and g[0]['ignoredWhy'] == ['prose'] and not g[0]['unrecognized']
+              and ['FCM Studio', 'Mixed At'] in co(1) and ['FCM Studio', 'Mastered At'] in co(1)
+              and g[2]['ignoredWhy'] == ['tracklist'] * 4 and not g[2]['unrecognized']
+              and g[3]['ignoredWhy'] == ['edition']
+              and co(4) == [['Skjul Fyra Sex', 'Recorded At']] and g[4]['ignoredWhy'] == ['translation']
+              and sorted(c[:3] for c in g[5]['companies'] + g[5]['credits']) == [['Aina Lesan', 'Photography By', 'photo of Jordina Millà'], ['Francesca Pfeffer', 'Photography By', 'photo of Barry Guy']]
+              and [c[1:] for c in g[6]['companies']] == [['Supported By', 'support']] * 2 and len(g[6]['companies']) == 2
+              and g[7]['ignoredWhy'] == ['signature'] and not g[7]['unrecognized'])
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+def case_text3128rr():
+    """Credits Importer 3.128.0 (review of S203–S208), in Node: A) "Recorded and mixed by Jane Doe at Studio X/Mastered by John Roe at Studio
+    Y" – no half left out as a translation (two English halves); B) "1. Song Two (Jane Doe) 5:32" no line of a track list; C) "Limited
+    edition of 300 copies, cover art by Jane Doe" – not left out as an edition; D) "Supported by Jane Doe on drums" – no label "Jane Doe on drums";
+    E) "all songs written, performed and recorded by sophie in her bedroom over the winter of the year" – "sophie" kept; F) "Jane Doe (alto
+    saxophone, flute, …)" with 20 words – no prose."""
+    node = NODE.replace("artistNames: c.artists || [], titleNames: c.titles || [] });",
+                        "artistNames: c.artists || [], titleNames: c.titles || [], trackTitles: c.titles || null, trackCount: (c.titles || []).length });")
+    node = node.replace("companies: r.companies.map((x) => [x.who.name, x.role, ...(x.entity ? [x.entity] : [])]),",
+                        "companies: r.companies.map((x) => [x.who.name, x.role]), ignoredWhy: r.ignored.map((x) => x.why),")
+    cases = ['Recorded and mixed by Jane Doe at Studio X/Mastered by John Roe at Studio Y',
+             '1. Song Two (Jane Doe) 5:32',
+             'Limited edition of 300 copies, cover art by Jane Doe',
+             'Supported by Jane Doe on drums',
+             'all songs written, performed and recorded by sophie in her bedroom over the winter of the year',
+             'Jane Doe (alto saxophone, flute, clarinet, bass clarinet, piccolo, recorder, tin whistle, oboe, english horn, bassoon, contrabassoon, soprano saxophone)']
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([{'text': t, 'titles': ['Song One', 'Song Two']} for t in cases])],
+                        capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for t, x in zip(cases, g or []):
+        print('  ', t[:50], '→', x['credits'][:4], x['companies'], x['ignoredWhy'], x['unrecognized'])
+    ok = g is not None
+    if ok:
+        ok = ('translation' not in g[0]['ignoredWhy']
+              and 'tracklist' not in g[1]['ignoredWhy']
+              and 'edition' not in g[2]['ignoredWhy']
+              and not any(c[1] == 'Supported By' for c in g[3]['companies'])
+              and any(c[0] == 'sophie' for c in g[4]['credits'])
+              and 'prose' not in g[5]['ignoredWhy'])
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_rmx3126r():
     """Credits Importer 3.126.0 (review of Z-RMXTITLE, S200), in Node – remixParts: the names of remixers in titles. "(Stereo Remix)",
     "(2009 Stereo Remix)", "(The Remix)", "(In Dub)", "(Disco Dub)", "(Acoustic Remix)", "(2nd Remix)", "(Remix)", "(Extended Mix)",

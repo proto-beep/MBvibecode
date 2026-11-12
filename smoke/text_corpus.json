@@ -2271,10 +2271,13 @@
       "expect": {
         "credits": [],
         "companies": [],
-        "unrecognized": [
-          "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals."
-        ],
-        "ignored": []
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals.",
+            "why": "prose"
+          }
+        ]
       }
     },
     {

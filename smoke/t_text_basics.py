@@ -1155,7 +1155,7 @@ def case_cloudpond():
        engineer. 3.39.2 (collected item 188, list T059): "Pacific coast" the area Pacific Coast (recorded in), not found in MusicBrainz
        – nothing not recognized.
     B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
-       Soundscape; the entry says "RR = Robert Rich (initials)" – 3.39.7 with "Layout by R.R." too: "RR, R.R. = Robert Rich (initials)".
+       Soundscape ((3.128.0, Z-MIXMASTERAT) recorded, mixed and mastered at); the entry says "RR = Robert Rich (initials)" – 3.39.7 with "Layout by R.R." too: "RR, R.R. = Robert Rich (initials)".
     C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
        used with permission" left out; "Photos © Ann Blow": photography credited "photo"; "©2026 Robert Rich" as before.
     D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both; 3.39.7 (collected item
@@ -1220,7 +1220,8 @@ Layout by R.R."""
         results.append(fr is not None and fr[3] == '2022 – 2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
                        and 'Ambisonic' not in ''.join(g) and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
         results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR, R.R. = Robert Rich (initials)' and 'RR' not in g
-                       and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
+                       and 'RR' in rr['ac'] and [r[0] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['Recorded At', 'Mixed At', 'Mastered At']
+                       and (g.get('Soundscape') or {'rows': [[0, '']]})['rows'][0][1] == 'recorded at')
         mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}
         results.append([r[1:3] for r in mk['rows']] == [['artwork', 'cover']] and [r[1:3] for r in ab['rows']] == [['photography', 'photo']]
                        and [r[1] for r in lab['rows']] == ['copyright'] and any(x.startswith('detail used with permission') for x in ign))
