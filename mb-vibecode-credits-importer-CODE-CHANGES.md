@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.132.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.133.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -22,7 +22,14 @@ How far back the entries go:
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.132.0 · 2026-11-12
+## Import 3.133.0 · 2026-11-12
+
+- **Z-IMPROV (S222):** `IMPROV_WORDS`, `IMPROV_TITLE` (module); in `TEXT.parse` `IMPROV_LINE` / `improvLine` (last of the line pipeline: "… improvised by X" → "Composed by X", the line as written in `improvLines`; names with a capital only; S222 off: left out as `improv`), the credits of those lines `improv` (the line); `groupCredits` / the rows carry it (`row.improv`); `improvOf(i)` (a work row with `improv` on the track, or the title), `improvMarkHtml` – in `workFrontCell`, the column head of the works matrix, the head of the entry (its work rows), `roleCell`, the compact line and the line of the entry matrix. Quick switch S222 (group works).
+- **Z-QSNAMES:** `quickSwitchesHtml` – `.dci-qname` (`quick.name.<id>`) above `.dci-qdesc` (`quick.<id>`); the missing German, Spanish and French sentences of D026, S078, S114, S155, S160, S170.
+- **S122 removed:** the rule, its switch and text (`DEFAULT_OFF_RULES`, `QUICK_SWITCHES`, `QUICK_GROUPS`); `TEXT.parse` reads the songs with `songsOk` alone (S118).
+- **Tests:** `t_text_lists.py improv3133`, `t_text_lists.py improvtitle3133`, `t_mapping.py qsnames3133` – new, fail on 3.132.0; `t_mapping.py improv3133r` (review). Adjusted: `t_rules_window.py quickswitch` (S222 for S122, the heading first), `t_mapping.py z382` (the songs without the switch).
+- **Review:** `improvSplit` after `joinBroken` (a line broken in two), a track scope first ("Tracks 1-3 improvised by …"), the noun after the word ("Improvised music by"), "by:"; a dash only with spaces, the names checked (no colon, digits, words of a heading – "Impro-Jazz by …", "Improv – Recorded live at …" nothing); the next clause of a verb its own line ("…, enregistré par X"); instruments in brackets: the line as written read as well; a text no other line has (`Composition by` … – another "Composed by X" keeps its line); only the composers marked, trimmed lines; off: left out only when the line gave nothing; `groupCredits` keeps composing and improvising apart (`|improv`); the marks only on the work level; `improvTitle` – plural, "Part 1", roman numbers in capitals only; `songLists` outside YouTube without "Artist - Title" and parts written small (`strictNo`); `--muted` with its fallback.
+
 
 - **Z-SUPPTOGGLE:** `suppIsOpen` without `S.supp`; `loadSupplement` sets `S.suppOpen`; `supp-open` folds always.
 - **Z-RELDATE (D034):** `REL_DATE_FORMS` (English, German, Spanish, French; groups of month, season or number), `relDate` (`spec.kind` month / season / year; a month or season "last" / "next" needs the month of the reference; seasons by `SEASON_START` as periods), `relRefFinder` (the dates of the paragraph without D034, ℗ / © and release dates – else the datelines; one date or none); `findDates` gives the matchers `relRef` (lazily) and its finds `rel` ({ text, value, words }); `noRel` for the finder itself. Quick switch D034 (group dates).
