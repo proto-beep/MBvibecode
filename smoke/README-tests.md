@@ -454,6 +454,10 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   workdate3130: 3.130.0 (Z-WORKDATE, Z-WORKUNDO, S215): the performance date onto a link with a work MusicBrainz has –
+                                #     added (staged as an edit of the link), "more precise", × and ↺, the switch off, a date dropped, MusicBrainz more
+                                #     precise; "✕ No new work" after "＋ New works"
+                                #   workdate3130r: 3.130.0 (review): MusicBrainz more precise – nothing; a date dropped: "changed", staged, "– staged"
                                 #   wnew398: 3.98.0 (Z-WNEW, S156): "＋ New" greyed at a linked work – a new work instead, "↺ keep linked work";
                                 #     staged: the old link removed, "arrangement of" only after ✓ (the log says it waits)
                                 #   pps390: 3.90.0 (Z-PPS, S142): Pub Co (Writer W's personal publisher) follows Writer W – on with track 3, off with
@@ -891,6 +895,12 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   bzk3105: 3.105.0 (Z-BZK, Q014): "Bouzouki" – bouzouki · irish bouzouki · tzouras (full list and matrix), the one chosen
                                 #   itree3107: 3.107.0 (Z-ITREE): the instruments flat as on MusicBrainz – without the workflow's file MusicBrainz asked
                                 #     (instrument-rels), the automatic row "saxophone"; with the file nothing asked; the kinds of bouzouki from the tree
+                                #   outwhy3130: 3.130.0 (Z-OUTWHY, S216): rows out because MusicBrainz has them – "MusicBrainz has it", the same date,
+                                #     "the date more precisely" (status and "Taken out:"); off
+                                #   dglineup3130: 3.130.0 (Z-DGLINEUP, S217): Discogs's lineup against its track credits – the question, the proposal
+                                #     (one row each, "all tracks except …", the more precise instrument), per track (no abbreviated credit), the lineup's; off
+                                #   dglineup3130r: 3.130.0 (review): two other saxophones on tracks – the lineup's stays, theirs on their tracks; another
+                                #     instrument on a track a row of its own; the answer taken again when the page is opened again
                                 #   dsup3107: 3.107.0 (Z-DSUP3, Z-DSUP2, Z-DSUPWHY): a role MusicBrainz has (on Skip) gets the pool's date – back with "add" taken,
                                 #     staged as edits; one with the date already stays; a producer: no "only on MusicBrainz"; developer mode: why no box
                                 #   dsup3106: 3.106.0 (Z-DSUP, S172–S174): against MusicBrainz – only on MusicBrainz, a conflict held, covered, an update,
