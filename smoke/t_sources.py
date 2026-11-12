@@ -435,7 +435,9 @@ def case_supp():
        anew (no marks, no list).
     F) The old script on the page: this one stays out and says so; started second, it warns after 3 s.
     G) Import 3.8.0: a source the release does not link to, typed into the field of "Supplement with" (another Bandcamp
-       album): it supplements like a linked one; the loaded source itself is refused."""
+       album): it supplements like a linked one; the loaded source itself is refused.
+    B2) Credits Importer 3.132.0 (collected item Z-SUPPTOGGLE): with the supplement loaded, "+ Supplement" folds the bar (until 3.131.0 it
+       stayed open) – the button keeps "BC ✓", the list of the supplement stays – and opens it again."""
     import re
 
     H.attr(9120, 'trumpet', 14, 14)
@@ -509,6 +511,16 @@ def case_supp():
             and m_bass == ['DG', 'BC'] and m_keys == ['BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
             and any('via the Bandcamp link: Test Band' in h for h in hints)
         results.append(b_ok)
+        # [Z-SUPPTOGGLE] (3.132.0) the bar folds on "+ Supplement" also while a supplement is loaded (the button keeps "BC ✓"), and opens again
+        f0 = pg.evaluate("[!!document.querySelector('.dci-suppbar'), document.querySelector('.dci-head [data-act=supp-open]').getAttribute('aria-expanded')]")
+        pg.click('.dci-head [data-act=supp-open]')
+        pg.wait_for_timeout(200)
+        f1 = pg.evaluate("[!!document.querySelector('.dci-suppbar'), document.querySelector('.dci-head [data-act=supp-open]').getAttribute('aria-expanded'), document.querySelector('.dci-head [data-act=supp-open]').textContent.replace(/\\s+/g, ' ').trim(), !document.querySelector('[data-el=supp]').hidden]")
+        pg.click('.dci-head [data-act=supp-open]')
+        pg.wait_for_timeout(200)
+        f2 = pg.evaluate("!!document.querySelector('.dci-suppbar')")
+        print('B2) Leiste geladen:', f0, '| zu:', f1, '| wieder auf:', f2)
+        results.append(f0 == [True, 'true'] and f1[:2] == [False, 'false'] and f1[2].endswith('BC ✓') and f1[3] and f2)
         # C) Test Band unticked, take over
         pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Test Band')).querySelector('input').click()")
         pg.wait_for_timeout(200)

@@ -1034,4 +1034,145 @@ Live at Club Montmartre, Copenhagen, Denmark
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_rel3132():
+    """Credits Importer 3.132.0 (collected items Z-RELDATE, Z-FESTALL; D034, S220): relative dates and what the notes only mention.
+    A) In Node: "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September",
+       "im Frühjahr darauf", "el pasado septiembre", "septembre dernier", "il y a deux ans", "last winter" reckoned from a date of the text (a
+       dateline "Berlin, June 2019", a date of the same paragraph); seasons as periods; two possible dates ("Berlin, June 2019" and "Oslo,
+       May 2020") or none: nothing; "the last may be" no month.
+    B) The dashboard, Discogs notes with a dateline, "This album was recorded last September at Studio X" (a sentence of the recording:
+       2018-09 under Performance), a story ("The two first met at a concert at the Village Vanguard in July 2015 …"), a festival of a story
+       ("Their friendship began at the 2011 Moers Festival …") and "Two years ago we played in Oslo for the first time.": 2015-07, 2011 and
+       2017 not in the pool, no place Village Vanguard; the festival hint says "only mentioned".
+    C) "Mentioned dates (3) ▾" at the right of "Dates & tracks": its list – the sentence, "Concert: Village Vanguard", the festival, "reckoned
+       from “June 2019”"; "→ Date pool" takes 2015-07 into the pool (the button then disabled)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const T = ['Berlin, June 2019\n\nWe recorded this last September in Oslo.', 'Berlin, June 2019\n\nRecorded earlier this year at Studio X.',
+ 'In March 2018 we toured. The following spring we recorded the album.', 'Recorded that summer. It was 2015.', 'Recorded last September.',
+ 'Berlin, June 2019\nOslo, May 2020\n\nRecorded last September.', 'Wien, 3. Juni 2019\n\nAufgenommen im Frühjahr darauf und letzten September.',
+ 'Madrid, junio de 2019\n\nGrabado el pasado septiembre.', 'Paris, juin 2019\n\nEnregistré en septembre dernier, il y a deux ans.', 'November 2019: recorded last winter',
+ 'the last may be fine, 2019', 'In 2019 we toured. Recorded last September.'];
+console.log(JSON.stringify(T.map((t) => m.findDates(t).filter((d) => d.rule === 'D034').map((d) => [d.text.replace(/\.$/, ''), m.formatDateValue(d.value), d.rel.text]))));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(js.stdout) if not js.returncode else js.stderr[-400:]
+    print('A)', out)
+    results = [out == [[['last September', '2018-09', 'June 2019']], [['earlier this year', '2019', 'June 2019']], [['The following spring', '2019-03 – 2019-05', 'March 2018']],
+                       [['that summer', '2015-06 – 2015-08', '2015']], [], [],
+                       [['im Frühjahr darauf', '2020-03 – 2020-05', '3. Juni 2019'], ['letzten September', '2018-09', '3. Juni 2019']],
+                       [['el pasado septiembre', '2018-09', 'junio de 2019']], [['septembre dernier', '2018-09', 'juin 2019'], ['il y a deux ans', '2017', 'juin 2019']],
+                       [['last winter', '2018-12 – 2019-02', 'November 2019']], [], []]]
+    NOTES = """Berlin, June 2019
+
+This album was recorded last September at Studio X, Berlin.
+
+The two first met at a concert at the Village Vanguard in July 2015 and have toured together ever since.
+
+Their friendship began at the 2011 Moers Festival, where both were playing in other bands.
+
+Two years ago we played in Oslo for the first time."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        fmt = lambda d: '-'.join(str(d['begin'][k]).zfill(2 if k != 'year' else 4) for k in ('year', 'month') if d['begin'].get(k))
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        cells = sorted((c['col'], fmt(pool[c['date']])) for c in mx.get('cells', []) if c['date'] in pool)
+        dates = sorted(fmt(d) for d in pool.values())
+        vv = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].some(x => /Vanguard/.test(x.textContent))")
+        fest = pg.evaluate("[...document.querySelectorAll('.dci-festival p')].map(p => [p.textContent.replace(/\\s+/g, ' ').trim().slice(0, 80), !!p.querySelector('.dci-festival-mention')])")
+        print('B) Pool:', dates, '| Matrix:', cells, '| Vanguard:', vv, '| Festival:', fest)
+        results.append(cells == [('performance', '2018-09')] and '2019-06' in dates and not any(x.startswith(('2015', '2011', '2017')) for x in dates)
+                       and not vv and len(fest) == 1 and 'Moers' in fest[0][0] and fest[0][1])
+        chip = pg.evaluate("(document.querySelector('.dci-pools-head .dci-pools-r [data-act=mention-toggle]') || {}).textContent")
+        pg.click('[data-act=mention-toggle]')
+        pg.wait_for_timeout(300)
+        items = pg.evaluate("""[...document.querySelectorAll('[data-el=mention] li')].map(li => [li.dataset.mention, (li.querySelector('code') || {}).textContent || '',
+          [...li.querySelectorAll('.dci-tg-tag')].map(t => t.textContent.trim()), (li.querySelector('.dci-mention-rel') || {}).textContent || '', li.querySelector('.dci-mention-line').textContent.slice(0, 30)])""")
+        print('C) Chip:', chip, '| Liste:', items)
+        by = {i[1]: i for i in items}
+        results.append((chip or '').strip().startswith('Mentioned dates (3)') and set(by) == {'2015-07', '2011', '2017'}
+                       and by['2015-07'][2] == ['Concert: Village Vanguard'] and any('Moers Festival' in t for t in by['2011'][2])
+                       and 'reckoned from “June 2019” (2019-06)' in by['2017'][3] and by['2015-07'][4].startswith('“The two first met'))
+        k = by['2015-07'][0]
+        pg.click(f'[data-el=mention] li[data-mention="{k}"] [data-act=mention-pool]')
+        pg.wait_for_timeout(400)
+        pool2 = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.found, d.begin.year, d.begin.month])")
+        dis = pg.evaluate(f"document.querySelector('[data-el=mention] li[data-mention=\"{k}\"] [data-act=mention-pool]').disabled")
+        print('C2) Pool:', pool2, '| Knopf aus:', dis)
+        results.append([f'mention:{k}', 2015, 7] in pool2 and dis)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_rel3132r():
+    """Credits Importer 3.132.0 (review of Z-RELDATE, S220): the story's part of a sentence of the recording – "Aufgenommen im Mai 2019, nachdem die
+    Band sich 2010 kennengelernt hatte.", "They met in 2008 and recorded this album in 2017." – 2010 and 2008 only mentioned, 2019-05 and 2017 in
+    the pool; "In March 2018 the band went into the studio with producer John Doe for three days." stays in the pool (a long sentence of a
+    studio); "→ Date pool" of a date the pool has from elsewhere still an entry of its own."""
+    NOTES = """Aufgenommen im Mai 2019, nachdem die Band sich 2010 kennengelernt hatte.
+
+In March 2018 the band went into the studio with producer John Doe for three days.
+
+They met in 2008 and recorded this album in 2017.
+
+The two first met in March 2018 and toured for a while."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        fmt = lambda d: '-'.join(str(d['begin'][k]).zfill(2 if k != 'year' else 4) for k in ('year', 'month') if d['begin'].get(k))
+        dates = sorted(fmt(d) for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')"))
+        pg.click('[data-act=mention-toggle]')
+        pg.wait_for_timeout(300)
+        items = pg.evaluate("[...document.querySelectorAll('[data-el=mention] li')].map(li => [li.dataset.mention, (li.querySelector('code') || {}).textContent || ''])")
+        print('A) Pool:', dates, '| erwähnt:', items)
+        results.append(dates == ['2017', '2018-03', '2019-05'] and sorted(v for _, v in items) == ['2008', '2010', '2018-03'])
+        k = [k for k, v in items if v == '2018-03'][0]
+        pg.click(f'[data-el=mention] li[data-mention="{k}"] [data-act=mention-pool]')
+        pg.wait_for_timeout(400)
+        found = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => d.found)")
+        dis = pg.evaluate(f"document.querySelector('[data-el=mention] li[data-mention=\"{k}\"] [data-act=mention-pool]').disabled")
+        print('B)', found, dis)
+        results.append(f'mention:{k}' in found and dis)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

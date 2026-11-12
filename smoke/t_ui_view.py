@@ -372,7 +372,8 @@ def case_ui301():
 
     def _rel():
         d = _orig_rel()
-        d['notes'] += ' The band met on 4 July 2000.'
+        # ([Z-RELDATE] 3.132.0) not a story's date – "The band met on 4 July 2000." is only mentioned now (S220)
+        d['notes'] += ' Berlin, 4 July 2000.'
         return d
 
 

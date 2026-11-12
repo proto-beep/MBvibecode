@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-12 | 3.132.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -104,6 +105,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.132.0
+
+- **"＋ Supplement" folds again** (collected item Z-SUPPTOGGLE): with a supplement loaded, the button folds the bar "Supplement with" and opens it again (until 3.131.0 it stayed open); the button keeps its mark ("BC ✓") and the list of the supplement stays.
+- **Festivals are always recognized** (Z-FESTALL; rule S220): a festival in a sentence that is not about the recording ("my dream became true at the 2017 … Festival") is found again – its hint says "only mentioned: check the context", and nothing is set by itself.
+- **Concerts at a place** (Z-CONCERTHINT; S221): "Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus Freiburg", "concierto en la Sala …", "concert au Théâtre …" give the place as "recorded at" – a yellow suggestion with ✓ / ✕ and its sentence – and "live" on the links to the works.
+- **Relative dates** (Z-RELDATE; D034, a quick switch, on): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "el pasado septiembre", "en septembre dernier" – reckoned from a date of the text itself (a dateline "Berlin, June 2019" or a date of the same paragraph), never from the date of the release; with two possible dates or none, nothing. Seasons are periods (spring March–May …).
+- **"Mentioned dates (n) ▾"** (S220): what a sentence only mentions – a story ("after the two first met at a concert in July 2019"), a relative date not about the recording, a date in a long sentence without a word of the recording, a festival or a concert of such a sentence – is suggested nowhere. The chip at the right of "Dates & tracks" lists it with its sentence (and the date a relative one is reckoned from); "→ Date pool" takes a date in by hand.
 
 ### Import 3.131.0, Companion 1.21.0
 
