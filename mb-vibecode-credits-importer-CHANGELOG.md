@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.127.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.128.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.128.0
+
+- **Remixes** (Z-RMXSTAGE, Z-RMXONLY; rules S200, S210): a remixer from a title is staged on its remix again (until now the row had no type – "choose a relationship type" – and nothing was staged); linking him (a suggestion, a search, an MBID) answers the question – no extra "Take as remixer". Credits of the whole release (producer, performer, writer, recorded at …) leave out the remixes; what the source names for a remix stays.
+- **The button beside the field** (Z-APPLYLABEL): "Search" for a name, "Link" for an MBID or an address, "Search / Link" while empty.
+- **Dedications left out** (Z-DEDBACK): listed below the box "Dedications & tributes" with "↺ back".
+- **Places of "at"** (Z-MASTERAT, Z-MIXMASTERAT; S202): "Mastered by Antony Ryan at RedRedPaw" – RedRedPaw a place, not a label; "Mixing & Mastering by X at Y" – Y mixed at and mastered at.
+- **Texts** (S203–S208): a long sentence gives no name in small letters ("… replaced by newer tracks more …"); paragraphs of prose are left out as such (folded, their start shown), the name below liner notes as their signature; lines of a track list ("1. String Fables 9,14", "3. Flying Teapot – including: …") and "Total Time" are left out; the edition ("Limited to 100 copies"); a line of two languages ("Inspelad live på …/recorded live at …") is read in English, the other half left out as its translation; "Photos: Barry Guy by Francesca Pfeffer" – photography credited "photo of Barry Guy"; "Supported by: A & B" – two labels (MusicBrainz has no relationship of a label for support: switched to an artist they get miscellaneous support credited "support").
+- **Festivals** (Z-FESTCTX; S209): a festival only from a sentence about a recording; the hint quotes its sentence; a year in a long story is no date of the release.
+- **Log** (Z-LOGMORE): a name search without hits ("MusicBrainz has no entry of this name") or failed; the sentence of a date and of a festival; ⚙ Settings → General "Each line not recognized or left out in the log".
 
 ### Import 3.127.0
 
