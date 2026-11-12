@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.130.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.131.0, Companion 1.21.0
+
+- **The line of the release page after "Enter edit"** (collected item Z-GAPREFRESH; rule S218): at "Enter edit" the dashboard counts once more what is still missing – the total is certain then; the release page shows that number ("After “Enter edit” on … the dashboard counted 2 still missing") and no line at all when less than a fifth of the credits' relationships are still missing.
+- **Taken out in the editor by hand** (Z-CPREMOVED; S219, Companion 1.21.0): a credit whose staged relationships you took out in the relationship editor yourself gets a grey ✗ ("taken out in the relationship editor by you") after "Enter edit" instead of the red one – until the next import.
+- **"＋ Supplement" with images** (Z-SUPPALL): beside the linked sources, the text and an address, "＋ 🖼️ Images …" opens the window of the text from cover art – the artwork, the back cover, a booklet, a Discogs release's images; its text supplements the import.
+- **All Discogs images** (Z-DGIMAGES): "Load Discogs images" takes all images of the release from Discogs's API at their size there (as the companion does); the page only when the API gives none.
+- **Five more statistics** (Z-STATS): where the relationships come from (Discogs, Bandcamp, YouTube, MusicBrainz, a text, text from images), the lines left out by reason, supplemented instead of new, the suggestions confirmed, declined or left open, remixes and commissions – counted from 3.131.0 on.
 
 ### Import 3.130.0
 

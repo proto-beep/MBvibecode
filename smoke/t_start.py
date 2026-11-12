@@ -681,6 +681,61 @@ def case_gapline():
 
 
 
+def case_gaprefresh3131():
+    """Credits Importer 3.131.0 (collected item Z-GAPREFRESH; rule S218): "Enter edit" after a dashboard import.
+    A) The dashboard imports from Discogs, everything that can be staged is staged; "Enter edit" (its form submitted): the number of the line
+       counted once more – what is still missing – and kept with "afterEdit".
+    B) The release page: less than a fifth of the credits' relationships still missing – no line (developer mode: "after “Enter edit” …").
+    C) 20 still missing after "Enter edit": the line, "After “Enter edit” on … the dashboard counted 20 still missing."
+    D) Rule S218 off: the line as before (the small number after "Enter edit" does not hide it)."""
+    REL = H.REL
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        before = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null')")
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(3000)
+        # "Enter edit": the edit note in a form with its submit button (as in MusicBrainz's editor), the submission stopped here
+        pg.evaluate("""() => { const t = document.getElementById('edit-note-text'); const f = document.createElement('form'); t.parentNode.insertBefore(f, t); f.appendChild(t);
+          const btn = document.createElement('button'); btn.type = 'submit'; btn.textContent = 'Enter edit'; f.appendChild(btn); f.addEventListener('submit', (e) => e.preventDefault()); }""")
+        pg.evaluate("document.getElementById('edit-note-text').form.requestSubmit()")
+        pg.wait_for_timeout(800)
+        after = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null')")
+        log = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Enter edit' in x and 'still missing' in x]
+        print('A) vorher:', before, '| nach Enter edit:', after, log)
+        results.append(before and not before.get('afterEdit') and after and after.get('afterEdit') and after['n'] < before['n'] and log and not errs)
+        pg.evaluate("localStorage.setItem('dci-dev', 'true'); localStorage.setItem('dci-gap-why', 'true')")
+        pr, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        pr.wait_for_timeout(3000)
+        bb = pr.evaluate("[!!document.querySelector('.dci-gapline'), (document.querySelector('.dci-gapwhy') || {}).textContent || '']")
+        print('B)', bb)
+        results.append(not bb[0] and 'after “Enter edit”' in bb[1])
+        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ ...JSON.parse(localStorage.getItem('dci-gap-exact:{REL}')), n: 20, open: 0 }}))")
+        pr.reload()
+        pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        c = pr.evaluate("document.querySelector('.dci-gapline span').textContent")
+        print('C)', c)
+        results.append(bool(re.search(r'After “Enter edit” on \S+ the dashboard counted 20 still missing\.$', c)))
+        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ ...JSON.parse(localStorage.getItem('dci-gap-exact:{REL}')), n: 0, open: 1 }})); localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S218']))")
+        pr.reload()
+        pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        d = pr.evaluate("document.querySelector('.dci-gapline span').textContent")
+        print('D)', d)
+        results.append('still missing' in d and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_gapsplit():
     """Credits Importer 3.41.15 (the check of Block BF, Z-SUB): the line of the release page reads an index of Discogs whose sub-tracks
     are tracks of their own in MusicBrainz as these tracks, as the dashboard does. Discogs: 1, 2 and the index "Suite X" with 3a

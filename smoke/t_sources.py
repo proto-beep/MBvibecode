@@ -486,7 +486,7 @@ def case_supp():
         H.open_supp(pg)
         print('A) vor „Ergänzen“ zu:', closed)
         bar = pg.evaluate("[...document.querySelectorAll('.dci-suppbar .dci-supp-btn')].map(b => b.textContent.trim())")
-        a_ok = closed == [True, 'false'] and bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ Text …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
+        a_ok = closed == [True, 'false'] and bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ Text …', '＋ 🖼️ Images …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
             and not pg.evaluate("window.__gmXhr.length") and not pg.locator('.dci-srcmark').count()
         print('A) Leiste:', bar, '| Bandcamp-Abrufe:', pg.evaluate("window.__gmXhr.length"), '| Marken:', pg.locator('.dci-srcmark').count())
         results.append(a_ok)
