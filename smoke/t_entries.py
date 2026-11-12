@@ -4435,4 +4435,245 @@ def case_instlca3113():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_outwhy3130():
+    """Credits Importer 3.130.0 (collected item Z-OUTWHY; rule S216): why a row is out – only for those MusicBrainz has. MusicBrainz: Same Man
+    double bass on all four recordings with 2001-03-02, Even Man trombone with 2001-03, Plain Man piano without a date (none of them dated by
+    the source); the notes "Recorded March 1–3, 2001", the date matrix applied.
+    A) Same Man's row: "already on MusicBrainz – set to Skip (MusicBrainz has the date more precisely: 2001-03-02 (here 2001-03))"; Even Man's:
+       "(MusicBrainz has it with this date: 2001-03)". B) Before the matrix is applied, Plain Man (no date anywhere): the status alone (review).
+    C) The compact view of the entries: the chip of "Taken out:" with the same reason. D) Rule S216 off: no reason."""
+    import copy
+    orig = H.discogs_release
+    attrs0, extra0 = copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9160, 'trombone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    PEOPLE = [('Same Man', 3361, 'Double Bass', ['double bass'], '2001-03-02'), ('Even Man', 3362, 'Trombone', ['trombone'], '2001-03'),
+              ('Plain Man', 3363, 'Piano', ['piano'], '')]
+    for n, i, *_ in PEOPLE:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+    for rec in H.REC:
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [{'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': at, 'attribute-values': {},
+                                                     'artist': {'id': H.ARTISTS[i][0], 'name': n}, 'begin': d, 'end': d} for n, i, _r, at, d in PEOPLE]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, i, r, *_ in PEOPLE]
+        d['companies'] = []
+        d['notes'] = 'Recorded March 1–3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    STATUS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row .dci-status')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null; }"""
+    OUT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const l = g && g.querySelector('.dci-em-cl.dci-em-skip'); return l ? l.textContent.replace(/\\s+/g, ' ').trim() : null; }"""
+    results = []
+
+    def run(view='full', off=None):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            roff, ev0 = H.RULES_OFF, H.ENTRIES_VIEW
+            H.RULES_OFF = [*(roff or []), *(off or [])]
+            # (the compact view: the entries as a matrix, "Taken out:" a line of chips)
+            if view == 'compact':
+                H.ENTRIES_VIEW = 'matrix'
+            try:
+                pg, errs = H.open_mb_edit(ctx, companion=False, view=view)
+            finally:
+                H.RULES_OFF, H.ENTRIES_VIEW = roff, ev0
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            before = {n: (pg.evaluate(f"({STATUS})({_json(n)})") if view == 'full' else pg.evaluate(f"({OUT})({_json(n)})")) for n, *_ in PEOPLE}
+            pg.click('[data-act=dm-apply]')
+            pg.wait_for_timeout(1200)
+            after = {n: (pg.evaluate(f"({STATUS})({_json(n)})") if view == 'full' else pg.evaluate(f"({OUT})({_json(n)})")) for n, *_ in PEOPLE}
+            b.close()
+            return before, after, errs
+    import json as _jj
+    _json = _jj.dumps
+    try:
+        before, after, errs = run()
+        print('A)', after, '\nB) vorher:', before)
+        ex = 'already on MusicBrainz – set to Skip'
+        results.append(after['Same Man'] == [f'{ex} (MusicBrainz has the date more precisely: 2001-03-02 (here 2001-03))'] and after['Even Man'] == [f'{ex} (MusicBrainz has it with this date: 2001-03)'] and not errs)
+        results.append(before['Plain Man'] == [ex])
+        _, after2, _ = run('compact')
+        print('C)', after2)
+        results.append(bool(after2['Same Man']) and 'MusicBrainz has the date more precisely: 2001-03-02' in after2['Same Man'])
+        _, after3, _ = run(off=['S216'])
+        print('D)', after3)
+        results.append(after3['Same Man'] == [ex])
+    finally:
+        H.discogs_release = orig
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear()
+        H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dglineup3130():
+    """Credits Importer 3.130.0 (collected item Z-DGLINEUP; rule S217): Discogs's lineup (Bass Man bass, Guitar Guy guitar, Drum Guy drums on
+    the whole release) and track credits of the same people: track 2 Bass Man "Bass" as "B.Man" and Guitar Guy "Acoustic Guitar", track 3
+    Guitar Guy "Guitar" and Drum Guy "Drums" as "D.Guy".
+    A) Above the entries "Discogs: lineup and track credits" (a question that must be answered): Bass Man "all tracks except 3", Drum Guy
+       "all tracks except 2", Guitar Guy "“guitar” in the lineup, “acoustic guitar” on tracks 2"; the proposal set: Bass Man one row on
+       1, 2, 4, Drum Guy one on 1, 3, 4, Guitar Guy one acoustic guitar on all four – no row credited "B.Man"; its rows wait for the answer.
+    B) "Per track": Bass Man bass on 1, 4 and a row of track 2 without the credit "B.Man"; Guitar Guy guitar on 1, 3, 4 (track 3's credit
+       the same as the lineup's), acoustic guitar on 2. C) "The lineup's": each on all four tracks, one row each. D) "More precise everywhere" again: as A, the question answered
+       (✓, nothing waits). E) Rule S217 off: no question, two rows of Bass Man (as before)."""
+    orig = H.discogs_release
+    ex = lambda name, role, i, anv='': {'name': name, 'anv': anv, 'role': role, 'tracks': '', 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [ex('Bass Man', 'Bass', 3001), ex('Guitar Guy', 'Guitar', 3002), ex('Drum Guy', 'Drums', 3004)]
+        d['companies'] = []
+        d['notes'] = ''
+        for k, t in enumerate(d['tracklist']):
+            t['extraartists'] = ([ex('Bass Man', 'Bass', 3001, 'B.Man'), ex('Guitar Guy', 'Acoustic Guitar', 3002)] if k == 1
+                                 else [ex('Guitar Guy', 'Guitar', 3002), ex('Drum Guy', 'Drums', 3004, 'D.Guy')] if k == 2 else [])
+        return d
+    H.discogs_release = rel
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; return [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+        const tracks = [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1);
+        return [(tr.querySelector('[data-f=primary]') || {}).value || '', tracks, (tr.querySelector('[data-f=credit]') || { value: '' }).value, lv ? lv.dataset.level : '']; }); }"""
+    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+      pressed: [...b.querySelectorAll('[data-act=dgl-pick]')].filter(x => x.getAttribute('aria-pressed') === 'true').map(x => x.dataset.choice), done: b.classList.contains('dci-dgl-done') } : null; })()"""
+    NAMES = ['Bass Man', 'Guitar Guy', 'Drum Guy']
+    results = []
+    import json as _jj
+
+    def rows(pg):
+        return {n: pg.evaluate(f"({ROWS})({_jj.dumps(n)})") for n in NAMES}
+
+    def run(off=None, steps=()):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            roff = H.RULES_OFF
+            H.RULES_OFF = [*(roff or []), *(off or [])]
+            try:
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+            finally:
+                H.RULES_OFF = roff
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            pg.evaluate("document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open').forEach(b => b.click())")
+            pg.wait_for_timeout(300)
+            out = [(pg.evaluate(BOX), rows(pg), pg.evaluate("[...document.querySelectorAll('tr.dci-row .dci-status')].map(x => x.textContent).join(' | ')"))]
+            for c in steps:
+                pg.click(f'[data-el=dglineup] [data-act=dgl-pick][data-choice={c}]')
+                pg.wait_for_timeout(600)
+                out.append((pg.evaluate(BOX), rows(pg), pg.evaluate("[...document.querySelectorAll('tr.dci-row .dci-status')].map(x => x.textContent).join(' | ')")))
+            b.close()
+            return out, errs
+    try:
+        out, errs = run(steps=('track', 'lineup', 'precise'))
+        (box, r, st), (box2, r2, _), (box3, r3, _), (box4, r4, st4) = out
+        print('A)', box, '\n  ', r, '\n   Status:', st[:300])
+        results.append(box and box['lines'] == ['Bass Man: all tracks except 3', 'Guitar Guy: “guitar” in the lineup, “acoustic guitar” on tracks 2', 'Drum Guy: all tracks except 2']
+                       and not box['done'] and r['Bass Man'] == [['bass', [1, 2, 4], '', 'recording']] and r['Drum Guy'] == [['drums (drum set)', [1, 3, 4], '', 'recording']]
+                       and r['Guitar Guy'] == [['acoustic guitar', [1, 2, 3, 4], '', 'recording']] and 'Discogs' in st and not errs)
+        print('B)', r2)
+        results.append(sorted(r2['Bass Man']) == [['bass', [1, 4], '', 'recording'], ['bass', [2], '', 'recording']]
+                       and sorted(r2['Guitar Guy']) == [['acoustic guitar', [2], '', 'recording'], ['guitar', [1, 3, 4], '', 'recording']]
+                       and box2['pressed'] == ['track'])
+        print('C)', r3)
+        results.append(r3['Bass Man'] == [['bass', [1, 2, 3, 4], '', 'recording']] and r3['Guitar Guy'] == [['guitar', [1, 2, 3, 4], '', 'recording']] and box3['pressed'] == ['lineup'])
+        print('D)', box4, r4, st4[:200])
+        results.append(r4 == r and box4['done'] and box4['pressed'] == ['precise'] and 'Discogs' not in st4)
+        out5, _ = run(off=['S217'])
+        print('E)', out5[0][0], out5[0][1]['Bass Man'])
+        results.append(out5[0][0] is None and len(out5[0][1]['Bass Man']) == 2)
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dglineup3130r():
+    """Credits Importer 3.130.0 (review of Z-DGLINEUP, S217): lineup Sax Man "Saxophone", Gtr Man "Guitar", Drum Guy "Drums" on the whole
+    release; track 2 Sax Man "Alto Saxophone" and Gtr Man "Piano", track 3 Sax Man "Tenor Saxophone" and Drum Guy "Drums" as "D.Guy".
+    A) More precise: Sax Man keeps "saxophone" (the tracks give two other ones) on 1, 4, alto on 2, tenor on 3; Gtr Man's piano of track 2
+       (no instrument of the lineup) a row of its own – he plays on 2 (guitar on 1, 2, 4). B) "Per track" answered, the page loaded again: the
+       answer taken again (✓ Per track, nothing waits)."""
+    orig = H.discogs_release
+    import copy
+    attrs0 = copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy(H.LINKED.get('link_attribute_type'))
+    H.attr(9108, 'tenor saxophone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3371] = (H.uid('dddddddd', 3371), 'Sax Man')
+    H.ARTISTS[3372] = (H.uid('dddddddd', 3372), 'Gtr Man')
+    ex = lambda name, role, i, anv='': {'name': name, 'anv': anv, 'role': role, 'tracks': '', 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [ex('Sax Man', 'Saxophone', 3371), ex('Gtr Man', 'Guitar', 3372), ex('Drum Guy', 'Drums', 3004)]
+        d['companies'] = []
+        d['notes'] = ''
+        for k, t in enumerate(d['tracklist']):
+            t['extraartists'] = ([ex('Sax Man', 'Alto Saxophone', 3371), ex('Gtr Man', 'Piano', 3372)] if k == 1
+                                 else [ex('Sax Man', 'Tenor Saxophone', 3371), ex('Drum Guy', 'Drums', 3004, 'D.Guy')] if k == 2 else [])
+        return d
+    H.discogs_release = rel
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; return [...g.querySelectorAll('tr.dci-row')].map(tr => {
+        const tracks = [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1);
+        return [(tr.querySelector('[data-f=primary]') || {}).value || '', tracks]; }).sort(); }"""
+    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+      pressed: [...b.querySelectorAll('[data-act=dgl-pick]')].filter(x => x.getAttribute('aria-pressed') === 'true').map(x => x.dataset.choice), done: b.classList.contains('dci-dgl-done') } : null; })()"""
+    import json as _jj
+    results = []
+
+    def load(pg):
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pg.evaluate("document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open').forEach(b => b.click())")
+        pg.wait_for_timeout(300)
+        return pg.evaluate(BOX), {n: pg.evaluate(f"({ROWS})({_jj.dumps(n)})") for n in ('Sax Man', 'Gtr Man', 'Drum Guy')}
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            box, r = load(pg)
+            print('A)', box, r)
+            results.append(box and r['Sax Man'] == [['alto saxophone', [2]], ['saxophone', [1, 4]], ['tenor saxophone', [3]]]
+                           and sorted(r['Gtr Man']) == [['guitar', [1, 2, 4]], ['piano', [2]]] and 'Gtr Man: all tracks except 3' in box['lines'] and not errs)
+            pg.click('[data-el=dglineup] [data-act=dgl-pick][data-choice=track]')
+            pg.wait_for_timeout(600)
+            r1 = {n: pg.evaluate(f"({ROWS})({_jj.dumps(n)})") for n in ('Sax Man', 'Drum Guy')}
+            pg.wait_for_timeout(500)
+            pg.close()
+            # (the page opened again in the same browser: its storage kept)
+            pg, _ = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            box2, r2 = load(pg)
+            print('B)', box2, r2, '| vorher:', r1)
+            results.append(box2 and box2['done'] and box2['pressed'] == ['track'] and r2['Drum Guy'] == r1['Drum Guy'])
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.ATTRS.clear()
+        H.ATTRS.update(attrs0)
+        H.LINKED['link_attribute_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

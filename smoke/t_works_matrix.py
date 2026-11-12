@@ -1728,4 +1728,173 @@ def case_wnew398():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_workdate3130():
+    """Credits Importer 3.130.0 (collected items Z-WORKDATE, Z-WORKUNDO; rules S215): track 1 is linked to a work in MusicBrainz (its link
+    without a date); the dates of the Discogs notes applied in the date matrix (Performance 2001-03).
+    A) Below the linked work: "⌚ 2001-03 onto the link (MusicBrainz has none) ×"; in the corner "✓ ⌚ Performance dates onto linked works"
+       and "1 links get a date"; staged: the link of the editor (278) gets 2001-03 (begin and end).
+    B) The link in MusicBrainz dated 2001: "(MusicBrainz: 2001 – more precise)"; × – "not onto the link", ↺ – back; the switch in the corner
+       off: nothing below the link (only a place to drop a date while one is dragged), nothing staged on the link.
+    C) Off, a date of the pool picked (⠿) and dropped onto the link: "⌚ 2001-03-01 – 2001-03-03 onto the link …".
+    D) The link in MusicBrainz dated 2001-03-02: "MusicBrainz: 2001-03-02" – nothing to stage.
+    E) (Z-WORKUNDO) "＋ New works" for the other tracks, then "✕ No new work" at track 2: track 2 without a work again, the others new."""
+    import json as _j
+    orig_ws = H.ws_release
+
+    def with_date(begin):
+        def ws(full=False):
+            d = orig_ws(full)
+            for m in d['media']:
+                for t in m.get('tracks', []):
+                    for r in t['recording'].get('relations', []):
+                        if r.get('target-type') == 'work':
+                            r['begin'] = begin
+                            r['end'] = begin
+            return d
+        return ws
+    LINE = "(() => { const x = document.querySelector('tr[data-work=\"0\"] .dci-wd-linked'); return x ? [x.className.includes('dci-wd-empty'), x.textContent.replace(/\\s+/g, ' ').trim()] : null; })()"
+    HEAD = "(document.querySelector('[data-el=workdates]') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()"
+    EXISTING = f"""() => {{ const re = MB.relationshipEditor;
+      re.state = {{ ...re.state, existingRels: [{{ id: 9301, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'x' }},
+        entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'x' }}, begin_date: null, end_date: null, ended: false,
+        attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}"""
+    STAGED = "(() => { const r = MB.relationshipEditor.state.added.find(x => x.id === 9301); return r ? [r.begin_date, r.end_date, r._status] : null; })()"
+    results = []
+
+    def open_page(p):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1200)
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(800)
+        return b, pg, errs
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            a, h = pg.evaluate(LINE), pg.evaluate(HEAD)
+            pg.evaluate(EXISTING)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            st = pg.evaluate(STAGED)
+            print('A)', a, '|', h, '| im Editor:', st)
+            results.append(a == [False, '⌚ 2001-03 onto the link (MusicBrainz has none) ×'] and h == '✓ ⌚ Performance dates onto linked works 1 link gets a date'
+                           and st and st[0] == {'year': 2001, 'month': 3, 'day': None} and st[1] == {'year': 2001, 'month': 3, 'day': None} and st[2] == 2 and not errs)
+            b.close()
+            H.ws_release = with_date('2001')
+            b, pg, errs = open_page(p)
+            b1 = pg.evaluate(LINE)
+            pg.click('tr[data-work="0"] [data-act=wd-drop]')
+            pg.wait_for_timeout(300)
+            b2, h2 = pg.evaluate(LINE), pg.evaluate(HEAD)
+            pg.click('tr[data-work="0"] [data-act=wd-back]')
+            pg.wait_for_timeout(300)
+            b3 = pg.evaluate(LINE)
+            pg.click('[data-act=mx-workdates]')
+            pg.wait_for_timeout(300)
+            b4, h4 = pg.evaluate(LINE), pg.evaluate(HEAD)
+            pg.evaluate(EXISTING)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            st4 = pg.evaluate(STAGED)
+            print('B)', b1, '|', b2, h2, '|', b3, '| aus:', b4, h4, '| im Editor:', st4)
+            results.append(b1 == [False, '⌚ 2001-03 onto the link (MusicBrainz: 2001 – more precise) ×'] and b2 == [False, '⌚ 2001-03 not onto the link ↺ take']
+                           and h2 == '✓ ⌚ Performance dates onto linked works' and b3 == b1 and b4 and b4[0] and h4 == '⌚ Performance dates onto linked works' and st4 is None)
+            # C) a date of the pool dropped onto the link (the switch still off)
+            chip = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].find(c => /2001-03-01/.test(c.textContent)).dataset.id")
+            pg.click(f'.dci-pchip-date[data-id="{chip}"] [data-act=dm-pick]')
+            pg.wait_for_timeout(200)
+            pg.click('tr[data-work="0"] .dci-wd-linked')
+            pg.wait_for_timeout(500)
+            c = pg.evaluate(LINE)
+            print('C)', c)
+            results.append(c == [False, '⌚ 2001-03-01 – 2001-03-03 onto the link (MusicBrainz: 2001 – more precise) ×'])
+            pg.click('[data-act=mx-workdates]')  # (on again for the next runs)
+            pg.wait_for_timeout(200)
+            b.close()
+            H.ws_release = with_date('2001-03-02')
+            b, pg, errs = open_page(p)
+            d = pg.evaluate(LINE)
+            print('D)', d, pg.evaluate(HEAD))
+            results.append(d == [False, '⌚ MusicBrainz: 2001-03-02'])
+            # E) Z-WORKUNDO
+            pg.click('[data-act=works-pending-all]')
+            pg.wait_for_timeout(600)
+            for x in pg.locator('[data-act=mx-dup-answer]').all()[:1]:
+                x.click()
+                pg.wait_for_timeout(400)
+            undo = pg.locator('tr[data-work="1"] [data-act=work-unplan]')
+            label = undo.first.text_content().strip() if undo.count() else ''
+            undo.first.click()
+            pg.wait_for_timeout(500)
+            rows = pg.evaluate("[1, 2, 3].map(i => (document.querySelector(`tr[data-work=\"${i}\"] .dci-badge`) || {}).textContent || '')")
+            print('E)', label, rows)
+            results.append(label == '✕ No new work' and rows[0].strip().startswith('○') and all('new work' in r.lower() for r in rows[1:]))
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workdate3130r():
+    """Credits Importer 3.130.0 (review of Z-WORKDATE, S215): the link of track 1 in MusicBrainz dated 2001-03-02; the date matrix applied.
+    A) Without a date dropped: "MusicBrainz: 2001-03-02" (the recording date 2001-03 is less precise – nothing). B) The pool's 2001-03-01 – 2001-03-03
+    dropped onto the link: "(MusicBrainz: 2001-03-02 – changed)"; staged: the link of the editor with 2001-03-01 – 2001-03-03; then "– staged",
+    no ×, no number in the corner."""
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m.get('tracks', []):
+                for r in t['recording'].get('relations', []):
+                    if r.get('target-type') == 'work':
+                        r['begin'] = r['end'] = '2001-03-02'
+        return d
+    LINE = "(() => { const x = document.querySelector('tr[data-work=\"0\"] .dci-wd-linked'); return x ? x.textContent.replace(/\\s+/g, ' ').trim() : null; })()"
+    HEAD = "(document.querySelector('[data-el=workdates]') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()"
+    EXISTING = f"""() => {{ const re = MB.relationshipEditor;
+      re.state = {{ ...re.state, existingRels: [{{ id: 9302, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'x' }},
+        entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'x' }}, begin_date: {{ year: 2001, month: 3, day: 2 }}, end_date: {{ year: 2001, month: 3, day: 2 }}, ended: true,
+        attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}"""
+    results = []
+    H.ws_release = ws
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            pg.click('[data-act=dm-apply]')
+            pg.wait_for_timeout(800)
+            a = pg.evaluate(LINE)
+            chip = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].find(c => /2001-03-01/.test(c.textContent)).dataset.id")
+            pg.click(f'.dci-pchip-date[data-id="{chip}"] [data-act=dm-pick]')
+            pg.wait_for_timeout(200)
+            pg.click('tr[data-work="0"] .dci-wd-linked')
+            pg.wait_for_timeout(500)
+            b1, h1 = pg.evaluate(LINE), pg.evaluate(HEAD)
+            pg.evaluate(EXISTING)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(3000)
+            st = pg.evaluate("(() => { const r = MB.relationshipEditor.state.added.find(x => x.id === 9302); return r ? [r.begin_date, r.end_date] : null; })()")
+            b2, h2 = pg.evaluate(LINE), pg.evaluate(HEAD)
+            print('A)', a, '\nB)', b1, '|', h1, '| im Editor:', st, '| danach:', b2, '|', h2)
+            results.append(a == '⌚ MusicBrainz: 2001-03-02' and b1 == '⌚ 2001-03-01 – 2001-03-03 onto the link (MusicBrainz: 2001-03-02 – changed) ×'
+                           and h1.endswith('1 link gets a date') and st == [{'year': 2001, 'month': 3, 'day': 1}, {'year': 2001, 'month': 3, 'day': 3}]
+                           and b2 == '⌚ 2001-03-01 – 2001-03-03 onto the link – staged' and h2 == '✓ ⌚ Performance dates onto linked works' and not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

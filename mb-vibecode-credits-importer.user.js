@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.129.0
+// @version      3.130.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.129.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.129.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.130.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.130.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.129.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.130.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -831,6 +831,10 @@
       "works.plannedFound": "found, will be linked",
       "works.plannedCreated": "newly created, will be linked",
       "works.unplan": "Remove link",
+      "works.unplanNew": "No new work",
+      "works.unplanNewTitle": "No new work for this track – back to a track without a work (“＋ New” plans one again)",
+      "works.unplanParts": "No new works",
+      "works.unplanPartsTitle": "None of the {n} new works of the parts – back to a track without a work",
       "works.searching": "Searching …",
       "works.link": "Link",
       "sub.window": "Open in separate window",
@@ -1816,6 +1820,21 @@
       "log.instsRelease": "{name}: {n} instruments on the release, one row on the recordings",
       "log.instsTrack": "{name}: the instruments per track again",
       "plays.title": "Played by whom?",
+      "issue.dgLineup": "waits for the answer about Discogs's lineup (above the entries)",
+      "dgl.title": "Discogs: lineup and track credits",
+      "dgl.hint": "The lineup plays on the whole release, but Discogs's credits of tracks {list} name only some of them, partly with other instruments or spellings. Proposed (set until you answer):",
+      "dgl.hintDone": "Who plays where (tracks {list}):",
+      "dgl.except": "all tracks except {list}",
+      "dgl.exceptShort": "not {list}",
+      "dgl.mismatch": "“{lineup}” in the lineup, “{track}” on tracks {list}",
+      "dgl.precise": "More precise everywhere",
+      "dgl.preciseTitle": "Each one of the lineup on all tracks except those the track credits give to others only; the more precise instrument of the two on all of them; the track credits joined into it (no second row, no abbreviated spelling)",
+      "dgl.track": "Per track",
+      "dgl.trackTitle": "The lineup's rows on the tracks without track credits; the tracks with credits as Discogs gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
+      "dgl.lineup": "The lineup's",
+      "dgl.lineupTitle": "As the lineup says: everyone on all tracks with the lineup's instrument – the track credits left out",
+      "log.dglFound": "Discogs: the lineup and the credits of single tracks differ – proposed: {list}",
+      "log.dglAnswer": "Discogs lineup: {choice}",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
       "plays.take": "Take (all tracks)",
@@ -2319,6 +2338,29 @@
       "matrix.labelRoTitle": "Work type and lyrics languages of this work in MusicBrainz",
       "matrix.instrumentalAuto": "[No lyrics] because the title says “instrumental” (rule S153); a language you choose replaces it",
       "matrix.creditsAll": "All artists credited as:",
+      "matrix.workDates": "⌚ Performance dates onto linked works",
+      "matrix.workDatesTitle": "The recording date of a track (Performance) also onto its links with works MusicBrainz has, with “Apply”: added where the link has no date, made more precise where it has less – nothing else. A date dropped onto a link goes there either way.",
+      "matrix.workDatesN.one": "{n} link gets a date",
+      "matrix.workDatesN.other": "{n} links get a date",
+      "wd.target": "⌚ drop a date here (the link in MusicBrainz)",
+      "wd.mbHas": "MusicBrainz: {mb}",
+      "wd.mbHasTitle": "The link in MusicBrainz has this date already, or a more precise one – nothing to add",
+      "wd.mbOther": "MusicBrainz: {mb} – another date ({date}): not changed (drop a date onto the link to set it)",
+      "wd.mbOtherTitle": "The link in MusicBrainz has another date than the recording date ({date}): only a date dropped onto the link changes it",
+      "wd.staged": "{date} onto the link – staged",
+      "wd.change": "{date} onto the link (MusicBrainz: {mb} – changed)",
+      "out.mbOther": "MusicBrainz has another date: {mb} (here {date})",
+      "wd.off": "{date} not onto the link",
+      "wd.back": "take",
+      "wd.add": "{date} onto the link (MusicBrainz has none)",
+      "wd.refine": "{date} onto the link (MusicBrainz: {mb} – more precise)",
+      "wd.ownTitle": "A date dropped onto this link",
+      "wd.recTitle": "The recording date of the track (Performance) – ⚙ “Performance dates onto linked works” in the corner of the matrix",
+      "wd.dropTitle": "Not onto this link",
+      "log.workDated": "Date onto a link with a work MusicBrainz has: {text}",
+      "log.workDateOff": "Track {track}: no date onto the link with the work",
+      "log.workDateOn": "Track {track}: the date onto the link with the work again",
+      "preview.workDateTitle": "Link exists in MusicBrainz; its date is added or made more precise",
       "matrix.clearCreditsAll": "MusicBrainz names for all",
       "matrix.addColumnHead": "Add a column",
       "matrix.addColEntry": "An entry of the dashboard",
@@ -3229,6 +3271,9 @@
       "em.noEvent": "in no event",
       "em.moreChips": "+ {n} more",
       "em.out": "Taken out:",
+      "out.mbHas": "MusicBrainz has it",
+      "out.mbSame": "MusicBrainz has it with this date: {date}",
+      "out.mbPrecise": "MusicBrainz has the date more precisely: {mb} (here {date})",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -4512,6 +4557,9 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S217', where: 'dgLineupFind, dgLineupApply, dgLineupHtml, computePlan (issue)', note: 'Discogs (3.130.0; collected item Z-DGLINEUP): the lineup on the whole release and the same people\'s instruments on single tracks ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – two people of the lineup at least with track credits): a question that must be answered above the entries names who plays where – each one on all tracks except those the track credits give to others only – and where the instruments differ ("bass" in the lineup, "double bass" on tracks 2, 4). More precise everywhere (set until answered): the more precise instrument on all tracks, the track credits joined into the row; per track: the track credits as they are; the lineup\'s: everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit' },
+    { id: 'S216', where: 'outWhyText (the line "Taken out", the status of a row)', note: 'Rows taken out (3.130.0; collected item Z-OUTWHY): a row on Skip because MusicBrainz has it says so – with the date MusicBrainz has ("MusicBrainz has the date more precisely: 2007-05-06 – 2007-05-07"); rows skipped by hand say nothing (their reason is not known)' },
+    { id: 'S215', where: 'workDateOffer, computePlan (workDate), workDateLinkedHtml, workDatesHeadHtml, dropDateOn', note: 'Works matrix (3.130.0; collected item Z-WORKDATE): the performance date onto the links with works MusicBrainz has, with "Apply" – the recording date of the track (setting "Performance dates onto linked works" in the corner of the matrix, on) or a date dropped onto the link; as for recordings (S172): added when the link has none, made more precise when it has less, else nothing. × at the link leaves it out' },
     { id: 'S214', where: 'untilde, findDedications, dedSuggest, TEXT.parse', note: 'Dedications (3.129.0; collected item Z-DEDPLACE): words set off with tildes ("Dedicated to ~Namba~ ~Bears~") read without them; a dedication to a place of this release ("recorded live at Namba Bears") is a note in the box only – MusicBrainz has no dedication to a place; "Dedicated to X" alone in a line is left out as a dedication (the box has it)' },
     { id: 'S213', where: 'TEXT.parse (groups), checkGroupMembers, memberOfOffer, memberOfHtml, startArtistCreate, buildArtistSeed', note: 'Members (3.129.0; collected item Z-MEMBERCREATE): a member of a linked group the text names ("X are A and B", a heading "X:" or "X were:" with its members below) that MusicBrainz does not have as one: at its entry "＋ member of X ↗" – the artist\'s edit page with "member of band" filled in (its instruments and voices as attributes); not linked: "Create artist" fills it in. No question' },
     { id: 'S212', where: 'TEXT.parse (the end)', note: 'Roles (3.129.0; collected item Z-FANTASYROLE): a name of fantasy among the roles of a person ("guitar, speed guru", "Bass/Vocal/Mermaid Mountain") – two words or more, no instrument, voice nor role, beside one that is – left out as such' },
@@ -14186,6 +14234,9 @@
     wattrOpenAll: false,
     // "Spell out": the attributes with their names instead of the short forms (remembered)
     wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
+    workDates: readJson('localStorage', 'dci-work-dates', true) !== false, // [Z-WORKDATE] (3.130.0)
+    workDateOff: new Set(),
+    workDateOwn: new Map(),
     mxOptsOpen: new Set(),
     // The ▾ menu of a column head (its key)
     mxColMenu: null,
@@ -14333,7 +14384,7 @@
   }
 
   function indexExistingRelationships(ws) {
-    const existing = { exact: new Set(), loose: new Set(), workLinks: new Set(), credits: new Map(), noText: new Set(), list: [] };
+    const existing = { exact: new Set(), loose: new Set(), workLinks: new Set(), workLinkDates: new Map(), credits: new Map(), noText: new Set(), list: [] };
     addExistingArtistRels(existing, releaseMbid, ws.relations);
     (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
       if (!t.recording) return;
@@ -14341,6 +14392,8 @@
       for (const r of t.recording.relations || []) {
         if (r['target-type'] !== 'work' || !r.work) continue;
         existing.workLinks.add(`${t.recording.id}|${r.work.id}`);
+        // [Z-WORKDATE] (3.130.0, S215) the link's date as MusicBrainz has it
+        existing.workLinkDates.set(`${t.recording.id}|${r.work.id}`, { begin: r.begin || '', end: r.end || '', ended: !!r.ended });
         addExistingArtistRels(existing, r.work.id, r.work.relations);
       }
     }));
@@ -15237,6 +15290,37 @@
     return out;
   }
 
+  /**
+   * [Z-WORKDATE] (3.130.0, S215) The performance date for a link of track i with a work MusicBrainz has: a date dropped on it, else the
+   * recording date of the track (setting "Performance dates onto linked works"). Against the link's date in MusicBrainz as for the
+   * recordings (S172): added when it has none, made more precise when it has less – else nothing. → null (no such link or no date) or
+   * { key, value, sug (null: MusicBrainz has it so or more precisely), mb, own, off, dkey }.
+   */
+  function workDateOffer(i, w) {
+    if (!ruleOn('S215') || !w || w.planned || !w.gid || S.worksSkip || S.scope === 'nonwork' || !inMedium(i) || !S.existing || !S.existing.workLinkDates) return null;
+    const t = S.mbTracks[i];
+    const perf = idx().performanceLt;
+    const key = t ? `${t.recordingGid}|${w.gid}` : '';
+    // ((review) not a link that a new work replaces (it is removed)
+    if (!t || !perf || perf.has_dates === false || !S.existing.workLinks.has(key) || replacedWork(i, w.gid)) return null;
+    const ownF = S.workDateOwn && S.workDateOwn.get(key);
+    const ownV = ownF && hasDateInput(ownF) ? validateDateFields(ownF) : null;
+    const rec = ownV && !ownV.error ? null : S.workDates ? recordingDateOf(i) : null;
+    const value = ownV && !ownV.error ? ownV.value : rec ? rec.value : null;
+    if (!value) return null;
+    const mb = S.existing.workLinkDates.get(key) || { begin: '', end: '' };
+    const own = !!(ownV && !ownV.error);
+    const sug0 = dsupDateOf(value, mb);
+    // ((review) a date dropped onto the link goes there either way – another date than MusicBrainz's too (its own date then)
+    const sug = sug0 && (sug0.kind === 'add' || sug0.kind === 'refine') ? sug0
+      : sug0 && own ? { kind: 'change', mb: sug0.mb, to: sug0.row || sug0.to } : null;
+    const dkey = sug ? `wd|${key}|${dsupDateText(sug.to)}` : '';
+    return { key, value, sug, mb, other: !!(sug0 && !sug && (sug0.kind === 'change' || sug0.kind === 'differs')), own, off: !!(S.workDateOff && S.workDateOff.has(key)), dkey,
+      staged: !!(dkey && S.dsupDone && S.dsupDone.has(dkey)) };
+  }
+  /** [Z-WORKDATE] (3.130.0) The date of a link in MusicBrainz as text ("2007-05", "2007-05-06 – 2007-05-07"). */
+  const mbLinkDateText = (mb) => { const b = String(mb.begin || ''); const e = String(mb.end || ''); return !b && !e ? '' : !e || b === e ? b : `${b} – ${e}`; };
+
   /** [Z-LVD] (3.62.0, S089) The date a planned link of track i with its work is staged with (as computePlan stages it): its own valid
    *  date, else the recording date of the track (performance rows) unless cleared; null when the link is not staged (works skipped, out
    *  of scope or of the media, already in MusicBrainz) or has no date. */
@@ -15424,6 +15508,7 @@
       if (!lt) info.issues.push(tr('issue.chooseType'));
       if (abbrOpen(row)) info.issues.push(tr('issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0)
       if (dateOrderOpen(row)) info.issues.push(tr('issue.dateOrder')); // [Z-DATEORDER] (3.121.0, S190) not staged before the answer
+      if (dgLineupOpen(row)) info.issues.push(tr('issue.dgLineup')); // [Z-DGLINEUP] (3.130.0, S217) not staged before the answer
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
       if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
       if (lt && artist && artist.company && artist.entityType && row.company && row.entityType && row.entityType !== artist.entityType) info.issues.push(tr('issue.kindMismatch'));
@@ -15637,6 +15722,22 @@
         artist: { mbid: f.mbid, mbName: f.name, name: f.name },
         target: { kind: 'work', gid: f.workGid, label: tr('preview.work', { title: work.title }), order: 10000 + f.track, track: t, work },
       });
+    }
+    // [Z-WORKDATE] (3.130.0, S215) the performance date onto the links with works MusicBrainz has: added or made more precise
+    if (ruleOn('S215') && perf && !S.worksSkip && S.scope !== 'nonwork') {
+      for (const t of S.mbTracks) {
+        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const o = workDateOffer(t.idx, w);
+          if (!o || !o.sug || o.off || o.staged || seen.has(`wd|${o.key}`)) continue;
+          seen.add(`wd|${o.key}`);
+          items.push({
+            kind: 'work-link', workDate: { key: o.dkey, to: o.sug.to, kind: o.sug.kind }, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '',
+            date: o.value, attrs: [], key: `wd|${o.key}`,
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
+      }
     }
     for (const { item, info, markTrack } of pendingUpdates) {
       if (unchanged.has(item.key) || seen.has(item.key)) {
@@ -18085,6 +18186,7 @@
       });
     }
     (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
+    if (ruleOn('S217') && S.dgLineup && !S.dgLineup.done) add('must', 'dgl', 'dgl'); // [Z-DGLINEUP] (3.130.0, S217)
     [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
     // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
@@ -18132,6 +18234,7 @@
     else if (it.kind === 'rmx') el = sec && sec.querySelector('[data-el=rmx]');
     else if (it.kind === 'dsup') el = sec && sec.querySelector('[data-el=dsup] .dci-dsup-h');
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
+    else if (it.kind === 'dgl') el = ov.querySelector('[data-el=dglineup] .dci-festival-offers');
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
     else if (it.kind === 'ded') el = [...ov.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find((x) => x.dataset.key === it.dk);
@@ -24110,6 +24213,8 @@
       row.unresolved = c.unresolved;
       // The source names no tracks for this credit (the whole release)
       row.dAllTracks = !!c.allTracks;
+      // ([Z-DGLINEUP] 3.130.0, S217) the tracks a credit of the whole release is named on once more (the same role and spelling there)
+      if (c.allTracks && c.indexes.size) row.dTrackIdx = new Set([...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i)));
       // Credits without track information go onto the tracks of the chosen media (media choice)
       // [Z-RMXONLY] (3.128.0, S210) a credit for the whole release is none of a remix ("This Machine (TVAM Remix)"): its remixer and "remix
       // of" only – what the source names for that track stays
@@ -24453,6 +24558,7 @@
       S.ensAsk = (rel.ensembles || []).filter((e) => e.kind === 'solo').map((e, k) => ({ ...e, id: `ens${k}` }));
       (rel.ensembles || []).filter((e) => e.applied).forEach((e) => log('info', 'ensembleApplied', { line: e.line }));
       S.playsAsk = []; // [Z-PLAYS] (3.102.0, S168) made once the rows are there
+      S.dgLineup = null; // [Z-DGLINEUP] (3.130.0, S217)
       // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
       setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
@@ -24651,6 +24757,12 @@
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
         if (seq !== importSeq) return;
+        // [Z-DGLINEUP] (3.130.0, S217) Discogs's lineup against the same people's instruments on single tracks: asked (its proposal set,
+        // or the answer given before) – ((review) from the rows of the source, before what was changed in them comes back
+        if (dgLineupRefresh()) {
+          renderSource();
+          renderGroups();
+        }
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq, repeat);
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
@@ -25852,6 +25964,38 @@
         }
         continue;
       }
+      // [Z-WORKDATE] (3.130.0, S215) the performance date onto a link with a work MusicBrainz has (added, or more precise)
+      if (it.workDate) {
+        try {
+          const current = statesBetween(re.state, it.target.gid, it.workGid, it.lt.id)[0];
+          if (!current) {
+            fillMissing.push(text);
+            continue;
+          }
+          const newState = {
+            ...current,
+            begin_date: partialDate(dsupPart(it.workDate.to.b)),
+            end_date: partialDate(dsupPart(it.workDate.to.e)),
+            ended: !!((it.workDate.to.e && it.workDate.to.e.length) || current.ended),
+            _original: current._original || current,
+            _status: current._status === 0 ? 2 : current._status, // 2 = edited
+          };
+          const sourceEntity = current.entity0 && current.entity0.gid === it.target.gid ? current.entity0 : current.entity1;
+          re.dispatch({
+            type: 'update-relationship-state', sourceEntity, batchSelectionCount: null,
+            creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
+          });
+          S.dsupDone.add(it.workDate.key);
+          S.noteDates.set(`wd:${dsupDateText(it.workDate.to)}`, dsupDateText(it.workDate.to));
+          statFill(newState, null, sourceEntity, 'dates');
+          dateFillIds.push(newState.id);
+          log('ok', 'workDated', { text });
+        } catch (e) {
+          errors.push(`${text}: ${e.message}`);
+          log('error', 'stageFailed', { text, error: e.message });
+        }
+        continue;
+      }
       // [Z-DSUP] (3.106.0, S172, S174) a date taken, an instrument made more precise: MusicBrainz's relationship edited
       if (it.relDate || it.relAttr) {
         try {
@@ -26767,7 +26911,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${playsHtml()}${dgLineupHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -28600,6 +28744,33 @@
   }
 
   /**
+   * [Z-OUTWHY] (3.130.0, S216) Why rows taken out are out – only those MusicBrainz has (by hand, the reason is not known): "MusicBrainz has
+   * it", "… with the same date (2007-05-06)", "MusicBrainz has the date more precisely: 2007-05-06 – 2007-05-07".
+   */
+  function outWhyText(rows) {
+    if (!ruleOn('S216')) return '';
+    const r = (rows || []).find((x) => x.existingAll && x.level === 'skip' && x.levelBeforeSkip && x.levelBeforeSkip !== 'skip');
+    if (!r) return '';
+    const p = { ...r, level: r.levelBeforeSkip };
+    const lt = currentLinkType(p);
+    const v = lt && lt.has_dates !== false ? rowDateInfo(p, lt).value : null;
+    const dated = (lt ? dsupRelsOf(p) : []).filter((x) => x.begin || x.end);
+    if (v && dated.length && ruleOn('S172')) {
+      const x = dated[0];
+      const mb = mbLinkDateText(x);
+      const own = formatDateValue(v) || '';
+      const sug = dsupDateOf(v, x);
+      // ((review) by the kind of the comparison: the same (open ends too), MusicBrainz more precise, another date
+      const same = !sug && dsupDateText({ b: (x.begin || '').split('-').filter(Boolean).map(Number), e: (x.end || '').split('-').filter(Boolean).map(Number) })
+        === dsupDateText(dsupDateOf(v, { begin: '', end: '' }).to);
+      if (!sug) return same ? tr('out.mbSame', { date: mb }) : tr('out.mbPrecise', { mb, date: own });
+      if (sug.kind === 'change' || sug.kind === 'differs') return tr('out.mbOther', { mb, date: own });
+    }
+    return tr('out.mbHas');
+  }
+  const outWhyHtml = (rows) => { const t = outWhyText(rows); return t ? ` <span class="dci-sub dci-outwhy">(${esc(t)})</span>` : ''; };
+
+  /**
    * [E4] (3.35.0) An entry compact as a matrix (mockup board 1): by event – a line
    * per event (① Recording · date · tracks) with the roles ticked there as chips, the first S.emShow and "+ n more"; by role – a
    * line per role with its events. A chip opens the entry's full matrix (▸ in the head too), ✕ takes it out of the event, dragged
@@ -28667,7 +28838,8 @@
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
       }));
       const out = m.lines.filter((l) => !l.ev.size);
-      if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null, a)).join('')}</div>`;
+      // ([Z-OUTWHY] 3.130.0, S216) beside a chip MusicBrainz has: why it is out ("MusicBrainz has the date more precisely: …")
+      if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => `${emChipHtml(l, null, a)}${outWhyHtml(l.rows)}`).join('')}</div>`;
       // [Z-DSUP] (3.106.0, S173) what only MusicBrainz has: a line of yellow chips
       if (a.dsup && a.dsup.mbOnly.length) {
         body += `<div class="dci-em-cl dci-em-mbonlyline" data-el="mbonly"><span class="dci-tag dci-dsup-tag">${esc(tr('dsup.mbOnlyTag'))}</span> ${a.dsup.mbOnly.map((m) => `<span class="dci-em-chip dci-dsup-mark dci-em-chip-mbonly"><span class="dci-em-chipname">${esc(tr('dsup.onTracks', { name: m.name, n: m.n }))}</span></span>`).join('')}</div>`;
@@ -33008,7 +33180,11 @@
       }
       el.className = 'dci-status';
       if (row.level === 'skip') {
-        el.textContent = row.existingAll ? tr('status.skippedExisting') : '';
+        // ([Z-OUTWHY] 3.130.0, S216) why: MusicBrainz has it (with the date it has)
+        // ((review) only what says more than the status: a date)
+        const why0 = row.existingAll ? outWhyText([row]) : '';
+        const why = why0 === tr('out.mbHas') ? '' : why0;
+        el.textContent = row.existingAll ? `${tr('status.skippedExisting')}${why ? ` (${why})` : ''}` : '';
         if (row.existingAll) el.classList.add('dci-ok');
         continue;
       }
@@ -33148,6 +33324,7 @@
       if (it.noteText) line.push(tr('preview.noteOnly', { text: it.noteText }));
       const mark = it.attrFill ? `<span class="dci-pv-update" title="${esc(tr('preview.attrFillTitle'))}">✎</span> `
         : it.fillDate ? `<span class="dci-pv-update" title="${esc(tr('preview.fillDateTitle'))}">✎</span> `
+        : it.workDate ? `<span class="dci-pv-update" title="${esc(tr('preview.workDateTitle'))}">✎</span> `
         : it.fill ? `<span class="dci-pv-update" title="${esc(tr('preview.fillTitle'))}">✎</span> `
         : it.update || it.replaces ? `<span class="dci-pv-update" title="${esc(tr('preview.updateTitle'))}">↻</span> ` : '';
       byTarget.get(label).push(`${mark}${esc(line.join(', '))}`);
@@ -36781,6 +36958,179 @@
     }).join('')}</div>`;
   }
 
+  // --- [Z-DGLINEUP] (3.130.0, S217) Discogs: the lineup on the whole release, and the same people's instruments on single tracks -------
+  // ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" on the back cover, Discogs's track credits of it): who plays where is asked – the
+  // proposal (each one of the lineup on all tracks except those where the track credits name others only) set until answered
+  const dglRows = (a) => S.rows.filter((r) => r.artistKey === a.key && r.level === 'recording' && !r.manual && !r.instsAuto && !r.instsCopy && !r.instsCommon
+    && ['instrument', 'vocal'].includes(instsKind(r)) && norm(r.primaryText));
+  /** Two instruments of one: the same, or one more precise than the other ("guitar" – "acoustic guitar", "bass" – "double bass"). */
+  // ((review) the same instrument with words of its kind before it ("acoustic guitar", "alto saxophone", "double bass") – not "bass guitar",
+  // "bass drum", "bass trumpet" (MusicBrainz's tree puts some of them below the other)
+  const DGL_KIND_WORDS = new Set(['acoustic', 'electric', 'classical', 'steel', 'nylon', '12-string', 'fretless', 'upright', 'double', 'alto', 'tenor', 'soprano',
+    'sopranino', 'baritone', 'piccolo', 'lead', 'backing', 'background']);
+  const dglMore = (a, b) => b !== a && b.endsWith(` ${a}`) && b.slice(0, -a.length).trim().split(/\s+/).every((w) => DGL_KIND_WORDS.has(w));
+  const dglRelated = (x, y) => { const a = norm(x); const b = norm(y); return a === b || dglMore(a, b) || dglMore(b, a); };
+  /** The more precise of two related instruments. */
+  const dglPrecise = (x, y) => (dglMore(norm(x), norm(y)) ? y : x);
+  /** A spelling of Discogs that only abbreviates the full name ("K.Filiano", "T.H.Bynum" for "Taylor Ho Bynum"). */
+  function dglAbbr(anv, full) {
+    const a = String(anv || '').replace(/\*+$/, '').trim();
+    const f = String(full || '').trim();
+    if (!a || !f || norm(a) === norm(f)) return false;
+    const m = a.match(/^((?:\p{Lu}\.\s*)+)(\p{L}[\p{L}'’-]+)$/u);
+    if (!m) return false;
+    const words = f.split(/\s+/);
+    return words.length > 1 && norm(words[words.length - 1]) === norm(m[2]) && words.slice(0, -1).map((w) => w[0].toUpperCase()).join('') === m[1].replace(/[.\s]/g, '').toUpperCase();
+  }
+  /** The question, or null: the lineup (two people at least with Discogs's credit for the whole release) and their track credits. */
+  function dgLineupFind() {
+    if (!ruleOn('S217') || selIdx().length < 2) return null;
+    const people = [...S.artists.values()].filter((a) => !a.company && !a.other && entrySource(a) === DISCOGS && !entrySkipped(a));
+    const lineup = [];
+    for (const a of people) {
+      const rows = dglRows(a);
+      const L = rows.filter((r) => r.dAllTracks);
+      if (!L.length) continue;
+      // (the person's credits of instruments on single tracks: there the person plays; those of an instrument of the lineup are its own)
+      const all = rows.filter((r) => !r.dAllTracks && r.tracks.size);
+      const T = all.filter((r) => L.some((l) => dglRelated(l.primaryText, r.primaryText)));
+      // (a track credit the same as the lineup's – role and spelling – is part of its row: its tracks)
+      const also = L.flatMap((r) => [...(r.dTrackIdx || [])]);
+      lineup.push({ a, L, T, also, onTracks: uniq([...all.flatMap((r) => [...r.tracks]), ...also]) });
+    }
+    if (lineup.length < 2 || lineup.filter((x) => x.onTracks.length).length < 2) return null;
+    const tracks = uniq(lineup.flatMap((x) => x.onTracks)).sort((p, q) => p - q);
+    const items = lineup.map((x) => {
+      const own = new Set(x.onTracks);
+      const mism = [];
+      x.T.forEach((r) => {
+        const l = x.L.find((y) => dglRelated(y.primaryText, r.primaryText));
+        if (l && norm(l.primaryText) !== norm(r.primaryText)) mism.push({ lineup: l.primaryText, track: r.primaryText, tracks: [...r.tracks].sort((p, q) => p - q) });
+      });
+      return { key: x.a.key, name: x.a.mbName || x.a.name, missing: tracks.filter((i) => !own.has(i)), mism, L: x.L.map((r) => r.id), T: x.T.map((r) => r.id), also: x.also };
+    });
+    if (!items.some((x) => x.missing.length || x.mism.length)) return null;
+    return { sig: items.map((x) => `${x.key}:${x.missing.join('.')}:${x.mism.length}`).join('|'), items, tracks };
+  }
+  /** Made after the import: the question with its proposal set (more precise everywhere); the rows as imported kept to go back to. */
+  function dgLineupRefresh() {
+    const had = !!S.dgLineup;
+    if (had) return true;
+    const q = dgLineupFind();
+    if (!q) return false;
+    const ids = new Set(q.items.flatMap((x) => [...x.L, ...x.T]));
+    q.snap = new Map(S.rows.filter((r) => ids.has(r.id)).map((r) => [r.id, { tracks: new Set(r.tracks), primaryText: r.primaryText, primaryTouched: !!r.primaryTouched, credit: r.credit, creditTouched: !!r.creditTouched }]));
+    q.removed = [];
+    q.set = new Map();
+    q.choice = '';
+    q.done = false;
+    S.dgLineup = q;
+    // ((review) the answer given for this release before (the same question): taken again, answered
+    const was = (readJson('localStorage', DGL_KEY, {}) || {})[releaseMbid] || null;
+    if (was && was.sig === q.sig && ['precise', 'track', 'lineup'].includes(was.choice)) {
+      dgLineupApply(was.choice, false);
+      q.done = true;
+      return true;
+    }
+    dgLineupApply('precise', false);
+    log('info', 'dglFound', { list: q.items.filter((x) => x.missing.length).map((x) => `${x.name} (${tr('dgl.exceptShort', { list: trackListLabel(x.missing) })})`).join(', ') || '–' });
+    return true;
+  }
+  /** ((review) the answers given, per release: { [MBID]: { sig, choice } } (the last 50) */
+  const DGL_KEY = 'dci-dgl-answers';
+  /** The rows of the answer, from the rows as imported: 'precise' (default), 'track', 'lineup'; `answered`: the question is done. */
+  function dgLineupApply(choice, answered) {
+    const q = S.dgLineup;
+    if (!q || !['precise', 'track', 'lineup'].includes(choice)) return;
+    // back to the import's rows ((review) in the order they were taken out, the last first; what was changed by hand since stays)
+    q.removed.slice().reverse().forEach(({ row, at }) => { if (!S.rows.includes(row)) S.rows.splice(Math.min(at, S.rows.length), 0, row); });
+    q.removed = [];
+    const tracksSig = (t) => [...t].sort((a, b) => a - b).join(',');
+    for (const r of S.rows) {
+      const sn = q.snap.get(r.id);
+      if (!sn) continue;
+      const was = q.set.get(r.id);
+      if (!was || tracksSig(r.tracks) === was.tracks) r.tracks = new Set(sn.tracks);
+      if (!was || r.primaryText === was.primaryText) Object.assign(r, { primaryText: sn.primaryText, primaryTouched: sn.primaryTouched });
+      if (!was || r.credit === was.credit) Object.assign(r, { credit: sn.credit, creditTouched: sn.creditTouched });
+    }
+    const byId = (id) => S.rows.find((r) => r.id === id);
+    const fold = (r) => {
+      const at = S.rows.indexOf(r);
+      if (at < 0) return;
+      q.removed.push({ row: r, at });
+      S.rows.splice(at, 1);
+    };
+    for (const x of q.items) {
+      const a = S.artists.get(x.key);
+      const full = a ? a.mbName || a.name : x.name;
+      const L = x.L.map(byId).filter(Boolean);
+      const T = x.T.map(byId).filter(Boolean);
+      const own = new Set(T.flatMap((r) => [...r.tracks]));
+      if (choice === 'lineup') {
+        T.forEach(fold);
+        continue;
+      }
+      L.forEach((l) => {
+        const drop = new Set(x.missing);
+        if (choice === 'track') own.forEach((i) => { if (!(x.also || []).includes(i)) drop.add(i); });
+        l.tracks = new Set([...l.tracks].filter((i) => !drop.has(i)));
+        if (choice === 'precise') {
+          // the more precise instrument of the track credits on all of its tracks – ((review) only when they all give the same one
+          const rel = T.filter((t) => dglRelated(l.primaryText, t.primaryText));
+          const kinds = uniq(rel.map((t) => norm(t.primaryText)).filter((n) => n !== norm(l.primaryText)));
+          if (kinds.length === 1) {
+            const best = dglPrecise(l.primaryText, rel.find((t) => norm(t.primaryText) === kinds[0]).primaryText);
+            if (norm(best) !== norm(l.primaryText)) Object.assign(l, { primaryText: best, primaryTouched: true });
+          }
+          // track credits of another instrument than the row's now: they stay, on their tracks only
+          // (one less precise than the row's instrument, "guitar" beside "acoustic guitar", goes into it too)
+          rel.filter((t) => !(norm(t.primaryText) === norm(l.primaryText) || dglMore(norm(t.primaryText), norm(l.primaryText))))
+            .forEach((t) => { t.dglKeep = true; t.tracks.forEach((i) => l.tracks.delete(i)); });
+        }
+      });
+      if (choice === 'precise') {
+        T.filter((t) => !t.dglKeep).forEach(fold);
+        T.forEach((t) => {
+          if (t.dglKeep && dglAbbr(t.credit, full)) Object.assign(t, { credit: '', creditTouched: true });
+          delete t.dglKeep;
+        });
+      }
+      else T.forEach((t) => { if (dglAbbr(t.credit, full)) Object.assign(t, { credit: '', creditTouched: true }); }); // the abbreviation of the full name is no artist credit
+      // a lineup row on no track any more: left out (the person plays only where the track credits say)
+      L.filter((l) => !l.tracks.size).forEach(fold);
+    }
+    S.rows.filter((r) => q.snap.has(r.id)).forEach((r) => refreshRowDetails(r));
+    // ((review) what this answer set: a field still so is the answer's (else changed by hand since)
+    q.set = new Map(S.rows.filter((r) => q.snap.has(r.id)).map((r) => [r.id, { tracks: tracksSig(r.tracks), primaryText: r.primaryText, credit: r.credit }]));
+    q.choice = choice;
+    if (answered) {
+      q.done = true;
+      log('info', 'dglAnswer', { choice: tr(`dgl.${choice}`) });
+      if (releaseMbid) {
+        const all = readJson('localStorage', DGL_KEY, {}) || {};
+        delete all[releaseMbid];
+        writeJson('localStorage', DGL_KEY, Object.fromEntries([...Object.entries(all).slice(-49), [releaseMbid, { sig: q.sig, choice }]]));
+      }
+    }
+  }
+  /** Whether a row waits for the answer. */
+  const dgLineupOpen = (row) => !!(ruleOn('S217') && S.dgLineup && !S.dgLineup.done && S.dgLineup.snap.has(row.id));
+  function dgLineupHtml() {
+    const q = S.dgLineup;
+    if (!q || !ruleOn('S217')) return '';
+    const lines = q.items.filter((x) => x.missing.length || x.mism.length).map((x) => {
+      const parts = [];
+      if (x.missing.length) parts.push(tr('dgl.except', { list: trackListLabel(x.missing) }));
+      x.mism.forEach((m) => parts.push(tr('dgl.mismatch', { lineup: m.lineup, track: m.track, list: trackListLabel(m.tracks) })));
+      return `<li><strong>${esc(x.name)}</strong>: ${esc(parts.join(' · '))}</li>`;
+    }).join('');
+    const btn = (c) => `<button type="button" class="${c === 'precise' ? 'dci-small' : 'dci-textbtn'}" data-act="dgl-pick" data-choice="${c}" aria-pressed="${q.done && q.choice === c}" title="${esc(tr(`dgl.${c}Title`))}">${q.done && q.choice === c ? '✓ ' : ''}${esc(tr(`dgl.${c}`))}</button>`;
+    return `<div class="dci-festival dci-plays dci-dglineup${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="dglineup"><p><strong>${esc(tr('dgl.title'))}</strong> ${esc(tr(q.done ? 'dgl.hintDone' : 'dgl.hint', { list: trackListLabel(q.tracks) }))}</p>
+      <ul class="dci-dgl-list">${lines}</ul>
+      <div class="dci-festival-offers">${['precise', 'track', 'lineup'].map(btn).join(' ')}</div></div>`;
+  }
+
   function playsHtml() {
     const list = (S.playsAsk || []).filter((x) => !x.done);
     if (!list.length) return '';
@@ -38612,12 +38962,15 @@
       : creditsSkipped(i) ? ` <button type="button" class="dci-textbtn dci-mx-cskip" data-act="mx-creditskip" aria-pressed="true" title="${esc(tr('matrix.creditTakeTitle'))}">↺ ${esc(tr('matrix.creditTake'))}</button>`
       : ` <button type="button" class="dci-textbtn dci-mx-cskip" data-act="mx-creditskip" aria-pressed="false" title="${esc(tr('matrix.creditSkipTitle'))}">${esc(tr('matrix.creditSkip'))}</button>`;
     const line = (inner) => `<div class="dci-mx-line">${inner}${cskip}${linkAttrsToggleHtml(mrow)}</div>`;
-    const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
+    // [Z-WORKUNDO] (3.130.0) a new work planned ("＋ New", "＋ New works"): "✕ No new work" – back to a track without a work
+    const unplan = work && work.planned && work.origin === 'pending'
+      ? `<button type="button" class="dci-textbtn dci-mx-unplan" data-act="work-unplan" title="${esc(tr('works.unplanNewTitle'))}">✕ ${esc(tr('works.unplanNew'))}</button>`
+      : `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
       // [Z-WNEW] (3.98.0, S156) "＋ New" greyed: a new work of the same title instead of the one linked (an arrangement, say)
       const wnew = ruleOn('S156') && track.works.length === 1 && !S.workPlan.has(i) && !S.workParts.has(i)
         ? ` <button type="button" class="dci-small dci-mx-wnew" data-act="wnew-on" data-gid="${esc(work.gid)}" title="${esc(tr('wnew.onTitle', { title: work.title }))}">＋ ${esc(tr('works.pendingShort'))}</button>` : '';
-      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}${wnew}`)}${linkAttrsHtml(mrow)}`;
+      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}${wnew}`)}${linkAttrsHtml(mrow)}${workDateLinkedHtml(i, work)}`;
     }
     if (work && work.planned) {
       const plan = planOf(i, work.gid);
@@ -38636,7 +38989,9 @@
         // (3.41.4, review) a work of MusicBrainz found for the part: offered
         const pick = pending && plan.offer ? ` <button type="button" class="dci-small" data-act="part-pick" data-pgid="${esc(plan.gid)}" title="${esc(tr('suite.partPickTitle'))}">${esc(tr('suite.partPick', { title: plan.offer.title }))}</button>
           <a class="dci-mblink" href="/work/${esc(plan.offer.gid)}" target="_blank" rel="noopener" aria-label="${esc(plan.offer.title)}"><span class="dci-src dci-src-mb">MB</span></a>` : '';
-        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}`)}${linkAttrsHtml(mrow)}${po.panel}`;
+        // [Z-WORKUNDO] (3.130.0) the new works of the parts: "✕ No new works" at the first – the track without a work again
+        const undoParts = pending && (mrow.k === 1 || n < 2) && (S.workParts.get(i) || []).every((p) => p.origin === 'pending') ? ` <button type="button" class="dci-textbtn dci-mx-unplan" data-act="work-unplan" title="${esc(tr('works.unplanPartsTitle', { n }))}">✕ ${esc(tr('works.unplanParts'))}</button>` : '';
+        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}${undoParts}`)}${linkAttrsHtml(mrow)}${po.panel}`;
       }
       const o = pending ? rowOptsHtml(i) : { btn: '', panel: '', hint: '' };
       const badge = pending
@@ -38696,6 +39051,30 @@
         <button type="button" class="dci-textbtn" data-act="work-search">${esc(tr('works.searchMb'))}</button>
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button></div>` : ''}${o.panel}
       ${found}`;
+  }
+
+  /**
+   * [Z-WORKDATE] (3.130.0, S215) Below a work MusicBrainz has linked: the date its link gets ("⌚ 2007-05-06 onto the link – MusicBrainz:
+   * 2007-05"), × leaves it out (↺ takes it again); where a date can be dropped (while one is dragged), and what MusicBrainz has already.
+   */
+  function workDateLinkedHtml(i, work) {
+    if (!ruleOn('S215')) return '';
+    const o = workDateOffer(i, work);
+    const t = S.mbTracks[i];
+    const mb = t && S.existing && S.existing.workLinkDates ? S.existing.workLinkDates.get(`${t.recordingGid}|${work.gid}`) : null;
+    const box = (inner, cls = '') => `<div class="dci-c-date dci-w-date dci-wd-linked${cls}" data-wdlinked="${esc(work.gid)}">${inner}</div>`;
+    if (!o) return box(`<span class="dci-sub dci-wd-target">${esc(tr('wd.target'))}</span>`, ' dci-wd-empty');
+    const date = formatDateValue(o.value) || '';
+    if (!o.sug && o.other) return box(`<span class="dci-sub" title="${esc(tr('wd.mbOtherTitle', { date }))}">⌚ ${esc(tr('wd.mbOther', { mb: mbLinkDateText(o.mb || mb || {}), date }))}</span>`);
+    if (!o.sug) return box(`<span class="dci-sub" title="${esc(tr('wd.mbHasTitle'))}">⌚ ${esc(tr('wd.mbHas', { mb: mbLinkDateText(o.mb || mb || {}) || date }))}</span>`);
+    // ((review) staged already: said so, no ×
+    if (o.staged) return box(`<span class="dci-sub dci-wd-on">⌚ ${esc(tr('wd.staged', { date: dsupDateText(o.sug.to) }))}</span>`);
+    if (o.off) {
+      return box(`<span class="dci-sub dci-wd-off">⌚ ${esc(tr('wd.off', { date }))}</span> <button type="button" class="dci-textbtn" data-act="wd-back" data-gid="${esc(work.gid)}">↺ ${esc(tr('wd.back'))}</button>`);
+    }
+    const what = o.sug.kind === 'add' ? tr('wd.add', { date: dsupDateText(o.sug.to) }) : o.sug.kind === 'change' ? tr('wd.change', { date: dsupDateText(o.sug.to), mb: mbLinkDateText(o.mb) })
+      : tr('wd.refine', { date: dsupDateText(o.sug.to), mb: mbLinkDateText(o.mb) });
+    return box(`<span class="dci-sub dci-wd-on" title="${esc(tr(o.own ? 'wd.ownTitle' : 'wd.recTitle'))}">⌚ ${esc(what)}</span> <button type="button" class="dci-iconbtn" data-act="wd-drop" data-gid="${esc(work.gid)}" title="${esc(tr('wd.dropTitle'))}" aria-label="${esc(tr('wd.dropTitle'))}">×</button>`);
   }
 
   /** [180] (3.38.15) Opens or closes the list "n works ▾" of a track in the page (the matrix is not drawn anew). */
@@ -39707,6 +40086,19 @@
       <button type="button" class="dci-textbtn dci-mx-sepbtn" data-act="medley-seps" aria-expanded="${!!S.medleySepsOpen}" title="${esc(tr('medley.sepsTitle', { list: seps.join('  ') }))}">✎ ${esc(seps.join(' '))}</button>${editor}</span>`;
   }
 
+  /**
+   * [Z-WORKDATE] (3.130.0, S215) In the corner of the matrix: "⌚ Performance dates onto linked works" – on (default): the recording date
+   * goes onto the links with works MusicBrainz has (added or made more precise) with "Apply"; the number of such links.
+   */
+  function workDatesHeadHtml() {
+    if (!ruleOn('S215')) return '';
+    const linked = S.mbTracks.filter((t) => matrixTrack(t) && inMedium(t.idx)).flatMap((t) => t.works.filter((w) => !w.planned).map((w) => [t.idx, w]));
+    if (!linked.length) return '';
+    const n = linked.filter(([i, w]) => { const o = workDateOffer(i, w); return o && o.sug && !o.off && !o.staged; }).length;
+    return `<div class="dci-mx-cardline dci-mx-wdates" data-el="workdates"><button type="button" class="dci-small" data-act="mx-workdates" aria-pressed="${!!S.workDates}" title="${esc(tr('matrix.workDatesTitle'))}">${S.workDates ? '✓ ' : ''}${esc(tr('matrix.workDates'))}</button>
+      ${n ? `<span class="dci-sub" title="${esc(tr('matrix.workDatesN', { n }))}">${esc(tr('matrix.workDatesN', { n }))}</span>` : ''}</div>`;
+  }
+
   /** [Z-WMX] (3.52.0) In the corner of the matrix: "All artists credited as: ↺ MusicBrainz names for all" (before: in the tools above). */
   function creditsHeadHtml() {
     return `<div class="dci-mx-cardline dci-mx-creditsall"><span class="dci-sub">${esc(tr('matrix.creditsAll'))}</span>
@@ -40269,7 +40661,7 @@
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
-            <span class="dci-sub" title="${esc(`${tr('matrix.countTracks', { n: nTracks })} · ${tr('matrix.colWorks', { n: nWorks })}`)}">${esc(`${nTracks} · ${nWorks}`)}</span></div>${linkAttrsHeadHtml()}${creditsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}${skipped ? '' : addColumnHeadHtml()}</tr></thead>
+            <span class="dci-sub" title="${esc(`${tr('matrix.countTracks', { n: nTracks })} · ${tr('matrix.colWorks', { n: nWorks })}`)}">${esc(`${nTracks} · ${nWorks}`)}</span></div>${linkAttrsHeadHtml()}${creditsHeadHtml()}${workDatesHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}${skipped ? '' : addColumnHeadHtml()}</tr></thead>
           <tbody>${matrixBodyHtml(mrows, cols, skipped)}</tbody>
         </table>
       </div>
@@ -40607,6 +40999,23 @@
         S.wattrLong = !S.wattrLong;
         writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
         break;
+      // [Z-WORKDATE] (3.130.0, S215) the setting, and one link left out or taken again
+      case 'mx-workdates':
+        S.workDates = !S.workDates;
+        writeJson('localStorage', 'dci-work-dates', S.workDates ? null : false);
+        log('info', 'settingValue', { what: tr('matrix.workDates'), value: tr(S.workDates ? 'common.on' : 'common.off') });
+        break;
+      case 'wd-drop':
+      case 'wd-back': {
+        const tr1 = btn.closest('tr[data-work]');
+        const t = tr1 && S.mbTracks[Number(tr1.dataset.work)];
+        if (!t || !btn.dataset.gid) return true;
+        const key = `${t.recordingGid}|${btn.dataset.gid}`;
+        if (act === 'wd-drop') S.workDateOff.add(key);
+        else S.workDateOff.delete(key);
+        log('info', act === 'wd-drop' ? 'workDateOff' : 'workDateOn', { track: trackLabel(t) });
+        break;
+      }
       case 'mx-wattr-open': {
         const tr1 = btn.closest('tr[data-mrow]');
         if (!tr1) return true;
@@ -41886,6 +42295,23 @@
       return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
     }
     const workRow = target.closest('tr[data-work]');
+    // [Z-WORKDATE] (3.130.0, S215) onto a link with a work MusicBrainz has: its date (added or made more precise with "Apply")
+    const wdl = workRow && target.closest('[data-wdlinked]');
+    if (wdl) {
+      const t = S.mbTracks[Number(workRow.dataset.work)];
+      if (!t) return null;
+      const key = `${t.recordingGid}|${wdl.dataset.wdlinked}`;
+      const name = t.title || '';
+      const old = S.workDateOwn.get(key);
+      if (old && otherDate(old) && !replace) return needShift(name, old);
+      S.workDateOwn.set(key, { ...fieldsFromDate(entry), poolId: entry.id });
+      S.workDateOff.delete(key);
+      log('info', 'dateApplied', { n: 1, date });
+      renderWorks();
+      renderDates();
+      refresh();
+      return { key: replace ? 'drop.dateReplaced' : 'drop.dateSet', params: { date, name } };
+    }
     if (workRow && target.closest('.dci-w-date')) {
       const i = Number(workRow.dataset.work);
       const plan = S.workPlan.get(i);
@@ -41973,6 +42399,8 @@
         plans: [...[...S.workPlan].map(([i, x]) => [i, x, planOf(x)]), ...[...S.workParts].flatMap(([i, ps]) => ps.map((x) => [i, x, planOf(x)]))],
         dm: structuredClone(dm()),
         pool: S.datePool.map((x) => [x, structuredClone({ ...x })]),
+        // ([Z-WORKDATE] 3.130.0, review) the dates of the links with works MusicBrainz has
+        wdOwn: structuredClone(S.workDateOwn), wdOff: new Set(S.workDateOff),
       };
     } catch {
       // (something that cannot be copied: the drop is done, without ↶)
@@ -41995,7 +42423,8 @@
   const dropMark = () => {
     try {
       return JSON.stringify([S.rows.map((r) => [r.id, r.level, (r.types || []).join('|'), r.date ? fieldsText(r.date) : '', [...(r.tracks || [])].join(','), r.primaryText || '']),
-        [...S.mxColDate], dm().cells.map((c) => [c.id, c.col, c.date, (c.tgs || []).join(',')]), S.datePool.map((d) => d.id), S.dateFills.size]);
+        [...S.mxColDate], dm().cells.map((c) => [c.id, c.col, c.date, (c.tgs || []).join(',')]), S.datePool.map((d) => d.id), S.dateFills.size,
+        [...S.workDateOwn].map(([k, f]) => [k, fieldsText(f)]), [...S.workDateOff]]);
     } catch {
       return '';
     }
@@ -42030,6 +42459,8 @@
     S.filledDates = snap.filled;
     S.linkAttrOn = snap.attrOn;
     S.linkAttrOff = snap.attrOff;
+    if (snap.wdOwn) S.workDateOwn = snap.wdOwn;
+    if (snap.wdOff) S.workDateOff = snap.wdOff;
     snap.plans.forEach(([i, x, c]) => Object.assign(x, c));
     uniq(snap.plans.map(([i]) => i)).forEach((i) => { if (S.workPlan.has(i)) saveCreatedWorkDate(i); });
     S.dm = snap.dm;
@@ -42548,7 +42979,7 @@
     const act = btn.dataset.act;
     // ([Z-DUR] 3.65.0, S095, review) the time of creating a new entry from the click on "Create …" (its form opens after lookups)
     if (['artist-create', 'company-create', 'other-create', 'work-create', 'works-create-all', 'suite-create'].includes(act)) S.crClick = { at: Date.now(), idle: S.statIdle || 0 };
-    if ((act.startsWith('mx-') || act === 'cd-copy' || act === 'xd-copy') && matrixAction(act, btn)) return;
+    if ((act.startsWith('mx-') || act === 'cd-copy' || act === 'xd-copy' || act === 'wd-drop' || act === 'wd-back') && matrixAction(act, btn)) return;
     const row = rowOf(btn);
     const artist = artistOf(btn);
     // [3.26.0] an entry of the menu "Source ▾" closes it
@@ -42965,6 +43396,13 @@
         } else playsTake(q).then(after, (e) => showMessage('error', 'raw', { text: e.message }));
         break;
       }
+      // [Z-DGLINEUP] (3.130.0, S217) the answer: more precise everywhere, per track, the lineup's
+      case 'dgl-pick':
+        dgLineupApply(btn.dataset.choice, true);
+        renderSource();
+        renderGroups();
+        refresh();
+        break;
       // [Z-CIMP] (3.101.0, S162) the answer to "track 7 SOLO: …"
       case 'solo-ans':
         soloAnswer(btn.dataset.ens, btn.dataset.ans);
@@ -44999,6 +45437,8 @@
         }
         // [Z-WNEW] (3.98.0) the linked work comes back – ((review) not once its link is removed in the editor)
         if (replacedWork(i) && !wnewOff(i, true)) break;
+        // ([Z-WORKUNDO] 3.130.0) the parts planned as new works too (a medley, songs, a suite split by "＋ New works")
+        if (S.workParts.has(i) && (S.workParts.get(i) || []).every((p) => p.origin === 'pending')) S.workParts.delete(i);
         S.workPlan.delete(i);
         log('info', 'workUnplanned', { track: trackLabel(S.mbTracks[i]) });
         renderWorks();
@@ -46606,7 +47046,7 @@
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
-    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
+    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
@@ -49266,7 +49706,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -49401,6 +49841,7 @@
     S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
     S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
     S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
+    S.workDates = readJson('localStorage', 'dci-work-dates', true) !== false; // [Z-WORKDATE] (3.130.0)
     S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
     S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
     S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
@@ -51468,6 +51909,11 @@
       /* [Z-AWB] (3.86.0) "all works" below "credited as": a place for track groups too (exactly their works by default) */
       .dci-mx-rolelevel { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 10); }
       .dci-mx-allworks { display: block; margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11); }
+      /* [Z-WORKDATE] (3.130.0) the date of a linked work's link; its drop place only while a date is dragged or picked */
+      #dci-overlay .dci-wd-linked { margin-top: calc(var(--u, 1px) * 2); }
+      #dci-overlay .dci-wd-empty { display: none; }
+      #dci-overlay.dci-dm-drag-date .dci-wd-empty, #dci-overlay.dci-dm-drag-pool .dci-wd-empty { display: block; }
+      #dci-overlay .dci-wd-off { text-decoration: line-through; }
       .dci-mx-allworks[aria-pressed="true"] { font-weight: 600; text-decoration: none; }
       #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) [data-allworks] { outline: 1px dashed var(--orange); outline-offset: 1px; }
       #dci-overlay [data-allworks].dci-dm-over { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
