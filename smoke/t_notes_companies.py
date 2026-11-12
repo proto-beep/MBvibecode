@@ -738,7 +738,7 @@ def case_festival():
        1994 –, nothing set (no entry of it).
     C) Its button: the event an entry, in the colour of events (plum); the log says so – from 3.85.0 (S130) the hint goes then (until
        3.84.0 the button greyed out). ⚙ Appearance has the colour "Event".
-    D) A pasted text "Recorded live at the Montreux Jazz Festival." (no date): the hint without events; "the Royal Festival Hall"
+    D) A pasted text "Recorded live at the Montreux Jazz Festival." (no date): the hint without events ((3.128.0, Z-FESTCTX) its sentence quoted); "the Royal Festival Hall"
        (a place) gives none."""
     NOTES = ('Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier, Ltd. International Jazz Festival Vancouver.')
     E1, E2 = H.uid('fefefefe', 1), H.uid('fefefefe', 2)
@@ -802,7 +802,7 @@ def case_festival():
         H.wait_for(pg, "(() => { const f = document.querySelector('.dci-festival'); return !!f && /Montreux/.test(f.textContent); })()", 40)
         d = pg.evaluate(FEST)
         print('D)', d)
-        results.append(bool(d) and d['text'] == 'Festival recording: “Montreux Jazz Festival”. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”).'
+        results.append(bool(d) and d['text'].replace('From:', ' From:') == 'Festival recording: “Montreux Jazz Festival”. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”). From: “Recorded live at the Montreux Jazz Festival.”'
                        and d['offers'] == [] and d['n'] == 1)
         print('Fehler:', errs)
         results.append(not errs)
@@ -1078,7 +1078,8 @@ def case_dedbox():
     A) The entries, the box and the works matrix each in a narrow frame, the box between them; in it "dedicated to Cecil Taylor"
        (on the release group, added by itself); a suggestion "In memory of Peter Kowald" with both entries as buttons (the second
        "(German painter)"); a suggestion "for Ireland" ("the work of which track?"); "Create …" only at "In memory of Nobody Known"
-       (MusicBrainz has none of the name: 3.124.0, Z-INMEM – until 3.123.0 nowhere in the box).
+       (MusicBrainz has none of the name: 3.124.0, Z-INMEM – until 3.123.0 nowhere in the box). C2) (3.128.0, Z-DEDBACK) a suggestion left
+       out listed below the box with "↺ back", which brings it back.
     B) "Peter Kowald (German painter)": his row "dedicated to" on the release group, listed in the box, the suggestion gone.
     C) "for Ireland": the work of track 2 chosen, the MBID of the area pasted, "Add": a row of the area on the work of track 2.
     D) "＋ Dedication | Tribute" – the half "Tribute": a form; the link of Bass Man: his row "tribute to" on the release group.
@@ -1168,6 +1169,15 @@ def case_dedbox():
             pg.click('[data-el=dedbox] [data-act=ded-dismiss]')
             pg.wait_for_timeout(300)
             results.append(pg.evaluate(BOX)['sugg'] == [])
+            # ([Z-DEDBACK] 3.128.0) listed below the box as left out – "↺ back" brings it back (until 3.127.0 it was gone for good)
+            left = pg.evaluate("(document.querySelector('[data-el=ded-left]') || {}).textContent || ''")
+            pg.click('[data-el=dedbox] [data-act=ded-back]')
+            pg.wait_for_timeout(300)
+            back = [x[0] for x in pg.evaluate(BOX)['sugg']]
+            print('C2) ausgelassen:', left.strip(), '| zurück:', back)
+            results.append('“In memory of Nobody Known”' in left and back == ['“In memory of Nobody Known”'])
+            pg.click('[data-el=dedbox] [data-act=ded-dismiss]')
+            pg.wait_for_timeout(300)
             pg.click('[data-el=dedbox] .dci-dedbox-head [data-act=ded-add][data-kind=tribute]')
             pg.wait_for_timeout(300)
             pg.fill('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', f'https://musicbrainz.org/area/{IE}')

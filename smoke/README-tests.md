@@ -250,8 +250,17 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   textlines3128: 3.128.0 (S202–S209, Z-LOGMORE): "String Fables" – track list, prose, signature left out; photos "photo of …";
+                                #     "Supported by" labels (as an artist: miscellaneous support "support"); FCM Studio mixed and mastered at; RedRedPaw a place;
+                                #     no festival, no 2017; the log line by line
+                                #   rmx3128: 3.128.0 (Z-RMXONLY, Z-RMXSTAGE, Z-APPLYLABEL): "Written, performed and produced by …" not on the remix; Search / Link;
+                                #     TVAM linked – remixer (153) and "remix of" (230) staged
                                 #   rmxtitle3126: 3.126.0 (Z-RMXTITLE, S200): "(TVAM Remix)", "[Remix by Jane Roe & John Doe]" – remixer entries on Skip
                                 #     with "Take as remixer", John Doe (credited) only "remix of"; staged: remix of track 1 (230, the remix entity0)
+                                #   (t_text_lists) text3128r: 3.128.0 (Node): prose "by", mixed and mastered at, track list lines, edition, translation, photos,
+                                #     "Supported by", signature
+                                #   (t_text_lists) text3128rr: 3.128.0 (review, Node): two English halves no translation, "1. Song Two (Jane Doe) 5:32" no
+                                #     track list, an edition line with "cover art by" kept, "Supported by Jane Doe on drums" no label, "sophie" kept, a long list of instruments no prose
                                 #   (t_text_lists) rmx3126r: 3.126.0 (review, Node): remixParts – "(Stereo Remix)", "(The Remix)", "(Disco Dub)" no name; "(Radio Edit -
                                 #     TVAM Remix)" TVAM; "(Above & Beyond Remix)" one name; "[Remix by Jane Roe & John Doe]" two; "(Dub Syndicate Remix)"
                                 #   exceptc3125: 3.125.0 (Z-EXCEPTC, S199): "All tracks except 'A' and 'B' were / composed and commissioned for the 2025
