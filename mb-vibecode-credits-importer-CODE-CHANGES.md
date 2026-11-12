@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.134.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.135.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -22,7 +22,13 @@ How far back the entries go:
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.134.0 · 2026-11-12
+## Import 3.135.0 · 2026-11-12
+
+- **Z-GAPREFRESH2 (S223):** `rowsRemovedInEditor({ any, rels })` – without the companion when counting, the relationships gone counted; `afterEnterEdit` adds them to the number (`gapExactWrite(…, removed)`) and keeps their credits (`rmdStore`: `dci-removed-in-editor`, { [MBID]: [{ key: rowBaseKey, label }] }, the last 50); `showReleaseGap` says how many (`gap.exactRemoved`); after an import `rmdRefresh` (the rows of those credits not on Skip) – `rmdAskHtml` above the entries (✓ `rmdSkipAll`: `levelOf(…, 'skip')`, ✕ `rmdKeep`), a yellow item `rmd`.
+- **Z-WORKDATE-REM:** `worksSnapshot` keeps `wdOff` and `wdOwn` (by recording and work), `restoreWorks` takes them back.
+- **Tests:** `t_start.py gaprefresh3135`, `t_works_matrix.py workdaterem3135` – new, fail on 3.134.0 (C of gaprefresh3135 from the review).
+- **Review:** each relationship taken out once (a joined one is staged per row); not what the dashboard takes back or changes itself (`skip`: the plan's removals, `update`, `replaces`), only rows still there and not on Skip; a walk of the editor's state cut off is no removal (`findRelationshipStates(…, out)`); kept by the occurrence of the source's line (`S.freshRows` key), rows of the source only, once each; asked after what was remembered came back; answered (✓, ✕) – not asked again (`rmdForget`); with another source or S218 off kept all the same; `S.rmdAsk` reset with each import; "Delete stored import …" forgets it (`REL_MAPS`), and the dates of linked works (also "↻ Repeat import" afresh: `dropWorkChoices`); the works matrix and dates drawn again after ✓; S219's set its own field (`S.cpRemovedRows` – `S.removedRows` is the list of rows removed with ✕); the removed sentence after "its rows …"; no pool id stored with a dropped date.
+
 
 - **Z-DGEXCL:** `s150Row` without `source === DISCOGS` (and the type of the work level also by its name – a text's row has none chosen yet); `textDedupe(rel)` (loadRelease and compareSupplement for every source but Discogs): S054 – a credit of the same name and kind (`creditKind` / `sameCreditKind`, lifted out of `addNotesPersons`) in another line is the first one's (`also`: its line, the tracks joined), S175 – places of one name (`samePlaceName` both ways) one entry, credited as each line writes it; `groupCredits` / `groupCompanies` add the `also` lines to the refs (the companion's marks); `artlEvidence` with the labels and companies of every source (`why: 'text'`). Log `textTwice`.
 - **Z-LINEUPALL:** `dgLineupFind` – all people of the entries (not added by hand); the box's title, hint and the tooltip of "Per track" by the source (`dgl.titleAny`, `dgl.hintAny`, `dgl.trackTitleAny`).
