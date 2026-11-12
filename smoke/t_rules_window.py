@@ -309,10 +309,10 @@ def case_quickswitch():
         # ([Z-QSCAT] 3.105.0) in groups: dates · instruments and performers · attributes and credits · writers, rights and works · companies
         groups = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-group')].map(g => [g.querySelector('.dci-quick-gh').textContent.trim(), [...g.querySelectorAll('[data-qs-goto]')].map(x => x.textContent.trim())])")
         print('   Gruppen:', groups)
-        results.append(a == [['D022', True], ['D026', False], ['D023', False], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
+        results.append(a == [['D022', True], ['D026', False], ['D023', False], ['D034', True], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
                              ['S021', True], ['S031', True], ['S160', False], ['S045', True], ['S122', False], ['S007', True]]
-                       and box[:4] == [True, 14, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name')
-                       and groups == [['Dates', ['D022', 'D026', 'D023']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
+                       and box[:4] == [True, 15, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name')
+                       and groups == [['Dates', ['D022', 'D026', 'D023', 'D034']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
                                       ['Attributes and credits', ['S021', 'S031']], ['Writers, rights and works', ['S160', 'S045', 'S122']], ['Companies and places', ['S007']]])
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
