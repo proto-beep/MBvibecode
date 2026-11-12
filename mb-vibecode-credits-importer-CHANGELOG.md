@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-12 | 3.132.0 – 3.135.0 | – |
+| 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -105,6 +105,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.136.0
+
+- **Settings in order** (collected item Z-SETTABS): every tab has subheadings (they do not fold) and its settings in an order of priority – General: Language, Log; Appearance: Window, Colours, Entries, Symbols and boxes, Mapping rules; Sources: Order of the sources, Release editor and release page, MusicBrainz search, Text from cover art; Works: Lookups of works, Works matrix, Suites; Staging: Staging and its limits, Edit note, Live comments, Open items; Cache: Remember, Statistics.
+- The settings of an entry's matrix (events shared, lines shown, compact by, attributes) moved from Staging to Appearance → Entries; "Performance dates onto linked works" also under Works → Works matrix.
+- "Developer mode" only in the tab "Developer", which is always there now (its tools only in developer mode).
 
 ### Import 3.135.0
 
