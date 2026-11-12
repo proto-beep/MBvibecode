@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.133.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.134.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -22,7 +22,13 @@ How far back the entries go:
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.133.0 · 2026-11-12
+## Import 3.134.0 · 2026-11-12
+
+- **Z-DGEXCL:** `s150Row` without `source === DISCOGS` (and the type of the work level also by its name – a text's row has none chosen yet); `textDedupe(rel)` (loadRelease and compareSupplement for every source but Discogs): S054 – a credit of the same name and kind (`creditKind` / `sameCreditKind`, lifted out of `addNotesPersons`) in another line is the first one's (`also`: its line, the tracks joined), S175 – places of one name (`samePlaceName` both ways) one entry, credited as each line writes it; `groupCredits` / `groupCompanies` add the `also` lines to the refs (the companion's marks); `artlEvidence` with the labels and companies of every source (`why: 'text'`). Log `textTwice`.
+- **Z-LINEUPALL:** `dgLineupFind` – all people of the entries (not added by hand); the box's title, hint and the tooltip of "Per track" by the source (`dgl.titleAny`, `dgl.hintAny`, `dgl.trackTitleAny`).
+- **Tests:** `t_text_lists.py dgexcl3134`, `t_sources_bandcamp.py twice3134` – new, fail on 3.133.0; `t_text_lists.py dgexcl3134r` (review). Adjusted: `t_entries.py arr394` (C: a line of a bare "Arranged by" on the works).
+- **Review:** S150 for a text only for a line that is the bare "Arranged by X" (`srcRefs`; not a clause after other credits), the Discogs notes the same; `textDedupe` – the same name as written (`norm`, not `looseName`), the kind with the role credit and the rule, within one text only lines for the whole release (its blocks of tracks name a person per track – found by the suite: maya392), no ambiguous stacks, a scope of titles not found is a scope, the whole release keeps the tracks a line names (`all` with `indexes`), the line not of the about text leads (so "Leave out the about text" keeps it), `pos` in the refs, web profiles, date, other name and role credit of the other line kept, places with the other spelling searched (`altNames`) and its area, roles " at" in any case; the merged lines in `entry.lines` too (the marks on images); `artlEvidence` for a text only with a label of that name among the entry's suggestions of MusicBrainz (a ℗ line may name a person); `dgLineupFind` for a text only the lineup's own instruments on its lines of tracks; the texts of the lineup by source (`dgl.titleAny`, `issue.dgLineupAny`, logs neutral); `creditKind` beside `addNotesPersons` (which keeps its own comparison); the register notes of S054, S150, S159, S175, S217.
+
 
 - **Z-IMPROV (S222):** `IMPROV_WORDS`, `IMPROV_TITLE` (module); in `TEXT.parse` `IMPROV_LINE` / `improvLine` (last of the line pipeline: "… improvised by X" → "Composed by X", the line as written in `improvLines`; names with a capital only; S222 off: left out as `improv`), the credits of those lines `improv` (the line); `groupCredits` / the rows carry it (`row.improv`); `improvOf(i)` (a work row with `improv` on the track, or the title), `improvMarkHtml` – in `workFrontCell`, the column head of the works matrix, the head of the entry (its work rows), `roleCell`, the compact line and the line of the entry matrix. Quick switch S222 (group works).
 - **Z-QSNAMES:** `quickSwitchesHtml` – `.dci-qname` (`quick.name.<id>`) above `.dci-qdesc` (`quick.<id>`); the missing German, Spanish and French sentences of D026, S078, S114, S155, S160, S170.
