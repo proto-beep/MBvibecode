@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.130.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.131.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.131.0 · Companion 1.21.0 · 2026-11-08
+
+- **Z-GAPREFRESH (S218):** `initAfterEditArm` / `afterEnterEdit` ("Enter edit": the form with the edit note submitted) – `computePlan` once more, `gapExactWrite(…, afterEdit)` with what is still missing (`S.gapExactSrc` of the import); `gapEstimate` counts `all` (the relationships of the credits); the release page: `afterEdit` with less than a fifth of them still missing – no line (`gapWhy.afterEdit`), else `gap.exactAfter`.
+- **Z-CPREMOVED (S219):** `rowsRemovedInEditor` (the rows whose staged states are all gone from the editor or taken out there); `sendDiscogsStatus` gives them the status `removed` (also per track), at "Enter edit" at once (`now`); label `dgStatus.removed`. Companion 1.21.0: `MARK_SYMBOL.removed` ✗, `.dci-dg-removed` grey (dark too); the check of the release page leaves it (only "staged" becomes "pending").
+- **Z-SUPPALL:** `suppBarHtml` – "＋ 🖼️ Images …" (`ocr-open`; on: the supplement of text from images).
+- **Z-DGIMAGES:** `DISCOGS.pageImages` – first `api.discogs.com/releases/<id>` (`images[].uri`), the page only without them; the hints of the OCR window.
+- **Z-STATS:** the record of a submission: each relationship's sources (`o`, `rowOrigins`), `x.out` (`statLeftOut`: the reasons of the lines left out), `x.may` (`statMay`: ✓ / ✕ of `yellAnswer` in `S.yellStat`, the open ones); `statMore` counts `origins`, `outWhy`, `may`, `suppl`, `rmx`; `statsMore131Html` – cards `origins`, `leftout` (group sources), `suppl`, `may`, `remixes` (group what).
+- **Tests:** `t_start.py gaprefresh3131`, `t_companion_discogs.py cpremoved3131`, `t_coverart.py dgimages3131`, `t_ui_settings.py stats3131` – new, fail on 3.130.0. Adjusted: `t_ui_settings.py statsmore2` (B: the keys `out`, `may`), `t_sources.py supp` (A: "＋ 🖼️ Images …" in the bar).
+- **Review:** the chip "Text ✓" not for a supplement of text from images (its own chip); `removed` only for a companion of 1.21.0 or later (an older one "staged"), found once at "Enter edit" (`S.removedRows`, reset with each import; the editor walked with a larger limit) and with the plan of that moment; the count after "Enter edit" a month at most; the API of Discogs at the pace of the other requests (`getJson`); `S.yellStat` reset with each import; the lines left out and the suggestions once per import (`seenImport`: several rounds of "Enter edit" one); each source of a row in "Where the relationships come from"; the reasons in short (`stats.why.*`).
 
 ## Import 3.130.0 · 2026-11-08
 

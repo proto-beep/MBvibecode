@@ -1656,13 +1656,86 @@ def case_statsmore2():
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
         # ((3.42.6, Z-STG2) and the tags of Bandcamp)
         # ([3.53.0] version 3: the release's media, types, language, script and lengths; role credits and aliases)
-        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
+        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions', 'out', 'may'}
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
                        and isinstance((r.get('x') or {}).get('decisions'), list))
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_stats3131():
+    """Credits Importer 3.131.0 (collected item Z-STATS): five more cards, from three stored submissions of 3.131.0.
+    A) "Where the relationships come from": Discogs 40 % (2), MusicBrainz 40 % (2), pasted text 20 % (1) (by the first source of each row besides
+       MusicBrainz);
+       "Lines left out, by reason": a line of the track list 3, the edition 1; "Supplemented instead of new": 40 % (2 of 5), dates added 2,
+       of them dates onto links with works 1; "Suggestions that may be confirmed": confirmed 2, declined 1, left open 1; "Remixes and
+       commissions": remixers 1, "remix of" 1, commissioned 1.
+       (review) A second round of the same import does not count its lines left out and suggestions again.
+    B) A real submission: its record has the lines left out and the suggestions (x.out, x.may), each relationship where its row came from (o)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def rl(k, lt, tg, o, f=None, et='artist', lv='recording'):
+            d = stat_rel(k, lt, lv, et, tg, 'x')
+            d['o'] = o
+            if f is not None:
+                d['f'] = f
+            return d
+
+        def r3(i, rels, out, may, mbid=None, start=None):
+            return {'v': 3, 'id': f'y:{i}', 'mbid': mbid or f'm{i}', 'at': now - i * 1000, 'start': start, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None,
+                    'x': {'suites': {}, 'works': {}, 'genres': [], 'live': {}, 'gaps': {}, 'decisions': [], 'out': out, 'may': may}, 'rels': rels}
+        recs = [
+            r3(1, [rl('n', 'remixer', 'g1', ['dg']), rl('n', 'remix', 'r2', ['mb'], et='recording'), rl('s', 'performance', 'w1', ['dg', 'mb'], ['dates'], et='work')],
+               {'tracklist': 2, 'edition': 1}, {'yes': 1, 'no': 1, 'open': 0}, start=now - 9000),
+            # (review) a second round of the same import ("Enter edit" again): what it left out and its suggestions not counted again
+            r3(3, [], {'tracklist': 2, 'edition': 1}, {'yes': 1, 'no': 1, 'open': 0}, mbid='m1', start=now - 9000),
+            r3(2, [rl('n', 'commissioned', 'w2', ['text'], et='label', lv='work'), rl('s', 'instrument', 'g3', ['mb', 'mb'], ['dates'])],
+               {'tracklist': 1}, {'yes': 1, 'no': 0, 'open': 1}),
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).concat([(c.querySelector('.dci-stats-cardhead[data-since]') || {}).title].filter(Boolean))]))"""
+        c = pg.evaluate(CARDS)
+        for k in ('origins', 'leftout', 'suppl', 'may', 'remixes'):
+            print(f'   {k}:', c.get(k))
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('origins', 'Discogs 40 % (2)', 'pasted text 20 % (1)', 'MusicBrainz 40 % (2)') and ok('leftout', 'a line of the track list 3', 'the edition (no relationship) 1')
+                       and ok('suppl', '40 % supplemented (2 of 5 relationships): MusicBrainz had them – the dashboard added to them', 'dates added 2', 'of them dates onto links with works 1')
+                       and ok('may', 'confirmed (✓) (50 %) 2', 'declined (✕) (25 %) 1', 'left open (taken as suggested) (25 %) 1')
+                       and ok('remixes', 'remixers 1', '“remix of” 1', 'commissioned 1'))
+        H.open_stats(pg)
+        pg.evaluate(STAT_SEED, [])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs2 = pg.evaluate(STAT_COUNT) or []
+        r = recs2[0] if recs2 else {}
+        x = r.get('x') or {}
+        print('B)', x.get('out'), x.get('may'), [it.get('o') for it in r.get('rels', [])][:5])
+        results.append(len(recs2) == 1 and isinstance(x.get('out'), dict) and set((x.get('may') or {}).keys()) == {'yes', 'no', 'open'}
+                       and all(isinstance(it.get('o'), list) for it in r.get('rels', [])) and any('dg' in (it.get('o') or []) for it in r.get('rels', [])) and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

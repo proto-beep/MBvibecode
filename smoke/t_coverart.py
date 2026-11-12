@@ -610,6 +610,70 @@ def case_ocrdiscogs():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dgimages3131():
+    """Credits Importer 3.131.0 (collected items Z-DGIMAGES, Z-SUPPALL): "Load Discogs images" takes all images from Discogs's API (as the
+    companion does), at their size there – the page of the release not read; and "＋ Supplement" offers the images too.
+    A) Discogs's API gives three images (1200 px): three cards "Discogs r<id> · 1 … 3", no request for the release's page.
+    B) An API without images: the page as before (its two images).
+    C) "＋ Supplement": "＋ 🖼️ Images …" beside "＋ Text …"; a click opens the window of the text from cover art."""
+    results = []
+    rel = H.DISCOGS_ID
+    page = '<html><body><img src="%s"><img src="%s"></body></html>' % (discogs_image(rel, 1, 600), discogs_image(rel, 2, 600))
+    orig = H.discogs_release
+
+    def run(with_images):
+        pages = []
+
+        def dgrel():
+            d = orig()
+            if with_images:
+                d['images'] = [{'type': 'primary', 'uri': discogs_image(rel, k, 1200), 'width': 1200, 'height': 1200} for k in (1, 2, 3)]
+            return d
+        H.discogs_release = dgrel
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.COVER_ART = list(ART)
+            ctx = H.new_context(b)
+            beta_on(ctx)
+
+            def dg_page(route):
+                pages.append(route.request.url)
+                return route.fulfill(body=page, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
+            ctx.route('https://www.discogs.com/release/**', dg_page)
+            ctx.route('https://i.discogs.com/**', lambda r: r.fulfill(body=H.png_of(600, 600), content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            supp = None
+            if with_images:
+                pg.click('[data-act=supp-open]')
+                pg.wait_for_timeout(300)
+                supp = pg.evaluate("[...document.querySelectorAll('.dci-suppbar .dci-supp-btn')].map(b => [b.dataset.act, b.textContent.replace(/\\s+/g, ' ').trim()])")
+                pg.click('.dci-suppbar [data-act=ocr-open]')
+            else:
+                H.src_menu(pg, 'ocr-open')
+            pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+            pg.click('#dci-ocr [data-ocr-discogs]')
+            H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length >= 2", 20)
+            pg.wait_for_timeout(500)
+            cards = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => c.querySelector('.dci-ocr-type').textContent.trim())")
+            b.close()
+            return cards, list(pages), supp, errs
+    try:
+        cards, pages, supp, errs = run(True)
+        print('A)', cards, pages, '\nC)', supp)
+        results.append(cards == [f'Discogs r{rel} · {k}' for k in (1, 2, 3)] and pages == [] and not errs)
+        results.append(supp and ['supp-text', '＋ Text …'] in supp and ['ocr-open', '＋ 🖼️ Images …'] in supp)
+        cards2, pages2, _, _ = run(False)
+        print('B)', cards2, pages2)
+        results.append(cards2 == [f'Discogs r{rel} · {k}' for k in (1, 2)] and pages2 == [f'https://www.discogs.com/release/{rel}'])
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_ocrstart():
     """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124).
     A) ([Z-BETAOFF] 3.115.0: on at first) "… from cover art" (until 3.114 with "beta"), joined to "Import credits …".
