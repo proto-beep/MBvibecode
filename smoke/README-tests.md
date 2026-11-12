@@ -759,6 +759,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   settabs3136: 3.136.0 (Z-SETTABS): the subheadings of the tabs, the matrix of an entry under Appearance, developer mode only
+                                #     in "Developer", "Performance dates onto linked works" under Works
                                 #   profnew3108: 3.108.0 (Z-PROFNEW): "+ New profile" – a copy of the settings, named, active, its name focused
                                 #   devtab3108: 3.108.0 (Z-DEVTAB, Z-CONN2): the tab Developer only in developer mode (its switches moved from Sources,
                                 #     diagnosis, statistics, the tree); the tab MusicBrainz with the data the script reads and their links

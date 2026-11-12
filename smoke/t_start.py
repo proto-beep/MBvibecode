@@ -1510,7 +1510,10 @@ def case_gapwhy3105():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.open_settings(pg, 'sources')
-            off = pg.locator('[data-el=settings] [data-set=gap-why]').count() + pg.locator('[data-el=settings] .dci-set-tab[data-topic=developer]').count()
+            off = pg.locator('[data-el=settings] [data-set=gap-why]').count()
+            # ([Z-SETTABS] 3.136.0) the tab "Developer" always there – its tools only in developer mode
+            H.open_settings(pg, 'developer')
+            off += pg.locator('[data-el=settings] [data-set=gap-why]').count()
             pg.evaluate("localStorage.setItem('dci-dev', 'true')")
             pg.reload()
             pg.add_script_tag(content=H.MAIN)
