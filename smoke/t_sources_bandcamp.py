@@ -2060,4 +2060,45 @@ def case_artlbc3100():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_twice3134():
+    """Credits Importer 3.134.0 (collected item Z-DGEXCL; S054 for every source): Bandcamp's credits "Produced by Anna Neu" and its about text
+    "Producer: Anna Neu" – one row (nothing twice; until 3.133.0 two), both lines its sources (the companion marks both)."""
+    PAGE = 'https://twiceband.bandcamp.com/'
+    ALBUM = PAGE + 'album/twice'
+    TITLES = ['One', 'Two', 'Three', 'Four']
+    H.TITLES[:] = TITLES
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Twice Band', 'current': {'title': 'Twice', 'credits': 'Produced by Anna Neu\nBob Roe – drums',
+                                                                       'about': 'Producer: Anna Neu', 'release_date': '17 Jun 2022 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Anna Neu');
+          return g ? [...g.querySelectorAll('tr.dci-row')].map(r => r.querySelector('.dci-drole').dataset.raw.trim()) : null; })()""")
+        log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /two lines of the texts/.test(t))")
+        print('A) Anna Neu:', rows, '| Log:', log)
+        results.append(rows is not None and len(rows) == 1 and bool(log) and 'joined in one row' in log[0])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

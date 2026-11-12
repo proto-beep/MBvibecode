@@ -2265,7 +2265,7 @@ def case_arr394():
        "Writing credits and arrangements of the works" (after the other entries); its line "arranger · Work" – a click puts it back on
        "Recording", the entry among the others again; its level then clicks through Recording → Release → Work and stays a button.
     B) Discogs "Arranged By [Strings]": on the recordings (an arrangement for the recording).
-    C) A text "All songs were arranged by Writer Z": on the works; "Arranged by Writer Z" alone: on the recordings; (review) not a song
+    C) A text "All songs were arranged by Writer Z": on the works; "Arranged by Writer Z" alone: on the recordings (3.134.0, Z-DGEXCL: on the works too); (review) not a song
        word elsewhere in the line ("Melody Gardot - vocals, arrangements", "Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z").
     D) Bandcamp "All songs was written & arranged by Writer Z": arranger on the works (until 3.93.0 on the recordings)."""
     H.lt(9297, H.uid('1a1a1a1a', 9297), 'arranger', 'artist', 'recording', ())
@@ -2343,7 +2343,8 @@ def case_arr394():
                 out.append([pg.evaluate(f"(() => {{ const g = {WZ}; return g ? !!g.closest('[data-el=workonly]') : null; }})()"), len(pg.evaluate(MXCOL))])
                 b.close()
         print('C)', out)
-        results.append(out == [[True, 1], [False, 0], [False, 0]])
+        # ([Z-DGEXCL] 3.134.0) a line that is the bare "Arranged by X": on the works too (every source); a clause after other credits not
+        results.append(out == [[True, 1], [True, 1], [False, 0]])
     finally:
         H.discogs_release = orig
     # D) Bandcamp

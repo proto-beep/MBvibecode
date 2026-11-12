@@ -103,6 +103,10 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   dgexcl3134r: 3.134.0 (review): tracks of two lines joined, another role credit apart, "Michael"/"Michal" apart, additive
+                                #     lines of tracks ask nothing, "…, arranged by X" after other credits stays on the recordings
+                                #   dgexcl3134: 3.134.0 (Z-DGEXCL, Z-LINEUPALL): a pasted text – "Arranged by" on the works, "Producer:" / "Produced by"
+                                #     one row, "Tonart Studio" / "Tonart" one place, "Design: X" with "℗ 2024 X" the label, the lineup question
                                 #   improv3133: 3.133.0 (Z-IMPROV, S222): "All music was improvised by Anna Neu and Bob Roe" – composers of the works,
                                 #     marked "improvisation" (entries, columns, tracks; the line quoted); S222 off: left out, no works
                                 #   improvtitle3133: 3.133.0 (Z-IMPROV): "Improvisation III", "Impro 2" marked by their titles; "Improvisation in Blue" not
@@ -1039,6 +1043,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   twice3134: 3.134.0 (Z-DGEXCL, S054): "Produced by Anna Neu" in the credits, "Producer: Anna Neu" in the about text – one row
                                 #   bclbl3118: 3.118.0 (Z-BCLBL, S185; Node): on a label's page "© 2026 WEWANTSOUNDS" linked to the page; not on the artist's
                                 #     own page, not another name
                                 #   artlbc3100: 3.100.0 (Z-ARTL, S159): "Artwork: Cyclical Dreams" on the label's Bandcamp page – the label, linked at once

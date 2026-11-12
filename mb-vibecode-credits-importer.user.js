@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.133.0
+// @version      3.134.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.133.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.133.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.134.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.134.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.133.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.134.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -170,6 +170,7 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
+      "log.textTwice": "The same credit in two lines of the texts ({n}): joined in one row, both lines kept",
       "log.notesCredits": "From the Discogs notes, credits not listed by Discogs ({n}): {list}",
       "log.notesCreditTracks": "From the Discogs notes: the tracks of credits Discogs lists for the whole release – {list} (set; ⓘ shows the line)",
       "log.notesOff": "Credits of the Discogs notes left out (rows hidden: {rows})",
@@ -1852,7 +1853,11 @@
       "log.instsTrack": "{name}: the instruments per track again",
       "plays.title": "Played by whom?",
       "issue.dgLineup": "waits for the answer about Discogs's lineup (above the entries)",
+      "issue.dgLineupAny": "waits for the answer about the lineup of {src} (above the entries)",
       "dgl.title": "Discogs: lineup and track credits",
+      "dgl.titleAny": "Lineup and track credits ({src})",
+      "dgl.hintAny": "The lineup plays on the whole release, but the credits of tracks {list} ({src}) name only some of them, partly with other instruments or spellings. Proposed (set until you answer):",
+      "dgl.trackTitleAny": "The lineup's rows on the tracks without track credits; the tracks with credits as {src} gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
       "dgl.hint": "The lineup plays on the whole release, but Discogs's credits of tracks {list} name only some of them, partly with other instruments or spellings. Proposed (set until you answer):",
       "dgl.hintDone": "Who plays where (tracks {list}):",
       "dgl.except": "all tracks except {list}",
@@ -1864,8 +1869,8 @@
       "dgl.trackTitle": "The lineup's rows on the tracks without track credits; the tracks with credits as Discogs gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
       "dgl.lineup": "The lineup's",
       "dgl.lineupTitle": "As the lineup says: everyone on all tracks with the lineup's instrument – the track credits left out",
-      "log.dglFound": "Discogs: the lineup and the credits of single tracks differ – proposed: {list}",
-      "log.dglAnswer": "Discogs lineup: {choice}",
+      "log.dglFound": "Lineup and the credits of single tracks differ – proposed: {list}",
+      "log.dglAnswer": "Lineup: {choice}",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
       "plays.take": "Take (all tracks)",
@@ -1890,6 +1895,7 @@
       "artl.why.bandcamp": "the album is on its Bandcamp page “{page}”",
       "artl.why.mb": "MusicBrainz has it as a label of this release",
       "artl.why.discogs": "Discogs lists it as a label or company of this release",
+      "artl.why.text": "the text names it as a label or company of this release",
       "log.artlLabel": "“{name}” credited for the artwork as the label ({why})",
       "log.artlArtist": "“{name}” as an artist again",
       "log.pcOfPerson": "℗ / © of “{name}”: Discogs lists it as a label, MusicBrainz has no label with its link – given to the artist of the same name ({where})",
@@ -4553,7 +4559,7 @@
     { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
-    { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before (3.134.0, Z-DGEXCL: the texts of every other source too – the same credit in two lines of them one row, both lines its sources)' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7). Two capitals before small letters – a slip of the shift key – in normal case too: "SHelley Hirsch" → "Shelley Hirsch" (not "DAngelo", "OBrien", "MCing"; 3.50.0)' },
     // [3.52.0] collected item Z-WTS
@@ -4607,7 +4613,7 @@
     { id: 'S147', where: 'readLine0 (TEXT_GEAR)', note: 'Texts (3.92.0; collected item Z-GEAR): a line of equipment – "Microphone: …", "Handy Recorder for field recording: …", "Guitar Amplifier: …", "Micpreamp: …", "Audio Interface: …", "DAW: Logic Pro X" – is no credit (left out as such); names after it ("Amplifier: Anna Bell", "Mic: John Smith") and "Strings:", "Recorder:", "Laptop:" as before' },
     { id: 'S148', where: 'tidyLines, placeOf', note: 'Texts (3.92.0; collected items Z-LYR, Z-SPA): "All Lyrics was written by X" – lyrics by X, "All field recording by X" – field recording by X (not with "except …" after it); "Art work" is artwork; "Nothing Space Studio at Shonan" – the place, Shonan its area (no time: "at Christmas")' },
     { id: 'S149', where: 'readUnit, tidyLines', note: 'Texts (3.92.0; collected item Z-SEI): in the block of a track (S145) each word that may be an instrument in the list of a player of the text asks as such a word of a list (137d: other instruments, credited as written, when no instrument is like it) – however many ("Ryota Takano: Bass Guitar, Sei, Sei Wakka Ring"), also without a known one ("Ryota Takano: Sei"); poetry among the instruments: spoken vocals, credited as written' },
-    { id: 'S150', where: 'TEXT.parse (WORK_ARR), loadRelease', note: 'Arrangements of works (3.94.0; collected items Z-ARRL, Z-ARRD): a line of a text about songs, tracks or compositions ("All songs was written & arranged by X") and Discogs\'s "Arranged By" without more (not "Arranged By [Strings]") put the arranger on the works (the works matrix) – as S006 without writing credits; a bare "Arranged by X" of a text stays on the recordings. The level of such an arrangement stays a button in its entry ("arranger · Work"): a click puts it back on the recordings' },
+    { id: 'S150', where: 'TEXT.parse (WORK_ARR), loadRelease', note: 'Arrangements of works (3.94.0; collected items Z-ARRL, Z-ARRD): a line of a text about songs, tracks or compositions ("All songs was written & arranged by X") and Discogs\'s "Arranged By" without more (not "Arranged By [Strings]") put the arranger on the works (the works matrix) – as S006 without writing credits; a bare "Arranged by X" of a text stays on the recordings (3.134.0, Z-DGEXCL: a line of a text that is the bare "Arranged by X" – every source, the Discogs notes too – on the works as well; a clause after other credits stays on the recordings). The level of such an arrangement stays a button in its entry ("arranger · Work"): a click puts it back on the recordings' },
     { id: 'S151', where: 'readLine0 (AMP_LINE, ampLines), GEAR_MODELS effects', note: 'Amplifiers and effects (3.96.0; collected item Z-AMP): "All Guitar Amplifier : Fender Twin Reverb \'78", "Pedals: Big Muff (Jane Doe)" – the instrument effects credited with the model, of the person in brackets, else of the one guitarist of the text (bass amplifier: the bassist; keyboard amplifier: the keyboardist), else a credit without a name to be given; a model in a player\'s list ("Jane Doe: guitar, Big Muff") effects too (R113). Preamps, compressors, microphones, interfaces, software stay equipment (S147)' },
     { id: 'S152', where: 'modelSpelling', note: 'Models written the usual way in their role credit (3.96.0; collected item Z-NORD): "Nord stage2" → "Nord Stage 2", "JUNO 6" → "Juno 6", "prophet5" → "Prophet 5"; codes in capitals ("TR-8S", "DX7", "JCM800"); the model as MusicBrainz\'s instrument: its name, no role credit' },
     { id: 'S143', where: 'statPerRelease, statPerReleaseHtml, globalPerRelease (statsMoreCards, globalCoreParts)', note: 'Statistics (3.91.0; collected item Z-SRR): the card "Per release" – the relationships of a release (all its submissions; also by level), its recordings and the relationships on its recordings per recording, each the average and the median of the releases; in "This browser" (recordings from 3.91.0 on) and in "Global" (from the edit dump, the recordings from the core dump)' },
@@ -4639,7 +4645,7 @@
     { id: 'S220', where: 'datesWithContext (mentionKind), dateFinds, mentionedChipHtml, findFestivals, festivalHtml', note: 'Mentioned only (3.132.0; collected items Z-FESTALL, Z-RELDATE): a date, a festival or a concert of a sentence that is not about the recording – a story ("after the two first met at a concert in July 2019"), a long sentence without words of a recording, a relative date in such a sentence – is suggested nowhere: the chip "Mentioned dates (n) ▾" at the right of "Dates & tracks" lists it with its sentence (and the date it is reckoned from), to be taken into the pool by hand; festivals are always recognized again (the hint says "only mentioned – check the context" for such a sentence; until 3.131.0 they were left out, S209)' },
     { id: 'S219', where: 'rowsRemovedInEditor, sendDiscogsStatus, afterEnterEdit; companion 1.21.0', note: 'Marks of the companion (3.131.0; collected item Z-CPREMOVED): a credit whose relationships the dashboard staged and that were all taken out in the relationship editor by hand is "taken out in the editor" – a grey ✗ instead of the red one after "Enter edit", until the next import' },
     { id: 'S218', where: 'afterEnterEdit, gapExactWrite, the line of the release page (gapEstimate: all)', note: 'The line of the release page (3.131.0; collected item Z-GAPREFRESH): at "Enter edit" the dashboard counts once more what is still missing – the total now certain; on the release page, less than a fifth of the relationships of the credits still missing: no line (else "After “Enter edit” … still missing")' },
-    { id: 'S217', where: 'dgLineupFind, dgLineupApply, dgLineupHtml, computePlan (issue)', note: 'Discogs (3.130.0; collected item Z-DGLINEUP): the lineup on the whole release and the same people\'s instruments on single tracks ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – two people of the lineup at least with track credits): a question that must be answered above the entries names who plays where – each one on all tracks except those the track credits give to others only – and where the instruments differ ("bass" in the lineup, "double bass" on tracks 2, 4). More precise everywhere (set until answered): the more precise instrument on all tracks, the track credits joined into the row; per track: the track credits as they are; the lineup\'s: everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit' },
+    { id: 'S217', where: 'dgLineupFind, dgLineupApply, dgLineupHtml, computePlan (issue)', note: 'Discogs (3.130.0; collected item Z-DGLINEUP): the lineup on the whole release and the same people\'s instruments on single tracks ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – two people of the lineup at least with track credits): a question that must be answered above the entries names who plays where – each one on all tracks except those the track credits give to others only – and where the instruments differ ("bass" in the lineup, "double bass" on tracks 2, 4). More precise everywhere (set until answered): the more precise instrument on all tracks, the track credits joined into the row; per track: the track credits as they are; the lineup\'s: everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit (3.134.0, Z-LINEUPALL: every source – for a text only the lineup\'s own instruments on its lines of tracks count)' },
     { id: 'S216', where: 'outWhyText (the line "Taken out", the status of a row)', note: 'Rows taken out (3.130.0; collected item Z-OUTWHY): a row on Skip because MusicBrainz has it says so – with the date MusicBrainz has ("MusicBrainz has the date more precisely: 2007-05-06 – 2007-05-07"); rows skipped by hand say nothing (their reason is not known)' },
     { id: 'S215', where: 'workDateOffer, computePlan (workDate), workDateLinkedHtml, workDatesHeadHtml, dropDateOn', note: 'Works matrix (3.130.0; collected item Z-WORKDATE): the performance date onto the links with works MusicBrainz has, with "Apply" – the recording date of the track (setting "Performance dates onto linked works" in the corner of the matrix, on) or a date dropped onto the link; as for recordings (S172): added when the link has none, made more precise when it has less, else nothing. × at the link leaves it out' },
     { id: 'S214', where: 'untilde, findDedications, dedSuggest, TEXT.parse', note: 'Dedications (3.129.0; collected item Z-DEDPLACE): words set off with tildes ("Dedicated to ~Namba~ ~Bears~") read without them; a dedication to a place of this release ("recorded live at Namba Bears") is a note in the box only – MusicBrainz has no dedication to a place; "Dedicated to X" alone in a line is left out as a dedication (the box has it)' },
@@ -4681,7 +4687,7 @@
     { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*, bcArt*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR; 3.119.0, Companion 1.19.0, Z-COCRBC: also every artwork of a Bandcamp page – the album\'s and the photos of the media to buy, opened by a click on one of them): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, + Supplement)' },
     { id: 'S177', where: 'instsCommonAdd, instsCommonBtnHtml', note: 'Instruments (3.113.0; collected item Z-INSTLCA): ⑃ beside "Instruments: per track | on the release" – a row of the lowest level of the instruments\' tree all of them share (saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments) on the recordings, beside them (they stay), with their tracks, date, guest / solo when all have it; only of those without tracks of their own (precise tracks need none); ⚙ Settings → Appearance can switch the button off' },
     { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
-    { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place' },
+    { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place (3.134.0, Z-DGEXCL: in the texts of every other source too – two spellings of one place one entry)' },
     { id: 'S174', where: 'dsupScan, dsupTake, computePlan (relAttr)', note: 'MusicBrainz less precise (3.106.0; collected item Z-DSUP): MusicBrainz has a person with an instrument the source names more precisely ("saxophone" – "tenor saxophone") – no conflict, an update: "tenor saxophone instead of saxophone" offered at the entry (the relationship of MusicBrainz edited, its other attributes, credits and dates kept); several more precise ones without tracks (tenor and alto saxophone) on a release of several tracks: they go on the release, MusicBrainz keeps the common group on the recordings; MusicBrainz more precise than the source: nothing is added. 3.107.0 (Z-ITREE): which instrument is a kind of which from the instruments\' tree (itreeAncestors) – MusicBrainz\'s attributes are flat' },
     { id: 'S173', where: 'dsupScan, dsupHtml, dsupTake', note: 'Conflicts with MusicBrainz (3.106.0; collected item Z-DSUP): a linked person MusicBrainz has with other instruments or voices on this release than the source – "only on MusicBrainz: drums" shown at the entry (yellow, a line of its own in the matrix, a chip in the compact view), the roles only in the source held on Skip until "Add anyway" (or "Add all conflicts"); the same role is never a conflict; any source (texts, other sites), on all its tracks together. 3.107.0 (Z-DSUP2): "only on MusicBrainz" only when the source names instruments or voices of the person; (Z-DSUPWHY) developer mode: why an entry has no box (dsupWhyOf)' },
     { id: 'S172', where: 'dsupDateOf, dsupDatesOf, computePlan (relDate)', note: 'Dates of relationships MusicBrainz has (3.106.0; collected item Z-DSUP): a row with a date (from the pool, the matrix or by hand) whose relationship MusicBrainz has – without a date: "add the date"; the same date less precise: "more precise"; another date: their lowest common denominator ("2007-05-06" and "2007-06": 2007); MusicBrainz more precise and the same: nothing – offered at the entry (yellow), "Take" edits the relationship of MusicBrainz. 3.107.0 (Z-DSUP3): a date MusicBrainz does not have is taken without a click (a click takes it back); the rows MusicBrainz has already (on Skip since the import) get the dates of the matrix too and come back when their date adds to or changes MusicBrainz\'s (dsupWithExisting)' },
@@ -4697,7 +4703,7 @@
     { id: 'S162', where: 'TEXT.parse (readLine0, ensembles), soloAskHtml, soloAnswer', note: 'Texts (3.101.0; collected item Z-CIMP): "track 2 DUO: K.Filiano (b) + N.Wooley (tpt)", TRIO, QUARTET … – only the people named play on those tracks: the lineup without tracks loses them for everyone else, a name in short is the person of the lineup it stands for, the instrument in brackets the one played there; "track 7 SOLO: X" is asked at the person – only this person on the track, the attribute "solo" there, or nothing' },
     { id: 'S161', where: 'joinWriterLines, TEXT.parse (readLine0)', note: 'Texts (3.101.0; collected item Z-CIMP): the writers below a track title – "Ken Filiano (FlizmoMusic-BMI) / Nate Wooley (4WordSeaMusic-BMI)", broken over two lines too – each a writer of that track (as Z-TCP), the publisher in the bracket that track\'s, the society the release\'s (S160); the release\'s title above a list whose first track has that title is left out. 3.107.0 (Z-CIMP2, listLine): a cover\'s list as read – the length after a title, "9.... Title", a society misread ("-BM!)", "-BMI}"); a title with its writers below is their block whatever is above it; a numbered title of the release alone is left out as a title; a writer with the publisher in a bracket is never a publisher' },
     { id: 'S160', where: 'addCompanyEntry', note: 'Rights societies (3.101.0; collected item Z-RSOC; off by default, a quick switch): "Take rights societies" – BMI, GEMA … of the source (Discogs, texts, notes) as label–release "rights society"; off: their entry on Skip, with a note' },
-    { id: 'S159', where: 'artlEvidence, artlApply, artlToLabel, artlToArtist, artlNoteHtml', note: 'Entries (3.100.0; collected item Z-ARTL): a name credited only for the artwork of the release (art direction, artwork, design, graphic design, illustration, photography) that is beyond doubt a label – the label whose Bandcamp page the album is on, a label of the release in MusicBrainz, a label or company Discogs lists for the release – becomes that label: its rows the label–release relationships of the same name, linked at once to MusicBrainz\'s label when it is known; "As an artist instead" takes it back (and again "As the label")' },
+    { id: 'S159', where: 'artlEvidence, artlApply, artlToLabel, artlToArtist, artlNoteHtml', note: 'Entries (3.100.0; collected item Z-ARTL): a name credited only for the artwork of the release (art direction, artwork, design, graphic design, illustration, photography) that is beyond doubt a label – the label whose Bandcamp page the album is on, a label of the release in MusicBrainz, a label or company Discogs lists for the release – becomes that label: its rows the label–release relationships of the same name, linked at once to MusicBrainz\'s label when it is known; "As an artist instead" takes it back (and again "As the label") (3.134.0, Z-DGEXCL: for a text also a label or company it names – ℗ / ©, catalogue lines – when MusicBrainz has a label of that name)' },
     { id: 'S158', where: 'arrComProposals, renderArrComments, arrComFor (pendingWorkEntity), arrNotice', note: 'Arrangement works (3.98.0; collected item Z-ARRDIS): the new works of tracks whose writer is [traditional] and that have arrangers get the disambiguation "<arrangers> arrangement" ("The Bothy Band arrangement", "A & B arrangement") – offered in the footer left of the live comments (✓ takes it, its text can be changed), set when the new works are staged; afterwards a small box on the page names the works. Only new works; other arrangements (classical music …) not yet' },
     { id: 'S157', where: 'medleySplit, medleySeps, medleyHeadHtml, tradArrangers, arrDupCheck, arrDupCheck2; MEDLEY_EXCEPTIONS', note: 'Medleys (3.98.0; collected item Z-MDLY): the parts of a title by the separators of the release ("/" also without spaces; ✎ in the head of the works matrix, several possible), the words of MEDLEY_EXCEPTIONS kept whole ("AC/DC", "24/7", "w/", fractions); the titles of MusicBrainz first; "Medleys: split n" splits every such title. A part of a traditional tune with arrangers (writer [traditional]) stays a new work with "arrangement of" the works of that title suggested (yellow, the one with the most recordings first, staged only once confirmed); an arrangement of that title found in MusicBrainz – among the arrangements of those works (1), the works of the arrangers, artists and writers (2), the works of the performers\' recordings of that title when the credits name arrangers (3) – is offered instead' },
     { id: 'S156', where: 'wnewOn, wnewOff, removeReplacedLinks (applyPlan), arrangementSuggest', note: 'Works matrix (3.98.0; collected item Z-WNEW): a work linked in MusicBrainz has a greyed "＋ New" – a new work of the same title instead (an arrangement of a traditional tune is a work of its own): it gets the attributes of the old link, "arrangement of" the old work is suggested (yellow, staged only once confirmed with ✓), and the old link is removed in the relationship editor once the new one is staged; "↺" keeps the linked work' },
@@ -11848,6 +11854,8 @@
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
         addSrcRef(entry.refs, c);
+        // [Z-DGEXCL] (3.134.0) the same credit in another line of the texts ((review) its line too – the marks on the images)
+        (c.also || []).forEach((x) => { addSrcRef(entry.refs, { ...x, fromAbout: x.fromAbout }); if (x.line && !entry.lines.includes(x.line)) entry.lines.push(x.line); });
         if (at.all) entry.allTracks = true;
         (at.indexes || []).forEach((i) => entry.indexes.add(i));
         (at.unresolved || []).forEach((u) => entry.unresolved.includes(u) || entry.unresolved.push(u));
@@ -11881,6 +11889,7 @@
       // ([Z-PHOTOS] 3.128.0) a role credit of the text ("photo of X"): two of one role joined
       else if (c.roleCredit && same.roleCredit !== c.roleCredit) same.roleCredit = [same.roleCredit, c.roleCredit].filter(Boolean).join(', ');
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
+      (c.also || []).forEach((x) => addSrcRef((same || g.roles[g.roles.length - 1]).refs, x)); // [Z-DGEXCL] (3.134.0)
       if (!same) continue;
       if (c.anv && !same.anv) same.anv = c.anv; // [Z-PLDUP] (3.111.0)
       if (c.notesLine) same.notesLine = c.notesLine;
@@ -15505,8 +15514,15 @@
   /** After a rule was added, changed or switched: every row is mapped again and the dashboard redrawn. */
   /** [Z-ARRL] (3.94.0, S150) Whether a row is an arrangement of the works by S150 (a text about songs; Discogs's plain "Arranged By"). */
   function s150Row(r, source = S.source) {
-    return ruleOn('S150') && norm(r.types[0] || '') === 'arranger' && !(r.mods || []).length && typeOnLevel(r, 'work')
-      && (!!r.workArr || (source === DISCOGS && !r.fromNotes && /^arranged by$/i.test(String(r.base || r.raw || '').trim())));
+    // ((3.134.0) the type of the work level by its name too – a row of a text has none chosen yet when it is read)
+    if (!ruleOn('S150') || norm(r.types[0] || '') !== 'arranger' || (r.mods || []).length
+      || !(typeOnLevel(r, 'work') || (!ltOf(r) && typesFor('work', r.entityType || 'artist').some((t) => norm(t.name) === 'arranger')))) return false;
+    if (r.workArr) return true;
+    if (!/^arranged by$/i.test(String(r.base || r.raw || '').trim())) return false;
+    // ([Z-DGEXCL] 3.134.0) Discogs's credit; [Z-DGEXCL] a line of a text (any source, also the notes) that is the bare "Arranged by X" – not a
+    // clause after other credits ("Vocals on tracks 2, 4 by Jane Doe, arranged by X": the recording's)
+    if (source === DISCOGS && !r.fromNotes) return true;
+    return (r.srcRefs || []).some((x) => /^\s*arranged\s+by\b/i.test(String(x.line || '')));
   }
 
   /**
@@ -15949,7 +15965,7 @@
       if (!lt) info.issues.push(tr('issue.chooseType'));
       if (abbrOpen(row)) info.issues.push(tr('issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0)
       if (dateOrderOpen(row)) info.issues.push(tr('issue.dateOrder')); // [Z-DATEORDER] (3.121.0, S190) not staged before the answer
-      if (dgLineupOpen(row)) info.issues.push(tr('issue.dgLineup')); // [Z-DGLINEUP] (3.130.0, S217) not staged before the answer
+      if (dgLineupOpen(row)) info.issues.push(trSrc('issue.dgLineup')); // [Z-DGLINEUP] (3.130.0, S217) not staged before the answer
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
       if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
       if (lt && artist && artist.company && artist.entityType && row.company && row.entityType && row.entityType !== artist.entityType) info.issues.push(tr('issue.kindMismatch'));
@@ -22962,6 +22978,7 @@
     let n = 0;
     const id = () => `s${++n}`;
     // MB entries of the names with a link at the second source (Bandcamp: the band), to find them by MBID
+    if (sp.source !== DISCOGS) textDedupe(sp.rel); // [Z-DGEXCL] (3.134.0)
     const groups = groupCredits(placeholderCredits(sp.rel.credits));
     const companies = groupCompanies(sp.rel.companies);
     const urls = uniq(groups.filter((g) => g.dId && (g.links || [])[0]).map((g) => g.links[0]));
@@ -23880,6 +23897,98 @@
    * Imports a release of a source (default: the current one): the adapter delivers it as a neutral release
    * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
+  /** [S054] The kind of a credit's role: its first type, its attributes and its instrument or voice ("Producer" = "Produced by X"). */
+  function creditKind(x) {
+    const p = parseRoleNotation(x.role)[0] || { base: x.role, mods: [] };
+    const m = mapRole(x.base || p.base, x.details && x.details.length ? x.details : p.mods);
+    return { type: (m.types || [])[0] || '', flags: [...(m.flags || [])].sort().join(','), prim: (m.primaryCands || [])[0] || '', credit: norm(m.credit || ''), rule: m.rule || '' };
+  }
+  /** ((3.134.0, review) for the texts also the role credit and the rule: "Cover photo" is no "Photography", "Drum programming" no "Programming") */
+  function sameCreditKind(x, y) {
+    const a = creditKind(x);
+    const b = creditKind(y);
+    return !!a.type && a.type === b.type && a.flags === b.flags && a.prim === b.prim && a.credit === b.credit && a.rule === b.rule;
+  }
+
+  /**
+   * [Z-DGEXCL] (3.134.0, S054, S175) The texts of a source other than Discogs (Bandcamp's credits and about text, a video's description, a
+   * pasted text): nothing twice – a credit of the same name and the same kind in another line ("Produced by X" in the credits, "Producer: X"
+   * in the about text) is the first one's, its line kept beside it (the companion marks both; the tracks of both); a place named twice
+   * in two spellings ("Tonart Studio", "Tonart") is one place, credited as each line writes it. As S054 and S175 do for Discogs's notes.
+   */
+  function textDedupe(rel) {
+    if (!rel) return;
+    // ((review) a scope of tracks: indexes or titles not found; the whole release with the tracks a line names kept beside it)
+    const someTracks = (t) => !!(t && !t.all && ((t.indexes || []).length || (t.unresolved || []).length));
+    const joinTracks = (a, b) => {
+      const all = !someTracks(a) || !someTracks(b);
+      const idx = uniq([...((a && a.indexes) || []), ...((b && b.indexes) || [])]);
+      const un = uniq([...((a && a.unresolved) || []), ...((b && b.unresolved) || [])]);
+      if (all && !idx.length && !un.length) return null;
+      return { ...(a || b || {}), ...(all ? { all: true } : {}), indexes: idx, ...(un.length ? { unresolved: un } : {}), spec: all ? '' : [a && a.spec, b && b.spec].filter(Boolean).join(', ') };
+    };
+    const ref = (c) => ({ line: c.line, part: c.part || '', pi: c.pi || 0, n: c.n || 0, page: c.page || '', ...(c.pos ? { pos: c.pos } : {}), ...(c.fromAbout ? { fromAbout: true } : {}) });
+    // the one kept: the line not of the about text first ((review) "Leave out the about text" keeps what another line names too)
+    const join = (list, k, c) => {
+      const d = list[k];
+      const lead = d.fromAbout && !c.fromAbout ? c : d;
+      const other = lead === c ? d : c;
+      const tracks = joinTracks(d.tracks, c.tracks);
+      const merged = { ...lead, tracks, also: [...(lead.also || []), ...(other.also || []), ref(other)] };
+      // ((review) what only the other line says: its web profiles, date, other name, role credit
+      if (other.who && (other.who.links || []).length) merged.who = { ...merged.who, links: uniq([...(merged.who.links || []), ...other.who.links]) };
+      ['date', 'aka', 'roleCredit'].forEach((f) => { if (other[f] && !merged[f]) merged[f] = other[f]; });
+      if (other.who && other.who.area && merged.who && !merged.who.area) merged.who = { ...merged.who, area: other.who.area };
+      list[k] = merged;
+    };
+    const plain = (c) => c && c.who && !c.who.placeholder && c.line && !c.members && !c.improv && !c.stackAmbig;
+    if (ruleOn('S054') && (rel.credits || []).length) {
+      const kept = [];
+      let n = 0;
+      for (const c of rel.credits) {
+        // ((review) the same name as written (no loose comparison: "Michael" is no "Michal")
+        // ((3.134.0, suite) two texts of the source (Bandcamp's credits and about text), or two lines for the whole release – not the blocks of
+        // tracks of one text ("Saxophone" on track 3, "Saxophone Trio" on track 1: two credits); the same role credit
+        const k = plain(c) ? kept.findIndex((d) => plain(d) && d.line !== c.line && norm(d.who.name) === norm(c.who.name) && norm(d.role) !== norm(c.role)
+          && (!!d.fromAbout !== !!c.fromAbout || (!someTracks(d.tracks) && !someTracks(c.tracks))) && norm(d.roleCredit || '') === norm(c.roleCredit || '')
+          && sameCreditKind(d, c)) : -1;
+        if (k < 0) {
+          kept.push(c);
+          continue;
+        }
+        join(kept, k, c);
+        n++;
+      }
+      if (n) log('info', 'textTwice', { n });
+      rel.credits = kept;
+    }
+    if (ruleOn('S175') && (rel.companies || []).length) {
+      const places = [];
+      const kept = [];
+      for (const c of rel.companies) {
+        const at = /\sat$/i.test(String(c.role || '')) && c.who && c.who.name;
+        const same = at ? places.find((d) => d.who.name !== c.who.name && (samePlaceName(d.who, c.who.name) || samePlaceName(c.who, d.who.name))) : null;
+        if (!same) {
+          if (at) places.push(c);
+          kept.push(c);
+          continue;
+        }
+        // ((review) the other spelling searched too; its area kept
+        if (!(same.who.altNames || []).includes(c.who.name)) same.who.altNames = [...(same.who.altNames || []), c.who.name];
+        if (c.who.area && !same.who.area) same.who.area = c.who.area;
+        const k = kept.findIndex((d) => d.who === same.who && norm(d.role) === norm(c.role));
+        if (k >= 0) {
+          join(kept, k, c);
+          continue;
+        }
+        // another role of the place: its entry, credited as this line writes it
+        kept.push({ ...c, who: same.who, ...(norm(c.who.name) !== norm(same.who.name) ? { anv: c.who.name } : {}) });
+      }
+      rel.companies = kept;
+    }
+  }
+
+
   /**
    * [S042] (3.30.8) What the Discogs notes name besides the credits (collected item 98): places ("All music recorded … at Orange Music
    * Sound Studios in West Orange, New Jersey") read like a pasted text; one Discogs already lists with the same role is left out, one
@@ -25085,6 +25194,8 @@
         log('warn', 'tracksDiffer', { what: trackFitText(fit), list: fit.differ.length ? ` – ${trackFitList(fit)}` : '' });
       }
 
+      // [Z-DGEXCL] (3.134.0) nothing twice in the texts of a source (its credits and about text …), places of one name one place
+      if (source !== DISCOGS) textDedupe(rel);
       // [S026] entries whose credits were all left out for a medium the release does not have
       const leftOutKeys = new Set();
       // [Z-RMXTITLE] (3.126.0, S200) the remixers MusicBrainz's titles name
@@ -36609,12 +36720,20 @@
     }
     const mb = (S.releaseLabelList || []).find((l) => artlFold(l.name) === n);
     if (mb) return { mbid: mb.mbid, name: mb.name, why: 'mb' };
-    if (S.source === DISCOGS && S.release) {
+    // ([Z-DGEXCL] 3.134.0) every source: the labels and companies of a text too (its ℗ / © and catalogue lines) – until 3.133.0 Discogs only
+    if (S.release) {
       const names = [...(S.release.labels || []).map((l) => l.name), ...(S.release.companies || []).map((c) => c.who && c.who.name)];
       if (names.some((x) => artlFold(x) === n)) {
         // the company entry of that name, linked to a label
         const co = [...S.artists.values()].find((x) => x.company && !x.artl && x.mbid && x.entityType === 'label' && artlFold(x.rawName || x.name) === n);
-        return { mbid: co ? co.mbid : null, name: co ? co.mbName || co.name : a.rawName || a.name, why: 'discogs' };
+        // ((3.134.0, review) a text: only a label MusicBrainz knows of that name (its entry linked, or a label among its suggestions) – a ℗ / ©
+        // line may name a person
+        if (S.source !== DISCOGS && !co) {
+          const any = [...S.artists.values()].find((x) => x.company && !x.artl && artlFold(x.rawName || x.name) === n);
+          const hit = any && (any.nameHits || []).find((h) => h.entityType === 'label' && artlFold(h.name) === n);
+          return hit ? { mbid: hit.mbid, name: hit.name, why: 'text' } : null;
+        }
+        return { mbid: co ? co.mbid : null, name: co ? co.mbName || co.name : a.rawName || a.name, why: S.source === DISCOGS ? 'discogs' : 'text' };
       }
     }
     return null;
@@ -37598,15 +37717,19 @@
   /** The question, or null: the lineup (two people at least with Discogs's credit for the whole release) and their track credits. */
   function dgLineupFind() {
     if (!ruleOn('S217') || selIdx().length < 2) return null;
-    const people = [...S.artists.values()].filter((a) => !a.company && !a.other && entrySource(a) === DISCOGS && !entrySkipped(a));
+    // ([Z-LINEUPALL] 3.134.0) every source – a text's lineup and its lines of tracks too (until 3.133.0 Discogs only)
+    const people = [...S.artists.values()].filter((a) => !a.company && !a.other && !a.manual && !entrySkipped(a));
     const lineup = [];
     for (const a of people) {
       const rows = dglRows(a);
       const L = rows.filter((r) => r.dAllTracks);
       if (!L.length) continue;
       // (the person's credits of instruments on single tracks: there the person plays; those of an instrument of the lineup are its own)
-      const all = rows.filter((r) => !r.dAllTracks && r.tracks.size);
-      const T = all.filter((r) => L.some((l) => dglRelated(l.primaryText, r.primaryText)));
+      const all0 = rows.filter((r) => !r.dAllTracks && r.tracks.size);
+      const T = all0.filter((r) => L.some((l) => dglRelated(l.primaryText, r.primaryText)));
+      // ((3.134.0, review) a text's lines of tracks often add to the lineup ("Track 2: Anna – vocals"): there only the lineup's instruments say
+      // where someone plays
+      const all = entrySource(a) === DISCOGS ? all0 : T;
       // (a track credit the same as the lineup's – role and spelling – is part of its row: its tracks)
       const also = L.flatMap((r) => [...(r.dTrackIdx || [])]);
       lineup.push({ a, L, T, also, onTracks: uniq([...all.flatMap((r) => [...r.tracks]), ...also]) });
@@ -37738,8 +37861,8 @@
       x.mism.forEach((m) => parts.push(tr('dgl.mismatch', { lineup: m.lineup, track: m.track, list: trackListLabel(m.tracks) })));
       return `<li><strong>${esc(x.name)}</strong>: ${esc(parts.join(' · '))}</li>`;
     }).join('');
-    const btn = (c) => `<button type="button" class="${c === 'precise' ? 'dci-small' : 'dci-textbtn'}" data-act="dgl-pick" data-choice="${c}" aria-pressed="${q.done && q.choice === c}" title="${esc(tr(`dgl.${c}Title`))}">${q.done && q.choice === c ? '✓ ' : ''}${esc(tr(`dgl.${c}`))}</button>`;
-    return `<div class="dci-festival dci-plays dci-dglineup${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="dglineup"><p><strong>${esc(tr('dgl.title'))}</strong> ${esc(tr(q.done ? 'dgl.hintDone' : 'dgl.hint', { list: trackListLabel(q.tracks) }))}</p>
+    const btn = (c) => `<button type="button" class="${c === 'precise' ? 'dci-small' : 'dci-textbtn'}" data-act="dgl-pick" data-choice="${c}" aria-pressed="${q.done && q.choice === c}" title="${esc(c === 'track' ? trSrc('dgl.trackTitle') : tr(`dgl.${c}Title`))}">${q.done && q.choice === c ? '✓ ' : ''}${esc(tr(`dgl.${c}`))}</button>`;
+    return `<div class="dci-festival dci-plays dci-dglineup${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="dglineup"><p><strong>${esc(trSrc('dgl.title'))}</strong> ${esc(q.done ? tr('dgl.hintDone', { list: trackListLabel(q.tracks) }) : trSrc('dgl.hint', { list: trackListLabel(q.tracks) }))}</p>
       <ul class="dci-dgl-list">${lines}</ul>
       <div class="dci-festival-offers">${['precise', 'track', 'lineup'].map(btn).join(' ')}</div></div>`;
   }
