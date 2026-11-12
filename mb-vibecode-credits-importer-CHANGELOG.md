@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-12 | 3.132.0 – 3.134.0 | – |
+| 2026-11-12 | 3.132.0 – 3.135.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -105,6 +105,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.135.0
+
+- **Taken out in the editor counts as missing** (collected item Z-GAPREFRESH2; rule S223): relationships the dashboard staged and you took out in the relationship editor by hand count as still missing at "Enter edit" – the release page says how many ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth. The next import brings those credits back as the source gives them and asks once: "Taken out in the editor last time: N credits – Skip them again?" – ✓ puts them all on Skip again, ✕ at one keeps it; without an answer they are imported as the source gives them.
+- **Dates on links with works remembered** (Z-WORKDATE-REM): with "Remember", × at the date of a linked work's link and a date dropped onto it are kept for the release.
 
 ### Import 3.134.0
 

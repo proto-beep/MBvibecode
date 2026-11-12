@@ -470,6 +470,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   workdaterem3135: 3.135.0 (Z-WORKDATE-REM): × at the date of a linked work kept with "Remember"
                                 #   workdate3130: 3.130.0 (Z-WORKDATE, Z-WORKUNDO, S215): the performance date onto a link with a work MusicBrainz has –
                                 #     added (staged as an edit of the link), "more precise", × and ↺, the switch off, a date dropped, MusicBrainz more
                                 #     precise; "✕ No new work" after "＋ New works"
@@ -1102,6 +1103,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gaprefresh3135: 3.135.0 (Z-GAPREFRESH2, S223): Guitar Guy taken out in the editor – counted as missing, said apart on
+                                #     the release page; the next import asks "Skip them again?" – ✓ on Skip
                                 #   gapcenter3120: 3.120.0 (Z-GAPCENTER): the text of the line "Discogs: about … relationships" centred, the buttons beside it
                                 #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
                                 #     on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
