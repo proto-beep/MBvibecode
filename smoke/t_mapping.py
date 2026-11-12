@@ -1665,7 +1665,7 @@ def case_z382():
        both; (review) "Mr Bungle" stays; "Yesterday Marco Polo" – Marco Polo; "Conor O'Brien"; "Dr. Martin Luther King" without "Dr.".
     B) Lists of songs outside YouTube (S122, a quick switch, off): a pasted text "Setlist:" / three titles – no songs while it is off
        (the lines not recognized as before), the three songs with it on; (review) not for a release of many tracks, not below "Set:",
-       no names with tracks in brackets."""
+       no names with tracks in brackets. (3.133.0: S122 removed – the songs are read in any case.)"""
     import subprocess
     node = r"""
 const on = process.argv[2] === 'on';
@@ -1690,7 +1690,8 @@ console.log(JSON.stringify({ ded, songs: r.songs, unrec: r.unrecognized.length, 
     # ((review) none or two full names: the name as written – looked up as any other ("Mr Bungle", "Dr. Dre" are names))
     a = isinstance(out['off'], dict) and out['off']['ded'] == [['Marco Polo'], ['Martin Luther King'], ['Mr. Smith'], ['Mr. Smith'], ['Cecil Taylor', 'James Brown'],
                                                              ['Mr Bungle'], ['Marco Polo'], ["Conor O'Brien"], ['Martin Luther King']]
-    b = isinstance(out['on'], dict) and out['off']['songs'] == [] and out['off']['unrec'] > 0 and out['on']['songs'] == ['Approach to Anywhere', 'Nuska', 'Melting Fish'] \
+    # ([Z-QSNAMES] 3.133.0) S122 removed: the songs are read without a switch too
+    b = isinstance(out['on'], dict) and out['off']['songs'] == ['Approach to Anywhere', 'Nuska', 'Melting Fish'] and out['on']['songs'] == ['Approach to Anywhere', 'Nuska', 'Melting Fish'] \
         and out['on']['many'] == [] and out['on']['strict'] == [[], []]
     print('Ergebnis:', 'OK' if a and b else 'FEHLER', [a, b])
 
@@ -1961,6 +1962,70 @@ def case_descon3120():
         H.LTS.update(lts0)
         H.LINKED['link_type'] = linked0
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_qsnames3133():
+    """Credits Importer 3.133.0 (collected items Z-QSNAMES, Z-IMPROV), in Node: every quick switch has a short heading ("quick.name.<id>") and
+    its sentence in all four languages; S122 is no rule any more (no switch, no text), S222 "Improvisations as works" is one (on); the words of
+    improvisations read as composers ("All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …",
+    "Instant composing by …", "Improvisiert von …", "Música improvisada por …", "Echtzeitkomposition: …"), marked; "Improvisation: the art of
+    listening" no credit; IMPROV_TITLE through the marks of the dashboard (t_text_lists.py improvtitle3133)."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const MAPJ = JSON.parse(require('fs').readFileSync(process.argv[1].replace(/\.user\.js$/, '-mapping.json'), 'utf8'));
+const L = JSON.parse(require('fs').readFileSync(process.argv[1].replace(/\.user\.js$/, '-languages.json'), 'utf8'));
+const ids = MAPJ.QUICK_SWITCHES;
+const missing = [];
+for (const id of ids) for (const k of [`quick.name.${id}`, `quick.${id}`]) {
+  if (!m.I18N.en[k]) missing.push(`en:${k}`);
+  for (const lang of ['de', 'es', 'fr']) if (!L[lang][k]) missing.push(`${lang}:${k}`);
+}
+const isRole = (r) => { try { const p = m.parseRoleNotation(r)[0]; if (!p || !p.base) return false; const x = m.mapRole(p.base, p.mods); return !!x && !!x.rule && x.rule !== 'R096' && !x.fallback; } catch (e) { return false; } };
+const ctx = { isRole, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [], titleNames: [] };
+const lines = ['All music was improvised by Izumi Kimura, Artur Majewski, Barry Guy, and Ramon Lopez', 'Free improvisation by Anna Neu and Bob Roe', 'Improvisations: Anna Neu, Bob Roe',
+  'Instant composing by Anna Neu', 'Improvisiert von Anna Neu und Bob Roe', 'Música improvisada por Ana Pérez', 'Echtzeitkomposition: Anna Neu', 'Improvisation: the art of listening'];
+const cr = lines.map((t) => m.SOURCES.text.parse(t, ctx).credits.map((c) => [c.who.name, c.base, !!c.improv]));
+console.log(JSON.stringify({ ids, missing, s122: !!m.I18N.en['quick.S122'], cr }));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-400:]
+    print('A)', out)
+    C = lambda *n: [[x, 'Composed By', True] for x in n]
+    ok = isinstance(out, dict) and 'S222' in out['ids'] and 'S122' not in out['ids'] and not out['missing'] and not out['s122'] \
+        and out['cr'] == [C('Izumi Kimura', 'Artur Majewski', 'Barry Guy', 'Ramon Lopez'), C('Anna Neu', 'Bob Roe'), C('Anna Neu', 'Bob Roe'), C('Anna Neu'),
+                          C('Anna Neu', 'Bob Roe'), C('Ana Pérez'), C('Anna Neu'), []]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+def case_improv3133r():
+    """Credits Importer 3.133.0 (review of Z-IMPROV), in Node: only the composers of a line are marked ("Improvised by Anna Neu, recorded by Bob
+    Roe" – the recording not); instruments in brackets read as well ("… (piano) and Bob Roe (drums)"); no names – "Impro-Jazz by …", "Improv –
+    Recorded live at …", "Improvisations – Live in Berlin 2019", "Improvisation: The Art of Listening" – nothing; "Improvisé par Anna Neu,
+    enregistré par Bob Roe" the composer only; another "Composed by Anna Neu" of the text keeps its own line (not marked); a space at the end;
+    "Tracks 1-3 improvised by …" with its tracks; "Improvised music by …", "Improvised by: …", "Improvisierte Musik von …"; a line broken in
+    two; titles: "Improvisation III", "Impro 2", "Improvisations", "Improvisation Part 1" – not "Improvisation Civil", "Improvisation in Blue"."""
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (r) => { try { const p = m.parseRoleNotation(r)[0]; if (!p || !p.base) return false; const x = m.mapRole(p.base, p.mods); return (!!x && !!x.rule && x.rule !== 'R096' && !x.fallback) || /^(piano|drums)$/i.test(p.base); } catch (e) { return false; } };
+const T = ['Improvised by Anna Neu, recorded by Bob Roe', 'Improvised by Anna Neu (piano) and Bob Roe (drums)', 'Impro-Jazz by Anna Neu', 'Improv – Recorded live at Moods, Zurich',
+  'Improvisations – Live in Berlin 2019', 'Improvisation: The Art of Listening', 'Improvisé par Anna Neu, enregistré par Bob Roe', 'Composed by Anna Neu\nPiano - Bob Roe\nImprovised by Anna Neu',
+  'All music was improvised by Anna Neu ', 'Tracks 1-3 improvised by Anna Neu', 'Improvised music by Anna Neu', 'Improvised by: Anna Neu', 'All the music on this record was\nimprovised by Anna Neu and Bob Roe',
+  'Improvisierte Musik von Anna Neu'];
+const out = T.map((t) => m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: (x) => (/1-3/.test(x) ? new Set([0, 1, 2]) : null), artistNames: [] })
+  .credits.map((c) => `${c.who.name}|${c.base}${c.improv ? '|I' : ''}${c.tracks && c.tracks.spec ? `|${c.tracks.spec}` : ''}`));
+console.log(JSON.stringify(out));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    out = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-400:]
+    print('A)', out)
+    ok = out == [['Anna Neu|Composed By|I', 'Bob Roe|Recorded By'], ['Anna Neu|Composed By|I', 'Bob Roe|Composed By|I', 'Anna Neu|Piano', 'Bob Roe|Drums'], [], [], [], [],
+                 ['Anna Neu|Composed By|I'], ['Anna Neu|Composed By', 'Bob Roe|Piano', 'Anna Neu|Composition By|I'], ['Anna Neu|Composed By|I'], ['Anna Neu|Composed By|I|1-3'],
+                 ['Anna Neu|Composed By|I'], ['Anna Neu|Composed By|I'], ['Anna Neu|Composed By|I', 'Bob Roe|Composed By|I'], ['Anna Neu|Composed By|I']]
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
 run_cases(globals())

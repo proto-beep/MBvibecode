@@ -1510,7 +1510,10 @@ def case_gapwhy3105():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.open_settings(pg, 'sources')
-            off = pg.locator('[data-el=settings] [data-set=gap-why]').count() + pg.locator('[data-el=settings] .dci-set-tab[data-topic=developer]').count()
+            off = pg.locator('[data-el=settings] [data-set=gap-why]').count()
+            # ([Z-SETTABS] 3.136.0) the tab "Developer" always there – its tools only in developer mode
+            H.open_settings(pg, 'developer')
+            off += pg.locator('[data-el=settings] [data-set=gap-why]').count()
             pg.evaluate("localStorage.setItem('dci-dev', 'true')")
             pg.reload()
             pg.add_script_tag(content=H.MAIN)
@@ -1588,6 +1591,78 @@ def case_gapcenter3120():
         results.append(g == {'align': 'center', 'sameLine': True, 'countRight': True, 'closeLast': True, 'centred': True, 'list': True})
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_gaprefresh3135():
+    """Credits Importer 3.135.0 (collected item Z-GAPREFRESH2; rule S223): the dashboard imports from Discogs, stages; Guitar Guy's relationships
+    are taken out in the relationship editor by hand; "Enter edit".
+    A) The number after "Enter edit" counts them as still missing ("removed": how many) – the release page: ""n of them were taken out by you in
+       the editor" after it; the credit kept for the release.
+    B) The next import: Guitar Guy back as the source gives it, the question "Taken out in the editor last time: 1 credit – … Skip them
+       again?" (a yellow item); ✓ – his rows on Skip, the question done.
+    C) (review) The import after that does not ask again."""
+    REL = H.REL
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(3000)
+        gg = H.ARTISTS[3002][0]
+        n = pg.evaluate(f"""(() => {{ const re = MB.relationshipEditor; const own = re.state.added.filter(r => r.entity0 && r.entity0.gid === '{gg}');
+          own.forEach((r) => re.dispatch({{ type: 'remove-relationship', relationship: r }})); return own.length; }})()""")
+        pg.evaluate("""() => { const t = document.getElementById('edit-note-text'); const f = document.createElement('form'); t.parentNode.insertBefore(f, t); f.appendChild(t);
+          const btn = document.createElement('button'); btn.type = 'submit'; btn.textContent = 'Enter edit'; f.appendChild(btn); f.addEventListener('submit', (e) => e.preventDefault()); }""")
+        pg.evaluate("document.getElementById('edit-note-text').form.requestSubmit()")
+        pg.wait_for_timeout(800)
+        after = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null')")
+        kept = pg.evaluate(f"(JSON.parse(localStorage.getItem('dci-removed-in-editor') || '{{}}')['{REL}'] || []).map(x => x.label)")
+        print('A) herausgenommen:', n, '| nach Enter edit:', after, '| gemerkt:', kept)
+        results.append(n >= 1 and after and after.get('removed') == n and after['n'] >= n and any('Guitar Guy' in k for k in kept))
+        pr, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ ...JSON.parse(localStorage.getItem('dci-gap-exact:{REL}')), n: 20 + {n}, open: 0 }}))")
+        pr.reload()
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        line = pr.evaluate("document.querySelector('.dci-gapline span').textContent")
+        print('A2)', line)
+        results.append(f'still missing. {n} of them were taken out by you in the editor.' in line)
+        pg2, errs3 = H.open_mb_edit(ctx, companion=False)
+        pg2.on('dialog', lambda d: d.accept())
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg2.wait_for_timeout(1500)
+        box = pg2.evaluate("(() => { const b = document.querySelector('[data-el=rmdask]'); return b ? [b.querySelector('strong').textContent, [...b.querySelectorAll('li')].map(l => l.textContent.trim())] : null; })()")
+        lv0 = pg2.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Guitar Guy');
+          return g ? [...g.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(x => x.dataset.level) : null; })()""")
+        pg2.click('[data-el=rmdask] [data-act=rmd-skip]')
+        pg2.wait_for_timeout(600)
+        lv1 = pg2.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Guitar Guy');
+          return g ? [...g.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(x => x.dataset.level) : null; })()""")
+        done = pg2.evaluate("!!document.querySelector('[data-el=rmdask].dci-dgl-done')")
+        print('B) Frage:', box, '| Guitar Guy vorher:', lv0, '| nach ✓:', lv1, '| erledigt:', done)
+        results.append(bool(box) and box[0].startswith('Taken out in the editor last time: 1 credit') and any('Guitar Guy' in x for x in box[1])
+                       and lv0 and 'skip' not in lv0 and lv1 and all(x == 'skip' for x in lv1) and done)
+        # ((review) answered: the next import does not ask again
+        pg3, errs4 = H.open_mb_edit(ctx, companion=False)
+        pg3.on('dialog', lambda d: d.accept())
+        pg3.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg3)
+        H.wait_for(pg3, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg3.wait_for_timeout(1000)
+        again = pg3.evaluate("!!document.querySelector('[data-el=rmdask]')")
+        print('C) noch einmal gefragt:', again)
+        results.append(not again and not errs4)
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs3)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

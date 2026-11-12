@@ -213,7 +213,7 @@ def case_matrix():
             print('C) Solo Man:', [(l['role'], l['flags']) for l in s1[0]['lines']])
             results.append([(l['role'], l['flags']) for l in s1[0]['lines']] == [('electric guitar', ['guest']), ('saxophone', ['solo'])])
             # D) more events than shared
-            H.open_settings(pg, 'staging')
+            H.open_settings(pg, 'appearance')  # ([Z-SETTABS] 3.136.0) the matrix of an entry there
             pg.fill('[data-set=ev-shared]', '1')
             pg.press('[data-set=ev-shared]', 'Tab')
             pg.wait_for_timeout(500)
@@ -248,7 +248,7 @@ def case_matrix():
                            and sorted((x['lines'][0]['role'], len(x['ev']), len(x['add'])) for x in d1) == [('electric guitar', 1, 1), ('piano', 1, 1)]
                            and piano3['ev'] == ['① Recording all 4 tracks', '② Recording track 2'] and piano3['lines'][0]['ticks'] == [True, True]
                            and piano3['lines'][0]['n'] == 2 and join_btn and len(d4) == 1)
-            H.open_settings(pg, 'staging')
+            H.open_settings(pg, 'appearance')  # ([Z-SETTABS] 3.136.0) the matrix of an entry there
             pg.fill('[data-set=ev-shared]', '3')
             pg.press('[data-set=ev-shared]', 'Tab')
             pg.wait_for_timeout(400)
@@ -387,7 +387,7 @@ def case_dates():
                            and [(l['role'], l['ticks'], l['n']) for l in e1[0]['lines']] == [('lead vocals', [True, True], 2), ('background vocals', [True, True], 2)]
                            and ev2 == ['2001-05'] and ev3 == ['2001-03-02'])
             # E2) (3.35.0) onto the head of a block whose lines are partly behind "▸ n more": all its lines
-            H.open_settings(pg, 'staging')
+            H.open_settings(pg, 'appearance')  # ([Z-SETTABS] 3.136.0) the matrix of an entry there
             pg.fill('[data-set=em-show]', '1')
             pg.press('[data-set=em-show]', 'Tab')
             pg.wait_for_timeout(400)
@@ -498,7 +498,7 @@ def case_compact():
             flash = pg.evaluate("(sel) => !!document.querySelector(sel + ' tr.dci-em-line.dci-flash')", multi)
             print('E) ▸:', e1['wide'], len(e1b or []), '| ▾:', e2['compact'], '| Chip:', e3['wide'], flash)
             results.append(e1['wide'] and len(e1b) == 1 and e2['compact'] and e3['wide'] and flash)
-            H.open_settings(pg, 'staging')
+            H.open_settings(pg, 'appearance')  # ([Z-SETTABS] 3.136.0) the matrix of an entry there
             pg.click('.dci-set-pane [data-act=em-by-default][data-by=role]')
             pg.wait_for_timeout(400)
             f_part = pg.evaluate(CLINES, 'Part Man')
@@ -2265,7 +2265,7 @@ def case_arr394():
        "Writing credits and arrangements of the works" (after the other entries); its line "arranger · Work" – a click puts it back on
        "Recording", the entry among the others again; its level then clicks through Recording → Release → Work and stays a button.
     B) Discogs "Arranged By [Strings]": on the recordings (an arrangement for the recording).
-    C) A text "All songs were arranged by Writer Z": on the works; "Arranged by Writer Z" alone: on the recordings; (review) not a song
+    C) A text "All songs were arranged by Writer Z": on the works; "Arranged by Writer Z" alone: on the recordings (3.134.0, Z-DGEXCL: on the works too); (review) not a song
        word elsewhere in the line ("Melody Gardot - vocals, arrangements", "Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z").
     D) Bandcamp "All songs was written & arranged by Writer Z": arranger on the works (until 3.93.0 on the recordings)."""
     H.lt(9297, H.uid('1a1a1a1a', 9297), 'arranger', 'artist', 'recording', ())
@@ -2343,7 +2343,8 @@ def case_arr394():
                 out.append([pg.evaluate(f"(() => {{ const g = {WZ}; return g ? !!g.closest('[data-el=workonly]') : null; }})()"), len(pg.evaluate(MXCOL))])
                 b.close()
         print('C)', out)
-        results.append(out == [[True, 1], [False, 0], [False, 0]])
+        # ([Z-DGEXCL] 3.134.0) a line that is the bare "Arranged by X": on the works too (every source); a clause after other credits not
+        results.append(out == [[True, 1], [True, 1], [False, 0]])
     finally:
         H.discogs_release = orig
     # D) Bandcamp
@@ -2644,7 +2645,7 @@ def case_align3100():
             pg.wait_for_timeout(500)
             d = pg.evaluate(ALIGN, 'Mix Man')
             words = [h for h in d['head'] if h in ('add.', 'guest', 'solo', 'co', 'executive', 'assistant', 'associate')] if d else []
-            H.open_settings(pg, 'staging')
+            H.open_settings(pg, 'appearance')  # ([Z-SETTABS] 3.136.0) the matrix of an entry there
             pressed = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=em-attr]')].map(b => b.dataset.attr + ':' + b.getAttribute('aria-pressed'))")
             print('D)', d and d['head'], d and [ln['split'] for ln in d['lines']], d and d['store'], pressed)
             gs = [ln['split'] for ln in (d or {}).get('lines', []) if ln['role'] == 'electric guitar']

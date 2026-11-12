@@ -103,6 +103,13 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   dgexcl3134r: 3.134.0 (review): tracks of two lines joined, another role credit apart, "Michael"/"Michal" apart, additive
+                                #     lines of tracks ask nothing, "…, arranged by X" after other credits stays on the recordings
+                                #   dgexcl3134: 3.134.0 (Z-DGEXCL, Z-LINEUPALL): a pasted text – "Arranged by" on the works, "Producer:" / "Produced by"
+                                #     one row, "Tonart Studio" / "Tonart" one place, "Design: X" with "℗ 2024 X" the label, the lineup question
+                                #   improv3133: 3.133.0 (Z-IMPROV, S222): "All music was improvised by Anna Neu and Bob Roe" – composers of the works,
+                                #     marked "improvisation" (entries, columns, tracks; the line quoted); S222 off: left out, no works
+                                #   improvtitle3133: 3.133.0 (Z-IMPROV): "Improvisation III", "Impro 2" marked by their titles; "Improvisation in Blue" not
                                 #   ocrc3120: 3.120.0 (Z-OCRC, S187, Node): "C1978 – Fantasy Records", "C 1978 X" → © 1978; digits after the name stay
                                 #   prodfor3122r: 3.122.0 (review, Node, DISCOGS.toRelease): "Producer [Assistant, For Radio Bremen (2)]", "Executive-Producer [For …]",
                                 #     two "For", no label for "For The Album …", "Production Manager", "Mixed By"; no second VARA Radio; "RSD", "Cassette Store Day"
@@ -463,6 +470,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   workdaterem3135: 3.135.0 (Z-WORKDATE-REM): × at the date of a linked work kept with "Remember"
                                 #   workdate3130: 3.130.0 (Z-WORKDATE, Z-WORKUNDO, S215): the performance date onto a link with a work MusicBrainz has –
                                 #     added (staged as an edit of the link), "more precise", × and ↺, the switch off, a date dropped, MusicBrainz more
                                 #     precise; "✕ No new work" after "＋ New works"
@@ -584,6 +592,10 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   qsnames3133: 3.133.0 (Z-QSNAMES, Z-IMPROV; Node): a heading and a sentence for every quick switch in four languages;
+                                #     S122 gone, S222 there; the words of improvisations read as composers (marked)
+                                #   improv3133r: 3.133.0 (review of Z-IMPROV; Node): only the composers marked, instruments in brackets read too, no names
+                                #     no credit ("Impro-Jazz by", "Improv – Recorded live at …"), the next clause its own, tracks first, the noun after the word
                                 #   descon3120: 3.120.0 (Z-DESCON, S186): "Design Concept [Graphic Concept]" → graphic design without a role credit
                                 #   engrr3111: 3.111.0 (Z-ENGRR): "Engineer [Recording & Remix]" → recording, remixer; "[Mix and Mastering]", "[Recording / Overdubs]", "[Remix]"
                                 #   engtr3109: 3.109.0 (Z-ENGTR): "English Translation", "Translated By [German]", "Übersetzung", "Translation (French)" from
@@ -593,7 +605,7 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     artist name in brackets (not "(Tenor)", "(Jr.)", "(CD2)" …), a dedication inside a credit keeps it,
                                 #     composed in / produced in, the period for Composition and Production, a recording's word wins
                                 #   z382: 3.82.0 (Node; Z-DEDH, Z-YTW2): "dedicated to Mr. Polo’s …" → Marco Polo (one full name in the text), Martin
-                                #     Luther King, two Smiths or none: nothing; songs of a pasted text only with S122
+                                #     Luther King, two Smiths or none: nothing; songs of a pasted text (3.133.0: without a switch, S122 gone)
                                 #   annrep: 3.72.0 (Z-TST, the former t_ar.py): A&R with the task "consultant" on the release group
                                 #   dedphrases: 3.67.0 (Z-DED, Node): the phrases of dedications and tributes, names joined, a title
                                 #   dedforphrases: 3.71.0 (Z-DED2, S107, Node): "for …" in a sentence – found or not (a production before it,
@@ -747,6 +759,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   settabs3136: 3.136.0 (Z-SETTABS): the subheadings of the tabs, the matrix of an entry under Appearance, developer mode only
+                                #     in "Developer", "Performance dates onto linked works" under Works
                                 #   profnew3108: 3.108.0 (Z-PROFNEW): "+ New profile" – a copy of the settings, named, active, its name focused
                                 #   devtab3108: 3.108.0 (Z-DEVTAB, Z-CONN2): the tab Developer only in developer mode (its switches moved from Sources,
                                 #     diagnosis, statistics, the tree); the tab MusicBrainz with the data the script reads and their links
@@ -1032,6 +1046,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   twice3134: 3.134.0 (Z-DGEXCL, S054): "Produced by Anna Neu" in the credits, "Producer: Anna Neu" in the about text – one row
                                 #   bclbl3118: 3.118.0 (Z-BCLBL, S185; Node): on a label's page "© 2026 WEWANTSOUNDS" linked to the page; not on the artist's
                                 #     own page, not another name
                                 #   artlbc3100: 3.100.0 (Z-ARTL, S159): "Artwork: Cyclical Dreams" on the label's Bandcamp page – the label, linked at once
@@ -1090,6 +1105,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gaprefresh3135: 3.135.0 (Z-GAPREFRESH2, S223): Guitar Guy taken out in the editor – counted as missing, said apart on
+                                #     the release page; the next import asks "Skip them again?" – ✓ on Skip
                                 #   gapcenter3120: 3.120.0 (Z-GAPCENTER): the text of the line "Discogs: about … relationships" centred, the buttons beside it
                                 #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
                                 #     on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
