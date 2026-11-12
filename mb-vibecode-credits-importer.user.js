@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.132.0
+// @version      3.133.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.132.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.132.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.133.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.133.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.132.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.133.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3184,10 +3184,28 @@
       "quick.S007": "Leave out festivals in “Companies, etc.”",
       "quick.D023": "Dates in the titles of the tracks",
       "quick.D034": "Relative dates (“last September”) from a date of the text",
+      "quick.name.D022": "Several days → month",
+      "quick.name.D026": "Concert photos",
+      "quick.name.D023": "Dates from titles",
+      "quick.name.D034": "Relative dates",
+      "quick.name.S046": "Track performers → instruments",
+      "quick.name.S078": "Track-artist instruments",
+      "quick.name.S170": "Instrument group",
+      "quick.name.S155": "Instrument models apart",
+      "quick.name.S114": "Group as performer",
+      "quick.name.S021": "Live preset",
+      "quick.name.S031": "Case-only credits",
+      "quick.name.S160": "Rights societies",
+      "quick.name.S045": "Writer’s society",
+      "quick.name.S222": "Improvisations as works",
+      "quick.name.S007": "No festival labels",
+      "quick.S222": "Lines of improvisations (“All music was improvised by …”) → the players as composers of the works",
+      "improv.from": "Improvisation – from: “{line}”",
+      "improv.fromTitle": "Improvisation – by its title: “{title}”",
+      "ignored.why.improv": "improvisations (no works: switched off)",
       "quick.S046": "“Performer” on tracks → the instruments on those tracks",
       "quick.D026": "Photographs of the concert → the concert’s date",
       "quick.S114": "Heading of a group above its members → the group as performer too",
-      "quick.S122": "Lists of songs → the works of a release of one track also in pasted texts and Bandcamp (not only YouTube)",
       "quick.S155": "Several models of one instrument → each role credit on its own",
       "quick.S160": "Take rights societies (BMI, GEMA …) of the source",
       "quick.S170": "“On the release”: the instruments' common group on the recordings (else “instruments”)",
@@ -4567,11 +4585,10 @@
     { id: 'S115', where: 'TEXT.parse (venueBlocks), TEXT_VENUE_HEAD', note: 'Texts (3.79.0; collected item Z-VEN): a line "venue: industry city" (the words of T062: venue, location, live at, place, club) with the lines right below it – a city ("brooklyn, NY") and a date ("9/17/26") – is the place where it was recorded live, read as "Recorded live at Industry City, Brooklyn, NY, 2026-09-17": the place Industry City (recorded at; its name with capitals), the city as its area – shown at the entry, and the places in it first among MusicBrainz\'s hits –, the date' },
     { id: 'S116', where: 'TEXT.parse (namesScoped)', note: 'Texts (3.79.0; collected item Z-KXP): "A with B" in a list of names – both a person\'s name of two to four words with capitals – are two names ("Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht" – four); a name of the release\'s artists stays whole (S077)' },
     { id: 'S117', where: 'YOUTUBE.toRelease (videoSeries), loadSeries, SERIES_FROM_VIDEO', note: 'YouTube (3.80.0; collected item Z-KXS): a video whose title and channel match a line of T063 ("Live on KEXP" on the channel KEXP) is suggested as part of that series – "Live on KEXP (full performance videos)", a series of recordings: the recordings part of it, the number the date it was recorded ("Recorded April 8, 2025." → 2025-04-08)' },
-    { id: 'S118', where: 'TEXT.parse (songLists), medleyParts, splitMedley, searchParts, TEXT_SONG_HEAD, TEXT_SONG_SKIP', note: 'YouTube (3.80.0; collected item Z-YTW): the songs a video\'s description lists – below "Songs:", "Setlist:", "Tracklist:" (T064) or lines with a time ("00:00 Intro", "4:12 Nuska"; [Z-YTT] 3.81.0: the time first or last in every line, rising, three lines or more – two from 0:00 on; no schedule of Doors, Support …) – are the works of the release\'s one track: "Split into n works (songs)" in the works matrix, each a work of its own in the order of the list (no "medley"); a work of the band\'s or of the track\'s writers with that title is offered, the others are new works (with the writers the text names only)' },
+    { id: 'S118', where: 'TEXT.parse (songLists), medleyParts, splitMedley, searchParts, TEXT_SONG_HEAD, TEXT_SONG_SKIP', note: 'YouTube (3.80.0; collected item Z-YTW; from 3.133.0 every free text of a release of one track – pasted texts, Bandcamp – without "Artist - Title" lines or parts written small there): the songs a video\'s description lists – below "Songs:", "Setlist:", "Tracklist:" (T064) or lines with a time ("00:00 Intro", "4:12 Nuska"; [Z-YTT] 3.81.0: the time first or last in every line, rising, three lines or more – two from 0:00 on; no schedule of Doors, Support …) – are the works of the release\'s one track: "Split into n works (songs)" in the works matrix, each a work of its own in the order of the list (no "medley"); a work of the band\'s or of the track\'s writers with that title is offered, the others are new works (with the writers the text names only)' },
     { id: 'S119', where: 'TEXT.parse (splitRoles)', note: 'Texts (3.81.0; collected item Z-SLD): "Appalachian/Hammered Dulcimer" – a word before "/" that is no role, with the noun of the instrument after it an instrument of MusicBrainz too – are two instruments: Appalachian dulcimer, hammered dulcimer ("Piano/Keys" stays piano and keys)' },
     { id: 'S120', where: 'TEXT.parse (readLine)', note: 'Texts (3.81.0; collected item Z-OTR): "on track(s) …" after a role in a list of roles is that role\'s tracks – "Andy Becker - Baritone Electric Guitar on track 2 & 6, Synth on track 2", "Joe Davin - Bass Guitar on track 2,4,6, Double Bass on track 3" (each role with its own tracks, as "(2, 6)" after it)' },
     { id: 'S121', where: 'TEXT.parse (readClause, addCredit), TEXT_FILLER_SUBJECT, TEXT_BROADCASTER', note: 'Texts (3.81.0; collected item Z-RAD): "This was", "It was", "These tracks were" … before "recorded / mixed … by" are no part of the credit (until 3.80.0 its role credit); a broadcaster that recorded it (T066: "Norwegian State radio", "Westdeutscher Rundfunk", "BBC") is a label – recording (C021) and broadcast (C044) on the recordings; the names after "by" end with their sentence ("… and Guy. At the time …" made Guy a name of it); a place "outside / near Oslo" has Oslo as its area' },
-    { id: 'S122', where: 'TEXT.parse (songLists), BANDCAMP.toRelease', note: 'Texts (3.82.0; collected item Z-YTW2; off by default, a quick switch): the lists of songs of S118 also in pasted texts and Bandcamp\'s texts, not only in a YouTube video\'s description' },
     { id: 'S123', where: 'findDedications, dedFullName', note: 'Dedications (3.82.0; collected item Z-DEDH): a form of address and a surname after "dedicated to" ("dedicated to Mr. Polo’s incredible explorations") – the one full name with that surname in the text or the release\'s title ("Marco Polo’s journey") is suggested in "Dedications & tributes" (artist – release); none when there is no full name or more than one' },
     { id: 'S124', where: 'applyPlan (removals, replaces, updates)', note: 'Staging (3.83.0; collected item Z-RLV): what was staged before and is changed in the dashboard since – its level, type, tracks, attributes, credits, date – is replaced at the next "Stage" (the old relationship taken out or updated), also when it was changed in the relationship editor itself; those are named in a message (until 3.82.0 they were left alone: "changed in the editor itself", "to remove by hand")' },
     { id: 'S125', where: 'dupAskHtml, dupAnswer, buildNoteBlock', note: 'Works (3.83.0; collected item Z-SNW): new works for all tracks while some have a work of the same title in MusicBrainz – three answers in the works matrix: the other works (those tracks left out to be linked), all works anyway, cancel; works created anyway are named in the edit note with the works of the same title (⚙ Settings → Staging → Edit note, on)' },
@@ -4617,6 +4634,7 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S222', where: 'TEXT.parse (improvLine, IMPROV_LINE), IMPROV_TITLE, improvOf, improvMarkHtml, workFrontCell, roleCell, the compact line', note: 'Improvisations as works (3.133.0; collected item Z-IMPROV; a quick switch, on): "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous compositions by …", "Instant composing by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …" – composers of the works (as the other rules of composing), marked "improvisation" at their rows and at the tracks in the works matrix (the line quoted); a title on its own ("Improvisation III", "Impro 2") marks its track too. Off: such a line is left out ("improvisations") and no work is made of it. (S122 – lists of songs outside YouTube as a switch – removed in 3.133.0: S118 reads them in every free text)' },
     { id: 'S221', where: 'TEXT.parse (CONCERT_AT, concertKind), groupCompanies, addCompanyEntry, yellItems, applyLiveDefault', note: 'Concerts (3.132.0; collected item Z-CONCERTHINT): a sentence of a concert at a place ("Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus", "concierto en …", "concert au …") gives the place as "recorded at" – a yellow suggestion (✓ / ✕) – and "live" on the links to the works; a sentence of a story ("after the two first met at a concert at …") gives nothing but a line under "Mentioned dates"' },
     { id: 'S220', where: 'datesWithContext (mentionKind), dateFinds, mentionedChipHtml, findFestivals, festivalHtml', note: 'Mentioned only (3.132.0; collected items Z-FESTALL, Z-RELDATE): a date, a festival or a concert of a sentence that is not about the recording – a story ("after the two first met at a concert in July 2019"), a long sentence without words of a recording, a relative date in such a sentence – is suggested nowhere: the chip "Mentioned dates (n) ▾" at the right of "Dates & tracks" lists it with its sentence (and the date it is reckoned from), to be taken into the pool by hand; festivals are always recognized again (the hint says "only mentioned – check the context" for such a sentence; until 3.131.0 they were left out, S209)' },
     { id: 'S219', where: 'rowsRemovedInEditor, sendDiscogsStatus, afterEnterEdit; companion 1.21.0', note: 'Marks of the companion (3.131.0; collected item Z-CPREMOVED): a credit whose relationships the dashboard staged and that were all taken out in the relationship editor by hand is "taken out in the editor" – a grey ✗ instead of the red one after "Enter edit", until the next import' },
@@ -6796,6 +6814,16 @@
   /** [Z-CONCERTHINT] (3.132.0, S221) What a sentence of a concert is: 'rec' (the recording's – a hint) or 'mention' (a story). */
   // ((review) a word of a story wins – "after the two first met at a concert at X, they recorded this album" is a story of the concert)
   const concertKind = (sentence) => (STORY_SENTENCE.test(sentence) || CONCERT_MENTION.test(sentence) ? 'mention' : 'rec');
+
+  // [Z-IMPROV] (3.133.0, S222) the words of improvisations (English, German, Spanish, French)
+  const IMPROV_WORDS = String.raw`(?:(?:freely|spontaneously|collectively|totally|fully|frei|libremente|librement)\s+)?(?:improvised|improvisations?|improvisational(?:\s+music)?|free\s+improvisations?|impro(?:v|s)?|spontaneous\s+compositions?|instant\s+compos(?:ition|itions|ing)|real[-\s]time\s+compositions?|composed\s+in\s+real\s+time|extempori[sz](?:ed|ations?)|ad[-\s]libbed|improvisiert|improvisationen|aus\s+dem\s+stegreif|echtzeitkomposition(?:en)?|improvisad[oa]s?|improvisaci(?:ón|on|ones)|improvisierte|improvis[ée]e?s?)(?![\p{L}])`;
+  /** [Z-IMPROV] (3.133.0, S222) A title of an improvisation on its own: "Improvisation III", "Impro 2", "Free Improvisation No. 4", "Improvisación 1". */
+  const IMPROV_TITLE = /^\s*(?:(?:free|freie|libre|collective|kollektive)\s+)?(?:improvisations?|improvisación|improvisacion|impro|improv)(?:\s+(?:part\s+|teil\s+|no\.?\s*|nr\.?\s*|n[°º]\s*|#\s*)?(\d{1,4}|[IVXLCivxlc]{1,6}|[a-z]))?\s*(?:\([^)]*\))?\s*$/iu;
+  /** ((review) roman numbers in capitals only: "Improvisation Civil" is none) */
+  const improvTitle = (t) => {
+    const m = IMPROV_TITLE.exec(String(t || ''));
+    return !!m && !(m[1] && m[1].length > 1 && /^[IVXLCivxlc]+$/.test(m[1]) && !/^[IVXLC]+$/.test(m[1]));
+  };
 
   /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
   const DATE_MATCHERS = [
@@ -9617,7 +9645,7 @@
         noteCredited(c0, k0, raw);
       };
       /**
-       * [Z-YTW] (3.80.0, S118, T064) The songs a video's description lists (only for YouTube, ctx0.songs): below a heading ("Songs:",
+       * [Z-YTW] (3.80.0, S118, T064) The songs a video's description lists (YouTube, ctx0.songs; 3.133.0 every free text of one track, `strict`): below a heading ("Songs:",
        * "Setlist:", "Tracklist:" – the lines up to an empty line or one that is no title) or two lines or more in a row with a time
        * ("00:00 Intro", "4:12 - Nuska", "Nuska (4:12)"). Numbers and times taken off; Intro, Interview, Outro … no song. The lines are
        * left out of the credits ("songList"). → { lines (those taken empty), songs }
@@ -9640,7 +9668,8 @@
           || t.split(/\s+[-–—]\s+/).some((x, k, all) => all.length > 1 && (isRole(cap(clean(x))) || playable(clean(x).toLowerCase())))
           || ((m) => !!m && (isRole(cap(m[1])) || playable(m[1].toLowerCase())))(t.match(/\(([^()]+)\)\s*$/));
         // ((review) outside YouTube also no tracks in brackets ("John Smith (1, 3)"), no name of the release's artists, no list with commas
-        const strictNo = (t) => strict && (/\(\s*\d/.test(t) || bandNames.has(norm(t)) || /,\s/.test(t) || isRole(cap(t)));
+        // ([Z-QSNAMES] 3.133.0, review: every free text now) neither "Artist - Title" (a mix) nor a part written small ("12:30 the storm")
+        const strictNo = (t) => strict && (/\(\s*\d/.test(t) || bandNames.has(norm(t)) || /,\s/.test(t) || isRole(cap(t)) || /\s[-–—]\s/.test(t) || /^\p{Ll}/u.test(t));
         const isTitle = (t) => !!t && t.length <= 80 && !creditLike(t) && !strictNo(t) && !/https?:\/\/|www\.|@|#\w/i.test(t) && !/:(?:\s|$)/.test(t) && !/^\W+$/.test(t)
           && !/^(?:recorded|mixed|mastered|produced|engineered|filmed|edited|directed|shot|written|composed|arranged|performed|hosted|thanks)\b/i.test(t)
           && !/\sby\s+\p{Lu}[\p{Ll}.'’-]*\s+\p{Lu}/u.test(t);
@@ -9650,7 +9679,7 @@
           out[k] = '';
         };
         for (let i = 0; i < out.length; i++) {
-          // ((review) outside YouTube (S122) a heading with its colon, not "Set:" or "Tracks:" alone)
+          // ((review) outside YouTube a heading with its colon, not "Set:" or "Tracks:" alone)
           if (TEXT_SONG_HEAD.test(clean(out[i])) && (!strict || (/:\s*$/.test(out[i]) && !/^\s*(?:set|tracks|full set|chapters|timestamps)\s*:/i.test(out[i])))) {
             const at = ignored.length;
             let n = 0;
@@ -10732,6 +10761,58 @@
         }
         return out;
       };
+      /**
+       * [Z-IMPROV] (3.133.0, S222) "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous
+       * compositions by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …": read as "Composed by …" – the
+       * composers of the works, as the other rules of composing –, the credits marked as improvisations (`improvLines`: the line as written).
+       * S222 off: the line left out ("improvisations", no works).
+       */
+      const improvLines = new Set();
+      const improvOff = new Set();
+      // ((review) a track scope first ("Tracks 1-3 improvised by X"); the noun after the word ("Improvised music by X"); "by:"; a dash only with
+      // spaces around it ("Impro-Jazz by X" is none)
+      const IMPROV_LINE = new RegExp(String.raw`^\s*(?:((?:tracks?|titles?|pieces?|stücke|titel|pistas?|morceaux)\s+[\dA-H][\dA-H\s,&.–-]*?(?:\s+(?:and|und|y|et)\s+[\dA-H][\d]*)?)\s*:?\s+)?(?:(?:all|alle|toda\s+la|todas\s+las|toute\s+la|toutes\s+les)\s+)?(?:(?:the\s+)?(?:music|musik|música|musique|tracks?|stücke|titel|pieces?|piezas|morceaux|songs?|compositions?|works?)(?:\s+on\s+this\s+(?:record|album|release))?\s+)?(?:(?:was|were|is|are|has\s+been|have\s+been|wurde|wurden|ist|sind|fue|fueron|es|son|a\s+été|ont\s+été|est|sont)\s+)?${IMPROV_WORDS}(?:\s+(?:music|musik|música|musique|compositions?|pieces?|works?|stücke))?\s*(?:\b(?:by|von|por|par)\b\s*:?|:|\s[–—-]\s)\s*(\S.+)$`, 'iu');
+      // ((review) the names only – a word of a heading, a colon, a role after a dash end it; the next clause of a verb ("…, recorded by X",
+      // "…, enregistré par X") its own line)
+      const IMPROV_NOT_NAME = /^(?:live|recorded|recording|part|teil|parte|vol|volume|the\s+art|session|sessions|theater|theatre|jazz|music|musik)\b/i;
+      const improvNames = (rest) => {
+        const cut = rest.search(/[.;]\s|,\s*\p{L}+\s+(?:by|von|por|par)\b|\s+(?:and|und|y|et)\s+\p{Ll}+(?:ed|é|ée|és|ado|ada|iert)\s+(?:by|von|por|par)\b/u);
+        const names = cut >= 0 ? rest.slice(0, cut) : rest;
+        return { names: names.replace(/[.\s]+$/, ''), tail: cut >= 0 ? rest.slice(cut).replace(/^[.;,\s]+/, '') : '' };
+      };
+      /**
+       * [Z-IMPROV] (3.133.0, S222) A line of improvisations → "Composed by …" (its tracks first, the names only: brackets of instruments taken off –
+       * the line as written read as well then, for its instruments); the next clause its own line. The line as written in `improvLines`.
+       */
+      const improvSplit = (lines) => lines.flatMap((l) => {
+        const m = String(l || '').match(IMPROV_LINE);
+        if (!m) return [l];
+        const { names, tail } = improvNames(m[2]);
+        const plain = names.replace(/\s*\([^()]*\)/g, '').replace(/\s+[–—-]\s+\p{Ll}[^,]*/gu, '').trim();
+        const parts = plain.split(/\s*(?:,|&|\band\b|\bund\b|\by\b|\bet\b)\s*/u).filter(Boolean);
+        const nameOk = (x) => /^(?:(?:de|van|von|del|da|di|le|la|du)\s+)?\p{Lu}/u.test(x) && x.split(/\s+/).length <= 5 && !/:/.test(x) && !/\d/.test(x) && !IMPROV_NOT_NAME.test(x);
+        if (!parts.length || !parts.every(nameOk)) return [l];
+        const raw = (rawOf.get(l) || l).trim();
+        if (!ruleOn('S222')) {
+          improvOff.add(raw);
+          return [l];
+        }
+        // ((review) a text no other line has – another "Composed by X" of the text keeps its own place)
+        const head = m[1] ? `${m[1].trim()}: ` : '';
+        const t = ['Composed by', 'Composition by', 'Music by', 'Compositions by'].map((w) => `${head}${w} ${plain}`)
+          .find((x) => !lines.some((y) => String(y).trim() === x) && !rawOf.has(x));
+        if (!t) return [l];
+        rawOf.set(t, raw);
+        improvLines.add(raw);
+        const out = [t];
+        // the instruments in brackets or after a dash ("Improvised by Anna Neu (piano) and Bob Roe (drums)"): the line as written too
+        if (plain !== names) out.push(l);
+        if (tail) {
+          if (!rawOf.has(tail)) rawOf.set(tail, raw);
+          out.push(tail);
+        }
+        return out;
+      });
       // [Z-CPYEAR] (3.124.0, S194) "Copyright 2026 Castles In Space." → "© 2026 Castles In Space."; "Phonographic Copyright 2026 X" → "℗ 2026 X"
       // ((review) only with a holder after the year: "Copyright 2026" alone stays as it is)
       const cpyLine = (l) => (!ruleOn('S194') ? l : String(l || '').replace(/(^|[.;]\s+)(Phonographic\s+)?Copyright\s+(?:©|\(c\)|℗|\(p\))?\s*((?:19|20)\d{2})\b(?=\s+\p{L})/giu,
@@ -10818,12 +10899,15 @@
       };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
       const allLines0 = joinBroken(discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(untilde).map(cpyLine).map(qpLine).map(rdstLine).map(licLine))); // ([Z-DEDPLACE] 3.129.0) words set off with tildes
-      const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
+      // [Z-IMPROV] (3.133.0, S222) the lines of improvisations, after the broken ones are joined ((review) "All the music on this record was / improvised by …")
+      const allLines0i = improvSplit(allLines0);
+      const allLines1 = ruleOn('S115') ? venueBlocks(allLines0i) : allLines0i;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
-      // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
+      // [Z-YTW2] (3.82.0; 3.133.0 without the switch S122) also in pasted texts and Bandcamp's texts
       // ((review) only where a release of one track can take them: `songsOk` of the pasted text and the Bandcamp album – not the Discogs
       // notes, a track page, an album of many tracks)
-      const songRead = ctx0 && (ctx0.songs || (ruleOn('S122') && ctx0.songsOk)) && ruleOn('S118') ? songLists(allLines1, !ctx0.songs) : { lines: allLines1, songs: [] };
+      // ([Z-QSNAMES] 3.133.0: S122 removed – S118 reads them in every free text of a release of one track)
+      const songRead = ctx0 && (ctx0.songs || ctx0.songsOk) && ruleOn('S118') ? songLists(allLines1, !ctx0.songs) : { lines: allLines1, songs: [] };
       const allLines = trackListLines(ruleOn('S161') ? joinWriterLines(songRead.lines.map(listLine)) : songRead.lines);
       // ([Z-TBL] the positions of the text in their order: "A1", "A2" … "B4" – the tracks 1 … 8)
       for (const l of allLines) {
@@ -11106,6 +11190,23 @@
         }
         ignored.push(...out);
       }
+      // [Z-IMPROV] (3.133.0, S222) the credits of a line of improvisations: so marked (the line as written, quoted at the mark); switched off: the
+      // line left out
+      // ((review) only the composers – "…, recorded by X" of the same line is no improvisation)
+      credits.forEach((c) => { if (c.line != null && improvLines.has(String(c.line).trim()) && /^(?:composed by|composition by|music by|compositions by)$/i.test(c.base || '')) c.improv = String(c.line).trim(); });
+      // ((review) off: a line of improvisations that gave nothing is left out ("improvisations"), not "not recognized"
+      improvOff.forEach((raw) => {
+        if (credits.some((c) => String(c.line || '').trim() === raw)) return;
+        let hit = false;
+        for (let k = unrecognized.length - 1; k >= 0; k--) {
+          const u = String(unrecognized[k]).trim();
+          if (u === raw || u.startsWith(`${raw} →`)) {
+            unrecognized.splice(k, 1);
+            hit = true;
+          }
+        }
+        if (hit && !ignored.some((g) => g.text === raw)) ignored.push({ text: raw, why: 'improv' });
+      });
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
@@ -11138,7 +11239,7 @@
     function toRelease(input, ctx) {
       const text = String((input && input.text) || '');
       const origin = String((input && input.origin) || '').trim();
-      // [Z-YTW2] (3.82.0, S122) a release of one track can take a list of songs
+      // [Z-YTW2] (3.82.0) a release of one track can take a list of songs
       const res = parse(text, { ...ctx, songsOk: (ctx.tracks || []).length <= 1 });
       return {
         source: 'text',
@@ -11440,7 +11541,7 @@
         covers,
         quotes,
         groups,
-        // [Z-YTW2] (3.82.0, S122) the songs its texts list (with the quick switch)
+        // [Z-YTW2] (3.82.0) the songs its texts list
         songs: [...(album.songs || []), ...(aboutRes.songs || [])],
         band,
         released: cur.release_date || '',
@@ -11716,7 +11817,7 @@
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] }).flatMap(splitArtTasks)) {
         // [S058] (3.38.12) a credit of lines whose order was not clear is a row of its own: "⇅" swaps it without taking a clear
         // credit of the same role with it (the same relationship of both is staged once)
-        const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}`;
+        const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}${c.improv ? '|improv' : ''}`; // ([Z-IMPROV] 3.133.0, review) apart from composing
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
             fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle,
@@ -11735,6 +11836,7 @@
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
         if (c.workArr) entry.workArr = true; // [Z-ARRL] (3.94.0, S150)
+        if (c.improv) entry.improv = c.improv; // [Z-IMPROV] (3.133.0, S222)
         // [Z-RMXTITLE] (3.126.0, S200; review) only from titles while every credit of the role is one (a credit of the source is taken as it is)
         if (!c.rmxTitle) entry.rmxTitle = false;
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
@@ -18018,7 +18120,7 @@
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
   const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031']],
-    ['works', ['S160', 'S045', 'S122']], ['companies', ['S007']]];
+    ['works', ['S160', 'S045', 'S222']], ['companies', ['S007']]];
   function quickSwitchesHtml() {
     const notes = ruleNotes();
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
@@ -18027,7 +18129,7 @@
       // [Z-MSYN] (3.97.0) a switch that cannot be switched on yet: greyed, with why
       const locked = LOCKED_RULES.has(id);
       return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
-        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel">${esc(tr(`quick.${id}`))}</span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
       <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
@@ -23229,6 +23331,7 @@
     // ((3.92.0, review) a role credit of the text as in the import: S064, S146)
     if (!company && info.c.roleCredit) Object.assign(row, { roleCredit: info.c.roleCredit, roleCreditTouched: true });
     if (!company && info.c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
+    if (!company && info.c.improv) row.improv = info.c.improv; // [Z-IMPROV] (3.133.0, S222)
     row.tracks = new Set(info.tracks);
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
@@ -24566,6 +24669,7 @@
       } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       if (c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
+      if (c.improv) row.improv = c.improv; // [Z-IMPROV] (3.133.0, S222) a composer of improvisations
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
       row.unresolved = c.unresolved;
@@ -28856,7 +28960,7 @@
     const autoRow = l.rows.find((x) => x.instsAuto);
     if (autoRow) role += ` <span class="dci-tag dci-insts-tag" title="${esc(tr(autoRow.instsHint ? 'insts.autoHint' : 'insts.auto', { group: autoRow.instsHint || '' }))}">${esc(tr('insts.tag'))}</span>`;
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}${l.rows.some(arhlOn) ? ' dci-arhl' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}${ruleOn('S201') ? rowOriginsHtml(l.rows, S.artists.get(l.rows[0].artistKey)) : ''}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
+        <td class="dci-em-c-role">${grip}${role}${ruleOn('S201') ? rowOriginsHtml(l.rows, S.artists.get(l.rows[0].artistKey)) : ''}${improvMarkHtml(l.rows)}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}"><div class="dci-em-stick">${ask}</div></td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${emDetailRows(l.rows)}</tbody></table></td></tr>` : ''}`;
   }
@@ -29838,7 +29942,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
@@ -30046,6 +30150,8 @@
       + (row.instsAuto ? `<div class="dci-note dci-insts-note">${esc(tr(row.instsHint ? 'insts.autoHint' : 'insts.auto', { group: row.instsHint || '' }))}</div>` : '')
       // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named (3.102.0: asked – abbrAskHtml – while S166 is on)
       + (row.abbrAlt && row.abbrAlt.length && !row.abbrAsk ? `<div class="dci-note dci-abbr-note">${esc(tr('note.abbrAlt', { abbr: row.abbr || '', list: row.abbrAlt.join(', ') }))}</div>` : '')
+      // [Z-IMPROV] (3.133.0, S222) a composer of improvisations: marked
+      + improvMarkHtml([row])
       // [Z-CONCERTHINT] (3.132.0, S221) the place of a concert of the text: a suggestion, its sentence quoted
       + (row.concert && ruleOn('S221') ? `<div class="dci-note dci-concert-note">${esc(tr('concert.note', { line: row.concert }))}</div>` : '')
 ;
@@ -33022,6 +33128,8 @@
       parts.push(open(`dci-cl-date${text ? ' dci-cl-has' : ''}`, esc(text || tr('cl.noDate')), tr('cl.dateTitle')));
     }
     if (!skip) {
+      const im = improvMarkHtml([row]);
+      if (im) parts.push(im);
       const flags = [];
       // ((review) the question of a date before the recording is shown as itself, not again among the issues)
       const issues = info && info.issues ? info.issues.filter((x) => !(dateOrderOpen(row) && x === tr('issue.dateOrder'))) : [];
@@ -39453,11 +39561,33 @@
    * (linked, new, found – or the buttons to get one) with the closed attributes at the end of that line; below
    * it the attributes when open, the date of a planned link and the work's options when opened.
    */
+  /**
+   * [Z-IMPROV] (3.133.0, S222) What makes track i an improvisation: the line of a composer's credit of improvisations on it (a row on the work
+   * level, not left out) or its title on its own ("Improvisation III", "Impro 2") – { line } or { title }; null without.
+   */
+  function improvOf(i) {
+    if (!ruleOn('S222')) return null;
+    const r = S.rows.find((x) => x.improv && x.level === 'work' && x.tracks && x.tracks.has(i));
+    if (r) return { line: r.improv };
+    const t = S.mbTracks.find((x) => x.idx === i);
+    const st = (S.srcTracks || [])[i];
+    const title = [t && t.title, st && st.title].find(improvTitle);
+    return title ? { title } : null;
+  }
+  /** [Z-IMPROV] (3.133.0) The mark "improvisation" (always English) – at rows of composers of improvisations, the source quoted. */
+  function improvMarkHtml(rows, cls = '') {
+    const r = ruleOn('S222') && rows.find((x) => x && x.improv && x.level === 'work');
+    return r ? ` <span class="dci-improv-mark ${cls}" title="${esc(tr('improv.from', { line: r.improv }))}">improvisation</span>` : '';
+  }
+
   function workFrontCell(mrow) {
     const { i, track, work } = mrow;
     const dPos = S.srcTracks[i] ? S.srcTracks[i].position : '';
+    // [Z-IMPROV] (3.133.0, S222) an improvisation: marked, its source quoted
+    const imp = improvOf(i);
+    const impMark = imp ? ` <span class="dci-improv-mark" title="${esc(imp.line ? tr('improv.from', { line: imp.line }) : tr('improv.fromTitle', { title: imp.title }))}">improvisation</span>` : '';
     const head = `<div class="dci-mx-title"><span class="dci-tn">${esc(trackLabel(track))}</span> <strong>${esc(track.title)}</strong>${dPos
-      ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}</div>${workNotesHtml(i)}`;
+      ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}${impMark}</div>${workNotesHtml(i)}`;
     // ([Z-NWA] 3.57.0, S083) an existing work: a lock – only its link is staged
     const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${workLocked(w)
       ? ` <span class="dci-mx-wlock" title="${esc(tr('matrix.workLockedRow'))}">${LOCK_SVG}<span class="dci-sr">${esc(tr('matrix.workLockedRow'))}</span></span>` : ''}`;
@@ -39787,7 +39917,7 @@
     const typoText = uniq(col.rows.flatMap((r) => (r.typos || []).map((t) => tr('role.typoRead', { read: t.read, written: t.written })))).join(' · ');
     const s050 = typoText ? `<button type="button" class="dci-textbtn dci-ruleid dci-typo" data-act="rule-goto" data-rule="S050" title="${esc(typoText)}">S050</button>` : '';
     return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      <div class="dci-mx-colname">${columnKindTag(col)}${name}</div>
+      <div class="dci-mx-colname">${columnKindTag(col)}${name}${improvMarkHtml(col.rows || [])}</div>
       <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
       ${pubLevels}${typeAsk}
@@ -52025,6 +52155,9 @@
       #dci-rules .dci-qled::after { content: ''; position: absolute; top: calc(var(--u, 1px) * 2); left: calc(var(--u, 1px) * 2); width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12);
         border-radius: 50%; background: #fff; transition: left 0.15s; }
       #dci-rules .dci-qlabel { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+      /* [Z-QSNAMES] (3.133.0) a short heading, the sentence below it */
+      #dci-rules .dci-qname { display: block; font-weight: 600; }
+      #dci-rules .dci-qdesc { display: block; margin-top: calc(var(--u, 1px) * 1); font-size: calc(var(--u, 1px) * 11); color: var(--muted, #6d6a7c); line-height: 1.3; }
       #dci-rules .dci-qstate { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
       #dci-rules .dci-qbtn[aria-pressed=true] { background: #f4f3fb; color: #24213a; border-color: #8e88c2; }
       #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled { background: #5b55a0; }
@@ -52953,6 +53086,9 @@
       .dci-pools-body + .dci-pools-foot + .dci-pools-head, .dci-pools-kept + .dci-pools-head { margin-top: calc(var(--u, 1px) * 6); }
       .dci-pools-toggle:hover .dci-chev { background: var(--date-d); }
       .dci-pools-toggle:hover .dci-pools-title { text-decoration: underline; }
+      /* [Z-IMPROV] (3.133.0, S222) the mark "improvisation" */
+      .dci-improv-mark { display: inline-block; margin-left: calc(var(--u, 1px) * 4); padding: 0 calc(var(--u, 1px) * 5); border: 1px dashed var(--purple, #6b4fa0); border-radius: 3px;
+        color: var(--purple, #6b4fa0); font-size: calc(var(--u, 1px) * 11); font-style: italic; line-height: 1.5; cursor: help; white-space: nowrap; }
       /* [Z-RELDATE] (3.132.0, S220) "Mentioned dates (n) ▾" at the right of "Dates & tracks", its list below the line */
       .dci-mention-btn { margin-left: calc(var(--u, 1px) * 12); font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
       .dci-mention { margin: calc(var(--u, 1px) * 4) 0 0 auto; max-width: calc(var(--u, 1px) * 760); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);

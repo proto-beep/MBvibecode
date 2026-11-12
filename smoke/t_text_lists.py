@@ -1301,4 +1301,76 @@ console.log(JSON.stringify(['Anoyo Drive 00:32\nMelting 13:37\nIyo no Hito 23:16
     print('Ergebnis:', 'OK' if a and b and c and por and d else 'FEHLER', [a, b, c, por, d])
 
 
+def case_improv3133():
+    """Credits Importer 3.133.0 (collected item Z-IMPROV, S222): a pasted text "All music was improvised by Anna Neu and Bob Roe" – both
+    composers of the works (rows "Composed By" on the work level, columns of the works matrix), marked "improvisation" at the head of their
+    entries, their columns and each track of the matrix (the line quoted); a track titled "Improvisation III" alone is marked too (by its title).
+    B) S222 off: the line left out ("improvisations"), no composer, no mark."""
+    H.TITLES[:] = ['Song One', 'Improvisation III', 'Song Three', 'Song Four']
+    TEXT = "All music was improvised by Anna Neu and Bob Roe\nAnna Neu – piano\nBob Roe – drums"
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [!!g.querySelector('.dci-gname .dci-improv-mark'), ...[...g.querySelectorAll('tr.dci-row')].map(r => r.querySelector('.dci-drole').dataset.raw.trim())] : null; }"""
+    MX = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].map(tr => [tr.dataset.work, (tr.querySelector('.dci-mx-title .dci-improv-mark') || {}).title || ''])"
+    COLS = "[...document.querySelectorAll('[data-el=works] th[data-colhead]')].map(th => [th.querySelector('.dci-mx-colname').textContent.replace(/\\s+/g, ' ').trim(), !!th.querySelector('.dci-improv-mark')])"
+    results = []
+    for off in (False, True):
+        H.RULES_OFF[:] = ['S083'] + (['S222'] if off else [])
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(2500)
+            anna = pg.evaluate(ROWS, 'Anna Neu')
+            mx = pg.evaluate(MX)
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.textContent.replace(/^–\\s*/, '').trim())")
+            cols = pg.evaluate(COLS)
+            print('B)' if off else 'A)', 'Anna Neu:', anna, '| Matrix:', mx, '| Spalten:', cols, '| ausgelassen:', ign)
+            if not off:
+                results.append(anna is not None and anna[0] and any('Anna Neu' in n and m for n, m in cols) and any('Bob Roe' in n and m for n, m in cols)
+                               and len(mx) == 4 and all('All music was improvised by Anna Neu and Bob Roe' in t for _, t in mx))
+            else:
+                results.append(anna is not None and not anna[0] and not any('Anna Neu' in n for n, m in cols) and not any(t for _, t in mx)
+                               and 'improvisations (no works: switched off)' in ign)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    H.RULES_OFF[:] = ['S083']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_improvtitle3133():
+    """Credits Importer 3.133.0 (Z-IMPROV, S222): without a line of improvisations, a track titled "Improvisation III" (and "Impro 2") is marked
+    "improvisation" in the works matrix by its title; "Improvisation in Blue" and ((review) "Improvisation Civil" are no such titles."""
+    H.TITLES[:] = ['Improvisation Civil', 'Improvisation III', 'Impro 2', 'Improvisation in Blue']
+    TEXT = "Anna Neu – piano\nBob Roe – drums"
+    MX = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].map(tr => (tr.querySelector('.dci-mx-title .dci-improv-mark') || {}).title || '')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2000)
+        mx = pg.evaluate(MX)
+        print('A) Matrix:', mx)
+        results.append(mx == ['', 'Improvisation – by its title: “Improvisation III”', 'Improvisation – by its title: “Impro 2”', ''])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

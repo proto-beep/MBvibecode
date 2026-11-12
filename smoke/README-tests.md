@@ -103,6 +103,9 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
                                 # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_text_lists.py         # Texts from Bandcamp's credits of 2026-11 (Intentions, Throats), in Node (3.48.0 –)
+                                #   improv3133: 3.133.0 (Z-IMPROV, S222): "All music was improvised by Anna Neu and Bob Roe" – composers of the works,
+                                #     marked "improvisation" (entries, columns, tracks; the line quoted); S222 off: left out, no works
+                                #   improvtitle3133: 3.133.0 (Z-IMPROV): "Improvisation III", "Impro 2" marked by their titles; "Improvisation in Blue" not
                                 #   ocrc3120: 3.120.0 (Z-OCRC, S187, Node): "C1978 – Fantasy Records", "C 1978 X" → © 1978; digits after the name stay
                                 #   prodfor3122r: 3.122.0 (review, Node, DISCOGS.toRelease): "Producer [Assistant, For Radio Bremen (2)]", "Executive-Producer [For …]",
                                 #     two "For", no label for "For The Album …", "Production Manager", "Mixed By"; no second VARA Radio; "RSD", "Cassette Store Day"
@@ -584,6 +587,10 @@ python3 t_works_cover.py        # [3.72.0, from t_works_more.py] Works: covers �
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   qsnames3133: 3.133.0 (Z-QSNAMES, Z-IMPROV; Node): a heading and a sentence for every quick switch in four languages;
+                                #     S122 gone, S222 there; the words of improvisations read as composers (marked)
+                                #   improv3133r: 3.133.0 (review of Z-IMPROV; Node): only the composers marked, instruments in brackets read too, no names
+                                #     no credit ("Impro-Jazz by", "Improv – Recorded live at …"), the next clause its own, tracks first, the noun after the word
                                 #   descon3120: 3.120.0 (Z-DESCON, S186): "Design Concept [Graphic Concept]" → graphic design without a role credit
                                 #   engrr3111: 3.111.0 (Z-ENGRR): "Engineer [Recording & Remix]" → recording, remixer; "[Mix and Mastering]", "[Recording / Overdubs]", "[Remix]"
                                 #   engtr3109: 3.109.0 (Z-ENGTR): "English Translation", "Translated By [German]", "Übersetzung", "Translation (French)" from
@@ -593,7 +600,7 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     artist name in brackets (not "(Tenor)", "(Jr.)", "(CD2)" …), a dedication inside a credit keeps it,
                                 #     composed in / produced in, the period for Composition and Production, a recording's word wins
                                 #   z382: 3.82.0 (Node; Z-DEDH, Z-YTW2): "dedicated to Mr. Polo’s …" → Marco Polo (one full name in the text), Martin
-                                #     Luther King, two Smiths or none: nothing; songs of a pasted text only with S122
+                                #     Luther King, two Smiths or none: nothing; songs of a pasted text (3.133.0: without a switch, S122 gone)
                                 #   annrep: 3.72.0 (Z-TST, the former t_ar.py): A&R with the task "consultant" on the release group
                                 #   dedphrases: 3.67.0 (Z-DED, Node): the phrases of dedications and tributes, names joined, a title
                                 #   dedforphrases: 3.71.0 (Z-DED2, S107, Node): "for …" in a sentence – found or not (a production before it,
