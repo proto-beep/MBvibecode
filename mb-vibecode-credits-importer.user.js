@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.128.0
+// @version      3.129.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.128.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.128.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.129.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.129.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.128.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.129.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -737,6 +737,7 @@
       "dedbox.dismiss": "leave out",
       "dedbox.dismissTitle": "Leave this suggestion out (for this release)",
       "dedbox.leftOut": "Left out:",
+      "dedbox.place": "“{phrase} {name}”: a place of this release – MusicBrainz has no dedication to a place (a note only)",
       "dedbox.back": "back",
       "dedbox.backTitle": "Offer this suggestion again",
       "dedbox.empty": "None found in the texts of this release – “＋ Dedication | Tribute” adds one.",
@@ -815,6 +816,7 @@
       "ignored.why.translation": "a translation of the line beside it",
       "ignored.why.prose": "prose (no credit)",
       "ignored.why.signature": "the signature of the liner notes",
+      "ignored.why.fantasy": "a name of fantasy among the roles (no instrument, voice nor role)",
       "ignored.why.address": "an address",
       "ignored.why.statement": "the label's statement on how it records",
       "ignored.why.releaseTitle": "the release’s title – a title line, no credit",
@@ -3674,6 +3676,10 @@
       "typeAsk.askSoundscapes": "“Soundscapes”: effects credited “soundscapes”, sound effects, or miscellaneous support credited “soundscapes”?",
       "members.note": "Members per the text: {names}",
       "members.edit": "edit the band in MusicBrainz ↗",
+      "memberOf.add": "member of {group}",
+      "memberOf.editTitle": "The text names this artist a member of {group}, MusicBrainz does not: the artist's edit page with “member of band” (and the instruments) filled in",
+      "memberOf.onCreate": "“Create artist” adds “member of {group}”",
+      "memberOf.createTitle": "The text names this artist a member of {group}: the form for a new artist gets “member of band” (and the instruments) filled in",
       "site.note": "Website per the text: {host} – not in MusicBrainz yet.",
       "site.edit": "add it in MusicBrainz ↗",
       "log.siteHint": "{name}: the website {host} of the text is not in MusicBrainz yet – a note at the entry",
@@ -4506,6 +4512,10 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S214', where: 'untilde, findDedications, dedSuggest, TEXT.parse', note: 'Dedications (3.129.0; collected item Z-DEDPLACE): words set off with tildes ("Dedicated to ~Namba~ ~Bears~") read without them; a dedication to a place of this release ("recorded live at Namba Bears") is a note in the box only – MusicBrainz has no dedication to a place; "Dedicated to X" alone in a line is left out as a dedication (the box has it)' },
+    { id: 'S213', where: 'TEXT.parse (groups), checkGroupMembers, memberOfOffer, memberOfHtml, startArtistCreate, buildArtistSeed', note: 'Members (3.129.0; collected item Z-MEMBERCREATE): a member of a linked group the text names ("X are A and B", a heading "X:" or "X were:" with its members below) that MusicBrainz does not have as one: at its entry "＋ member of X ↗" – the artist\'s edit page with "member of band" filled in (its instruments and voices as attributes); not linked: "Create artist" fills it in. No question' },
+    { id: 'S212', where: 'TEXT.parse (the end)', note: 'Roles (3.129.0; collected item Z-FANTASYROLE): a name of fantasy among the roles of a person ("guitar, speed guru", "Bass/Vocal/Mermaid Mountain") – two words or more, no instrument, voice nor role, beside one that is – left out as such' },
+    { id: 'S211', where: 'TEXT.parse (MEMBER_HEAD, readLine)', note: 'Members (3.129.0; collected item Z-MEMBERBLOCK): a heading "X are", "X were:", "X -at the time of this live recording were:", "X consists of:" (the release\'s artist, or a name in capitals – "&" part of it) above its members – an empty line right after it allowed; each line below a member with its own roles' },
     { id: 'S210', where: 'addCreditRows, addCompanyEntry, remixTrackIdx', note: 'Remixes (3.128.0; collected item Z-RMXONLY): a credit or company of the whole release (producer, performer, writer, recorded at …) is none of a track that is a remix by its title ("(TVAM Remix)", "[Dub]") – there only its remixer and "remix of"; what the source names for that track stays (mastering goes on the release anyway)' },
     { id: 'S209', where: 'findFestivals (FEST_RECORDING), festivalHtml, datesWithContext', note: 'Festivals (3.128.0; collected item Z-FESTCTX): a festival recording only from a sentence about a recording ("recorded live at … Festival") – a story of another album ("my dream became true at the 2017 … Festival") gives none; the hint quotes its sentence (the log too); a year alone in a long sentence without words of a recording, mix, production … is no date of the release' },
     { id: 'S208', where: 'TEXT.parse (lineOfItsOwn), C052', note: 'Texts (3.128.0; collected item Z-SUPPORTED): "Supported by: A & B" – each a label (its kind can be switched) with miscellaneous support of the release, credited "support"' },
@@ -5657,8 +5667,11 @@
    * "For X"; `title`: a title – the name after its last "For" ("Odes And Meditations For Cecil Taylor", two words at least), as
    * `titleKind`; `phrases: false` (a track's title): only that ("In Memory Of Elizabeth Reed" is a song).
    */
+  /** [Z-DEDPLACE] (3.129.0, S214) Words set off with tildes ("~Namba~ ~Bears"~"): the words. */
+  // ((review) only tildes tight against a word – "Scott ~ Carter ~ Smith" (names apart, S179) stays)
+  const untilde = (t) => (ruleOn('S214') ? String(t || '').replace(/(^|[\s"“(])["“]?~+(?=[^\s~])([^~\n]*?[^\s~])["“”]?~+["“”]?(?=$|[\s"”),.;:!?])/gu, '$1$2') : String(t || ''));
   function findDedications(text, { title = false, titleKind = 'tribute', phrases = true } = {}) {
-    const src = String(text || '');
+    const src = untilde(text);
     const out = [];
     // ([Z-DEDH] 3.82.0: "Polo’s" – the possessive off first)
     const split = (names) => names.split(/[ \t]*(?:,|\band\b|\bund\b)[ \t]+(?:to[ \t]+)?/iu).map((x) => x.replace(/['’]s$/u, '').replace(/^["“„'‘]+|["”“'’]+$/gu, '').replace(/["“”„]/g, '').replace(/[.\s]+$/, '').trim())
@@ -8419,6 +8432,8 @@
               && n.split(' ').every((w) => /^\p{Lu}/u.test(w) || /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu)$/i.test(w));
             if (list.length && list.every(person)) {
               list.forEach((n) => { if (addCredit(n, 'Performer', cScope, { members: true })) found++; });
+              // [Z-MEMBERCREATE] (3.129.0, S213) the members of the group (its name, not "the band", "we")
+              if (ruleOn('S213') && !TEXT_BAND_SELF.test(clean(m[1]))) groups.push({ name: clean(m[1]), members: list, line: line0, ign: null });
               return;
             }
           }
@@ -9176,7 +9191,9 @@
         }
         // [Z-TBY] (3.59.0, S087) a group's heading: no credit (left out as such); a separator ("+", "*") or an empty line ends it
         const t = clean(raw);
-        if (!t || /^[+*•·~=_–—-]{1,5}$/u.test(t)) groupHead = null;
+        // ([Z-MEMBERBLOCK] 3.129.0, S211) "HIBUSHIBIRE are" / "" / the members: one empty line right after such a heading keeps it
+        if (!t && groupHead && groupHead.blankOk && !groupHead.members.length) groupHead.blankOk = false;
+        else if (!t || /^[+*•·~=_–—-]{1,5}$/u.test(t)) groupHead = null;
         // (clean() takes the colon away: the line as written)
         const t1 = String(raw || '').replace(/\s+/g, ' ').trim();
         // ((review) as readLine0 does: a heading or separator ends the roles of a name above and the lines that go on a "by" line)
@@ -9191,6 +9208,27 @@
           // ((review) a group only with members below it: else the line is not recognized, as before – groupsOut)
           const ign = { text: line0, why: 'groupHeading' };
           groupHead = { name: t, members: [], line: t1, ign };
+          groups.push(groupHead);
+          ignored.push(ign);
+          return;
+        }
+        // [Z-MEMBERBLOCK] (3.129.0, S211) "HIBUSHIBIRE are", "Acid Mothers Temple & The Melting Paraiso U.F.O. -at the time of this live recording
+        // were:", "X consists of:" – the heading of a group (the release's artist, or a name in capitals; "&" stays part of the name) above its
+        // members, each line a member with its own roles
+        const mh = ruleOn('S211') && t ? t1.match(MEMBER_HEAD) : null;
+        // (as written: "U.F.O." keeps its last dot)
+        const mhName = mh ? String(mh[1]).replace(/\s+/g, ' ').trim().replace(/[\s,–—-]+$/u, '') : '';
+        // ((review) a name, not a sentence: every word in capitals ("&", "of", "the" … between them), no "The songs", "All tracks", "Here We",
+        // nothing of a crew)
+        const mhWords = mhName.split(/\s+/);
+        const mhNamed = mhWords.length <= 10 && mhWords.every((w, k) => /^[\p{Lu}\d]/u.test(w) || (k > 0 && /^(?:&|\+|and|of|the|de|la|le|der|die|das|y|et|und|da|di|del)$/i.test(w)))
+          && !/^(?:the|these|this|those|all|our|my|we|they|i|it|here|there|who|what|both|each|some|most|other|others)$/i.test(mhWords[0])
+          && !/\b(?:songs?|tracks?|recordings?|pieces?|titles?|works?|compositions?|credits?|lyrics?|words)\b/i.test(mhName);
+        if (mhName && !MEMBER_NOT_HEAD.test(mhName) && (isTheBand(mhName) || (mhNamed && !isRole(cap(mhName)) && !CREDITS_HEADING.test(mhName)))) {
+          startLine(raw);
+          ends();
+          const ign = { text: line0, why: 'groupHeading' };
+          groupHead = { name: mhName, members: [], line: t1, ign, blankOk: true };
           groups.push(groupHead);
           ignored.push(ign);
           return;
@@ -9365,6 +9403,8 @@
        */
       // ((review) headings of no group of musicians: "Live Sound Crew:", "Tour Support:", "Management:")
       const MEMBER_NOT_HEAD = /\b(?:crew|support|staff|team|tour|management|thanks|engineering|production|technical|stage|sound|lighting|design|artwork|additional)\b/i;
+      /** [Z-MEMBERBLOCK] (3.129.0, S211) A heading of the members: the group, then "are" / "were" / "is" / "consists of" (at the time of a recording), nothing after it. */
+      const MEMBER_HEAD = /^(.+?)\s*(?:[-–—]\s*)?,?\s*(?:(?:at\s+the\s+time\s+of|during)\s+(?:this|the|these)\s+(?:live\s+)?(?:recordings?|concerts?|sessions?|performances?)\s*,?\s*)?\b(?:are|were|is|was|consists?\s+of|consisted\s+of)\s*:?\s*$/i;
       const memberLine = (t) => {
         const ws = t.split(/\s+/);
         return looksLikeName(t) && ws.length >= 2 && ws.length <= 4 && !/\d/.test(t)
@@ -10034,7 +10074,9 @@
           // [Z-INMEM] (3.124.0, S197) a dedication alone ("In memory of Kyle Bunell-Cooke."): the box "Dedications & tributes" has it
           // ((review) only with the dedications and their box on; the name starts with a capital, no clause after it)
           if (ruleOn('S197') && ruleOn('S097') && ruleOn('S109')
-            && /^(?:[Dd]edicated\s+to\s+the\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+[Mm]emoriam:?)\s+\p{Lu}[^.;:,]*\.?$/u.test(clean(unit))) {
+            && (/^(?:[Dd]edicated\s+to\s+the\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+(?:[Ll]oving\s+)?[Mm]emory\s+[Oo]f|[Ii]n\s+[Mm]emoriam:?)\s+\p{Lu}[^.;:,]*\.?$/u.test(clean(unit))
+              // ([Z-DEDPLACE] 3.129.0, S214) "Dedicated to Namba Bears" alone too
+              || (ruleOn('S214') && /^[Dd]edicated\s+to\s+\p{Lu}[^.;:,]*\.?$/u.test(clean(unit))))) {
             ignored.push({ text: whole, why: 'dedication' });
             continue;
           }
@@ -10400,6 +10442,7 @@
           const members = m[2].split(/\s*,\s*|\s+(?:and|&)\s+/).map((x) => clean(x)).filter(Boolean);
           if (members.length && members.every(qpPerson)) {
             ignored.push({ text: line.trim(), why: 'members', band: clean(m[1]), names: members.join(', ') });
+            if (ruleOn('S213')) groups.push({ name: clean(m[1]), members, line: line.trim(), ign: null }); // [Z-MEMBERCREATE] (3.129.0)
             line = `${m[2]} : ${qpRoles(m[3], false)}`;
           }
         }
@@ -10432,7 +10475,7 @@
         return out;
       };
       // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
-      const allLines0 = joinBroken(discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(cpyLine).map(qpLine).map(rdstLine).map(licLine)));
+      const allLines0 = joinBroken(discTrackLines(tidyLines(String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l))).map(untilde).map(cpyLine).map(qpLine).map(rdstLine).map(licLine))); // ([Z-DEDPLACE] 3.129.0) words set off with tildes
       const allLines1 = ruleOn('S115') ? venueBlocks(allLines0) : allLines0;
       // [Z-YTW] (3.80.0, S118) the songs of a video's description (YouTube only)
       // [Z-YTW2] (3.82.0, S122; off) with the quick switch also in pasted texts and Bandcamp's texts
@@ -10653,6 +10696,42 @@
         delete c.studioArt;
         delete c.studioCredit;
       });
+      // [Z-FANTASYROLE] (3.129.0, S212) names of fantasy in a list of roles ("guitar, speed guru", "Bass/Vocal/Mermaid Mountain"): a name of two
+      // words or more that is no instrument, voice nor role, beside one that is – left out as such (not a row that asks, not "not recognized")
+      if (ruleOn('S212')) {
+        const known = new Set(credits.filter((c) => !c.guess && c.line != null).map((c) => `${c.line}|${norm(c.who.name)}`));
+        const fant = [];
+        // ((review) no word of a sound maker ("Buddha machine", "shruti box", "ondes Martenot"), no model with a number ("Juno 101")
+        const SOUNDISH = /\b(?:machines?|box(?:es)?|bowls?|loops?|tapes?|cassettes?|devices?|objects?|toys?|electronics|effects|pedals?|feedback|noises?|sounds?|samples?|sampler|radios?|turntables?|organs?|pipes?|bells?|chimes?|gongs?|whistles?|horns?|harps?|flutes?|strings?|drums?|percussion|sticks?|saws?|bows?|synths?|keys|keyboards?|voices?|field|recordings?|ondes|martenot|shruti|sruti|tanpura|tambura|theremin|kalimba|mbira|zither|lute|oud|kora|sitar|tabla)\b/i;
+        const fantasy = (r) => { const ws = clean(r).split(/\s+/); return ws.length >= 2 && ws.length <= 4 && !/\d/.test(r) && !SOUNDISH.test(r) && !ws.some((w) => playable(w.toLowerCase()) || isRoleKnown(cap(w))) && !isRoleKnown(cap(r)); };
+        // ((review) the odd one among known roles: one such name at most per name and line
+        const knownN = new Map();
+        credits.filter((c) => !c.guess && c.line != null).forEach((c) => { const k = `${c.line}|${norm(c.who.name)}`; knownN.set(k, (knownN.get(k) || 0) + 1); });
+        const guessN = new Map();
+        credits.filter((c) => c.guess && c.line != null && fantasy(c.role)).forEach((c) => { const k = `${c.line}|${norm(c.who.name)}`; guessN.set(k, (guessN.get(k) || 0) + 1); });
+        for (let i = credits.length - 1; i >= 0; i--) {
+          const c = credits[i];
+          const ck = `${c.line}|${norm(c.who.name)}`;
+          if (!c.guess || !known.has(ck) || !fantasy(c.role) || guessN.get(ck) > 1 || !knownN.get(ck)) continue;
+          credits.splice(i, 1);
+          fant.unshift({ text: `${c.role} (${c.who.name})`, why: 'fantasy' });
+        }
+        for (let i = unrecognized.length - 1; i >= 0; i--) {
+          const m = String(unrecognized[i]).match(/^(.*?)\s+→\s+\?\s+(.+)$/u);
+          if (!m) continue;
+          const parts = [...m[2].matchAll(/“([^”]+)”/gu)].map((x) => x[1]);
+          // ((review) only a part of a list of roles ("(…, X)", "…/X/…") – not what is left of a sentence ("… Pacific coast")
+          const inList = (r) => new RegExp(`[(/,]\\s*${r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(?:[)/,]|$)`, 'iu').test(m[1]);
+          const out = parts.filter((r) => fantasy(r) && inList(r));
+          // (a name of fantasy is the odd one among known roles – not a long list of roles this page does not know yet)
+          if (!out.length || out.length > 1 || parts.length > credits.filter((c) => c.line === m[1]).length) continue;
+          fant.push(...out.map((r) => ({ text: `${r} (${m[1]})`, why: 'fantasy' })));
+          const rest = parts.filter((r) => !out.includes(r));
+          if (rest.length) unrecognized[i] = `${m[1]} → ? ${rest.map((r) => `“${r}”`).join(', ')}`;
+          else unrecognized.splice(i, 1);
+        }
+        ignored.push(...fant);
+      }
       // [Z-TRACKLINE] (3.128.0, S204) a line of a track list that nothing read: left out as such
       if (ruleOn('S204')) {
         const out = [];
@@ -11586,6 +11665,8 @@
       params.push([`rels.${i}.target`, r.mbid], [`rels.${i}.type`, String(r.linkTypeId)]);
       if (r.backward) params.push([`rels.${i}.backward`, '1']);
       if (r.ended) params.push([`rels.${i}.ended`, '1']);
+      // ([Z-MEMBERCREATE] 3.129.0) the instruments and voices of a member: attributes of "member of band"
+      (r.attrs || []).forEach((id, j) => params.push([`rels.${i}.attributes.${j}.type`, String(id)]));
     });
     if (editNote) params.push(['edit-artist.edit_note', editNote]);
     return params;
@@ -21888,6 +21969,8 @@
       S.dedDone = null; // [Z-DED] (3.67.0, review) the dedications looked up: of this release
       S.dedSugg = []; // [Z-DEDQ] (3.74.0) its suggestions too
       S.dedLeft = []; // [Z-DEDBACK] (3.128.0)
+      S.dedPlaces = []; // [Z-DEDPLACE] (3.129.0)
+      S.memberOffers = null; // [Z-MEMBERCREATE] (3.129.0, review)
       S.siteHints = null; // [Z-WEBDOM] ((3.124.0, review) looked up again: an address added in MusicBrainz meanwhile)
       S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false });
@@ -24410,6 +24493,8 @@
       S.evAsk = null; // ([Z-EVQ] 3.73.0, review) the question of an event of the import before
       S.dedSugg = []; // [Z-DEDQ] (3.74.0)
       S.dedLeft = []; // [Z-DEDBACK] (3.128.0)
+      S.dedPlaces = []; // [Z-DEDPLACE] (3.129.0)
+      S.memberOffers = null; // [Z-MEMBERCREATE] (3.129.0, review)
       S.dedForm = null;
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
@@ -29209,7 +29294,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
@@ -32630,6 +32715,13 @@
     if (spell) spell.innerHTML = spellHtml(a);
     // [Z-CP] (3.40.7) ⧉ only while no MusicBrainz entry is chosen
     section.querySelectorAll('.dci-gname .dci-copyname').forEach((b) => { b.hidden = !!a.mbid; });
+    // ([Z-MEMBERCREATE] 3.129.0) "member of X": the edit link once linked, the note again once not
+    const mo = section.querySelector('.dci-gname [data-el=memberof]');
+    const moHtml = memberOfHtml(a).trim();
+    if (mo) {
+      if (moHtml) mo.outerHTML = moHtml;
+      else mo.remove();
+    } else if (moHtml) section.querySelector('.dci-gname').insertAdjacentHTML('beforeend', ` ${moHtml}`);
     const list = section.querySelector(`#dci-ac-${a.key}`);
     if (list) list.innerHTML = artistVariants(a).map((v) => `<option value="${esc(v)}"></option>`).join('');
   }
@@ -33280,6 +33372,12 @@
       } finally {
         setBusy('');
       }
+    }
+    // [Z-MEMBERCREATE] (3.129.0, S213) a member of a group the text names ("X are A and B", "X:" with its members below): "member of band"
+    const mo = memberOfOffer(artist);
+    if (mo && !rels.some((r) => r.mbid === mo.gid)) {
+      rels.push({ mbid: mo.gid, name: mo.group, linkTypeId: x.memberLtId, backward: false, attrs: memberAttrIds(artist) });
+      (mo.created = mo.created || new Set()).add(artist.key);
     }
     const type = person ? person.type : null;
     // [3.21.0] a name from a text: the web profiles found next to it (T032) as its links
@@ -34253,6 +34351,11 @@
       return same;
     };
     for (const d of found) {
+      // ([Z-DEDPLACE] 3.129.0, S214; review) a place of this release: a note only – before any search (one artist of its name is no dedication)
+      if (ruleOn('S214') && dedPlaceOf(d)) {
+        dedSuggest(d, []);
+        continue;
+      }
       let track = trackOf(d);
       // ([Z-DED2] 3.71.0, review) "written / composed for": the work of the track named (the only track of the release), else none;
       // a single word after "for" (a country, a place, "Björk") only with a track named
@@ -34328,9 +34431,18 @@
   // --- [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" above the works matrix ------------------------------------------
   const DED_BOX_KEY = 'dci-ded-box';
   /** A suggestion of the box: a dedication found but not sure (several entries of the name, none, no track) – once per key. */
+  /** [Z-DEDPLACE] (3.129.0, S214) Whether a dedication names a place entry of this release. */
+  const dedPlaceOf = (d) => [...S.artists.values()].some((a) => a.company && entryKind(a) === 'place' && [a.name, a.mbName].some((n) => n && norm(n) === norm(d.name)));
   function dedSuggest(d, hits) {
     if (!ruleOn('S109')) return;
     S.dedSugg = S.dedSugg || [];
+    // [Z-DEDPLACE] (3.129.0, S214) a place of this release ("Dedicated to Namba Bears", "recorded live at Namba Bears"): MusicBrainz has no
+    // dedication to a place – a note only
+    if (ruleOn('S214') && dedPlaceOf(d)) {
+      S.dedPlaces = S.dedPlaces || [];
+      if (!S.dedPlaces.some((x) => norm(x.name) === norm(d.name))) S.dedPlaces.push({ name: d.name, phrase: d.phrase });
+      return;
+    }
     const choices = dedChoices();
     const sugg = { key: d.key, kind: (choices[d.key] && choices[d.key].kind) || d.kind, name: d.name, phrase: d.phrase, where: d.where, sentence: String(d.sentence || '').slice(0, 200),
       track: d.track != null ? d.track : null, needTrack: !!d.needTrack, fromTitle: !!d.fromTitle, hits };
@@ -34408,8 +34520,8 @@
     // while a track group was dragged)
     const html = `<div class="dci-dedbox-head"><h3 id="dci-dedbox-h">${esc(tr('dedbox.title'))}</h3>${dedKindSeg('ded-add', '')}
         <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S109" title="${esc(tr('rules.gotoTitle'))}">S109</button></div>
-      ${list ? `<ul class="dci-dedlist">${list}</ul>` : ''}${sugg}${form}${dedLeftHtml()}
-      ${!list && !sugg && !form && !(S.dedLeft || []).length ? `<p class="dci-sub">${esc(tr(!ruleOn('S097') ? 'dedbox.off' : S.dedRunning ? 'dedbox.looking' : 'dedbox.empty'))}</p>` : ''}
+      ${list ? `<ul class="dci-dedlist">${list}</ul>` : ''}${sugg}${form}${dedLeftHtml()}${(S.dedPlaces || []).map((x) => `<p class="dci-sub dci-dedplace" data-el="ded-place">${esc(tr('dedbox.place', { phrase: x.phrase, name: x.name }))}</p>`).join('')}
+      ${!list && !sugg && !form && !(S.dedPlaces || []).length && !(S.dedLeft || []).length ? `<p class="dci-sub">${esc(tr(!ruleOn('S097') ? 'dedbox.off' : S.dedRunning ? 'dedbox.looking' : 'dedbox.empty'))}</p>` : ''}
       <div class="dci-err" data-el="ded-err" aria-live="polite">${esc(S.dedErr || '')}</div>`;
     if (el.dciHtml === html) return;
     el.dciHtml = html;
@@ -34653,7 +34765,9 @@
    */
   async function checkGroupMembers(rel, seq) {
     const groups = ((rel && rel.groups) || []).filter((g) => g.members && g.members.length);
-    if (!ruleOn('S087') || !groups.length) return;
+    S.memberOffers = new Map(); // [Z-MEMBERCREATE] (3.129.0)
+    // ((review) the offers of S213 also with the info of S087 off
+    if (!(ruleOn('S087') || ruleOn('S213')) || !groups.length) return;
     // (the entries still looked up in MusicBrainz first: at most 20 s)
     for (let k = 0; k < 40 && [...S.artists.values()].some((a) => a.status === 'pending'); k++) {
       await sleep(500);
@@ -34693,9 +34807,38 @@
       // ((review) by MBID, or – a name not linked yet – by the name MusicBrainz has for a member
       const missing = g.members.filter((nm) => { const id = byName(nm); return !(id && ids.has(id)) && !names.has(norm(nm)); });
       if (!missing.length) continue;
-      showMessage('info', 'msg.groupMembers', { group: g.name, names: missing.join(', '), n: missing.length });
+      if (ruleOn('S087')) showMessage('info', 'msg.groupMembers', { group: g.name, names: missing.join(', '), n: missing.length });
       log('info', 'groupMembers', { group: g.name, names: missing.join(', ') });
+      // [Z-MEMBERCREATE] (3.129.0, S213) each of them: "member of band" offered at its entry (create, or the edit of a linked one)
+      if (ruleOn('S213')) missing.forEach((nm) => S.memberOffers.set(norm(nm), { group: g.name, gid, ids }));
     }
+    if (S.memberOffers.size) renderGroups();
+  }
+  /** [Z-MEMBERCREATE] (3.129.0, S213) The group the text makes this entry a member of (not in MusicBrainz yet): { group, gid } or null. */
+  function memberOfOffer(a) {
+    if (!ruleOn('S213') || !a || a.company || a.other || !S.memberOffers) return null;
+    const mo = S.memberOffers.get(norm(a.name)) || (a.mbName && S.memberOffers.get(norm(a.mbName))) || null;
+    // ((review) not once linked to a member MusicBrainz has (or to the group itself), nor after "Create artist" with it
+    if (!mo || (a.mbid && (a.mbid === mo.gid || (mo.ids && mo.ids.has(a.mbid)) || (mo.created && mo.created.has(a.key))))) return null;
+    return mo;
+  }
+  /** The attributes of "member of band" from the member's rows (instruments, voices): their ids. */
+  function memberAttrIds(a) {
+    const ids = [];
+    for (const r of S.rows.filter((x) => x.artistKey === a.key && x.level !== 'skip' && norm(x.primaryText))) {
+      const root = primaryRootOf(currentLinkType(r));
+      const at = root && findChildAttr(root.id, r.primaryText);
+      if (at && !ids.includes(at.id)) ids.push(at.id);
+    }
+    return ids;
+  }
+  /** At the entry: "＋ member of X ↗" – the edit of the linked artist with the relationship filled in; for one not linked "Create artist" adds it. */
+  function memberOfHtml(a) {
+    const mo = memberOfOffer(a);
+    if (!mo) return '';
+    if (!a.mbid) return ` <span class="dci-sub dci-memberof" data-el="memberof" title="${esc(tr('memberOf.createTitle', { group: mo.group }))}">${esc(tr('memberOf.onCreate', { group: mo.group }))}</span>`;
+    const q = buildArtistSeed({ name: a.mbName || a.name, rels: [{ mbid: mo.gid, linkTypeId: idx().memberLtId, backward: false, attrs: memberAttrIds(a) }] }).filter(([k]) => /^rels\./.test(k));
+    return ` <a class="dci-textbtn dci-memberof" data-el="memberof" href="/artist/${esc(a.mbid)}/edit?${esc(toQuery(q))}" target="_blank" rel="noopener" title="${esc(tr('memberOf.editTitle', { group: mo.group }))}">＋ ${esc(tr('memberOf.add', { group: mo.group }))} ↗</a>`;
   }
 
   /** [Z-EXC] (3.49.0, review) The covers and quotes of a source (a supplement too: tracks that have one already keep it). */
