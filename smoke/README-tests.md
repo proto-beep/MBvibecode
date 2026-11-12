@@ -277,6 +277,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     "castlesin.space" a note at the linked label (none when MusicBrainz has it)
                                 #   studio3120: 3.120.0 (Z-STUDIO, S188): "Art & Design by William Mazza Studio" a label (artwork, design), "Graphic Design by
                                 #     Red Studios" a label (graphic design), "Photography by Jane Roe" a person
+                                #   concert3132: 3.132.0 (Z-CONCERTHINT, S221): "Concert at Jazzclub Unterfahrt, Munich, …" – the place recorded at, a yellow
+                                #     suggestion (✓ / ✕; ✕ leaves it out); "Konzert im Jazzhaus Freiburg" too; a gig of a story only under "Mentioned dates"
+                                #   concert3132r: 3.132.0 (review): a concert after a story's sentence in one line, a story with "recorded", "St. Paul's
+                                #     Cathedral", "à l'Église …", a show to come, "she shows at", a date before the place
                                 #   una3108: 3.108.0 (Z-UNA2): the words of an unrecognized line grouped as names – a click the name, again the word,
                                 #     ⇧ extends, a company word chooses "company", known names marked
                                 #   rdst3105: 3.105.0 (Z-RDST, S171): "Recorded May, 6. 7, 2007 Studio des …" – the place without "at" by a word of places (Node)
@@ -391,6 +395,11 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   rel3132: 3.132.0 (Z-RELDATE, Z-FESTALL; D034, S220): relative dates from a dateline or a date of the paragraph
+                                #     (Node; two possible dates or none: nothing); the dashboard – "recorded last September" Performance 2018-09, a story's
+                                #     dates, festival and concert under "Mentioned dates (3) ▾", "→ Date pool"
+                                #   rel3132r: 3.132.0 (review): the story's part of a sentence of the recording only mentioned; a long sentence of a studio
+                                #     stays; "→ Date pool" of a date the pool has from elsewhere an entry of its own
                                 #   dtrk3121: 3.121.0 (Z-DTRK, S189): "1-1 to 1-2 recorded …" / "Live at Club Montmartre, …" / "1-3 to 2-1 recorded …" –
                                 #     the dates on those tracks (across media), the place below the date line recorded at on 1-1, 1-2
                                 #   dat3104: 3.104.0 (D033): "May, 6. 7, 2007", "May 6. 7. 2007", "6. 7. Mai 2007" – May 6–7; "6. 7. 2007" still July 6 (Node)
@@ -1009,7 +1018,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   supp: a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
                                 #     (new role, new entries with suggestions, "differs" – from 3.116.0 "more tracks" when it only adds tracks –, not recognized), marks DG BC / BC ≠, take over
                                 #     selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
-                                #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0)
+                                #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0); B2 (3.132.0, Z-SUPPTOGGLE):
+                                #     the bar folds with a supplement loaded
                                 #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
