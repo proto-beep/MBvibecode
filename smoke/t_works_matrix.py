@@ -1897,4 +1897,55 @@ def case_workdate3130r():
         H.ws_release = orig_ws
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_workdaterem3135():
+    """Credits Importer 3.135.0 (collected item Z-WORKDATE-REM): with "Remember" (⚙ Settings → Cache), × at the date of a linked work's link is
+    kept for the release – the next import shows the link "not onto the link" again (until 3.134.0 the date was offered anew)."""
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m.get('tracks', []):
+                for r in t['recording'].get('relations', []):
+                    if r.get('target-type') == 'work':
+                        r['begin'] = '2001'
+                        r['end'] = '2001'
+        return d
+    LINE = "(() => { const x = document.querySelector('tr[data-work=\"0\"] .dci-wd-linked'); return x ? x.textContent.replace(/\\s+/g, ' ').trim() : null; })()"
+    results = []
+    rem0 = H.REMEMBER
+    H.REMEMBER = True
+    H.ws_release = ws
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+
+            def open_page():
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1200)
+                pg.click('[data-act=dm-apply]')
+                pg.wait_for_timeout(800)
+                return pg, errs
+            pg, errs = open_page()
+            a0 = pg.evaluate(LINE)
+            pg.click('tr[data-work="0"] [data-act=wd-drop]')
+            pg.wait_for_timeout(1500)
+            a1 = pg.evaluate(LINE)
+            pg.close()
+            pg2, errs2 = open_page()
+            a2 = pg2.evaluate(LINE)
+            print('A) vorher:', a0, '| ×:', a1, '| neuer Import:', a2)
+            results.append(a0 and a1 and a0 != a1 and a2 == a1 and not errs and not errs2)
+            b.close()
+    finally:
+        H.REMEMBER = rem0
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -1301,4 +1301,206 @@ console.log(JSON.stringify(['Anoyo Drive 00:32\nMelting 13:37\nIyo no Hito 23:16
     print('Ergebnis:', 'OK' if a and b and c and por and d else 'FEHLER', [a, b, c, por, d])
 
 
+def case_improv3133():
+    """Credits Importer 3.133.0 (collected item Z-IMPROV, S222): a pasted text "All music was improvised by Anna Neu and Bob Roe" – both
+    composers of the works (rows "Composed By" on the work level, columns of the works matrix), marked "improvisation" at the head of their
+    entries, their columns and each track of the matrix (the line quoted); a track titled "Improvisation III" alone is marked too (by its title).
+    B) S222 off: the line left out ("improvisations"), no composer, no mark."""
+    H.TITLES[:] = ['Song One', 'Improvisation III', 'Song Three', 'Song Four']
+    TEXT = "All music was improvised by Anna Neu and Bob Roe\nAnna Neu – piano\nBob Roe – drums"
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [!!g.querySelector('.dci-gname .dci-improv-mark'), ...[...g.querySelectorAll('tr.dci-row')].map(r => r.querySelector('.dci-drole').dataset.raw.trim())] : null; }"""
+    MX = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].map(tr => [tr.dataset.work, (tr.querySelector('.dci-mx-title .dci-improv-mark') || {}).title || ''])"
+    COLS = "[...document.querySelectorAll('[data-el=works] th[data-colhead]')].map(th => [th.querySelector('.dci-mx-colname').textContent.replace(/\\s+/g, ' ').trim(), !!th.querySelector('.dci-improv-mark')])"
+    results = []
+    for off in (False, True):
+        H.RULES_OFF[:] = ['S083'] + (['S222'] if off else [])
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(2500)
+            anna = pg.evaluate(ROWS, 'Anna Neu')
+            mx = pg.evaluate(MX)
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.textContent.replace(/^–\\s*/, '').trim())")
+            cols = pg.evaluate(COLS)
+            print('B)' if off else 'A)', 'Anna Neu:', anna, '| Matrix:', mx, '| Spalten:', cols, '| ausgelassen:', ign)
+            if not off:
+                results.append(anna is not None and anna[0] and any('Anna Neu' in n and m for n, m in cols) and any('Bob Roe' in n and m for n, m in cols)
+                               and len(mx) == 4 and all('All music was improvised by Anna Neu and Bob Roe' in t for _, t in mx))
+            else:
+                results.append(anna is not None and not anna[0] and not any('Anna Neu' in n for n, m in cols) and not any(t for _, t in mx)
+                               and 'improvisations (no works: switched off)' in ign)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    H.RULES_OFF[:] = ['S083']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_improvtitle3133():
+    """Credits Importer 3.133.0 (Z-IMPROV, S222): without a line of improvisations, a track titled "Improvisation III" (and "Impro 2") is marked
+    "improvisation" in the works matrix by its title; "Improvisation in Blue" and ((review) "Improvisation Civil" are no such titles."""
+    H.TITLES[:] = ['Improvisation Civil', 'Improvisation III', 'Impro 2', 'Improvisation in Blue']
+    TEXT = "Anna Neu – piano\nBob Roe – drums"
+    MX = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].map(tr => (tr.querySelector('.dci-mx-title .dci-improv-mark') || {}).title || '')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2000)
+        mx = pg.evaluate(MX)
+        print('A) Matrix:', mx)
+        results.append(mx == ['', 'Improvisation – by its title: “Improvisation III”', 'Improvisation – by its title: “Impro 2”', ''])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dgexcl3134():
+    """Credits Importer 3.134.0 (collected items Z-DGEXCL, Z-LINEUPALL; rules S150, S159, S175, S054, S217 for every free text), a pasted text:
+    A) "Arranged by Cid Doe" – the arranger on the works (a column of the works matrix; until 3.133.0 on the recordings: Discogs only).
+    B) "Producer: Anna Neu" and "Produced by Anna Neu" – one row (nothing twice; until 3.133.0 two).
+    C) "Recorded at Tonart Studio" and "Mixed at Tonart" – one place Tonart Studio with both rows (no entry "Tonart").
+    D) "Design: Cyclical Dreams" with "℗ 2024 Cyclical Dreams" – the label Cyclical Dreams (artwork of a label; until 3.133.0 Discogs only).
+    E) The lineup (Anna Neu bass, Bob Roe drums, Cid Doe guitar) and lines of tracks ("Track 2: Anna Neu – double bass", "Track 3: Bob Roe –
+       drums, Cid Doe – guitar"): the question "Lineup and track credits (pasted text)" (until 3.133.0 Discogs only).
+    (review) "Design: Cyclical Dreams" becomes the label only as MusicBrainz's label (a text's ℗ line may name a person)."""
+    H.TITLES[:] = ['One', 'Two', 'Three', 'Four']
+    H.COMPANIES[913401] = ('place', H.uid('eeeeeeee', 9134), 'Tonart Studio')
+    H.COMPANIES[913402] = ('label', H.uid('1abe1000', 9134), 'Cyclical Dreams')
+    import copy
+    lts0, linked0 = copy.deepcopy(H.LTS), copy.deepcopy(H.LINKED.get('link_type'))
+    for i, name in ((1170, 'artwork'), (1171, 'design'), (1172, 'graphic design'), (1173, 'illustration'), (1174, 'art direction'), (1175, 'photography')):
+        H.lt(i, H.uid('1aaa0000', i), name, 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """Anna Neu – bass
+Bob Roe – drums
+Cid Doe – guitar
+Track 2: Anna Neu – double bass
+Track 3: Bob Roe – drums, Cid Doe – guitar
+Arranged by Cid Doe
+Producer: Anna Neu
+Produced by Anna Neu
+Recorded at Tonart Studio
+Mixed at Tonart
+Design: Cyclical Dreams
+℗ 2024 Cyclical Dreams
+Photography: Jane Doe
+© 2024 Jane Doe"""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? { kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', rows: [...g.querySelectorAll('tr.dci-row')].map(r => [r.querySelector('.dci-drole').dataset.raw.trim(),
+    (r.querySelector('[data-f=credit]') || { value: '' }).value, (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '']) } : null; }"""
+    COLS = "[...document.querySelectorAll('[data-el=works] th[data-colhead] .dci-mx-colname')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open').forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        cols = pg.evaluate(COLS)
+        anna = pg.evaluate(ROWS, 'Anna Neu')
+        place = pg.evaluate(ROWS, 'Tonart Studio')
+        tonart = pg.evaluate(ROWS, 'Tonart')
+        cd = pg.evaluate(ROWS, 'Cyclical Dreams')
+        jd = pg.evaluate(ROWS, 'Jane Doe')
+        box = pg.evaluate("(document.querySelector('[data-el=dglineup] strong') || {}).textContent || ''")
+        print('A) Spalten:', cols)
+        print('B) Anna Neu:', anna)
+        print('C) Tonart Studio:', place, '| Tonart:', tonart, pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => /Tonart/.test(g.textContent)).map(g => g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').slice(0, 120) + ' | ' + [...g.querySelectorAll('tr.dci-row')].map(r => r.textContent.replace(/\\s+/g, ' ').slice(0, 100)).join(' # '))"))
+        print('D) Cyclical Dreams:', cd, '| Cid Doe:', pg.evaluate(ROWS, 'Cid Doe'))
+        print('E) Frage:', box)
+        results.append(any('Cid Doe' in c for c in cols))
+        results.append(bool(anna) and sum(1 for r in anna['rows'] if r[0] in ('Producer', 'Produced By')) == 1)
+        results.append(bool(place) and place['kind'] == 'place' and sorted(r[0] for r in place['rows']) == ['Mixed At', 'Recorded At'] and not tonart)
+        print('   Jane Doe:', jd)
+        results.append(bool(cd) and cd['kind'] == 'label' and bool(jd) and jd['kind'] == 'artist')
+        results.append(box == 'Lineup and track credits (pasted text)')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.LTS.clear()
+    H.LTS.update(lts0)
+    H.LINKED['link_type'] = linked0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dgexcl3134r():
+    """Credits Importer 3.134.0 (review of Z-DGEXCL, Z-LINEUPALL), a pasted text: "Produced by John Smith (track 1)" and "Producer: John Smith
+    (track 3)" two rows (lines of tracks of one text); "Photography: Ann Lee" and "Cover photo: Ann Lee" two (another role credit); "Michael Novak" and
+    "Michal Novak" two people; lines of tracks that only add ("Track 2: Anna Neu – vocals", "Track 3: Bob Roe – percussion") ask no lineup
+    question; "Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z" – the arranger stays on the recordings."""
+    H.TITLES[:] = ['One', 'Two', 'Three', 'Four']
+    TEXT = """Produced by John Smith (track 1)
+Producer: John Smith (track 3)
+Photography: Ann Lee
+Cover photo: Ann Lee
+Michael Novak – piano
+Michal Novak – piano
+Anna Neu – bass
+Bob Roe – drums
+Track 2: Anna Neu – vocals
+Track 3: Bob Roe – percussion
+Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z"""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(),
+    [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1)]) : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open').forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        js = pg.evaluate(ROWS, 'John Smith')
+        al = pg.evaluate(ROWS, 'Ann Lee')
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
+        box = pg.evaluate("!!document.querySelector('[data-el=dglineup]')")
+        wz = pg.evaluate(ROWS, 'Writer Z')
+        print('A) John Smith:', js, '| Ann Lee:', al, '| Novak:', [n for n in names if 'Novak' in n], '| Frage:', box, '| Writer Z:', wz)
+        # ((3.134.0) two lines of tracks of one text stay two credits – the blocks of tracks of a text name a person per track)
+        results.append(js is not None and len(js) == 2 and sorted(r[1] for r in js) == [[1], [3]])
+        results.append(al is not None and len(al) == 2)
+        results.append(sorted(n for n in names if 'Novak' in n) == ['Michael Novak', 'Michal Novak'])
+        results.append(not box)
+        results.append(wz is not None and any(r[0] == 'Arranged By' for r in wz))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

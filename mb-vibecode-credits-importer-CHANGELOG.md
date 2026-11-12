@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-12 | 3.132.0 | – |
+| 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -105,6 +105,28 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.136.0
+
+- **Settings in order** (collected item Z-SETTABS): every tab has subheadings (they do not fold) and its settings in an order of priority – General: Language, Log; Appearance: Window, Colours, Entries, Symbols and boxes, Mapping rules; Sources: Order of the sources, Release editor and release page, MusicBrainz search, Text from cover art; Works: Lookups of works, Works matrix, Suites; Staging: Staging and its limits, Edit note, Live comments, Open items; Cache: Remember, Statistics.
+- The settings of an entry's matrix (events shared, lines shown, compact by, attributes) moved from Staging to Appearance → Entries; "Performance dates onto linked works" also under Works → Works matrix.
+- "Developer mode" only in the tab "Developer", which is always there now (its tools only in developer mode).
+
+### Import 3.135.0
+
+- **Taken out in the editor counts as missing** (collected item Z-GAPREFRESH2; rule S223): relationships the dashboard staged and you took out in the relationship editor by hand count as still missing at "Enter edit" – the release page says how many ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth. The next import brings those credits back as the source gives them and asks once: "Taken out in the editor last time: N credits – Skip them again?" – ✓ puts them all on Skip again, ✕ at one keeps it; without an answer they are imported as the source gives them.
+- **Dates on links with works remembered** (Z-WORKDATE-REM): with "Remember", × at the date of a linked work's link and a date dropped onto it are kept for the release.
+
+### Import 3.134.0
+
+- **Text rules of Discogs for every free text** (collected item Z-DGEXCL): a bare "Arranged by X" of a text puts the arranger on the works (S150); the same credit in two lines of the texts of a source – Bandcamp's credits and its about text, "Producer: X" and "Produced by X" – is one row, both lines kept as its sources (S054); a place named in two spellings ("Tonart Studio", "Tonart") is one place (S175); a name credited for the artwork that the text names as a label or company (its ℗ / © line) becomes that label (S159). Role words in Norwegian, Swedish or Danish were read in texts already (S032).
+- **The lineup question for every source** (Z-LINEUPALL; S217): a lineup with lines of tracks in a text ("Track 2: Anna Neu – double bass") asks as Discogs's does – "Pasted text: lineup and track credits".
+
+### Import 3.133.0
+
+- **Improvisations as works** (collected item Z-IMPROV; rule S222, a quick switch in "Writers, rights and works", on): "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous compositions by …", "Instant composing by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …" make the players composers of the works, as the other rules of composing. The mark "improvisation" stands at the head of their entries, their columns and each track of the works matrix, its tooltip quoting the line; a title on its own ("Improvisation III", "Impro 2") marks its track too. Switched off, such a line is left out ("improvisations") and no work is made.
+- **Short headings for the quick switches** (Z-QSNAMES): each switch has a short name ("Several days → month", "Concert photos", "Relative dates", "Improvisations as works" …) with its sentence below; the sentences are translated where they were missing.
+- **S122 removed**: lists of songs (S118) are read in every free text of a release of one track – pasted texts and Bandcamp too – without a switch.
 
 ### Import 3.132.0
 
