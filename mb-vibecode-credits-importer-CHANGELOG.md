@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.129.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.130.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.130.0
+
+- **Performance dates onto linked works** (collected item Z-WORKDATE; rule S215): the recording date of a track also goes onto its link with a work MusicBrainz has, with "Apply" – added when the link has no date, made more precise when it has less, else nothing (as for recordings). Below the linked work: "⌚ 2007-05-06 onto the link (MusicBrainz: 2007-05 – more precise)", × leaves it out (↺ takes it again); a date of the pools can be dropped onto the link. The switch "⌚ Performance dates onto linked works" in the corner of the works matrix (on).
+- **Taking back single new works** (Z-WORKUNDO): after "＋ New works", "✕ No new work" at each track (at the parts of a medley or suite: "✕ No new works") – the track without a work again.
+- **Why a row is out** (Z-OUTWHY; S216): a row on Skip because MusicBrainz has it says so – "MusicBrainz has it", "… with this date: 2001-03", "MusicBrainz has the date more precisely: 2007-05-06 – 2007-05-07 (here 2007-05)" – at the row and beside its chip in "Taken out:". Rows skipped by hand say nothing.
+- **Discogs: lineup and track credits** (Z-DGLINEUP; S217): when the lineup plays on the whole release but the credits of single tracks name only some of the same people ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)"), a question that must be answered names who plays where – "Ken Filiano: all tracks except 6, 8" – and where the instruments differ. "More precise everywhere" (set until answered): each on all tracks except those, the more precise instrument on all of them, no second row; "Per track": the track credits as Discogs gives them; "The lineup's": everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit.
 
 ### Import 3.129.0
 
