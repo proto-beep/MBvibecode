@@ -1604,6 +1604,53 @@ def case_pldup3111():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dedplace3129():
+    """Credits Importer 3.129.0 (collected item Z-DEDPLACE; rule S214): Discogs notes "Recorded live at Namba Bears, Osaka. Dedicated to
+    ~Namba~ ~Bears~." – the tildes read as set-off words.
+    A) The box "Dedications & tributes": a note that "Namba Bears" is a place of this release (no dedication to a place in MusicBrainz) –
+       no suggestion "Namba Bears", nothing with a tilde; the place an entry.
+    B) Rule S214 off: no such note."""
+    orig, roff = H.discogs_release, H.RULES_OFF
+
+    def dg():
+        d = orig()
+        d['notes'] = 'Recorded live at Namba Bears, Osaka. Dedicated to ~Namba~ ~Bears~.'
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { place: [...b.querySelectorAll('[data-el=ded-place]')].map(x => x.textContent.trim()),
+        sugg: [...b.querySelectorAll('.dci-dedsugg strong')].map(x => x.textContent.trim()), text: b.textContent.replace(/\\s+/g, ' ') }; })()"""
+    NAMES = "[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())"
+    results = []
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            H.RULES_OFF = off
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            r = pg.evaluate(BOX), pg.evaluate(NAMES), errs
+            b.close()
+            return r
+    try:
+        box, names, errs = run(roff)
+        print('A)', box, '| Einträge:', names)
+        results.append(bool(box) and len(box['place']) == 1 and 'Namba Bears' in box['place'][0] and 'place of this release' in box['place'][0]
+                       and not any('Namba' in x for x in box['sugg']) and '~' not in box['text'] and 'Namba Bears' in names and not errs)
+        box2, _, _ = run([*(roff or []), 'S214'])
+        print('B) aus:', box2)
+        results.append(not (box2 or {}).get('place'))
+    finally:
+        H.discogs_release = orig
+        H.RULES_OFF = roff
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_lcnote3111():
     """Credits Importer 3.111.0 (collected item Z-LCNOTE, S176): Discogs gives "Label Code: LC 12345".
     A) The release's label Sony on MusicBrainz without a code: a note "… Sony has no label code on MusicBrainz", ＋ to Sony's edit page

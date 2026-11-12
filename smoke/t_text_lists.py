@@ -1028,6 +1028,64 @@ def case_text3128r():
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
+def case_members3129():
+    """Credits Importer 3.129.0 (Z-MEMBERBLOCK S211, Z-FANTASYROLE S212, Z-MEMBERCREATE S213, Z-DEDPLACE S214), in Node: A) "HIBUSHIBIRE are",
+    an empty line, three members with their roles – a group of three, "speed guru" left out as fantasy, Jane Doe guitar; B) "Acid Mothers Temple
+    & The Melting Paraiso U.F.O. -at the time of this live recording were:" – one group, "&" in its name; C) "Qien Pudiera are Camila Chapelle
+    and Lucia Reyes" – the group with both; D) 'Dedicated to ~Namba~ ~Bears"~' – left out as a dedication, nothing not recognized; E) "John
+    Roe: Bass/Vocal/Mermaid Mountain" – "Mermaid Mountain" left out as fantasy, bass and vocals kept."""
+    node = NODE.replace("unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]) };",
+                        "unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]), groups: (r.groups || []).map((g) => [g.name, g.members]) };")
+    cases = [{'text': 'HIBUSHIBIRE are\n\nJane Doe - guitar\nJohn Roe - bass, speed guru\nMax Moe - drums', 'artists': ['HIBUSHIBIRE']},
+             {'text': 'Acid Mothers Temple & The Melting Paraiso U.F.O. -at the time of this live recording were:\nJane Doe - guitar\nJohn Roe - drums'},
+             {'text': 'Qien Pudiera are Camila Chapelle and Lucia Reyes', 'artists': ['Qien Pudiera']},
+             {'text': 'Recorded live at Namba Bears, Osaka\nDedicated to ~Namba~ ~Bears"~'},
+             {'text': 'John Roe: Bass/Vocal/Mermaid Mountain'}]
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(cases)], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for c, x in zip(cases, g or []):
+        print('  ', c['text'][:50].replace('\n', ' / '), '→', x['credits'][:6], x['groups'], [i[0] for i in x['ignored']], x['unrecognized'])
+    ok = g is not None
+    if ok:
+        grp = lambda k, name: next((m for n, m in g[k]['groups'] if n == name), None)
+        why = lambda k: [i[0] for i in g[k]['ignored']]
+        ok = (sorted(grp(0, 'HIBUSHIBIRE') or []) == ['Jane Doe', 'John Roe', 'Max Moe'] and 'fantasy' in why(0)
+              and ['Jane Doe', 'guitar'] in [c[:2] for c in g[0]['credits']] and not g[0]['unrecognized']
+              and grp(1, 'Acid Mothers Temple & The Melting Paraiso U.F.O.') is not None
+              and sorted(grp(2, 'Qien Pudiera') or []) == ['Camila Chapelle', 'Lucia Reyes']
+              and 'dedication' in why(3) and not g[3]['unrecognized']
+              and 'fantasy' in why(4) and {c[1].lower() for c in g[4]['credits'] if c[0] == 'John Roe'} >= {'bass'}
+              and not any('Mermaid' in c[1] for c in g[4]['credits']))
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
+def case_members3129r():
+    """Credits Importer 3.129.0 (review of S211, S212, S214), in Node: A) "The songs are" and "Live Sound Crew were:" no heading of a group;
+    B) "Guitar – John Doe ~ Jane Roe ~ Max Moe": the tildes between names stay (no name "John Doe  Jane Roe  Max Moe"); C) "John Doe (piano, synth, Buddha
+    machine)" nothing left out as fantasy; D) a sentence "… on the Pacific coast" no fantasy."""
+    node = NODE.replace("unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]) };",
+                        "unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text]), groups: (r.groups || []).map((g) => [g.name, g.members]) };")
+    cases = [{'text': 'The songs are\nJane Doe - guitar\nJohn Roe - bass\n\nLive Sound Crew were:\nMax Moe - drums'},
+             {'text': 'Guitar – John Doe ~ Jane Roe ~ Max Moe'},
+             {'text': 'John Doe (piano, synth, Buddha machine)'},
+             {'text': 'Jane Doe - field recordings, guitar\nAll field recordings were made by Jane Doe on the Pacific coast'}]
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(cases)], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-1500:])
+    g = json.loads(js.stdout) if not js.returncode else None
+    for c, x in zip(cases, g or []):
+        print('  ', c['text'][:50].replace('\n', ' / '), '→', x['credits'][:6], x['groups'], [i[0] for i in x['ignored']], x['unrecognized'])
+    ok = g is not None
+    if ok:
+        why = lambda k: [i[0] for i in g[k]['ignored']]
+        ok = (not g[0]['groups'] and 'groupHeading' not in why(0)
+              and not any('Doe  Jane' in c[0] or 'Doe Jane' in c[0] for c in g[1]['credits'])
+              and 'fantasy' not in why(2) and 'fantasy' not in why(3))
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
+
+
 def case_text3128rr():
     """Credits Importer 3.128.0 (review of S203–S208), in Node: A) "Recorded and mixed by Jane Doe at Studio X/Mastered by John Roe at Studio
     Y" – no half left out as a translation (two English halves); B) "1. Song Two (Jane Doe) 5:32" no line of a track list; C) "Limited

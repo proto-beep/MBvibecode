@@ -15,7 +15,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
-| 2026-11-08 | 3.88.0 – 3.128.0 | 1.17.0 – 1.20.0 |
+| 2026-11-08 | 3.88.0 – 3.129.0 | 1.17.0 – 1.20.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
@@ -104,6 +104,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.129.0
+
+- **Members below a heading** (collected item Z-MEMBERBLOCK; rule S211): "HIBUSHIBIRE are", "Acid Mothers Temple & The Melting Paraiso U.F.O. -at the time of this live recording were:", "X consists of:" – an empty line right after it allowed; each line below a member with his own roles. "&" stays part of a group's name.
+- **Names of fantasy among roles** (Z-FANTASYROLE; S212): "guitar, speed guru", "Bass/Vocal/Mermaid Mountain" – the made-up part is left out as such (listed under "left out"), not a row and not "not recognized"; only beside roles that are known, never a long list of roles.
+- **"member of" the group** (Z-MEMBERCREATE; S213): a member the text names ("X are A and B", a heading with members below) of a linked group that MusicBrainz does not have as one – at his entry "＋ member of X ↗", his edit page with "member of band" filled in (his instruments and voices as its attributes, no date); not linked yet: "Create artist" fills it in. No question.
+- **Dedications to a place** (Z-DEDPLACE; S214): words set off with tildes ("Dedicated to ~Namba~ ~Bears~") read without them; a dedication to a place of this release is a note in the box "Dedications & tributes" (MusicBrainz has no dedication to a place); the line is left out as a dedication.
 
 ### Import 3.128.0
 
