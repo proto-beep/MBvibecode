@@ -811,6 +811,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     3.40.14: no switch in the statistics
                                 #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
+                                #   stats3131: 3.131.0 (Z-STATS): the sources of the relationships, lines left out by reason, supplemented instead of new,
+                                #     the suggestions, remixes and commissions; the record of a real submission
                                 #   statsmore2: 3.41.14 (Z-STS … Z-STC): the new cards from four records (one v 1) – suites, attributes, works,
                                 #     genres, decisions, live, gaps, worked together, "Counted from 3.41.14 on"; a real record v 2 with x and a
                                 #   conngroups: 3.42.0 (Z-CONS): ⓘ Connections in groups (Sources, Websites, Tools & scripts, Resources, managers, Links)
@@ -1094,6 +1096,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     link in any list: the note counts the links of all lists
                                 #   gapwhy3105: 3.105.0 (Z-GAPL): developer mode – why the line is missing (no link recognized, Discogs broken off),
                                 #     no note with the line or without developer mode; the switch only in developer mode; 3.107.0: with the script's name
+                                #   gaprefresh3131: 3.131.0 (Z-GAPREFRESH, S218): "Enter edit" counts what is still missing – no line below a fifth
+                                #     (developer mode says why), the line with "After “Enter edit” … still missing", off
                                 #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
                                 #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
                                 #   gapmore: 3.40.0 (AY): no line without credits or when nothing is missing (setting dci-gap-none, one missing, the
@@ -1140,6 +1144,8 @@ python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.
                                 #     a frame around one column, read – own text in order and by frame, a scanned page recognized –, the
                                 #     source; a PDF by its address; a broken one named
                                 #     3.37.5: E) opened again as it was left (the three texts), "↺ Start over" first
+                                #   dgimages3131: 3.131.0 (Z-DGIMAGES, Z-SUPPALL): all Discogs images from its API (the page not read), the page without
+                                #     them; "＋ 🖼️ Images …" in "＋ Supplement"
                                 #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrstart: 3.34.8: "… from cover art" (from 3.115.0 at first, without "beta"), joined to "Import credits …"; the dashboard without the
@@ -1207,6 +1213,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   artworkbox: 3.72.0 (Z-TST, the former t_artwork.py): the cover miniature on Discogs – shown when connected, its
                                 #     frame, a click (1.17.0: the image large in the page, Esc), dragged and kept after reloading, folded, the switch, gone with the MusicBrainz page
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
+                                #   cpremoved3131: 3.131.0 / Companion 1.21.0 (Z-CPREMOVED, S219): staged, taken out in the editor by hand, "Enter edit" –
+                                #     a grey ✗ on Discogs instead of the red one; off
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
                                 #   trackmarks: a status mark on each Discogs track line, checked per track on the release page

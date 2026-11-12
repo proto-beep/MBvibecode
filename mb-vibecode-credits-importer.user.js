@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.130.0
+// @version      3.131.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.130.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.130.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.131.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.131.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.130.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.131.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -179,6 +179,8 @@
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
+      "supp.images": "Images …",
+      "supp.imagesTitle": "Text from images as a supplement: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
       "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "supp.urlLoad": "Supplement",
       "supp.sameAsLoaded": "That is the source loaded already.",
@@ -374,6 +376,11 @@
       "gap.incomplete": "Discogs: MusicBrainz does not give all relationships of this large release at once – the dashboard counts them.",
       "gap.exact.one": "The dashboard counted {n} new one on {date}.",
       "gap.exact.other": "The dashboard counted {n} new ones on {date}.",
+      "gap.exactAfter.one": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
+      "gap.exactAfter.other": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
+      "gapWhy.afterEdit": "after “Enter edit” of the dashboard {n} of about {all} relationships of the credits are still missing – less than a fifth.",
+      "log.gapAfterEdit": "“Enter edit”: for the line of the release page {n} relationships still missing, {open} rows open",
+      "dgStatus.removed": "taken out in the relationship editor by you – not entered",
       "gap.partsLabel": "Show the parts",
       "gap.recordings": "recordings: about {n}",
       "gap.release": "release: about {n}",
@@ -2677,6 +2684,31 @@
       "stats.gaps.credits": "role credits added",
       "stats.gaps.dates": "dates added",
       "stats.gaps.attrs": "attributes added to links of recordings and works",
+      "stats.more.origins": "Where the relationships come from",
+      "stats.orig.dg": "Discogs",
+      "stats.orig.bc": "Bandcamp",
+      "stats.orig.yt": "YouTube",
+      "stats.orig.mb": "MusicBrainz",
+      "stats.orig.text": "pasted text",
+      "stats.orig.ocr": "text from images",
+      "stats.orig.other": "other",
+      "stats.more.leftout": "Lines left out, by reason",
+      "stats.more.suppl": "Supplemented instead of new",
+      "stats.suppl.share": "{pct} supplemented ({s} of {n} relationships): MusicBrainz had them – the dashboard added to them",
+      "stats.suppl.dates": "dates added",
+      "stats.suppl.links": "of them dates onto links with works",
+      "stats.suppl.attrs": "attributes added",
+      "stats.suppl.credits": "credits added",
+      "stats.more.may": "Suggestions that may be confirmed",
+      "stats.may.yes": "confirmed (✓)",
+      "stats.may.no": "declined (✕)",
+      "stats.may.open": "left open (taken as suggested)",
+      "stats.more.remixes": "Remixes and commissions",
+      "stats.rmx.remixer": "remixers",
+      "stats.rmx.remixOf": "“remix of”",
+      "stats.rmx.commissioned": "commissioned",
+      "stats.why.medium": "for a medium the release does not have",
+      "stats.why.other": "other",
       "stats.since": "Counted from {v} on – the imports before do not hold it.",
       "stats.found.link": "through the link of the source",
       "stats.found.search": "by their name",
@@ -2943,7 +2975,7 @@
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
       "ocr.urlLabel": "Address of an image",
       "ocr.addUrl": "Add",
-      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. The address of a Discogs release gives its images (small: at most 600 px). For an image on another site the userscript manager may ask once whether the script may read from it.",
+      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. The address of a Discogs release gives all its images (from Discogs's API; else the small ones of its page). For an image on another site the userscript manager may ask once whether the script may read from it.",
       "ocr.ownFile": "your file",
       "ocr.ownUrl": "by its address",
       "ocr.remove": "remove",
@@ -2962,7 +2994,7 @@
       "ocr.errNoPdf": "The PDF reader could not be loaded ({url}) – the page or the browser may not allow it.",
       "ocr.fromPdf": "Read from the PDF's own text – no text recognition needed.",
       "ocr.discogsLoad": "Load Discogs images (r{id})",
-      "ocr.discogsHint": "of the Discogs release linked to this one – small images (at most 600 px), read enlarged",
+      "ocr.discogsHint": "of the Discogs release linked to this one – all its images (from Discogs's API; else the small ones of its page, read enlarged)",
       "ocr.discogsLoading": "Loading the images from Discogs …",
       "ocr.loadQueued": "waiting to load",
       "ocr.loadReady": "loaded",
@@ -4557,6 +4589,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S219', where: 'rowsRemovedInEditor, sendDiscogsStatus, afterEnterEdit; companion 1.21.0', note: 'Marks of the companion (3.131.0; collected item Z-CPREMOVED): a credit whose relationships the dashboard staged and that were all taken out in the relationship editor by hand is "taken out in the editor" – a grey ✗ instead of the red one after "Enter edit", until the next import' },
+    { id: 'S218', where: 'afterEnterEdit, gapExactWrite, the line of the release page (gapEstimate: all)', note: 'The line of the release page (3.131.0; collected item Z-GAPREFRESH): at "Enter edit" the dashboard counts once more what is still missing – the total now certain; on the release page, less than a fifth of the relationships of the credits still missing: no line (else "After “Enter edit” … still missing")' },
     { id: 'S217', where: 'dgLineupFind, dgLineupApply, dgLineupHtml, computePlan (issue)', note: 'Discogs (3.130.0; collected item Z-DGLINEUP): the lineup on the whole release and the same people\'s instruments on single tracks ("track 2 DUO: K.Filiano (b) + N.Wooley (tpt)" – two people of the lineup at least with track credits): a question that must be answered above the entries names who plays where – each one on all tracks except those the track credits give to others only – and where the instruments differ ("bass" in the lineup, "double bass" on tracks 2, 4). More precise everywhere (set until answered): the more precise instrument on all tracks, the track credits joined into the row; per track: the track credits as they are; the lineup\'s: everyone everywhere. A spelling that only abbreviates the full name ("K.Filiano") is no artist credit' },
     { id: 'S216', where: 'outWhyText (the line "Taken out", the status of a row)', note: 'Rows taken out (3.130.0; collected item Z-OUTWHY): a row on Skip because MusicBrainz has it says so – with the date MusicBrainz has ("MusicBrainz has the date more precisely: 2007-05-06 – 2007-05-07"); rows skipped by hand say nothing (their reason is not known)' },
     { id: 'S215', where: 'workDateOffer, computePlan (workDate), workDateLinkedHtml, workDatesHeadHtml, dropDateOn', note: 'Works matrix (3.130.0; collected item Z-WORKDATE): the performance date onto the links with works MusicBrainz has, with "Apply" – the recording date of the track (setting "Performance dates onto linked works" in the corner of the matrix, on) or a date dropped onto the link; as for recordings (S172): added when the link has none, made more precise when it has less, else nothing. × at the link leaves it out' },
@@ -7204,6 +7238,15 @@
       releaseIdInUrl: (u) => (String(u || '').match(/^https?:\/\/(?:www\.)?discogs\.com\/(?:[a-z]{2}\/)?release\/(\d+)/i) || [])[1] || '',
       /** The images of a release from its page: those of this release only ("R-<id>-…"), each once, at its largest size. */
       async pageImages(id) {
+        // [Z-DGIMAGES] (3.131.0) all images of the release from Discogs's API, in its order and at their full size (as the companion 1.17.0
+        // takes them) – the page holds only some of them, small; the page as before when the API gives none
+        try {
+          const data = await getJson(`releases/${id}`); // ((review) at the pace of the other requests to Discogs
+          const list = ((data && data.images) || []).map((im) => String((im && (im.uri || im.resource_url)) || '')).filter((u) => /^https:\/\/i\.discogs\.com\//.test(u));
+          if (list.length) return uniq(list);
+        } catch (e) {
+          // the page then
+        }
         const url = `${WEB}/release/${id}`;
         let r;
         try {
@@ -12213,7 +12256,8 @@
 
   /** About how many relationships are missing, by part: { recordings, release, works, companies, total }. */
   function gapEstimate(dg, mb) {
-    const out = { recordings: 0, release: 0, works: 0, companies: 0, total: 0 };
+    // ([Z-GAPREFRESH] 3.131.0) all: the relationships of the credits, MusicBrainz's or not
+    const out = { recordings: 0, release: 0, works: 0, companies: 0, total: 0, all: 0 };
     const n = mb.n || dg.nTracks;
     for (const c of dg.credits) {
       const idx = c.tracks ? c.tracks.filter((i) => i < n) : [...Array(n).keys()];
@@ -12225,6 +12269,7 @@
       const part = c.kind !== 'person' ? 'companies' : c.level === 'recording' ? 'recordings' : c.level === 'work' ? 'works' : 'release';
       out[part] += miss;
       out.total += miss;
+      out.all += c.level === 'recording' || c.level === 'work' ? idx.length : 1;
     }
     return out;
   }
@@ -12263,8 +12308,8 @@
    * [AY] (3.40.0) The dashboard's number of new relationships for the line of the release page (Discogs or Bandcamp); (review) open:
    * its rows that cannot be staged yet (no MusicBrainz entry, no type …) – relationships missing all the same.
    */
-  function gapExactWrite(mbid, p, n, open) {
-    writeJson('localStorage', gapExactKey(mbid, p.src), { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}) });
+  function gapExactWrite(mbid, p, n, open, afterEdit = false) {
+    writeJson('localStorage', gapExactKey(mbid, p.src), { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}), ...(afterEdit ? { afterEdit: true } : {}) });
   }
   /** (3.40.3, review) The dashboard's number per source (Bandcamp's of its own: an import of the Discogs release does not take it). */
   const gapExactKey = (mbid, kind) => `${GAP_EXACT_PREFIX}${String(mbid).toLowerCase()}${kind && kind !== 'discogs' ? `:${kind}` : ''}`;
@@ -12497,6 +12542,12 @@
     // its rows open – a name without a MusicBrainz entry is missing all the same): no line (Q-x), unless the setting says so
     const none = (est && est.total === 0) || !!(exact && exact.n === 0 && exact.open === 0 && (exact.at || 0) >= (kept.since || kept.at || 0));
     if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return gapWhy('none');
+    // [Z-GAPREFRESH] (3.131.0, S218) after "Enter edit" of a dashboard import: its number then – what was entered counted as MusicBrainz's
+    // (its edits may still be open) – less than a fifth of the relationships of the credits: no line, unless the setting says so
+    // ((review) a month at most – the credits read first on this page after it are no sign of a change)
+    const left = exact && exact.afterEdit && ruleOn('S218') && est && est.all > 0 && Date.now() - (exact.at || 0) < 30 * 86400000
+      ? (Number(exact.n) || 0) + (Number(exact.open) || 0) : null;
+    if (left != null && left < est.all * 0.2 && readJson('localStorage', GAP_NONE_KEY, false) !== true) return gapWhy('afterEdit', { n: left, all: est.all });
     // ✕: hidden until the number changes
     if (est && kept.dismissed != null && kept.dismissed === est.total) return gapWhy('dismissed', { n: est.total });
     showReleaseGap({ mbid, src, est, exact, notes: kept.notes, dismiss: use.dismiss, dgEmpty: use.dgEmpty || null, others: use.others || [] });
@@ -12523,7 +12574,7 @@
     const text = (dgEmpty ? `${tr(dgEmpty.missing ? 'gap.dgMissing' : dgEmpty.notes ? 'gap.dgNoneNotes' : 'gap.dgNone')} ` : '') + (!est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
       : est.total ? tr(bc ? 'gap.bc.missing' : notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total })
         : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none'));
-    const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
+    const exactText = exact && exact.n != null ? ` ${tr(exact.afterEdit ? 'gap.exactAfter' : 'gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
       + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '') : '';
     const parts = (est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
       .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '')
@@ -13482,6 +13533,43 @@
     };
     document.addEventListener('submit', arm, true);
     document.addEventListener('click', arm, true);
+  }
+
+  /**
+   * [Z-GAPREFRESH, Z-CPREMOVED] (3.131.0, S218, S219) "Enter edit" of the relationship editor (the submission of its form with the edit
+   * note, or a click on its submit button): the number of the line of the release page once more – what is still missing then, the
+   * total now certain –, and the marks of the companion with the relationships taken out in the editor by hand (grey, not red).
+   */
+  function initAfterEditArm() {
+    let at = 0;
+    const arm = (e) => {
+      const t = e.target;
+      const form = t && (t.tagName === 'FORM' ? t : t.closest && t.closest('form'));
+      if (!form || !form.querySelector('#edit-note-text, textarea[name$="edit_note"]')) return;
+      if (e.type === 'click' && !(t.closest('button[type=submit], input[type=submit]'))) return;
+      if (Date.now() - at < 5000 || !S.initialized || !S.release) return;
+      at = Date.now();
+      try {
+        afterEnterEdit();
+      } catch (err) {
+        console.warn('[Credits-Importer] after "Enter edit"', err);
+      }
+    };
+    document.addEventListener('submit', arm, true);
+    document.addEventListener('click', arm, true);
+  }
+  function afterEnterEdit() {
+    if (ruleOn('S218') && S.gapExactSrc && SOURCES[S.gapExactSrc.src] === S.source && releaseMbid) {
+      const { items, rowInfo } = computePlan();
+      const open = S.rows.filter((r) => {
+        const i = rowInfo.get(r.id);
+        return i && i.issues.length && !(r.level === 'work' && S.worksSkip);
+      }).length;
+      gapExactWrite(releaseMbid, S.gapExactSrc, items.length, open, true);
+      log('info', 'gapAfterEdit', { n: items.length, open });
+    }
+    // (relationships taken out in the editor by hand were taken out on purpose: not counted as missing)
+    if (ruleOn('S219')) sendDiscogsStatus(computePlan().rowInfo, true);
   }
 
   /** [3.19.1] The address of "Edit relationships" that opens the dashboard by itself, with the sources to load in its #. */
@@ -16204,6 +16292,7 @@
   initArrComArm(releaseMbid); // [Z-ARRDIS2] (3.99.0)
   // [E8] (3.38.0) "Enter edit": what is submitted, for the statistics once MusicBrainz has it
   initStatJobArm(releaseMbid, () => statSnapshot(), (level, key, params) => log(level, key, params));
+  initAfterEditArm(); // [Z-GAPREFRESH, Z-CPREMOVED] (3.131.0)
   // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
   // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
   S.autostartFrom = 'editor';
@@ -18446,6 +18535,11 @@
   function yellAnswer(key, what) {
     const it = (S.yellList || yellItems()).find((x) => x.key === key);
     if (!it) return;
+    // [Z-STATS] (3.131.0) the suggestions confirmed (✓) or declined (✕), for the statistics
+    S.yellStat = S.yellStat || { ok: new Set(), no: new Set() };
+    S.yellStat.ok.delete(key);
+    S.yellStat.no.delete(key);
+    if (what === 'ok' || what === 'no') S.yellStat[what].add(key);
     if (what === 'undo') {
       S.yellDone.delete(key);
       if (it.kind === 'preset') it.rows.forEach((r) => { if (r.typeAnswer === 0) r.typePreset = true; });
@@ -22984,12 +23078,16 @@
       <button type="button" class="dci-textbtn" data-act="supp-remove">${esc(tr('supp.remove'))}</button>`;
     const links = S.sourceLinks.filter((l) => !isCurrent(l)).map((l) => (sp && sp.source.id === l.source && sp.id === l.id ? on(sourceLinkLabel(l))
       : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`${l.source}|${l.id}`)}">＋ ${esc(sourceLinkLabel(l))}</button>`));
-    const text = sp && sp.source === TEXT ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`)
+    const text = sp && sp.source === TEXT && !sp.ocr ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`)
       : `<button type="button" class="dci-supp-btn" data-act="supp-text" title="${esc(tr('supp.textTitle'))}">＋ ${esc(tr('supp.text'))}</button>`;
     // [3.8.0] A source the release does not link to: a typed Discogs release or Bandcamp album
     const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id })) : '';
+    // [Z-SUPPALL] (3.131.0) the images too – artwork, back cover, booklet, a Discogs release's: the window of the text from cover art (its
+    // text a supplement of this import)
+    const images = !S.ocrOn ? '' : sp && sp.ocr ? on(`${emo('ocr')} ${tr('supp.images')}`)
+      : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${esc(emo('ocr'))} ${esc(tr('supp.images'))}</button>`;
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
-      ${links.join(' ')} ${typedOn} ${text}
+      ${links.join(' ')} ${typedOn} ${text} ${images}
       <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
@@ -24559,6 +24657,7 @@
       (rel.ensembles || []).filter((e) => e.applied).forEach((e) => log('info', 'ensembleApplied', { line: e.line }));
       S.playsAsk = []; // [Z-PLAYS] (3.102.0, S168) made once the rows are there
       S.dgLineup = null; // [Z-DGLINEUP] (3.130.0, S217)
+      S.removedRows = null; // [Z-CPREMOVED] (3.131.0)
       // ((3.49.0, review) nothing of the import before stays – also when this one has no entries)
       setWorkNotes(null);
       // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
@@ -24578,6 +24677,7 @@
       S.rows = [];
       S.emGhost = new Map(); // [Z-EVCOL] (3.103.0)
       yellLoad(); // [Z-YELL] (3.110.0) what was confirmed: open again unless remembered
+      S.yellStat = null; // ([Z-STATS] 3.131.0, review) the ✓ / ✕ of this import
       S.scope = 'all'; // [Z-SCOPE] (3.112.0) the works' filter back on "with" at each import
       if (S.overlay) S.overlay.querySelectorAll('[data-act="scope"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scope === 'all')));
       S.festivals = []; // [3.37.8] (S056)
@@ -24786,6 +24886,7 @@
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
         S.gapExactPending = source === DISCOGS || source === BANDCAMP ? { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) } : null;
+        S.gapExactSrc = S.gapExactPending; // ([Z-GAPREFRESH] 3.131.0) for "Enter edit"
         if (S.gapExactPending && releaseMbid && typeof S.lastSumCount === 'number') gapExactWrite(releaseMbid, S.gapExactPending, S.lastSumCount, S.lastSumOpen || 0);
         // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
         // [S060] (3.38.12) names in capitals written in normal case
@@ -41366,9 +41467,33 @@
    * (its line and the part of the line, see TEXT.parse).
    */
   let dgStatusTimer = null;
-  function sendDiscogsStatus(rowInfo = S.rowInfo) {
+  /**
+   * [Z-CPREMOVED] (3.131.0, S219) The rows whose staged relationships were all taken out in the editor by hand (not by the dashboard):
+   * their marks of the companion are grey ("taken out in the editor"), not red, until the next import.
+   */
+  function rowsRemovedInEditor() {
+    const out = new Set();
+    const mb = ruleOn('S219') ? getMB() : null;
+    const re = mb && mb.relationshipEditor;
+    // ((review) an older companion has no such mark: "staged" for it
+    if (!re || !re.state || !S.sync.companionVersion || compareVersions(S.sync.companionVersion, '1.21.0') < 0) return out;
+    const byRow = new Map();
+    for (const st of S.staged.values()) {
+      const id = st && st.state && st.state.id;
+      if (typeof id !== 'number' || !st.rowId) continue;
+      if (!byRow.has(st.rowId)) byRow.set(st.rowId, []);
+      byRow.get(st.rowId).push(id);
+    }
+    if (!byRow.size) return out;
+    // ((review) the editor's state walked with a larger limit (once, at "Enter edit")
+    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat()), 2000000);
+    const gone = (id) => { const x = cur.get(id); return !x || x._status === 3; };
+    byRow.forEach((ids, rowId) => { if (ids.every(gone)) out.add(rowId); });
+    return out;
+  }
+  function sendDiscogsStatus(rowInfo = S.rowInfo, now = false) {
     clearTimeout(dgStatusTimer);
-    dgStatusTimer = setTimeout(() => {
+    const send = () => {
       const releaseId = companionReleaseId();
       if (!S.sync.installed || !releaseId) return;
       // [3.43.1] (review) the editor "Count exactly" opens in the background sends no marks: they would replace the marks of the
@@ -41378,6 +41503,15 @@
       const items = [];
       const targetIndex = new Map();
       const posIdx = positionIndex(S.srcTracks || []);
+      // [Z-CPREMOVED] (3.131.0, S219) found at "Enter edit" (now) and kept for the sends after it ((review) not each time)
+      if (now) {
+        try {
+          S.removedRows = S.dgStatus ? rowsRemovedInEditor() : new Set();
+        } catch (e) {
+          S.removedRows = new Set();
+        }
+      }
+      const removed = S.removedRows || new Set();
       if (S.dgStatus) {
         for (const row of S.rows) {
           const a = S.artists.get(row.artistKey);
@@ -41390,7 +41524,7 @@
           let status = 'open';
           if (row.level === 'skip') status = row.existingAll ? 'mb' : 'skip';
           else if (info && (info.ready > 0 || info.issues.length)) status = 'open';
-          else if (info && info.applied > 0) status = 'staged';
+          else if (info && info.applied > 0) status = removed.has(row.id) ? 'removed' : 'staged';
           else if (info && info.existing > 0) status = 'mb';
           // ([Z-CWR] 3.56.0, review) only writers left out beside composer, lyricist or librettist: the more exact type covers them
           else if (info && info.exact > 0) status = 'mb';
@@ -41414,7 +41548,8 @@
             const i = posIdx.get(normPos(pos));
             const onRow = i != null && (!['recording', 'work'].includes(row.level) || row.tracks.has(i));
             // A track the row covers but that got no status (no work yet, other medium) is still open
-            const st = i == null ? status : !onRow ? 'skip' : info && info.per ? (info.per.get(i) || 'open') : status;
+            const st0 = i == null ? status : !onRow ? 'skip' : info && info.per ? (info.per.get(i) || 'open') : status;
+            const st = st0 === 'staged' && removed.has(row.id) ? 'removed' : st0;
             const pt = { status: st };
             if (mb && onRow) {
               pt.t = info.mb.t.filter((g, k) => info.mb.tt[k] === i).map((g) => targetIndex.get(g));
@@ -41438,7 +41573,7 @@
       }
       // [173] (3.38.9) "multi": two imports of the same release open (companion 1.10.0)
       const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow', 'artPrev', 'artNext', 'artBig', 'artTab', 'artOnly',
-        'off', 'on', 'isOff', 'hover', 'multi']
+        'off', 'on', 'isOff', 'hover', 'multi', 'removed']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
       // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
@@ -41446,7 +41581,10 @@
       toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels, texts,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
         toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks });
-    }, 800);
+    };
+    // ([Z-CPREMOVED] 3.131.0) at "Enter edit" at once – the page is left
+    if (now) send();
+    else dgStatusTimer = setTimeout(send, 800);
   }
 
   /**
@@ -47435,6 +47573,8 @@
         rt: attrs.map((a) => a.credit).filter(Boolean).slice(0, 4), al: entry && entry.viaAlias ? 1 : 0,
         // [Z-AST] (3.54.0) the year of the relationship's date (posthumous: after the end of its artist)
         dy: (state.begin_date && Number(state.begin_date.year)) || null,
+        // [Z-STATS] (3.131.0) where its row comes from (Discogs, Bandcamp, YouTube, MusicBrainz, a text, text from images)
+        o: row ? rowOrigins(row) : [],
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -47484,7 +47624,27 @@
       gaps: { credits: fills('credits'), dates: fills('dates'), attrs: fills('attrs') },
       // [Z-STQ] (3.41.15, review) the answers of the rows, once a row – also of a row an answer put on "Skip"
       decisions: S.rows.flatMap((r) => statAnswers(r)),
+      // [Z-STATS] (3.131.0) the lines left out of the sources, by their reason; the suggestions that may be confirmed: ✓, ✕, still open
+      out: statLeftOut(),
+      may: statMay(),
     };
+  }
+  /** [Z-STATS] (3.131.0) The lines of the sources left out on purpose, by their reason ({ why: n }). */
+  function statLeftOut() {
+    const out = {};
+    [S.release, S.supp && S.supp.rel].filter(Boolean).forEach((rel) => (rel.ignored || []).forEach((x) => { const k = String(x.why || 'other'); out[k] = (out[k] || 0) + 1; }));
+    return out;
+  }
+  /** [Z-STATS] (3.131.0) The suggestions that may be confirmed (yellow): confirmed with ✓, declined with ✕, left open. */
+  function statMay() {
+    const st = S.yellStat || { ok: new Set(), no: new Set() };
+    let open = 0;
+    try {
+      open = yellItems().filter((it) => it.cls === 'can' && !it.done && !st.ok.has(it.key) && !st.no.has(it.key)).length;
+    } catch (e) {
+      open = 0;
+    }
+    return { yes: st.ok.size, no: st.no.size, open };
   }
 
   /**
@@ -47976,10 +48136,10 @@
   /** [Z-STL] (3.61.0) The groups of the cards (S3) – the key of each card of this browser and of "Global". */
   const STATS_GROUPS = [
     ['when', ['when', 'lengths']],
-    ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'live', 'gaps', 'decisions', 'instruments']],
+    ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'live', 'gaps', 'suppl', 'decisions', 'may', 'remixes', 'instruments']],
     ['who', ['artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
     ['releases', ['perrelease', 'releases', 'media', 'script', 'genres']],
-    ['sources', ['sources', 'ocr']],
+    ['sources', ['sources', 'origins', 'leftout', 'ocr']],
   ];
   /** [Z-STL] (3.61.0) The one line of a folded card: the first entry of its body as text ("0 % with a date", "producer 6"). */
   function statSummary(body) {
@@ -48148,7 +48308,11 @@
       // [Z-RLS, Z-LNG, Z-RDU] (3.53.0) the releases (at their first submission): media, types of the release group, language, script, lengths
       relY: 0, seenRelY: new Set(), media: { single: 0, multi: 0 }, rgp: new Map(), rgs: new Map(), lang: new Map(), script: new Map(), lens: [], relLens: [], wholes: [],
       // [Z-AST, Z-PLS] (3.54.0) the artists' relationships ([gid, year of the relationship, year of the release]); labels of the relationships
-      artRels: [], labelsRel: new Map(), placesRel: new Map(), entName: new Map() };
+      artRels: [], labelsRel: new Map(), placesRel: new Map(), entName: new Map(),
+      // [Z-STATS] (3.131.0) the relationships by where their rows come from; the lines left out by reason; the suggestions; supplemented
+      // instead of new; remixes and commissions
+      origins: new Map(), origN: 0, outWhy: new Map(), seenImport: new Set(), may: { yes: 0, no: 0, open: 0 }, mayN: 0, suppl: { n: 0, s: 0, dates: 0, attrs: 0, credits: 0, links: 0 },
+      rmx: { remixer: 0, remixOf: 0, commissioned: 0 } };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -48224,6 +48388,36 @@
         m.ocr.corrected += r.ocr.corrected || 0;
       }
       if (r.own != null) m.own = r.own;
+      // [Z-STATS] (3.131.0)
+      for (const it of rels) {
+        if (Array.isArray(it.o)) {
+          // ((review) each source of its row (a Bandcamp import confirmed by Discogs: both); MusicBrainz only when it alone
+          const o = uniq(it.o.filter((k) => k !== 'mb'));
+          if (o.length || it.o.length) {
+            m.origN++;
+            (o.length ? o : ['mb']).forEach((k) => inc(m.origins, k));
+          }
+        }
+        if (it.k === 's') {
+          m.suppl.s++;
+          (it.f || []).forEach((k) => { if (k in m.suppl) m.suppl[k]++; });
+          if (it.lt === 'performance' && (it.f || []).includes('dates')) m.suppl.links++;
+        } else m.suppl.n++;
+        const lt = norm(it.lt || '');
+        if (lt === 'remixer') m.rmx.remixer++;
+        else if (lt === 'remix' || lt === 'remix of' || lt === 'remixes') m.rmx.remixOf++; // (recording – recording)
+        else if (lt === 'commissioned') m.rmx.commissioned++;
+      }
+      // ((review) what an import left out and its suggestions: once per import (its submissions in rounds, again – one)
+      const impKey = `${r.mbid}|${r.start || r.at}`;
+      const firstOfImport = !m.seenImport.has(impKey);
+      m.seenImport.add(impKey);
+      if (firstOfImport && r.x && r.x.out) Object.entries(r.x.out).forEach(([k, n]) => inc(m.outWhy, k, Number(n) || 0));
+      if (r.x && r.x.may && !firstOfImport) m.mayN++;
+      else if (r.x && r.x.may) {
+        m.mayN++;
+        ['yes', 'no', 'open'].forEach((k) => { m.may[k] += Number(r.x.may[k]) || 0; });
+      }
       // [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14)
       if (r.x) {
         m.x++;
@@ -48686,7 +48880,33 @@
       ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
       ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
       ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
-      ${card('together', kv(top(new Map([...m.pairs].filter(([, n]) => n >= 2)), 5), pair))}`;
+      ${card('together', kv(top(new Map([...m.pairs].filter(([, n]) => n >= 2)), 5), pair))}
+      ${statsMore131Html(m, recs.length, { top, kv, card })}`;
+  }
+
+  /**
+   * [Z-STATS] (3.131.0) Five more: the relationships by where their rows come from, the lines left out by reason, supplemented instead of
+   * new, the suggestions confirmed, declined or left open, remixes and commissions. Counted from 3.131.0 on.
+   */
+  function statsMore131Html(m, nRecs, { top, kv, card }) {
+    const since = m.mayN < nRecs ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.131.0' }))}</p>` : '';
+    const origName = (k) => tr(`stats.orig.${['dg', 'bc', 'yt', 'mb', 'text', 'ocr'].includes(k) ? k : 'other'}`);
+    const share = (map, n) => (n ? `<ul class="dci-stats-kv">${top(map, 6).map(([k, x]) => `<li><span>${esc(origName(k))}</span> <span class="dci-sub">${statPct(x, n)} % (${statNum(x)})</span></li>`).join('')}</ul>` : '<p class="dci-sub">–</p>');
+    // ((review) the reasons in short – a text with values of its own ("for {medium} …") has a label of the card
+    const whyName = (k) => {
+      const own = tr(`stats.why.${k}`);
+      if (own && own !== `stats.why.${k}`) return own;
+      const t = tr(`ignored.why.${k}`);
+      return t && t !== `ignored.why.${k}` && !/\{/.test(t) ? t.replace(/^[–\s]+/, '') : tr('stats.why.other');
+    };
+    const su = m.suppl;
+    const mayAll = m.may.yes + m.may.no + m.may.open;
+    return `${card('origins', `${share(m.origins, m.origN)}${since}`)}
+      ${card('leftout', `${kv(top(m.outWhy, 8), whyName)}${since}`)}
+      ${card('suppl', `<p>${esc(tr('stats.suppl.share', { pct: `${statPct(su.s, su.n + su.s)} %`, s: statNum(su.s), n: statNum(su.n + su.s) }))}</p>
+        ${kv([['dates', su.dates], ['links', su.links], ['attrs', su.attrs], ['credits', su.credits]].filter(([, n]) => n), (k) => tr(`stats.suppl.${k}`))}${since}`)}
+      ${card('may', mayAll ? `${kv([['yes', m.may.yes], ['no', m.may.no], ['open', m.may.open]], (k) => `${tr(`stats.may.${k}`)} (${statPct(m.may[k], mayAll)} %)`)}${since}` : `<p class="dci-sub">–</p>${since}`)}
+      ${card('remixes', `${kv([['remixer', m.rmx.remixer], ['remixOf', m.rmx.remixOf], ['commissioned', m.rmx.commissioned]], (k) => tr(`stats.rmx.${k}`))}${since}`)}`;
   }
 
   /**

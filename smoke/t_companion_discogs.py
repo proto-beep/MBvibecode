@@ -181,6 +181,67 @@ def case_relcheck():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_cpremoved3131():
+    """Credits Importer 3.131.0 with Companion 1.21.0 (collected item Z-CPREMOVED; rule S219): Guitar Guy's relationships staged and then
+    taken out in the relationship editor by hand; "Enter edit"; the release page checks what MusicBrainz has.
+    A) Discogs: Guitar Guy's mark a grey ✗ ("taken out in the relationship editor by you"), not the red one; the others ✓.
+    B) Rule S219 off: the red ✗ as before."""
+    MARKS = "[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent)"
+    GG = "(() => { const li = [...document.querySelectorAll('#release-credits li')].find(l => l.textContent.includes('Guitar Guy')); const m = li && li.querySelector('.dci-dg-mark'); return m ? [m.className, m.textContent, m.title] : null; })()"
+    results = []
+
+    def poll(pg, js, timeout=20):
+        for _ in range(timeout * 5):
+            try:
+                if pg.evaluate(js):
+                    return True
+            except Exception:
+                pass
+            pg.wait_for_timeout(200)
+        raise TimeoutError(js)
+
+    real = lambda es: [e for e in es if 'Synchronous XHR in page dismissal' not in e]
+
+    def run(off):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            dg, dgerr = H.open_discogs(ctx)
+            roff = H.RULES_OFF
+            H.RULES_OFF = [*(roff or []), *(['S219'] if off else [])]
+            try:
+                pg, errs = H.open_mb_edit(ctx)
+            finally:
+                H.RULES_OFF = roff
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            pg.click('[data-act=apply]')
+            poll(dg, f"{MARKS}.includes('●')")
+            gg = H.ARTISTS[3002][0]
+            n = pg.evaluate(f"""(() => {{ const re = MB.relationshipEditor; const own = re.state.added.filter(r => r.entity0 && r.entity0.gid === '{gg}');
+              own.forEach((r) => re.dispatch({{ type: 'remove-relationship', relationship: r }})); return own.length; }})()""")
+            pg.evaluate("""() => { const t = document.getElementById('edit-note-text'); const f = document.createElement('form'); t.parentNode.insertBefore(f, t); f.appendChild(t);
+              f.addEventListener('submit', (e) => e.preventDefault()); f.requestSubmit(); }""")
+            pg.wait_for_timeout(1000)
+            H.submit_staged(pg)
+            pg.goto(f'https://musicbrainz.org/release/{H.REL}')
+            H.with_companion(pg)
+            poll(dg, f"(() => {{ const m = {MARKS}; return m.includes('✓') && !m.includes('●'); }})()", 30)
+            dg.wait_for_timeout(500)
+            out = (n, dg.evaluate(GG), dg.evaluate(MARKS), real(errs) + real(dgerr))
+            b.close()
+            return out
+    n, gg, marks, errs = run(False)
+    print('A) herausgenommen:', n, '| Guitar Guy:', gg, '| Marken:', marks, errs)
+    results.append(n >= 1 and gg and 'dci-dg-removed' in gg[0] and gg[1] == '✗' and 'taken out in the relationship editor' in gg[2] and not errs)
+    n2, gg2, _, _ = run(True)
+    print('B) aus:', gg2)
+    results.append(gg2 and 'dci-dg-pending' in gg2[0])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_trackmarks():
     """Status marks on Discogs for credits on track lines: one mark on each line, with the status of that track
     ("Written-By – Writer W" under tracks 1 and 2: two marks). On the release page each line is checked on its own:
