@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.135.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.136.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -22,7 +22,12 @@ How far back the entries go:
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.135.0 · 2026-11-12
+## Import 3.136.0 · 2026-11-12
+
+- **Z-SETTABS:** `settingsHtml` – `sh(key)` (`settings.h.<key>`, an `h4.dci-set-h`; the first of a tab without its line), the bodies reordered: General (language, log; developer mode out), Appearance (window, colours, entries – with `ev-shared`, `em-show`, `em-by-default`, `em-attr` from Staging –, symbols and boxes, rules), Sources, Works (with `work-dates`, the switch of the matrix's corner: `S.workDates`, `dci-work-dates`), Staging, Cache, Developer (`dev-mode` there, its tools under `devTools` in developer mode); `settingTopics` – the tab "Developer" always; `TOPIC_KEYS` and the topic resets follow (`DEV_KEY` with Developer, the matrix of an entry with Appearance); `dev-mode` draws the settings again.
+- **Tests:** `t_ui_settings.py settabs3136` – new, fails on 3.135.0. Adjusted: `t_ui_settings.py settabs`, `settings`, `cache`, `logdiag`, `statsdev`, `devtab3108` (the tab "Developer" always, the switch there), `t_entries.py` (the matrix of an entry under Appearance), `t_start.py gapwhy3105` (the tab "Developer" without its tools).
+- **Review:** the topic resets – Appearance draws the entries again (the matrix of an entry), Works turns the work dates on again, Developer takes the notes of developer mode off the entries; "Developer mode" switched off: those notes gone too; the switch of the work dates with its tooltip, drawing like the matrix's corner; "Compact | Full" under Entries; `dev.intro` without "⚙ Settings → General" (es, fr: the tab's name and its intro translated).
+
 
 - **Z-GAPREFRESH2 (S223):** `rowsRemovedInEditor({ any, rels })` – without the companion when counting, the relationships gone counted; `afterEnterEdit` adds them to the number (`gapExactWrite(…, removed)`) and keeps their credits (`rmdStore`: `dci-removed-in-editor`, { [MBID]: [{ key: rowBaseKey, label }] }, the last 50); `showReleaseGap` says how many (`gap.exactRemoved`); after an import `rmdRefresh` (the rows of those credits not on Skip) – `rmdAskHtml` above the entries (✓ `rmdSkipAll`: `levelOf(…, 'skip')`, ✕ `rmdKeep`), a yellow item `rmd`.
 - **Z-WORKDATE-REM:** `worksSnapshot` keeps `wdOff` and `wdOwn` (by recording and work), `restoreWorks` takes them back.

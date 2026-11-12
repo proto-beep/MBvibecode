@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.135.0
+// @version      3.136.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.135.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.135.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.136.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.136.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.135.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.136.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1306,7 +1306,7 @@
       "settings.t.connections": "ⓘ Connections",
       "settings.t.musicbrainz": "ⓘ MusicBrainz",
       "settings.t.developer": "Developer",
-      "dev.intro": "For reporting issues and improving the script – only while “Developer mode” is on (⚙ Settings → General).",
+      "dev.intro": "For reporting issues and improving the script – its tools appear below while “Developer mode” is on.",
       "dev.diag": "Diagnosis of the relationship editor (also in the log):",
       "dev.stats": "Developer statistics …",
       "dev.statsTitle": "Opens the statistics – the developer part is at their end",
@@ -1954,6 +1954,25 @@
       "dupAsk.allTitleNote": "New works for these tracks too, although MusicBrainz has works of the same title – the edit note names those works",
       "log.dupAll": "New works for all tracks, also for {n} with a work of the same title in MusicBrainz",
       "settings.editNoteHead": "Edit note",
+      "settings.h.language": "Language",
+      "settings.h.log": "Log",
+      "settings.h.window": "Window",
+      "settings.h.colours": "Colours",
+      "settings.h.entries": "Entries",
+      "settings.h.symbols": "Symbols and boxes",
+      "settings.h.rules": "Mapping rules",
+      "settings.h.srcOrder": "Order of the sources",
+      "settings.h.releasePage": "Release editor and release page",
+      "settings.h.mbSearch": "MusicBrainz search",
+      "settings.h.lookups": "Lookups of works",
+      "settings.h.matrix": "Works matrix",
+      "settings.h.suites": "Suites",
+      "settings.h.limits": "Staging and its limits",
+      "settings.h.liveCom": "Live comments",
+      "settings.h.yell": "Open items",
+      "settings.h.remember": "Remember",
+      "settings.h.stats": "Statistics",
+      "settings.h.devTools": "Tools",
       "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
       "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
       "yell.must": "● {n}",
@@ -47941,7 +47960,8 @@
   // ([Z-QSP] 3.75.0) the profiles right after General
   // ([Z-CONN2] 3.108.0) what is taken from MusicBrainz; ([Z-DEVTAB] 3.108.0) the developer's settings – only in developer mode (settingTopics)
   const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer'];
-  const settingTopics = () => SETTING_TOPICS.filter((k) => k !== 'developer' || S.devMode);
+  // ([Z-SETTABS] 3.136.0) the tab "Developer" always – its switch "Developer mode" is only there; the rest of it in developer mode
+  const settingTopics = () => SETTING_TOPICS;
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -48004,21 +48024,23 @@
     'em-ev': 'dates', 'em-line': 'dates', 'em-block': 'dates', row: 'dates' };
 
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', DEV_KEY, LOG_LINES_KEY],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY],
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
-      'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark'],
+      'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
+      // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
+      EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
     musicbrainz: [],
-    developer: [GAP_WHY_KEY, DSUP_WHY_KEY],
+    developer: [GAP_WHY_KEY, DSUP_WHY_KEY, DEV_KEY], // ([Z-SETTABS] 3.136.0) developer mode only here
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
     beta: [],
@@ -49881,33 +49903,33 @@
       return `<input type="number" data-set="${name}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[name]}" aria-label="${esc(tr(`settings.aria.${name}`))}">`;
     };
     const row = (html) => `<div class="dci-set-row">${html}</div>`;
+    // [Z-SETTABS] (3.136.0) a subheading of a tab (not folding)
+    const sh = (key) => `<h4 class="dci-set-h" data-el="set-${key}">${esc(tr(`settings.h.${key}`))}</h4>`;
     const req = Math.ceil(S.awMax / 100);
     const bodies = {
       general: () => [
+        sh('language'),
         row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
+        sh('log'),
         row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
         // [Z-LOGMORE] (3.128.0) each line not recognized or left out in the log
         row(`<label title="${esc(tr('settings.logLinesTitle'))}"><input type="checkbox" data-set="log-lines" ${S.logLines ? 'checked' : ''}> ${esc(tr('settings.logLines'))}</label>`),
         row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
-        // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown); [171] (3.38.5) "Developer mode":
-        // also the developer statistics
-        row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
+        // ([Z-SETTABS] 3.136.0: "Developer mode" only in the tab "Developer")
         // [Z-QSP] (3.75.0) what was imported and exported, folded; never cleared
         ioLogHtml(),
       ],
       // [Z-QSP] (3.75.0, S110) the profiles
       profiles: () => [profilesPaneHtml()],
-      // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
+      // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General"); [Z-SETTABS] (3.136.0) window, colours,
+      // entries (with the matrix of an entry from "Staging"), symbols and boxes, rules
       appearance: () => [
+        sh('window'),
         row(`${esc(tr('zoom.label'))} <button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
           <span data-el="zoom-set">${Math.round(S.scale * 100)} %</span> <button type="button" class="dci-headbtn" data-act="zoom-in" aria-label="${esc(tr('zoom.larger'))}">A+</button>`),
         row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
-        // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
-        row(check('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'))),
-        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
-        row(check('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'))),
         // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
         ...['window', 'page'].map((where) => {
           const label = tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow');
@@ -49915,26 +49937,7 @@
             role="group" data-el="theme-${where}" aria-label="${esc(label)}">${THEMES.map((v) => `<button type="button" data-act="theme-set" data-where="${where}" data-theme="${v}"
             aria-pressed="${themeSetting(where) === v}">${esc(tr(`settings.theme.${v}`))}</button>`).join('')}</span>`);
         }),
-        row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
-        // [E4] (3.34.29) the entries as a matrix (default) or as before
-        row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
-          data-act="entries-view" data-view="${v}" aria-pressed="${S.entriesView === v}" title="${esc(tr(`settings.entries.${v}Title`))}">${esc(tr(`settings.entries.${v}`))}</button>`).join('')}</span>`),
-        // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
-        row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
-          data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
-        // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
-        row(`<span title="${esc(tr('settings.emojiTitle'))}">${esc(tr('settings.emoji'))}</span> <span class="dci-seg dci-seg-small" role="group" data-el="emoji-mode" aria-label="${esc(tr('settings.emoji'))}">${['emoji', 'text'].map((v) => `<button type="button"
-          data-act="emoji-mode" data-mode="${v}" aria-pressed="${!!S.emojiText === (v === 'text')}">${esc(tr(`settings.emoji.${v}`))}</button>`).join('')}</span>`),
-        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
-        row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
-        // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
-        row(check('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'))),
-        // [3.30.0] where the mapping rules open (item 75)
-        row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
-          data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
-        // [3.30.2] rule ids and ⓘ at rows (item 75b)
-        row(`${esc(tr('settings.rulesRowPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesRowPlace'))}">${['window', 'symbol'].map((pl) => `<button type="button"
-          data-act="rules-rowplace" data-place="${pl}" aria-pressed="${S.rulesRowPlace === pl}">${esc(tr(`settings.rulesRowPlace.${pl}`))}</button>`).join('')}</span>`),
+        sh('colours'),
         row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
@@ -49956,10 +49959,47 @@
             <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}
             <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="kind" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`),
         ] : []),
+        sh('entries'),
+        row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
+        // [E4] (3.34.29) the entries as a matrix (default) or as before
+        row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
+          data-act="entries-view" data-view="${v}" aria-pressed="${S.entriesView === v}" title="${esc(tr(`settings.entries.${v}Title`))}">${esc(tr(`settings.entries.${v}`))}</button>`).join('')}</span>`),
+        // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
+        row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
+          data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
+        // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
+        row(check('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'))),
+        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
+        row(check('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'))),
+        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
+        row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
+        // [E4] (3.34.30) the matrix of an entry
+        row(`<label title="${esc(tr('settings.evSharedTitle'))}">${esc(tr('settings.evShared'))} <input type="number" data-set="ev-shared" min="1" max="12" value="${S.evShared}"> ${esc(tr('settings.evSharedAfter'))}</label>`),
+        row(`<label>${esc(tr('settings.emShow'))} <input type="number" data-set="em-show" min="1" max="50" value="${S.emShow}"></label>`),
+        // [E4] (3.35.0) an entry, compact, at first
+        row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
+          data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        // [Z-ALIGN] (3.100.0) the attributes in the full matrix: together in one column or a column each
+        row(`<span title="${esc(tr('settings.emAttrTitle'))}">${esc(tr('settings.emAttr'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emAttr'))}">${['joint', 'split'].map((v) => `<button type="button"
+          data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span>`),
+        sh('symbols'),
+        // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
+        row(`<span title="${esc(tr('settings.emojiTitle'))}">${esc(tr('settings.emoji'))}</span> <span class="dci-seg dci-seg-small" role="group" data-el="emoji-mode" aria-label="${esc(tr('settings.emoji'))}">${['emoji', 'text'].map((v) => `<button type="button"
+          data-act="emoji-mode" data-mode="${v}" aria-pressed="${!!S.emojiText === (v === 'text')}">${esc(tr(`settings.emoji.${v}`))}</button>`).join('')}</span>`),
+        // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
+        row(check('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'))),
+        sh('rules'),
+        // [3.30.0] where the mapping rules open (item 75)
+        row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
+          data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
+        // [3.30.2] rule ids and ⓘ at rows (item 75b)
+        row(`${esc(tr('settings.rulesRowPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesRowPlace'))}">${['window', 'symbol'].map((pl) => `<button type="button"
+          data-act="rules-rowplace" data-place="${pl}" aria-pressed="${S.rulesRowPlace === pl}">${esc(tr(`settings.rulesRowPlace.${pl}`))}</button>`).join('')}</span>`),
       ],
       sources: () => [
-        row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
+        sh('srcOrder'), sourceOrderHtml(),
         row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
+        sh('releasePage'),
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
         row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
@@ -49968,6 +50008,7 @@
         row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
         // [Z-GAPL] (3.105.0) developer mode: why the line is not there
         // ([Z-DEVTAB] 3.108.0: the developer's switches are in the tab "Developer")
+        sh('mbSearch'),
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
         row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
             value="${aliasMax()}"></label>`),
@@ -50004,45 +50045,43 @@
       developer: () => [
         `<p class="dci-sub">${esc(tr('dev.intro'))}</p>`,
         row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
+        ...(S.devMode ? [
+          sh('devTools'),
         row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))),
         row(check('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'))),
         row(`${esc(tr('dev.diag'))} <button type="button" class="dci-small" data-act="dev-diag" aria-pressed="${!!DIAG.timer}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>`),
         row(`<button type="button" class="dci-textbtn" data-act="dev-stats" title="${esc(tr('dev.statsTitle'))}">${esc(tr('dev.stats'))}</button>`),
         devTreeHtml(),
+        ] : []),
       ],
       discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
       works: () => [
+        sh('lookups'),
         row(check('data-set="aw-on"', S.awOn, tr('settings.awOn'))),
         row(`<label>${esc(tr('settings.awMax'))} ${num('awMax')}</label> <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`),
         row(`${esc(tr('settings.awSlow'))} ${num('awSlowSec')} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN')} ${esc(tr('settings.awSlowN'))}`),
         row(`<label>${esc(tr('settings.awDays'))} ${num('awDays')}</label>`),
         row(`<label title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('settings.awAsk'))} ${num('awAsk')} ${esc(tr('settings.awAskTracks'))}</label>`),
-        row(check('data-set="mx-skiprows"', S.mxSkipRows, tr('settings.mxSkipRows'))),
         row(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
           ${S.awStoreCount == null ? '' : `<span class="dci-sub">${esc(tr('settings.awStored', { n: S.awStoreCount }))}</span>`}`),
+        sh('matrix'),
+        row(check('data-set="mx-skiprows"', S.mxSkipRows, tr('settings.mxSkipRows'))),
+        // [Z-SETTABS] (3.136.0) the switch of the corner of the matrix here too: performance dates onto linked works (S215)
+        row(check('data-set="work-dates"', S.workDates !== false, tr('matrix.workDates'), tr('matrix.workDatesTitle'))),
         row(`<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`),
         row(check('data-set="wattr-long"', S.wattrLong, tr('settings.wattrLong'))),
         // [Z-SU] (3.41.1) how the parts of a suite are named (Q-bu)
+        sh('suites'),
         row(`${esc(tr('settings.suiteNaming'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.suiteNaming'))}" title="${esc(tr('settings.suiteNamingTitle'))}">${['colon', 'comma'].map((v) => `<button type="button"
           data-act="suite-naming" data-naming="${v}" aria-pressed="${(S.suiteNaming === 'comma' ? 'comma' : 'colon') === v}">${esc(tr(`settings.suiteNaming.${v}`))}</button>`).join('')}</span>`),
       ],
       staging: () => [
+        sh('limits'),
         row(check('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'))),
         row(check('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'))),
         row(`<label>${esc(tr('settings.capLimit'))} <input type="number" data-set="cap-limit" min="50" max="2000" step="50" value="${S.capLimit}"></label>`),
-        // [3.32.9] disambiguation comments of live recordings (item 113)
-        row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
         // [E4] (3.34.29) the instruments and voices of an entry in one relationship (not in the legacy view)
         row(check(`data-set="join"${S.entriesView === 'legacy' ? ' disabled' : ''}`, S.joinAuto, tr('settings.join'), tr('settings.joinTitle'))),
-        // [E4] (3.34.30) the matrix of an entry
-        row(`<label title="${esc(tr('settings.evSharedTitle'))}">${esc(tr('settings.evShared'))} <input type="number" data-set="ev-shared" min="1" max="12" value="${S.evShared}"> ${esc(tr('settings.evSharedAfter'))}</label>`),
-        row(`<label>${esc(tr('settings.emShow'))} <input type="number" data-set="em-show" min="1" max="50" value="${S.emShow}"></label>`),
-        // [E4] (3.35.0) an entry, compact, at first
-        row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
-          data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
-        // [Z-ALIGN] (3.100.0) the attributes in the full matrix: together in one column or a column each
-        row(`<span title="${esc(tr('settings.emAttrTitle'))}">${esc(tr('settings.emAttr'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emAttr'))}">${['joint', 'split'].map((v) => `<button type="button"
-          data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span>`),
         // [Z-SNW] (3.83.0) the edit note under a heading of its own
         `<h4 class="dci-set-h" data-el="set-editnote">${esc(tr('settings.editNoteHead'))}</h4>`,
         // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
@@ -50050,7 +50089,11 @@
         row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
           data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
         row(check('data-f="note-dup"', S.noteDupWorks, tr('settings.noteDup'), tr('settings.noteDupTitle'))),
+        // [3.32.9] disambiguation comments of live recordings (item 113)
+        sh('liveCom'),
+        row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
         // [Z-YELL] (3.110.0) what is open: two counters (must, can) or one
+        sh('yell'),
         row(check('data-f="yell-one"', S.yellOne, tr('settings.yellOne'), tr('settings.yellOneTitle'))),
       ],
       dates: () => [
@@ -50073,6 +50116,7 @@
       cache: () => {
         const z = storageSizes();
         return [
+          sh('remember'),
           `<p class="dci-sub">${esc(tr('settings.cacheHint'))}</p>`,
           row(check('data-set="remember"', remembering(), tr('settings.remember'), tr('settings.rememberTitle'))),
           row(`<label title="${esc(tr('settings.rememberMaxTitle'))}">${esc(tr('settings.rememberMax'))} <input type="number" data-set="remember-max" min="0" max="100" step="1"
@@ -50080,6 +50124,7 @@
           row(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
+          sh('stats'),
           row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
           // [Z-STH, Z-GOF] (3.53.0; Q-fx, Q-fm) when you work, and "Global", can be left out of the statistics
           row(check('data-set="stats-daily"', statsDailyOn(), tr('settings.statsDaily'), tr('settings.statsDailyTitle'))),
@@ -50514,6 +50559,9 @@
       if (!el.checked && DIAG.timer) stopDiag();
       log('info', 'settingValue', { what: tr('settings.dev'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderLog();
+      // ([Z-SETTABS] 3.136.0) the tools of the tab "Developer" shown or not: the settings are drawn again after the change (settingsAfterEvent)
+      S.dsupSig = '';
+      if (S.overlay) renderGroups();
     } else if (k === 'remember') {
       // [146] (3.36.0) remembered per release, or not
       setRemember(el.checked);
@@ -50584,6 +50632,13 @@
       writeJson('localStorage', 'dci-weblinks-show', el.checked || null);
       log('info', 'settingValue', { what: tr('settings.webLinksShow'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderGroups();
+    } else if (k === 'work-dates') {
+      // [Z-SETTABS] (3.136.0) as the switch in the corner of the works matrix
+      S.workDates = el.checked;
+      writeJson('localStorage', 'dci-work-dates', S.workDates ? null : false);
+      log('info', 'settingValue', { what: tr('matrix.workDates'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderWorks();
+      refresh();
     } else if (k === 'mx-skiprows') {
       S.mxSkipRows = el.checked;
       writeJson('localStorage', 'dci-mx-skiprows', el.checked ? null : false);
@@ -50656,11 +50711,19 @@
     if (t === 'general') {
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
-      // [3.36.2] the diagnosis off again – [171] (3.38.5) "Developer mode"
+      renderLog();
+      if (LANG !== 'en') setLanguage('en');
+    } else if (t === 'developer') {
+      // [3.36.2] the diagnosis off again – [171] (3.38.5) "Developer mode" ([Z-SETTABS] 3.136.0: its switch is in this tab)
       S.devMode = false;
       if (DIAG.timer) stopDiag();
       renderLog();
-      if (LANG !== 'en') setLanguage('en');
+      // ((review) the notes of developer mode at the entries gone
+      S.dsupSig = '';
+      if (S.overlay) {
+        renderGroups();
+        refresh();
+      }
     } else if (t === 'appearance') {
       setScale(1);
       Object.assign(S, { sortOn: true, sortMode: 'source', instsCommonOn: true }); // [Z-SORT] (3.112.0, review), [Z-INSTLCA] (3.113.0)
@@ -50693,6 +50756,10 @@
         refresh();
       }
       if (S.emojiText) setEmojiText(false); // [Z-SRCTAG] (3.127.0)
+      // ([Z-SETTABS] 3.136.0) the matrix of an entry (from "Staging") – the entries drawn again
+      Object.assign(S, { evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint' });
+      renderGroups();
+      refresh();
       // [Z-SK] (3.40.15) skipped entries in their place again
       if (S.skipHide) {
         S.skipHide = false;
@@ -50728,13 +50795,13 @@
       const was = { on: S.awOn, max: S.awMax };
       S.awOn = true;
       Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
-      Object.assign(S, { roleCodes: 'names', wattrLong: false, mxSkipRows: true });
+      Object.assign(S, { roleCodes: 'names', wattrLong: false, mxSkipRows: true, workDates: true }); // ([Z-SETTABS] 3.136.0, review) work dates on
       if (S.suiteNaming === 'comma') setSuiteNaming('colon'); // [Z-SU] (3.41.1)
       renderWorks();
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint', editNoteMode: 'full', noteDupWorks: true, yellOne: false });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, editNoteMode: 'full', noteDupWorks: true, yellOne: false });
       // ([Z-SNW] 3.83.0, review) the edit note as the defaults write it (Full, works of the same title named)
       if (S.staged.size) writeEditNote();
       S.rows.forEach(updateHint);
@@ -53531,6 +53598,8 @@
       .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }
       /* [Z-SNW] (3.83.0) a heading inside a topic of the settings ("Edit note") */
       .dci-set-h { margin: calc(var(--u, 1px) * 12) 0 calc(var(--u, 1px) * 4); padding-top: calc(var(--u, 1px) * 8); border-top: 1px solid var(--line); font-size: 1em; font-weight: 600; }
+      /* [Z-SETTABS] (3.136.0) the first subheading of a tab without the line above it */
+      .dci-set-pane > .dci-set-h:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
       .dci-dm-pending { color: var(--warn); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
 
       /* The date matrix: one column per date group */

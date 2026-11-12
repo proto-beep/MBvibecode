@@ -38,8 +38,8 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        # ([Z-CONN2] 3.108.0) "ⓘ MusicBrainz" after "ⓘ Connections"; "Developer" only in developer mode
-        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz']
+        # ([Z-CONN2] 3.108.0) "ⓘ MusicBrainz" after "ⓘ Connections"; "Developer" ([Z-SETTABS] 3.136.0) always – its switch is only there
+        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -56,7 +56,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])
+                       k2 == [('developer', True)] and k3 == [('general', True)])  # ([Z-SETTABS] 3.136.0) Developer always, last
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -184,7 +184,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz']
+        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -700,7 +700,7 @@ def case_cache():
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
             # [189] (3.39.3) no tab "Statistics" any more (their own button)
-            results.append(a['tabs'][-4:] == ['Beta', 'Cache', 'ⓘ Connections', 'ⓘ MusicBrainz'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            results.append(a['tabs'][-5:] == ['Beta', 'Cache', 'ⓘ Connections', 'ⓘ MusicBrainz', 'Developer'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -854,7 +854,7 @@ def case_logdiag():
     A) The log open: no "Start diagnosis"; ⚙ Settings → General "Developer mode" off (until 3.38.4 "Diagnosis in the log").
     B) On: the button in the log, stored (dci-dev).
     C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
-    D) On again, "↺ Defaults" of General: off, no button.
+    D) On again, "↺ Defaults" of General ([Z-SETTABS] 3.136.0: of Developer – the switch is only there): off, no button.
     E) [3.38.5] Taken over: with "Developer statistics" (dci-stats-dev, 3.38.2) or "Diagnosis in the log" (dci-log-diag) on before,
        "Developer mode" is on – the button in the log –, the old keys are gone; both off before: off."""
     DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
@@ -867,7 +867,7 @@ def case_logdiag():
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-        H.open_settings(pg, 'general')
+        H.open_settings(pg, 'developer')
         a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
              pg.evaluate("document.querySelector('.dci-set-pane [data-set=dev-mode]').closest('label').textContent.trim()")]
         pg.click('.dci-set-pane [data-set=dev-mode]')
@@ -881,7 +881,7 @@ def case_logdiag():
         c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-dev')")]
         pg.click('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
-        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
+        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=developer]')
         pg.wait_for_timeout(500)
         d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(), pg.evaluate("localStorage.getItem('dci-dev')")]
         print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
@@ -900,7 +900,7 @@ def case_logdiag():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            H.open_settings(pg, 'general')
+            H.open_settings(pg, 'developer')
             e = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
                  pg.evaluate("[localStorage.getItem('dci-dev'), localStorage.getItem('dci-log-diag'), localStorage.getItem('dci-stats-dev')]")]
             print('E) vorher', old, '→', e)
@@ -969,7 +969,7 @@ def case_stats():
         # ([3.61.0, Z-STL] the sentence in the tooltip of "Collecting: on")
         a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {title: ''}).title.startsWith('Statistics are being collected')]")
         print('A) Reiter:', tabs, '| leer, an:', a)
-        results.append(tabs[-3:] == ['cache', 'connections', 'musicbrainz'] and 'statistics' not in tabs and a == [True, True])
+        results.append(tabs[-4:] == ['cache', 'connections', 'musicbrainz', 'developer'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
         pg.click('[data-act=apply]')
         pg.wait_for_timeout(2500)
@@ -1941,7 +1941,7 @@ def case_statsdev():
         pg.wait_for_timeout(500)
         # [171] (3.38.5) shown in "Developer mode" (⚙ Settings → General; until 3.38.4 a switch of its own here)
         b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), !!document.querySelector('[data-set=stats-dev]')]")
-        H.open_settings(pg, 'general')
+        H.open_settings(pg, 'developer')  # ([Z-SETTABS] 3.136.0) the switch only there
         pg.check('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
         H.open_stats(pg)
@@ -3268,7 +3268,7 @@ def case_devtab3108():
         rows = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] tr[data-mbdata]')].map(r => [r.dataset.mbdata, (r.querySelector('a') || {}).href || '',
           (r.querySelector('[data-rw]') || {}).dataset.rw, !!r.querySelector('details:not([open]) summary')])""")
         print('A)', tabs[-3:], rows)
-        results.append(tabs[-2:] == ['connections', 'musicbrainz'] and [r[0] for r in rows] == ['ws2', 'wsjs', 'editor', 'page', 'forms', 'dump', 'caa']
+        results.append(tabs[-3:] == ['connections', 'musicbrainz', 'developer'] and [r[0] for r in rows] == ['ws2', 'wsjs', 'editor', 'page', 'forms', 'dump', 'caa']
                        and all(r[1].startswith('https://') and r[3] for r in rows) and dict((r[0], r[2]) for r in rows)['wsjs'] == 'both')
         pg.evaluate("localStorage.setItem('dci-dev', 'true')")
         pg.reload()
@@ -3297,5 +3297,50 @@ def case_devtab3108():
                        and 'dump test' in tree and 'tzouras' in tree and diag == 'true' and stats and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_settabs3136():
+    """Credits Importer 3.136.0 (collected item Z-SETTABS): the tabs with subheadings (not folding), in an order of priority –
+    General: Language, Log; Appearance: Window, Colours, Entries, Symbols and boxes, Mapping rules; Sources: Order of the sources, Release
+    editor and release page, MusicBrainz search, Text from cover art; Works: Lookups of works, Works matrix, Suites; Staging: Staging and its
+    limits, Edit note, Live comments, Open items; Cache: Remember, Statistics. The matrix of an entry (events shared, lines shown, compact by,
+    attributes) under Appearance → Entries, no more under Staging; "Developer mode" only in the tab "Developer" (always there); the switch of
+    the works matrix "Performance dates onto linked works" also under Works → Works matrix (stored as in the matrix)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        heads = {}
+        sets = {}
+        for tab in ('general', 'appearance', 'sources', 'works', 'staging', 'cache', 'developer'):
+            H.open_settings(pg, tab)
+            pg.wait_for_timeout(200)
+            heads[tab] = pg.evaluate("[...document.querySelectorAll('.dci-set-pane .dci-set-h')].map(h => h.textContent.trim())")
+            sets[tab] = pg.evaluate("[...document.querySelectorAll('.dci-set-pane [data-set], .dci-set-pane [data-act]')].map(x => x.dataset.set || x.dataset.act)")
+        print('A)', heads)
+        results.append(heads['general'] == ['Language', 'Log'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
+                       and heads['sources'][:3] == ['Order of the sources', 'Release editor and release page', 'MusicBrainz search']
+                       and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites'] and heads['staging'][0] == 'Staging and its limits'
+                       and 'Live comments' in heads['staging'] and heads['cache'] == ['Remember', 'Statistics'] and not pg.evaluate("!!document.querySelector('.dci-set-pane details')"))
+        moved = ['ev-shared', 'em-show', 'em-by-default', 'em-attr']
+        print('B) Appearance:', [x for x in sets['appearance'] if x in moved], '| Staging:', [x for x in sets['staging'] if x in moved],
+              '| dev-mode in General:', 'dev-mode' in sets['general'], '| in Developer:', 'dev-mode' in sets['developer'])
+        results.append(all(x in sets['appearance'] for x in moved) and not any(x in sets['staging'] for x in moved)
+                       and 'dev-mode' not in sets['general'] and 'dev-mode' in sets['developer'] and 'work-dates' in sets['works'])
+        H.open_settings(pg, 'works')
+        pg.uncheck('.dci-set-pane [data-set=work-dates]')
+        pg.wait_for_timeout(300)
+        stored = pg.evaluate("localStorage.getItem('dci-work-dates')")
+        print('C) work-dates aus:', stored)
+        results.append(stored == 'false')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
