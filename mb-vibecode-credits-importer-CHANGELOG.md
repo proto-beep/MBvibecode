@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-12 | 3.132.0 – 3.133.0 | – |
+| 2026-11-12 | 3.132.0 – 3.134.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -105,6 +105,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.134.0
+
+- **Text rules of Discogs for every free text** (collected item Z-DGEXCL): a bare "Arranged by X" of a text puts the arranger on the works (S150); the same credit in two lines of the texts of a source – Bandcamp's credits and its about text, "Producer: X" and "Produced by X" – is one row, both lines kept as its sources (S054); a place named in two spellings ("Tonart Studio", "Tonart") is one place (S175); a name credited for the artwork that the text names as a label or company (its ℗ / © line) becomes that label (S159). Role words in Norwegian, Swedish or Danish were read in texts already (S032).
+- **The lineup question for every source** (Z-LINEUPALL; S217): a lineup with lines of tracks in a text ("Track 2: Anna Neu – double bass") asks as Discogs's does – "Pasted text: lineup and track credits".
 
 ### Import 3.133.0
 
