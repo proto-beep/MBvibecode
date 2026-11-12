@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-12 | 3.132.0 | – |
+| 2026-11-12 | 3.132.0 – 3.133.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
@@ -105,6 +105,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.133.0
+
+- **Improvisations as works** (collected item Z-IMPROV; rule S222, a quick switch in "Writers, rights and works", on): "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous compositions by …", "Instant composing by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …" make the players composers of the works, as the other rules of composing. The mark "improvisation" stands at the head of their entries, their columns and each track of the works matrix, its tooltip quoting the line; a title on its own ("Improvisation III", "Impro 2") marks its track too. Switched off, such a line is left out ("improvisations") and no work is made.
+- **Short headings for the quick switches** (Z-QSNAMES): each switch has a short name ("Several days → month", "Concert photos", "Relative dates", "Improvisations as works" …) with its sentence below; the sentences are translated where they were missing.
+- **S122 removed**: lists of songs (S118) are read in every free text of a release of one track – pasted texts and Bandcamp too – without a switch.
 
 ### Import 3.132.0
 
