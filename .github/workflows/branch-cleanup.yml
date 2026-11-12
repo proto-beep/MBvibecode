@@ -1,0 +1,44 @@
+# Deletes the branches whose pull request was merged (the version branches claude/credits-importer-* and the like).
+# Kept always: main, stats (the data branch of the global statistics), claude/stable-* (bookmarks) and every branch
+# without a merged pull request. Run it by hand under Actions → "Branch cleanup" → "Run workflow"; with "dry run"
+# it only lists them. (Since "Automatically delete head branches" is on, merged branches are deleted by GitHub itself.)
+name: Branch cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list the branches, delete nothing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete merged branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$REPO/pulls?state=closed&per_page=100" \
+            --jq '.[] | select(.merged_at != null and .head.repo.full_name == env.REPO) | .head.ref' | sort -u > merged.txt
+          gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name' | sort -u > branches.txt
+          n=0
+          for b in $(comm -12 branches.txt merged.txt); do
+            case "$b" in main|stats|claude/stable-*) continue ;; esac
+            n=$((n + 1))
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "would delete: $b"
+            else
+              gh api -X DELETE "repos/$REPO/git/refs/heads/$b" >/dev/null && echo "deleted: $b"
+            fi
+          done
+          echo "$n branch(es) $([ "$DRY_RUN" = "true" ] && echo 'to delete' || echo 'deleted')"
+          echo "kept: $(comm -23 branches.txt merged.txt | tr '\n' ' ')"
