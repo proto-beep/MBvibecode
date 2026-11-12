@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.20.0
+// @version      1.21.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -49,7 +49,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.20.0';
+  const COMPANION_VERSION = '1.21.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -588,6 +588,7 @@
       .dci-dg-skip { background: #c4c4c4; color: #333; }
       .dci-dg-unmapped { background: #e0a800; }
       .dci-dg-pending { background: #c0392b; }
+      .dci-dg-removed { background: #9a9a9a; }
       /* [1.14.0] the line of a date or a dedication the dashboard took (no credit of its own: no click) */
       .dci-bc-textmark { background: #fff; color: #736dab; box-shadow: inset 0 0 0 1px #736dab; cursor: default; font-weight: normal; }
       html.dci-site-dark .dci-bc-textmark { background: transparent; color: #b9b4e8; box-shadow: inset 0 0 0 1px #b9b4e8; }
@@ -638,6 +639,7 @@
       /* [1.12.0] (Credits Importer 3.46.0, Z-DM) the site shown dark (its own theme, or a dark background): the marks for it */
       html.dci-site-dark .dci-dg-skip { background: #5c5a66; color: #ecebf2; }
       html.dci-site-dark .dci-dg-staged { background: #8a84c4; }
+      html.dci-site-dark .dci-dg-removed { background: #6a6874; }
       html.dci-site-dark .dci-dg-unmapped { color: #1f1d29; }
       html.dci-site-dark .dci-dg-unmapped-line { background-color: rgba(224, 168, 0, 0.22) !important; }
       html.dci-site-dark .${HIGHLIGHT} { background-color: rgba(235, 116, 59, 0.24) !important; }
@@ -1410,7 +1412,8 @@
 
   // --- Status marks: which Discogs credits are in MusicBrainz, staged, open, skipped or not mapped ----
 
-  const MARK_SYMBOL = { mb: '✓', staged: '●', open: '○', skip: '–', unmapped: '!', pending: '✗' };
+  // [1.21.0] (Credits Importer 3.131.0, Z-CPREMOVED) removed: staged, then taken out in the relationship editor by hand – grey, not red
+  const MARK_SYMBOL = { mb: '✓', staged: '●', open: '○', skip: '–', unmapped: '!', pending: '✗', removed: '✗' };
 
   /**
    * The tooltip of a mark: where (track position or role), status, note, checked; [1.8.3] switched off, and what a click
