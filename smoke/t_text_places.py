@@ -721,7 +721,13 @@ Recorded in Elsewhere Town"""
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
-        pg, errs = H.open_mb_edit(ctx, companion=False)
+        # ((3.128.0) "Mastered at" makes a place by itself (S202, Z-MASTERAT): off here – the kinds in turn from the label)
+        roff = H.RULES_OFF
+        H.RULES_OFF = [*(roff or []), 'S202']
+        try:
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+        finally:
+            H.RULES_OFF = roff
         pg.on('dialog', lambda d: d.accept())
         searches = []
         pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
@@ -886,7 +892,13 @@ def case_kindrace():
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
-        pg, errs = H.open_mb_edit(ctx, companion=False)
+        # ((3.128.0) "Mastered at" makes a place by itself (S202, Z-MASTERAT): off here – the kinds in turn from the label)
+        roff = H.RULES_OFF
+        H.RULES_OFF = [*(roff or []), 'S202']
+        try:
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+        finally:
+            H.RULES_OFF = roff
         pg.on('dialog', lambda d: d.accept())
         searches = []
         pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
@@ -1315,6 +1327,159 @@ Copyright 2026 Castles In Space."""
             results.append(not errs)
             pg.close()
             ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_textlines3128():
+    """Credits Importer 3.128.0 (collected items Z-TRACKLINE, Z-PHOTOS, Z-SUPPORTED, Z-MIXMASTERAT, Z-MASTERAT, Z-PROSETEXT, Z-FESTCTX,
+    Z-LOGMORE): the text of Bandcamp's "String Fables" (liner notes, a track list with times as "9,14", "Photos: … by …", "Supported by: …")
+    and "Mastered by Antony Ryan at RedRedPaw." – with ⚙ "Each line not recognized or left out in the log" on.
+    A) No line not recognized (until 3.127.0: 15): the track list and "Total Time" left out as a track list, the three paragraphs as prose
+       (folded, their start shown), "Maciej Lewenstein" below them as the signature of the liner notes.
+    B) Francesca Pfeffer and Aina Lesan photography, credited "photo of Barry Guy" / "photo of Jordina Millà"; both supporters labels
+       (MusicBrainz has no label relationship of support: switched to an artist – miscellaneous support credited "support"); FCM Studio a
+       place mixed at and mastered at; RedRedPaw a place (no label).
+    C) No festival recording ("… my dream became true at the 2017 Ad Libitum … Festival" is another album's story), no date 2017 in the pool.
+    D) The log: each line left out with its reason; for a name without hits "MusicBrainz has no entry of this name"; the sentence of a date."""
+    H.TITLES[:] = ['String Fables', 'Nuc', 'Duna', 'Decodification', 'Agora', 'Quart creixent', 'Plithorikós', 'Essential Sonances']
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 9)]
+    TEXT = """A true music lover typically has dreams that their favorite musicians, who do not normally work one with another, will meet and perform together. I had a dream many years ago that the two Giants of contemporary improvised music, Joëlle Léandre and Barry Guy play a double bass duo together. And my dream became true at the 2017 Ad Libitum in Warsaw in Festival, and was released by Fundacja Słuchaj! on a phenomenal 3 CDs box “Blue Horizon ● Barry Guy@70”. Here is another dream realized by Fundacja Słuchaj! – on “String Fables” Barry Guy encounters Jordina Millà.
+
+Barry has a long experience working in piano trios and piano bass duos: from Howard Riley Trio in the 1960s, through Ithaca Trio with Marilyn Crispell and Paul Lytton, to Aurora Trio with Agustí Fernández and Ramón López, or more recent trio with the phenomenal Japanese pianist, Izumi Kimura and Gerry Hemingway, also on Fundacja Słuchaj!.
+
+String Fables is a masterpiece presentation of the joint concept of this music: lyrical abstraction/abstract lyricism. For me, this is one of the most beautiful piano-bass records of the century!”
+
+Maciej Lewenstein
+
+1. String Fables 9,14
+2. Nuc 4,01
+3. Duna 6,07
+4. Decodification 10,00
+5. Agora 7, 49
+6. Quart creixent 2,45
+7. Plithorikós 7,05
+8. Essential Sonances 12,41
+Total Time: 59,41
+
+Jordina Millà – piano
+Barry Guy - bass
+
+Recorded July 16th 2021 Studio Rosazul, Barcelona
+Mixing & Mastering by Ferran Conangla at FCM Studio, Barcelona
+Mastered by Antony Ryan at RedRedPaw.
+
+Photos: Barry Guy by Francesca Pfeffer, Jordina Millà by Aina Lesan
+Liner notes: Maciej Lewenstein
+Cover Design: SEMAFOR
+Executive Producer: Maciej Karłowski
+
+Supported by: Departament de Cultura de la Generalitat de Catalunya & Gesellschaft zur Verwetrung von Leistungsschutzrechten"""
+    GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? { kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', chips: [...g.querySelectorAll('[data-f=role-credit]')].map(x => x.value), rows: g.querySelectorAll('tr.dci-row').length } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_settings(pg, 'general')
+        pg.check('[data-set=log-lines]')
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(2500)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ign-why')].map(x => x.textContent.replace(/^–\\s*/, '').trim())")
+        prose = pg.evaluate("[...document.querySelectorAll('details.dci-ign-prose summary')].map(x => x.textContent.trim())")
+        print('A) nicht erkannt:', unrec, '| ausgelassen:', ign, '| Fließtext:', prose)
+        results.append(not unrec and ign.count('a line of the track list') == 9 and ign.count('prose (no credit)') == 3 and 'the signature of the liner notes' in ign
+                       and len(prose) == 3 and prose[0].startswith('A true music lover typically has dreams') and prose[0].endswith('…'))
+        g = {n: pg.evaluate(GROUP, n) for n in ('Francesca Pfeffer', 'Aina Lesan', 'Departament de Cultura de la Generalitat de Catalunya',
+                                                 'Gesellschaft zur Verwetrung von Leistungsschutzrechten', 'FCM Studio', 'RedRedPaw')}
+        print('B)', g)
+        results.append(all(g.values()) and 'photo of Barry Guy' in ' '.join(g['Francesca Pfeffer']['chips']) and 'photo of Jordina Millà' in ' '.join(g['Aina Lesan']['chips'])
+                       and g['Departament de Cultura de la Generalitat de Catalunya']['kind'] == 'label'
+                       and g['Gesellschaft zur Verwetrung von Leistungsschutzrechten']['kind'] == 'label'
+                       and g['FCM Studio']['kind'] == 'place' and g['FCM Studio']['rows'] == 2 and g['RedRedPaw']['kind'] == 'place')
+        # (MusicBrainz has no relationship of a label for support: switched to an artist, miscellaneous support credited "support")
+        pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => /Gesellschaft/.test(s.querySelector('.dci-gname strong').textContent)).querySelector('[data-f=match-kind]').scrollIntoView()")
+        pg.locator('section.dci-group', has_text='Gesellschaft zur Verwetrung').locator('[data-f=match-kind]').select_option('artist')
+        pg.wait_for_timeout(800)
+        gv = pg.evaluate(GROUP, 'Gesellschaft zur Verwetrung von Leistungsschutzrechten')
+        print('B2) als Artist:', gv)
+        results.append(bool(gv) and gv['kind'] == 'artist' and gv['chips'] == ['support'])
+        fest = pg.evaluate("document.querySelectorAll('.dci-festival').length")
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin.year])")
+        print('C) Festival-Hinweise:', fest, '| Pool:', pool)
+        results.append(fest == 0 and not any(y == 2017 for _, y in pool))
+        log = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.trim())")
+        print('D)', [l for l in log if 'Left out:' in l][:3], [l for l in log if 'no entry of this name' in l][:2], [l for l in log if 'from the sentence' in l][-1:])
+        results.append(sum('Left out:' in l and 'a line of the track list' in l for l in log) == 9 and any('Barry Guy: MusicBrainz has no entry of this name' in l for l in log)
+                       and any('from the sentence “Recorded July 16th 2021 Studio Rosazul, Barcelona”' in l for l in log))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_rmx3128():
+    """Credits Importer 3.128.0 (collected items Z-RMXONLY, Z-RMXSTAGE, Z-APPLYLABEL; S210, S200): MusicBrainz's tracks "This Machine",
+    "The Wire", "This Machine (TVAM Remix)"; the text "Written, performed and produced by Gordon Chapman-Fox."
+    A) Gordon Chapman-Fox's roles on tracks 1 and 2 only – not on the remix (until 3.127.0 all three).
+    B) The button beside the field: "Search / Link" empty, "Search" for a name, "Link" for an MBID.
+    C) TVAM linked with MusicBrainz's suggestion: that answers the question – his row taken (until 3.127.0 it stayed on Skip until
+       "Take as remixer"), "remix of" too; staged: remixer on the remix's recording (153) and "remix of" (230)."""
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 4)]
+    H.TITLES[:] = ['This Machine', 'The Wire', 'This Machine (TVAM Remix)']
+    TV = H.uid('a1a1a1a1', 3128)
+    H.ARTISTS[3128] = (TV, 'TVAM')
+    H.lt(153, '7950be4d-13a3-48e7-906b-5af562e39544', 'remixer', 'artist', 'recording', ())
+    H.lt(230, 'bfbdb55a-b857-473a-8f2e-a9c09e45c3f5', 'remix', 'recording', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = "Written, performed and produced by Gordon Chapman-Fox."
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name)"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        tracks = pg.evaluate(f"(() => {{ const g = ({SEC})('Gordon Chapman-Fox'); return g ? [...g.querySelectorAll('[data-tcount]')].map(x => x.textContent.trim()) : null; }})()")
+        print('A) Gordon:', tracks)
+        results.append(bool(tracks) and all(t == '2 of 3 tracks' for t in tracks) and len(tracks) >= 2)
+        lab = []
+        sel = "section.dci-group:has(.dci-gname strong:text-is('Gordon Chapman-Fox')) [data-f=artist-input]"
+        btn = "section.dci-group:has(.dci-gname strong:text-is('Gordon Chapman-Fox')) [data-act=artist-set]"
+        lab.append(pg.locator(btn).text_content().strip())
+        pg.fill(sel, 'Gordon Fox')
+        lab.append(pg.locator(btn).text_content().strip())
+        pg.fill(sel, TV)
+        lab.append(pg.locator(btn).text_content().strip())
+        pg.fill(sel, '')
+        lab.append(pg.locator(btn).text_content().strip())
+        print('B) Knopf:', lab)
+        results.append(lab == ['Search / Link', 'Search', 'Link', 'Search / Link'])
+        pg.evaluate(f"({SEC})('TVAM').querySelector('[data-act=name-use][data-mbid=\"{TV}\"]').click()")
+        pg.wait_for_timeout(1200)
+        st = pg.evaluate(f"(() => {{ const g = ({SEC})('TVAM'); return {{ ask: !!g.querySelector('[data-act=rmx-take]'), of: [...g.querySelectorAll('[data-act=rmxof-toggle]')].map(b => b.getAttribute('aria-pressed')) }}; }})()")
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        rr = pg.evaluate("window.__dispatched.filter(a => a.newRelationshipState && [153, 230].includes(a.newRelationshipState.linkTypeID)).map(a => [a.newRelationshipState.linkTypeID, a.newRelationshipState.entity0.gid, a.newRelationshipState.entity1.gid])")
+        print('C) TVAM:', st, '| gestaged:', rr)
+        results.append(not st['ask'] and st['of'] == ['true'] and [153, TV, H.REC[2]] in rr and [230, H.REC[2], H.REC[0]] in rr)
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

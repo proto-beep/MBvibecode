@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.127.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.128.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.128.0 · 2026-11-08
+
+- **Z-RMXSTAGE (S200):** `remixTitleCredits` gives its credits `base` and `details` (before: no rule – R001, no type); `refresh` takes the rows of a remixer of a title once linked by hand (`matchTouched`, `rmxLinkTaken` → `rmxTake`).
+- **Z-RMXONLY (S210):** `remixTrackIdx`; `addCreditRows` (a credit of all tracks, not a remix role) and `addCompanyEntry` (a company without tracks) leave out those tracks.
+- **Z-APPLYLABEL:** `match.searchLink` / `match.searchBtn` / `match.link`, changed in `onInput` (`artist-input`).
+- **Z-DEDBACK:** `S.dedLeft` (from `dedSuggest` when chosen "x", and from `ded-dismiss`), `dedLeftHtml`, case `ded-back` (`dedChoose(key, { x: false })`).
+- **Z-MASTERAT, Z-MIXMASTERAT (S202):** the "by … at …" reader: `verbOf`, `atVerbs` (each verb of "Mixing & Mastering" that has "… At"); `addCompanyEntry` – roles "… At" only: `setCompanyEntityType(company, 'place')`.
+- **Texts (S203–S208):** `lineOfItsOwn` before the rest of `readLine0` – S204 `ownTitles`, `DURATION_END`, "Total Time"; S205 edition; S207 photos (`roleCredit` "photo of X" – `groupCompanies` and `addCompanyEntry` carry it); S208 "Supported by" (C052: no label type, an artist's miscellaneous support; `roleCredit` "support"); S206 the halves of a line split at "/" (English words counted); S203 `proseClause` (no name in small letters in a sentence of 12 words or more) and, at the end of `TEXT.parse`, paragraphs of prose and the signature out of `unrecognized` (`ignProseHtml` folds them). Reasons `tracklist`, `edition`, `translation`, `prose`, `signature`.
+- **Z-FESTCTX (S209):** `FEST_RECORDING` in `findFestivals`; `festival.from` in `festivalHtml`; `datesWithContext` drops a year alone in a long sentence without words of recording, mixing, production ….
+- **Z-LOGMORE:** `log.nameNone`, `log.nameFailed`, `log.dateFrom` (`poolDateFor`), `log.festivalFrom`; `LOG_LINES_KEY` (`dci-log-lines`, topic general) – `log.lineUnrec`, `log.lineIgnored` after `sourceLoaded`.
+- **Tests:** `t_text_places.py textlines3128`, `rmx3128`; `t_text_lists.py text3128r`; `t_notes_companies.py dedbox` (C2) – new, fail on 3.127.0. `text_corpus.json` (a paragraph of prose left out). `t_text_lists.py text3128rr` (review). Adjusted: `t_notes_companies.py festival` (D: the hint quotes its sentence), `t_text_basics.py cloudpond` (B: Soundscape recorded, mixed and mastered at), `t_text_places.py kindcycle` and `kindrace` (S202 off: the kinds in turn from the label).
+- **Review:** a name in prose is skipped only when lower-case and three words long or with words of prose, never a band name of the page ("all songs … by sophie" kept); S204 a line of a track list only without brackets, without "by/at/in/with/feat." and not under a heading ("…:"), a title of the release or a plain title with a duration; S205 an edition line only alone (no " by " / " at " after it); S206 two halves split only when one is English (two words of credits) and the other foreign (none, but a function word of another language) – "Recorded … at Studio X/Mastered by …" stays one line; S207 "photos of B and C" two names; S208 "Supported by" only names (no "on drums"); S203 prose needs two sentences of 18 words or one of 30 and no "Name (" / "Name:" / "Name – " at its start, the signature only of a credit of notes, essay or text; S209 `FEST_RECORDING` in German, Spanish and French too. After the suite: a line of a track list only once nothing else read it (`trackListLine` at the end of `TEXT.parse` – the writers below a title, "1. The Throes" / "Taylor Ho Bynum (…)", need its line; a piece of it taken for a web address goes with it); S202 also the verbs written without a separator ("Recorded Mixed and Mastered by RR at Soundscape").
 
 ## Import 3.127.0 · 2026-11-08
 
