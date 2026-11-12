@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.128.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.129.0, Companion 1.6.0 – 1.20.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.129.0 · 2026-11-08
+
+- **Z-MEMBERBLOCK (S211):** `MEMBER_HEAD` in `TEXT.parse`; `readLine` – a heading (the release's artist, or a capitalised name of ten words at most, no role, no credits heading; the name as written, "U.F.O." keeps its dot) is a group (`groupHead` with `blankOk`: one empty line right after it keeps it), left out as `groupHeading`; the members below as before (S113; playable roles add to `members`).
+- **Z-FANTASYROLE (S212):** at the end of `TEXT.parse` – guessed roles of two to four words without an instrument, voice or role word beside a known credit of the same line and name, and the same among the parts of "→ ? …" (only while they are not more than the line's known credits), left out as `fantasy`.
+- **Z-MEMBERCREATE (S213):** `groups` also from S041 ("X are A and B") and S195; `checkGroupMembers` keeps `S.memberOffers` (name → group, MBID); `memberOfOffer`, `memberAttrIds` (the attribute ids of the member's rows), `memberOfHtml` in the entry's head (`/artist/<mbid>/edit?rels.0.…`, or a note before "Create artist"); `updateGroupHeader` redraws it once linked by hand; `startArtistCreate` adds the relationship; `buildArtistSeed` writes `rels.N.attributes.M.type`.
+- **Z-DEDPLACE (S214):** `untilde` (in `findDedications` and the pipeline of `TEXT.parse`); `dedSuggest` – a place entry of the name: `S.dedPlaces`, a note `dedbox.place` in the box; "Dedicated to X" alone in a line left out as `dedication`.
+- **Tests:** `t_text_lists.py members3129`, `t_sources_bandcamp.py membercreate3129`, `t_notes_companies.py dedplace3129` – new, fail on 3.128.0; `t_text_lists.py members3129r` (review).
+- **Review:** a heading of members only of a name (each word in capitals, "&", "of", "the" … between them; not "The songs are", "All tracks were", "Here We Are", nothing of `MEMBER_NOT_HEAD` – "Live Sound Crew were:"); `untilde` only tildes tight against a word ("John Doe ~ Jane Roe ~ Max Moe" stays apart, S179); S212 no word of a sound maker (`SOUNDISH`: "Buddha machine", "shruti box") nor a number, one name of fantasy at most per name and line, and of "→ ? …" only a part of a list of roles (not "… Pacific coast"); S214 a place of the release checked before any search (`dedPlaceOf`); `S.memberOffers` reset with each import, an offer keeps the members MusicBrainz has (`ids`) and is gone once linked to one of them, to the group, or after "Create artist" with it; the offers also with S087 off (its info then not shown).
 
 ## Import 3.128.0 · 2026-11-08
 
