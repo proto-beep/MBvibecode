@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-13 | 3.137.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -105,6 +106,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.137.0
+
+- **Settings in two columns** (collected item Z-SETTABS2): every setting is a row – its name on the left (right-aligned, no colon), its choices on the right in one line, all starting at the same place; switches in the right column, a short explanation below some of them; a switch that depends on another stands indented below it and is greyed out while that one is off; the colours in fixed columns. A **dot** after a name says that it differs from the default (its tooltip names the default). In a narrow dashboard the name stands above its choices. Clearer names: "View" and "Layout" (were "Entries:" and "Entries"), "Notes of compact entries", "Offer the order of the entries" with “Order:” … below, "Offer ⑃" … The messages of the import are hidden while the settings are open.
+- **Developer mode** is back in General; the tab "Developer" is only there while it is on, as the last tab after "Beta". Sources has a heading **Discogs & Bandcamp** (the track pages of Bandcamp, the aliases of Discogs). Source pages: the switches of the companion as switches, one below the other.
+- **Search in the dashboard** (Z-SEARCH): 🔍 in the head or **/** opens a small field at the top right. It searches as you type – names of the entries (artists, labels, places …), instruments and roles, dates, tracks and works, not tooltips or notes – and goes to the hit and lights it up; ↓ / Enter and ↑ / Shift+Enter to the next and previous hit, the counter "2 / 7". Nothing is unfolded: a hit behind "▸ n more" or not shown in this view lights up the nearest place you can see ("hidden"). Esc closes it.
 
 ### Import 3.136.0
 

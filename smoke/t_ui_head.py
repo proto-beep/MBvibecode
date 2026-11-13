@@ -73,9 +73,10 @@ def case_head():
         # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙; [Z-HB] (3.40.6) in groups:
         # the view | the work | help and settings | ✕ (Q-ay)
         print('   Gruppen:', a1['groups'])
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'window-reset', 'rules', 'log', 'stats-open', 'keys-open', 'settings-open', 'close']
-                       and a1['groups'] == [['view-toggle', 'dci-zoom', 'window-reset'], ['rules', 'log'], ['stats-open', 'keys-open', 'settings-open'], ['close']]
-                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][6][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
+        # ([Z-SEARCH] 3.137.0) 🔍 before the statistics
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'window-reset', 'rules', 'log', 'search-open', 'stats-open', 'keys-open', 'settings-open', 'close']
+                       and a1['groups'] == [['view-toggle', 'dci-zoom', 'window-reset'], ['rules', 'log'], ['search-open', 'stats-open', 'keys-open', 'settings-open'], ['close']]
+                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][7][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
         pg.set_viewport_size({'width': 1500, 'height': 1000})
@@ -1784,6 +1785,166 @@ def case_foot397():
         results.append(c0['color'] == 'rgb(191, 232, 204)')
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_search3137():
+    """Credits Importer 3.137.0 (collected item Z-SEARCH): the search of the dashboard.
+    A) 🔍 in the head (before the statistics) and "/" (not while typing in a field) open a field at the top right, the focus in it.
+    B) As you type (from two letters, no case, no accents): names of entries ("guit" → Multi Man's “Electric Guitar” chip, an entry's name
+       and its MusicBrainz name one hit), the counter "1 / n"; the hit scrolled into view and lit up (.dci-search-hit).
+    C) ↓ / Enter and ↑ go from hit to hit (round); no hit: "No hits"; tooltips and notes are not searched ("drag dates here").
+    D) A hit hidden behind "▸ n more" (an entry's lines shown: 1): the button lit up, "(hidden)"; nothing unfolded.
+    E) Esc closes the search, the dashboard stays open, the focus back on 🔍; 🔍 again opens it with the text kept."""
+    CRED = [('Multi Man', 'Electric Guitar, Acoustic Guitar, Drums, Piano', 3071, ''), ('Zoë Quist', 'Bass', 3072, '')]
+    for n, _r, i, _t in CRED:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CRED]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    COUNT = "document.querySelector('[data-el=search-count]').textContent"
+    LIT = "(() => { const h = document.querySelector('#dci-overlay .dci-search-hit'); return h ? [h.className, h.textContent.trim().slice(0, 40)] : null; })()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.ENTRIES_VIEW = 'matrix'
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) { localStorage.setItem('dci-view', JSON.stringify('compact')); localStorage.setItem('dci-em-show', '1'); }")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(500)
+        head = pg.evaluate("[...document.querySelectorAll('.dci-head [data-act]')].map(x => x.dataset.act)")
+        order = head.index('search-open') < head.index('stats-open') if 'search-open' in head else False
+        # "/" in a field of the dashboard is typed there
+        pg.click('[data-f=manual-artist]')
+        pg.keyboard.press('/')
+        typed = pg.evaluate("document.querySelector('[data-f=manual-artist]').value")
+        pg.fill('[data-f=manual-artist]', '')
+        pg.locator('#dci-overlay .dci-body').click(position={'x': 3, 'y': 3})
+        pg.keyboard.press('/')
+        pg.wait_for_timeout(200)
+        a = pg.evaluate("({ open: !document.querySelector('[data-el=search]').hidden, focus: document.activeElement.dataset.f, pressed: document.querySelector('.dci-head [data-act=search-open]').getAttribute('aria-expanded') })")
+        print('A)', order, repr(typed), a)
+        results.append(order and typed == '/' and a == {'open': True, 'focus': 'search', 'pressed': 'true'})
+        pg.keyboard.type('GUIT')
+        pg.wait_for_timeout(400)
+        b1 = [pg.evaluate(COUNT), pg.evaluate(LIT)]
+        pg.fill('[data-f=search]', 'zoe')
+        pg.wait_for_timeout(400)
+        b2 = [pg.evaluate(COUNT), pg.evaluate(LIT)]
+        print('B)', b1, b2)
+        results.append(b1[0].startswith('1 / ') and b1[1] and 'guitar' in b1[1][1].lower() and b2[0] == '1 / 1' and b2[1] and b2[1][1] == 'Zoë Quist')
+        pg.fill('[data-f=search]', 'guitar')
+        pg.wait_for_timeout(400)
+        n = int(pg.evaluate(COUNT).split('/')[1].split()[0])
+        seq = []
+        for k in ['ArrowDown', 'Enter', 'ArrowUp']:
+            pg.keyboard.press(k)
+            pg.wait_for_timeout(120)
+            seq.append(pg.evaluate(COUNT).split(' (')[0])
+        pg.fill('[data-f=search]', 'drag dates')
+        pg.wait_for_timeout(400)
+        none = pg.evaluate(COUNT)
+        print('C)', n, seq, none)
+        results.append(n >= 2 and seq == ['2 / %d' % n, '%d / %d' % (min(3, n) if n >= 3 else 1, n), '2 / %d' % n] and none == 'No hits')
+        pg.fill('[data-f=search]', 'piano')
+        pg.wait_for_timeout(400)
+        d = [pg.evaluate(COUNT), pg.evaluate(LIT), pg.evaluate("[...document.querySelectorAll('.dci-em-chipname')].some(x => /piano/i.test(x.textContent))")]
+        print('D)', d)
+        results.append(d[0] == '1 / 1 (hidden)' and d[1] and 'dci-em-more' in d[1][0] and not d[2])
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(200)
+        e = pg.evaluate("({ open: !document.querySelector('[data-el=search]').hidden, dash: !document.getElementById('dci-overlay').hidden, focus: document.activeElement.dataset.act || '' })")
+        pg.click('.dci-head [data-act=search-open]')
+        pg.wait_for_timeout(300)
+        kept = pg.evaluate("document.querySelector('[data-f=search]').value")
+        print('E)', e, kept)
+        results.append(e == {'open': False, 'dash': True, 'focus': 'search-open'} and kept == 'piano')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_search3137r():
+    """Credits Importer 3.137.0 (review of Z-SEARCH): the search after the dashboard is built anew, Esc with a popover open, a role of a
+    compact line (legacy).
+    A) The search open, the language switched (the dashboard built anew): closed, and one click on 🔍 opens it again.
+    B) The search open and "⚙ Options ▾" of the footer open: Esc closes the options first, the next the search, the dashboard stays.
+    C) The view compact, the entries as before (legacy): "bass" is found at the role of its line, not hidden.
+    D) "/" in a field of MusicBrainz's page is typed there; ✕ of the box puts the focus back on 🔍."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) localStorage.setItem('dci-view', JSON.stringify('compact'))")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        OPEN = "!document.querySelector('[data-el=search]').hidden"
+        pg.click('.dci-head [data-act=search-open]')
+        pg.wait_for_timeout(200)
+        H.open_settings(pg, 'general')
+        pg.select_option('.dci-set-pane [data-f=lang]', 'de')
+        pg.wait_for_timeout(800)
+        a0 = pg.evaluate(OPEN)
+        pg.click('.dci-head [data-act=search-open]')
+        pg.wait_for_timeout(200)
+        a1 = pg.evaluate(OPEN)
+        pg.select_option('.dci-set-pane [data-f=lang]', 'en') if pg.locator('.dci-set-pane [data-f=lang]').count() else None
+        pg.wait_for_timeout(800)
+        print('A) nach dem Neuaufbau offen:', a0, '| ein Klick:', a1)
+        results.append(a0 is False and a1 is True)
+        if not pg.evaluate(OPEN):
+            pg.click('.dci-head [data-act=search-open]')
+            pg.wait_for_timeout(200)
+        # ("⚙ Options ▾" is there in a dashboard narrower than about 1,100 px)
+        pg.set_viewport_size({'width': 1000, 'height': 900})
+        pg.wait_for_timeout(300)
+        pg.locator('[data-act=foot-opts]').evaluate('b => { b.click(); b.focus(); }')
+        pg.wait_for_timeout(200)
+        b0 = pg.evaluate("!!document.querySelector('[data-act=foot-opts][aria-expanded=true]')")
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(200)
+        b1 = [pg.evaluate("!!document.querySelector('[data-act=foot-opts][aria-expanded=true]')"), pg.evaluate(OPEN)]
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(200)
+        b2 = [pg.evaluate(OPEN), pg.evaluate("!document.getElementById('dci-overlay').hidden")]
+        print('B) Optionen offen:', b0, '| Esc – Optionen zu, Suche offen:', b1, '| dann Suche zu, Dashboard offen:', b2)
+        results.append(b0 and b1 == [False, True] and b2 == [False, True])
+        pg.click('.dci-head [data-act=search-open]')
+        pg.wait_for_timeout(200)
+        pg.fill('[data-f=search]', 'bass')
+        pg.wait_for_timeout(400)
+        c = [pg.evaluate("document.querySelector('[data-el=search-count]').textContent"), pg.evaluate("(document.querySelector('#dci-overlay .dci-search-hit') || {}).className || ''")]
+        print('C)', c)
+        results.append(not c[0].endswith('(hidden)') and c[0] != 'No hits' and 'dci-row' not in c[1] and c[1] != '')
+        pg.click('[data-el=search] .dci-search-box [data-act=search-open]')
+        pg.wait_for_timeout(200)
+        d1 = pg.evaluate("document.activeElement.dataset.act || ''")
+        pg.evaluate("(() => { const i = document.createElement('input'); i.id = 'mbfield'; document.body.prepend(i); })()")
+        pg.focus('#mbfield')
+        pg.keyboard.press('/')
+        pg.wait_for_timeout(200)
+        d2 = [pg.evaluate("document.getElementById('mbfield').value"), pg.evaluate(OPEN)]
+        print('D) Fokus nach ✕:', d1, '| "/" im Feld der Seite:', d2)
+        results.append(d1 == 'search-open' and d2 == ['/', False])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

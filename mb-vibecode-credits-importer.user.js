@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.136.0
+// @version      3.137.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.136.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.136.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.137.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.137.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.136.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.137.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1221,8 +1221,8 @@
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
       "settings.entries": "Entries",
-      "settings.emSide": "Compact entries",
-      "settings.emSide.beside": "notes beside the lines",
+      "settings.emSide": "Notes of compact entries",
+      "settings.emSide.beside": "beside the lines",
       "settings.emSide.besideTitle": "The relationships to stage, the notes and “＋ Another role” in a column beside the lines of a compact entry (default).",
       "settings.emSide.lines": "in the lines",
       "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
@@ -1306,7 +1306,7 @@
       "settings.t.connections": "ⓘ Connections",
       "settings.t.musicbrainz": "ⓘ MusicBrainz",
       "settings.t.developer": "Developer",
-      "dev.intro": "For reporting issues and improving the script – its tools appear below while “Developer mode” is on.",
+      "dev.intro": "For reporting issues and improving the script.",
       "dev.diag": "Diagnosis of the relationship editor (also in the log):",
       "dev.stats": "Developer statistics …",
       "dev.statsTitle": "Opens the statistics – the developer part is at their end",
@@ -1457,15 +1457,15 @@
       "settings.logLines": "Each line not recognized or left out in the log",
       "settings.logLinesTitle": "Off: the log gives their number after an import. On: each line with its reason.",
       "settings.discogsHint": "With the companion script in a Discogs or Bandcamp tab: when the view follows the dashboard and what it shows (the cover only on Discogs). It shows the source that is loaded.",
-      "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
-      "settings.awMax": "At most per artist (works and recordings together)",
+      "settings.awOn": "Look up works of the people involved",
+      "settings.awMax": "At most per artist",
       "settings.awCost": "= {req} requests, about {sec} s per artist",
       "settings.awSlow": "Name a large catalogue after",
       "settings.awSlowSec": "seconds and from",
       "settings.awSlowN": "entries to read",
       "settings.awDays": "Keep the works read for (days)",
       "settings.awAsk": "Ask before the work lookups from",
-      "settings.awAskTracks": "tracks without a work (0: never)",
+      "settings.awAskTracks": "tracks without a work",
       "settings.awClear": "Clear the stored works",
       "settings.awStored.one": "{n} artist stored",
       "settings.awStored.other": "{n} artists stored",
@@ -1484,7 +1484,7 @@
       "settings.emAttr": "Attributes in the full matrix of an entry",
       "settings.emAttrTitle": "Together: one column, each attribute with its word. Separate: a column per attribute (wider). Also switchable above each matrix.",
       "settings.emShow": "Lines of a block shown before “▸ n more”",
-      "settings.emBy": "An entry, compact, at first",
+      "settings.emBy": "Compact entries at first",
       "settings.aria.awMax": "At most works and recordings per artist",
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
@@ -1816,7 +1816,7 @@
       "insts.commonAll": "instruments",
       "log.instsCommon": "{name}: the common level of the instruments added – {what}",
       "log.instsCommonOff": "{name}: the row of the common level taken out",
-      "settings.instsCommon": "Offer ⑃ – the common level of an entry's instruments as a row",
+      "settings.instsCommon": "Offer ⑃",
       "settings.instsCommonTitle": "Beside “Instruments: per track | on the release”: a row of the level all of them share (saxophones and a flute: woodwind)",
       "insts.track": "per track",
       "insts.release": "on the release",
@@ -2012,7 +2012,25 @@
       "sort.etype.company": "Not looked up yet",
       "sort.etype.other": "Others",
       "log.sortMode": "Order of the entries: {mode}",
-      "settings.sortOn": "Offer the order of the entries (“Order:” in the line “Level for all rows”)",
+      "settings.sortOn": "Offer the order of the entries",
+      "settings.dflt": "Default: {v}",
+      "settings.dfltAria": "Changed – default: {v}",
+      "settings.view": "View",
+      "settings.layout": "Layout",
+      "settings.rulesPlaceLbl": "Place",
+      "settings.editNoteKind": "Content",
+      "settings.h.dgbc": "Discogs & Bandcamp",
+      "settings.h.dev": "Developer",
+      "settings.devHint": "Shows the tab “{tab}”: tools for reporting issues and improving the script",
+      "settings.sortOnHint": "“{order}:” in the line “{line}”",
+      "settings.instsCommonHint": "The common level of an entry's instruments as a row",
+      "settings.afterEditHint": "Next to “Enter edit” (Ctrl+Alt+Enter): submits, then opens the relationship editor with the import",
+      "settings.afterEditBgHint": "Bandcamp, Discogs – Harmony’s page stays in front",
+      "settings.gapLineHint": "With a Discogs or Bandcamp link: how many of its relationships are missing",
+      "settings.awOnHint": "Compares the tracks without a work with the works of the release's artists, writers and musicians",
+      "settings.awMaxHint": "Works and recordings together",
+      "settings.awAskHint": "0: never",
+      "settings.yellOneHint": "Not “must” and “may” apart",
       "settings.sortOnTitle": "Off: the entries always in the source's order, no choice",
       "yell.can": "● {n}",
       "yell.all": "● {n}",
@@ -2044,7 +2062,7 @@
       "log.yellOk": "Confirmed: {what}",
       "log.yellNo": "Taken back: {what}",
       "log.yellUndo": "Opened again: {what}",
-      "settings.yellOne": "One counter of open points (not “must” and “may” apart)",
+      "settings.yellOne": "One counter of open points",
       "settings.yellOneTitle": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (may, yellow) – apart, or in one counter",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
@@ -2166,9 +2184,9 @@
       "afterEdit.buttonTitleBg": "Credits Importer: “Enter edit” – MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads the credits of its source – {links} · {keys}",
       "afterEdit.keys": "Ctrl+Alt+Enter",
       "afterEdit.keysMac": "Control+Option+Return",
-      "settings.afterEdit": "Release editor: the button “Enter edit & import credits” next to “Enter edit” (Ctrl+Alt+Enter) – submits, then opens the relationship editor with the import",
-      "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
-      "settings.gapLine": "On the page of a release with a Discogs or Bandcamp link, say how many of its relationships are missing",
+      "settings.afterEdit": "Button “Enter edit & import credits” in the release editor",
+      "settings.afterEditBg": "Imported with Harmony: open in a background tab",
+      "settings.gapLine": "Say on the release page what is missing",
       "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
       "settings.gapNone": "Also when nothing seems to be missing",
       "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
@@ -2643,6 +2661,17 @@
       "stats.global.st.no_votes": "no votes",
       "stats.global.st.deleted": "cancelled",
       "stats.buttonTitle": "Statistics: what you entered into MusicBrainz with the dashboard",
+      "search.open": "Search the dashboard (/)",
+      "search.label": "Search in the dashboard",
+      "search.ph": "Names, instruments, dates, works …",
+      "search.prev": "Previous hit (↑, Shift+Enter)",
+      "search.next": "Next hit (↓, Enter)",
+      "search.close": "Close the search (Esc)",
+      "search.none": "No hits",
+      "search.count": "{i} / {n}",
+      "search.hidden": "hidden",
+      "search.hiddenTitle": "In a folded block or not shown in this view: the place lit up is the nearest one you can see",
+      "keys.search": "Search in the dashboard (Esc closes it)",
       "stats.foldTitle": "Fold the statistics in (as their button does)",
       "stats.t.releases": "releases",
       "stats.t.rels": "relationships",
@@ -2911,7 +2940,7 @@
       "settings.rememberTitle": "On: a release imported again from the same source comes back as you left it – its rows (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, the MusicBrainz entity chosen by hand), the date pool, track pool and date matrix, the source and media chosen, “Skip works”, “Leave out the about text”, the credits switched off on the source pages, the frames of its images. Off: none of it is stored or read (what is stored stays until it is forgotten).",
       "settings.rememberMax": "Releases to remember:",
       "settings.rememberMaxTitle": "0 – 100; 0 switches remembering off. Beyond it, the release used longest ago is forgotten first.",
-      "settings.rememberMaxHint": "(0 – 100, 0 = off)",
+      "settings.rememberMaxHint": "0 – 100, 0 = off",
       "settings.rememberForget": "Forget all remembered releases …",
       "settings.rememberSize.one": "{n} release · {size}",
       "settings.rememberSize.other": "{n} releases · {size}",
@@ -22065,12 +22094,13 @@
     }
     if (fresh) S.msgsFolded = false;
     const n = S.messages.length;
-    const folded = n > 1 && !!S.msgsFolded;
+    // ([Z-SETTABS2] 3.137.0, review) not folded while the settings are open: "Only the settings are open" stays in view
+    const folded = n > 1 && !!S.msgsFolded && !S.settingsOpen;
     const head = n > 1 ? `<div class="dci-msgs-head"><button type="button" class="dci-textbtn dci-msgs-fold" data-act="msgs-fold" aria-expanded="${!folded}"
       title="${esc(tr(folded ? 'msgs.unfold' : 'msgs.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('msgs.count', { n }))}</button></div>` : '';
     const x = (m) => `<button type="button" class="dci-msg-x" data-act="msg-close" data-id="${m.id}" title="${esc(tr('msgs.close'))}" aria-label="${esc(tr('msgs.close'))}">${ico('close')}</button>`;
     $('msgs').innerHTML = head + (folded ? '' : S.messages.map((m) => `
-      <div class="dci-msg dci-msg-${m.kind}" data-msg="${m.id}">${esc(tr(m.key, m.params))}${m.action
+      <div class="dci-msg dci-msg-${m.kind}" data-msg="${m.id}" data-msgkey="${esc(m.key)}">${esc(tr(m.key, m.params))}${m.action
         ? ` <button type="button" class="dci-inline-btn" data-act="${esc(m.action.act)}" data-arg="${esc(m.action.arg || '')}">${esc(tr(m.action.label, m.params))}</button>` : ''}${m.closeButton
         ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}${x(m)}</div>`).join(''));
   }
@@ -29198,7 +29228,8 @@
     const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l) || S.emOpen.has(l.id);
     const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
     const hidden = b.lines.filter((l) => !shown.includes(l));
-    const moreBtn = hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
+    // ([Z-SEARCH] 3.137.0) the names it hides for the search (data-search)
+    const moreBtn = hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}" data-search="${esc(hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(' · '))}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
       : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : '';
     // [Z-DSUP] (3.106.0, S173) below the first block of instruments and voices: the roles only on MusicBrainz
     const mbOnly = insts || ((b.kind === 'instrument' || b.kind === 'vocal') && m.blocks.find((x) => x.kind === 'instrument' || x.kind === 'vocal') === b) ? dsupMbOnlyRows(a, t.cols) : '';
@@ -29506,7 +29537,8 @@
         // ([Z-CIN] 3.69.0, S103) the instruments and roles one below the other, in a block of their own
         const stack = ruleOn('S103');
         return `<div class="dci-em-cl${e.skip ? ' dci-em-skip' : ''}${e.ghost ? ' dci-em-clghost' : ''}${stack ? ' dci-em-clstack' : ''}" ${e.skip || e.ghost ? 'data-emskip' : 'data-emev'}="${esc(e.key)}">${evShortHtml(e, a)} <span class="dci-em-sep" aria-hidden="true"></span>
-          ${stack ? '<span class="dci-em-cllist">' : ''}${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
+          ${stack ? '<span class="dci-em-cllist">' : ''}${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}"
+            data-search="${esc(ls.filter((l) => !shown.includes(l)).map((l) => l.rows[0].primaryText || l.rows[0].raw).join(' · '))}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
           : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}${stack ? '</span>' : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
       }));
@@ -45716,6 +45748,14 @@
         // [3.36.3] the keyboard shortcuts below the head
         setKeysOpen(!S.keysOpen);
         break;
+      // [Z-SEARCH] (3.137.0) the search: 🔍 in the head (or /), its arrows and ✕
+      case 'search-open':
+        setSearchOpen(!S.searchOpen, !!btn.closest('[data-el="search"]'));
+        break;
+      case 'search-prev':
+      case 'search-next':
+        searchGo(act === 'search-next' ? 1 : -1);
+        break;
       case 'settings-reset':
         if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
         break;
@@ -46625,7 +46665,7 @@
     if (f === 'insts-common-on') {
       S.instsCommonOn = el.checked;
       writeJson('localStorage', 'dci-insts-common', el.checked ? null : false);
-      log('info', 'settingValue', { what: tr('settings.instsCommon'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      log('info', 'settingValue', { what: `${tr('settings.instsCommon')} (${tr('settings.instsCommonHint')})`, value: tr(el.checked ? 'common.on' : 'common.off') });
       renderGroups();
       refresh();
       return;
@@ -47563,6 +47603,8 @@
     plus: '<path d="M8 3v10M3 8h10"/>',
     // [189] (3.39.3) the statistics: a small bar chart
     stats: '<path d="M2.5 13.5h11M4.5 11V8M8 11V4M11.5 11V6.5"/>',
+    // [Z-SEARCH] (3.137.0) a magnifier
+    search: '<circle cx="6.8" cy="6.8" r="4.3"/><path d="M10 10l4 4"/>',
   };
   const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
   /** A button of the head: its symbol, the word only in a wide dashboard (the tooltip and aria-label always). */
@@ -47574,6 +47616,7 @@
     const overlay = document.createElement('div');
     overlay.id = 'dci-overlay';
     overlay.hidden = true;
+    S.searchOpen = false; // ([Z-SEARCH] 3.137.0, review) a dashboard built anew has its search closed
     overlay.lang = LANG;
     const levelBtn = (level) => `<button type="button" data-act="bulk-level" data-level="${level}">${esc(tr(`level.${level}`))}</button>`;
     overlay.innerHTML = `
@@ -47595,6 +47638,7 @@
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
             <span class="dci-head-sep" aria-hidden="true"></span>
+            ${headBtn('search-open', 'search', '', tr('search.open'), 'aria-expanded="false" aria-controls="dci-search"')}
             ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
@@ -47603,6 +47647,7 @@
           </div>
         </header>
         <div class="dci-body" data-el="body">
+          <div class="dci-searchbar" id="dci-search" data-el="search" hidden></div>
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
           <div class="dci-settings dci-stats-dock" data-el="stats" role="region" aria-label="${esc(tr('stats.title'))}" hidden></div>
           <div class="dci-keys" id="dci-keys" data-el="keys" role="region" aria-label="${esc(tr('keys.title'))}" hidden></div>
@@ -47959,9 +48004,10 @@
   // [189] (3.39.3) the statistics with a button of their own in the head (until 3.39.2 the tab "Statistics" after "Cache")
   // ([Z-QSP] 3.75.0) the profiles right after General
   // ([Z-CONN2] 3.108.0) what is taken from MusicBrainz; ([Z-DEVTAB] 3.108.0) the developer's settings – only in developer mode (settingTopics)
-  const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer'];
-  // ([Z-SETTABS] 3.136.0) the tab "Developer" always – its switch "Developer mode" is only there; the rest of it in developer mode
-  const settingTopics = () => SETTING_TOPICS;
+  // ([Z-SETTABS2] 3.137.0) "Beta" and "Developer" at the bottom
+  const SETTING_TOPICS = ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'cache', 'connections', 'musicbrainz', 'beta', 'developer'];
+  // ([Z-SETTABS2] 3.137.0) the tab "Developer" only in developer mode again (its switch back in General; 3.136.0: always)
+  const settingTopics = () => SETTING_TOPICS.filter((k) => k !== 'developer' || S.devMode);
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -48024,7 +48070,7 @@
     'em-ev': 'dates', 'em-line': 'dates', 'em-block': 'dates', row: 'dates' };
 
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -48035,7 +48081,7 @@
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
     musicbrainz: [],
-    developer: [GAP_WHY_KEY, DSUP_WHY_KEY, DEV_KEY], // ([Z-SETTABS] 3.136.0) developer mode only here
+    developer: [GAP_WHY_KEY, DSUP_WHY_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -49897,27 +49943,63 @@
   };
 
   function settingsHtml() {
-    const check = (attr, on, label, title = '') => `<label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}> ${esc(label)}</label>`;
-    const num = (name) => {
+    const num = (name, dis = false) => {
       const d = AW_SETTINGS[name];
-      return `<input type="number" data-set="${name}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[name]}" aria-label="${esc(tr(`settings.aria.${name}`))}">`;
+      return `<input type="number" data-lb data-set="${name}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[name]}" aria-label="${esc(tr(`settings.aria.${name}`))}"${dis ? ' disabled' : ''}>`;
     };
-    const row = (html) => `<div class="dci-set-row">${html}</div>`;
     // [Z-SETTABS] (3.136.0) a subheading of a tab (not folding)
     const sh = (key) => `<h4 class="dci-set-h" data-el="set-${key}">${esc(tr(`settings.h.${key}`))}</h4>`;
+    // [Z-SETTABS2] (3.137.0) a setting in two columns: its name on the left (right-aligned, without a colon), its choices on the right in
+    // one line (mockup "A compact"); a dot after the name when it differs from the default (its tooltip names the default); a short
+    // explanation below the choices. A control marked ` data-lb` is labelled by the name (<label for>), a group marked ` data-lbg` by its id.
+    let fieldN = 0;
+    const plain = (t) => String(t).replace(/[\s\u00a0]*[:：]\s*$/u, '');
+    // (a name starts with a capital: "apply automatically" of the date bar is "Apply automatically" here)
+    const cap = (t) => { const x = plain(t); return x.charAt(0).toLocaleUpperCase() + x.slice(1); };
+    const dotHtml = (changed, defText) => (changed ? ` <span class="dci-set-dot" data-el="set-dot" role="img" title="${esc(tr('settings.dflt', { v: defText }))}"
+      aria-label="${esc(tr('settings.dfltAria', { v: defText }))}"></span>` : '');
+    const hintHtml = (h) => (h ? `<span class="dci-set-hint">${esc(h)}</span>` : '');
+    const onOff = (v) => tr(v ? 'common.on' : 'common.off');
+    const field = (label, ctl, o = {}) => {
+      const id = `dci-sf-${++fieldN}`;
+      const one = / data-lb(?=[\s>])/.test(ctl);
+      const name = `${esc(cap(label))}${o.dflt ? dotHtml(o.dflt[0], o.dflt[1]) : ''}`;
+      const tip = o.title ? ` title="${esc(o.title)}"` : '';
+      return `<div class="dci-set-row dci-set-field${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}>${one
+        ? `<label class="dci-set-lbl" for="${id}"${tip}>${name}</label>` : `<span class="dci-set-lbl" id="${id}-l"${tip}>${name}</span>`}<span class="dci-set-ctl">${
+        ctl.replace(/ data-lb(?=[\s>])/, ` id="${id}"`).replace(/ data-lbg(?=[\s>])/, ` aria-labelledby="${id}-l"`)}${hintHtml(o.hint)}</span></div>`;
+    };
+    // a switch: in the right column (indented below the switch it depends on: `sub`; greyed out and not to be used while that is off: `off`)
+    const cb = (attr, on, label, title = '', o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}>
+      <span class="dci-set-lbl"></span><span class="dci-set-ctl"><label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}${o.off ? ' disabled' : ''}> ${esc(cap(label))}</label>${
+      o.def === undefined ? '' : dotHtml(!!on !== !!o.def, onOff(o.def))}${hintHtml(o.hint)}</span></div>`;
+    // anything else in the right column (the colour pickers below their switch, a button)
+    const right = (html, o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}><span class="dci-set-lbl"></span><span class="dci-set-ctl">${html}</span></div>`;
+    // a choice of a few: its buttons (pressed: the value); the default named by its text
+    const seg = (act, attr, values, cur, text, o = {}) => `<span class="dci-seg dci-seg-small" role="group" data-lbg${o.segEl ? ` data-el="${o.segEl}"` : ''}>${values.map((v) => `<button type="button"
+      data-act="${act}"${o.btn || ''} data-${attr}="${v}" aria-pressed="${cur === v}"${o.titles ? ` title="${esc(o.titles(v))}"` : ''}>${esc(text(v))}</button>`).join('')}</span>`;
+    const segField = (label, act, attr, values, cur, def, text, o = {}) => field(label, seg(act, attr, values, cur, text, o), { ...o, dflt: [cur !== def, text(def)] });
+    const numField = (label, attr, val, def, o = {}) => field(label, `<input type="number" data-lb ${attr} value="${val}"${o.off ? ' disabled' : ''}>${o.after ? ` ${esc(o.after)}` : ''}`,
+      { ...o, dflt: [Number(val) !== Number(def), String(def)] });
     const req = Math.ceil(S.awMax / 100);
+    const awOff = !S.awOn;
+    const awDef = (name) => [S[name] !== AW_SETTINGS[name].def, String(AW_SETTINGS[name].def)];
+    const gapOn = readJson('localStorage', GAP_ON_KEY, true) !== false;
     const bodies = {
       general: () => [
         sh('language'),
-        row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
+        field(tr('lang.label'), `<select data-lb data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select>`),
         sh('log'),
-        row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
+        cb('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'), '', { def: true }),
         // [Z-LOGMORE] (3.128.0) each line not recognized or left out in the log
-        row(`<label title="${esc(tr('settings.logLinesTitle'))}"><input type="checkbox" data-set="log-lines" ${S.logLines ? 'checked' : ''}> ${esc(tr('settings.logLines'))}</label>`),
-        row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
-        // ([Z-SETTABS] 3.136.0: "Developer mode" only in the tab "Developer")
+        cb('data-set="log-lines"', S.logLines, tr('settings.logLines'), tr('settings.logLinesTitle'), { def: false }),
+        field(tr('settings.logPlace'), `<select data-lb data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select>`,
+          { dflt: [S.logPlace !== 'window', tr('log.place.window')] }),
         // [Z-QSP] (3.75.0) what was imported and exported, folded; never cleared
         ioLogHtml(),
+        // [Z-SETTABS2] (3.137.0) "Developer mode" back here (3.136.0: in its tab) – the tab "Developer" is only there while it is on
+        sh('dev'),
+        cb('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'), { def: false, hint: tr('settings.devHint', { tab: tr('settings.t.developer') }) }),
       ],
       // [Z-QSP] (3.75.0, S110) the profiles
       profiles: () => [profilesPaneHtml()],
@@ -49925,188 +50007,187 @@
       // entries (with the matrix of an entry from "Staging"), symbols and boxes, rules
       appearance: () => [
         sh('window'),
-        row(`${esc(tr('zoom.label'))} <button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
-          <span data-el="zoom-set">${Math.round(S.scale * 100)} %</span> <button type="button" class="dci-headbtn" data-act="zoom-in" aria-label="${esc(tr('zoom.larger'))}">A+</button>`),
-        row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
+        field(tr('zoom.label'), `<button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
+          <span data-el="zoom-set">${Math.round(S.scale * 100)} %</span> <button type="button" class="dci-headbtn" data-act="zoom-in" aria-label="${esc(tr('zoom.larger'))}">A+</button>`,
+        { dflt: [Math.round(S.scale * 100) !== 100, '100 %'] }),
+        field(tr('settings.place'), `<span class="dci-seg dci-seg-small" role="group" data-lbg>${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
-          : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
+          : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`, { dflt: [inPage(), tr('settings.place.window')] }),
         // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
-        ...['window', 'page'].map((where) => {
-          const label = tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow');
-          return row(`<span title="${esc(tr(where === 'page' ? 'settings.themePageTitle' : 'settings.themeWindowTitle'))}">${esc(label)}</span> <span class="dci-seg dci-seg-small"
-            role="group" data-el="theme-${where}" aria-label="${esc(label)}">${THEMES.map((v) => `<button type="button" data-act="theme-set" data-where="${where}" data-theme="${v}"
-            aria-pressed="${themeSetting(where) === v}">${esc(tr(`settings.theme.${v}`))}</button>`).join('')}</span>`);
-        }),
+        ...['window', 'page'].map((where) => segField(tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow'), 'theme-set', 'theme', THEMES, themeSetting(where),
+          where === 'page' ? 'light' : 'auto', (v) => tr(`settings.theme.${v}`), { title: tr(where === 'page' ? 'settings.themePageTitle' : 'settings.themeWindowTitle'), segEl: `theme-${where}`, btn: ` data-where="${where}"` })),
         sh('colours'),
-        row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
-        row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
+        cb('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'), { def: true }),
+        right(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
-          <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`),
+          <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`, { sub: true, off: !S.levelColors }),
         // [3.32.4] the colours of the kinds of entries (item 108)
-        row(check('data-set="kind-colors"', S.kindColors, tr('settings.kindColors'), tr('settings.kindColorsTitle'))),
-        row(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
+        cb('data-set="kind-colors"', S.kindColors, tr('settings.kindColors'), tr('settings.kindColorsTitle'), { def: true }),
+        right(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
           value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
-          <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`),
+          <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`, { sub: true, off: !S.kindColors }),
         // [Z-DM] (3.46.0; Q-ee) colours of their own for the dark theme (off: the light ones made lighter; on: those to begin with)
-        row(check('data-set="dark-colors"', S.darkColors, tr('settings.darkColors'), tr('settings.darkColorsTitle'))),
+        cb('data-set="dark-colors"', S.darkColors, tr('settings.darkColors'), tr('settings.darkColorsTitle'), { def: false }),
         ...(S.darkColors ? [
-          row(`<span class="dci-lvl-pick dci-dark-pick" data-el="dark-levels">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color-dark"
+          right(`<span class="dci-lvl-pick dci-dark-pick" data-el="dark-levels">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color-dark"
             data-level="${level}" value="${darkPaletteColor('level', level)}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColorDark', { level: tr(`level.${level}`) }))}">
             <span class="dci-cl-level" data-level="${level}" style="${darkChipStyle('level', level)}">${esc(tr(`level.${level}`))}</span></label>`).join('')}
-            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="level" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`),
-          row(`<span class="dci-lvl-pick dci-kind-pick dci-dark-pick" data-el="dark-kinds">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}" style="${darkChipStyle('kind', kind)}"><input type="color"
+            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="level" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`, { sub: true }),
+          right(`<span class="dci-lvl-pick dci-kind-pick dci-dark-pick" data-el="dark-kinds">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}" style="${darkChipStyle('kind', kind)}"><input type="color"
             data-set="kind-color-dark" data-kind="${kind}" value="${darkPaletteColor('kind', kind)}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColorDark', { kind: tr(`kind.${kind}`) }))}">
             <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}
-            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="kind" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`),
+            <button type="button" class="dci-textbtn" data-act="dark-colors-reset" data-what="kind" title="${esc(tr('settings.darkColorsReset'))}">↺</button></span>`, { sub: true }),
         ] : []),
         sh('entries'),
-        row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
+        // ([Z-SETTABS2] 3.137.0) "View" and "Layout" (until 3.136.0 "Entries:" and "Entries")
+        field(tr('settings.view'), viewToggleHtml(true), { dflt: [S.view !== 'compact', tr('view.compact')] }),
         // [E4] (3.34.29) the entries as a matrix (default) or as before
-        row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
-          data-act="entries-view" data-view="${v}" aria-pressed="${S.entriesView === v}" title="${esc(tr(`settings.entries.${v}Title`))}">${esc(tr(`settings.entries.${v}`))}</button>`).join('')}</span>`),
+        segField(tr('settings.layout'), 'entries-view', 'view', ['matrix', 'legacy'], S.entriesView, 'matrix', (v) => tr(`settings.entries.${v}`), { titles: (v) => tr(`settings.entries.${v}Title`) }),
         // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
-        row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
-          data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
-        // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
-        row(check('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'))),
-        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
-        row(check('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'))),
-        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
-        row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
-        // [E4] (3.34.30) the matrix of an entry
-        row(`<label title="${esc(tr('settings.evSharedTitle'))}">${esc(tr('settings.evShared'))} <input type="number" data-set="ev-shared" min="1" max="12" value="${S.evShared}"> ${esc(tr('settings.evSharedAfter'))}</label>`),
-        row(`<label>${esc(tr('settings.emShow'))} <input type="number" data-set="em-show" min="1" max="50" value="${S.emShow}"></label>`),
+        segField(tr('settings.emSide'), 'em-side', 'side', ['beside', 'lines'], S.emSide, 'beside', (v) => tr(`settings.emSide.${v}`), { titles: (v) => tr(`settings.emSide.${v}Title`) }),
         // [E4] (3.35.0) an entry, compact, at first
-        row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
-          data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        segField(tr('settings.emBy'), 'em-by-default', 'by', ['event', 'role'], S.emByDefault, 'event', (v) => tr(`em.by.${v}`)),
         // [Z-ALIGN] (3.100.0) the attributes in the full matrix: together in one column or a column each
-        row(`<span title="${esc(tr('settings.emAttrTitle'))}">${esc(tr('settings.emAttr'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emAttr'))}">${['joint', 'split'].map((v) => `<button type="button"
-          data-act="em-attr" data-attr="${v}" aria-pressed="${(S.emAttr === 'split') === (v === 'split')}" title="${esc(tr(`em.attr.${v}Title`))}">${esc(tr(`em.attr.${v}`))}</button>`).join('')}</span>`),
+        segField(tr('settings.emAttr'), 'em-attr', 'attr', ['joint', 'split'], S.emAttr === 'split' ? 'split' : 'joint', 'joint', (v) => tr(`em.attr.${v}`),
+          { title: tr('settings.emAttrTitle'), titles: (v) => tr(`em.attr.${v}Title`) }),
+        // [E4] (3.34.30) the matrix of an entry
+        numField(tr('settings.evShared'), 'data-set="ev-shared" min="1" max="12"', S.evShared, 3, { title: tr('settings.evSharedTitle'), after: tr('settings.evSharedAfter') }),
+        numField(tr('settings.emShow'), 'data-set="em-show" min="1" max="50"', S.emShow, 8),
+        // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
+        cb('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'), { def: true, hint: tr('settings.sortOnHint', { order: plain(tr('sort.label')), line: plain(tr('toolbar.levelAll')) }) }),
+        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
+        cb('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'), { def: true, hint: tr('settings.instsCommonHint') }),
+        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
+        cb('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'), { def: false }),
         sh('symbols'),
         // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
-        row(`<span title="${esc(tr('settings.emojiTitle'))}">${esc(tr('settings.emoji'))}</span> <span class="dci-seg dci-seg-small" role="group" data-el="emoji-mode" aria-label="${esc(tr('settings.emoji'))}">${['emoji', 'text'].map((v) => `<button type="button"
-          data-act="emoji-mode" data-mode="${v}" aria-pressed="${!!S.emojiText === (v === 'text')}">${esc(tr(`settings.emoji.${v}`))}</button>`).join('')}</span>`),
+        segField(tr('settings.emoji'), 'emoji-mode', 'mode', ['emoji', 'text'], S.emojiText ? 'text' : 'emoji', 'emoji', (v) => tr(`settings.emoji.${v}`), { title: tr('settings.emojiTitle'), segEl: 'emoji-mode' }),
         // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
-        row(check('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'))),
+        cb('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'), { def: true }),
         sh('rules'),
-        // [3.30.0] where the mapping rules open (item 75)
-        row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
-          data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
-        // [3.30.2] rule ids and ⓘ at rows (item 75b)
-        row(`${esc(tr('settings.rulesRowPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesRowPlace'))}">${['window', 'symbol'].map((pl) => `<button type="button"
-          data-act="rules-rowplace" data-place="${pl}" aria-pressed="${S.rulesRowPlace === pl}">${esc(tr(`settings.rulesRowPlace.${pl}`))}</button>`).join('')}</span>`),
+        // [3.30.0] where the mapping rules open (item 75); [3.30.2] rule ids and ⓘ at rows (item 75b)
+        segField(tr('settings.rulesPlaceLbl'), 'rules-place', 'place', ['dashboard', 'window'], S.rulesPlace, 'dashboard', (v) => tr(`settings.rulesPlace.${v}`)),
+        segField(tr('settings.rulesRowPlace'), 'rules-rowplace', 'place', ['window', 'symbol'], S.rulesRowPlace, 'window', (v) => tr(`settings.rulesRowPlace.${v}`)),
       ],
       sources: () => [
         sh('srcOrder'), sourceOrderHtml(),
-        row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
         sh('releasePage'),
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
-        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
-        row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
+        cb('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'), '', { def: true, hint: tr('settings.afterEditHint') }),
+        cb('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'), '', { def: true, hint: tr('settings.afterEditBgHint') }),
         // [172] (3.39.0) the line of the release page; [AY] (3.40.0) of Bandcamp too, and when nothing seems to be missing (off, Q-x)
-        row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapLine'), tr('settings.gapLineTitle'))),
-        row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
-        // [Z-GAPL] (3.105.0) developer mode: why the line is not there
-        // ([Z-DEVTAB] 3.108.0: the developer's switches are in the tab "Developer")
-        sh('mbSearch'),
+        cb('data-set="gap-on"', gapOn, tr('settings.gapLine'), tr('settings.gapLineTitle'), { def: true, hint: tr('settings.gapLineHint') }),
+        cb('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'), { def: false, sub: true, off: !gapOn }),
+        // [Z-SETTABS2] (3.137.0) the track pages of Bandcamp and the aliases of Discogs under a heading of their own
+        sh('dgbc'),
+        cb('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'), { def: true }),
         // [Z-ALC] (3.44.1) the Discogs aliases looked up per import (0: none; the others on demand at their entries)
-        row(`<label title="${esc(tr('settings.aliasMaxTitle'))}">${esc(tr('settings.aliasMax'))} <input type="number" data-set="alias-max" min="0" max="200" step="1"
-            value="${aliasMax()}"></label>`),
+        numField(tr('settings.aliasMax'), 'data-set="alias-max" min="0" max="200" step="1"', aliasMax(), ALIAS_MAX_DEFAULT, { title: tr('settings.aliasMaxTitle') }),
+        sh('mbSearch'),
         // [Z-MBSEARCH] (3.123.0, S193) the hits of a search in an entry's field
-        row(`<label title="${esc(tr('settings.mbHitsTitle'))}">${esc(tr('settings.mbHits'))} <input type="number" data-set="mb-hits" min="1" max="25" step="1" value="${mbHits()}"></label>`),
+        numField(tr('settings.mbHits'), 'data-set="mb-hits" min="1" max="25" step="1"', mbHits(), MB_HITS_DEFAULT, { title: tr('settings.mbHitsTitle') }),
         // [Z-BETAOFF] (3.115.0) the text from cover art, out of the beta: on at first
         `<h4 class="dci-set-h" data-el="set-ocr">${esc(tr('settings.ocrHead'))}</h4>`,
-        row(check('data-set="ocr-on"', S.ocrOn, tr('settings.ocrOn'), tr('settings.ocrOnTitle'))),
-        `<p class="dci-sub">${esc(tr('settings.ocrOnWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }))}</p>`,
-        // [3.34.10] loading the images ticked ahead (collected item 128), while it is on
-        S.ocrOn ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
-        // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
-        S.ocrOn ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
-        // [138b] (3.34.23) the window in front of the dashboard
-        S.ocrOn ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
+        cb('data-set="ocr-on"', S.ocrOn, tr('settings.ocrOn'), tr('settings.ocrOnTitle'), { def: true, hint: tr('settings.ocrOnWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }) }),
+        // [3.34.10] loading the images ticked ahead (collected item 128), while it is on; [3.34.15] the same state as "Auto-select" in
+        // the window (collected item 136); [138b] (3.34.23) the window in front of the dashboard
+        S.ocrOn ? cb('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'), { def: false, sub: true }) : '',
+        S.ocrOn ? cb('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'), { def: false, sub: true }) : '',
+        S.ocrOn ? cb('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'), { def: true, sub: true }) : '',
       ],
       // [3.25.0] pasted texts and the credits texts of Bandcamp
       texts: () => [
         // [3.21.3] web profiles next to names in a text
-        row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
-        // [3.32.5] typos in role words (S050, collected item 115: "an/ausschaltbar in den einstellungen") – the rule's switch
-        // [3.32.6] the credits of Bandcamp's "about" text (S049, collected item 115)
-        row(check('data-set="rule-on" data-rule="S049"', ruleOn('S049'), tr('settings.aboutCredits'), tr('settings.aboutCreditsTitle'))),
-        // [3.37.0] the credits of the Discogs notes (S054, E5)
-        row(check('data-set="rule-on" data-rule="S054"', ruleOn('S054'), tr('settings.notesCredits'), tr('settings.notesCreditsTitle'))),
-        row(check('data-set="rule-on" data-rule="S050"', ruleOn('S050'), tr('settings.typos'), tr('settings.typosTitle'))),
+        cb('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'), { def: false }),
+        // [3.32.6] the credits of Bandcamp's "about" text (S049); [3.37.0] the credits of the Discogs notes (S054, E5); [3.32.5] typos in
+        // role words (S050) – the rules' switches
+        ...['S049', 'S054', 'S050'].map((id) => cb(`data-set="rule-on" data-rule="${id}"`, ruleOn(id), tr({ S049: 'settings.aboutCredits', S054: 'settings.notesCredits', S050: 'settings.typos' }[id]),
+          tr({ S049: 'settings.aboutCreditsTitle', S054: 'settings.notesCreditsTitle', S050: 'settings.typosTitle' }[id]), { def: !DEFAULT_OFF_RULES.has(id) })),
         `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
       ],
       // [3.25.0] where the script connects to other sites, tools and scripts (item 40)
       connections: () => [connectionsHtml()],
       // [Z-CONN2] (3.108.0) what the script takes from MusicBrainz (and gives back)
       musicbrainz: () => [mbDataHtml()],
-      // [Z-DEVTAB] (3.108.0) everything of developer mode in one tab (shown in developer mode only)
+      // [Z-DEVTAB] (3.108.0) everything of developer mode in one tab ([Z-SETTABS2] 3.137.0: the tab only in developer mode again)
       developer: () => [
         `<p class="dci-sub">${esc(tr('dev.intro'))}</p>`,
-        row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
-        ...(S.devMode ? [
-          sh('devTools'),
-        row(check('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'))),
-        row(check('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'))),
-        row(`${esc(tr('dev.diag'))} <button type="button" class="dci-small" data-act="dev-diag" aria-pressed="${!!DIAG.timer}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>`),
-        row(`<button type="button" class="dci-textbtn" data-act="dev-stats" title="${esc(tr('dev.statsTitle'))}">${esc(tr('dev.stats'))}</button>`),
+        sh('devTools'),
+        cb('data-set="gap-why"', readJson('localStorage', GAP_WHY_KEY, false) === true, tr('settings.gapWhy'), tr('settings.gapWhyTitle'), { def: false }),
+        cb('data-set="dsup-why"', readJson('localStorage', DSUP_WHY_KEY, false) === true, tr('settings.dsupWhy'), tr('settings.dsupWhyTitle'), { def: false }),
+        field(tr('dev.diag'), `<button type="button" class="dci-small" data-act="dev-diag" aria-pressed="${!!DIAG.timer}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>`),
+        right(`<button type="button" class="dci-textbtn" data-act="dev-stats" title="${esc(tr('dev.statsTitle'))}">${esc(tr('dev.stats'))}</button>`),
         devTreeHtml(),
-        ] : []),
       ],
-      discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
+      // [Z-SETTABS2] (3.137.0) the switches of the companion as switches of the menu (until 3.136.0 the bar of the page, in one line)
+      discogs: () => [
+        `<h4 class="dci-set-h" data-el="set-nav">${esc(plain(tr('nav.label')))}</h4>`,
+        field(tr('syncMode.label'), `<span class="dci-seg dci-seg-small" role="group" data-lbg>${['hover', 'click'].map((mode) => `<button type="button" data-sync-mode="${mode}"
+          aria-pressed="${S.syncMode === mode}" title="${esc(tr(`syncMode.${mode}Title`))}">${esc(tr(`syncMode.${mode}`))}</button>`).join('')}</span>`, { dflt: [S.syncMode !== 'click', tr('syncMode.click')] }),
+        cb('data-dg-status', S.dgStatus, trView('sync.dgStatus'), trView('sync.dgStatusTitle'), { def: true }),
+        cb('data-dg-hover', S.dgHover, tr('sync.trackHover'), trView('sync.trackHoverTitle'), { def: true }),
+        cb('data-dg-release', S.dgRelease, tr('sync.dgRelease'), trView('sync.dgReleaseTitle'), { def: true }),
+        cb('data-click-toggle', S.clickToggle, tr('sync.clickToggle'), tr('sync.clickToggleTitle'), { def: true }),
+        cb('data-keep-marks', S.keepMarks, tr('sync.keepMarks'), tr('sync.keepMarksTitle'), { def: false }),
+        viewSite() === 'discogs' ? cb('data-dg-artwork', S.dgArtwork, tr('sync.dgArtwork'), tr('sync.dgArtworkTitle'), { def: true }) : '',
+        `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`,
+      ],
       works: () => [
         sh('lookups'),
-        row(check('data-set="aw-on"', S.awOn, tr('settings.awOn'))),
-        row(`<label>${esc(tr('settings.awMax'))} ${num('awMax')}</label> <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`),
-        row(`${esc(tr('settings.awSlow'))} ${num('awSlowSec')} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN')} ${esc(tr('settings.awSlowN'))}`),
-        row(`<label>${esc(tr('settings.awDays'))} ${num('awDays')}</label>`),
-        row(`<label title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('settings.awAsk'))} ${num('awAsk')} ${esc(tr('settings.awAskTracks'))}</label>`),
-        row(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
+        cb('data-set="aw-on"', S.awOn, tr('settings.awOn'), '', { def: true, hint: tr('settings.awOnHint') }),
+        field(tr('settings.awMax'), `${num('awMax', awOff)} <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`,
+          { off: awOff, dflt: awDef('awMax'), hint: tr('settings.awMaxHint') }),
+        field(tr('settings.awSlow'), `${num('awSlowSec', awOff)} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN', awOff)} ${esc(tr('settings.awSlowN'))}`,
+          { off: awOff, dflt: [awDef('awSlowSec')[0] || awDef('awSlowN')[0], `${AW_SETTINGS.awSlowSec.def} · ${AW_SETTINGS.awSlowN.def}`] }),
+        field(tr('settings.awDays'), num('awDays', awOff), { off: awOff, dflt: awDef('awDays') }),
+        // ((review) every work lookup asks from so many tracks – not only those of the artists' works: never greyed out
+        field(tr('settings.awAsk'), `${num('awAsk')} ${esc(tr('settings.awAskTracks'))}`, { title: tr('matrix.askCountTitle'), dflt: awDef('awAsk'), hint: tr('settings.awAskHint') }),
+        right(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
           ${S.awStoreCount == null ? '' : `<span class="dci-sub">${esc(tr('settings.awStored', { n: S.awStoreCount }))}</span>`}`),
         sh('matrix'),
-        row(check('data-set="mx-skiprows"', S.mxSkipRows, tr('settings.mxSkipRows'))),
+        cb('data-set="mx-skiprows"', S.mxSkipRows, tr('settings.mxSkipRows'), '', { def: true }),
         // [Z-SETTABS] (3.136.0) the switch of the corner of the matrix here too: performance dates onto linked works (S215)
-        row(check('data-set="work-dates"', S.workDates !== false, tr('matrix.workDates'), tr('matrix.workDatesTitle'))),
-        row(`<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`),
-        row(check('data-set="wattr-long"', S.wattrLong, tr('settings.wattrLong'))),
+        cb('data-set="work-dates"', S.workDates !== false, tr('matrix.workDates'), tr('matrix.workDatesTitle'), { def: true }),
+        field(tr('matrix.codes'), `<select data-lb data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select>`,
+          { dflt: [(S.roleCodes || 'names') !== 'names', tr('matrix.codes.names')] }),
+        cb('data-set="wattr-long"', S.wattrLong, tr('settings.wattrLong'), '', { def: false }),
         // [Z-SU] (3.41.1) how the parts of a suite are named (Q-bu)
         sh('suites'),
-        row(`${esc(tr('settings.suiteNaming'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.suiteNaming'))}" title="${esc(tr('settings.suiteNamingTitle'))}">${['colon', 'comma'].map((v) => `<button type="button"
-          data-act="suite-naming" data-naming="${v}" aria-pressed="${(S.suiteNaming === 'comma' ? 'comma' : 'colon') === v}">${esc(tr(`settings.suiteNaming.${v}`))}</button>`).join('')}</span>`),
+        segField(tr('settings.suiteNaming'), 'suite-naming', 'naming', ['colon', 'comma'], S.suiteNaming === 'comma' ? 'comma' : 'colon', 'colon', (v) => tr(`settings.suiteNaming.${v}`),
+          { title: tr('settings.suiteNamingTitle') }),
       ],
       staging: () => [
         sh('limits'),
-        row(check('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'))),
-        row(check('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'))),
-        row(`<label>${esc(tr('settings.capLimit'))} <input type="number" data-set="cap-limit" min="50" max="2000" step="50" value="${S.capLimit}"></label>`),
+        cb('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'), { def: false }),
+        cb('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'), { def: true }),
+        numField(tr('settings.capLimit'), 'data-set="cap-limit" min="50" max="2000" step="50"', S.capLimit, 500, { off: !S.capOn }),
         // [E4] (3.34.29) the instruments and voices of an entry in one relationship (not in the legacy view)
-        row(check(`data-set="join"${S.entriesView === 'legacy' ? ' disabled' : ''}`, S.joinAuto, tr('settings.join'), tr('settings.joinTitle'))),
+        cb(`data-set="join"${S.entriesView === 'legacy' ? ' disabled' : ''}`, S.joinAuto, tr('settings.join'), tr('settings.joinTitle'), { def: true }),
         // [Z-SNW] (3.83.0) the edit note under a heading of its own
         `<h4 class="dci-set-h" data-el="set-editnote">${esc(tr('settings.editNoteHead'))}</h4>`,
         // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
         // (3.42.0) no "none"
-        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
-          data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
-        row(check('data-f="note-dup"', S.noteDupWorks, tr('settings.noteDup'), tr('settings.noteDupTitle'))),
+        segField(tr('settings.editNoteKind'), 'edit-note-mode', 'mode', ['full', 'simple'], S.editNoteMode, 'full', (v) => tr(`settings.editNote.${v}`), { titles: (v) => tr(`settings.editNote.${v}Title`) }),
+        cb('data-f="note-dup"', S.noteDupWorks, tr('settings.noteDup'), tr('settings.noteDupTitle'), { def: true }),
         // [3.32.9] disambiguation comments of live recordings (item 113)
         sh('liveCom'),
-        row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
+        cb('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'), { def: false }),
         // [Z-YELL] (3.110.0) what is open: two counters (must, can) or one
         sh('yell'),
-        row(check('data-f="yell-one"', S.yellOne, tr('settings.yellOne'), tr('settings.yellOneTitle'))),
+        cb('data-f="yell-one"', S.yellOne, tr('settings.yellOne'), tr('settings.yellOneTitle'), { def: false, hint: tr('settings.yellOneHint') }),
       ],
       dates: () => [
-        row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
+        cb('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'), { def: false }),
         // [Z-PF] (3.40.9)
-        row(check('data-f="dm-fold"', S.dmFold, tr('dm.fold'), tr('dm.foldTitle'))),
-        row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
+        cb('data-f="dm-fold"', S.dmFold, tr('dm.fold'), tr('dm.foldTitle'), { def: true }),
+        cb('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'), { def: true }),
         // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
-        row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
+        cb('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'), { def: true }),
         // [Z-DNDS] (3.86.0) what a drop does at each place
         `<h4 class="dci-set-h" data-el="set-drop">${esc(tr('settings.dropHead'))}</h4>`,
         // [Z-DNDA] (3.87.0) a grid: the places in one column, the switches exactly below each other (both halves of the same width)
-        `<div class="dci-drop-grid" data-el="drop-grid">${DROP_PLACES.map((p) => `<span class="dci-drop-place" id="dci-drop-${p}">${esc(tr(`settings.drop.${p}`))}</span>
+        `<div class="dci-drop-grid" data-el="drop-grid">${DROP_PLACES.map((p) => `<span class="dci-drop-place" id="dci-drop-${p}">${esc(tr(`settings.drop.${p}`))}${
+          dotHtml(S.dropModes[p] !== (DROP_DEFAULT[p] || 'add'), tr(`settings.drop.${DROP_DEFAULT[p] || 'add'}`))}</span>
           <span class="dci-seg dci-seg-small" role="group" aria-labelledby="dci-drop-${p}">${['add', 'replace'].map((v) => `<button type="button"
           data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`).join('')}</div>`,
       ],
@@ -50118,32 +50199,31 @@
         return [
           sh('remember'),
           `<p class="dci-sub">${esc(tr('settings.cacheHint'))}</p>`,
-          row(check('data-set="remember"', remembering(), tr('settings.remember'), tr('settings.rememberTitle'))),
-          row(`<label title="${esc(tr('settings.rememberMaxTitle'))}">${esc(tr('settings.rememberMax'))} <input type="number" data-set="remember-max" min="0" max="100" step="1"
-            value="${S.rememberMax}"></label> <span class="dci-sub">${esc(tr('settings.rememberMaxHint'))}</span>`),
-          row(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
+          cb('data-set="remember"', remembering(), tr('settings.remember'), tr('settings.rememberTitle'), { def: false }),
+          numField(tr('settings.rememberMax'), 'data-set="remember-max" min="0" max="100" step="1"', S.rememberMax, 50,
+            { title: tr('settings.rememberMaxTitle'), hint: tr('settings.rememberMaxHint'), off: !S.rememberOn }),
+          right(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
           sh('stats'),
-          row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
+          cb('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'), { def: true }),
           // [Z-STH, Z-GOF] (3.53.0; Q-fx, Q-fm) when you work, and "Global", can be left out of the statistics
-          row(check('data-set="stats-daily"', statsDailyOn(), tr('settings.statsDaily'), tr('settings.statsDailyTitle'))),
-          row(check('data-set="stats-global-on"', statsGlobalOn(), tr('settings.statsGlobal'), tr('settings.statsGlobalTitle'))),
+          cb('data-set="stats-daily"', statsDailyOn(), tr('settings.statsDaily'), tr('settings.statsDailyTitle'), { def: true }),
+          cb('data-set="stats-global-on"', statsGlobalOn(), tr('settings.statsGlobal'), tr('settings.statsGlobalTitle'), { def: true }),
           // [Z-STD] (3.45.0; Q-ep) beside it: pauses not counted from … seconds
-          row(`<label title="${esc(tr('settings.statsIdleTitle'))}">${esc(tr('settings.statsIdle'))} <input type="number" data-set="stats-idle" min="0" max="86400" step="1"
-            value="${Math.round(statIdleMs() / 1000)}"></label>`),
+          numField(tr('settings.statsIdle'), 'data-set="stats-idle" min="0" max="86400" step="1"', Math.round(statIdleMs() / 1000), STATS_IDLE_DEFAULT, { title: tr('settings.statsIdleTitle') }),
           // [Z-DS] (3.42.0) and deleting them (until 3.41.15 at the bottom of the statistics)
           (() => {
             if (S.statsData == null) statsLoad();
             const n = S.statsData == null ? null : S.statsData.length;
-            return row(`<button type="button" class="dci-small" data-act="stats-delete"${n === 0 ? ' disabled' : ''}>${esc(tr('stats.delete'))}</button>
+            return right(`<button type="button" class="dci-small" data-act="stats-delete"${n === 0 ? ' disabled' : ''}>${esc(tr('stats.delete'))}</button>
               <span class="dci-sub" data-el="stats-stored">${n == null ? esc(tr('stats.loading')) : esc(tr('stats.stored', { n }))}</span>`)
               // [Z-SCV] (3.76.0, S111) exported (JSON: to import in another browser; CSV: to read in a spreadsheet) and imported
-              + (ruleOn('S111') ? row(`<span class="dci-statio"><button type="button" class="dci-small" data-act="stats-export" data-kind="json"${n === 0 ? ' disabled' : ''}
+              + (ruleOn('S111') ? right(`<span class="dci-statio"><button type="button" class="dci-small" data-act="stats-export" data-kind="json"${n === 0 ? ' disabled' : ''}
                 title="${esc(tr('statio.jsonTitle'))}">${esc(tr('statio.json'))}</button>
                 <button type="button" class="dci-small" data-act="stats-export" data-kind="csv"${n === 0 ? ' disabled' : ''} title="${esc(tr('statio.csvTitle'))}">${esc(tr('statio.csv'))}</button>
                 <label class="dci-filebtn" title="${esc(tr('statio.importTitle'))}">${esc(tr('statio.import'))} <input type="file" accept=".json,application/json" data-stats-import ${S.statioBusy ? 'disabled' : ''}></label></span>
-                <div class="dci-sub">${esc(tr('statio.purpose'))}</div><div class="dci-sub" data-el="statio-status" aria-live="polite">${esc(S.statioStatus || '')}</div>`) : '');
+                <span class="dci-set-hint">${esc(tr('statio.purpose'))}</span><span class="dci-set-hint" data-el="statio-status" aria-live="polite">${esc(S.statioStatus || '')}</span>`) : '');
           })(),
         ];
       },
@@ -50151,6 +50231,11 @@
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
     // ([Z-BETAOFF] 3.115.0, review) "Beta" chosen before: General, and forgotten
     if (S.settingsTab === 'beta') {
+      S.settingsTab = 'general';
+      writeJson('localStorage', SETTINGS_TAB_KEY, null);
+    }
+    // ([Z-SETTABS2] 3.137.0, review) "Developer" remembered with developer mode off: General, and forgotten
+    if (S.settingsTab === 'developer' && !S.devMode) {
       S.settingsTab = 'general';
       writeJson('localStorage', SETTINGS_TAB_KEY, null);
     }
@@ -50257,6 +50342,7 @@
       ['editor', [[kbd([k('ctrl'), k('alt'), k('enter')]), 'keys.enterEdit']]],
       ['dashboard', [
         [kbd(k('enter')), 'keys.enter'],
+        [kbd('/'), 'keys.search'], // [Z-SEARCH] (3.137.0)
         [`${kbd('↑', '↓', '←', '→')} · ${kbd(k('home'), k('end'))}`, 'keys.tabs'],
         [kbd([k('alt'), '↑'], [k('alt'), '↓']), 'keys.lines'],
         [kbd(k('shift')), 'keys.shiftDrop'],
@@ -50293,12 +50379,147 @@
     el.innerHTML = S.keysOpen ? keysHtml() : '';
   }
 
+  /**
+   * [Z-SEARCH] (3.137.0) The search of the dashboard: 🔍 in the head or "/" opens a small field at the top right; it searches as you type
+   * (from two letters, without regard to case and accents) the names of the entries (artists, labels, places …), their instruments and
+   * roles, the dates, the tracks and works – not the tooltips nor the notes and hints. ↓ / Enter and ↑ / Shift+Enter go from hit to hit;
+   * a hit is scrolled into view and lit up briefly. Nothing is unfolded: a hit in a folded block ("▸ n more") or not shown in this
+   * view goes to the nearest place you can see, the counter says "hidden". Esc closes it.
+   */
+  const SEARCH_TARGETS = [
+    '.dci-gname > strong', '.dci-gcredit', '.dci-gmatch a.dci-mblink', '.dci-mx-name', '.dci-mx-colname',
+    '.dci-em-chipname', '.dci-em-bhead strong', '.dci-drole', '.dci-cl-role', '.dci-cl-credit', 'input[data-f="em-primary"]', 'input[data-f="primary"]',
+    '.dci-chip-main', '.dci-em-evdate', '.dci-cl-date', '.dci-datechip-text', '.dci-tg-tag', '.dci-dm-date',
+    '.dci-mx-title strong', '.dci-mx-line a.dci-mblink',
+    '.dci-em-more[data-search]',
+  ].join(', ');
+  // not searched: the menus and boxes above the entries, the search itself, the hints
+  const SEARCH_SKIP = '[data-el="search"], [data-el="settings"], [data-el="stats"], [data-el="keys"], [data-el="rules-dock"], [data-el="msgs"], [data-el="busy"], datalist';
+  const searchNorm = (t) => String(t || '').normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const typingIn = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName)
+    || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|reset|color|file|range|image)$/i.test(el.type || '')));
+  const searchShown = (el) => el.getClientRects().length > 0 && !el.closest('details:not([open]) > :not(summary)');
+  function searchHits(q) {
+    const nq = searchNorm(q);
+    const body = S.overlay && $('body');
+    if (!body || nq.length < 2) return [];
+    const out = [];
+    const seen = new Set();
+    body.querySelectorAll(SEARCH_TARGETS).forEach((el) => {
+      if (el.closest(SEARCH_SKIP)) return;
+      const text = el.matches('input') ? el.value : el.dataset.search != null ? el.dataset.search : el.textContent;
+      if (!searchNorm(text).includes(nq)) return;
+      // ("▸ n more" stands for what it hides)
+      const shown = searchShown(el) && el.dataset.search == null;
+      let at = el;
+      while (at && at !== body && !searchShown(at)) at = at.parentElement;
+      // (an entry's name, its credit and its MusicBrainz name are one hit; so are a track's title and its work)
+      const one = el.closest('.dci-ghead, .dci-mx-fw') || at;
+      if (!at || at === body || seen.has(one)) return;
+      seen.add(one);
+      out.push({ el: at, hidden: !shown });
+    });
+    return out;
+  }
+  function searchHtml() {
+    return `<div class="dci-search-box" role="search" aria-label="${esc(tr('search.label'))}">
+      ${ico('search')}<input type="search" data-f="search" value="${esc(S.searchQ || '')}" placeholder="${esc(tr('search.ph'))}" aria-label="${esc(tr('search.label'))}" autocomplete="off" spellcheck="false">
+      <span class="dci-search-count" data-el="search-count" aria-live="polite"></span>
+      <button type="button" class="dci-iconbtn" data-act="search-prev" title="${esc(tr('search.prev'))}" aria-label="${esc(tr('search.prev'))}">↑</button>
+      <button type="button" class="dci-iconbtn" data-act="search-next" title="${esc(tr('search.next'))}" aria-label="${esc(tr('search.next'))}">↓</button>
+      <button type="button" class="dci-iconbtn" data-act="search-open" title="${esc(tr('search.close'))}" aria-label="${esc(tr('search.close'))}">${ico('close')}</button></div>`;
+  }
+  function setSearchOpen(open, focusBack = false) {
+    if (!S.overlay) return;
+    S.searchOpen = !!open;
+    const el = $('search');
+    S.overlay.querySelectorAll('.dci-head [data-act="search-open"]').forEach((b) => b.setAttribute('aria-expanded', String(S.searchOpen)));
+    if (!el) return;
+    el.hidden = !S.searchOpen;
+    if (!S.searchOpen) {
+      el.innerHTML = '';
+      searchMark(null);
+      if (focusBack) {
+        const b = S.overlay.querySelector('.dci-head [data-act="search-open"]');
+        if (b) b.focus({ preventScroll: true });
+      }
+      return;
+    }
+    if (!el.firstChild) {
+      el.innerHTML = searchHtml();
+      const input = el.querySelector('input');
+      input.addEventListener('input', () => {
+        S.searchQ = input.value;
+        clearTimeout(S.searchTimer);
+        S.searchTimer = setTimeout(() => searchRun(), 120);
+      });
+      // (its keys stay here: the dashboard's own ↑ ↓ and Enter are not meant)
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setSearchOpen(false, true);
+        else if (e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey)) searchGo(1);
+        else if (e.key === 'ArrowUp' || (e.key === 'Enter' && e.shiftKey)) searchGo(-1);
+        else return;
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+    const input = el.querySelector('input');
+    input.focus({ preventScroll: true });
+    input.select();
+    if (S.searchQ) searchRun();
+    else searchCount([], 0);
+  }
+  function searchCount(hits, i) {
+    const c = S.overlay && S.overlay.querySelector('[data-el="search-count"]');
+    if (!c) return;
+    const nq = searchNorm(S.searchQ);
+    c.textContent = nq.length < 2 ? '' : !hits.length ? tr('search.none') : `${tr('search.count', { i: i + 1, n: hits.length })}${hits[i].hidden ? ` (${tr('search.hidden')})` : ''}`;
+    c.title = hits.length && hits[i].hidden ? tr('search.hiddenTitle') : '';
+    c.classList.toggle('dci-search-nohit', nq.length >= 2 && !hits.length);
+  }
+  function searchMark(el) {
+    if (S.searchLit && S.searchLit !== el) S.searchLit.classList.remove('dci-search-hit');
+    clearTimeout(S.searchLitTimer);
+    S.searchLit = el;
+    if (!el) return;
+    el.classList.remove('dci-search-hit');
+    void el.offsetWidth; // (the light starts again)
+    el.classList.add('dci-search-hit');
+    S.searchLitTimer = setTimeout(() => el.classList.remove('dci-search-hit'), 1800);
+  }
+  /** The hits of the field anew: from the first one. */
+  function searchRun() {
+    S.searchI = 0;
+    searchGo(0);
+  }
+  /** One hit on (1), back (-1) or the current one (0): found anew each time – the dashboard draws itself again often. */
+  function searchGo(step) {
+    if (!S.searchOpen) return;
+    const hits = searchHits(S.searchQ);
+    if (!hits.length) {
+      searchCount(hits, 0);
+      searchMark(null);
+      return;
+    }
+    const n = hits.length;
+    S.searchI = (((S.searchI || 0) + step) % n + n) % n;
+    const h = hits[S.searchI];
+    h.el.scrollIntoView({ block: 'center', inline: 'nearest' });
+    searchMark(h.el);
+    searchCount(hits, S.searchI);
+  }
+
   function renderSettings() {
     if (!S.overlay) return;
     const el = $('settings');
     if (!el) return;
     S.overlay.querySelectorAll('.dci-head [data-act="settings-open"]').forEach((b) => b.setAttribute('aria-expanded', String(!!S.settingsOpen)));
     el.hidden = !S.settingsOpen;
+    // [Z-SETTABS2] (3.137.0) the messages hidden while the settings are open
+    if (S.overlay.classList.contains('dci-set-isopen') !== !!S.settingsOpen) {
+      S.overlay.classList.toggle('dci-set-isopen', !!S.settingsOpen);
+      if ((S.messages || []).length > 1) renderMessages();
+    }
     if (!S.settingsOpen) {
       el.innerHTML = '';
       alignPanes();
@@ -50308,6 +50529,10 @@
     // [3.25.0] also a button (a tab, "Cancel"): the focus stays where it was
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` // ([Z-PROFNEW] 3.108.0) a profile's name by its id
       : active.dataset.statsImport != null ? '[data-stats-import]' : active.dataset.profilesImport != null ? '[data-profiles-import]'
+        // ([Z-SETTABS2] 3.137.0, review) the switches of the companion and its "jump to source"
+        : active.dataset.syncMode ? `[data-sync-mode="${active.dataset.syncMode}"]`
+        : ['dgStatus', 'dgHover', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks'].find((k) => active.dataset[k] != null)
+          ? `[data-${['dgStatus', 'dgHover', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks'].find((k) => active.dataset[k] != null).replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}]`
         : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}${active.dataset.kind ? `[data-kind="${active.dataset.kind}"]` : ''}${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` : '') : '';
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
@@ -50711,14 +50936,20 @@
     if (t === 'general') {
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
-      renderLog();
-      if (LANG !== 'en') setLanguage('en');
-    } else if (t === 'developer') {
-      // [3.36.2] the diagnosis off again – [171] (3.38.5) "Developer mode" ([Z-SETTABS] 3.136.0: its switch is in this tab)
+      S.logLines = false; // ((3.137.0, review) as its key)
+      // [3.36.2] the diagnosis off again – [171] (3.38.5) "Developer mode" ([Z-SETTABS2] 3.137.0: its switch in General again)
       S.devMode = false;
       if (DIAG.timer) stopDiag();
       renderLog();
-      // ((review) the notes of developer mode at the entries gone
+      if (LANG !== 'en') setLanguage('en');
+      // ((review 3.136.0) the notes of developer mode at the entries gone
+      S.dsupSig = '';
+      if (S.overlay) {
+        renderGroups();
+        refresh();
+      }
+    } else if (t === 'developer') {
+      // ([Z-SETTABS2] 3.137.0) its tools: the notes of developer mode at the entries drawn again
       S.dsupSig = '';
       if (S.overlay) {
         renderGroups();
@@ -51962,6 +52193,13 @@
       else showDashboard();
       return;
     }
+    // [Z-SEARCH] (3.137.0) "/" opens the search of the open dashboard (not while typing in a field)
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && S.overlay && !S.overlay.hidden && !typingIn(e.target)
+      && (S.overlay.contains(document.activeElement) || !document.activeElement || document.activeElement === document.body)) {
+      e.preventDefault();
+      setSearchOpen(true);
+      return;
+    }
     if (e.key !== 'Escape') return;
     // [3.34.1] the window "Text from cover art" first
     if (S.ocr && document.getElementById('dci-ocr')) {
@@ -52040,6 +52278,12 @@
       if (a) rerenderGroup(a);
       const back = [...S.overlay.querySelectorAll('[data-act=em-chipask]')].find((x) => x.dataset.ask === k);
       if (back) back.focus({ preventScroll: true });
+      return;
+    }
+    // [Z-SEARCH] (3.137.0) the search ((review) after the popovers; Esc in its field closes it there)
+    if (S.searchOpen && !S.subDialog) {
+      e.preventDefault();
+      setSearchOpen(false, true);
       return;
     }
     if (S.subDialog) S.subDialog.cancel();
@@ -53525,6 +53769,40 @@
       .dci-conn .dci-conn-group th { padding-top: calc(var(--u, 1px) * 10); background: var(--soft); color: var(--purple-d); font-weight: 600; font-size: calc(var(--u, 1px) * 12.5); }
       .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
+      /* [Z-SETTABS2] (3.137.0) a setting in two columns: its name right-aligned on the left, its choices in one line on the right ("A compact");
+         a narrow menu: the name above them */
+      .dci-set-pane { container-type: inline-size; }
+      .dci-set-row.dci-set-field { display: grid; grid-template-columns: calc(var(--u, 1px) * 210) minmax(0, 1fr); column-gap: calc(var(--u, 1px) * 12); align-items: baseline; margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-set-lbl { text-align: right; overflow-wrap: anywhere; }
+      .dci-set-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); min-width: 0; }
+      .dci-set-hint { flex: 1 0 100%; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      .dci-set-cb .dci-set-hint { padding-left: calc(var(--u, 1px) * 22); }
+      .dci-set-sub > .dci-set-ctl { padding-left: calc(var(--u, 1px) * 22); }
+      .dci-set-off > .dci-set-ctl, .dci-set-off > .dci-set-lbl { opacity: 0.5; }
+      .dci-set-dot { display: inline-block; width: calc(var(--u, 1px) * 7); height: calc(var(--u, 1px) * 7); border-radius: 50%; background: var(--purple); vertical-align: middle; cursor: help; }
+      .dci-set-pane .dci-lvl-pick { display: grid; grid-template-columns: repeat(4, max-content); }
+      .dci-set-pane .dci-kind-pick { grid-template-columns: repeat(3, max-content); }
+      .dci-set-pane .dci-dark-pick { grid-template-columns: repeat(4, max-content) auto; }
+      .dci-set-pane .dci-kind-pick.dci-dark-pick { grid-template-columns: repeat(3, max-content) auto; }
+      @container (max-width: 36em) {
+        .dci-set-row.dci-set-field { grid-template-columns: minmax(0, 1fr); }
+        .dci-set-lbl { text-align: left; }
+        .dci-set-field > .dci-set-lbl:empty { display: none; }
+        .dci-set-pane .dci-lvl-pick, .dci-set-pane .dci-kind-pick, .dci-set-pane .dci-dark-pick { grid-template-columns: repeat(2, max-content); }
+      }
+      /* [Z-SEARCH] (3.137.0) the search at the top right of the dashboard, staying there while it scrolls; a hit lit up briefly */
+      .dci-searchbar { position: sticky; top: calc(var(--u, 1px) * -14); z-index: 40; height: 0; }
+      .dci-search-box { position: absolute; right: calc(var(--u, 1px) * -12); top: calc(var(--u, 1px) * -6); display: flex; align-items: center; gap: calc(var(--u, 1px) * 4);
+        padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9); background: #fff; border: 1px solid var(--purple); border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(38, 36, 48, 0.18); }
+      #dci-overlay.dci-inline .dci-searchbar { top: calc(var(--u, 1px) * 6); }
+      .dci-search-box input { width: calc(var(--u, 1px) * 230); max-width: 50vw; }
+      .dci-search-count { min-width: 4.5em; font-size: calc(var(--u, 1px) * 12); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .dci-search-count.dci-search-nohit { color: #a23b00; }
+      @keyframes dci-search-lit { 0%, 55% { outline-color: #e8a400; background-color: rgba(255, 214, 92, 0.55); } 100% { outline-color: transparent; background-color: transparent; } }
+      #dci-overlay .dci-search-hit { outline: 3px solid transparent; outline-offset: 2px; border-radius: 3px; animation: dci-search-lit 1.8s ease-out; }
+      /* [Z-SETTABS2] (3.137.0) the messages of the import not over the open settings (the one saying only the settings are open stays) */
+      .dci-set-isopen .dci-msgs > .dci-msg:not([data-msgkey="settingsOnly.hint"]):not([data-msgkey="statsOnly.hint"]), .dci-set-isopen .dci-msgs > .dci-msgs-head { display: none; }
       /* [E8] (3.38.0) the statistics */
       .dci-stats-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 132), 1fr)); gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; }
       /* [Z-STL] (3.61.0) compact: the head in one line, a flat bar, groups of cards in columns without gaps, cards that fold */
