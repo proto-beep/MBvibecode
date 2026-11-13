@@ -806,7 +806,8 @@ def case_bctrack():
         pg.wait_for_timeout(400)
         e1 = pg.evaluate("""(() => { const pane = document.querySelector('[data-el=settings] .dci-set-pane').getBoundingClientRect();
       const lab = (sel) => document.querySelector(`[data-el=settings] .dci-set-pane label:has(${sel})`);
-      const t = lab('[data-f=bc-tracks]'); const l = lab('[data-set=after-edit]'); const r = l.getBoundingClientRect();
+      // ([Z-SETTABS2] 3.137.0) the row of the switch: its name and the explanation below
+      const t = lab('[data-f=bc-tracks]'); const l = document.querySelector('[data-el=settings] .dci-set-pane [data-set=after-edit]').closest('.dci-set-row'); const r = l.getBoundingClientRect();
       const line = parseFloat(getComputedStyle(l).lineHeight) || 18;
       return [t.textContent.trim(), Math.round(r.right) <= Math.round(pane.right), r.height > line * 1.5, l.querySelector('input').getBoundingClientRect().top < r.top + line]; })()""")
         print('E) Text, innerhalb, umgebrochen, Kästchen oben:', e1)

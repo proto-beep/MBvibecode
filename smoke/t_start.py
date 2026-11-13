@@ -326,7 +326,8 @@ def case_harmony():
         pg.wait_for_timeout(400)
         e3 = [pg.evaluate("localStorage.getItem('dci-after-edit-btn')"), pg.evaluate("localStorage.getItem('dci-after-edit-bg')"), pg.evaluate(SET)]
         print('E) Einstellungen:', e1, '| beide aus:', e2, '| ↺ Quellen:', e3)
-        results.append(e1 == [['after-edit', True, 'Release editor: the button “Enter edit &'], ['after-edit-bg', True, 'Imported with Harmony (Bandcamp, Discogs']]
+        # ([Z-SETTABS2] 3.137.0) shorter names, the rest below them
+        results.append(e1 == [['after-edit', True, 'Button “Enter edit & import credits” in '], ['after-edit-bg', True, 'Imported with Harmony: open in a backgro']]
                        and e2[0] == 'false' and e2[1] == 'false' and e3[0] is None and e3[1] is None and [x[1] for x in e3[2]] == [True, True])
         print('Fehler:', real(errs), real(mb_errs))
         results.append(not real(errs) and not real(mb_errs))
@@ -1511,9 +1512,8 @@ def case_gapwhy3105():
             H.open_dashboard(pg)
             H.open_settings(pg, 'sources')
             off = pg.locator('[data-el=settings] [data-set=gap-why]').count()
-            # ([Z-SETTABS] 3.136.0) the tab "Developer" always there – its tools only in developer mode
-            H.open_settings(pg, 'developer')
-            off += pg.locator('[data-el=settings] [data-set=gap-why]').count()
+            # ([Z-SETTABS2] 3.137.0) the tab "Developer" only in developer mode again (3.136.0: always, its tools only then)
+            off += pg.locator('[data-el=settings] .dci-set-tab[data-topic=developer]').count()
             pg.evaluate("localStorage.setItem('dci-dev', 'true')")
             pg.reload()
             pg.add_script_tag(content=H.MAIN)
