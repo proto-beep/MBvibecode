@@ -1822,4 +1822,272 @@ def case_rsd3122():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+LJ_NOTES = """Recorded live in Berlin, Haus der Berliner Festspiele, Grosse Bühne, November 1, 2025, by Bernd Bechtold and Peter Schladebach, assisted by Henrike Zeller and Benedikt Jäger, Ulrich Hieber (Schnitt). Mixed and mastered in September 2026 by Ferran Conangla
+at FCM Studios Barcelona.
+
+℗ + © 2025 Rundfunk Berlin-Brandenburg.
+Lizenz durch rbb media GmbH
+
+Our thanks go to Nadine Deventer, the artistic director of the Jazzfest Berlin and to Peter Margasak for inviting us to present Double Trouble III on the main stage.
+
+Thanks also to Silke Kaminski (rbb) for her help with the licensing.
+
+And we are very grateful that underwriting support was provided by the Robert D. Bielecki Foundation.
+
+Cover art: András Wolsky, "Random-Etude", 2025
+
+Barry Guy plays exclusively on Thomastik-Infeld bass strings
+
+℗ + © 2026 Maya Recordings"""
+
+# the rows of the dashboard as the script holds them (its state through a hook of the test only)
+LJ_ROWS = """() => window.__S.rows.map(r => { const a = window.__S.artists.get(r.artistKey) || {}; return { name: a.name, raw: r.raw, types: r.types || [],
+  flags: [...(r.flags || [])], credit: r.roleCredit || '', primary: r.primaryText || '', level: r.level, notes: r.notes || [], area: a.area || '',
+  alt: a.altNames || [], ask: r.abbrAsk ? r.abbrAsk.options : null, solo: !!(r.abbrAsk && r.abbrAsk.solo) }; })"""
+
+
+def lj_discogs(notes):
+    """Discogs 38896542 (London Jazz Composers Orchestra, "Double Trouble III"): its credits and companies as the page lists them."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['notes'] = notes
+        d['companies'] = [
+            {'name': 'rbb Media GmbH', 'entity_type_name': 'Licensed Through', 'id': 1101, 'catno': ''},
+            {'name': 'Robert D. Bielecki Foundation', 'entity_type_name': 'Funded By', 'id': 1102, 'catno': ''},
+            {'name': 'Maya Recordings', 'entity_type_name': 'Phonographic Copyright (p)', 'id': 1103, 'catno': ''},
+            {'name': 'Maya Recordings', 'entity_type_name': 'Copyright (c)', 'id': 1103, 'catno': ''},
+            {'name': 'Rundfunk Berlin-Brandenburg', 'entity_type_name': 'Phonographic Copyright (p)', 'id': 1104, 'catno': ''},
+            {'name': 'Rundfunk Berlin-Brandenburg', 'entity_type_name': 'Copyright (c)', 'id': 1104, 'catno': ''},
+            {'name': 'Haus der Berliner Festspiele', 'entity_type_name': 'Recorded At', 'id': 1105, 'catno': ''},
+            {'name': 'FCM Studios', 'entity_type_name': 'Mixed At', 'id': 1106, 'catno': ''},
+            {'name': 'FCM Studios', 'entity_type_name': 'Mastered At', 'id': 1106, 'catno': ''}]
+        d['extraartists'] = [
+            ex('Barry Guy', 'Bass, Directed By [Director]', 4001), ex('Ulrich Hieber', 'Edited By [Schnitt]', 4003),
+            ex('Ferran Conangla', 'Mixed By, Mastered By', 4005), ex('John Sharpe', 'Photography By [Photo (Marilyn Crispell)]', 4006),
+            ex('Camille Blake', 'Photography By [Photos]', 4007), ex('Marilyn Crispell', 'Piano [Piano Soloist], Soloist [Piano Soloist]', 4008),
+            ex('Angelica Sanchez', 'Piano [Piano Soloist], Soloist [Piano Soloist]', 4009),
+            ex('Bernd Bechtold', 'Recorded By', 4010), ex('Peter Schladebach', 'Recorded By', 4011),
+            ex('Benedikt Jäger', 'Recorded By [Recorded By Bernd Bechtold And Peter Schladebach, Assisted By]', 4012),
+            ex('Henrike Zeller', 'Recorded By [Recorded By Bernd Bechtold And Peter Schladebach, Assisted By]', 4013)]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    return rel
+
+
+def case_ljdiscogs3140():
+    """Credits Importer 3.140.0: Discogs 38896542 (London Jazz Composers Orchestra, "Double Trouble III"; collected items Z-SOLOIST,
+    Z-PHOTOOF, Z-ASSISTBR, Z-SCHNITT, Z-LICTHRU, Z-FUNDED, Z-PCLABEL, Z-LJTEXT; answers of 2026-11-13 10:57 – 12:28).
+    A) "Piano [Piano Soloist], Soloist [Piano Soloist]": one row, piano with the attribute solo (no row "Soloist", no credit "piano soloist").
+    B) "Photography By [Photo (Marilyn Crispell)]": credited "photo of Marilyn Crispell".
+    C) "Recorded By [Recorded By Bernd Bechtold And Peter Schladebach, Assisted By]": recording with assistant, no role credit.
+    D) "Edited By [Schnitt]": editor without the credit "schnitt".
+    E) "Licensed Through – rbb Media GmbH": licensor; the notes' "Lizenz durch rbb media GmbH" joins it (one row).
+    F) "Funded By – Robert D. Bielecki Foundation": credited "support" – the notes say "underwriting support was provided by …";
+       without that sentence "funding".
+    G) The notes' "Haus der Berliner Festspiele, Grosse Bühne": Discogs's place named "Haus der Berliner Festspiele: Grosse Bühne"
+       (searched as the house too) – one entry; "“Random-Etude”" no entry.
+    H) The ℗ / © dates of the notes in the date matrix: "label: Maya Recordings" (until 3.139.0 "studio: …").
+    I) "Jazzfest Berlin" only in the thanks: its event found by the date of the recording (2025-11-01) – offered, said so."""
+    E1 = H.uid('fefefefe', 11)
+    H.MB_SEARCH['event'] = [{'id': E1, 'name': 'Jazzfest Berlin 2025', 'disambiguation': '', 'type': 'Festival', 'life-span': {'begin': '2025-10-30', 'end': '2025-11-02'}}]
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for run, notes in (('A', LJ_NOTES), ('F2', LJ_NOTES.replace('And we are very grateful that underwriting support was provided by the Robert D. Bielecki Foundation.', ''))):
+                H.discogs_release = lj_discogs(notes)
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1500)
+                rows = pg.evaluate(LJ_ROWS)
+                of = lambda n: [r for r in rows if r['name'] == n]
+                fund = of('Robert D. Bielecki Foundation')
+                if run == 'F2':
+                    print('F) ohne den Satz:', fund)
+                    results.append(len(fund) == 1 and fund[0]['credit'] == 'funding' and fund[0]['notes'] == ['fundingLabel'])
+                    results.append(not errs)
+                    pg.close()
+                    ctx.close()
+                    continue
+                mc = of('Marilyn Crispell')
+                print('A)', [(r['raw'], r['types'], r['flags'], r['credit'], r['primary']) for r in mc + of('Angelica Sanchez')])
+                results.append(len(mc) == 1 and mc[0]['primary'] == 'piano' and mc[0]['flags'] == ['solo'] and mc[0]['credit'] == ''
+                               and len(of('Angelica Sanchez')) == 1 and of('Angelica Sanchez')[0]['flags'] == ['solo'])
+                js = of('John Sharpe')
+                print('B)', [(r['raw'], r['credit']) for r in js])
+                results.append([r['credit'] for r in js] == ['photo of Marilyn Crispell'])
+                ass = of('Benedikt Jäger') + of('Henrike Zeller')
+                print('C)', [(r['types'], r['flags'], r['credit']) for r in ass])
+                results.append(len(ass) == 2 and all('recording' in r['types'] and r['flags'] == ['assistant'] and r['credit'] == '' for r in ass))
+                uh = of('Ulrich Hieber')
+                print('D)', [(r['types'], r['credit']) for r in uh])
+                results.append(len(uh) == 1 and uh[0]['types'] == ['editor'] and uh[0]['credit'] == '')
+                rbb = [r for r in rows if 'rbb' in r['name'].lower()]
+                print('E)', [(r['name'], r['raw'], r['types']) for r in rbb])
+                results.append(len(rbb) == 1 and rbb[0]['types'] == ['licensor'])
+                print('F)', [(r['raw'], r['types'], r['credit'], r['level'], r['notes']) for r in fund])
+                results.append(len(fund) == 1 and fund[0]['credit'] == 'support' and fund[0]['level'] == 'release' and fund[0]['types'] == [])
+                haus = [r for r in rows if 'Festspiele' in r['name']]
+                names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
+                print('G)', [(r['name'], r['raw'], r['alt']) for r in haus], '| Random:', [n for n in names if 'Random' in n])
+                results.append(len(haus) == 1 and haus[0]['name'] == 'Haus der Berliner Festspiele: Grosse Bühne' and 'Haus der Berliner Festspiele' in haus[0]['alt']
+                               and not any('Random' in n for n in names))
+                H.wait_for(pg, "!!document.querySelector('.dci-festival [data-act=festival-add]')", 20)
+                fest = pg.evaluate("(() => { const f = document.querySelector('.dci-festival'); return f ? f.textContent.replace(/\\s+/g, ' ').trim() : ''; })()")
+                print('I)', fest[:400])
+                results.append('Jazzfest Berlin' in fest and 'Jazzfest Berlin 2025 (2025-10-30 – 2025-11-02)' in fest and 'found by the date of the recording' in fest
+                               and 'only mentioned' not in fest)
+                dates = pg.evaluate("[...document.querySelectorAll('.dci-tg-tag')].map(x => x.textContent.trim()).filter(t => /:/.test(t))")
+                print('H)', dates)
+                results.append('label: Maya Recordings' in dates and any(t.startswith('label: Rundfunk Berlin') for t in dates))
+                results.append(not any(t.startswith('studio: Maya') for t in dates))
+                print('Fehler:', errs)
+                results.append(not errs)
+                pg.close()
+                ctx.close()
+            b.close()
+    finally:
+        H.MAIN = main0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_soloist3140():
+    """Credits Importer 3.140.0 (collected item Z-SOLOIST; answer of 2026-11-13 12:28): "Soloist" without an instrument.
+    A) The person has one instrument on the release ("Saxophone"): that row gets the attribute solo, no row "Soloist".
+    B) Two ("Piano", "Guitar"): the row asks "“Soloist” without an instrument – which one of the person’s?" with piano and guitar;
+       the answer piano: the piano row gets solo, the row of the question goes (one row less).
+    C) None: a role MusicBrainz does not know, as before (miscellaneous support, its task the word)."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['notes'] = ''
+        d['extraartists'] = [ex('Olga Organ', 'Saxophone', 5001), ex('Olga Organ', 'Soloist', 5001), ex('Pia Twokeys', 'Piano, Guitar', 5002),
+                             ex('Pia Twokeys', 'Soloist', 5002), ex('Nora None', 'Soloist', 5003), ex('Nora None', 'Liner Notes', 5003)]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            rows = pg.evaluate(LJ_ROWS)
+            of = lambda n: [(r['raw'], r['primary'], r['flags'], r['ask'], r['solo'], r['types']) for r in rows if r['name'] == n]
+            print('A)', of('Olga Organ'))
+            results.append(of('Olga Organ') == [('Saxophone', 'saxophone', ['solo'], None, False, ['instrument'])])
+            pt = of('Pia Twokeys')
+            print('B)', pt)
+            results.append(len(pt) == 3 and [x for x in pt if x[0] == 'Soloist'][0][3] == ['piano', 'guitar'] and [x for x in pt if x[0] == 'Soloist'][0][4])
+            ask = pg.evaluate("[...document.querySelectorAll('[data-el=abbr-ask]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+            print('B) Frage:', ask)
+            results.append(any('“Soloist” without an instrument – which one of the person’s?' in a for a in ask))
+            pg.click("[data-el=abbr-ask] [data-act=instr-pick][data-instr=piano]")
+            pg.wait_for_timeout(600)
+            rows = pg.evaluate(LJ_ROWS)
+            pt2 = [(r['raw'], r['primary'], r['flags']) for r in rows if r['name'] == 'Pia Twokeys']
+            print('B) nach der Antwort:', pt2)
+            results.append(sorted(pt2) == [('Guitar', 'guitar', []), ('Piano', 'piano', ['solo'])])
+            nn = of('Nora None')
+            print('C)', nn)
+            results.append(any(x[0] == 'Soloist' and x[5] == ['misc'] for x in nn))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.MAIN = main0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_ljreview3140():
+    """Credits Importer 3.140.0 (review of Z-SOLOIST, Z-FUNDED, Z-LICTHRU): Discogs credits and notes.
+    A) "Piano" on all tracks and "Soloist [Piano Soloist]" on track 2: the piano row without solo, the soloist's own piano row (track 2)
+       with solo – not solo on every track.
+    B) "Funded By – Kunststiftung NRW", the notes "Mit freundlicher Unterstützung der Kunststiftung NRW.": credited "support".
+    C) The notes "Recorded by Jane Roe with the kind support of Bayerischer Rundfunk": Jane Roe still read (recording) – the sentence is
+       no line of support alone.
+    D) "Licensed through an agreement with Sony Music", "Lizenz: Creative Commons BY-NC-SA": no licensor.
+    E) A rule switched (applyRulesChange – remapRow): the solo of B's joined row stays."""
+    NOTES = """Mit freundlicher Unterstützung der Kunststiftung NRW.
+Recorded by Jane Roe with the kind support of Bayerischer Rundfunk
+Licensed through an agreement with Sony Music
+Lizenz: Creative Commons BY-NC-SA"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i, tr='': {'name': name, 'anv': '', 'role': role, 'tracks': tr, 'id': i, 'join': ''}
+        d['notes'] = NOTES
+        d['companies'] = [{'name': 'Kunststiftung NRW', 'entity_type_name': 'Funded By', 'id': 1201, 'catno': ''}]
+        d['extraartists'] = [ex('Pia Solo', 'Piano', 6001), ex('Pia Solo', 'Soloist [Piano Soloist]', 6001, '2'), ex('Sam Same', 'Saxophone', 6002),
+                             ex('Sam Same', 'Soloist [Saxophone Soloist]', 6002)]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+            ROWS = LJ_ROWS.replace("solo: !!(r.abbrAsk && r.abbrAsk.solo) }", "solo: !!(r.abbrAsk && r.abbrAsk.solo), tracks: [...r.tracks].sort() }")
+            rows = pg.evaluate(ROWS)
+            pia = sorted((r['raw'], r['flags'], r['tracks']) for r in rows if r['name'] == 'Pia Solo')
+            print('A)', pia)
+            results.append(pia == [('Piano', [], [0, 1, 2, 3]), ('Soloist [Piano Soloist]', ['solo'], [1])])
+            kun = [(r['raw'], r['credit'], r['notes']) for r in rows if r['name'] == 'Kunststiftung NRW']
+            print('B)', kun)
+            results.append(kun == [('Funded By', 'support', ['supportLabel'])])
+            jr = [(r['raw'], r['types']) for r in rows if r['name'] == 'Jane Roe']
+            print('C)', jr)
+            results.append(len(jr) == 1 and 'recording' in jr[0][1])
+            lic = [(r['name'], r['raw']) for r in rows if 'Licensed' in r['raw'] or 'Creative' in (r['name'] or '') or 'agreement' in (r['name'] or '')]
+            print('D)', lic)
+            results.append(not lic)
+            pg.click('[data-act=rules]')
+            pg.wait_for_timeout(300)
+            box = '#dci-rules [data-rule-on=R095]'
+            pg.locator(box).first.scroll_into_view_if_needed()
+            pg.locator(box).first.uncheck()
+            pg.wait_for_timeout(800)
+            sam = [(r['raw'], r['flags']) for r in pg.evaluate(ROWS) if r['name'] == 'Sam Same']
+            print('E)', sam)
+            results.append(sam == [('Saxophone', ['solo'])])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.MAIN = main0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
