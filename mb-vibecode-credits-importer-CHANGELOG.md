@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-13 | 3.137.0 | – |
+| 2026-11-13 | 3.137.0 – 3.139.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -106,6 +106,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.139.0
+
+- **Import with the source page in the background** (collected item Z-GAPBG): on the line of the release page ↗ at the right of "Import credits …" opens the page of the source of the line (the one imported) in a tab in the background – with the companion it shows where the credits come from – and starts the import.
+- **Credits taken out on some tracks** (Z-GAPREFRESH2b; rule S223): a credit whose relationships were taken out in the relationship editor on some of its tracks only is asked for at the next import too – "Bass Man – bass (on tracks 2, 3 only)"; ✓ takes those tracks off its row, the others stay.
+- **Global statistics from the dump** (Z-GSTNEW): "Global" also shows "Supplemented instead of new" (the share of the submissions with a supplement of another source, by that source, dates and role credits added), "Remixes and commissions" and "Sources of the submissions" (with their supplements, "Discogs + Bandcamp") – read by the workflow of the dump from its next run.
+
+### Import 3.138.0
+
+- **Works by their catalogue number** (collected item Z-BWV; rule S224): a track without a work of its title whose title has a catalogue number – BWV, K. / KV, Op. (No.), D, Hob., RV, HWV – is looked up by the number among the works of its composer. "Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001" offers the movement "Sonata for Violin solo no. 1 in G minor, BWV 1001: I. Adagio"; "Sonata in G minor, BWV 1001" the sonata itself. Offered in the track's list ("1 work of these writers with BWV 1001"), not linked by itself.
+- **Only some works** (Z-ONEWORK; S225): in the head of the works matrix ✍ keeps only the works of tracks with writing credits, 🔗 only works that are in MusicBrainz, ☝ the work of one track picked from a list; the others get no work and their credits are skipped. ↺ brings everything back. With "Symbols: Text" they are words.
+- **Live comments of whole media** (Z-LIVECOMALL): the notice of the live comments says "all recordings" when a comment is on every recording, "recordings on mediums 1, 3–4" for whole media and "recordings on medium 1, 2.1–2.3" when tracks of another medium come with them.
 
 ### Import 3.137.0
 

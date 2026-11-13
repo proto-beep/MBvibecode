@@ -519,6 +519,12 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "＋ attribute", the hourglass chip, "＋ Add a column" by MBID (a long name smaller; a place refused)
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, choosing a work, suites and medleys
+                                #   bwv3138: 3.138.0 (Z-BWV, S224): a catalogue number in the title – the movement it names ("BWV1001" … "Adagio"), the
+                                #     work without one, "II. Fuga"; the query by the number with the composer; S224 off: nothing
+                                #   bwv3138r: 3.138.0 (review of Z-BWV): "Hob. I:104" the work, "Prelude No. 15 …, Op. 28" its prelude, "Requiem …, Op. 48" the
+                                #     Requiem; ↺ keeps a new work planned by hand after ☝, the focus on ☝
+                                #   onework3138: 3.138.0 (Z-ONEWORK, S225): ☝ one track from the list, 🔗 existing works only, ✍ writing credits only, ↺,
+                                #     the words with "Symbols: Text"
                                 #   colw399: 3.99.0 (Z-COLW, Z-APOS): the first column at most 460 px with long titles; "Patsy Geary’s" for the new work
                                 #   mdly398: 3.98.0 (Z-MDLY, S157): "Alpha/Beta" split ("/" without spaces), "AC/DC" whole, "+" added by ✎ –
                                 #     "Medleys: split n"; a traditional tune arranged: "arrangement of" suggested (most recordings first), an
@@ -560,6 +566,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
 python3 t_works_live.py         # [3.72.0, from t_works_more.py] Works: comments of live recordings
+                                #   livecomall3138: 3.138.0 (Z-LIVECOMALL), in Node: "all recordings", "recordings on mediums 1, 3–4", "recordings on
+                                #     medium 1, 2.1–2.3", the tracks otherwise
                                 #   live3108: 3.108.0 (Z-LIVE2): comments ticked after the first staging still become the job – the offer answered later,
                                 #     ticked again after a staging without them (untick: gone), the setting switched on afterwards; before a staging no job
                                 #   livedate: 3.62.0 (Z-PDT, Z-LVD, S089): "Performed in … on …" under Performance, the live comment without it before the matrix is applied, the hint naming it; off
@@ -763,6 +771,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   gstnew3139: 3.139.0 (Z-GSTNEW): "Global" with "Supplemented instead of new", "Remixes and commissions", "Sources of the
+                                #     submissions" (in the groups What and Sources)
                                 #   settabs3137: 3.137.0 (Z-SETTABS2): two columns (names right-aligned without a colon, the choices at one place), the dot at
                                 #     what differs from the default, explanations below, dependent switches indented and greyed out, the tab Developer only in
                                 #     developer mode (its switch in General, last after Beta), "Discogs & Bandcamp", the messages hidden, the companion's
@@ -1113,6 +1123,9 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gaprefresh3139: 3.139.0 (Z-GAPREFRESH2b, S223): a credit taken out on tracks 2 and 3 only – kept with them, asked "(on
+                                #     tracks 2, 3 only)", ✓ takes them off the row (2 of 4 tracks)
+                                #   gapbg3139: 3.139.0 (Z-GAPBG): ↗ beside "Import credits …" – the source in a tab in the background, the import started
                                 #   gaprefresh3135: 3.135.0 (Z-GAPREFRESH2, S223): Guitar Guy taken out in the editor – counted as missing, said apart on
                                 #     the release page; the next import asks "Skip them again?" – ✓ on Skip
                                 #   gapcenter3120: 3.120.0 (Z-GAPCENTER): the text of the line "Discogs: about … relationships" centred, the buttons beside it
