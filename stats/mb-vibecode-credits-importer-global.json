@@ -5,7 +5,7 @@
   "MB x Vibecode: Import Discogs credits"
  ],
  "dump": "20261111-002335",
- "generated": "2026-11-12T14:13:12Z",
+ "generated": "2026-11-13T08:22:29Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits, releases or URLs; \"editors\" is how many different ones",
  "totals": {
@@ -271,6 +271,20 @@
   "youtube": 3
  },
  "supplements": {},
+ "supplemented": {
+  "n": 0,
+  "of": 85
+ },
+ "source_mix": {
+  "discogs": 65,
+  "bandcamp": 17,
+  "youtube": 3
+ },
+ "remixes": {
+  "remixer": 6,
+  "remix_of": 0,
+  "commissioned": 0
+ },
  "done": {
   "credit relationships": 5522,
   "works linked": 422
