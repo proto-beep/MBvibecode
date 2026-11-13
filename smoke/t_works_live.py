@@ -622,4 +622,27 @@ def case_live3108():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_livecomall3138():
+    """Credits Importer 3.138.0 (collected item Z-LIVECOMALL), in Node: the recordings of a live comment by the media of the release –
+    all of them "all recordings"; whole media "recordings on mediums 1, 3–4" ("medium 1" alone); whole media and tracks of another
+    "recordings on medium 1, 2.1–2.3"; no whole medium: the tracks as before; one medium all: "all recordings"."""
+    import json
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const media = [[1, ['1.1', '1.2', '1.3', '1.4', '1.5', '1.6']], [2, ['2.1', '2.2', '2.3', '2.4', '2.5', '2.6']], [3, ['3.1', '3.2', '3.3']], [4, ['4.1', '4.2']]];
+const all = media.flatMap((x) => x[1]);
+console.log(JSON.stringify([m.liveScopeText(all, true, media), m.liveScopeText([...media[0][1], ...media[2][1], ...media[3][1]], true, media),
+  m.liveScopeText(media[0][1], true, media), m.liveScopeText([...media[0][1], '2.1', '2.2', '2.3'], true, media), m.liveScopeText(['1.1', '1.2', '2.4'], true, media),
+  m.liveScopeText(['1.1', '1.2', '1.3'], false, [[1, ['1.1', '1.2', '1.3']]]), m.liveScopeText(['1.2', '1.3'], false, [[1, ['1.1', '1.2', '1.3']]])]));
+"""
+    o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+    print(res)
+    results = [res == ['all recordings', 'recordings on mediums 1, 3–4', 'recordings on medium 1', 'recordings on medium 1, 2.1–2.3', 'tracks 1.1, 1.2, 2.4',
+                       'all recordings', 'tracks 2, 3']]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

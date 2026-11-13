@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-13 | 3.137.0 | – |
+| 2026-11-13 | 3.137.0 – 3.138.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -106,6 +106,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.138.0
+
+- **Works by their catalogue number** (collected item Z-BWV; rule S224): a track without a work of its title whose title has a catalogue number – BWV, K. / KV, Op. (No.), D, Hob., RV, HWV – is looked up by the number among the works of its composer. "Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001" offers the movement "Sonata for Violin solo no. 1 in G minor, BWV 1001: I. Adagio"; "Sonata in G minor, BWV 1001" the sonata itself. Offered in the track's list ("1 work of these writers with BWV 1001"), not linked by itself.
+- **Only some works** (Z-ONEWORK; S225): in the head of the works matrix ✍ keeps only the works of tracks with writing credits, 🔗 only works that are in MusicBrainz, ☝ the work of one track picked from a list; the others get no work and their credits are skipped. ↺ brings everything back. With "Symbols: Text" they are words.
+- **Live comments of whole media** (Z-LIVECOMALL): the notice of the live comments says "all recordings" when a comment is on every recording, "recordings on mediums 1, 3–4" for whole media and "recordings on medium 1, 2.1–2.3" when tracks of another medium come with them.
 
 ### Import 3.137.0
 
