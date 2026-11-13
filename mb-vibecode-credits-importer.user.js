@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.138.0
+// @version      3.139.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.138.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.138.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.139.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.139.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.138.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.139.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1878,11 +1878,13 @@
       "log.dglAnswer": "Lineup: {choice}",
       "rmd.title.one": "Taken out in the editor last time: {n} credit",
       "rmd.title.other": "Taken out in the editor last time: {n} credits",
+      "rmd.part.one": "(on track {list} only)",
+      "rmd.part.other": "(on tracks {list} only)",
       "rmd.hint": "– imported again as the source gives it. Skip them again?",
       "rmd.done": "– on Skip again.",
       "rmd.keepTitle": "Keep this one (import it as the source gives it)",
       "rmd.skip": "Skip them again",
-      "rmd.skipTitle": "All of them on Skip again, as at “Enter edit” last time",
+      "rmd.skipTitle": "All of them on Skip again, as at “Enter edit” last time (a credit taken out on some tracks: those tracks only)",
       "log.rmdFound": "Taken out in the editor last time: {n} – asked whether to skip them again",
       "log.rmdSkipped": "Taken out in the editor last time: {n} on Skip again",
       "yell.kind.rmd": "credits taken out in the editor last time",
@@ -2815,6 +2817,13 @@
       "stats.may.no": "declined (✕)",
       "stats.may.open": "left open (taken as suggested)",
       "stats.more.remixes": "Remixes and commissions",
+      "stats.more.gsources": "Sources of the submissions",
+      "stats.more.gsupp": "Supplemented by another source",
+      "stats.src.unknown": "unknown",
+      "stats.global.supShare": "{pct} of the submissions with a supplement of another source ({s} of {n})",
+      "stats.global.supDates": "dates added to relationships in MusicBrainz",
+      "stats.global.supCredits": "role credits added to relationships in MusicBrainz",
+      "gap.importBgTitle": "Import credits … and open {source} in a tab in the background",
       "stats.rmx.remixer": "remixers",
       "stats.rmx.remixOf": "“remix of”",
       "stats.rmx.commissioned": "commissioned",
@@ -4720,7 +4729,7 @@
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
     { id: 'S225', where: 'oneWorkKeep, oneWorkUndo, oneWorkHtml, renderWorksInner', note: 'Works matrix (3.138.0; collected item Z-ONEWORK): in its head ✍ keeps the tracks with writing credits, 🔗 those whose work is in MusicBrainz (linked, or found and chosen), ☝ one track picked from a list; of the others the new and chosen works are dropped (no work) and the credits of a linked work of one\'s own are skipped (S093) – nothing of them is staged at the works level; ↺ brings back what was there before (Symbols: Text – words instead of the symbols)' },
     { id: 'S224', where: 'catalogueOf, catalogueWorks, runWorkSearch, workFrontCell', note: 'Works (3.138.0; collected item Z-BWV): a track without a work of its title whose title has a catalogue number – BWV, K. / KV, Op. (No.), D, Hob., RV, HWV ("Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001") – is looked up by that number among the works of its composers; the movement the title names (the part after the colon of the work, "BWV 1001: I. Adagio") is offered, else the work itself ("Sonata … BWV 1001"); offered, not linked by itself' },
-    { id: 'S223', where: 'afterEnterEdit, rowsRemovedInEditor, gapExactWrite, showReleaseGap, rmdStore, rmdRefresh, rmdAskHtml', note: 'Taken out in the editor (3.135.0; collected item Z-GAPREFRESH2): at "Enter edit" the relationships the dashboard staged and that were taken out in the relationship editor by hand count as still missing – the line of the release page says how many of them ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth (not those the dashboard takes back itself – Skip, ✕, another instrument); their credits (all of a row\'s relationships taken out; rows of the source) are kept for the release: the next import brings them back as the source gives them and asks once "Taken out in the editor last time: N credits – Skip them again?" (✓ all of them on Skip again, ✕ at one keeps it; no answer: imported as the source gives them)' },
+    { id: 'S223', where: 'afterEnterEdit, rowsRemovedInEditor, gapExactWrite, showReleaseGap, rmdStore, rmdRefresh, rmdAskHtml', note: 'Taken out in the editor (3.135.0; collected item Z-GAPREFRESH2): at "Enter edit" the relationships the dashboard staged and that were taken out in the relationship editor by hand count as still missing – the line of the release page says how many of them ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth (not those the dashboard takes back itself – Skip, ✕, another instrument); their credits (all of a row\'s relationships taken out; rows of the source; [Z-GAPREFRESH2b] 3.139.0: also those taken out on some of their tracks, with those tracks) are kept for the release: the next import brings them back as the source gives them and asks once "Taken out in the editor last time: N credits – Skip them again?" (✓ all of them on Skip again, ✕ at one keeps it; no answer: imported as the source gives them)' },
     { id: 'S222', where: 'TEXT.parse (improvLine, IMPROV_LINE), IMPROV_TITLE, improvOf, improvMarkHtml, workFrontCell, roleCell, the compact line', note: 'Improvisations as works (3.133.0; collected item Z-IMPROV; a quick switch, on): "All music was improvised by A, B, C, and D", "Free improvisation by …", "Improvisations: …", "Spontaneous compositions by …", "Instant composing by …", "Alle Musik improvisiert von …", "Música improvisada por …", "Improvisé par …" – composers of the works (as the other rules of composing), marked "improvisation" at their rows and at the tracks in the works matrix (the line quoted); a title on its own ("Improvisation III", "Impro 2") marks its track too. Off: such a line is left out ("improvisations") and no work is made of it. (S122 – lists of songs outside YouTube as a switch – removed in 3.133.0: S118 reads them in every free text)' },
     { id: 'S221', where: 'TEXT.parse (CONCERT_AT, concertKind), groupCompanies, addCompanyEntry, yellItems, applyLiveDefault', note: 'Concerts (3.132.0; collected item Z-CONCERTHINT): a sentence of a concert at a place ("Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus", "concierto en …", "concert au …") gives the place as "recorded at" – a yellow suggestion (✓ / ✕) – and "live" on the links to the works; a sentence of a story ("after the two first met at a concert at …") gives nothing but a line under "Mentioned dates"' },
     { id: 'S220', where: 'datesWithContext (mentionKind), dateFinds, mentionedChipHtml, findFestivals, festivalHtml', note: 'Mentioned only (3.132.0; collected items Z-FESTALL, Z-RELDATE): a date, a festival or a concert of a sentence that is not about the recording – a story ("after the two first met at a concert in July 2019"), a long sentence without words of a recording, a relative date in such a sentence – is suggested nowhere: the chip "Mentioned dates (n) ▾" at the right of "Dates & tracks" lists it with its sentence (and the date it is reckoned from), to be taken into the pool by hand; festivals are always recognized again (the hint says "only mentioned – check the context" for such a sentence; until 3.131.0 they were left out, S209)' },
@@ -13030,12 +13039,16 @@
       + (others || []).map((o) => `<li>${esc(o.n == null ? tr('gap.bc.otherFailed', { page: String(o.url).replace(/^https?:\/\//, '') })
         : tr('gap.bc.other', { page: String(o.url).replace(/^https?:\/\//, ''), n: o.n }))}</li>`).join('');
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
+    const srcName = (SOURCES[src.kind] || {}).name || src.kind;
     // [Z-GAPBTN] (3.112.0) "Count exactly" (outlined) and "Import credits …" (filled): small round buttons, not underlined text
     const pill = 'border:1px solid #736dab;border-radius:999px;padding:1px 10px;margin-left:6px;cursor:pointer;font:inherit;font-size:0.92em;line-height:1.5;vertical-align:baseline;';
     box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}justify-self:start;">▸</button>
       <span data-gap-text style="min-width:0;text-align:center;">${esc(text)}${esc(exactText)}</span>
       <span data-gap-btns style="justify-self:end;display:inline-flex;align-items:center;white-space:nowrap;"><button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${pill}background:#fff;color:#4a2f99;">${esc(tr('gap.count'))}</button>
-      <button type="button" data-gap="import" style="${pill}background:#736dab;color:#fff;border-color:#736dab;">${esc(tr('gap.import'))}</button>
+      <button type="button" data-gap="import" style="${pill}background:#736dab;color:#fff;border-color:#736dab;${src.url ? 'border-top-right-radius:0;border-bottom-right-radius:0;padding-right:8px;' : ''}">${esc(tr('gap.import'))}</button>${
+  // [Z-GAPBG] (3.139.0) ↗ at its right: the import, and the page of the source in a tab in the background
+  src.url ? `<button type="button" data-gap="import-bg" title="${esc(tr('gap.importBgTitle', { source: srcName }))}" aria-label="${esc(tr('gap.importBgTitle', { source: srcName }))}"
+        style="${pill}margin-left:0;padding:1px 7px;border-top-left-radius:0;border-bottom-left-radius:0;background:#736dab;color:#fff;border-color:#736dab;border-left-color:#b9b4dc;">↗</button>` : ''}
       <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}margin-left:6px;">✕</button></span>
       <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;grid-column:1 / -1;">${parts}<li>${esc(tr(bc ? 'gap.bc.how' : 'gap.how'))}</li></ul>`;
     box.querySelector('[data-gap=parts]').addEventListener('click', (e) => {
@@ -13045,12 +13058,24 @@
       e.currentTarget.setAttribute('aria-expanded', String(!ul.hidden));
     });
     box.querySelector('[data-gap=count]').addEventListener('click', () => gapCount(opts, box));
-    box.querySelector('[data-gap=import]').addEventListener('click', () => {
+    const importNow = () => {
       // (3.40.3, review) the source of the line (force) – also when the release has others (the Discogs release without credits,
       // several Bandcamp pages)
       writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([src.url]), at: Date.now(), force: true });
       location.assign(`/release/${mbid}/edit-relationships`);
-    });
+    };
+    box.querySelector('[data-gap=import]').addEventListener('click', importNow);
+    // [Z-GAPBG] (3.139.0) the page of the source of the line (the one imported: Discogs, else the Bandcamp page with the most credits) in
+    // the background – with the companion it shows where the credits come from – then the import as above
+    const bgBtn = box.querySelector('[data-gap=import-bg]');
+    if (bgBtn) {
+      bgBtn.addEventListener('click', () => {
+        if (typeof GM_openInTab === 'function') GM_openInTab(src.url, { active: false, insert: true, setParent: true });
+        else if (typeof GM !== 'undefined' && GM && typeof GM.openInTab === 'function') GM.openInTab(src.url, true);
+        else window.open(src.url, '_blank', 'noopener');
+        importNow();
+      });
+    }
     box.querySelector('[data-gap=close]').addEventListener('click', () => {
       if (est && dismiss) dismiss(est.total);
       box.remove();
@@ -14055,7 +14080,7 @@
       } catch (e) { /* no editor state */ }
       gapExactWrite(releaseMbid, S.gapExactSrc, items.length + rels.n, open, true, rels.n);
       try {
-        rmdStore(removed);
+        rmdStore(removed, rels.partial);
       } catch (e) { /* not kept */ }
       log('info', 'gapAfterEdit', { n: items.length + rels.n, open });
     } else if (ruleOn('S223') && releaseMbid) {
@@ -14063,7 +14088,8 @@
       try {
         const plan = computePlan();
         const skip = new Set([...plan.removals.map((r) => r.staged), ...plan.items.flatMap((it) => [it.update, it.replaces && it.replaces.staged]).filter(Boolean)]);
-        rmdStore(rowsRemovedInEditor({ any: true, rels: { n: 0 }, skip }));
+        const rels2 = { n: 0 };
+        rmdStore(rowsRemovedInEditor({ any: true, rels: rels2, skip }), rels2.partial);
       } catch (e) { /* not kept */ }
     }
     // (S219: the companion marks the relationships taken out in the editor by hand grey – S223 counts them as missing on the release page)
@@ -38055,16 +38081,26 @@
 
   // --- [Z-GAPREFRESH2] (3.135.0, S223) the credits taken out in the editor last time --------------------------------------------------
   const RMD_KEY = 'dci-removed-in-editor';
-  /** At "Enter edit": the credits whose relationships were all taken out in the editor by hand, per release ({ [MBID]: [{ key, label }] }, the last 50). */
-  function rmdStore(rowIds) {
+  /**
+   * At "Enter edit": the credits whose relationships were all taken out in the editor by hand, per release ({ [MBID]: [{ key, label }] },
+   * the last 50); [Z-GAPREFRESH2b] (3.139.0) those taken out on some of their tracks only (partial: rowId → track indexes): { key, label,
+   * tracks: [index …], positions: "2, 3" }.
+   */
+  function rmdStore(rowIds, partial = null) {
     if (!releaseMbid) return;
     const all = readJson('localStorage', RMD_KEY, {}) || {};
     // ((review) rows of the source only (not added by hand, not of a supplement), by the key of their line and its occurrence (base#i)
     const seen = new Set();
-    const list = S.rows.filter((r) => rowIds.has(r.id) && !r.manual && !r.supp && S.freshRows && S.freshRows.has(r.id)).map((r) => {
+    const part = partial || new Map();
+    const list = S.rows.filter((r) => (rowIds.has(r.id) || part.has(r.id)) && !r.manual && !r.supp && S.freshRows && S.freshRows.has(r.id)).map((r) => {
       const a = S.artists.get(r.artistKey) || {};
-      return { key: S.freshRows.get(r.id).k, label: `${a.mbName || a.name || '?'} – ${rowPhrase(r) || r.raw || ''}` };
-    }).filter((x) => x.key && !seen.has(x.key) && seen.add(x.key));
+      const x = { key: S.freshRows.get(r.id).k, label: `${a.mbName || a.name || '?'} – ${rowPhrase(r) || r.raw || ''}` };
+      if (!rowIds.has(r.id)) {
+        const ts = part.get(r.id).filter((i) => S.mbTracks[i]).sort((p, q) => p - q);
+        Object.assign(x, { tracks: ts, positions: trackListLabel(ts) });
+      }
+      return x;
+    }).filter((x) => x.key && (!x.tracks || x.tracks.length) && !seen.has(x.key) && seen.add(x.key));
     delete all[releaseMbid];
     if (list.length) all[releaseMbid] = list;
     const keys = Object.keys(all);
@@ -38077,7 +38113,13 @@
     if (!ruleOn('S223') || !releaseMbid) return false;
     const list = ((readJson('localStorage', RMD_KEY, {}) || {})[releaseMbid]) || [];
     const keyOf = (r) => (S.freshRows && S.freshRows.get(r.id) ? S.freshRows.get(r.id).k : '');
-    const items = list.map((x) => ({ ...x, rows: S.rows.filter((r) => r.level !== 'skip' && keyOf(r) === x.key).map((r) => r.id) })).filter((x) => x.rows.length);
+    // ([Z-GAPREFRESH2b] 3.139.0) a credit taken out on some tracks: only while its row still has them
+    const items = list.map((x) => {
+      const rows = S.rows.filter((r) => r.level !== 'skip' && keyOf(r) === x.key && (!x.tracks || ((r.level === 'recording' || r.level === 'work') && x.tracks.some((i) => r.tracks.has(i)))));
+      // ((review) the tracks the row still has
+      const tracks = x.tracks ? x.tracks.filter((i) => rows.some((r) => r.tracks.has(i))) : null;
+      return { ...x, rows: rows.map((r) => r.id), ...(tracks ? { tracks, positions: trackListLabel(tracks) } : {}) };
+    }).filter((x) => x.rows.length);
     if (!items.length) return false;
     S.rmdAsk = { items, done: false };
     log('info', 'rmdFound', { n: items.length });
@@ -38087,7 +38129,8 @@
     const q = S.rmdAsk;
     if (!q || !ruleOn('S223') || !q.items.length) return '';
     const n = q.items.length;
-    const li = q.items.map((x, k) => `<li>${esc(x.label)}${q.done ? '' : ` <button type="button" class="dci-iconbtn" data-act="rmd-keep" data-k="${k}" title="${esc(tr('rmd.keepTitle'))}" aria-label="${esc(tr('rmd.keepTitle'))}">✕</button>`}</li>`).join('');
+    // ([Z-GAPREFRESH2b] 3.139.0) a credit taken out on some of its tracks: which ones
+    const li = q.items.map((x, k) => `<li>${esc(x.label)}${x.tracks ? ` <span class="dci-sub">${esc(tr('rmd.part', { n: x.tracks.length, list: x.positions || trackListLabel(x.tracks) }))}</span>` : ''}${q.done ? '' : ` <button type="button" class="dci-iconbtn" data-act="rmd-keep" data-k="${k}" title="${esc(tr('rmd.keepTitle'))}" aria-label="${esc(tr('rmd.keepTitle'))}">✕</button>`}</li>`).join('');
     return `<div class="dci-festival dci-plays dci-rmdask${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="rmdask"><p><strong>${esc(tr('rmd.title', { n }))}</strong> ${esc(tr(q.done ? 'rmd.done' : 'rmd.hint'))}</p>
       <ul class="dci-dgl-list">${li}</ul>${q.done ? '' : `<div class="dci-festival-offers"><button type="button" class="dci-small" data-act="rmd-skip" title="${esc(tr('rmd.skipTitle'))}">✓ ${esc(tr('rmd.skip'))}</button></div>`}</div>`;
   }
@@ -38095,10 +38138,20 @@
   function rmdSkipAll() {
     const q = S.rmdAsk;
     if (!q) return;
-    const ids = new Set(q.items.flatMap((x) => x.rows));
+    const ids = new Set(q.items.filter((x) => !x.tracks).flatMap((x) => x.rows));
     S.rows.filter((r) => ids.has(r.id) && r.level !== 'skip').forEach((r) => {
       levelOf(r, 'skip');
       r.levelTouched = true;
+    });
+    // [Z-GAPREFRESH2b] (3.139.0) taken out on some tracks: those tracks off the row (none left: Skip)
+    q.items.filter((x) => x.tracks).forEach((x) => {
+      S.rows.filter((r) => x.rows.includes(r.id) && (r.level === 'recording' || r.level === 'work')).forEach((r) => {
+        x.tracks.forEach((i) => r.tracks.delete(i));
+        if (!r.tracks.size) {
+          levelOf(r, 'skip');
+          r.levelTouched = true;
+        }
+      });
     });
     q.done = true;
     rmdForget(q.items.map((x) => x.key));
@@ -42573,18 +42626,23 @@
         if (!row || row.level === 'skip') continue;
       }
       if (!byRow.has(st.rowId)) byRow.set(st.rowId, []);
-      byRow.get(st.rowId).push(id);
+      byRow.get(st.rowId).push({ id, track: Number.isInteger(st.track) ? st.track : null });
     }
     if (!byRow.size) return out;
     // ((review) the editor's state walked with a larger limit (once, at "Enter edit")
     const walk = {};
-    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat()), 2000000, walk);
+    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat().map((x) => x.id)), 2000000, walk);
     if (walk.cut) return out;
-    const gone = (id) => { const x = cur.get(id); return !x || x._status === 3; };
+    const gone = (x) => { const y = cur.get(x.id); return !y || y._status === 3; };
     const goneIds = new Set();
-    byRow.forEach((ids, rowId) => {
-      if (ids.every(gone)) out.add(rowId);
-      ids.filter(gone).forEach((id) => goneIds.add(id));
+    byRow.forEach((xs, rowId) => {
+      if (xs.every(gone)) out.add(rowId);
+      // [Z-GAPREFRESH2b] (3.139.0) a credit taken out on some of its tracks only: those tracks (all of a track's relationships gone)
+      else if (rels && xs.some(gone)) {
+        const tracks = uniq(xs.filter((x) => x.track != null).map((x) => x.track)).filter((t) => xs.filter((x) => x.track === t).every(gone));
+        if (tracks.length) (rels.partial || (rels.partial = new Map())).set(rowId, tracks);
+      }
+      xs.filter(gone).forEach((x) => goneIds.add(x.id));
     });
     // [Z-GAPREFRESH2] (3.135.0) the relationships taken out by hand ((review) each one once – a joined relationship is staged per row)
     if (rels) rels.n = goneIds.size;
@@ -49116,7 +49174,10 @@
     return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
       by_version: rows(d.by_version, ['edits', 'submissions']), by_status: nums(d.by_status), by_source: nums(d.by_source), by_relationship_type: nums(d.by_relationship_type),
       done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type), credits: { credited_as: pair(obj(d.credits).credited_as) }, core,
-      per_release: srrClean(d.per_release, ['rels']) };
+      per_release: srrClean(d.per_release, ['rels']),
+      // [Z-GSTNEW] (3.139.0) supplemented instead of new, their sources, remixes and commissions (a file of before: none)
+      supplements: nums(d.supplements), supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
+      remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null };
   }
   /** [Z-SRR] (3.91.0) A part "per_release" of the global file – only numbers: { n, <key>: { mean, median } …, by_level }; null without. */
   function srrClean(p, keys) {
@@ -49197,7 +49258,8 @@
     return [head, old, tiles, `<div class="dci-stats-gcore" data-el="stats-global-core">${statGroupsHtml(core.cards, { overview, who: core.lead }, GLOBAL_STATS_GROUPS, 'g:')}</div>`];
   }
   /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
-  const GLOBAL_STATS_GROUPS = [['who', ['credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']]];
+  // ([Z-GSTNEW] 3.139.0) What: supplemented instead of new, remixes and commissions; Sources: the sources of the submissions together
+  const GLOBAL_STATS_GROUPS = [['what', ['suppl', 'remixes']], ['who', ['credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
   /** [Z-SRR] (3.91.0) "Per release" of all users: the edits' part (relationships, by level) and the core's (recordings, per recording). */
   function globalPerRelease(d) {
     const e = d && d.per_release;
@@ -49236,6 +49298,26 @@
     // [Z-SRR] (3.91.0, S143) per release
     const pr = ruleOn('S143') ? globalPerRelease(d) : null;
     if (pr) card('perrelease', statPerReleaseHtml(pr));
+    // [Z-GSTNEW] (3.139.0) from every run (the edit dump): supplemented instead of new, remixes and commissions, the sources of the
+    // submissions with their supplements – as the cards of this browser (3.131.0); a file of before has none of them
+    // ((review) the same label once, its numbers together; "unknown" a label of its own
+    const SRCN = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr', unknown: 'unknown' };
+    const srcLabel = (k) => String(k).split('+').map((x) => tr(`stats.src.${SRCN[x] || 'other'}`)).join(' + ');
+    const summed = (o) => {
+      const m = {};
+      Object.entries(o || {}).forEach(([k, v]) => { const l = srcLabel(k); m[l] = (m[l] || 0) + (Number(v) || 0); });
+      return m;
+    };
+    // ((review) supplemented by another source – a card of its own; "Supplemented instead of new" as in this browser: added to what
+    // MusicBrainz had
+    const su = d.supplemented;
+    if (su && su.of) {
+      card('gsupp', `<p>${esc(tr('stats.global.supShare', { pct: `${statPct(su.n, su.of)} %`, s: num(su.n), n: num(su.of) }))}</p>${kvo(summed(d.supplements))}`);
+      const dn = d.done || {};
+      card('suppl', kvo({ [tr('stats.global.supDates')]: dn['dates added'] || 0, [tr('stats.global.supCredits')]: dn['role credits added'] || 0 }));
+    }
+    if (d.remixes) card('remixes', kvo({ [tr('stats.rmx.remixer')]: d.remixes.remixer || 0, [tr('stats.rmx.remixOf')]: d.remixes.remix_of || 0, [tr('stats.rmx.commissioned')]: d.remixes.commissioned || 0 }));
+    if (d.source_mix) card('gsources', kvo(summed(d.source_mix), (k) => k, 8));
     if (!c) {
       if (ca && ca.of) card('credits', credits);
       return { cards, lead: `<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p>` };

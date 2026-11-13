@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.138.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.139.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.139.0 · 2026-11-13
+
+- **Z-GAPBG:** `showReleaseGap` – `[data-gap=import-bg]` (↗, `gap.importBgTitle` with the source's name) joined to the right of "Import credits …" when the line has a URL; `importNow` (the handover as before); ↗: `GM_openInTab(src.url, { active: false, insert: true, setParent: true })` (else `window.open`), then `importNow`.
+- **Z-GAPREFRESH2b (S223):** `rowsRemovedInEditor` – the staged relationships with their track; `rels.partial` (row → the tracks all of whose relationships are gone, the row not all gone); `rmdStore(rowIds, partial)` – such a credit with `tracks` (indexes) and `positions`; `rmdRefresh` – only while its row has those tracks; `rmdAskHtml` – `rmd.part`; `rmdSkipAll` – those tracks off the row (none left: Skip); `afterEnterEdit` passes `rels.partial` (both calls).
+- **Z-GSTNEW:** `stats/global_stats.py` – `supplemented` ({ n, of }: submissions with "Also from:"), `source_mix` (source + supplements), `remixes` (added relationships of the types remixer, remix, commissioned); `globalStatsClean` keeps them; `globalCoreParts` – cards `suppl` (`stats.global.supShare`, the supplements by source, `stats.global.supDates`, `stats.global.supCredits`), `remixes`, `gsources` (`stats.more.gsources`); `GLOBAL_STATS_GROUPS` with "what" and "sources". `stats/README.md`.
+- **Tests:** `t_start.py gaprefresh3139`, `t_start.py gapbg3139`, `t_ui_settings.py gstnew3139`, `stats/test_global_stats.py` (supplemented, source_mix, remixes; `build_rmx`) – new, fail on 3.138.0. `register_golden.json` anew (S223's note).
+- **Review:** "Supplemented by another source" (`gsupp`, in Sources) apart from "Supplemented instead of new" (dates and role credits added, as in this browser); equal labels of the sources added up, `unknown` its own (`stats.src.unknown`); `global_stats.py`: each supplement in `source_mix` (also one of the source's kind), remixes only of open or applied edits; the divider of ↗ visible, `GM.openInTab` as a fallback; a credit taken out on some tracks: only rows on the recording or works level, its tracks those the row still has, `levelTouched` only with Skip; S223's note.
 
 ## Import 3.138.0 · 2026-11-13
 

@@ -88,6 +88,24 @@ def build(path, cut=None, skip=()):
             tar.addfile(ti, io.BytesIO(b))
 
 
+def build_rmx(path):
+    """[3.139.0, Z-GSTNEW] Remixes and commissions: a submission of editor 3 with a remixer, a "remix of" and a "commissioned" added, a
+    remixer removed (not counted)."""
+    rel = lambda t0, t1, name: json.dumps({'type0': t0, 'type1': t1, 'link_type': {'id': 9, 'name': name}, 'entity0': {'id': 1}, 'entity1': {'id': 2}})
+    edit = [copy_line(201, 3, 90, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(202, 3, 90, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1),
+            copy_line(203, 3, 90, 1, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(204, 3, 92, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1)]
+    data = [copy_line(201, rel('artist', 'recording', 'remixer')), copy_line(202, rel('recording', 'recording', 'remix')),
+            copy_line(203, rel('artist', 'work', 'commissioned')), copy_line(204, json.dumps({'relationship': {'link': {'type': {'id': 9}}}}))]
+    n = note('3.139.0', 'https://x.bandcamp.com/album/y', 'added 3 credit relationships from Bandcamp (2 recording, 1 work)', extra='Also from: https://www.discogs.com/release/3-x')
+    notes = [copy_line(21, 3, e, n, '2026-11-05 10:00:01+00') for e in (201, 202, 203, 204)]
+    with tarfile.open(path, 'w:bz2') as tar:
+        for name, rows in (('edit', edit), ('edit_data', data), ('edit_note', notes), ('vote', ['1\t2\n'])):
+            b = ''.join(rows).encode('utf-8')
+            ti = tarfile.TarInfo(f'mbdump/{name}')
+            ti.size = len(b)
+            tar.addfile(ti, io.BytesIO(b))
+
+
 def build_core(path, cut=None, instruments=None, extra_ii=(), no_subtype=False):
     """[3.55.0] A small made-up mbdump.tar.bz2 (the tables of the core pass, their columns as in MusicBrainz)."""
     N = None
@@ -141,6 +159,12 @@ def main():
         build(src)
         subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--input', src, '--out', out, '--dump', 'test'], check=True)
         r = json.load(open(out))
+        # [3.139.0, Z-GSTNEW] remixes and commissions
+        rmx_src = os.path.join(d, 'rmx.tar.bz2')
+        rmx_out = os.path.join(d, 'rmx.json')
+        build_rmx(rmx_src)
+        subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--input', rmx_src, '--out', rmx_out, '--dump', 'test'], check=True)
+        rx = json.load(open(rmx_out))
         # [3.55.0] the facts for the core pass, the core pass merged into the result; without the core tables an error
         facts = os.path.join(d, 'facts.json')
         subprocess.run([sys.executable, os.path.join(HERE, 'global_stats.py'), '--input', src, '--out', out, '--dump', 'test', '--facts', facts], check=True)
@@ -206,6 +230,11 @@ def main():
         ('by_relationship_type', r['by_relationship_type'], {'instrument': 3, 'vocal': 2, 'producer': 1, 'mix': 1}),
         ('by_source', r['by_source'], {'discogs': 2, 'youtube': 1}),
         ('supplements', r['supplements'], {'bandcamp': 2}),
+        # [3.139.0, Z-GSTNEW] the two Discogs submissions of editor 7 with a supplement of Bandcamp; their sources together
+        ('supplemented', r['supplemented'], {'n': 2, 'of': 3}),
+        ('source_mix', r['source_mix'], {'discogs+bandcamp': 2, 'youtube': 1}),
+        ('remixes (none)', r['remixes'], {'remixer': 0, 'remix_of': 0, 'commissioned': 0}),
+        ('remixes', [rx['remixes'], rx['supplemented'], rx['source_mix']], [{'remixer': 1, 'remix_of': 1, 'commissioned': 1}, {'n': 1, 'of': 1}, {'bandcamp+discogs': 1}]),
         ('done', r['done'], {'credit relationships': 4, 'works linked': 1}),
         ('done_by_level', r['done_by_level'], {'recording': 5, 'release': 2}),  # (the second Discogs submission: "0 credit … (2 recording, 1 release)")
         ('rows_read', r['rows_read'].get('notes on edits before "since"'), 1),
