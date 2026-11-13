@@ -1734,7 +1734,7 @@ def case_gapbg3139():
           if (!g) return null; const ri = i.getBoundingClientRect(), rg = g.getBoundingClientRect();
           return [g.textContent.trim(), g.title, Math.abs(rg.left - ri.right) < 2, Math.abs(rg.top - ri.top) < 2]; })()""")
         print('A)', a)
-        results.append(bool(a) and a[0] == '↗' and a[1] == 'Import credits … and open Discogs in a tab in the background' and a[2] and a[3])
+        results.append(bool(a) and a[0] == '↗' and a[1] == 'Import credits … and open the Discogs source tab in the background' and a[2] and a[3])
         pr.evaluate("window.__opened = []; window.GM_openInTab = (u, o) => { window.__opened.push([u, o]); sessionStorage.setItem('dci-test-opened', JSON.stringify(window.__opened)); };")
         pr.click('.dci-gapline [data-gap=import-bg]')
         pr.wait_for_url('**/edit-relationships', timeout=20000)
@@ -1746,6 +1746,56 @@ def case_gapbg3139():
         results.append(len(opened) == 1 and 'discogs.com/release/' in opened[0][0] and opened[0][1] and opened[0][1].get('active') is False and d)
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_gaporder3141():
+    """Credits Importer 3.141.0 (collected items Z-GAPORDER, Z-GAPBGTIP; answers of 2026-11-13 09:12, 09:38): the line of the release page
+    in the order of the sources for the release's kind (⚙ Sources).
+    A) A digital release (all media "Digital Media") with a Discogs and a Bandcamp link: Bandcamp's credits (Bandcamp first for digital
+       releases by default; until 3.140.0 always Discogs); ↗ says "Import credits … and open the Bandcamp source tab in the background".
+    B) The same as a CD: Discogs.
+    C) The order for physical media changed to Bandcamp first: the CD reads Bandcamp."""
+    REL = H.REL
+    BAND = 'https://testband.bandcamp.com'
+    ALBUM = f'{BAND}/album/testalbum'
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Mixed by Jane Roe\nTrumpet: Peter Evans'}, 'trackinfo': TRACKS}, ALBUM)
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+    H.ws_release = ws
+    LINE = """(() => { const b = document.querySelector('.dci-gapline'); if (!b) return null; const g = b.querySelector('[data-gap=import-bg]');
+      return [b.dataset.src, g ? g.title : '']; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run, fmt, order in (('A', 'Digital Media', None), ('B', 'CD', None), ('C', 'CD', {'physical': ['bandcamp', 'discogs', 'youtube'], 'digital': ['bandcamp', 'discogs', 'youtube']})):
+            H.MEDIA_FORMAT = fmt
+            ctx = H.new_context(b)
+            if order:
+                ctx.add_init_script(f"localStorage.setItem('dci-source-order', {repr(__import__('json').dumps(order))})")
+            pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+            H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 30)
+            got = pr.evaluate(LINE)
+            print(f'{run})', fmt, got)
+            if run == 'A':
+                results.append(got == ['bandcamp', 'Import credits … and open the Bandcamp source tab in the background'])
+            elif run == 'B':
+                results.append(got == ['discogs', 'Import credits … and open the Discogs source tab in the background'])
+            else:
+                results.append(got[0] == 'bandcamp')
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

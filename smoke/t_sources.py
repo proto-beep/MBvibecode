@@ -488,7 +488,7 @@ def case_supp():
         H.open_supp(pg)
         print('A) vor „Ergänzen“ zu:', closed)
         bar = pg.evaluate("[...document.querySelectorAll('.dci-suppbar .dci-supp-btn')].map(b => b.textContent.trim())")
-        a_ok = closed == [True, 'false'] and bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ Text …', '＋ 🖼️ Images …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
+        a_ok = closed == [True, 'false'] and bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ 📄Text …', '＋ 🖼️Images …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
             and not pg.evaluate("window.__gmXhr.length") and not pg.locator('.dci-srcmark').count()
         print('A) Leiste:', bar, '| Bandcamp-Abrufe:', pg.evaluate("window.__gmXhr.length"), '| Marken:', pg.locator('.dci-srcmark').count())
         results.append(a_ok)
@@ -1024,5 +1024,139 @@ def case_alias3108():
         for k in ('/artists/3040', '/artists/3042', '/artists/3044'):
             H.DG_API.pop(k, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_artdates3141():
+    """Credits Importer 3.141.0 (collected item Z-ARTDATES, rule S238; answers of 2026-11-13 09:28, 09:32): "Create artist" from Discogs takes
+    the dates of the profile – however it is written.
+    A) "Born: July 28th, 1952" → begin 1952-07-28, no end.
+    B) "Born December 17th, 1941, in the district of Lawrence Hall in rural St. Ann, Jamaica, and passed away on August 24th, 2017." →
+       1941-12-17 – 2017-08-24, ended.
+    C) "Born: 9 October 1940 in Liverpool, … son of [a3405982]. \r\nDied: 8 December 1980 in NYC, NY, USA." → 1940-10-09 – 1980-12-08.
+    D) "Born: 27 November 1942, Seattle, USA – Died: 18 September 1970, London, UK." → 1942-11-27 – 1970-09-18.
+    E) Bach's long profile ("… was born on March 21, 1685 in Eisenach … the mid-20th century … He died on July 28, 1750.") → 1685-03-21 –
+       1750-07-28.
+    F) "Jane Doe (1952–2010) was a singer." → 1952 – 2010 (the years only).
+    G) Only someone else's ("His father died in 1950.") → no dates. H) A group: "Formed in 1965 in London. Disbanded in 1980." → 1965 – 1980.
+    I) The dialog says "the dates … (from the Discogs profile)". J) Rule S238 off: no dates."""
+    import urllib.parse
+    BACH = ("Johann Sebastian Bach was born on March 21, 1685 in Eisenach, Thuringia, Germany. A prolific German composer and organist, his sacred "
+            "and secular works drew together the strands of the baroque genre. From 1723 until his death he was Thomascantor at Leipzig.\r\n\r\n"
+            "In a scholarly context, the appearance of “BWV” … Established in the mid-20th century through the Bach-Werke-Verzeichnis, BWV numbers "
+            "provide a standardized system.\r\n\r\nRevered for their intellectual depth, J.S. Bach's works include the Brandenburg concertos. He died on July 28, 1750.")
+    PEOPLE = [(3101, 'Larry Marshall', 'Born: July 28th, 1952', 'A', ('1952', '7', '28'), None),
+              (3102, 'Leroy Sibbles', 'Born December 17th, 1941, in the district of Lawrence Hall in rural St. Ann, Jamaica, and passed away on August 24th, 2017.', 'B', ('1941', '12', '17'), ('2017', '8', '24')),
+              (3103, 'John Lennon', 'Born: 9 October 1940 in Liverpool, Lancashire, UK, son of [a3405982]. \r\nDied: 8 December 1980 in NYC, NY, USA.', 'C', ('1940', '10', '9'), ('1980', '12', '8')),
+              (3104, 'Jimi Hendrix', 'Born: 27 November 1942, Seattle, USA – Died: 18 September 1970, London, UK.', 'D', ('1942', '11', '27'), ('1970', '9', '18')),
+              (3105, 'Johann Sebastian Bach', BACH, 'E', ('1685', '3', '21'), ('1750', '7', '28')),
+              (3106, 'Jane Doe', 'Jane Doe (1952–2010) was a singer.', 'F', ('1952', None, None), ('2010', None, None)),
+              (3107, 'Sonny Son', 'Jazz pianist. His father died in 1950.', 'G', None, None)]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['extraartists'] = [ex(n, 'Piano', i) for i, n, *_ in PEOPLE] + [ex('Old Group', 'Performer', 3108)]
+        return d
+    H.discogs_release = rel
+    for i, n, prof, *_ in PEOPLE:
+        H.DG_API[f'/artists/{i}'] = {'id': i, 'name': n, 'profile': prof, 'aliases': [], 'urls': []}
+    H.DG_API['/artists/3108'] = {'id': 3108, 'name': 'Old Group', 'profile': 'Formed in 1965 in London. Disbanded in 1980.', 'aliases': [], 'urls': [],
+                                 'members': [{'id': 3999, 'name': 'Somebody', 'active': False}]}
+
+    def form(pg, name):
+        sel = f"section.dci-group:has(.dci-gname strong:text-is('{name}')) [data-act=artist-create]"
+        pg.locator(sel).first.click()
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        info = pg.evaluate("document.querySelector('[data-el=sub-info]').textContent")
+        pg.click('[data-act=sub-close]')
+        pg.wait_for_timeout(200)
+        q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+        d = lambda k: (q.get(f'edit-artist.period.{k}_date.year'), q.get(f'edit-artist.period.{k}_date.month'), q.get(f'edit-artist.period.{k}_date.day'))
+        return d('begin'), d('end'), q.get('edit-artist.period.ended'), info
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for off in (False, True):
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda dl: dl.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S238']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            for i, n, prof, run, beg, end in PEOPLE + [(3108, 'Old Group', '', 'H', ('1965', None, None), ('1980', None, None))]:
+                bg, en, ended, info = form(pg, n.replace(' (2)', ''))
+                print(f'{run})' if not off else f'J{run})', n, bg, en, ended, '|', info[:140].replace('\n', ' '))
+                none = (None, None, None)
+                if off:
+                    results.append(bg == none and en == none and not ended)
+                else:
+                    results.append(bg == (beg or none) and en == (end or none) and (ended == '1') == bool(end))
+                    if run == 'B':
+                        results.append('the dates 1941-12-17 – 2017-08-24 (from the Discogs profile)' in info)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_artdates3141r():
+    """Credits Importer 3.141.0 (review of Z-ARTDATES): no dates of someone else, none that are no dates of birth or death.
+    A) "Guitarist of Metallica (1983–2001)." – none; B) "Not to be confused with John Smith, born 1950." – none; C) "Discography:\n* 1985 Debut" –
+    none; D) "He was born on May 2, 1950 in Ohio." – 1950-05-02; E) "Ann Bee (b. 1930, d. 2001) was a pianist." – 1930 – 2001; F) "Geboren am
+    3. Mai 1950 in Köln." – 1950-05-03; G) a group "Split up in 1995 and re-formed in 2005." – no begin (re-formed is none), no end (split
+    up names no year right after it… it does: 1995)."""
+    import urllib.parse
+    PEOPLE = [(3201, 'Kirk Ham', 'Guitarist of Metallica (1983–2001).', 'A', None, None),
+              (3202, 'John Smyth', 'Not to be confused with John Smith, born 1950.', 'B', None, None),
+              (3203, 'Disco Kid', 'Discography:\n* 1985 Debut album\n† 1999 Memorial', 'C', None, None),
+              (3204, 'Ohio Man', 'He was born on May 2, 1950 in Ohio.', 'D', ('1950', '5', '2'), None),
+              (3205, 'Ann Bee', 'Ann Bee (b. 1930, d. 2001) was a pianist.', 'E', ('1930', None, None), ('2001', None, None)),
+              (3206, 'Hans Koeln', 'Geboren am 3. Mai 1950 in Köln.', 'F', ('1950', '5', '3'), None)]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['extraartists'] = [ex(n, 'Piano', i) for i, n, *_ in PEOPLE] + [ex('Reform Band', 'Performer', 3207)]
+        return d
+    H.discogs_release = rel
+    for i, n, prof, *_ in PEOPLE:
+        H.DG_API[f'/artists/{i}'] = {'id': i, 'name': n, 'profile': prof, 'aliases': [], 'urls': []}
+    H.DG_API['/artists/3207'] = {'id': 3207, 'name': 'Reform Band', 'profile': 'Split up in 1995 and re-formed in 2005.', 'aliases': [], 'urls': [],
+                                 'members': [{'id': 3998, 'name': 'Somebody', 'active': False}]}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda dl: dl.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        none = (None, None, None)
+        for i, n, prof, run, beg, end in PEOPLE + [(3207, 'Reform Band', '', 'G', None, ('1995', None, None))]:
+            sel = f"section.dci-group:has(.dci-gname strong:text-is('{n}')) [data-act=artist-create]"
+            pg.locator(sel).first.click()
+            pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+            q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(pg.evaluate("document.querySelector('[data-el=sub-frame]').src")).query))
+            pg.click('[data-act=sub-close]')
+            pg.wait_for_timeout(200)
+            d = lambda k: (q.get(f'edit-artist.period.{k}_date.year'), q.get(f'edit-artist.period.{k}_date.month'), q.get(f'edit-artist.period.{k}_date.day'))
+            print(f'{run})', n, d('begin'), d('end'))
+            results.append(d('begin') == (beg or none) and d('end') == (end or none))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())

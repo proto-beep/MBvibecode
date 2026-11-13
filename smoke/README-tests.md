@@ -1045,6 +1045,10 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
+                                #   artdates3141: 3.141.0 (Z-ARTDATES, S238): "Create artist" – the dates of eight Discogs profiles (born, died, passed away, Bach's
+                                #     prose, "(1952–2010)", someone else's death none, a group formed / disbanded); S238 off: none
+                                #   artdates3141r: 3.141.0 (review): "Guitarist of Metallica (1983–2001)", "Not to be confused with …, born 1950", "* 1985" none;
+                                #     "He was born …", "(b. 1930, d. 2001)", "Geboren am 3. Mai 1950", "re-formed" none
                                 #   alias3108: 3.108.0 (Z-ALIAS): "Create artist" from Discogs – an alias on MusicBrainz as "performs as", the direction
                                 #     asked when it is not clear, the form filled anew with the answer; the other aliases only shown; (review) the answer in the
                                 #     form opened in a window, a later answer loads the window (the frame stays empty)
@@ -1073,6 +1077,8 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     3.40.17 (review): a new work kept / dropped, one question at a time
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
+                                #   memberinst3141: 3.141.0 (Z-MEMBERINST, S239): "Tarbaby: A (piano), …", "Tarbaby (A – percussion, …)" – members with their
+                                #     instruments, "member of band" with percussion; a group linked later (by hand): its members checked then
                                 #   twice3134: 3.134.0 (Z-DGEXCL, S054): "Produced by Anna Neu" in the credits, "Producer: Anna Neu" in the about text – one row
                                 #   bclbl3118: 3.118.0 (Z-BCLBL, S185; Node): on a label's page "© 2026 WEWANTSOUNDS" linked to the page; not on the artist's
                                 #     own page, not another name
@@ -1132,6 +1138,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gaporder3141: 3.141.0 (Z-GAPORDER, Z-GAPBGTIP; S236): a digital release – the line reads Bandcamp, a CD Discogs, the order of the
+                                #     sources changed – Bandcamp; ↗ "… and open the Bandcamp source tab in the background"
                                 #   gaprefresh3139: 3.139.0 (Z-GAPREFRESH2b, S223): a credit taken out on tracks 2 and 3 only – kept with them, asked "(on
                                 #     tracks 2, 3 only)", ✓ takes them off the row (2 of 4 tracks)
                                 #   gapbg3139: 3.139.0 (Z-GAPBG): ↗ beside "Import credits …" – the source in a tab in the background, the import started
@@ -1177,6 +1185,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
 python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.114 a beta): ⚙ Settings → Sources, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   bcimages3141: 3.141.0 (Z-BCIMAGES, Z-SUPPICONS; S237): "Load Bandcamp images (…)" – the cover and the vinyl's photo, not ticked;
+                                #     Bandcamp loaded: at once; the symbols of the sources in "Supplement with", the cards and buttons; words with Symbols: Text
                                 #   tcpmulti3117: 3.117.0 (Z-TCPMULTI): "(Man - Guy)" from the cover art – Man is Bass Man's; Guy asks (four of that name),
                                 #     Drum Guy chosen
                                 #   suppnav3116: 3.116.0 (Z-SUPPMSG, Z-SUPPNAV): "＋ Supplement" from the cover art – the message (top, window; no button) "2 new ·

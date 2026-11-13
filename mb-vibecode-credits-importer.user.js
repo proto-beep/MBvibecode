@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.140.0
+// @version      3.141.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.140.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.140.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.141.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.141.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.140.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.141.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -869,6 +869,8 @@
       "part.members.other": "{n} “member of band” relationships to {names}",
       "artistDlg.notInMb": "Not in MusicBrainz and therefore not linked: {list}.",
       "part.performsAs": "“performs as” to {names}",
+      "part.dates": "the dates {begin} – {end} (from the Discogs profile)",
+      "part.dateBegin": "the begin date {begin} (from the Discogs profile)",
       "artistDlg.aliasAsk": "Discogs has “{alias}” as another name of “{name}” – which of them is the person? (Answer before typing in the form: it is filled in anew.)",
       "artistDlg.aliasFwd": "{name} performs as {alias}",
       "artistDlg.aliasBack": "{alias} performs as {name}",
@@ -973,6 +975,7 @@
       "log.bcPageLabelOfRelease": "Bandcamp page {page}: label {label} in MusicBrainz – a label of this release",
       "log.artistManual": "{name}: set manually → {mb}",
       "log.artistForm": "Create-artist form opened: {name}",
+      "log.artistDates": "{name}: dates from the Discogs profile – {begin} – {end}",
       "log.artistCreated": "Artist created: {name} ({mbid})",
       "log.manualAdded": "Manual entry added: {name}, {role}",
       "log.formCancelled": "Form closed without creating anything",
@@ -1247,6 +1250,7 @@
       "srcbadge.mb": "MB",
       "srcbadge.text": "Text",
       "srcbadge.ocr": "OCR",
+      "srcbadge.own": "Own",
       "srcbadge.name.dg": "Discogs",
       "srcbadge.name.bc": "Bandcamp",
       "srcbadge.name.yt": "YouTube",
@@ -1296,7 +1300,7 @@
       "conn.group.links": "Links",
       "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
       "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
-      "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them.",
+      "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them. For the text from cover art it reads the album’s images (its cover and the photos of its editions, from bcbits.com).",
       "conn.X004.name": "Pasted text",
       "conn.X004": "A credits text you paste (booklet, liner notes, a list of musicians) – nothing is fetched.",
       "conn.X005": "Adds “Edit relationships with Credits Importer” to Harmony’s “Release Actions”; after “Enter edit & import credits” the relationship editor opens there in a background tab.",
@@ -2832,7 +2836,7 @@
       "stats.global.supShare": "{pct} of the submissions with a supplement of another source ({s} of {n})",
       "stats.global.supDates": "dates added to relationships in MusicBrainz",
       "stats.global.supCredits": "role credits added to relationships in MusicBrainz",
-      "gap.importBgTitle": "Import credits … and open {source} in a tab in the background",
+      "gap.importBgTitle": "Import credits … and open the {source} source tab in the background",
       "stats.rmx.remixer": "remixers",
       "stats.rmx.remixOf": "“remix of”",
       "stats.rmx.commissioned": "commissioned",
@@ -3145,6 +3149,13 @@
       "ocr.discogsNone": "No images of Discogs release r{id} were found on its page.",
       "ocr.discogsImage": "Discogs r{id} · {n}",
       "ocr.ownDiscogs": "from Discogs",
+      "ocr.bandcampLoad": "Load Bandcamp images ({page})",
+      "ocr.bandcampHint": "of the Bandcamp page linked to this release – its cover and the photos of its physical editions",
+      "ocr.bandcampLoading": "Loading the images from Bandcamp …",
+      "ocr.bandcampNone": "No images were found on the Bandcamp page {url}.",
+      "ocr.bandcampCover": "Bandcamp · cover",
+      "ocr.bandcampImage": "Bandcamp · {n}",
+      "ocr.ownBandcamp": "from Bandcamp",
       "log.ocrPdfAdded": "Text from cover art: {name} – {n} pages, {text} with a text of their own",
       "conn.kind.library": "Library",
       "conn.X013": "Text from cover art (⚙ Settings → Sources): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
@@ -4739,6 +4750,10 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S239', where: 'startArtistCreate, checkGroupMembers, memberRecheck, groupMbidOf, checkGroupOf, TEXT.parse (lineOfItsOwn)', note: 'Members (3.141.0; collected item Z-MEMBERINST): "Create artist" fills in "member of band" with the member\'s instruments and voices also for a group of the Discogs profile that is an artist of the release (or an entry of the dashboard); a group of the text linked only later (by hand, or found later): its members checked then; a band of the release with its members in one line – "Band X: A (guitar), B (bass)", "Band X (A – guitar, B – bass)" – each member\'s roles and the members of the group (S213)' },
+    { id: 'S238', where: 'profileDates, startArtistCreate, buildArtistSeed', note: 'Create artist (3.141.0; collected item Z-ARTDATES): the dates of the Discogs profile – born and died (a group: formed / founded and disbanded / split up) in many wordings ("Born: July 28th, 1952", "Born December 17th, 1941, in … and passed away on August 24th, 2017.", "Born: 9 October 1940 in Liverpool …", "Died: 8 December 1980 …", "… was born on March 21, 1685 … He died on July 28, 1750.", "b. 1952", "(1952–2010)", German "geboren", "gestorben", "*", "†") – only of the artist itself (the clause starts with the word, its name or "he" / "she"; not "his father died …"); a year alone the year; an end before the begin or after this year none; the form\'s begin and end, "ended" with an end' },
+    { id: 'S237', where: 'BANDCAMP.pageImageUrls, ocrBandcampAuto, ocrBandcampLinks, ocrAddBandcamp', note: 'Text from cover art (3.141.0; collected item Z-BCIMAGES): the images of Bandcamp – the cover and the photos of the physical editions (its packages) – as cards of the window, not ticked: at once for the Bandcamp album loaded or supplemented, "Load Bandcamp images (…)" for the other Bandcamp pages linked to the release' },
+    { id: 'S236', where: 'initReleaseGap, gapBandcampFirst', note: 'Release page (3.141.0; collected item Z-GAPORDER): the line of the credits MusicBrainz does not have reads the sources in the order of ⚙ Sources for the release\'s kind – all media digital: "digital" (Bandcamp first by default), else "physical" (Discogs first); the next one when the first has no credits (or Bandcamp\'s page could not be read). Until 3.140.0 always Discogs first' },
     { id: 'S235', where: 'findFestivals, festivalHtml', note: 'Festivals (3.140.0; collected item Z-LJTEXT): a festival named only in another sentence of the text ("Our thanks go to …, the artistic director of the Jazzfest Berlin") – the date of the text\'s recording sentence asks MusicBrainz for its events: one whose time holds the date makes it the festival of the recording (the hint, the events offered, the place at the event – S131), said at the hint; none: only mentioned, as before' },
     { id: 'S234', where: 'TEXT.parse (addCredit)', note: 'Texts (3.140.0; collected item Z-LJTEXT): a title in quotation marks among the names of a credit ("Cover art: András Wolsky, “Random-Etude”, 2025") is the title of the picture – left out as such, no entry' },
     { id: 'S233', where: 'TEXT.parse (joinBroken)', note: 'Texts (3.140.0; collected item Z-LJTEXT): a line that goes on with "at", "in", "on" or "by" and a name in capitals ("at FCM Studios Barcelona.") belongs to the line above it when that one is a sentence of a credit (a "by", a verb of a recording) of four words or more without an end ("… Mixed and mastered in September 2026 by Ferran Conangla")' },
@@ -7644,7 +7659,9 @@
         ].filter((r) => r.id).map((r) => ({ id: r.id, name: cleanName(r.name), links: [artistUrl(r.id)], isGroup: r.isGroup, active: r.active }));
         // [Z-ALIAS] (3.108.0) its other names (Discogs's "Aliases") and its real name – for "performs as"
         const aliases = (x.aliases || []).filter((a) => a && a.id).map((a) => ({ id: a.id, name: cleanName(a.name), links: [artistUrl(a.id)] }));
-        return { name: cleanName(x.name), type: personType(x), urls: (x.urls || []).map((u) => String(u || '').trim()), related, aliases, realname: cleanName(x.realname || '') };
+        // ([Z-ARTDATES] 3.141.0) and its profile – its dates of birth and death (profileDates)
+        return { name: cleanName(x.name), type: personType(x), urls: (x.urls || []).map((u) => String(u || '').trim()), related, aliases, realname: cleanName(x.realname || ''),
+          profile: String(x.profile || '') };
       },
       /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
       async aliases(id) {
@@ -10085,6 +10102,31 @@
       };
       const lineOfItsOwn = (line, raw) => {
         const l = clean(line);
+        // [Z-MEMBERINST] (3.141.0, S239) a band of the release with its members and their instruments in one line – "Band X: A (guitar),
+        // B (bass)", "Band X (A – guitar, B – bass)", "Band X (A: guitar; B: bass)": each member's roles, and the members of the group
+        // ("Create artist" fills in "member of band" with them)
+        if (ruleOn('S239') && ruleOn('S213')) {
+          const roleOf = (w) => PROSE_ROLE_WORDS[norm(w)] || (isRole(cap(w)) ? cap(w) : isRole(`${cap(w)} By`) ? `${cap(w)} By` : '');
+          let band = '';
+          let list = [];
+          // ((review) the name of a group of the release – not "Line-up", "The Band", "We" –, its members persons ("Side A", "Live" none)
+          const ofRelease = (x) => bandNames.has(norm(x)) && !TEXT_BAND_SELF.test(x);
+          const mc = l.match(/^([^:()]+?)\s*:\s*(\S.+)$/u);
+          if (mc && ofRelease(clean(mc[1]))) [band, list] = [clean(mc[1]), namesWithRoles(mc[2])];
+          const mp = !list.length ? l.match(/^([^()]+?)\s*\((.+)\)\s*\.?$/u) : null;
+          if (mp && ofRelease(clean(mp[1]))) {
+            const items = mp[2].split(/\s*[;,]\s*(?=\p{Lu})/u).map((x) => x.match(/^(.+?)\s*(?:\s[–—-]\s|:)\s*(.+)$/u));
+            const got = items.every(Boolean) ? items.map((x) => ({ name: clean(x[1]), roles: x[2].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(roleOf) })) : [];
+            if (got.length && got.every((x) => x.roles.length && x.roles.every(Boolean))) [band, list] = [clean(mp[1]), got];
+          }
+          const person = (n) => looksLikeName(n) && !isTheBand(n) && !isRole(cap(n)) && n.split(/\s+/).length >= 2 && n.split(/\s+/).length <= 4
+            && !/^(?:side|disc|cd|lp|track|part|live|remaster(?:ed)?|bonus|edit|mix|version|take)\b/i.test(n);
+          if (band && list.length && list.every((x) => person(x.name))) {
+            list.forEach((x) => uniq(x.roles).forEach((r) => addCredit(x.name, r, null)));
+            groups.push({ name: band, members: list.map((x) => x.name), line: l, ign: null });
+            return true;
+          }
+        }
         // [Z-TRACKLINE] (S204) a position and a title of the release (case and signs aside), a time after it or not; or position, words and a time
         // ((review) the lines of a track list themselves only once nothing else read them – below "trackListLine": the writers below a
         // title, "1. The Throes" / "Taylor Ho Bynum (…)", need its line)
@@ -11567,6 +11609,25 @@
     const unescapeHtml = (t) => String(t || '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
       ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
     /** The page data of an album or track page (the JSON in "data-tralbum"), or null. */
+    /**
+     * [Z-BCIMAGES] (3.141.0, S237) The images of an album page: its cover (art_id) and the photos of its physical editions (the packages'
+     * arts) – each at 1200 px ("_10"), its preview at 700 px ("_16"); each once.
+     */
+    function pageImageUrls(data) {
+      const out = [];
+      const push = (id, cover) => {
+        const n = Number(id);
+        if (!n || out.some((x) => x.id === n)) return;
+        const base = `https://f4.bcbits.com/img/${cover ? 'a' : ''}${String(n).padStart(10, '0')}`;
+        out.push({ id: n, cover, big: `${base}_10.jpg`, thumb: `${base}_16.jpg` });
+      };
+      if (data && data.art_id) push(data.art_id, true);
+      for (const p of (data && data.packages) || []) {
+        for (const a of (p && p.arts) || []) push(a && (a.image_id || a.id), false);
+        if (p && p.image_id) push(p.image_id, false);
+      }
+      return out;
+    }
     function pageData(html) {
       const m = String(html || '').match(/data-tralbum="([^"]*)"/);
       if (!m) return null;
@@ -11773,6 +11834,8 @@
         tags: [],
         // [Z-STG2] (3.42.6) the album's tags (genres and styles of the statistics; no words of the format, unlike Discogs's `tags`)
         bcTags: tags,
+        // [Z-BCIMAGES] (3.141.0) its images: the cover and the photos of its physical editions (for the window of the text from cover art)
+        bcImages: pageImageUrls(data),
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
         companies: companies.map((c) => ({ ...c, who: linkPage(c.who, c.role) })),
@@ -11812,6 +11875,13 @@
       pageUrl,
       isTrackPage,
       pageData,
+      pageImageUrls,
+      /** [Z-BCIMAGES] (3.141.0) The images of an album or track page by its address (the page read once). */
+      async pageImages(url) {
+        const data = pageData(await httpGet(pageUrl(url) || url));
+        if (!data) throw new Error(tr('err.bandcampData', { url }));
+        return pageImageUrls(data);
+      },
       pageTags, // [Z-STG2] (3.42.6)
       toRelease,
       linerNotes,
@@ -12344,9 +12414,18 @@
    * sourceUrl: the artist's page at the source; person: what the source adapter knows (name, urls);
    * rels: [{ mbid, linkTypeId, backward, ended }]
    */
-  function buildArtistSeed({ name, sourceUrl, sourceLinkTypeId, person, typeId, rels, editNote }) {
+  function buildArtistSeed({ name, sourceUrl, sourceLinkTypeId, person, typeId, rels, editNote, dates = null }) {
     const params = [['edit-artist.name', (person && person.name) || name]];
     if (typeId) params.push(['edit-artist.type_id', String(typeId)]);
+    // [Z-ARTDATES] (3.141.0, S238) begin and end (a year alone: the year), "ended" with an end
+    for (const k of ['begin', 'end']) {
+      const d = dates && dates[k];
+      if (!d) continue;
+      params.push([`edit-artist.period.${k}_date.year`, String(d.year)]);
+      if (d.month) params.push([`edit-artist.period.${k}_date.month`, String(d.month)]);
+      if (d.month && d.day) params.push([`edit-artist.period.${k}_date.day`, String(d.day)]);
+    }
+    if (dates && dates.ended) params.push(['edit-artist.period.ended', '1']);
     const urls = [];
     if (sourceUrl) urls.push({ text: sourceUrl, type: sourceLinkTypeId });
     for (const u of (person && person.urls) || []) {
@@ -12396,7 +12475,8 @@
   const CONNECTIONS = [
     { id: 'X001', kind: 'site', name: 'MusicBrainz', home: 'https://musicbrainz.org/', hosts: ['musicbrainz.org', 'metabrainz.org'], perms: '@match …musicbrainz.org/release/* · unsafeWindow', since: '0.1.0' },
     { id: 'X002', kind: 'source', name: 'Discogs', home: 'https://www.discogs.com', hosts: ['discogs.com'], perms: '–', since: '0.1.0' },
-    { id: 'X003', kind: 'source', name: 'Bandcamp', home: 'https://bandcamp.com/', hosts: ['bandcamp.com'], perms: '@connect bandcamp.com · GM_xmlhttpRequest', since: '3.3.0' },
+    { id: 'X003', kind: 'source', name: 'Bandcamp', home: 'https://bandcamp.com/', hosts: ['bandcamp.com', 'bcbits.com'], // [3.141.0] its images (bcbits.com)
+      perms: '@connect bandcamp.com · @connect * (its images on bcbits.com) · GM_xmlhttpRequest', since: '3.3.0' },
     { id: 'X004', kind: 'source', name: '', home: '', hosts: [], perms: '–', since: '3.2.0' },
     { id: 'X005', kind: 'tool', name: 'Harmony', home: 'https://harmony.pulsewidth.org.uk/', hosts: ['harmony.pulsewidth.org.uk'], perms: '@match harmony.pulsewidth.org.uk/release/actions* · GM_openInTab', since: '3.19.1' },
     { id: 'X006', kind: 'script', name: 'MB x Vibecode: Credits Importer Companion', home: 'https://github.com/proto-beep/MBvibecode', hosts: [], perms: '–', since: '0.3.0' },
@@ -13038,6 +13118,17 @@
     return { kept: { ...(prev && prev.dismissed != null ? { dismissed: prev.dismissed } : {}), at: Date.now(), since: same ? (prev.since || prev.at) : Date.now(), ...read }, changed: true };
   }
 
+  /** [Z-GAPORDER] (3.141.0, S236) Bandcamp before Discogs in the order of the sources for this release (all its media digital or not). */
+  function gapBandcampFirst(ws) {
+    const media = (ws && ws.media) || [];
+    const digital = !!media.length && media.every((m) => /digital media/i.test(m.format || ''));
+    // (the release page ends the script before the order's constants – SOURCE_ORDER_KEY, readSourceOrder: read here as they store it)
+    const stored = readJson('localStorage', 'dci-source-order', null) || {};
+    const list = Array.isArray(stored[digital ? 'digital' : 'physical']) ? stored[digital ? 'digital' : 'physical'] : (digital ? ['bandcamp', 'discogs'] : ['discogs', 'bandcamp']);
+    const at = (k) => (list.indexOf(k) < 0 ? 99 : list.indexOf(k));
+    return at('bandcamp') < at('discogs');
+  }
+
   async function initReleaseGap(mbid) {
     if (readJson('localStorage', GAP_ON_KEY, true) === false) return gapWhy('off');
     if (!/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return gapWhy('path', { path: location.pathname });
@@ -13069,16 +13160,18 @@
     // [Z-AD] (3.40.2) Discogs read, without credits in its list: { notes } – Bandcamp steps in, the line says so (Q-ad)
     let dgEmpty = null;
     let bcFailed = false;
-    if (dLink) {
+    const stop = (key, vars) => ({ stop: [key, vars] });
+    const tryDiscogs = async () => {
+      if (!dLink) return null;
       const src = { kind: 'discogs', id: String(dLink.id), url: dLink.url };
       const key = `${GAP_PREFIX}${rel}`;
       const old = readJson('localStorage', key, null);
       const r = await gapRead(src, old && old.dId === src.id ? old : null, ws);
-      if (!r) return gapWhy('dgBroken', { id: src.id, msg: gapRead.lastError || '' });
+      if (!r) return stop('dgBroken', { id: src.id, msg: gapRead.lastError || '' });
       if (r.changed) writeJson('localStorage', key, { ...r.kept, dId: src.id });
       // Discogs did not answer: no line (Bandcamp steps in only when Discogs has nothing); (3.40.3, review) a release Discogs does
       // not have (404) has nothing
-      if (r.failed && r.kept.failStatus !== 404) return gapWhy('dgFailed', { id: src.id, when: new Date(r.kept.failAt || Date.now()).toLocaleString() });
+      if (r.failed && r.kept.failStatus !== 404) return stop('dgFailed', { id: src.id, when: new Date(r.kept.failAt || Date.now()).toLocaleString() });
       if (r.failed) dgEmpty = { missing: true };
       else if ((r.kept.credits || []).length) {
         use = {
@@ -13089,8 +13182,10 @@
           },
         };
       } else dgEmpty = { notes: !!r.kept.notes };
-    }
-    if (!use && bLinks.length) {
+      return null;
+    };
+    const tryBandcamp = async (last) => {
+      if (use || !bLinks.length) return null;
       // [AY] (3.40.0) without a Discogs link (or [Z-AD] one without credits): Bandcamp, a rough estimate (Q-o). [Z-AE] (3.40.2) all
       // its pages linked (three at most), each kept a week (`dci-gap:<MBID>:bandcamp`); the page with the most credits counts, as the
       // dialog of several linked releases chooses the one with the most data (Q-ae, Q-ag) – the others named under ▸
@@ -13108,7 +13203,8 @@
       for (const l of bLinks.slice(0, 3)) {
         const src = { kind: 'bandcamp', id: String(l.id), url: l.url };
         const r = await gapRead(src, pages[src.id] || null, ws);
-        if (!r) return gapWhy('bcBroken', { url: src.url, msg: gapRead.lastError || '' });
+        // ([Z-GAPORDER] 3.140.0) read first and broken: Discogs then
+        if (!r) return last ? stop('bcBroken', { url: src.url, msg: gapRead.lastError || '' }) : null;
         if (r.changed) {
           pages[src.id] = r.kept;
           changed = true;
@@ -13133,6 +13229,15 @@
           },
         };
       }
+      return null;
+    };
+    // [Z-GAPORDER] (3.141.0, S236) in the order of the sources for the release's kind (⚙ Sources: all media digital – Bandcamp first by default);
+    // until 3.140.0 always Discogs first
+    const bcFirst = ruleOn('S236') && !!bLinks.length && !!dLink && gapBandcampFirst(ws);
+    for (const [k, t] of (bcFirst ? [tryBandcamp, tryDiscogs] : [tryDiscogs, tryBandcamp]).entries()) {
+      if (use) break;
+      const r = await t(k === 1);
+      if (r && r.stop) return gapWhy(...r.stop);
     }
     // [AY] (3.40.0) nothing in it: no line (Q-o, Q-x)
     if (!use) {
@@ -19632,6 +19737,69 @@
     }
   }
 
+  // --- [Z-BCIMAGES] (3.141.0, S237) Bandcamp's images – the cover and the photos of the physical editions: offered as cards (not ticked) –
+  // at once for the Bandcamp album loaded or supplemented (its page was read already), else on request ("Load Bandcamp images").
+
+  /** The cards of a Bandcamp page's images (those there already left out). */
+  function ocrBandcampCards(url, list) {
+    const o = S.ocr;
+    const has = new Set(o.images.filter((im) => im.src === 'bandcamp').map((im) => im.bcId));
+    const out = list.filter((x) => !has.has(x.id)).map((x, k) => ({ ...ocrOwnImage('url', x.big), src: 'bandcamp', bandcamp: url, bcId: x.id, thumb: x.thumb,
+      name: tr(x.cover ? 'ocr.bandcampCover' : 'ocr.bandcampImage', { n: k + 1 }), sel: false, shown: true }));
+    ocrTakeSaved(out);
+    return out;
+  }
+  /** The Bandcamp albums of the import (the source loaded, its supplement) with the images their pages gave. */
+  function ocrBandcampLoaded() {
+    const rels = [S.source === BANDCAMP ? S.release : null, S.supp && S.supp.source === BANDCAMP ? S.supp.rel : null].filter(Boolean);
+    return rels.filter((r) => (r.bcImages || []).length).map((r) => ({ url: r.url || r.id, images: r.bcImages }));
+  }
+  function ocrBandcampAuto() {
+    const o = S.ocr;
+    if (!o || !ruleOn('S237')) return;
+    for (const x of ocrBandcampLoaded()) {
+      const cards = ocrBandcampCards(x.url, x.images);
+      if (cards.length) {
+        o.images.push(...cards);
+        log('info', 'ocrOwnAdded', { n: cards.length, what: `Bandcamp ${String(x.url).replace(/^https?:\/\//, '')}` });
+      }
+    }
+  }
+  /** The Bandcamp pages linked to this release whose images are not in the window yet (none of the import's: they come by themselves). */
+  function ocrBandcampLinks() {
+    if (!ruleOn('S237')) return [];
+    // ((review) by the cards there: a page whose cards are not there yet keeps its button
+    const there = new Set(((S.ocr && S.ocr.images) || []).filter((im) => im.src === 'bandcamp').map((im) => im.bandcamp));
+    const loaded = new Set(ocrBandcampLoaded().map((x) => x.url).filter((u) => there.has(u)));
+    return (S.sourceLinks || []).filter((l) => l.source === 'bandcamp' && !loaded.has(l.url || l.id));
+  }
+  /** "Load Bandcamp images": the page read, its images as cards. */
+  async function ocrAddBandcamp(url) {
+    const o = S.ocr;
+    if (!o || o.step === 'run' || (o.bcLoading || []).includes(url)) return;
+    o.bcLoading = [...(o.bcLoading || []), url];
+    o.error = '';
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+    try {
+      const list = await BANDCAMP.pageImages(url);
+      if (S.ocr !== o) return;
+      if (!list.length) throw new Error(tr('ocr.bandcampNone', { url }));
+      const cards = ocrBandcampCards(url, list);
+      o.images.push(...cards);
+      o.bcDone = uniq([...(o.bcDone || []), url]);
+      if (!cards.length) o.error = tr('ocr.urlTwice'); // ((review) its images there already (an album and its track page)
+      log('info', 'ocrOwnAdded', { n: cards.length, what: `Bandcamp ${String(url).replace(/^https?:\/\//, '')}` });
+    } catch (e) {
+      if (S.ocr === o) o.error = (e && e.message) || String(e);
+    } finally {
+      if (S.ocr === o) {
+        o.bcLoading = o.bcLoading.filter((x) => x !== url);
+        renderOcr();
+      }
+    }
+  }
+
   /** The Discogs releases linked to this release (from the import, else asked of MusicBrainz once). */
   function ocrDiscogsLinks() {
     const o = S.ocr;
@@ -20395,6 +20563,7 @@
     const e = { k: ocrFrameKey(im), src: im.src || 'caa', sel: !!im.sel, mode: ['whole', 'skip'].includes(im.mode) ? im.mode : 'frames' };
     if (im.src === 'url') e.url = im.url;
     else if (im.src === 'discogs') Object.assign(e, { url: im.url, discogs: im.discogs, name: im.name });
+    else if (im.src === 'bandcamp') Object.assign(e, { url: im.url, bandcamp: im.bandcamp, bcId: im.bcId, name: im.name, thumb: im.thumb }); // [Z-BCIMAGES] (3.141.0, review)
     else if (im.src === 'file') Object.assign(e, { name: im.name, size: (im.blob && im.blob.size) || im.size0 || 0 });
     else if (im.src === 'pdf') Object.assign(e, { name: im.name, file: im.file, from: im.from || '', page: im.page });
     if (c && c.width && c.height) Object.assign(e, { f: im.frames.map((b) => ocrToFrac(b, c.width, c.height)), turn: im.turn || 0 });
@@ -20424,7 +20593,8 @@
     // (not before the stored window was taken over: a list of the release that failed would erase it)
     if (!o || o.step === 'list' || !releaseMbid || !o.restoreTried) return;
     // (not pasted images: nothing names them)
-    const imgs = o.images.filter((im) => !im.pasted && (!ocrIsCaa(im) || im.sel)).map(ocrImgEntry);
+    // ((review) Bandcamp's cards not ticked come again by themselves: not stored
+    const imgs = o.images.filter((im) => !im.pasted && (!ocrIsCaa(im) || im.sel) && !(im.src === 'bandcamp' && !im.sel)).map(ocrImgEntry);
     const res = o.results.filter((r) => r.status === 'done' && !r.img.pasted).map(ocrResEntry).filter(Boolean);
     const step = o.step === 'run' ? (res.length ? 'result' : 'pick') : o.step;
     relWrite(OCR_STATE_KEY, !imgs.length && !res.length ? null
@@ -20490,6 +20660,7 @@
       let im = null;
       if (e.src === 'url' && e.url) im = ocrOwnImage('url', e.url);
       else if (e.src === 'discogs' && e.url) im = { ...ocrOwnImage('url', e.url), src: 'discogs', discogs: e.discogs, name: e.name || ocrUrlName(e.url) };
+      else if (e.src === 'bandcamp' && e.url) im = { ...ocrOwnImage('url', e.url), src: 'bandcamp', bandcamp: e.bandcamp, bcId: e.bcId, name: e.name || ocrUrlName(e.url), thumb: e.thumb || e.url };
       else if (e.src === 'file' || e.src === 'pdf') {
         im = { id: `own${++ocrOwnN}`, src: e.src, name: String(e.name || '?'), file: e.file, from: e.from || '', page: e.page, size0: e.size || 0,
           types: [], comment: '', frames: [], canvas: null, thumb: '', missing: true };
@@ -20573,7 +20744,7 @@
   function ocrRestart() {
     const o = S.ocr;
     if (!o) return;
-    const lose = o.results.some((r) => r.status === 'done') || o.images.some((im) => im.sel || !ocrIsCaa(im));
+    const lose = o.results.some((r) => r.status === 'done') || o.images.some((im) => im.sel || (!ocrIsCaa(im) && im.src !== 'bandcamp'));
     if (lose && !confirm(tr('ocr.restartAsk'))) return;
     closeOcr(true);
     relWrite(OCR_STATE_KEY, null);
@@ -20638,6 +20809,8 @@
         S.ocr.hidden = false;
         log('info', 'ocrBack');
       }
+      // ([Z-BCIMAGES] 3.141.0, review) a Bandcamp album loaded or supplemented meanwhile: its images
+      if (S.ocr.step !== 'list' && S.ocr.step !== 'run') ocrBandcampAuto();
       renderOcr();
       return;
     }
@@ -20662,10 +20835,12 @@
       Object.assign(S.ocr, { images: [...all, ...rest], step: crops.length ? 'result' : S.ocr.restoredStep || 'pick', restoreTried: true });
       crops.forEach((r) => { if (!S.ocr.results.includes(r)) S.ocr.results.push(r); });
       delete S.ocr.restoredStep;
+      ocrBandcampAuto(); // [Z-BCIMAGES] (3.141.0)
       renderOcr();
     }, (e) => {
       if (!S.ocr) return;
       Object.assign(S.ocr, { step: (S.ocr.results || []).some((r) => r.img && r.img.cocr) ? 'result' : 'pick', listError: e.message || String(e) });
+      ocrBandcampAuto();
       renderOcr();
     });
   }
@@ -20943,6 +21118,7 @@
     const crops = uniq(done.filter((r) => r.img.cocr).map((r) => `${r.img.cocrSite || 'discogs'}|${r.img.cocrRelease || ''}`));
     const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
     const discogs = uniq(done.filter((r) => r.img.src === 'discogs').map((r) => r.img.discogs));
+    const bandcamp = uniq(done.filter((r) => r.img.src === 'bandcamp').map((r) => r.img.bandcamp)); // [Z-BCIMAGES] (3.141.0, review)
     // [3.34.6] PDFs with their pages read
     const pdfs = new Map();
     done.filter((r) => r.img.src === 'pdf').forEach((r) => {
@@ -20952,6 +21128,7 @@
     const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
       files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
       ...discogs.map((id) => `images of Discogs release ${DISCOGS.releaseUrl(id)}`),
+      ...bandcamp.map((u) => `images of the Bandcamp page ${u}`),
       // ([Z-COCRBC] 3.119.0) of a Bandcamp page too
       ...crops.map((k) => {
         const [site, id] = [k.slice(0, k.indexOf('|')), k.slice(k.indexOf('|') + 1)];
@@ -21060,6 +21237,9 @@
     });
   }
 
+  /** [Z-SUPPICONS] (3.141.0) Where an image of the window comes from: the Cover Art Archive (MusicBrainz), Discogs, Bandcamp, one's own. */
+  const ocrSrcKey = (im) => (ocrIsCaa(im) ? 'mb' : im.src === 'discogs' ? 'dg' : im.src === 'bandcamp' ? 'bc' : 'own');
+
   /** [3.34.5] Own images: files (chosen, dropped, pasted) and addresses. */
   function ocrOwnHtml() {
     const o = S.ocr;
@@ -21068,9 +21248,13 @@
           <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
         ${o.pdfLoading ? `<p class="dci-sub" role="status" data-ocr-pdfstatus>${esc(o.pdfStatus || tr('ocr.pdfLoading'))}</p>` : ''}
         ${ocrDiscogsLinks().length ? `<div class="dci-ocr-ownrow">${ocrDiscogsLinks().map((l) => `<button type="button" class="dci-small" data-ocr-discogs="${esc(l.id)}"
-          ${(o.discogsLoading || []).includes(l.id) || o.images.some((im) => im.discogs === l.id) ? 'disabled' : ''}>${esc(tr('ocr.discogsLoad', { id: l.id }))}</button>`).join('')}
+          ${(o.discogsLoading || []).includes(l.id) || o.images.some((im) => im.discogs === l.id) ? 'disabled' : ''}>${srcIconHtml('dg')} ${esc(tr('ocr.discogsLoad', { id: l.id }))}</button>`).join('')}
           <span class="dci-sub">${esc(tr('ocr.discogsHint'))}</span></div>` : ''}
         ${(o.discogsLoading || []).length ? `<p class="dci-sub" role="status">${esc(tr('ocr.discogsLoading'))}</p>` : ''}
+        ${ocrBandcampLinks().length ? `<div class="dci-ocr-ownrow">${ocrBandcampLinks().map((l) => `<button type="button" class="dci-small" data-ocr-bandcamp="${esc(l.url || l.id)}"
+          ${(o.bcLoading || []).includes(l.url || l.id) || (o.bcDone || []).includes(l.url || l.id) || o.images.some((im) => im.bandcamp === (l.url || l.id)) ? 'disabled' : ''}>${srcIconHtml('bc')} ${esc(tr('ocr.bandcampLoad', { page: String(l.url || l.id).replace(/^https?:\/\//, '') }))}</button>`).join('')}
+          <span class="dci-sub">${esc(tr('ocr.bandcampHint'))}</span></div>` : ''}
+        ${(o.bcLoading || []).length ? `<p class="dci-sub" role="status">${esc(tr('ocr.bandcampLoading'))}</p>` : ''}
         <div class="dci-ocr-ownrow"><input type="url" data-ocr-url value="${esc(o.urlDraft || '')}" placeholder="https://…/back.jpg" aria-label="${esc(tr('ocr.urlLabel'))}" spellcheck="false">
           <button type="button" class="dci-small" data-ocr="url">${esc(tr('ocr.addUrl'))}</button></div>
         <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
@@ -21093,11 +21277,11 @@
     // [3.37.5] a card waiting for its file (no image; its tick as it was)
     const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}${im.missing ? ' dci-ocr-gone' : ''}" data-ocr-card="${i}">
         ${im.missing ? '<span class="dci-ocr-goneimg" aria-hidden="true">?</span>' : `<img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" data-ocr-peek="${esc(im.id)}" data-ocr-preview>`}
-        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''} ${im.missing ? 'disabled' : ''}> <span>${esc(ocrTypes(im))}</span></span>
+        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''} ${im.missing ? 'disabled' : ''}> ${srcIconHtml(ocrSrcKey(im))}<span>${esc(ocrTypes(im))}</span></span>
         ${im.missing ? '' : ocrLoadHtml(im, true)}
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
-          : `<span class="dci-sub">${esc(tr(im.missing ? 'ocr.missingCard' : im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+          : `<span class="dci-sub">${esc(tr(im.missing ? 'ocr.missingCard' : im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : im.src === 'bandcamp' ? 'ocr.ownBandcamp' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
     // [3.34.5] "All images" (collected item 125): on – all, off – none, half – some
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.filter((im) => !im.missing).length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Sources)
@@ -21774,7 +21958,7 @@
     const cur = o.step === 'frames' ? ocrCurrent().img : null;
     el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))}</h2>
         <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
-        <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
+        <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${srcIconHtml('mb')} ${esc(tr('ocr.caaLink'))}</a>
         ${o.step === 'list' ? '' : `<button type="button" class="dci-textbtn dci-ocr-restart" data-ocr="restart" title="${esc(tr('ocr.restartTitle'))}">${esc(tr('ocr.restart'))}</button>`}
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
     if (peekFor != null) {
@@ -21879,6 +22063,11 @@
     const dg = t.closest('[data-ocr-discogs]');
     if (dg && S.ocr) {
       ocrAddDiscogs(dg.dataset.ocrDiscogs);
+      return;
+    }
+    const bcb = t.closest('[data-ocr-bandcamp]');
+    if (bcb && S.ocr) {
+      ocrAddBandcamp(bcb.dataset.ocrBandcamp); // [Z-BCIMAGES] (3.141.0)
       return;
     }
     const rm = t.closest('[data-ocr-remove]');
@@ -22884,6 +23073,7 @@
       S.dedLeft = []; // [Z-DEDBACK] (3.128.0)
       S.dedPlaces = []; // [Z-DEDPLACE] (3.129.0)
       S.memberOffers = null; // [Z-MEMBERCREATE] (3.129.0, review)
+      S.memberMissed = null; // [Z-MEMBERINST] (3.141.0, review)
       S.siteHints = null; // [Z-WEBDOM] ((3.124.0, review) looked up again: an address added in MusicBrainz meanwhile)
       S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false, mxOneOpen: false });
@@ -23799,18 +23989,20 @@
     if (!S.release || !S.rows.length) return '';
     const sp = S.supp;
     const isCurrent = (l) => l.source === S.source.id && l.id === S.release.id;
-    const on = (label) => `<span class="dci-supp-on">${esc(label)} ✓ ${esc(tr('supp.on'))}</span>
+    // [Z-SUPPICONS] (3.141.0) each with the symbol of its source
+    const ico = (k) => (k ? srcIconHtml(k) : '');
+    const on = (label, k = '') => `<span class="dci-supp-on">${ico(k)}${esc(label)} ✓ ${esc(tr('supp.on'))}</span>
       <button type="button" class="dci-textbtn" data-act="supp-remove">${esc(tr('supp.remove'))}</button>`;
-    const links = S.sourceLinks.filter((l) => !isCurrent(l)).map((l) => (sp && sp.source.id === l.source && sp.id === l.id ? on(sourceLinkLabel(l))
-      : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`${l.source}|${l.id}`)}">＋ ${esc(sourceLinkLabel(l))}</button>`));
-    const text = sp && sp.source === TEXT && !sp.ocr ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`)
-      : `<button type="button" class="dci-supp-btn" data-act="supp-text" title="${esc(tr('supp.textTitle'))}">＋ ${esc(tr('supp.text'))}</button>`;
+    const links = S.sourceLinks.filter((l) => !isCurrent(l)).map((l) => (sp && sp.source.id === l.source && sp.id === l.id ? on(sourceLinkLabel(l), SRC_OF_LINK[l.source])
+      : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`${l.source}|${l.id}`)}">＋ ${ico(SRC_OF_LINK[l.source])}${esc(sourceLinkLabel(l))}</button>`));
+    const text = sp && sp.source === TEXT && !sp.ocr ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`, 'text')
+      : `<button type="button" class="dci-supp-btn" data-act="supp-text" title="${esc(tr('supp.textTitle'))}">＋ ${ico('text')}${esc(tr('supp.text'))}</button>`;
     // [3.8.0] A source the release does not link to: a typed Discogs release or Bandcamp album
-    const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id })) : '';
+    const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id }), SRC_OF_LINK[sp.source.id]) : '';
     // [Z-SUPPALL] (3.131.0) the images too – artwork, back cover, booklet, a Discogs release's: the window of the text from cover art (its
     // text a supplement of this import)
-    const images = !S.ocrOn ? '' : sp && sp.ocr ? on(`${emo('ocr')} ${tr('supp.images')}`)
-      : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${esc(emo('ocr'))} ${esc(tr('supp.images'))}</button>`;
+    const images = !S.ocrOn ? '' : sp && sp.ocr ? on(tr('supp.images'), 'ocr')
+      : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${ico('ocr')}${esc(tr('supp.images'))}</button>`;
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
       ${links.join(' ')} ${typedOn} ${text} ${images}
       <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
@@ -25628,6 +25820,7 @@
       S.dedLeft = []; // [Z-DEDBACK] (3.128.0)
       S.dedPlaces = []; // [Z-DEDPLACE] (3.129.0)
       S.memberOffers = null; // [Z-MEMBERCREATE] (3.129.0, review)
+      S.memberMissed = null; // [Z-MEMBERINST] (3.141.0, review)
       S.dedForm = null;
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
@@ -30459,6 +30652,18 @@
     return { href: (sp && sp.url) || (S.release && S.source && S.source.short === short ? S.release.url || '' : '') };
   }
   /** A badge: the logo in its square (Discogs white on black, black in the dark theme), 📄 / 🖼️, or a word (⚙ Settings → Appearance). */
+  /**
+   * [Z-SUPPICONS] (3.141.0) The symbol of a source without a link – the logo in its square, 📄 / 🖼️ / 📎 (own files and addresses), or a
+   * word (⚙ Settings → Appearance → Symbols: Text) – for the buttons of "Supplement with" and the window of the text from cover art.
+   */
+  const SRC_OF_LINK = { discogs: 'dg', bandcamp: 'bc', youtube: 'yt' };
+  function srcIconHtml(k) {
+    const name = tr(`srcbadge.${k}`);
+    const inner = S.emojiText ? esc(name) : k === 'text' ? '📄' : k === 'ocr' ? '🖼️' : k === 'own' ? '📎'
+      : k === 'dg' ? `<img class="dci-sb-lt" src="${SRC_ICONS.dg}" alt=""><img class="dci-sb-dk" src="${SRC_ICONS.dgd}" alt="">`
+        : SRC_ICONS[k] ? `<img src="${SRC_ICONS[k]}" alt="">` : esc(name);
+    return `<span class="dci-sbi dci-sbi-${k}${S.emojiText ? ' dci-sbi-word' : ''}" aria-hidden="true">${inner}</span>`;
+  }
   function srcBadgeHtml(k, rows, row = false) {
     const name = tr(`srcbadge.${k}`);
     const title = tr('srcbadge.title', { src: tr(`srcbadge.name.${k}`) });
@@ -34290,6 +34495,7 @@
       }
     }
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
+    memberRecheck(); // [Z-MEMBERINST] (3.141.0, S239)
     plateNone(); // [Z-PLT] (3.89.0, S141)
     // [Z-WEBDOM] (3.124.0, S198) the linked entries whose site the text names: MusicBrainz's addresses of each looked up once
     if (ruleOn('S198')) S.artists.forEach((a) => siteHintRun(a));
@@ -34717,6 +34923,86 @@
     return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
   }
 
+  /**
+   * [Z-ARTDATES] (3.141.0, S238) The dates of a person (born, died) or a group (formed, disbanded) in the profile of its Discogs page –
+   * however it is written: "Born: July 28th, 1952", "Born December 17th, 1941, in … and passed away on August 24th, 2017.", "Born: 9 October
+   * 1940 in Liverpool …" / "Died: 8 December 1980 …", "Born: 27 November 1942, Seattle, USA – Died: 18 September 1970, London, UK.",
+   * "Johann Sebastian Bach was born on March 21, 1685 in Eisenach … He died on July 28, 1750.", "b. 1952", "(1952–2010)" – a year alone
+   * the year only. Only of the artist itself: the clause starts with the word, the name or "he" / "she" ("his father died in 1950" is
+   * none); the date right after the word. → { begin, end, ended } (each { year, month, day } or null) or null.
+   */
+  function profileDates(profile, { name = '', group = false } = {}) {
+    const text = String(profile || '').replace(/\[[a-z]=?[^\]]*\]/gi, (m) => (/^\[[a-z]=/i.test(m) ? m.replace(/^\[[a-z]=|\]$/gi, '') : ' ')).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+    if (!text.trim()) return null;
+    const names = uniq([name, String(name).split(/\s+/).pop()].map((x) => foldWord(x)).filter((x) => x.length >= 3));
+    // ((review) a word of its own – not "re-formed", "re-born"; "Death" only as "Death:"; "*" and "†" only in the bracket at the start)
+    const BEGIN = group ? /(?<![\p{L}-])(?:formed|founded|established|started|gegr(?:ü|ue)ndet|fond[ée]e?|fundad[oa])(?![\p{L}])/iu
+      : /(?<![\p{L}-])(?:born|b\.|geboren|geb\.|n[ée]e?\s+le|nacid[oa])(?=[\s:,])/iu;
+    const END = group ? /(?<![\p{L}-])(?:disbanded|split(?:\s+up)?|broke\s+up|dissolved|aufgel(?:ö|oe)st|disuelt[oa]|s[ée]par[ée]s?)(?![\p{L}])/iu
+      : /(?<![\p{L}-])(?:died|d\.|passed\s+away|death(?=\s*:)|gestorben|gest\.|verstorben|mort|morte|falleci[óo]|murió)(?=[\s:,])/iu;
+    const NOT_OWN = /\b(?:his|her|their|whose|father|mother|wife|husband|son|daughter|brother|sister|parents?|partner|friend|confused|who|whom|vater|mutter|frau|mann|sohn|tochter)\b/iu;
+    // the clause the artist's own: nothing before the word, "he" / "she" (was), its name (was); after a date of its own in the same sentence also
+    // a clause joined by ",", "and", a dash ("Born …, and passed away on …", "– Died: …") without another person in it
+    const own = (lead, seen) => {
+      const l = foldWord(lead).replace(/[\s,;:–—(-]+$/u, '').replace(/^[\s(]+/u, '').trim();
+      if (!l || /^(?:he|she|they|it|er|sie|il|elle|el|ella)(?:\s+(?:was|is|wurde|ist|war|est|fue))?$/.test(l)) return true;
+      if (names.some((n) => l === n || (l.startsWith(`${n} `) && /^(?:was|is|had been|wurde|ist|war|est|fue)$/.test(l.slice(n.length).trim())))) return true;
+      return seen && /(?:,|\band|\bund|\bet|\by|[–—(-])\s*$/u.test(lead) && !NOT_OWN.test(lead.slice(seen));
+    };
+    const dateAt = (rest) => {
+      const head = rest.replace(/^\s*(?::|on|in|am|im|le|el|en|the)?\s*/iu, '').replace(/^(?:on|in|am|im)\s+/iu, '');
+      if (!/^(?:\d|\p{L}+\.?\s+\d|\d{1,2}(?:st|nd|rd|th)?\s+\p{L})/u.test(head)) return null;
+      const d = findDates(head.slice(0, 60), { usOrder: true })[0];
+      if (!d || !d.value || !d.value.begin || !d.value.begin.year || head.indexOf(d.text) > 2) return null;
+      // ((review) "04/07/1952" could be either: the year only
+      if (/^\d{1,2}[./]\d{1,2}[./]\d{2,4}/.test(String(d.text || '').trim()) && d.value.begin.day && d.value.begin.day <= 12) return { year: d.value.begin.year, month: null, day: null };
+      return { year: d.value.begin.year, month: d.value.begin.month || null, day: d.value.begin.day || null };
+    };
+    // the sentences: not after an initial ("D.", "St.") or a short word with a dot
+    const sentences = [];
+    let start = 0;
+    const re = /[.!?]\s+(?=\p{Lu})|\n+/gu;
+    let m;
+    while ((m = re.exec(text))) {
+      const word = (text.slice(start, m.index).match(/(\S+)$/) || ['', ''])[1];
+      // ((review) nor after the day of a German date: "am 3. Mai 1950")
+      if (m[0][0] !== '\n' && (/^\p{Lu}$/u.test(word) || /^\d{1,2}$/.test(word) || /^(?:st|dr|mr|mrs|ms|jr|sr|b|d|ca|c|geb|gest|no|vol)$/i.test(word))) continue;
+      sentences.push(text.slice(start, m.index + 1));
+      start = m.index + m[0].length;
+    }
+    sentences.push(text.slice(start));
+    const out = { begin: null, end: null };
+    for (const sent of sentences) {
+      // the words in the order of the sentence: a clause after the artist's own date may go on with the other one
+      const hits = [['begin', BEGIN], ['end', END]].flatMap(([key, rx]) => [...sent.matchAll(new RegExp(rx.source, `${rx.flags.replace('g', '')}g`))].map((k) => ({ key, k })))
+        .sort((x, y) => x.k.index - y.k.index);
+      let seen = 0;
+      for (const { key, k } of hits) {
+        if (out[key]) continue;
+        if (!own(sent.slice(0, k.index), seen)) continue;
+        const d = dateAt(sent.slice(k.index + k[0].length));
+        if (d) {
+          out[key] = d;
+          seen = k.index + k[0].length;
+        }
+      }
+    }
+    // "(1952–2010)", "(b. 1952)", "(* 1952, † 2010)" right at the start or right after the name – not someone else's ("Guitarist of Metallica
+    // (1983–2001)")
+    const lead = text.trim();
+    const span = lead.match(/^([^()\n]{0,80}?)\s*\(\s*(?:(b\.|born|\*)\s*)?(1\d{3}|20\d{2})\s*(?:(?:[–—-]|,?\s*(?:d\.|died|†))\s*(1\d{3}|20\d{2}))?\s*\)/u);
+    const atName = span && (!span[1].trim() || names.some((n) => foldWord(span[1]).trim() === n));
+    if (span && atName && (span[2] || span[4])) {
+      if (!out.begin) out.begin = { year: Number(span[3]), month: null, day: null };
+      if (span[4] && !out.end) out.end = { year: Number(span[4]), month: null, day: null };
+    }
+    const key = (d) => (d ? d.year * 10000 + (d.month || 0) * 100 + (d.day || 0) : 0);
+    const now = new Date().getFullYear();
+    if (out.begin && (out.begin.year < 1000 || out.begin.year > now)) out.begin = null;
+    if (out.end && (out.end.year < 1000 || out.end.year > now || (out.begin && key(out.end) < key(out.begin)))) out.end = null;
+    return out.begin || out.end ? { ...out, ended: !!out.end } : null;
+  }
+
   async function startArtistCreate(artist) {
     const x = idx();
     let person = null;
@@ -34741,7 +35027,12 @@
             const matches = found.get(r.links[0]) || [];
             if (matches.length === 1) {
               // "member of band": the member is entity0. If the new artist is the group, the relationship points backward.
-              rels.push({ mbid: matches[0].mbid, name: matches[0].name, linkTypeId: x.memberLtId, backward: r.isGroup, ended: r.active === false });
+              // [Z-MEMBERINST] (3.141.0, S239) a group of this release (its artist, or an entry of the dashboard): the instruments and voices
+              // the person has here as the attributes of "member of band"
+              const ofRelease = !r.isGroup && ruleOn('S239') && ((S.releaseCredit || []).some((p) => p.mbid === matches[0].mbid)
+                || [...S.artists.values()].some((a) => a.mbid === matches[0].mbid && !a.company));
+              rels.push({ mbid: matches[0].mbid, name: matches[0].name, linkTypeId: x.memberLtId, backward: r.isGroup, ended: r.active === false,
+                ...(ofRelease ? { attrs: memberAttrIds(artist) } : {}) });
             } else {
               notInMb.push(r);
             }
@@ -34780,6 +35071,8 @@
       (mo.created = mo.created || new Set()).add(artist.key);
     }
     const type = person ? person.type : null;
+    // [Z-ARTDATES] (3.141.0, S238) born / died (formed / disbanded) as the Discogs profile says them
+    const dates = ruleOn('S238') && person && person.profile ? profileDates(person.profile, { name: person.name || artist.name, group: type === 'group' }) : null;
     // [3.21.0] a name from a text: the web profiles found next to it (T032) as its links
     const web = !artist.dId && !person ? (artist.links || []).filter((u) => /^https?:\/\//i.test(u)) : [];
     // ([Z-ALIAS] 3.108.0) the answers of the dialog to "who is the person?" – the form opened again with them
@@ -34790,6 +35083,7 @@
       person: person || (web.length ? { urls: web } : null),
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
       sourceLinkTypeId: sourceUrlLtId('artist'),
+      dates,
       rels: [...rels, ...aliasAsk.filter((m) => asked.get(m.mbid)).map((m) => ({ ...m, linkTypeId: x.isPersonLtId, backward: asked.get(m.mbid) === 'back', alias: true }))],
       editNote: srcUrlOf(artist) ? formEditNote([srcUrlOf(artist)], prefilledBy(true)) : '',
     });
@@ -34799,6 +35093,11 @@
     const prefilled = [tr('part.name')];
     if (type) prefilled.push(tr('part.type', { type: tr(`type.${type}`) }));
     if (urlCount) prefilled.push(tr(web.length && !srcUrlOf(artist) ? 'part.webUrls' : 'part.urls', { n: urlCount }));
+    if (dates) {
+      const day = (d) => (d ? [d.year, d.month, d.day].filter((v) => v != null).map((v, i) => String(v).padStart(i ? 2 : 4, '0')).join('-') : '?');
+      prefilled.push(tr(dates.end ? 'part.dates' : 'part.dateBegin', { begin: day(dates.begin), end: day(dates.end) }));
+      log('info', 'artistDates', { name: (person && person.name) || artist.name, begin: day(dates.begin), end: dates.end ? day(dates.end) : '' });
+    }
     const members = rels.filter((r) => !r.alias);
     if (members.length) prefilled.push(tr('part.members', { n: members.length, names: members.map((r) => r.name).join(', ') }));
     const performs = rels.filter((r) => r.alias);
@@ -36186,9 +36485,11 @@
    * not have them as members of the group ("member of band") – the group among the release's artists or the entries, the members
    * among the entries (by name). One look-up of the group's relationships.
    */
-  async function checkGroupMembers(rel, seq) {
+  async function checkGroupMembers(rel, seq, again = false) {
     const groups = ((rel && rel.groups) || []).filter((g) => g.members && g.members.length);
-    S.memberOffers = new Map(); // [Z-MEMBERCREATE] (3.129.0)
+    // ([Z-MEMBERINST] 3.141.0, S239) asked again for a group linked later: the offers of the others stay
+    if (!again || !S.memberOffers) S.memberOffers = new Map(); // [Z-MEMBERCREATE] (3.129.0)
+    if (!again) S.memberMissed = new Set();
     // ((review) the offers of S213 also with the info of S087 off
     if (!(ruleOn('S087') || ruleOn('S213')) || !groups.length) return;
     // (the entries still looked up in MusicBrainz first: at most 20 s)
@@ -36196,46 +36497,67 @@
       await sleep(500);
       if (seq !== importSeq) return;
     }
-    const byName = (name) => {
-      const n = norm(name);
-      const rc = (S.releaseCredit || []).find((p) => p.mbid && norm(p.name) === n);
-      if (rc) return rc.mbid;
-      const a = [...S.artists.values()].find((x) => x.mbid && !x.company && (norm(x.name) === n || norm(x.mbName) === n));
-      if (a) return a.mbid;
-      // (an entry not linked yet: its one candidate of exactly that name)
-      const open = [...S.artists.values()].find((x) => !x.mbid && !x.company && norm(x.name) === n);
-      // (a source that wants the names of the release's credit – Bandcamp – keeps the hits by name aside: nameHits)
-      const same = open ? uniq([...(open.candidates || []), ...(open.nameHits || [])].filter((c) => c.mbid && norm(c.name) === n).map((c) => c.mbid)) : [];
-      return same.length === 1 ? same[0] : '';
-    };
     for (const g of groups) {
-      const gid = byName(g.name);
+      if (again && !S.memberMissed.has(norm(g.name))) continue;
+      const gid = groupMbidOf(g.name);
       // ((review) a group not among the release's artists: only in the log – no info for every heading)
       if (!gid) {
-        log('info', 'groupNotFound', { group: g.name });
+        if (!again) log('info', 'groupNotFound', { group: g.name });
+        S.memberMissed.add(norm(g.name)); // [Z-MEMBERINST] (3.141.0, S239) asked again once it is linked (memberRecheck)
         continue;
       }
-      let rels = null;
-      try {
-        const a = await mbWsIdle(`artist/${gid}?inc=artist-rels`);
-        // ((review) the group's members: "member of band" backward – forward are the groups the group is a member of)
-        rels = ((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.direction !== 'forward' && r.artist && r.artist.id);
-      } catch (e) {
-        console.warn('[Discogs-Credits]', e);
-      }
+      S.memberMissed.delete(norm(g.name));
+      await checkGroupOf(g, gid, seq);
       if (seq !== importSeq) return;
-      if (!rels) continue;
-      const ids = new Set(rels.map((r) => r.artist.id));
-      const names = new Set(rels.flatMap((r) => [r.artist.name, r['target-credit']].filter(Boolean).map(norm)));
-      // ((review) by MBID, or – a name not linked yet – by the name MusicBrainz has for a member
-      const missing = g.members.filter((nm) => { const id = byName(nm); return !(id && ids.has(id)) && !names.has(norm(nm)); });
-      if (!missing.length) continue;
-      if (ruleOn('S087')) showMessage('info', 'msg.groupMembers', { group: g.name, names: missing.join(', '), n: missing.length });
-      log('info', 'groupMembers', { group: g.name, names: missing.join(', ') });
-      // [Z-MEMBERCREATE] (3.129.0, S213) each of them: "member of band" offered at its entry (create, or the edit of a linked one)
-      if (ruleOn('S213')) missing.forEach((nm) => S.memberOffers.set(norm(nm), { group: g.name, gid, ids }));
     }
     if (S.memberOffers.size) renderGroups();
+  }
+  /**
+   * [Z-MEMBERINST] (3.141.0, S239) A group of the text that was not linked when its members were checked: linked now (by hand, or found
+   * later) – its members checked then. Called with every drawing (refresh); does nothing while none waits.
+   */
+  function memberRecheck() {
+    if (!ruleOn('S239') || !S.memberMissed || !S.memberMissed.size || S.memberRechecking || !S.workNotesRel) return;
+    const groups = (S.workNotesRel.groups || []).filter((g) => S.memberMissed.has(norm(g.name)) && groupMbidOf(g.name));
+    if (!groups.length) return;
+    S.memberRechecking = true;
+    const seq = importSeq;
+    checkGroupMembers(S.workNotesRel, seq, true).catch((e) => console.warn('[Discogs-Credits]', e)).finally(() => { S.memberRechecking = false; });
+  }
+  /** The MBID of a group by its name: of the release's artists, of a linked entry, or the one candidate of exactly that name. */
+  function groupMbidOf(name) {
+    const n = norm(name);
+    const rc = (S.releaseCredit || []).find((p) => p.mbid && norm(p.name) === n);
+    if (rc) return rc.mbid;
+    const a = [...S.artists.values()].find((x) => x.mbid && !x.company && (norm(x.name) === n || norm(x.mbName) === n));
+    if (a) return a.mbid;
+    // (an entry not linked yet: its one candidate of exactly that name)
+    const open = [...S.artists.values()].find((x) => !x.mbid && !x.company && norm(x.name) === n);
+    // (a source that wants the names of the release's credit – Bandcamp – keeps the hits by name aside: nameHits)
+    const same = open ? uniq([...(open.candidates || []), ...(open.nameHits || [])].filter((c) => c.mbid && norm(c.name) === n).map((c) => c.mbid)) : [];
+    return same.length === 1 ? same[0] : '';
+  }
+  /** [Z-MEMBERCREATE] (3.129.0, S213; 3.141.0 a function of its own) The members of one group: those MusicBrainz does not have, offered. */
+  async function checkGroupOf(g, gid, seq) {
+    let rels = null;
+    try {
+      const a = await mbWsIdle(`artist/${gid}?inc=artist-rels`);
+      // ((review) the group's members: "member of band" backward – forward are the groups the group is a member of)
+      rels = ((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.direction !== 'forward' && r.artist && r.artist.id);
+    } catch (e) {
+      console.warn('[Discogs-Credits]', e);
+    }
+    if (seq !== importSeq) return;
+    if (!rels) return;
+    const ids = new Set(rels.map((r) => r.artist.id));
+    const names = new Set(rels.flatMap((r) => [r.artist.name, r['target-credit']].filter(Boolean).map(norm)));
+    // ((review) by MBID, or – a name not linked yet – by the name MusicBrainz has for a member
+    const missing = g.members.filter((nm) => { const id = groupMbidOf(nm); return !(id && ids.has(id)) && !names.has(norm(nm)); });
+    if (!missing.length) return;
+    if (ruleOn('S087')) showMessage('info', 'msg.groupMembers', { group: g.name, names: missing.join(', '), n: missing.length });
+    log('info', 'groupMembers', { group: g.name, names: missing.join(', ') });
+    // [Z-MEMBERCREATE] (3.129.0, S213) each of them: "member of band" offered at its entry (create, or the edit of a linked one)
+    if (ruleOn('S213')) missing.forEach((nm) => S.memberOffers.set(norm(nm), { group: g.name, gid, ids }));
   }
   /** [Z-MEMBERCREATE] (3.129.0, S213) The group the text makes this entry a member of (not in MusicBrainz yet): { group, gid } or null. */
   function memberOfOffer(a) {
@@ -54146,6 +54468,18 @@
       #dci-overlay .dci-sb-row.dci-sb-word { min-width: calc(var(--u, 1px) * 16); font-size: calc(var(--u, 1px) * 8); }
       #dci-overlay .dci-sb:hover, #dci-overlay .dci-sb:focus-visible { border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple); }
       #dci-overlay .dci-sb.dci-sb-nolink { cursor: default; }
+      /* [Z-SUPPICONS] (3.141.0) the symbol of a source in a button or a card (no link): the square of the badges, a little smaller */
+      .dci-sbi { display: inline-flex; align-items: center; justify-content: center; width: calc(var(--u, 1px) * 16); height: calc(var(--u, 1px) * 16);
+        border: 1px solid #c9ccd3; border-radius: 3px; background: #fff; box-sizing: border-box; overflow: hidden; vertical-align: middle;
+        font: 700 calc(var(--u, 1px) * 8)/1 system-ui, sans-serif; color: #333; margin-right: calc(var(--u, 1px) * 2); flex: 0 0 auto; }
+      .dci-sbi img { width: calc(var(--u, 1px) * 13); height: calc(var(--u, 1px) * 13); display: block; }
+      .dci-sbi-text, .dci-sbi-ocr, .dci-sbi-own { font-size: calc(var(--u, 1px) * 10); }
+      .dci-sbi-dg { background: #111; border-color: #111; color: #fff; }
+      .dci-sbi .dci-sb-dk { display: none; }
+      html.dci-dk-overlay .dci-sbi-dg { background: #f2f2f2; border-color: #f2f2f2; color: #111; }
+      html.dci-dk-overlay .dci-sbi-dg .dci-sb-lt { display: none; }
+      html.dci-dk-overlay .dci-sbi-dg .dci-sb-dk { display: block; }
+      .dci-sbi-word { width: auto; min-width: calc(var(--u, 1px) * 16); padding: 0 calc(var(--u, 1px) * 2); }
       #dci-overlay .dci-sb.dci-sb-nolink:hover { border-color: #c9ccd3; box-shadow: none; }
       #dci-overlay .dci-idlink { margin-left: calc(var(--u, 1px) * 8); font-size: 0.92em; white-space: nowrap; }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
