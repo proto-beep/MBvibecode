@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-13 | 3.137.0 – 3.140.0 | – |
+| 2026-11-13 | 3.137.0 – 3.141.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -106,6 +106,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.141.0
+
+- **The line of the release page in your order of the sources** (collected item Z-GAPORDER; rule S236): it reads the sources in the order of ⚙ Sources for the release's kind – a digital release Bandcamp first (by default), a physical one Discogs first; until now always Discogs. ↗ says which source tab it opens: "Import credits … and open the Bandcamp source tab in the background" (Z-GAPBGTIP).
+- **Bandcamp's images in the text from cover art** (Z-BCIMAGES; S237): the cover and the photos of the physical editions as cards (not ticked) – at once when Bandcamp is the source or the supplement, else "Load Bandcamp images (…)" for a linked Bandcamp page.
+- **Symbols of the sources** (Z-SUPPICONS): "Supplement with" and the window of the text from cover art show the logo or symbol of each source (MusicBrainz's cover art, Discogs, Bandcamp, 📄, 🖼️, 📎 for your own images); words with "Symbols: Text".
+- **Members with their instruments** (Z-MEMBERINST; S239): "Create artist" fills in "member of band" with the instruments also for a group of the Discogs profile that is an artist of the release; a group linked later in the dashboard is checked then; "Band X: A (guitar), B (bass)" and "Band X (A – guitar, B – bass)" give the members and their instruments.
+- **Dates of new artists** (Z-ARTDATES; S238): "Create artist" from Discogs takes born and died (a group: formed and disbanded) from its profile – "Born: July 28th, 1952", "Born December 17th, 1941, … and passed away on August 24th, 2017.", "… was born on March 21, 1685 … He died on July 28, 1750.", "(1952–2010)" and more; a year alone is the year; "his father died …" is not the artist's.
 
 ### Import 3.140.0
 
