@@ -2102,4 +2102,100 @@ def case_twice3134():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_memberinst3141():
+    """Credits Importer 3.141.0 (collected item Z-MEMBERINST, rule S239; answers of 2026-11-13 10:36, 10:57): "Create artist" fills in "member of
+    band" with the instruments.
+    A) A band of the release with its members in one line – "Tarbaby: Orrin Evans (piano), Nasheet Waits (drums), Zed Newman (percussion)":
+       each member's instrument, no entry "Tarbaby", nothing not recognized; Zed Newman's "Create artist" with "member of band" to Tarbaby and
+       percussion; Orrin Evans (a member in MusicBrainz) nothing.
+    B) "Tarbaby (Zed Newman – percussion, Nasheet Waits – drums)": the same.
+    C) A group of the text linked only later: "The Quartet are" above its members, "Mixed by The Quartet" – two artists of that name in
+       MusicBrainz, the entry not linked (Bandcamp: offered by name); chosen by hand: its members checked then ("Zed Newman" offered "member of
+       The Quartet")."""
+    import urllib.parse
+    PAGE = 'https://tarbaby.bandcamp.com/'
+    ALBUM = PAGE + 'album/members'
+    TITLES = ['One', 'Two', 'Three', 'Four']
+    H.TITLES[:] = TITLES
+    TB = H.uid('dddddddd', 3600)
+    QA, QB = H.uid('dddddddd', 3610), H.uid('dddddddd', 3611)
+    who = {n: H.uid('dddddddd', 3601 + k) for k, n in enumerate(['Orrin Evans', 'Nasheet Waits'])}
+    H.attr(9311, 'percussion', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.BAND_MEMBERS[TB] = [who['Orrin Evans']]
+    H.BAND_MEMBERS[QA] = [who['Orrin Evans']]
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    sec = lambda name: f"[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === {json.dumps(name)})"
+
+    def page(credits):
+        H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Tarbaby', 'current': {'title': 'Members', 'credits': credits, 'about': '', 'release_date': '17 Jun 2022 00:00:00 GMT'},
+                                       'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(TITLES)]})
+
+    def run(credits, group, later=False):
+        page(credits)
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            if later:
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /The Quartet/.test(li.textContent) && /not/i.test(li.textContent))", 40)
+                before = pg.evaluate(f"(() => {{ const g = {sec('Zed Newman')}; return !!(g && g.querySelector('[data-el=memberof]')); }})()")
+                css = "section.dci-group:has(.dci-gname strong:text-is('The Quartet'))"
+                nb = pg.locator(f'{css} [data-act=name-use][data-mbid="{QA}"]')
+                if nb.count():
+                    nb.first.click()
+                else:
+                    pg.locator(f'{css} [data-f=artist-pick]').select_option(QA)
+                try:
+                    H.wait_for(pg, f"(() => {{ const g = {sec('Zed Newman')}; return !!(g && g.querySelector('[data-el=memberof]')); }})()", 30)
+                except Exception:  # noqa: BLE001 – said below
+                    print('Protokoll:', pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).slice(-25)"))
+            else:
+                H.wait_for(pg, f"[...document.querySelectorAll('.dci-msg')].some(m => /{group}/.test(m.textContent))", 30)
+                before = None
+            pg.wait_for_timeout(800)
+            names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+            roles = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+              [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw)])""")
+            mo = {n: pg.evaluate(f"(() => {{ const g = {sec(n)}; const e = g && g.querySelector('[data-el=memberof]'); return e ? e.textContent.trim() : null; }})()") for n in ('Orrin Evans', 'Zed Newman')}
+            pg.evaluate(f"{sec('Zed Newman')}.querySelector('[data-act=artist-create]').click()")
+            pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+            q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(pg.evaluate("document.querySelector('[data-el=sub-frame]').src")).query))
+            b.close()
+            return names, unrec, roles, mo, {k: v for k, v in q.items() if k.startswith('rels.')}, before, errs
+
+    results = []
+    H.RELEASE_AC[:] = [(TB, 'Tarbaby', 'Tarbaby', '')]
+    H.MB_SEARCH['artist'] = [{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for n, g in [('Tarbaby', TB), *who.items()]]
+    for run_, credits in (('A', 'Tarbaby: Orrin Evans (piano), Nasheet Waits (drums), Zed Newman (percussion)'),
+                          ('B', 'Tarbaby (Zed Newman – percussion, Nasheet Waits – drums)')):
+        names, unrec, roles, mo, rels, _, errs = run(credits, 'Tarbaby')
+        print(f'{run_})', names, '| nicht erkannt:', unrec, '|', roles, '|', mo, '|', rels)
+        results.append(not unrec and 'Tarbaby' not in names and ['Zed Newman', ['Percussion']] in roles and ['Nasheet Waits', ['Drums']] in roles
+                       and mo['Zed Newman'] and mo['Orrin Evans'] is None and rels.get('rels.0.target') == TB and rels.get('rels.0.type') == '103'
+                       and rels.get('rels.0.attributes.0.type') == '9311' and not errs)
+    # C) a group linked later
+    H.RELEASE_AC[:] = []
+    H.MB_SEARCH['artist'] = [{'id': QA, 'name': 'The Quartet', 'disambiguation': 'jazz', 'score': 100}, {'id': QB, 'name': 'The Quartet', 'disambiguation': 'pop', 'score': 100},
+                             *[{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for n, g in who.items()]]
+    names, unrec, roles, mo, rels, before, errs = run('The Quartet are\n\nOrrin Evans piano\nZed Newman percussion\n\nMixed by The Quartet', 'Quartet', later=True)
+    print('C) vorher:', before, '| nachher:', mo, '|', rels)
+    results.append(before is False and mo['Zed Newman'] and rels.get('rels.0.target') == QA and rels.get('rels.0.attributes.0.type') == '9311' and not errs)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
