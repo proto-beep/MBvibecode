@@ -3501,4 +3501,102 @@ def case_gstnew3139():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_setdot3142():
+    """Credits Importer 3.142.0 (collected item Z-SETDOT; answer of 2026-11-13 09:28): the dot of a setting not on its default in a column of its
+    own between the name and the choices – always there, so nothing moves when it comes or goes.
+    A) Appearance: every row of a setting has the slot; the name's right edge and the choices' left edge the same with and without the dot
+       ("View": Full ↔ Compact), the dot between them.
+    B) A switch (Sources → "Show the line …"): its box at the same place with and without the dot.
+    C) A narrow dashboard: the dot right after the name, the choices below at the name's left edge."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.set_viewport_size({'width': 1400, 'height': 1000})
+        H.open_settings(pg, 'appearance')
+        pg.wait_for_timeout(300)
+        POS = """(sel) => { const r = document.querySelector(sel).closest('.dci-set-row'); const l = r.querySelector('.dci-set-lbl').getBoundingClientRect(),
+          c = r.querySelector('.dci-set-ctl').getBoundingClientRect(), d = r.querySelector('.dci-set-dot'); const dr = d && d.getBoundingClientRect();
+          return { lr: Math.round(l.right), cl: Math.round(c.left), dot: !!d, between: !!d && dr.left >= l.right - 1 && dr.right <= c.left + 1 }; }"""
+        slots = pg.evaluate("[...document.querySelectorAll('.dci-set-pane .dci-set-field')].every(r => r.querySelector(':scope > .dci-set-dotslot'))")
+        a1 = pg.evaluate(POS, '.dci-set-pane [data-act=view][data-view=compact]')
+        pg.click('.dci-set-pane [data-act=view][data-view=compact]')
+        pg.wait_for_timeout(300)
+        a2 = pg.evaluate(POS, '.dci-set-pane [data-act=view][data-view=compact]')
+        print('A)', slots, a1, a2)
+        results.append(slots and a1['dot'] != a2['dot'] and a1['lr'] == a2['lr'] and a1['cl'] == a2['cl'] and (a1['between'] or a2['between']))
+        H.open_settings(pg, 'sources')
+        BOX = """() => { const i = document.querySelector('.dci-set-pane [data-set=gap-on]'); const r = i.getBoundingClientRect();
+          return [Math.round(r.left), !!i.closest('.dci-set-row').querySelector('.dci-set-dot')]; }"""
+        b1 = pg.evaluate(BOX)
+        pg.click('.dci-set-pane [data-set=gap-on]')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(BOX)
+        pg.click('.dci-set-pane [data-set=gap-on]')
+        print('B)', b1, b2)
+        results.append(b1[0] == b2[0] and b1[1] != b2[1])
+        pg.set_viewport_size({'width': 480, 'height': 1000})
+        pg.wait_for_timeout(400)
+        H.open_settings(pg, 'appearance')
+        c = pg.evaluate("""(() => { const r = [...document.querySelectorAll('.dci-set-pane .dci-set-field')].find(x => x.querySelector('.dci-set-dot') && x.querySelector('.dci-set-lbl').textContent.trim());
+          if (!r) return null; const l = r.querySelector('.dci-set-lbl').getBoundingClientRect(), c = r.querySelector('.dci-set-ctl').getBoundingClientRect(),
+          d = r.querySelector('.dci-set-dot').getBoundingClientRect(); return [d.left >= l.right - 1, Math.abs(d.top - l.top) < 12, c.top >= l.bottom - 1, Math.abs(c.left - l.left) < 3]; })()""")
+        print('C)', c)
+        results.append(c == [True, True, True, True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_uniq3142():
+    """Credits Importer 3.142.0 (collected item Z-UNIQ, rule S241; answer of 2026-11-13 12:28): "Linked entries" in the group "who".
+    A) Two submissions: Ann (twice), Bob (made new), the label L, the place P (twice), a work W: "different artists 2 · 1 new", "different labels 1",
+       "different places 1", "different areas 0", "different events 0", "different works 1".
+    B) "Global": the card from the file's `linked` (no "new"); a file of before without it: no card."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261115-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1},
+            'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}}, 'by_version': {'3.142.0': {'edits': 10}}, 'by_source': {'discogs': 2},
+            'linked': {'artist': {'n': 7}, 'label': {'n': 2}, 'place': {'n': 1}, 'area': {'n': 0}, 'event': {'n': 1}, 'work': {'n': 3}}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+        mk = lambda i, rels: {'v': 3, 'id': f't:{i}', 'mbid': f'm{i}', 'at': now - i * 1000, 'start': now - 99999, 'ms': 5000, 'src': 'discogs', 'supp': [], 'rel': rel,
+                              'own': 0, 'ocr': None, 'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}}, 'rels': rels}
+        recs = [mk(1, [stat_rel('n', 'instrument', 'recording', 'artist', 'gA', 'Ann'), stat_rel('n', 'producer', 'release', 'artist', 'gB', 'Bob', nw=1),
+                       stat_rel('n', 'phonographic copyright', 'release', 'label', 'gL', 'L'), stat_rel('n', 'recorded at', 'recording', 'place', 'gP', 'P')]),
+                mk(2, [stat_rel('n', 'instrument', 'recording', 'artist', 'gA', 'Ann'), stat_rel('n', 'recorded at', 'recording', 'place', 'gP', 'P'),
+                       stat_rel('n', 'performance', 'recording', 'work', 'gW', 'W')])]
+        pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(700)
+        groups = pg.evaluate("[...document.querySelectorAll('.dci-stats-group')].map(g => [g.dataset.group, [...g.querySelectorAll('.dci-stats-card')].map(c => c.dataset.card)])")
+        LI = "(sel) => [...document.querySelectorAll(sel + ' [data-el=stats-uniq] li')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+        a = pg.evaluate(LI, ".dci-stats-card[data-card='linked']")
+        print('A)', [g for g in groups if g[0] == 'who'], a)
+        results.append(any(g[0] == 'who' and g[1][:1] == ['linked'] for g in groups)
+                       and a == ['different artists 2 · 1 new', 'different labels 1', 'different places 1', 'different areas 0', 'different events 0', 'different works 1'])
+        pg.click('[data-act=stats-scope][data-scope=global]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+        g = pg.evaluate(LI, "[data-el=stats-global-core] .dci-stats-card[data-card='g:glinked']")
+        print('B)', g)
+        results.append(g == ['different artists 7', 'different labels 2', 'different places 1', 'different areas 0', 'different events 1', 'different works 3'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

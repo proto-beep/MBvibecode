@@ -780,6 +780,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   setdot3142: 3.142.0 (Z-SETDOT): the dot in a slot of its own – name and choices at the same place with and without it; narrow:
+                                #     after the name, the choices below
+                                #   uniq3142: 3.142.0 (Z-UNIQ, S241): "Linked entries" – different artists (1 new), labels, places, works; Global from `linked`
                                 #   gstnew3139: 3.139.0 (Z-GSTNEW): "Global" with "Supplemented instead of new", "Remixes and commissions", "Sources of the
                                 #     submissions" (in the groups What and Sources)
                                 #   settabs3137: 3.137.0 (Z-SETTABS2): two columns (names right-aligned without a colon, the choices at one place), the dot at
@@ -927,6 +930,8 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   headas3142: 3.142.0 (Z-MBAS, Z-INSTTOP; S240): "as MB Drum Guy", "place as MB Abbey Road Studios"; "bass" the first answer of
+                                #     "Bass" (picked: bass); S240 off: as before
                                 #   instlca3113: 3.113.0 (Z-INSTLCA): ⑃ – woodwind of saxophone and flute (added, taken out), vocals of voices, none with tracks of
                                 #     their own, switched off
                                 #   sort3112: 3.112.0 (Z-SORT, Z-SCOPE): "Order:" – by kind (headings, instruments first), by name, by level ("Skipped" last), kept,
@@ -1269,6 +1274,7 @@ python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   yelljump3142: 3.142.0 (Z-YELLJUMP): ‹ ● n › – the item in the dashboard and its line highlighted on Discogs
                                 #   cocr3114: 3.114.0 / 1.18.0 (Z-COCR): frames in the large image read in the dashboard's window, added, ✕ both ways, no dashboard
                                 #   artapi3108: Companion 1.17.0 (Z-CPVA3): the release's images from Discogs' API – ‹ › through all of them, not only the
                                 #     page's first; (review) the box switched off while the API is asked stays off; artnav (1.17.0, Z-CPVA4): the big view over the tab (‹ ›, count, ↗, ✕, a click beside it closes), one image 1 / 1 greyed
