@@ -235,6 +235,9 @@ def main():
         ('source_mix', r['source_mix'], {'discogs+bandcamp': 2, 'youtube': 1}),
         ('remixes (none)', r['remixes'], {'remixer': 0, 'remix_of': 0, 'commissioned': 0}),
         ('remixes', [rx['remixes'], rx['supplemented'], rx['source_mix']], [{'remixer': 1, 'remix_of': 1, 'commissioned': 1}, {'n': 1, 'of': 1}, {'bandcamp+discogs': 1}]),
+        # [3.142.0, Z-UNIQ] the different entries linked: the artist 1 (its remixer and its commission of work 2 – a work with a writer counts as the
+        # writer's); "remix of" links recordings only
+        ('linked (remixes)', rx['linked'], {'artist': {'n': 1}, 'label': {'n': 0}, 'place': {'n': 0}, 'area': {'n': 0}, 'event': {'n': 0}, 'work': {'n': 0}}),
         ('done', r['done'], {'credit relationships': 4, 'works linked': 1}),
         ('done_by_level', r['done_by_level'], {'recording': 5, 'release': 2}),  # (the second Discogs submission: "0 credit … (2 recording, 1 release)")
         ('rows_read', r['rows_read'].get('notes on edits before "since"'), 1),

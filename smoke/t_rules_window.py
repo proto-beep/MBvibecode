@@ -541,7 +541,8 @@ def case_wqedit():
         c3 = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.Q002")
         print('C) Frage vorher:', c0, '| nachher:', c1, '| leeres Wort:', c2, '| gespeichert:', c3)
         # ([3.97.0, Z-QGTR] guitar itself a choice too)
-        results.append(c0 == ['electric guitar', 'acoustic guitar', 'guitar'] and c1 == ['electric guitar', 'acoustic guitar', 'guitar', 'resonator guitar']
+        # [3.142.0] (Z-INSTTOP) the answers with "guitar" first – the saved choices keep their order
+        results.append(c0 == ['guitar', 'electric guitar', 'acoustic guitar'] and c1 == ['guitar', 'electric guitar', 'acoustic guitar', 'resonator guitar']
                        and c2.startswith('Q002: the field “base”') and c3['set'] == {'options': ['electric guitar', 'acoustic guitar', 'guitar', 'resonator guitar']})
         # D) Q003: chorus master out, creative direction up, a choice added
         pg.click('#dci-rules [data-redit-open=Q003]')
@@ -615,7 +616,7 @@ def case_wqedit():
         pg.wait_for_timeout(700)
         f1 = [pg.evaluate("localStorage.getItem('dci-mapping-changes')"), pg.evaluate(TEST, 'Bass [Stand-Up]'), pg.evaluate(ASK)]
         print('F) ↺ alle:', f1[0], '|', f1[1][:100], '|', f1[2])
-        results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['electric guitar', 'acoustic guitar', 'guitar'])
+        results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['guitar', 'electric guitar', 'acoustic guitar'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

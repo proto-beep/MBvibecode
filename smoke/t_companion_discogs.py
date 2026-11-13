@@ -1025,4 +1025,50 @@ def case_cocr3114():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_yelljump3142():
+    """Credits Importer 3.142.0 (collected item Z-YELLJUMP; answer of 2026-11-13 09:28): going through the footer's counter ‹ ● n › the
+    Discogs page goes to the item's line and lights it up, as a click on its row does.
+    A) The counter of the open items (Ghost Pub, a publisher MusicBrainz does not have): shown in the dashboard, its line highlighted on Discogs."""
+    orig_page = H.discogs_page
+    H.discogs_page = lambda: orig_page().replace('<li><span>Published By</span>', '<li><span>Published By</span> – <a href="/label/1005-x">Ghost Pub</a></li><li><span>Published By</span>', 1)
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        H.wait_for(pg, "!!document.querySelector('[data-act=yell-next].dci-yell-n:not([disabled])')", 20)
+        dg.wait_for_timeout(1500)
+        dg.evaluate("document.querySelectorAll('.dci-discogs-highlight').forEach(x => x.classList.remove('dci-discogs-highlight'))")
+        # (through the items until one is on the Discogs page – a company Discogs's page does not show has no line there)
+        got = []
+        for _ in range(8):
+            pg.locator('[data-act=yell-next].dci-yell-n:not([disabled])').first.click()
+            pg.wait_for_timeout(300)
+            flashed = pg.evaluate("(() => { const f = document.querySelector('.dci-flash'); const g = f && f.closest('section.dci-group'); return g ? g.querySelector('.dci-gname strong').textContent.trim() : null; })()")
+            hl = None
+            for _ in range(15):
+                hl = dg.evaluate("(h => h ? h.textContent.replace(/\\s+/g, ' ').trim() : null)(document.querySelector('.dci-discogs-highlight'))")
+                if hl:
+                    break
+                dg.wait_for_timeout(200)
+            got.append([flashed, hl])
+            if hl and flashed and flashed.split()[-1] in hl:
+                break
+            dg.evaluate("document.querySelectorAll('.dci-discogs-highlight').forEach(x => x.classList.remove('dci-discogs-highlight'))")
+        print('A) im Dashboard → auf Discogs:', got)
+        results.append(any(f and h and f.split()[-1] in h for f, h in got))
+        H.discogs_page = orig_page
+        real = [e for e in errs + dgerr if 'Synchronous XHR in page dismissal' not in e]
+        print('Fehler:', real)
+        results.append(not real)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

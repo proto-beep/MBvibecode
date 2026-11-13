@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.141.0
+// @version      3.142.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.141.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.141.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.142.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.142.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.141.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.142.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -511,6 +511,7 @@
       "group.addRoleShort": "＋ role",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
+      "match.as": "as",
       "match.viaMapping": "from the mapping file (by the video)",
       "match.viaArtl": "the label of this release (credited for the artwork)",
       "issue.kindMismatch": "a type of another kind of entity than the entry – choose the role again",
@@ -2767,6 +2768,16 @@
       "stats.more.instruments": "Instruments",
       "stats.more.ocr": "Text from cover art",
       "stats.more.own": "Own rules",
+      "stats.more.linked": "Linked entries",
+      "stats.more.glinked": "Linked entries",
+      "stats.uniq.artist": "different artists",
+      "stats.uniq.label": "different labels",
+      "stats.uniq.place": "different places",
+      "stats.uniq.area": "different areas",
+      "stats.uniq.event": "different events",
+      "stats.uniq.work": "different works",
+      "stats.uniq.new": "{n} new",
+      "stats.uniq.hint": "each entry once, however often it was linked; new: made with the dashboard",
       "stats.withSupp": "with a supplement: {n}",
       "stats.src.discogs": "Discogs",
       "stats.src.bandcamp": "Bandcamp",
@@ -4750,6 +4761,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S241', where: 'statMore, statsMoreCards, uniqHtml, globalCoreParts, stats/global_stats.py', note: 'Statistics (3.142.0; collected item Z-UNIQ): "Linked entries" – how many different artists, labels, places, areas, events and works the submissions linked (each once), of them made new with the dashboard; in "Global" (the edit dump) the different ones of all users' },
+    { id: 'S240', where: 'questionOptions', note: 'Questions of instruments (3.142.0; collected item Z-INSTTOP): the word as written first among the answers – "bass" before electric bass guitar, double bass …, "guitar" before electric guitar … – when MusicBrainz has it as an instrument (an answer set at once – "Horns" – keeps its order)' },
     { id: 'S239', where: 'startArtistCreate, checkGroupMembers, memberRecheck, groupMbidOf, checkGroupOf, TEXT.parse (lineOfItsOwn)', note: 'Members (3.141.0; collected item Z-MEMBERINST): "Create artist" fills in "member of band" with the member\'s instruments and voices also for a group of the Discogs profile that is an artist of the release (or an entry of the dashboard); a group of the text linked only later (by hand, or found later): its members checked then; a band of the release with its members in one line – "Band X: A (guitar), B (bass)", "Band X (A – guitar, B – bass)" – each member\'s roles and the members of the group (S213)' },
     { id: 'S238', where: 'profileDates, startArtistCreate, buildArtistSeed', note: 'Create artist (3.141.0; collected item Z-ARTDATES): the dates of the Discogs profile – born and died (a group: formed / founded and disbanded / split up) in many wordings ("Born: July 28th, 1952", "Born December 17th, 1941, in … and passed away on August 24th, 2017.", "Born: 9 October 1940 in Liverpool …", "Died: 8 December 1980 …", "… was born on March 21, 1685 … He died on July 28, 1750.", "b. 1952", "(1952–2010)", German "geboren", "gestorben", "*", "†") – only of the artist itself (the clause starts with the word, its name or "he" / "she"; not "his father died …"); a year alone the year; an end before the begin or after this year none; the form\'s begin and end, "ended" with an end' },
     { id: 'S237', where: 'BANDCAMP.pageImageUrls, ocrBandcampAuto, ocrBandcampLinks, ocrAddBandcamp', note: 'Text from cover art (3.141.0; collected item Z-BCIMAGES): the images of Bandcamp – the cover and the photos of the physical editions (its packages) – as cards of the window, not ticked: at once for the Bandcamp album loaded or supplemented, "Load Bandcamp images (…)" for the other Bandcamp pages linked to the release' },
@@ -6201,7 +6214,30 @@
    * [Z-BZK] (3.105.0) The choices of a question: as written, or ("children": true) the instrument itself and every kind of it in
    * MusicBrainz's instrument tree ("bouzouki", "irish bouzouki" …) – the written ones while the tree is not there.
    */
+  /**
+   * [Z-INSTTOP] (3.142.0, S240) The answers of an instrument's question with the word as written first – "bass" before electric bass guitar,
+   * double bass …, "guitar" before electric guitar … – when MusicBrainz has it as an instrument (an answer set at once – "Horns" – keeps its order).
+   */
   function questionOptions(q) {
+    const list = questionOptions0(q);
+    if (!q || q.preset || !ruleOn('S240')) return list;
+    let top = null;
+    try {
+      const ix = idx();
+      const cache = questionOptions.top && questionOptions.top.ix === ix ? questionOptions.top : (questionOptions.top = { ix, map: new Map() });
+      if (!cache.map.has(q.base)) {
+        const root = [...ix.atById.values()].find((a) => !a.parent_id && norm(a.name) === 'instrument');
+        const hit = root ? findChildAttr(root.id, q.base) : null;
+        // ((review) the instrument of that very name – not one the word is only another name of ("sax")
+        cache.map.set(q.base, hit && norm(hit.name) === norm(q.base) ? hit : null);
+      }
+      top = cache.map.get(q.base);
+    } catch (e) {
+      return list;
+    }
+    return top ? uniq([top.name, ...list.filter((x) => norm(x) !== norm(top.name))]) : list;
+  }
+  function questionOptions0(q) {
     if (!q || !q.children) return q ? q.options : [];
     let ix = null;
     try {
@@ -6209,7 +6245,7 @@
     } catch (e) {
       return q.options; // ((review) MusicBrainz's types not loaded yet: the written ones
     }
-    const cache = questionOptions.cache && questionOptions.cache.ix === ix ? questionOptions.cache : (questionOptions.cache = { ix, map: new Map() });
+    const cache = questionOptions0.cache && questionOptions0.cache.ix === ix ? questionOptions0.cache : (questionOptions0.cache = { ix, map: new Map() });
     const ck = `${q.id}|${q.base}|${q.options.join('|')}`; // ((review) an own edit of the question counts
     if (cache.map.has(ck)) return cache.map.get(ck);
     const root = [...ix.atById.values()].find((a) => !a.parent_id && norm(a.name) === 'instrument');
@@ -19313,6 +19349,7 @@
     el.scrollIntoView({ block: 'center' });
     el.classList.add('dci-flash');
     setTimeout(() => el.classList.remove('dci-flash'), 2500);
+    navShowSource(el, r); // [Z-YELLJUMP] (3.142.0)
   }
   /** [Z-YELL] (3.110.0) To the next (or the one before) open item of a class: shown in the middle, flashing. */
   function gotoYell(cls, step) {
@@ -19346,6 +19383,22 @@
     el.scrollIntoView({ block: 'center' });
     el.classList.add('dci-flash');
     setTimeout(() => el.classList.remove('dci-flash'), 2500);
+    navShowSource(el, it.row);
+  }
+  /**
+   * [Z-YELLJUMP] (3.142.0) Going through the footer's counters (‹ ● n ›, 🖼️ n, the open rows): the page of the source goes to the item's line
+   * and lights it up – as a click on its row does (with the companion; nothing without).
+   */
+  function navShowSource(el, row = null) {
+    try {
+      // (an item of the entry – its link, its head: the entry's head, as a click on it)
+      const head = el.closest && el.closest('section.dci-group');
+      const target = (row && S.overlay.querySelector(`tr.dci-row[data-row="${row.id}"]`)) || sourceElOf(el) || (head && head.querySelector('.dci-ghead')) || el;
+      const src = target.matches && target.matches('tr.dci-row, tr[data-work], .dci-ghead, .dci-em-chip[data-rows], .dci-em-cl, tr.dci-em-line') ? target : sourceElOf(target);
+      if (src) showSourceOf(src);
+    } catch (e) {
+      console.warn('[Discogs-Credits] source line', e);
+    }
   }
   /** [Z-YELL] (3.110.0) ✓ / ✕ / ↺ of a suggestion. */
   function yellAnswer(key, what) {
@@ -19413,6 +19466,7 @@
       el.classList.add('dci-flash');
       setTimeout(() => el.classList.remove('dci-flash'), 2500);
     });
+    navShowSource(tr1, row); // [Z-YELLJUMP] (3.142.0)
   }
 
   /** Jumps to a rule in the rules window (own rules or the register) and highlights it until another one is chosen. */
@@ -28539,9 +28593,10 @@
         : a.artl && a.company && !a.matchTouched && a.artl.ev.mbid === a.mbid ? tr('match.viaArtl') // ([Z-ARTL] 3.100.0, review)
         : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) });
       const short = a.status === 'linked' && !a.viaAlias && S.emSide === 'lines' && mxCompact(a) && !mxEntry(a);
+      // [Z-MBAS] (3.142.0) "place as MB Regent Sound Studios": the entry is MusicBrainz's, as MusicBrainz writes it
       return `<span class="dci-badge dci-badge-ok"${short ? ` title="${esc(okText)}"` : ''}>${esc(short ? tr('match.linkedShort') : okText)}</span>
         ${a.company || a.other ? `<span class="dci-sub">${esc(tr(`entity.${a.entityType}`))}</span>` : ''}
-        <a class="dci-mblink" href="/${esc(path)}/${esc(a.mbid)}" target="_blank" rel="noopener" title="${esc(tr('link.mbTitle'))}"><span class="dci-src dci-src-mb">MB</span>${esc(a.mbName)}</a>
+        <span class="dci-sub dci-mbas">${esc(tr('match.as'))}</span> <a class="dci-mblink" href="/${esc(path)}/${esc(a.mbid)}" target="_blank" rel="noopener" title="${esc(tr('link.mbTitle'))}"><span class="dci-src dci-src-mb">MB</span>${esc(a.mbName)}</a>
         ${a.mbComment ? `<span class="dci-disamb">(${esc(a.mbComment)})</span>` : ''}
         <button type="button" class="dci-textbtn" data-act="artist-edit">${esc(tr('match.change'))}</button>`;
     }
@@ -33857,7 +33912,8 @@
   function clineAskHtml(kind, label, opts) {
     const act = kind === 'instr' ? 'instr-pick' : 'type-pick';
     const data = (o) => (kind === 'instr' ? `data-instr="${esc(o.value)}"` : `data-opt="${esc(o.value)}"`);
-    const pick = opts.length >= 5
+    // ([Z-INSTTOP] 3.142.0, review) buttons up to five answers – "Bass" has five with "bass" first
+    const pick = opts.length >= 6
       ? `<select data-f="cl-pick" data-kind="${kind}" aria-label="${esc(label)}"><option value="">${esc(tr('cl.pickList'))}</option>${opts.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('')}</select>`
       : opts.map((o) => `<button type="button" class="dci-textbtn dci-cl-pick" data-act="${act}" ${data(o)}>${esc(o.text)}</button>`).join(' · ');
     return `<span class="dci-cl-flag dci-cl-ask dci-cl-askq">${esc(label)} ${pick}</span>`;
@@ -37803,7 +37859,7 @@
   function itreeChanged() {
     ITREE.version++;
     attrChain.cache = null;
-    questionOptions.cache = null;
+    questionOptions0.cache = null;
     clearTimeout(ITREE.timer);
     ITREE.timer = setTimeout(() => {
       if (!S.overlay || !S.rows.length) return;
@@ -49809,7 +49865,9 @@
       per_release: srrClean(d.per_release, ['rels']),
       // [Z-GSTNEW] (3.139.0) supplemented instead of new, their sources, remixes and commissions (a file of before: none)
       supplements: nums(d.supplements), supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
-      remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null };
+      remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null,
+      // [Z-UNIQ] (3.142.0) the different entries linked by kind (a file of before: none)
+      linked: d.linked ? Object.fromEntries(['artist', 'label', 'place', 'area', 'event', 'work'].map((k) => [k, { n: Number(obj(obj(d.linked)[k]).n) || 0 }])) : null };
   }
   /** [Z-SRR] (3.91.0) A part "per_release" of the global file – only numbers: { n, <key>: { mean, median } …, by_level }; null without. */
   function srrClean(p, keys) {
@@ -49891,7 +49949,7 @@
   }
   /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
   // ([Z-GSTNEW] 3.139.0) What: supplemented instead of new, remixes and commissions; Sources: the sources of the submissions together
-  const GLOBAL_STATS_GROUPS = [['what', ['suppl', 'remixes']], ['who', ['credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
+  const GLOBAL_STATS_GROUPS = [['what', ['suppl', 'remixes']], ['who', ['glinked', 'credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
   /** [Z-SRR] (3.91.0) "Per release" of all users: the edits' part (relationships, by level) and the core's (recordings, per recording). */
   function globalPerRelease(d) {
     const e = d && d.per_release;
@@ -49950,6 +50008,7 @@
     }
     if (d.remixes) card('remixes', kvo({ [tr('stats.rmx.remixer')]: d.remixes.remixer || 0, [tr('stats.rmx.remixOf')]: d.remixes.remix_of || 0, [tr('stats.rmx.commissioned')]: d.remixes.commissioned || 0 }));
     if (d.source_mix) card('gsources', kvo(summed(d.source_mix), (k) => k, 8));
+    if (d.linked && ruleOn('S241')) card('glinked', uniqHtml(d.linked, true)); // [Z-UNIQ] (3.142.0)
     if (!c) {
       if (ca && ca.of) card('credits', credits);
       return { cards, lead: `<p class="dci-sub dci-stats-wide" data-el="stats-global-nocore">${esc(tr('stats.global.noCore'))}</p>` };
@@ -49990,10 +50049,22 @@
     writeJson('localStorage', STATS_FOLD_KEY, f.cards.size || f.groups.size ? { cards: [...f.cards], groups: [...f.groups] } : null);
   }
   /** [Z-STL] (3.61.0) The groups of the cards (S3) – the key of each card of this browser and of "Global". */
+  /** [Z-UNIQ] (3.142.0, S241) The kinds of entries "Linked entries" counts, in its order. */
+  const UNIQ_KINDS = ['artist', 'label', 'place', 'area', 'event', 'work'];
+  /** [Z-UNIQ] (3.142.0, S241) "Linked entries": how many different ones of each kind – of them made new with the dashboard. */
+  function uniqHtml(uniq, global = false) {
+    const rows = UNIQ_KINDS.map((k) => {
+      const v = uniq[k];
+      const n = v instanceof Map ? v.size : Number(v && v.n) || 0;
+      const nw = v instanceof Map ? [...v.values()].filter(Boolean).length : 0;
+      return `<li data-uniq="${k}"><span>${esc(tr(`stats.uniq.${k}`))}</span> <span class="dci-sub">${statNum(n)}${!global && nw ? ` · ${esc(tr('stats.uniq.new', { n: statNum(nw) }))}` : ''}</span></li>`;
+    });
+    return `<ul class="dci-stats-kv" data-el="stats-uniq">${rows.join('')}</ul>${global ? '' : `<p class="dci-sub">${esc(tr('stats.uniq.hint'))}</p>`}`;
+  }
   const STATS_GROUPS = [
     ['when', ['when', 'lengths']],
     ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'live', 'gaps', 'suppl', 'decisions', 'may', 'remixes', 'instruments']],
-    ['who', ['artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
+    ['who', ['linked', 'artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
     ['releases', ['perrelease', 'releases', 'media', 'script', 'genres']],
     ['sources', ['sources', 'origins', 'leftout', 'ocr']],
   ];
@@ -50168,7 +50239,9 @@
       // [Z-STATS] (3.131.0) the relationships by where their rows come from; the lines left out by reason; the suggestions; supplemented
       // instead of new; remixes and commissions
       origins: new Map(), origN: 0, outWhy: new Map(), seenImport: new Set(), may: { yes: 0, no: 0, open: 0 }, mayN: 0, suppl: { n: 0, s: 0, dates: 0, attrs: 0, credits: 0, links: 0 },
-      rmx: { remixer: 0, remixOf: 0, commissioned: 0 } };
+      rmx: { remixer: 0, remixOf: 0, commissioned: 0 },
+      // [Z-UNIQ] (3.142.0, S241) the different entries linked, by their kind (MBID → 1 when made with the dashboard)
+      uniq: Object.fromEntries(UNIQ_KINDS.map((k) => [k, new Map()])) };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -50320,6 +50393,9 @@
           inc(m.dsrc, it.ds || 'hand');
         }
         if (it.et === 'place') inc(m.places, it.tn);
+        // [Z-UNIQ] (3.142.0, S241) each entry once; new: its entry made with the dashboard (a work: none)
+        // ((review) of the relationships added – not those MusicBrainz had (a date or credit added), as the dump counts them
+        if (it.tg && it.k !== 's' && m.uniq[it.et]) m.uniq[it.et].set(it.tg, m.uniq[it.et].get(it.tg) || (it.nw && it.et !== 'work' ? 1 : 0));
         // ((review) labels by their MBID, shown by their name)
         if (it.et === 'label') {
           inc(m.labelsRel, it.tg || it.tn);
@@ -50552,6 +50628,7 @@
       ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+      ${ruleOn('S241') ? card('linked', uniqHtml(m.uniq)) : ''}
       ${statsMore3Html(m, { top, kv, card })}
       ${statsMore4Html(m, { top, kv, card })}
       ${statsMore2Html(m, recs, { top, kv, card })}
@@ -50914,22 +50991,24 @@
     const dotHtml = (changed, defText) => (changed ? ` <span class="dci-set-dot" data-el="set-dot" role="img" title="${esc(tr('settings.dflt', { v: defText }))}"
       aria-label="${esc(tr('settings.dfltAria', { v: defText }))}"></span>` : '');
     const hintHtml = (h) => (h ? `<span class="dci-set-hint">${esc(h)}</span>` : '');
+    const dotSlot = (dot) => `<span class="dci-set-dotslot">${dot}</span>`;
     const onOff = (v) => tr(v ? 'common.on' : 'common.off');
     const field = (label, ctl, o = {}) => {
       const id = `dci-sf-${++fieldN}`;
       const one = / data-lb(?=[\s>])/.test(ctl);
-      const name = `${esc(cap(label))}${o.dflt ? dotHtml(o.dflt[0], o.dflt[1]) : ''}`;
+      // [Z-SETDOT] (3.142.0) the dot in a slot of its own between the name and the choices – always there, so nothing moves when it comes or goes
+      const name = esc(cap(label));
       const tip = o.title ? ` title="${esc(o.title)}"` : '';
       return `<div class="dci-set-row dci-set-field${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}>${one
-        ? `<label class="dci-set-lbl" for="${id}"${tip}>${name}</label>` : `<span class="dci-set-lbl" id="${id}-l"${tip}>${name}</span>`}<span class="dci-set-ctl">${
+        ? `<label class="dci-set-lbl" for="${id}"${tip}>${name}</label>` : `<span class="dci-set-lbl" id="${id}-l"${tip}>${name}</span>`}${dotSlot(o.dflt ? dotHtml(o.dflt[0], o.dflt[1]) : '')}<span class="dci-set-ctl">${
         ctl.replace(/ data-lb(?=[\s>])/, ` id="${id}"`).replace(/ data-lbg(?=[\s>])/, ` aria-labelledby="${id}-l"`)}${hintHtml(o.hint)}</span></div>`;
     };
     // a switch: in the right column (indented below the switch it depends on: `sub`; greyed out and not to be used while that is off: `off`)
     const cb = (attr, on, label, title = '', o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}>
-      <span class="dci-set-lbl"></span><span class="dci-set-ctl"><label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}${o.off ? ' disabled' : ''}> ${esc(cap(label))}</label>${
-      o.def === undefined ? '' : dotHtml(!!on !== !!o.def, onOff(o.def))}${hintHtml(o.hint)}</span></div>`;
+      <span class="dci-set-lbl"></span>${dotSlot(o.def === undefined ? '' : dotHtml(!!on !== !!o.def, onOff(o.def)))}<span class="dci-set-ctl"><label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}${o.off ? ' disabled' : ''}> ${esc(cap(label))}</label>${
+      hintHtml(o.hint)}</span></div>`;
     // anything else in the right column (the colour pickers below their switch, a button)
-    const right = (html, o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}><span class="dci-set-lbl"></span><span class="dci-set-ctl">${html}</span></div>`;
+    const right = (html, o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}><span class="dci-set-lbl"></span>${dotSlot('')}<span class="dci-set-ctl">${html}</span></div>`;
     // a choice of a few: its buttons (pressed: the value); the default named by its text
     const seg = (act, attr, values, cur, text, o = {}) => `<span class="dci-seg dci-seg-small" role="group" data-lbg${o.segEl ? ` data-el="${o.segEl}"` : ''}>${values.map((v) => `<button type="button"
       data-act="${act}"${o.btn || ''} data-${attr}="${v}" aria-pressed="${cur === v}"${o.titles ? ` title="${esc(o.titles(v))}"` : ''}>${esc(text(v))}</button>`).join('')}</span>`;
@@ -54745,7 +54824,9 @@
       /* [Z-SETTABS2] (3.137.0) a setting in two columns: its name right-aligned on the left, its choices in one line on the right ("A compact");
          a narrow menu: the name above them */
       .dci-set-pane { container-type: inline-size; }
-      .dci-set-row.dci-set-field { display: grid; grid-template-columns: calc(var(--u, 1px) * 210) minmax(0, 1fr); column-gap: calc(var(--u, 1px) * 12); align-items: baseline; margin: calc(var(--u, 1px) * 6) 0; }
+      /* [Z-SETDOT] (3.142.0) a column of its own for the dot of a setting not on its default – between the name and the choices, always there */
+      .dci-set-row.dci-set-field { display: grid; grid-template-columns: calc(var(--u, 1px) * 210) calc(var(--u, 1px) * 9) minmax(0, 1fr); column-gap: calc(var(--u, 1px) * 4); align-items: baseline; margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-set-dotslot { display: inline-flex; justify-content: center; align-self: center; width: calc(var(--u, 1px) * 9); }
       .dci-set-lbl { text-align: right; overflow-wrap: anywhere; }
       .dci-set-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); min-width: 0; }
       .dci-set-hint { flex: 1 0 100%; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
@@ -54758,8 +54839,14 @@
       .dci-set-pane .dci-dark-pick { grid-template-columns: repeat(4, max-content) auto; }
       .dci-set-pane .dci-kind-pick.dci-dark-pick { grid-template-columns: repeat(3, max-content) auto; }
       @container (max-width: 36em) {
-        .dci-set-row.dci-set-field { grid-template-columns: minmax(0, 1fr); }
-        .dci-set-lbl { text-align: left; }
+        /* ([Z-SETDOT] 3.142.0) the dot right after the name, the choices below both */
+        .dci-set-row.dci-set-field { grid-template-columns: auto calc(var(--u, 1px) * 9) minmax(0, 1fr); }
+        .dci-set-lbl { text-align: left; grid-column: 1; }
+        .dci-set-dotslot { grid-column: 2; }
+        .dci-set-field > .dci-set-ctl { grid-column: 1 / -1; }
+        /* ((review) a switch (no name): its dot on its line, before it */
+        .dci-set-cb > .dci-set-dotslot { grid-row: 1; grid-column: 1; }
+        .dci-set-cb > .dci-set-ctl { grid-row: 1; grid-column: 2 / -1; }
         .dci-set-field > .dci-set-lbl:empty { display: none; }
         .dci-set-pane .dci-lvl-pick, .dci-set-pane .dci-kind-pick, .dci-set-pane .dci-dark-pick { grid-template-columns: repeat(2, max-content); }
       }
