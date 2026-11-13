@@ -38,8 +38,8 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        # ([Z-CONN2] 3.108.0) "ⓘ MusicBrainz" after "ⓘ Connections"; "Developer" ([Z-SETTABS] 3.136.0) always – its switch is only there
-        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer']
+        # ([Z-CONN2] 3.108.0) "ⓘ MusicBrainz" after "ⓘ Connections"; ([Z-SETTABS2] 3.137.0) "Beta" last, "Developer" only in developer mode
+        results.append([t for t, _, _ in t1] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'cache', 'connections', 'musicbrainz', 'beta']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -56,7 +56,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('developer', True)] and k3 == [('general', True)])  # ([Z-SETTABS] 3.136.0) Developer always, last
+                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen (Beta greyed out)
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -184,7 +184,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections', 'musicbrainz', 'developer']
+        results.append([t for t, _ in topics] == ['general', 'profiles', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'cache', 'connections', 'musicbrainz', 'beta']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -243,7 +243,8 @@ def case_settings():
         open_set(pg, 'discogs')
         before = pg.evaluate("localStorage.getItem('dci-dg-hover')")
         pg.locator('[data-el=settings] [data-dg-hover]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
-        after = [pg.evaluate("localStorage.getItem('dci-dg-hover')"), pg.evaluate("[...document.querySelectorAll('[data-dg-hover]')].map(b => b.getAttribute('aria-pressed'))")]
+        # ([Z-SETTABS2] 3.137.0) a switch in the menu (a checkbox)
+        after = [pg.evaluate("localStorage.getItem('dci-dg-hover')"), pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-dg-hover]')].map(b => String(b.checked))")]
         print('F) Track-Hervorhebung:', before, '→', after)
         results.append(after[0] == 'false' and after[1] and all(x == 'false' for x in after[1]))
         print('Fehler:', errs)
@@ -322,7 +323,7 @@ def case_pressed():
         results.append(all(tab_ok(t) for t in list(b1.values()) + list(b2.values()))
                        # the list of the connections from the top, its tab in the middle; the first tab joins at the top; a short one lower
                        and b1['connections']['margin'] == 0 and b1['connections']['above'] < -100 and b1['connections']['below'] > 100
-                       and b1['general']['joinedTop'] and b1['discogs']['margin'] > 0 and not b1['discogs']['joinedTop'])
+                       and b1['general']['joinedTop'] and not b1['discogs']['joinedTop'])
         # F) the switch "Entries" in the settings (Appearance)
         H.open_settings(pg, 'appearance')
         pg.wait_for_timeout(200)
@@ -700,7 +701,7 @@ def case_cache():
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
             # [189] (3.39.3) no tab "Statistics" any more (their own button)
-            results.append(a['tabs'][-5:] == ['Beta', 'Cache', 'ⓘ Connections', 'ⓘ MusicBrainz', 'Developer'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            results.append(a['tabs'][-4:] == ['Cache', 'ⓘ Connections', 'ⓘ MusicBrainz', 'Beta'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -854,7 +855,7 @@ def case_logdiag():
     A) The log open: no "Start diagnosis"; ⚙ Settings → General "Developer mode" off (until 3.38.4 "Diagnosis in the log").
     B) On: the button in the log, stored (dci-dev).
     C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
-    D) On again, "↺ Defaults" of General ([Z-SETTABS] 3.136.0: of Developer – the switch is only there): off, no button.
+    D) On again, "↺ Defaults" of General (3.136.0: of Developer; [Z-SETTABS2] 3.137.0 General again): off, no button.
     E) [3.38.5] Taken over: with "Developer statistics" (dci-stats-dev, 3.38.2) or "Diagnosis in the log" (dci-log-diag) on before,
        "Developer mode" is on – the button in the log –, the old keys are gone; both off before: off."""
     DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
@@ -867,7 +868,7 @@ def case_logdiag():
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-        H.open_settings(pg, 'developer')
+        H.open_settings(pg, 'general')
         a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
              pg.evaluate("document.querySelector('.dci-set-pane [data-set=dev-mode]').closest('label').textContent.trim()")]
         pg.click('.dci-set-pane [data-set=dev-mode]')
@@ -881,7 +882,7 @@ def case_logdiag():
         c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-dev')")]
         pg.click('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
-        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=developer]')
+        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
         pg.wait_for_timeout(500)
         d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(), pg.evaluate("localStorage.getItem('dci-dev')")]
         print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
@@ -900,7 +901,7 @@ def case_logdiag():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            H.open_settings(pg, 'developer')
+            H.open_settings(pg, 'general')
             e = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
                  pg.evaluate("[localStorage.getItem('dci-dev'), localStorage.getItem('dci-log-diag'), localStorage.getItem('dci-stats-dev')]")]
             print('E) vorher', old, '→', e)
@@ -969,7 +970,7 @@ def case_stats():
         # ([3.61.0, Z-STL] the sentence in the tooltip of "Collecting: on")
         a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-el=stats-where]') || {title: ''}).title.startsWith('Statistics are being collected')]")
         print('A) Reiter:', tabs, '| leer, an:', a)
-        results.append(tabs[-4:] == ['cache', 'connections', 'musicbrainz', 'developer'] and 'statistics' not in tabs and a == [True, True])
+        results.append(tabs[-4:] == ['cache', 'connections', 'musicbrainz', 'beta'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
         pg.click('[data-act=apply]')
         pg.wait_for_timeout(2500)
@@ -1941,7 +1942,7 @@ def case_statsdev():
         pg.wait_for_timeout(500)
         # [171] (3.38.5) shown in "Developer mode" (⚙ Settings → General; until 3.38.4 a switch of its own here)
         b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), !!document.querySelector('[data-set=stats-dev]')]")
-        H.open_settings(pg, 'developer')  # ([Z-SETTABS] 3.136.0) the switch only there
+        H.open_settings(pg, 'general')  # ([Z-SETTABS2] 3.137.0) the switch in General again
         pg.check('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
         H.open_stats(pg)
@@ -3268,7 +3269,7 @@ def case_devtab3108():
         rows = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] tr[data-mbdata]')].map(r => [r.dataset.mbdata, (r.querySelector('a') || {}).href || '',
           (r.querySelector('[data-rw]') || {}).dataset.rw, !!r.querySelector('details:not([open]) summary')])""")
         print('A)', tabs[-3:], rows)
-        results.append(tabs[-3:] == ['connections', 'musicbrainz', 'developer'] and [r[0] for r in rows] == ['ws2', 'wsjs', 'editor', 'page', 'forms', 'dump', 'caa']
+        results.append(tabs[-3:] == ['connections', 'musicbrainz', 'beta'] and [r[0] for r in rows] == ['ws2', 'wsjs', 'editor', 'page', 'forms', 'dump', 'caa']
                        and all(r[1].startswith('https://') and r[3] for r in rows) and dict((r[0], r[2]) for r in rows)['wsjs'] == 'both')
         pg.evaluate("localStorage.setItem('dci-dev', 'true')")
         pg.reload()
@@ -3293,7 +3294,7 @@ def case_devtab3108():
         stats = pg.evaluate("!!document.querySelector('[data-el=stats]') && !document.querySelector('[data-el=stats]').hidden")
         tree = ' '.join(dev[5].split())
         print('B)', src, tabs2[-3:], dev[:5], tree[:200], diag, stats, '| Fehler:', errs)
-        results.append(src == 0 and tabs2[-3:] == ['connections', 'musicbrainz', 'developer'] and dev[:5] == [True] * 5
+        results.append(src == 0 and tabs2[-3:] == ['musicbrainz', 'beta', 'developer'] and dev[:5] == [False, True, True, True, True]
                        and 'dump test' in tree and 'tzouras' in tree and diag == 'true' and stats and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
@@ -3316,27 +3317,146 @@ def case_settabs3136():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         heads = {}
         sets = {}
-        for tab in ('general', 'appearance', 'sources', 'works', 'staging', 'cache', 'developer'):
+        for tab in ('general', 'appearance', 'sources', 'works', 'staging', 'cache'):
             H.open_settings(pg, tab)
             pg.wait_for_timeout(200)
             heads[tab] = pg.evaluate("[...document.querySelectorAll('.dci-set-pane .dci-set-h')].map(h => h.textContent.trim())")
             sets[tab] = pg.evaluate("[...document.querySelectorAll('.dci-set-pane [data-set], .dci-set-pane [data-act]')].map(x => x.dataset.set || x.dataset.act)")
         print('A)', heads)
-        results.append(heads['general'] == ['Language', 'Log'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
-                       and heads['sources'][:3] == ['Order of the sources', 'Release editor and release page', 'MusicBrainz search']
+        # ([Z-SETTABS2] 3.137.0) General with "Developer" (its switch), Sources with "Discogs & Bandcamp"
+        results.append(heads['general'] == ['Language', 'Log', 'Developer'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
+                       and heads['sources'][:4] == ['Order of the sources', 'Release editor and release page', 'Discogs & Bandcamp', 'MusicBrainz search']
                        and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites'] and heads['staging'][0] == 'Staging and its limits'
                        and 'Live comments' in heads['staging'] and heads['cache'] == ['Remember', 'Statistics'] and not pg.evaluate("!!document.querySelector('.dci-set-pane details')"))
         moved = ['ev-shared', 'em-show', 'em-by-default', 'em-attr']
         print('B) Appearance:', [x for x in sets['appearance'] if x in moved], '| Staging:', [x for x in sets['staging'] if x in moved],
-              '| dev-mode in General:', 'dev-mode' in sets['general'], '| in Developer:', 'dev-mode' in sets['developer'])
+              '| dev-mode in General:', 'dev-mode' in sets['general'])
         results.append(all(x in sets['appearance'] for x in moved) and not any(x in sets['staging'] for x in moved)
-                       and 'dev-mode' not in sets['general'] and 'dev-mode' in sets['developer'] and 'work-dates' in sets['works'])
+                       and 'dev-mode' in sets['general'] and 'work-dates' in sets['works'])
         H.open_settings(pg, 'works')
         pg.uncheck('.dci-set-pane [data-set=work-dates]')
         pg.wait_for_timeout(300)
         stored = pg.evaluate("localStorage.getItem('dci-work-dates')")
         print('C) work-dates aus:', stored)
         results.append(stored == 'false')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_settabs3137():
+    """Credits Importer 3.137.0 (collected item Z-SETTABS2): the settings in two columns ("A compact").
+    A) Appearance: every setting a row of two columns – its name right-aligned without a colon ("View", "Layout", "Symbols"), its choices in
+       one line, all starting at the same place; switches in the right column.
+    B) A dot after a name that differs from the default, its tooltip the default ("Default: Compact"); none at the defaults.
+    C) Short names with an explanation below ("Offer the order of the entries" – “Order:” in the line “Level for all rows”).
+    D) A switch below the one it depends on, greyed out and not to be used while that is off ("Also when nothing seems to be missing",
+       "Relationships per round"); the colours of the levels indented below their switch.
+    E) The tabs: "Developer" only in developer mode, its switch in General; then last, after "Beta". Sources: "Discogs & Bandcamp" with the
+       track pages of Bandcamp and the aliases of Discogs.
+    F) The messages of the import hidden while the settings are open (back when they close).
+    G) Source pages: the switches of the companion as switches ("Discogs status" off: stored).
+    H) A narrow menu: the name above its choices."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.set_viewport_size({'width': 1400, 'height': 1000})
+        msgs0 = pg.evaluate("[...document.querySelectorAll('[data-el=msgs] .dci-msg')].filter(m => m.getClientRects().length).length")
+        H.open_settings(pg, 'appearance')
+        pg.wait_for_timeout(300)
+        a = pg.evaluate("""(() => { const pane = document.querySelector('.dci-set-pane');
+          const rows = [...pane.querySelectorAll('.dci-set-row')];
+          const fields = rows.filter(r => r.classList.contains('dci-set-field'));
+          const lefts = new Set(fields.map(r => Math.round(r.querySelector('.dci-set-ctl').getBoundingClientRect().left)));
+          const names = fields.map(r => r.querySelector('.dci-set-lbl').textContent.trim()).filter(Boolean);
+          const al = fields.filter(r => r.querySelector('.dci-set-lbl').textContent.trim()).map(r => getComputedStyle(r.querySelector('.dci-set-lbl')).textAlign);
+          const segs = [...pane.querySelectorAll('.dci-set-ctl > .dci-seg')].map(x => x.getBoundingClientRect().height);
+          return { all: rows.length === fields.length, lefts: [...lefts], names, colon: names.some(n => /:$/.test(n)), al: [...new Set(al)], oneLine: Math.max(...segs) < 40 }; })()""")
+        print('A)', a['all'], a['lefts'], a['colon'], a['al'], a['oneLine'], a['names'][:12])
+        results.append(a['all'] and len(a['lefts']) == 1 and not a['colon'] and a['al'] == ['right'] and a['oneLine']
+                       and all(x in a['names'] for x in ['View', 'Layout', 'Symbols', 'Place']))
+        DOTS = "[...document.querySelectorAll('.dci-set-pane .dci-set-dot')].map(d => [d.closest('.dci-set-row').querySelector('.dci-set-lbl').textContent.trim() || d.closest('.dci-set-row').textContent.trim(), d.title])"
+        b1 = pg.evaluate(DOTS)
+        pg.click('.dci-set-pane [data-act=view][data-view=compact]')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(DOTS)
+        print('B)', b1, '→', b2)
+        results.append(['View', 'Default: Compact'] in b1 and not any(x[0] == 'View' for x in b2))
+        c = pg.evaluate("""(() => { const cb = document.querySelector('.dci-set-pane [data-f=sort-on]').closest('.dci-set-row');
+          return [cb.querySelector('label').textContent.trim(), (cb.querySelector('.dci-set-hint') || {}).textContent]; })()""")
+        print('C)', c)
+        results.append(c == ['Offer the order of the entries', '“Order:” in the line “Level for all rows”'])
+        H.open_settings(pg, 'sources')
+        pg.uncheck('.dci-set-pane [data-set=gap-on]')
+        pg.wait_for_timeout(300)
+        H.open_settings(pg, 'staging')
+        pg.uncheck('.dci-set-pane [data-f=stage-cap]')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate("(() => { const i = document.querySelector('.dci-set-pane [data-set=cap-limit]'); return [i.disabled, i.closest('.dci-set-row').classList.contains('dci-set-off')]; })()")
+        H.open_settings(pg, 'sources')
+        d2 = pg.evaluate("(() => { const i = document.querySelector('.dci-set-pane [data-set=gap-none]'); const r = i.closest('.dci-set-row'); return [i.disabled, r.classList.contains('dci-set-sub'), r.classList.contains('dci-set-off'), getComputedStyle(r.querySelector('.dci-set-ctl')).opacity]; })()")
+        pg.check('.dci-set-pane [data-set=gap-on]')
+        pg.check('.dci-set-pane [data-f=stage-cap]') if pg.locator('.dci-set-pane [data-f=stage-cap]').count() else None
+        pg.wait_for_timeout(300)
+        d3 = pg.evaluate("document.querySelector('.dci-set-pane [data-set=gap-none]').disabled")
+        H.open_settings(pg, 'appearance')
+        d4 = pg.evaluate("(() => { const p = document.querySelector('.dci-set-pane .dci-lvl-pick').closest('.dci-set-row'); return [p.classList.contains('dci-set-sub'), getComputedStyle(p.querySelector('.dci-lvl-pick')).display]; })()")
+        # ((review) "Ask before the work lookups from …" counts for every work lookup: not greyed out with the lookups of the artists' works off
+        H.open_settings(pg, 'works')
+        pg.uncheck('.dci-set-pane [data-set=aw-on]')
+        pg.wait_for_timeout(300)
+        d5 = pg.evaluate("[document.querySelector('.dci-set-pane [data-set=awAsk]').disabled, document.querySelector('.dci-set-pane [data-set=awMax]').disabled]")
+        pg.check('.dci-set-pane [data-set=aw-on]')
+        pg.wait_for_timeout(300)
+        H.open_settings(pg, 'appearance')
+        print('D)', d1, d2, d3, d4, d5)
+        results.append(d1 == [True, True] and d2[:3] == [True, True, True] and float(d2[3]) < 1 and d3 is False and d4 == [True, 'grid'] and d5 == [False, True])
+        TABS = "[...document.querySelectorAll('.dci-set-tab')].map(t => t.dataset.topic)"
+        e1 = pg.evaluate(TABS)
+        H.open_settings(pg, 'general')
+        devrow = pg.evaluate("!!document.querySelector('.dci-set-pane [data-set=dev-mode]')")
+        pg.check('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        e2 = pg.evaluate(TABS)
+        H.open_settings(pg, 'developer')
+        e3 = pg.evaluate("({ dev: !!document.querySelector('.dci-set-pane [data-set=dev-mode]'), tools: !!document.querySelector('.dci-set-pane [data-set=gap-why]') })")
+        H.open_settings(pg, 'general')
+        pg.uncheck('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        H.open_settings(pg, 'sources')
+        e4 = pg.evaluate("""(() => { const h = [...document.querySelectorAll('.dci-set-pane .dci-set-h')]; const i = h.findIndex(x => x.textContent.trim() === 'Discogs & Bandcamp');
+          if (i < 0) return null; const sets = []; let n = h[i].nextElementSibling; while (n && !n.matches('.dci-set-h')) { n.querySelectorAll('[data-set], [data-f]').forEach(x => sets.push(x.dataset.set || x.dataset.f)); n = n.nextElementSibling; } return sets; })()""")
+        print('E)', e1[-3:], devrow, e2[-3:], e3, e4)
+        results.append('developer' not in e1 and e1[-1] == 'beta' and devrow and e2[-2:] == ['beta', 'developer'] and e3 == {'dev': False, 'tools': True}
+                       and e4 == ['bc-tracks', 'alias-max'])
+        f1 = pg.evaluate("[...document.querySelectorAll('[data-el=msgs] .dci-msg')].filter(m => m.getClientRects().length).length")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        f2 = pg.evaluate("[...document.querySelectorAll('[data-el=msgs] .dci-msg')].filter(m => m.getClientRects().length).length")
+        print('F)', msgs0, f1, f2)
+        results.append(msgs0 >= 1 and f1 == 0 and f2 == msgs0)
+        H.open_settings(pg, 'discogs')
+        g0 = pg.evaluate("(() => { const i = document.querySelector('.dci-set-pane input[type=checkbox][data-dg-status]'); return i ? i.checked : null; })()")
+        pg.click('.dci-set-pane input[data-dg-status]')
+        pg.wait_for_timeout(300)
+        g1 = [pg.evaluate("localStorage.getItem('dci-dg-status')"), pg.evaluate("document.querySelector('.dci-set-pane input[data-dg-status]').checked"),
+              pg.evaluate("!!document.querySelector('.dci-set-pane input[data-dg-status]').closest('.dci-set-row').querySelector('.dci-set-dot')")]
+        print('G)', g0, g1)
+        results.append(g0 is True and g1 == ['false', False, True])
+        pg.set_viewport_size({'width': 480, 'height': 1000})
+        pg.wait_for_timeout(400)
+        H.open_settings(pg, 'appearance')
+        h = pg.evaluate("""(() => { const r = [...document.querySelectorAll('.dci-set-pane .dci-set-field')].find(x => x.querySelector('.dci-set-lbl').textContent.trim() === 'Layout');
+          const l = r.querySelector('.dci-set-lbl').getBoundingClientRect(), c = r.querySelector('.dci-set-ctl').getBoundingClientRect(); return [c.top >= l.bottom - 1, Math.abs(c.left - l.left) < 3]; })()""")
+        print('H)', h)
+        results.append(h == [True, True])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
