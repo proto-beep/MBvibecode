@@ -257,6 +257,9 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
+                                #   ljtext3140: 3.140.0 (Z-LJTEXT, Z-FUNDED, Z-LICTHRU; S230 – S234): the notes of "Double Trouble III" as a text – five people of
+                                #     the recording sentence (assistants, editor), "Haus der Berliner Festspiele: Grosse Bühne" (Berlin), a sentence over two lines,
+                                #     FCM Studios (Barcelona), licensor, support, thanks, "“Random-Etude”" no entry; German and English funding and support lines
                                 #   textlines3128: 3.128.0 (S202–S209, Z-LOGMORE): "String Fables" – track list, prose, signature left out; photos "photo of …";
                                 #     "Supported by" labels (as an artist: miscellaneous support "support"); FCM Studio mixed and mastered at; RedRedPaw a place;
                                 #     no festival, no 2017; the log line by line
@@ -336,6 +339,12 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     as performers (S113, Q013), not one with an instrument; the group too (S114); concert photos dated (D026)
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   ljdiscogs3140: 3.140.0 (Z-SOLOIST, Z-PHOTOOF, Z-ASSISTBR, Z-SCHNITT, Z-LICTHRU, Z-FUNDED, Z-PCLABEL, Z-LJTEXT): Discogs 38896542 –
+                                #     piano with solo, "photo of Marilyn Crispell", assistant, editor, one licensor row, "support" (without the sentence "funding"),
+                                #     the sub-place of the notes, "label:" at ℗ / © dates, the Jazzfest Berlin found by the date of the recording
+                                #   soloist3140: 3.140.0 (Z-SOLOIST, S226): "Soloist" alone – one instrument: solo on it; two: asked, the answer joins; none: misc
+                                #   ljreview3140: 3.140.0 (review): the soloist of one track a row of its own, "support" from German notes, "with the kind support
+                                #     of" keeps the person, no licensor of an agreement or Creative Commons, solo kept when a rule is switched
                                 #   rsd3122: 3.122.0 (Z-RSD, S192): "Record Store Day" in the format – 2025-11-28 "Record Store Day Black Friday 2025",
                                 #     2025-04-12 "Record Store Day 2025" linked; 2025-08-10 suggested only; "Limited Edition" no series
                                 #   prodfor3122: 3.122.0 (Z-PRODFOR, S191): "Producer [Session Originally Produced For VARA Radio By]" (tracks 3 to 4) – producers
