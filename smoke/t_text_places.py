@@ -1948,4 +1948,104 @@ Anna Neu – piano"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_ljtext3140():
+    """Credits Importer 3.140.0 (collected item Z-LJTEXT, Z-FUNDED, Z-LICTHRU; answers of 2026-11-13 10:57 – 12:28): the notes of Discogs
+    38896542 pasted as a text.
+    A) "Recorded live in Berlin, Haus der Berliner Festspiele, Grosse Bühne, November 1, 2025, by Bernd Bechtold and Peter Schladebach,
+       assisted by Henrike Zeller and Benedikt Jäger, Ulrich Hieber (Schnitt).": Bechtold and Schladebach recording; Zeller and Jäger
+       recording with assistant; Hieber editor; the place "Haus der Berliner Festspiele: Grosse Bühne" (also searched as the house),
+       Berlin its area. Not left out as prose.
+    B) "Mixed and mastered in September 2026 by Ferran Conangla" / "at FCM Studios Barcelona.": one sentence – Conangla mix and
+       mastering, FCM Studios (Barcelona) mixed at and mastered at.
+    C) "Lizenz durch rbb media GmbH": licensor. "… underwriting support was provided by the Robert D. Bielecki Foundation.": support
+       (a label, credited "support"). "Our thanks go to …": thanks. "“Random-Etude”": the title of the picture, no entry.
+    D) Nothing not recognized.
+    E) Other wordings: "Gefördert von der Initiative Musik gGmbH." funding; "Mit freundlicher Unterstützung der Kunststiftung NRW."
+       support; "Licensed through Sony Music Entertainment" licensor; "with the generous support of the Arts Council of Norway" support."""
+    TEXT = """Recorded live in Berlin, Haus der Berliner Festspiele, Grosse Bühne, November 1, 2025, by Bernd Bechtold and Peter Schladebach, assisted by Henrike Zeller and Benedikt Jäger, Ulrich Hieber (Schnitt). Mixed and mastered in September 2026 by Ferran Conangla
+at FCM Studios Barcelona.
+
+℗ + © 2025 Rundfunk Berlin-Brandenburg.
+Lizenz durch rbb media GmbH
+
+Our thanks go to Nadine Deventer, the artistic director of the Jazzfest Berlin and to Peter Margasak for inviting us to present Double Trouble III on the main stage.
+
+Thanks also to Silke Kaminski (rbb) for her help with the licensing.
+
+And we are very grateful that underwriting support was provided by the Robert D. Bielecki Foundation.
+
+Cover art: András Wolsky, "Random-Etude", 2025
+
+Barry Guy plays exclusively on Thomastik-Infeld bass strings
+
+℗ + © 2026 Maya Recordings"""
+    TEXT2 = """Gefördert von der Initiative Musik gGmbH.
+Mit freundlicher Unterstützung der Kunststiftung NRW.
+Licensed through Sony Music Entertainment
+This album was made with the generous support of the Arts Council of Norway."""
+    ROWS = """() => window.__S.rows.filter(r => !r.dId || true).map(r => { const a = window.__S.artists.get(r.artistKey) || {}; return { name: a.name, raw: r.raw,
+      types: r.types || [], flags: [...(r.flags || [])], credit: r.roleCredit || '', area: a.area || '', alt: a.altNames || [] }; })"""
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            for k, text in enumerate((TEXT, TEXT2)):
+                H.src_menu(pg, 'text-open')
+                pg.fill('[data-f=text-src]', text)
+                pg.click('[data-act=text-load]')
+                try:
+                    pg.wait_for_selector('[data-el=media] [data-mact=ok]', timeout=3000)
+                    pg.click('[data-el=media] [data-mact=ok]')
+                except Exception:  # noqa: BLE001 – no question of media for this text
+                    pass
+                H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {k + 2}", 90)
+                pg.wait_for_timeout(1200)
+                rows = pg.evaluate(ROWS)
+                of = lambda n: [(r['raw'], r['types'], r['flags'], r['credit']) for r in rows if r['name'] == n]
+                unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+                ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+                if k == 0:
+                    print('A)', of('Bernd Bechtold'), of('Henrike Zeller'), of('Benedikt Jäger'), of('Ulrich Hieber'))
+                    results.append(all(x[1] == ['recording', 'engineer'] and x[2] == [] for x in of('Bernd Bechtold') + of('Peter Schladebach'))
+                                   and all(x[1] == ['recording', 'engineer'] and x[2] == ['assistant'] for x in of('Henrike Zeller') + of('Benedikt Jäger'))
+                                   and len(of('Henrike Zeller')) == 1 and [x[1] for x in of('Ulrich Hieber')] == [['editor']])
+                    haus = [r for r in rows if 'Festspiele' in r['name']]
+                    print('A) Ort:', [(r['name'], r['raw'], r['area'], r['alt']) for r in haus])
+                    results.append(len(haus) == 1 and haus[0]['name'] == 'Haus der Berliner Festspiele: Grosse Bühne' and haus[0]['area'] == 'Berlin'
+                                   and haus[0]['alt'] == ['Haus der Berliner Festspiele'] and haus[0]['raw'] == 'Recorded At')
+                    fcm = [(r['name'], r['raw'], r['area']) for r in rows if 'FCM' in r['name']]
+                    print('B)', of('Ferran Conangla'), fcm)
+                    results.append(sorted(x[1][0] for x in of('Ferran Conangla')) == ['mastering', 'mix']
+                                   and sorted(fcm) == [('FCM Studios', 'Mastered At', 'Barcelona'), ('FCM Studios', 'Mixed At', 'Barcelona')])
+                    print('C)', [(r['name'], r['raw'], r['types'], r['credit']) for r in rows if r['name'] in ('rbb media GmbH', 'Robert D. Bielecki Foundation')])
+                    results.append(of('rbb media GmbH') == [('Licensed From', ['licensor'], [], '')]
+                                   and [(x[0], x[3]) for x in of('Robert D. Bielecki Foundation')] == [('Supported By', 'support')]
+                                   and not any('Random' in (r['name'] or '') for r in rows))
+                    print('C) ausgelassen:', ign)
+                    results.append(any(t.startswith('Our thanks go to') and t.endswith('thanks') for t in ign) and any('Random-Etude' in t and 'picture' in t for t in ign)
+                                   and not any('prose' in t for t in ign))
+                    print('D) nicht erkannt:', unrec)
+                    results.append(not unrec)
+                else:
+                    got = sorted((r['name'], r['raw'], r['credit']) for r in rows if r['name'] in ('Initiative Musik gGmbH', 'Kunststiftung NRW', 'Sony Music Entertainment', 'Arts Council of Norway'))
+                    print('E)', got, '| nicht erkannt:', unrec)
+                    results.append(got == [('Arts Council of Norway', 'Supported By', 'support'), ('Initiative Musik gGmbH', 'Funded By', 'funding'),
+                                           ('Kunststiftung NRW', 'Supported By', 'support'), ('Sony Music Entertainment', 'Licensed From', '')] and not unrec)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.MAIN = main0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
 run_cases(globals())

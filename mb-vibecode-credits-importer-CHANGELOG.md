@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-13 | 3.137.0 – 3.139.0 | – |
+| 2026-11-13 | 3.137.0 – 3.140.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -106,6 +106,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.140.0
+
+- **Soloists** (collected item Z-SOLOIST; rule S226): "Piano [Piano Soloist], Soloist [Piano Soloist]" is one row – piano with the attribute solo (no row "Soloist", no credit "piano soloist"). "Soloist" without an instrument: the person's instrument on the release gets solo; with several the row asks which one (the answer adds solo to that row).
+- **Photos of someone** (Z-PHOTOOF; S227): "Photography By [Photo (Marilyn Crispell)]" is credited "photo of Marilyn Crispell", as in texts.
+- **Assistants** (Z-ASSISTBR; S228): "Recorded By [Recorded By A And B, Assisted By]" is recording with the attribute assistant, without a role credit.
+- **Editing** (Z-SCHNITT; S229): "Edited By [Schnitt]" is the editor without the credit "schnitt"; "Schnitt" in a text too.
+- **Funding** (Z-FUNDED; S230): Discogs's "Funded By" is miscellaneous support credited "funding" – "support" when the notes only speak of support ("underwriting support was provided by …"). Texts: "support was provided by X", "with the generous support of X", "gefördert von X", "mit freundlicher Unterstützung der X", "funded by X".
+- **Licences** (Z-LICTHRU; S231): "Licensed Through" is the licensor ("licensed / licensed from"; was the licensee); "Lizenz durch X", "In Lizenz von X", "Licensed through X" in texts too. A licence of the notes for a company Discogs lists joins its row.
+- **Recording sentences** (Z-LJTEXT; S232 – S235): "Recorded live in Berlin, Haus der Berliner Festspiele, Grosse Bühne, …, by A and B, assisted by C and D, E (Schnitt)." gives all five people (C and D as assistants, E as editor) and the place "Haus der Berliner Festspiele: Grosse Bühne" (searched as the house too); a sentence broken over two lines ("… by Ferran Conangla" / "at FCM Studios Barcelona.") is read as one, "FCM Studios Barcelona" is FCM Studios in Barcelona; "Our thanks go to …" is a thanks; a title in quotation marks among names ("“Random-Etude”") no entry; a festival named only in another sentence ("the Jazzfest Berlin") is found by the date of the recording – its event offered, the place at the event.
+- **℗ / © in the date matrix** (Z-PCLABEL): a date limited to labels says "label: Maya Recordings" (was "studio: …").
 
 ### Import 3.139.0
 

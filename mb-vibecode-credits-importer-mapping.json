@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.139.0",
+  "version": "3.140.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -42,8 +42,8 @@
   "COMPANY_ROLES": [
     [{"$re":"^phonographic copyright","$flags":""},{"id":"C001","label":["phonographic copyright"],"artist":["phonographic copyright"],"level":"recording"}],
     [{"$re":"^copyright","$flags":""},{"id":"C002","label":["copyright"],"artist":["copyright"],"level":"release"}],
-    [{"$re":"^licensed from","$flags":""},{"id":"C003","label":["licensor"],"artist":["licensor"],"level":"release"}],
-    [{"$re":"^licensed (to|through)","$flags":""},{"id":"C004","label":["licensee"],"artist":["licensee"],"level":"release"}],
+    [{"$re":"^licensed (from|through)","$flags":""},{"id":"C003","label":["licensor"],"artist":["licensor"],"level":"release"}],
+    [{"$re":"^licensed to","$flags":""},{"id":"C004","label":["licensee"],"artist":["licensee"],"level":"release"}],
     [{"$re":"^marketed by","$flags":""},{"id":"C005","label":["marketed"],"level":"release"}],
     [{"$re":"^distributed (by|through)","$flags":""},{"id":"C006","label":["distributed"],"level":"release"}],
     [{"$re":"^exported by","$flags":""},{"id":"C007","label":["exported"],"level":"release"}],
@@ -85,6 +85,7 @@
     [{"$re":"^co-produced for","$flags":""},{"id":"C050","label":["produced for"],"level":"release","prefer":"label","flags":["co"]}],
     [{"$re":"^executive produced for","$flags":""},{"id":"C051","label":["produced for"],"level":"release","prefer":"label","flags":["executive"]}],
     [{"$re":"^supported by","$flags":""},{"id":"C052","label":[],"artist":["miscellaneous support"],"level":"release","prefer":"label"}],
+    [{"$re":"^funded by","$flags":""},{"id":"C053","label":[],"artist":["miscellaneous support"],"level":"release","prefer":"label"}],
     [{"$re":"^(recorded|overdubbed) in","$flags":""},{"id":"C038","area":["recorded in"],"level":"recording"}],
     [{"$re":"^mixed in","$flags":""},{"id":"C039","area":["mixed in"],"level":"recording"}],
     [{"$re":"^mastered in","$flags":""},{"id":"C040","area":["mastered in"],"level":"release"}],
@@ -601,6 +602,7 @@
     ["Electronics","Elektronik@de; electrónica@es; électronique@fr"]
   ],
   "ROLE_TERMS": [
+    ["Edited By","Schnitt@de; Tonschnitt@de; Audioschnitt@de; Digitalschnitt@de"],
     ["Mixed By","Miksa av@no; Mikset av@no; Miksing@no; Miksing av@no; Mixad av@sv; Mixning@sv; Mixning av@sv; Mixet af@da; Mixning af@da"],
     ["Mastered By","Mastering av@no,sv; Mastra av@no; Mastret av@no; Mastrad av@sv; Mastring@sv; Mastering af@da; Mastereret af@da"],
     ["Producer","Produsert av@no; Produsent@no; Produksjon@no; Producerad av@sv; Producent@sv,da; Produktion@sv,da; Produceret af@da"],
@@ -909,7 +911,7 @@
   "PLACEHOLDER_WHO": {"$re":"^(?:an?\\s+)?(?:human(?:\\s+being)?|me|myself|us|ourselves|the\\s+artists?|the\\s+band|the\\s+musicians?|himself|herself|themselves)$","$flags":"i"},
   "TEXT_DISTRIBUTION": {"$re":"^(?:distribution|distributions|distributor|distributors|distributed|vertrieb|vertrieben|distribución|distribuidora|distribuido|distribuidor|distribution exclusive|distribué|distribuée|distribuzione|distribuito|distributie)$","$flags":"i"},
   "TEXT_ABBREV": {"$re":"^(?:vol|vols|no|nos|nr|st|ste|dr|mr|mrs|ms|mme|mlle|prof|feat|ft|op|opp|vs|jr|sr|inc|ltd|co|corp|bros|mt|ca|approx|incl|arr|orch|dept|nb|cf|pp|bzw|bspw|ggf|usw|etc|rd|blvd|ave|hwy|pkwy|sq|wm|chas|jas|thos|geo)$","$flags":"i"},
-  "TEXT_THANKS": {"$re":"^(?:(?:very\\s+|extra\\s+|a\\s+)?special\\s+thanks?|many\\s+thanks|big\\s+thanks|huge\\s+thanks|thanks?\\b|thank\\s+you\\b|dank(?:e|en)?\\b|vielen\\s+dank|besonderer\\s+dank|gracias\\b|agradecimientos|merci\\b|remerciements|grazie\\b|ringraziamenti|tack\\b|bedankt\\b|kiitos\\b|(?:infinite|endless|eternal|deep|deepest|much|all\\s+(?:my|our)|love\\s+and)\\s+gratitude\\b|gratitude\\s+to\\b|(?:so\\s+|forever\\s+)?grateful\\s+to\\b)","$flags":"i"},
+  "TEXT_THANKS": {"$re":"^(?:(?:very\\s+|extra\\s+|a\\s+)?special\\s+thanks?|many\\s+thanks|big\\s+thanks|huge\\s+thanks|thanks?\\b|thank\\s+you\\b|dank(?:e|en)?\\b|vielen\\s+dank|besonderer\\s+dank|gracias\\b|agradecimientos|merci\\b|remerciements|grazie\\b|ringraziamenti|tack\\b|bedankt\\b|kiitos\\b|(?:our|my)\\s+(?:(?:sincere|special|warmest|warm|heartfelt|deepest|deep|big|many|very\\s+special)\\s+)?thanks\\s+(?:also\\s+)?(?:go(?:es)?\\s+(?:out\\s+)?)?(?:also\\s+)?to\\b|(?:infinite|endless|eternal|deep|deepest|much|all\\s+(?:my|our)|love\\s+and)\\s+gratitude\\b|gratitude\\s+to\\b|(?:so\\s+|forever\\s+)?grateful\\s+to\\b)","$flags":"i"},
   "TEXT_COURTESY_LINE": {"$re":"\\b(?:appears?|appearing)\\s+(?:by\\s+)?(?:kind\\s+)?(?:courtesy|permission)\\s+of\\b","$flags":"i"},
   "MEDIUM_WORDS": {
     "vinyl": {"$re":"^(?:vinyl|vinyls|lp|lps|lacquer|lacquers|lack|acetate|dmm|12\"|7\"|10\"|schallplatte|platte|vinilo|vinyle)$","$flags":"i"},
@@ -917,7 +919,7 @@
     "cassette": {"$re":"^(?:cassette|cassettes|tape|tapes|mc|kassette|casete|cassete)$","$flags":"i"},
     "digital": {"$re":"^(?:digital|streaming|download|downloads|hi-res|hires|high-res|mp3|flac|online)$","$flags":"i"}
   },
-  "TEXT_IGNORE_LINE": {"$re":"^(?:(?:very\\s+|extra\\s+|a\\s+)?special\\s+thanks?|many\\s+thanks|big\\s+thanks|huge\\s+thanks|thanks?\\b|thank\\s+you\\b|dank(?:e|en)?\\b|vielen\\s+dank|besonderer\\s+dank|gracias\\b|agradecimientos|merci\\b|remerciements|grazie\\b|ringraziamenti|tack\\b|bedankt\\b|kiitos\\b|(?:infinite|endless|eternal|deep|deepest|much|all\\s+(?:my|our)|love\\s+and)\\s+gratitude\\b|gratitude\\s+to\\b|(?:so\\s+|forever\\s+)?grateful\\s+to\\b)|\\b(?:plays?|uses?|endorses?)\\s+(?:exclusively|only)\\s|\\b(?:plays?|uses?)\\s+(?:on\\s+|with\\s+)?(?:\\S+\\s+){1,3}(?:strings|cymbals|reeds|sticks|mallets|drumheads|heads|pickups|amps?|amplifiers|mouthpieces?|ligatures?|picks)\\b|\\b(?:appears?|appearing)\\s+(?:by\\s+)?(?:kind\\s+)?(?:courtesy|permission)\\s+of\\b|\\bendorse[sd]?\\b","$flags":"i"},
+  "TEXT_IGNORE_LINE": {"$re":"^(?:(?:very\\s+|extra\\s+|a\\s+)?special\\s+thanks?|many\\s+thanks|big\\s+thanks|huge\\s+thanks|thanks?\\b|thank\\s+you\\b|dank(?:e|en)?\\b|vielen\\s+dank|besonderer\\s+dank|gracias\\b|agradecimientos|merci\\b|remerciements|grazie\\b|ringraziamenti|tack\\b|bedankt\\b|kiitos\\b|(?:our|my)\\s+(?:(?:sincere|special|warmest|warm|heartfelt|deepest|deep|big|many|very\\s+special)\\s+)?thanks\\s+(?:also\\s+)?(?:go(?:es)?\\s+(?:out\\s+)?)?(?:also\\s+)?to\\b|(?:infinite|endless|eternal|deep|deepest|much|all\\s+(?:my|our)|love\\s+and)\\s+gratitude\\b|gratitude\\s+to\\b|(?:so\\s+|forever\\s+)?grateful\\s+to\\b)|\\b(?:plays?|uses?|endorses?)\\s+(?:exclusively|only)\\s|\\b(?:plays?|uses?)\\s+(?:on\\s+|with\\s+)?(?:\\S+\\s+){1,3}(?:strings|cymbals|reeds|sticks|mallets|drumheads|heads|pickups|amps?|amplifiers|mouthpieces?|ligatures?|picks)\\b|\\b(?:appears?|appearing)\\s+(?:by\\s+)?(?:kind\\s+)?(?:courtesy|permission)\\s+of\\b|\\bendorse[sd]?\\b","$flags":"i"},
   "TEXT_COURTESY": {"$re":"(?:^|[\\s,;(])(?:(?:by|with|appears?)\\s+)?(?:kind\\s+)?(?:courtesy|permission)\\s+(?:of|from)\\b|used\\s+(?:with|by)\\s+permission|mit\\s+freundlicher\\s+genehmigung|cortes[ií]a\\s+de|avec\\s+l[’']aimable\\s+autorisation","$flags":"i"},
   "TEXT_QUOTED_TITLE": {"$re":"(?:[“„«‘\"][^“”„«»‘’\"']{1,80}[”“»’\"']|(?<!\\p{L})'[^'\\n]{1,80}'(?!\\p{L}))(?:\\s*,?\\s*\\(?(?:1[89]|20)\\d{2}\\)?)?","$flags":"gu"},
   "TITLE_SMALL_WORDS": {"$set":["a","an","the","of","at","in","on","to","and","or","for","with","from","by","as","der","die","das","den","dem","des","ein","eine","einen","einer","eines","und","oder","im","am","auf","von","vom","zu","zum","zur","mit","fur","el","la","lo","los","las","un","una","unos","unas","de","del","y","o","en","con","por","para","al","le","les","l","une","du","d","et","ou","au","aux","sur","pour","avec","il","gli","i","di","da","e","nel","nella","della","dei","os","um","uma","do","dos","em","no","na","het","een","van","op","met"]},
@@ -1033,7 +1035,7 @@
     ["7e84f845-ac16-41fe-9ff8-df12eb32af55","MusicBrainz Test Artist"]
   ],
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
-  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered|composed) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
+  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered|composed) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
     "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv"],
     "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév"],

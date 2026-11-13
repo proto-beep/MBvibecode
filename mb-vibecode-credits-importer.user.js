@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.139.0
+// @version      3.140.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.139.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.139.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.140.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.140.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.139.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.140.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1176,6 +1176,7 @@
       "festival.hint": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”), or one found below.",
       "festival.from": "From: “{line}”",
       "festival.mention": "– only mentioned: check the context (nothing is set by itself)",
+      "festival.byRecDate": "– named in another sentence; its event found by the date of the recording",
       "concert.note": "A concert of the text: “{line}” – its place as where it was recorded (live), a suggestion",
       "mention.chip": "Mentioned dates ({n})",
       "mention.title": "Dates, festivals and concerts the text only mentions – suggested nowhere; a date can be taken into the date pool by hand",
@@ -1202,6 +1203,8 @@
       "festival.add": "+ {name} ({period})",
       "festival.addTitle": "Adds the event as an entry, as “Add entry manually” with its MBID does; choose its relationship there.",
       "log.festivalFound": "Festival recording in the text: “{name}” – events offered from MusicBrainz: {n}",
+      "log.soloistJoined": "{name}: “Soloist” – the attribute solo on {instrument}",
+      "log.festivalByRecDate": "Festival “{name}” named elsewhere in the text – its event found by the date of the recording ({date})",
       "log.festivalFrom": "  … from the sentence “{line}”",
       "log.mentionPooled": "Mentioned date {date} taken into the date pool",
       "log.festivalAdded": "Event added: {name}",
@@ -1895,7 +1898,10 @@
       "plays.noWho": "Choose the person first.",
       "abbr.ask": "“{abbr}” is an abbreviation – which instrument?",
       "abbr.chosen": "“{abbr}” (abbreviation):",
+      "soloist.ask": "“{abbr}” without an instrument – which one of the person’s?",
+      "soloist.chosen": "“{abbr}”:",
       "issue.abbrAsk": "choose the instrument “{abbr}” stands for",
+      "issue.soloistAsk": "choose the instrument of “{abbr}”",
       "log.formatSeries": "Series from the format: {name} (the release's date {date})",
       "dateOrder.askRec": "{date}: before the recording of the same tracks ({other}) – a mix or mastering comes after the recording. Keep the date?",
       "dateOrder.askMix": "{date}: before the mix of the same tracks ({other}) – mastering comes after the mix. Keep the date?",
@@ -2105,6 +2111,9 @@
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
       "note.rsocOff": "Rights societies are not taken (quick switch “Take rights societies” off): this one is on Skip – choose its level to take it.",
       "note.supportLabel": "MusicBrainz has no relationship of a label for support: switch the kind of the entry to Artist (miscellaneous support, credited “support”).",
+      "note.fundingLabel": "MusicBrainz has no relationship of a label for funding: switch the kind of the entry to Artist (miscellaneous support, credited “funding”).",
+      "note.fromSoloist": "From “Soloist”: the instrument with the attribute solo.",
+      "note.soloistPick": "“Soloist” without an instrument: choose the instrument.",
       "note.seriesText": "A series named in the text: choose MusicBrainz's series above (or give its MBID) – the release is then part of it with its number.",
       "note.seriesFormat": "A series named in the format of the release (Record Store Day …) without a date that tells which: choose MusicBrainz's series above (or give its MBID).",
       "note.abbrAlt": "“{abbr}” can also be: {list}",
@@ -3871,6 +3880,9 @@
       "log.settingsReset": "Settings reset (own rules: {rules}, pools: {pools})",
       "datefind.tracks": "tracks {list}",
       "datefind.studio": "studio: {list}",
+      "datefind.label": "label: {list}",
+      "datefind.artistOf": "artist: {list}",
+      "datefind.entryOf": "for: {list}",
       "datefind.multi.one": "{n} date",
       "datefind.multi.other": "{n} single dates → {n} rows",
       "datefind.multiTitle": "Separate days: each gets a pool entry and a row of its own (a period would include the days in between)",
@@ -4727,6 +4739,16 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S235', where: 'findFestivals, festivalHtml', note: 'Festivals (3.140.0; collected item Z-LJTEXT): a festival named only in another sentence of the text ("Our thanks go to …, the artistic director of the Jazzfest Berlin") – the date of the text\'s recording sentence asks MusicBrainz for its events: one whose time holds the date makes it the festival of the recording (the hint, the events offered, the place at the event – S131), said at the hint; none: only mentioned, as before' },
+    { id: 'S234', where: 'TEXT.parse (addCredit)', note: 'Texts (3.140.0; collected item Z-LJTEXT): a title in quotation marks among the names of a credit ("Cover art: András Wolsky, “Random-Etude”, 2025") is the title of the picture – left out as such, no entry' },
+    { id: 'S233', where: 'TEXT.parse (joinBroken)', note: 'Texts (3.140.0; collected item Z-LJTEXT): a line that goes on with "at", "in", "on" or "by" and a name in capitals ("at FCM Studios Barcelona.") belongs to the line above it when that one is a sentence of a credit (a "by", a verb of a recording) of four words or more without an end ("… Mixed and mastered in September 2026 by Ferran Conangla")' },
+    { id: 'S232', where: 'TEXT.parse (readClause, placeIn, placeOf), addNotesCompanies', note: 'Texts (3.140.0; collected item Z-LJTEXT): "Recorded live in Berlin, Haus der Berliner Festspiele, Grosse Bühne, November 1, 2025, by A and B, assisted by C and D, E (Schnitt)." – a part of a place after it (a stage, a hall: "Grosse Bühne") is the place "Haus der Berliner Festspiele: Grosse Bühne", searched so and as the house, the city before it its area (a place of the Discogs notes named so renames Discogs\'s place); "assisted by C and D" the roles of the clause before with the attribute assistant; a later name of the list with a role of its own in brackets ("E (Schnitt)") that role; a date before "by" ("Mixed and mastered in September 2026 by X") no part of the role; "at FCM Studios Barcelona": the city after "Studio(s)" its area' },
+    { id: 'S231', where: 'TEXT.parse (licLine), C003, addNotesCompanies', note: 'Licences (3.140.0; collected item Z-LICTHRU): Discogs\'s "Licensed Through" is the licensor (C003; until 3.139.0 the licensee – "Licensed To" stays it); in texts "Lizenz durch X", "In Lizenz von X", "Lizenz: X", "Licensed through X" too; a role of the Discogs notes of the same relationship as one Discogs lists for that name joins it (no second row)' },
+    { id: 'S230', where: 'TEXT.parse (lineOfItsOwn), C053, addCompanyEntry, fundingWord', note: 'Funding (3.140.0; collected item Z-FUNDED): Discogs\'s "Funded By" – miscellaneous support of the release (a label: switch the kind to Artist), credited "funding"; "support" when the texts of the release name the funder only with support ("underwriting support was provided by X" – funding would be a reading of it). In texts: "… support was provided by X", "with the (generous) support of X", "gefördert von X", "mit freundlicher Unterstützung der X" – support; "funded by X", "financed by X", "mit Förderung von X" – funding' },
+    { id: 'S229', where: 'mapRoleInner, ROLE_TERMS', note: 'Roles (3.140.0; collected item Z-SCHNITT): "Schnitt", "Tonschnitt", "Audioschnitt" are the editing of the recording (editor) – also "Edited By [Schnitt]" without a role credit "schnitt" and "E (Schnitt)" in a text' },
+    { id: 'S228', where: 'mapRoleInner', note: 'Roles (3.140.0; collected item Z-ASSISTBR): Discogs\'s "Recorded By [Recorded By A And B, Assisted By]" – "Assisted By" is the attribute assistant; the bracket that only says the role again with others\' names is no role credit' },
+    { id: 'S227', where: 'roleCreditForInner, photoOfCredit', note: 'Roles (3.140.0; collected item Z-PHOTOOF): "Photography By [Photo (Marilyn Crispell)]", "[Photos Of X]" – photography credited "photo of X" (X as MusicBrainz writes the person when the release or the dashboard has it), as the text\'s "Photos: X by Y" (S207)' },
+    { id: 'S226', where: 'mapRole, mapRoleInner, soloistResolve, soloistJoin, pickInstrument', note: 'Roles (3.140.0; collected item Z-SOLOIST): "Piano [Piano Soloist]", "[Soloist]" – the attribute solo, no role credit; "Soloist [Piano Soloist]" the instrument of the bracket with solo, joined to the person\'s row of it on the same tracks (no second row); "Soloist" alone – the instrument (or voice) the person has on the release with solo, of several asked at the row (the answer joins that row), of none a role MusicBrainz does not know as before' },
     { id: 'S225', where: 'oneWorkKeep, oneWorkUndo, oneWorkHtml, renderWorksInner', note: 'Works matrix (3.138.0; collected item Z-ONEWORK): in its head ✍ keeps the tracks with writing credits, 🔗 those whose work is in MusicBrainz (linked, or found and chosen), ☝ one track picked from a list; of the others the new and chosen works are dropped (no work) and the credits of a linked work of one\'s own are skipped (S093) – nothing of them is staged at the works level; ↺ brings back what was there before (Symbols: Text – words instead of the symbols)' },
     { id: 'S224', where: 'catalogueOf, catalogueWorks, runWorkSearch, workFrontCell', note: 'Works (3.138.0; collected item Z-BWV): a track without a work of its title whose title has a catalogue number – BWV, K. / KV, Op. (No.), D, Hob., RV, HWV ("Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001") – is looked up by that number among the works of its composers; the movement the title names (the part after the colon of the work, "BWV 1001: I. Adagio") is offered, else the work itself ("Sonata … BWV 1001"); offered, not linked by itself' },
     { id: 'S223', where: 'afterEnterEdit, rowsRemovedInEditor, gapExactWrite, showReleaseGap, rmdStore, rmdRefresh, rmdAskHtml', note: 'Taken out in the editor (3.135.0; collected item Z-GAPREFRESH2): at "Enter edit" the relationships the dashboard staged and that were taken out in the relationship editor by hand count as still missing – the line of the release page says how many of them ("… counted 24 still missing. 4 of them were taken out by you in the editor.") and they count toward its fifth (not those the dashboard takes back itself – Skip, ✕, another instrument); their credits (all of a row\'s relationships taken out; rows of the source; [Z-GAPREFRESH2b] 3.139.0: also those taken out on some of their tracks, with those tracks) are kept for the release: the next import brings them back as the source gives them and asks once "Taken out in the editor last time: N credits – Skip them again?" (✓ all of them on Skip again, ✕ at one keeps it; no answer: imported as the source gives them)' },
@@ -5347,6 +5369,10 @@
   // [T051] Texts (3.34.18): the words of places – "Recorded in Guruguru Brain studio, Rotterdam" names a place (recorded at),
   // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
   const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
+  // [Z-LJTEXT] (3.140.0, S232) the German words of places, for a place after its city ("in Berlin, Haus der Berliner Festspiele, …") only
+  const TEXT_PLACE_WORDS_DE = /(?<![\p{L}])(?:haus|halle|saal|philharmoni[ae]|konzerthaus|festspielhaus|kulturhaus)(?![\p{L}])/iu;
+  // [Z-LJTEXT] (3.140.0, S232) a part of a place named after it – "Grosse Bühne", "Kleiner Saal", "Main Stage", "Studio 2", "Room A"
+  const TEXT_SUBPLACE = /^(?:(?:gro(?:ß|ss)e[rs]?|kleine[rs]?|neue[rs]?|obere[rs]?|untere[rs]?|main|small|large|big|little|upper|lower|grand|great|new|old)\s+)?(?:b(?:ü|ue)hne|saal|halle|hall|stage|room|foyer|salon|auditorium|kammermusiksaal|studio(?:\s+[\p{Lu}\d]\w*)?)$/iu;
   /** [Z-GEAR] (3.92.0, S147) A line of equipment ("Microphone: …", "Audio Interface: …", "DAW: …") – its words before the colon. */
   /** [Z-AMP] (3.96.0, review) The models of a line of amplifiers: split at commas, ";", "&", "and" and " / " outside brackets. */
   const ampParts = (t) => {
@@ -6237,6 +6263,25 @@
       if (res.level === 'recording') res.level = 'release';
       return res;
     }
+    // [Z-SOLOIST] (3.140.0, S226) "Soloist [Piano Soloist]": the instrument (or voice) of the bracket with the attribute solo; "Soloist"
+    // alone: the instruments the person has on the release decide (soloistResolve)
+    if (ruleOn('S226') && /^\s*soloists?\s*$/i.test(String(baseIn || ''))) {
+      const mods = modsIn || [];
+      // ((review) the detail that names the soloist's instrument first: "[Guest, Piano Soloist]"
+      const named = mods.findIndex((x) => /\S\s+soloists?\s*$/i.test(String(x)));
+      const k = named >= 0 ? named : mods.findIndex((x) => /\S/.test(String(x).replace(/\s*\bsoloists?\s*$/i, '')));
+      if (k >= 0) {
+        const inner = mapRole(String(mods[k]).replace(/\s*\bsoloists?\s*$/i, '').trim(), mods.filter((_, i) => i !== k), { noTranslation });
+        if ((inner.types || []).some((t) => t === 'instrument' || t === 'vocal') && (!inner.fallback || (inner.primaryCands || []).length)) {
+          return { ...inner, base: String(baseIn).trim(), flags: uniq([...(inner.flags || []), 'solo']), notes: [...(inner.notes || []), 'fromSoloist'],
+            consumed: uniq([...(inner.consumed || []), norm(mods[k])]), rule: 'S226' };
+        }
+      }
+      if (!mods.length) {
+        return { types: ['instrument'], level: 'recording', flags: ['solo'], primaryCands: [], notes: ['soloistPick'], work: false, credit: '',
+          base: String(baseIn).trim(), consumed: [], rule: 'S226' };
+      }
+    }
     const res = mapRoleInner(baseIn, modsIn);
     // [S065] (3.39.4) "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger" (collected items K-1, K-2): the
     // role after the word, with MusicBrainz's attribute where its type has it (applyDetailFlags), else the word as role credit;
@@ -6289,7 +6334,15 @@
     const engBase = /^(engineer|engineered by|engineering)$/.test(b);
     // the bracket as written, for each shortened one (what is used of it is used of the bracket as written too)
     const stripped = new Map();
-    const modsIn = (modsIn0 || []).map((m) => {
+    // [Z-ASSISTBR] (3.140.0, S228) Discogs's "Recorded By [Recorded By A And B, Assisted By]": "Assisted By" is the attribute assistant,
+    // the bracket that only says the role again with the names of others is no detail (no role credit)
+    const restates = (m) => ruleOn('S228') && b.length > 3 && / by$/.test(b) && norm(m).startsWith(`${b} `);
+    const restated = (modsIn0 || []).filter(restates).map(norm);
+    const modsIn = (modsIn0 || []).filter((m) => !restates(m)).map((m) => {
+      if (ruleOn('S228') && /^\s*assist(?:ed|ing)(?:\s+by)?\s*$/i.test(String(m))) {
+        stripped.set('assistant', norm(m));
+        return 'assistant';
+      }
       if (!engBase || !ruleOn('S047') || !/^\s*\S.*\s+engineer\s*$/i.test(String(m))) return m;
       const short = String(m).replace(/\s+engineer\s*$/i, '');
       stripped.set(norm(short), norm(m));
@@ -6306,9 +6359,21 @@
     }
     // Bracket details that are already used as an attribute or for the type
     // and are therefore not suggested as a role credit as well
-    const consumed = new Set();
+    const consumed = new Set(restated);
     let uncredited = false;
     for (const m of (modsIn || []).map(norm)) {
+      // [Z-SOLOIST] (3.140.0, S226) "Piano [Piano Soloist]", "[Soloist]": the attribute solo – no role credit "piano soloist"
+      const solo = ruleOn('S226') && m.match(/^(?:(.+?)\s+)?soloists?$/);
+      if (solo && (!solo[1] || b === solo[1] || b.startsWith(`${solo[1]} `) || b.endsWith(` ${solo[1]}`) || foldWord(solo[1]) === foldWord(b))) {
+        flags.push('solo');
+        consumed.add(m);
+        continue;
+      }
+      // [Z-SCHNITT] (3.140.0, S229) "Edited By [Schnitt]": the German word of the same task – no role credit
+      if (ruleOn('S229') && /^(?:ton|audio|digital)?schnitt$/.test(m) && /^(?:edit|edited|edited by|editing|editor|schnitt|tonschnitt)$/.test(b)) {
+        consumed.add(m);
+        continue;
+      }
       // [S002] details that tick checkboxes ("Additional Musicians", "Additonal" … count as additional)
       const box = flagForDetail(m);
       if (ruleOn('S002') && ['additional', 'guest', 'solo'].includes(box)) {
@@ -7790,6 +7855,9 @@
         || (ruleOn('S148') ? (([x, a, b]) => (x && TEXT_PLACE_WORDS.test(a) && !TIME_WORDS.test(b) ? [x, a, b] : null))(name.match(/^(.+?)\s+at\s+(\p{Lu}[\p{L}\s.'’-]*)$/u) || []) : null)
         || (ruleOn('S121') ? name.match(/^(.+?)\s+(?:just\s+)?(?:outside(?:\s+of)?|near|close\s+to)\s+(\p{Lu}[\p{L}\s.'’-]*)$/u) : null);
       if (inArea) [name, area] = [inArea[1], [inArea[2], area].filter(Boolean).join(', ')];
+      // [Z-LJTEXT] (3.140.0, S232) "FCM Studios Barcelona": the city after "Studio(s)" without a comma is its area
+      const cityAfter = !inArea && ruleOn('S232') ? name.match(/^(.+?\bStudios?)\s+(\p{Lu}[\p{Ll}'’-]{2,}(?:\s+\p{Lu}[\p{Ll}'’-]{2,})?)$/u) : null;
+      if (cityAfter && !TEXT_PLACE_WORDS.test(cityAfter[2]) && !/^(?:One|Two|Three|Four|Room|Hall|Stage|Mobile|West|East|North|South|Central|Main)$/i.test(cityAfter[2].split(' ')[0])) [name, area] = [cityAfter[1], [cityAfter[2], area].filter(Boolean).join(', ')];
       if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
       // [3.37.8] "at the Western Front Lodge": the article written small is no part of the name ("The Hit Factory" keeps it; item 158)
       name = clean(name).replace(/^the\s+(?=\p{Lu})/u, '');
@@ -8293,6 +8361,12 @@
         const songsArr = !!p1 && ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p1.base || '') && (p1.mods || []).length > 0 && p1.mods.every((x) => SONG_WORDS.test(String(x).trim()));
         const role = songsArr ? p1.base : role1;
         const p = songsArr ? parseRoleNotation(role)[0] : p1;
+        // [Z-LJTEXT] (3.140.0, S234) a title in quotation marks among the names ("Cover art: András Wolsky, “Random-Etude”, 2025") is the
+        // name of the work of art, no person – left out as such
+        if (ruleOn('S234') && /^\s*["“„«‘‚'][^"“”„«»]+["”“»’']\s*$/u.test(String(name || ''))) {
+          ignored.push({ text: clean(name), why: 'artTitle' });
+          return false;
+        }
         if (!p || !looksLikeName(name)) return false;
         // [Z-IMD] (3.92.0, S146, review) another instrument played on a model of the text: credited as written ("Wurlitzer (Nord stage2)")
         const mc = modelCredits.get(norm(p.raw));
@@ -8780,6 +8854,7 @@
       const readUnit = (unit, scope, pi) => {
         const line = unit;
         let found = 0;
+        let lastByRoles = []; // [Z-LJTEXT] (3.140.0, S232) the roles of the last "… by" clause (for "assisted by")
         let m;
         const unknownParts = [];
         part0 = line;
@@ -8889,7 +8964,7 @@
             if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return false;
             // [S050] (3.32.5) "Recordd at X": the verb as it is read
             const { role, typos } = readRole(`${cap(verb)} At`);
-            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}), ...extra });
+            companies.push({ who: { ...who(n), area: where.area || '', ...(where.altNames ? { altNames: where.altNames } : {}) }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}), ...extra });
             found++;
             return true;
           };
@@ -8914,9 +8989,25 @@
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
             // [Z-AP] (3.40.12) also a place the source lists itself ("Recorded At – Meguro Fukushi Center" of Discogs; placeNames)
-            const isPlace = (x) => (TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), '')))
+            // ([Z-LJTEXT] 3.140.0, S232) and the German words of places ("Haus der Berliner Festspiele", "Kleiner Saal") – here only, not for
+            // the names of people ("Halle Berry")
+            const words = ruleOn('S232') ? TEXT_PLACE_WORDS_DE : null;
+            const isPlace = (x) => ((TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), '')))
+              || (words && words.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(words.source, 'giu'), ''))))
               || placeNames.some((n) => norm(n) === norm(x));
             const parts = String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/).map((x) => clean(x).replace(/^the\s+/i, ''));
+            // [Z-LJTEXT] (3.140.0, S232) "in Berlin, Haus der Berliner Festspiele, Grosse Bühne": a part of the place after it (a stage, a hall)
+            // – MusicBrainz's place "Haus der Berliner Festspiele: Große Bühne", searched so and as the house itself; the city before it its area
+            if (ruleOn('S232')) {
+              const ps = parts.filter((x) => x && (TEXT_SUBPLACE.test(x) || (!/\d/.test(x) && noDates(x) === x)));
+              const k = ps.findIndex(isPlace);
+              const sub = k >= 0 ? ps[k + 1] : '';
+              if (sub && TEXT_SUBPLACE.test(sub)) {
+                const city = k > 0 ? areaOf(ps.slice(0, k).join(', ')) : (ps[k + 2] ? areaOf(ps.slice(k + 2).join(', ')) : null);
+                // ((review) a name too long for one: as before
+                if (place(verb, { name: `${ps[k]}: ${sub}`, area: city ? [city.name, city.area].filter(Boolean).join(', ') : '', altNames: [ps[k]] })) return true;
+              }
+            }
             if (isPlace(parts[0])) return place(verb, placeOf(text));
             // [3.37.7] the place after its city: "in Tokyo, Zojoji Hall" → Zojoji Hall, its area Tokyo (collected item 157)
             const last = parts.length >= 2 && parts.length <= 4 ? parts[parts.length - 1] : '';
@@ -8969,6 +9060,9 @@
               atVerbs.forEach((v) => places(v, at[2]));
               left = at[1];
             }
+            // [Z-LJTEXT] (3.140.0, S232) "Mixed and mastered in September 2026 by X": the date is no part of the role (its group reads it)
+            const dateL = ruleOn('S232') && !at ? left.match(/^(.*?\S)\s+(?:in|on|during|im|am)\s+(\S.*)$/u) : null;
+            if (dateL && (dateL[2].search(TEXT_MONTHS) >= 0 || /\b(?:1[89]|20)\d{2}\b/.test(dateL[2])) && !noDates(dateL[2]).replace(/^(?:the|early|late|mid)\b\s*/i, '').replace(/[,.\s]/g, '')) left = dateL[1];
             // [3.22.0] "Recorded in Xixon, Asturies by X"
             const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
             if (inL && (placeIn(verb, inL[2]) || inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, ''))))) left = inL[1];
@@ -9024,6 +9118,9 @@
             const made = sentence && clean(left).match(TEXT_MADE_BY);
             const madeParts = made ? made[1].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(cap) : [];
             let roles = madeParts.length && madeParts.every(isRole) ? madeParts : byRoles(left);
+            // [Z-LJTEXT] (3.140.0, S232) "…, by A and B, assisted by C and D": the roles of the clause before, with the attribute assistant
+            if (!roles.length && ruleOn('S232') && /^assist(?:ed|ing)$/i.test(clean(left)) && lastByRoles.length) roles = lastByRoles.map((r) => `${r} [Assisted By]`);
+            else if (roles.length && ruleOn('S232')) lastByRoles = roles;
             // [T042] (3.29.0) a verb of prose before "by" says nothing about the role ("Cover artwork channeled by X")
             if (!roles.length && PROSE_FILLER_VERB.test(clean(left))) roles = byRoles(clean(left).replace(PROSE_FILLER_VERB, ''));
             // [T042] … nor words before the name ("by the guided hand of BMS Illustration")
@@ -9063,6 +9160,19 @@
             const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
             if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
             const proseClause = clean(clause).split(/\s+/).length >= 12;
+            // [Z-LJTEXT] (3.140.0, S232) "… assisted by C and D, E (Schnitt)": a later name of the list with a role of its own in brackets has
+            // that role (the editor), not the clause's
+            if (rolesM.length && ruleOn('S232')) {
+              const segs = right.split(/\s*,\s*(?![^()]*\))/);
+              const keep = segs.filter((seg, k) => {
+                const mm = k > 0 && seg.match(/^(.+?)\s*\(([^()]+)\)\s*\.?$/u);
+                const r0 = mm ? cap(clean(mm[2])) : '';
+                if (!mm || !looksLikeName(clean(mm[1])) || !isRole(r0) || mediumKindOf(mm[2])) return true;
+                if (addCredit(clean(mm[1]), r0, cScope)) found++;
+                return false;
+              });
+              right = keep.join(', ');
+            }
             for (const x of rolesM.length ? namesScoped(right) : []) {
               // [S075] "Mixed by Jane Roe in Dolby Atmos", "Mastered by X for Vinyl", "Produced by X with Y": no name – listed
               let nm = x.name;
@@ -10011,6 +10121,29 @@
             return true;
           }
         }
+        // [Z-FUNDED] (3.140.0, S230) a sentence of support or funding at the end of a line – "… underwriting support was provided by the
+        // Robert D. Bielecki Foundation.", "with the generous support of X", "funded by X", "gefördert von X", "mit freundlicher Unterstützung
+        // der X": support credited "support", funding "funding" (Funded By); names only ("Bill and Melinda Gates Foundation" one)
+        let fu = ruleOn('S230') && (l.match(/\b(?:(?:underwriting|financial|generous|additional|kind|further)\s+)*(support|funding)\s+(?:was|is|has\s+been|were|have\s+been)\s+(?:kindly\s+|generously\s+)?(?:provided|given|granted|offered|received)\s+(?:by|from)\s+(?:the\s+)?(.+?)\.?$/iu)
+          || l.match(/\bwith\s+(?:the\s+)?(?:(?:kind|generous|financial|friendly|additional)\s+)*(support|funding)\s+(?:of|from|by)\s+(?:the\s+)?(.+?)\.?$/iu)
+          || l.match(/(?:^|\b(?:was|were|is|are|been)\s+(?:generously\s+|kindly\s+)?)(funded|financed)\s+by\s+(?:the\s+)?(.+?)\.?$/iu)
+          || l.match(/\b(gef(?:ö|oe)rdert|unterst(?:ü|ue)tzt)\s+(?:von|durch)\s+(?:de[nmr]\s+|die\s+|das\s+)?(.+?)\.?$/iu)
+          || l.match(/\bmit\s+(?:der\s+)?(?:(?:freundlicher|gro(?:ß|ss)z(?:ü|ue)giger|finanzieller)\s+)*(Unterst(?:ü|ue)tzung|F(?:ö|oe)rderung)\s+(?:von|durch|de[rs])\s+(?:de[nmr]\s+|die\s+|das\s+)?(.+?)\.?$/iu));
+        // ((review) only a line of one sentence whose words before it are no credit ("Recorded … by John Doe with the kind support of X",
+        // "Produziert von X, gefördert durch Y" are read as before)
+        const fuBefore = fu ? l.slice(0, l.indexOf(fu[0])).replace(/\b\p{Lu}\.\s/gu, '') : '';
+        if (fu && (/[.!?]\s+\p{Lu}/u.test(fuBefore) || /\s(?:by|von|par|por|durch)\s|:|[–—]|\s-\s|\b(?:recorded|produced|mixed|mastered|engineered|written|composed|arranged|produziert|aufgenommen|gemischt|gemastert|komponiert)\b/iu.test(fuBefore))) fu = null;
+        if (fu) {
+          const funding = /^(?:fund|financ|gef|f(?:ö|oe)rder)/iu.test(fu[1]);
+          const nameWords = (n) => n.split(/\s+/).every((w, k) => /^[\p{Lu}\d]/u.test(w) || (k > 0 && /^(?:de|del|della|la|le|les|du|des|der|die|das|den|dem|zur|zum|von|van|für|fur|and|of|the|for|et|y|i|e|a|al|el|en|und|&|g?gmbh|mbh|e\.\s?v\.?|gug|eg)$/i.test(w)));
+          // (a list of names of two words or more each: "A Foundation and the B Trust"; else one name)
+          const parts = fu[2].split(/\s*(?:,|;|\s&\s|\band\b|\bund\b)\s*(?:the\s+|de[nmr]\s+)?(?=\p{Lu})/u).map(clean).filter(Boolean);
+          const list = parts.length > 1 && parts.every((n) => n.split(/\s+/).length >= 2) ? parts : [clean(fu[2])];
+          if (list.every((n) => /^\p{Lu}/u.test(n) && n.split(/\s+/).length <= 10 && !/[.!?]\s/.test(n.replace(/\b\p{Lu}\.\s/gu, '')) && nameWords(n))) {
+            list.forEach((n) => companies.push({ who: who(n), role: funding ? 'Funded By' : 'Supported By', catno: '', tracks: null, ...at(), roleCredit: funding ? 'funding' : 'support', entity: 'label' }));
+            return true;
+          }
+        }
         return false;
       };
       const readLine0 = (raw, sub = false) => {
@@ -10822,7 +10955,20 @@
        */
       // ((review) only these forms – "Licensed from X" was read before –, at the start of a line or a sentence; the names end before
       // a further clause ("…, Licensed to …", "… for the UK territory", "… under …"); not "the artist", "the original master tapes")
-      const licLine = (l) => (!ruleOn('S183') ? l : String(l || '').replace(/(^|[.;]\s+)Licen[cs]ed\s+(?:by\s+)?(?:the\s+)?courtesy\s+of\s+([^.;]+)/giu, (m, pre, who0) => {
+      // [Z-LICTHRU] (3.140.0, S231) "Lizenz durch rbb media GmbH", "In Lizenz von X", "Lizenz: X", "Licensed through X": the licensor
+      // ("Licensed From: X"; "Licensed To" stays the licensee)
+      // ((review) a name – not "Licensed through an agreement with …" –, no licence of Creative Commons
+      const LIC_LEAD = /^\s*(?:(?:in\s+)?lizenz(?:iert)?\s*(?:durch|von|über|ueber|der|des|:)|licen[cs]ed\s+through)\s*:?\s+(?:the\s+)?/iu;
+      const licLine = (l0) => {
+        const l1 = String(l0 || '');
+        const lead = ruleOn('S231') ? l1.match(LIC_LEAD) : null;
+        const who = lead ? l1.slice(lead[0].length).replace(/\.?\s*$/, '') : '';
+        // (a name – also one in small letters, "rbb media GmbH" –, not words of a sentence: "an agreement with …")
+        const nameLike = who && !/[.;]/.test(who) && !/^(?:an?|the|this|that|these|those|our|their|his|her|its|my|your|ein|eine[mnrs]?|der|die|das|dem|den|des|agreement|arrangement|vertrag)\b/i.test(who)
+          && (/\p{Lu}/u.test(who) || who.split(/\s+/).length <= 3);
+        return licLine0(lead && nameLike && !/^(?:creative\s+commons|cc\b)/i.test(who) ? `Licensed From: ${who}` : l1);
+      };
+      const licLine0 = (l) => (!ruleOn('S183') ? l : String(l || '').replace(/(^|[.;]\s+)Licen[cs]ed\s+(?:by\s+)?(?:the\s+)?courtesy\s+of\s+([^.;]+)/giu, (m, pre, who0) => {
         const cut = who0.search(/,\s*(?=licen[cs]ed|distributed|manufactured|marketed|an?\s|the\s)|\s+(?:for|under|in|by\s+arrangement|on\s+behalf|excluding|except|worldwide)\b/iu);
         const head = cut < 0 ? who0 : who0.slice(0, cut);
         const who = head.replace(/(^|,\s*|\s(?:and|&)\s+)the\s+(?=\p{Lu})/gu, '$1').trim();
@@ -10977,14 +11123,19 @@
        * for …"): a line of four words or more that ends in a word like "were", "and", "for", the next one starting small – read as one.
        */
       const joinBroken = (lines) => {
-        if (!ruleOn('S199')) return lines;
+        if (!ruleOn('S199') && !ruleOn('S233')) return lines;
         const out = [];
         for (let i = 0; i < lines.length; i++) {
           let l = String(lines[i] || '');
           // ((review) only after a word that cannot end a sentence ("were", "and", "for" …), and neither line a credit (" - ", ":", a dash):
           // lower-case credit lines one below the other stay apart
           const credit = (x) => /[:–—]|\s-\s/.test(x);
-          while (i + 1 < lines.length && /\s(?:were|was|are|is|been|and|for|the|of|to|especially|specially)\s*$/.test(l) && l.trim().split(/\s+/).length >= 4
+          const broken = (x) => ruleOn('S199') && /\s(?:were|was|are|is|been|and|for|the|of|to|especially|specially)\s*$/.test(x);
+          // [Z-LJTEXT] (3.140.0, S233) "… Mixed and mastered in September 2026 by Ferran Conangla" / "at FCM Studios Barcelona.": a line that
+          // goes on with "at", "in", "on" or "by" and a name belongs to the one above it when that one is a sentence of a credit ("… by X", a verb of a
+          // recording) without its end ("with X" lines stay lines of their own)
+          const goesOn = (x, next) => ruleOn('S233') && !/[.!?:;,]\s*$/.test(x) && (/\sby\s/i.test(x) || recSentence(x)) && /^\s*(?:at|in|on|by)\s+\p{Lu}/u.test(next);
+          while (i + 1 < lines.length && (broken(l) || goesOn(l, String(lines[i + 1] || ''))) && l.trim().split(/\s+/).length >= 4
             && /^\s*\p{Ll}/u.test(String(lines[i + 1] || '')) && !credit(l) && !credit(String(lines[i + 1] || ''))) {
             l = `${l.replace(/\s+$/, '')} ${String(lines[i + 1]).trim()}`;
             i++;
@@ -15309,6 +15460,22 @@
   }
 
 
+  /**
+   * [Z-PHOTOOF] (3.140.0, S227) The detail "Photo (X)", "Photos Of X", "Photo Of: X" of a photographer: "photo of X" – X as MusicBrainz
+   * writes the person (an artist of the release or the dashboard), else as the source writes it; '' when X is the photographer;
+   * null for any other detail.
+   */
+  const PHOTO_OF = /^(?:photos?|photographs?|pictures?)\s*(?:\(\s*([^()]+?)\s*\)|of\s*:?\s+(.+?))\s*$/iu;
+  function photoOfCredit(raw, row) {
+    const m = String(raw || '').trim().match(PHOTO_OF);
+    if (!m) return null;
+    const asWritten = (row.mods || []).map((x) => String(x).trim().match(PHOTO_OF)).find(Boolean);
+    const who = (asWritten && (asWritten[1] || asWritten[2])) || m[1] || m[2];
+    const own = S.artists && S.artists.get(row.artistKey);
+    if (own && [own.name, own.mbName].some((x) => x && foldWord(x) === foldWord(who))) return '';
+    return `photo of ${photographerName(who, row) || who}`;
+  }
+
   function roleCreditForInner(row) {
     // [W001–W003] A wording rule of the register wins (e.g. "Bass [Upright]" → "upright bass")
     const wr = wordingRuleFor(row);
@@ -15355,6 +15522,9 @@
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
     // [Z-PHN] (3.63.0, S091) a photographer named in the detail – "Photography [Barry Guy]", "[Barry Guy photographs by]": the name as
     // MusicBrainz writes it (an artist of the release or of the dashboard), the words of the role left out
+    // [Z-PHOTOOF] (3.140.0, S227) "Photography By [Photo (Marilyn Crispell)]", "[Photo Of X]": credited "photo of X" (as a text's "Photos: X by Y")
+    const photoOf = raw && ruleOn('S227') && norm((currentLinkType(row) || {}).name || '') === 'photography' ? photoOfCredit(raw, row) : null;
+    if (photoOf != null) return photoOf;
     if (raw && ruleOn('S091') && norm((currentLinkType(row) || {}).name || '') === 'photography') {
       const name = photographerName(raw, row);
       if (name) return name;
@@ -15599,6 +15769,9 @@
       prefix: m.prefix || null, prefixCredit: false });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
+    // [Z-SOLOIST] (3.140.0, S226, review) the solo of a soloist joined to this row stays; a row of "Soloist" keeps its question or instrument
+    if (row.soloJoined && ruleOn('S226')) row.soloJoined.forEach((f) => row.flags.add(f));
+    if (ruleOn('S226') && (m.notes || []).some((n) => n === 'soloistPick')) soloistResolveRow(row, false);
     // [3.43.2] (review) a level the import chose stays (a producer named for tracks: recording; S006 arrangers: work – `levelImport`), and a
     // credit switched off at the source or with the about/notes text stays off (its level to come back to follows the rule)
     if (!row.levelTouched) {
@@ -16127,7 +16300,7 @@
       }
       const lt = currentLinkType(row);
       if (!lt) info.issues.push(tr('issue.chooseType'));
-      if (abbrOpen(row)) info.issues.push(tr('issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0)
+      if (abbrOpen(row)) info.issues.push(tr(row.abbrAsk.solo ? 'issue.soloistAsk' : 'issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0); [Z-SOLOIST] (3.140.0)
       if (dateOrderOpen(row)) info.issues.push(tr('issue.dateOrder')); // [Z-DATEORDER] (3.121.0, S190) not staged before the answer
       if (dgLineupOpen(row)) info.issues.push(trSrc('issue.dgLineup')); // [Z-DGLINEUP] (3.130.0, S217) not staged before the answer
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
@@ -24198,6 +24371,15 @@
       // [Z-PLDUP] (3.111.0) a place of the notes the same as one Discogs lists, more widely ("Tonart Studio" – "Tonart Studio,
       // Kerpen-Horrem", "Tonart"): no second place; the notes' name is its credit (as the notes write it)
       const isAt = /\sAt$/.test(String(c.role || ''));
+      // [Z-LJTEXT] (3.140.0, S232) the notes name a part of a place Discogs lists ("Haus der Berliner Festspiele: Grosse Bühne" – Discogs:
+      // "Haus der Berliner Festspiele"): that part is the place – Discogs's entry named so, searched by both names
+      if (ruleOn('S232') && isAt && String(c.who.name).includes(':')) {
+        const head = String(c.who.name).split(':')[0].trim();
+        rel.companies.filter((d) => /\sAt$/.test(String(d.role || '')) && sameCompanyName(d.who.name, head)).forEach((d) => {
+          if (d.who.altNames && d.who.altNames.includes(c.who.name)) return;
+          Object.assign(d.who, { altNames: uniq([...(d.who.altNames || []), d.who.name]), name: c.who.name, rawName: c.who.name, ...(c.who.area && !d.who.area ? { area: c.who.area } : {}) });
+        });
+      }
       let same = rel.companies.filter((d) => sameCompanyName(d.who.name, c.who.name));
       // ((review) the credit only for a place found so – one the same as before (only the spelling differs) keeps Discogs's name)
       let byPlace = false;
@@ -24209,7 +24391,16 @@
         if (!byPlace || !/\sAt$/.test(String(d.role || '')) || d.anv) return;
         if (norm(c.who.name) !== norm(d.who.name)) d.anv = c.who.name;
       };
-      const sameRole = same.find((d) => norm(d.role) === norm(c.role));
+      // ([Z-LICTHRU] [Z-FUNDED] 3.140.0, S231, S230) or a role of the same relationship: "Lizenz durch X" is Discogs's "Licensed Through – X",
+      // "support was provided by X" its "Funded By – X" (whose credit the notes decide: fundingWord)
+      const fund = (r) => /^(?:funded|supported) by$/i.test(String(r || '').trim());
+      const sameRule = (d) => {
+        if (ruleOn('S230') && fund(d.role) && fund(c.role)) return true;
+        // ((review) only the licences: "Overdubbed At" and "Recorded At", "Mastered At" and "Mastered By" stay rows of their own
+        const [x, y] = [mapCompanyRole(d.role).rule, mapCompanyRole(c.role).rule];
+        return ruleOn('S231') && !!x && x === y && /^C00[34]$/.test(x);
+      };
+      const sameRole = same.find((d) => norm(d.role) === norm(c.role)) || same.find(sameRule);
       // the notes' spelling is searched in MusicBrainz too (T046)
       const alt = (d) => { if (d.who.name !== c.who.name && !(d.who.altNames || []).includes(c.who.name)) d.who.altNames = [...(d.who.altNames || []), c.who.name]; };
       if (sameRole) {
@@ -25012,6 +25203,57 @@
     row.abbrAsk = { abbr: c.abbr, options: uniq([String(c.role.raw || '').toLowerCase(), ...c.abbrAlt]), chose: '' };
     row.primaryText = '';
   }
+  /**
+   * [Z-SOLOIST] (3.140.0, S226) The rows of "Soloist": one that names its instrument ("Soloist [Piano Soloist]") joins the person's row
+   * of that instrument on the same tracks – its attribute solo, no second row; "Soloist" alone gets the instrument (or voice) the person
+   * has on the release – of several, asked at the row (soloAsk); of none, as a role MusicBrainz does not know.
+   */
+  function soloistResolve() {
+    if (!ruleOn('S226')) return;
+    const drop = new Set();
+    for (const row of S.rows.filter((r) => (r.notes || []).some((n) => n === 'fromSoloist' || n === 'soloistPick'))) if (soloistResolveRow(row)) drop.add(row);
+    if (drop.size) S.rows = S.rows.filter((r) => !drop.has(r));
+  }
+  /**
+   * [Z-SOLOIST] (S226) One row of "Soloist": true when it joined another row (to be taken out). `join` false (the rules changed – no row
+   * taken out then): only what it asks or names.
+   */
+  function soloistResolveRow(row, join = true) {
+    const plays = (r) => r !== row && r.artistKey === row.artistKey && r.level !== 'skip' && norm(r.primaryText)
+      && (r.types || []).some((t) => t === 'instrument' || t === 'vocal') && !(r.notes || []).some((n) => n === 'soloistPick' || n === 'fromSoloist');
+    const others = S.rows.filter(plays);
+    if ((row.notes || []).includes('fromSoloist')) return join && soloistJoin(row, others.filter((r) => norm(r.primaryText) === norm(row.primaryText)));
+    const names = uniq(others.map((r) => r.primaryText).filter(Boolean));
+    row.notes = (row.notes || []).filter((n) => n !== 'soloistPick');
+    if (names.length === 1) {
+      if (join && soloistJoin(row, others.filter((r) => norm(r.primaryText) === norm(names[0])))) return true;
+      // ((review) its tracks other than that row's: the instrument with solo, a row of its own
+      Object.assign(row, { primaryText: names[0], primaryCands: [norm(names[0])], primaryTouched: true });
+    } else if (names.length > 1) {
+      row.abbrAsk = { abbr: row.raw || 'Soloist', options: names, chose: (row.abbrAsk && row.abbrAsk.chose) || '', solo: true };
+      if (!row.abbrAsk.chose) row.primaryText = '';
+    } else {
+      // (none: as before 3.140.0 – a role MusicBrainz does not know, its task the word)
+      Object.assign(row, { types: ['misc'], flags: new Set(), notes: [...row.notes, 'unknownRole'], creditFromRole: String(row.raw || 'soloist').trim() });
+      resolveRowType(row);
+    }
+    refreshRowDetails(row);
+    return false;
+  }
+  /** [Z-SOLOIST] (S226) The attribute solo on the row of the same instrument on the same tracks: true when joined. */
+  function soloistJoin(row, same) {
+    // ((review) the same tracks only – a piano of the whole release does not become solo for the soloist's one track
+    const hit = same.find((r) => r.tracks.size === row.tracks.size && [...row.tracks].every((i) => r.tracks.has(i)));
+    if (!hit) return false;
+    hit.flags.add('solo');
+    // ((review) kept when the rules change (remapRow), with the soloist's other attributes
+    hit.soloJoined = uniq([...(hit.soloJoined || []), 'solo', ...[...row.flags].filter((f) => f === 'guest' || f === 'additional')]);
+    hit.soloJoined.forEach((f) => hit.flags.add(f));
+    refreshRowDetails(hit);
+    const artist = S.artists.get(row.artistKey);
+    log('info', 'soloistJoined', { name: (artist && (artist.mbName || artist.name)) || '', instrument: hit.primaryText });
+    return true;
+  }
   /** Still to be answered (an instrument typed or chosen by hand answers it too). */
   const abbrOpen = (row) => !!row.abbrAsk && !row.abbrAsk.chose && !(row.primaryTouched && norm(row.primaryText));
 
@@ -25198,6 +25440,22 @@
    * A company of the source (label, place, area – a group of groupCompanies) as an entry with its rows, as the import makes it (moved
    * out of loadRelease in 3.42.4 for Z-UNA, which adds one from words of a line not recognized): null when it is left out (S007).
    */
+  /**
+   * [Z-FUNDED] (3.140.0, S230) The word for a funder: "support" when the texts of the release name it only with support, "funding" when
+   * they say it was funded (or say nothing of it).
+   */
+  function fundingWord(name, rel) {
+    const key = foldWord(String(name || '').replace(/^the\s+/i, ''));
+    // (the notes of the source – a text's are its words – and of the import it supplements)
+    const text = uniq([rel && rel.notes, S.release && S.release.notes].filter((x) => typeof x === 'string')).join('\n');
+    if (!key || !text) return 'funding';
+    // (what the lines naming it say before the name – at most 160 characters: "D." of a name ends no sentence here)
+    const said = text.split(/\n+/).map((x) => foldWord(x)).filter((x) => x.includes(key)).map((x) => x.slice(Math.max(0, x.indexOf(key) - 160), x.indexOf(key)));
+    // ((review) the lines folded: no accents – "gefordert", "unterstutzt")
+    if (!said.length || said.some((x) => /\b(?:fund(?:ed|ing|s)?|financ(?:ed|ing)|gef(?:o|oe)rdert|f(?:o|oe)rderung)\b/iu.test(x))) return 'funding';
+    return said.some((x) => /\b(?:support(?:ed|s)?|unterst(?:u|ue)tz)/iu.test(x)) ? 'support' : 'funding';
+  }
+
   function addCompanyEntry(g, rel, leftOutKeys) {
     // [S007]
     const commissioned = (r) => norm(r.role) === 'commissioned by';
@@ -25229,6 +25487,12 @@
       if (r.roleCredit) Object.assign(row, { roleCredit: r.roleCredit, roleCreditTouched: true }); // [Z-PHOTOS] [Z-SUPPORTED] (3.128.0)
       // ([Z-SUPPORTED] 3.128.0, review) MusicBrainz has no relationship of a label for support: said at the row (an artist has one)
       if (ruleOn('S208') && /^supported by$/i.test(String(r.role || '').trim())) row.notes = [...(row.notes || []), 'supportLabel'];
+      // [Z-FUNDED] (3.140.0, S230) "Funded By": miscellaneous support credited "funding" – "support" when the text of the release says
+      // only that ("underwriting support was provided by …": funding would be a reading of it)
+      if (ruleOn('S230') && /^funded by$/i.test(String(r.role || '').trim())) {
+        if (!r.roleCredit) Object.assign(row, { roleCredit: fundingWord(g.name, rel), roleCreditTouched: true });
+        row.notes = [...(row.notes || []), row.roleCredit === 'support' ? 'supportLabel' : 'fundingLabel'];
+      }
       row.srcRefs = r.refs || []; // [3.17.0]
       // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
       if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
@@ -25408,6 +25672,7 @@
       applyPerformerTracks();
       // [S078] (3.50.0; Z-TAR) a musician for the whole release on the tracks that name the musician as their artist
       applyTrackArtistTracks();
+      soloistResolve(); // [Z-SOLOIST] (3.140.0, S226)
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [S026] nor entries whose credits were all left out for a medium
@@ -26174,6 +26439,17 @@
       S.festivals.push({ name, date, offers: [], line: sentence.trim(), index: m.index, ...(notRec && ruleOn('S220') ? { mention: true } : {}) });
     }
     if (!S.festivals.length) return;
+    // [Z-LJTEXT] (3.140.0, S235) a festival named only in another sentence ("Our thanks go to … the artistic director of the Jazzfest Berlin"):
+    // the date of the text's recording asks for its events – one whose time holds it makes it the festival of the recording
+    const recDate = ruleOn('S235') ? (() => {
+      for (const sent of text.split(/\n+|(?<=[.!?])\s+(?=\p{Lu})/u)) {
+        if (!FEST_RECORDING.test(sent) || storySentence(sent)) continue;
+        const d = (findDates(sent, { usOrder: usDateOrder() })[0] || {}).value;
+        if (d && d.begin && d.begin.year && d.begin.month) return d;
+      }
+      return null;
+    })() : null;
+    if (recDate) S.festivals.filter((f) => f.mention && !(f.date && f.date.begin && f.date.begin.year)).forEach((f) => Object.assign(f, { date: recDate, byRecDate: true }));
     renderSource();
     if (S.festivals.some((f) => f.mention)) renderDates(); // ((3.132.0, review) the chip "Mentioned dates" counts them
     for (const f of S.festivals) {
@@ -26192,8 +26468,15 @@
           return b && en && b <= to && en >= from;
         }).slice(0, 5).map((e) => ({ mbid: e.id, name: e.name, period: [e['life-span'] && e['life-span'].begin, e['life-span'] && e['life-span'].end].filter(Boolean).join(' – '),
           comment: [e.disambiguation, e.type].filter(Boolean).join(', ') }));
+        // ([Z-LJTEXT] S235) found by the date of the recording: the festival of the recording – else only mentioned, its date none
+        if (f.byRecDate) {
+          if (f.offers.length) f.mention = false;
+          else Object.assign(f, { date: null, byRecDate: false });
+        }
       }
+      if (f.byRecDate) renderDates(); // ((S235) no longer only mentioned: the chip "Mentioned dates" counts it no more
       log('info', 'festivalFound', { name: f.name, n: f.offers.length });
+      if (f.byRecDate) log('info', 'festivalByRecDate', { name: f.name, date: formatDateValue(f.date) }); // [Z-LJTEXT] (3.140.0, S235)
       if (f.line) log('info', 'festivalFrom', { line: f.line.length > 160 ? `${f.line.slice(0, 160)} …` : f.line }); // [Z-LOGMORE] (3.128.0)
     }
     renderSource();
@@ -26364,7 +26647,9 @@
       // [Z-FESTCTX] (3.128.0) the sentence it comes from
       const from = f.line ? `<br><span class="dci-sub dci-festival-line">${esc(tr('festival.from', { line: f.line.length > 220 ? `${f.line.slice(0, 220)} …` : f.line }))}</span>` : '';
       // [Z-FESTALL] (3.132.0, S220) only mentioned: said so
-      const mention = f.mention ? ` <span class="dci-warn dci-festival-mention">${esc(tr('festival.mention'))}</span>` : '';
+      const mention = f.mention ? ` <span class="dci-warn dci-festival-mention">${esc(tr('festival.mention'))}</span>`
+        // ([Z-LJTEXT] 3.140.0, S235) named in another sentence, its event found by the date of the recording: said so
+        : f.byRecDate ? ` <span class="dci-sub dci-festival-recdate">${esc(tr('festival.byRecDate'))}</span>` : '';
       return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${mention}${from}</p>${offers}`;
     }).join('')}</div>`;
   }
@@ -31609,7 +31894,7 @@
         x.multi ? `<span class="dci-tg-tag dci-tag-date" title="${esc(trSrc('datefind.alsoRangeTitle'))}">${esc(tr('datefind.alsoRange', { date: formatDateValue(span(x.multi[0].begin, x.multi[x.multi.length - 1].end)) }))}</span>` : '',
         x.consecutive ? `<button type="button" class="dci-textbtn" data-act="datefind-split" data-key="${key}">${esc(tr(asDays ? 'datefind.asPeriod' : 'datefind.asDays'))}</button>` : '',
         x.tracks ? `<span class="dci-tg-tag dci-tag-track">${esc(tr('datefind.tracks', { list: trackListLabel(x.tracks) }))}</span>` : '',
-        x.studios && x.studios.length ? `<span class="dci-tg-tag">${esc(tr('datefind.studio', { list: x.studios.map((k) => { const a = S.artists.get(k); return a ? a.mbName || a.name : ''; }).join(', ') }))}</span>` : '',
+        x.studios && x.studios.length ? `<span class="dci-tg-tag">${esc(studioTagText(x.studios.map((k) => S.artists.get(k)).filter(Boolean)))}</span>` : '',
         placed.length ? `<span class="dci-tg-tag dci-tag-date">${esc(tr('datefind.inMatrix', { list: placed.join(', ') }))}</span>` : '',
       ].join(' ');
       const groups = DATE_GROUPS.map((g) => `<button type="button" class="${x.hint === g.key ? 'dci-primary' : ''}" data-act="datefind-use" data-src="${src}" data-i="${i}" data-group="${g.key}">${esc(g.label)}</button>`).join('');
@@ -32633,6 +32918,20 @@
       </div></div>`;
   }
 
+  /**
+   * [Z-PCLABEL] (3.140.0) The entries a date is limited to, by their kind: "studio: …" for places, "label: …" for labels (the ℗ / © of a
+   * label), "artist: …" for people – until 3.139.0 each a "studio".
+   */
+  function studioTagText(entries) {
+    const by = new Map();
+    for (const a of entries) {
+      const k = entryKind(a);
+      const key = k === 'place' ? 'datefind.studio' : k === 'label' ? 'datefind.label' : k === 'artist' ? 'datefind.artistOf' : 'datefind.entryOf';
+      by.set(key, [...(by.get(key) || []), a.mbName || a.name]);
+    }
+    return [...by].map(([key, names]) => tr(key, { list: names.join(', ') })).join(' · ');
+  }
+
   /** Track groups and studios of a cell, and the target of a picked track group. */
   /** The track groups and studios of a cell; extra: shown right after the track groups (the "Release level" box, 3.10.0). */
   function cellTracksHtml(c, extra = '') {
@@ -32644,7 +32943,7 @@
           <button type="button" class="dci-dm-x" data-act="dm-tg-remove" data-cell="${esc(c.id)}" data-id="${esc(g.id)}" title="${esc(tr('dm.tgRemove', { name: g.name }))}" aria-label="${esc(tr('dm.tgRemove', { name: g.name }))}">×</button></span>`).join('')
           : `<span class="dci-dm-all">${esc(tr('date.allTracks'))}</span>`}
         ${extra}
-        ${studios.length ? `<span class="dci-tg-tag">${esc(tr('datefind.studio', { list: studios.map((a) => a.mbName || a.name).join(', ') }))}</span>` : ''}
+        ${studios.length ? `<span class="dci-tg-tag">${esc(studioTagText(studios))}</span>` : ''}
         ${target ? `<button type="button" class="dci-dm-target" data-act="dm-drop-here" data-cell="${esc(c.id)}">${esc(tr('dm.tracksHere'))}</button>` : ''}
       </div>`;
   }
@@ -33130,12 +33429,14 @@
    * [137d] (3.34.20) A word MusicBrainz does not know as an instrument: "did you mean" its similar instruments · other
    * instruments credited as written (the one chosen pressed); with none like it, what was given.
    */
+  /** [Z-SOLOIST] (3.140.0, S226) The words of the question: an abbreviation, or the instrument of a soloist. */
+  const abbrAskText = (row, chosen = false) => tr(row.abbrAsk.solo ? (chosen ? 'soloist.chosen' : 'soloist.ask') : (chosen ? 'abbr.chosen' : 'abbr.ask'), { abbr: row.abbrAsk.abbr });
   /** [Z-ABBR2] (3.102.0, S166) "“tb” (an abbreviation): trombone · tuba" – the row is staged once one is chosen. */
   function abbrAskHtml(row) {
     const q = row.abbrAsk;
     if (!q || row.level === 'skip') return '';
     const btns = q.options.map((n) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(n)}" aria-pressed="${norm(row.primaryText) === norm(n)}">${esc(n)}</button>`).join(' · ');
-    return `<div class="dci-bass-ask dci-abbr-ask" data-el="abbr-ask">${esc(tr(abbrOpen(row) ? 'abbr.ask' : 'abbr.chosen', { abbr: q.abbr }))} ${btns}</div>`;
+    return `<div class="dci-bass-ask dci-abbr-ask" data-el="abbr-ask">${esc(abbrAskText(row, !abbrOpen(row)))} ${btns}</div>`;
   }
 
   function instrGuessHtml(row) {
@@ -33245,6 +33546,15 @@
     row.primaryText = name;
     row.primaryTouched = true;
     if (row.abbrAsk) row.abbrAsk.chose = name; // [Z-ABBR2] (3.102.0)
+    // [Z-SOLOIST] (3.140.0, S226) the soloist's instrument answered: the attribute solo on the person's row of it (no second row)
+    if (row.abbrAsk && row.abbrAsk.solo && ruleOn('S226')) {
+      const same = S.rows.filter((r) => r !== row && r.artistKey === row.artistKey && r.level !== 'skip' && norm(r.primaryText) === norm(name));
+      if (soloistJoin(row, same)) {
+        same.forEach((r) => rerenderRow(r));
+        removeRow(row);
+        return;
+      }
+    }
     // [Z-QGTR] (3.97.0) the answer is the instrument of the word itself ("guitar" for "Guitar"): the question is answered
     const q = questionRuleFor(row);
     row.baseKept = q && norm(name) === q.base ? q.id : null;
@@ -33453,7 +33763,7 @@
       if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base && !keptBase(row, q)) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), questionOptions(q).map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings
-      if (abbrOpen(row)) parts.push(clineAskHtml('instr', tr('abbr.ask', { abbr: row.abbrAsk.abbr }), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
+      if (abbrOpen(row)) parts.push(clineAskHtml('instr', abbrAskText(row), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
       // [Z-DATEORDER] (3.121.0, S190) a date before the recording (or the mix): keep or remove it
       if (dateOrderOpen(row)) parts.push(`<span class="dci-cl-flag dci-cl-ask dci-dateorder-ask">${dateOrderHtml(row).replace(/^<div[^>]*>|<\/div>$/g, '')}</span>`);
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
