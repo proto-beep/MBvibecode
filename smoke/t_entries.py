@@ -4677,4 +4677,64 @@ def case_dglineup3130r():
         H.LINKED['link_attribute_type'] = linked0
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_headas3142():
+    """Credits Importer 3.142.0 (collected items Z-MBAS, Z-INSTTOP; answers of 2026-11-13 09:14, 09:19): the head of a linked entry and the
+    question of a plain instrument.
+    A) A linked entry says how MusicBrainz has it: "… as MB Drum Guy", the place "place as MB Abbey Road Studios".
+    B) "Bass" (Q001): "bass" is the first answer (MusicBrainz has it as an instrument), then electric bass guitar, double bass …; picked: bass.
+    C) Rule S240 off: the answers as before (no "bass" first).
+    D) (review) The compact line of Bass Man: the five answers as buttons (no list)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        d = pg.evaluate("""(() => { const q = [...document.querySelectorAll('.dci-cl-askq')].find(x => x.querySelector('[data-instr="double bass"], option[value="double bass"]'));
+          return q ? [[...q.querySelectorAll('button[data-act=instr-pick]')].map(x => x.dataset.instr), !!q.querySelector('select')] : null; })()""")
+        print('D)', d)
+        results.append(bool(d) and d[0][:1] == ['bass'] and len(d[0]) == 5 and not d[1] and not errs)
+        ctx.close()
+        for off in (False, True):
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S240']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            HEAD = """(n) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === n);
+              const m = g && g.querySelector('.dci-gmatch'); return m ? m.textContent.replace(/\\s+/g, ' ').trim() : null; }"""
+            ASK = """() => { const q = document.querySelector('.dci-bass-ask[data-question=Q001]'); return q ? [...q.querySelectorAll('[data-act=instr-pick]')].map(b => b.dataset.instr) : null; }"""
+            opts = pg.evaluate(ASK)
+            if not off:
+                heads = [pg.evaluate(HEAD, n) for n in ('Drum Guy', 'Abbey Road Studios')]
+                print('A)', heads)
+                # (the badge "MB" right before the name)
+                results.append(bool(heads[0]) and ' as MBDrum Guy' in heads[0] and bool(heads[1]) and 'place as MBAbbey Road Studios' in heads[1])
+                print('B)', opts)
+                results.append(bool(opts) and opts[0] == 'bass' and 'double bass' in opts and opts.count('bass') == 1)
+                pg.click('.dci-bass-ask[data-question=Q001] [data-act=instr-pick][data-instr="bass"]')
+                pg.wait_for_timeout(400)
+                prim = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man');
+                  const i = g && g.querySelector('[data-f=primary]'); return i ? i.value : null; })()""")
+                print('B) gewählt:', prim)
+                results.append(prim == 'bass')
+            else:
+                print('C)', opts)
+                results.append(bool(opts) and opts[0] != 'bass')
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
