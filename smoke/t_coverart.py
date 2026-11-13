@@ -21,7 +21,7 @@ TEXTS = [
 ]
 DIALOG = """(() => { const el = document.getElementById('dci-ocr'); if (!el) return null;
   return { head: el.querySelector('.dci-ocr-head').innerText.replace(/\\s+/g, ' ').trim(),
-    cards: [...el.querySelectorAll('.dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.innerText.includes('rarely has credits')]),
+    cards: [...el.querySelectorAll('.dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked, c.innerText.includes('rarely has credits')]),
     langs: [...el.querySelectorAll('[data-ocr-lang]')].filter(x => x.checked).map(x => x.dataset.ocrLang),
     run: (el.querySelector('[data-ocr=run], [data-ocr=frames]') || {}).textContent, body: el.querySelector('.dci-ocr-body').innerText.replace(/\\s+/g, ' ').trim() }; })()"""
 
@@ -343,7 +343,7 @@ def case_ocrown():
         print('A) alle:', a0, a1, a2, a3)
         results.append(a0 == ['All images (5)', False, True, 'Next: frames for 3 images →', False] and a1[1:] == [True, False, 'Next: frames for 5 images →', False]
                        and a2[1:] == [False, False, 'Next: frames for 0 images →', True] and a3[1] is True)
-        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(/\\s+/g, ' ').trim()])"
+        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(/\\s+/g, ' ').trim()])"
         ERR = "(document.querySelector('#dci-ocr .dci-ocr-err[role=alert]') || {}).textContent || ''"
         pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'booklet-scan.png', 'mimeType': 'image/png', 'buffer': H.png_of(1400, 1800)},
                                                               {'name': 'notes.txt', 'mimeType': 'text/plain', 'buffer': b'credits'}])
@@ -450,7 +450,7 @@ def case_ocrpdf():
     pdf = H.pdf_of([[(40, 380, 14, 'Booklet'), (40, 350, 12, 'Credits'), (40, 330, 12, 'Marc D. Rusch - double bass'), (40, 310, 12, 'Recorded at the Iridium, New York')],
                     None,
                     [(30, 300, 12, 'Drums - Drum Guy'), (230, 300, 12, 'Piano - Keys Guy'), (30, 280, 12, 'Bass - Bass Man'), (230, 280, 12, 'Organ - Org Guy')]])
-    CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+    CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         H.COVER_ART = []
@@ -568,10 +568,10 @@ def case_ocrdiscogs():
         a = [pg.evaluate("[...document.querySelectorAll('#dci-ocr [data-ocr-discogs]')].map(x => x.textContent.trim())"), list(pages)]
         print('A) Knopf:', a)
         results.append(a == [[f'Load Discogs images (r{rel})'], []])
-        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
         pg.click('#dci-ocr [data-ocr-discogs]')
         H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 2", 20)
-        b1 = [pg.evaluate(CARDS), pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard img')].map(i => i.getAttribute('src').match(/h:(\\d+)/)[1])"),
+        b1 = [pg.evaluate(CARDS), pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard img:not(.dci-sbi img)')].map(i => i.getAttribute('src').match(/h:(\\d+)/)[1])"),
               pg.evaluate("document.querySelector('#dci-ocr [data-ocr-discogs]').disabled"), list(pages)]
         print('B) Discogs:', b1)
         # [3.34.15] not ticked (no choice beforehand)
@@ -658,14 +658,14 @@ def case_dgimages3131():
             pg.click('#dci-ocr [data-ocr-discogs]')
             H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length >= 2", 20)
             pg.wait_for_timeout(500)
-            cards = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => c.querySelector('.dci-ocr-type').textContent.trim())")
+            cards = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => c.querySelector('.dci-ocr-type > span:last-child').textContent.trim())")
             b.close()
             return cards, list(pages), supp, errs
     try:
         cards, pages, supp, errs = run(True)
         print('A)', cards, pages, '\nC)', supp)
         results.append(cards == [f'Discogs r{rel} · {k}' for k in (1, 2, 3)] and pages == [] and not errs)
-        results.append(supp and ['supp-text', '＋ Text …'] in supp and ['ocr-open', '＋ 🖼️ Images …'] in supp)
+        results.append(supp and ['supp-text', '＋ 📄Text …'] in supp and ['ocr-open', '＋ 🖼️Images …'] in supp)
         cards2, pages2, _, _ = run(False)
         print('B)', cards2, pages2)
         results.append(cards2 == [f'Discogs r{rel} · {k}' for k in (1, 2)] and pages2 == [f'https://www.discogs.com/release/{rel}'])
@@ -962,12 +962,12 @@ def case_ocrpeek():
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.src_menu(pg, 'ocr-open')
-        pg.wait_for_selector('#dci-ocr .dci-ocr-card img', timeout=10000)
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card img:not(.dci-sbi img)', timeout=10000)
         pg.wait_for_timeout(500)
-        a = pg.evaluate("""[...document.querySelectorAll('#dci-ocr .dci-ocr-card img')].map(i => { const r = i.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), getComputedStyle(i).objectFit]; })""")
+        a = pg.evaluate("""[...document.querySelectorAll('#dci-ocr .dci-ocr-card img:not(.dci-sbi img)')].map(i => { const r = i.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), getComputedStyle(i).objectFit]; })""")
         print('A) Kacheln:', a)
         results.append(len(a) == 5 and len({(w, h) for w, h, _ in a}) == 1 and a[0][0] == a[0][1] and all(f == 'contain' for _, _, f in a))
-        card = pg.locator('#dci-ocr .dci-ocr-card img').nth(2)
+        card = pg.locator('#dci-ocr .dci-ocr-card img:not(.dci-sbi img)').nth(2)
         card.hover()
         pg.wait_for_timeout(100)
         b0 = pg.evaluate(PEEK)
@@ -984,7 +984,7 @@ def case_ocrpeek():
         # C) an own file and the frames step
         pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'narrow.png', 'mimeType': 'image/png', 'buffer': H.png_of(300, 800)}])
         pg.wait_for_timeout(300)
-        pg.locator('#dci-ocr .dci-ocr-owncard img').hover()
+        pg.locator('#dci-ocr .dci-ocr-owncard img:not(.dci-sbi img)').hover()
         pg.wait_for_timeout(800)
         c1 = pg.evaluate(PEEK)
         pg.mouse.move(5, 5)
@@ -1013,7 +1013,7 @@ def case_ocrload():
        "Next" the others ticked come too, two at a time, the one shown first (Back, Booklet loading, the Tray waiting)."""
     results = []
     held = []
-    CARD = "(() => Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), (c.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || ''])))()"
+    CARD = "(() => Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), (c.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || ''])))()"
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         H.COVER_ART = list(ART)
@@ -1328,7 +1328,7 @@ def case_ocrauto():
        opened again: as it was left.
     E) 30 booklet pages, loading ahead on: two load, 22 more wait, the last 6 are not loaded ahead."""
     results = []
-    TICKS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked]))"
+    TICKS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked]))"
     AUTO = "(() => { const b = document.querySelector('#dci-ocr [data-ocr=auto]'); return b ? b.getAttribute('aria-pressed') : null; })()"
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1960,7 +1960,7 @@ def case_ocrkeep():
     DRAWN = "[...document.querySelectorAll('#dci-ocr [data-ocr-zoom]')].map(c => !!c.dataset.box)"
     NOTE = "(document.querySelector('#dci-ocr [data-ocr-missing]') || {}).textContent"
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Text from cover art: (opened again|as left|started over)/.test(t))"
-    TICKS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked]))"
+    TICKS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked]))"
     STORED = f"localStorage.getItem('dci-ocr:{H.REL}')"
 
     def reload(pg):
@@ -2017,7 +2017,7 @@ def case_ocrkeep():
         b2 = [pg.evaluate(NOTE), pg.evaluate(TEXTS), pg.evaluate(DRAWN)]
         pg.click('#dci-ocr [data-ocr=back]')
         pg.wait_for_selector('#dci-ocr .dci-ocr-owncard', timeout=10000)
-        b3 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, !!c.querySelector('img'), c.classList.contains('dci-ocr-gone')])")
+        b3 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked, !!c.querySelector('img:not(.dci-sbi img)'), c.classList.contains('dci-ocr-gone')])")
         pg.click('#dci-ocr [data-ocr=toresult]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=10000)
         b4 = pg.evaluate(TEXTS)
@@ -2198,6 +2198,90 @@ def case_ocrentry():
         results.append(bool(b1) and b1['crops'] == ['Back: Mixed by Bob Lee', 'Tray: Bob Lee – drums'] and b2['crops'] == [] and bool(b3) and b3['head'] == '' and b3['rows'] == [])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_bcimages3141():
+    """Credits Importer 3.141.0 (collected items Z-BCIMAGES, Z-SUPPICONS; answers of 2026-11-13 09:38, 09:43): Bandcamp's images in the window
+    of the text from cover art, the symbols of the sources.
+    A) Discogs loaded, a Bandcamp album linked: "Supplement with" – each button with the symbol of its source (Bandcamp's logo, 📄, 🖼️).
+    B) The window: the Cover Art Archive's cards with MusicBrainz's symbol, "Load Discogs images (r…)" with Discogs's, "Load Bandcamp images
+       (testband.bandcamp.com/album/testalbum)" with Bandcamp's; nothing of Bandcamp read before the click.
+    C) The click: the cover and the photo of the vinyl edition – "Bandcamp · cover", "Bandcamp · 2", not ticked, "from Bandcamp", Bandcamp's symbol;
+       1200 px addresses of f4.bcbits.com.
+    D) Bandcamp loaded (the release links only to it): its images there at once (no button); E) Symbols: Text – words instead."""
+    BAND = 'https://testband.bandcamp.com'
+    ALBUM = f'{BAND}/album/testalbum'
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'art_id': 1234567890, 'packages': [{'title': 'Vinyl LP', 'arts': [{'image_id': 22222}]}],
+                                   'current': {'title': 'Testalbum', 'credits': 'Mixed by Jane Roe'}, 'trackinfo': TRACKS}, ALBUM)
+    orig_ws = H.ws_release
+    MODE = {'discogs': True}
+
+    def ws(full=False):
+        d = orig_ws(full)
+        if not MODE['discogs']:
+            d['relations'] = [r for r in d['relations'] if not (r.get('url') and 'discogs.com' in r['url']['resource'])]
+            for m in d['media']:
+                m['format'] = 'Digital Media'
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+    H.ws_release = ws
+    CARDS = """[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type > span:last-child').textContent.trim(), c.querySelector('input').checked,
+      c.querySelector('.dci-sub').textContent.replace(' remove', '').trim(), (c.querySelector('.dci-sbi') || {}).className || '', c.querySelector('img').getAttribute('src')])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run in ('A', 'D', 'E'):
+            MODE['discogs'] = run == 'A'
+            H.COVER_ART = list(ART)
+            ctx = H.new_context(b)
+            beta_on(ctx)
+            if run == 'E':
+                ctx.add_init_script("localStorage.setItem('dci-emoji-text', 'true');")
+            bcimg = []
+            ctx.route('https://f4.bcbits.com/**', lambda r: (bcimg.append(r.request.url), r.fulfill(body=H.png_of(1200, 1200), content_type='image/jpeg', headers={'Access-Control-Allow-Origin': '*'}))[1])
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(600)
+            if run == 'A':
+                H.open_supp(pg)
+                supp = pg.evaluate("[...document.querySelectorAll('.dci-suppbar .dci-supp-btn')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim(), (x.querySelector('.dci-sbi') || {}).className || ''])")
+                print('A)', supp)
+                results.append(len(supp) == 3 and 'dci-sbi-bc' in supp[0][1] and supp[0][0] == '＋ Bandcamp testband.bandcamp.com/album/testalbum'
+                               and supp[1][0] == '＋ 📄Text …' and 'dci-sbi-text' in supp[1][1] and supp[2][0] == '＋ 🖼️Images …' and 'dci-sbi-ocr' in supp[2][1])
+            H.src_menu(pg, 'ocr-open')
+            pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+            pg.wait_for_timeout(400)
+            caa = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-card:not(.dci-ocr-owncard) .dci-sbi')].map(x => x.className)")
+            btns = pg.evaluate("[...document.querySelectorAll('#dci-ocr [data-ocr-discogs], #dci-ocr [data-ocr-bandcamp]')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim(), (x.querySelector('.dci-sbi') || {}).className])")
+            if run == 'A':
+                print('B)', caa[:2], btns, '| Bandcamp vorher:', bcimg)
+                results.append(len(caa) == len(ART) and all('dci-sbi-mb' in c for c in caa) and len(btns) == 2 and 'dci-sbi-dg' in btns[0][1]
+                               and btns[1][0] == 'Load Bandcamp images (testband.bandcamp.com/album/testalbum)' and 'dci-sbi-bc' in btns[1][1])
+                pg.click('#dci-ocr [data-ocr-bandcamp]')
+                H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 2", 20)
+            cards = pg.evaluate(CARDS)
+            print(f'{"C" if run == "A" else run})', cards, btns if run != 'A' else '')
+            want = [['Bandcamp · cover', False, 'from Bandcamp', 'https://f4.bcbits.com/img/a1234567890_16.jpg'],
+                    ['Bandcamp · 2', False, 'from Bandcamp', 'https://f4.bcbits.com/img/0000022222_16.jpg']]
+            results.append([[c[0], c[1], c[2], c[4]] for c in cards] == want and all('dci-sbi-bc' in c[3] for c in cards))
+            if run == 'D':
+                results.append(not any('data-ocr-bandcamp' in str(x) or 'Bandcamp' in x[0] for x in btns))
+            if run == 'E':
+                words = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-sbi')].map(x => x.textContent.trim())")
+                print('E) Wörter:', sorted(set(words)))
+                results.append({'MB', 'BC'} <= set(words) and all('dci-sbi-word' in c[3] for c in cards))
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
