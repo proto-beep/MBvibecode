@@ -691,6 +691,10 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     of 3.40.4 (words): no change
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   search3137r: 3.137.0 (review of Z-SEARCH): the search after the dashboard is built anew, Esc with "⚙ Options ▾" open,
+                                #     the role of a compact line (legacy), "/" in a field of the page, the focus after ✕
+                                #   search3137: 3.137.0 (Z-SEARCH): 🔍 and "/" (not in a field), hits as you type (no case, no accents; a name and its MB
+                                #     name one hit), ↓ / Enter / ↑ round, no hits, a hit behind "▸ n more" (hidden, nothing unfolded), Esc (the dashboard stays)
                                 #   srctag3127: 3.127.0 (Z-SRCTAG, Z-ICONS, Z-SKIPVIS, S201): the badges of the sources after the name (the same square
                                 #     each; Discogs white on black, a link to the release), MusicBrainz for a relationship it has and a remixer of a title
                                 #     (a link to the recording), at the rows only with more than one source; "Skip ⤼"; Symbols: Text – "DG", "MB"; X018
@@ -759,6 +763,10 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   settabs3137: 3.137.0 (Z-SETTABS2): two columns (names right-aligned without a colon, the choices at one place), the dot at
+                                #     what differs from the default, explanations below, dependent switches indented and greyed out, the tab Developer only in
+                                #     developer mode (its switch in General, last after Beta), "Discogs & Bandcamp", the messages hidden, the companion's
+                                #     switches as checkboxes, a narrow menu: the name above
                                 #   settabs3136: 3.136.0 (Z-SETTABS): the subheadings of the tabs, the matrix of an entry under Appearance, developer mode only
                                 #     in "Developer", "Performance dates onto linked works" under Works
                                 #   profnew3108: 3.108.0 (Z-PROFNEW): "+ New profile" – a copy of the settings, named, active, its name focused

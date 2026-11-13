@@ -223,7 +223,7 @@ def case_bcview():
         pg.wait_for_timeout(300)
         # [3.25.0] the topic is a tab, its content the pane
         g2 = pg.evaluate("""(() => { const s = document.querySelector('[data-el=settings]'); const t = s.querySelector('.dci-set-pane');
-      return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').textContent.trim(),
+      return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').closest('label').textContent.trim(),
         !!t.querySelector('[data-dg-artwork]'), t.querySelector('.dci-sub').textContent.trim().slice(0, 60)]; })()""")
         print('G) alter Companion:', g1, '| Menü:', g2)
         results.append(g1.startswith('Script Companion: version 1.8.0 or later needed for Bandcamp') and g2[:3] == ['Source pages', 'Bandcamp status', False])

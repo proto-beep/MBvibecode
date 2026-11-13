@@ -322,10 +322,11 @@ def case_worksskip():
         pg.wait_for_timeout(300)
         pg.locator('[data-act=settings-topic][data-topic=works]').evaluate('b => b.click()')
         pg.wait_for_timeout(300)
-        f = pg.evaluate("(() => { const i = document.querySelector('[data-set=awAsk]'); return i ? [i.value, i.min, i.getAttribute('aria-label'), i.closest('label').textContent.replace(/\\s+/g, ' ').trim(), i.closest('label').title] : null; })()")
+        # ([Z-SETTABS2] 3.137.0) a row of two columns: the name (with the tooltip) on the left, "(0: never)" below the field
+        f = pg.evaluate("(() => { const i = document.querySelector('[data-set=awAsk]'); const r = i && i.closest('.dci-set-row'); return i ? [i.value, i.min, i.getAttribute('aria-label'), r.textContent.replace(/\\s+/g, ' ').trim(), r.querySelector('.dci-set-lbl').title] : null; })()")
         pg.evaluate("localStorage.removeItem('dci-aw-ask')")
         print('   Einstellung:', f)
-        results.append(f is not None and f[0] == '3' and f[1] == '0' and 'tracks without a work (0: never)' in f[3]
+        results.append(f is not None and f[0] == '3' and f[1] == '0' and 'tracks without a work' in f[3] and f[3].endswith('0: never')
                        and tip.startswith('Counted are the tracks without a work') and f[4] == tip)
         # G) [3.19.3] the rows skipped with the works matrix: shown with their entries (setting, on) or not
         click(pg, '[data-el=works] [data-act=mx-skip]')
