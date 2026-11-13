@@ -1472,4 +1472,203 @@ def case_snw383():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_bwv3138():
+    """Credits Importer 3.138.0 (collected item Z-BWV, rule S224): a track without a work of its title whose title has a catalogue number
+    is looked up by the number among the works of its composer (Johann Sebastian Bach, composer of tracks 2–4).
+    A) "Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001" → the movement "… BWV 1001: I. Adagio" only (not the sonata, not
+       BWV 1002), the list says "with BWV 1001"; the query "work:"bwv 1001"" with Bach's MBID.
+    B) "Sonata in G minor, BWV 1001" (no movement named) → the sonata itself. C) "Fuga (BWV 1001)" → "II. Fuga".
+    D) S224 off: nothing found for them."""
+    BACH = H.uid('dddddddd', 401)
+    H.ARTISTS[3201] = (BACH, 'Johann Sebastian Bach')
+    S1001 = H.uid('eeeeeeee', 401)
+    MV = {k: H.uid('eeeeeeee', 402 + n) for n, k in enumerate(['I. Adagio', 'II. Fuga', 'III. Siciliana', 'IV. Presto'])}
+    P1002 = H.uid('eeeeeeee', 410)
+    comp = [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': BACH, 'name': 'Johann Sebastian Bach'}}]
+    sonata = 'Sonata for Violin solo no. 1 in G minor, BWV 1001'
+    works = [{'id': S1001, 'title': sonata, 'aliases': [], 'type': 'Sonata', 'relations': comp}]
+    works += [{'id': g, 'title': f'{sonata}: {k}', 'aliases': [], 'type': '', 'relations': comp} for k, g in MV.items()]
+    works += [{'id': P1002, 'title': 'Partita for Violin solo no. 1 in B minor, BWV 1002: I. Allemanda', 'aliases': [], 'type': '', 'relations': comp}]
+    orig = H.discogs_release
+    H.TITLES[:] = ['Song One', 'Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001', 'Sonata in G minor, BWV 1001', 'Fuga (BWV 1001)']
+
+    def rel():
+        d = orig()
+        for t, title in zip(d['tracklist'], H.TITLES):
+            t['title'] = title
+            t['extraartists'] = []
+        d['extraartists'] = [{'name': 'Johann Sebastian Bach', 'anv': '', 'role': 'Composed By', 'tracks': '2 to 4', 'id': 3201, 'join': ''}]
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    PICKS = """(i) => [...document.querySelectorAll(`[data-el=works] tr[data-work="${i}"] .dci-same [data-act=work-pick]`)].map(b => b.dataset.title)"""
+    results = []
+
+    def run(off):
+        H.WORK_SEARCH[:] = works
+        H.WORK_QUERIES[:] = []
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            if off:
+                ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) localStorage.setItem('dci-rules-off', JSON.stringify(['S224']))")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            picks = [pg.evaluate(f"({PICKS})({i})") for i in (1, 2, 3)]
+            head = pg.evaluate("(document.querySelector('[data-el=works] tr[data-work=\"1\"] .dci-same strong') || {}).textContent || ''")
+            log = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'found by' in x]
+            b.close()
+            return picks, head, log, [q for q in H.WORK_QUERIES if 'work:"bwv' in q.lower()], errs
+    picks, head, log, qs, errs = run(False)
+    print('A-C)', picks, '|', head, '|', log[:1], '|', qs[:1])
+    results.append(picks[0] == [f'{sonata}: I. Adagio'] and 'with BWV 1001' in head and any('work:"bwv 1001"' in q and BACH in q for q in qs))
+    results.append(picks[1] == [sonata])
+    results.append(picks[2] == [f'{sonata}: II. Fuga'])
+    results.append(not errs)
+    picks2, _h, _l, qs2, errs2 = run(True)
+    print('D) aus:', picks2, qs2)
+    results.append(picks2 == [[], [], []] and not qs2 and not errs2)
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_onework3138():
+    """Credits Importer 3.138.0 (collected item Z-ONEWORK, rule S225): only some works – in the head of the works matrix.
+    A) "＋ New works (3)": tracks 2–4 new works. ☝ opens a list of the four tracks; track 3 picked – only its new work stays, the others
+       "no work"; the log says so; ↺ appears and brings the three back.
+    B) 🔗 Existing works only: the new works gone (track 1, linked, stays); ↺ back.
+    C) ✍ Writing credits only: the new works of the tracks with writing credits stay, the others gone.
+    D) "Symbols: Text": words instead of the symbols ("Writing credits only", "Existing works only", "Only one …", "All back")."""
+    PENDING = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-badge-plan')).map(tr => Number(tr.dataset.work))"
+    CREDITS = "[...new Set([...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-mxchip')).map(tr => Number(tr.dataset.work)))]"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(500)
+        withCredits = pg.evaluate(CREDITS)
+        pg.click('[data-el=works] [data-act=works-pending-all]')
+        pg.wait_for_timeout(500)
+        p0 = pg.evaluate(PENDING)
+        pg.click('[data-el=works] [data-act=wone-open]')
+        pg.wait_for_timeout(300)
+        items = pg.locator('[data-el=works-one] [data-act=wone-pick]').count()
+        pg.click('[data-el=works-one] [data-act=wone-pick][data-i="2"]')
+        pg.wait_for_timeout(400)
+        p1 = pg.evaluate(PENDING)
+        logl = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Works matrix – ' in x]
+        undo = pg.locator('[data-el=works] [data-act=wone-undo]').count()
+        pg.click('[data-el=works] [data-act=wone-undo]')
+        pg.wait_for_timeout(400)
+        p2 = pg.evaluate(PENDING)
+        print('A)', p0, items, p1, logl[-1:], undo, p2)
+        results.append(p0 == [1, 2, 3] and items == 4 and p1 == [2] and logl and 'tracks with a work 2 of 4' in logl[-1] and undo == 1 and p2 == [1, 2, 3])
+        pg.click('[data-el=works] [data-act=wone-existing]')
+        pg.wait_for_timeout(400)
+        b1 = [pg.evaluate(PENDING), pg.evaluate("document.querySelector('[data-el=works] [data-act=wone-existing]').getAttribute('aria-pressed')"),
+              pg.evaluate("!!document.querySelector('[data-el=works] tr[data-work=\"0\"] .dci-badge-ok')")]
+        pg.click('[data-el=works] [data-act=wone-undo]')
+        pg.wait_for_timeout(400)
+        b2 = pg.evaluate(PENDING)
+        print('B)', b1, b2)
+        results.append(b1 == [[], 'true', True] and b2 == [1, 2, 3])
+        pg.click('[data-el=works] [data-act=wone-credits]')
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(PENDING)
+        print('C) mit Credits:', withCredits, '→', c1)
+        results.append(c1 == [i for i in [1, 2, 3] if i in withCredits] and len(c1) < 3)
+        H.open_settings(pg, 'appearance')
+        pg.click('.dci-set-pane [data-act=emoji-mode][data-mode=text]')
+        pg.wait_for_timeout(400)
+        d = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-wone-btn')].map(b => b.textContent.trim())")
+        print('D)', d)
+        results.append(d == ['Writing credits only', 'Existing works only', 'Only one …', 'All back'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_bwv3138r():
+    """Credits Importer 3.138.0 (review of Z-BWV): the movement after ": " (not the colon of "Hob. I:104"), "No. 15" as a pair, no small words.
+    A) "Symphony No. 104 in D major, Hob. I:104" (no movement named) → the symphony only, not its movements.
+    B) "Prelude No. 15 in D-flat Major, Op. 28" → "24 Préludes, Op. 28: No. 15 in D-flat major “Raindrop”" only (not every prelude).
+    C) "Requiem in D minor, Op. 48" → the Requiem, not "VII. In paradisum".
+    D) ↺ of ✍ 🔗 ☝ takes back only what they did: a new work planned by hand afterwards on a track they dropped stays."""
+    X = H.uid('dddddddd', 402)
+    H.ARTISTS[3202] = (X, 'Ann Composer')
+    comp = [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': X, 'name': 'Ann Composer'}}]
+    titles = ['Symphony no. 104 in D major, Hob. I:104 “London”', 'Symphony no. 104 in D major, Hob. I:104 “London”: I. Adagio – Allegro',
+              'Symphony no. 104 in D major, Hob. I:104 “London”: II. Andante', '24 Préludes, Op. 28', '24 Préludes, Op. 28: No. 14 in E-flat minor',
+              '24 Préludes, Op. 28: No. 15 in D-flat major “Raindrop”', '24 Préludes, Op. 28: No. 16 in B-flat minor', 'Requiem in D minor, Op. 48',
+              'Requiem in D minor, Op. 48: I. Introït et Kyrie', 'Requiem in D minor, Op. 48: VII. In paradisum']
+    works = [{'id': H.uid('eeeeeeee', 450 + k), 'title': t, 'aliases': [], 'type': '', 'relations': comp} for k, t in enumerate(titles)]
+    orig = H.discogs_release
+    H.TITLES[:] = ['Song One', 'Symphony No. 104 in D major, Hob. I:104', 'Prelude No. 15 in D-flat Major, Op. 28', 'Requiem in D minor, Op. 48']
+
+    def rel():
+        d = orig()
+        for t, title in zip(d['tracklist'], H.TITLES):
+            t['title'] = title
+            t['extraartists'] = []
+        d['extraartists'] = [{'name': 'Ann Composer', 'anv': '', 'role': 'Composed By', 'tracks': '2 to 4', 'id': 3202, 'join': ''}]
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    H.WORK_SEARCH[:] = works
+    PICKS = """(i) => [...document.querySelectorAll(`[data-el=works] tr[data-work="${i}"] .dci-same [data-act=work-pick]`)].map(b => b.dataset.title)"""
+    PENDING = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-badge-plan')).map(tr => Number(tr.dataset.work))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        picks = [pg.evaluate(f"({PICKS})({i})") for i in (1, 2, 3)]
+        print('A-C)', picks)
+        results.append(picks[0] == [titles[0]])
+        results.append(picks[1] == [titles[5]])
+        results.append(picks[2] == [titles[7]])
+        # D) ☝ track 2 (all new works first, without the question of works of the same title: "all" anyway)
+        pg.click('[data-el=works] [data-act=works-pending-all]')
+        pg.wait_for_timeout(400)
+        if pg.locator('[data-act=mx-dup-answer][data-answer=all]').count():
+            pg.click('[data-act=mx-dup-answer][data-answer=all]')
+            pg.wait_for_timeout(400)
+        d0 = pg.evaluate(PENDING)
+        pg.click('[data-el=works] [data-act=wone-open]')
+        pg.wait_for_timeout(200)
+        pg.click('[data-el=works-one] [data-act=wone-pick][data-i="1"]')
+        pg.wait_for_timeout(400)
+        d1 = pg.evaluate(PENDING)
+        pg.click('[data-el=works] tr[data-work="3"] [data-act=work-pending]')
+        pg.wait_for_timeout(400)
+        d2 = pg.evaluate(PENDING)
+        pg.click('[data-el=works] [data-act=wone-undo]')
+        pg.wait_for_timeout(400)
+        d3 = pg.evaluate(PENDING)
+        focus = pg.evaluate("document.activeElement.dataset.act || ''")
+        print('D) alle neu:', d0, '| ☝ 1.2:', d1, '| von Hand 1.4:', d2, '| ↺:', d3, '| Fokus:', focus)
+        results.append(d0 == [1, 2, 3] and d1 == [1] and d2 == [1, 3] and d3 == [1, 2, 3] and focus == 'wone-open')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

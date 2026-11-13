@@ -13,7 +13,9 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   (`https://raw.githubusercontent.com/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json`) – totals (edits,
   submissions, different editors), per month, per version, per edit type, status, auto-edit or voted, the relationship types, the
   sources and supplements, and what the "Done:" lines say (credit relationships per level, works linked, role credits and dates
-  added).
+  added). From Credits Importer 3.139.0 (collected item Z-GSTNEW) also `supplemented` (the submissions with an "Also from:" line, of
+  all), `source_mix` (the source of each submission with its supplements, e.g. `discogs+bandcamp`) and `remixes` (the relationships
+  added of the types remixer, remix and commissioned).
 - **Privacy:** only numbers. No editor names or ids, no edits, no releases, no URLs; "editors" is how many different ones.
 - **Safety:** an archive cut off or without the tables is an error – nothing is written or committed.
 - **How:** `global_stats.py` reads the archive as a stream (nothing on disk): the table `edit` (the edits from `--since` on, by
