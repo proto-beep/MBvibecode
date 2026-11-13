@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.141.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.142.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.142.0 · 2026-11-13
+
+- **Z-MBAS:** `matchHtmlInner` (linked, manual, created) – `.dci-mbas` (`match.as`) before the MusicBrainz link.
+- **Z-INSTTOP (S240):** `questionOptions(q)` – the answers of `questionOptions0` (before: `questionOptions`; its cache `questionOptions0.cache`) with MusicBrainz's instrument of `q.base` first (not for a question with `preset`).
+- **Z-SETDOT:** `settingsHtml` – `dotSlot(dot)` (`.dci-set-dotslot`) in every `field`, `cb` and `right` (the dot of `field` no longer in the name, that of `cb` no longer after its label); CSS: the grid of `.dci-set-field` in three columns (name · 9 · choices); `@container (max-width: 36em)`: name and dot in the first line, the choices below at the name's edge.
+- **Z-YELLJUMP:** `navShowSource(el, row)` (the row's line, the entry's head for an item of the entry – `showSourceOf`, nothing without the companion) from `gotoYell`, `gotoOcr`, `gotoIncomplete`.
+- **Z-UNIQ (S241):** `UNIQ_KINDS`, `uniqHtml(uniq, global)` (`stats.uniq.*`); `statsMore` – `m.uniq` (kind → MBID → made new), the card `linked` first in "who"; `globalStatsClean` – `linked`; `globalCoreParts` – the card `glinked`; `stats/global_stats.py` – `rel_targets` (the entries an added relationship links; a work with a writer: the writer), `self.targets`, `out['linked']`; `stats/test_global_stats.py` – the check `linked (remixes)`; `stats/README.md`.
+- **Tests:** `t_ui_settings.py setdot3142`, `t_ui_settings.py uniq3142`, `t_entries.py headas3142`, `t_companion_discogs.py yelljump3142` – new, fail on 3.141.0. `t_rules_window.py wqedit`, `t_ui_view.py compact`: the question's answers with the word itself first. `register_golden.json` anew (S240, S241).
+- **Review:** the compact line's answers as buttons up to five ("Bass" has five now); "Linked entries" of the relationships added only (not those MusicBrainz had), as the dump; `rel_targets` – two works both counted; the targets in the string of `rel_facts` (one entry an edit, `facts_of` takes the first five parts); the narrow settings: a switch's dot before it on its line; the first answer only the instrument of that very name (not an alias), looked up once (`questionOptions.top`); S241's `where`.
 
 ## Import 3.141.0 · 2026-11-13
 

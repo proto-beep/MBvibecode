@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-13 | 3.137.0 – 3.141.0 | – |
+| 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
@@ -106,6 +106,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.142.0
+
+- **"as" before the MusicBrainz name** (collected item Z-MBAS): the head of a linked entry says "place as MB Regent Sound Studios", "… as MB Jane Doe" – the entry is MusicBrainz's, as MusicBrainz writes it.
+- **The instrument as written first** (Z-INSTTOP; rule S240): in the question of a plain instrument the word itself is the first answer – "bass" before electric bass guitar, double bass …; "guitar" before electric guitar … (when MusicBrainz has it as an instrument).
+- **The dot of the settings in a place of its own** (Z-SETDOT): between the name and the choices, always there – nothing moves when a setting leaves or comes back to its default.
+- **Through the open items with the source** (Z-YELLJUMP): going through ‹ ● n › in the footer (and 🖼️ n, the open rows) the companion shows the item's line on the source page and lights it up, as a click on its row does.
+- **Linked entries** (Z-UNIQ; S241): a card in the statistics ("who") – how many different artists, labels, places, areas, events and works were linked, of them made new with the dashboard; in "Global" from the next run of the dump.
 
 ### Import 3.141.0
 

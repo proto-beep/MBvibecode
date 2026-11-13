@@ -120,9 +120,24 @@ def rel_facts(d, lt):
     return f"{ids('artist')}|{'' if year is None else year}|{ids('recording')}|{','.join(attrs)}|{int(creditable)}{int(credited)}"
 
 
+LINKED_KINDS = ('artist', 'label', 'place', 'area', 'event', 'work')
+
+
+def rel_targets(d, lt):
+    """[3.142.0, Z-UNIQ] The entries an added relationship links, in short ("artist:12,work:7" → only the artist: a work with a writer is
+    the writer's; the release, its recordings and release group are none): the kinds of LINKED_KINDS with their ids."""
+    types = [d.get('type0') or lt.get('entity0_type'), d.get('type1') or lt.get('entity1_type')]
+    ents = [d.get('entity0') if isinstance(d.get('entity0'), dict) else {}, d.get('entity1') if isinstance(d.get('entity1'), dict) else {}]
+    out = [(t, as_int(e.get('id'))) for t, e in zip(types, ents) if t in LINKED_KINDS and as_int(e.get('id')) is not None]
+    # ((review) a work with a writer: the writer; two works (an arrangement, a part): both
+    if any(t != 'work' for t, _ in out):
+        out = [x for x in out if x[0] != 'work']
+    return ','.join(f'{t}:{i}' for t, i in out)
+
+
 def facts_of(text):
     """[3.55.0] The parts of rel_facts: (artist ids, year, recording ids, ((type id, credited), …), creditable, credited)."""
-    a, y, r, at, fl = text.split('|')
+    a, y, r, at, fl = text.split('|')[:5]
     nums = lambda x: tuple(int(v) for v in x.split(',') if v)
     attrs = tuple((int(t), int(c)) for t, c in (x.split(':') for x in at.split(',') if x))
     return nums(a), int(y) if y else None, nums(r), attrs, fl[0] == '1', fl[1] == '1'
@@ -211,7 +226,9 @@ class Stats:
             self.ltype[i] = f'#{lid}'
         # [3.55.0] what an added relationship is made of (only 90: its entities, date, attributes and credits are in its data)
         if (self.edits.get(i, 0) >> 12) & 0xFFF == 90:
-            self.facts[i] = rel_facts(d, lt)
+            # [3.142.0, Z-UNIQ] with the entries it links (not the release, its recordings or release group; a work with a writer: the
+            # writer) – ((review) in the same string: one entry an edit
+            self.facts[i] = f'{rel_facts(d, lt)}|{rel_targets(d, lt)}'
 
     def link_row(self, raw):
         # [3.55.0] edit_release (edit, release) – after edit_note: only the script's edits
@@ -351,6 +368,15 @@ class Stats:
         # [3.55.0, Z-ALI] "credited as" of the relationships the script added with an artist, a label or a place
         facts = self.script_facts()
         out['credits'] = {'credited_as': {'n': sum(1 for f in facts if f[4] and f[5]), 'of': sum(1 for f in facts if f[4])}}
+        # [3.142.0, Z-UNIQ] the different entries linked by the script's relationships (open or applied), by kind – how many, no ids
+        seen = {k: set() for k in LINKED_KINDS}
+        for e in self.notes:
+            if e in self.facts and self.info(e)[2] in (1, 2):
+                for part in (self.facts[e].split('|')[5:] or [''])[0].split(','):
+                    k, _, i = part.partition(':')
+                    if k in seen:
+                        seen[k].add(i)
+        out['linked'] = {k: {'n': len(v)} for k, v in seen.items()}
         out['rows_read'] = dict(self.rows)
         return out
 
