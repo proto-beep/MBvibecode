@@ -1667,4 +1667,87 @@ def case_gaprefresh3135():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_gaprefresh3139():
+    """Credits Importer 3.139.0 (collected item Z-GAPREFRESH2b; rule S223): a credit taken out in the editor on some of its tracks only.
+    A) Staged; Bass Man's relationships with the recordings of tracks 2 and 3 taken out by hand; "Enter edit": the credit kept with those
+       tracks (and counted as missing).
+    B) The next import asks for it with "(on tracks 2, 3 only)"; ✓ takes those tracks off his row (on its level, not Skip): 2 of 4 tracks."""
+    REL = H.REL
+    results = []
+    TRACKS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man');
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-act=level][aria-pressed=true]') || {}).dataset ? r.querySelector('[data-act=level][aria-pressed=true]').dataset.level : '',
+        (r.querySelector('.dci-c-tracks') || {}).textContent || '']) : null; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        t0 = pg.evaluate(TRACKS)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(3000)
+        bm = H.ARTISTS[3001][0]
+        recs = [H.REC[1], H.REC[2]]
+        n = pg.evaluate(f"""(() => {{ const re = MB.relationshipEditor; const own = re.state.added.filter(r => r.entity0 && r.entity0.gid === '{bm}' && r.entity1 && {recs}.includes(r.entity1.gid));
+          own.forEach((r) => re.dispatch({{ type: 'remove-relationship', relationship: r }})); return own.length; }})()""")
+        pg.evaluate("""() => { const t = document.getElementById('edit-note-text'); const f = document.createElement('form'); t.parentNode.insertBefore(f, t); f.appendChild(t);
+          const btn = document.createElement('button'); btn.type = 'submit'; btn.textContent = 'Enter edit'; f.appendChild(btn); f.addEventListener('submit', (e) => e.preventDefault()); }""")
+        pg.evaluate("document.getElementById('edit-note-text').form.requestSubmit()")
+        pg.wait_for_timeout(800)
+        after = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null')")
+        kept = pg.evaluate(f"(JSON.parse(localStorage.getItem('dci-removed-in-editor') || '{{}}')['{REL}'] || [])")
+        print('A) vorher:', t0, '| herausgenommen:', n, '| nach Enter edit:', after, '| gemerkt:', kept)
+        results.append(n == 2 and after and after.get('removed') == 2 and len(kept) == 1 and 'Bass Man' in kept[0]['label'] and kept[0].get('tracks') == [1, 2])
+        pg2, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg2.on('dialog', lambda d: d.accept())
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg2.wait_for_timeout(1500)
+        box = pg2.evaluate("(() => { const b = document.querySelector('[data-el=rmdask]'); return b ? [...b.querySelectorAll('li')].map(l => l.textContent.trim()) : null; })()")
+        pg2.click('[data-el=rmdask] [data-act=rmd-skip]')
+        pg2.wait_for_timeout(600)
+        t1 = pg2.evaluate(TRACKS)
+        print('B) Frage:', box, '| nach ✓:', t1)
+        results.append(bool(box) and len(box) == 1 and '(on tracks 2, 3 only)' in box[0] and t1 and len(t1) == 1 and t1[0][0] == 'recording'
+                       and '4 of 4 tracks' in t0[0][1] and '2 of 4 tracks' in t1[0][1])
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_gapbg3139():
+    """Credits Importer 3.139.0 (collected item Z-GAPBG): on the line of the release page ↗ at the right of "Import credits …" – a tooltip naming
+    the source; a click opens the page of the source of the line (Discogs) in a tab in the background and starts the import as "Import credits …"."""
+    REL = H.REL
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        a = pr.evaluate("""(() => { const i = document.querySelector('.dci-gapline [data-gap=import]'), g = document.querySelector('.dci-gapline [data-gap=import-bg]');
+          if (!g) return null; const ri = i.getBoundingClientRect(), rg = g.getBoundingClientRect();
+          return [g.textContent.trim(), g.title, Math.abs(rg.left - ri.right) < 2, Math.abs(rg.top - ri.top) < 2]; })()""")
+        print('A)', a)
+        results.append(bool(a) and a[0] == '↗' and a[1] == 'Import credits … and open Discogs in a tab in the background' and a[2] and a[3])
+        pr.evaluate("window.__opened = []; window.GM_openInTab = (u, o) => { window.__opened.push([u, o]); sessionStorage.setItem('dci-test-opened', JSON.stringify(window.__opened)); };")
+        pr.click('.dci-gapline [data-gap=import-bg]')
+        pr.wait_for_url('**/edit-relationships', timeout=20000)
+        opened = pr.evaluate("JSON.parse(sessionStorage.getItem('dci-test-opened') || '[]')")
+        H.wait_for(pr, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        d = pr.evaluate("!document.getElementById('dci-overlay').hidden")
+        print('B) geöffnet:', opened, '| Dashboard mit Import:', d)
+        opened = [x for x in opened if x[0]]
+        results.append(len(opened) == 1 and 'discogs.com/release/' in opened[0][0] and opened[0][1] and opened[0][1].get('active') is False and d)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
