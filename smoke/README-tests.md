@@ -771,6 +771,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   gstnew3139: 3.139.0 (Z-GSTNEW): "Global" with "Supplemented instead of new", "Remixes and commissions", "Sources of the
+                                #     submissions" (in the groups What and Sources)
                                 #   settabs3137: 3.137.0 (Z-SETTABS2): two columns (names right-aligned without a colon, the choices at one place), the dot at
                                 #     what differs from the default, explanations below, dependent switches indented and greyed out, the tab Developer only in
                                 #     developer mode (its switch in General, last after Beta), "Discogs & Bandcamp", the messages hidden, the companion's
@@ -1121,6 +1123,9 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     recording without a work; S117 off, a single song, another channel: no series
 
 python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   gaprefresh3139: 3.139.0 (Z-GAPREFRESH2b, S223): a credit taken out on tracks 2 and 3 only – kept with them, asked "(on
+                                #     tracks 2, 3 only)", ✓ takes them off the row (2 of 4 tracks)
+                                #   gapbg3139: 3.139.0 (Z-GAPBG): ↗ beside "Import credits …" – the source in a tab in the background, the import started
                                 #   gaprefresh3135: 3.135.0 (Z-GAPREFRESH2, S223): Guitar Guy taken out in the editor – counted as missing, said apart on
                                 #     the release page; the next import asks "Skip them again?" – ✓ on Skip
                                 #   gapcenter3120: 3.120.0 (Z-GAPCENTER): the text of the line "Discogs: about … relationships" centred, the buttons beside it
