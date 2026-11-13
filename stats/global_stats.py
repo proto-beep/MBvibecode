@@ -247,6 +247,7 @@ class Stats:
         by_month = defaultdict(lambda: {'edits': 0, 'submissions': 0, 'editors': set()})
         by_version = defaultdict(lambda: {'edits': 0, 'submissions': 0})
         types, status, ltypes, auto = Counter(), Counter(), Counter(), Counter()
+        added_lt = Counter()  # [3.139.0, Z-GSTNEW] the types of the relationships added (90)
         editors = set()
         groups = defaultdict(list)  # (editor, the script's lines) → [(time, month, version, text)]
         for edit_id, (nid, text, post) in self.notes.items():
@@ -261,7 +262,11 @@ class Stats:
             auto['auto-edit' if au else 'voted'] += 1
             if edit_id in self.ltype:
                 lt = self.ltype[edit_id]
-                ltypes[self.lt_names.get(int(lt[1:]), lt) if lt.startswith('#') else lt] += 1
+                name = self.lt_names.get(int(lt[1:]), lt) if lt.startswith('#') else lt
+                ltypes[name] += 1
+                # ((review) open or applied, as the facts of the core pass)
+                if t == 90 and stt in (1, 2):
+                    added_lt[name.lower()] += 1
             core = '\n'.join(line.strip() for line in text.split('\n') if line.strip().startswith(CORE))
             groups[(editor, core)].append((seconds(post), mon, ver, text, edit_id))
         # a submission: the same note of one editor, its parts at most SUBMISSION_GAP apart (its "Done:" counted once)
@@ -289,16 +294,20 @@ class Stats:
         # [3.91.0, Z-SRR] per release (all its submissions): its credit relationships, also by level ("Done:")
         per_rel = defaultdict(Counter)
         sources, supps, done, levels = Counter(), Counter(), Counter(), Counter()
+        mix = Counter()  # [3.139.0, Z-GSTNEW] the source of a submission with its supplements ("discogs+bandcamp")
+        supplemented = 0
         for k, (_, mon, ver, text) in enumerate(subs):
             by_version[ver]['submissions'] += 1
             by_month[mon]['submissions'] += 1
             src = None
+            also = []
             for line in text.split('\n'):
                 line = line.strip()
                 if line.startswith('Source: '):
                     src = source_kind(line[8:])
                 elif line.startswith('Also from: '):
                     supps[source_kind(line[11:]) or 'other'] += 1
+                    also.append(source_kind(line[11:]) or 'other')
             m = DONE_RE.search(text)
             if m:
                 done['credit relationships'] += int(m.group(1))
@@ -314,6 +323,9 @@ class Stats:
                 if mm:
                     done[what] += int(mm.group(1))
             sources[src or 'unknown'] += 1
+            # ((review) each supplement once – also one of the same kind as the source ("bandcamp+bandcamp")
+            mix['+'.join([src or 'unknown'] + sorted(also))] += 1
+            supplemented += 1 if also else 0
         out['totals'] = {'edits': len(self.notes), 'submissions': len(subs), 'editors': len(editors)}
         out['by_month'] = {m: {'edits': v['edits'], 'submissions': v['submissions'], 'editors': len(v['editors'])} for m, v in sorted(by_month.items())}
         out['by_version'] = dict(sorted(by_version.items(), key=lambda kv: [int(x) for x in kv[0].split('.')]))
@@ -323,6 +335,11 @@ class Stats:
         out['by_relationship_type'] = dict(ltypes.most_common(60))
         out['by_source'] = dict(sources.most_common())
         out['supplements'] = dict(supps.most_common())
+        # [3.139.0, Z-GSTNEW] as the statistics of this browser (3.131.0): submissions supplemented by another source, their sources
+        # together, remixes and commissions among the relationships added
+        out['supplemented'] = {'n': supplemented, 'of': len(subs)}
+        out['source_mix'] = dict(mix.most_common(12))
+        out['remixes'] = {'remixer': added_lt['remixer'], 'remix_of': added_lt['remix'], 'commissioned': added_lt['commissioned']}
         out['done'] = dict(done.most_common())
         out['done_by_level'] = dict(levels.most_common())
         # [3.91.0, Z-SRR] the average and the median of the releases (numbers only); the relationships on the recordings of each for the core pass

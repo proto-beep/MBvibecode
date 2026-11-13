@@ -3463,4 +3463,42 @@ def case_settabs3137():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_gstnew3139():
+    """Credits Importer 3.139.0 (collected item Z-GSTNEW): "Global" with what the dump gives of the statistics of 3.131.0 – What: "Supplemented
+    instead of new" (the share of the submissions with a supplement of another source, by that source, dates and role credits added) and
+    "Remixes and commissions"; Sources: "Sources of the submissions" (with their supplements, "Discogs + Bandcamp"). A file of before has none."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261115-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1},
+            'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}}, 'by_version': {'3.139.0': {'edits': 10}}, 'by_source': {'discogs': 2},
+            'supplements': {'bandcamp': 1}, 'done': {'credit relationships': 8, 'dates added': 3, 'role credits added': 2},
+            'supplemented': {'n': 1, 'of': 2}, 'source_mix': {'discogs+bandcamp': 1, 'discogs': 1, 'other': 1, 'pasted text+x': 0, 'zzz': 1}, 'remixes': {'remixer': 2, 'remix_of': 1, 'commissioned': 0},
+            'credits': {'credited_as': {'n': 1, 'of': 4}}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_stats(pg)
+        pg.click('[data-act=stats-scope][data-scope=global]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+        groups = pg.evaluate("[...document.querySelectorAll('[data-el=stats-global-core] .dci-stats-group')].map(g => [g.dataset.group, [...g.querySelectorAll('.dci-stats-card')].map(c => c.dataset.card)])")
+        TXT = "(k) => { const c = document.querySelector(`[data-el=stats-global-core] .dci-stats-card[data-card='g:${k}']`); return c ? [...c.querySelectorAll('p, li')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null; }"
+        texts = {k: pg.evaluate(f"({TXT})('{k}')") for k in ('suppl', 'remixes', 'gsources', 'gsupp')}
+        print('A)', groups, '\n  ', texts)
+        # ((review) "Supplemented by another source" a card of its own; "Supplemented instead of new" as in this browser
+        results.append(['g:what', ['g:suppl', 'g:remixes']] in groups and ['g:sources', ['g:gsources', 'g:gsupp']] in groups)
+        results.append(texts['gsupp'] == ['50 % of the submissions with a supplement of another source (1 of 2)', 'Bandcamp 1']
+                       and texts['suppl'] == ['dates added to relationships in MusicBrainz 3', 'role credits added to relationships in MusicBrainz 2'])
+        results.append(texts['remixes'] and 'remixers 2' in texts['remixes'] and '“remix of” 1' in texts['remixes'])
+        # ((review) the same label once, its numbers together: "other" and an unknown kind)
+        results.append(texts['gsources'] == ['other 2', 'Discogs + Bandcamp 1', 'Discogs 1', 'pasted text + other 0'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
