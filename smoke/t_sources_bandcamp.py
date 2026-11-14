@@ -587,6 +587,7 @@ def case_labelpage():
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")  # ([3.144.0] S242 off: the suggestions)
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
@@ -649,6 +650,7 @@ console.log(JSON.stringify({ names, own: id('Test Band', 'The Test Band'), frien
         H.discogs_release = dg
         ctx2 = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx2, companion=False)
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")  # ([3.144.0] S242 off: the suggestions)
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
@@ -1565,9 +1567,10 @@ def case_titlecomposers():
             b = p.chromium.launch(args=H.LAUNCH_ARGS)
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")  # ([3.144.0] S242 off: the suggestions)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S088']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S088', 'S242']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             if off:
                 # (off: nothing read – no entries, no checks; the line of the log says what was not recognized)

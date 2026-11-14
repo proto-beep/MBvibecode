@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-14 | 3.143.0 | – |
+| 2026-11-14 | 3.143.0 – 3.144.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
@@ -107,6 +107,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.144.0
+
+- **Names found in this release** (collected item Z-NOIDNAME; rule S242): a Discogs credit of a name only ("Other [Hospitality] – Susan Rusch", no link to an artist) is looked up by its name, as a name of a text; when MusicBrainz links exactly one entry of its kind with exactly that name in this release already, it is linked to it – "found in this release (miscellaneous support on the release)" –, so a relationship MusicBrainz has is recognized. All sources.
+- **Strokes of the artwork** (Z-PIPE; S243): in the text from cover art a single "|" at the start or the end of a line is a stroke the text recognition read – taken out ("Spirit Room Series Vol.247 |" is a series again). Other texts keep their "|".
+- **Press quotes** (Z-REVIEW; S244): a quote with its source ("(THE WIRE / October 2026)", "— Pitchfork") or a rating ("4.5 / 5.0") is left out, folded, as "review (press quote)" – no credit, no liner notes; in a text of prose its short sentences are prose too, not "not recognized".
+- **Drums credited "drums"** (Z-DRUMSQS; S245): every spelling of drums that gives drums (drum set) – "Drums", "Drum", "dr", "ds", "drs" – is credited "drums"; a quick switch (on), off: no role credit.
+- **The dashboard stays where it is** (Z-JUMP): the pointer on a track or a mark of the source page in a tab beside it only lights the row up; "Jump along in the dashboard" (⚙ Settings → Discogs & Bandcamp, off) moves the dashboard there as before. The tab in two parts: "On the source page" and "In the dashboard".
 
 ### Import 3.143.0
 
