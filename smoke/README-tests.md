@@ -160,6 +160,8 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # release's artists ("artists") and its number of tracks ("tracks")
 
 python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
+                                #   review3144, drumsqs3144: 3.144.0 (Z-REVIEW S244: press quotes left out as "review (press quote)", short sentences
+                                #     among them prose; Z-DRUMSQS S245: Drums, Drum, dr, ds, drs credited "drums", off: none)
                                 #   cimp3107: 3.107.0 (Z-CIMP2, S161) Node: the track list of CIMP #384 as Tesseract reads the cover (lengths, misread
                                 #     societies, "9...."): every track's writers and publishers; writers only below every second title: titles left out
                                 #   cimp3101: 3.101.0 (Z-CIMP, Z-RSOC; S160–S165): the back cover of CIMP #384 pasted – writers below the titles,
@@ -930,6 +932,10 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   noidname3144: 3.144.0 (Z-NOIDNAME, S242): a Discogs name without a link linked as in this release; two of that name:
+                                #     suggested; S242 off: "no Discogs ID"
+                                #   mbskind3143: 3.143.0 (Z-MBSKIND): "several MB labels have this Discogs link", "change MB label" / "change MB artist",
+                                #     "Paste the URL of an MB label page", "Looking up MB entries via their Discogs links …"
                                 #   headas3142: 3.142.0 (Z-MBAS, Z-INSTTOP; S240): "as MB Drum Guy", "place as MB Abbey Road Studios"; "bass" the first answer of
                                 #     "Bass" (picked: bass); S240 off: as before
                                 #   instlca3113: 3.113.0 (Z-INSTLCA): ⑃ – woodwind of saxophone and flute (added, taken out), vocals of voices, none with tracks of
@@ -1065,11 +1071,11 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   links: several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
                                 #     most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
                                 #     another one by hand without remembering, "Cancel" (the message as before)
-                                #   supp: a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
+                                #   supp: a second source added to the loaded one (3.5.0; "＋ Source" from 3.143.0): only on request, the list "From the added source: …"
                                 #     (new role, new entries with suggestions, "differs" – from 3.116.0 "more tracks" when it only adds tracks –, not recognized), marks DG BC / BC ≠, take over
                                 #     selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
                                 #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0); B2 (3.132.0, Z-SUPPTOGGLE):
-                                #     the bar folds with a supplement loaded
+                                #     the bar folds with a supplement loaded; B3 (3.143.0, Z-SUPPNAME): "＋ Source", "Add a source:", "✓ added", "Added source: …"
                                 #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
@@ -1190,6 +1196,7 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
 
 python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.114 a beta): ⚙ Settings → Sources, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   ocrpipe3144: 3.144.0 (Z-PIPE, S243): "|" / "¦" at the edge of a line taken out, the series recognized; off: as read
                                 #   bcimages3141: 3.141.0 (Z-BCIMAGES, Z-SUPPICONS; S237): "Load Bandcamp images (…)" – the cover and the vinyl's photo, not ticked;
                                 #     Bandcamp loaded: at once; the symbols of the sources in "Supplement with", the cards and buttons; words with Symbols: Text
                                 #   tcpmulti3117: 3.117.0 (Z-TCPMULTI): "(Man - Guy)" from the cover art – Man is Bass Man's; Guy asks (four of that name),
@@ -1274,6 +1281,8 @@ python3 t_coverart.py           # Text from cover art (3.34.1, item E3; until 3.
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   jump3144: 3.144.0 (Z-JUMP): hover-track / focus-row of a hover light the row up, the dashboard does not move;
+                                #     "Jump along in the dashboard" on: it does
                                 #   yelljump3142: 3.142.0 (Z-YELLJUMP): ‹ ● n › – the item in the dashboard and its line highlighted on Discogs
                                 #   cocr3114: 3.114.0 / 1.18.0 (Z-COCR): frames in the large image read in the dashboard's window, added, ✕ both ways, no dashboard
                                 #   artapi3108: Companion 1.17.0 (Z-CPVA3): the release's images from Discogs' API – ‹ › through all of them, not only the

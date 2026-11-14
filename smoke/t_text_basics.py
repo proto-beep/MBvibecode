@@ -40,6 +40,7 @@ Thanks to everyone who came."""
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")  # ([3.144.0] S242 off: names only suggested)
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
@@ -2171,5 +2172,112 @@ console.log(JSON.stringify(out));
     print('review:', out2)
     ok_c = len(out2) == 3 and ['Chrysalis Music (UK) Ltd', ''] in out2[0].get('pubs', []) and 'CASH' not in json.dumps(out2[1]) and out2[2].get('titles') == 1 and out2[2].get('unrec') == []
     print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c else 'FEHLER', [ok_a, ok_b, ok_c])
+
+def case_drumsqs3144():
+    """Credits Importer 3.144.0 (collected item Z-DRUMSQS, rule S245; answers of 2026-11-13 15:55, 2026-11-14 11:11): every spelling of
+    drums that gives drums (drum set) – "drums", "Drum", "dr", "ds", "drs" – is credited "drums" (a quick switch, on); with S245 off
+    drums (drum set) without a role credit (until 3.143.0 "Drums" alone was credited, by T007). The quick switch is in the group
+    "Role credits" of "Mapping rules"."""
+    results = []
+    TEXT = 'Al Dee – drums\nBo Ess – Drum\nCy Tee – dr\nDo Ell – ds\nEd Ray – drs\n'
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || { value: '' }).value])]))()"""
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            if off:
+                ctx.add_init_script("localStorage.setItem('dci-rules-off', JSON.stringify(['S245']));")
+            pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.fill('[data-f=text-origin]', 'Booklet')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(800)
+            got = {n: r for n, r in pg.evaluate(ROWS) if n in ('Al Dee', 'Bo Ess', 'Cy Tee', 'Do Ell', 'Ed Ray')}
+            print('S245 aus' if off else 'S245 an', got)
+            want = '' if off else 'drums'
+            results.append(len(got) == 5 and all(r == [['drums (drum set)', want]] for r in got.values()))
+            if not off:
+                pg.locator('[data-act=rules]').first.click()
+                pg.wait_for_selector('#dci-rules [data-qgroup=credits]', timeout=10000)
+                q = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-qgroup=credits] [data-qs-toggle]')].map(b => [b.dataset.qsToggle, b.getAttribute('aria-pressed')])")
+                print('Schnellschalter:', q)
+                results.append(['S245', 'true'] in q)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_review3144():
+    """Credits Importer 3.144.0 (collected item Z-REVIEW, rule S244; answers of 2026-11-13 15:55, 2026-11-14 11:11): press quotes in a text
+    – a quote with its source on the next line ("(SOUND MAGAZINE / October 2026)"), with a rating ("4.5 / 5.0"), with its source after
+    it ("” — The Daily Echo") – are left out, folded, as "review (press quote): <source>", their source lines with them; nothing of them
+    is "not recognized", the credit below them is read; a short sentence among them is prose too. S244 off: as before (not
+    recognized). B) (review) Titles with their credits, a quote signed by a person (liner notes), a credit below a quote stay as before; a
+    review over two lines with "it’s" in the first is one."""
+    results = []
+    TEXT = ('"A record of rare depth that keeps drawing you back, with dub rhythms and ambient melodies all over it." 4.5 / 5.0\n'
+            '(SOUND MAGAZINE / October 2026)\n\n'
+            '"It takes the listener on a long voyage of discovery, with its imagination and coherence intact."\n'
+            '(STATIC RADIO / October 2026)\n\n'
+            '“A gentle and thoughtful album that rewards patient listening from start to finish.” — The Daily Echo\n\n'
+            'There are records that feel assembled, and there are records that feel found.\n\n'
+            'Bass Man – bass\n')
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            if off:
+                ctx.add_init_script("localStorage.setItem('dci-rules-off', JSON.stringify(['S244']));")
+            pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.fill('[data-f=text-origin]', 'Bandcamp about')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(800)
+            got = pg.evaluate("""(() => ({ ign: [...document.querySelectorAll('.dci-ignored li')].map(li => [!!li.querySelector('details.dci-ign-prose'), (li.querySelector('.dci-ign-why') || {}).textContent || '']),
+              unrec: [...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent.trim()),
+              names: [...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim()) }))()""")
+            print('S244 aus' if off else 'S244 an', got)
+            whys = [w for f, w in got['ign'] if 'review' in w]
+            if off:
+                results.append(not whys and 'Bass Man' in got['names'] and 'There are records that feel assembled, and there are records that feel found.' in got['unrec'])
+            else:
+                results.append(whys == ['– review (press quote): SOUND MAGAZINE / October 2026 · 4.5 / 5.0', '– review (press quote): STATIC RADIO / October 2026',
+                                        '– review (press quote): The Daily Echo']
+                               and all(f for f, w in got['ign'] if 'review' in w) and not got['unrec'] and 'Bass Man' in got['names']
+                               and not any('MAGAZINE' in n or 'Echo' in n or 'RADIO' in n for n in got['names']))
+                # ((review) what is no press quote stays as before: titles with their credits, a quote of liner notes signed by a person,
+                # a credit below a quote; a review over two lines with "it’s" in the first is one
+                T2 = ('“Song Title” – Jane Doe, John Smith\n“My Funny Valentine” (Richard Rodgers / Lorenz Hart)\n\n'
+                      '“I wrote these songs during a long winter in the north, alone with my guitar.”\n— John Smith\n\n'
+                      '"A gentle record, with no hurry, that keeps its promises."\n- Jane Doe – piano\n\n'
+                      '“Somewhere between dub and ambient, it’s a record that\nstays with you for many weeks after the first listen.”\n(NOISE WEEKLY)\n')
+                H.src_menu(pg, 'text-open')
+                pg.fill('[data-f=text-src]', T2)
+                pg.click('[data-act=text-load]')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)
+                pg.wait_for_timeout(800)
+                g2 = pg.evaluate("""[...document.querySelectorAll('.dci-ignored li')].map(li => (li.querySelector('.dci-ign-why') || {}).textContent || '')""")
+                names2 = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
+                print('   B)', g2, names2)
+                results.append([w for w in g2 if 'review' in w] == ['– review (press quote): NOISE WEEKLY'] and 'Jane Doe' in names2)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
