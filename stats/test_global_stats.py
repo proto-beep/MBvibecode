@@ -93,11 +93,20 @@ def build_rmx(path):
     remixer removed (not counted)."""
     rel = lambda t0, t1, name: json.dumps({'type0': t0, 'type1': t1, 'link_type': {'id': 9, 'name': name}, 'entity0': {'id': 1}, 'entity1': {'id': 2}})
     edit = [copy_line(201, 3, 90, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(202, 3, 90, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1),
-            copy_line(203, 3, 90, 1, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(204, 3, 92, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1)]
+            copy_line(203, 3, 90, 1, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(204, 3, 92, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1),
+            # [3.145.0, Z-CREATED] an artist (applied) and a series (open) made new with the dashboard, a label of a failed vote (not counted)
+            copy_line(205, 3, 1, 2, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1), copy_line(206, 3, 140, 1, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1),
+            copy_line(207, 3, 10, 3, 0, '2026-11-05 10:00:00+00', None, '2026-11-12', None, 1)]
     data = [copy_line(201, rel('artist', 'recording', 'remixer')), copy_line(202, rel('recording', 'recording', 'remix')),
             copy_line(203, rel('artist', 'work', 'commissioned')), copy_line(204, json.dumps({'relationship': {'link': {'type': {'id': 9}}}}))]
     n = note('3.139.0', 'https://x.bandcamp.com/album/y', 'added 3 credit relationships from Bandcamp (2 recording, 1 work)', extra='Also from: https://www.discogs.com/release/3-x')
-    notes = [copy_line(21, 3, e, n, '2026-11-05 10:00:01+00') for e in (201, 202, 203, 204)]
+    # [3.145.0, Z-SUPPREL] the levels new or supplemented
+    n += '\nSupplemented: the release group, 2 of 3 recordings. New: the release, 1 recording.'
+    # ((review) not a line of the source's wording that has "New:" in it
+    n += '\n- Recorded live. New: 3 recordings.'
+    # (the forms of new entries: "Prefilled by …" – edits of the script, no submission of relationships)
+    pre = 'Source: https://www.discogs.com/artist/9-x\nPrefilled by MB x Vibecode: Credits Importer v3.145.0 (userscript, https://github.com/proto-beep/MBvibecode) from Discogs.'
+    notes = [copy_line(21, 3, e, n, '2026-11-05 10:00:01+00') for e in (201, 202, 203, 204)] + [copy_line(22 + k, 3, e, pre, '2026-11-05 10:00:01+00') for k, e in enumerate((205, 206, 207))]
     with tarfile.open(path, 'w:bz2') as tar:
         for name, rows in (('edit', edit), ('edit_data', data), ('edit_note', notes), ('vote', ['1\t2\n'])):
             b = ''.join(rows).encode('utf-8')
@@ -239,6 +248,11 @@ def main():
         # writer's); "remix of" links recordings only
         ('linked (remixes)', rx['linked'], {'artist': {'n': 1}, 'label': {'n': 0}, 'place': {'n': 0}, 'area': {'n': 0}, 'event': {'n': 0}, 'work': {'n': 0}}),
         ('done', r['done'], {'credit relationships': 4, 'works linked': 1}),
+        # [3.145.0, Z-SUPPREL, Z-CREATED, Z-STATSJSON] the levels of the edit note, the entries made new (open or applied), the format
+        ('levels', rx['levels'], {'release_group': {'new': 0, 'supplemented': 1}, 'release': {'new': 1, 'supplemented': 0}, 'recording': {'new': 1, 'supplemented': 2}}),
+        ('levels (none before 3.145.0)', r['levels']['recording'], {'new': 0, 'supplemented': 0}),
+        ('created', rx['created'], {'artist': 1, 'label': 0, 'place': 0, 'series': 1, 'event': 0, 'work': 0}),
+        ('format', [r['$schema'].endswith('/schemas/mb-vibecode-credits-importer-global.schema.json'), r['format'], r['format_version']], [True, 'mb-vibecode-credits-importer-global', 2]),
         ('done_by_level', r['done_by_level'], {'recording': 5, 'release': 2}),  # (the second Discogs submission: "0 credit … (2 recording, 1 release)")
         ('rows_read', r['rows_read'].get('notes on edits before "since"'), 1),
         ('cut off / without edit_note / without vote', bad_runs, [[True, False], [True, False], [True, False]]),
@@ -274,6 +288,14 @@ def main():
         ('core per release', r2['core']['per_release'], {'n': 2, 'recordings': {'mean': 2.0, 'median': 2.0},
                                                         'rels_per_recording': {'mean': (2 / 3 + 1) / 2, 'median': (2 / 3 + 1) / 2}}),
     ]
+    # [3.145.0, Z-STATSJSON] the result as its JSON Schema describes it (where jsonschema is installed)
+    try:
+        import jsonschema
+        schema = json.load(open(os.path.join(HERE, '..', 'schemas', 'mb-vibecode-credits-importer-global.schema.json'), encoding='utf-8'))
+        errs = [e.message for e in jsonschema.Draft202012Validator(schema).iter_errors(r2)] + [e.message for e in jsonschema.Draft202012Validator(schema).iter_errors(rx)]
+        checks.append(('schema', errs, []))
+    except ImportError:
+        print('(jsonschema not installed: the schema not checked)')
     bad = [(k, got, want) for k, got, want in checks if got != want]
     text = json.dumps(r2)
     private = [w for w in ('discogs.com/release', 'youtube.com/watch', '"7"', 'editor 7') if w in text]
