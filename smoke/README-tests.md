@@ -930,6 +930,8 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   mbskind3143: 3.143.0 (Z-MBSKIND): "several MB labels have this Discogs link", "change MB label" / "change MB artist",
+                                #     "Paste the URL of an MB label page", "Looking up MB entries via their Discogs links …"
                                 #   headas3142: 3.142.0 (Z-MBAS, Z-INSTTOP; S240): "as MB Drum Guy", "place as MB Abbey Road Studios"; "bass" the first answer of
                                 #     "Bass" (picked: bass); S240 off: as before
                                 #   instlca3113: 3.113.0 (Z-INSTLCA): ⑃ – woodwind of saxophone and flute (added, taken out), vocals of voices, none with tracks of
@@ -1065,11 +1067,11 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   links: several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
                                 #     most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
                                 #     another one by hand without remembering, "Cancel" (the message as before)
-                                #   supp: a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
+                                #   supp: a second source added to the loaded one (3.5.0; "＋ Source" from 3.143.0): only on request, the list "From the added source: …"
                                 #     (new role, new entries with suggestions, "differs" – from 3.116.0 "more tracks" when it only adds tracks –, not recognized), marks DG BC / BC ≠, take over
                                 #     selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
                                 #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0); B2 (3.132.0, Z-SUPPTOGGLE):
-                                #     the bar folds with a supplement loaded
+                                #     the bar folds with a supplement loaded; B3 (3.143.0, Z-SUPPNAME): "＋ Source", "Add a source:", "✓ added", "Added source: …"
                                 #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
