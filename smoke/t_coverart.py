@@ -832,14 +832,14 @@ def case_suppnav3116():
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
         pg.click('#dci-ocr [data-ocr=supp]')
-        H.wait_for(pg, "(n => !!n && !/Supplementing/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
+        H.wait_for(pg, "(n => !!n && !/Adding the source/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
         pg.wait_for_timeout(500)
-        a = pg.evaluate("""[[...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /^Supplement from/.test(t)),
+        a = pg.evaluate("""[[...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /^Added source:/.test(t)),
           document.querySelector('#dci-ocr [data-el=ocr-suppnote]').textContent.trim(),
-          [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Supplement from Text: 3 confirmed, 2 new/.test(t)).length,
+          [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Added source: Text – 3 confirmed, 2 new/.test(t)).length,
           [...document.querySelectorAll('[data-el=supp] .dci-supp-row')].map(r => [r.querySelector('td:nth-child(3) strong') ? r.querySelector('td:nth-child(3) strong').textContent.trim() : '', r.className.replace('dci-supp-row ', ''), r.querySelector('input').checked])]""")
         print('A) Meldung:', a[0], '| Fenster:', a[1], '| Protokoll:', a[2], '| Liste:', a[3])
-        want = 'Supplement from the cover art: 2 new · 3 there already or very similar.'
+        want = 'Added source: the cover art – 2 new · 3 there already or very similar.'
         results.append(len(a[0]) == 1 and a[0][0].startswith(want) and not a[0][0].endswith('To the editor') and a[1].startswith(want) and a[2] == 1
                        and sorted(a[3]) == [['Anna Neu', 'dci-supp-row-entry', True], ['Writer Z', 'dci-supp-row-role', True]])
         pg.click('#dci-ocr [data-ocr=close]')
@@ -879,7 +879,7 @@ def case_suppnav3116():
           [...document.querySelectorAll('[data-el=msgs] .dci-msg')].filter(m => /nothing new/.test(m.textContent)).length,
           document.querySelectorAll('[data-el=supp] .dci-supp-row').length, !!document.querySelector('[data-el=supp] [data-act=supp-apply]')]""")
         print('D) nichts Neues:', d1)
-        results.append(d1[0] == 'Supplement from the cover art: nothing new – 1 there already or very similar. Nothing was changed.' and d1[1] == 1 and d1[2] == 0 and not d1[3])
+        results.append(d1[0] == 'Added source: the cover art – nothing new (1 there already or very similar). Nothing was changed.' and d1[1] == 1 and d1[2] == 0 and not d1[3])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -915,7 +915,7 @@ def case_tcpmulti3117():
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
         pg.click('#dci-ocr [data-ocr=supp]')
-        H.wait_for(pg, "(n => !!n && !/Supplementing/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
+        H.wait_for(pg, "(n => !!n && !/Adding the source/.test(n.textContent))(document.querySelector('#dci-ocr [data-el=ocr-suppnote]'))", 30)
         pg.click('#dci-ocr [data-ocr=close]')
         pg.click('[data-el=supp] [data-act=supp-apply]')
         pg.wait_for_timeout(2000)
