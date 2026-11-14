@@ -40,13 +40,23 @@ OUT_NAME = 'mb-vibecode-credits-importer-global.json'
 # (MusicBrainz's lib/MusicBrainz/Server/Constants.pm)
 EDIT_TYPES = {90: 'Add relationship', 91: 'Edit relationship', 92: 'Remove relationship', 99: 'Reorder relationships', 41: 'Add work',
               42: 'Edit work', 1: 'Add artist', 2: 'Edit artist', 10: 'Add label', 61: 'Add place', 71: 'Add standalone recording',
-              72: 'Edit recording', 32: 'Edit release', 46: 'Add work alias', 6: 'Add artist alias'}
+              72: 'Edit recording', 32: 'Edit release', 46: 'Add work alias', 6: 'Add artist alias', 140: 'Add series', 150: 'Add event'}
+# [3.145.0, Z-CREATED] the entries made new with the dashboard (its edit note on the form of each): by the type of the edit
+CREATE_TYPES = {1: 'artist', 10: 'label', 61: 'place', 140: 'series', 150: 'event', 41: 'work'}
+# [3.145.0, Z-STATSJSON] the file described by a JSON Schema (draft 2020-12)
+OUT_FORMAT = 'mb-vibecode-credits-importer-global'
+OUT_SCHEMA = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/schemas/mb-vibecode-credits-importer-global.schema.json'
 STATUS = {1: 'open', 2: 'applied', 3: 'failed vote', 4: 'failed dependency', 5: 'error', 6: 'failed prerequisite', 7: 'no votes', 9: 'deleted'}
 REL_TYPES = (90, 91, 92)
 # (the script's own line, at the start of a line – a voter quoting it elsewhere does not count)
-NOTE_RE = re.compile(r'^Script: (MB x Vibecode: (?:Credits Importer|Import Discogs credits)) v?(\d+\.\d+(?:\.\d+)?)', re.M)
+# [3.145.0, Z-CREATED] also the forms it fills in to create an entry ("Prefilled by MB x Vibecode: Credits Importer v3.145.0 …")
+NOTE_RE = re.compile(r'^(?:Script: |Prefilled by )(MB x Vibecode: (?:Credits Importer|Import Discogs credits)) v?(\d+\.\d+(?:\.\d+)?)', re.M)
 DONE_RE = re.compile(r'added (\d+) credit relationships? from (.+?) \(([^)]*)\)')
 LEVEL_RE = re.compile(r'(\d+) (recording|release group|release|work)')
+# [3.145.0, Z-SUPPREL] "Supplemented: the release group, 5 of 8 recordings. New: the release, 3 recordings."
+# ((review) only a line of its own that starts so – not "… New: 3 recordings." inside another line
+SUPPLV_LINE_RE = re.compile(r'^(?:Supplemented|New): ')
+SUPPLV_RE = re.compile(r'(Supplemented|New): (.*?)\.(?=\s+(?:Supplemented|New): |\s*$)')
 LINKED_RE = re.compile(r'linked (\d+) works? to recordings')
 FILLED_RE = re.compile(r'added role credits to (\d+) existing')
 DATES_RE = re.compile(r'added dates to (\d+) existing')
@@ -259,11 +269,13 @@ class Stats:
             self.notes[edit_id] = (nid, text, f[4])
 
     def result(self, dump):
-        out = {'script': SCRIPT, 'names': list(NAMES), 'dump': dump, 'generated': dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        out = {'$schema': OUT_SCHEMA, 'format': OUT_FORMAT, 'format_version': 2,
+               'script': SCRIPT, 'names': list(NAMES), 'dump': dump, 'generated': dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                'since': self.since, 'privacy': 'numbers only: no editors, edits, releases or URLs; "editors" is how many different ones'}
         by_month = defaultdict(lambda: {'edits': 0, 'submissions': 0, 'editors': set()})
         by_version = defaultdict(lambda: {'edits': 0, 'submissions': 0})
         types, status, ltypes, auto = Counter(), Counter(), Counter(), Counter()
+        created = Counter()  # [3.145.0, Z-CREATED]
         added_lt = Counter()  # [3.139.0, Z-GSTNEW] the types of the relationships added (90)
         editors = set()
         groups = defaultdict(list)  # (editor, the script's lines) → [(time, month, version, text)]
@@ -277,6 +289,8 @@ class Stats:
             types[f'{t} {EDIT_TYPES.get(t, "other")}'] += 1
             status[STATUS.get(stt, str(stt))] += 1
             auto['auto-edit' if au else 'voted'] += 1
+            if t in CREATE_TYPES and stt in (1, 2):
+                created[CREATE_TYPES[t]] += 1
             if edit_id in self.ltype:
                 lt = self.ltype[edit_id]
                 name = self.lt_names.get(int(lt[1:]), lt) if lt.startswith('#') else lt
@@ -285,7 +299,9 @@ class Stats:
                 if t == 90 and stt in (1, 2):
                     added_lt[name.lower()] += 1
             core = '\n'.join(line.strip() for line in text.split('\n') if line.strip().startswith(CORE))
-            groups[(editor, core)].append((seconds(post), mon, ver, text, edit_id))
+            # ([3.145.0] an entry created through a form the script filled in is no submission of relationships)
+            if any(line.strip().startswith('Script: ') for line in text.split('\n')):
+                groups[(editor, core)].append((seconds(post), mon, ver, text, edit_id))
         # a submission: the same note of one editor, its parts at most SUBMISSION_GAP apart (its "Done:" counted once)
         subs = []
         sub_edits = []
@@ -313,6 +329,7 @@ class Stats:
         sources, supps, done, levels = Counter(), Counter(), Counter(), Counter()
         mix = Counter()  # [3.139.0, Z-GSTNEW] the source of a submission with its supplements ("discogs+bandcamp")
         supplemented = 0
+        lv_new = {k: {'new': 0, 'supplemented': 0} for k in ('release_group', 'release', 'recording')}  # [3.145.0, Z-SUPPREL]
         for k, (_, mon, ver, text) in enumerate(subs):
             by_version[ver]['submissions'] += 1
             by_month[mon]['submissions'] += 1
@@ -343,6 +360,18 @@ class Stats:
             # ((review) each supplement once – also one of the same kind as the source ("bandcamp+bandcamp")
             mix['+'.join([src or 'unknown'] + sorted(also))] += 1
             supplemented += 1 if also else 0
+            for kind, items in [x for ln in text.split('\n') if SUPPLV_LINE_RE.match(ln.strip()) for x in SUPPLV_RE.findall(ln.strip())]:
+                key = 'supplemented' if kind == 'Supplemented' else 'new'
+                for item in items.split(', '):
+                    item = item.strip()
+                    if item == 'the release group':
+                        lv_new['release_group'][key] += 1
+                    elif item == 'the release':
+                        lv_new['release'][key] += 1
+                    else:
+                        mr = re.match(r'(\d+)(?: of \d+)? recordings?$', item)
+                        if mr:
+                            lv_new['recording'][key] += int(mr.group(1))
         out['totals'] = {'edits': len(self.notes), 'submissions': len(subs), 'editors': len(editors)}
         out['by_month'] = {m: {'edits': v['edits'], 'submissions': v['submissions'], 'editors': len(v['editors'])} for m, v in sorted(by_month.items())}
         out['by_version'] = dict(sorted(by_version.items(), key=lambda kv: [int(x) for x in kv[0].split('.')]))
@@ -359,6 +388,10 @@ class Stats:
         out['remixes'] = {'remixer': added_lt['remixer'], 'remix_of': added_lt['remix'], 'commissioned': added_lt['commissioned']}
         out['done'] = dict(done.most_common())
         out['done_by_level'] = dict(levels.most_common())
+        # [3.145.0, Z-SUPPREL] the release groups, releases and recordings new or supplemented (the edit notes from 3.145.0 on);
+        # [Z-CREATED] the entries made new (their edits open or applied)
+        out['levels'] = lv_new
+        out['created'] = {k: created[k] for k in ('artist', 'label', 'place', 'series', 'event', 'work')}
         # [3.91.0, Z-SRR] the average and the median of the releases (numbers only); the relationships on the recordings of each for the core pass
         vals = list(per_rel.values())
         mm = lambda xs: {'mean': mean(xs), 'median': median(xs)}

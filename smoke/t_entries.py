@@ -4864,4 +4864,36 @@ def case_noidname3144():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_createdstat3145():
+    """Credits Importer 3.145.0 (collected item Z-CREATED; answer of 2026-11-14 11:11): an entry made new with the dashboard counts in the
+    statistics once MusicBrainz confirms it (its page after the form) – noted with its kind (`dci-stats-made`), once; nothing while the
+    form is open."""
+    results = []
+    NEW = H.uid('dddddddd', 81)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        # (Ghost Pub: a publisher MusicBrainz does not have – "Create label …")
+        btn = pg.locator('#dci-overlay [data-act=company-create]').filter(has_text='Create label').first
+        btn.evaluate('b => b.click()')
+        pg.wait_for_timeout(600)
+        before = pg.evaluate("localStorage.getItem('dci-stats-made')")
+        opened = pg.evaluate("(() => { const f = document.querySelector('#dci-overlay [data-el=sub-frame]'); return f ? f.getAttribute('src') : null; })()")
+        pg.evaluate("(u) => { document.querySelector('#dci-overlay [data-el=sub-frame]').src = u; }", f'/label/{NEW}')
+        H.wait_for(pg, "!!localStorage.getItem('dci-stats-made')", 15)
+        pg.wait_for_timeout(500)
+        made = pg.evaluate("JSON.parse(localStorage.getItem('dci-stats-made') || '[]')")
+        print('A) Formular:', opened, '| vorher:', before, '| danach:', made)
+        results.append(bool(opened) and '/create' in opened and before is None and len(made) == 1 and made[0]['et'] == 'label' and made[0]['tg'] == NEW
+                       and isinstance(made[0]['at'], (int, float)) and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
