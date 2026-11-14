@@ -1071,4 +1071,55 @@ def case_yelljump3142():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_jump3144():
+    """Credits Importer 3.144.0 (collected item Z-JUMP; answers of 2026-11-13 16:15, 16:22, 2026-11-14 11:11): the pointer on a track or a
+    mark of the source page (a tab beside the dashboard) lights its row up but no longer moves the dashboard.
+    A) "hover-track" (track 3): its row of the works matrix highlighted, the dashboard where it was (until 3.143.0 it jumped to it).
+    B) "focus-row" of a hover (a mark): the row lit up, the dashboard where it was.
+    C) ⚙ Settings → Discogs & Bandcamp: "In the dashboard" with "Track highlight", "Jump along in the dashboard" (off) and "Click
+       switches"; switched on: the dashboard scrolls to the track's row again (stored, `dci-dg-jump`)."""
+    results = []
+    ST = "Math.round(document.querySelector('#dci-overlay [data-el=body]').scrollTop)"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        rid = H.discogs_release()['id']
+        send = lambda m: pg.evaluate("(m) => document.dispatchEvent(new CustomEvent('dci:from-discogs', { detail: JSON.stringify(m) }))", m)
+        pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop = 0")
+        pg.wait_for_timeout(200)
+        send({'type': 'hover-track', 'releaseId': rid, 'position': '3'})
+        pg.wait_for_timeout(400)
+        a = [pg.evaluate(ST), pg.evaluate("document.querySelectorAll('#dci-overlay .dci-mx-hover').length")]
+        row = pg.evaluate("(() => { const tr = document.querySelector('#dci-overlay tr[data-row]'); return tr ? tr.dataset.row : null; })()")
+        send({'type': 'focus-row', 'releaseId': rid, 'row': row, 'hover': True})
+        pg.wait_for_timeout(300)
+        bb = [pg.evaluate(ST), pg.evaluate(f"document.querySelector('#dci-overlay tr[data-row=\"{row}\"]').classList.contains('dci-flash')")]
+        print('A)', a, '| B)', bb)
+        results.append(a == [0, 1] and bb == [0, True])
+        H.open_settings(pg, 'discogs')
+        c = pg.evaluate("""(() => { const s = document.querySelector('[data-el=settings]'); const hs = [...s.querySelectorAll('h4.dci-set-h')].map(h => h.textContent.trim());
+          const j = s.querySelector('[data-dg-jump]'); return [hs, j ? (j.checked ?? j.getAttribute('aria-pressed')) : null]; })()""")
+        pg.locator('[data-el=settings] [data-dg-jump]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        stored = pg.evaluate("localStorage.getItem('dci-dg-jump')")
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop = 0")
+        send({'type': 'hover-track', 'releaseId': rid, 'position': '3'})
+        pg.wait_for_timeout(400)
+        moved = pg.evaluate(ST)
+        print('C)', c, '| gespeichert:', stored, '| danach:', moved)
+        results.append('On the source page' in c[0] and 'In the dashboard' in c[0] and c[1] in (False, 'false') and stored == 'true' and moved > 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
