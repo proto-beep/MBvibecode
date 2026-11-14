@@ -2081,10 +2081,10 @@ def case_ocrnonsense():
     """[3.37.6] "Remove nonsensical words and signs" (collected item 156).
     A) Back and Tray read; the Back's switch: "~" and "|" at the end of a line go, a line of signs only goes, the words read
        uncertainly without a vowel ("Rrrt", "Qx") go – "Jo" (uncertain, a word), "»", "|" between words, "℗" and "Grmbl" (read
-       surely) stay; "7 removed", the buttons of "Rrrt" and "Qx" struck through; the Tray and the switch for all untouched.
+       surely) stay; "6 removed" ([3.144.0] the "|" at the end of the first line goes when it is read – S243), the buttons of "Rrrt" and "Qx" struck through; the Tray and the switch for all untouched.
     B) A word added by hand ("Smith" after "Jo"), the switch again: everything comes back where it was – "Rrrt" after "Jo", the
        line of signs in its place –, "Smith" stays; no number, nothing struck through.
-    C) The switch in the bar: both images ("8 removed"), both switches pressed; again: all back.
+    C) The switch in the bar: both images ("7 removed"), both switches pressed; again: all back.
     D) Imported while on: the text imported has none of it (the producer is "Jo Smith")."""
     results = []
     back = 'Mixed by Bob Lee ~ |\nMastered by Ann Lee » Photos: Dirk Glawe\n=- ‘ ~\nProduced by Jo Rrrt and Qx\nDrums | Bass: Ann Blow\n℗ 1998 Grmbl Records\n'
@@ -2116,7 +2116,7 @@ def case_ocrnonsense():
         a = [pg.evaluate(TXT), pg.evaluate(SW)]
         print('A) vorher:', t0, '\n   an:', a)
         want = 'Mixed by Bob Lee\nMastered by Ann Lee » Photos: Dirk Glawe\nProduced by Jo and\nDrums | Bass: Ann Blow\n℗ 1998 Grmbl Records'
-        results.append(a[0] == [want, t0[1]] and a[1]['back'] == ['true', '7 removed'] and a[1]['tray'] == ['false', ''] and a[1]['all'] == ['false', '']
+        results.append(a[0] == [want, t0[1]] and a[1]['back'] == ['true', '6 removed'] and a[1]['tray'] == ['false', ''] and a[1]['all'] == ['false', '']
                        and sorted(a[1]['cut']) == ['Qx', 'Rrrt'])
         # B) changed by hand, then back
         pg.fill('#dci-ocr [data-ocr-text="0:0"]', want.replace('by Jo and', 'by Jo Smith and'))
@@ -2130,8 +2130,8 @@ def case_ocrnonsense():
         pg.click('#dci-ocr [data-ocr=clean-all]')
         c2 = [pg.evaluate(TXT), pg.evaluate(SW)]
         print('C) alle:', c1, '\n   wieder:', c2)
-        results.append(c1[0][1] == 'Saxophone – Ann Blow' and c1[1]['back'] == ['true', '7 removed'] and c1[1]['tray'] == ['true', '1 removed']
-                       and c1[1]['all'] == ['true', '8 removed'] and c2[0] == bb[0] and c2[1]['all'] == ['false', ''] and c2[1]['back'][0] == 'false' and c2[1]['tray'][0] == 'false')
+        results.append(c1[0][1] == 'Saxophone – Ann Blow' and c1[1]['back'] == ['true', '6 removed'] and c1[1]['tray'] == ['true', '1 removed']
+                       and c1[1]['all'] == ['true', '7 removed'] and c2[0] == bb[0] and c2[1]['all'] == ['false', ''] and c2[1]['back'][0] == 'false' and c2[1]['tray'][0] == 'false')
         # D) imported while on
         pg.click('#dci-ocr [data-ocr=clean-all]')
         pg.click('#dci-ocr [data-ocr=import]')
@@ -2283,6 +2283,51 @@ def case_bcimages3141():
             results.append(not errs)
             ctx.close()
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrpipe3144():
+    """Credits Importer 3.144.0 (collected item Z-PIPE, rule S243; answers of 2026-11-13 17:17, 2026-11-14 11:14): a stroke of the artwork
+    read as "|" at the edge of a line – "Spirit Room Series Vol.247 |", "| Marc D. Rusch – double bass", a line "¦" alone – is taken out
+    ("stroke of the artwork at the edge of a line taken out (3)"); the series is recognized (S164) and "|" inside a line stays
+    ("A | B – drums"). With S243 off the text is as read."""
+    results = []
+    texts = [{'text': 'Spirit Room Series Vol.247 |\n¦ |\n| Marc D. Rusch - double bass\nA | B - drums\n', 'words': [{'text': 'Rusch', 'confidence': 91}]}]
+    for off in (False, True):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.COVER_ART = [(12, ['Back'], '', 1500, 1500)]
+            ctx = H.new_context(b)
+            beta_on(ctx)
+            ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+            if off:
+                ctx.add_init_script("localStorage.setItem('dci-rules-off', JSON.stringify(['S243']));")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'ocr-open')
+            pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+            pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+            pg.click('#dci-ocr [data-ocr=run]')
+            pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+            res = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr');
+              return [[...el.querySelectorAll('[data-ocr-text]')].map(t => t.value), [...el.querySelectorAll('.dci-ocr-res .dci-sub')].map(x => x.textContent.trim()).filter(t => t.startsWith('Corrected'))]; })()""")
+            print('S243 aus' if off else 'S243 an', res)
+            if off:
+                results.append(res[0] == ['Spirit Room Series Vol.247 |\n¦ |\n| Marc D. Rusch – double bass\nA | B – drums'] and not any('stroke' in x for x in res[1]))
+            else:
+                results.append(res[0] == ['Spirit Room Series Vol.247\nMarc D. Rusch – double bass\nA | B – drums']
+                               and res[1] == ['Corrected after reading: dash between a name and a role (2) · stroke of the artwork at the edge of a line taken out (3)'])
+                pg.click('#dci-ocr [data-ocr=import]')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+                pg.wait_for_timeout(1000)
+                names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
+                print('   Einträge:', names)
+                results.append('Spirit Room Series' in names and 'Marc D. Rusch' in names)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

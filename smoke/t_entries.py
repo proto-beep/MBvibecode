@@ -4807,4 +4807,61 @@ def case_mbskind3143():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_noidname3144():
+    """Credits Importer 3.144.0 (collected item Z-NOIDNAME, rule S242; answers of 2026-11-13 17:29, 2026-11-14 11:11): a Discogs credit of a
+    name only ("Other [Hospitality] – Susan Rusch", no link to an artist).
+    A) MusicBrainz has Susan Rusch in this release (miscellaneous support on the release): linked to her, "found in this release
+       (… on the release)", in the log "Susan Rusch: linked as in this release (…) → Susan Rusch"; the statistics count her "by name".
+    B) Two artists Susan Rusch in this release: not linked – both suggested first ("not assigned yet (no link)").
+    C) Rule S242 off: as before – "no Discogs ID", not looked up."""
+    import copy
+    results = []
+    orig_rel, orig_ws = H.discogs_release, H.ws_release
+    SUSAN, SUSAN2 = H.uid('dddddddd', 61), H.uid('dddddddd', 62)
+
+    def rel():
+        d = copy.deepcopy(orig_rel())
+        d['extraartists'].append({'name': 'Susan Rusch', 'anv': '', 'role': 'Other [Hospitality]', 'tracks': '', 'id': 0, 'join': ''})
+        return d
+    for mode in ('one', 'two', 'off'):
+        def ws(mode=mode):
+            d = orig_ws()
+            people = [(SUSAN, '')] + ([(SUSAN2, 'the other one')] if mode == 'two' else [])
+            for gid, dis in people:
+                d['relations'].append({'target-type': 'artist', 'type': 'miscellaneous support', 'attributes': ['task'], 'attribute-values': {'task': 'hospitality'},
+                                       'artist': {'id': gid, 'name': 'Susan Rusch', 'disambiguation': dis}})
+            return d
+        H.discogs_release, H.ws_release = rel, ws
+        try:
+            with sync_playwright() as p:
+                b = p.chromium.launch(args=H.LAUNCH_ARGS)
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+                pg.on('dialog', lambda d: d.accept())
+                if mode == 'off':
+                    pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1200)
+                head = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Susan Rusch');
+                  const m = g && g.querySelector('.dci-gmatch'); return m ? [m.textContent.replace(/\\s+/g, ' ').trim(), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid)] : null; })()""")
+                log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Susan Rusch' in x]
+                print(f'{mode})', head, '|', log[-3:])
+                if mode == 'one':
+                    results.append(bool(head) and 'found in this release (miscellaneous support' in head[0] and 'as MBSusan Rusch' in head[0]
+                                   and any('Susan Rusch: linked as in this release' in x and x.endswith('→ Susan Rusch') for x in log))
+                elif mode == 'two':
+                    results.append(bool(head) and 'not assigned yet (no link)' in head[0] and set(head[1][:2]) == {SUSAN, SUSAN2}
+                                   and not any('linked as in this release' in x for x in log))
+                else:
+                    results.append(bool(head) and 'no Discogs ID' in head[0] and not head[1] and not any('linked as in this release' in x for x in log))
+                print('Fehler:', errs)
+                results.append(not errs)
+                b.close()
+        finally:
+            H.discogs_release, H.ws_release = orig_rel, orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
