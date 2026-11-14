@@ -2,6 +2,7 @@
 
 Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); versions (3.51.0), [3.75.0] profiles, [3.76.0] statio; `python3 t_ui_settings.py <case> …` runs only those."""
 import json
+import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1006,8 +1007,9 @@ def case_stats():
         tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li:not([hidden])`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
         stored = pg.evaluate("localStorage.getItem('dci-stats-period')")
         print('C) Kacheln:', tiles, '\n   Monate:', rows_m, '| Tage:', rows_d, stored, '\n   Top:', tops)
-        results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('before') in ('100 % / 0 %', '0 % / 100 %')
-                       and tiles.get('created') == '0' and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRelease', ''))) and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRel', '')))
+        results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('lvl.release') in ('100 % / 0 %', '0 % / 100 %')
+                       and re.match(r'^\d+ % / \d+ %$', tiles.get('lvl.recording', '')) is not None and 'before' not in tiles  # ([Z-SUPPREL] 3.145.0: the levels)
+                       and tiles.get('created') == '2'  # ([Z-CREATED] 3.145.0: the two works created in the editor at "Enter edit") and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRelease', ''))) and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRel', '')))
                        and len(rows_m) == 1 and rows_m[0][0] == month and rows_m[0][1] == '1' and rows_m[0][2] == str(n) and rows_m[0][3] == '100 %'
                        and len(rows_d) == 1 and rows_d[0][0] == day and stored == '"day"'
                        and bool(tops['artists'] and tops['instr'] and tops['types']))
@@ -1268,7 +1270,7 @@ def case_statsmore():
             print(f'   {k}:', v)
         print('Gesät:', seeded, '| Balken:', cols)
         ok = lambda k, *want: all(w in c.get(k, []) for w in want)
-        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with a supplement: 1')
+        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with an added source: 1')
                        and c.get('found') == ['through the link of the source 2', 'by their name 1', 'chosen by hand 1', 'newly created 1'])
         results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
                        and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
@@ -2028,6 +2030,12 @@ def case_editnote():
         b0 = pg.evaluate(NOTE).splitlines()
         print('B)', b0[:4])
         results.append(b0[0] == 'Source: https://www.discogs.com/release/1234' and b0[1].startswith('Script: MB x Vibecode: Credits Importer v') and any(l.startswith('Done: added ') for l in b0))
+        # [Z-SUPPREL] (3.145.0) the levels: the release (MusicBrainz has only its Discogs link) new, the recordings supplemented (MusicBrainz
+        # has their drums and their works) – right after "Done:"
+        lv = [l for l in b0 if l.startswith(('Supplemented: ', 'New: '))]
+        print('B) Ebenen:', lv)
+        results.append(len(lv) == 1 and b0.index(lv[0]) == next(i for i, l in enumerate(b0) if l.startswith('Done: ')) + 1
+                       and re.search(r'^Supplemented: (?:the release group, )?\d+ of \d+ recordings?\. New: (?:.*)the release\b', lv[0]) is not None)
         st1 = mode(pg, 'simple')
         # (3.41.15, review) the block written follows the setting at once (no new staging needed)
         b1 = pg.evaluate(NOTE).splitlines()
@@ -2181,7 +2189,7 @@ def case_statstime():
         supp = pg.evaluate("(() => { const p = document.querySelector('[data-el=stats-sources] p.dci-sub'); return p ? p.textContent.trim() : null; })()")
         print('B/D) Median:', b1, '| Durchschnitt:', b2, '| gespeichert:', stored, '|', supp, '| Fehler:', errs)
         results.append(seeded and b1 == [['Discogs', '3', '2 min 0 s', '30 s', '1 · 2 min 0 s'], ['Bandcamp', '1', '30 s', '10 s', '–']]
-                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with a supplement: 1' and not errs)
+                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with an added source: 1' and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
@@ -3064,23 +3072,25 @@ def case_statio():
         jpath = dl.value.path()
         data = json.loads(open(jpath, encoding='utf-8').read())
         with pg.expect_download() as dl2:
-            pg.click('[data-el=settings] [data-act=stats-export][data-kind=csv]')
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=csvx]')  # ([Z-STATSJSON] 3.145.0: "CSV (Excel)")
         raw = open(dl2.value.path(), encoding='utf-8').read()
         csv = raw.lstrip('\ufeff').splitlines()
         rows = [ln.split(';') for ln in csv]
-        print('A) JSON:', data['format'], [r['id'] for r in data['records']], '| CSV:', csv[:3], len(csv), '| BOM:', raw.startswith('\ufeff'), '| Zweck:', 'spreadsheet' in purpose)
+        print('A) JSON:', data['format'], [r['id'] for r in data['submissions']], '| CSV:', csv[:3], len(csv), '| BOM:', raw.startswith('\ufeff'), '| Zweck:', 'other programs' in purpose)
         head = rows[0]
         sec = head.index('seconds of the record') if 'seconds of the record' in head else -1
-        results.append(data['format'] == 'mb-vibecode-statistics' and sorted(r['id'] for r in data['records']) == [ID1, ID2] and data['records'][0]['rels']
+        # ([Z-STATSJSON] 3.145.0) the JSON in format 2 (submissions, relationships)
+        results.append(data['format'] == 'mb-vibecode-statistics' and data['format_version'] == 2 and sorted(r['id'] for r in data['submissions']) == [ID1, ID2] and data['submissions'][0]['relationships']
                        and raw.startswith('\ufeff') and csv[0].startswith('id;record;confirmed;release;release title;source;kind;relationship') and len(csv) == 4
                        and '"Jane; ""J"""' in csv[1] and ";'=Joe;" in csv[2] and ';Cascades;' in csv[1] and sec > 0
-                       and csv[1].split(';')[-2] == '60' and csv[2].split(';')[-2] == '' and 'spreadsheet' in purpose and 'several browsers' in purpose)
+                       and csv[1].split(';')[-2] == '60' and csv[2].split(';')[-2] == '' and 'other programs' in purpose and 'several browsers' in purpose)
         pg.evaluate(STAT_SEED, recs[:1])
         bad = [{**recs[1], 'id': '00000000-0000-0000-0000-000000000000:5'}, {**recs[1], 'id': f'{H.REL}:7', 'at': 7, 'rels': [1]},
                {**recs[1], 'id': f'{H.REL}:8', 'at': 8, 'rels': [{**recs[1]['rels'][0], 'i': 5}]}]
         tmp = tempfile.mkdtemp()
         fpath = f'{tmp}/stats.json'
-        json.dump({**data, 'records': data['records'] + [recs[1]] + bad}, open(fpath, 'w', encoding='utf-8'))
+        # (a file of format 1, as exported until 3.144.0: still read)
+        json.dump({'format': 'mb-vibecode-statistics', 'version': 1, 'records': recs + [recs[1]] + bad}, open(fpath, 'w', encoding='utf-8'))
         pg.set_input_files('[data-el=settings] [data-stats-import]', fpath)
         pg.wait_for_function("(document.querySelector('[data-el=settings] [data-el=statio-status]') || {}).textContent && /added/.test(document.querySelector('[data-el=settings] [data-el=statio-status]').textContent)", timeout=10000)
         b1 = [pg.evaluate("document.querySelector('[data-el=settings] [data-el=statio-status]').textContent"), sorted(r['id'] for r in pg.evaluate(STAT_COUNT))]
@@ -3490,7 +3500,7 @@ def case_gstnew3139():
         print('A)', groups, '\n  ', texts)
         # ((review) "Supplemented by another source" a card of its own; "Supplemented instead of new" as in this browser
         results.append(['g:what', ['g:suppl', 'g:remixes']] in groups and ['g:sources', ['g:gsources', 'g:gsupp']] in groups)
-        results.append(texts['gsupp'] == ['50 % of the submissions with a supplement of another source (1 of 2)', 'Bandcamp 1']
+        results.append(texts['gsupp'] == ['50 % of the submissions with an added source (1 of 2)', 'Bandcamp 1']
                        and texts['suppl'] == ['dates added to relationships in MusicBrainz 3', 'role credits added to relationships in MusicBrainz 2'])
         results.append(texts['remixes'] and 'remixers 2' in texts['remixes'] and '“remix of” 1' in texts['remixes'])
         # ((review) the same label once, its numbers together: "other" and an unknown kind)
@@ -3595,6 +3605,146 @@ def case_uniq3142():
         results.append(g == ['different artists 7', 'different labels 2', 'different places 1', 'different areas 0', 'different events 1', 'different works 3'])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsjson3145():
+    """Credits Importer 3.145.0 (collected items Z-STATSJSON, Z-SUPPREL, Z-CREATED; answers of 2026-11-13 16:22 – 2026-11-14 11:11): the
+    statistics readable to other programs, the levels new or supplemented, every entry made new.
+    A) The tiles: release groups, releases, recordings "new / supplemented" (a record of before: its release by what MusicBrainz had,
+       the rest "not noted"); "entries newly created in MusicBrainz" 3 – a label and a series noted when MusicBrainz confirmed them,
+       an artist of a submission – by kind in its tooltip.
+    B) ⇧ JSON: format 2 as its JSON Schema describes it ($schema, snake_case, RFC 3339, status "new", levels, created_entries).
+    C) ⇧ CSV: two files after RFC 4180 (submissions, relationships: one line each, a name with a quote quoted); ⇧ JSON Lines: one relationship a
+       line; ⇧ Data Package: the two CSV files of today with their columns.
+    D) The JSON imported into another browser: the same records as stored here, the entries made new with them."""
+    import tempfile
+    import jsonschema
+    now = 1762500000000
+    ID1, ID2 = f'{H.REL}:{now}', f'{H.REL}:{now + 1000}'
+    A1, L1, S1 = H.uid('dddddddd', 71), H.uid('eeeeeeee', 72), H.uid('eeeeeeee', 73)
+    recs = [{'v': 3, 'id': ID1, 'mbid': H.REL, 'at': now, 'start': now - 60000, 'ms': 61500, 'src': 'discogs', 'supp': ['text'], 'rel': {'title': 'Cascades', 'before': 0},
+             'own': 0, 'ocr': None, 'lvl': {'release_group': 'n', 'release': 's', 'recording': {'n': 2, 's': 1}},
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', A1, 'Jane; "J"', ['piano'], nw=1, lk='created'), stat_rel('s', 'producer', 'release', 'artist', 'g2', 'Joe', d='year')]},
+            {'v': 3, 'id': ID2, 'mbid': H.REL, 'at': now + 1000, 'start': None, 'ms': None, 'src': 'text', 'supp': [], 'rel': {'title': 'Cascades', 'before': 3}, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'recorded at', 'recording', 'place', 'p1', 'Zojoji Hall')]}]
+    made = [{'at': now - 5000, 'et': 'label', 'tg': L1}, {'at': now - 4000, 'et': 'series', 'tg': S1}]
+    schema = json.load(open(H.ROOT / 'schemas' / 'mb-vibecode-statistics-2.schema.json', encoding='utf-8'))
+    RFC = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$')
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate(STAT_SEED, recs)
+        pg.evaluate("(m) => localStorage.setItem('dci-stats-made', JSON.stringify(m))", made)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_selector('.dci-stats-tile', timeout=10000)
+        tiles = pg.evaluate("Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, [t.querySelector('.dci-stats-num').textContent.trim(), t.title]]))")
+        print('A)', {k: v for k, v in tiles.items() if k.startswith('lvl') or k == 'created'})
+        results.append(tiles.get('lvl.release_group', [''])[0] == '100 % / 0 %' and tiles.get('lvl.release', [''])[0] == '0 % / 100 %'
+                       and tiles.get('lvl.recording', [''])[0] == '67 % / 33 %' and '1 submission of before 3.145.0 not noted' in tiles.get('lvl.recording', ['', ''])[1] and 'not noted' not in tiles.get('lvl.release_group', ['', ''])[1]
+                       and tiles.get('created', [''])[0] == '3' and 'labels 1' in tiles['created'][1] and 'series 1' in tiles['created'][1] and 'artists 1' in tiles['created'][1]
+                       and 'before' not in tiles)
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(400)
+        with pg.expect_download() as d0:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=json]')
+        data = json.loads(open(d0.value.path(), encoding='utf-8').read())
+        errs_s = [e.message for e in jsonschema.Draft202012Validator(schema).iter_errors(data)]
+        s1 = next(x for x in data['submissions'] if x['id'] == ID1)
+        print('B)', d0.value.suggested_filename, data['format'], data['format_version'], errs_s[:3], s1['submitted_at'], s1['levels'], s1['relationships'][0]['status'], len(data['created_entries']))
+        results.append(data['$schema'].endswith('/schemas/mb-vibecode-statistics-2.schema.json') and data['format_version'] == 2 and not errs_s
+                       and RFC.match(s1['submitted_at']) and RFC.match(data['exported_at']) and s1['duration_s'] == 61.5 and s1['release_mbid'] == H.REL
+                       and s1['levels'] == {'release_group': 'new', 'release': 'supplemented', 'recording': {'new': 2, 'supplemented': 1}}
+                       and s1['relationships'][0]['status'] == 'new' and s1['relationships'][1]['status'] == 'supplemented' and s1['relationships'][0]['target_created_in_dashboard'] is True
+                       and s1['added_sources'] == ['text'] and len(data['created_entries']) == 2 and RFC.match(data['created_entries'][0]['created_at']))
+        results[-1] = bool(results[-1])
+        # ((review) the id of the type of its two entities: "producer" of a release, not of a recording
+        tids = [x.get('type_id') for x in s1['relationships']]
+        print('B) Typ-IDs:', tids)
+        results.append(tids == [H.LTS[148]['gid'], H.LTS[30]['gid']])
+        with pg.expect_download() as c1:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=csv]')
+        with pg.expect_download() as c2:
+            pass
+        subs_csv = open(c1.value.path(), encoding='utf-8').read()
+        rels_csv = open(c2.value.path(), encoding='utf-8').read()
+        with pg.expect_download() as j1:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=jsonl]')
+        jl = [json.loads(x) for x in open(j1.value.path(), encoding='utf-8').read().splitlines() if x.strip()]
+        with pg.expect_download() as p1:
+            pg.click('[data-el=settings] [data-act=stats-export][data-kind=dp]')
+        dp = json.loads(open(p1.value.path(), encoding='utf-8').read())
+        import csv as csvmod
+        import io
+        srows = list(csvmod.reader(io.StringIO(subs_csv)))
+        rrows = list(csvmod.reader(io.StringIO(rels_csv)))
+        names = [c1.value.suggested_filename, c2.value.suggested_filename]
+        print('C)', names, srows[0][:5], len(srows), rrows[0][:6], len(rrows), '| JSONL:', len(jl), jl[0].get('status'), '| DP:', [(r['name'], r['path']) for r in dp['resources']])
+        results.append(not subs_csv.startswith('\ufeff') and srows[0][:4] == ['submission_id', 'release_mbid', 'release_title', 'submitted_at'] and len(srows) == 3
+                       and len(rrows) == 4 and '"Jane; ""J"""' in rels_csv and any(r[rrows[0].index('target_name')] == 'Jane; "J"' for r in rrows[1:])
+                       and len(jl) == 3 and jl[0]['status'] in ('new', 'supplemented') and isinstance(jl[0]['instruments'], list) and isinstance(jl[0]['target_created_in_dashboard'], bool)
+                       and dp['profile'] == 'tabular-data-package' and sorted(r['path'] for r in dp['resources']) == sorted(names)
+                       and all(len(r['schema']['fields']) == len((srows if r['name'] == 'submissions' else rrows)[0]) for r in dp['resources']))
+        b.close()
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate(STAT_SEED, [])
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        H.open_settings(pg, 'cache')
+        pg.wait_for_timeout(300)
+        fpath = tempfile.mkdtemp() + '/stats.json'
+        json.dump(data, open(fpath, 'w', encoding='utf-8'))
+        pg.set_input_files('[data-el=settings] [data-stats-import]', fpath)
+        pg.wait_for_function("(document.querySelector('[data-el=settings] [data-el=statio-status]') || {}).textContent && /added/.test(document.querySelector('[data-el=settings] [data-el=statio-status]').textContent)", timeout=10000)
+        back = sorted(pg.evaluate(STAT_COUNT), key=lambda r: r['id'])
+        made2 = pg.evaluate("JSON.parse(localStorage.getItem('dci-stats-made') || '[]')")
+        same = json.dumps(back, sort_keys=True) == json.dumps(sorted(recs, key=lambda r: r['id']), sort_keys=True)
+        print('D) gleich:', same, '| angelegt:', made2)
+        if not same:
+            print('   zurück:', json.dumps(back, sort_keys=True)[:600])
+            print('   vorher:', json.dumps(sorted(recs, key=lambda r: r['id']), sort_keys=True)[:600])
+        results.append(same and sorted(x['tg'] for x in made2) == sorted([L1, S1]) and not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_glevels3145():
+    """Credits Importer 3.145.0 (collected items Z-SUPPREL, Z-CREATED): "Global" with the levels of the edit notes – "New or supplemented"
+    (release groups, releases, recordings) first in "What" – and "Created with the dashboard" (by kind) in "Who"."""
+    results = []
+    PATH = '/proto-beep/MBvibecode/stats/stats/mb-vibecode-credits-importer-global.json'
+    data = {'format': 'mb-vibecode-credits-importer-global', 'format_version': 2, 'script': 'MB x Vibecode: Credits Importer', 'dump': '20261115-002222',
+            'totals': {'edits': 10, 'submissions': 2, 'editors': 1}, 'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}},
+            'done': {'credit relationships': 8}, 'levels': {'release_group': {'new': 1, 'supplemented': 1}, 'release': {'new': 2, 'supplemented': 0},
+                                                            'recording': {'new': 3, 'supplemented': 1}},
+            'created': {'artist': 2, 'label': 1, 'place': 0, 'series': 0, 'event': 0, 'work': 3}}
+    H.RAW_GITHUB[PATH] = json.dumps(data)
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_stats(pg)
+        pg.click('[data-act=stats-scope][data-scope=global]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
+        groups = pg.evaluate("[...document.querySelectorAll('[data-el=stats-global-core] .dci-stats-group')].map(g => [g.dataset.group, [...g.querySelectorAll('.dci-stats-card')].map(c => c.dataset.card)])")
+        TXT = "(k) => { const c = document.querySelector(`[data-el=stats-global-core] .dci-stats-card[data-card='g:${k}']`); return c ? [...c.querySelectorAll('li')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null; }"
+        texts = {k: pg.evaluate(f"({TXT})('{k}')") for k in ('glevels', 'gcreated')}
+        print('A)', groups, texts)
+        results.append(any(g == 'g:what' and c[:1] == ['g:glevels'] for g, c in groups) and any(g == 'g:who' and 'g:gcreated' in c for g, c in groups)
+                       and texts['glevels'] == ['release groups new / supplemented 50 % / 50 %', 'releases new / supplemented 100 % / 0 %', 'recordings new / supplemented 75 % / 25 %']
+                       and texts['gcreated'] == ['works 3', 'artists 2', 'labels 1'] and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

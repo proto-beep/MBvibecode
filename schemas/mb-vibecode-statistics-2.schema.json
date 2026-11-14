@@ -1,0 +1,375 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://raw.githubusercontent.com/proto-beep/MBvibecode/main/schemas/mb-vibecode-statistics-2.schema.json",
+ "title": "MB x Vibecode: Credits Importer – statistics of a browser (format 2)",
+ "description": "The submissions (\"Enter edit\" confirmed by MusicBrainz) the dashboard counted in one browser, exported from ⚙ Settings → Cache. Names in snake_case, times in RFC 3339, durations in seconds. Fields not described here may appear in newer versions; readers should ignore them.",
+ "type": "object",
+ "required": [
+  "format",
+  "format_version",
+  "submissions"
+ ],
+ "properties": {
+  "$schema": {
+   "type": "string",
+   "format": "uri"
+  },
+  "format": {
+   "const": "mb-vibecode-statistics"
+  },
+  "format_version": {
+   "const": 2
+  },
+  "generator": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "version": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string",
+     "format": "uri"
+    }
+   }
+  },
+  "exported_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "time_zone": {
+   "type": "string",
+   "description": "IANA time zone of the browser (the offset of the times is its own)"
+  },
+  "submissions": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/submission"
+   }
+  },
+  "created_entries": {
+   "type": "array",
+   "description": "Entries created with the dashboard, counted when MusicBrainz confirmed them",
+   "items": {
+    "type": "object",
+    "required": [
+     "created_at",
+     "entity_type",
+     "mbid"
+    ],
+    "properties": {
+     "created_at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "entity_type": {
+      "type": "string"
+     },
+     "mbid": {
+      "$ref": "#/$defs/mbid"
+     }
+    }
+   }
+  }
+ },
+ "$defs": {
+  "mbid": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+  },
+  "strings": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "submission": {
+   "type": "object",
+   "required": [
+    "id",
+    "release_mbid",
+    "submitted_at",
+    "relationships"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "pattern": "^[0-9a-f-]{36}:[0-9]+$",
+     "description": "The release MBID and the time (milliseconds since 1970) of the import the submission came from"
+    },
+    "release_mbid": {
+     "$ref": "#/$defs/mbid"
+    },
+    "record_version": {
+     "type": "integer",
+     "description": "Version of the record (what it holds; 3 from Credits Importer 3.41.14)"
+    },
+    "submitted_at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "started_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "format": "date-time",
+     "description": "The first import of the page"
+    },
+    "duration_s": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "From the first import to \"Enter edit\", pauses not counted"
+    },
+    "work_s": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "idle_s": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Pauses not counted"
+    },
+    "creating_s": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Time in the forms creating entries"
+    },
+    "levels": {
+     "type": "object",
+     "description": "From 3.145.0: the release group, the release and the recordings the submission added to",
+     "properties": {
+      "release_group": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "enum": [
+        "new",
+        "supplemented",
+        "",
+        null
+       ],
+       "description": "new: MusicBrainz had no relationship of it (URLs aside) before; supplemented: it had; empty: nothing was added to it"
+      },
+      "release": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "enum": [
+        "new",
+        "supplemented",
+        "",
+        null
+       ],
+       "description": "new: MusicBrainz had no relationship of it (URLs aside) before; supplemented: it had; empty: nothing was added to it"
+      },
+      "recording": {
+       "type": "object",
+       "properties": {
+        "new": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "supplemented": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      }
+     }
+    },
+    "release": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "description": "The release as MusicBrainz had it at the import",
+     "properties": {
+      "title": {
+       "type": "string"
+      },
+      "year": {
+       "type": [
+        "integer",
+        "null"
+       ]
+      },
+      "country": {
+       "type": "string"
+      },
+      "media_count": {
+       "type": "integer"
+      },
+      "release_group_primary_type": {
+       "type": "string"
+      },
+      "release_group_secondary_types": {
+       "$ref": "#/$defs/strings"
+      },
+      "language": {
+       "type": "string"
+      },
+      "script": {
+       "type": "string"
+      },
+      "recording_lengths_ms": {
+       "type": "array",
+       "items": {
+        "type": "integer"
+       }
+      },
+      "length_ms": {
+       "type": "integer"
+      },
+      "relationships_before": {
+       "type": "integer",
+       "description": "Relationships of the release and its recordings (URLs aside)"
+      },
+      "recording_count": {
+       "type": "integer"
+      }
+     }
+    },
+    "source": {
+     "type": "string",
+     "description": "discogs, bandcamp, youtube, text, ocr …"
+    },
+    "added_sources": {
+     "$ref": "#/$defs/strings"
+    },
+    "text_from_cover_art": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "own_rules": {
+     "type": "integer"
+    },
+    "developer": {
+     "type": "object"
+    },
+    "extras": {
+     "type": "object",
+     "description": "Suites, works, genres, live comments, gaps closed, decisions, lines left out …"
+    },
+    "relationships": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/relationship"
+     }
+    }
+   }
+  },
+  "relationship": {
+   "type": "object",
+   "required": [
+    "status",
+    "type"
+   ],
+   "properties": {
+    "status": {
+     "enum": [
+      "new",
+      "supplemented"
+     ],
+     "description": "new: staged by the dashboard; supplemented: MusicBrainz had it, the dashboard added a credit, a date or attributes"
+    },
+    "type": {
+     "type": "string",
+     "description": "MusicBrainz relationship type"
+    },
+    "type_id": {
+     "$ref": "#/$defs/mbid",
+     "description": "MBID of the relationship type"
+    },
+    "level": {
+     "type": "string",
+     "description": "recording, release, release_group, work"
+    },
+    "target_entity_type": {
+     "type": "string"
+    },
+    "target_mbid": {
+     "type": "string"
+    },
+    "target_name": {
+     "type": "string"
+    },
+    "instruments": {
+     "$ref": "#/$defs/strings"
+    },
+    "vocals": {
+     "$ref": "#/$defs/strings"
+    },
+    "attributes": {
+     "$ref": "#/$defs/strings"
+    },
+    "role_credits": {
+     "$ref": "#/$defs/strings"
+    },
+    "date_precision": {
+     "enum": [
+      "day",
+      "month",
+      "year",
+      ""
+     ]
+    },
+    "date_source": {
+     "type": "string"
+    },
+    "date_year": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "has_attribute_credit": {
+     "type": "boolean"
+    },
+    "has_artist_credit": {
+     "type": "boolean"
+    },
+    "found_via_alias": {
+     "type": "boolean"
+    },
+    "target_created_in_dashboard": {
+     "type": "boolean"
+    },
+    "target_found_via": {
+     "type": "string",
+     "description": "link, search, hand, created"
+    },
+    "rule": {
+     "type": "string"
+    },
+    "changed_by_hand": {},
+    "answers": {
+     "type": "array"
+    },
+    "added_to_existing": {
+     "$ref": "#/$defs/strings"
+    },
+    "row_from": {
+     "$ref": "#/$defs/strings"
+    },
+    "lookup": {
+     "type": "object"
+    }
+   }
+  }
+ }
+}

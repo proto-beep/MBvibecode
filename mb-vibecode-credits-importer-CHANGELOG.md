@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
@@ -106,6 +107,25 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.145.0
+
+- **New or supplemented – per level** (collected item Z-SUPPREL): the release group, the release and each recording the import adds to count as **new** (MusicBrainz had no relationship of it, URLs aside) or **supplemented** (it had) – at every import, only what is staged and submitted with "Enter edit". The edit note says it ("Supplemented: the release group, 5 of 8 recordings. New: the release, 3 recordings."), the statistics have three tiles for it (a submission of before: its release as it was, the rest "not noted"), "Global" reads it from the edit notes.
+- **Every entry made new** (Z-CREATED): artists, labels, places, series, events and works created with the dashboard count once MusicBrainz confirms them – "entries newly created in MusicBrainz", by kind; "Global" counts the edits of the forms the script filled in.
+- **Statistics for other programs** (Z-STATSJSON): ⚙ Settings → Cache – ⇧ JSON (format 2: names in snake_case, times in RFC 3339, the link types with their MusicBrainz id; described by a JSON Schema in `schemas/`), ⇧ CSV (two files after RFC 4180: submissions, relationships), ⇧ CSV (Excel) (as before), ⇧ JSON Lines, ⇧ Data Package (the columns of the CSV files, Frictionless Data). The import reads format 2 and the files of before. The file of "Global" follows the same standards (its own schema).
+
+### Import 3.144.0
+
+- **Names found in this release** (collected item Z-NOIDNAME; rule S242): a Discogs credit of a name only ("Other [Hospitality] – Susan Rusch", no link to an artist) is looked up by its name, as a name of a text; when MusicBrainz links exactly one entry of its kind with exactly that name in this release already, it is linked to it – "found in this release (miscellaneous support on the release)" –, so a relationship MusicBrainz has is recognized. All sources.
+- **Strokes of the artwork** (Z-PIPE; S243): in the text from cover art a single "|" at the start or the end of a line is a stroke the text recognition read – taken out ("Spirit Room Series Vol.247 |" is a series again). Other texts keep their "|".
+- **Press quotes** (Z-REVIEW; S244): a quote with its source ("(THE WIRE / October 2026)", "— Pitchfork") or a rating ("4.5 / 5.0") is left out, folded, as "review (press quote)" – no credit, no liner notes; in a text of prose its short sentences are prose too, not "not recognized".
+- **Drums credited "drums"** (Z-DRUMSQS; S245): every spelling of drums that gives drums (drum set) – "Drums", "Drum", "dr", "ds", "drs" – is credited "drums"; a quick switch (on), off: no role credit.
+- **The dashboard stays where it is** (Z-JUMP): the pointer on a track or a mark of the source page in a tab beside it only lights the row up; "Jump along in the dashboard" (⚙ Settings → Discogs & Bandcamp, off) moves the dashboard there as before. The tab in two parts: "On the source page" and "In the dashboard".
+
+### Import 3.143.0
+
+- **"＋ Source" instead of "＋ Supplement"** (collected item Z-SUPPNAME): the second source is called **added source** everywhere – "＋ Source" in the head, the bar "Add a source:" with "Add" for an address, the list "From the added source: …", "＋ Add as a source" in the window of the text from cover art, the messages and the log ("Added source: Bandcamp – …"), "with an added source" in the statistics. "Supplemented" now only means what MusicBrainz had and the import added to. English first, German "＋ Quelle" / "zusätzliche Quelle", Spanish and French alike.
+- **The kind of the entry in its texts** (Z-MBSKIND): looking up, linking and changing an entry name what it is – "Looking up MB label …", "change MB place", "several MB labels have this Discogs link", "No MBID recognized. Paste the URL of an MB label page …" (until now always "MB artist"); the progress "Looking up MB entries via their … links".
 
 ### Import 3.142.0
 

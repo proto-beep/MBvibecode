@@ -436,6 +436,8 @@ def case_supp():
     F) The old script on the page: this one stays out and says so; started second, it warns after 3 s.
     G) Import 3.8.0: a source the release does not link to, typed into the field of "Supplement with" (another Bandcamp
        album): it supplements like a linked one; the loaded source itself is refused.
+    B3) Credits Importer 3.143.0 (collected item Z-SUPPNAME): "＋ Source" in the head, "Add a source:" with "Add" for an address, the list
+       "From the added source: Bandcamp", the source "✓ added", in the log "Added source: Bandcamp – …"; no "supplement" in the log.
     B2) Credits Importer 3.132.0 (collected item Z-SUPPTOGGLE): with the supplement loaded, "+ Supplement" folds the bar (until 3.131.0 it
        stayed open) – the button keeps "BC ✓", the list of the supplement stays – and opens it again."""
     import re
@@ -494,7 +496,7 @@ def case_supp():
         results.append(a_ok)
         # B) the list
         pg.click('[data-act=supp-load]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Supplement from Bandcamp/.test(li.textContent))", 60)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Bandcamp/.test(li.textContent))", 60)
         H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
         pg.wait_for_timeout(500)
         items = pg.evaluate(SUPP)
@@ -521,6 +523,17 @@ def case_supp():
         f2 = pg.evaluate("!!document.querySelector('.dci-suppbar')")
         print('B2) Leiste geladen:', f0, '| zu:', f1, '| wieder auf:', f2)
         results.append(f0 == [True, 'true'] and f1[:2] == [False, 'false'] and f1[2].endswith('BC ✓') and f1[3] and f2)
+        # [Z-SUPPNAME] (3.143.0; answers of 2026-11-13 16:43, 16:46) the second source is "＋ Source" / "added source" ("supplemented" only
+        # for what MusicBrainz had): the button of the head, the bar, its field, the list, the source loaded, the log
+        nm = pg.evaluate("""(() => { const h = document.querySelector('.dci-head [data-act=supp-open]');
+          return [h.querySelector('span').textContent.trim(), h.title.slice(0, 22), (document.querySelector('.dci-suppbar strong') || {}).textContent,
+            ((document.querySelector('.dci-suppbar [data-act=supp-url]') || {}).textContent || '').trim(),
+            ((document.querySelector('.dci-supp-fold') || {}).textContent || '').replace(/\\s+/g, ' ').trim(),
+            ((document.querySelector('.dci-supp-on') || {}).textContent || '').replace(/\\s+/g, ' ').trim()]; })()""")
+        nlog = logs(pg, 'Added source: Bandcamp – ')
+        print('B3) Namen:', nm, '|', nlog[:1])
+        results.append(nm[:4] == ['Source', 'Add a second source to', 'Add a source:', 'Add'] and nm[4].endswith('From the added source: Bandcamp')
+                       and nm[5].endswith('✓ added') and bool(nlog) and not logs(pg, '[Ss]upplement'))
         # C) Test Band unticked, take over
         pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Test Band')).querySelector('input').click()")
         pg.wait_for_timeout(200)
@@ -555,7 +568,7 @@ def case_supp():
         H.open_supp(pg)
         pg.fill('[data-f=supp-url]', OTHER + '?from=x')
         pg.click('[data-act=supp-url]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Supplement from Bandcamp/.test(li.textContent)).length >= 2", 60)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Added source: Bandcamp/.test(li.textContent)).length >= 2", 60)
         H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
         pg.wait_for_timeout(500)
         chip = pg.locator('.dci-supp-on').all_inner_texts()
@@ -581,7 +594,7 @@ def case_supp():
               pg.evaluate("document.querySelector('[data-el=supp]').hidden"), '| Marken:', pg.locator('.dci-srcmark').count())
         e_ok = picked == [H.REL] and asked == 'Delete the stored import of this release?' and after is None and 'Stored import of this release deleted' in first \
             and pg.evaluate("document.querySelector('[data-el=supp]').hidden") and not pg.locator('.dci-srcmark').count() \
-            and not logs(pg, 'Supplement from') and bool(logs(pg, 'Import complete'))
+            and not logs(pg, 'Added source:') and bool(logs(pg, 'Import complete'))
         results.append(e_ok)
         print('Fehler:', errs)
         results.append(not errs)

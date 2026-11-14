@@ -706,6 +706,8 @@ def case_linkedsugg():
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
+        # ([3.144.0] S242 off: the suggestions only – with it, Ann Mix is linked as in this release, noidname3144)
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
