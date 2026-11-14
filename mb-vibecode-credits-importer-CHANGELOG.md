@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-14 | 3.143.0 – 3.144.0 | – |
+| 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
@@ -107,6 +107,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.145.0
+
+- **New or supplemented – per level** (collected item Z-SUPPREL): the release group, the release and each recording the import adds to count as **new** (MusicBrainz had no relationship of it, URLs aside) or **supplemented** (it had) – at every import, only what is staged and submitted with "Enter edit". The edit note says it ("Supplemented: the release group, 5 of 8 recordings. New: the release, 3 recordings."), the statistics have three tiles for it (a submission of before: its release as it was, the rest "not noted"), "Global" reads it from the edit notes.
+- **Every entry made new** (Z-CREATED): artists, labels, places, series, events and works created with the dashboard count once MusicBrainz confirms them – "entries newly created in MusicBrainz", by kind; "Global" counts the edits of the forms the script filled in.
+- **Statistics for other programs** (Z-STATSJSON): ⚙ Settings → Cache – ⇧ JSON (format 2: names in snake_case, times in RFC 3339, the link types with their MusicBrainz id; described by a JSON Schema in `schemas/`), ⇧ CSV (two files after RFC 4180: submissions, relationships), ⇧ CSV (Excel) (as before), ⇧ JSON Lines, ⇧ Data Package (the columns of the CSV files, Frictionless Data). The import reads format 2 and the files of before. The file of "Global" follows the same standards (its own schema).
 
 ### Import 3.144.0
 

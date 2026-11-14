@@ -782,6 +782,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
+                                #   statsjson3145, glevels3145: 3.145.0 (Z-STATSJSON, Z-SUPPREL, Z-CREATED): the tiles of the levels and of the entries
+                                #     created; JSON of format 2 valid against its schema, CSV (RFC 4180), JSON Lines, Data Package; imported back the same;
+                                #     "Global": "New or supplemented", "Created with the dashboard"; editnote B: "Supplemented: … New: …"
                                 #   setdot3142: 3.142.0 (Z-SETDOT): the dot in a slot of its own – name and choices at the same place with and without it; narrow:
                                 #     after the name, the choices below
                                 #   uniq3142: 3.142.0 (Z-UNIQ, S241): "Linked entries" – different artists (1 new), labels, places, works; Global from `linked`
@@ -932,6 +935,7 @@ python3 t_ui_overlap.py         # 3.51.0 (Z-OVL, Z-IML): no two texts on each ot
                                 #   the page is drawn, scrolled through, fields; views (compact, 150 %, narrow, dark, Mapping rules, log)
 
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   createdstat3145: 3.145.0 (Z-CREATED): "Create label …" – noted in dci-stats-made as MusicBrainz shows its page
                                 #   noidname3144: 3.144.0 (Z-NOIDNAME, S242): a Discogs name without a link linked as in this release; two of that name:
                                 #     suggested; S242 off: "no Discogs ID"
                                 #   mbskind3143: 3.143.0 (Z-MBSKIND): "several MB labels have this Discogs link", "change MB label" / "change MB artist",

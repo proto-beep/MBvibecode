@@ -18,6 +18,16 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   added of the types remixer, remix and commissioned). From Credits Importer 3.142.0 (collected item Z-UNIQ) also `linked` – how many
   different artists, labels, places, areas, events and works the script's relationships linked (open or applied; a work with its writer
   counts as the writer's) – only numbers, no ids.
+  From Credits Importer 3.145.0 also `levels` (collected item Z-SUPPREL – the release groups, releases and recordings the submissions
+  added to, `new` when MusicBrainz had no relationship of them, URLs aside, else `supplemented`; from the line "Supplemented: … New:
+  …" of the edit notes) and `created` (Z-CREATED – the entries made new with the dashboard by kind: the edits "Add artist", "Add
+  label", "Add place", "Add series", "Add event", "Add work" open or applied whose form the script filled in – "Prefilled by MB x
+  Vibecode …"; such an edit counts, but is no submission).
+- **Format** (from 3.145.0, collected item Z-STATSJSON): JSON (RFC 8259) described by the JSON Schema (draft 2020-12)
+  [`schemas/mb-vibecode-credits-importer-global.schema.json`](../schemas/mb-vibecode-credits-importer-global.schema.json) – the file
+  names it in `$schema`, with `format` `mb-vibecode-credits-importer-global` and `format_version` 2; `generated` in RFC 3339 (UTC).
+  Fields not in the schema may come with newer versions: readers ignore them. `test_global_stats.py` checks its result against the
+  schema (with `jsonschema` installed).
 - **Privacy:** only numbers. No editor names or ids, no edits, no releases, no URLs; "editors" is how many different ones.
 - **Safety:** an archive cut off or without the tables is an error – nothing is written or committed.
 - **How:** `global_stats.py` reads the archive as a stream (nothing on disk): the table `edit` (the edits from `--since` on, by

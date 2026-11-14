@@ -1,0 +1,198 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://raw.githubusercontent.com/proto-beep/MBvibecode/main/schemas/mb-vibecode-credits-importer-global.schema.json",
+ "title": "MB x Vibecode: Credits Importer – global statistics from MusicBrainz's edit dump (format 2)",
+ "description": "Made by stats/global_stats.py (the workflow \"Global statistics\") from the edits whose edit note names the script. Numbers only: no editors, edits, releases or URLs. Fields not described here may appear in newer versions; readers should ignore them.",
+ "type": "object",
+ "required": [
+  "format",
+  "format_version",
+  "dump",
+  "generated",
+  "totals"
+ ],
+ "properties": {
+  "$schema": {
+   "type": "string",
+   "format": "uri"
+  },
+  "format": {
+   "const": "mb-vibecode-credits-importer-global"
+  },
+  "format_version": {
+   "const": 2
+  },
+  "script": {
+   "type": "string"
+  },
+  "names": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "dump": {
+   "type": "string",
+   "description": "The full export of MusicBrainz read (YYYYMMDD-HHMMSS)"
+  },
+  "generated": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "since": {
+   "type": "string",
+   "format": "date"
+  },
+  "privacy": {
+   "type": "string"
+  },
+  "totals": {
+   "type": "object",
+   "properties": {
+    "edits": {
+     "type": "integer"
+    },
+    "submissions": {
+     "type": "integer"
+    },
+    "editors": {
+     "type": "integer"
+    }
+   }
+  },
+  "by_month": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object"
+   }
+  },
+  "by_version": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object"
+   }
+  },
+  "by_edit_type": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   },
+   "description": "\"<id> <name>\" → edits"
+  },
+  "by_status": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "auto_edits": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "by_relationship_type": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "by_source": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "supplements": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   },
+   "description": "Added sources by kind"
+  },
+  "supplemented": {
+   "type": "object",
+   "description": "Submissions with an added source",
+   "properties": {
+    "n": {
+     "type": "integer"
+    },
+    "of": {
+     "type": "integer"
+    }
+   }
+  },
+  "source_mix": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "remixes": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "done": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "done_by_level": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "levels": {
+   "type": "object",
+   "description": "From 3.145.0: release groups, releases and recordings new or supplemented (the edit notes)",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "new": {
+      "type": "integer"
+     },
+     "supplemented": {
+      "type": "integer"
+     }
+    }
+   }
+  },
+  "created": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   },
+   "description": "From 3.145.0: entries created with the dashboard (their edits open or applied) by entity type"
+  },
+  "per_release": {
+   "type": "object"
+  },
+  "credits": {
+   "type": "object"
+  },
+  "linked": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "n": {
+      "type": "integer"
+     }
+    }
+   }
+  },
+  "rows_read": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "core": {
+   "type": "object"
+  }
+ }
+}

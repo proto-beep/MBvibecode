@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.144.0
+// @version      3.145.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.144.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.144.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.145.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.145.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.144.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.145.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1720,7 +1720,7 @@
       "settings.editNote": "Edit note",
       "settings.editNote.full": "Full",
       "settings.editNote.simple": "Simple",
-      "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
+      "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
       "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
@@ -2733,8 +2733,14 @@
       "stats.t.releases": "releases",
       "stats.t.rels": "relationships",
       "stats.t.newSupp": "new / supplemented",
+      "stats.t.lvl.release_group": "release groups new / supplemented",
+      "stats.t.lvl.release": "releases new / supplemented",
+      "stats.t.lvl.recording": "recordings new / supplemented",
+      "stats.lvlN": "{n} new (MusicBrainz had no relationship of it), {s} supplemented (it had)",
+      "stats.lvlU.one": "{n} submission of before 3.145.0 not noted",
+      "stats.lvlU.other": "{n} submissions of before 3.145.0 not noted",
       "stats.t.before": "releases with relationships before / empty",
-      "stats.t.created": "artists newly created in MusicBrainz",
+      "stats.t.created": "entries newly created in MusicBrainz",
       "stats.t.perRelease": "time per release",
       "stats.t.perRel": "time per relationship",
       "stats.subs": "{n} × “Enter edit”",
@@ -2752,13 +2758,20 @@
       "stats.top.instr": "Instruments used most",
       "stats.top.types": "Most frequent relationship types",
       "stats.delete": "Delete statistics …",
-      "statio.json": "⇧ Export statistics (JSON)",
-      "statio.jsonTitle": "Every record whole – to import it in another browser (⇩ Import there)",
-      "statio.csv": "⇧ Export as CSV",
-      "statio.csvTitle": "One line per relationship, separated by semicolons – to read in a spreadsheet; it cannot be imported",
+      "statio.json": "⇧ JSON",
+      "statio.jsonTitle": "Every submission whole, in readable names (format 2, described by a JSON Schema; times in RFC 3339) – to import it in another browser (⇩ Import there) or to read it in another program",
+      "statio.csv": "⇧ CSV",
+      "statio.exportedDp": "The columns of the CSV files of today described in {file} – put it next to them",
+      "statio.csvx": "⇧ CSV (Excel)",
+      "statio.csvxTitle": "One line per relationship, separated by semicolons – for Excel; it cannot be imported",
+      "statio.jsonl": "⇧ JSON Lines",
+      "statio.jsonlTitle": "One relationship a line as JSON (.jsonl) – for jq, DuckDB, Spark and other tools of data",
+      "statio.dp": "⇧ Data Package",
+      "statio.dpTitle": "datapackage.json (Frictionless Data): describes the columns and types of the two CSV files of today – put it next to them",
+      "statio.csvTitle": "Two files after RFC 4180 (commas, a header): the submissions and the relationships – for pandas, R, DuckDB, LibreOffice (two downloads at once: the browser may ask; a name beginning with “=” stays as written – for Excel take “CSV (Excel)”); their columns are described by “Data Package”",
       "statio.import": "⇩ Import statistics (JSON) …",
-      "statio.importTitle": "Adds the records of a file exported before; a record that is here already (the same id) is skipped",
-      "statio.purpose": "JSON: to keep the same statistics in several browsers (export here, import there). CSV: to look at them in a spreadsheet.",
+      "statio.importTitle": "Adds the records of a file exported before (JSON, format 1 or 2); a record that is here already (the same id) is skipped",
+      "statio.purpose": "JSON: to keep the same statistics in several browsers (export here, import there) – format 2 and the files of before. CSV, JSON Lines, Data Package: to evaluate them in other programs.",
       "statio.exported.one": "{n} record saved as {file}",
       "statio.exported.other": "{n} records saved as {file}",
       "statio.exportedCsv.one": "{n} relationship saved as {file}",
@@ -2793,6 +2806,8 @@
       "stats.more.own": "Own rules",
       "stats.more.linked": "Linked entries",
       "stats.more.glinked": "Linked entries",
+      "stats.more.glevels": "New or supplemented",
+      "stats.more.gcreated": "Created with the dashboard",
       "stats.uniq.artist": "different artists",
       "stats.uniq.label": "different labels",
       "stats.uniq.place": "different places",
@@ -14240,6 +14255,20 @@
   // what cannot be looked up counts on the release page shown within 2 minutes of "Enter edit" (MusicBrainz shows it after a successful one)
   const STAT_FRESH_MS = 2 * 60 * 1000;
   const STATS_DB = 'dci-stats';
+  // [Z-CREATED] (3.145.0) the entries made new with the dashboard, noted when MusicBrainz confirmed them: [{ at, et, tg }]
+  const STATS_MADE_KEY = 'dci-stats-made';
+  const statMadeList = () => {
+    const l = readJson('localStorage', STATS_MADE_KEY, []);
+    return Array.isArray(l) ? l.filter((x) => x && typeof x.tg === 'string' && typeof x.et === 'string' && Number.isFinite(x.at)) : [];
+  };
+  function statMade(et, gid) {
+    if (!statsOn() || !gid) return;
+    const l = statMadeList();
+    const tg = String(gid).toLowerCase();
+    if (l.some((x) => x.tg === tg)) return;
+    l.push({ at: Date.now(), et: String(et || 'artist').replace('-', '_'), tg });
+    writeJson('localStorage', STATS_MADE_KEY, l.slice(-20000));
+  }
   /** [E8] Collecting is on unless switched off */
   const statsOn = () => readJson('localStorage', STATS_ON_KEY, true) !== false;
   let statDbPromise = null;
@@ -22816,6 +22845,57 @@
   /** The release the companion script shows (its Discogs tab); null without one, or for a source it does not know. */
   const companionReleaseId = () => (S.release && S.source.companion ? S.release.id : null);
 
+  /**
+   * [Z-SUPPREL] (3.145.0) What MusicBrainz had before the import, URLs aside: gid → the number of relationships of the release, of its
+   * release group and of each recording (a link of a recording with a work counts).
+   */
+  function mbHadRels(ws) {
+    const out = new Map();
+    const n = (list) => (list || []).filter((r) => r && r['target-type'] !== 'url').length;
+    if (!ws) return out;
+    if (ws.id) out.set(ws.id, n(ws.relations));
+    const rg = ws['release-group'];
+    if (rg && rg.id && Array.isArray(rg.relations)) out.set(rg.id, n(rg.relations));
+    (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
+      if (t.recording && t.recording.id) out.set(t.recording.id, n(t.recording.relations));
+    }));
+    return out;
+  }
+  /** [Z-SUPPREL] The release group, the release and the recordings the import adds to (staged or supplemented): gid → level. */
+  function suppTouched(sources = [...[...S.staged.values()].map((x) => x && x.source), ...[...S.statFills.values()].map((f) => f && f.source)]) {
+    const out = new Map();
+    for (const e of sources) {
+      const lv = e && String(e.entityType || '').replace('-', '_');
+      if (e && e.gid && ['release_group', 'release', 'recording'].includes(lv)) out.set(e.gid, lv);
+    }
+    return out;
+  }
+  /**
+   * [Z-SUPPREL] Each level "new" ('n': MusicBrainz had no relationship of it) or "supplemented" ('s'); the recordings counted. had: gid →
+   * the number of relationships before (unknown: none).
+   */
+  function suppLevels(had, touched) {
+    const out = { release_group: '', release: '', recording: { n: 0, s: 0 } };
+    touched.forEach((lv, gid) => {
+      const was = (had.get(gid) || 0) > 0;
+      if (lv === 'recording') out.recording[was ? 's' : 'n']++;
+      else out[lv] = was ? 's' : 'n';
+    });
+    return out;
+  }
+  /** [Z-SUPPREL] The line of the edit note: "Supplemented: the release group, 5 of 8 recordings. New: the release, 3 recordings." */
+  function suppLevelsNote() {
+    const lv = suppLevels(S.mbHad || new Map(), suppTouched());
+    const sup = [];
+    const nw = [];
+    if (lv.release_group) (lv.release_group === 's' ? sup : nw).push('the release group');
+    if (lv.release) (lv.release === 's' ? sup : nw).push('the release');
+    const t = lv.recording.n + lv.recording.s;
+    if (lv.recording.s) sup.push(`${lv.recording.s} of ${t} recording${t === 1 ? '' : 's'}`);
+    if (lv.recording.n) nw.push(`${lv.recording.n} recording${lv.recording.n === 1 ? '' : 's'}`);
+    return [sup.length ? `Supplemented: ${sup.join(', ')}.` : '', nw.length ? `New: ${nw.join(', ')}.` : ''].filter(Boolean).join(' ');
+  }
+
   function editNoteBlock() {
     const st = S.noteStats;
     const lines = [];
@@ -22845,6 +22925,9 @@
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
     if (st.linkAttrs) done.push(`added attributes (live, cover …) to ${st.linkAttrs} existing link${st.linkAttrs === 1 ? '' : 's'} between recording and work`);
     if (done.length) lines.push(`Done: ${done.join('; ')}.`);
+    // [Z-SUPPREL] (3.145.0) which levels MusicBrainz had something of (supplemented) and which were empty (new)
+    const lvNote = suppLevelsNote();
+    if (lvNote) lines.push(lvNote);
     supp.filter((l) => !l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     // [Z-EXC] (3.49.0) covers, arrangements and quotes as the source says them; a work not found in MusicBrainz is named (Q-fh)
     // ((3.49.0, review) only for tracks chosen, with the works matrix in use; a cover while "cover" is on one of its links)
@@ -23228,7 +23311,8 @@
         log('info', S.autostartFrom === 'link' ? 'fromLink' : S.autostartFrom === 'count' ? 'fromCount' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       }
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
-        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
+        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels'
+        + '+release-group-level-rels'); // ([Z-SUPPREL] 3.145.0) what the release group had
       if (!ws) throw new Error(tr('err.releaseMissing'));
       // [3.21.1] tracks or recording relationships the web service left out: read from MB's relationship editor (Punkt 44)
       await completeMedia(ws);
@@ -23281,6 +23365,7 @@
       itreeLoad(); // [Z-ITREE] (3.107.0) the instruments' tree: on its way while the import goes on
       // [E8] (3.38.0) the release for the statistics (its relationships before the import)
       S.statRel = statReleaseInfo(ws);
+      S.mbHad = mbHadRels(ws); // [Z-SUPPREL] (3.145.0)
       // [E5a] (3.37.1) who is linked where in this release in MusicBrainz (their name suggestions come first)
       S.linked = linkedInRelease(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
@@ -35141,6 +35226,7 @@
       done = true;
       // ([Z-DUR] 3.65.0, review) a pause up to now is closed before the time of creating is taken
       statActivity({ type: 'created' });
+      statMade(entityType, mbid); // [Z-CREATED] (3.145.0) counted as MusicBrainz confirms it
       cleanup();
       Promise.resolve(onCreated(mbid.toLowerCase())).finally(() => {
         if (S.statStart && crStart >= S.statStart) S.statCreate = (S.statCreate || 0) + Math.max(0, Date.now() - crStart - Math.max(0, (S.statIdle || 0) - crIdle));
@@ -47085,6 +47171,7 @@
         statClear().then(() => {
           S.statsData = [];
           writeJson('localStorage', STATS_ARTISTS_KEY, null); // [Z-AST] (3.54.0) the artists looked up for them too
+          writeJson('localStorage', STATS_MADE_KEY, null); // [Z-CREATED] (3.145.0)
           S.statArtistsGen = (S.statArtistsGen || 0) + 1;
           log('info', 'statsDeleted', {});
           renderStats();
@@ -49677,6 +49764,7 @@
     const cur = findRelationshipStates(re.state, new Set(byId.keys()));
     const had = statExisting(re.state);
     const rels = [];
+    const touched = []; // [Z-SUPPREL] (3.145.0) the entities the submission adds to
     for (const [id, state] of cur) {
       const x = byId.get(id);
       // taken out in the editor (3), or a supplement undone there (0): not submitted
@@ -49717,11 +49805,17 @@
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
       }
       rels.push(it);
+      touched.push(src);
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
     // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
     // [Z-STD] (3.45.0) idle: the pauses not counted (the time of the record: from the start until "Enter edit" without them)
-    return { v: 3, mbid: releaseMbid, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+    // [Z-SUPPREL] (3.145.0) the release group, the release and the recordings: new or supplemented (what the editor had of them, and
+    // what MusicBrainz gave at the import)
+    const hadOf = new Map([...(S.mbHad || new Map())]);
+    (had.ent || new Map()).forEach((n, gid) => hadOf.set(gid, Math.max(hadOf.get(gid) || 0, n)));
+    const lvl = suppLevels(hadOf, suppTouched(touched));
+    return { v: 3, mbid: releaseMbid, lvl, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -49790,6 +49884,8 @@
    */
   function statExisting(root, maxSteps = 400000) {
     const out = new Map();
+    const ent = new Map();
+    out.ent = ent;
     const counted = new Set();
     const seen = new Set();
     const stack = [root];
@@ -49805,6 +49901,8 @@
           [[v.entity0, v.entity1], [v.entity1, v.entity0]].forEach(([a, b]) => {
             const k = `${a.gid}|${v.linkTypeID}|${b.gid}`;
             out.set(k, (out.get(k) || 0) + 1);
+            // [Z-SUPPREL] (3.145.0) the relationships of each entity (URLs aside)
+            if (a.gid && b.entityType !== 'url') ent.set(a.gid, (ent.get(a.gid) || 0) + 1);
           });
         }
         continue;
@@ -49837,7 +49935,10 @@
   /** [E8] The sums of submissions (records of dci-stats). */
   function statAgg(recs) {
     const a = { subs: recs.length, releases: new Set(), rels: 0, n: 0, s: 0, filled: new Set(), empty: new Set(), created: new Set(), msSum: 0, msN: 0, msRels: 0,
-      artists: new Map(), instr: new Map(), types: new Map() };
+      artists: new Map(), instr: new Map(), types: new Map(),
+      // [Z-SUPPREL] (3.145.0) per submission: the levels new or supplemented; u: records of before that did not note it
+      lvl: { release_group: { n: 0, s: 0, u: 0 }, release: { n: 0, s: 0, u: 0 }, recording: { n: 0, s: 0, u: 0 } },
+      madeIn: new Map(), worksInEditor: 0 }; // [Z-CREATED] (3.145.0) entries made new seen in submissions (gid → kind), works made at "Enter edit"
     const add = (m, k, name = k) => {
       if (!k) return;
       const x = m.get(k) || { name, n: 0 };
@@ -49848,6 +49949,23 @@
     const relMs = new Map();
     for (const r of [...recs].sort((x, y) => x.at - y.at)) {
       a.releases.add(r.mbid);
+      // [Z-SUPPREL] (3.145.0) a record of before: the release by what MusicBrainz had of it then (`rel.before`), the release group and
+      // the recordings not noted
+      const lv = r.lvl && typeof r.lvl === 'object' ? r.lvl : null;
+      if (lv) {
+        ['release_group', 'release'].forEach((k) => { if (lv[k] === 'n' || lv[k] === 's') a.lvl[k][lv[k]]++; });
+        a.lvl.recording.n += Number((lv.recording || {}).n) || 0;
+        a.lvl.recording.s += Number((lv.recording || {}).s) || 0;
+      } else {
+        // ((review) a level only when the submission added to it; `before` counts the release's and its recordings' relationships
+        const at = (lvx) => (r.rels || []).some((it) => it && String(it.lv || '').replace('-', '_') === lvx);
+        if (at('release')) {
+          if (r.rel && r.rel.before != null) a.lvl.release[r.rel.before ? 's' : 'n']++;
+          else a.lvl.release.u++;
+        }
+        if (at('release_group')) a.lvl.release_group.u++;
+        if (at('recording')) a.lvl.recording.u++;
+      }
       // a release counts as it was at its first submission (before: its relationships in MusicBrainz then)
       if (!seenRel.has(r.mbid) && r.rel) {
         seenRel.add(r.mbid);
@@ -49855,6 +49973,7 @@
       }
       const rels = r.rels || [];
       a.rels += rels.length;
+      a.worksInEditor += Number(((r.x || {}).works || {}).pending) || 0; // [Z-CREATED] (3.145.0)
       const dur = statTime(r);
       if (dur != null && rels.length) {
         a.msSum += dur;
@@ -49869,6 +49988,7 @@
         (it.i || []).forEach((n) => add(a.instr, n));
         add(a.types, it.lt);
         if (it.nw && it.et === 'artist') a.created.add(it.tg);
+        if (it.nw && it.tg && it.et) a.madeIn.set(it.tg, it.et); // [Z-CREATED] (3.145.0) every kind
       }
     }
     // the time per release: all its submissions together
@@ -49878,6 +49998,19 @@
 
   const statTop = (m, n) => [...m.values()].sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, n);
   const statPct = (x, of) => (of ? Math.round((100 * x) / of) : 0);
+  /**
+   * [Z-CREATED] (3.145.0) The entries made new with the dashboard (artists, labels, places, series, events, works), each once – those
+   * noted when MusicBrainz confirmed them (`dci-stats-made`), those of the submissions (`nw`), the works made at "Enter edit" – by kind.
+   */
+  function statMadeKinds(a) {
+    const byGid = new Map(a.madeIn);
+    statMadeList().forEach((x) => byGid.set(x.tg, x.et));
+    const out = new Map();
+    byGid.forEach((et) => out.set(et, (out.get(et) || 0) + 1));
+    if (a.worksInEditor) out.set('work', (out.get('work') || 0) + a.worksInEditor);
+    const order = ['artist', 'label', 'place', 'series', 'event', 'area', 'work'];
+    return new Map([...out].sort(([x], [y]) => (order.indexOf(x) + 99) % 99 - (order.indexOf(y) + 99) % 99));
+  }
   /** [E8] A duration: "45 s", "3 min 20 s", "1 h 5 min". */
   function statDur(ms) {
     if (ms == null || !Number.isFinite(ms)) return '–';
@@ -49971,16 +50104,170 @@
     if (!Array.isArray(rec.rels) || rec.rels.some((it) => !it || typeof it !== 'object' || Array.isArray(it))) return null;
     return statRecUsable(rec) ? rec : null;
   }
+  // --- [Z-STATSJSON] (3.145.0) The statistics in format 2: readable to other programs -------
+  // JSON (RFC 8259) described by a JSON Schema (draft 2020-12, `$schema`), names in snake_case, times in RFC 3339 with the offset of
+  // this browser, durations in seconds, link types with their MusicBrainz id; the same relationships as CSV (RFC 4180: commas, a
+  // header) with a Frictionless Data Package that describes its columns, as JSON Lines (one relationship a line), and as before for
+  // Excel (semicolons). Stored in the browser as before (short names): only the files change; the import reads format 1 and 2.
+  const STATS_SCHEMA_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/schemas/mb-vibecode-statistics-2.schema.json';
+  // [stored, exported, kind of value] – a name not listed is kept as it is (both ways)
+  const STAT_V2_REC = [['id', 'id'], ['mbid', 'release_mbid'], ['v', 'record_version'], ['at', 'submitted_at', 'time'], ['start', 'started_at', 'time'],
+    ['ms', 'duration_s', 'sec'], ['work', 'work_s', 'sec'], ['idle', 'idle_s', 'sec'], ['cr', 'creating_s', 'sec'], ['lvl', 'levels', 'lvl'], ['rel', 'release', 'rel'],
+    ['src', 'source'], ['supp', 'added_sources'], ['ocr', 'text_from_cover_art'], ['own', 'own_rules'], ['dev', 'developer'], ['x', 'extras'], ['rels', 'relationships', 'rels']];
+  const STAT_V2_REL = [['media', 'media_count'], ['rgp', 'release_group_primary_type'], ['rgs', 'release_group_secondary_types'], ['lang', 'language'],
+    ['lens', 'recording_lengths_ms'], ['whole', 'length_ms'], ['before', 'relationships_before'], ['recs', 'recording_count']];
+  const STAT_V2_IT = [['k', 'status', 'status'], ['lt', 'type'], ['lv', 'level'], ['et', 'target_entity_type'], ['tg', 'target_mbid'], ['tn', 'target_name'],
+    ['i', 'instruments'], ['v', 'vocals'], ['a', 'attributes'], ['rt', 'role_credits'], ['d', 'date_precision'], ['ds', 'date_source'], ['dy', 'date_year'],
+    ['rc', 'has_attribute_credit', 'bool'], ['ac', 'has_artist_credit', 'bool'], ['al', 'found_via_alias', 'bool'], ['nw', 'target_created_in_dashboard', 'bool'],
+    ['lk', 'target_found_via'], ['ru', 'rule'], ['h', 'changed_by_hand'], ['q', 'answers'], ['f', 'added_to_existing'], ['o', 'row_from'], ['c', 'lookup']];
+  /** RFC 3339 with the offset of this browser and milliseconds ("2026-11-14T11:15:00.000+01:00"). */
+  function rfc3339(t) {
+    const d = new Date(t);
+    const off = -d.getTimezoneOffset();
+    const p = (n, w = 2) => String(Math.abs(n)).padStart(w, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`
+      + `${off < 0 ? '-' : '+'}${p(Math.trunc(off / 60))}:${p(off % 60)}`;
+  }
+  const v2Val = {
+    time: [(v) => (Number.isFinite(v) ? rfc3339(v) : v), (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? Date.parse(v) : v)],
+    sec: [(v) => (Number.isFinite(v) ? v / 1000 : v), (v) => (Number.isFinite(v) ? Math.round(v * 1000) : v)],
+    bool: [(v) => !!v, (v) => (v ? 1 : 0)],
+    status: [(v) => ({ n: 'new', s: 'supplemented' }[v] || v), (v) => ({ new: 'n', supplemented: 's' }[v] || v)],
+    lvl: [(v) => (v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x && typeof x === 'object' ? { new: x.n || 0, supplemented: x.s || 0 }
+      : ({ n: 'new', s: 'supplemented' }[x] || x || null)])) : v),
+    (v) => (v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x && typeof x === 'object' ? { n: x.new || 0, s: x.supplemented || 0 }
+      : ({ new: 'n', supplemented: 's' }[x] || x || '')])) : v)],
+    rel: [(v) => v2Map(v, STAT_V2_REL, 0), (v) => v2Map(v, STAT_V2_REL, 1)],
+    rels: [(v) => (Array.isArray(v) ? v.map((it) => statItV2(it)) : v), (v) => (Array.isArray(v) ? v.map((it) => v2Map(it, STAT_V2_IT, 1)) : v)],
+  };
+  /** An object with its names of the table turned (dir 0: stored → exported, 1: back), its values with them. */
+  function v2Map(o, table, dir) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return o;
+    const out = {};
+    for (const [k, v] of Object.entries(o)) {
+      const row = table.find((r) => r[dir] === k);
+      if (!row) {
+        out[k] = v;
+        continue;
+      }
+      const conv = row[2] && v2Val[row[2]];
+      out[row[1 - dir]] = conv ? conv[dir](v) : v;
+    }
+    return out;
+  }
+  /** A relationship of a record in format 2, with the id of its link type in MusicBrainz (when the types are loaded). */
+  function statItV2(it) {
+    const o = v2Map(it, STAT_V2_IT, 0);
+    try {
+      // ((review) the type of its two entity types: "producer" of a recording is not that of a release
+      const ty = (x) => String(x || '').replace('-', '_');
+      const pair = [ty(it.lv), ty(it.et)].sort().join('|');
+      const lt = it && it.lt ? [...idx().ltById.values()].find((x) => x.name === it.lt && [ty(x.type0), ty(x.type1)].sort().join('|') === pair) : null;
+      if (lt && lt.gid) o.type_id = lt.gid;
+    } catch {
+      // (the types not loaded: without the id)
+    }
+    return o;
+  }
+  const statRecV2 = (rec) => v2Map(rec, STAT_V2_REC, 0);
+  const statRecFromV2 = (sub) => {
+    const rec = v2Map(sub, STAT_V2_REC, 1);
+    // (the id of a link type is MusicBrainz's – derived, not stored)
+    if (Array.isArray(rec.rels)) rec.rels = rec.rels.map((it) => (it && typeof it === 'object' ? (({ type_id: _t, ...x }) => x)(it) : it));
+    return rec;
+  };
+  /** The columns of a relationship in the CSV and the lines of JSON Lines: [name, type of the Data Package, description, value]. */
+  const STAT_REL_COLS = [
+    ['submission_id', 'string', 'The submission ("Enter edit"): the release MBID and the time of its first import', (r) => r.id],
+    ['release_mbid', 'string', 'MBID of the release', (r) => r.mbid],
+    ['release_title', 'string', 'Title of the release', (r) => (r.rel && r.rel.title) || ''],
+    ['submitted_at', 'datetime', 'When MusicBrainz confirmed the submission (RFC 3339)', (r) => (r.at ? rfc3339(r.at) : '')],
+    ['source', 'string', 'The source imported (discogs, bandcamp, youtube, text, ocr …)', (r) => r.src || ''],
+    ['added_sources', 'string', 'Sources added to it, separated by "; "', (r) => (r.supp || []), true],
+    ['status', 'string', '"new": staged by the dashboard; "supplemented": MusicBrainz had it, the dashboard added a credit, a date or attributes', (r, it) => (it.k === 's' ? 'supplemented' : 'new')],
+    ['type', 'string', 'MusicBrainz relationship type', (r, it) => it.lt || ''],
+    ['type_id', 'string', 'MBID of the relationship type', (r, it) => statItV2(it).type_id || ''],
+    ['level', 'string', 'Entity the relationship is on (recording, release, release_group, work)', (r, it) => it.lv || ''],
+    ['target_entity_type', 'string', 'Entity type of the target (artist, label, place, work …)', (r, it) => it.et || ''],
+    ['target_mbid', 'string', 'MBID of the target', (r, it) => it.tg || ''],
+    ['target_name', 'string', 'Name of the target', (r, it) => it.tn || ''],
+    ['instruments', 'string', 'Instruments, separated by "; "', (r, it) => it.i || [], true],
+    ['vocals', 'string', 'Vocals, separated by "; "', (r, it) => it.v || [], true],
+    ['attributes', 'string', 'Other attributes (additional, guest, solo, live …), separated by "; "', (r, it) => it.a || [], true],
+    ['role_credits', 'string', 'Role credits ("credited as" of attributes), separated by "; "', (r, it) => it.rt || [], true],
+    ['date_precision', 'string', 'Precision of the date of the relationship (day, month, year; empty: no date)', (r, it) => it.d || ''],
+    ['date_year', 'integer', 'Year of the date of the relationship', (r, it) => (it.dy == null ? '' : it.dy)],
+    ['target_created_in_dashboard', 'boolean', 'The target was created with the dashboard', (r, it) => (it.nw ? 'true' : 'false')],
+    ['target_found_via', 'string', 'How the target was found: link, search, hand, created', (r, it) => it.lk || ''],
+    ['rule', 'string', 'Mapping rule of the row', (r, it) => it.ru || ''],
+  ];
+  const STAT_SUB_COLS = [
+    ['submission_id', 'string', 'The submission: the release MBID and the time of its first import', (r) => r.id],
+    ['release_mbid', 'string', 'MBID of the release', (r) => r.mbid],
+    ['release_title', 'string', 'Title of the release', (r) => (r.rel && r.rel.title) || ''],
+    ['submitted_at', 'datetime', 'When MusicBrainz confirmed the submission (RFC 3339)', (r) => (r.at ? rfc3339(r.at) : '')],
+    ['source', 'string', 'The source imported', (r) => r.src || ''],
+    ['added_sources', 'string', 'Sources added to it, separated by "; "', (r) => r.supp || [], true],
+    ['relationships', 'integer', 'Relationships submitted', (r) => (r.rels || []).length],
+    ['duration_s', 'number', 'Seconds from the first import to "Enter edit", pauses not counted', (r) => (r.ms == null ? '' : r.ms / 1000)],
+    ['work_s', 'number', 'Seconds of work in it', (r) => (r.work == null ? '' : r.work / 1000)],
+    ['release_group_level', 'string', 'The release group: new (MusicBrainz had no relationship of it), supplemented, or empty (nothing added to it / not noted)', (r) => ({ n: 'new', s: 'supplemented' }[(r.lvl || {}).release_group] || '')],
+    ['release_level', 'string', 'The release: new, supplemented, or empty', (r) => ({ n: 'new', s: 'supplemented' }[(r.lvl || {}).release] || '')],
+    ['recordings_new', 'integer', 'Recordings added to that had no relationship', (r) => (r.lvl ? Number((r.lvl.recording || {}).n) || 0 : '')],
+    ['recordings_supplemented', 'integer', 'Recordings added to that had relationships', (r) => (r.lvl ? Number((r.lvl.recording || {}).s) || 0 : '')],
+  ];
+  const csv4180 = (v) => {
+    const t = Array.isArray(v) ? v.join('; ') : v == null ? '' : String(v);
+    return /[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const statRows = (all, cols, per) => all.flatMap((r) => (per ? (Array.isArray(r.rels) ? r.rels.filter((it) => it && typeof it === 'object').map((it) => [r, it]) : []) : [[r, null]]))
+    .map(([r, it]) => cols.map((c) => c[3](r, it)));
+  function statsCsv4180(all, cols, per) {
+    return `${[cols.map((c) => c[0]).join(','), ...statRows(all, cols, per).map((row) => row.map(csv4180).join(','))].join('\r\n')}\r\n`;
+  }
+  function statsJsonl(all) {
+    return statRows(all, STAT_REL_COLS, true).map((row) => JSON.stringify(Object.fromEntries(STAT_REL_COLS.map((c, k) => {
+      const v = row[k];
+      return [c[0], c[1] === 'integer' || c[1] === 'number' ? (v === '' ? null : Number(v)) : c[1] === 'boolean' ? v === 'true' : v];
+    })))).join('\n') + '\n';
+  }
+  function statsDataPackage(day) {
+    const res = (name, path, cols, key) => ({ name, path, profile: 'tabular-data-resource', format: 'csv', mediatype: 'text/csv', encoding: 'utf-8',
+      dialect: { delimiter: ',', header: true }, schema: { fields: cols.map(([n, type, description]) => ({ name: n, type, description, ...(type === 'datetime' ? { format: 'any' } : {}) })), ...(key ? { primaryKey: key } : {}) } });
+    return { name: 'mb-vibecode-statistics', title: 'MB x Vibecode: Credits Importer – statistics of this browser', profile: 'tabular-data-package', created: rfc3339(Date.now()),
+      description: `Exported by ${EDIT_NOTE_SCRIPT_NAME} ${VERSION} (${SCRIPT_URL}). The JSON of the same statistics: ${STATS_SCHEMA_URL}`,
+      resources: [res('submissions', `mb-vibecode-statistics-submissions-${day}.csv`, STAT_SUB_COLS, 'submission_id'),
+        res('relationships', `mb-vibecode-statistics-relationships-${day}.csv`, STAT_REL_COLS)] };
+  }
   async function exportStats(kind) {
     const all = (await statAll()) || [];
-    const csv = kind === 'csv';
-    const file = `mb-vibecode-statistics-${dayStamp()}.${csv ? 'csv' : 'json'}`;
-    if (csv) downloadText(statsCsv(all), file, 'text/csv;charset=utf-8');
-    else downloadText(`${JSON.stringify({ format: STATS_FILE_FORMAT, version: 1, script: VERSION, exported: new Date().toISOString(), records: all })}\n`, file, 'application/json');
+    const day = dayStamp();
+    const files = [];
+    if (kind === 'csvx') files.push([`mb-vibecode-statistics-${day}-excel.csv`, statsCsv(all), 'text/csv;charset=utf-8']);
+    else if (kind === 'csv') {
+      files.push([`mb-vibecode-statistics-submissions-${day}.csv`, statsCsv4180(all, STAT_SUB_COLS, false), 'text/csv;charset=utf-8']);
+      files.push([`mb-vibecode-statistics-relationships-${day}.csv`, statsCsv4180(all, STAT_REL_COLS, true), 'text/csv;charset=utf-8']);
+    } else if (kind === 'jsonl') files.push([`mb-vibecode-statistics-relationships-${day}.jsonl`, statsJsonl(all), 'application/jsonl']);
+    else if (kind === 'dp') files.push(['datapackage.json', `${JSON.stringify(statsDataPackage(day), null, 2)}\n`, 'application/json']);
+    else {
+      let tz = '';
+      try {
+        tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      } catch {
+        tz = '';
+      }
+      files.push([`mb-vibecode-statistics-${day}.json`, `${JSON.stringify({ $schema: STATS_SCHEMA_URL, format: STATS_FILE_FORMAT, format_version: 2,
+        generator: { name: EDIT_NOTE_SCRIPT_NAME, version: VERSION, url: SCRIPT_URL }, exported_at: rfc3339(Date.now()), time_zone: tz,
+        submissions: all.map(statRecV2), created_entries: statMadeList().map((x) => ({ created_at: rfc3339(x.at), entity_type: x.et, mbid: x.tg })) }, null, 1)}\n`, 'application/json']);
+    }
+    files.forEach(([f, text, type], k) => setTimeout(() => downloadText(text, f, type), k * 400));
+    const csv = kind !== 'json' && kind !== 'dp';
     const n = csv ? all.reduce((k, r) => k + ((r.rels || []).length), 0) : all.length;
+    const file = files.map((f) => f[0]).join(', ');
     log('info', csv ? 'statsExportedCsv' : 'statsExported', { n, file });
     ioLog('E', csv ? 'statisticsCsv' : 'statistics', file, n);
-    S.statioStatus = tr(csv ? 'statio.exportedCsv' : 'statio.exported', { n, file });
+    // ((review) the Data Package: what it describes
+    S.statioStatus = kind === 'dp' ? tr('statio.exportedDp', { file }) : tr(csv ? 'statio.exportedCsv' : 'statio.exported', { n, file });
     renderSettings();
   }
   /** The records of a file added to the statistics of this browser; a record there already (the same id) is skipped. */
@@ -49990,6 +50277,14 @@
       data = JSON.parse(text);
     } catch {
       data = null;
+    }
+    // [Z-STATSJSON] (3.145.0) format 2 (submissions in readable names) turned back; format 1 as it is
+    if (data && data.format === STATS_FILE_FORMAT && data.format_version === 2 && Array.isArray(data.submissions)) {
+      const made = Array.isArray(data.created_entries) ? data.created_entries : [];
+      data = { format: STATS_FILE_FORMAT, version: 1, records: data.submissions.map((x) => (x && typeof x === 'object' && !Array.isArray(x) ? statRecFromV2(x) : null)),
+        made: made.filter((x) => x && typeof x.mbid === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x.mbid)
+          && ['artist', 'label', 'place', 'series', 'event', 'area', 'work'].includes(x.entity_type))
+          .map((x) => ({ at: Date.parse(x.created_at) || Date.now(), et: x.entity_type.slice(0, 20), tg: x.mbid.toLowerCase() })) };
     }
     if (!data || data.format !== STATS_FILE_FORMAT || data.version !== 1 || !Array.isArray(data.records)) {
       S.statioStatus = tr('statio.bad', { file });
@@ -50032,6 +50327,17 @@
       }
     } finally {
       S.statioBusy = false;
+    }
+    // [Z-CREATED] [Z-STATSJSON] (3.145.0) the entries made new of a file of format 2, each once
+    if (Array.isArray(data.made) && data.made.length && statsOn()) {
+      const have = statMadeList();
+      const seen = new Set(have.map((x) => x.tg));
+      data.made.forEach((x) => {
+        if (seen.has(x.tg)) return;
+        seen.add(x.tg);
+        have.push(x);
+      });
+      writeJson('localStorage', STATS_MADE_KEY, have.slice(-20000));
     }
     log('info', 'statsImported', { n, skipped: here + bad, file });
     ioLog('I', 'statistics', file, n, here + bad);
@@ -50116,7 +50422,10 @@
       supplements: nums(d.supplements), supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
       remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null,
       // [Z-UNIQ] (3.142.0) the different entries linked by kind (a file of before: none)
-      linked: d.linked ? Object.fromEntries(['artist', 'label', 'place', 'area', 'event', 'work'].map((k) => [k, { n: Number(obj(obj(d.linked)[k]).n) || 0 }])) : null };
+      linked: d.linked ? Object.fromEntries(['artist', 'label', 'place', 'area', 'event', 'work'].map((k) => [k, { n: Number(obj(obj(d.linked)[k]).n) || 0 }])) : null,
+      // [Z-SUPPREL] [Z-CREATED] (3.145.0) the levels new or supplemented, the entries made new (a file of before: none)
+      levels: d.levels ? Object.fromEntries(['release_group', 'release', 'recording'].map((k) => [k, { n: Number(obj(obj(d.levels)[k]).new) || 0, s: Number(obj(obj(d.levels)[k]).supplemented) || 0 }])) : null,
+      created: d.created ? Object.fromEntries(['artist', 'label', 'place', 'series', 'event', 'work'].map((k) => [k, Number(obj(d.created)[k]) || 0])) : null };
   }
   /** [Z-SRR] (3.91.0) A part "per_release" of the global file – only numbers: { n, <key>: { mean, median } …, by_level }; null without. */
   function srrClean(p, keys) {
@@ -50198,7 +50507,7 @@
   }
   /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
   // ([Z-GSTNEW] 3.139.0) What: supplemented instead of new, remixes and commissions; Sources: the sources of the submissions together
-  const GLOBAL_STATS_GROUPS = [['what', ['suppl', 'remixes']], ['who', ['glinked', 'credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
+  const GLOBAL_STATS_GROUPS = [['what', ['glevels', 'suppl', 'remixes']], ['who', ['glinked', 'gcreated', 'credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
   /** [Z-SRR] (3.91.0) "Per release" of all users: the edits' part (relationships, by level) and the core's (recordings, per recording). */
   function globalPerRelease(d) {
     const e = d && d.per_release;
@@ -50249,6 +50558,14 @@
     };
     // ((review) supplemented by another source – a card of its own; "Supplemented instead of new" as in this browser: added to what
     // MusicBrainz had
+    // [Z-SUPPREL] [Z-CREATED] (3.145.0)
+    if (d.levels && ['release_group', 'release', 'recording'].some((k) => d.levels[k].n + d.levels[k].s)) {
+      card('glevels', `<ul class="dci-stats-kv">${['release_group', 'release', 'recording'].map((k) => {
+        const x = d.levels[k];
+        return `<li><span>${esc(tr(`stats.t.lvl.${k}`))}</span> <span class="dci-sub" title="${esc(tr('stats.lvlN', { n: num(x.n), s: num(x.s) }))}">${statPct(x.n, x.n + x.s)} % / ${statPct(x.s, x.n + x.s)} %</span></li>`;
+      }).join('')}</ul>`);
+    }
+    if (d.created && Object.values(d.created).some(Boolean)) card('gcreated', kvo(Object.fromEntries(Object.entries(d.created).filter(([, v]) => v).map(([k, v]) => [tr(`entity.pl.${k}`), v]))));
     const su = d.supplemented;
     if (su && su.of) {
       card('gsupp', `<p>${esc(tr('stats.global.supShare', { pct: `${statPct(su.n, su.of)} %`, s: num(su.n), n: num(su.of) }))}</p>${kvo(summed(d.supplements))}`);
@@ -50431,8 +50748,15 @@
       ${tile('releases', statNum(nRel), tr('stats.subs', { n: a.subs }))}
       ${tile('rels', statNum(a.rels))}
       ${tile('newSupp', `${statPct(a.n, relsAll)} % / ${statPct(a.s, relsAll)} %`, tr('stats.newSuppN', { n: a.n, s: a.s }))}
-      ${tile('before', `${statPct(a.filled.size, nRel)} % / ${statPct(a.empty.size, nRel)} %`, tr('stats.beforeN', { f: a.filled.size, e: a.empty.size }))}
-      ${tile('created', statNum(a.created.size))}
+      ${['release_group', 'release', 'recording'].map((k) => { // [Z-SUPPREL] (3.145.0) instead of "releases with relationships before / empty"
+    const x = a.lvl[k];
+    return tile(`lvl.${k}`, `${statPct(x.n, x.n + x.s)} % / ${statPct(x.s, x.n + x.s)} %`, `${tr('stats.lvlN', { n: x.n, s: x.s })}${x.u ? ` · ${tr('stats.lvlU', { n: x.u })}` : ''}`);
+  }).join('')}
+      ${(() => { // [Z-CREATED] (3.145.0) every entry made new with the dashboard, counted when MusicBrainz confirmed it – by kind
+    const made = statMadeKinds(a);
+    const n = [...made.values()].reduce((x, y) => x + y, 0);
+    return tile('created', statNum(n), [...made].map(([k, v]) => `${tr(`entity.pl.${k}`)} ${statNum(v)}`).join(' · '));
+  })()}
       ${tile('perRelease', statDur(a.perRelease))}
       ${tile('perRel', statDur(a.msRels ? a.msSum / a.msRels : null))}
     </div>`;
@@ -51508,7 +51832,7 @@
               // [Z-SCV] (3.76.0, S111) exported (JSON: to import in another browser; CSV: to read in a spreadsheet) and imported
               + (ruleOn('S111') ? right(`<span class="dci-statio"><button type="button" class="dci-small" data-act="stats-export" data-kind="json"${n === 0 ? ' disabled' : ''}
                 title="${esc(tr('statio.jsonTitle'))}">${esc(tr('statio.json'))}</button>
-                <button type="button" class="dci-small" data-act="stats-export" data-kind="csv"${n === 0 ? ' disabled' : ''} title="${esc(tr('statio.csvTitle'))}">${esc(tr('statio.csv'))}</button>
+                ${[['csv', 'statio.csv'], ['csvx', 'statio.csvx'], ['jsonl', 'statio.jsonl'], ['dp', 'statio.dp']].map(([k, key]) => `<button type="button" class="dci-small" data-act="stats-export" data-kind="${k}"${n === 0 ? ' disabled' : ''} title="${esc(tr(`${key}Title`))}">${esc(tr(key))}</button>`).join('')}
                 <label class="dci-filebtn" title="${esc(tr('statio.importTitle'))}">${esc(tr('statio.import'))} <input type="file" accept=".json,application/json" data-stats-import ${S.statioBusy ? 'disabled' : ''}></label></span>
                 <span class="dci-set-hint">${esc(tr('statio.purpose'))}</span><span class="dci-set-hint" data-el="statio-status" aria-live="polite">${esc(S.statioStatus || '')}</span>`) : '');
           })(),
@@ -52881,6 +53205,7 @@
       statClear();
       S.statsData = [];
       writeJson('localStorage', STATS_ARTISTS_KEY, null);
+      writeJson('localStorage', STATS_MADE_KEY, null); // ([Z-CREATED] 3.145.0, review)
       S.statArtistsGen = (S.statArtistsGen || 0) + 1;
       log('info', 'statsDeleted', {});
     }
