@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.142.0
+// @version      3.143.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.142.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.142.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.143.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.143.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.142.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.143.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -178,40 +178,41 @@
       "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (set in the works matrix; ⓘ shows the line)",
       "log.notesCompanyTracks": "From the Discogs notes: the tracks of what Discogs lists for the whole release – {list} (set; ⓘ shows the line)",
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
-      "supp.with": "Supplement with",
+      "supp.with": "Add a source:",
+      "supp.withAria": "Add a source",
       "supp.text": "Text …",
       "supp.images": "Images …",
-      "supp.imagesTitle": "Text from images as a supplement: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
+      "supp.imagesTitle": "Text from images as an added source: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
       "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
-      "supp.urlLoad": "Supplement",
+      "supp.urlLoad": "Add",
       "supp.sameAsLoaded": "That is the source loaded already.",
-      "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
+      "supp.textTitle": "Paste a text (booklet, liner notes …) and add it as a second source",
       "supp.hint": "The loaded source stays decisive. What only the second one has is a suggestion; nothing is taken over by itself.",
-      "supp.on": "supplemented",
+      "supp.on": "added",
       "supp.remove": "remove",
-      "supp.title": "Supplements from {name}",
+      "supp.title": "From the added source: {name}",
       "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
-      "supp.msgSome": "Supplement from {name}: {list}. What to take over is in the list “Supplements from …” of the dashboard.",
+      "supp.msgSome": "Added source: {name} – {list}. What to take over is in the list “From the added source: …” of the dashboard.",
       "supp.written": "written “{name}”",
       "supp.kind.more": "more tracks",
       "supp.fromCover": "the cover art",
-      "supp.msgNothing": "Supplement from {name}: nothing new – {list}. Nothing was changed.",
-      "supp.msgBusy": "Supplementing the import …",
+      "supp.msgNothing": "Added source: {name} – nothing new ({list}). Nothing was changed.",
+      "supp.msgBusy": "Adding the source …",
       "supp.msg.new": "{n} new",
       "supp.msg.more": "{n} with more tracks",
       "supp.msg.differ": "{n} with other tracks",
       "supp.msg.same": "{n} there already or very similar",
       "supp.msg.unrec": "{n} not recognized",
       "supp.msg.none": "no credit in it",
-      "ocrnav.markNew": "From the cover art (added by a supplement)",
-      "ocrnav.markSeen": "The cover art says this too (a supplement read from it)",
+      "ocrnav.markNew": "From the cover art (read as an added source)",
+      "ocrnav.markSeen": "The cover art says this too (read as an added source)",
       "ocrnav.entry": "Lines from the cover art in this entry",
-      "ocrnav.title": "What a supplement read from the cover art added. A click goes to the next one",
+      "ocrnav.title": "Rows the cover art brought as an added source. A click goes to the next one",
       "ocrnav.label": "{n} rows from the cover art – to the next one",
       "ocrnav.prev": "Row from the cover art before",
       "ocrnav.next": "Next row from the cover art",
       "ocrnav.only": "Only from images",
-      "ocrnav.onlyTitle": "Only the entries with lines from the cover art (added or said again by a supplement read from it)",
+      "ocrnav.onlyTitle": "Only the entries with lines from the cover art (read as an added source: new or said again)",
       "supp.selectAll": "select all",
       "supp.th.select": "Take over",
       "supp.th.kind": "Kind",
@@ -242,21 +243,21 @@
       "supp.empty": "Nothing left to take over. Rows {name} confirms are marked {short}.",
       "supp.mismatch": "{name} has {n} tracks, MusicBrainz {m}: check the track numbers.",
       "supp.allTracks": "all",
-      "supp.textLoad": "Read text and supplement",
+      "supp.textLoad": "Read text and add",
       "supp.badgeConfirm": "{name} says the same",
       "supp.badgeAdded": "taken over from {name}",
       "supp.badgeDiffer": "{name} gives other tracks: {tracks}",
-      "busy.supp": "Reading {source} to supplement …",
-      "log.suppLoaded": "Supplement from {name}: {confirmed} confirmed, {added} new, {differ} differing, {unrec} not recognized",
+      "busy.supp": "Reading {source} as an added source …",
+      "log.suppLoaded": "Added source: {name} – {confirmed} confirmed, {added} new, {differ} differing, {unrec} not recognized",
       "log.suppApplied": "Taken over from {name}: {n}",
-      "log.suppDiscarded": "Supplements from {name} discarded: {n}",
+      "log.suppDiscarded": "Added source: {name} – discarded: {n}",
       "forget.title": "Deletes what the script stored for the import of this release and imports it anew",
       "forget.ask": "Delete the stored import of this release?",
-      "forget.what": "Deleted: the date pool, track pool and date matrix of this release, the source chosen for it, its media choice, the supplements, its log and – with the companion – its status marks. Then the source is imported anew, as the first time.",
+      "forget.what": "Deleted: the date pool, track pool and date matrix of this release, the source chosen for it, its media choice, the added sources, its log and – with the companion – its status marks. Then the source is imported anew, as the first time.",
       "forget.keeps": "What is staged in the relationship editor stays (discard it with MusicBrainz’s own buttons or by reloading the page), and so does the list of created works.",
       "forget.do": "Delete and import again",
       "forget.done": "The stored import of this release was deleted; the source is imported anew.",
-      "log.importForgotten": "Stored import of this release deleted (pools, matrix, chosen source, media choice, supplements, log, status marks)",
+      "log.importForgotten": "Stored import of this release deleted (pools, matrix, chosen source, media choice, added sources, log, status marks)",
       "srcorder.physical": "Physical media",
       "srcorder.digital": "Digital media",
       "srcorder.thisRelease": "(this release)",
@@ -272,7 +273,7 @@
       "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
       "err.bandcampData": "No album data found on {url}.",
       "err.youtubeData": "No video description found on {url}.",
-      "conn.X017": "Reads the page of a YouTube video whose address you enter as another source (or a supplement): its description is read as a text of credits.",
+      "conn.X017": "Reads the page of a YouTube video whose address you enter as the source or as an added source: its description is read as a text of credits.",
       "conn.X018": "Icons: Dashboard Icons by Homarr Labs (Apache License 2.0); Discogs icon via Simple Icons. Logos and brand names belong to their owners. The badges of the sources in the dashboard – embedded in the script, nothing is loaded.",
       "stats.src.youtube": "YouTube",
       "err.pageHttp": "The page answered with HTTP {status}: {url}",
@@ -509,7 +510,7 @@
       "log.entryTaken.one": "{name} taken again: {n} row back on its level",
       "log.entryTaken.other": "{name} taken again: {n} rows back on their levels",
       "group.addRoleShort": "＋ role",
-      "match.searching": "Looking up MB artist …",
+      "match.searching": "Looking up MB {kind} …",
       "match.linked": "found via {src} link",
       "match.as": "as",
       "match.viaMapping": "from the mapping file (by the video)",
@@ -519,9 +520,9 @@
       "match.manual": "set manually",
       "match.created": "newly created",
       "match.change": "change",
-      "match.changeLabel": "change MB artist",
+      "match.changeLabel": "change MB {kind}",
       "match.placeholder": "Name, or MB artist URL or MBID",
-      "match.inputAria": "MusicBrainz artist for {name}",
+      "match.inputAria": "MusicBrainz {kind} for {name}",
       "match.apply": "Apply",
       "match.searchLink": "Search / Link",
       "match.searchBtn": "Search",
@@ -529,9 +530,9 @@
       "match.applyTitle": "A name: searched in MusicBrainz. An MBID or an address: linked.",
       "match.search": "Search MB",
       "match.create": "Create artist …",
-      "match.ambiguous": "several MB artists have this {src} link",
+      "match.ambiguous": "several MB {kinds} have this {src} link",
       "match.pick": "Please choose …",
-      "match.noLink": "no MB artist with this {src} link",
+      "match.noLink": "no MB {kind} with this {src} link",
       "match.noId": "no Discogs ID",
       "match.byName": "not assigned yet (no link) – check the suggestions or enter an MBID",
       "bcPage.notOwn": "The Bandcamp page of this album belongs to {page} – not {name}'s own page; {name} is searched by name (MusicBrainz entries of this name are only suggested).",
@@ -645,8 +646,8 @@
       "matrix.colDateLocked": "Only in MusicBrainz: its relationships are on existing works, which are not supplemented – no date is added to them.",
       "matrix.writerExact": "writer – left out: this person has a more exact type on this work (composer, lyricist or librettist)",
       "status.nothing": "nothing new",
-      "issue.searching": "looking up MB artist",
-      "issue.missingArtist": "MB artist missing",
+      "issue.searching": "looking up MB {kind}",
+      "issue.missingArtist": "MB {kind} missing",
       "issue.chooseType": "choose a relationship type",
       "issue.worksSkipped": "works matrix skipped",
       "issue.noTracks": "no tracks selected",
@@ -769,7 +770,7 @@
       "ded.src.discogs": "the Discogs notes",
       "ded.src.bandcamp": "Bandcamp",
       "ded.src.text": "the text",
-      "ded.src.supp": "the supplement",
+      "ded.src.supp": "the added source",
       "ded.src.title": "the release's title",
       "ded.src.track": "the title of track {pos}",
       "log.dedFound": "{name}: {kind} – from “{phrase}” in {where}",
@@ -890,7 +891,7 @@
       "workDlg.done": "Work “{title}” has been created. The link with track {track} is staged.",
       "busy.mb": "Loading tracks and existing relationships from MusicBrainz …",
       "busy.discogs": "Loading Discogs release {id} …",
-      "busy.artists": "Looking up MB artists via their {src} links …",
+      "busy.artists": "Looking up MB entries via their {src} links …",
       "busy.aliases": "Looking up Discogs aliases {i} of {n} …",
       "msg.aliasesLater": "Discogs aliases looked up for {n} of {m} artists not found by their link – the others with “Discogs aliases …” at their entries (⚙ Settings → Sources).",
       "log.aliasesLater": "Discogs aliases looked up for {n} of {m} artists; on demand: {list}",
@@ -923,7 +924,7 @@
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
       "msg.badDiscogsId": "No Discogs release, Bandcamp album or track or YouTube video recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name, https://www.youtube.com/watch?v=Cx-BhTkZf8A",
-      "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
+      "msg.badMbid": "No MBID recognized. Paste the URL of an MB {kind} page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
       "msg.applied.one": "{n} relationship is staged in the editor but not submitted. Check it in the editor and click “Enter edit” yourself.",
@@ -969,8 +970,8 @@
       "log.discogsLoaded.one": "Discogs release {id} loaded: {artists} artists, {n} role",
       "log.discogsLoaded.other": "Discogs release {id} loaded: {artists} artists, {n} roles",
       "log.artistLinked": "{name}: found via {src} link → {mb}",
-      "log.artistAmbiguous": "{name}: {n} MB artists share the {src} link",
-      "log.artistMissing": "{name}: no MB artist with this {src} link",
+      "log.artistAmbiguous": "{name}: {n} MB {kinds} share the {src} link",
+      "log.artistMissing": "{name}: no MB {kind} with this {src} link",
       "log.bcPageOther": "{name}: the album is on the Bandcamp page of {page} (a label or another account) – {name} is searched by name",
       "log.bcPageLabel": "Bandcamp page {page}: label {label} in MusicBrainz",
       "log.bcPageLabelOfRelease": "Bandcamp page {page}: label {label} in MusicBrainz – a label of this release",
@@ -1377,7 +1378,7 @@
       "keys.toggle": "Show the dashboard, or send it to the background",
       "keys.esc": "Close what is open – first the window “Text from cover art”, then “Mapping rules”, these shortcuts, the menu “Source ▾”, a chip picked with ⠿, a dialog (the media choice …), then the dashboard; not while you type in a field of MusicBrainz or a dialog of MusicBrainz is open",
       "keys.enterEdit": "“Enter edit & import credits”, where the button is shown: enter the edit, then the relationship editor of the release opens with the dashboard",
-      "keys.enter": "In a field: what it is for – an MBID at an entry (Apply), “Artist credit for all roles” (Set for all), “Add entry manually” (Add), the address of another source (Load) or of a supplement, the forms of the date pool and the track pool (Save); in the field of a role: done",
+      "keys.enter": "In a field: what it is for – an MBID at an entry (Apply), “Artist credit for all roles” (Set for all), “Add entry manually” (Add), the address of another source (Load) or of an added source (Add), the forms of the date pool and the track pool (Save); in the field of a role: done",
       "keys.tabs": "On a tab of ⚙ Settings: the next tab · the first, the last",
       "keys.lines": "On ⠿ of a line of an entry’s matrix: one place up, one place down in its block",
       "keys.shiftDrop": "Held while dropping: a track group adds its tracks (instead of replacing them); a date onto the matrix of an entry: the rows stay where they are too",
@@ -1401,8 +1402,8 @@
       "keys.k.wheel": "mouse wheel",
       "srcmenu.button": "Source",
       "srcmenu.title": "Another source, a pasted text, the order of the sources, Bandcamp, delete the stored import",
-      "supp.open": "Supplement",
-      "supp.openTitle": "Supplement the rows with a second source – another linked source, a URL or a pasted text; compared with the rows, nothing is taken over by itself",
+      "supp.open": "Source",
+      "supp.openTitle": "Add a second source to the rows – another linked source, a URL or a pasted text; compared with the rows, nothing is taken over by itself",
       "langAsk.hint": "Choose the language of the Credits Importer – you can change it any time in ⚙ Settings → General.",
       "langAsk.ok": "OK",
       "view.label": "Entries:",
@@ -1548,6 +1549,20 @@
       "entity.release_group": "release group",
       "entity.instrument": "instrument",
       "entity.genre": "genre",
+      "entity.entry": "entry",
+      "entity.pl.artist": "artists",
+      "entity.pl.label": "labels",
+      "entity.pl.place": "places",
+      "entity.pl.area": "areas",
+      "entity.pl.event": "events",
+      "entity.pl.series": "series",
+      "entity.pl.work": "works",
+      "entity.pl.instrument": "instruments",
+      "entity.pl.genre": "genres",
+      "entity.pl.recording": "recordings",
+      "entity.pl.release": "releases",
+      "entity.pl.release_group": "release groups",
+      "entity.pl.entry": "entries",
       "others.title": "Other entries",
       "others.explain": "Areas, events, series, recordings, releases, works and other MusicBrainz entries you added by hand.",
       "msg.urlNotHere": "URLs are not added here; use “External links” in the release editor.",
@@ -2173,7 +2188,7 @@
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
       "launcher.ocr": "… from cover art",
-      "launcher.ocrTitle": "Import the credits from the cover art: the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can supplement it",
+      "launcher.ocrTitle": "Import the credits from the cover art: the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can be added as a source",
       "ocrStart.hint": "The import of this release has not started – the text read from the cover art will be its source.",
       "ms.2.16.0": "Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date",
       "ms.2.17.0": "Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note",
@@ -2778,7 +2793,7 @@
       "stats.uniq.work": "different works",
       "stats.uniq.new": "{n} new",
       "stats.uniq.hint": "each entry once, however often it was linked; new: made with the dashboard",
-      "stats.withSupp": "with a supplement: {n}",
+      "stats.withSupp": "with an added source: {n}",
       "stats.src.discogs": "Discogs",
       "stats.src.bandcamp": "Bandcamp",
       "stats.src.text": "pasted text",
@@ -2796,7 +2811,7 @@
       "stats.srcT.n": "releases",
       "stats.srcT.perRelease": "per release",
       "stats.srcT.perRel": "per relationship",
-      "stats.srcT.supp": "with supplement",
+      "stats.srcT.supp": "with added source",
       "settings.statsIdle": "Pauses not counted from (seconds)",
       "settings.statsIdleTitle": "The time of an import counts from its start until “Enter edit”; a gap without a click, a key or scrolling of at least this many seconds is a pause and is not counted (a hidden tab: from the moment it is hidden). 0: everything counts. For imports from 3.45.0 on.",
       "stats.genres.combined": "Combined",
@@ -2842,9 +2857,9 @@
       "stats.may.open": "left open (taken as suggested)",
       "stats.more.remixes": "Remixes and commissions",
       "stats.more.gsources": "Sources of the submissions",
-      "stats.more.gsupp": "Supplemented by another source",
+      "stats.more.gsupp": "With an added source",
       "stats.src.unknown": "unknown",
-      "stats.global.supShare": "{pct} of the submissions with a supplement of another source ({s} of {n})",
+      "stats.global.supShare": "{pct} of the submissions with an added source ({s} of {n})",
       "stats.global.supDates": "dates added to relationships in MusicBrainz",
       "stats.global.supCredits": "role credits added to relationships in MusicBrainz",
       "gap.importBgTitle": "Import credits … and open the {source} source tab in the background",
@@ -3080,10 +3095,10 @@
       "ocr.cleanN.other": "{n} removed",
       "ocr.cleanNone": "nothing to remove",
       "ocr.copied": "The text is in the clipboard",
-      "ocr.supp": "＋ Supplement the import with it",
+      "ocr.supp": "＋ Add as a source",
       "ocr.import": "Import this text",
       "ocr.importReplaceTitle": "Replaces the import: this text becomes the source, the rows of the source loaded now go (asks first)",
-      "ocr.importReplaceAsk": "“Import this text” replaces the import of {source}: its rows go and this text becomes the source. “＋ Supplement the import with it” keeps them.\n\nReplace the import?",
+      "ocr.importReplaceAsk": "“Import this text” replaces the import of {source}: its rows go and this text becomes the source. “＋ Add as a source” keeps them.\n\nReplace the import?",
       "ocr.errNoLib": "The text recognition could not be loaded ({url}) – the page or the browser may not allow it.",
       "ocr.errImage": "The image could not be read.",
       "log.ocrOpen": "Text from cover art: the images of release {mbid}",
@@ -4657,7 +4672,7 @@
     { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2). Tasks of one MusicBrainz type stay one row of that type, credited with the tasks in English: "Artwork [Design And Layout]" → design "design and layout" (3.28.4)' },
     { id: 'S034', where: 'roleCreditFor, caseCredit', note: 'The kind of a voice is written in lower case in its role credit ("Vocals [Screams]" → screams, "Vocals [Clean]" → clean), also words MusicBrainz does not know (3.28.2)' },
     { id: 'S035', where: 'instrumentCandidates, headNounCands, byHeadNoun, roleCreditFor', note: 'An instrument MusicBrainz does not have under its whole name (two to four words) is looked for by its last word ("wood flutes" → flute, after every other candidate); found only that way, the whole wording is its role credit, in lower case ("wood flutes"). In texts not for a name-like phrase ("John Bass") (3.28.2)' },
-    { id: 'S036', where: 'syncSourceCredits, sourceCreditFor', note: 'A name from a text or Bandcamp linked to a MusicBrainz entry is credited as written there ("K.M." for the artist it is linked to), unless it is the same or differs only in its case (S031); not a placeholder ("the band"), not a supplement. Typed in by hand, it stays (3.28.4)' },
+    { id: 'S036', where: 'syncSourceCredits, sourceCreditFor', note: 'A name from a text or Bandcamp linked to a MusicBrainz entry is credited as written there ("K.M." for the artist it is linked to), unless it is the same or differs only in its case (S031); not a placeholder ("the band"), not from an added source. Typed in by hand, it stays (3.28.4)' },
     { id: 'S037', where: 'roleRules (design rule R062, DESIGN_PARTS)', note: 'The design of a part of the package keeps its whole name as role credit: "Cover Design", "Cover Design By", "Design [Cover]", "Cover [Design]", "Artwork [Cover Design]" → design credited "cover design"; also sleeve, booklet, package, packaging, digipak, inlay, insert (3.28.4)' },
     { id: 'S038', where: 'TEXT.parse (namesWithRoles, PROSE_ROLE_WORDS)', note: 'Prose with names and their roles in brackets after "by": "A chronicle of rabid deeds, dutifully unearthed … by K.M. (sounds, words) & E. (voice)" → K.M. performer and lyricist, E. vocals – the words before "by" are no role, the brackets are (T041, or roles of the register: "(guitar, vocals)"); every name needs a bracket (3.29.0)' },
     { id: 'S039', where: 'TEXT.parse (place, placeOf)', note: 'Verbs joined before "at" each give the place: "Mixed and mastered at TQA.HQ (July 2026)" → mixed at and mastered at TQA.HQ; a date in brackets after the place is no part of it (3.29.0)' },
@@ -4765,7 +4780,7 @@
     { id: 'S240', where: 'questionOptions', note: 'Questions of instruments (3.142.0; collected item Z-INSTTOP): the word as written first among the answers – "bass" before electric bass guitar, double bass …, "guitar" before electric guitar … – when MusicBrainz has it as an instrument (an answer set at once – "Horns" – keeps its order)' },
     { id: 'S239', where: 'startArtistCreate, checkGroupMembers, memberRecheck, groupMbidOf, checkGroupOf, TEXT.parse (lineOfItsOwn)', note: 'Members (3.141.0; collected item Z-MEMBERINST): "Create artist" fills in "member of band" with the member\'s instruments and voices also for a group of the Discogs profile that is an artist of the release (or an entry of the dashboard); a group of the text linked only later (by hand, or found later): its members checked then; a band of the release with its members in one line – "Band X: A (guitar), B (bass)", "Band X (A – guitar, B – bass)" – each member\'s roles and the members of the group (S213)' },
     { id: 'S238', where: 'profileDates, startArtistCreate, buildArtistSeed', note: 'Create artist (3.141.0; collected item Z-ARTDATES): the dates of the Discogs profile – born and died (a group: formed / founded and disbanded / split up) in many wordings ("Born: July 28th, 1952", "Born December 17th, 1941, in … and passed away on August 24th, 2017.", "Born: 9 October 1940 in Liverpool …", "Died: 8 December 1980 …", "… was born on March 21, 1685 … He died on July 28, 1750.", "b. 1952", "(1952–2010)", German "geboren", "gestorben", "*", "†") – only of the artist itself (the clause starts with the word, its name or "he" / "she"; not "his father died …"); a year alone the year; an end before the begin or after this year none; the form\'s begin and end, "ended" with an end' },
-    { id: 'S237', where: 'BANDCAMP.pageImageUrls, ocrBandcampAuto, ocrBandcampLinks, ocrAddBandcamp', note: 'Text from cover art (3.141.0; collected item Z-BCIMAGES): the images of Bandcamp – the cover and the photos of the physical editions (its packages) – as cards of the window, not ticked: at once for the Bandcamp album loaded or supplemented, "Load Bandcamp images (…)" for the other Bandcamp pages linked to the release' },
+    { id: 'S237', where: 'BANDCAMP.pageImageUrls, ocrBandcampAuto, ocrBandcampLinks, ocrAddBandcamp', note: 'Text from cover art (3.141.0; collected item Z-BCIMAGES): the images of Bandcamp – the cover and the photos of the physical editions (its packages) – as cards of the window, not ticked: at once for the Bandcamp album loaded or added as a source, "Load Bandcamp images (…)" for the other Bandcamp pages linked to the release' },
     { id: 'S236', where: 'initReleaseGap, gapBandcampFirst', note: 'Release page (3.141.0; collected item Z-GAPORDER): the line of the credits MusicBrainz does not have reads the sources in the order of ⚙ Sources for the release\'s kind – all media digital: "digital" (Bandcamp first by default), else "physical" (Discogs first); the next one when the first has no credits (or Bandcamp\'s page could not be read). Until 3.140.0 always Discogs first' },
     { id: 'S235', where: 'findFestivals, festivalHtml', note: 'Festivals (3.140.0; collected item Z-LJTEXT): a festival named only in another sentence of the text ("Our thanks go to …, the artistic director of the Jazzfest Berlin") – the date of the text\'s recording sentence asks MusicBrainz for its events: one whose time holds the date makes it the festival of the recording (the hint, the events offered, the place at the event – S131), said at the hint; none: only mentioned, as before' },
     { id: 'S234', where: 'TEXT.parse (addCredit)', note: 'Texts (3.140.0; collected item Z-LJTEXT): a title in quotation marks among the names of a credit ("Cover art: András Wolsky, “Random-Etude”, 2025") is the title of the picture – left out as such, no entry' },
@@ -4824,7 +4839,7 @@
     { id: 'S181', where: 'TEXT.parse (readLine0)', note: 'Texts (3.117.0; collected item Z-OCRTITLE): a line that is the release\'s title – also with signs a cover\'s reading put around it ("YOU AIN\'T NO FRIEND OF MINE |") – is no credit: left out as such' },
     { id: 'S180', where: 'listLine, TCP_LEN_MARKED, TEXT.parse (trackListLines, tcp)', note: 'Texts (3.117.0; collected items Z-TCPLEN, Z-TCPNEXT, Z-TCPWRAP): a track list as printed – the length also 5\'54, 5’54, 5\'54", 5.54 and digits alone (533 after the composers\' bracket, or when the title is a track without them); the composers in brackets on the line below the track ("1. You ain\'t no friend of mine! 645" / "(H. Bullock)"); a title over several lines ("2. Tell me, where did we go 506" / "wrong ? (Idris Muhammad)") – joined when they make a track of the release (up to four lines; not a society\'s bracket)' },
     { id: 'S179', where: 'titleComposerParts, tcpSurnames', note: 'Texts (3.117.0; collected item Z-TCPMULTI): names in the brackets after a title also apart with " - ", "~", "|", "•", "·", "et", "y" ("Disco man (Scott - Carter)": two names; "Jean-Luc" one); a surname alone the person of the dashboard or of the release\'s artist credit with that last name – one: its rows join that entry; several: the entry asks which one; none: as before (S092)' },
-    { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*, bcArt*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR; 3.119.0, Companion 1.19.0, Z-COCRBC: also every artwork of a Bandcamp page – the album\'s and the photos of the media to buy, opened by a click on one of them): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, + Supplement)' },
+    { id: 'S178', where: 'cocrReceive, cocrRead, cocrDrop (companion: cocr*, bcArt*)', note: 'Text from cover art (3.114.0, Companion 1.18.0; collected item Z-COCR; 3.119.0, Companion 1.19.0, Z-COCRBC: also every artwork of a Bandcamp page – the album\'s and the photos of the media to buy, opened by a click on one of them): a frame drawn in the companion\'s large image of a Discogs release – sent at once, cut out – read here and added to the window of the text from cover art (a frame changed: read again); ✕ here or there takes out both; the text taken as before (Import, ＋ Source)' },
     { id: 'S177', where: 'instsCommonAdd, instsCommonBtnHtml', note: 'Instruments (3.113.0; collected item Z-INSTLCA): ⑃ beside "Instruments: per track | on the release" – a row of the lowest level of the instruments\' tree all of them share (saxophones and a flute: woodwind; voices only: vocals; instruments and voices: performer; none: instruments) on the recordings, beside them (they stay), with their tracks, date, guest / solo when all have it; only of those without tracks of their own (precise tracks need none); ⚙ Settings → Appearance can switch the button off' },
     { id: 'S176', where: 'lcNoteOf, lcNoteHtml', note: 'Label code (3.111.0; collected item Z-LCNOTE): the label code Discogs gives ("Label Code: LC 12345"; the notes too, "LC 12345 (Label X)") and the linked labels of MusicBrainz: a label to which it belongs without a code (or with another) gets a note – ＋ opens its edit page with the code filled in; when no label is clear, one note that no label on MusicBrainz has it' },
     { id: 'S175', where: 'addNotesCompanies, samePlaceName, addCompanyEntry', note: 'Places of the notes (3.111.0; collected item Z-PLDUP): a place the notes name as Discogs lists one ("Mixed in January 2016 at Tonart Studio" – "Mixed At – Tonart Studio, Kerpen-Horrem"; also "Tonart", without town, case, accents, "Studio", "Sound" …) is no second place: Discogs\'s, credited as the notes write it; another role of it in the notes ("Recorded at Tonart") a row of Discogs\'s place (3.134.0, Z-DGEXCL: in the texts of every other source too – two spellings of one place one entry)' },
@@ -16419,6 +16434,7 @@
     S.writerExact = exactOnWork;
     // [Z-MSYN] (3.97.0, S155) the attributes of each row once; the role credits of rows that are one relationship joined
     const attrsCache = new Map();
+    const kindOnce = new Map(); // ([Z-MBSKIND] 3.143.0, review)
     const attrsOf = (row, lt) => {
       const k = `${row.id}|${lt.gid}`;
       if (!attrsCache.has(k)) attrsCache.set(k, buildAttrs(row, lt));
@@ -16437,7 +16453,9 @@
       const artist = S.artists.get(row.artistKey);
       if (!artist || !artist.mbid) {
         const missing = row.company ? 'issue.missingCompany' : 'issue.missingArtist';
-        info.issues.push(tr(artist && artist.status === 'pending' ? 'issue.searching' : missing));
+        // [Z-MBSKIND] (3.143.0) ((review) the word once per entry and plan – companyTypes goes through all rows)
+        const kind = kindOnce.get(row.artistKey) ?? kindOnce.set(row.artistKey, kindWord(artist)).get(row.artistKey);
+        info.issues.push(tr(artist && artist.status === 'pending' ? 'issue.searching' : missing, { kind }));
       }
       const lt = currentLinkType(row);
       if (!lt) info.issues.push(tr('issue.chooseType'));
@@ -17245,7 +17263,13 @@
     const d = new Date(ts);
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   };
-  const logText = (entry) => tr(`log.${entry.key}`, entry.params);
+  // ([Z-MBSKIND] 3.143.0, review) the kinds of an entry stored as codes (`ek`): named in the language of now; a line of before without
+  // them: an artist
+  const logText = (entry) => {
+    const p = entry.params || {};
+    const ek = Array.isArray(p.ek) && p.ek.length ? p.ek : ['artist'];
+    return tr(`log.${entry.key}`, { kind: kindWord(null, false, ek), kinds: kindWord(null, true, ek), ...p });
+  };
   const logItemHtml = (entry) => `<li class="dci-log-${entry.level}"><time>${clock(entry.ts)}</time> ${esc(logText(entry))}</li>`;
 
   /** Adds a step to the log window; entries are stored as keys, so they follow the language setting. */
@@ -24057,7 +24081,7 @@
     // text a supplement of this import)
     const images = !S.ocrOn ? '' : sp && sp.ocr ? on(tr('supp.images'), 'ocr')
       : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${ico('ocr')}${esc(tr('supp.images'))}</button>`;
-    return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
+    return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.withAria'))}"><strong>${esc(tr('supp.with'))}</strong>
       ${links.join(' ')} ${typedOn} ${text} ${images}
       <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
@@ -26486,7 +26510,7 @@
       updateGroupHeader(a);
       // A name from a text has no link: it is looked up by its name below
       // [3.31.2] an entry from the Discogs notes is looked up by its name too (item 98b; before: "no MB artist with this Discogs link")
-      log(source.nameSearch || a.fromNotes ? 'info' : 'warn', source.nameSearch || a.fromNotes ? 'nameLookup' : 'artistMissing', { name: a.name });
+      log(source.nameSearch || a.fromNotes ? 'info' : 'warn', source.nameSearch || a.fromNotes ? 'nameLookup' : 'artistMissing', { name: a.name, ek: entryKinds(a), src: sourceLabel(entrySource(a)) });
     }
     // Each entry by the URL of its page at the source (people: MB artists; companies: labels, places …)
     const urlOf = (a) => (a.links || [])[0] || '';
@@ -26555,11 +26579,11 @@
         log('ok', 'artistLinked', { name: a.name, mb: a.mbName });
       } else if (a.candidates.length > 1) {
         a.status = 'ambiguous';
-        log('warn', 'artistAmbiguous', { name: a.name, n: a.candidates.length });
+        log('warn', 'artistAmbiguous', { name: a.name, n: a.candidates.length, ek: candKinds(a), src: sourceLabel(entrySource(a)) });
       } else {
         a.status = 'missing';
         if (a.strictMiss) log('warn', a.company ? 'artistSpelling' : 'artistCreditSpelling', { name: a.name, mb: a.strictSpelled || '–' });
-        else log('warn', 'artistMissing', { name: a.name });
+        else log('warn', 'artistMissing', { name: a.name, ek: entryKinds(a), src: sourceLabel(entrySource(a)) });
       }
     }
     // Not found by their own link: try their aliases at the source
@@ -26595,7 +26619,8 @@
   async function setArtistManually(artist, value) {
     const mbid = (String(value || '').match(MBID_RE) || [])[0];
     if (!mbid) {
-      artist.error = tr('msg.badMbid');
+      // ((review) a company can be matched with an artist too: "an MB artist, label or place page")
+      artist.error = artist.company ? tr('msg.badMbidAny') : tr('msg.badMbid', { kind: kindWord(artist) });
       updateGroupHeader(artist);
       return;
     }
@@ -28316,6 +28341,26 @@
   /** MB entity types a company can be matched with, from the roles it has. */
   const companyTypes = (a) => uniq(S.rows.filter((r) => r.artistKey === a.key).flatMap((r) => Object.keys(r.typeOptions || {})))
     .filter((et) => et !== 'artist');
+  /**
+   * [Z-MBSKIND] (3.143.0) The MB kinds an entry is looked up as: a person an artist; a company its type, else the types its
+   * roles allow; another entry (event, series, area …) its type.
+   */
+  const entryKinds = (a) => {
+    if (!a) return ['artist'];
+    if (a.other && a.entityType) return [a.entityType];
+    if (a.company) {
+      const ks = a.entityType ? [a.entityType] : companyTypes(a);
+      return ks.length ? ks : ['label'];
+    }
+    return ['artist'];
+  };
+  /** [Z-MBSKIND] Its kind as a word of the texts ("label", "label / place"; more than two: "entry"); pl: the plural. */
+  const kindWord = (a, pl = false, kinds = entryKinds(a)) => (kinds.length > 2 ? ['entry'] : kinds).map((k) => tr(`entity.${pl ? 'pl.' : ''}${k}`)).join(' / ');
+  /** ((review) The kinds of the candidates of an entry found through its link several times (a company: also an artist). */
+  const candKinds = (a) => {
+    const ks = uniq((a.candidates || []).map((c) => String(c.entityType || (a.company ? '' : 'artist')).replace('-', '_')).filter(Boolean));
+    return ks.length ? ks : entryKinds(a);
+  };
 
   const entityPath = (et) => String(et || 'artist').replace('_', '-');
 
@@ -28455,7 +28500,7 @@
   function mbsHtml(a) {
     const m = a.mbs;
     if (!m) return '';
-    if (m.busy) return `<div class="dci-mbs" data-el="mbs"><span class="dci-badge">${esc(tr('match.searching'))}</span></div>`;
+    if (m.busy) return `<div class="dci-mbs" data-el="mbs"><span class="dci-badge">${esc(tr('match.searching', { kind: tr(`entity.${m.kind}`) }))}</span></div>`;
     if (m.error) return `<div class="dci-mbs dci-err" data-el="mbs">${esc(m.error)}</div>`;
     if (!m.hits.length) return `<div class="dci-mbs dci-sub" data-el="mbs">${esc(tr('mbs.none', { q: m.q, kind: tr(`entity.${m.kind}`) }))}</div>`;
     const more = m.hits.length - m.shown;
@@ -28573,8 +28618,8 @@
         + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
       : `<button type="button"${miss} data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
-      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey, { src: sourceLabel(entrySource(a)) }))}</span>
-      ${mbsKindHtml(a)}<input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
+      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey, { src: sourceLabel(entrySource(a)), kind: kindWord(a), kinds: kindWord(a, true) }))}</span>
+      ${mbsKindHtml(a)}<input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name, kind: kindWord(a) }))}">
       <button type="button" data-act="artist-set" title="${esc(tr('match.applyTitle'))}">${esc(tr(ruleOn('S193') ? 'match.searchLink' : 'match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
       ${a.company && !a.other ? `<a href="/search?query=${encodeURIComponent(a.name)}&type=artist&method=indexed" target="_blank" rel="noopener">${esc(tr('match.searchArtist'))}</a>` : ''}
@@ -28582,7 +28627,7 @@
       ${a.mbid ? `<button type="button" class="dci-textbtn" data-act="artist-cancel">${esc(tr('common.cancel'))}</button>` : ''}
       ${a.error ? `<div class="dci-err">${esc(a.error)}</div>` : ''}${mbsHtml(a)}`;
 
-    if (a.status === 'pending') return `<span class="dci-badge">${esc(tr('match.searching'))}</span>`;
+    if (a.status === 'pending') return `<span class="dci-badge">${esc(tr('match.searching', { kind: kindWord(a) }))}</span>`; // [Z-MBSKIND] (3.143.0)
     if (a.editing) return editor('match.changeLabel');
     if (a.status === 'linked' || a.status === 'manual' || a.status === 'created') {
       const path = entityPath(a.company || a.other ? a.entityType : 'artist');
@@ -28603,7 +28648,7 @@
     if (a.status === 'ambiguous') {
       // [Z-TCPMULTI] (3.117.0) a surname alone: which of the persons of that name
       // ((review) and another one: "change")
-      return `${a.tcpSurname ? `<span class="dci-sub">${esc(tr('tcp.surnameAsk', { word: a.name }))}</span> <button type="button" class="dci-textbtn" data-act="artist-edit">${esc(tr('match.change'))}</button> ` : ''}<span class="dci-badge dci-badge-bad">${esc(tr(a.tcpSurname ? 'tcp.surnameBadge' : 'match.ambiguous'))}</span>
+      return `${a.tcpSurname ? `<span class="dci-sub">${esc(tr('tcp.surnameAsk', { word: a.name }))}</span> <button type="button" class="dci-textbtn" data-act="artist-edit">${esc(tr('match.change'))}</button> ` : ''}<span class="dci-badge dci-badge-bad">${esc(tr(a.tcpSurname ? 'tcp.surnameBadge' : 'match.ambiguous', { kinds: kindWord(a, true, candKinds(a)), src: sourceLabel(entrySource(a)) }))}</span>
         <select data-f="artist-pick" aria-label="${esc(tr('match.pick'))}">
           <option value="">${esc(tr('match.pick'))}</option>
           ${a.candidates.map((c) => `<option value="${esc(c.mbid)}">${esc(c.name)}${c.disambiguation ? ` (${esc(c.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${c.entityType}`))}` : ''}</option>`).join('')}
@@ -48657,7 +48702,7 @@
             </div>
             <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
           </div>
-          <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
+          <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.withAria'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">

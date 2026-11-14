@@ -1268,7 +1268,7 @@ def case_statsmore():
             print(f'   {k}:', v)
         print('Gesät:', seeded, '| Balken:', cols)
         ok = lambda k, *want: all(w in c.get(k, []) for w in want)
-        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with a supplement: 1')
+        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with an added source: 1')
                        and c.get('found') == ['through the link of the source 2', 'by their name 1', 'chosen by hand 1', 'newly created 1'])
         results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
                        and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
@@ -2181,7 +2181,7 @@ def case_statstime():
         supp = pg.evaluate("(() => { const p = document.querySelector('[data-el=stats-sources] p.dci-sub'); return p ? p.textContent.trim() : null; })()")
         print('B/D) Median:', b1, '| Durchschnitt:', b2, '| gespeichert:', stored, '|', supp, '| Fehler:', errs)
         results.append(seeded and b1 == [['Discogs', '3', '2 min 0 s', '30 s', '1 · 2 min 0 s'], ['Bandcamp', '1', '30 s', '10 s', '–']]
-                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with a supplement: 1' and not errs)
+                       and b2[0][:4] == ['Discogs', '3', '2 min 50 s', '1 min 4 s'] and stored == '"mean"' and supp == 'with an added source: 1' and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
@@ -3490,7 +3490,7 @@ def case_gstnew3139():
         print('A)', groups, '\n  ', texts)
         # ((review) "Supplemented by another source" a card of its own; "Supplemented instead of new" as in this browser
         results.append(['g:what', ['g:suppl', 'g:remixes']] in groups and ['g:sources', ['g:gsources', 'g:gsupp']] in groups)
-        results.append(texts['gsupp'] == ['50 % of the submissions with a supplement of another source (1 of 2)', 'Bandcamp 1']
+        results.append(texts['gsupp'] == ['50 % of the submissions with an added source (1 of 2)', 'Bandcamp 1']
                        and texts['suppl'] == ['dates added to relationships in MusicBrainz 3', 'role credits added to relationships in MusicBrainz 2'])
         results.append(texts['remixes'] and 'remixers 2' in texts['remixes'] and '“remix of” 1' in texts['remixes'])
         # ((review) the same label once, its numbers together: "other" and an unknown kind)

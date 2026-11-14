@@ -4737,4 +4737,74 @@ def case_headas3142():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_mbskind3143():
+    """Credits Importer 3.143.0 (collected item Z-MBSKIND; answer of 2026-11-13 17:22): the texts of looking up, linking and changing name the
+    kind of the entry (until 3.142.0 always "MB artist").
+    A) Other Pub (a label) has a Discogs link two MB labels share: "several MB labels have this Discogs link", in the log
+       "Other Pub: 2 MB labels share the Discogs link".
+    B) "change" at Sony (a label): "change MB label"; at Drum Guy (a person): "change MB artist".
+    C) An address that is no MB page at Sony: "… Paste the URL of an MB artist, label or place page, or an MBID." ((review) a company
+       can be matched with an artist too)
+    D) The progress of the lookup: "Looking up MB entries via their Discogs links …" (no more "artists" only).
+    E) (review) No "{kind" anywhere in the dashboard (the log is drawn from what it stored, the kinds as codes)."""
+    results = []
+    orig = H.ws_url
+    TWIN = H.uid('eeeeeeee', 44)
+
+    def ws_url(query):
+        out = orig(query)
+        if out and any('discogs.com/label/1004' in u['resource'] for u in out['urls']):
+            for u in out['urls']:
+                if 'discogs.com/label/1004' in u['resource']:
+                    u['relations'].append({'target-type': 'label', 'label': {'id': TWIN, 'name': 'Other Pub', 'disambiguation': 'the other one'}})
+        return out
+    H.ws_url = ws_url
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            busy = []
+            pg.expose_function('__busy', lambda t: busy.append(t))
+            pg.evaluate("""new MutationObserver(() => { const b = document.querySelector('[data-el=busy]'); if (b && b.textContent.trim()) window.__busy(b.textContent.trim()); })
+              .observe(document.documentElement, { subtree: true, childList: true, characterData: true })""")
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            HEAD = """(n) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === n);
+              const m = g && g.querySelector('.dci-gmatch'); return m ? m.textContent.replace(/\\s+/g, ' ').trim() : null; }"""
+            a = pg.evaluate(HEAD, 'Other Pub')
+            log = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Other Pub' in x and 'share' in x]
+            print('A)', a, '|', log)
+            results.append(bool(a) and 'several MB labels have this Discogs link' in a and any('Other Pub: 2 MB labels share the Discogs link' in x for x in log))
+            sec = lambda n: pg.locator('section.dci-group').filter(has=pg.locator('.dci-gname strong', has_text=n))
+            heads = []
+            for n in ('Sony', 'Drum Guy'):
+                sec(n).locator('[data-act=artist-edit]').first.click()
+                pg.wait_for_timeout(300)
+                heads.append(pg.evaluate(HEAD, n))
+            print('B)', heads)
+            results.append(bool(heads[0]) and 'change MB label' in heads[0] and bool(heads[1]) and 'change MB artist' in heads[1])
+            sec('Sony').locator('[data-f=artist-input]').fill('https://example.org/not-mb')
+            sec('Sony').locator('[data-act=artist-set]').click()
+            pg.wait_for_timeout(400)
+            c = pg.evaluate(HEAD, 'Sony')
+            print('C)', c)
+            results.append(bool(c) and 'No MBID recognized. Paste the URL of an MB artist, label or place page, or an MBID.' in c)
+            print('D)', sorted(set(busy))[:6])
+            results.append(any(x.startswith('Looking up MB entries via their Discogs links') for x in busy) and not any('MB artists via' in x for x in busy))
+            # ((review) no placeholder left anywhere – the log drawn anew from what it stored, also in German)
+            raw = pg.evaluate("document.getElementById('dci-overlay').innerText")
+            print('E) Platzhalter:', '{kind' in raw)
+            results.append('{kind' not in raw)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_url = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
