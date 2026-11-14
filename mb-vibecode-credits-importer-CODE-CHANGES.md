@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.142.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.143.0, Companion 1.6.0 – 1.21.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,13 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.143.0 · 2026-11-14
+
+- **Z-SUPPNAME:** texts only – `supp.with`, `supp.urlLoad`, `supp.open`, `supp.openTitle`, `supp.on`, `supp.title`, `supp.msgSome`, `supp.msgNothing`, `supp.msgBusy`, `supp.textTitle`, `supp.textLoad`, `supp.imagesTitle`, `busy.supp`, `log.suppLoaded`, `log.suppDiscarded`, `ocrnav.*`, `ocr.supp`, `ocr.importReplaceAsk`, `forget.what`, `log.importForgotten`, `ded.src.supp`, `keys.enter`, `launcher.ocrTitle`, `conn.X017`, `stats.withSupp`, `stats.srcT.supp`, `stats.more.gsupp`, `stats.global.supShare` (all four languages; es/fr: those missing added); the notes of S036, S178, S237. The texts of what MusicBrainz had (`stats.t.newSupp`, `matrix.workLocked` …) and the milestones (`ms.*`) unchanged.
+- **Z-MBSKIND:** `entryKinds(a)`, `kindWord(a, pl)` (after `companyTypes`) – `{kind}` / `{kinds}` for `match.searching` (`mbsHtml`: the kind searched), `issue.searching`, `issue.missingArtist`, `match.changeLabel`, `match.ambiguous`, `match.noLink` (the badge of `editor`), `msg.badMbid` (`setArtistManually`), `log.artistAmbiguous`, `log.artistMissing` (`resolveArtists`); `busy.artists` "MB entries"; new keys `entity.entry`, `entity.pl.*`.
+- **Tests:** `t_entries.py mbskind3143` – new; `t_sources.py supp` part B3 (the names) – new; both fail on 3.142.0. `t_sources.py`, `t_coverart.py`: the texts of the log and the messages. `register_golden.json` anew (the notes of S036, S178, S237).
+- **Review:** the log stores the kinds as codes (`ek`) and `logText` names them in the language of now (a line of before: artist); `candKinds(a)` – the kinds of the candidates for "several MB …" (a company: an artist too); `msg.badMbidAny` for a company; `{src}` of the entry's own source at the badge and in the log; `kindOnce` in `computePlan`; `supp.withAria` (no colon) for the bar and the list; `match.inputAria` with `{kind}`; es/fr of `supp.msg.*`, `supp.fromCover`, `supp.written`, `supp.kind.more`, `ocrnav.*`, `conn.X017` (de too); `ocrnav.*`, `supp.textTitle`, `ocr.supp` reworded. Tests: `t_coverart.py suppnav3116`, `t_ui_settings.py statsmore`, `statstime`, `gstnew3139` – the new texts; `mbskind3143` part E (no `{kind}` left).
 
 ## Import 3.142.0 · 2026-11-13
 

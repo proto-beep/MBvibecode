@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-14 | 3.143.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
@@ -106,6 +107,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.143.0
+
+- **"＋ Source" instead of "＋ Supplement"** (collected item Z-SUPPNAME): the second source is called **added source** everywhere – "＋ Source" in the head, the bar "Add a source:" with "Add" for an address, the list "From the added source: …", "＋ Add as a source" in the window of the text from cover art, the messages and the log ("Added source: Bandcamp – …"), "with an added source" in the statistics. "Supplemented" now only means what MusicBrainz had and the import added to. English first, German "＋ Quelle" / "zusätzliche Quelle", Spanish and French alike.
+- **The kind of the entry in its texts** (Z-MBSKIND): looking up, linking and changing an entry name what it is – "Looking up MB label …", "change MB place", "several MB labels have this Discogs link", "No MBID recognized. Paste the URL of an MB label page …" (until now always "MB artist"); the progress "Looking up MB entries via their … links".
 
 ### Import 3.142.0
 
