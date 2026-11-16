@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-16 | 3.146.0 | – |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -107,6 +108,25 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.146.0
+
+Free texts – every source that is read as a text (a pasted text, Bandcamp, YouTube, the Discogs notes, text from images):
+
+- **Other releases and links are no credits** (collected item Z-PROMO; rule S246): "More X on Y & Z - RECORDS" with titles and links below it, "1st EP『…』", "Japan : (https://…)", "Stream & Download : (…)", "≪Follow … Here≫", "support the artists by buying …" and a part after "************" that is only that – left out as "other releases and links". No "turntable" from "RECORDS" any more.
+- **A label's name after a dash** (Z-LABELSUFFIX; S247): "23 STAB WOUNDS - RECORDS" is a label (left out); "Records", "Productions", "Label" … are never instruments.
+- **Genres, catalogue numbers, labels** (Z-GENRELINE, Z-CATNOLINE, Z-LABELLINE; S248–S250): a line of genres only is left out; "Aumega Project - AP - 0432" (a label of the release) and "Label : A, B" or "a coproduction between A, B & C" too – with a hint above the entries when MusicBrainz has other labels or another catalogue number (or none).
+- **Supported by** (Z-FUNDING; S251): "supports: cnm, scpp and drac aura" is read as "Supported by" (miscellaneous support, credited "support"), names in small letters too.
+- **Prose with a title in brackets** (Z-PROSEPAREN; S252): "… its third album, Âmes Bleues (Blue Souls), …" is prose.
+- **"Name | roles"** (Z-PIPESEP; S253): "pierre bujeau | guitar" is read as "Name – roles" when every word on the right is a role or an instrument.
+- **Names in small letters** (Z-LOWERNAMES; S254): "romain de ferron" → "Romain de Ferron" for the search and a new artist; "↺ as written" takes the source's spelling.
+- **A name the other way round** (Z-NAMEORDER; S255): with no hit, "Eguchi Ryotaro" is searched as "Ryotaro Eguchi" too – a suggestion marked "name the other way round".
+- **Thanks for what was played** (Z-THANKSFOR; S256): "Thanks to Potatoe Jones for again contributing electric violin, viola and guitar." – his rows, with "additional · guest · neither" at each (additional chosen).
+- **A lineup below its heading** (Z-LINEUPHEAD; S257): "Recording Line-Up:" with names below it – performers; a member of the release's group in MusicBrainz gets the instruments of the membership offered ("Use these instruments").
+- **Members on the next line** (Z-MEMBERSNEXT; S258): "maya ongaku are" / "Tsutomu Sonoda, Shoei Ikeda, Ryota Takano".
+- **Help, and tracks after "on"** (Z-HELPOF; S259): "mixed by A and B, with the help of C on change" – C an assistant of the mix on the track "Change"; a track after "on" without quotation marks counts when it is exactly a title of the release.
+- **Logo and kinds of the artwork** (Z-LOGOOF, Z-ARTDETAIL; S260, S261): "omertà logo by …" – logo; "artwork by A (watercolors, drawings) and B (infographic)" – illustration and design, credited with the words in brackets.
+- **A company in brackets after a name** (Z-AFFIL; S262): "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)" – a note at the entry, no part of the name; after mastering, mix or recording also the place of that role.
 
 ### Import 3.145.0
 
