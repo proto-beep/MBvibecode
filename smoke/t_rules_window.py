@@ -309,11 +309,12 @@ def case_quickswitch():
         # ([Z-QSCAT] 3.105.0) in groups: dates · instruments and performers · attributes and credits · writers, rights and works · companies
         groups = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-group')].map(g => [g.querySelector('.dci-quick-gh').textContent.trim(), [...g.querySelectorAll('[data-qs-goto]')].map(x => x.textContent.trim())])")
         print('   Gruppen:', groups)
-        results.append(a == [['D022', True], ['D026', False], ['D023', False], ['D034', True], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
-                             ['S021', True], ['S031', True], ['S245', True], ['S160', False], ['S045', True], ['S222', True], ['S007', True]]
-                       and box[:4] == [True, 16, 'solid', '4px']  # ([3.144.0] S245, on) and box[4].startswith('Writer’s societyRights society after a writer’s name')
-                       and groups == [['Dates', ['D022', 'D026', 'D023', 'D034']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
-                                      ['Attributes and credits', ['S021', 'S031', 'S245']], ['Writers, rights and works', ['S160', 'S045', 'S222']], ['Companies and places', ['S007']]])
+        # ([3.147.0] S264 among the dates, S263 among the credits – both on)
+        results.append(a == [['D022', True], ['S264', True], ['D026', False], ['D023', False], ['D034', True], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
+                             ['S021', True], ['S031', True], ['S245', True], ['S263', True], ['S160', False], ['S045', True], ['S222', True], ['S007', True]]
+                       and box[:4] == [True, 18, 'solid', '4px']  # ([3.144.0] S245, on) and box[4].startswith('Writer’s societyRights society after a writer’s name')
+                       and groups == [['Dates', ['D022', 'S264', 'D026', 'D023', 'D034']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
+                                      ['Attributes and credits', ['S021', 'S031', 'S245', 'S263']], ['Writers, rights and works', ['S160', 'S045', 'S222']], ['Companies and places', ['S007']]])
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)
@@ -790,6 +791,8 @@ def case_mappingio():
         pg.wait_for_timeout(500)
         name1, reg1 = export('register')
         diff = [(x, y) for x, y in zip(mapping_file.split('\n'), reg1.split('\n')) if x != y]
+        if reg0 != mapping_file:  # what differs, to find it
+            print('   anders:', [(x[:90], y[:90]) for x, y in zip(mapping_file.split('\n'), reg0.split('\n')) if x != y][:4], len(mapping_file.split('\n')), len(reg0.split('\n')))
         print('A) Datei:', name0, reg0 == mapping_file, '| mit Änderung:', name1, len(diff), diff[0][1][:80] if diff else '')
         results.append(name0 == 'mb-vibecode-credits-importer-mapping.json' and reg0 == mapping_file and len(diff) == 1 and '"id":"R071"' in diff[0][1]
                        and '"level":"recording"' in diff[0][1] and len(reg1.split('\n')) == len(mapping_file.split('\n')))

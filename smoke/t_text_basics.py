@@ -1679,7 +1679,7 @@ def case_ytroles():
        "Mixed & Mastered By: Max Mix" likewise mix and mastering (the shared last word given to the part before it).
     B) "Cameras: Jim Beckmann, Carlos Cruz, Luke Knecht & Kendall Rock": each miscellaneous support with the task "cameras"
        (until 3.41.6 not recognized); "Camera Operator: Ann Op" miscellaneous support "camera operator"; "Cinematographer: Cin Ema"
-       stays a role of its own (miscellaneous support "cinematographer" – not "cameras").
+       stays a role of its own (3.147.0: the type cinematographer – not "cameras").
     C) "Editor: Jim Beckmann" (the video's editing): miscellaneous support "editor", not MusicBrainz's "editor" (audio editing)."""
     H.lt(138, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
     H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
@@ -1719,8 +1719,9 @@ Mixed & Mastered By: Max Mix"""
         results.append(a0[0] and sorted(x[1] for x in a0[0]) == ['audio', 'mix'] and a0[1] and sorted(x[1] for x in a0[1]) == ['mastering', 'mix'])
         b0 = [[x[1:] for x in (g.get(n) or []) if x[0].startswith('Camera')] for n in ('Jim Beckmann', 'Carlos Cruz', 'Luke Knecht', 'Kendall Rock', 'Ann Op')] + [[x[1:] for x in (g.get('Cin Ema') or [])]]
         print('B)', b0)
+        # ([3.147.0] Z-VIDEOCREW, R119) "Cinematographer" is MusicBrainz's type cinematographer – the test page has no such type: "Choose type …"
         results.append(b0[:4] == [[['misc', 'cameras']]] * 4 and b0[4] == [['misc', 'camera operator']]
-                       and b0[5] == [['misc', 'cinematographer']])
+                       and b0[5] in ([['cinematographer', '-']], [['Choose type …', '-']]))
         c0 = [x[1:] for x in (g.get('Jim Beckmann') or []) if x[0] == 'Editor']
         print('C)', c0, '| nicht erkannt:', unrec)
         results.append(c0 == [['misc', 'editor']] and not any('Audio & Mixing' in x or 'Cameras' in x for x in unrec))
@@ -2379,6 +2380,67 @@ def case_freetext3146ui():
         rows = group_eval('Al Member', "return [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', [...tr.classList].find(c => c.startsWith('dci-lv-'))]);")
         print('   nach Use:', rows)
         results.append(rows is not None and any(r[0].startswith('drums') and r[1] == 'dci-lv-recording' for r in rows) and any(r[1] == 'dci-lv-skip' for r in rows))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_video3147ui():
+    """Credits Importer 3.147.0 (collected items Z-VIDEOCREW, Z-LIVEEVENT; rules R119, S263, S264) in the dashboard, a pasted text of a live
+    video: A) the hint "Live recording?" with the song, the event, the venue and the day above the entries; "＋ Take event and place"
+    makes the entries "SHIBUYA WWWX" (a place, recorded at; MusicBrainz's "WWW X" suggested) and "Electronic Phantoms Tour 2024" (an
+    event, recorded at), the hint gone. B) "DP&Colorist : Guy Onozaki" – cinematographer and miscellaneous support credited "Colorist";
+    "Promoter : Smash" on Skip. C) The quick switch S263 in the group "Role credits" of "Mapping rules", with "mappings" folding out the
+    table (colorist → miscellaneous support)."""
+    results = []
+    WX = H.uid('acacacac', 1)
+    H.MB_SEARCH['place'] = [{'id': WX, 'name': 'WWW X', 'disambiguation': '', 'score': 100, 'area': {'name': 'Shibuya'}}]
+    TEXT = ('“Water Dream” at Electronic Phantoms Tour 2024\nSHIBUYA WWWX 2024.12.15\n\nDirector : Itsuki Yoshizawa\nDP&Colorist : Guy Onozaki\n'
+            'Promoter : Smash\n')
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.fill('[data-f=text-origin]', 'YouTube description')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_for(pg, "!!document.querySelector('[data-el=live-head]')", 30)
+        hint = pg.evaluate("document.querySelector('[data-el=live-head]').textContent.replace(/\\s+/g, ' ')")
+        print('A) Hinweis:', hint)
+        results.append('Water Dream' in hint and 'Electronic Phantoms Tour 2024' in hint and 'SHIBUYA WWWX' in hint and '2024-12-15' in hint)
+        pg.click('[data-act=live-take]')
+        pg.wait_for_timeout(2500)
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
+        place = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'SHIBUYA WWWX');
+          return g ? g.textContent.replace(/\\s+/g, ' ') : ''; })()""")
+        gone = pg.evaluate("!document.querySelector('[data-el=live-head]')")
+        print('   Einträge:', names, '| Ort:', place[:300], '| Hinweis weg:', gone)
+        results.append('SHIBUYA WWWX' in names and 'Electronic Phantoms Tour 2024' in names and 'WWW X' in place and gone)
+        # B)
+        ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+          [...g.querySelectorAll('tr.dci-row')].map(tr => [((tr.querySelector('.dci-drole') || { dataset: {} }).dataset.raw || '').trim(), (tr.querySelector('.dci-cl-role') || {}).textContent || '',
+            (tr.querySelector('.dci-cl-credit') || {}).textContent || '', [...tr.classList].find(c => c.startsWith('dci-lv-'))])]))()"""
+        rows = {n: r for n, r in pg.evaluate(ROWS)}
+        print('B)', rows.get('Guy Onozaki'), rows.get('Smash'))
+        go = rows.get('Guy Onozaki') or []
+        # (the harness has no link type of cinematographer: the levels say it – a recording's cinematographer, the release's support)
+        results.append(any(r[0] == 'DP' and r[3] == 'dci-lv-recording' for r in go) and any(r[0] == 'Colorist' and r[3] == 'dci-lv-release' for r in go)
+                       and bool(rows.get('Smash')) and all(r[3] == 'dci-lv-skip' for r in rows.get('Smash')))
+        # C)
+        pg.locator('[data-act=rules]').first.click()
+        pg.wait_for_selector('#dci-rules [data-qgroup=credits]', timeout=10000)
+        q = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-qgroup=credits] [data-qs-toggle]')].map(b => b.dataset.qsToggle)")
+        pg.evaluate("document.querySelector('#dci-rules [data-el=video-map] summary').click()")
+        table = pg.evaluate("document.querySelector('#dci-rules [data-el=video-map] table').innerText")
+        print('C)', q, table[:200].replace('\n', ' | '))
+        results.append('S263' in q and 'colorist' in table and 'miscellaneous support' in table)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
