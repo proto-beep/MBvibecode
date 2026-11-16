@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.146.0
+// @version      3.147.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.146.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.146.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.147.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.147.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.146.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.147.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -837,6 +837,33 @@
       "ignored.why.statement": "the label's statement on how it records",
       "ignored.why.releaseTitle": "the release’s title – a title line, no credit",
       "ignored.why.gear": "equipment (microphones, amplifiers, interfaces, software): no credit",
+      "note.videoNoType": "A credit of the video MusicBrainz has no type for – left out (quick switch S263 off)",
+      "note.videoNoRel": "The concert’s, not the recording’s – no relationship (left out)",
+      "video.map": "mappings",
+      "video.mapTitle": "The credits of a video and where they go in MusicBrainz",
+      "video.thWords": "Credit as written",
+      "video.thType": "In MusicBrainz",
+      "video.none": "left out (no relationship)",
+      "video.misc": "miscellaneous support",
+      "video.left": "left out (switch off)",
+      "video.asWritten": "as written",
+      "video.credited": "credited {credit}",
+      "quick.name.S263": "Video credits to misc.",
+      "quick.S263": "Credits of a video MusicBrainz has no type for: miscellaneous support, credited as written (off: left out)",
+      "quick.name.S264": "Live heads",
+      "quick.S264": "The head of a live video (“Song” at a tour, venue and day) offered as event, place and date",
+      "live.title": "Live recording?",
+      "live.hint": "“{song}” at {event} · {venue} · {date}",
+      "live.offers": "MusicBrainz has on that day:",
+      "live.take": "＋ Take event and place",
+      "live.takePlace": "＋ Take the place",
+      "live.takePlaceTitle": "The venue as a place, “recorded at” on all tracks, looked up by its name; the date is in the pool",
+      "live.takeTitle": "The venue as a place and the event as an entry, each “recorded at” on all tracks, looked up by their names; the date is in the pool",
+      "live.no": "Not a live recording",
+      "log.liveHeadFound": "Live recording in the text: {event} · {venue} · {date} – {n} events of MusicBrainz on that day",
+      "log.liveTaken": "Live recording taken: {event} · {venue}",
+      "log.liveNo": "Not a live recording: {event}",
+      "ignored.why.liveHead": "the head of a live recording – offered above the entries",
       "ignored.why.promo": "other releases and links (no credit)",
       "ignored.why.genres": "genres (no credit)",
       "ignored.why.catnoNew": "a catalogue number: {catno} – MusicBrainz has: {mb}",
@@ -4824,6 +4851,8 @@
     // [3.57.0] collected item Z-NWA
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
+    { id: 'S264', where: 'TEXT.parse (freeTextPre: liveHeads), findLiveHeads, liveHeadHtml, liveTake', note: 'Texts (3.147.0; collected item Z-LIVEEVENT; a quick switch, on): the head of a live video – "“Water Dream” at Electronic Phantoms Tour 2024" and below it the venue with the day ("SHIBUYA WWWX 2024.12.15") – is offered above the entries, greyed: "＋ Take event and place" makes the venue a place and the event an entry (each "recorded at" on all tracks, looked up by their names; the place also without the city in capitals before it and written apart: "WWW X"); MusicBrainz\'s events of that name on that day are offered to add; the date is in the pool as every date of the text; the lines are left out as such. Off: not offered, the lines read as before' },
+    { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
     { id: 'S260', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-LOGOOF): "<the release\'s artist> logo by X" ("omertà logo by jérémie sauvage") – design with the attribute logo' },
@@ -5001,6 +5030,13 @@
    * roleRules, under their id. A rule without code is tested with its pattern and gives its types and level.
    */
   const ROLE_RULE_DATA = MAP.ROLE_RULE_DATA;
+  /**
+   * [Z-VIDEOCREW] (3.147.0, R119, S263) The credits of a video (mapping VIDEO_CREDITS): words → MusicBrainz's type (its credit, its
+   * attributes); a type "misc" is miscellaneous support credited as written while S263 is on, left out while it is off; none (the
+   * concert's promoter) is left out.
+   */
+  const VIDEO_CREDITS = MAP.VIDEO_CREDITS;
+  const VIDEO_CREDIT_OF = new Map(VIDEO_CREDITS.flatMap((e) => (e.words || []).map((w) => [String(w).toLowerCase(), e])));
 
   /**
    * The role rules for one role: ROLE_RULE_DATA with test() and run(). The context c describes the role being mapped:
@@ -5202,6 +5238,23 @@
       R095: { run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
+      // [Z-VIDEOCREW] (3.147.0, R119, S263) the credits of a video (VIDEO_CREDITS)
+      // ((review) with S263 off a word R095 had before (Lighting, Hair, Stage Manager …) stays miscellaneous support there: only the new words
+      // are left out)
+      R119: { test: () => {
+        const e = VIDEO_CREDIT_OF.get(b);
+        if (!e) return false;
+        const r095 = e.type === 'misc' && !ruleOn('S263') ? ROLE_RULE_DATA.find((r) => r.id === 'R095') : null;
+        return !(r095 && r095.re && r095.re.test(b));
+      }, run: () => {
+        const e = VIDEO_CREDIT_OF.get(b);
+        if (!e.type || (e.type === 'misc' && !ruleOn('S263'))) return out([], { level: 'skip', notes: [e.type ? 'videoNoType' : 'videoNoRel'] });
+        if (e.type === 'misc') return out(['misc'], { ...rel, notes: ['misc'], credit: true });
+        // "Title Logo": design with "logo" as the role rule of logos (R101), credited as written
+        if (e.type === 'design') return out(['design', 'graphic design'], { ...rel, credit: true });
+        return out([e.type], { level: 'recording', credit: e.credit === true ? true : (e.credit || ''),
+          ...(e.attrs ? { flags: withFlags(...e.attrs) } : {}) });
+      } },
       // [Z-PLT] (3.89.0, R114) "Plated By": miscellaneous support, the task "vinyl plating" (roleCreditForInner), only for vinyl (mediumOfRow)
       R114: { run: () => out(['misc'], { ...rel }) },
       // [Z-LITI] (3.102.0, R117) "Little Instruments": other instruments, credited as written ("little instruments")
@@ -5324,6 +5377,8 @@
       show: () => ({ pairs: SERIES_FROM_VIDEO.map((x) => [x.name, `title ${x.title} · channel ${x.channel} · ${x.type} · ${x.mbid} · number: date (${x.number})`]) }) },
     { id: 'T064', where: 'TEXT_SONG_HEAD, TEXT_SONG_SKIP, TEXT_SONG_SCHEDULE, songLists', note: 'YouTube (3.80.0): the heading of a list of songs in a video\'s description and the lines of such a list that are no song (S118)',
       show: () => ({ pairs: [['heading', TEXT_SONG_HEAD], ['no song', TEXT_SONG_SKIP], ['schedule (3.81.0)', TEXT_SONG_SCHEDULE]] }) },
+    { id: 'T067', where: 'VIDEO_CREDITS, R119', note: 'Roles (3.147.0): the credits of a video and MusicBrainz\'s type for them (misc: miscellaneous support while S263 is on; none: left out)',
+      show: () => ({ pairs: VIDEO_CREDITS.map((e) => [e.words.join(', '), [e.type || '–', e.credit === true ? 'credited as written' : e.credit ? `credited "${e.credit}"` : '', ...(e.attrs || [])].filter(Boolean).join(' · ')]) }) },
     { id: 'T065', where: 'GEAR_MODELS, gearKind, R113', note: 'Roles (3.81.0): models of synthesizers, drum machines and samplers ("Juno", "Minilogue", "TR-808", "MPC") and the makers that may stand before them ("Roland", "Korg", "Akai") – a model is MusicBrainz\'s instrument of that name if it has one, else synthesizer, drum machine or sampler, the model as role credit',
       show: () => ({ pairs: Object.entries(gearModels()).map(([k, v]) => [k, v.join(' · ')]) }) },
     { id: 'T066', where: 'TEXT_BROADCASTER, addCredit', note: 'Texts (3.81.0): words of the name of a broadcaster (radio, Rundfunk, broadcasting, television … and NRK, BBC, WDR …) – one that recorded it is a label with recording and broadcast (S121)',
@@ -6998,6 +7053,7 @@
     { id: 'D028', note: 'Dates of composition and production (3.84.0; collected item Z-BTW): "composed", "produced", "production" before a date name the groups Composition and Production (columns of the date matrix, shown while they have dates) – a word of a recording in the same sentence wins unless they are joined ("Recorded at …, produced by …, 12 March 1969" stays Performance; "composed and produced between …" both)' },
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
+    { id: 'D035', note: 'The year first with dots or slashes – "2024.12.15", "2024/12/15" – and in Japanese – "2024年12月15日", "2024年12月" (3.147.0; collected item Z-YMDDOT)' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -7311,6 +7367,13 @@
     { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
     { id: 'D004', re: `${P.M},?\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
     { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
+    // [Z-YMDDOT] (3.147.0, D035) the year first with dots or slashes ("2024.12.15", "2024/12/15") and in Japanese ("2024年12月15日", "2024年12月")
+    // ((review) no version number ("v2024.1.2", "Firmware 2023.10.1", "CAT2024.01.03"); a period of two such days, and of days in Japanese
+    { id: 'D035', re: '(?<![\\p{L}\\d./-])(?<!(?:v|ver|version|build|firmware|release|rev)\\.?\\s?)(\\d{4})([./])(\\d{1,2})\\2(\\d{1,2})\\s*[-–—~〜～]\\s*(\\d{4})\\2(\\d{1,2})\\2(\\d{1,2})(?![\\d./])',
+      make: (m) => (Number(m[3]) <= 12 && Number(m[6]) <= 12 ? span(ymd(m[1], m[3], m[4]), ymd(m[5], m[6], m[7])) : null) },
+    { id: 'D035', re: '(?<!\\d)(\\d{4})\\s*年\\s*(\\d{1,2})\\s*月\\s*(\\d{1,2})\\s*日\\s*[-–—~〜～]\\s*(\\d{1,2})\\s*日', make: (m) => (Number(m[2]) <= 12 ? span(ymd(m[1], m[2], m[3]), ymd(m[1], m[2], m[4])) : null) },
+    { id: 'D035', re: '(?<![\\p{L}\\d./-])(?<!(?:v|ver|version|build|firmware|release|rev)\\.?\\s?)(\\d{4})([./])(\\d{1,2})\\2(\\d{1,2})(?![\\d./])', make: (m) => (Number(m[3]) <= 12 && Number(m[4]) <= 31 ? single(ymd(m[1], m[3], m[4])) : null) },
+    { id: 'D035', re: '(?<!\\d)(\\d{4})\\s*年\\s*(\\d{1,2})\\s*月(?:\\s*(\\d{1,2})\\s*日)?', make: (m) => (Number(m[2]) <= 12 ? single(ymd(m[1], m[2], m[3])) : null) },
     { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
     { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.\\s?(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
     { id: 'D003', re: '(?<![\\d/])(\\d{1,2})/(\\d{1,2})/(\\d{4})(?![\\d/])', make: (m, o) => {
@@ -8658,6 +8721,8 @@
           return false;
         }
         if (!p || !looksLikeName(name)) return false;
+        // [Z-VIDEOCREW] (3.147.0, review) "Stage: Main Stage", "Stage: B" – no person: a name of one word or with "stage" is none for a stage
+        if (/^stage$/i.test(String(p.base || '').trim()) && (clean(name).split(/\s+/).length < 2 || /\bstage\b/i.test(name))) return false;
         // [Z-IMD] (3.92.0, S146, review) another instrument played on a model of the text: credited as written ("Wurlitzer (Nord stage2)")
         const mc = modelCredits.get(norm(p.raw));
         const workArr = ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p.base || '') && !(p.mods || []).length && (songsArr || WORK_ARR.test(curLine));
@@ -11470,6 +11535,7 @@
       // credits get `thanksFor` / `members` after the text is read
       const thanksLines = new Set();
       const lineupLines = new Set();
+      const liveHeads = []; // [Z-LIVEEVENT] (3.147.0, S264) { song, event, venue, date, line }
       const labelNames = uniq([...((ctx0 && ctx0.labelNames) || [])].map((n) => norm(n)).filter(Boolean));
       /**
        * [3.146.0] The free text before it is read: what is no credit out (left out as such), and lines written another way into lines the
@@ -11596,6 +11662,41 @@
           const l = L[i];
           const t = clean(l);
           let m;
+          // [Z-LIVEEVENT] (3.147.0, S264) the head of a live video: "“Water Dream” at Electronic Phantoms Tour 2024" and below it the
+          // venue with the day ("SHIBUYA WWWX 2024.12.15") – offered above the entries (greyed, taken by a click): the event, the place,
+          // the date; the lines left out as such
+          // ((review) not "from the album / LP …"; the line below only a venue – no credit ("Mix: X 2024.12.15", "Recorded at …"); one line alone
+          // with its day: "“Song” live at Café Oto, 12 May 2019" – the place, no event)
+          if (ruleOn('S264') && (m = String(l).trim().match(/^["“„「『«]([^"”“」』»]{1,80})["”“」』»]\s+(?:\(live\)\s+)?(?:live\s+)?(at|@|from)\s+(.{3,100}?)\s*$/u))
+            && !(/^from$/i.test(m[2]) && /^(?:the\s+|my\s+|our\s+|their\s+|a\s+|an\s+)?(?:\w+\s+)?(?:album|lp|ep|single|record|release|cd|cassette|tape|mixtape|compilation|soundtrack|forthcoming|upcoming|new)\b/i.test(m[3]))) {
+            const target = m[3];
+            const j = i + 1 < L.length && L[i + 1].trim() && !gone.has(i + 1) ? i + 1 : -1;
+            const dayOf = (x) => (findDates(x) || []).find((d) => d.value && d.value.begin && d.value.begin.day && !d.alt);
+            const venueLine = (x) => !/[:：]/.test(x) && !/^\s*(?:recorded|live|at|mixed|mastered|filmed|shot)\b/i.test(x) && !isRole(roleWord(clean(x).split(/\s+/)[0] || ''))
+              && !isRole(roleWord(clean(x).split(/\s+/).slice(0, 2).join(' ')));
+            const d1 = dayOf(target);
+            const d2 = j >= 0 && venueLine(L[j]) ? dayOf(L[j]) : null;
+            const d = d2 || d1;
+            if (d) {
+              const cut = (x, dd) => clean(String(x).replace(dd.text, ' ')).replace(/[\s,;–—-]+$/, '').trim();
+              // (one line: what comes after "at" is the place)
+              const oneLine = !d2;
+              const event = oneLine ? '' : d1 ? cut(target, d1) : clean(target).replace(/[\s,;–—-]+$/, '');
+              const venue = oneLine ? cut(target, d1) : cut(L[j], d2);
+              if ((event || venue) && !/\s(?:by|von|par)\s/i.test(`${event} ${venue}`) && (!venue || venue.split(/\s+/).length <= 6)) {
+                liveHeads.push({ song: clean(m[1]), event, venue, date: d.value, line: [String(l).trim(), j >= 0 && d2 ? L[j].trim() : ''].filter(Boolean).join(' / '),
+                  lines: [String(l).trim(), ...(j >= 0 && d2 ? [L[j].trim()] : [])] });
+                drop(i, 'liveHead');
+                out.push('');
+                if (j >= 0 && d2) {
+                  drop(j, 'liveHead');
+                  out.push('');
+                  i = j;
+                }
+                continue;
+              }
+            }
+          }
           // [Z-MEMBERSNEXT] (S258, with S041) "maya ongaku are" / "Tsutomu Sonoda, Shoei Ikeda, Ryota Takano": one line
           // ((review) not "Heilung are:" (a heading above "Name – instrument"): no colon, and the next line names only, as S041 takes them
           const personOnly = (n) => looksLikeName(n) && n.split(/\s+/).length <= 4 && !/[:：()]|\s[–—-]\s/u.test(n) && !isRole(cap(n)) && !playable(n.toLowerCase())
@@ -12122,9 +12223,9 @@
       });
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
-        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson, liveHeads };
       }
-      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson };
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson, liveHeads };
     }
 
     /**
@@ -12169,6 +12270,7 @@
         series: (res.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
         ensembles: res.ensembles || [], // [Z-CIMP] (3.101.0, S162)
         firstPerson: res.firstPerson || [], // [Z-PLAYS] (3.102.0, S168)
+        liveHeads: res.liveHeads || [], // [Z-LIVEEVENT] (3.147.0, S264)
         unrecognized: res.unrecognized,
         ignored: res.ignored,
         stackAlt: res.stackAlt || [], // [S058] (3.38.12)
@@ -12474,6 +12576,7 @@
         series: (album.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
         ensembles: album.ensembles || [], // [Z-CIMP] (3.101.0, S162)
         firstPerson: [...(album.firstPerson || []), ...((aboutRes && aboutRes.firstPerson) || []).map((x) => ({ ...x, from: 'about' }))], // [Z-PLAYS] (3.102.0, S168)
+        liveHeads: [...(album.liveHeads || []), ...((aboutRes && aboutRes.liveHeads) || [])], // [Z-LIVEEVENT] (3.147.0, S264)
         unrecognized,
         ignored,
         covers,
@@ -19251,8 +19354,22 @@
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
-  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245']],
+  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263']],
     ['works', ['S160', 'S045', 'S222']], ['companies', ['S007']]];
+  /**
+   * [Z-VIDEOCREW] (3.147.0, S263) "mappings" at its quick switch: a small window to fold out – every video credit of VIDEO_CREDITS and where
+   * it goes; what the switch leaves out marked.
+   */
+  function videoCreditsHtml() {
+    const on = ruleOn('S263');
+    const rows = VIDEO_CREDITS.map((e) => {
+      const goes = !e.type ? tr('video.none') : e.type === 'misc' ? (on ? tr('video.misc') : tr('video.left')) : e.type === 'design' ? 'design / graphic design' : e.type;
+      const credit = e.credit === true ? tr('video.asWritten') : e.credit ? tr('common.quoted', { text: e.credit }) : '';
+      return `<tr class="${e.type === 'misc' && !on ? 'dci-video-off' : ''}"><td>${esc(e.words.join(', '))}</td><td>${esc(goes)}${credit ? ` <span class="dci-sub">${esc(tr('video.credited', { credit }))}</span>` : ''}${(e.attrs || []).length ? ` <span class="dci-sub">+ ${esc(e.attrs.join(', '))}</span>` : ''}</td></tr>`;
+    }).join('');
+    return `<details class="dci-video-map" data-el="video-map"><summary title="${esc(tr('video.mapTitle'))}">${esc(tr('video.map'))}</summary>
+      <table class="dci-video-table"><thead><tr><th>${esc(tr('video.thWords'))}</th><th>${esc(tr('video.thType'))}</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+  }
   function quickSwitchesHtml() {
     const notes = ruleNotes();
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
@@ -19261,7 +19378,7 @@
       // [Z-MSYN] (3.97.0) a switch that cannot be switched on yet: greyed, with why
       const locked = LOCKED_RULES.has(id);
       return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
-        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
       <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
@@ -26572,6 +26689,7 @@
       S.scope = 'all'; // [Z-SCOPE] (3.112.0) the works' filter back on "with" at each import
       if (S.overlay) S.overlay.querySelectorAll('[data-act="scope"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scope === 'all')));
       S.festivals = []; // [3.37.8] (S056)
+      S.liveHeads = []; // [Z-LIVEEVENT] (3.147.0, S264)
       S.festInMbSaid = null; // ([Z-EVR] 3.88.0, review)
       S.evNote = null; // ([Z-EVL] 3.92.0)
       Object.assign(S, { una: null, unaDone: new Map(), unaOpen: false, unaItems: [] }); // [Z-UNA] (3.42.4)
@@ -26802,6 +26920,7 @@
         if (stackNames.length) log('warn', S.stackUp ? 'stackAmbigUp' : 'stackAmbig', { n: stackNames.length, list: stackNames.join(', ') });
         // [S056] (3.37.8) festival recordings in the text: a hint, events offered
         findFestivals(seq);
+        findLiveHeads(seq); // [Z-LIVEEVENT] (3.147.0, S264)
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
         autoSearchWorks();
         runArtistWorks();
@@ -26809,6 +26928,7 @@
         // [3.36.1] also a release without credits at the source (rows added by hand)
         finishRemember(seq, repeat);
         findFestivals(seq);
+        findLiveHeads(seq); // [Z-LIVEEVENT] (3.147.0, S264)
         // [AY] (3.40.0, review) nothing to import from Discogs or Bandcamp: none new for the line of the release page
         if ((source === DISCOGS || source === BANDCAMP) && releaseMbid) {
           gapExactWrite(releaseMbid, { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) }, 0, 0);
@@ -27669,6 +27789,94 @@
         : f.byRecDate ? ` <span class="dci-sub dci-festival-recdate">${esc(tr('festival.byRecDate'))}</span>` : '';
       return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${mention}${from}</p>${offers}`;
     }).join('')}</div>`;
+  }
+
+  // --- [Z-LIVEEVENT] (3.147.0, S264) the head of a live video ("“Song” at Tour 2024" / "SHIBUYA WWWX 2024.12.15"): offered, greyed, until a
+  // click takes it – the venue a place (recorded at), the event an entry (recorded at; MusicBrainz's events of that day offered), the date
+  // in the pool as every date of the text
+  async function findLiveHeads(seq) {
+    S.liveHeads = ruleOn('S264') ? ((S.release && S.release.liveHeads) || []).map((h, k) => ({ ...h, id: `live${k}`, offers: [], done: false })) : [];
+    if (!S.liveHeads.length) return;
+    renderSource();
+    for (const h of S.liveHeads) {
+      const words = String(h.event || h.venue || '').split(/\s+/).filter((w) => !/^\d{4}$/.test(w) && !FEST_PARTICLE.test(w)).join(' ');
+      const q = luceneWords(words);
+      const data = q && h.date && h.date.begin ? await mbWs(`event?query=${encodeURIComponent(`event:(${q})`)}&limit=25`, { background: true }).catch(() => null) : null;
+      if (seq !== importSeq) return;
+      const day = h.date && h.date.begin ? dayKey(h.date.begin, false) : '';
+      h.offers = ((data && data.events) || []).filter((e) => {
+        const ls = e['life-span'] || {};
+        const b = lsKey(ls.begin, false);
+        const en = lsKey(ls.end || ls.begin, true);
+        return b && en && b <= day && en >= day;
+      }).slice(0, 5).map((e) => ({ mbid: e.id, name: e.name, period: [e['life-span'] && e['life-span'].begin, e['life-span'] && e['life-span'].end].filter(Boolean).join(' – '),
+        comment: [e.disambiguation, e.type].filter(Boolean).join(', ') }));
+      log('info', 'liveHeadFound', { event: h.event || '–', venue: h.venue || '–', date: h.date ? formatDateValue(h.date) : '–', n: data ? h.offers.length : '?' });
+    }
+    renderSource();
+  }
+  function liveHeadHtml() {
+    const list = (S.liveHeads || []).filter((h) => !h.done);
+    if (!list.length) return '';
+    return `<div class="dci-festival dci-live-head" role="note" data-el="live-head">${list.map((h) => `<p><strong>${esc(tr('live.title'))}</strong> ${esc(tr('live.hint', {
+      song: h.song, event: h.event || '–', venue: h.venue || '–', date: h.date ? formatDateValue(h.date) : '–' }))}</p>
+      <div class="dci-festival-offers" data-live="${esc(h.id)}">${h.offers.length ? `<span class="dci-sub">${esc(tr('live.offers'))}</span> ${h.offers.map((o) => `<button type="button" class="dci-small dci-kind-event"
+        data-act="festival-add" data-mbid="${esc(o.mbid)}" title="${esc([o.comment, tr('festival.addTitle')].filter(Boolean).join(' – '))}" ${o.added ? 'disabled' : ''}>${esc(tr('festival.add', { name: o.name, period: o.period || '?' }))}</button>`).join(' ')}` : ''}
+      <button type="button" class="dci-small" data-act="live-take" data-live="${esc(h.id)}" title="${esc(tr(h.event ? 'live.takeTitle' : 'live.takePlaceTitle'))}">${esc(tr(h.event ? 'live.take' : 'live.takePlace'))}</button>
+      <button type="button" class="dci-textbtn" data-act="live-no" data-live="${esc(h.id)}">${esc(tr('live.no'))}</button></div>`).join('')}</div>`;
+  }
+  /** Taken: the venue a place, the event an entry (each recorded at, all tracks), looked up by their names. */
+  async function liveTake(h) {
+    if (!h || h.done) return;
+    h.done = 'taken';
+    const made = [];
+    const rel = S.release;
+    // ((review) an entry of that name there already: no second one
+    const existing = (name, kind) => [...S.artists.values()].find((a) => norm(a.name) === norm(name) && (kind === 'event' ? a.other && a.entityType === 'event' : a.company));
+    // ((review) MusicBrainz's one event of that day: added by its MBID (a tour is a series in MusicBrainz – its name finds no event)
+    if (h.offers.length === 1 && !h.offers[0].added) {
+      const o = h.offers[0];
+      try {
+        await addEntryByMbid(o.mbid, 'recorded at');
+        for (const x of [...(S.festivals || []).flatMap((f) => f.offers), ...(S.liveHeads || []).flatMap((y) => y.offers)]) if (x.mbid === o.mbid) x.added = true;
+      } catch (e) {
+        showError(e);
+      }
+    }
+    if (h.venue && !existing(h.venue, 'place')) {
+      // ("WWWX" also written apart: "WWW X"; the city before it is no part of the name of a place – searched without it too)
+      const ws = h.venue.split(/\s+/);
+      const core = ws.length > 1 && /^\p{Lu}+$/u.test(ws[0]) && ws.slice(1).join(' ').length >= 3 ? ws.slice(1).join(' ') : h.venue;
+      // ((review) only a letter written three times and one more apart: "WWWX" → "WWW X" (not "KOKO")
+      const alt = uniq([core, core.replace(/^((\p{Lu})\2{2,})(\p{Lu})$/u, '$1 $3')].filter((x) => x && x !== h.venue));
+      for (const g of groupCompanies([{ who: { id: 0, name: h.venue, rawName: h.venue, links: [], ...(alt.length ? { altNames: alt } : {}) }, role: 'Recorded At', catno: '', tracks: null, line: h.line, entity: 'place' }])) {
+        const e = addCompanyEntry(g, rel, new Set());
+        if (e) {
+          setCompanyEntityType(e, 'place');
+          made.push(e);
+        }
+      }
+    }
+    if (h.event && !h.offers.some((o) => o.added) && !existing(h.event, 'event')) {
+      const entry = { key: nextId('o'), dId: 0, links: [], name: h.event, rawName: h.event, status: 'missing', other: true, entityType: 'event', mbid: null, mbName: '', mbComment: '',
+        candidates: [], editing: false, error: '', anvs: [] };
+      S.artists.set(entry.key, entry);
+      const row = makeRow(entry.key, { manual: true, company: null });
+      Object.assign(row, { other: true, entityType: 'event', types: [], typeOptions: null, notes: [] });
+      applyRoleText(row, 'recorded at');
+      Object.assign(row, { level: 'recording', tracks: new Set(selIdx()) });
+      row.suggested = new Set(row.tracks);
+      S.rows.push(row);
+      made.push(entry);
+    }
+    log('info', 'liveTaken', { event: h.event, venue: h.venue || '–' });
+    $('toolbar').hidden = false;
+    renderGroups();
+    renderSource();
+    refresh();
+    await suggestByName(made);
+    renderGroups();
+    refresh();
   }
 
   /** An entry of any kind by its MBID (one with a role text: its row): the row. */
@@ -28988,7 +29196,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${labelHintHtml(rel)}${playsHtml()}${dgLineupHtml()}${rmdAskHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${liveHeadHtml()}${labelHintHtml(rel)}${playsHtml()}${dgLineupHtml()}${rmdAskHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -45918,10 +46126,11 @@
       }
       case 'festival-add': {
         const mbid = btn.dataset.mbid;
-        const offer = (S.festivals || []).flatMap((f) => f.offers).find((o) => o.mbid === mbid);
+        const offer = [...(S.festivals || []).flatMap((f) => f.offers), ...(S.liveHeads || []).flatMap((h) => h.offers)].find((o) => o.mbid === mbid); // ([Z-LIVEEVENT] 3.147.0)
         btn.disabled = true;
         addEntryByMbid(mbid).then((row) => {
-          if (offer) offer.added = true;
+          // ((3.147.0, review) every offer of that MBID (a festival's and a live head's)
+          for (const x of [...(S.festivals || []).flatMap((f) => f.offers), ...(S.liveHeads || []).flatMap((h) => h.offers)]) if (x.mbid === mbid) x.added = true;
           log('ok', 'festivalAdded', { name: offer ? offer.name : mbid });
           // [Z-EVA] (3.85.0, S132) a festival's recording: "recorded at" – with videos too, "video shot at" on those (a row each)
           // ((3.88.0, review) with S136 and without S132: at once all the same)
@@ -46331,6 +46540,24 @@
           refresh();
         }
         break;
+      // [Z-LIVEEVENT] (3.147.0, S264) the head of a live video: taken, or not
+      case 'live-take':
+      case 'live-no': {
+        const h = (S.liveHeads || []).find((x) => x.id === btn.dataset.live);
+        if (h && act === 'live-take') liveTake(h);
+        else if (h) {
+          h.done = 'no';
+          // ((review) its lines back among those not recognized
+          const rel = S.release;
+          if (rel && Array.isArray(rel.unrecognized)) {
+            for (const l of h.lines || []) if (!rel.unrecognized.includes(l)) rel.unrecognized.push(l);
+            if (Array.isArray(rel.ignored)) rel.ignored = rel.ignored.filter((x) => !(x && x.why === 'liveHead' && (h.lines || []).includes(x.text)));
+          }
+          log('info', 'liveNo', { event: h.event || h.venue });
+          renderSource();
+        }
+        break;
+      }
       // [Z-THANKSFOR] (3.146.0, S256) additional or guest for a thanks with what was played
       case 'thanks-flag':
         if (row) {
@@ -54949,6 +55176,12 @@
       #dci-rules .dci-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 280), 1fr)); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
         padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 10); }
       #dci-rules .dci-qbtn-wrap { display: flex; align-items: stretch; min-width: 0; }
+      /* [Z-VIDEOCREW] (3.147.0, S263) the mappings of the video credits below their switch, a row of the grid of its own */
+      #dci-rules .dci-video-map { grid-column: 1 / -1; margin-top: calc(var(--u, 1px) * -2); }
+      #dci-rules .dci-video-map > summary { cursor: pointer; font-size: 0.92em; }
+      #dci-rules .dci-video-table { border-collapse: collapse; font-size: 0.9em; margin-top: calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-video-table th, #dci-rules .dci-video-table td { text-align: left; vertical-align: top; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--line); }
+      #dci-rules .dci-video-table tr.dci-video-off td { opacity: 0.6; text-decoration: line-through; }
       #dci-rules .dci-qbtn { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin: 0; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9);
         border: 1px solid #c8c5d6; border-right: 0; border-radius: 4px 0 0 4px; background: #fff; color: #55526a; font: inherit; text-align: left; cursor: pointer; }
       #dci-rules .dci-qbtn:hover { border-color: #8e88c2; }

@@ -1630,4 +1630,68 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_video3147():
+    """Credits Importer 3.147.0 (collected items Z-VIDEOCREW, Z-YMDDOT, Z-LIVEEVENT; rules R119, S263, S264, D035; answers of 2026-11-16 07:31,
+    07:46), in Node: A) the roles of a video – "DP" cinematographer, "VJ" VJ, "PA" sound credited "PA", "PA Assistant" sound with assistant,
+    "Live Production" producer credited "live production", "Title Logo" design credited as written, "Colorist" and "Stage" miscellaneous
+    support credited as written, "Promoter" left out (Skip); with S263 off "Colorist" left out (Skip), "DP" still cinematographer; "Edited By"
+    stays editor, "Management" misc. B) "2024.12.15", "2024/12/15", "2024年12月15日" are days, "2024年3月" a month, "2024.13.15" none.
+    C) "“Water Dream” at Electronic Phantoms Tour 2024" / "SHIBUYA WWWX 2024.12.15": a live head (song, event, venue, day), both lines
+    left out as such; with S264 off not."""
+    node = r"""
+const OFF = process.argv[2] ? JSON.parse(process.argv[2]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const roles = ['DP', 'VJ', 'PA', 'PA Assistant', 'Live Production', 'Title Logo', 'Colorist', 'Stage', 'Promoter', 'Edited By', 'Management', 'Cinematographer', 'Lighting', 'Lighting Design', 'Hair', 'Booking'];
+const map = Object.fromEntries(roles.map((r) => { const x = m.mapRole(r, []); return [r, [x.rule, x.types, x.flags, x.credit, x.level]]; }));
+const dates = Object.fromEntries(['2024.12.15', '2024/12/15', '2024年12月15日', '2024年3月', '2024.13.15', 'v2024.1.2', 'Firmware 2023.10.1', '2024.12.15-2024.12.16', '2024年12月15日〜16日'].map((t) => [t, m.findDates(t).map((d) => [d.rule, d.value.begin])]));
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const r = m.SOURCES.text.parse('“Water Dream” at Electronic Phantoms Tour 2024\nSHIBUYA WWWX 2024.12.15\n\nMix : Tsutomu Sonoda\n', { isRole, isCompanyRole: () => false, resolveTracks: () => null, artistNames: ['maya ongaku'] });
+// ((review) no live head: a dated credit below, "from the album", and a stage that is no person
+const neg = ['“Water Dream” at Tour 2024\nMix: Tsutomu Sonoda 2024.12.15', '“Song” from the forthcoming LP out 2024.12.15', 'Stage: Main Stage\nLocations: Berlin, Paris']
+  .map((t) => m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [] }))
+  .map((x) => ({ live: x.liveHeads, credits: x.credits.map((c) => [c.who.name, c.role]) }));
+const one = m.SOURCES.text.parse('“Song” live at Café Oto, 12 May 2019', { isRole, isCompanyRole: () => false, resolveTracks: () => null, artistNames: [] }).liveHeads;
+console.log(JSON.stringify({ map, dates, live: r.liveHeads, ignored: r.ignored.map((i) => i.why), unrec: r.unrecognized, neg, one }));
+"""
+    outs = []
+    for off in (None, ['S263', 'S264']):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        outs.append(json.loads(js.stdout))
+    on, off = outs
+    for k, v in on['map'].items():
+        print('  ', k, v, '| S263 aus:', off['map'][k])
+    print('B)', on['dates'])
+    print('C)', on['live'], on['ignored'], on['unrec'], '| S264 aus:', off['live'], off['unrec'])
+    print('D)', on['neg'], on['one'], '| S263 aus:', off['map']['Lighting'], off['map']['Hair'])
+    mp, mo = on['map'], off['map']
+    results = [
+        mp['DP'][0] == 'R119' and mp['DP'][1] == ['cinematographer'] and mp['Cinematographer'][1] == ['cinematographer']
+        and mp['PA'][1] == ['sound'] and mp['PA'][3] == 'PA' and mp['PA Assistant'][1] == ['sound'] and 'assistant' in mp['PA Assistant'][2]
+        and mp['Live Production'][1] == ['producer'] and mp['Live Production'][3] == 'live production' and 'design' in mp['Title Logo'][1] and mp['Title Logo'][3] == 'Title Logo'
+        and mp['Colorist'][1] == ['misc'] and mp['Colorist'][3] == 'Colorist' and mp['Stage'][1] == ['misc'] and mp['Promoter'][4] == 'skip'
+        and mp['Edited By'][1] == ['editor'] and mp['Management'][1] == ['misc'],
+        mo['Colorist'][4] == 'skip' and mo['Colorist'][1] == [] and mo['DP'][1] == ['cinematographer'],
+        [x[0] for x in on['dates']['2024.12.15']] == ['D035'] and on['dates']['2024.12.15'][0][1] == {'year': 2024, 'month': 12, 'day': 15}
+        and on['dates']['2024/12/15'][0][1]['day'] == 15 and on['dates']['2024年12月15日'][0][1]['day'] == 15
+        and on['dates']['2024年3月'][0][1] == {'year': 2024, 'month': 3, 'day': None} and not on['dates']['2024.13.15'],
+        len(on['live']) == 1 and on['live'][0]['song'] == 'Water Dream' and on['live'][0]['event'] == 'Electronic Phantoms Tour 2024' and on['live'][0]['venue'] == 'SHIBUYA WWWX'
+        and on['live'][0]['date']['begin'] == {'year': 2024, 'month': 12, 'day': 15} and on['ignored'].count('liveHead') == 2 and not on['unrec'],
+        not off['live'] and len(off['unrec']) == 2,
+        # D) (review) VJ misc; S263 off keeps the old misc words (R095); "Lighting Design" misc, "Booking" booking; versions no dates; periods
+        mp['VJ'][1] == ['misc'] and mp['VJ'][3] == 'VJ' and mo['Lighting'][1] == ['misc'] and mo['Lighting'][0] == 'R095' and mo['Hair'][1] == ['misc']
+        and mp['Lighting Design'][1] == ['misc'] and mp['Booking'][0] == 'R087'
+        and not on['dates']['v2024.1.2'] and not on['dates']['Firmware 2023.10.1']
+        and on['dates']['2024.12.15-2024.12.16'][0][1]['day'] == 15 and on['dates']['2024年12月15日〜16日'][0][0] == 'D035',
+        not on['neg'][0]['live'] and not on['neg'][1]['live']
+        and not any(c[0] in ('Main Stage', 'Berlin', 'Paris') for c in on['neg'][2]['credits'])
+        and len(on['one']) == 1 and on['one'][0]['venue'] == 'Café Oto' and on['one'][0]['event'] == '',
+    ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

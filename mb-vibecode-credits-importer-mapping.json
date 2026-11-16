@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.146.0",
+  "version": "3.147.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -181,6 +181,7 @@
     {"id":"R059","kind":"simple","note":"","re":{"$re":"^(orchestra|performing orchestra)$","$flags":""},"types":["performing orchestra","orchestra"],"level":"recording"},
     {"id":"R060","kind":"simple","note":"","re":{"$re":"^(performer|musician|performed by|played by|band|ensemble|accompanied by|backing band)$","$flags":""},"types":["performer"],"level":"recording"},
     {"id":"R061","kind":"simple","note":"","re":{"$re":"^(instruments|multi-instrumentalist|all instruments|instrumentation)$","$flags":""},"types":["instrument"],"level":"recording"},
+    {"id":"R119","kind":"special","note":"Video credits (3.147.0; collected item Z-VIDEOCREW): the credits of a video by the table VIDEO_CREDITS – MusicBrainz's own types (cinematographer, animation, choreographer, VJ, video appearance, sound, producer, design) with their credit; the others miscellaneous support credited as written while the quick switch S263 is on, left out (Skip) while it is off","re":{"$re":"^$","$flags":""},"types":["misc"],"level":"release"},
     {"id":"R062","special":"S004","kind":"special","note":"","re":null,"types":["design","design/illustration","graphic design"],"level":"release"},
     {"id":"R063","kind":"special","note":"","re":{"$re":"^(cover|cover by)$","$flags":""},"types":["photography"],"level":"release"},
     {"id":"R064","kind":"simple","note":"","re":{"$re":"^sleeve$","$flags":""},"types":["design","design/illustration","graphic design"],"level":"release","credit":"sleeve"},
@@ -1078,8 +1079,30 @@
     [{"$re":"\\b(lyrics|words|text|texte)\\s+by\\b|\\blyricists?\\b","$flags":"i"},"lyricist"],
     [{"$re":"\\b(arranged|arrangements?|orchestrated|orchestrations?)\\s+by\\b|\\barrangers?\\b","$flags":"i"},"arranger"]
   ],
+  "VIDEO_CREDITS": [
+    {"words":["cinematographer","cinematography","director of photography","dop","d.o.p.","dp","d.p.","camera director"],"type":"cinematographer"},
+    {"words":["animation","animations","animator","animated by","motion graphics"],"type":"animation"},
+    {"words":["choreographer","choreography","choreographed by"],"type":"choreographer"},
+    {"words":["vj","vjs","v.j.","visual jockey","live visuals"],"type":"misc","credit":true,"note":"MusicBrainz has VJ only for events"},
+    {"words":["video appearance","appears in video","appears in the video","in the video"],"type":"video appearance"},
+    {"words":["live production"],"type":"producer","credit":"live production"},
+    {"words":["pa","p.a.","pa engineer","foh","foh engineer","front of house","live sound","live sound engineer"],"type":"sound","credit":true},
+    {"words":["pa assistant","assistant pa","pa assist"],"type":"sound","credit":"PA","attrs":["assistant"]},
+    {"words":["foh assistant","assistant foh"],"type":"sound","credit":"FOH","attrs":["assistant"]},
+    {"words":["title logo","logo animation"],"type":"design","credit":true},
+    {"words":["colorist","colourist","color grading","colour grading","color correction","colour correction"],"type":"misc","credit":true},
+    {"words":["stage","stage design","stage designer","stage manager","stage crew","staging"],"type":"misc","credit":true},
+    {"words":["lighting","lights","light design","lighting design","lighting designer","lighting director","lighting operator","gaffer","best boy","grip"],"type":"misc","credit":true},
+    {"words":["hair","make-up","makeup","hair & make-up","hair and make-up","hair and makeup","make up","make-up artist","makeup artist","hair/make-up","hair/makeup","stylist","styling","costume","costumes","costume designer","wardrobe"],"type":"misc","credit":true},
+    {"words":["set design","set designer","production design","production designer","location manager","casting","storyboard","runner"],"type":"misc","credit":true},
+    {"words":["vfx","visual effects","compositing","cgi"],"type":"misc","credit":true},
+    {"words":["video editor","film editor","video editing","offline editor","online editor"],"type":"misc","credit":true},
+    {"words":["video producer","film producer","production manager","production assistant","line producer"],"type":"misc","credit":true},
+    {"words":["promoter","promoted by","concert promoter"],"type":"","note":"the concert's – no relationship of the recording"}
+  ],
   "QUICK_SWITCHES": [
     "D022",
+    "S264",
     "D026",
     "D023",
     "D034",
@@ -1094,6 +1117,7 @@
     "S045",
     "S222",
     "S007",
-    "S245"
+    "S245",
+    "S263"
   ]
 }
