@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-16 | 3.146.0 – 3.148.0 | – |
+| 2026-11-16 | 3.146.0 – 3.149.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -108,6 +108,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.149.0 · COMPANION 1.22.0
+
+- **Wikipedia's infobox as a source** (collected items Z-WIKI, Z-WIKISUPP): recorded (the date), studio and venue (recorded at), producer, label (a hint) and genre (statistics) of an album's article in en, de, fr, es, ja, it, pl – for the main track list only, not the bonus tracks. Added like the other sources ("＋ Wikipedia …", its address), or as the source (Source ▾); its rows in the table of the added source, with its badge, in the log, the edit note and the statistics (by language).
+- **Linked names** (Z-WIKILINK, Z-WIKIDATA): studios and producers linked in the infobox are found in MusicBrainz by their Wikidata item; the album's Wikidata item (P483, P162) goes before the infobox.
+- **In the background** (Z-WIKIBG): when an import is done, once per release, the articles of the release group's Wikidata item in the seven languages are added – the more precise value of each field; a contradiction is said and both are offered. On at first; Source ▾ → "Wikipedia in the background".
+- **The other languages** (Z-WIKILANGS) are named as links, not read. **Icons** (Z-WIKIICON): Wikipedia's W (black on white, white on black in the dark theme). Italian and Polish month names in every free text.
+- **COMPANION 1.22.0** (Z-WIKICOMP): a Wikipedia tab marks the rows of the infobox that name a credit; the pointer on a mark lights its row up without moving the page.
 
 ### Import 3.148.0
 

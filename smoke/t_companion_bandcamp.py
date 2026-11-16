@@ -894,6 +894,114 @@ https://kexp.org"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_wpview3149():
+    """Credits Importer 3.149.0 / Companion 1.22.0 (collected item Z-WIKICOMP): an article of Wikipedia as the source – the companion marks
+    the rows of its infobox that name a credit (the producers' row, the studio's row), none in other rows; the pointer on a mark lights
+    its row up, the page does not move."""
+    EN = """{{Infobox album
+| name = Testalbum
+| studio = [[Abbey Road Studios]], London
+| producer = {{hlist|[[Bob Producer]]|[[Wiki Prod]]}}
+| genre = Rock
+}}"""
+    H.WIKI_PAGES[('en', 'Testalbum (album)')] = {'text': EN, 'langlinks': []}
+    H.WIKI_HTML[('en', 'Testalbum (album)')] = """<!doctype html><html><head><meta charset="utf-8"><title>Testalbum</title></head><body style="height:3000px">
+<table class="infobox"><tr><th colspan="2">Testalbum</th></tr><tr><th>Genre</th><td>Rock</td></tr>
+<tr><th>Studio</th><td><a href="/wiki/Abbey_Road_Studios">Abbey Road Studios</a>, London</td></tr>
+<tr><th>Producer</th><td><ul><li><a href="/wiki/Bob_Producer">Bob Producer</a></li><li><a href="/wiki/Wiki_Prod">Wiki Prod</a></li></ul></td></tr></table>
+<p>Testalbum is an album.</p></body></html>"""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    results = []
+
+    def poll(pg, js, timeout=20):
+        for _ in range(timeout * 5):
+            try:
+                if pg.evaluate(js):
+                    return True
+            except Exception:
+                pass
+            pg.wait_for_timeout(200)
+        raise TimeoutError(js)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'https://en.wikipedia.org/wiki/Testalbum_(album)')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        wp, wperr = H.open_wikipedia(ctx, 'https://en.wikipedia.org/wiki/Testalbum_(album)')
+        poll(wp, "document.querySelectorAll('.dci-wp-mark').length >= 3")
+        wp.wait_for_timeout(500)
+        marks = wp.evaluate("[...document.querySelectorAll('.dci-wp-mark')].map(m => [m.closest('tr').querySelector('th').textContent, m.textContent])")
+        y0 = wp.evaluate("scrollY")
+        wp.hover('.dci-wp-mark')
+        wp.wait_for_timeout(300)
+        hl = wp.evaluate("[...document.querySelectorAll('tr.dci-wp-hl')].map(tr => tr.querySelector('th').textContent)")
+        y1 = wp.evaluate("scrollY")
+        print('Marken:', marks, '| hell:', hl, '| Rollen:', y0, y1)
+        results.append(sorted(set(m[0] for m in marks)) == ['Producer', 'Studio'] and len([m for m in marks if m[0] == 'Producer']) == 2
+                       and all(m[1] in '○!✓●' for m in marks) and hl == ['Studio'] and y0 == y1)
+        print('Fehler:', errs, wperr)
+        results.append(not errs and not wperr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_wpsupp3149():
+    """Credits Importer 3.149.0 / Companion 1.22.0 (review of Z-WIKICOMP): Discogs imported, Wikipedia added in the background (the release
+    group's Wikidata item) and Wiki Prod taken over from it – the article's tab marks the producers' row (the marks of the release
+    travel in one map: the Discogs tab keeps its own); a credit chosen in the dashboard lights its row of the infobox up."""
+    EN = """{{Infobox album
+| name = Testalbum
+| producer = {{hlist|[[Wiki Prod]]}}
+}}"""
+    H.MB_EXTRA[H.RG] = [{'target-type': 'url', 'type': 'wikidata', 'url': {'resource': 'https://www.wikidata.org/wiki/Q900'}}]
+    H.WD_ITEMS['Q900'] = {'sitelinks': {'enwiki': 'Testalbum (album)'}}
+    H.WIKI_PAGES[('en', 'Testalbum (album)')] = {'text': EN, 'langlinks': []}
+    H.WIKI_HTML[('en', 'Testalbum (album)')] = """<!doctype html><html><head><meta charset="utf-8"><title>Testalbum</title></head><body>
+<table class="infobox"><tr><th colspan="2">Studio album by Test Band</th></tr><tr><th>Genre</th><td>Rock</td></tr>
+<tr><th>Producer</th><td><a href="/wiki/Wiki_Prod">Wiki Prod</a></td></tr></table></body></html>"""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    results = []
+
+    def poll(pg, js, timeout=20):
+        for _ in range(timeout * 5):
+            try:
+                if pg.evaluate(js):
+                    return True
+            except Exception:
+                pass
+            pg.wait_for_timeout(200)
+        raise TimeoutError(js)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Added source: Wikipedia/.test(x))", 90)
+        pg.wait_for_timeout(500)
+        pg.click('[data-act=supp-apply]')
+        H.wait_for(pg, f"{LOGS}.some(x => /Taken over from Wikipedia/.test(x))", 30)
+        wp, wperr = H.open_wikipedia(ctx, 'https://en.wikipedia.org/wiki/Testalbum_(album)')
+        poll(wp, "document.querySelectorAll('.dci-wp-mark').length >= 1")
+        marks = wp.evaluate("[...document.querySelectorAll('.dci-wp-mark')].map(m => m.closest('tr').querySelector('th').textContent)")
+        print('Marken:', marks)
+        results.append(marks == ['Producer'])
+        print('Fehler:', errs, wperr)
+        results.append(not errs and not wperr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_cpnolink3124():
     """Companion 1.20.0 (Credits Importer 3.124.0, collected item Z-CPNOLINK): a Bandcamp album page while no dashboard of its release is
     open – a click on an artwork stays Bandcamp's (no large image of the companion, the click not taken; until 1.19.0 the companion's
