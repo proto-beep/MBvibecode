@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-16 | 3.146.0 | – |
+| 2026-11-16 | 3.146.0 – 3.147.0 | – |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -108,6 +108,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.147.0
+
+- **Credits of a video** (collected item Z-VIDEOCREW; rule R119, quick switch S263): a table in the mapping file (VIDEO_CREDITS) says where each credit of a video goes – "DP" / "Director of Photography" cinematographer, animation, choreographer, VJ, video appearance, "PA" sound (credited "PA"), "PA Assistant" with assistant, "Live Production" producer (credited "live production"), "Title Logo" design; colorist, stage, lighting, hair and make-up, set design, video editor … miscellaneous support credited as written. The quick switch "Video credits to misc." (on) leaves those out when it is off; "mappings" at the switch folds out the whole table. "DP&Colorist" are two roles.
+- **The year first** (Z-YMDDOT; D035): "2024.12.15", "2024/12/15", "2024年12月15日" are days in every free text.
+- **A live video's head** (Z-LIVEEVENT; S264, a quick switch): "“Water Dream” at Electronic Phantoms Tour 2024" with "SHIBUYA WWWX 2024.12.15" below – offered above the entries, greyed: "＋ Take event and place" adds the place (also found as "WWW X") and the event, each recorded at; MusicBrainz's events of that day are offered to add; the day is in the pool.
 
 ### Import 3.146.0
 
