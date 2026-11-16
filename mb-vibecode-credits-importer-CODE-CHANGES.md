@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.149.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.150.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,12 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.150.0 · 2026-11-16
+
+- **Z-QUICKFILL / Z-QUICKFILL2:** `QF_KEY` (`dci-beta-qf`, topic Beta, `SETTINGS_KEYS`), `QF_STATS_KEY` (`dci-qf-stats`, cleared with the statistics), `S.qfOn`, `S.qfPlan`; `qfStem` (the title without its part), `qfKey`, `QF_KINDS`, `qfTarget`, `qfSig`, `qfTracks`, `qfWorksFor`, `qfPlan` (kinds fill, none, differ, nosource; the release group: `release?release-group=…`, at most ten releases, title and length), `qfRelText`, `qfShow` (the window `#dci-qf` below the bar), `quickFill`, `qfLinkType`, `qfAttrs`, `qfDate`, `qfApply` (`pageRecordings`, `fetchJsEntity`, `dispatchAddRelationship`; the edit note line; the statistics); the button `#dci-quickfill` in `insertLauncher` / `renderLauncher` (only while on, in the relationship editor); ⚙ Settings → Beta – the switch `qf-on` (`settings.h.beta`), no longer greyed out, `openSettingsAt('beta')`; `resetTopic('beta')`, "Reset all settings", `reloadSettingsState`; `qfStatsHtml` in the card of the sources; CSS `#dci-qf`, dark root `dci-qf`. Texts `qf.*`, `log.qfNothing`, `log.qfDone`, `stats.qf`.
+- **Review:** what is staged in the editor counts (`qfStagedRecordings`) – a second run fills nothing twice; one run at a time (`S.qfBusy`), closing stops reading the group (`S.qfRun`); every relationship counts for "none" (URLs and recording links too: `inc` with `url-rels`, `recording-rels`); one target a recording; all or nothing when filling: every recording loaded, every type, attribute (`qfAttrs` among the roots of its link type, else an error) and entity found first (`qf.failed`, `qf.notLoaded`); `qfStem` – a bare letter or numeral only when another title has the same stem with another one, "Part Two", "[Live]" cut first, the part as a number (`qfPartNo`); the release group by stem and part number, lengths known on both sides (both unknown only with as many tracks); `qfWorksFor` – the exact title first, none when two works share it; "nothing to copy" (`qf.nothing`); the window: nothing while switched off, Esc closes, focus to its first button and back to "Credit fill"; the button once the editor is there (`waitForEditor`); statistics only while collected, deleted with "Delete statistics".
+- **Tests:** `t_sources.py quickfill3150` (with Node; a second run, the review's titles and works) – new, fails on 3.149.0. `harness.py`: `GROUP_RELEASES`, the browse `release?release-group=` and those releases.
 
 ## Import 3.149.0 · Companion 1.22.0 · 2026-11-16
 

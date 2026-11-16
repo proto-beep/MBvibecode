@@ -73,7 +73,7 @@ def case_ocrsetting():
         a = [sw.is_checked(), pg.evaluate(item), pg.evaluate(btn), pg.evaluate("localStorage.getItem('dci-beta-ocr')"),
              pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-set=ocr-preload], [data-el=settings] [data-set=ocr-auto], [data-el=settings] [data-set=ocr-front]')].length"),
              pg.evaluate("(() => { const t = document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]'); return [t.getAttribute('aria-disabled'), t.title, getComputedStyle(t).cursor]; })()")]
-        # ((review) a click on it opens nothing)
+        # ((review) a click on it opens nothing – 3.150.0: it opens the tab)
         pg.click('[data-el=settings] .dci-set-tab[data-topic=beta]', force=True)
         pg.wait_for_timeout(200)
         a.append(pg.evaluate("document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]').dataset.topic"))
@@ -92,7 +92,8 @@ def case_ocrsetting():
         H.open_settings(pg, 'connections')
         conn = pg.evaluate("[...document.querySelectorAll('[data-conn=X013], [data-conn=X014]')].map(r => r.innerText.replace(/\\s+/g, ' ').slice(0, 60))")
         print('A) an:', a, '| aus:', b1, '| zurückgesetzt:', c1, '| Verbindungen:', conn)
-        results.append(a == [True, 'Text from cover art …', True, None, 3, ['true', 'No beta functions at the moment', 'default'], 'sources', 'cache']
+        # ([Z-QUICKFILL] 3.150.0) the tab "Beta" can be chosen again (Credit fill)
+        results.append(a == [True, 'Text from cover art …', True, None, 3, [None, '', 'pointer'], 'beta', 'cache']
                        and b1 == ['false', None, False] and c1 == [None, True, 'Text from cover art …', True]
                        and len(conn) == 2 and conn[0].startswith('Cover Art Archive') and conn[1].startswith('Tesseract.js'))
         print('Fehler:', errs)

@@ -57,7 +57,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen (Beta greyed out)
+                       k2 == [('beta', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen ([Z-QUICKFILL] 3.150.0: Beta again)
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)

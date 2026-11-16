@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-16 | 3.146.0 – 3.149.0 | 1.22.0 |
+| 2026-11-16 | 3.146.0 – 3.150.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -108,6 +108,11 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.150.0
+
+- **Credit fill (Beta)** (collected items Z-QUICKFILL, Z-QUICKFILL2): ⚙ Settings → Beta → "Credit fill" (off at first; nothing shows while off) puts a button beside "Import credits …" in the relationship editor. The tracks without any relationship get the credits the other tracks have – only when those all have the same (all or nothing) –, with dates and places; a work whose title is the track's without its part ("Part 2", "B", "II") is linked too (partial). With no track to copy from: the recordings of the release group's other releases with the same title and length. A small window shows it all, "Fill all" adds it to the editor; the edit note names the MusicBrainz recordings copied from; the statistics count it apart.
+- ⚙ Settings → Beta is no longer greyed out.
 
 ### Import 3.149.0 · COMPANION 1.22.0
 

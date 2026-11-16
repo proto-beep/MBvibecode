@@ -930,6 +930,130 @@ def case_wikifail3149():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_quickfill3150():
+    """Credits Importer 3.150.0 (collected items Z-QUICKFILL, Z-QUICKFILL2; Beta): "Credit fill" in the relationship editor.
+    A) Off at first: no button; ⚙ Settings → Beta is no longer greyed and has its switch (off).
+    B) Switched on: "Credit fill" beside "Import credits …", stored.
+    C) Track 1 has Drum Guy (drums) and its work, tracks 2–4 nothing: the window offers drums for tracks 2, 3, 4 ("as tracks 1 have
+       them"); "Fill all" adds the three relationships to the editor, the edit note names the recording copied from, the statistics
+       count it (this browser) and show it.
+    D) Track 2 has another credit than track 1: nothing is filled ("do not all have the same (1, 2)").
+    E) (Z-QUICKFILL2) No track of the release has a relationship: the recordings of another release of the group with the same title
+       give theirs (Bob Producer for "Song One" and "Song Two"); the others stay empty (said).
+    F) Node: the title without its part – "Suite (Part 2)", "Suite, Pt. 3", "Song (B)", "Movement II" – and none in "Plan" or "Track 10";
+       a work of another track linked to a track whose title is its title without the part ("partial")."""
+    import json
+    import os
+    import re
+    import subprocess
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ADDED = """MB.relationshipEditor.state.added.map(r => [r.linkTypeID, (r.entity0 || {}).gid, (r.entity1 || {}).gid])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        a0 = pg.evaluate("document.getElementById('dci-quickfill').hidden")
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        H.open_settings(pg, 'beta')
+        a1 = pg.evaluate("[document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]').getAttribute('aria-disabled'), (document.querySelector('[data-set=qf-on]') || {}).checked]")
+        print('A) Knopf versteckt:', a0, '| Beta:', a1)
+        results.append(a0 is True and a1 == [None, False])
+        pg.click('[data-set=qf-on]')
+        pg.wait_for_timeout(200)
+        b1 = [pg.evaluate("document.getElementById('dci-quickfill').hidden"), pg.evaluate("document.getElementById('dci-quickfill').textContent"), pg.evaluate("localStorage.getItem('dci-beta-qf')")]
+        print('B) an:', b1)
+        results.append(b1 == [False, 'Credit fill', 'true'])
+        pg.evaluate("document.getElementById('dci-quickfill').click()")
+        H.wait_for(pg, "!!document.querySelector('#dci-qf [data-qf=fill]')", 30)
+        c0 = pg.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')")
+        before = len(pg.evaluate(ADDED))
+        pg.evaluate("document.querySelector('#dci-qf [data-qf=fill]').click()")
+        H.wait_for(pg, "/relationships added/.test(document.getElementById('dci-qf').textContent)", 30)
+        added = pg.evaluate(ADDED)[before:]
+        note = pg.evaluate("document.getElementById('edit-note-text').value")
+        stats = pg.evaluate("JSON.parse(localStorage.getItem('dci-qf-stats') || '[]')")
+        print('C)', c0[:240], '\n   neu:', added, '\n   Notiz:', note[-200:], '| Statistik:', stats)
+        recs = sorted(x[2] for x in added)
+        results.append('3 relationships for 3 tracks without any: as tracks 1 have them.' in c0 and 'Track 2: Song Two' in c0 and 'drums (drum set) · Drum Guy' in c0
+                       and len(added) == 3 and all(x[0] == 148 and x[1] == H.ARTISTS[3004][0] for x in added) and recs == sorted(H.REC[1:4])
+                       and f'Credit fill (beta): relationships copied from the MusicBrainz recording https://musicbrainz.org/recording/{H.REC[0]} to tracks 2, 3, 4.' in note
+                       and len(stats) == 1 and stats[0]['rels'] == 3)
+        # C2) (review) again: what is staged in the editor counts – nothing to fill, nothing staged twice
+        pg.evaluate("document.querySelector('#dci-qf [data-qf=close]').click()")
+        pg.evaluate("document.getElementById('dci-quickfill').click()")
+        H.wait_for(pg, "/nothing to fill/.test((document.getElementById('dci-qf') || {}).textContent || '')", 30)
+        c2 = [pg.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')"), len(pg.evaluate(ADDED)) - before]
+        print('C2) nochmal:', c2)
+        results.append('staged in the editor' in c2[0] and c2[1] == 3)
+        # D) another credit on track 2
+        H.MB_EXTRA[H.REC[1]] = [{'target-type': 'artist', 'type': 'producer', 'type-id': H.LTS[141]['gid'], 'attributes': [], 'attribute-values': {},
+                                 'artist': {'id': H.ARTISTS[3005][0], 'name': 'Bob Producer'}}]
+        pg2, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg2.wait_for_selector('#dci-quickfill:not([hidden])', timeout=20000)
+        pg2.evaluate("document.getElementById('dci-quickfill').click()")
+        H.wait_for(pg2, "/not all have the same/.test((document.getElementById('dci-qf') || {}).textContent || '')", 30)
+        d1 = pg2.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')")
+        print('D)', d1[:200])
+        results.append('(1, 2)' in d1 and not pg2.evaluate("!!document.querySelector('#dci-qf [data-qf=fill]')"))
+        pg2.close()
+        # E) from another release of the release group
+        orig = H.ws_release
+        OTHER = H.uid('eeeeeeee', 1)
+
+        def ws(full=False):
+            d = orig(full)
+            for m in d['media']:
+                for k, t in enumerate(m['tracks']):
+                    t['recording']['relations'] = []
+                    t['length'] = 180000 + 1000 * k  # (the lengths compared: 3 seconds apart at most)
+            return d
+        H.ws_release = ws
+        H.MB_EXTRA.pop(H.REC[1], None)
+        prod = lambda: [{'target-type': 'artist', 'type': 'producer', 'type-id': H.LTS[141]['gid'], 'attributes': [], 'attribute-values': {}, 'artist': {'id': H.ARTISTS[3005][0], 'name': 'Bob Producer'}}]
+        H.GROUP_RELEASES[OTHER] = {'id': OTHER, 'media': [{'position': 1, 'tracks': [
+            {'position': 1, 'number': '1', 'title': 'Song One', 'length': 181500, 'recording': {'id': H.uid('cccccccc', 91), 'title': 'Song One', 'relations': prod()}},
+            {'position': 2, 'number': '2', 'title': 'Song Two', 'length': 181000, 'recording': {'id': H.uid('cccccccc', 92), 'title': 'Song Two', 'relations': prod()}},
+            # (the same title, 10 seconds longer: another recording)
+            {'position': 3, 'number': '3', 'title': 'Song Three', 'length': 192000, 'recording': {'id': H.uid('cccccccc', 93), 'title': 'Song Three', 'relations': prod()}}]}]}
+        pg3, errs3 = H.open_mb_edit(ctx, companion=False)
+        pg3.wait_for_selector('#dci-quickfill:not([hidden])', timeout=20000)
+        pg3.evaluate("document.getElementById('dci-quickfill').click()")
+        H.wait_for(pg3, "!!document.querySelector('#dci-qf [data-qf=fill]')", 40)
+        e1 = pg3.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')")
+        b3 = len(pg3.evaluate(ADDED))
+        pg3.evaluate("document.querySelector('#dci-qf [data-qf=fill]').click()")
+        H.wait_for(pg3, "/relationships added/.test(document.getElementById('dci-qf').textContent)", 30)
+        e2 = pg3.evaluate(ADDED)[b3:]
+        note3 = pg3.evaluate("document.getElementById('edit-note-text').value")
+        print('E)', e1[:260], '| neu:', e2, '| Notiz:', note3[-160:])
+        results.append('from the recordings of the same title and length on other releases of the release group' in e1 and 'tracks 3, 4 – they stay empty' in e1
+                       and sorted(x[2] for x in e2) == sorted(H.REC[0:2]) and all(x[0] == 141 for x in e2) and 'other releases of the release group' in note3)
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    # F) Node
+    src = H.MAIN
+    fn = ''.join(re.search(rf"\n  const {n} = .*?;\n", src).group(0) for n in ('norm', 'uniq')) + src[src.index('\n  const QF_WORDS'):src.index('\n  const QF_KINDS')] \
+        + re.search(r"\n  function qfWorksFor\(track, sources, siblings = \[\]\) \{.*?\n  \}\n", src, re.S).group(0)
+    js = fn + """
+const sib = ['Song A', 'Song B', 'Movement I', 'Movement II'];
+const st = ['Suite (Part 2)', 'Suite, Pt. 3', 'Suite - Teil 2', 'Suite – Part Two', 'Song (B)', 'Song B', 'Movement II', 'Movement (III)', 'Plan', 'Track 10', 'Plan B', 'Rocky IV', 'You and I']
+  .map((t) => { const x = qfStem(t, sib); return x.part ? `${x.stem}#${x.no}` : '-'; });
+const w = qfWorksFor({ title: 'Suite (Part 2)' }, [{ works: [{ work: { id: 'w1', title: 'Suite' } }, { work: { id: 'w2', title: 'Other' } }] }]).map((x) => [x.rel.work.id, x.partial]);
+const w2 = qfWorksFor({ title: 'Song (Part 2)' }, [{ works: [{ work: { id: 'a', title: 'Song (Part 2)' } }, { work: { id: 'b', title: 'Song' } }] }]).map((x) => [x.rel.work.id, x.partial]);
+const w3 = qfWorksFor({ title: 'Intro' }, [{ works: [{ work: { id: 'a', title: 'Intro' } }] }, { works: [{ work: { id: 'b', title: 'Intro' } }] }]).length;
+console.log(JSON.stringify([st, w, w2, w3]));"""
+    out = subprocess.run(['node', '-e', js], capture_output=True, text=True)
+    print('F)', out.stdout.strip(), out.stderr[-300:])
+    results.append(json.loads(out.stdout or 'null') == [['Suite#2', 'Suite#3', 'Suite#2', 'Suite#2', 'Song#b', 'Song#b', 'Movement#2', 'Movement#3', '-', '-', '-', '-', '-'],
+                                                        [['w1', True]], [['a', False]], 0])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_tracksfit():
     """Credits Importer 3.24.1: the tracks of a source compared with MusicBrainz's – their number and their titles (collected
     item 52; S030, T038).
