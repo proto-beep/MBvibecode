@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.147.0
+// @version      3.148.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.147.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.147.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.148.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.148.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.147.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.148.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -217,24 +217,16 @@
       "supp.th.select": "Take over",
       "supp.th.kind": "Kind",
       "supp.th.name": "Name",
-      "supp.th.says": "{name} says",
       "supp.th.rel": "MB relationship",
-      "supp.th.tracks": "Tracks",
-      "supp.th.mb": "MusicBrainz",
       "supp.kind.role": "new role",
       "supp.kind.entry": "new entry",
       "supp.kind.differ": "differs",
       "supp.kind.unrec": "not recognized",
-      "supp.hasEntry": "entry exists",
       "supp.onlyHere": "only in {name}",
-      "supp.asEntry": "as the entry:",
       "supp.noMbYet": "the entry has no MusicBrainz match yet",
       "supp.suggest": "suggestion:",
       "supp.searchLater": "looked up when taken over (suggestions only)",
       "supp.byLink": "via the {name} link:",
-      "supp.differKeep": "not selected: {first} stays",
-      "supp.differTake": "selected: the tracks from {name}",
-      "supp.differWas": "{first}: {tracks}",
       "supp.byHand": "by hand (“Add entry manually”)",
       "supp.nSelected": "{n} selected",
       "supp.apply": "Take over selected",
@@ -247,6 +239,34 @@
       "supp.badgeConfirm": "{name} says the same",
       "supp.badgeAdded": "taken over from {name}",
       "supp.badgeDiffer": "{name} gives other tracks: {tracks}",
+      "settings.h.srcTrust": "Trust of the sources",
+      "trust.title": "Trust of the sources",
+      "trust.mbFixed": "MusicBrainz always comes first",
+      "trust.hint": "When sources say different things (the table of an added source), the one higher in this list is preselected – for all releases. Drag the entries or move them with ▲▼.",
+      "trust.ocr": "Text from images",
+      "trust.text": "Pasted text",
+      "trust.reason": "{win} chosen over {lose}: higher in the trust of the sources",
+      "trust.reasonSame": "Both from {name}, trusted alike: the loaded source stays",
+      "trust.link": "(⚙ Settings → Sources)",
+      "trust.reset": "Default order",
+      "log.sourceTrust": "Trust of the sources: {list}",
+      "supp.kind.precise": "more precise",
+      "supp.kind.name": "full name",
+      "supp.kind.spell": "check the spelling",
+      "supp.msg.precise": "{n} more precise",
+      "supp.msg.spell": "{n} to check (read from an image)",
+      "supp.notThere": "not there",
+      "supp.onTracks": "tracks {tracks}",
+      "supp.onAll": "all tracks",
+      "supp.summaryPrecise": " · more precise: {n}",
+      "supp.summarySpell": " · to check: {n}",
+      "trust.byHand": "Chosen by hand (against the trust of the sources)",
+      "log.suppLoadedMore": "Added source: {name} – {confirmed} confirmed, {added} new, {differ} differing, {precise} more precise, {spell} to check, {unrec} not recognized",
+      "supp.spellCheck": "read from an image – check the spelling",
+      "supp.nameLookup": "looked up again with the full name when taken over",
+      "supp.mbNone": "nothing of this kind on the release",
+      "supp.th.mbHas": "MusicBrainz has",
+      "supp.nothingNew": "Nothing new from the added source.",
       "busy.supp": "Reading {source} as an added source …",
       "log.suppLoaded": "Added source: {name} – {confirmed} confirmed, {added} new, {differ} differing, {unrec} not recognized",
       "log.suppApplied": "Taken over from {name}: {n}",
@@ -22046,7 +22066,7 @@
     }
     if (supp) loadSupplement(TEXT, textSig(text), { text, origin, ocr: true, ocrLines: ocrLineOrigins(text) });
     else {
-      S.textInput = { text, origin };
+      S.textInput = { text, origin, ocr: true }; // ([Z-SRCTRUST] 3.148.0) trusted as text read from images
       // ([Z-OCRSUPP] 3.115.0) asked above already: not a second time
       loadRelease(textSig(text), { source: TEXT, confirmed: true });
     }
@@ -23681,6 +23701,54 @@
     renderSource();
   }
 
+  /**
+   * [Z-SRCTRUST] (3.148.0) How far each source is trusted when the sources say different things (the table of an added source):
+   * MusicBrainz first, always; the rest in the order of the list (⚙ Settings → Sources, by drag and drop or ▲▼).
+   */
+  const SOURCE_TRUST_KEY = 'dci-source-trust';
+  const SOURCE_TRUST_DEFAULT = ['ocr', 'wikidata', 'wikipedia', 'bandcamp', 'discogs', 'youtube', 'text'];
+  const TRUST_NAMES = { mb: 'MusicBrainz', ocr: () => tr('trust.ocr'), wikidata: 'Wikidata', wikipedia: 'Wikipedia', bandcamp: 'Bandcamp', discogs: 'Discogs', youtube: 'YouTube', text: () => tr('trust.text') };
+  const trustName = (k) => (typeof TRUST_NAMES[k] === 'function' ? TRUST_NAMES[k]() : TRUST_NAMES[k] || k);
+  function readSourceTrust() {
+    const stored = readJson('localStorage', SOURCE_TRUST_KEY, null);
+    const known = (Array.isArray(stored) ? stored : []).filter((k) => SOURCE_TRUST_DEFAULT.includes(k));
+    return uniq([...known, ...SOURCE_TRUST_DEFAULT]);
+  }
+  S.sourceTrust = readSourceTrust();
+  /** The rank of a source (0: MusicBrainz, then the list): the smaller, the more it is trusted. */
+  const trustRank = (k) => (k === 'mb' ? 0 : 1 + Math.max(0, S.sourceTrust.indexOf(k) < 0 ? S.sourceTrust.length : S.sourceTrust.indexOf(k)));
+  /** The key of a source in the trust list (the text read from images: ocr). */
+  const trustKeyOf = (source, ocr = false) => (ocr ? 'ocr' : source ? (source.id === 'text' ? 'text' : source.id) : 'text');
+  function moveSourceTrust(src, dir, toSrc = null) {
+    const list = [...S.sourceTrust];
+    const i = list.indexOf(src);
+    if (i < 0) return;
+    const j = toSrc ? list.indexOf(toSrc) : i + dir;
+    if (j < 0 || j >= list.length || j === i) return;
+    list.splice(i, 1);
+    list.splice(j, 0, src);
+    setSourceTrust(list);
+  }
+  /** The trust list stored (null: the default), logged, and the preselection of contradictions not chosen by hand made anew. */
+  function setSourceTrust(list) {
+    S.sourceTrust = list ? uniq([...list, ...SOURCE_TRUST_DEFAULT]) : SOURCE_TRUST_DEFAULT.slice();
+    writeJson('localStorage', SOURCE_TRUST_KEY, list && list.join() !== SOURCE_TRUST_DEFAULT.join() ? list : null);
+    log('info', 'sourceTrust', { list: ['mb', ...S.sourceTrust].map(trustName).join(' › ') });
+    retrustSupp();
+    renderSettings();
+    renderSupp();
+  }
+  /** [Z-SRCTRUST] (3.148.0) The contradictions of the added source preselected anew by the trust list (unless ticked by hand). */
+  function retrustSupp() {
+    const sp = S.supp;
+    if (!sp) return;
+    for (const it of sp.items) {
+      if (it.kind !== 'differ' || !it.conflict) continue;
+      it.addWins = trustRank(sp.addKey) < trustRank(it.mainKey);
+      if (!it.touched) it.sel = it.addWins;
+    }
+  }
+
   /** [E2] What the script finds on a Bandcamp album page ([3.28.1] or track page; to check that it can read Bandcamp in this browser). */
   async function testBandcampPage(input) {
     const url = BANDCAMP.pageUrl(input);
@@ -24151,7 +24219,7 @@
     if (S.startText) {
       const { text, origin } = S.startText;
       S.startText = null;
-      S.textInput = { text, origin };
+      S.textInput = { text, origin, ocr: true }; // ([Z-SRCTRUST] 3.148.0, review) trusted as text read from images
       await loadRelease(textSig(text), { source: TEXT });
       return;
     }
@@ -24279,8 +24347,43 @@
   /** MB relationship of a row in words: "instrument · trumpet". */
   const rowRelText = (row) => [(row.types || [])[0] || '', row.primaryText || ''].filter(Boolean).join(' · ');
 
-  /** The entry of the dashboard a name of the second source belongs to: the same MB entry, else the same name. */
+  /**
+   * [Z-OCRNAMES] (3.148.0) A name as text read from images may spell it: "rn" for "m", "l", "I", "1" and "|" alike, "0" for "o"
+   * (accents and case do not count already: nameKey).
+   */
+  // ((review) on the name as written: a capital I is a slip for l, a small i is not – "Ilse" is no "Lise")
+  const ocrFold = (raw) => nameKey(String(raw || '').replace(/rn/gi, 'm').replace(/[Il1|]/g, 'l').replace(/0/g, 'o'));
+  /**
+   * [Z-SUPPTABLE] (3.148.0) The same person written with initials ("J. Olski" – "James Olski", "J. S. Bach" – "Johann Sebastian Bach"):
+   * the same number of words, the last the same, every other the same or an initial of it. 1: the second name the fuller one,
+   * -1: the first, 0: the same, null: not the same person.
+   */
+  function initialsMatch(k1, k2) {
+    const a = k1.split(' ');
+    const b = k2.split(' ');
+    if (a.length < 2 || a.length !== b.length || a[a.length - 1] !== b[b.length - 1] || a[a.length - 1].length < 2) return null;
+    let dir = 0;
+    for (let i = 0; i < a.length - 1; i++) {
+      if (a[i] === b[i]) continue;
+      if (a[i].length === 1 && b[i].length > 1 && b[i][0] === a[i]) {
+        if (dir < 0) return null;
+        dir = 1;
+      } else if (b[i].length === 1 && a[i].length > 1 && a[i][0] === b[i]) {
+        if (dir > 0) return null;
+        dir = -1;
+      } else return null;
+    }
+    return dir;
+  }
+
+  /**
+   * The entry of the dashboard a name of the second source belongs to: the same MB entry, else the same name. How it was found is
+   * kept in suppEntryFor.how: '' (MBID or the same name), 'initials' (with `fuller`: the supplement's name the fuller one), 'ocr'
+   * (only slips of reading an image apart) or 'near' (one letter off, read from an image).
+   */
   function suppEntryFor(name, mbids, company, near = false) {
+    suppEntryFor.how = '';
+    suppEntryFor.fuller = false;
     const list = [...S.artists.values()].filter((a) => !!a.company === company && !a.other && S.rows.some((r) => r.artistKey === a.key));
     const byMbid = mbids.length ? list.find((a) => a.mbid && mbids.includes(a.mbid)) : null;
     if (byMbid) return byMbid;
@@ -24288,6 +24391,26 @@
     const names = (a) => [a.name, a.rawName, a.mbName, ...(a.anvs || []), ...(a.dAliases || [])].filter(Boolean).map(nameKey);
     const same = list.find((a) => names(a).includes(k));
     if (same) return same;
+    // [Z-OCRNAMES] (3.148.0) read from an image: the same name but for the slips of reading it – no row, it is the same person
+    if (near && !company && !mbids.length && k.length >= 4) {
+      const rawNames = (a) => [a.name, a.rawName, a.mbName, ...(a.anvs || []), ...(a.dAliases || [])].filter(Boolean);
+      const hits = list.filter((a) => rawNames(a).some((n) => ocrFold(n) === ocrFold(name)));
+      if (hits.length === 1) {
+        suppEntryFor.how = 'ocr';
+        return hits[0];
+      }
+    }
+    // [Z-SUPPTABLE] (3.148.0) a person written with initials in one of the sources: the same person (one entry only)
+    if (!company && !mbids.length) {
+      const hits = list.map((a) => ({ a, dir: names(a).map((n) => initialsMatch(n, k)).find((d) => d != null) })).filter((x) => x.dir != null);
+      // ((review) not when another name of the added source fits the same entry so – "James Olski" and "Jane Olski" for "J. Olski")
+      const rivals = hits.length === 1 ? (suppEntryFor.others || []).filter((o) => o !== k && names(hits[0].a).some((n) => n !== o && initialsMatch(n, o) != null)) : [];
+      if (hits.length === 1 && !rivals.length) {
+        suppEntryFor.how = 'initials';
+        suppEntryFor.fuller = hits[0].dir > 0;
+        return hits[0].a;
+      }
+    }
     // [Z-SUPPMSG] (3.116.0) very similar: one letter off ("Bob Produser" – "Bob Producer") – ((review) only for the text read from the
     // cover art, without a link, of a person: one word of four letters at least off by one letter, its first letter and its digits the
     // same – not "A. Smith" / "B. Smith", "Room 101" / "Room 102" –, one entry only)
@@ -24302,7 +24425,65 @@
       return Math.min(v.length, w.length) >= 4 && v[0] === w[0] && !/\d/.test(v + w) && slipDistance(v, w) <= 1;
     };
     const hits = list.filter((a) => names(a).some(close));
+    if (hits.length === 1) suppEntryFor.how = 'near';
     return hits.length === 1 ? hits[0] : null;
+  }
+
+  /** [Z-SUPPTABLE] (3.148.0) An attribute of MusicBrainz below another one (congas below percussion, lead vocals below vocals). */
+  function attrBelow(lower, upper) {
+    const ix = idx();
+    const seen = new Set();
+    let cur = lower && lower.parent_id != null ? ix.atById.get(lower.parent_id) : null;
+    while (cur && !seen.has(cur.id)) {
+      if (cur.id === upper.id) return true;
+      seen.add(cur.id);
+      cur = cur.parent_id != null ? ix.atById.get(cur.parent_id) : null;
+    }
+    return false;
+  }
+  /** The MusicBrainz attribute of a row's instrument or voice (null: none, or unknown). */
+  function rowAttr(row) {
+    if (!norm(row.primaryText)) return null;
+    const lt = currentLinkType(row);
+    const root = lt ? primaryRootOf(lt) : null;
+    return root ? findChildAttr(root.id, row.primaryText) : null;
+  }
+  /**
+   * [Z-SUPPTABLE] (3.148.0) How precise two rows of the same relationship type are: 1 – the second more precise (an instrument
+   * below the first one's, or one where the first has none), -1 – the first, null – neither (other instruments, or the same).
+   */
+  function rowPrecision(first, second) {
+    if (suppSig(first).split('|').slice(0, 2).join('|') !== suppSig(second).split('|').slice(0, 2).join('|')) return null;
+    const a = rowAttr(first);
+    const b = rowAttr(second);
+    if (!norm(first.primaryText) && b) return 1;
+    if (!norm(second.primaryText) && a) return -1;
+    if (!a || !b || a.id === b.id) return null;
+    if (attrBelow(b, a)) return 1;
+    if (attrBelow(a, b)) return -1;
+    return null;
+  }
+
+  /** [Z-SRCTRUST] (3.148.0) The loaded source as a key of the trust list (a text read from images: 'ocr'). */
+  const mainTrustKey = () => trustKeyOf(S.source, S.source === TEXT && !!(S.textInput && S.textInput.ocr));
+  /** [Z-SRCTRUST] (3.148.0) The source a row came from, as a key of the trust list (taken over from an added source: that one). */
+  function rowTrustKey(row) {
+    // ((review) a row changed by an earlier added source: that source's word
+    if (row.suppTook) return row.suppTook.key || 'text';
+    if (row.suppOcr) return 'ocr';
+    if (row.supp) {
+      const src = sourceByShort(row.supp);
+      return src && src.id ? trustKeyOf(src) : 'text';
+    }
+    return mainTrustKey();
+  }
+  /** [Z-SUPPTABLE] (3.148.0) What MusicBrainz has of an entry's relationship of this type (on the release's recordings or itself). */
+  function mbHasText(a, row) {
+    if (!a || !a.mbid || !S.existing || !S.existing.list) return '';
+    const type = norm((row.types || [])[0] || '');
+    const hits = S.existing.list.filter((x) => x.mbid === a.mbid && x.type === type);
+    if (!hits.length) return '';
+    return uniq(hits.map((x) => [x.type, ...x.attrs].join(' · '))).join('; ');
   }
   /** [Z-SUPPMSG] (3.116.0) Roles of the same kind for a supplement: writer, composer, lyricist, librettist ("Written-By" = composer). */
   // ((review) only the general writer and the composer – a lyricist or librettist is another credit)
@@ -24336,7 +24517,9 @@
       S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
       await compareSupplement();
       const n = (kind) => S.supp.items.filter((it) => it.kind === kind).length;
-      log('info', 'suppLoaded', { name: source.name, confirmed: S.supp.confirmed, added: n('role') + n('entry'), differ: n('differ'), unrec: n('unrec') });
+      // ((3.148.0, review) the more precise ones and the names to check counted too
+      const more = { precise: n('precise') + n('name'), spell: n('spell') };
+      log('info', more.precise || more.spell ? 'suppLoadedMore' : 'suppLoaded', { name: source.name, confirmed: S.supp.confirmed, added: n('role') + n('entry'), differ: n('differ'), unrec: n('unrec'), ...more });
       suppSummary();
       setBusy('');
     } catch (e) {
@@ -24365,9 +24548,10 @@
     if (!sp) return;
     const n = (f) => sp.items.filter(f).length;
     const c = { new: n((it) => it.kind === 'role' || it.kind === 'entry'), more: n((it) => it.kind === 'differ' && it.more),
-      differ: n((it) => it.kind === 'differ' && !it.more), same: sp.confirmed || 0, unrec: n((it) => it.kind === 'unrec') };
-    const list = ['new', 'more', 'differ', 'same', 'unrec'].filter((k) => c[k]).map((k) => tr(`supp.msg.${k}`, { n: c[k] })).join(' · ');
-    const nothing = !c.new && !c.more && !c.differ;
+      precise: n((it) => it.kind === 'precise' || it.kind === 'name'), // [Z-SUPPTABLE] (3.148.0)
+      differ: n((it) => it.kind === 'differ' && !it.more), spell: n((it) => it.kind === 'spell'), same: sp.confirmed || 0, unrec: n((it) => it.kind === 'unrec') };
+    const list = ['new', 'more', 'precise', 'differ', 'spell', 'same', 'unrec'].filter((k) => c[k]).map((k) => tr(`supp.msg.${k}`, { n: c[k] })).join(' · ');
+    const nothing = !c.new && !c.more && !c.differ && !c.precise && !c.spell;
     const name = sp.ocr ? tr('supp.fromCover') : sourceLabel(sp.source);
     const text = tr(nothing ? 'supp.msgNothing' : 'supp.msgSome', { name, list: list || tr('supp.msg.none') });
     sp.summary = { ...c, text, nothing };
@@ -24386,6 +24570,12 @@
       if (sp.ocr && !r.suppOcr) delete r.ocrSeen; // [Z-SUPPNAV] (3.116.0; (review) what was taken over keeps its lines)
     }
   }
+
+  /**
+   * [Z-SUPPTABLE] (3.148.0) What is ticked at first: new rows and entries, what is more precise (more tracks, a more precise instrument),
+   * and a contradiction where the added source is trusted more.
+   */
+  const suppPreselect = (res) => res.kind === 'role' || res.kind === 'precise' || (res.kind === 'differ' && (res.more || res.addWins));
 
   async function compareSupplement() {
     const sp = S.supp;
@@ -24414,7 +24604,27 @@
       const same = S.rows.find((r) => r.artistKey === a.key && suppSig(r) === suppSig(probe));
       const near = same ? null : S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && !kin.has(r) && suppSameKind(r, probe) && sameTracks(r.tracks, new Set(info.tracks)));
       const row = same || near;
-      if (!row) return { kind: 'role' };
+      if (!row) {
+        // [Z-SUPPTABLE] (3.148.0) the same relationship more or less precise (an instrument below the other one's, one where the other
+        // has none) on tracks of the row: the more precise one preselected; less precise than the dashboard – nothing to decide
+        // ((review) not a row another item changes; not a row with an open question; more precise only over all the row's tracks – else a
+        // new row on its own tracks)
+        for (const r of S.rows.filter((x) => x.artistKey === a.key && x.level !== 'skip' && !kin.has(x) && !x.askVoice && !(x.instrGuess && !x.instrGuess.chose))) {
+          const p = rowPrecision(r, probe);
+          if (p == null || !info.tracks.some((i) => r.tracks.has(i))) continue;
+          if (p > 0 && !info.all && ![...r.tracks].every((i) => info.tracks.includes(i))) continue;
+          kin.add(r);
+          if (p < 0) {
+            if (!r.confirmedBy) r.confirmedBy = new Set();
+            r.confirmedBy.add(short);
+            if (sp.ocr) r.ocrSeen = uniq([...(r.ocrSeen || []), info.line].filter(Boolean));
+            sp.confirmed++;
+            return null;
+          }
+          return { kind: 'precise', rowId: r.id, mainSays: rowRelText(r), mainPrimary: r.primaryText || '', mainKey: rowTrustKey(r), firstTracks: trackSetText(r.tracks, r.dAllTracks), firstAll: !!r.dAllTracks, toPrimary: probe.primaryText };
+        }
+        return { kind: 'role', types: probe.types || [] };
+      }
       if (near) kin.add(near);
       // [Z-SUPPNAV] (3.116.0) a line of the cover art that says what is there already: the row shows it (🖼️, its cut-out)
       if (sp.ocr) row.ocrSeen = uniq([...(row.ocrSeen || []), info.line].filter(Boolean));
@@ -24428,11 +24638,30 @@
       // [Z-SUPPMSG] (3.116.0) only tracks more than the row has (the supplement naming its tracks): "more tracks"; ((review) chosen by
       // hand like any difference – not ticked)
       const more = !info.all && info.tracks.length > row.tracks.size && [...row.tracks].every((i) => info.tracks.includes(i));
-      return { kind: 'differ', rowId: row.id, firstTracks: trackSetText(row.tracks, row.dAllTracks), more };
+      // [Z-SUPPTABLE] (3.148.0) more tracks: more precise, preselected; other tracks: a contradiction, decided by the trust of the sources
+      // (⚙ Settings → Sources) – the source the row came from against the added one; the same trust: the row stays
+      const mainKey = rowTrustKey(row);
+      const addWins = trustRank(addKey) < trustRank(mainKey);
+      kin.add(row); // ((review) no second item for this row
+      return { kind: 'differ', rowId: row.id, firstTracks: trackSetText(row.tracks, row.dAllTracks), firstAll: !!row.dAllTracks, more, mainKey, ...(more ? {} : { conflict: true, addWins }) };
+    };
+    const addKey = trustKeyOf(sp.source, !!sp.ocr);
+    sp.addKey = addKey;
+    suppEntryFor.others = groups.map((g) => nameKey(g.name)); // ((review) the names of the added source: initials only for one of them
+    // [Z-SUPPTABLE] (3.148.0) the name of an entry: once
+    const named = new Set();
+    const nameItem = (a, g, how, fuller) => {
+      if (!a || named.has(a.key)) return;
+      named.add(a.key);
+      // a fuller name (initials in the dashboard) for an entry not yet found in MusicBrainz: preselected, to look it up again
+      if (how === 'initials' && fuller && !a.mbid) items.push({ id: id(), kind: 'name', sel: true, artistKey: a.key, name: g.name, from: a.name, line: g.name, rel: '', tracks: [], all: false });
+      // [Z-OCRNAMES] (3.148.0) read from an image and one letter off (not a slip of reading): to check by hand
+      if (how === 'near') items.push({ id: id(), kind: 'spell', sel: false, artistKey: a.key, name: g.name, from: a.name, line: g.name, rel: '', tracks: [], all: false });
     };
     for (const g of groups) {
       const mbids = (linked.get((g.links || [])[0]) || []).map((c) => c.mbid);
       const a = suppEntryFor(g.name, mbids, false, !!sp.ocr);
+      nameItem(a, g, suppEntryFor.how, suppEntryFor.fuller);
       const fresh = [];
       for (const c of g.roles.values()) {
         const tracks = suppTracks(c);
@@ -24447,7 +24676,7 @@
           continue;
         }
         const res = compare(a, probe, info);
-        if (res) items.push({ id: id(), artistKey: a.key, sel: res.kind === 'role', ...info, ...res });
+        if (res) items.push({ id: id(), artistKey: a.key, sel: suppPreselect(res), ...info, ...res });
       }
       if (!a && fresh.length) {
         items.push({ id: id(), kind: 'entry', sel: true, name: g.name, g, roles: fresh, mbids, line: fresh.map((x) => x.line).join(' · '),
@@ -24470,7 +24699,7 @@
           continue;
         }
         const res = compare(a, probe, info);
-        if (res) items.push({ id: id(), artistKey: a.key, sel: res.kind === 'role', ...info, ...res });
+        if (res) items.push({ id: id(), artistKey: a.key, sel: suppPreselect(res), ...info, ...res });
       }
       if (!a && fresh.length) {
         items.push({ id: id(), kind: 'entry', sel: true, company: true, name: g.name, g, roles: fresh, mbids: [], line: fresh.map((x) => x.line).join(' · '),
@@ -24791,11 +25020,14 @@
     return row;
   }
 
+  /** ((3.148.0, review) The source a row's value came from before an added source changed it, for the edit note. */
+  const rowPrevName = (row) => (row.suppTook ? row.suppTook.name : row.supp ? row.suppName : S.source.noteName);
+
   /** Takes the selected suggestions of the list into the dashboard. */
   async function applySupplement() {
     const sp = S.supp;
     if (!sp) return;
-    const chosen = sp.items.filter((it) => it.sel && it.kind !== 'unrec');
+    const chosen = sp.items.filter((it) => it.sel && it.kind !== 'unrec' && it.kind !== 'spell');
     const added = [];
     for (const it of chosen) {
       if (it.kind === 'role') {
@@ -24808,8 +25040,26 @@
         row.tracks = new Set(it.tracks);
         row.suggested = new Set(it.tracks);
         row.dAllTracks = !!it.all;
-        row.suppTook = { short: sp.source.short, name: sp.source.name, first: it.firstTracks };
+        row.suppTook = { short: sp.source.short, name: sp.source.name, first: it.firstTracks, key: sp.addKey, prev: rowPrevName(row) };
         row.differ = null;
+      } else if (it.kind === 'precise') {
+        // [Z-SUPPTABLE] (3.148.0) the more precise instrument or voice of the added source on the row
+        const row = S.rows.find((r) => r.id === it.rowId);
+        // ((review) not over an instrument chosen since the comparison
+        if (!row || norm(row.primaryText) !== norm(it.mainPrimary)) continue;
+        const prev = rowPrevName(row);
+        Object.assign(row, { primaryText: it.toPrimary, primaryTouched: true, primaryCands: [] });
+        if (!row.roleCreditTouched) row.roleCredit = '';
+        row.suppTook = { short: sp.source.short, name: sp.source.name, first: it.mainSays, field: 'precise', to: it.rel, key: sp.addKey, prev };
+        refreshRowDetails(row);
+        rerenderRow(row);
+      } else if (it.kind === 'name') {
+        // [Z-SUPPTABLE] (3.148.0) the full name for an entry written with initials, looked up again in MusicBrainz
+        const a = S.artists.get(it.artistKey);
+        if (!a || a.mbid) continue;
+        a.suppNameTook = { short: sp.source.short, name: sp.source.name, from: a.name, to: it.name };
+        Object.assign(a, { name: it.name, status: 'pending', candidates: [], nameHits: null, error: '' });
+        added.push(a);
       } else if (it.kind === 'entry') {
         const g = it.g;
         const entry = it.company
@@ -24858,7 +25108,7 @@
   function discardSupplement() {
     const sp = S.supp;
     if (!sp) return;
-    log('info', 'suppDiscarded', { name: sp.source.name, n: sp.items.filter((it) => it.kind !== 'unrec').length });
+    log('info', 'suppDiscarded', { name: sp.source.name, n: sp.items.filter((it) => it.kind !== 'unrec' && it.kind !== 'spell').length });
     sp.items = [];
     for (const r of S.rows) if (r.differ && r.differ.short === sp.source.short) r.differ = null;
     renderSupp();
@@ -24892,7 +25142,12 @@
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
   }
 
-  /** The list "Supplements from …" (variant B): every suggestion of the second source with a checkbox. */
+  /**
+   * The list "Supplements from …" (variant B): every suggestion of the second source with a checkbox.
+   * [Z-SUPPTABLE] (3.148.0) One table of what is new, more precise or contradicting: a column for the loaded source, one for the added
+   * one and what MusicBrainz has; the more precise preselected, a contradiction decided by the trust of the sources (its reason below
+   * the row, with a link to ⚙ Settings → Sources) – "Nothing new from the added source" when there is nothing to decide.
+   */
   function renderSupp() {
     if (!S.overlay) return;
     const el = $('supp');
@@ -24904,32 +25159,71 @@
     }
     const name = sp.source.name;
     const short = sp.source.short;
+    const addName = sp.ocr ? tr('trust.ocr') : name;
+    const mainName = S.source === TEXT && S.textInput && S.textInput.ocr ? tr('trust.ocr') : S.source.name;
     const count = (kind) => sp.items.filter((it) => it.kind === kind).length;
-    const selectable = sp.items.filter((it) => it.kind !== 'unrec');
+    const selectable = sp.items.filter((it) => it.kind !== 'unrec' && it.kind !== 'spell');
     const nSel = selectable.filter((it) => it.sel).length;
     // ([Z-SUPPMSG] 3.116.0) "more tracks": a difference that only adds tracks
     const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind === 'more' ? 'differ' : kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
+    const none = `<span class="dci-sub">${esc(tr('supp.notThere'))}</span>`;
+    const words = (text, all) => `<span class="dci-sub">(${esc(all ? tr('supp.onAll') : tr('supp.onTracks', { tracks: text }))})</span>`;
+    const tracksOf = (it) => ((it.tracks && it.tracks.length) || it.all ? ` ${words(trackSetText(it.tracks, it.all), it.all)}` : '');
+    const mainCell = (it) => {
+      if (it.kind === 'differ') return `${esc(it.rel || '')} ${words(it.firstTracks, it.firstAll)}`;
+      if (it.kind === 'precise') return `${esc(it.mainSays)} ${words(it.firstTracks, it.firstAll)}`;
+      if (it.kind === 'name' || it.kind === 'spell') return esc(it.from);
+      return it.kind === 'unrec' ? '–' : none;
+    };
+    const addCell = (it) => {
+      if (it.kind === 'name' || it.kind === 'spell') return esc(it.name);
+      if (it.kind === 'unrec') return `<span class="dci-supp-line">${esc(it.line)}</span>`;
+      return `<span class="dci-supp-line">${esc(it.line)}</span>${it.kind === 'precise' ? `<div>${esc(it.rel)}</div>` : ''}${tracksOf(it)}`;
+    };
     const mbCell = (it) => {
       if (it.kind === 'unrec') return esc(tr('supp.byHand'));
-      if (it.kind === 'differ') return esc(tr(it.sel ? 'supp.differTake' : 'supp.differKeep', { name, first: S.source.name }));
-      if (it.kind === 'role') {
-        const a = S.artists.get(it.artistKey);
-        return a && a.mbid ? `${esc(tr('supp.asEntry'))} <a href="/${entityPath(a.company ? a.entityType : 'artist')}/${esc(a.mbid)}" target="_blank" rel="noopener">${esc(a.mbName)}</a>`
-          : esc(tr('supp.noMbYet'));
+      if (it.kind === 'spell') return esc(tr('supp.spellCheck'));
+      const a = it.artistKey ? S.artists.get(it.artistKey) : null;
+      if (it.kind === 'name') return esc(tr('supp.nameLookup'));
+      if (it.kind === 'differ' || it.kind === 'precise' || it.kind === 'role') {
+        const row = it.rowId ? S.rows.find((r) => r.id === it.rowId) : null;
+        // ((review) a new role: by the relationship type of its credit
+        const probe = row || (it.types ? { types: it.types } : null);
+        const has = a && probe ? mbHasText(a, probe) : '';
+        const link = a && a.mbid ? `<a href="/${entityPath(a.company ? a.entityType : 'artist')}/${esc(a.mbid)}" target="_blank" rel="noopener">${esc(a.mbName)}</a>` : '';
+        if (has) return `${link}<div>${esc(has)}</div>`;
+        if (link) return `${link}<div class="dci-sub">${esc(tr('supp.mbNone'))}</div>`;
+        return esc(tr('supp.noMbYet'));
       }
       if (it.hint && it.hint.names.length) return `${esc(tr(it.hint.byLink ? 'supp.byLink' : 'supp.suggest', { name }))} <span class="dci-supp-hint">${esc(it.hint.names.join(', '))}</span>`;
       return esc(tr('supp.searchLater'));
     };
+    // [Z-SRCTRUST] (3.148.0) why a contradiction is preselected as it is
+    const whyRow = (it) => {
+      if (it.kind !== 'differ' || !it.conflict) return '';
+      const win = it.addWins ? sp.addKey : it.mainKey;
+      const lose = it.addWins ? it.mainKey : sp.addKey;
+      // ((review) chosen by hand against the trust: said so
+      if (it.touched && it.sel !== it.addWins) return `<tr class="dci-supp-why"><td></td><td colspan="6">⚖ ${esc(tr('trust.byHand'))}</td></tr>`;
+      const text = trustRank(win) === trustRank(lose) ? tr('trust.reasonSame', { name: trustName(win) }) : tr('trust.reason', { win: trustName(win), lose: trustName(lose) });
+      return `<tr class="dci-supp-why"><td></td><td colspan="6">⚖ ${esc(text)} <button type="button" class="dci-textbtn" data-act="trust-open">${esc(tr('trust.link'))}</button></td></tr>`;
+    };
     const rows = sp.items.map((it) => {
       const a = it.artistKey ? S.artists.get(it.artistKey) : null;
-      const who = it.kind === 'unrec' ? '–' : `<strong>${esc(it.name)}</strong><div class="dci-sub">${esc(it.kind === 'entry' ? tr('supp.onlyHere', { name }) : tr('supp.hasEntry'))}</div>`;
-      const tracks = it.kind === 'unrec' ? '–' : `${esc(trackSetText(it.tracks, it.all))}${it.kind === 'differ' ? ` <span class="dci-sub">(${esc(tr('supp.differWas', { first: S.source.name, tracks: it.firstTracks }))})</span>` : ''}`;
-      return `<tr class="dci-supp-row dci-supp-row-${it.kind}" data-supp="${it.id}">
-        <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${it.kind === 'unrec' ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${it.kind}`)}: ${it.name || it.line}`)}"></td>
-        <td>${chip(it.more ? 'more' : it.kind)}</td><td>${a && it.kind !== 'entry' ? `<strong>${esc(a.name)}</strong><div class="dci-sub">${esc(tr('supp.hasEntry'))}${it.name && nameKey(it.name) !== nameKey(a.name) ? ` · ${esc(tr('supp.written', { name: it.name }))}` : ''}</div>` : who}</td>
-        <td class="dci-supp-line">${esc(it.line)}</td><td>${esc(it.rel || '–')}</td><td>${tracks}</td><td>${mbCell(it)}</td></tr>`;
+      const who = it.kind === 'unrec' ? '–' : a && it.kind !== 'entry'
+        ? `<strong>${esc(a.name)}</strong>${it.name && it.kind !== 'name' && it.kind !== 'spell' && nameKey(it.name) !== nameKey(a.name) ? `<div class="dci-sub">${esc(tr('supp.written', { name: it.name }))}</div>` : ''}`
+        : `<strong>${esc(it.name)}</strong><div class="dci-sub">${esc(tr('supp.onlyHere', { name }))}</div>`;
+      const off = it.kind === 'unrec' || it.kind === 'spell';
+      const kind = it.more ? 'more' : it.kind;
+      return `<tr class="dci-supp-row dci-supp-row-${it.kind}${it.conflict ? ' dci-supp-conflict' : ''}" data-supp="${it.id}">
+        <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${off ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${kind}`)}: ${it.name || it.line}`)}"></td>
+        <td>${chip(kind)}</td><td>${who}</td><td>${esc(it.kind === 'precise' ? it.mainSays : it.rel || '–')}</td>
+        <td>${mainCell(it)}</td><td>${addCell(it)}</td><td>${mbCell(it)}</td></tr>${whyRow(it)}`;
     }).join('');
-    const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') });
+    // ((review) the more precise ones and the names to check counted too
+    const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') })
+      + (count('precise') + count('name') ? tr('supp.summaryPrecise', { n: count('precise') + count('name') }) : '') + (count('spell') ? tr('supp.summarySpell', { n: count('spell') }) : '');
+    const nothing = !selectable.length;
     el.innerHTML = `<div class="dci-supp-head">
         <button type="button" class="dci-textbtn dci-supp-fold" data-act="supp-fold" aria-expanded="${sp.open}">${sp.open ? '▾' : '▸'} ${esc(tr('supp.title', { name }))}</button>
         <span>${esc(summary)}</span>
@@ -24938,13 +25232,13 @@
       ${sp.open ? `${sp.mismatch ? `<p class="dci-note dci-warn">${esc(tr('supp.mismatch', { name, ...sp.mismatch }))}</p>` : ''}
       ${sp.items.length ? `<div class="dci-tablewrap"><table class="dci-table dci-supp-table"><thead><tr>
           <th scope="col"><span class="dci-vh">${esc(tr('supp.th.select'))}</span></th><th scope="col">${esc(tr('supp.th.kind'))}</th>
-          <th scope="col">${esc(tr('supp.th.name'))}</th><th scope="col">${esc(tr('supp.th.says', { name }))}</th><th scope="col">${esc(tr('supp.th.rel'))}</th>
-          <th scope="col">${esc(tr('supp.th.tracks'))}</th><th scope="col">${esc(tr('supp.th.mb'))}</th></tr></thead><tbody>${rows}</tbody></table></div>
-        <div class="dci-supp-foot"><span>${esc(tr('supp.nSelected', { n: nSel }))}</span>
+          <th scope="col">${esc(tr('supp.th.name'))}</th><th scope="col">${esc(tr('supp.th.rel'))}</th>
+          <th scope="col">${esc(mainName)}</th><th scope="col">${esc(addName)}</th><th scope="col">${esc(tr('supp.th.mbHas'))}</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+      ${nothing ? `<p class="dci-sub">${esc(sp.summary && sp.summary.nothing ? tr('supp.nothingNew') : tr('supp.empty', { name, short }))}</p>`
+    : `<div class="dci-supp-foot"><span>${esc(tr('supp.nSelected', { n: nSel }))}</span>
           <button type="button" class="dci-apply dci-small" data-act="supp-apply" ${nSel ? '' : 'disabled'}>${esc(tr('supp.apply'))}</button>
           <button type="button" data-act="supp-discard">${esc(tr('supp.discard'))}</button>
-          <span class="dci-sub">${esc(tr('supp.applyHint', { short }))}</span></div>`
-    : `<p class="dci-sub">${esc(tr('supp.empty', { name, short }))}</p>`}` : ''}`;
+          <span class="dci-sub">${esc(tr('supp.applyHint', { short }))}</span></div>`}` : ''}`;
   }
 
   /** The marks of a row: its source, and the second source when it says the same (or other tracks). */
@@ -24990,7 +25284,8 @@
       const added = S.rows.filter((r) => r.supp === short && can(r));
       const took = S.rows.filter((r) => r.suppTook && r.suppTook.short === short);
       const differ = S.rows.filter((r) => r.differ && r.differ.short === short);
-      if (!confirmed && !added.length && !took.length && !differ.length) continue;
+      const renamed = [...S.artists.values()].filter((a) => a.suppNameTook && a.suppNameTook.short === short); // [Z-SUPPTABLE] (3.148.0)
+      if (!confirmed && !added.length && !took.length && !differ.length && !renamed.length) continue;
       if (src.url) lines.push(`Also from: ${src.url}`);
       const nameOf = (r) => (S.artists.get(r.artistKey) || {}).name || '';
       const what = (r) => `${nameOf(r)}, ${r.primaryText || (r.types || [])[0] || r.raw}`;
@@ -25000,9 +25295,15 @@
       if (parts.length) lines.push(`${parts.join('; ')}.`.replace(/^./, (c) => c.toUpperCase()));
       const diffs = [
         ...differ.map((r) => `${what(r)} – ${S.source.noteName}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}, ${src.name}: ${r.differ.all ? 'all tracks' : trackSetText(r.differ.tracks)}; kept ${S.source.noteName}`),
-        ...took.map((r) => `${what(r)} – ${S.source.noteName}: ${r.suppTook.first}, ${src.name}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}; took ${src.name}`),
+        ...took.filter((r) => r.suppTook.field !== 'precise').map((r) => `${what(r)} – ${r.suppTook.prev || S.source.noteName}: ${r.suppTook.first}, ${src.name}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}; took ${src.name}`),
       ];
       if (diffs.length) lines.push(`Sources differ: ${diffs.join('; ')}.`);
+      // [Z-SUPPTABLE] (3.148.0) what the added source says more precisely (only entries with a MusicBrainz match)
+      const precise = [
+        ...took.filter((r) => r.suppTook.field === 'precise' && can(r)).map((r) => `${nameOf(r)}, ${r.suppTook.first} → ${r.suppTook.to}`),
+        ...renamed.filter((a) => a.mbid).map((a) => `${a.suppNameTook.from} → ${a.suppNameTook.to} (full name)`),
+      ];
+      if (precise.length) lines.push(`More precise in ${src.name}: ${precise.join('; ')}.`);
     }
     return lines;
   }
@@ -29279,6 +29580,19 @@
         <button type="button" class="dci-iconbtn" data-act="srcorder-move" data-list="${kind}" data-src="${k}" data-dir="1" ${i < all.length - 1 ? '' : 'disabled'} aria-label="${esc(tr('srcorder.down', { src: SOURCES[k].name }))}">▼</button></li>`).join('')}</ol></div>`;
     return `<div class="dci-srcorder" role="group" aria-label="${esc(tr('srcorder.toggle'))}">${list('physical')}${list('digital')}
       <p class="dci-sub">${esc(tr('srcorder.hint'))}</p></div>`;
+  }
+
+  /** [Z-SRCTRUST] (3.148.0) The list of trust: MusicBrainz fixed (greyed) on top, the others to drag or move with ▲▼. */
+  function sourceTrustHtml() {
+    const list = S.sourceTrust;
+    return `<div class="dci-srcorder dci-srctrust" role="group" aria-label="${esc(tr('trust.title'))}"><div class="dci-srcorder-col">
+      <ol data-srctrust>
+        <li class="dci-srcorder-item dci-srctrust-fixed" aria-disabled="true" title="${esc(tr('trust.mbFixed'))}"><span class="dci-chip-grip" aria-hidden="true">🔒</span> MusicBrainz</li>
+        ${list.map((k, i) => `<li class="dci-srcorder-item" draggable="true" data-drag="srctrust" data-id="${k}" data-srctrust-item>
+        <span class="dci-chip-grip" aria-hidden="true">⠿</span> ${esc(trustName(k))}
+        <button type="button" class="dci-iconbtn" data-act="srctrust-move" data-src="${k}" data-dir="-1" ${i ? '' : 'disabled'} aria-label="${esc(tr('srcorder.up', { src: trustName(k) }))}">▲</button>
+        <button type="button" class="dci-iconbtn" data-act="srctrust-move" data-src="${k}" data-dir="1" ${i < list.length - 1 ? '' : 'disabled'} aria-label="${esc(tr('srcorder.down', { src: trustName(k) }))}">▼</button></li>`).join('')}</ol></div>
+      <p class="dci-sub">${esc(tr('trust.hint'))} <button type="button" class="dci-textbtn" data-act="srctrust-reset" ${list.join() === SOURCE_TRUST_DEFAULT.join() ? 'disabled' : ''}>↺ ${esc(tr('trust.reset'))}</button></p></div>`;
   }
 
   /** [E2] Bandcamp: read the credits of the track pages too; test a page (what the script finds there). */
@@ -45613,6 +45927,11 @@
       const li = t.closest('[data-srcorder-item]');
       return li && li.dataset.list === d.list && li.dataset.id !== d.id ? { el: li, kind: 'srcorder' } : null;
     }
+    // [Z-SRCTRUST] (3.148.0)
+    if (d.kind === 'srctrust') {
+      const li = t.closest('[data-srctrust-item]');
+      return li && li.dataset.id !== d.id ? { el: li, kind: 'srctrust' } : null;
+    }
     if (d.kind === 'tg' || d.kind === 'cell-tg') {
       const c = t.closest('[data-dmcell]');
       if (c) return !c.classList.contains('dci-dm-choose') ? { el: c, kind: 'tracks' } : null;
@@ -45895,6 +46214,10 @@
     }
     if (t.kind === 'srcorder') {
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
+      return;
+    }
+    if (t.kind === 'srctrust') {
+      moveSourceTrust(d.id, 0, t.el.dataset.id);
       return;
     }
     // [Z-DNDS] (3.86.0) replace or add: the setting of the place, turned round with ⇧ Shift
@@ -48197,6 +48520,15 @@
       case 'srcorder-move':
         moveSourceOrder(btn.dataset.list, btn.dataset.src, Number(btn.dataset.dir));
         break;
+      case 'srctrust-reset': // [Z-SRCTRUST] (3.148.0)
+        setSourceTrust(null);
+        break;
+      case 'trust-open': // [Z-SRCTRUST] (3.148.0) the reason of a contradiction: ⚙ Settings → Sources, at the trust list
+        openSettingsAt('sources', '[data-srctrust] [data-act="srctrust-move"]:not(:disabled)');
+        break;
+      case 'srctrust-move': // [Z-SRCTRUST] (3.148.0)
+        moveSourceTrust(btn.dataset.src, Number(btn.dataset.dir));
+        break;
       case 'bc-test':
         testBandcampPage(S.overlay.querySelector('[data-f="bc-test-url"]').value);
         break;
@@ -48243,7 +48575,9 @@
           dropSupplementMarks(S.supp);
           S.suppSources.delete(S.supp.source.short);
           // What was taken over stays, with its mark
-          if (S.rows.some((r) => r.supp === S.supp.source.short || (r.suppTook && r.suppTook.short === S.supp.source.short))) {
+          // ([Z-SUPPTABLE] 3.148.0, review) a full name taken over too
+          if (S.rows.some((r) => r.supp === S.supp.source.short || (r.suppTook && r.suppTook.short === S.supp.source.short))
+            || [...S.artists.values()].some((a) => a.suppNameTook && a.suppNameTook.short === S.supp.source.short)) {
             S.suppSources.set(S.supp.source.short, { ...(S.suppSources.get(S.supp.source.short) || {}), name: S.supp.source.noteName, url: S.supp.url, ocr: !!S.supp.ocr });
           }
           S.supp = null;
@@ -49089,12 +49423,13 @@
         break;
       case 'supp-sel': {
         const it = S.supp && S.supp.items.find((x) => x.id === el.dataset.id);
-        if (it) it.sel = el.checked;
+        if (it) Object.assign(it, { sel: el.checked, touched: true });
         renderSupp();
         break;
       }
       case 'supp-all':
-        if (S.supp) S.supp.items.forEach((x) => { if (x.kind !== 'unrec') x.sel = el.checked; });
+        // ((3.148.0, review) not the names to check; chosen by hand)
+        if (S.supp) S.supp.items.forEach((x) => { if (x.kind !== 'unrec' && x.kind !== 'spell') Object.assign(x, { sel: el.checked, touched: true }); });
         renderSupp();
         break;
       case 'work-type':
@@ -50213,7 +50548,7 @@
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
+    sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -52492,6 +52827,7 @@
       ],
       sources: () => [
         sh('srcOrder'), sourceOrderHtml(),
+        sh('srcTrust'), sourceTrustHtml(), // [Z-SRCTRUST] (3.148.0)
         sh('releasePage'),
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
         cb('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'), '', { def: true, hint: tr('settings.afterEditHint') }),
@@ -53423,6 +53759,10 @@
       }
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
+      S.sourceTrust = SOURCE_TRUST_DEFAULT.slice(); // [Z-SRCTRUST] (3.148.0)
+      log('info', 'sourceTrust', { list: ['mb', ...S.sourceTrust].map(trustName).join(' › ') });
+      retrustSupp();
+      renderSupp();
       // [Z-BETAOFF] (3.115.0) the text from cover art: on again, its switches as at first (its window stays)
       // ((review) its window as the switches now are: no image loaded ahead, the ticks of "Auto-select" gone; the frames and the
       // windows kept per release stay – "Reset all settings" forgets them)
@@ -53482,7 +53822,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -53649,6 +53989,9 @@
     S.levelPaletteDark = paletteOwnRead(LEVEL_PALETTE_DARK_KEY, LEVEL_PALETTE_DEFAULT);
     S.kindPaletteDark = paletteOwnRead(KIND_PALETTE_DARK_KEY, KIND_PALETTE_DEFAULT);
     S.sourceOrder = readSourceOrder();
+    S.sourceTrust = readSourceTrust(); // [Z-SRCTRUST] (3.148.0)
+    retrustSupp();
+    renderSupp();
     S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
   }
   /**
@@ -53964,6 +54307,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, dgJump: false, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
+      sourceTrust: SOURCE_TRUST_DEFAULT.slice(), // [Z-SRCTRUST] (3.148.0)
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
@@ -53979,6 +54323,8 @@
       statsScope: 'local',
     });
     applyTheme();
+    retrustSupp(); // ([Z-SRCTRUST] 3.148.0, review) the contradictions of an added source by the default trust
+    renderSupp();
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
@@ -55430,6 +55776,13 @@
       .dci-supp-row-role td, .dci-supp-row-entry td { background: var(--sugg-bg); color: var(--sugg-ink); }
       .dci-supp-row-differ td { background: #fdf0e8; color: #6e2c0b; }
       .dci-supp-row-unrec td { color: var(--muted); }
+      .dci-supp-row-precise td, .dci-supp-row-name td { background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-supp-row-spell td { color: var(--muted); }
+      .dci-supp-precise, .dci-supp-name { border: 1px solid var(--sugg-line); color: var(--sugg-ink); }
+      .dci-supp-spell { border: 1px dashed #c8c5d6; color: var(--muted); }
+      .dci-supp-conflict td { border-bottom: 0; }
+      .dci-supp-why td { background: #fdf0e8; color: #6e2c0b; font-size: calc(var(--u, 1px) * 12); padding-top: 0; }
+      .dci-srctrust-fixed { cursor: default; color: var(--muted); }
       .dci-supp-kind { display: inline-block; padding: 0 calc(var(--u, 1px) * 8); border-radius: 999px; background: #fff; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
       .dci-supp-role, .dci-supp-entry { border: 1px dashed var(--sugg-line); color: var(--sugg-ink); }
       .dci-supp-differ { border: 1px solid #e8a27f; color: #8a3a12; }

@@ -3335,7 +3335,7 @@ def case_settabs3136():
         print('A)', heads)
         # ([Z-SETTABS2] 3.137.0) General with "Developer" (its switch), Sources with "Discogs & Bandcamp"
         results.append(heads['general'] == ['Language', 'Log', 'Developer'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
-                       and heads['sources'][:4] == ['Order of the sources', 'Release editor and release page', 'Discogs & Bandcamp', 'MusicBrainz search']
+                       and heads['sources'][:5] == ['Order of the sources', 'Trust of the sources', 'Release editor and release page', 'Discogs & Bandcamp', 'MusicBrainz search']  # ([3.148.0] Z-SRCTRUST)
                        and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites'] and heads['staging'][0] == 'Staging and its limits'
                        and 'Live comments' in heads['staging'] and heads['cache'] == ['Remember', 'Statistics'] and not pg.evaluate("!!document.querySelector('.dci-set-pane details')"))
         moved = ['ev-shared', 'em-show', 'em-by-default', 'em-attr']
