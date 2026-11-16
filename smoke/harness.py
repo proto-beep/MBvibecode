@@ -448,6 +448,8 @@ def js_tracks(medium_id, page):
 MB_EXTRA = {}
 # [3.39.9] "member of band": group mbid → [member mbids]; the artists of a track (its index → [(mbid, name)])
 BAND_MEMBERS = {}
+# [3.146.0] the attributes of a membership ("member of band" with instruments): (group, member) → ['drums', 'vocals']
+MEMBER_ATTRS = {}
 # [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
 IS_PERSON = {}
 # [3.73.0] positions (0-based) whose recordings are videos (MusicBrainz's `video`)
@@ -534,7 +536,8 @@ def ws_search(kind, query):
         need = [fold(w) for w in words.group(1).split(' AND ') if w.strip()]
         names = lambda x: [x['name']] + [a['name'] for a in x.get('aliases', [])]
         hit = lambda x: any(all(w in fold(n).split() for w in need) for n in names(x))
-    m = re.search(r'"(.*)"', q)
+    # ([3.146.0] up to the first quotation mark that ends the phrase: "artist:"A B" OR alias:"A B"" is the name "A B")
+    m = re.search(r'"((?:[^"\\]|\\.)*)"', q)
     name = (m.group(1) if m else q.split(':', 1)[-1]).replace('\\"', '"').strip().lower()
     items = []
     if kind == 'artist':
@@ -898,7 +901,7 @@ def install_routes(ctx):
         if m:
             # [3.39.9] "member of band" (BAND_MEMBERS: group → [member mbids]) in both directions
             a = m.group(1)
-            band = [{'target-type': 'artist', 'type': 'member of band', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in BAND_MEMBERS.get(a, [])]
+            band = [{'target-type': 'artist', 'type': 'member of band', 'direction': 'backward', 'artist': {'id': x, 'name': x}, 'attributes': MEMBER_ATTRS.get((a, x), [])} for x in BAND_MEMBERS.get(a, [])]
             band += [{'target-type': 'artist', 'type': 'member of band', 'direction': 'forward', 'artist': {'id': g, 'name': g}} for g, ms in BAND_MEMBERS.items() if a in ms]
             # [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
             band += [{'target-type': 'artist', 'type': 'is person', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in IS_PERSON.get(a, [])]
