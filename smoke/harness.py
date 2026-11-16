@@ -569,6 +569,8 @@ WIKI_PAGES = {}
 WIKI_QIDS = {}
 # [3.149.0] (Z-WIKICOMP) the page of an article as Wikipedia shows it: (lang, title) → its HTML (the companion's tab)
 WIKI_HTML = {}
+# [3.150.0] (Z-QUICKFILL2) other releases of the release group: mbid → the release as the web service gives it
+GROUP_RELEASES = {}
 WD_ITEMS = {}
 
 
@@ -903,6 +905,11 @@ def install_routes(ctx):
                 WS_FAIL['release'] -= 1
                 return route.fulfill(status=503, body='{}', content_type='application/json')
             return json_route(route, ws_release())
+        # [3.150.0] (Z-QUICKFILL2) the other releases of the release group: browsed by it, each read as the web service gives it
+        if p == '/ws/2/release' and 'release-group=' in u.query:
+            return json_route(route, {'releases': [{'id': REL}] + [{'id': k} for k in GROUP_RELEASES]})
+        if p.startswith('/ws/2/release/') and p[len('/ws/2/release/'):] in GROUP_RELEASES:
+            return json_route(route, GROUP_RELEASES[p[len('/ws/2/release/'):]])
         m = re.match(r'/ws/2/label/([0-9a-f-]{36})', p)
         if m:
             # [3.124.0] (Z-WEBDOM) its web addresses in MusicBrainz (ENTITY_URLS: mbid → [url])
