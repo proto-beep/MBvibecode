@@ -561,12 +561,25 @@ def ws_search(kind, query):
 
 # [3.21.0] web profiles MusicBrainz has for artists: url → (gid, name)
 WEB_URLS = {}
+# [3.149.0] (Z-WIKILINK) other entities MusicBrainz has a link of (a Wikidata item of a place): url → (entity type, gid, name)
+WEB_ENTITIES = {}
+# [3.149.0] (Z-WIKI) Wikipedia: (lang, title) → {'text': wikitext, 'qid': 'Q…', 'langlinks': [(lang, title)]}; the Wikidata items of
+# linked articles (lang, title) → 'Q…'; Wikidata: 'Q…' → {'claims': {'P162': ['Q…']}, 'sitelinks': {'enwiki': 'Title'}, 'labels': {'en': '…'}}
+WIKI_PAGES = {}
+WIKI_QIDS = {}
+# [3.149.0] (Z-WIKICOMP) the page of an article as Wikipedia shows it: (lang, title) → its HTML (the companion's tab)
+WIKI_HTML = {}
+WD_ITEMS = {}
 
 
 def ws_url(query):
     qs = urllib.parse.parse_qs(query)
     out = []
     for res in qs.get('resource', []):
+        if res in WEB_ENTITIES:
+            et, gid, name = WEB_ENTITIES[res]
+            out.append({'resource': res, 'relations': [{'target-type': et, et: {'id': gid, 'name': name, 'disambiguation': ''}}]})
+            continue
         if res in WEB_URLS:
             gid, name = WEB_URLS[res]
             out.append({'resource': res, 'relations': [{'target-type': 'artist', 'artist': {'id': gid, 'name': name, 'disambiguation': 'artist with this link'}}]})
@@ -1091,6 +1104,52 @@ def install_routes(ctx):
         return route.fulfill(body=page, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
 
     ctx.route('https://www.youtube.com/**', yt_web)
+
+    # [3.149.0] (Z-WIKI) Wikipedia's API (an article: its wikitext, Wikidata item and other languages; linked articles: their items)
+    def wp_api(route):
+        u = urllib.parse.urlparse(route.request.url)
+        lang = u.netloc.split('.')[0]
+        q = dict(urllib.parse.parse_qsl(u.query))
+        hdr = {'Access-Control-Allow-Origin': '*'}
+        if u.path.startswith('/wiki/'):
+            title = urllib.parse.unquote(u.path[6:]).replace('_', ' ')
+            page = WIKI_HTML.get((lang, title))
+            if page is None:
+                return route.fulfill(status=404, body='', headers=hdr)
+            return route.fulfill(body=page, content_type='text/html', headers=hdr)
+        if u.path != '/w/api.php':
+            return route.fulfill(status=404, body='', headers=hdr)
+        titles = q.get('titles', '').split('|')
+        if 'revisions' in q.get('prop', ''):
+            pg = WIKI_PAGES.get((lang, titles[0]))
+            if pg is None:
+                return json_route(route, {'query': {'pages': [{'title': titles[0], 'missing': True}]}})
+            page = {'title': titles[0], 'revisions': [{'slots': {'main': {'content': pg['text']}}}],
+                    'langlinks': [{'lang': a, 'title': b} for a, b in pg.get('langlinks', [])]}
+            if pg.get('qid'):
+                page['pageprops'] = {'wikibase_item': pg['qid']}
+            return json_route(route, {'query': {'pages': [page]}})
+        pages = [dict({'title': t}, **({'pageprops': {'wikibase_item': WIKI_QIDS[(lang, t)]}} if (lang, t) in WIKI_QIDS else {})) for t in titles if t]
+        return json_route(route, {'query': {'pages': pages}})
+
+    ctx.route(re.compile(r'https://[a-z-]+\.wikipedia\.org/.*'), wp_api)
+
+    def wd_web(route):
+        u = urllib.parse.urlparse(route.request.url)
+        m = re.match(r'/wiki/Special:EntityData/(Q\d+)\.json', u.path)
+        if m:
+            it = WD_ITEMS.get(m.group(1))
+            if it is None:
+                return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
+            claims = {p: [{'mainsnak': {'datavalue': {'value': {'id': x}}}} for x in v] for p, v in it.get('claims', {}).items()}
+            return json_route(route, {'entities': {m.group(1): {'claims': claims, 'sitelinks': {k: {'title': t} for k, t in it.get('sitelinks', {}).items()}}}})
+        if u.path == '/w/api.php':
+            q = dict(urllib.parse.parse_qsl(u.query))
+            ents = {i: {'labels': {k: {'value': v} for k, v in WD_ITEMS.get(i, {}).get('labels', {}).items()}} for i in q.get('ids', '').split('|') if i}
+            return json_route(route, {'entities': ents})
+        return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
+
+    ctx.route('https://www.wikidata.org/**', wd_web)
     png = bytes.fromhex('89504e470d0a1a0a0000000d4948445200000001000000010806000000'
                         '1f15c4890000000d49444154789c6360f8cf00000301010018dd8db40000000049454e44ae426082')
     ctx.route('https://i.discogs.com/**', lambda route: route.fulfill(body=png, content_type='image/png'))
@@ -1225,6 +1284,11 @@ def open_bandcamp(ctx, url):
                        % (json.dumps(GM_SHIM), json.dumps(SYNC)))
     pg.goto(url)
     return pg, errs
+
+
+def open_wikipedia(ctx, url):
+    """[3.149.0] A Wikipedia tab with the companion (as open_youtube)."""
+    return open_youtube(ctx, url)
 
 
 def open_youtube(ctx, url):

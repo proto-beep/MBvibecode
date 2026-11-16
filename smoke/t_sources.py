@@ -1,6 +1,7 @@
 """Sources: the adapter, several linked releases, supplementing, the tracks of a source (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: adapter, links, supp, tracksfit, indextracks (3.35.1), repeat (3.40.16) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
+import os
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -773,6 +774,159 @@ console.log(JSON.stringify(out));"""
     e = json.loads(subprocess.run(['node', '-e', js], capture_output=True, text=True).stdout)
     print('E) Namen:', e)
     results.append(e == [True, True, True, False, False, False, True, 1, -1, 1, None, None, None, None, 0])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_wiki3149():
+    """Credits Importer 3.149.0 (collected items Z-WIKI, Z-WIKISUPP, Z-WIKILINK, Z-WIKIDATA, Z-WIKIBG, Z-WIKILANGS): Wikipedia's infobox as a
+    source. The release group links to the Wikidata item Q900 (articles en, de, fi); en: recorded "March 2001" at Abbey Road Studios,
+    producers Bob Producer and Wiki Prod, label Sony, genres, a track list of three and a bonus track; de: "1.–3. März 2001"; Wikidata:
+    producers Q910 (Bob Producer) and Q911 (Wiki Prod, linked to MusicBrainz).
+    A) In the background after the import (Discogs): "Wikipedia read in the background: …Q900", added as "Wikipedia (all languages)".
+       The table: Bob Producer and Abbey Road Studios differ (tracks 1–3 – only the main track list – against all), Wikipedia chosen
+       over Discogs by the trust; Wiki Prod a new entry found through its Wikidata link. Below its head: read en · de, the main track
+       list, fi as not read; the label Sony as a hint.
+    B) The date of the more precise language (de) is in the dates of the notes.
+    C) Source ▾ "Wikipedia in the background" switched off: stored, logged.
+    D) An article as the source (its address in Source ▾): its rows, the languages below the head; no background reading then.
+    E) Node: templates, lists and dates of wikitext; two languages merged – the more precise date, a contradiction kept; (review) dates
+       with a month's name, links to other languages, a template not closed, French track lists, one line a producer."""
+    import json
+    import re
+    import subprocess
+
+    H.MB_EXTRA[H.RG] = [{'target-type': 'url', 'type': 'wikidata', 'url': {'resource': 'https://www.wikidata.org/wiki/Q900'}}]
+    EN = """{{Infobox album
+| name = Testalbum
+| recorded = March 2001<ref>x</ref>
+| studio = [[Abbey Road Studios]], London
+| producer = {{hlist|[[Bob Producer]]|[[Wiki Prod]]}}
+| label = [[Sony Music|Sony]]
+| genre = {{hlist|[[Rock music|Rock]]|Pop}}
+}}
+{{Track listing
+| title1 = Song One | title2 = Song Two | title3 = Song Three
+}}
+{{Track listing
+| headline = Bonus tracks
+| title4 = Song Four
+}}"""
+    DE = """{{Infobox Musikalbum
+| Aufnahme = 1.–3. März 2001
+| Studio = [[Abbey Road Studios]]
+}}"""
+    H.WIKI_PAGES[('en', 'Testalbum (album)')] = {'text': EN, 'qid': 'Q900', 'langlinks': [('de', 'Testalbum'), ('fi', 'Testalbumi')]}
+    H.WIKI_PAGES[('de', 'Testalbum')] = {'text': DE, 'qid': 'Q900'}
+    H.WD_ITEMS['Q900'] = {'claims': {'P162': ['Q910', 'Q911']}, 'sitelinks': {'enwiki': 'Testalbum (album)', 'dewiki': 'Testalbum', 'fiwiki': 'Testalbumi'}}
+    H.WD_ITEMS['Q910'] = {'labels': {'en': 'Bob Producer'}}
+    H.WD_ITEMS['Q911'] = {'labels': {'en': 'Wiki Prod'}}
+    H.WIKI_QIDS[('en', 'Abbey Road Studios')] = 'Q920'
+    H.WEB_URLS['https://www.wikidata.org/wiki/Q911'] = (H.uid('dddddddd', 51), 'Wiki Prod')
+    ROWS = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(),
+      (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked, tr.children[5].textContent.replace(/\\s+/g, ' ').trim(),
+      tr.children[6].textContent.replace(/\\s+/g, ' ').trim()])"""
+    logs = lambda pg, pat: [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if re.search(pat, x)]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Wikipedia/.test(li.textContent))", 90)
+        H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
+        pg.wait_for_timeout(1500)
+        rows = pg.evaluate(ROWS)
+        why = pg.evaluate("[...document.querySelectorAll('.dci-supp-why')].map(tr => tr.textContent.replace(/\\s+/g, ' ').trim())")
+        langs = pg.evaluate("[...document.querySelectorAll('[data-el=supp] [data-el=wiki-langs] p')].map(p => p.textContent.replace(/\\s+/g, ' ').trim())")
+        hint = pg.evaluate("(document.querySelector('[data-el=supp] [data-el=label-hint]') || {}).textContent || ''")
+        on = pg.evaluate("[...document.querySelectorAll('.dci-supp-on')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+        bg = logs(pg, 'Wikipedia read in the background')
+        print('A)', bg[:1], on, '\n  ', rows, '\n   Grund:', why, '\n   Sprachen:', langs, '| Hinweis:', hint.strip()[:90])
+        by = {(k, n): (sel, a, m) for k, n, sel, a, m in rows}
+        results.append(bool(bg) and 'Q900' in bg[0] and any('Wikipedia (all languages) ✓ added' in x for x in on)
+                       and by.get(('differs', 'Bob Producer'), (None,))[0] is True and by.get(('differs', 'Bob Producer'), (0, ''))[1].endswith('(tracks 1, 2, 3)')
+                       and by.get(('differs', 'Abbey Road Studios'), (None,))[0] is True
+                       and by.get(('new entry', 'Wiki Prod'), (None,))[0] is True and 'Wiki Prod' in by.get(('new entry', 'Wiki Prod'), (0, '', ''))[2]
+                       and why and all(w.startswith('⚖ Wikipedia chosen over Discogs') for w in why)
+                       and langs and langs[0].startswith('Read from Wikipedia: en · de · for the 3 tracks of the main track list') and any('not read by the script: fi' in x for x in langs)
+                       and 'Sony' in hint)
+        # B) the date of the more precise language among the dates of the notes
+        dates = pg.evaluate("document.getElementById('dci-overlay').textContent")
+        found = '2001-03-01' in dates or '1.–3. März 2001' in dates
+        print('B) Datum im Dashboard:', found)
+        results.append(found)
+        # C) the switch in Source ▾
+        H.src_menu(pg)
+        c0 = pg.evaluate("document.querySelector('[data-f=wiki-bg]').checked")
+        pg.click('[data-f=wiki-bg]')
+        pg.wait_for_timeout(200)
+        c1 = [pg.evaluate("localStorage.getItem('dci-wiki-bg')"), logs(pg, 'Wikipedia in the background: off')]
+        print('C) Schalter:', c0, c1)
+        results.append(c0 is True and c1[0] == 'false' and bool(c1[1]))
+        # D) an article as the source
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'https://en.wikipedia.org/wiki/Testalbum_(album)')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+        langs2 = pg.evaluate("[...document.querySelectorAll('[data-el=wiki-langs] p')].map(p => p.textContent.replace(/\\s+/g, ' ').trim())")
+        print('D) Einträge:', names, '| Sprachen:', langs2)
+        results.append(set(names) >= {'Bob Producer', 'Wiki Prod', 'Abbey Road Studios'} and 'Song' not in ' '.join(names)
+                       and langs2 and langs2[0].startswith('Read from Wikipedia: en') and len(logs(pg, 'Wikipedia read in the background')) == 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # E) Node
+    js = """global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]); const W = m.SOURCES.wikipedia;
+const t = W.wikiTemplates('{{Infobox album | recorded = {{start date|1975|1|16}} | producer = {{flatlist|\\n* [[A B|Ann B]]\\n* C D}} | studio = [[X Studio]]<br />[[Y Hall]], Paris <!-- c -->}}')[0];
+const links = []; const prod = W.wikiPlain(t.params.producer, links);
+const a = (lang, rec) => ({ lang, box: true, links: [], values: { recorded: [rec], studio: [], venue: [], producer: [], label: [], genre: [] } });
+const mg = W.mergeArticles([a('en', 'January 1975'), a('de', '16. Januar 1975'), a('fr', '1974')]);
+const more = ['{{dts|1975|April|23}}', '{{date|23|avril|1975}}', '{{ill|Jan Nowak|pl|Jan Nowak (muzyk)}}', '{{仮リンク|山田太郎|en|Taro Yamada}}', '{{sortname|Ann|Lee}}', 'A &amp; B&#39;s &quot;C&quot;']
+  .map((x) => W.wikiPlain(x).join('|'));
+const broken = W.wikiTemplates('{{cite web|url=x\\n{{Infobox album | producer = Z}}').map((x) => x.name);
+const fr = W.wikiTemplates('{{Liste des titres | titre1 = Un | titre2 = Deux }}')[0];
+console.log(JSON.stringify([t.name, W.wikiPlain(t.params.recorded), prod, links.map((l) => l.title), W.wikiPlain(t.params.studio), mg.values.recorded, mg.values.recordedAlt, mg.conflicts.length,
+  W.pageId('https://de.m.wikipedia.org/wiki/Diamonds_%26_Rust'), W.urlKey('http://wikidata.org/entity/q42'), more, broken, Object.keys(fr.params),
+  W.infoboxText({ producer: ['Earth, Wind & Fire', 'X'] }, '')]));"""
+    out = subprocess.run(['node', '-e', js, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    print('E)', out.stdout.strip(), out.stderr[-300:])
+    e = json.loads(out.stdout or 'null')
+    results.append(e == ['Infobox album', ['1975-01-16'], ['Ann B', 'C D'], ['A B'], ['X Studio', 'Y Hall, Paris'], ['16. Januar 1975'], ['1974'], 1,
+                         'de:Diamonds & Rust', 'https://www.wikidata.org/wiki/Q42',
+                         ['1975 April 23', '23 avril 1975', 'Jan Nowak', '山田太郎', 'Ann Lee', 'A & B\'s "C"'], ['Infobox album'], ['titre1', 'titre2'],
+                         'Produced by Earth, Wind & Fire\nProduced by X'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_wikifail3149():
+    """Credits Importer 3.149.0 (review of Z-WIKIBG): the release group's Wikidata item has no article with an album's infobox – the
+    background reading says so in the log only: no error at the top, the messages of the import stay, no added source."""
+    import re
+    H.MB_EXTRA[H.RG] = [{'target-type': 'url', 'type': 'wikidata', 'url': {'resource': 'https://www.wikidata.org/wiki/Q901'}}]
+    H.WD_ITEMS['Q901'] = {'sitelinks': {'enwiki': 'Nothing here'}}
+    H.WIKI_PAGES[('en', 'Nothing here')] = {'text': 'Nothing here is a word.'}
+    logs = lambda pg, pat: [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if re.search(pat, x)]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Wikipedia in the background: not read/.test(li.textContent))", 90)
+        pg.wait_for_timeout(500)
+        err = pg.evaluate("[...document.querySelectorAll('[data-el=msgs] .dci-msg-error')].map(m => m.textContent.trim())")
+        supp = pg.evaluate("document.querySelector('[data-el=supp]').hidden")
+        print('Protokoll:', logs(pg, 'Wikipedia in the background')[:2], '| Fehler oben:', err, '| keine Quelle:', supp)
+        results.append(bool(logs(pg, 'not read – No infobox')) and not err and supp)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

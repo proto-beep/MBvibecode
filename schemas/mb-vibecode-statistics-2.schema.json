@@ -249,6 +249,10 @@
     "added_sources": {
      "$ref": "#/$defs/strings"
     },
+    "wikipedia_languages": {
+     "$ref": "#/$defs/strings",
+     "description": "The languages of Wikipedia read for the release (3.149.0)"
+    },
     "text_from_cover_art": {
      "type": [
       "object",

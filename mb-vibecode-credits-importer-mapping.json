@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.148.0",
+  "version": "3.149.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -1037,18 +1037,18 @@
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
   "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered|composed) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
-    "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv"],
-    "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév"],
-    "3": ["march","mar","märz","maerz","marzo","mars"],
-    "4": ["april","apr","abril","abr","avril","avr"],
-    "5": ["may","mai","mayo"],
-    "6": ["june","jun","juni","junio","juin"],
-    "7": ["july","jul","juli","julio","juillet","juil"],
-    "8": ["august","aug","agosto","ago","août","aout"],
-    "9": ["september","sept","sep","septiembre","septembre"],
-    "10": ["october","oct","oktober","okt","octubre","octobre"],
-    "11": ["november","nov","noviembre","novembre"],
-    "12": ["december","dec","dezember","dez","diciembre","dic","décembre","decembre","déc"]
+    "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv","gennaio","styczeń","stycznia","styczen"],
+    "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév","febbraio","luty","lutego"],
+    "3": ["march","mar","märz","maerz","marzo","mars","marzec","marca"],
+    "4": ["april","apr","abril","abr","avril","avr","aprile","kwiecień","kwietnia","kwiecien"],
+    "5": ["may","mai","mayo","maggio","maj","maja"],
+    "6": ["june","jun","juni","junio","juin","giugno","czerwiec","czerwca"],
+    "7": ["july","jul","juli","julio","juillet","juil","luglio","lipiec","lipca"],
+    "8": ["august","aug","agosto","ago","août","aout","sierpień","sierpnia","sierpien"],
+    "9": ["september","sept","sep","septiembre","septembre","settembre","wrzesień","września","wrzesien","wrzesnia"],
+    "10": ["october","oct","oktober","okt","octubre","octobre","ottobre","październik","października","pazdziernik","pazdziernika"],
+    "11": ["november","nov","noviembre","novembre","listopad","listopada"],
+    "12": ["december","dec","dezember","dez","diciembre","dic","décembre","decembre","déc","dicembre","grudzień","grudnia","grudzien"]
   },
   "COVER_DETAIL": [
     {"re":{"$re":"^(?:cover )?(?:art|artworks?)$","$flags":""},"type":"artwork","credit":"cover art"},
@@ -1119,5 +1119,16 @@
     "S007",
     "S245",
     "S263"
-  ]
+  ],
+  "WIKI_INFOBOX": {
+    "templates": ["infobox album","infobox musikalbum","infobox musique (œuvre)","infobox musique (oeuvre)","ficha de álbum","album","album infobox","infobox single","infobox song"],
+    "recorded": ["recorded","aufnahme","aufgenommen","enregistré","enregistrement","grabación","grabado","registrato","registrazione","nagrywany","nagrania","録音"],
+    "studio": ["studio","studios","enregistré lieu","lieu","estudio","studio nagraniowe","スタジオ"],
+    "venue": ["venue","veranstaltungsort","lugar"],
+    "producer": ["producer","produzent","produktion","producteur","productor","produttore","producent","プロデュース","プロデューサー"],
+    "label": ["label","etichetta","discográfica","sello","wytwórnia","レーベル"],
+    "genre": ["genre","género","genere","gatunek","ジャンル"],
+    "tracklists": ["track listing","tracklist","titelliste","liste des titres","lista de canciones","tracce","lista utworów"],
+    "bonus": ["bonus","bonustitel","titres bonus","pistas adicionales","tracce bonus","utwory bonusowe","ボーナス"]
+  }
 }

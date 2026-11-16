@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.148.0
+// @version      3.149.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.148.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.148.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.149.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.149.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.148.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.149.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -143,7 +143,7 @@
       "source.none": "No source loaded yet",
       "source.pickLinked": "Import from another linked source …",
       "srcmenu.bcSettings": "Bandcamp settings",
-      "source.other": "Other source: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
+      "source.other": "Other source: Discogs release (URL or ID), Bandcamp album or track URL, YouTube video URL or Wikipedia article",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
@@ -183,7 +183,7 @@
       "supp.text": "Text …",
       "supp.images": "Images …",
       "supp.imagesTitle": "Text from images as an added source: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
-      "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
+      "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL, YouTube video URL or Wikipedia article",
       "supp.urlLoad": "Add",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Paste a text (booklet, liner notes …) and add it as a second source",
@@ -295,6 +295,8 @@
       "err.youtubeData": "No video description found on {url}.",
       "conn.X017": "Reads the page of a YouTube video whose address you enter as the source or as an added source: its description is read as a text of credits.",
       "conn.X018": "Icons: Dashboard Icons by Homarr Labs (Apache License 2.0); Discogs icon via Simple Icons. Logos and brand names belong to their owners. The badges of the sources in the dashboard – embedded in the script, nothing is loaded.",
+      "conn.X019": "Reads the infobox of a Wikipedia article (its source text through Wikipedia’s API) – an article whose address you enter, one the release links to or, in the background, the articles of the release group’s Wikidata item in seven languages; and which Wikidata items the linked articles have.",
+      "conn.X020": "Reads an item of Wikidata: the articles of an album in seven languages, its recording places (P483) and producers (P162) with their names; MusicBrainz finds the entries by their Wikidata link.",
       "stats.src.youtube": "YouTube",
       "err.pageHttp": "The page answered with HTTP {status}: {url}",
       "err.pageNet": "The page could not be loaded (blocked or offline): {url}",
@@ -992,7 +994,7 @@
       "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release, Bandcamp album or track or YouTube video recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name, https://www.youtube.com/watch?v=Cx-BhTkZf8A",
+      "msg.badDiscogsId": "No Discogs release, Bandcamp album or track, YouTube video or Wikipedia article recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name, https://www.youtube.com/watch?v=Cx-BhTkZf8A, https://en.wikipedia.org/wiki/Diamonds_%26_Rust",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB {kind} page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -1328,6 +1330,24 @@
       "srcbadge.name.mb": "MusicBrainz (already there, or its track titles)",
       "srcbadge.name.text": "the pasted text",
       "srcbadge.name.ocr": "text read from images",
+      "err.wikiPage": "Wikipedia has no article at {url}.",
+      "err.wikiInfobox": "No infobox of an album found in {url} – the script reads only the infobox.",
+      "wiki.allLangs": "Wikipedia (all languages)",
+      "wiki.allLangsTitle": "The infoboxes of the articles the release group’s Wikidata item has in {langs}: the more precise value of each field",
+      "wiki.bg": "Wikipedia in the background",
+      "wiki.bgTitle": "When the import is done, once per release: the infoboxes of Wikipedia ({langs}) are read as an added source – no other requests later",
+      "wiki.conflict": "Wikipedia’s languages say different things – both are offered: {list}",
+      "wiki.read": "Read from Wikipedia:",
+      "wiki.mainOnly": "for the {n} tracks of the main track list (not the bonus tracks)",
+      "wiki.otherLangs": "Other languages – not read by the script:",
+      "log.wikiBg": "Wikipedia in the background: {state}",
+      "log.wikiBgStart": "Wikipedia read in the background: {what}",
+      "log.wikiBgFailed": "Wikipedia in the background: not read – {error}",
+      "log.wikiConflict": "Wikipedia’s languages differ – both offered: {list}",
+      "stats.src.wikipedia": "Wikipedia",
+      "stats.wikiLangs": "Wikipedia by language: {list}",
+      "srcbadge.wp": "WP",
+      "srcbadge.name.wp": "Wikipedia",
       "srcbadge.title": "From {src} – click to open it",
       "srcbadge.from": "From {src}",
       "srcbadge.identity": "{src} artist",
@@ -5056,6 +5076,8 @@
    * concert's promoter) is left out.
    */
   const VIDEO_CREDITS = MAP.VIDEO_CREDITS;
+  /** [Z-WIKI] (3.149.0) The infoboxes of Wikipedia: their templates and fields in en, de, fr, es, ja, it, pl; track lists and bonus words (T068). */
+  const WIKI_INFOBOX = MAP.WIKI_INFOBOX;
   const VIDEO_CREDIT_OF = new Map(VIDEO_CREDITS.flatMap((e) => (e.words || []).map((w) => [String(w).toLowerCase(), e])));
 
   /**
@@ -5320,7 +5342,7 @@
       show: () => ({ pairs: [['before (English)', INSTRUMENT_MODIFIER], ['after (Spanish, French; 3.21.2)', INSTRUMENT_MODIFIER_AFTER]] }) },
     { id: 'T012', where: 'PRIVATE_PLACE', note: 'Texts: private places that are no MusicBrainz place ("recorded at home", "at my place")', show: () => ({ pattern: PRIVATE_PLACE }) },
     { id: 'T013', where: 'TEXT_COMPANY_RE', note: 'Texts: roles that name a company (published by, recorded at, ℗ / ©); other "… by" are people', show: () => ({ pattern: TEXT_COMPANY_RE }) },
-    { id: 'T014', where: 'MONTH_NAMES, ORDINALS, TEXT_MONTHS', note: 'Dates: month names (English, German, Spanish, French) and ordinal words (D004, D005)',
+    { id: 'T014', where: 'MONTH_NAMES, ORDINALS, TEXT_MONTHS', note: 'Dates: month names (English, German, Spanish, French; 3.149.0: Italian, Polish) and ordinal words (D004, D005)',
       show: () => ({ pairs: [...Object.entries(MONTH_NAMES).map(([n, words]) => [n, words.join(', ')]), ['1 … 31', [...ORDINALS.keys()].join(', ')]] }) },
     { id: 'T015', where: 'DATE_HINTS', note: 'Dates: words near a date that name its date group ("recorded", "mixed", "mastered", "℗") (D015)',
       show: () => ({ pairs: DATE_HINTS.map(([group, re]) => [group, re]) }) },
@@ -5397,6 +5419,8 @@
       show: () => ({ pairs: SERIES_FROM_VIDEO.map((x) => [x.name, `title ${x.title} · channel ${x.channel} · ${x.type} · ${x.mbid} · number: date (${x.number})`]) }) },
     { id: 'T064', where: 'TEXT_SONG_HEAD, TEXT_SONG_SKIP, TEXT_SONG_SCHEDULE, songLists', note: 'YouTube (3.80.0): the heading of a list of songs in a video\'s description and the lines of such a list that are no song (S118)',
       show: () => ({ pairs: [['heading', TEXT_SONG_HEAD], ['no song', TEXT_SONG_SKIP], ['schedule (3.81.0)', TEXT_SONG_SCHEDULE]] }) },
+    { id: 'T068', where: 'WIKI_INFOBOX, WIKIPEDIA', note: 'Sources (3.149.0; collected item Z-WIKI): the infoboxes of Wikipedia – their templates and the names of their fields in en, de, fr, es, ja, it, pl (recorded, studio, venue, producer, label, genre), the templates of track lists and the words of bonus tracks',
+      show: () => ({ pairs: Object.entries(WIKI_INFOBOX).map(([k, v]) => [k, (v || []).join(', ')]) }) },
     { id: 'T067', where: 'VIDEO_CREDITS, R119', note: 'Roles (3.147.0): the credits of a video and MusicBrainz\'s type for them (misc: miscellaneous support while S263 is on; none: left out)',
       show: () => ({ pairs: VIDEO_CREDITS.map((e) => [e.words.join(', '), [e.type || '–', e.credit === true ? 'credited as written' : e.credit ? `credited "${e.credit}"` : '', ...(e.attrs || [])].filter(Boolean).join(' · ')]) }) },
     { id: 'T065', where: 'GEAR_MODELS, gearKind, R113', note: 'Roles (3.81.0): models of synthesizers, drum machines and samplers ("Juno", "Minilogue", "TR-808", "MPC") and the makers that may stand before them ("Roland", "Korg", "Akai") – a model is MusicBrainz\'s instrument of that name if it has one, else synthesizer, drum machine or sampler, the model as role credit',
@@ -12786,7 +12810,445 @@
     };
   })();
 
-  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE };
+  // --- Source adapter: Wikipedia ---------------------------------------------------------------------------------
+
+  /**
+   * [Z-WIKI] (3.149.0) Wikitext of an article: its templates (top level) and the plain text of a value. `wikiClose` – the end of a
+   * template or link starting at i; `wikiPipes` – its parts at its own pipes; `wikiTemplates` – [{ name, params }] (names of named
+   * parameters in small letters, others numbered); `wikiPlain` – a value as lines (lists one item a line, "{{start date|1975|4}}"
+   * → "1975-04", links as their text, kept in `links`).
+   */
+  function wikiClose(s, i) {
+    const open = s.slice(i, i + 2);
+    const close = open === '{{' ? '}}' : ']]';
+    let depth = 0;
+    for (let k = i; k < s.length - 1; k++) {
+      if (s.startsWith(open, k)) {
+        depth++;
+        k++;
+      } else if (s.startsWith(close, k)) {
+        depth--;
+        k++;
+        if (!depth) return k + 1;
+      }
+    }
+    return -1;
+  }
+  function wikiPipes(s) {
+    const out = [];
+    let cur = '';
+    for (let k = 0; k < s.length; k++) {
+      if (s.startsWith('{{', k) || s.startsWith('[[', k)) {
+        const end = wikiClose(s, k);
+        if (end > 0) {
+          cur += s.slice(k, end);
+          k = end - 1;
+          continue;
+        }
+      }
+      if (s[k] === '|') {
+        out.push(cur);
+        cur = '';
+      } else cur += s[k];
+    }
+    out.push(cur);
+    return out;
+  }
+  const wikiStrip = (s) => String(s || '').replace(/<!--[\s\S]*?-->/g, '').replace(/<(nowiki|pre|math|code)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<ref\b[^>]*\/>/gi, '').replace(/<ref\b[^>]*>[\s\S]*?<\/ref>/gi, '');
+  function wikiTemplates(text) {
+    const s = wikiStrip(text);
+    const out = [];
+    for (let k = s.indexOf('{{'); k >= 0; k = s.indexOf('{{', k)) {
+      const end = wikiClose(s, k);
+      // ((review) a template not closed: the next one is read)
+      if (end < 0) {
+        k += 2;
+        continue;
+      }
+      const parts = wikiPipes(s.slice(k + 2, end - 2));
+      const params = {};
+      let n = 0;
+      for (const p of parts.slice(1)) {
+        const eq = p.indexOf('=');
+        if (eq > 0 && !/[[{]/.test(p.slice(0, eq))) params[p.slice(0, eq).trim().toLowerCase()] = p.slice(eq + 1).trim();
+        else params[String(++n)] = p.trim();
+      }
+      out.push({ name: parts[0].trim().replace(/_/g, ' '), params });
+      k = end;
+    }
+    return out;
+  }
+  const WIKI_LIST_TPL = /^(?:hlist|flatlist|plainlist|plain list|ubl|ubil|unbulleted list|bulleted list|blist|br separated entries|nowrap|small|nobr|nowrap begin)$/i;
+  const WIKI_DATE_TPL = /^(?:start[ _-]date|end[ _-]date|dts|date-?|film date|release date|start date and age|dni|data|fecha|fecha de lanzamiento|dátum)$/i;
+  // ((review) a link to an article of another language, a sorted name: its first value (the name as written)
+  const WIKI_NAME_TPL = /^(?:ill|interlanguage link|lien|link-interwiki|仮リンク|ill2|tsl|sortname|sort|nihongo|lang-\w+|nowrap)$/i;
+  function wikiPlain(v0, links = []) {
+    let v = wikiStrip(v0);
+    for (let guard = 0; guard < 80 && v.includes('{{'); guard++) {
+      const m = /\{\{([^{}]*)\}\}/.exec(v);
+      if (!m) break;
+      const parts = wikiPipes(m[1]);
+      const name = parts[0].trim();
+      const pos = parts.slice(1).filter((p) => !/^\s*[\w -]+\s*=/.test(p)).map((p) => p.trim()).filter(Boolean);
+      let rep = '';
+      if (WIKI_LIST_TPL.test(name)) rep = `\n${pos.join('\n')}\n`;
+      else if (WIKI_DATE_TPL.test(name)) {
+        // (numbers only, the year first: "1975-04-23"; with a month's name or the day first: as written – "23 avril 1975")
+        const nums = pos.slice(0, 3);
+        rep = nums.length && nums.every((p) => /^\d{1,4}$/.test(p)) && nums[0].length === 4 ? [nums[0], ...nums.slice(1).map((x) => x.padStart(2, '0'))].join('-') : nums.join(' ');
+      } else if (/^(?:lang|transl)$/i.test(name)) rep = pos[1] || pos[0] || '';
+      else if (/^sortname$/i.test(name)) rep = pos.slice(0, 2).join(' ');
+      else if (WIKI_NAME_TPL.test(name)) {
+        // a named value "fr=…" / "1=…" of {{Lien}}: the name as written
+        const named = parts.slice(1).map((p) => /^\s*(?:fr|1|texte)\s*=\s*(.+)$/i.exec(p)).find(Boolean);
+        rep = pos[0] || (named ? named[1].trim() : '');
+      }
+      v = v.slice(0, m.index) + rep + v.slice(m.index + m[0].length);
+    }
+    v = v.replace(/\[\[([^[\]|]+)(?:\|([^[\]]*))?\]\]/g, (x, target, text) => {
+      if (/^(?:file|image|datei|bild|fichier|archivo|imagen|plik|ファイル|画像|category|kategorie|catégorie|categoría|kategoria):/i.test(target)) return '';
+      const t = String(text || target).trim();
+      links.push({ title: target.trim().replace(/_/g, ' ').replace(/#.*$/, ''), text: t });
+      return t;
+    });
+    const ENT = { nbsp: ' ', ndash: '–', mdash: '—', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', thinsp: ' ', hellip: '…' };
+    v = v.replace(/\[https?:\/\/\S+\s+([^\]]+)\]/g, '$1').replace(/\[https?:\/\/\S+\]/g, '').replace(/'{2,}/g, '').replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/?[a-z][^>]*>/gi, '').replace(/&#(\d+);/g, (x, n) => String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi, (x, n) => String.fromCodePoint(parseInt(n, 16)))
+      .replace(/&([a-z]+);/gi, (x, n) => (ENT[n.toLowerCase()] != null ? ENT[n.toLowerCase()] : x));
+    return v.split('\n').map((l) => l.replace(/^\s*[*#:;]+\s*/, '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  }
+
+  /**
+   * [Z-WIKI] (3.149.0) Wikipedia: the infobox of an album's article (WIKI_INFOBOX of the mapping file: its templates and fields in en, de,
+   * fr, es, ja, it, pl; T068). Its fields become lines of a text read as any free text – "Recorded <date> at <studio>", "Recorded live at
+   * <venue>", "Produced by …" –, for the main track list only (not bonus tracks); the label a hint above the entries (S250), the
+   * genres for the statistics. [Z-WIKILINK] the producers and studios linked there are found by their Wikidata item (MusicBrainz's
+   * link to Wikidata); [Z-WIKIDATA] the album's Wikidata item (P483 recorded at, P162 producer) goes before the infobox. An id "en:Title"
+   * is one article; "auto:Q123" ([Z-WIKIBG]) the articles of the release group's Wikidata item in the seven languages, the more precise
+   * value of each field taken, a contradiction kept with both values.
+   */
+  const WIKIPEDIA = (() => {
+    const LANGS = ['en', 'de', 'fr', 'es', 'ja', 'it', 'pl'];
+    /** A name compared loosely (as nameKey, which the Node tests do not reach). */
+    const wkey = (x) => norm(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const URL_RE = /^https?:\/\/([a-z]{2,3}(?:-[a-z]+)?)\.(?:m\.)?wikipedia\.org\/wiki\/([^?#\s]+)/i;
+    /** "https://en.wikipedia.org/wiki/Diamonds_%26_Rust" → "en:Diamonds & Rust" ('' for any other address). */
+    const pageId = (text) => {
+      const m = URL_RE.exec(String(text || '').trim());
+      if (!m) return '';
+      let title = m[2];
+      try {
+        title = decodeURIComponent(title);
+      } catch { /* as written */ }
+      return `${m[1].toLowerCase()}:${title.replace(/_/g, ' ')}`;
+    };
+    const split = (id) => {
+      const k = String(id || '').indexOf(':');
+      return { lang: id.slice(0, k), title: id.slice(k + 1) };
+    };
+    const articleUrl = (lang, title) => `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(String(title).replace(/ /g, '_')).replace(/%2F/g, '/').replace(/%3A/g, ':').replace(/%2C/g, ',')}`;
+    const pageUrl = (id) => {
+      const { lang, title } = split(id);
+      return articleUrl(lang, title);
+    };
+    const apiUrl = (lang, params) => `https://${lang}.wikipedia.org/w/api.php?${new URLSearchParams({ action: 'query', format: 'json', formatversion: '2', redirects: '1', origin: '*', ...params })}`;
+    const QID_RE = /^https?:\/\/(?:www\.|m\.)?wikidata\.org\/(?:wiki|entity)\/(Q\d+)/i;
+    const wikidataUrl = (q) => `https://www.wikidata.org/wiki/${q}`;
+    /** A Wikidata address as MusicBrainz stores it ('' for any other). */
+    const urlKey = (u) => {
+      const m = QID_RE.exec(String(u || ''));
+      return m ? wikidataUrl(m[1].toUpperCase()) : '';
+    };
+    const qidOf = (u) => (QID_RE.exec(String(u || '')) || [])[1] || '';
+    const getJson = async (ctx, url) => JSON.parse(await ctx.httpGet(url));
+    const fieldOf = (params, kind) => {
+      for (const name of WIKI_INFOBOX[kind] || []) if (params[name] && String(params[name]).trim()) return params[name];
+      return '';
+    };
+    const isInfobox = (name) => (WIKI_INFOBOX.templates || []).includes(norm(name).replace(/_/g, ' '));
+
+    /** The titles of the main track list (no bonus tracks); null without a track list. */
+    function mainTitles(tpls) {
+      const lists = tpls.filter((t) => (WIKI_INFOBOX.tracklists || []).includes(norm(t.name)));
+      if (!lists.length) return null;
+      const bonus = new RegExp((WIKI_INFOBOX.bonus || ['bonus']).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
+      const main = lists.filter((t) => !bonus.test(`${t.params.headline || ''} ${t.params.caption || ''}`));
+      // ((review) the title's parameter in other languages: titre1, titolo1, título1, tytuł1)
+      const num = (k) => Number((k.match(/\d+$/) || [0])[0]);
+      return main.flatMap((t) => Object.keys(t.params).filter((k) => /^(?:title|titre|titolo|t[ií]tulo|tytu[lł])\d+$/i.test(k)).sort((a, b) => num(a) - num(b))
+        .map((k) => wikiPlain(t.params[k]).join(' ')));
+    }
+    /** The MusicBrainz tracks of the main track list ([] – all of them). */
+    function mainTracks(titles, tracks) {
+      if (!titles || !titles.length || titles.length >= tracks.length) return [];
+      // ((review) one track for each title, in their order – "(demo)" or "(live)" make another track
+      const used = new Set();
+      const hit = titles.map((x) => tracks.findIndex((t, i) => !used.has(i) && wkey(t.title) === wkey(x))).filter((i) => i >= 0 && !used.has(i) && used.add(i));
+      // (titles written otherwise: the first ones, as many as the main list has)
+      const idx = hit.length >= Math.ceil(titles.length / 2) ? hit : tracks.slice(0, titles.length).map((t, i) => i);
+      return idx.length < tracks.length ? idx : [];
+    }
+
+    /** One article: its infobox's values (lines and links), its Wikidata item, its other languages, its main track list. */
+    async function readArticle(lang, title, ctx) {
+      const data = await getJson(ctx, apiUrl(lang, { prop: 'revisions|langlinks|pageprops', rvprop: 'content', rvslots: 'main', titles: title, lllimit: '500', ppprop: 'wikibase_item' }));
+      const page = (((data && data.query) || {}).pages || [])[0];
+      if (!page || page.missing || page.invalid) throw new Error(tr('err.wikiPage', { url: articleUrl(lang, title) }));
+      const rev = (page.revisions || [])[0] || {};
+      const text = (rev.slots && rev.slots.main && (rev.slots.main.content != null ? rev.slots.main.content : rev.slots.main['*'])) || rev.content || '';
+      const tpls = wikiTemplates(text);
+      const box = tpls.find((t) => isInfobox(t.name));
+      const links = [];
+      const get = (k) => (box ? wikiPlain(fieldOf(box.params, k), links) : []);
+      const values = {};
+      ['recorded', 'studio', 'venue', 'producer', 'label', 'genre'].forEach((k) => { values[k] = get(k); });
+      return {
+        lang, title: page.title || title, url: articleUrl(lang, page.title || title), box: !!box, values, links,
+        qid: ((page.pageprops || {}).wikibase_item) || '', langLinks: (page.langlinks || []).map((l) => ({ lang: l.lang, title: l.title, url: articleUrl(l.lang, l.title) })),
+        main: mainTitles(tpls),
+      };
+    }
+
+    /** [Z-WIKIDATA] (3.149.0) An item's claims (P483 recorded at, P162 producer) with their names; its articles in the seven languages. */
+    async function readItem(q, lang, ctx) {
+      const d = await getJson(ctx, `https://www.wikidata.org/wiki/Special:EntityData/${q}.json`);
+      const e = d && d.entities && (d.entities[q] || Object.values(d.entities)[0]);
+      if (!e) return null;
+      const ids = (p) => ((e.claims || {})[p] || []).map((c) => ((((c.mainsnak || {}).datavalue || {}).value) || {}).id).filter(Boolean);
+      const claims = { studio: ids('P483'), producer: ids('P162') };
+      const all = uniq([...claims.studio, ...claims.producer]);
+      const names = new Map();
+      if (all.length) {
+        const l = await getJson(ctx, `https://www.wikidata.org/w/api.php?${new URLSearchParams({ action: 'wbgetentities', ids: all.slice(0, 50).join('|'), props: 'labels', languages: uniq(['en', lang]).join('|'), format: 'json', origin: '*' })}`);
+        // ((review) the English name first – it is searched in MusicBrainz
+        Object.entries((l && l.entities) || {}).forEach(([id, x]) => {
+          const lb = x.labels || {};
+          names.set(id, (lb.en || lb[lang] || Object.values(lb)[0] || {}).value || '');
+        });
+      }
+      const sitelinks = LANGS.filter((x) => e.sitelinks && e.sitelinks[`${x}wiki`]).map((x) => ({ lang: x, title: e.sitelinks[`${x}wiki`].title }));
+      return { claims: { studio: claims.studio.map((id) => ({ id, name: names.get(id) || '' })).filter((x) => x.name), producer: claims.producer.map((id) => ({ id, name: names.get(id) || '' })).filter((x) => x.name) }, sitelinks };
+    }
+
+    /** The Wikidata items of linked articles: title → QID (50 at a time). */
+    async function linkedItems(lang, titles, ctx) {
+      const out = new Map();
+      const list = uniq(titles.filter(Boolean));
+      for (let i = 0; i < list.length; i += 50) {
+        const d = await getJson(ctx, apiUrl(lang, { prop: 'pageprops', ppprop: 'wikibase_item', titles: list.slice(i, i + 50).join('|') }));
+        const q = (d && d.query) || {};
+        const back = new Map();
+        (q.normalized || []).forEach((x) => back.set(x.to, x.from));
+        (q.redirects || []).forEach((x) => back.set(x.to, back.get(x.from) || x.from));
+        (q.pages || []).forEach((p) => {
+          const qid = (p.pageprops || {}).wikibase_item;
+          if (!qid) return;
+          out.set(p.title, qid);
+          if (back.has(p.title)) out.set(back.get(p.title), qid);
+        });
+      }
+      return out;
+    }
+
+    /** A date of a field ('' if none), to compare the precision of two languages' values. */
+    const dateOf = (lines) => {
+      const d = (findDates((lines || []).join('; '))[0] || {}).value;
+      return d && d.begin ? d.begin : null;
+    };
+    /** 1: b more precise than a (the same as far as a goes), -1: a more precise, 0: the same, null: a contradiction. */
+    const finer = (a, b) => {
+      const ks = ['year', 'month', 'day'];
+      for (const k of ks) {
+        if (a[k] == null || b[k] == null) {
+          const na = ks.filter((x) => a[x] != null).length;
+          const nb = ks.filter((x) => b[x] != null).length;
+          return nb > na ? 1 : nb < na ? -1 : 0;
+        }
+        if (a[k] !== b[k]) return null;
+      }
+      return 0;
+    };
+
+    /**
+     * [Z-WIKIBG] (3.149.0) The articles of several languages as one: a field's more precise value (a date with month and day before one
+     * with the year only; the longer list of names), a contradiction of dates kept with both (and said).
+     */
+    function mergeArticles(arts) {
+      const withBox = arts.filter((a) => a.box);
+      const out = { values: {}, links: withBox.flatMap((a) => a.links.map((l) => ({ ...l, lang: a.lang }))), conflicts: [] };
+      ['studio', 'venue', 'producer', 'label', 'genre'].forEach((k) => {
+        // (the language with the most names; the first of them – the order of the languages – with the same number)
+        const best = withBox.reduce((m, a) => (a.values[k].length > (m ? m.values[k].length : 0) ? a : m), null);
+        out.values[k] = best ? best.values[k] : [];
+        if (best) out.values[`${k}Lang`] = best.lang;
+      });
+      const recs = withBox.filter((a) => a.values.recorded.length).map((a) => ({ lang: a.lang, lines: a.values.recorded, d: dateOf(a.values.recorded) }));
+      let pick = [];
+      for (const r of recs) {
+        if (!r.d) continue;
+        const k = pick.findIndex((p) => finer(p.d, r.d) !== null);
+        if (k < 0) pick.push(r);
+        else if (finer(pick[k].d, r.d) === 1) pick[k] = r;
+      }
+      if (!pick.length && recs.length) pick = [recs[0]];
+      out.values.recorded = pick.length ? pick[0].lines : [];
+      // (a contradiction: each value a line of its own – both offered)
+      out.values.recordedAlt = pick.slice(1).map((p) => p.lines.join(', '));
+      if (pick.length > 1) out.conflicts.push({ field: 'recorded', values: pick.map((p) => `${p.lang}: ${p.lines.join(', ')}`) });
+      return out;
+    }
+
+    /** The text of the infobox's values, in the words of the free texts (English): one line a fact. */
+    function infoboxText(v, scope) {
+      const lines = [];
+      const rec = (v.recorded || []).join(', ');
+      const studios = v.studio || [];
+      if (studios.length) studios.forEach((s, i) => lines.push(`Recorded ${i ? '' : rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
+      (v.venue || []).forEach((s, i) => lines.push(`Recorded live ${!studios.length && !i && rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
+      if (rec && !studios.length && !(v.venue || []).length) lines.push(`Recorded ${rec}${scope}`);
+      (v.recordedAlt || []).forEach((x) => lines.push(`Recorded ${x}${scope}`));
+      // ((review) one line a producer: a name with a comma stays one)
+      (v.producer || []).forEach((n) => lines.push(`Produced by ${n}${scope}`));
+      return lines.join('\n');
+    }
+
+    async function release(id, ctx) {
+      const auto = /^auto:/.test(id);
+      let arts = [];
+      let item = null;
+      let qid = '';
+      let langLinks = [];
+      if (auto) {
+        // [Z-WIKIBG] the release group's Wikidata item: its articles in the seven languages
+        qid = id.slice(5);
+        item = await readItem(qid, 'en', ctx);
+        for (const s of (item && item.sitelinks) || []) {
+          try {
+            arts.push(await readArticle(s.lang, s.title, ctx));
+          } catch (e) {
+            console.warn('[Credits-Importer] Wikipedia', s.lang, e);
+          }
+        }
+        langLinks = uniq(arts.flatMap((a) => a.langLinks).filter((l) => !arts.some((a) => a.lang === l.lang)).map((l) => JSON.stringify(l))).map((x) => JSON.parse(x));
+      } else {
+        const { lang, title } = split(id);
+        const a = await readArticle(lang, title, ctx);
+        arts = [a];
+        qid = a.qid;
+        langLinks = a.langLinks;
+        if (qid) {
+          try {
+            item = await readItem(qid, lang, ctx);
+          } catch (e) {
+            console.warn('[Credits-Importer] Wikidata', qid, e);
+          }
+        }
+      }
+      if (!arts.some((a) => a.box)) throw new Error(tr('err.wikiInfobox', { url: arts.length ? arts.map((a) => a.url).join(', ') : wikidataUrl(qid) }));
+      const merged = mergeArticles(arts);
+      const v = merged.values;
+      // [Z-WIKIDATA] Wikidata's recorded-at places and producers before the infobox's
+      const claims = (item && item.claims) || { studio: [], producer: [] };
+      const fromItem = new Map();
+      // ((review) first; the infobox's others (not the same item or name) after them
+      const before = (list, own) => {
+        if (!list.length) return own || [];
+        list.forEach((x) => fromItem.set(wkey(x.name), x.id));
+        const known = new Set(list.map((x) => wkey(x.name)));
+        const itemOfLink = new Map(merged.links.map((l) => [wkey(l.text), l.title]));
+        return [...list.map((x) => x.name), ...(own || []).filter((n) => !known.has(wkey(n)) && !known.has(wkey(String(n).split(',')[0])) && !known.has(wkey(itemOfLink.get(wkey(n)) || '')))];
+      };
+      v.studio = before(claims.studio, v.studio);
+      v.producer = before(claims.producer, v.producer);
+      // only the main track list (the article of the first language with one)
+      const tracks = ctx.tracks || [];
+      const main = mainTracks((arts.find((a) => a.main && a.main.length) || {}).main || null, tracks);
+      const scope = main.length ? ` (tracks ${main.map((i) => tracks[i].position).join(', ')})` : '';
+      const text = infoboxText(v, scope);
+      const res = TEXT.parse(text, { ...ctx, songsOk: false });
+      // [Z-WIKILINK] the linked articles: their Wikidata items, MusicBrainz's link to them
+      const byLang = new Map();
+      merged.links.forEach((l) => {
+        if (!byLang.has(l.lang)) byLang.set(l.lang, []);
+        byLang.get(l.lang).push(l);
+      });
+      const qOfName = new Map(fromItem);
+      for (const [lang, list] of byLang) {
+        let items = new Map();
+        try {
+          items = await linkedItems(lang, list.map((l) => l.title), ctx);
+        } catch (e) {
+          console.warn('[Credits-Importer] Wikipedia links', e);
+        }
+        list.forEach((l) => {
+          const q = items.get(l.title);
+          if (q && !qOfName.has(wkey(l.text))) qOfName.set(wkey(l.text), q);
+          if (q && !qOfName.has(wkey(l.title))) qOfName.set(wkey(l.title), q);
+        });
+      }
+      const linkWho = (who) => {
+        const q = qOfName.get(wkey(who.rawName || who.name)) || qOfName.get(wkey(who.name));
+        return q ? { ...who, id: q, links: [wikidataUrl(q)] } : who;
+      };
+      // only the main track list: the tracks set here too (a text's "(tracks …)" needs its tracks resolved)
+      const scoped = (t) => (main.length && (!t || t.all) ? { all: false, indexes: main.slice(), spec: main.map((i) => tracks[i].position).join(', ') } : t);
+      const credits = (res.credits || []).map((c) => ({ ...c, who: linkWho(c.who), tracks: scoped(c.tracks) }));
+      const companies = (res.companies || []).map((c) => ({ ...c, who: linkWho(c.who), tracks: scoped(c.tracks) }));
+      const ignored = [...(res.ignored || [])];
+      // the label: a hint (S250); genres for the statistics
+      if ((v.label || []).length) ignored.push({ text: `Label: ${v.label.join(', ')}`, why: 'labels', labels: v.label, list: v.label.join(', ') });
+      const read = arts.filter((a) => a.box).map((a) => ({ lang: a.lang, title: a.title, url: a.url }));
+      const first = read[0];
+      return {
+        // ((review) the article's own title – a redirect or a small first letter – for the companion's tab
+        source: 'wikipedia', id: auto ? id : `${first.lang}:${first.title}`, url: first.url, title: auto ? `Wikipedia (${read.map((a) => a.lang).join(', ')})` : first.title,
+        noteSource: read.map((a) => a.url).join(' '), country: '', notes: text, tags: [], tracks,
+        credits, companies, unrecognized: [], ignored, genres: uniq((v.genre || []).map(norm)).slice(0, 12),
+        series: [], ensembles: [], firstPerson: [], liveHeads: [], stackAlt: [], covers: [], quotes: [], groups: [], songs: [],
+        // [Z-WIKILANGS] the other languages (not read), [Z-WIKISTATS] those read
+        wikiRead: read, wikiLangs: langLinks.filter((l) => !read.some((a) => a.lang === l.lang)), wikiConflicts: merged.conflicts, wikiQid: qid,
+        wikiMain: main.length,
+      };
+    }
+
+    return {
+      id: 'wikipedia',
+      name: 'Wikipedia',
+      short: 'WP',
+      noteName: 'Wikipedia',
+      creditsName: 'Wikipedia infobox',
+      companion: 'wikipedia',
+      readsTrackLists: false,
+      nameSearch: true,
+      usesMbTracks: true,
+      urlKey,
+      LANGS,
+      /** The Wikipedia articles a MusicBrainz release links to. */
+      releaseLinks(relations) {
+        const links = new Map();
+        for (const r of relations || []) {
+          const id = r['target-type'] === 'url' && r.url ? pageId(r.url.resource) : '';
+          if (id && !links.has(id)) links.set(id, { id, url: pageUrl(id) });
+        }
+        return [...links.values()];
+      },
+      parseReleaseId: pageId,
+      pageId,
+      pageUrl,
+      wikidataUrl,
+      qidOf,
+      wikiTemplates,
+      wikiPlain,
+      mergeArticles,
+      infoboxText,
+      mainTracks,
+      release,
+    };
+  })();
+
+  // [Z-WIKI] (3.149.0) Wikipedia too – not one of the linked sources of the order (loaded by its address, added, or in the background)
+  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE, wikipedia: WIKIPEDIA };
   // [Z-YTL] (3.42.7) YouTube too: the videos the release links to
   const LINKED_SOURCES = ['discogs', 'bandcamp', 'youtube'];
 
@@ -13272,6 +13734,9 @@
     // [Z-ICONS] (3.127.0) the logos of the sources' badges, embedded
     { id: 'X018', kind: 'library', name: 'Dashboard Icons', home: 'https://dashboardicons.com/', more: [{ name: 'Simple Icons', home: 'https://simpleicons.org/' }],
       hosts: ['dashboardicons.com', 'simpleicons.org'], perms: '– (embedded in the script, nothing is loaded)', since: '3.127.0' },
+    // [Z-WIKI] (3.149.0) the infobox of an article, the items of Wikidata
+    { id: 'X019', kind: 'source', name: 'Wikipedia', home: 'https://www.wikipedia.org/', hosts: ['wikipedia.org'], perms: '@connect * · GM_xmlhttpRequest', since: '3.149.0' },
+    { id: 'X020', kind: 'source', name: 'Wikidata', home: 'https://www.wikidata.org/', hosts: ['wikidata.org'], perms: '@connect * · GM_xmlhttpRequest', since: '3.149.0' },
   ];
 
   /**
@@ -19349,6 +19814,10 @@
    * (⚙ Settings → Connections, the README). Discogs white on black (`dgd`: black, for the dark theme); YouTube never recoloured.
    */
   const SRC_ICONS = {
+    // [Z-WIKIICON] (3.149.0) Wikipedia: a black W on white (light), a white W on black (dark); Wikidata's bars
+    wp: 'data:image/png;base64,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',
+    wpd: 'data:image/png;base64,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',
+    wd: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAADXklEQVR42u2Yz4scRRTHP6+qunt2ejbJ7GbDIooHj0Iu4sVL5iL+BXoKwYBEMGAO/gGD6EERlUVRo5hAjgavIujBuQkeFpFdQtIIAREPhk3W+d3V9Tx0zWZ2/ZHrHvpBdX159e3ub1e/d/gWNNFEE/8boiACCqAghxYfkUdVEPkPfPQ1i9si1n88NeaPXI/9Dn4Ba2MYXYHZJ9BNQErQBOQ3GD4N1QM4CbDIn4QH7169ZBKTr/74ygd7z3z+qqvxh3u8vpXi2jnTUpknQscFti7e59LVNrbK+PS1Pc6/l7NxKjvgtMeej67sn71xPpdqPfn54tb9szfeyHU4Tk0bihW48BVYCzsKhYVbLSgehxf+hCctFBXcsXDHGCk24al7T6w/p5kvnv34whpGnq8yX/R3NnL285fwrQJvb+EoGM+269/OW1T2NgD5qbcjZ5eWK2SWfQ3gxu133GzyE0A6/uv91PhtZ6GrsBJ3dMOBK0FdXRRZBc5Bt4oEFydRUuNM16crgpjUONsd2yAYXcG6LoJinRBCEm9dReR0rNETGNdFqDDOwnStpugJiBypsfF15YbYDKUHXZrVgXrQCkIFlQcNoKiq+lCXcQiqvooNQqDyCloS4gwg4tHgD3BY4ghlrDhfVxKoiEcpjRzuJZGlsdS1wr/kWe5VkSN4MSJHdQmHek1laT7o/kPYHPcubgQ2AhuBjcBGYCOwEdgIbAQ2Ao91OAW/8CRSYw94rU2Tutqz+Oi6FTAJqARRRX3tbx5ikICqR/EogkidVwnx2Q854FEsolW0ECHqQWtN3nXAjaKrS6DTAubgOsAQsgm4TXA2flEW16FKk7zlZnMRW83TNG+5qVVBwgqtjiNUDpfBeH/h0jpkrSy6t07N8Y5WDqNJt7YqrIrV03GzVhFZd0O4JrC9A/oYfFZBEqAa1Xbz9gz2hvBlGY87SsVswj3jbJjvja/PJ2GSp7Yoh7Nra8nqnMr8wnR4nXLq8aVFdBy/7Xvm03nE3zEdzfCzkhmJYH5VACPfCvwRd/kbNPx+7I8+bB9cDxiARmwW4wfQN0GO5gegKHKOvrs7GITDWKX29z3Dyz0DPcPdQaDfN/R6lsESXnDOXBZ2byr9vnnx8hmze3NX6ffNuR62Od9roolHxN8uPpV6yjnYzAAAAABJRU5ErkJggg==',
     dg: 'data:image/png;base64,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',
     dgd: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAFJUlEQVR42u2YaYiVVRjHf90ZW0YdTalcCq0pE9OpiEoGyi20xaCF+lrQB8ckUtJ0MFPKL2lEWBomhhlBamQIVoa5kDUWhpilWS7jJOW0kI7j2sy9ffm98PBy7/XOxAiFBw73vOee5X/+z3oOnC//83LBv5jbBbgeuAsYDVQDVwAZ4FfgO2C9dQ/w97k6VC/gGaARyJVYG53TqzMZvBCYBswNfbuAr2TsJNBmfwaoAPoAtwFDU8y3lrppeYnjqoCNwFV+fwB8DpQB1wEjgauBS/3/KHAA2Am8LfjxwNL2gCu1jAyi2gE8Bcx287Qo/7S2pfp3A891ROfLSwC30fb7KvzjwHD7tgMbgCbFmqzXCmSBy4Ea65eCjer1KvAJ8HFHmLsmMLAMmKKocrI3VcV/D/glD5uHgVXAdOCJPOyND2MHdsSFNDl5jeCSxd4BaoFNKUDfy+b6POK/MrV+LbAQWB4O06U9Ip6leH4C1gIL7F+ky3jNuT8CK9S7HkCl45qBxTLTBTgU1r4ReAM45cFv1spnAnNKYa+np2pTjNv9TsSVsPImMBFYHUQf62ngC+CisPY41WVJMJ6ndeI59z4rg7Uq+GcychOwT9Etcsw8ASwIa3ykIWT1fQ8o6tP+30eDQE+wCxgC9FVK9wMTgJfOZtWHPc0MQ1RO+uttLwdeCEy9AnTLs1ZlYG+ozL0e3NUM2w1KKtHFop6lOkxKFtgTRNsITArgHnNemYC6WSvDRhVh/KRw6OeD+sxU3DlgWASUSQEcq4i26mZQtLfYXgHcY3uxUaKrYbAZaLE2C7ASOAG87LoPAyudf7s+NmvSUW97bDGAY+w75CT0cTVObgJG2T/NsVmNJF1OAWccM8u+O4Aj9tcAv/v/YON5xsyoIMCE3mMh7rYC/YGDslUBbHFMRQFwEWRXf9fKag/gh2CxrcAAmU7cUEGAl/nb5kKnQgRoEhAmCqRCF8B9wKOpvmxqTjfXSnT3iKqQTWFoVzaTLpkC/S15QJ9tTqbYdxpgk6ItB/4ywUw27Asctz2iQD65uQiAO0OU6RskVWkkygQMBdHvDGJoDIc4KPATsjRcHTqujhUqlzimArhb4zgGDAL+COs3BPXZWQzgBnVhgHEWgW11bH/dDqZKCbv5QFYEK59vexPQW7dUb3TJGlX6hwhWsAwLDjlx1Pt1KTldzsQQeweHg3YPjrq7BoDOPDrq/bbrQtZTFxx4dTEd3B30sMyb2VDZ2Kzu1eigD+guEpVozpN0zBUUwIvArV4NvgkhcJ/JwiDgN9ksWqarvJsMRwmjEzScHPBQGD/cvs1GjPm6lJjVzDYJSLKkiapQTuBr7a8rxYX0CIvPCEnCajdZkrLehQF4rEfNtmtDepWsuTIkDVPCHaakdOuoieMc4EnFdK3pU50MJ+Ve4GIvRD3VvSQStXiRf1axnlEiA4FH/F7otSHjPkfak/Inadc6s411qQOVpRhr0NrrgyEk9VNV5N3QNwX40HZToZS/WBkYFnsrj1MeLSNLgz7FutfccbKsJ+nUcfuWhbFVHX1ZGCWAakUWY3ZicRvNftqCa8m5dj8zpCH2b/HSNS4Y2uhwte1QyaenDwLb8rB2ssD9ZJtqMjl14xvVGa9bVYp8jawNAG5QJeLTR6N+9IBGMMJ7B8DPMre3MwDuCN7+IPC1YFrCu0u5zrufF6iq1JV2nlbcKaW3FtjQzue3qZ39/JbPFQ3yAXOMYSt5wGwCvlX51xsSz9kD5vnynyr/AIC80pIg2/0YAAAAAElFTkSuQmCC',
     bc: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAADFklEQVR42u2WS2gdVRjH/9935t65z7mkD0xQbBalbooEUahSdxZaqVaIWBojakhLdemDdimUSrNzqW0Xgo9WJSiIUbsoaEGUFrQoKsWCYC9NxJbc3Jv7mDnn+1wkKUiTMJced/NfDoeZ3/y/x/8AmTJlypQp052I+jrNBhCH6u79D26YOHpRmo0ujCl4IRFnqVAOer9dOj137KWDtz6Z/lcIUAGXqlTZ8+wpjXsAU+DNKmZoEsfzH7392n8epwdkQBXVxw/syt8zPKK9bhfEfgCti7lcC9rfff1q78rlRv8lpqVjZmCzGTpxpk5huBHOMZj5juFUBUSiqt3Zo2Mb7N/1BKp9OkgEqKK27/lxM7DpLlhrvcABgEjMlShYPP/ppJ27loC4zyFhBkSRu3s4HDz+/jzgAigYROwBThAEIu3W9dkjY8Nu4aYsu9pvDyqi0YOvcKlUgBPxArcEEnOpGjS/PDPuGjdkpc/TDwkzIIJw2/1ReceuN6W1EMOYvB84sZQP83H96o+tcx9fWNkStyGkeVdt9NAUmAH1uIGdChVK3Pzs3XHptHU199YHZAOIoPjAo4PFkUcO62IzhmFP7jlLxWLQ++PnmcULX/wKYkDc6hjr9AfIBIhGJ0+qtQICe3NPIJTLc2P61CG19tYaSw/IBlBBaefu+wrbRp7QTtuCjZ+l7CSmcjXfufz96c6lb+pLfe76AFxuVioUqbZv4j3ttgWG2Gv6q6Ax/c7rqRJwzUh77OmHc/dufUjjXuwt0pyLuRLl2z+cf6P3+0/zK1siPeCyeyYa4Mre8Q+l3bQg8jQYKjDM0unEjemTU6nvEKu6t/e5p3KbBrcgSfxGWrkWtL79/OXkr6vdNO7dHnVECDYP5Qanzv5DTCWI+ok0FQGzaJLMXz8yNuRuzllg9cW8voOqiJ58ccJUahGss94iTTTmSi1onfvkBXdj1i5VSvovcbh1e7W8c89bstiw/m7KIhSGhaT+5y8LMx/MrBVpqQCjZw6foDAspOmNfi4ElC+i+dXZSWktrBlpmTJlypQp0/+jfwE2J1f1GGB5eQAAAABJRU5ErkJggg==',
@@ -23675,6 +24144,10 @@
   }
   S.sourceOrder = readSourceOrder();
   S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
+  /** [Z-WIKIBG] (3.149.0) Wikipedia read in the background when the dashboard opens (once per release; Source ▾). */
+  const WIKI_BG_KEY = 'dci-wiki-bg';
+  S.wikiBg = readJson('localStorage', WIKI_BG_KEY, true) !== false;
+  S.wikiBgDone = new Set();
   const sourceOrder = () => (S.digital ? S.sourceOrder.digital : S.sourceOrder.physical);
   /** A source chosen by hand for this release is remembered and wins over the list. */
   function keepSourcePick(source, id) {
@@ -24033,6 +24506,10 @@
       S.arq = null; // [Z-ARQ] (3.86.0) the question of "＋ Another role" of an entry of the import before
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
+      // [Z-WIKI] (3.149.0) the Wikipedia articles of the release and its group; [Z-WIKIBG] the group's Wikidata item
+      const rgRels = (ws['release-group'] && ws['release-group'].relations) || [];
+      S.wikiLinks = WIKIPEDIA.releaseLinks([...(ws.relations || []), ...rgRels]).map((l) => ({ ...l, source: 'wikipedia' }));
+      S.wikiQid = uniq([...rgRels, ...(ws.relations || [])].filter((r) => r['target-type'] === 'url' && r.url).map((r) => WIKIPEDIA.qidOf(r.url.resource)).filter(Boolean))[0] || '';
       S.digital = !!(ws.media || []).length && (ws.media || []).every((m) => /digital media/i.test(m.format || ''));
       // Large releases: one medium at a time, starting with the first (from 50 tracks on several media)
       const media = uniq(S.mbTracks.map((t) => t.medium));
@@ -24494,28 +24971,79 @@
   /** The tracks of a credit of the second source, in MusicBrainz (and in the media chosen for the import). */
   const suppTracks = (c) => (c.allTracks ? selIdx() : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i)));
 
+  /**
+   * [Z-WIKIBG] (3.149.0) Wikipedia in the background: when an import is done, once per release (while the dashboard is open, no other
+   * requests later), the articles of the release group's Wikidata item in en, de, fr, es, ja, it, pl – else an article the release links
+   * to – are read as an added source (unless one is added already, or the import is Wikipedia's). Switched off in Source ▾.
+   */
+  async function wikiBackground(seq) {
+    // ((review) not in the editor opened in the background to count exactly)
+    if (!S.wikiBg || !releaseMbid || S.wikiBgDone.has(releaseMbid) || S.supp || S.source === WIKIPEDIA || S.autostartFrom === 'count' || seq !== importSeq) return;
+    const id = S.wikiQid ? `auto:${S.wikiQid}` : ((S.wikiLinks || [])[0] || {}).id;
+    if (!id) return;
+    S.wikiBgDone.add(releaseMbid);
+    log('info', 'wikiBgStart', { what: S.wikiQid ? WIKIPEDIA.wikidataUrl(S.wikiQid) : WIKIPEDIA.pageUrl(id) });
+    await loadSupplement(WIKIPEDIA, id, null, false, { quiet: true });
+  }
+
+  /**
+   * [Z-WIKILANGS] (3.149.0) The articles of Wikipedia read (links) and its other languages – named as links, not read by the script; a
+   * contradiction of two languages said (both values offered).
+   */
+  function wikiLangsHtml(rel) {
+    if (!rel || rel.source !== 'wikipedia') return '';
+    const a = (l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener" lang="${esc(l.lang)}">${esc(l.lang)}</a>`;
+    const read = (rel.wikiRead || []).map(a).join(' · ');
+    const other = (rel.wikiLangs || []).slice(0, 40).map(a).join(' · ');
+    const conf = (rel.wikiConflicts || []).map((c) => `<p class="dci-note dci-warn">${esc(tr('wiki.conflict', { list: c.values.join(' · ') }))}</p>`).join('');
+    return `<div class="dci-wiki-langs" data-el="wiki-langs"><p class="dci-sub">${esc(tr('wiki.read'))} ${read}${rel.wikiMain ? ` · ${esc(tr('wiki.mainOnly', { n: rel.wikiMain }))}` : ''}</p>
+      ${other ? `<p class="dci-sub">${esc(tr('wiki.otherLangs'))} ${other}</p>` : ''}${conf}</div>`;
+  }
+
   /** Reads the second source and compares it with the rows of the dashboard. */
-  async function loadSupplement(source, id, input = null, typed = false) {
+  async function loadSupplement(source, id, input = null, typed = false, { quiet = false } = {}) {
     if (!S.release || !S.rows.length) {
       if (input && input.ocr && S.ocr) Object.assign(S.ocr, { suppBusy: false, suppNote: '' });
       return;
     }
+    // ([Z-WIKIBG] 3.149.0, review) the newest request wins: one read in the background gives way to a source added meanwhile or a new import
+    const token = (S.suppSeq = (S.suppSeq || 0) + 1);
+    const seq = importSeq;
     try {
-      clearMessages();
-      setBusy('busy.supp', { source: source.name });
+      // (in the background: the messages of the import stay, nothing is busy)
+      if (!quiet) {
+        clearMessages();
+        setBusy('busy.supp', { source: source.name });
+      }
       const rel = await source.release(id, { ...sourceContext(), input });
+      if (token !== S.suppSeq || seq !== importSeq || (quiet && S.supp)) {
+        if (!quiet) setBusy('');
+        return;
+      }
       if (S.supp) dropSupplementMarks(S.supp);
       // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 🖼️, the images of its lines ((review) kept beside those
       // of a supplement read before)
-      S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '', typed, ocr: !!(input && input.ocr) };
+      // ([Z-WIKI] 3.149.0, review) the badge's link one address (Wikipedia: its first article); the edit note names them all
+      S.supp = { source, id, rel, open: true, items: [], url: (source === WIKIPEDIA ? rel.url : rel.noteSource || rel.url) || '', typed, ocr: !!(input && input.ocr) };
       S.suppOpen = true; // [Z-SUPPTOGGLE] (3.132.0) the bar shows what was loaded; the button folds it
       if (input && input.ocrLines) {
         const was = S.ocrSuppLines;
         S.ocrSuppLines = { text: input.ocrLines.text, lines: new Map([...((was && was.lines) || []), ...input.ocrLines.lines]) };
       }
       // ([Z-SRCTAG] 3.127.0, review) a text: its words (the badge 📄 shows them); read from images: so marked (🖼️)
-      S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
+      S.suppSources.set(source.short, { name: source.noteName, url: rel.noteSource || S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
       await compareSupplement();
+      // [Z-WIKIBG] (3.149.0) two languages of Wikipedia that contradict each other: said, both offered
+      (rel.wikiConflicts || []).forEach((c) => {
+        showMessage('warn', 'wiki.conflict', { list: c.values.join(' · ') });
+        log('warn', 'wikiConflict', { list: c.values.join(' · ') });
+      });
+      if (rel.wikiRead) S.suppSources.get(source.short).langs = rel.wikiRead.map((x) => x.lang); // [Z-WIKISTATS] (3.149.0)
+      // ([Z-WIKI] 3.149.0, review) its dates: placed as the notes' are
+      if (source === WIKIPEDIA) {
+        autoPlaceFoundDates({ force: true });
+        renderDates();
+      }
       const n = (kind) => S.supp.items.filter((it) => it.kind === kind).length;
       // ((3.148.0, review) the more precise ones and the names to check counted too
       const more = { precise: n('precise') + n('name'), spell: n('spell') };
@@ -24523,6 +25051,11 @@
       suppSummary();
       setBusy('');
     } catch (e) {
+      if (quiet) {
+        // ([Z-WIKIBG] 3.149.0, review) in the background: only in the log
+        log('warn', 'wikiBgFailed', { error: e.message || String(e) });
+        return;
+      }
       setBusy('');
       showError(e);
     }
@@ -24683,8 +25216,18 @@
           rel: fresh.map((x) => x.rel).join('; '), tracks: uniq(fresh.flatMap((x) => x.tracks)), all: fresh.every((x) => x.all) });
       }
     }
+    // ([Z-WIKILINK] 3.149.0, review) Wikipedia's studios by their Wikidata item too
+    const linkedCo = new Map();
+    const coUrls = sp.source === WIKIPEDIA ? uniq(companies.filter((g) => g.dId && (g.links || [])[0]).map((g) => g.links[0])) : [];
+    if (coUrls.length) {
+      try {
+        (await lookupUrls(coUrls, 'label', sp.source.urlKey)).forEach((v, k) => linkedCo.set(k, v));
+      } catch (e) {
+        console.warn('[Credits-Importer] supplement company links', e);
+      }
+    }
     for (const g of companies) {
-      const a = suppEntryFor(g.rawName || g.name, [], true);
+      const a = suppEntryFor(g.rawName || g.name, (linkedCo.get((g.links || [])[0]) || []).map((c) => c.mbid), true);
       const fresh = [];
       for (const r of g.roles) {
         const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
@@ -25130,13 +25673,21 @@
     const text = sp && sp.source === TEXT && !sp.ocr ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`, 'text')
       : `<button type="button" class="dci-supp-btn" data-act="supp-text" title="${esc(tr('supp.textTitle'))}">＋ ${ico('text')}${esc(tr('supp.text'))}</button>`;
     // [3.8.0] A source the release does not link to: a typed Discogs release or Bandcamp album
-    const typedOn = sp && sp.typed ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id }), SRC_OF_LINK[sp.source.id]) : '';
+    const typedOn = sp && sp.typed && sp.source !== WIKIPEDIA ? on(sourceLinkLabel({ source: sp.source.id, id: sp.id }), SRC_OF_LINK[sp.source.id]) : '';
+    // [Z-WIKI] (3.149.0) the Wikipedia articles of the release (group); [Z-WIKIBG] the articles of its Wikidata item in all seven languages
+    const wikiOn = (id) => sp && sp.source === WIKIPEDIA && sp.id === id;
+    const wikiLabel = (l) => `Wikipedia ${l.id.replace(':', ': ')}`;
+    const wikis = [...(S.wikiLinks || []).map((l) => (wikiOn(l.id) ? on(wikiLabel(l), 'wp')
+      : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`wikipedia|${l.id}`)}">＋ ${ico('wp')}${esc(wikiLabel(l))}</button>`)),
+    ...(S.wikiQid ? [wikiOn(`auto:${S.wikiQid}`) ? on(tr('wiki.allLangs'), 'wp')
+      : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`wikipedia|auto:${S.wikiQid}`)}" title="${esc(tr('wiki.allLangsTitle', { langs: WIKIPEDIA.LANGS.join(', ') }))}">＋ ${ico('wp')}${esc(tr('wiki.allLangs'))}</button>`] : [])];
+    const wikiTyped = sp && sp.source === WIKIPEDIA && sp.typed ? on(wikiLabel({ id: sp.id }), 'wp') : '';
     // [Z-SUPPALL] (3.131.0) the images too – artwork, back cover, booklet, a Discogs release's: the window of the text from cover art (its
     // text a supplement of this import)
     const images = !S.ocrOn ? '' : sp && sp.ocr ? on(tr('supp.images'), 'ocr')
       : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${ico('ocr')}${esc(tr('supp.images'))}</button>`;
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.withAria'))}"><strong>${esc(tr('supp.with'))}</strong>
-      ${links.join(' ')} ${typedOn} ${text} ${images}
+      ${links.join(' ')} ${wikis.join(' ')} ${typedOn}${wikiTyped} ${text} ${images}
       <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
@@ -25178,7 +25729,8 @@
     const addCell = (it) => {
       if (it.kind === 'name' || it.kind === 'spell') return esc(it.name);
       if (it.kind === 'unrec') return `<span class="dci-supp-line">${esc(it.line)}</span>`;
-      return `<span class="dci-supp-line">${esc(it.line)}</span>${it.kind === 'precise' ? `<div>${esc(it.rel)}</div>` : ''}${tracksOf(it)}`;
+      // ([Z-WIKI] 3.149.0) not again for Wikipedia, whose lines name their tracks already
+      return `<span class="dci-supp-line">${esc(it.line)}</span>${it.kind === 'precise' ? `<div>${esc(it.rel)}</div>` : ''}${sp.source === WIKIPEDIA && /\(tracks [^()]*\)\s*$/.test(it.line || '') ? '' : tracksOf(it)}`;
     };
     const mbCell = (it) => {
       if (it.kind === 'unrec') return esc(tr('supp.byHand'));
@@ -25229,7 +25781,7 @@
         <span>${esc(summary)}</span>
         ${selectable.length ? `<label class="dci-check dci-supp-all"><input type="checkbox" data-f="supp-all" ${nSel === selectable.length ? 'checked' : ''}> ${esc(tr('supp.selectAll'))}</label>` : ''}
       </div>
-      ${sp.open ? `${sp.mismatch ? `<p class="dci-note dci-warn">${esc(tr('supp.mismatch', { name, ...sp.mismatch }))}</p>` : ''}
+      ${sp.open ? `${sp.mismatch ? `<p class="dci-note dci-warn">${esc(tr('supp.mismatch', { name, ...sp.mismatch }))}</p>` : ''}${wikiLangsHtml(sp.rel)}${sp.source === WIKIPEDIA ? labelHintHtml(sp.rel) : ''}
       ${sp.items.length ? `<div class="dci-tablewrap"><table class="dci-table dci-supp-table"><thead><tr>
           <th scope="col"><span class="dci-vh">${esc(tr('supp.th.select'))}</span></th><th scope="col">${esc(tr('supp.th.kind'))}</th>
           <th scope="col">${esc(tr('supp.th.name'))}</th><th scope="col">${esc(tr('supp.th.rel'))}</th>
@@ -27186,6 +27738,7 @@
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
         // ([Z-OCRSUPP] 3.115.0, review) the window of the text from cover art open at its result: its buttons as the import now is
         if (S.ocr && !S.ocr.hidden && S.ocr.step === 'result') renderOcr();
         // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
@@ -27733,7 +28286,9 @@
       || (a.dId && personCopyright(a)));
     // ([Z-BCLBL] 3.118.0, review) a company linked to the release's own Bandcamp page and not found by it: searched by its name as before
     const bcPage = (a) => ruleOn('S185') && source === BANDCAMP && a.company && S.release && String(S.release.url || '').startsWith(String(a.dId || '#'));
-    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a) || bcPage(a)) && !(a.nameHits || []).length
+    // ([Z-WIKILINK] 3.149.0, review) a studio of Wikipedia not found through its Wikidata item: by its name
+    const wikiItem = (a) => a.company && /^Q\d+$/.test(String(a.dId || ''));
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a) || bcPage(a) || wikiItem(a)) && !(a.nameHits || []).length
       : source.nameSearch || a.fromNotes || ruleOn('S242'))));
     linkInRelease(pending); // [Z-NOIDNAME] (3.144.0, S242)
     for (const a of pending) {
@@ -29478,6 +30033,7 @@
         ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} ${esc(tr('srcmenu.bcSettings'))}`, `aria-expanded="${S.bcOpen}"`)}
         ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
         ${S.source === DISCOGS && (S.notesOff || S.rows.some((r) => r.fromNotes)) ? `<label class="dci-check dci-menuitem" title="${esc(tr('notes.offTitle'))}"><input type="checkbox" data-f="notes-off" ${S.notesOff ? 'checked' : ''}> ${esc(tr('notes.off'))}</label>` : ''}
+        <label class="dci-check dci-menuitem" title="${esc(tr('wiki.bgTitle', { langs: WIKIPEDIA.LANGS.join(', ') }))}"><input type="checkbox" data-f="wiki-bg" ${S.wikiBg ? 'checked' : ''}> ${esc(tr('wiki.bg'))}</label>
         ${item('forget-open', esc(tr('forget.button')), `aria-expanded="${!!S.forgetOpen}"`, tr('forget.title'))}
       </div>`;
     const suppOpen = suppIsOpen();
@@ -29497,7 +30053,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${festHtml}${liveHeadHtml()}${labelHintHtml(rel)}${playsHtml()}${dgLineupHtml()}${rmdAskHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${liveHeadHtml()}${labelHintHtml(rel)}${wikiLangsHtml(rel)}${playsHtml()}${dgLineupHtml()}${rmdAskHtml()}${lcNoteHtml()}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -31963,9 +32519,9 @@
   // --- [Z-SRCTAG] (3.127.0) Where an entry and its rows come from: a badge per source after the name (a logo, or a word), each a link
   // to it – Discogs (its notes too), Bandcamp, YouTube, MusicBrainz (a relationship it has, a remixer of its titles), a pasted text,
   // text from images. At a row only when the entry has more than one.
-  const SRC_KEY_OF = { DG: 'dg', BC: 'bc', YT: 'yt', TXT: 'text' };
-  const SRC_SHORT_OF = { dg: 'DG', bc: 'BC', yt: 'YT', text: 'TXT' };
-  const SRC_ORDER = ['dg', 'bc', 'yt', 'mb', 'text', 'ocr'];
+  const SRC_KEY_OF = { DG: 'dg', BC: 'bc', YT: 'yt', TXT: 'text', WP: 'wp' }; // ([Z-WIKI] 3.149.0) Wikipedia
+  const SRC_SHORT_OF = { dg: 'DG', bc: 'BC', yt: 'YT', text: 'TXT', wp: 'WP' };
+  const SRC_ORDER = ['dg', 'bc', 'yt', 'wp', 'mb', 'text', 'ocr'];
   /** ((review) a supplement's key: a text read from images is "ocr", not "text") */
   const suppKey = (sh) => (sh === 'TXT' && (S.suppSources.get('TXT') || {}).ocr ? 'ocr' : SRC_KEY_OF[sh] || 'text');
   /** The key of the import's own source of an entry (a text read from images: "ocr"). */
@@ -32027,11 +32583,11 @@
    * [Z-SUPPICONS] (3.141.0) The symbol of a source without a link – the logo in its square, 📄 / 🖼️ / 📎 (own files and addresses), or a
    * word (⚙ Settings → Appearance → Symbols: Text) – for the buttons of "Supplement with" and the window of the text from cover art.
    */
-  const SRC_OF_LINK = { discogs: 'dg', bandcamp: 'bc', youtube: 'yt' };
+  const SRC_OF_LINK = { discogs: 'dg', bandcamp: 'bc', youtube: 'yt', wikipedia: 'wp' };
   function srcIconHtml(k) {
     const name = tr(`srcbadge.${k}`);
     const inner = S.emojiText ? esc(name) : k === 'text' ? '📄' : k === 'ocr' ? '🖼️' : k === 'own' ? '📎'
-      : k === 'dg' ? `<img class="dci-sb-lt" src="${SRC_ICONS.dg}" alt=""><img class="dci-sb-dk" src="${SRC_ICONS.dgd}" alt="">`
+      : k === 'dg' || k === 'wp' ? `<img class="dci-sb-lt" src="${SRC_ICONS[k]}" alt=""><img class="dci-sb-dk" src="${SRC_ICONS[`${k}d`]}" alt="">`
         : SRC_ICONS[k] ? `<img src="${SRC_ICONS[k]}" alt="">` : esc(name);
     return `<span class="dci-sbi dci-sbi-${k}${S.emojiText ? ' dci-sbi-word' : ''}" aria-hidden="true">${inner}</span>`;
   }
@@ -32039,7 +32595,7 @@
     const name = tr(`srcbadge.${k}`);
     const title = tr('srcbadge.title', { src: tr(`srcbadge.name.${k}`) });
     const inner = S.emojiText ? esc(name) : k === 'text' ? '📄' : k === 'ocr' ? '🖼️'
-      : k === 'dg' ? `<img class="dci-sb-lt" src="${SRC_ICONS.dg}" alt="${esc(name)}"><img class="dci-sb-dk" src="${SRC_ICONS.dgd}" alt="${esc(name)}">`
+      : k === 'dg' || k === 'wp' ? `<img class="dci-sb-lt" src="${SRC_ICONS[k]}" alt="${esc(name)}"><img class="dci-sb-dk" src="${SRC_ICONS[`${k}d`]}" alt="${esc(name)}">`
         : `<img src="${SRC_ICONS[k]}" alt="${esc(name)}">`;
     const cls = `dci-sb dci-sb-${k}${S.emojiText ? ' dci-sb-word' : ''}${row ? ' dci-sb-row' : ''}`;
     const link = originLink(k, rows);
@@ -33074,8 +33630,16 @@
   }
 
   /** Dates found in the Discogs notes (once per release) and in the text pasted into the date pool. */
+  /**
+   * [Z-WIKI] (3.149.0) The text of the found dates: the notes of the source, and those of Wikipedia added as a source ("Recorded January
+   * 1975 at …") after them (the finds of the notes keep their numbers).
+   */
+  function foundDateText() {
+    const wiki = S.supp && S.supp.source === WIKIPEDIA ? String(S.supp.rel.notes || '') : '';
+    return [String((S.release && S.release.notes) || ''), wiki].filter(Boolean).join('\n');
+  }
   function dateFinds() {
-    const notes = String((S.release && S.release.notes) || '');
+    const notes = foundDateText();
     const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}`;
     if (S.notesDatesFor !== sig) {
       // [Z-RELDATE] (3.132.0, S220) what the notes only mention: S.notesMentioned
@@ -34008,7 +34572,7 @@
    * pool (cleared, or the browser's storage emptied), so a release gives the same result as at its first import.
    */
   function autoPlaceFoundDates({ force = false } = {}) {
-    const notes = String((S.release && S.release.notes) || '');
+    const notes = foundDateText(); // ([Z-WIKI] 3.149.0, review) Wikipedia's dates placed too
     const m = dm();
     // (with a media choice, its media are part of the signature: another choice places anew)
     const sig = `${srcReleaseId() || ''}|${textSig(notes)}${S.mediaSel ? `|m:${formatMediaList(S.mediaSel.media)}` : ''}`;
@@ -44675,8 +45239,9 @@
 
   /** 'discogs' or 'bandcamp': the site of the loaded source in the companion (Discogs while none or a text is loaded). */
   // [Z-YTC] (3.42.8) or 'youtube': the video of a YouTube source (companion 1.11.0)
-  const viewSite = () => (S.source && ['bandcamp', 'youtube'].includes(S.source.companion) ? S.source.companion : 'discogs');
-  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp', youtube: 'YouTube' };
+  // [Z-WIKICOMP] (3.149.0) or 'wikipedia': the article of a Wikipedia source (companion 1.22.0)
+  const viewSite = () => (S.source && ['bandcamp', 'youtube', 'wikipedia'].includes(S.source.companion) ? S.source.companion : 'discogs');
+  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp', youtube: 'YouTube', wikipedia: 'Wikipedia' };
   /** [Z-YTC] (3.42.8) A site whose credits are lines of a text (Bandcamp, YouTube): a credit is found by its line. */
   const textSite = (site = viewSite()) => site === 'bandcamp' || site === 'youtube';
   /** A text of the Discogs view; with Bandcamp its "…Site" form ({site}: "Bandcamp"), where there is one. */
@@ -44700,6 +45265,7 @@
     if (!sites) return viewSite() === 'discogs' ? S.sync : { tabs: 0, target: null, releases: [], old: true };
     // [Z-YTC] (3.42.8) a companion before 1.11.0 knows no YouTube tabs
     if (viewSite() === 'youtube' && !sites.youtube) return { tabs: 0, target: null, releases: [], old: true, need: '1.11.0' };
+    if (viewSite() === 'wikipedia' && !sites.wikipedia) return { tabs: 0, target: null, releases: [], old: true, need: '1.22.0' }; // [Z-WIKICOMP] (3.149.0)
     return sites[viewSite()] || { tabs: 0, target: null, releases: [] };
   }
 
@@ -44753,11 +45319,32 @@
     if (rels) rels.n = goneIds.size;
     return out;
   }
+  /**
+   * [Z-WIKICOMP] (3.149.0) The marks of Wikipedia (companion 1.22.0): each row with the names its entry has (as written, in MusicBrainz,
+   * credited) – the companion marks the row of the infobox naming one of them.
+   */
+  function wikiStatusItems(rows, rowInfo) {
+    const out = [];
+    for (const row of rows) {
+      const a = S.artists.get(row.artistKey);
+      if (!a || row.manual || !row.raw) continue;
+      const info = rowInfo && rowInfo.get(row.id);
+      let status = 'open';
+      if (row.level === 'skip') status = row.existingAll ? 'mb' : 'skip';
+      else if (info && (info.ready > 0 || info.issues.length)) status = 'open';
+      else if (info && info.applied > 0) status = 'staged';
+      else if (info && (info.existing > 0 || info.exact > 0)) status = 'mb';
+      out.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), names: uniq([a.name, a.rawName, a.mbName, row.anv].filter(Boolean)), ...(row.srcOff ? { off: true } : {}) });
+    }
+    return out;
+  }
+
   function sendDiscogsStatus(rowInfo = S.rowInfo, now = false) {
     clearTimeout(dgStatusTimer);
     const send = () => {
       const releaseId = companionReleaseId();
-      if (!S.sync.installed || !releaseId) return;
+      // ([Z-WIKICOMP] 3.149.0) also without a source of the companion: the marks of Wikipedia added as a source
+      if (!S.sync.installed || (!releaseId && !(S.supp && S.supp.source === WIKIPEDIA))) return;
       // [3.43.1] (review) the editor "Count exactly" opens in the background sends no marks: they would replace the marks of the
       // editor you work in (the companion keeps one map per release)
       if (S.autostartFrom === 'count') return;
@@ -44775,7 +45362,9 @@
       }
       // ((3.135.0, review) its own field – S.removedRows is the list of rows removed with ✕)
       const removed = S.cpRemovedRows || new Set();
-      if (S.dgStatus) {
+      // [Z-WIKICOMP] (3.149.0) Wikipedia: the credits by the names the infobox has (companion 1.22.0)
+      if (S.dgStatus && site === 'wikipedia') items.push(...wikiStatusItems(S.rows.filter((r) => !r.supp), rowInfo));
+      if (S.dgStatus && site !== 'wikipedia') {
         for (const row of S.rows) {
           const a = S.artists.get(row.artistKey);
           if (!a || row.manual || !row.raw) continue;
@@ -44841,9 +45430,14 @@
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
       // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
       const texts = S.dgStatus ? usedTextMarks() : [];
-      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels, texts,
+      // [Z-WIKICOMP] (3.149.0; review) Wikipedia added as a source: its articles' marks in the same map (the companion keeps one map a
+      // release) – the rows taken over from it and those it confirms
+      const wItems = S.dgStatus && S.supp && S.supp.source === WIKIPEDIA && site !== 'wikipedia'
+        ? wikiStatusItems(S.rows.filter((r) => r.supp === WIKIPEDIA.short || (r.confirmedBy && r.confirmedBy.has(WIKIPEDIA.short))), rowInfo) : [];
+      const wiki = wItems.length ? (S.supp.rel.wikiRead || []).map((art) => ({ releaseId: `${art.lang}:${art.title}`, items: wItems })) : [];
+      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items: releaseId ? items : [], labels, texts,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
-        toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks });
+        toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks, ...(wiki.length ? { wiki } : {}) });
     };
     // ([Z-CPREMOVED] 3.131.0) at "Enter edit" at once – the page is left
     if (now) send();
@@ -45086,7 +45680,9 @@
       if (!msg.hover) logView('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
     } else if (msg.type === 'toggle-credit') {
       // [3.17.1] a click on a mark ([3.17.5] Bandcamp and Discogs): the credit off ("Skip") or on again
-      if (!S.clickToggle || String(msg.releaseId) !== String(companionReleaseId())) return;
+      // ([Z-WIKICOMP] 3.149.0, review) also a mark on an article of Wikipedia added as a source
+      const wikiIds = S.supp && S.supp.source === WIKIPEDIA ? (S.supp.rel.wikiRead || []).map((x) => `${x.lang}:${x.title}`) : [];
+      if (!S.clickToggle || (String(msg.releaseId) !== String(companionReleaseId()) && !wikiIds.includes(String(msg.releaseId)))) return;
       const row = S.rows.find((r) => r.id === msg.row);
       if (row) toggleCredit(row, !!msg.off);
     } else if (msg.type === 'hover-track') {
@@ -45143,11 +45739,14 @@
   function discogsPayloadForRow(row) {
     const artist = S.artists.get(row.artistKey);
     if (row.company) {
-      return { labelId: artist ? artist.dId : 0, artistId: 0, artistName: artist ? (artist.rawName || artist.name) : '', role: row.raw, base: row.raw, positions: [], spec: '' };
+      return { labelId: artist ? artist.dId : 0, artistId: 0, artistName: artist ? (artist.rawName || artist.name) : '', role: row.raw, base: row.raw, positions: [], spec: '',
+        ...(viewSite() === 'wikipedia' && artist ? { names: uniq([artist.name, artist.rawName, artist.mbName].filter(Boolean)) } : {}) };
     }
     return {
       artistId: artist ? artist.dId : 0,
       artistName: artist ? (artist.rawName || artist.name) : '',
+      // [Z-WIKICOMP] (3.149.0, review) Wikipedia finds a credit by the names of its entry
+      ...(viewSite() === 'wikipedia' && artist ? { names: uniq([artist.name, artist.rawName, artist.mbName, row.anv].filter(Boolean)) } : {}),
       anv: row.anv || '',
       role: row.raw,
       base: row.dSplitBase || row.base,
@@ -48499,8 +49098,9 @@
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
         const bc = BANDCAMP.pageUrl(input.value);
         const yt = !bc && YOUTUBE.videoId(input.value);
-        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
-        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
+        const wp = !bc && !yt && WIKIPEDIA.pageId(input.value); // [Z-WIKI] (3.149.0) an article as the source
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : wp ? WIKIPEDIA : DISCOGS;
+        const id = bc || yt || wp || DISCOGS.parseReleaseId(input.value);
         if (id) {
           keepSourcePick(source, id);
           loadRelease(id, { source });
@@ -48542,14 +49142,15 @@
         const input = S.overlay.querySelector('[data-f="supp-url"]');
         const bc = BANDCAMP.pageUrl(input.value);
         const yt = !bc && YOUTUBE.videoId(input.value); // [Z-YT] (3.41.13)
-        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
-        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
+        const wp = !bc && !yt && WIKIPEDIA.pageId(input.value); // [Z-WIKI] (3.149.0)
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : wp ? WIKIPEDIA : DISCOGS;
+        const id = bc || yt || wp || DISCOGS.parseReleaseId(input.value);
         if (!id) {
           showMessage('error', 'msg.badDiscogsId');
         } else if (source === S.source && String(id) === String(S.release && S.release.id)) {
           showMessage('info', 'supp.sameAsLoaded');
         } else {
-          const linked = S.sourceLinks.some((l) => l.source === source.id && String(l.id) === String(id));
+          const linked = [...S.sourceLinks, ...(S.wikiLinks || [])].some((l) => l.source === source.id && String(l.id) === String(id));
           loadSupplement(source, id, null, !linked);
         }
         break;
@@ -49420,6 +50021,11 @@
       case 'bc-tracks':
         S.bcTracks = el.checked;
         writeJson('localStorage', 'dci-bc-tracks', el.checked ? null : false);
+        break;
+      case 'wiki-bg': // [Z-WIKIBG] (3.149.0)
+        S.wikiBg = el.checked;
+        writeJson('localStorage', WIKI_BG_KEY, el.checked ? null : false);
+        log('info', 'wikiBg', { state: tr(el.checked ? 'common.on' : 'common.off') });
         break;
       case 'supp-sel': {
         const it = S.supp && S.supp.items.find((x) => x.id === el.dataset.id);
@@ -50548,7 +51154,7 @@
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
-    sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
+    sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', WIKI_BG_KEY, AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -50812,10 +51418,21 @@
     return S.source.id || '';
   }
 
+  /** [Z-WIKISTATS] (3.149.0) The languages of Wikipedia read for this import (as its source or added). */
+  function statWikiLangs() {
+    const main = S.source === WIKIPEDIA && S.release ? (S.release.wikiRead || []).map((x) => x.lang) : [];
+    return uniq([...main, ...(wikiUsed() ? ((S.suppSources && S.suppSources.get('WP')) || {}).langs || [] : [])]);
+  }
+  /** [Z-WIKISTATS] (3.149.0, review) Something of Wikipedia added as a source is used: a row taken over, changed or confirmed by it. */
+  const wikiUsed = () => S.rows.some((r) => r.supp === 'WP' || (r.suppTook && r.suppTook.short === 'WP') || (r.confirmedBy && r.confirmedBy.has('WP')))
+    || [...S.artists.values()].some((a) => a.suppNameTook && a.suppNameTook.short === 'WP');
+
   /** [E8] The kinds of the supplements of this import. */
   function statSuppKinds() {
-    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text', YT: 'youtube' }; // [Z-YT] (3.41.13)
-    return [...S.suppSources.keys()].map((k) => (k === 'TXT' && S.statOcr && S.statOcr.supp ? 'ocr' : by[k] || String(k).toLowerCase()));
+    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text', YT: 'youtube', WP: 'wikipedia' }; // [Z-YT] (3.41.13), [Z-WIKI] (3.149.0)
+    // ([Z-WIKISTATS] 3.149.0, review) Wikipedia read in the background only when something of it is used (a row taken over or confirmed)
+    return [...S.suppSources.keys()].filter((k) => k !== 'WP' || wikiUsed())
+      .map((k) => (k === 'TXT' && S.statOcr && S.statOcr.supp ? 'ocr' : by[k] || String(k).toLowerCase()));
   }
 
   /**
@@ -50964,7 +51581,7 @@
     const hadOf = new Map([...(S.mbHad || new Map())]);
     (had.ent || new Map()).forEach((n, gid) => hadOf.set(gid, Math.max(hadOf.get(gid) || 0, n)));
     const lvl = suppLevels(hadOf, suppTouched(touched));
-    return { v: 3, mbid: releaseMbid, lvl, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+    return { v: 3, mbid: releaseMbid, lvl, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ...(statWikiLangs().length ? { wl: statWikiLangs() } : {}), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -51262,7 +51879,7 @@
   // [stored, exported, kind of value] – a name not listed is kept as it is (both ways)
   const STAT_V2_REC = [['id', 'id'], ['mbid', 'release_mbid'], ['v', 'record_version'], ['at', 'submitted_at', 'time'], ['start', 'started_at', 'time'],
     ['ms', 'duration_s', 'sec'], ['work', 'work_s', 'sec'], ['idle', 'idle_s', 'sec'], ['cr', 'creating_s', 'sec'], ['lvl', 'levels', 'lvl'], ['rel', 'release', 'rel'],
-    ['src', 'source'], ['supp', 'added_sources'], ['ocr', 'text_from_cover_art'], ['own', 'own_rules'], ['dev', 'developer'], ['x', 'extras'], ['rels', 'relationships', 'rels']];
+    ['src', 'source'], ['supp', 'added_sources'], ['wl', 'wikipedia_languages'], ['ocr', 'text_from_cover_art'], ['own', 'own_rules'], ['dev', 'developer'], ['x', 'extras'], ['rels', 'relationships', 'rels']];
   const STAT_V2_REL = [['media', 'media_count'], ['rgp', 'release_group_primary_type'], ['rgs', 'release_group_secondary_types'], ['lang', 'language'],
     ['lens', 'recording_lengths_ms'], ['whole', 'length_ms'], ['before', 'relationships_before'], ['recs', 'recording_count']];
   const STAT_V2_IT = [['k', 'status', 'status'], ['lt', 'type'], ['lv', 'level'], ['et', 'target_entity_type'], ['tg', 'target_mbid'], ['tn', 'target_name'],
@@ -51621,7 +52238,7 @@
       <tbody>${months.map(([k, v]) => `<tr data-period-key="${esc(k)}"><th scope="row">${esc(k)}</th><td><span class="dci-stats-bar" style="width:${Math.max(2, Math.round((60 * (Number(v.edits) || 0)) / max))}px" aria-hidden="true"></span> ${num(v.edits)}</td>
         <td>${num(v.submissions)}</td><td>${num(v.editors)}</td></tr>`).join('')}</tbody></table></div>`;
     // ((3.47.0, review) the names the workflow writes; the same label once, its numbers together)
-    const SRC = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr' };
+    const SRC = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', wikipedia: 'wikipedia', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr' };
     const srcName = (k) => tr(`stats.src.${SRC[k] || 'other'}`);
     const lbl = (key, k) => {
       const x = tr(key);
@@ -51698,7 +52315,7 @@
     // [Z-GSTNEW] (3.139.0) from every run (the edit dump): supplemented instead of new, remixes and commissions, the sources of the
     // submissions with their supplements – as the cards of this browser (3.131.0); a file of before has none of them
     // ((review) the same label once, its numbers together; "unknown" a label of its own
-    const SRCN = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr', unknown: 'unknown' };
+    const SRCN = { discogs: 'discogs', bandcamp: 'bandcamp', youtube: 'youtube', wikipedia: 'wikipedia', text: 'text', 'pasted text': 'text', ocr: 'ocr', 'cover art text': 'ocr', unknown: 'unknown' };
     const srcLabel = (k) => String(k).split('+').map((x) => tr(`stats.src.${SRCN[x] || 'other'}`)).join(' + ');
     const summed = (o) => {
       const m = {};
@@ -51949,7 +52566,7 @@
       own: 0, ownRels: new Map(), srcTime: new Map(), srcRel: new Map(), suppRel: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
-      genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map(),
+      genres: new Map(), bcTags: new Map(), genresAll: new Map(), wikiLangs: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map(),
       // [Z-STK, Z-WKD] (3.53.0) days, weeks (from Monday), months with something submitted; the submissions by weekday
       dayIdx: new Set(), weekIdx: new Set(), monthIdx: new Set(), weekdaySubs: new Array(7).fill(0),
       // [Z-ALI] (3.53.0) role credits (of relationships with instruments or vocals), credited as, the role credits used, entries found through an alias
@@ -51973,6 +52590,7 @@
     for (const r of sorted) {
       const rels = r.rels || [];
       inc(m.src, r.src || 'other');
+      (r.wl || []).forEach((l) => inc(m.wikiLangs, l)); // [Z-WIKISTATS] (3.149.0)
       // (3.45.0, review) the releases per source (a release submitted twice is one), and the releases with a supplement
       const sk = r.src || 'other';
       if (!m.srcRel.has(sk)) m.srcRel.set(sk, new Set());
@@ -52301,7 +52919,7 @@
     };
     const wd = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'short' }).format(new Date(2024, 0, 1 + i)));
     const hours = Array.from({ length: 24 }, (_, h) => String(h));
-    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr', 'youtube'].includes(k) ? k : 'other'}`);
+    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr', 'youtube', 'wikipedia'].includes(k) ? k : 'other'}`);
     const pct = (x) => `${statPct(x, m.rels)} %`;
     // [Z-STK, Z-WKD, Z-STH] (3.53.0) days, weeks, months in a row; the most active weekday – all of when you work can be switched off
     const daily = statsDailyOn();
@@ -52323,7 +52941,7 @@
     const list10 = (names) => (names.length ? `${esc(names.slice(0, 10).join(', '))}${names.length > 10 ? ' …' : ''}` : '–');
     // (the cards register themselves: card() gives '')
     void `
-      ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>`)}
+      ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>${m.wikiLangs.size ? `<p class="dci-sub" data-el="stats-wiki-langs">${esc(tr('stats.wikiLangs', { list: [...m.wikiLangs.entries()].sort((x, y) => y[1] - x[1]).map(([l, n]) => `${l} ${statNum(n)}`).join(' · ') }))}</p>` : ''}`)}
       ${card('found', kv(['link', 'search', 'hand', 'created'].map((k) => [k, m.link.get(k) || 0]), (k) => tr(`stats.found.${k}`)))}
       ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
         ${kv(['day', 'month', 'year'].map((k) => [k, m.prec.get(k) || 0]), (k) => tr(`stats.prec.${k}`))}
@@ -53758,7 +54376,7 @@
         renderGroups();
       }
     } else if (t === 'sources') {
-      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
+      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true, wikiBg: true });
       S.sourceTrust = SOURCE_TRUST_DEFAULT.slice(); // [Z-SRCTRUST] (3.148.0)
       log('info', 'sourceTrust', { list: ['mb', ...S.sourceTrust].map(trustName).join(' › ') });
       retrustSupp();
@@ -53822,7 +54440,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -53947,6 +54565,7 @@
     S.ocrPreload = readJson('localStorage', OCR_PRELOAD_KEY, false) === true;
     S.ocrAuto = readJson('localStorage', OCR_AUTO_KEY, false) === true;
     S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
+    S.wikiBg = readJson('localStorage', WIKI_BG_KEY, true) !== false; // [Z-WIKIBG] (3.149.0)
     S.roleCodes = readJson('localStorage', 'dci-role-codes', 'names');
     if (!['cisac', 'gema', 'names'].includes(S.roleCodes)) S.roleCodes = 'names';
     S.capOn = readJson('localStorage', 'dci-stage-cap-on', true) !== false;
@@ -54308,6 +54927,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       sourceTrust: SOURCE_TRUST_DEFAULT.slice(), // [Z-SRCTRUST] (3.148.0)
+      wikiBg: true, // [Z-WIKIBG] (3.149.0)
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
@@ -56316,6 +56936,10 @@
       html.dci-dk-overlay .dci-sbi-dg { background: #f2f2f2; border-color: #f2f2f2; color: #111; }
       html.dci-dk-overlay .dci-sbi-dg .dci-sb-lt { display: none; }
       html.dci-dk-overlay .dci-sbi-dg .dci-sb-dk { display: block; }
+      /* [Z-WIKIICON] (3.149.0) Wikipedia's W: white on black in the dark theme */
+      html.dci-dk-overlay .dci-sbi-wp .dci-sb-lt, html.dci-dk-overlay #dci-overlay .dci-sbs .dci-sb-wp .dci-sb-lt { display: none; }
+      html.dci-dk-overlay .dci-sbi-wp .dci-sb-dk, html.dci-dk-overlay #dci-overlay .dci-sbs .dci-sb-wp .dci-sb-dk { display: block; }
+      html.dci-dk-overlay .dci-sbi-wp { background: #000; border-color: #444; }
       .dci-sbi-word { width: auto; min-width: calc(var(--u, 1px) * 16); padding: 0 calc(var(--u, 1px) * 2); }
       #dci-overlay .dci-sb.dci-sb-nolink:hover { border-color: #c9ccd3; box-shadow: none; }
       #dci-overlay .dci-idlink { margin-left: calc(var(--u, 1px) * 8); font-size: 0.92em; white-space: nowrap; }
