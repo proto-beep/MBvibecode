@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.150.0
+// @version      3.151.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,13 +29,13 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.150.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.150.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.151.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.151.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
 
-/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest, GM_openInTab, GM_getResourceText */
+/* global GM_getResourceText */
 (function () {
   'use strict';
 
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.150.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.151.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -52,6 +52,10 @@
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   // ([Z-APOS] 3.99.0) ’ ‘ ʼ compare as ' ("Patsy Geary's" finds "Patsy Geary’s")
   const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[’‘ʼ]/g, "'").replace(/\s+/g, ' ').trim();
+  /** A name compared loosely: small letters, no accents, anything but letters and digits a space. ((Fable review, 3.151.0) one for all – was three copies) */
+  const nameKey = (x) => norm(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  /** A text as a literal part of a regular expression. ((Fable review, 3.151.0) one for all – was eight copies) */
+  const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // ((3.99.0, review) the keys stored in the browser (entries remembered per release, sources switched off) as until 3.98.0 – without
   // the apostrophes made one: what was remembered before is found again)
   const normKey = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
@@ -127,7 +131,6 @@
     }
   })();
 
-  /* eslint-disable quote-props */
   const I18N = {
     en: {
       "title": "Credits Importer",
@@ -489,7 +492,6 @@
       "level.workSkipped": "The works matrix is skipped for this release (“Take works again” in the works section brings the works level back)",
       "level.work": "Work",
       "level.skip": "Skip",
-      "th.role": "{src} role",
       "th.type": "MB relationship",
       "th.attrs": "Attributes and credits",
       "th.level": "Level",
@@ -507,13 +509,11 @@
       "group.foldOpen": "Close the open roles of {name}",
       "group.openAll": "Open all roles of {name}",
       "group.closeAll": "Close all roles of {name}",
-      "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.creditAllOther": "Credited as for all roles",
       "group.initials": "{said} = {name} (initials)",
       "group.initialsOf": "{said}: the initials of",
       "group.initialsUseTitle": "{said} stands for {name}: the rows go to {name}, credited “{said}” on this release",
       "log.initialsUsed": "Initials {said}: {name} chosen – credited “{said}”",
-      "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "ncy.allTitle": "Click: the next spelling as “credited as” on all relationships of {name} ({list}) – the name in MusicBrainz is an empty field",
       "ncy.oneTitle": "⇄ The next spelling as “credited as” here only ({list})",
@@ -575,8 +575,6 @@
       "msg.rowRestore": "undo",
       "log.rowRemoved": "Row removed: {text}",
       "log.rowRestored": "Row brought back: {text}",
-      "toolbar.onlyWorks": "only works",
-      "toolbar.onlyWorksTitle": "Skips everything except the work relationships of the works matrix (composers, lyricists, writers, publishers, arrangers …)",
       "msg.lvlRgKept.one": "Release group: 1 row stays where it was – MusicBrainz has no release group relationship of its role ({list}).",
       "msg.lvlRgKept.other": "Release group: {n} rows stay where they were – MusicBrainz has no release group relationship of their roles ({list}).",
       "msg.lvlRgNone": "Release group: MusicBrainz did not give the release group of this release – no row was moved (load the import again).",
@@ -1010,6 +1008,7 @@
       "msg.toEditor": "To the editor",
       "err.mbHttp": "The MusicBrainz API responded with HTTP {status}.",
       "err.mbBusy": "The MusicBrainz API is busy (HTTP 503). Please try again shortly.",
+      "err.mbNet": "MusicBrainz did not answer (no connection, or no answer in 30 seconds). Please try again.",
       "err.entity": "Entry {mbid} not found (HTTP {status}).",
       "err.discogsLimit": "Discogs rate limit reached. Please wait a minute and try again.",
       "err.discogsMissing": "Discogs release {id} does not exist.",
@@ -1615,7 +1614,6 @@
       "msg.addColOnly": "A column holds an artist or a label – this is a {type}.",
       "msg.badMbidColumn": "No MBID recognized. Paste the link of an artist or label page of MusicBrainz, or its MBID.",
       "msg.addColThere": "{name} is a column of the matrix already – its roles are in the ▾ of its cells.",
-      "msg.groupNotFound": "{group}: the heading of a group above {names} was left out. The group is not among the artists of this release in MusicBrainz, so whether they are its members was not checked.",
       "msg.groupMembers.one": "{group}: MusicBrainz does not have {names} as a member of the group yet (“member of band”). The heading “{group}:” was left out – add the membership in MusicBrainz if it is right.",
       "msg.groupMembers.other": "{group}: MusicBrainz does not have {names} as members of the group yet (“member of band”). The heading “{group}:” was left out – add the memberships in MusicBrainz if they are right.",
       "log.groupMembers": "{group}: not members of the group in MusicBrainz yet – {names}",
@@ -1805,7 +1803,6 @@
       "settings.suiteNaming.colon": "Suite: Part",
       "settings.suiteNaming.comma": "Suite, Part",
       "settings.suiteNamingTitle": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
-      "settings.editNote": "Edit note",
       "settings.editNote.full": "Full",
       "settings.editNote.simple": "Simple",
       "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
@@ -2561,7 +2558,6 @@
       "matrix.suggestPartType": "type {n} of {of}",
       "matrix.suggestPartLang": "language {n} of {of}",
       "matrix.suggestIfNotOwn": "if not accepted: the defaults stay ({what})",
-      "matrix.suggestRowTitle": "Suggested from the works of the artists – not filled in until “Accept” in the head of the matrix",
       "matrix.suggestRowTitle2": "Suggested from the works of the artists: {what} – not filled in until “Accept” in the head of the matrix; the label says what is filled in",
       "matrix.labelRoTitle": "Work type and lyrics languages of this work in MusicBrainz",
       "matrix.instrumentalAuto": "[No lyrics] because the title says “instrumental” (rule S153); a language you choose replaces it",
@@ -2864,7 +2860,6 @@
       "stats.t.perRel": "time per relationship",
       "stats.subs": "{n} × “Enter edit”",
       "stats.newSuppN": "{n} new, {s} supplemented",
-      "stats.beforeN": "{f} had relationships, {e} were empty",
       "stats.overTime": "Over time",
       "stats.period": "Statistics by",
       "stats.period.day": "Days",
@@ -4117,7 +4112,6 @@
       "log.dgRelease": "Discogs status on the release page: {state}",
     },
   };
-  /* eslint-enable quote-props */
 
   // --- 1c. [3.34.0] The languages file --------------------------------------------------------------------------------
   // (collected item E6, milestone "Languages file") German, Spanish and French are in mb-vibecode-credits-importer-languages.json,
@@ -4152,7 +4146,6 @@
       }
     };
     if (IS_NODE_TEST) {
-      // eslint-disable-next-line no-undef
       const fs = require('fs');
       // eslint-disable-next-line no-undef
       const path = require('path').join(__dirname, file);
@@ -4889,7 +4882,7 @@
     { id: 'S141', where: 'plateNone (refresh); R114, C046', note: 'Roles (3.89.0; collected item Z-PLT): "Plated By" is miscellaneous support with the task "vinyl plating" on the release, only for vinyl (else left out, S026); a company only as an artist of MusicBrainz – none of that name: left out on purpose (Skip, said at the row)' },
     { id: 'S142', where: 'ppsSync (refresh), ppsWriters, ppsLoadRels, ppsHandSet', note: 'Works matrix (3.90.0; collected item Z-PPS): a publisher that MusicBrainz has as the personal publisher of writers (S014) follows their writing credits at every change, not only at the import – on where one of them writes (one is enough), off where none does; a cell of it set by hand stays, a source that names its tracks keeps them; no other personal publisher by itself' },
     { id: 'S144', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.92.0; collected items Z-FWC, Z-NCL, Z-WRAP): before a text is read – the Japanese colon "：" (and brackets) as ":"; a name of the "Name: roles" lines of the text without its colon ("Shoei Ikeda Saxophone, …") and two such lines in one ("…, Sampring from Records Shoei Ikeda: Wurlitzer …") read as two (only after a list of roles: "Mary Jane Doe: piano" stays); a line broken in a list ("…, Field" / "Recording") joined when both words make a role (not a role and its name below: "…, bass" / "Drums" / "Bob Roe"); the marks of the companion keep the line as written' },
-    { id: 'S145', where: 'readLine0 (trackBlock), posIndex', note: 'Texts (3.92.0; collected item Z-TBL): a track\'s title alone – in quotation marks, with its position ("A1") above or before it and its length after it ("”Vanishing Waves” (3:19)", "\"Approach\"") – makes the lines below its credits, up to the next title, a line for all tracks ("All …") or any line that is no "Name: roles" ("Mixed by …"); the title decides, else its position in the order of the positions of the text (A1 … B4: tracks 1 … 8). A title next to another one is a line of a track list (no block); without quotation marks and position only its exact title, in a text of two such blocks at least ("Black Sabbath" above its members: none)' },
+    { id: 'S145', where: 'readLine0 (trackBlock), posIndex', note: 'Texts (3.92.0; collected item Z-TBL): a track\'s title alone – in quotation marks, with its position ("A1") above or before it and its length after it ("”Vanishing Waves” (3:19)", ""Approach"") – makes the lines below its credits, up to the next title, a line for all tracks ("All …") or any line that is no "Name: roles" ("Mixed by …"); the title decides, else its position in the order of the positions of the text (A1 … B4: tracks 1 … 8). A title next to another one is a line of a track list (no block); without quotation marks and position only its exact title, in a text of two such blocks at least ("Black Sabbath" above its members: none)' },
     { id: 'S146', where: 'withModels (tidyLines), addCredit (R113)', note: 'Texts (3.92.0; collected item Z-IMD): "Synthesizer (JUNO 6)", "Rhythm Maschine (TR 8S)", "Electric Organ(YAMAHA YC-45D)" – the model in brackets is the role (R113: MusicBrainz\'s instrument of the model, else its kind; the model the role credit); two models ("JUNO 6 & Multipoly") two relationships; another instrument played on a model ("Wurlitzer (Nord stage2)", also "Organ (Nord Electro)": a model of another kind): the model, credited as written' },
     { id: 'S147', where: 'readLine0 (TEXT_GEAR)', note: 'Texts (3.92.0; collected item Z-GEAR): a line of equipment – "Microphone: …", "Handy Recorder for field recording: …", "Guitar Amplifier: …", "Micpreamp: …", "Audio Interface: …", "DAW: Logic Pro X" – is no credit (left out as such); names after it ("Amplifier: Anna Bell", "Mic: John Smith") and "Strings:", "Recorder:", "Laptop:" as before' },
     { id: 'S148', where: 'tidyLines, placeOf', note: 'Texts (3.92.0; collected items Z-LYR, Z-SPA): "All Lyrics was written by X" – lyrics by X, "All field recording by X" – field recording by X (not with "except …" after it); "Art work" is artwork; "Nothing Space Studio at Shonan" – the place, Shonan its area (no time: "at Christmas")' },
@@ -6965,7 +6958,7 @@
       if (runs && run && run.length > 1) runs.push(run.join(' '));
       run = null;
     };
-    const words = (part, base) => part.replace(/[^\s,\[\]()/]+/g, (w, off) => {
+    const words = (part, base) => part.replace(/[^\s,[\]()/]+/g, (w, off) => {
       if (!lowerUnknown) return caseWord(w, vocab, keep);
       const out = lowerWord(w, vocab, keep);
       const small = out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab));
@@ -7134,7 +7127,7 @@
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
 
-  const reAlt = (keys) => [...keys].sort((x, y) => y.length - x.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const reAlt = (keys) => [...keys].sort((x, y) => y.length - x.length).map((k) => escRe(k)).join('|');
 
   const P = {
     M: `(?<![\\p{L}])(${reAlt(MONTH_BY_NAME.keys())})(?![\\p{L}])\\.?`,
@@ -8671,7 +8664,7 @@
           return name && name !== m[1] ? keep(`${name}: ${m[2]}`, rawOf.get(l) || l) : l;
         });
         if (known.size) {
-          const alt = [...known.keys()].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')).join('|');
+          const alt = [...known.keys()].sort((a, b) => b.length - a.length).map((n) => escRe(n).replace(/\s+/g, '\\s+')).join('|');
           const mid = new RegExp(`\\s+(${alt})\\s*:\\s*`, 'iu');
           const head = new RegExp(`^\\s*(${alt})\\s+(?!:)(\\S.*)$`, 'iu');
           const split = [];
@@ -12213,7 +12206,7 @@
           if (!m) continue;
           const parts = [...m[2].matchAll(/“([^”]+)”/gu)].map((x) => x[1]);
           // ((review) only a part of a list of roles ("(…, X)", "…/X/…") – not what is left of a sentence ("… Pacific coast")
-          const inList = (r) => new RegExp(`[(/,]\\s*${r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(?:[)/,]|$)`, 'iu').test(m[1]);
+          const inList = (r) => new RegExp(`[(/,]\\s*${escRe(r)}\\s*(?:[)/,]|$)`, 'iu').test(m[1]);
           const out = parts.filter((r) => fantasy(r) && inList(r));
           // (a name of fantasy is the odd one among known roles – not a long list of roles this page does not know yet)
           if (!out.length || out.length > 1 || parts.length > credits.filter((c) => c.line === m[1]).length) continue;
@@ -12266,7 +12259,7 @@
             const lower = ws.filter((w) => /^\p{Ll}/u.test(w)).length;
             // [Z-PROSEPAREN] (3.146.0, S252) words in brackets ("Âmes Bleues (Blue Souls)") and the titles of the release and its tracks are no
             // names here
-            const tn = !ruleOn('S252') ? t : (titleNames || []).filter((x) => x && x.length >= 3).reduce((acc, x) => acc.replace(new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu'), ' '), t.replace(/\([^)]*\)/g, ' '));
+            const tn = !ruleOn('S252') ? t : (titleNames || []).filter((x) => x && x.length >= 3).reduce((acc, x) => acc.replace(new RegExp(escRe(x), 'giu'), ' '), t.replace(/\([^)]*\)/g, ' '));
             if (credits.some((c) => String(c.line || '').trim() === t.trim()) || /\b(?:by|with|feat\.?|featuring)\s+\p{Lu}/u.test(tn)
               || /(?:^|\s)\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+/u.test(tn)
               || ws.some((w) => { const x = w.replace(/[^\p{L}]/gu, ''); return x.length > 2 && playable(x.toLowerCase()); })) continue;
@@ -12960,8 +12953,6 @@
    */
   const WIKIPEDIA = (() => {
     const LANGS = ['en', 'de', 'fr', 'es', 'ja', 'it', 'pl'];
-    /** A name compared loosely (as nameKey, which the Node tests do not reach). */
-    const wkey = (x) => norm(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const URL_RE = /^https?:\/\/([a-z]{2,3}(?:-[a-z]+)?)\.(?:m\.)?wikipedia\.org\/wiki\/([^?#\s]+)/i;
     /** "https://en.wikipedia.org/wiki/Diamonds_%26_Rust" → "en:Diamonds & Rust" ('' for any other address). */
     const pageId = (text) => {
@@ -12991,7 +12982,8 @@
       return m ? wikidataUrl(m[1].toUpperCase()) : '';
     };
     const qidOf = (u) => (QID_RE.exec(String(u || '')) || [])[1] || '';
-    const getJson = async (ctx, url) => JSON.parse(await ctx.httpGet(url));
+    // ((Fable review, 3.151.0) who asks: Wikimedia's APIs want a script to name itself)
+    const getJson = async (ctx, url) => JSON.parse(await ctx.httpGet(url, { 'Api-User-Agent': `MBvibecode-CreditsImporter/${VERSION} (${SCRIPT_URL})` }));
     const fieldOf = (params, kind) => {
       for (const name of WIKI_INFOBOX[kind] || []) if (params[name] && String(params[name]).trim()) return params[name];
       return '';
@@ -13002,7 +12994,7 @@
     function mainTitles(tpls) {
       const lists = tpls.filter((t) => (WIKI_INFOBOX.tracklists || []).includes(norm(t.name)));
       if (!lists.length) return null;
-      const bonus = new RegExp((WIKI_INFOBOX.bonus || ['bonus']).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
+      const bonus = new RegExp((WIKI_INFOBOX.bonus || ['bonus']).map((x) => escRe(x)).join('|'), 'i');
       const main = lists.filter((t) => !bonus.test(`${t.params.headline || ''} ${t.params.caption || ''}`));
       // ((review) the title's parameter in other languages: titre1, titolo1, título1, tytuł1)
       const num = (k) => Number((k.match(/\d+$/) || [0])[0]);
@@ -13014,7 +13006,7 @@
       if (!titles || !titles.length || titles.length >= tracks.length) return [];
       // ((review) one track for each title, in their order – "(demo)" or "(live)" make another track
       const used = new Set();
-      const hit = titles.map((x) => tracks.findIndex((t, i) => !used.has(i) && wkey(t.title) === wkey(x))).filter((i) => i >= 0 && !used.has(i) && used.add(i));
+      const hit = titles.map((x) => tracks.findIndex((t, i) => !used.has(i) && nameKey(t.title) === nameKey(x))).filter((i) => i >= 0 && !used.has(i) && used.add(i));
       // (titles written otherwise: the first ones, as many as the main list has)
       const idx = hit.length >= Math.ceil(titles.length / 2) ? hit : tracks.slice(0, titles.length).map((t, i) => i);
       return idx.length < tracks.length ? idx : [];
@@ -13035,7 +13027,9 @@
       ['recorded', 'studio', 'venue', 'producer', 'label', 'genre'].forEach((k) => { values[k] = get(k); });
       return {
         lang, title: page.title || title, url: articleUrl(lang, page.title || title), box: !!box, values, links,
-        qid: ((page.pageprops || {}).wikibase_item) || '', langLinks: (page.langlinks || []).map((l) => ({ lang: l.lang, title: l.title, url: articleUrl(l.lang, l.title) })),
+        qid: ((page.pageprops || {}).wikibase_item) || '',
+        // ((Fable review, 3.151.0) only codes of languages: they become part of an address)
+        langLinks: (page.langlinks || []).filter((l) => /^[a-z]{2,3}(?:-[a-z0-9]+)*$/.test(String(l.lang || ''))).map((l) => ({ lang: l.lang, title: l.title, url: articleUrl(l.lang, l.title) })),
         main: mainTitles(tpls),
       };
     }
@@ -13184,10 +13178,10 @@
       // ((review) first; the infobox's others (not the same item or name) after them
       const before = (list, own) => {
         if (!list.length) return own || [];
-        list.forEach((x) => fromItem.set(wkey(x.name), x.id));
-        const known = new Set(list.map((x) => wkey(x.name)));
-        const itemOfLink = new Map(merged.links.map((l) => [wkey(l.text), l.title]));
-        return [...list.map((x) => x.name), ...(own || []).filter((n) => !known.has(wkey(n)) && !known.has(wkey(String(n).split(',')[0])) && !known.has(wkey(itemOfLink.get(wkey(n)) || '')))];
+        list.forEach((x) => fromItem.set(nameKey(x.name), x.id));
+        const known = new Set(list.map((x) => nameKey(x.name)));
+        const itemOfLink = new Map(merged.links.map((l) => [nameKey(l.text), l.title]));
+        return [...list.map((x) => x.name), ...(own || []).filter((n) => !known.has(nameKey(n)) && !known.has(nameKey(String(n).split(',')[0])) && !known.has(nameKey(itemOfLink.get(nameKey(n)) || '')))];
       };
       v.studio = before(claims.studio, v.studio);
       v.producer = before(claims.producer, v.producer);
@@ -13213,12 +13207,12 @@
         }
         list.forEach((l) => {
           const q = items.get(l.title);
-          if (q && !qOfName.has(wkey(l.text))) qOfName.set(wkey(l.text), q);
-          if (q && !qOfName.has(wkey(l.title))) qOfName.set(wkey(l.title), q);
+          if (q && !qOfName.has(nameKey(l.text))) qOfName.set(nameKey(l.text), q);
+          if (q && !qOfName.has(nameKey(l.title))) qOfName.set(nameKey(l.title), q);
         });
       }
       const linkWho = (who) => {
-        const q = qOfName.get(wkey(who.rawName || who.name)) || qOfName.get(wkey(who.name));
+        const q = qOfName.get(nameKey(who.rawName || who.name)) || qOfName.get(nameKey(who.name));
         return q ? { ...who, id: q, links: [wikidataUrl(q)] } : who;
       };
       // only the main track list: the tracks set here too (a text's "(tracks …)" needs its tracks resolved)
@@ -15520,6 +15514,12 @@
       const work = job.rec.start && job.armedAt && 'idle' in job.rec ? Math.max(0, Math.round(job.armedAt - job.rec.start - (job.rec.idle || 0))) : null;
       const rec = { ...job.rec, rels, id: `${String(mbid).toLowerCase()}:${job.armedAt}`, at, ms: job.rec.start ? Math.max(0, Math.round(conf - job.rec.start)) : null, ...(work != null ? { work } : {}) };
       const ok = rels.length ? await statPut(rec) : true;
+      // ((Fable review, 3.151.0) not stored (the browser's database blocked): the job stays – the release page tries again, until it
+      // is too old – instead of being lost
+      if (!ok) {
+        liveLog(mbid, 'warn', 'statsFailed', { n: rels.length }, logFn);
+        return false;
+      }
       writeJson('localStorage', key, null);
       // (3.45.0, review) confirmed on the editor's page: a later "Enter edit" on it counts from this one on, not from the first import
       if (!final && S.statStart && S.statStart === job.rec.start && 'idle' in job.rec) {
@@ -15797,7 +15797,19 @@
         if (wait > 0) await sleep(wait);
         lastMbRequest = Date.now();
         const url = `/ws/2/${path}${path.includes('?') ? '&' : '?'}fmt=json`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        // ((Fable review, 3.151.0) no answer in 30 s or the network down: once more, then said in words – a request that never
+        // ends held every later one back (they wait in one queue)
+        let res;
+        try {
+          const signal = window.AbortSignal && window.AbortSignal.timeout ? { signal: window.AbortSignal.timeout(30000) } : {};
+          res = await fetch(url, { headers: { Accept: 'application/json' }, ...signal });
+        } catch (e) {
+          if (attempt < 1) {
+            await sleep(1500);
+            continue;
+          }
+          throw new Error(tr('err.mbNet'));
+        }
         if (res.status === 503) {
           await sleep(1500 * (attempt + 1));
           continue;
@@ -16833,7 +16845,7 @@
     if (!hits.some(Boolean) || hits.every((h) => h && isOwn(h))) return '';
     // ((review) the others names too: two to five words of letters, no word of a position or a role ("Cover", "others", "1992")
     const NOT_NAME = /^(?:cover|back|front|inner|inside|sleeve|booklet|tray|insert|others?|all|live|on|stage|studio|session|photos?|photographs?|band|group)$/i;
-    if (names.some((x, i) => !hits[i] && (!/^[\p{L}][\p{L}.'’\-]*(?:\s+[\p{L}][\p{L}.'’\-]*){1,4}$/u.test(x) || x.split(/\s+/).some((w) => NOT_NAME.test(w))))) return '';
+    if (names.some((x, i) => !hits[i] && (!/^[\p{L}][\p{L}.'’-]*(?:\s+[\p{L}][\p{L}.'’-]*){1,4}$/u.test(x) || x.split(/\s+/).some((w) => NOT_NAME.test(w))))) return '';
     const cap = (x) => x.split(/(\s+|-)/).map((w) => (/^\p{Ll}/u.test(w) && !NAME_PARTICLES.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join('');
     return parts.map((x, i) => (i % 2 ? (/^\s*,/.test(x) ? ', ' : ` ${x.trim()} `) : hits[i / 2] || cap(x.trim()))).join('');
   }
@@ -17332,7 +17344,7 @@
       };
     } else {
       m = mapRole(base, mods);
-      var dBase = base; // eslint-disable-line no-var
+      var dBase = base;
       if (m.base) base = m.base;
     }
     const row = {
@@ -18837,7 +18849,6 @@
     return c && c.set && field in c.set ? c.set[field] : builtinField(id, field);
   }
   const ruleFieldsOf = (id) => RULE_FIELDS[ruleKindOf(id)] || [];
-  const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
   // (3.40.8, review) a region of T059 without an area: the region alone
   const showItem = (x) => (Array.isArray(x) ? ([].concat(x[1]).join('') ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x[0])) : String(x));
@@ -24854,7 +24865,6 @@
   const suppSig = (row) => `${row.company ? 'c' : 'a'}|${norm((row.types || [])[0] || '')}|${norm(row.primaryText || '')}`;
   const sameTracks = (a, b) => a.size === b.size && [...a].every((i) => b.has(i));
   /** A name compared loosely: case, accents and punctuation do not count. */
-  const nameKey = (x) => norm(x).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   /** MB relationship of a row in words: "instrument · trumpet". */
   const rowRelText = (row) => [(row.types || [])[0] || '', row.primaryText || ''].filter(Boolean).join(' · ');
 
@@ -25868,9 +25878,10 @@
       const can = (r) => r.level !== 'skip' && !!(S.artists.get(r.artistKey) || {}).mbid;
       const confirmed = S.rows.filter((r) => r.confirmedBy && r.confirmedBy.has(short) && can(r)).length;
       const added = S.rows.filter((r) => r.supp === short && can(r));
-      const took = S.rows.filter((r) => r.suppTook && r.suppTook.short === short);
-      const differ = S.rows.filter((r) => r.differ && r.differ.short === short);
-      const renamed = [...S.artists.values()].filter((a) => a.suppNameTook && a.suppNameTook.short === short); // [Z-SUPPTABLE] (3.148.0)
+      // ((Fable review, 3.151.0) those too only when they can be staged: a row skipped or without a MusicBrainz entry is not in the note)
+      const took = S.rows.filter((r) => r.suppTook && r.suppTook.short === short && can(r));
+      const differ = S.rows.filter((r) => r.differ && r.differ.short === short && can(r));
+      const renamed = [...S.artists.values()].filter((a) => a.suppNameTook && a.suppNameTook.short === short && a.mbid); // [Z-SUPPTABLE] (3.148.0)
       if (!confirmed && !added.length && !took.length && !differ.length && !renamed.length) continue;
       if (src.url) lines.push(`Also from: ${src.url}`);
       const nameOf = (r) => (S.artists.get(r.artistKey) || {}).name || '';
@@ -25880,14 +25891,14 @@
       if (added.length) parts.push(`added from ${src.name} only: ${added.map((r) => `${what(r)} (${r.dAllTracks ? 'all tracks' : `tracks ${trackSetText(r.tracks)}`})`).join('; ')}`);
       if (parts.length) lines.push(`${parts.join('; ')}.`.replace(/^./, (c) => c.toUpperCase()));
       const diffs = [
-        ...differ.map((r) => `${what(r)} – ${S.source.noteName}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}, ${src.name}: ${r.differ.all ? 'all tracks' : trackSetText(r.differ.tracks)}; kept ${S.source.noteName}`),
+        ...differ.map((r) => `${what(r)} – ${rowPrevName(r)}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}, ${src.name}: ${r.differ.all ? 'all tracks' : trackSetText(r.differ.tracks)}; kept ${rowPrevName(r)}`),
         ...took.filter((r) => r.suppTook.field !== 'precise').map((r) => `${what(r)} – ${r.suppTook.prev || S.source.noteName}: ${r.suppTook.first}, ${src.name}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}; took ${src.name}`),
       ];
       if (diffs.length) lines.push(`Sources differ: ${diffs.join('; ')}.`);
       // [Z-SUPPTABLE] (3.148.0) what the added source says more precisely (only entries with a MusicBrainz match)
       const precise = [
-        ...took.filter((r) => r.suppTook.field === 'precise' && can(r)).map((r) => `${nameOf(r)}, ${r.suppTook.first} → ${r.suppTook.to}`),
-        ...renamed.filter((a) => a.mbid).map((a) => `${a.suppNameTook.from} → ${a.suppNameTook.to} (full name)`),
+        ...took.filter((r) => r.suppTook.field === 'precise').map((r) => `${nameOf(r)}, ${r.suppTook.first} → ${r.suppTook.to}`),
+        ...renamed.map((a) => `${a.suppNameTook.from} → ${a.suppNameTook.to} (full name)`),
       ];
       if (precise.length) lines.push(`More precise in ${src.name}: ${precise.join('; ')}.`);
     }
@@ -29707,7 +29718,7 @@
   const unaWords = (line) => String(line || '').split(/\s+/).filter(Boolean);
   /** A selection as a name: the words without the signs around them ("“Skinny", "recording,"). */
   const unaName = (line, a, b) => unaWords(line).slice(Math.min(a, b), Math.max(a, b) + 1).join(' ')
-    .replace(/^[\s“”"‘’'(\[«»•·,;:–—-]+/, '').replace(/[\s“”"‘’')\]«»•·,;:.!?–—-]+$/, '').trim();
+    .replace(/^[\s“”"‘’'([«»•·,;:–—-]+/, '').replace(/[\s“”"‘’')\]«»•·,;:.!?–—-]+$/, '').trim();
 
   /**
    * [Z-UNA2] (3.108.0) The words of a line in groups of sense – a click takes the whole group: names (capitals, initials, particles:
@@ -41905,7 +41916,7 @@
     const exc = medleyExcRe();
     if (exc) t = t.replace(exc, mask);
     const alts = seps.map((x) => x.trim()).filter(Boolean)
-      .map((x) => (x === '/' ? '\\s*\\/\\s*' : `\\s+${x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+`));
+      .map((x) => (x === '/' ? '\\s*\\/\\s*' : `\\s+${escRe(x)}\\s+`));
     if (!alts.length) return [];
     const unmask = (x) => { let y = x; for (let k = 0; k < 3 && /\u0000\d+\u0000/.test(y); k++) y = y.replace(/\u0000(\d+)\u0000/g, (m, n) => masks[Number(n)]); return y; };
     const parts = t.split(new RegExp(alts.join('|'))).map((x) => unmask(x).trim()).filter(Boolean);
@@ -42005,7 +42016,7 @@
     if (!cache.has(key)) {
       if (cache.size > 200) cache.clear();
       cache.set(key, uniq(names.filter(Boolean)).sort((a, b) => b.length - a.length).map((n) => {
-        const e = String(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const e = escRe(n);
         return [new RegExp(`\\(\\s*${e}(?:\\s+cover)?\\s*\\)`, 'giu'), new RegExp(`(^|\\s)(?:by|of|after)\\s+${e}(?=$|[\\s,.;:!?)])`, 'giu'),
           new RegExp(`\\s[-–—:]\\s*${e}\\s*$`, 'giu')];
       }));
@@ -54497,6 +54508,8 @@
     STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY,
     // [Z-STH, Z-GOF, Z-RDU] (3.53.0) when you work, "Global", the lengths of the recordings
     STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY, STATS_LEN_KEY,
+    // ((Fable review, 3.151.0) how the statistics are shown: folded cards, with or without creating, lengths of – were left out)
+    STATS_FOLD_KEY, STATS_DUR_KEY, STATS_LEN_OF_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY, GAP_WHY_KEY, DSUP_WHY_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
@@ -54532,7 +54545,7 @@
   const PROFILE_FILE_FORMAT = 'mb-vibecode-profiles';
   const PROFILE_NOT = new Set(['dci-log-note-w', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
     REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY, STATS_DAILY_KEY,
-    STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
+    STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, STATS_FOLD_KEY, STATS_DUR_KEY, STATS_LEN_OF_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
     // ((review) a window's state, and the frames of the cover art kept per release – no settings)
     'dci-log-open', OCR_FRAMES_KEY, OCR_BETA_OLD_KEY]);
   const profileKeys = () => SETTINGS_KEYS.filter((k) => !PROFILE_NOT.has(k));
@@ -55546,12 +55559,11 @@
     const bare = /\s+([A-D]|I{1,3}|IV|VI{0,3}|IX|X)$/.exec(t);
     if (bare) {
       const stem = t.slice(0, bare.index).trim();
-      const other = siblings.some((x) => x !== t && (() => { const y = /\s+([A-D]|I{1,3}|IV|VI{0,3}|IX|X)$/.exec(String(x || '').trim()); return y && qfKey(String(x).trim().slice(0, y.index)) === qfKey(stem) && y[1] !== bare[1]; })());
+      const other = siblings.some((x) => x !== t && (() => { const y = /\s+([A-D]|I{1,3}|IV|VI{0,3}|IX|X)$/.exec(String(x || '').trim()); return y && nameKey(String(x).trim().slice(0, y.index)) === nameKey(stem) && y[1] !== bare[1]; })());
       if (stem && other) return { stem, part: true, no: qfPartNo(bare[1]) };
     }
     return { stem: t, part: false, no: '' };
   }
-  const qfKey = (x) => norm(x).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   const QF_KINDS = ['artist', 'label', 'place', 'area', 'event', 'series', 'instrument'];
   const qfTarget = (r) => r[r['target-type']] || r[String(r['target-type'] || '').replace('_', '-')] || null;
   const qfSortObj = (o) => Object.entries(o || {}).sort(([a], [b]) => a.localeCompare(b));
@@ -55582,11 +55594,11 @@
   function qfWorksFor(track, sources, siblings = []) {
     const works = new Map();
     sources.forEach((t) => t.works.forEach((r) => { if (!works.has(r.work.id)) works.set(r.work.id, r); }));
-    const pick = (key) => [...works.values()].filter((r) => qfKey(r.work.title) === key);
-    const exact = pick(qfKey(track.title));
+    const pick = (key) => [...works.values()].filter((r) => nameKey(r.work.title) === key);
+    const exact = pick(nameKey(track.title));
     if (exact.length) return exact.length === 1 ? [{ rel: exact[0], partial: false }] : [];
     const { stem, part } = qfStem(track.title, siblings);
-    const parent = part ? pick(qfKey(stem)) : [];
+    const parent = part ? pick(nameKey(stem)) : [];
     return parent.length === 1 ? [{ rel: parent[0], partial: true }] : [];
   }
   /** [Z-QUICKFILL] (3.150.0, review) The recordings with relationships staged in the editor (not yet in MusicBrainz): not empty. */
@@ -55650,7 +55662,7 @@
           if (found.has(e.pos) || t.rec === e.rec) continue;
           const a = qfStem(e.title, titles);
           const b = qfStem(t.title, otitles);
-          const sameTitle = qfKey(a.stem) === qfKey(b.stem) && a.no === b.no;
+          const sameTitle = nameKey(a.stem) === nameKey(b.stem) && a.no === b.no;
           const sameLength = e.length && t.length ? Math.abs(e.length - t.length) <= 3000 : !e.length && !t.length && ots.length === tracks.length;
           if (sameTitle && sameLength) found.set(e.pos, { track: e, rels: t.rels, works: t.works.map((r) => ({ rel: r, partial: false })), source: { ...t, release: id } });
         }

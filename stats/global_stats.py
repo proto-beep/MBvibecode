@@ -82,7 +82,8 @@ def unescape(v):
 
 def source_kind(url):
     u = (url or '').lower()
-    for host, kind in (('discogs.com', 'discogs'), ('bandcamp.com', 'bandcamp'), ('youtube.com', 'youtube'), ('youtu.be', 'youtube')):
+    for host, kind in (('discogs.com', 'discogs'), ('bandcamp.com', 'bandcamp'), ('youtube.com', 'youtube'), ('youtu.be', 'youtube'),
+                       ('wikipedia.org', 'wikipedia'), ('wikidata.org', 'wikipedia')):  # (3.151.0, Fable review: Wikipedia since 3.149.0)
         if host in u:
             return kind
     return 'other' if u else None
@@ -90,7 +91,7 @@ def source_kind(url):
 
 def kind_from_done(words):
     w = (words or '').lower()
-    for k in ('discogs', 'bandcamp', 'youtube'):
+    for k in ('discogs', 'bandcamp', 'youtube', 'wikipedia'):
         if k in w:
             return k
     if 'cover' in w or 'artwork' in w:
