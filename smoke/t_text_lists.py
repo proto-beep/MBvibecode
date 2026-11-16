@@ -1503,4 +1503,131 @@ Vocals on tracks 2, 4 by Jane Doe, arranged by Writer Z"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_freetext3146():
+    """Credits Importer 3.146.0 (collected items Z-PROMO … Z-AFFIL, rules S246–S262; asked 2026-11-14 13:10 and 2026-11-16 07:31, answers
+    up to 2026-11-16 08:23), in Node – free texts of every source:
+    A) Aumega Project (Bandcamp): "More X on Y & Z - RECORDS" with titles and links below – other releases and links (no credit, no
+       "turntable"); the genres line and "Aumega Project - AP - 0432" (the label's page; MusicBrainz has no number) left out; "Thanks to
+       Potatoe Jones for again contributing electric violin, viola and guitar." – three credits, additional, marked; James Olski artwork.
+    B) Carton Records: "name | instrument" read; names in small letters in the usual spelling ("Romain de Ferron", as written kept);
+       "with the help of aurore debret on change" – assistant mixing on “Change”; "artwork by A (watercolors, drawings) and B
+       (infographic)" – illustration [watercolors, drawings], design [infographic]; "omertà logo by …" – logo; the coproduction – the
+       labels (left out); "supports: cnm, scpp and drac aura" – supported by (S208); nothing not recognized.
+    C) Heilung: "Recording Line-Up:" and three names – performers (members, lineup), the heading left out.
+    D) maya ongaku (YouTube): "maya ongaku are" + the names below – performers; the part after "************" – all other releases and
+       links; "Label : …" left out; "(WWW)" and "(StudioMASS)" companies after a name (no part of it) – StudioMASS mastered at too.
+    E) The first paragraph of prose with "(Blue Souls)" is prose. F) Not taken: "Jane Doe - Music" (a role), "Line-up:" with roles
+       below, "Thanks to X for everything", "A | B" without roles, "Mixed by X, with the help of Y" without a track. G) S246–S262 off: as before."""
+    node = r"""
+const OFF = process.argv[3] ? JSON.parse(process.argv[3]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated
+  || /^(?:additional\s+)?(piano|bass|guitar|drums|vocals|voice|synth|synthesizers|keyboards|electronics|metallophone|percussions?|violin|electric violin|viola|performer)$/i.test(p.base); };
+const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|engineered at|produced at|supported by/i.test(role) && !!m.mapCompanyRole(role).rule;
+const out = JSON.parse(process.argv[2]).map((c) => {
+  const r = m.SOURCES.text.parse(c.text, { isRole, isCompanyRole, resolveTracks: () => null, artistNames: c.artists || [], titleNames: c.titles || [],
+    trackTitles: c.titles || [], labelNames: c.labels || [], catnos: c.catnos || [] });
+  return { credits: r.credits.map((x) => [x.who.name, x.role, (x.tracks && x.tracks.spec) || '', x.thanksFor ? 'thanks' : '', x.lineup ? 'lineup' : '', x.affil || '', x.who.caseFrom || '']),
+    companies: r.companies.map((x) => [x.who.name, x.role]), unrecognized: r.unrecognized, ignored: r.ignored.map((i) => [i.why, i.text, i.catno || '', (i.labels || []).join('|')]) };
+});
+console.log(JSON.stringify(out));
+"""
+    AUM = ('Kosmische Musik, Krautrock, Synthwave (U.S.A.)\nwww.aumegaproject.com/artists/yakuza-jacuzzi\n\n'
+           'Thanks to Potatoe Jones for again contributing electric violin, viola and guitar.\nArtwork by James Olski\n\n'
+           'More Yakuza Jacuzzi on Aumega Project & 23 STAB WOUNDS - RECORDS\nSquid Business\naumegaproject.bandcamp.com/album/squid-business\n'
+           'Bazooka\n23stabwounds-records.bandcamp.com/album/bazooka\nSame\n23stabwounds-records.bandcamp.com/album/yakuza-jacuzzi\n\n'
+           'Aumega Project - AP - 0432\n')
+    CARTON = ('pierre bujeau | guitar\nromain de ferron | keyboards, synthesizers, electronics\nflorence giroud | voice, metallophone\n'
+              'jonathan grandcollot | drums, percussions, electronics\nromain hervault | bass\njérémie sauvage | bass\n\n'
+              'recorded by manu laffeach at chaudelande studio\n'
+              'all tracks mixed by romain hervault and antoine bellini, with the help of aurore debret on change\n'
+              'mastering by jose guerrero at plataforma continental mastering\n'
+              'artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)\nomertà logo by jérémie sauvage\n\n'
+              'this album is a coproduction between carton records, standard in-fi & zamzamrec\n\nsupports: cnm, scpp and drac aura\n')
+    HEIL = 'Produced, engineered, mixed and mastered at LAVA Studio by Christopher Juul.\n\nRecording Line-Up:\nKai Uwe Faust\nChristopher Juul\nMaria Franz\n'
+    YT = ('maya ongaku are\nTsutomu Sonoda, Shoei Ikeda, Ryota Takano\n\nLighting : Saki Ichijo (WWW)\nMix : Tsutomu Sonoda\n'
+          'Mastering : Soushi Mizuno (StudioMASS)\nLabel : Bayon production, Guruguru Brain\n\n************ ************ ************\n'
+          '1st EP『Electronic Phantoms』\nJapan : (https://shop.example.jp/items/66...)\nStream & Download : ( https://maya.example.to/EP_m)\n\n'
+          '≪Follow “maya ongaku” Here ≫\n・Instagram : ( https://www.instagram.com/maya_ongaku... )\n≪Info≫\n・linktree : ( https://x.gd/juQVN )\n')
+    PROSE = ('Without premeditation nor haste, Omertà re-emerges with its third album, Âmes Bleues (Blue Souls), gracefully deepening its own unique furrow, '
+             'between lyrically rich songs and singular harmonic explorations.\n\nAfter ambling through the Corsican air currents and immersing itself in smoke, '
+             'Omertà continues to unfold its geographical and sensory music, seemingly finding its reach in the suspension inherent in the subtle tension it produces.\n\nThe group expands its sonic palette with soothing and psychedelic harmonic '
+             'sequences, summoning the infinitely poetic through fluid, repetitive motifs transmogrified into songs.\n\nThis latest album invites us to '
+             'transcend, to observe the world in its purest form, from the height of church steeples or simply to contemplate a sky that already contains everything.\n')
+    NEG = ('Jane Doe - Music\n\nLine-up:\nAl Bee – guitar\nCy Dee – drums\n\nThanks to Ed Eff for everything.\n\nApples | Pears\n\n'
+           'Mixed by Gus Hay, with the help of Ian Jay\n')
+    # (review) what must stay a credit
+    NEG2 = ('Heilung are:\nKai Uwe Faust – vocals\n\nGuitar - John Doe https://johndoe.bandcamp.com\n\n***\n\nMastered by Max Mast\nwww.maxmast.com/mastering\n\n'
+            'Debut album produced by Pro Ducer (www.producer.com)\n\nVocals – Bob Smith (UK)\n\nRecorded and mixed by Al Bee, assisted by Cy Dee\n\n'
+            'Support: Sue Port, Ann Other\n\nMary Whitehouse, Tom Moorhouse\n\nProduced by Joe Bloggs at Sun Studio - SUN 123\n\n'
+            'Thanks to Tim Tom for contributing guitar.\n\nTim Tom – guitar\n')
+    OFF = ['S246', 'S247', 'S248', 'S249', 'S250', 'S251', 'S252', 'S253', 'S254', 'S255', 'S256', 'S257', 'S258', 'S259', 'S260', 'S261', 'S262']
+    cases = [{'text': AUM, 'artists': ['More Yakuza Jacuzzi'], 'labels': ['Aumega Project']},
+             {'text': CARTON, 'artists': ['Omertà'], 'titles': ['Intermède', 'Bleuité', 'Change']},
+             {'text': HEIL, 'artists': ['Heilung']},
+             {'text': YT, 'artists': ['maya ongaku']},
+             {'text': PROSE, 'artists': ['Omertà'], 'titles': ['Âmes Bleues']},
+             {'text': NEG, 'artists': ['Somebody']},
+             {'text': NEG2, 'artists': ['Heilung'], 'catnos': ['SUN 123']}]
+    off_cases = [{'text': AUM, 'artists': ['More Yakuza Jacuzzi'], 'labels': ['Aumega Project']},
+                 {'text': CARTON, 'artists': ['Omertà'], 'titles': ['Change']}]
+    g = []
+    for cs, off in ((cases, None), (off_cases, OFF)):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(cs)] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        g += json.loads(js.stdout)
+    for k, x in enumerate(g):
+        print(f'-- {k}', 'credits:', x['credits'])
+        print('   companies:', x['companies'], '| unrecognized:', x['unrecognized'])
+        print('   ignored:', [i[0] for i in x['ignored']], [i[2:] for i in x['ignored'] if i[2] or i[3]])
+    results = []
+    a, c, h, y, pr, ng, n2, aoff, coff = g
+    why = lambda x: [i[0] for i in x['ignored']]
+    cr = lambda x, name: [r for r in x['credits'] if r[0] == name]
+    # A)
+    results.append(why(a).count('promo') == 7 and 'genres' in why(a) and ['catnoNew', 'Aumega Project - AP - 0432', 'AP-0432', ''] in a['ignored']
+                   and not a['unrecognized'] and [r[1] for r in cr(a, 'Potatoe Jones')] == ['Additional electric violin', 'Additional viola', 'Additional guitar']
+                   and all(r[3] == 'thanks' for r in cr(a, 'Potatoe Jones')) and [r[1] for r in cr(a, 'James Olski')] == ['Artwork By']
+                   and not any('Yakuza' in r[0] or 'STAB' in r[0] for r in a['credits']))
+    # B)
+    names = {r[0] for r in c['credits']}
+    results.append({'Pierre Bujeau', 'Romain de Ferron', 'Florence Giroud', 'Jonathan Grandcollot', 'Romain Hervault', 'Jérémie Sauvage', 'Aurore Debret'} <= names
+                   and ['Romain de Ferron', 'keyboards', '', '', '', '', 'romain de ferron'] in c['credits']
+                   and any(r[0] == 'Aurore Debret' and r[1] == 'assistant mixing' and r[2] == '“change”' for r in c['credits'])
+                   and any(r[0] == 'Florence Giroud' and r[1] == 'Illustration [watercolors, drawings]' for r in c['credits'])
+                   and any(r[0] == 'Pierre Bujeau' and r[1].startswith('Design [infographic]') for r in c['credits'])
+                   and any(r[0] == 'Jérémie Sauvage' and r[1].startswith('Logo') for r in c['credits'])
+                   and ['labels', 'this album is a coproduction between carton records, standard in-fi & zamzamrec', '', 'carton records|standard in-fi|zamzamrec'] in c['ignored']
+                   and [x for x in c['companies'] if x[1] == 'Supported By'] == [['cnm', 'Supported By'], ['scpp', 'Supported By'], ['drac aura', 'Supported By']]
+                   and not c['unrecognized'])
+    # C)
+    results.append([r[0] for r in h['credits'] if r[4] == 'lineup'] == ['Kai Uwe Faust', 'Christopher Juul', 'Maria Franz'] and 'heading' in why(h) and not h['unrecognized'])
+    # D)
+    results.append([r[0] for r in y['credits'] if r[1] == 'Performer'] == ['Tsutomu Sonoda', 'Shoei Ikeda', 'Ryota Takano']
+                   and why(y).count('promo') == 8 and 'labels' in why(y) and not y['unrecognized']
+                   and ['Saki Ichijo', 'Lighting', '', '', '', 'WWW', ''] in y['credits'] and any(r[0] == 'Soushi Mizuno' and r[5] == 'StudioMASS' for r in y['credits'])
+                   and ['StudioMASS', 'Mastered At'] in y['companies'])
+    # E)
+    results.append(why(pr).count('prose') == 4 and not pr['unrecognized'])
+    # F)
+    results.append(any(r[0] == 'Jane Doe' for r in ng['credits']) and not any(r[4] == 'lineup' for r in ng['credits']) and ['Al Bee', 'guitar', '', '', '', '', ''] in ng['credits']
+                   and 'thanks' in why(ng) and 'Apples | Pears' in ng['unrecognized'] and not any(r[0] == 'Ian Jay' and 'assistant' in r[1] and r[2] for r in ng['credits']))
+    # F2) (review)
+    f2 = [[r[0], r[1]] for r in n2['credits']]
+    print('F2)', f2, n2['companies'], why(n2), n2['unrecognized'])
+    results.append(['Kai Uwe Faust', 'vocals'] in f2 and ['John Doe', 'Guitar'] in f2 and any(r[0] == 'Max Mast' for r in f2) and any(r[0] == 'Pro Ducer' for r in f2)
+                   and ['Bob Smith', 'Vocals', '', '', '', '', ''] in n2['credits'] and ['Cy Dee', 'assistant recording'] in f2 and ['Cy Dee', 'assistant mixing'] in f2
+                   and not any(x[1] == 'Supported By' for x in n2['companies']) and 'genres' not in why(n2) and any(r[0] == 'Joe Bloggs' for r in f2)
+                   and 'catno' not in why(n2) and ['Tim Tom', 'guitar'] in f2 and not any(r[3] for r in n2['credits']) and 'thanks' in why(n2))
+    # G)
+    results.append('promo' not in why(aoff) and 'genres' not in why(aoff) and not any(r[3] for r in aoff['credits'])
+                   and any('|' in u for u in coff['unrecognized']) and not any(r[6] for r in coff['credits']))
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

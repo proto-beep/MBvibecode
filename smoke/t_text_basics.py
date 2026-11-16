@@ -1,6 +1,7 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17, 3.39.2), cloudpond (3.38.18, 3.39.2), booklets (3.39.8), initialsmemo (3.39.8) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+import json
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -152,7 +153,7 @@ Thanks to the cat for keeping us company"""
         print('   Pool:', pool)
         named = [x for x in g if x[0] == 'Jane Roe' and 'names no one' not in x[2]]
         ok_a = bool(named) and named[0][1] == ['Played By', 'Recorded By', 'Mixed By', 'Mastered By', 'Layout'] \
-            and ['Sam Lee', ['Photography By']] in [x[:2] for x in g] and ['john doe', ['Mastering']] in [x[:2] for x in g]
+            and ['Sam Lee', ['Photography By']] in [x[:2] for x in g] and ['John Doe', ['Mastering']] in [x[:2] for x in g]  # ([3.146.0] S254: a name in small letters in the usual spelling)
         ok_b = '{"year":2025,"month":3,"day":null} {"year":2025,"month":4,"day":null}' in pool and '{"year":2025,"month":5,"day":null} {"year":2025,"month":5,"day":null}' in pool
         ok_c = unrec == ['We had a great time together'] and ign == ['Thanks to the cat for keeping us company']
         ph = [x for x in g if x[0] == 'Jane Roe' and 'names no one' in x[2]]
@@ -2277,6 +2278,110 @@ def case_review3144():
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_freetext3146ui():
+    """Credits Importer 3.146.0 (collected items Z-THANKSFOR, Z-AFFIL, Z-LABELLINE, Z-CATNOLINE, Z-LOWERNAMES, Z-NAMEORDER, Z-LINEUPHEAD; rules
+    S249, S250, S254–S257, S262) in the dashboard, a pasted text:
+    A) "Thanks to Pat Jones for again contributing piano and guitar." – two rows of Pat Jones with "additional · guest · neither"
+       (additional chosen, the attribute ticked); "guest" switches both rows (guest ticked, additional not).
+    B) "Mastering : Ann Mixer (StudioMASS)" – the note at Ann Mixer names StudioMASS (no part of the name); StudioMASS an entry
+       (mastered at).
+    C) "Label : Carton Records, Zamzamrec" and "Carton Records - CR - 012" (MusicBrainz: Carton Records, no number) – the hint above the
+       entries names the labels and the number.
+    D) "pierre bujeau | guitar" – the entry "Pierre Bujeau" with "↺ as written".
+    E) "Eguchi Ryotaro – piano": MusicBrainz has "Ryotaro Eguchi" – a suggestion marked "name the other way round".
+    F) "Personnel:" with "Al Member" and "Bo Member" below – performers; Al Member a member of the release's group in MusicBrainz with
+       drums – "Use these instruments" takes a row of drums, the row of performer on Skip."""
+    results = []
+    G = H.uid('abababab', 1)
+    AL = H.uid('abababab', 2)
+    BO = H.uid('abababab', 3)
+    PAT = H.uid('abababab', 4)
+    PB = H.uid('abababab', 5)
+    RE = H.uid('abababab', 6)
+    H.RELEASE_AC[:] = [(G, 'The Group', 'The Group', '')]
+    H.ARTISTS.update({3901: (AL, 'Al Member'), 3902: (BO, 'Bo Member'), 3903: (PAT, 'Pat Jones'), 3904: (PB, 'Pierre Bujeau')})
+    H.MB_SEARCH['artist'] = [{'id': RE, 'name': 'Ryotaro Eguchi', 'disambiguation': '', 'score': 100}]
+    H.BAND_MEMBERS[G] = [AL, BO]
+    H.MEMBER_ATTRS[(G, AL)] = ['drums']
+    H.RELEASE_LABELS[:] = [(H.uid('eeeeeeee', 41), 'Carton Records')]
+    TEXT = ('Thanks to Pat Jones for again contributing piano and guitar.\npierre bujeau | guitar\nMastering : Ann Mixer (StudioMASS)\n'
+            'Eguchi Ryotaro – piano\n\nLabel : Carton Records, Zamzamrec\nCarton Records - CR - 012\n\nPersonnel:\nAl Member\nBo Member\n')
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.fill('[data-f=text-origin]', 'Booklet')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        print('Einträge:', pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())"))
+        print('nicht erkannt:', pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())"))
+        GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); return g || null; }"""
+        def group_eval(name, body):
+            return pg.evaluate(f"(() => {{ const g = ({GROUP})({json.dumps(name)}); if (!g) return null; {body} }})()")
+        # A)
+        pick = group_eval('Pat Jones', """return [...g.querySelectorAll('tr.dci-row')].map(tr => [
+            [...tr.querySelectorAll('[data-act=thanks-flag]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.flag).join(),
+            [...tr.querySelectorAll('[data-f=flag]')].filter(x => x.checked).map(x => x.value).join()]);""")
+        print('A) Pat Jones:', pick)
+        results.append(pick is not None and len(pick) == 2 and all(x[0] == 'additional' and 'additional' in x[1] for x in pick))
+        pg.evaluate(f"(() => {{ const g = ({GROUP})('Pat Jones'); g.querySelector('[data-act=thanks-flag][data-flag=guest]').click(); }})()")
+        pg.wait_for_timeout(600)
+        pick2 = group_eval('Pat Jones', """return [...g.querySelectorAll('tr.dci-row')].map(tr => [
+            [...tr.querySelectorAll('[data-act=thanks-flag]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.flag).join(),
+            [...tr.querySelectorAll('[data-f=flag]')].filter(x => x.checked).map(x => x.value).join()]);""")
+        print('   nach guest:', pick2)
+        results.append(pick2 is not None and len(pick2) == 2 and all(x[0] == 'guest' and 'guest' in x[1] and 'additional' not in x[1] for x in pick2))
+        # ((review) "neither": pressed, no attribute
+        pg.evaluate(f"(() => {{ const g = ({GROUP})('Pat Jones'); g.querySelector('[data-act=thanks-flag][data-flag=none]').click(); }})()")
+        pg.wait_for_timeout(600)
+        pick3 = group_eval('Pat Jones', """return [...g.querySelectorAll('tr.dci-row')].map(tr => [
+            [...tr.querySelectorAll('[data-act=thanks-flag]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.flag).join(),
+            [...tr.querySelectorAll('[data-f=flag]')].filter(x => x.checked).map(x => x.value).join()]);""")
+        print('   nach neither:', pick3)
+        results.append(pick3 is not None and all(x[0] == 'none' and 'guest' not in x[1] and 'additional' not in x[1] for x in pick3))
+        # B)
+        affil = group_eval('Ann Mixer', "const n = g.querySelector('[data-el=affil-note]'); return n ? n.textContent : '';")
+        studio = group_eval('StudioMASS', "return [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').dataset.raw.trim());")
+        print('B)', affil, studio)
+        results.append(bool(affil) and 'StudioMASS' in affil and studio == ['Mastered At'])
+        # C)
+        hint = pg.evaluate("(document.querySelector('[data-el=label-hint]') || {}).textContent || ''")
+        print('C)', hint)
+        results.append('Zamzamrec' in hint and 'Carton Records' in hint and 'CR-012' in hint)
+        # D)
+        case_btn = group_eval('Pierre Bujeau', "const b = g.querySelector('[data-act=case-back]'); return b ? b.textContent.trim() : '';")
+        print('D)', case_btn)
+        results.append(case_btn == '↺ as written')
+        # E)
+        order = group_eval('Eguchi Ryotaro', "return g.textContent.includes('Ryotaro Eguchi') && g.textContent.includes('name the other way round');")
+        print('E)', order)
+        results.append(order is True)
+        # F) (Al Member linked by its suggestion: MusicBrainz knows its membership only then)
+        pg.evaluate(f"(() => {{ const g = ({GROUP})('Al Member'); g.querySelector('[data-act=name-use][data-mbid=\"{AL}\"]').click(); }})()")
+        pg.wait_for_timeout(1000)
+        H.wait_for(pg, f"(() => {{ const g = ({GROUP})('Al Member'); return g && !!g.querySelector('[data-el=lineup-inst]'); }})()", 30)
+        li = group_eval('Al Member', "const n = g.querySelector('[data-el=lineup-inst]'); return n ? n.textContent : '';")
+        bo = group_eval('Bo Member', "return !!g.querySelector('[data-el=lineup-inst]');")
+        print('F)', li, '| Bo:', bo)
+        results.append('drums' in (li or '') and bo is False)
+        pg.evaluate(f"(() => {{ const g = ({GROUP})('Al Member'); g.querySelector('[data-act=lineup-inst]').click(); }})()")
+        pg.wait_for_timeout(800)
+        rows = group_eval('Al Member', "return [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', [...tr.classList].find(c => c.startsWith('dci-lv-'))]);")
+        print('   nach Use:', rows)
+        results.append(rows is not None and any(r[0].startswith('drums') and r[1] == 'dci-lv-recording' for r in rows) and any(r[1] == 'dci-lv-skip' for r in rows))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
