@@ -806,10 +806,13 @@ def case_suppnav3116():
        (review) "… · Booklet" at Writer Z (his row on the works).
     C) "🖼️ Only from images": only the entries with 🖼️ shown; off: all again.
     D) The same images again with only "Drum Guy – drums": "nothing new – 1 there already or very similar. Nothing was changed.";
-       nothing to take over."""
+       nothing to take over.
+    Credits Importer 3.148.0 (collected item Z-OCRNAMES): "Drurn Guy" (rn read for m) is Drum Guy – no row; "Bob Produser" (one letter
+    off, no slip of reading) is offered as "check the spelling" (read from an image), not to tick: "… 2 new · 1 to check (read from
+    an image) · 3 there already or very similar"."""
     import copy
     texts = copy.deepcopy(TEXTS)
-    texts[0]['text'] = 'Drum Guy - drums\n\nProduced by Bob Produser\n\nAnna Neu - piano\n'
+    texts[0]['text'] = 'Drurn Guy - drums\n\nProduced by Bob Produser\n\nAnna Neu - piano\n'
     texts[1]['text'] = 'Written by Writer Z\n'
     texts[2]['text'] = 'Bass Man - bass\n'
     SECS = "[...document.querySelectorAll('section.dci-group')].filter(s => s.getClientRects().length).map(s => (s.querySelector('.dci-gname strong') || {}).textContent)"
@@ -839,9 +842,9 @@ def case_suppnav3116():
           [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Added source: Text – 3 confirmed, 2 new/.test(t)).length,
           [...document.querySelectorAll('[data-el=supp] .dci-supp-row')].map(r => [r.querySelector('td:nth-child(3) strong') ? r.querySelector('td:nth-child(3) strong').textContent.trim() : '', r.className.replace('dci-supp-row ', ''), r.querySelector('input').checked])]""")
         print('A) Meldung:', a[0], '| Fenster:', a[1], '| Protokoll:', a[2], '| Liste:', a[3])
-        want = 'Added source: the cover art – 2 new · 3 there already or very similar.'
+        want = 'Added source: the cover art – 2 new · 1 to check (read from an image) · 3 there already or very similar.'
         results.append(len(a[0]) == 1 and a[0][0].startswith(want) and not a[0][0].endswith('To the editor') and a[1].startswith(want) and a[2] == 1
-                       and sorted(a[3]) == [['Anna Neu', 'dci-supp-row-entry', True], ['Writer Z', 'dci-supp-row-role', True]])
+                       and sorted(a[3]) == [['Anna Neu', 'dci-supp-row-entry', True], ['Bob Producer', 'dci-supp-row-spell', False], ['Writer Z', 'dci-supp-row-role', True]])
         pg.click('#dci-ocr [data-ocr=close]')
         pg.click('[data-el=supp] [data-act=supp-apply]')
         pg.wait_for_timeout(1500)

@@ -470,7 +470,9 @@ def case_supp():
     logs = lambda pg, pat: [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if re.search(pat, x)]
     done = lambda pg, n: H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 90)
     SUPP = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(),
-  (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked, tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
+  (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked,
+  // ([Z-SUPPTABLE] 3.148.0) the column of the added source: its line and "(tracks …)"
+  ((tr.children[5].textContent.replace(/\\s+/g, ' ').trim().match(/\\(([^()]*)\\)$/) || [])[1] || '')])"""
     MARKS = """(name, role) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === role);
   // ([Z-SRCTAG] 3.127.0) the badges of the row's sources (DG, BC …) and the marks of what differs
@@ -506,8 +508,9 @@ def case_supp():
         m_keys = pg.evaluate(f"({MARKS})('Keys Guy', 'Synth')")
         print('B)', summary, '\n  ', items, '\n   Hinweise:', hints, '| Bass Man:', m_bass, '| Keys Guy:', m_keys)
         kinds = {(k, n): (sel, t) for k, n, sel, t in items}
-        b_ok = kinds.get(('new role', 'Guitar Guy')) == (True, '2') and kinds.get(('new entry', 'Anna Viola')) == (True, 'all') \
-            and kinds.get(('new entry', 'Test Band')) == (True, 'all') and kinds.get(('more tracks', 'Keys Guy'), (None, ''))[0] is False \
+        # ([Z-SUPPTABLE] 3.148.0) more tracks: more precise – preselected
+        b_ok = kinds.get(('new role', 'Guitar Guy')) == (True, 'tracks 2') and kinds.get(('new entry', 'Anna Viola')) == (True, 'all tracks') \
+            and kinds.get(('new entry', 'Test Band')) == (True, 'all tracks') and kinds.get(('more tracks', 'Keys Guy'), (None, ''))[0] is True \
             and '1, 2' in kinds.get(('more tracks', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'See you on tour.') not in kinds \
             and any(k == 'not recognized' for k, *_ in items) and summary.startswith('confirmed: 1 · new: 3 · differing: 1 · not recognized: 1') \
             and m_bass == ['DG', 'BC'] and m_keys == ['BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
@@ -534,8 +537,9 @@ def case_supp():
         print('B3) Namen:', nm, '|', nlog[:1])
         results.append(nm[:4] == ['Source', 'Add a second source to', 'Add a source:', 'Add'] and nm[4].endswith('From the added source: Bandcamp')
                        and nm[5].endswith('✓ added') and bool(nlog) and not logs(pg, '[Ss]upplement'))
-        # C) Test Band unticked, take over
+        # C) Test Band and Keys Guy unticked, take over
         pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Test Band')).querySelector('input').click()")
+        pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Keys Guy')).querySelector('input').click()")
         pg.wait_for_timeout(200)
         pg.click('[data-act=supp-apply]')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp: 2/.test(li.textContent))", 30)
@@ -575,7 +579,7 @@ def case_supp():
         items_g = pg.evaluate(SUPP)
         print('G) gleiche Quelle:', [m for m in same if 'already' in m][:1], '| Chip:', chip, '| Liste:', [(k, n, t) for k, n, _, t in items_g])
         g_ok = any('That is the source loaded already.' in m for m in same) and chip and 'otherband.bandcamp.com/album/live' in chip[0] \
-            and ('new role', 'Drum Guy', '3') in [(k, n, t) for k, n, _, t in items_g]
+            and ('new role', 'Drum Guy', 'tracks 3') in [(k, n, t) for k, n, _, t in items_g]
         results.append(g_ok)
         # E) delete the stored import
         H.src_menu(pg)
@@ -613,6 +617,162 @@ def case_supp():
         print('F) zuerst das alte:', f1, '| danach:', f2[:90])
         results.append(f1 == [1, 0] and f2.startswith('Two importer scripts are running on this page'))
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_supptable3148():
+    """Credits Importer 3.148.0 (collected items Z-SUPPTABLE, Z-SRCTRUST, Z-OCRNAMES): the table of an added source and the trust of the
+    sources. Discogs imported (with "J. Olski – Artwork", not in MusicBrainz); Bandcamp added: "Bass Man – bass" (the same),
+    "Twelve-String Guitar: Guitar Guy" (Discogs: guitar – an instrument below it), "Keys Guy – synth (tracks 1, 3)" (Discogs: track 2 –
+    a contradiction) and "Artwork: James Olski" (the full name of J. Olski).
+    A) One table: Kind, Name, MB relationship, a column for Discogs, one for Bandcamp, "MusicBrainz has". Only the more precise
+       instrument (preselected), the contradiction (preselected: Bandcamp is above Discogs in the trust; below it "⚖ Bandcamp chosen
+       over Discogs: higher in the trust of the sources (⚙ Settings → Sources)") and the full name (preselected) – no new entry James
+       Olski, no row for Bass Man or the artwork (confirmed: 2).
+    B) ⚙ Settings → Sources: "Trust of the sources" – MusicBrainz first (fixed), then Text from images, Wikidata, Wikipedia, Bandcamp,
+       Discogs, YouTube, Pasted text; ▲ of Discogs: stored, logged; the contradiction now unticked, "Discogs chosen over Bandcamp".
+       Ticked by hand and "↺ Default order": stored no more, the tick by hand stays, "Bandcamp chosen over Discogs" again.
+    C) The link of the reason opens ⚙ Settings at "Sources".
+    D) Taken over: Guitar Guy plays the twelve-string guitar, Keys Guy tracks 1 and 3, the entry is called James Olski; staged, the
+       edit note says so ("took Bandcamp (more precise)", "(full name)").
+    E) The names of a supplement: initials ("J. Olski" – "James Olski", "J. S. Bach") and slips of reading an image ("Drurn" – "Drum",
+       "0" – "o", "l" – "I" – "1") in the script's own functions (Node)."""
+    import json
+    import re
+    import subprocess
+
+    H.attr(9131, 'twelve-string guitar', 14, 229)
+    H.attr(9132, 'fretless bass', 14, 70)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ALBUM = 'https://testband.bandcamp.com/album/testalbum'
+    BAND = 'https://testband.bandcamp.com/'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 43), 'name': 'James Olski', 'disambiguation': 'painter', 'score': 100}]
+    dg = H.discogs_release()
+    dg['extraartists'].append({'name': 'J. Olski', 'anv': '', 'role': 'Artwork', 'tracks': '', 'id': 3098, 'join': ''})
+    H.DG_API[f'/releases/{H.DISCOGS_ID}'] = dg
+    CREDITS = 'Bass Man – bass\nTwelve-String Guitar: Guitar Guy\nKeys Guy – synth (tracks 1, 3)\nArtwork: James Olski\nFretless Bass: Bass Man (track 2)'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': CREDITS, 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+
+    H.ws_release = ws
+    ROWS = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(),
+      (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked,
+      tr.children[4].textContent.replace(/\\s+/g, ' ').trim(), tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
+    WHY = "[...document.querySelectorAll('.dci-supp-why')].map(tr => tr.textContent.replace(/\\s+/g, ' ').trim())"
+    TRUST = "[...document.querySelectorAll('[data-srctrust] li')].map(li => li.textContent.replace(/[▲▼🔒⠿]/g, '').replace(/\\s+/g, ' ').trim())"
+    logs = lambda pg, pat: [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if re.search(pat, x)]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(500)
+        H.open_supp(pg)
+        pg.click('[data-act=supp-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Bandcamp/.test(li.textContent))", 60)
+        H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
+        pg.wait_for_timeout(500)
+        heads = pg.evaluate("[...document.querySelectorAll('.dci-supp-table thead th')].map(th => th.textContent.trim())")
+        rows = pg.evaluate(ROWS)
+        why = pg.evaluate(WHY)
+        summary = pg.locator('.dci-supp-head span').first.inner_text()
+        print('A)', heads, '\n  ', rows, '\n   Grund:', why, '|', summary)
+        by = {(k, n): (sel, m, a) for k, n, sel, m, a in rows}
+        g = by.get(('more precise', 'Guitar Guy'), (None, '', ''))
+        k = by.get(('differs', 'Keys Guy'), (None, '', ''))
+        o = by.get(('full name', 'J. Olski'), (None, '', ''))
+        # ((review) the fretless bass on one of Bass Man's tracks: a new role there, not his bass on every track made more precise)
+        results.append(heads == ['Take over', 'Kind', 'Name', 'MB relationship', 'Discogs', 'Bandcamp', 'MusicBrainz has'] and len(rows) == 4
+                       and by.get(('new role', 'Bass Man'), (None,))[0] is True and ('more precise', 'Bass Man') not in by
+                       and g[0] is True and 'guitar (all tracks)' in g[1] and 'Twelve-String Guitar: Guitar Guy' in g[2] and 'twelve-string guitar' in g[2]
+                       and k[0] is True and '(tracks 2)' in k[1] and '(tracks 1, 3)' in k[2] and o[0] is True and o[1] == 'J. Olski' and o[2] == 'James Olski'
+                       and why == ['⚖ Bandcamp chosen over Discogs: higher in the trust of the sources (⚙ Settings → Sources)']
+                       and summary == 'confirmed: 2 · new: 1 · differing: 1 · not recognized: 0 · more precise: 2')
+        # B) the trust list
+        H.open_settings(pg, 'sources')
+        t0 = pg.evaluate(TRUST)
+        fixed = pg.evaluate("[document.querySelector('[data-srctrust] li').getAttribute('aria-disabled'), !document.querySelector('[data-srctrust] li:first-child [data-act]'), !!document.querySelector('[data-act=srctrust-reset]:disabled')]")
+        pg.click('[data-act=srctrust-move][data-src=discogs][data-dir="-1"]')
+        pg.wait_for_timeout(200)
+        t1 = pg.evaluate(TRUST)
+        stored = pg.evaluate("JSON.parse(localStorage.getItem('dci-source-trust') || 'null')")
+        k1 = [x for x in pg.evaluate(ROWS) if x[1] == 'Keys Guy']
+        why1 = pg.evaluate(WHY)
+        lg = logs(pg, 'Trust of the sources:')
+        print('B) Liste:', t0, fixed, '| ▲ Discogs:', t1[4:6], stored, '| Keys Guy:', k1[0][2] if k1 else None, why1, '| Log:', lg[:1])
+        results.append(t0 == ['MusicBrainz', 'Text from images', 'Wikidata', 'Wikipedia', 'Bandcamp', 'Discogs', 'YouTube', 'Pasted text'] and fixed == ['true', True, True]
+                       and t1[4:6] == ['Discogs', 'Bandcamp'] and stored[:5] == ['ocr', 'wikidata', 'wikipedia', 'discogs', 'bandcamp'] and k1 and k1[0][2] is False
+                       and why1 == ['⚖ Discogs chosen over Bandcamp: higher in the trust of the sources (⚙ Settings → Sources)']
+                       and lg and lg[0].startswith('Trust of the sources: MusicBrainz › Text from images › Wikidata › Wikipedia › Discogs › Bandcamp'))
+        pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Keys Guy')).querySelector('input').click()")
+        pg.wait_for_timeout(200)
+        pg.click('[data-act=srctrust-reset]')
+        pg.wait_for_timeout(200)
+        t2 = pg.evaluate(TRUST)
+        stored2 = pg.evaluate("localStorage.getItem('dci-source-trust')")
+        k2 = [x for x in pg.evaluate(ROWS) if x[1] == 'Keys Guy']
+        why2 = pg.evaluate(WHY)
+        print('B2) ↺:', t2[4:6], stored2, '| Keys Guy:', k2[0][2] if k2 else None, why2)
+        results.append(t2 == t0 and stored2 is None and k2 and k2[0][2] is True and why2 and why2[0].startswith('⚖ Bandcamp chosen over Discogs'))
+        # C) the link of the reason
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        H.open_settings(pg, 'general')
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        pg.click('.dci-supp-why [data-act=trust-open]')
+        pg.wait_for_timeout(300)
+        c = pg.evaluate("[!document.querySelector('[data-el=settings]').hidden, (document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]') || {}).dataset.topic, !!document.querySelector('[data-srctrust]')]")
+        print('C) Einstellungen:', c)
+        results.append(c == [True, 'sources', True])
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        # D) taken over and staged
+        pg.click('[data-act=supp-apply]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp: 4/.test(li.textContent))", 30)
+        # the full name looked up again: its suggestion chosen (the edit note names only what has a MusicBrainz entry)
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski' && s.querySelector('[data-act=name-use]'))", 30)
+        pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski').querySelector('[data-act=name-use]').click()")
+        pg.wait_for_timeout(800)
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+        gg = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Guitar Guy').querySelector('[data-f=primary]').value")
+        left = pg.evaluate("document.querySelectorAll('.dci-supp-row').length")
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        note = pg.evaluate("document.getElementById('edit-note-text').value")
+        print('D) Namen:', names, '| Guitar Guy:', gg, '| übrig:', left, '| Notiz:', [l for l in note.splitlines() if 'differ' in l or 'precise' in l])
+        results.append('James Olski' in names and 'J. Olski' not in names and gg == 'twelve-string guitar' and left == 0
+                       and 'Sources differ: Keys Guy, synthesizer – Discogs: 2, Bandcamp: 1, 3; took Bandcamp.' in note
+                       and 'More precise in Bandcamp: Guitar Guy, instrument · guitar → instrument · twelve-string guitar; J. Olski → James Olski (full name).' in note)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # E) the functions of the names (Node)
+    src = H.MAIN
+    fold = ''.join(re.search(rf"\n  const {n} = .*?;\n", src).group(0) for n in ('norm', 'nameKey', 'ocrFold'))
+    ini = re.search(r"\n  function initialsMatch\(k1, k2\) \{.*?\n  \}\n", src, re.S).group(0)
+    js = fold + ini + """
+const out = [ocrFold('Drurn Guy') === ocrFold('Drum Guy'), ocrFold('B0b Ian') === ocrFold('Bob lan'), ocrFold('Anna 1ee') === ocrFold('Anna Lee'),
+  ocrFold('Bob Produser') === ocrFold('Bob Producer'), ocrFold('Ilse Berg') === ocrFold('Lise Berg'), ocrFold('Kai Ito') === ocrFold('Kal Ito'), ocrFold('DRURN GUY') === ocrFold('Drum Guy'), initialsMatch('j olski', 'james olski'), initialsMatch('james olski', 'j olski'),
+  initialsMatch('j s bach', 'johann sebastian bach'), initialsMatch('a smith', 'b smith'), initialsMatch('j olski', 'james olsen'),
+  initialsMatch('olski', 'james olski'), initialsMatch('j sebastian bach', 'johann s bach'), initialsMatch('james olski', 'james olski')];
+console.log(JSON.stringify(out));"""
+    e = json.loads(subprocess.run(['node', '-e', js], capture_output=True, text=True).stdout)
+    print('E) Namen:', e)
+    results.append(e == [True, True, True, False, False, False, True, 1, -1, 1, None, None, None, None, 0])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

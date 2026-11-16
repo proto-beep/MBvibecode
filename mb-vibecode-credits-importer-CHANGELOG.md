@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-16 | 3.146.0 – 3.147.0 | – |
+| 2026-11-16 | 3.146.0 – 3.148.0 | – |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -108,6 +108,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.148.0
+
+- **One table for an added source** (collected item Z-SUPPTABLE): "From the added source" shows only what is new, more precise or contradicting – a column for the loaded source, one for the added source and "MusicBrainz has". The more precise is preselected (an instrument below the other one, an instrument where the other has none, more tracks, the full name for initials – "J. Olski" and "James Olski" are one person). "Nothing new from the added source." when there is nothing to decide. The edit note says what was taken ("took Bandcamp (more precise)", "(full name)").
+- **Trust of the sources** (Z-SRCTRUST): a new list in ⚙ Settings → Sources – MusicBrainz (fixed), Text from images, Wikidata, Wikipedia, Bandcamp, Discogs, YouTube, Pasted text; drag and drop or ▲▼, "↺ Default order". A contradiction is preselected by it, the reason below the row with a link to the list.
+- **Names read from images** (Z-OCRNAMES): "Drurn Guy" is Drum Guy ("rn" for "m", "l" / "I" / "1", "0" / "o", accents) – no row; a name one letter off otherwise is offered as "check the spelling".
 
 ### Import 3.147.0
 
