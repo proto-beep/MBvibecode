@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.149.0
+// @version      3.150.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.149.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.149.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.150.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.150.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.149.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.150.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2751,6 +2751,36 @@
       "settings.t.beta": "Beta",
       "settings.ocrHead": "Text from cover art",
       "settings.betaNone": "No beta functions at the moment",
+      "settings.h.beta": "Beta functions",
+      "qf.setting": "Credit fill",
+      "qf.settingTitle": "A button “Credit fill” beside “Import credits …” in the relationship editor",
+      "qf.settingHint": "The tracks without any relationship get the credits the other tracks have – only when they all have the same (with dates and places); a work whose title is the track’s without its part (“Part 2”, “B”, “II”) is linked too. With no track to copy from: the recordings of the other releases of the release group with the same title and length. Nothing shows while it is off.",
+      "qf.button": "Credit fill",
+      "qf.buttonTitle": "Beta: the tracks without relationships get the credits of the other tracks (all or nothing)",
+      "qf.title": "Credit fill",
+      "qf.beta": "Beta",
+      "qf.reading": "Reading the relationships of the release …",
+      "qf.readingGroup": "Reading the other releases of the release group ({k} of {n}) …",
+      "qf.none": "Every track has relationships already (in MusicBrainz or staged in the editor) – nothing to fill.",
+      "qf.nosource": "No track to copy from – no track of the release has relationships, and no recording of the release group fits.",
+      "qf.differ": "The tracks with relationships do not all have the same ({list}) – nothing is filled (all or nothing).",
+      "qf.what": "{n} relationships for {tracks} tracks without any:",
+      "qf.fromRelease": "as tracks {list} have them.",
+      "qf.fromGroup": "from the recordings of the same title and length on other releases of the release group.",
+      "qf.track": "Track {pos}: {title}",
+      "qf.work": "work “{title}”",
+      "qf.workPartial": "work “{title}” (partial)",
+      "qf.missing": "No recording of the release group fits tracks {list} – they stay empty.",
+      "qf.noAttr": "the attribute “{attr}” of “{type}” is not known to the editor",
+      "qf.failed": "Nothing was filled (all or nothing): {error}",
+      "qf.nothing": "The tracks with relationships have no credits to copy, and none of their works fits the empty tracks.",
+      "qf.fill": "Fill all ({n})",
+      "qf.notLoaded": "Tracks {list}: their medium is not loaded in the editor – open it there first. Nothing was filled.",
+      "qf.noType": "no relationship type “{type}” in the editor",
+      "qf.done": "{n} relationships added to {tracks} tracks – check them in the editor, then “Enter edit”.",
+      "log.qfNothing": "Credit fill: {why}",
+      "log.qfDone": "Credit fill: {n} relationships for {tracks} tracks (errors: {errors})",
+      "stats.qf": "Credit fill (beta): {n} times, {rels} relationships",
       "settings.t.cache": "Cache",
       "settings.t.statistics": "Statistics",
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
@@ -24148,6 +24178,10 @@
   const WIKI_BG_KEY = 'dci-wiki-bg';
   S.wikiBg = readJson('localStorage', WIKI_BG_KEY, true) !== false;
   S.wikiBgDone = new Set();
+  /** [Z-QUICKFILL] (3.150.0) Credit fill (Beta; off at first) and its statistics (this browser). */
+  const QF_KEY = 'dci-beta-qf';
+  const QF_STATS_KEY = 'dci-qf-stats';
+  S.qfOn = readJson('localStorage', QF_KEY, false) === true;
   const sourceOrder = () => (S.digital ? S.sourceOrder.digital : S.sourceOrder.physical);
   /** A source chosen by hand for this release is remembered and wins over the list. */
   function keepSourcePick(source, id) {
@@ -48904,6 +48938,7 @@
       case 'stats-delete':
         // [E8] (3.38.0) all statistics deleted (asked first)
         if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
+        writeJson('localStorage', QF_STATS_KEY, null); // [Z-QUICKFILL] (3.150.0, review)
         statClear().then(() => {
           S.statsData = [];
           writeJson('localStorage', STATS_ARTISTS_KEY, null); // [Z-AST] (3.54.0) the artists looked up for them too
@@ -51167,7 +51202,7 @@
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
-    beta: [],
+    beta: [QF_KEY], // [Z-QUICKFILL] (3.150.0)
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY, STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY],
@@ -51291,7 +51326,7 @@
   const KIND_PALETTE_DARK_KEY = 'dci-kind-palette-dark';
   // (the page bar and what is in it; (3.46.0, review) the boxes on MusicBrainz's other pages have colours of their own and no
   // stylesheet of the script: as before)
-  const DARK_PAGE_ROOTS = ['dci-pagebar', 'dci-controls', 'dci-launcher', 'dci-open', 'dci-open-ocr', 'dci-notice', 'dci-langask'];
+  const DARK_PAGE_ROOTS = ['dci-pagebar', 'dci-controls', 'dci-launcher', 'dci-open', 'dci-open-ocr', 'dci-notice', 'dci-langask', 'dci-qf'];
   const DARK_WIN_ROOTS = ['dci-ocr', 'dci-ocr-peek', 'dci-line-peek'];
   const DARK_ROOTS = ['dci-overlay', 'dci-log', 'dci-rules', ...DARK_WIN_ROOTS, ...DARK_PAGE_ROOTS];
   // (the parts not inside another one: enough for "in a dark part")
@@ -51426,6 +51461,13 @@
   /** [Z-WIKISTATS] (3.149.0, review) Something of Wikipedia added as a source is used: a row taken over, changed or confirmed by it. */
   const wikiUsed = () => S.rows.some((r) => r.supp === 'WP' || (r.suppTook && r.suppTook.short === 'WP') || (r.confirmedBy && r.confirmedBy.has('WP')))
     || [...S.artists.values()].some((a) => a.suppNameTook && a.suppNameTook.short === 'WP');
+
+  /** [Z-QUICKFILL] (3.150.0) Credit fill in the statistics (this browser): how often, how many relationships. */
+  function qfStatsHtml() {
+    const list = readJson('localStorage', QF_STATS_KEY, []);
+    if (!Array.isArray(list) || !list.length) return '';
+    return `<p class="dci-sub" data-el="stats-qf">${esc(tr('stats.qf', { n: statNum(list.length), rels: statNum(list.reduce((t, x) => t + (Number(x.rels) || 0), 0)) }))}</p>`;
+  }
 
   /** [E8] The kinds of the supplements of this import. */
   function statSuppKinds() {
@@ -52941,7 +52983,7 @@
     const list10 = (names) => (names.length ? `${esc(names.slice(0, 10).join(', '))}${names.length > 10 ? ' …' : ''}` : '–');
     // (the cards register themselves: card() gives '')
     void `
-      ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>${m.wikiLangs.size ? `<p class="dci-sub" data-el="stats-wiki-langs">${esc(tr('stats.wikiLangs', { list: [...m.wikiLangs.entries()].sort((x, y) => y[1] - x[1]).map(([l, n]) => `${l} ${statNum(n)}`).join(' · ') }))}</p>` : ''}`)}
+      ${card('sources', `${statSourcesHtml(m, top, srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: [...m.suppRel.values()].reduce((t, set) => t + set.size, 0) }))}</p>${m.wikiLangs.size ? `<p class="dci-sub" data-el="stats-wiki-langs">${esc(tr('stats.wikiLangs', { list: [...m.wikiLangs.entries()].sort((x, y) => y[1] - x[1]).map(([l, n]) => `${l} ${statNum(n)}`).join(' · ') }))}</p>` : ''}${qfStatsHtml()}`)}
       ${card('found', kv(['link', 'search', 'hand', 'created'].map((k) => [k, m.link.get(k) || 0]), (k) => tr(`stats.found.${k}`)))}
       ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
         ${kv(['day', 'month', 'year'].map((k) => [k, m.prec.get(k) || 0]), (k) => tr(`stats.prec.${k}`))}
@@ -53571,7 +53613,8 @@
           data-act="drop-mode" data-place="${p}" data-mode="${v}" aria-pressed="${S.dropModes[p] === v}">${esc(tr(`settings.drop.${v}`))}</button>`).join('')}</span>`).join('')}</div>`,
       ],
       // [3.34.1] functions to try out ([Z-BETAOFF] 3.115.0: none at the moment – the tab is greyed out)
-      beta: () => [`<p class="dci-sub">${esc(tr('settings.betaNone'))}</p>`],
+      // [Z-QUICKFILL] (3.150.0) Credit fill
+      beta: () => [sh('beta'), cb('data-set="qf-on"', S.qfOn, tr('qf.setting'), tr('qf.settingTitle'), { def: false, hint: tr('qf.settingHint') })],
       // [146] (3.36.0) remembered per release
       cache: () => {
         const z = storageSizes();
@@ -53608,11 +53651,6 @@
       },
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
-    // ([Z-BETAOFF] 3.115.0, review) "Beta" chosen before: General, and forgotten
-    if (S.settingsTab === 'beta') {
-      S.settingsTab = 'general';
-      writeJson('localStorage', SETTINGS_TAB_KEY, null);
-    }
     // ([Z-SETTABS2] 3.137.0, review) "Developer" remembered with developer mode off: General, and forgotten
     if (S.settingsTab === 'developer' && !S.devMode) {
       S.settingsTab = 'general';
@@ -53621,8 +53659,8 @@
     const tab = settingTopics().includes(S.settingsTab) ? S.settingsTab : 'general';
     const tabs = settingTopics().map((key) => {
       const sel = !S.resetOpen && key === tab;
-      // [Z-BETAOFF] (3.115.0) a topic without settings at the moment: greyed out, its tooltip says why
-      const off = key === 'beta';
+      // [Z-BETAOFF] (3.115.0) a topic without settings at the moment: greyed out, its tooltip says why ([Z-QUICKFILL] 3.150.0: none now)
+      const off = false;
       return `<button type="button" role="tab" class="dci-set-tab" id="dci-set-tab-${key}" data-act="settings-topic" data-topic="${key}" aria-selected="${sel}"
         aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}"${off ? ` aria-disabled="true" title="${esc(tr('settings.betaNone'))}"` : ''}>${esc(tr(`settings.t.${key}`))}</button>`;
     }).join('');
@@ -54102,6 +54140,12 @@
       writeJson('localStorage', SKIP_HIDE_KEY, el.checked || null);
       log('info', 'settingValue', { what: tr('settings.skipHide'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderGroups();
+    } else if (k === 'qf-on') {
+      // [Z-QUICKFILL] (3.150.0) Credit fill (Beta)
+      S.qfOn = el.checked;
+      writeJson('localStorage', QF_KEY, el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('qf.setting'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderLauncher();
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -54375,6 +54419,9 @@
         S.skipHide = false;
         renderGroups();
       }
+    } else if (t === 'beta') {
+      S.qfOn = false; // [Z-QUICKFILL] (3.150.0)
+      renderLauncher();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true, wikiBg: true });
       S.sourceTrust = SOURCE_TRUST_DEFAULT.slice(); // [Z-SRCTRUST] (3.148.0)
@@ -54440,7 +54487,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -54566,6 +54613,7 @@
     S.ocrAuto = readJson('localStorage', OCR_AUTO_KEY, false) === true;
     S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
     S.wikiBg = readJson('localStorage', WIKI_BG_KEY, true) !== false; // [Z-WIKIBG] (3.149.0)
+    S.qfOn = readJson('localStorage', QF_KEY, false) === true; // [Z-QUICKFILL] (3.150.0)
     S.roleCodes = readJson('localStorage', 'dci-role-codes', 'names');
     if (!['cisac', 'gema', 'names'].includes(S.roleCodes)) S.roleCodes = 'names';
     S.capOn = readJson('localStorage', 'dci-stage-cap-on', true) !== false;
@@ -54928,6 +54976,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       sourceTrust: SOURCE_TRUST_DEFAULT.slice(), // [Z-SRCTRUST] (3.148.0)
       wikiBg: true, // [Z-WIKIBG] (3.149.0)
+      qfOn: false, // [Z-QUICKFILL] (3.150.0)
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
@@ -54986,6 +55035,7 @@
       S.statsData = [];
       writeJson('localStorage', STATS_ARTISTS_KEY, null);
       writeJson('localStorage', STATS_MADE_KEY, null); // ([Z-CREATED] 3.145.0, review)
+      writeJson('localStorage', QF_STATS_KEY, null); // [Z-QUICKFILL] (3.150.0)
       S.statArtistsGen = (S.statArtistsGen || 0) + 1;
       log('info', 'statsDeleted', {});
     }
@@ -55356,6 +55406,14 @@
     if (!bar) return;
     bar.querySelector('#dci-open').textContent = tr('launcher.open');
     bar.querySelector('#dci-open').title = tr('launcher.shortcut');
+    // [Z-QUICKFILL] (3.150.0) Credit fill: only while switched on (⚙ Settings → Beta), in the relationship editor
+    const qfBtn = bar.querySelector('#dci-quickfill');
+    if (qfBtn) {
+      qfBtn.hidden = !S.qfOn || !(getMB() && getMB().relationshipEditor);
+      qfBtn.textContent = tr('qf.button');
+      qfBtn.title = tr('qf.buttonTitle');
+      if (qfBtn.hidden) (document.getElementById('dci-qf') || { remove() {} }).remove();
+    }
     const ocrBtn = bar.querySelector('#dci-open-ocr');
     if (ocrBtn) {
       ocrBtn.hidden = !S.ocrOn;
@@ -55391,7 +55449,7 @@
   function openSettingsAt(topic, focusSel = '') {
     S.settingsOpen = true;
     S.resetOpen = false;
-    if (topic && SETTING_TOPICS.includes(topic) && topic !== 'beta') {
+    if (topic && SETTING_TOPICS.includes(topic)) {
       S.settingsTab = topic;
       writeJson('localStorage', SETTINGS_TAB_KEY, topic === 'general' ? null : topic);
     }
@@ -55453,6 +55511,310 @@
     }
   }
 
+  // --- [Z-QUICKFILL] (3.150.0) Credit fill (Beta) --------------------------------------------------------------------------------
+  // A button beside "Import credits …" (⚙ Settings → Beta; nothing shows while it is off): the tracks of the release without any
+  // relationship get the credits the other tracks have – only when those all have the same (all or nothing), with their dates and
+  // places; a work of those tracks whose title is the track's title without the part it names ("Suite (Part 2)", "Song B", "Tune II")
+  // is linked too ("partial" when it names a part). [Z-QUICKFILL2] With no track of the release to copy from: the recordings of the
+  // other releases of the release group with the same title (its part cut off) and length (3 seconds apart at most) – one request a
+  // second. A small window shows what is filled; the edit note names the recordings copied from; the statistics count it apart.
+
+  /**
+   * A title without the part it names: "Suite (Part 2)", "Suite, Pt. 3", "Suite - Teil 2", "Suite – Part Two" → "Suite"; "Song (B)",
+   * "Movement (III)" → "Song", "Movement". { stem, part, no } – `no` the part as a number ("2", "B" → "b", "III" → "3"). A bare letter
+   * or numeral at the end ("Song B", "Rocky IV", "Plan B") only when another title of the release (`siblings`) has the same stem with
+   * another one ((review): "You and I" or "Malcolm X" are no parts).
+   */
+  const QF_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+  const QF_ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10 };
+  const qfPartNo = (x) => {
+    const k = String(x || '').toLowerCase().replace(/\.$/, '');
+    return String(QF_WORDS[k] || QF_ROMAN[k] || (/^\d+$/.test(k) ? Number(k) : k));
+  };
+  function qfStem(title, siblings = []) {
+    const t = String(title || '').trim().replace(/\s*\[[^\]]*\]\s*$/, '');
+    const NUM = '(\\d+|[IVXivx]+|one|two|three|four|five|six|seven|eight|nine|ten)';
+    const SURE = [
+      new RegExp(`\\s*[([]\\s*(?:part|pt\\.?|teil|partie|parte|cz\\.|część)\\s*${NUM}\\s*[)\\]]\\s*$`, 'i'),
+      new RegExp(`\\s*[,:–—-]?\\s+(?:part|pt\\.?|teil|partie|parte)\\s*${NUM}\\s*$`, 'i'),
+      /\s*[([]\s*([A-D]|I{1,3}|IV|VI{0,3}|IX|X)\s*[)\]]\s*$/,
+    ];
+    for (const re of SURE) {
+      const m = re.exec(t);
+      if (m && t.slice(0, m.index).trim()) return { stem: t.slice(0, m.index).trim(), part: true, no: qfPartNo(m[1]) };
+    }
+    const bare = /\s+([A-D]|I{1,3}|IV|VI{0,3}|IX|X)$/.exec(t);
+    if (bare) {
+      const stem = t.slice(0, bare.index).trim();
+      const other = siblings.some((x) => x !== t && (() => { const y = /\s+([A-D]|I{1,3}|IV|VI{0,3}|IX|X)$/.exec(String(x || '').trim()); return y && qfKey(String(x).trim().slice(0, y.index)) === qfKey(stem) && y[1] !== bare[1]; })());
+      if (stem && other) return { stem, part: true, no: qfPartNo(bare[1]) };
+    }
+    return { stem: t, part: false, no: '' };
+  }
+  const qfKey = (x) => norm(x).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const QF_KINDS = ['artist', 'label', 'place', 'area', 'event', 'series', 'instrument'];
+  const qfTarget = (r) => r[r['target-type']] || r[String(r['target-type'] || '').replace('_', '-')] || null;
+  const qfSortObj = (o) => Object.entries(o || {}).sort(([a], [b]) => a.localeCompare(b));
+  /** A relationship of a recording as one string: type, target, attributes and their values and credits, dates, credit, direction. */
+  const qfSig = (r) => JSON.stringify([r['type-id'] || r.type, r['target-type'], (qfTarget(r) || {}).id, [...(r.attributes || [])].map(norm).sort(),
+    qfSortObj(r['attribute-values']), qfSortObj(r['attribute-credits']), r.begin || '', r.end || '', !!r.ended, r['target-credit'] || '', r.direction || '']);
+  /**
+   * The tracks of a release of the web service: position, title, length, recording, its credits, its works and whether it has any
+   * relationship at all (URLs and other recordings too) – `staged`: the recordings with relationships staged in the editor.
+   */
+  function qfTracks(ws, staged = new Set()) {
+    const several = (ws.media || []).length > 1;
+    const out = [];
+    (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
+      const rec = t.recording || {};
+      const all = rec.relations || [];
+      const rels = all.filter((r) => QF_KINDS.includes(r['target-type']) && qfTarget(r));
+      const works = all.filter((r) => r['target-type'] === 'work' && r.work);
+      out.push({ pos: several ? `${m.position}.${t.number || t.position}` : String(t.number || t.position), title: t.title || rec.title || '', length: t.length || rec.length || null,
+        rec: rec.id, rels, works, any: all.length > 0 || staged.has(rec.id) });
+    }));
+    return out;
+  }
+  /**
+   * The works of tracks for a track's title: a work of exactly its title; else of its title without the part ("partial"); none when
+   * two works of other tracks have that title ((review): which one is not clear).
+   */
+  function qfWorksFor(track, sources, siblings = []) {
+    const works = new Map();
+    sources.forEach((t) => t.works.forEach((r) => { if (!works.has(r.work.id)) works.set(r.work.id, r); }));
+    const pick = (key) => [...works.values()].filter((r) => qfKey(r.work.title) === key);
+    const exact = pick(qfKey(track.title));
+    if (exact.length) return exact.length === 1 ? [{ rel: exact[0], partial: false }] : [];
+    const { stem, part } = qfStem(track.title, siblings);
+    const parent = part ? pick(qfKey(stem)) : [];
+    return parent.length === 1 ? [{ rel: parent[0], partial: true }] : [];
+  }
+  /** [Z-QUICKFILL] (3.150.0, review) The recordings with relationships staged in the editor (not yet in MusicBrainz): not empty. */
+  function qfStagedRecordings() {
+    const out = new Set();
+    const mb = getMB();
+    const root = mb && mb.relationshipEditor && mb.relationshipEditor.state;
+    if (!root) return out;
+    const seen = new Set();
+    const stack = [root];
+    let steps = 0;
+    while (stack.length && steps < 400000) {
+      const v = stack.pop();
+      steps++;
+      if (!v || typeof v !== 'object' || seen.has(v)) continue;
+      seen.add(v);
+      if ('linkTypeID' in v && v.entity0 && v.entity1) {
+        if (v._status !== 3) [v.entity0, v.entity1].forEach((e) => { if (e && e.entityType === 'recording' && e.gid) out.add(e.gid); });
+        continue;
+      }
+      if (v instanceof Map || v instanceof Set) v.forEach((x) => stack.push(x));
+      else if (Array.isArray(v)) v.forEach((x) => stack.push(x));
+      else Object.keys(v).forEach((k) => stack.push(v[k]));
+    }
+    return out;
+  }
+
+  /** What Credit fill would do for a release: { kind: 'fill' | 'none' | 'differ' | 'nosource' | 'nothing', targets, from, sources }. */
+  async function qfPlan(ws, { group = true, staged = new Set(), onStep = () => {} } = {}) {
+    const tracks = qfTracks(ws, staged);
+    const titles = tracks.map((t) => t.title);
+    // (one target a recording: a recording on two tracks is filled once)
+    const empty = tracks.filter((t) => !t.any).filter((t, i, all) => all.findIndex((x) => x.rec === t.rec) === i);
+    const filled = tracks.filter((t) => t.rels.length || t.works.length);
+    if (!empty.length) return { kind: 'none' };
+    if (filled.length) {
+      const sigOf = (t) => uniq(t.rels.map(qfSig)).sort().join('\n');
+      const sig0 = sigOf(filled[0]);
+      const differ = filled.filter((t) => sigOf(t) !== sig0);
+      if (differ.length) return { kind: 'differ', tracks: [filled[0], ...differ].map((t) => t.pos) };
+      const targets = empty.map((t) => ({ track: t, rels: filled[0].rels, works: qfWorksFor(t, filled, titles) })).filter((x) => x.rels.length || x.works.length);
+      // ((review) the other tracks have only works, none fits: nothing to copy (said so)
+      return targets.length ? { kind: 'fill', from: 'release', targets, sources: filled } : { kind: 'nothing' };
+    }
+    if (!group) return { kind: 'nosource' };
+    // [Z-QUICKFILL2] the other releases of the release group: the same title (its part as a number) and length (3 seconds apart; a
+    // title without a length on both sides only when the release has as many tracks)
+    const rg = ws['release-group'] && ws['release-group'].id;
+    if (!rg) return { kind: 'nosource' };
+    const g = await mbWs(`release?release-group=${rg}&limit=25`);
+    const others = ((g && g.releases) || []).map((r) => r.id).filter((id) => id !== ws.id).slice(0, 10);
+    const found = new Map();
+    for (const [k, id] of others.entries()) {
+      if (onStep(k + 1, others.length) === false) return { kind: 'cancelled' };
+      const o = await mbWs(`release/${id}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels+instrument-rels+work-rels+recording-level-rels`);
+      const ots = qfTracks(o || {});
+      const otitles = ots.map((t) => t.title);
+      for (const t of ots) {
+        if (!t.rels.length && !t.works.length) continue;
+        for (const e of empty) {
+          if (found.has(e.pos) || t.rec === e.rec) continue;
+          const a = qfStem(e.title, titles);
+          const b = qfStem(t.title, otitles);
+          const sameTitle = qfKey(a.stem) === qfKey(b.stem) && a.no === b.no;
+          const sameLength = e.length && t.length ? Math.abs(e.length - t.length) <= 3000 : !e.length && !t.length && ots.length === tracks.length;
+          if (sameTitle && sameLength) found.set(e.pos, { track: e, rels: t.rels, works: t.works.map((r) => ({ rel: r, partial: false })), source: { ...t, release: id } });
+        }
+      }
+      if (found.size === empty.length) break;
+    }
+    const targets = empty.map((e) => found.get(e.pos)).filter(Boolean);
+    return targets.length ? { kind: 'fill', from: 'group', targets, sources: targets.map((x) => x.source), missing: empty.filter((e) => !found.has(e.pos)).map((e) => e.pos) } : { kind: 'nosource' };
+  }
+
+  /** A relationship in words: "producer · Bob Producer · 2001-03". */
+  function qfRelText(r) {
+    const t = qfTarget(r) || {};
+    const attrs = (r.attributes || []).join(', ');
+    const date = [r.begin, r.end && r.end !== r.begin ? r.end : ''].filter(Boolean).join(' – ');
+    return [r.type || '', attrs, t.name || t.title || '', r['target-credit'] ? `“${r['target-credit']}”` : '', date].filter(Boolean).join(' · ');
+  }
+
+  /** The window of Credit fill (below the bar of "Import credits …"). */
+  function qfShow(html) {
+    // ((review) switched off, or closed meanwhile: nothing shows
+    if (!S.qfOn) return null;
+    let box = document.getElementById('dci-qf');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dci-qf';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-label', tr('qf.title'));
+      const bar = document.getElementById('dci-pagebar');
+      (bar || document.body).appendChild(box);
+      const close = () => {
+        S.qfRun = (S.qfRun || 0) + 1; // ((review) a read of the release group stops
+        box.remove();
+        const btn = document.getElementById('dci-quickfill');
+        if (btn) btn.focus();
+      };
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest && e.target.closest('[data-qf]');
+        if (!b) return;
+        if (b.dataset.qf === 'close') close();
+        if (b.dataset.qf === 'fill' && S.qfPlan) qfApply(S.qfPlan);
+      });
+      box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    }
+    box.innerHTML = `<div class="dci-qf-head"><strong>${esc(tr('qf.title'))}</strong> <span class="dci-qf-beta">${esc(tr('qf.beta'))}</span>
+      <button type="button" class="dci-qf-x" data-qf="close" aria-label="${esc(tr('common.close'))}">×</button></div><div aria-live="polite">${html}</div>`;
+    // ((review) the keyboard in the window: its first button of the content (fill, else close)
+    const first = box.querySelector('[data-qf=fill]') || box.querySelector('div [data-qf=close]');
+    if (first) first.focus();
+    return box;
+  }
+
+  /** "Credit fill": reads the release, says what it would fill – the button fills all of it. */
+  async function quickFill() {
+    const mb = getMB();
+    if (!releaseMbid || !mb || !mb.relationshipEditor || S.qfBusy) return;
+    S.qfPlan = null;
+    S.qfBusy = true;
+    const run = (S.qfRun = (S.qfRun || 0) + 1);
+    qfShow(`<p class="dci-qf-sub">${esc(tr('qf.reading'))}</p>`);
+    let plan;
+    try {
+      // ((review) every relationship counts: URLs and other recordings too; and what is staged in the editor
+      const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels+instrument-rels+work-rels+recording-rels+url-rels+recording-level-rels+release-groups`);
+      plan = await qfPlan(ws || {}, { staged: qfStagedRecordings(), onStep: (k, n) => run === S.qfRun && !!qfShow(`<p class="dci-qf-sub">${esc(tr('qf.readingGroup', { k, n }))}</p>`) });
+    } catch (e) {
+      S.qfBusy = false;
+      qfShow(`<p class="dci-qf-sub dci-qf-warn">${esc(e.message || String(e))}</p><p><button type="button" data-qf="close">${esc(tr('common.close'))}</button></p>`);
+      return;
+    }
+    S.qfBusy = false;
+    if (run !== S.qfRun || plan.kind === 'cancelled') return;
+    const close = `<p><button type="button" data-qf="close">${esc(tr('common.close'))}</button></p>`;
+    if (plan.kind !== 'fill') {
+      const why = plan.kind === 'differ' ? tr('qf.differ', { list: plan.tracks.join(', ') }) : tr({ none: 'qf.none', nothing: 'qf.nothing' }[plan.kind] || 'qf.nosource');
+      log('info', 'qfNothing', { why });
+      qfShow(`<p class="dci-qf-sub">${esc(why)}</p>${close}`);
+      return;
+    }
+    S.qfPlan = plan;
+    const n = plan.targets.reduce((t, x) => t + x.rels.length + x.works.length, 0);
+    const from = plan.from === 'release' ? tr('qf.fromRelease', { list: plan.sources.map((t) => t.pos).join(', ') }) : tr('qf.fromGroup');
+    const list = plan.targets.map((x) => `<li><strong>${esc(tr('qf.track', { pos: x.track.pos, title: x.track.title }))}</strong>
+      <ul>${x.rels.map((r) => `<li>${esc(qfRelText(r))}</li>`).join('')}${x.works.map((w) => `<li>${esc(tr(w.partial ? 'qf.workPartial' : 'qf.work', { title: w.rel.work.title }))}</li>`).join('')}</ul></li>`).join('');
+    qfShow(`<p class="dci-qf-sub">${esc(tr('qf.what', { n, tracks: plan.targets.length }))} ${esc(from)}</p><ul class="dci-qf-list">${list}</ul>
+      ${(plan.missing || []).length ? `<p class="dci-qf-sub dci-qf-warn">${esc(tr('qf.missing', { list: plan.missing.join(', ') }))}</p>` : ''}
+      <p><button type="button" class="dci-qf-go" data-qf="fill">${esc(tr('qf.fill', { n }))}</button> <button type="button" data-qf="close">${esc(tr('common.cancel'))}</button></p>`);
+  }
+
+  /** The link type and attributes of a relationship of the web service, as MusicBrainz's editor knows them. */
+  function qfLinkType(r) {
+    const all = [...idx().ltById.values()];
+    return all.find((l) => l.gid === r['type-id']) || all.find((l) => norm(l.name) === norm(r.type) && [l.type0, l.type1].includes(r['target-type']) && [l.type0, l.type1].includes('recording')) || null;
+  }
+  /** ((review) every attribute found among those its link type allows – else an error: a relationship without it would say something else) */
+  function qfAttrs(r, lt, extra = []) {
+    const all = [...idx().atById.values()];
+    const ids = r['attribute-ids'] || {};
+    const values = r['attribute-values'] || {};
+    const credits = r['attribute-credits'] || {};
+    const roots = allowedRoots(lt).map((x) => x.attr);
+    return [...(r.attributes || []), ...extra].map((name) => {
+      const type = all.find((a) => ids[name] && a.gid === ids[name])
+        || roots.find((a) => norm(a.name) === norm(name)) || roots.map((a) => findChildAttr(a.id, name)).find(Boolean);
+      if (!type) throw new Error(tr('qf.noAttr', { attr: name, type: r.type || '' }));
+      return { type, ...(credits[name] ? { credited_as: credits[name] } : {}), ...(values[name] != null ? { text_value: values[name] } : {}) };
+    });
+  }
+  const qfDate = (r) => (r.begin || r.end || r.ended ? { begin: parseDate(r.begin), end: parseDate(r.end), ended: !!r.ended } : null);
+
+  /**
+   * Fills the tracks of the plan (all of it), says how many, writes the edit note and counts it. ((review) all or nothing: every
+   * recording loaded in the editor, every type, attribute and entity found first – only then anything staged)
+   */
+  async function qfApply(plan) {
+    S.qfPlan = null;
+    const recordings = pageRecordings();
+    const close = `<p><button type="button" data-qf="close">${esc(tr('common.close'))}</button></p>`;
+    const missing = plan.targets.filter((x) => !recordings.get(x.track.rec)).map((x) => x.track.pos);
+    if (missing.length) {
+      qfShow(`<p class="dci-qf-sub dci-qf-warn">${esc(tr('qf.notLoaded', { list: missing.join(', ') }))}</p>${close}`);
+      return;
+    }
+    const jobs = [];
+    try {
+      for (const x of plan.targets) {
+        const list = [...x.rels.map((r) => ({ r, extra: [] })), ...x.works.map((w) => ({ r: w.rel, extra: w.partial && !(w.rel.attributes || []).map(norm).includes('partial') ? ['partial'] : [] }))];
+        for (const { r, extra } of list) {
+          const lt = qfLinkType(r);
+          if (!lt) throw new Error(tr('qf.noType', { type: r.type || '' }));
+          jobs.push({ rec: recordings.get(x.track.rec), lt, attrs: qfAttrs(r, lt, extra), target: await fetchJsEntity((qfTarget(r) || {}).id), r });
+        }
+      }
+    } catch (e) {
+      log('warn', 'qfDone', { n: 0, tracks: 0, errors: e.message || String(e) });
+      qfShow(`<p class="dci-qf-sub dci-qf-warn">${esc(tr('qf.failed', { error: e.message || String(e) }))}</p>${close}`);
+      return;
+    }
+    let added = 0;
+    for (const j of jobs) {
+      dispatchAddRelationship(j.rec, j.target, j.lt.id, j.attrs, j.r['target-credit'] || '', qfDate(j.r));
+      added++;
+    }
+    const errors = [];
+    // the edit note: the recordings copied from
+    const srcs = uniq(plan.sources.map((t) => t.rec)).map((g) => `https://musicbrainz.org/recording/${g}`);
+    const line = `Credit fill (beta): relationships copied from ${srcs.length === 1 ? 'the MusicBrainz recording' : 'the MusicBrainz recordings'} ${srcs.join(', ')}${plan.from === 'group' ? ' (other releases of the release group)' : ''} to tracks ${plan.targets.map((x) => x.track.pos).join(', ')}.`;
+    const el = editNoteEl();
+    if (el && added && !el.value.includes(line)) {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(el, (el.value.trim() ? `${el.value.replace(/\s+$/, '')}\n\n` : '') + line);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    // the statistics: a kind of its own (this browser)
+    if (added && statsOn()) {
+      const list = readJson('localStorage', QF_STATS_KEY, []);
+      list.push({ at: Date.now(), mbid: releaseMbid, rels: added, tracks: plan.targets.length, from: plan.from });
+      writeJson('localStorage', QF_STATS_KEY, list.slice(-500));
+    }
+    log(errors.length ? 'warn' : 'ok', 'qfDone', { n: added, tracks: plan.targets.length, errors: errors.join('; ') || '–' });
+    qfShow(`<p class="dci-qf-sub">${esc(tr('qf.done', { n: added, tracks: plan.targets.length }))}</p>${errors.length ? `<p class="dci-qf-sub dci-qf-warn">${esc(errors.join('; '))}</p>` : ''}
+      <p><button type="button" data-qf="close">${esc(tr('common.close'))}</button></p>`);
+  }
+
   function insertLauncher() {
     if (document.getElementById('dci-launcher')) return;
     const controls = document.createElement('div');
@@ -55461,7 +55823,7 @@
     bar.id = 'dci-launcher';
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
     // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
-    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
+    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button><button type="button" id="dci-quickfill" hidden></button>
       <select id="dci-profile" class="dci-profile-pick"></select>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
@@ -55477,6 +55839,9 @@
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
+    bar.querySelector('#dci-quickfill').addEventListener('click', () => quickFill()); // [Z-QUICKFILL] (3.150.0)
+    // ((review) MusicBrainz's editor may come after the bar: its button then
+    waitForEditor().then(() => renderLauncher(), () => {});
     // [Z-QSP] (3.75.0, S110) the profile: applied at once (also with the dashboard open)
     bar.querySelector('#dci-profile').addEventListener('change', (e) => applyProfile(e.target.value));
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
@@ -55912,6 +56277,17 @@
       #dci-pagebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
       #dci-pagebar > :not(#dci-launcher):not(#dci-controls) { flex: 0 0 auto; box-sizing: border-box; width: min(80ch, 100%); margin-right: calc(100% - min(80ch, 100%)); }
       #dci-launcher { display: flex; align-items: center; gap: 12px; margin: 0; }
+      /* [Z-QUICKFILL] (3.150.0) Credit fill: its window below the bar */
+      #dci-qf { max-width: 720px; margin: 8px 0; padding: 8px 12px; border: 1px solid #c9ccd3; border-left: 4px solid #6a4c93; border-radius: 4px; background: #fff; color: #222; font: 13px/1.45 system-ui, sans-serif; }
+      #dci-qf .dci-qf-head { display: flex; align-items: center; gap: 8px; }
+      #dci-qf .dci-qf-beta { padding: 0 6px; border-radius: 999px; background: #eee6f6; color: #4b2e75; font-size: 11px; }
+      #dci-qf .dci-qf-x { margin-left: auto; border: 0; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: inherit; }
+      #dci-qf .dci-qf-sub { margin: 6px 0; color: #444; }
+      #dci-qf .dci-qf-warn { color: #8a3a12; }
+      #dci-qf .dci-qf-list { margin: 4px 0 8px 18px; padding: 0; max-height: 40vh; overflow: auto; }
+      #dci-qf .dci-qf-go { font-weight: 600; }
+      html.dci-dk-qf #dci-qf { background: #1f1f24; color: #eee; border-color: #444; }
+      html.dci-dk-qf #dci-qf .dci-qf-sub { color: #ccc; }
       #dci-open { font: inherit; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-open:hover { background: #f1f0f8; }
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
