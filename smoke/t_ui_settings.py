@@ -81,8 +81,8 @@ def case_settabs():
       return [rows.length, h ? [...h.cells].map(c => c.textContent.trim().slice(0, 40)) : null, h ? h.querySelector('a').href : '',
         [...{SET}.querySelectorAll('.dci-set-tab')].filter(b => b.getAttribute('aria-selected') === 'true').map(b => b.dataset.topic)]; }})()""")
         print('D) Verbindungen:', d1)
-        # (3.41.13: X017 YouTube; 3.127.0: X018 the icons)
-        results.append(d1[0] == 18 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
+        # (3.41.13: X017 YouTube; 3.127.0: X018 the icons; 3.149.0: X019 Wikipedia, X020 Wikidata)
+        results.append(d1[0] == 20 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
                        and d1[1][3].startswith('@match harmony.pulsewidth.org.uk') and d1[1][4] == '3.19.1' and d1[2] == 'https://harmony.pulsewidth.org.uk/'
                        and d1[3] == ['connections'])
         # E) reset all, in the settings
@@ -1833,7 +1833,8 @@ def case_conngroups():
         g = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] .dci-conn tbody')].map(t => [t.dataset.connGroup, t.querySelector('.dci-conn-group th').textContent.trim(),
           [...t.querySelectorAll('tr[data-conn]')].map(r => r.dataset.conn)])""")
         print('A)', g)
-        results.append(g == [['sources', 'Sources', ['X002', 'X003', 'X004', 'X015', 'X017']], ['sites', 'Websites', ['X001', 'X010', 'X013']],
+        results.append(g == [['sources', 'Sources', ['X002', 'X003', 'X004', 'X015', 'X017', 'X019', 'X020']],  # ([3.149.0] Wikipedia, Wikidata)
+                        ['sites', 'Websites', ['X001', 'X010', 'X013']],
                              ['tools', 'Tools & scripts', ['X005', 'X006', 'X007', 'X011', 'X012']], ['resources', 'Resources', ['X014', 'X016', 'X018']],
                              ['managers', 'Userscript managers', ['X008']], ['links', 'Links', ['X009']]])
         print('Fehler:', errs)
