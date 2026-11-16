@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.21.0
+// @version      1.22.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -22,6 +22,7 @@
 // @match        *://*.bandcamp.com/*
 // @match        *://www.youtube.com/*
 // @match        *://m.youtube.com/*
+// @match        *://*.wikipedia.org/wiki/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -49,7 +50,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.21.0';
+  const COMPANION_VERSION = '1.22.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -73,8 +74,10 @@
   const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
   // [1.11.0] (Credits Importer 3.42.8, collected item Z-YTC) the pages of a YouTube video
   const isYoutube = /(^|\.)youtube\.com$/i.test(location.hostname);
+  // [1.22.0] (Credits Importer 3.149.0, collected item Z-WIKICOMP) the articles of Wikipedia: the rows of the infobox read
+  const isWikipedia = /(^|\.)wikipedia\.org$/i.test(location.hostname);
   /** [1.8.0] The sites the companion shows; a tab without a site (before 1.8.0) is a Discogs tab. */
-  const SITES = ['discogs', 'bandcamp', 'youtube'];
+  const SITES = ['discogs', 'bandcamp', 'youtube', 'wikipedia'];
   const siteOf = (x) => (x && SITES.includes(x.site) ? x.site : 'discogs');
 
   // Stored data of the companion has a generation; an update that raises it clears it once
@@ -146,9 +149,10 @@
     // the site and release of its map, in the beat: a Discogs or Bandcamp tab reads only the maps of its own release
     let beatSite = '';
     let beatRel = '';
+    let beatWiki = []; // [1.22.0] the articles of Wikipedia added as a source (their marks are in the same map)
     const beatKey = `statusBeat:${key}:${pageId}`;
     const statusBeat = () => {
-      if (!leaving) GM_setValue(beatKey, { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden', used, site: beatSite, releaseId: beatRel });
+      if (!leaving) GM_setValue(beatKey, { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden', used, site: beatSite, releaseId: beatRel, ...(beatWiki.length ? { wiki: beatWiki } : {}) });
     };
     // worked with: said at once (once a second at most), so the tabs switch to this import without waiting for the next beat
     const markUsed = () => {
@@ -221,9 +225,11 @@
     };
 
     // Other scripts on the page could send these events too, so only MusicBrainz, Discogs and Bandcamp pages are opened.
-    // [1.11.0] and YouTube's videos
+    // [1.11.0] and YouTube's videos, [1.22.0] Wikipedia's articles
     const mayOpen = (url) => /^https:\/\/((beta|test)\.)?musicbrainz\.org\//.test(String(url)) || /^https:\/\/(www\.)?discogs\.com\//.test(String(url))
-      || /^https:\/\/([a-z0-9-]+\.)?bandcamp\.com\//i.test(String(url)) || /^https:\/\/(www\.|m\.)?youtube\.com\/watch\?/i.test(String(url));
+      || /^https:\/\/([a-z0-9-]+\.)?bandcamp\.com\//i.test(String(url)) || /^https:\/\/(www\.|m\.)?youtube\.com\/watch\?/i.test(String(url))
+      // [1.22.0] and Wikipedia's articles
+      || /^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//i.test(String(url));
 
     document.addEventListener('dci:to-discogs', (e) => {
       let msg;
@@ -256,6 +262,7 @@
         keepPerRelease(map, key);
         beatSite = siteOf(map);
         beatRel = String(map.releaseId || '');
+        beatWiki = (Array.isArray(map.wiki) ? map.wiki : []).map((w) => String(w.releaseId || '')).filter(Boolean);
         statusBeat();
         pingStatus(key);
         if (!beatTimer) beatTimer = setInterval(statusBeat, 2000);
@@ -393,14 +400,26 @@
           GM_deleteValue(k);
           continue;
         }
-        if (!alive(b) || (b.site && b.site !== side.id) || (b.releaseId && !here.includes(String(b.releaseId)))) continue;
+        // ([1.22.0] a Wikipedia tab: also an import that added this article as a source)
+        const wikiHere = side.id === 'wikipedia' && (b.wiki || []).some((x) => here.includes(String(x)));
+        if (!alive(b) || (!wikiHere && ((b.site && b.site !== side.id) || (b.releaseId && !here.includes(String(b.releaseId)))))) continue;
         const cur = out.get(m[1]) || { ts: 0, used: 0 };
         out.set(m[1], { ts: Math.max(cur.ts, b.ts), used: Math.max(cur.used, b.used || 0) });
       }
       return out;
     };
+    /**
+     * [1.22.0] The map as this page shows it: the map of this site and release; on Wikipedia also the part for this article of a map
+     * whose import added Wikipedia as a source (`wiki`: [{ releaseId, items }]); null for another page.
+     */
+    const viewOf = (map) => {
+      if (!map) return null;
+      if (siteOf(map) === side.id && releaseIds().includes(String(map.releaseId))) return map;
+      const w = side.id === 'wikipedia' && Array.isArray(map.wiki) ? map.wiki.find((x) => releaseIds().includes(String(x.releaseId))) : null;
+      return w ? { ...map, site: 'wikipedia', releaseId: w.releaseId, items: w.items || [], texts: [], targets: [], artwork: false } : null;
+    };
     // A status map of this site and of the release this page shows
-    const forHere = (map) => !!(map && siteOf(map) === side.id && releaseIds().includes(String(map.releaseId)));
+    const forHere = (map) => !!viewOf(map);
     // [1.8.4] the release a message back to the dashboard is about: the one whose marks are shown (the album or the track)
     const currentReleaseId = () => (forHere(lastMap) ? String(lastMap.releaseId) : side.releaseId());
     /**
@@ -409,7 +428,7 @@
      */
     const liveMaps = () => {
       if (!releaseIds().length) return [];
-      return [...liveReleases()].map(([key, beat]) => ({ key, beat, map: GM_getValue(`statusMap:${key}`) })).filter((x) => forHere(x.map))
+      return [...liveReleases()].map(([key, beat]) => ({ key, beat, map: viewOf(GM_getValue(`statusMap:${key}`)) })).filter((x) => x.map)
         .sort((a, b) => (b.beat.used - a.beat.used) || (b.beat.ts - a.beat.ts));
     };
     // [1.10.0] two imports of this release open: a small note says which one the marks are
@@ -439,8 +458,8 @@
     const keptMap = () => {
       if (!GM_getValue('keepMarks')) return null;
       for (const id of GM_getValue('statusMapIndex') || []) {
-        const m = GM_getValue(`statusMap:${id}`);
-        if (forHere(m) && m.enabled) return m;
+        const m = viewOf(GM_getValue(`statusMap:${id}`));
+        if (m && m.enabled) return m;
       }
       return null;
     };
@@ -628,6 +647,9 @@
       html.dci-site-dark #dci-artwork .dci-art-nav button { border-color: #4a4758; background: #33303f; color: #ecebf2; }
       .dci-dg-unmapped-line { background-color: #fff3c4 !important; }
       .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }
+      /* [1.22.0] (Z-WIKICOMP) Wikipedia: the mark after the value of the infobox, its row lit up */
+      .dci-wp-mark { margin-left: 4px; vertical-align: baseline; }
+      tr.dci-wp-hl > th, tr.dci-wp-hl > td { background-color: rgba(235, 116, 59, 0.22) !important; }
       .dci-dg-mark.dci-mark-off { opacity: 0.55; }
       /* [1.13.0] (review) while copying: the marks not in the text */
       html.dci-copying .dci-dg-mark { display: none !important; }
@@ -2319,9 +2341,108 @@
     });
   }
 
+  // --- [1.22.0] Wikipedia: an album's article (Credits Importer 3.149.0, collected item Z-WIKICOMP) -------------------------------------
+  // The importer reads only the infobox: each credit is marked in the row of the infobox that names it (a producer, a studio); the
+  // pointer resting on a mark shows its row in the dashboard and lights the row up here – the page does not jump.
+
+  /** "en:Diamonds & Rust" – the article shown ('' on any other page of Wikipedia). */
+  const wpArticle = () => {
+    const lang = (location.hostname.match(/^([a-z]{2,3}(?:-[a-z]+)?)\./i) || [])[1] || '';
+    const m = location.pathname.match(/^\/wiki\/([^?#]+)/);
+    if (!lang || !m) return '';
+    let title = m[1];
+    try {
+      title = decodeURIComponent(title);
+    } catch (e) { /* as written */ }
+    return `${lang.toLowerCase()}:${title.replace(/_/g, ' ')}`;
+  };
+  const WP_HL = 'dci-wp-hl';
+  /** The rows of the infobox (the table of the article's head; fr infobox_v2/v3, it sinottico). */
+  const wpRows = () => uniqEls([...document.querySelectorAll('table.infobox tr, table.infobox_v2 tr, .infobox_v3 tr, table.sinottico tr, .infobox tr')]);
+  const uniqEls = (list) => list.filter((x, i) => list.indexOf(x) === i);
+  const wpEsc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /**
+   * The row of the infobox that names one of the names – a row with a label (th) and values (td), the name a whole word there ("Can"
+   * is not in "Canada"; the heading "Studio album by …" is no row of values); null if none.
+   */
+  function wpRowFor(names) {
+    const res = (names || []).map((x) => norm(x)).filter((x) => x.length > 2).map((k) => new RegExp(`(^|[^\\p{L}\\p{N}])${wpEsc(k)}($|[^\\p{L}\\p{N}])`, 'u'));
+    if (!res.length) return null;
+    for (const tr of wpRows()) {
+      const th = tr.querySelector('th');
+      const td = tr.querySelector('td');
+      if (!th || !td || th.getAttribute('colspan')) continue;
+      // (the items of a list apart: "Bob Producer" and "Wiki Prod" are not "Bob ProducerWiki Prod")
+      const t = norm(td.innerText || [...td.childNodes].map((n) => n.textContent).join(' '));
+      if (res.some((re) => re.test(t))) return tr;
+    }
+    return null;
+  }
+  // how many marks the last drawing placed (none: nothing to draw again)
+  let wpPlaced = 0;
+  function renderWikipediaStatus(map) {
+    ensureStyle();
+    wpPlaced = 0;
+    document.querySelectorAll('.dci-wp-mark').forEach((m) => m.remove());
+    if (!map || !map.enabled) return;
+    for (const item of map.items || []) {
+      const tr = wpRowFor(item.names);
+      const td = tr && tr.querySelector('td');
+      if (!td) continue;
+      const status = item.unmapped ? 'unmapped' : item.status;
+      const mark = document.createElement('button');
+      mark.type = 'button';
+      mark.className = `dci-dg-mark dci-dg-${status} dci-wp-mark${item.off ? ' dci-mark-off' : ''}`;
+      mark.dataset.row = item.row;
+      mark.textContent = MARK_SYMBOL[status] || '?';
+      mark.title = markTitle(map, item, status, item.note || '', item.role);
+      td.appendChild(mark);
+      wpPlaced++;
+    }
+  }
+  // the pointer on a mark: its row of the infobox lit up (no jump)
+  if (isWikipedia) {
+    document.addEventListener('mouseover', (e) => {
+      // ((review) only on a mark: what a jump lit up stays while the pointer moves elsewhere
+      const mark = e.target.closest && e.target.closest('.dci-wp-mark');
+      const tr = mark && mark.closest('tr');
+      if (!tr || tr.classList.contains(WP_HL)) return;
+      document.querySelectorAll(`.${WP_HL}`).forEach((x) => x.classList.remove(WP_HL));
+      tr.classList.add(WP_HL);
+    });
+  }
+  const WIKIPEDIA_SIDE = {
+    id: 'wikipedia',
+    artwork: false,
+    releaseId: wpArticle,
+    /** The article of the command, '' when it is this one, null for a command that is no article. */
+    pageFor(cmd) {
+      const want = String(cmd.releaseId || '');
+      const m = want.match(/^([a-z]{2,3}(?:-[a-z]+)?):(.+)$/);
+      if (!m) return null;
+      // ((review) written as the importer writes an article's address: "/", ":" and "," as they are
+      return want === wpArticle() ? '' : `https://${m[1]}.wikipedia.org/wiki/${encodeURIComponent(m[2].replace(/ /g, '_')).replace(/%2F/g, '/').replace(/%3A/g, ':').replace(/%2C/g, ',')}`;
+    },
+    /** A credit: its row of the infobox lit up – scrolled to only when it is out of sight. */
+    async locate(cmd) {
+      ensureStyle();
+      document.querySelectorAll(`.${WP_HL}`).forEach((x) => x.classList.remove(WP_HL));
+      const tr = wpRowFor(cmd.names || []);
+      if (!tr) return 'none';
+      tr.classList.add(WP_HL);
+      tr.scrollIntoView({ block: 'nearest' });
+      return 'credit';
+    },
+    renderStatus: (map) => renderWikipediaStatus(map),
+    trackAt: () => '',
+    // ((review) only marks drawn that are gone (Wikipedia drew the page anew) – not again and again when none fits
+    stale: (map) => !!(map && map.enabled && wpPlaced && !document.querySelector('.dci-wp-mark')),
+  };
+
   if (isMusicBrainz && /\/edit-relationships/.test(location.pathname)) initMusicBrainzSide();
   else if (isMusicBrainz) initReleasePage();
   else if (isBandcamp) initSourceSide(BANDCAMP_SIDE);
   else if (isYoutube) initSourceSide(YOUTUBE_SIDE);
+  else if (isWikipedia) initSourceSide(WIKIPEDIA_SIDE);
   else initSourceSide(DISCOGS_SIDE);
 })();
