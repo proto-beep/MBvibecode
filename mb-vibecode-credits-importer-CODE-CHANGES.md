@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.151.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.152.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.152.0 · 2026-11-17
+
+- **F-NOTESTAGED / F-NOTECOUNT:** `noteStaged()` (the staged relationships still in the editor – `findRelationshipStates`, `_status` 3 is out –: the rows with one, the credit relationships by level per source – `''` or the short name of an added one when all rows of a relationship came only from it –, the links of works; `null` when the editor cannot be read, then as until 3.151.0), `noteAddedText(c, name)`; `editNoteBlock` – "Done" per source, the links of works, the rows of the tracks from the artist credits from it; `suppNoteLines(ns)` – only rows with a relationship in the editor, a full name only with one of its entry's rows there; `initAfterEditArm` – at "Enter edit" (click or submit, before MusicBrainz reads the note, also without the dashboard) `qfAfterEdit()` and `writeEditNote()`.
+- **F-QFSTATS:** `qfApply` keeps each run (`S.qfRuns`: the ids staged, recording, position, link type, target) instead of counting; `qfNoteLine`, `qfSetNote`; `qfAfterEdit()` – the line of each run with the tracks still filled, the job `dci-qf-job:<MBID>` (`QF_JOB_PREFIX`; `{ armedAt, runs: [{ at, tracks, from, rels: [{ c }] }] }`); `runQfJob(mbid, { tries })` (`statSeenAll` over `/ws/js/release`; then `QF_STATS_KEY`; after 30 min dropped) – on the editor's page and in `initReleasePageHook`; `statJobsSweep` sweeps both kinds. `QF_STATS_KEY` moved up (defined before the release page's hook).
+- **F-RESETPROFILE:** `resetHtml` – `reset.askProfile` while a profile of one's own is active (`[data-el=reset-ask]`).
+- **F-WSJS:** `mbFetch(url, init, { pace })` (beside `escRe`; 30 s with `AbortSignal.timeout`, once more after a network error, then `err.mbNet`; `pace`: a queue of its own), `MB_JS_PACE` (200 ms) – `fetchJsEntity`, `fetchMediumTracks`, `runLiveJob`, the job of the comments, `runStatJob`, `runQfJob`; `initReleaseGap` (its `/ws/2` request; a failure: `gapWhy('ws')`). Not `/ws/js/edit/create` (a request made twice could enter an edit twice).
+- **F-WALK:** `editorRelIndex(root)` (one walk per state object, cached while MusicBrainz's state is the same object; up to `EDITOR_WALK_MAX` = 5,000,000 steps; `byId`, `all` – relationship states with their entities, not their `_original` –, `cut`); `findRelationshipStates(root, ids, out)` (no step limit argument any more), `statesBetween`, `findLinkState`, `statExisting`, `qfStagedRecordings` from it. Measured (Node, a state shaped like the editor's): 600 tracks × 40 relationships – all of it in some 60 ms; cut at 400,000 steps before.
+- **Texts:** new `reset.askProfile`.
+- **Tests:** `t_sources.py fable3152` (A the profile in the question; B relationships taken out by hand at "Enter edit"; C Credit fill – the line, the statistics after MusicBrainz; D the index – beyond 400,000 steps, not the `_original`; E `mbFetch`) – new, fails on 3.151.0. `supp` (Anna Viola's entry known to `/ws/js/entity`, so that she is staged – until 3.151.0 the note named her although staging her failed; the Bandcamp count), `supptable3148` (the artwork's type chosen, so that it is staged), `quickfill3150` (nothing counted when staged). `harness.py`: `JS_ARTISTS`.
 
 ## Import 3.151.0 · 2026-11-16
 
