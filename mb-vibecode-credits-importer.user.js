@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.152.0
+// @version      3.153.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.152.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.152.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.153.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.153.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.152.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.153.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -882,6 +882,7 @@
       "ignored.why.edition": "the edition (no relationship)",
       "ignored.why.translation": "a translation of the line beside it",
       "ignored.why.prose": "prose (no credit)",
+      "ignored.why.aside": "an aside between dashes (no credit)",
       "ignored.why.review": "review (press quote): {source}",
       "ignored.why.signature": "the signature of the liner notes",
       "ignored.why.fantasy": "a name of fantasy among the roles (no instrument, voice nor role)",
@@ -916,12 +917,23 @@
       "log.liveTaken": "Live recording taken: {event} · {venue}",
       "log.liveNo": "Not a live recording: {event}",
       "ignored.why.liveHead": "the head of a live recording – offered above the entries",
-      "ignored.why.promo": "other releases and links (no credit)",
+      "ignored.why.promo": "a description of the music (no credit)",
       "ignored.why.genres": "genres (no credit)",
       "ignored.why.catnoNew": "a catalogue number: {catno} – MusicBrainz has: {mb}",
       "ignored.why.labels": "the release’s labels: {list} – check them in the release editor",
       "ignored.why.labelName": "the name of a label: {name}",
       "hint.labels": "The text names the labels {list}; MusicBrainz has {mb} for this release – check the labels in the release editor.",
+      "hint.homeStudio": "Recorded at {name}{where}: a studio without a name – MusicBrainz has no place for it, nothing of it is submitted (only the town, as “recorded in”).",
+      "hint.homeStudioPlace": "MusicBrainz has a place that may be this studio ({why}):",
+      "hint.homeStudioPlaces": "MusicBrainz has {n} places that may be this studio:",
+      "hint.hsOwner": "owned by {by}",
+      "hint.hsName": "named after {by}",
+      "hint.hsTake": "＋ Recorded at {name}",
+      "hint.hsTakeOne": "＋ Recorded at the place chosen",
+      "ignored.why.homeStudio": "a studio without a name (said above the entries)",
+      "stats.homeStudios": "Home studios and studios without a name: {n} ({list})",
+      "stats.homeStudiosTitle": "Not submitted to MusicBrainz: it has no place for them (only their town, as “recorded in”).",
+      "log.hsTaken": "Studio without a name: {name} of MusicBrainz taken (recorded at)",
       "hint.catno": "The text gives the catalogue number {list}; MusicBrainz has {mb} – check it in the release editor.",
       "hint.none": "none",
       "affil.note": "{name}: “{org}” in brackets after the name is a company – no part of the name",
@@ -1852,6 +1864,7 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "role.corrected": "Read as “{read}”: the detail of “{written}” names the role (corrected)",
       "role.fromSource": "from {source}: {raw}",
       "stack.noteDown": "Read from lines with the name above its instruments – their order was not clear.",
       "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
@@ -4636,8 +4649,35 @@
         mods.push(...splitTopLevel(inner));
         return ' ';
       }).replace(/\s+/g, ' ').trim();
-      return { raw, base, mods };
+      // [Z-ALLMUSIC] (3.153.0, S265) a detail that only says the role again for all of it – "Composed By [All Music Composed By]", "Conductor
+      // [All Music Conducted By]" –: no detail (it made a credit, or an instrument "all music arranged by")
+      const kept = ruleOn('S265') ? mods.filter((m) => !allRepeat(base, m)) : mods;
+      // [Z-BRACKETROLE] (3.153.0, S266) the detail another kind of the same role – "Executive-Producer [Associate Producer]" –: the detail is
+      // the role (a slip of Discogs's), said at the row
+      const fixed = ruleOn('S266') ? bracketRole(base, kept) : '';
+      if (fixed) return { raw, base: fixed, mods: [], corrected: base };
+      return { raw, base, mods: kept };
     });
+  }
+  /** [Z-ALLMUSIC] (3.153.0) The words of a role as stems ("Conducted By" → ["conduc"]; "by" and its translations left out). */
+  const roleStems = (s) => nameKey(s).split(' ').filter((w) => w && !/^(?:by|von|par|por|af|av|door)$/.test(w)).map((w) => w.slice(0, 6));
+  /** [Z-ALLMUSIC] (3.153.0) "All Music Composed By" of "Composed By", "All Lyrics By" of "Lyrics By": the same role for all of it. */
+  function allRepeat(base, mod) {
+    const m = String(mod || '').trim().match(/^all\s+(?:(?:the\s+)?(music|songs|tracks|compositions|pieces|titles|works|lyrics|words|arrangements)\s+)?(.*)$/i);
+    if (!m) return false;
+    const b = roleStems(base);
+    const rest = roleStems(m[2]);
+    const x = rest.length ? rest : roleStems(m[1] || '');
+    return !!(b.length && x.length && b[b.length - 1] === x[x.length - 1]);
+  }
+  /** [Z-BRACKETROLE] (3.153.0) "Executive-Producer [Associate Producer]": two kinds ("<kind> <role>") of one role – the detail; else ''. */
+  const BRACKET_HEADS = /^(?:producer|engineer|director|arranger|conductor|designer|editor|manager|coordinator|mixer|programmer)$/i;
+  function bracketRole(base, mods) {
+    if (mods.length !== 1) return '';
+    const b = String(base).replace(/-/g, ' ').trim().split(/\s+/);
+    const m = String(mods[0]).replace(/-/g, ' ').trim().split(/\s+/);
+    if (b.length !== 2 || m.length !== 2 || !BRACKET_HEADS.test(b[1]) || norm(b[1]) !== norm(m[1]) || norm(b[0]) === norm(m[0])) return '';
+    return String(mods[0]).trim();
   }
 
   /** Roles typed in the dashboard (rule test, rows added by hand): the notation, engineer tasks split (S018). */
@@ -4948,6 +4988,16 @@
     { id: 'S083', where: 'workLocked, computePlan, cellHtml, workFrontCell', note: 'Works (3.57.0): an existing work is not supplemented – a work linked in MusicBrainz or found and chosen in the works matrix gets none of the relationships the matrix suggests (writers, composers, publishers, their dates and credits, "arrangement of" / "quotes"); only the link of the recording with it (and its attributes: live, cover …) is staged. Its cells are locked. New works (planned or made with the form) are not affected.' },
     { id: 'S082', where: 'computePlan, writerExactPairs, writersForTrack, cellHtml', note: 'Works (3.56.0): never writer beside a more exact type – where a person has composer, lyricist or librettist on a work (planned here, in the form of a new work, or in MusicBrainz), a writer of theirs on that work is left out (writer is the general type above them); the cell shows it struck through. ("revised by", also under writer, is not such a type: it says something else.)' },
     { id: 'S264', where: 'TEXT.parse (freeTextPre: liveHeads), findLiveHeads, liveHeadHtml, liveTake', note: 'Texts (3.147.0; collected item Z-LIVEEVENT; a quick switch, on): the head of a live video – "“Water Dream” at Electronic Phantoms Tour 2024" and below it the venue with the day ("SHIBUYA WWWX 2024.12.15") – is offered above the entries, greyed: "＋ Take event and place" makes the venue a place and the event an entry (each "recorded at" on all tracks, looked up by their names; the place also without the city in capitals before it and written apart: "WWW X"); MusicBrainz\'s events of that name on that day are offered to add; the date is in the pool as every date of the text; the lines are left out as such. Off: not offered, the lines read as before' },
+    { id: 'S265', where: 'parseRoleNotation (allRepeat)', note: 'Roles (3.153.0; collected items Z-ALLMUSIC, Z-ARRWORK): a detail that only says the role again for all of it – "Composed By [All Music Composed By]", "Arranged By [All Music Arranged By]", "Conductor [All Music Conducted By]" – is no detail: no credit of it, and "Arranged By" goes to the works as the bare one does (S150)' },
+    { id: 'S266', where: 'parseRoleNotation (bracketRole), corrHtml', note: 'Roles (3.153.0; collected item Z-BRACKETROLE): a detail that is another kind of the same role – "Executive-Producer [Associate Producer]" – is the role (a slip of Discogs\'s): read as "Associate Producer", said at the row' },
+    { id: 'S267', where: 'addNotesCompanies (placeCredit)', note: 'Places (3.153.0; collected item Z-STUDIONAME): a studio of the notes or a text written otherwise than Discogs\'s entry of it ("EastSide Sound" – "East Side Sound"): Discogs\'s linked entry, credited as the text writes it' },
+    { id: 'S268', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-SURNAMES): a surname alone ("All tracks written by Franke / Froese / Baumann") is the one full name of the same text ending with it (Chris Franke), credited as written; "All tracks written by" a writer on the works (R098)' },
+    { id: 'S269', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected items Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN): "Personnel:" (line-up, musicians, Besetzung) before a list is no part of it; a paragraph of credits with semicolons is a line per part ("recording engineer: otto" in the middle); a line of roles broken after "/", "&", "and" – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" – is one line' },
+    { id: 'S270', where: 'TEXT.parse (readClause)', note: 'Texts (3.153.0; collected item Z-CAPSTITLE): the release\'s title as the subject – "FRAG NICHT NACH SONNENSCHEIN was recorded at …", in capitals or not – is the album (no person), as "The album was …"' },
+    { id: 'S271', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-PROMOPROSE): a sentence that describes the music – "Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction" – is left out ("a description of the music"), not "not recognized": no name, no role, no instrument, no title of the release or its tracks' },
+    { id: 'S272', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected item Z-DASHASIDE): an aside between two dashes in a sentence – "recorded at the bands home studio in - the capital of Finnish psychedelic rock - Tampere, Finland" – is read apart: the sentence around it, the aside as a line of its own (a name in it is read); one that gives nothing is left out ("an aside")' },
+    { id: 'S273', where: 'HOME_STUDIO, placeOf, TEXT.parse (end), homeStudioHtml, homeStudioFind', note: 'Places (3.153.0; collected items Z-HOMESTUDIO, Z-RECINAREA): a studio without a name ("the band\'s home studio", "their own studio", "im eigenen Studio", "at home") is no place – said above the entries (where, when), counted in the statistics (not submitted); its town is "recorded in" (found in MusicBrainz, else nothing). MusicBrainz\'s place of it is offered only when the release\'s artist owns it ("owner") or it has the artist\'s name in that town (several: a list)' },
+    { id: 'S274', where: 'studiosInText', note: 'Dates (3.153.0; collected item Z-RECSENTDATE): a date in the sentence of the recordings ("recorded … in Tampere, Finland in February 2026", "tracked in March 2025") is the time of the recordings – the performance (instruments, voices, "recorded by", "recorded in") of all tracks, not only of the town; mix and mastering keep no date' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -5680,6 +5730,13 @@
   // ((review) a mapping file of an older version has none of these: nothing found, no error)
   const NO_MATCH = /(?!)/;
   const gearModels = () => GEAR_MODELS || { brands: [] };
+  /**
+   * [Z-HOMESTUDIO] (3.153.0, S273) A studio without a name: "the band's home studio", "the bands home studio", "their own studio", "his home studio",
+   * "the band's studio"; German "im eigenen Studio", "im Heimstudio", "im Studio der Band"; French "leur propre studio"; Spanish "su propio estudio".
+   */
+  const HOME_STUDIO = /^(?:(?:the|a)\s+)?(?:(?:band|group|artist|duo|trio)(?:'s|s'|’s|s)?\s+|(?:their|his|her|our|my|its)\s+)?(?:own\s+)?(?:home|private|house)?\s*(?:-?\s*)?studios?$|^(?:(?:im|in\s+(?:ihrem|seinem|unserem))\s+)?(?:eigenen\s+)?(?:heim)?studio(?:\s+der\s+band)?$|^(?:leur|son|notre)\s+(?:propre\s+)?studio$|^(?:su|nuestro)\s+(?:propio\s+)?estudio$/i;
+  // (the band's, their own, a home studio – not "the studio" alone)
+  const homeStudio = (x) => HOME_STUDIO.test(x) && /(?:^|\s)(?:the\s+)?(?:band|group|artist|duo|trio|their|his|her|our|my|its|own|home|private|house|eigenen|heim|ihrem|seinem|unserem|propre|propio|leur|su|nuestro)/i.test(x);
   /** [Z-RAD] (3.81.0, S121) "This was", "It was", "These tracks were" … before "recorded / mixed … by" (no part of the credit). */
   const TEXT_FILLER_SUBJECT = /^(?:this|it|that|all(?:\s+of\s+(?:this|it))?|everything|(?:the|this)\s+(?:album|record|recording|session|concert|music|performance|set|ep|lp|piece)|(?:the|these|all)\s+(?:tracks|songs|pieces|recordings))\s+(?:was|were|has\s+been|have\s+been|got)\s+(?:(?:all|entirely|mostly|partly)\s+)?(?:(live)\s+)?(recorded|mixed|mastered|produced|engineered|filmed|captured|edited|remixed|taped)(?=(?:\s*(?:,|and|&)\s*[a-z]+ed)*\s+(?:live\s+)?(?:by|at|in|on)\b)/i;
   const reWords = (list) => (list || []).map((w) => String(w).trim().toLowerCase().replace(/[.*+?^$()|[\]{}\\]/g, '\\$&').replace(/[\s-]+/g, '[\\s-]?')).filter(Boolean).join('|');
@@ -6949,6 +7006,8 @@
    */
   function lowerWord(word, vocab, keep = null) {
     if (/\d/.test(word)) return word;
+    // [Z-INSTRNEW] (3.153.0) one capital letter as written: "Fender E Piano", the key of an instrument ("A Clarinet", "E♭ Horn")
+    if (/^\p{Lu}[♭♯]?$/u.test(word)) return word;
     const w = word.toLowerCase();
     const own = properSpelling(w, keep);
     if (own) return own;
@@ -8310,6 +8369,8 @@
       // [Z-LJTEXT] (3.140.0, S232) "FCM Studios Barcelona": the city after "Studio(s)" without a comma is its area
       const cityAfter = !inArea && ruleOn('S232') ? name.match(/^(.+?\bStudios?)\s+(\p{Lu}[\p{Ll}'’-]{2,}(?:\s+\p{Lu}[\p{Ll}'’-]{2,})?)$/u) : null;
       if (cityAfter && !TEXT_PLACE_WORDS.test(cityAfter[2]) && !/^(?:One|Two|Three|Four|Room|Hall|Stage|Mobile|West|East|North|South|Central|Main)$/i.test(cityAfter[2].split(' ')[0])) [name, area] = [cityAfter[1], [cityAfter[2], area].filter(Boolean).join(', ')];
+      // [Z-HOMESTUDIO] (3.153.0, S273) a private place ("at home", "their own studio") is no place of MusicBrainz – kept to be said, with its town
+      if (ruleOn('S273') && PRIVATE_PLACE.test(clean(name)) && !NOT_A_PLACE.test(clean(name))) return { name: clean(name), area: clean(noDates(area)), home: true };
       if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
       // [3.37.8] "at the Western Front Lodge": the article written small is no part of the name ("The Hit Factory" keeps it; item 158)
       name = clean(name).replace(/^the\s+(?=\p{Lu})/u, '');
@@ -8583,6 +8644,7 @@
       // [Z-FWC] [Z-NCL] [Z-WRAP] [Z-IMD] (3.92.0, S144, S146) the lines made readable first; the line as written stays for the marks of
       // the companion (rawOf)
       const rawOf = new Map();
+      const asideLines = new Set(); // [Z-DASHASIDE] (3.153.0) the asides read as lines of their own (norm)
       const textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
       const guessedSet = new Set(); // ([Z-SEI2] 3.96.0, review) the words asked in blocks of tracks
       // [Z-ARRL] (3.94.0, S150) a line about songs, tracks, compositions …: its arrangement is that of the works ("All songs was written &
@@ -8667,6 +8729,56 @@
         };
         // [Z-FWC] the colon and brackets of Japanese and Chinese texts ("Tsutomu Sonoda：Vocal") as ASCII
         let out = lines.map((l) => keep(l.replace(/\s*：\s*/g, ': ').replace(/（/g, ' (').replace(/）/g, ')'), l));
+        // [Z-PERSONNELHEAD] (3.153.0, S269) "Personnel: Edgar Froese (guitar); …": the heading before the list is no part of it
+        if (ruleOn('S269')) out = out.map((l) => keep(l.replace(/^\s*(?:personnel|line-?up|musicians|besetzung|musiker(?:innen)?|mitwirkende|personnel\s+on\s+this\s+(?:album|record))\s*:\s*(?=\S)/i, ''), rawOf.get(l) || l));
+        // [Z-SEMICOLON] (3.153.0, S269) a paragraph of credits with semicolons – "Edgar Froese (guitar); Chris Franke (synthesizer); recording engineer:
+        // otto" –: each part a line of its own (a part may be "role: name" in the middle of the line)
+        if (ruleOn('S269')) {
+          out = out.flatMap((l) => {
+            const parts = l.split(/\s*;\s*/).map((x) => x.trim()).filter(Boolean);
+            // ((each part a credit of its own – "Name (roles)", "role: name", "… by name", "Name – roles" –; not "Jane Roe – bass; vocals")
+            if (parts.length < 2 || parts.some((x) => x.split(/\s+/).length > 12 || !/[:(]|\sby\s|\s[–—-]\s/i.test(x))) return [l];
+            const raw = rawOf.get(l) || l;
+            return parts.map((x) => keep(x.replace(/[.]$/, ''), raw));
+          });
+        }
+        // [Z-DASHASIDE] (3.153.0, S272) an aside between two dashes in a sentence – "recorded at the bands home studio in - the capital of Finnish
+        // psychedelic rock - Tampere, Finland" –: the sentence read around it, the aside as a line of its own (it may name someone)
+        if (ruleOn('S272')) {
+          out = out.flatMap((l) => {
+            if (l.split(/\s+/).length < 10) return [l];
+            const asides = [];
+            const t = l.replace(/(\p{Ll}[\p{L}'’]*)\s+[-–—]\s+([^-–—]{3,120}?)\s+[-–—]\s+(?=\S)/gu, (w, before, inner) => {
+              if (inner.split(/\s+/).length < 3) return w;
+              asides.push(inner.trim());
+              return `${before} `;
+            });
+            if (!asides.length) return [l];
+            const raw = rawOf.get(l) || l;
+            asides.forEach((x) => asideLines.add(norm(x)));
+            return [keep(t, raw), ...asides];
+          });
+        }
+        // [Z-HOMESTUDIO] (3.153.0, S273) "recorded in their own studio in Hamburg": recorded at it (a studio, in the town)
+        if (ruleOn('S273')) {
+          out = out.map((l) => {
+            const t = l.replace(/\b(recorded|tracked|mixed)\s+in\s+((?:the\s+)?(?:band(?:'s|s'|’s|s)?|their|his|her|our|my)\s+(?:own\s+)?(?:home\s+)?studio)\b/gi, '$1 at $2');
+            return t === l ? l : keep(t, rawOf.get(l) || l);
+          });
+        }
+        // [Z-OCRLINEJOIN] (3.153.0, S269) a line of roles broken after "/", "&", "and" … – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" –: one line
+        if (ruleOn('S269')) {
+          for (let i = 0; i < out.length - 1; i++) {
+            if (!NAME_ROLES.test(out[i]) || !/(?:^|\s)(?:\/|&|\+|and|und|et|y)\s*$/i.test(out[i])) continue;
+            let j = i + 1;
+            while (j < out.length && !out[j].trim()) j++;
+            const next = j < out.length ? out[j].trim() : '';
+            if (!next || next.includes(':') || next.split(/\s+/).length > 10) continue;
+            const raw = rawOf.get(out[i]) || out[i];
+            out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
+            for (let k = i + 1; k <= j; k++) out[k] = '';
+          }
+        }
         // [Z-LYR] (S148) "All Lyrics was written by X", "All field recording by X": "Lyrics by X", "Field recording by X" (the songs:
         // "Written by …" as before)
         if (ruleOn('S148')) {
@@ -9374,7 +9486,12 @@
         const readClause = (clause0, ci) => {
           // [Z-RAD] (3.81.0, S121) "This was recorded by …", "It was mixed by …", "These tracks were recorded live by …": the words before
           // the verb are no part of the credit (until 3.80.0 "This was" became its credit)
-          const clause1 = ruleOn('S121') ? clause0.replace(TEXT_FILLER_SUBJECT, (m0, live, v) => `${cap(v.toLowerCase())}${live ? ' live' : ''}`) : clause0;
+          // [Z-CAPSTITLE] (3.153.0, S270) the release's title as the subject – "FRAG NICHT NACH SONNENSCHEIN was recorded at …", written in capitals
+          // or not –: the album (no person)
+          const relT = ruleOn('S270') && releaseTitle ? String(releaseTitle).trim() : '';
+          const clauseT = relT && relT.length >= 3 && clause0.toLowerCase().startsWith(relT.toLowerCase())
+            && /^\s+(?:was|were|has\s+been|have\s+been|got)\s/i.test(clause0.slice(relT.length)) ? `The album${clause0.slice(relT.length)}` : clause0;
+          const clause1 = ruleOn('S121') ? clauseT.replace(TEXT_FILLER_SUBJECT, (m0, live, v) => `${cap(v.toLowerCase())}${live ? ' live' : ''}`) : clauseT;
           // [Z-WPR] (3.84.0, S126) "All tracks written, performed and recorded by …", "Tracks were composed and produced between … in …": the
           // words for the music before the verbs are no part of the credit – a role the register knows with them stays ("All songs
           // written by", R098)
@@ -9442,9 +9559,11 @@
           const place = (verb, where, extra = {}) => {
             const n = where && clean(where.name);
             if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return false;
+            // ([Z-HOMESTUDIO] 3.153.0) a private place of another verb ("mixed at home"): no place, the line as before
+            if (where.home && !/^(?:recorded|tracked)$/i.test(String(verb || '').trim())) return false;
             // [S050] (3.32.5) "Recordd at X": the verb as it is read
             const { role, typos } = readRole(`${cap(verb)} At`);
-            companies.push({ who: { ...who(n), area: where.area || '', ...(where.altNames ? { altNames: where.altNames } : {}) }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}), ...extra });
+            companies.push({ who: { ...who(n), area: where.area || '', ...(where.altNames ? { altNames: where.altNames } : {}), ...(where.home ? { home: true } : {}) }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}), ...extra });
             found++;
             return true;
           };
@@ -12304,6 +12423,32 @@
         }
         ignored.push(...out);
       }
+      // [Z-DASHASIDE] (3.153.0, S272) an aside between dashes that gave nothing ("the capital of Finnish psychedelic rock"): left out with its sentence
+      if (asideLines.size) {
+        for (let i = unrecognized.length - 1; i >= 0; i--) {
+          const t = String(unrecognized[i]).trim();
+          if (!asideLines.has(norm(t))) continue;
+          ignored.push({ text: t, why: 'aside' });
+          unrecognized.splice(i, 1);
+        }
+      }
+      // [Z-PROMOPROSE] (3.153.0, S271) a sentence that describes the music ("Expect a heavy dose of psychedelic riffs, deep-space grooves and pure
+      // sonic destruction"): no name, no role, no instrument, no title of the release or its tracks – left out, not "not recognized"
+      if (ruleOn('S271')) {
+        const titles = new Set((titleNames || []).map((x) => norm(x)).filter(Boolean));
+        for (let i = unrecognized.length - 1; i >= 0; i--) {
+          const t = String(unrecognized[i]).trim();
+          if (/\s+→\s+\?/u.test(t) || titles.has(norm(t.replace(/[.!?…]+$/, ''))) || credits.some((c) => String(c.line || '').trim() === t)) continue;
+          const tn = (titleNames || []).filter((x) => x && x.length >= 3).reduce((acc, x) => acc.replace(new RegExp(escRe(x), 'giu'), ' '), t.replace(/\([^)]*\)/g, ' '));
+          const ws = t.split(/\s+/);
+          const lower = ws.filter((w) => /^\p{Ll}/u.test(w)).length;
+          if (ws.length < 6 || lower < ws.length * 0.6 || !/^[\p{Lu}"“‘]/u.test(t) || /[:–—]/.test(t) || /\d/.test(t)
+            || /\b(?:by|with|feat\.?|featuring|von|par|por)\s+\p{Lu}/u.test(tn) || /(?:^|\s)\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+/u.test(tn)
+            || ws.some((w) => { const x = w.replace(/[^\p{L}]/gu, ''); return x.length > 2 && (playable(x.toLowerCase()) || isRole(cap(x))); })) continue;
+          ignored.push({ text: t, why: 'promo' });
+          unrecognized.splice(i, 1);
+        }
+      }
       // [Z-IMPROV] (3.133.0, S222) the credits of a line of improvisations: so marked (the line as written, quoted at the mark); switched off: the
       // line left out
       // ((review) only the composers – "…, recorded by X" of the same line is no improvisation)
@@ -12321,6 +12466,43 @@
         }
         if (hit && !ignored.some((g) => g.text === raw)) ignored.push({ text: raw, why: 'improv' });
       });
+      // [Z-HOMESTUDIO] [Z-RECINAREA] (3.153.0, S273) "recorded at the band's home studio in Tampere, Finland": a studio without a name – no place
+      // (MusicBrainz has none for it), said above the entries –; the town it is in an area the recordings were recorded in
+      if (ruleOn('S273')) {
+        for (let k = companies.length - 1; k >= 0; k--) {
+          const c = companies[k];
+          // (a private place of another verb – "mixed at home" –: no place, as before)
+          if (c.who && c.who.home && !/^recorded at$/i.test(String(c.role || ''))) {
+            companies.splice(k, 1);
+            continue;
+          }
+          if (!/^recorded at$/i.test(String(c.role || '')) || !(homeStudio(String((c.who && c.who.name) || '').trim()) || (c.who && c.who.home))) continue;
+          companies.splice(k, 1);
+          const area = String((c.who && c.who.area) || '').trim();
+          // (the sentence of it, and the date it gives: the time of the recordings)
+          const line = (String(c.line || '').split(/(?<=[.!?])\s+/).find((x) => x.toLowerCase().includes(String(c.who.name).toLowerCase())) || String(c.line || '')).trim();
+          const d = findDates(line)[0];
+          ignored.push({ text: c.who.name, why: 'homeStudio', area, line, ...(d && d.value ? { date: d.value } : {}) });
+          if (!area) continue;
+          const [town, ...wider] = area.split(/\s*,\s*/);
+          if (town && !companies.some((x) => /^recorded in$/i.test(String(x.role || '')) && norm(x.who.name) === norm(town))) {
+            companies.push({ ...c, who: { id: 0, name: town, rawName: town, links: [], ...(wider.length ? { area: wider.join(', ') } : {}) }, role: 'Recorded In', entity: 'area' });
+          }
+        }
+      }
+      // [Z-SURNAMES] (3.153.0, S268) a surname alone ("All tracks written by Franke / Froese / Baumann") the one full name of the same text
+      // ending with it (Chris Franke) – credited as written
+      if (ruleOn('S268')) {
+        const full = uniq(credits.map((c) => String((c.who && c.who.name) || '').trim()).filter((n) => n.split(/\s+/).length >= 2));
+        credits.forEach((c) => {
+          const n = String((c.who && c.who.name) || '').trim();
+          if (!n || /\s/.test(n) || (c.who && (c.who.id || c.who.placeholder))) return;
+          const hits = full.filter((f) => norm(f.split(/\s+/).pop()) === norm(n));
+          if (hits.length !== 1) return;
+          c.credited = c.credited || n;
+          c.who = { ...c.who, name: hits[0], rawName: hits[0], surnameOf: n };
+        });
+      }
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson, liveHeads };
@@ -26526,8 +26708,11 @@
         same = rel.companies.filter((d) => /\sAt$/.test(String(d.role || '')) && samePlaceName(d.who, c.who.name));
         byPlace = same.length > 0;
       }
+      // [Z-STUDIONAME] (3.153.0, S267) also a place of the same name written otherwise ("EastSide Sound" – Discogs: "East Side Sound"): Discogs's
+      // entry, credited as the notes write it
+      const spelt = (d) => ruleOn('S267') && /\sAt$/.test(String(c.role || '')) && /\sAt$/.test(String(d.role || ''));
       const placeCredit = (d) => {
-        if (!byPlace || !/\sAt$/.test(String(d.role || '')) || d.anv) return;
+        if (!(byPlace || spelt(d)) || !/\sAt$/.test(String(d.role || '')) || d.anv) return;
         if (norm(c.who.name) !== norm(d.who.name)) d.anv = c.who.name;
       };
       // ([Z-LICTHRU] [Z-FUNDED] 3.140.0, S231, S230) or a role of the same relationship: "Lizenz durch X" is Discogs's "Licensed Through – X",
@@ -26559,7 +26744,7 @@
       if (same.length) alt(same[0]);
       // [Z-PLDUP] (3.111.0) the same place with another role ("Recorded at Tonart" – Discogs: "Mixed At – Tonart Studio, …"): Discogs's
       // place, credited as the notes write it
-      const anv = byPlace && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
+      const anv = (byPlace || (same.length && spelt(same[0]))) && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
       rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
       added.push(`${c.who.name} (${c.role})`);
     }
@@ -27947,6 +28132,7 @@
         if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
+        homeStudioFind(seq).catch((e) => console.warn('[Credits-Importer] home studio', e)); // [Z-HOMESTUDIO] (3.153.0)
         // ([Z-OCRSUPP] 3.115.0, review) the window of the text from cover art open at its result: its buttons as the import now is
         if (S.ocr && !S.ocr.hidden && S.ocr.step === 'result') renderOcr();
         // [Z-EXC] (3.49.0) covers and quotes of the text: their works looked up (in the background)
@@ -33061,6 +33247,14 @@
   const typoHtml = (row) => ((row.typos || []).length ? `<div class="dci-sub dci-typo">${esc(row.typos.map((t) => tr('role.typoRead', { read: t.read, written: t.written })).join(' · '))}
     <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S050" title="${esc(tr('rules.gotoTitle'))}">S050</button></div>` : '');
 
+  /** [Z-BRACKETROLE] (3.153.0, S266) A role whose detail named it ("Executive-Producer [Associate Producer]"): what was read, with its rule. */
+  function corrHtml(row) {
+    const p = ruleOn('S266') && row.raw ? parseRoleNotation(row.raw)[0] : null;
+    if (!p || !p.corrected) return '';
+    return `<div class="dci-sub dci-typo" data-el="role-corrected">${esc(tr('role.corrected', { read: p.base, written: row.raw }))}
+    <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S266" title="${esc(tr('rules.gotoTitle'))}">S266</button></div>`;
+  }
+
   /**
    * [S065] (3.39.4) A word before the role the type has no attribute for: "MusicBrainz has no “assistant” for this type: credited
    * “assistant arranger”." – or, without a role credit for the type, "… in the edit note" (Q-u).
@@ -33105,7 +33299,7 @@
     // ([Z-DED] 3.67.0) a dedication: its wording and the switch "dedicated to" ⇄ "tribute to" below the role
     const drole = `<div class="dci-drole" data-raw="${esc(row.raw)}" title="${esc(label.title)}">${esc(label.text)}</div>${dedicationHtml(row)}`;
     if (row.company) {
-      return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
+      return `${drole}${srcMarksHtml(row)}${typoHtml(row)}${corrHtml(row)}
         ${row.pcFromCompany ? `<div class="dci-note dci-pcfrom">${esc(tr('role.pcFromCompany', { name: row.pcFromCompany, where: row.pcWhere || '' }))}${row.pcFromKey
           ? ` <button type="button" class="dci-textbtn" data-act="pc-as-label" title="${esc(tr('role.pcAsLabelTitle'))}">${esc(tr('role.pcAsLabel'))}</button>` : ''}</div>` : ''}
         <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${prefixNoteHtml(row)}${notesFromHtml(row)}
@@ -33115,7 +33309,7 @@
     const where = [];
     if (row.dSpec) where.push(row.dSpec);
     if (row.dPositions.length) where.push(tr('role.tracks', { list: row.dPositions.join(', ') }));
-    return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
+    return `${drole}${srcMarksHtml(row)}${typoHtml(row)}${corrHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       ${row.tarPositions ? `<div class="dci-sub dci-tartracks">${esc(tr('role.tarTracks', { list: row.tarPositions.join(', ') }))}</div>` : ''}
@@ -33761,7 +33955,9 @@
   /** [S016] Entries of "Companies, etc." named in a sentence (by their Discogs or MusicBrainz name). */
   function studiosInText(text) {
     const t = norm(text);
-    return [...S.artists.values()].filter((a) => a.company && [a.name, a.mbName].filter(Boolean)
+    // [Z-RECSENTDATE] (3.153.0, S274) not a town the recordings were made in ("recorded … in Tampere, Finland in February 2026"): the date is the
+    // time of the recordings – all of their performance (instruments, voices, "recorded by", "recorded in"), mix and mastering not
+    return [...S.artists.values()].filter((a) => a.company && !(ruleOn('S274') && entryKind(a) === 'area') && [a.name, a.mbName].filter(Boolean)
       .some((n) => { const x = norm(n).replace(/\s*\(\d+\)$/, ''); return x.length > 3 && t.includes(x); }));
   }
 
@@ -40996,6 +41192,54 @@
     return true;
   }
 
+  // --- [Z-HOMESTUDIO] (3.153.0, S273) A studio without a name ("recorded at the band's home studio in Tampere, Finland in February 2026") ------
+  // MusicBrainz has no place for it: said above the entries, counted in the statistics, nothing submitted – unless MusicBrainz has a place
+  // that is it: one owned by the release's artist ("owner"), or with the artist's name in that town; offered then (several: a list)
+
+  /** The studios without a name of the source (and of its added sources). */
+  const homeStudios = (rel = S.release) => [rel, S.supp && S.supp.rel]
+    .flatMap((r) => ((r && r.ignored) || []).filter((x) => x && x.why === 'homeStudio'));
+  /** MusicBrainz's places that may be such a studio (in the background, after the import). */
+  async function homeStudioFind(seq) {
+    S.hsPlaces = [];
+    S.hsTaken = '';
+    const hs = homeStudios();
+    if (!ruleOn('S273') || !hs.length) return;
+    const towns = uniq(hs.map((h) => String(h.area || '').split(/\s*,\s*/)[0]).filter(Boolean));
+    const out = [];
+    for (const a of (S.releaseCredit || []).filter((p) => p.mbid)) {
+      try {
+        const d = await mbWsIdle(`artist/${a.mbid}?inc=place-rels`);
+        ((d && d.relations) || []).filter((r) => r['target-type'] === 'place' && r.place && /\bowner\b/i.test(String(r.type || '')))
+          .forEach((r) => out.push({ mbid: r.place.id, name: r.place.name, why: 'owner', by: a.name }));
+      } catch (e) { /* none */ }
+      for (const town of towns) {
+        try {
+          const d = await mbWsIdle(`place?query=${encodeURIComponent(`place:"${a.name.replace(/"/g, '')}" AND area:"${town.replace(/"/g, '')}"`)}&limit=10`);
+          ((d && d.places) || []).filter((p) => p && p.name && nameKey(p.name).includes(nameKey(a.name)))
+            .forEach((p) => out.push({ mbid: p.id, name: p.name, why: 'name', by: a.name }));
+        } catch (e) { /* none */ }
+      }
+    }
+    if (seq !== importSeq) return;
+    S.hsPlaces = out.filter((x, i, all) => all.findIndex((y) => y.mbid === x.mbid) === i);
+    if (S.hsPlaces.length) renderSource();
+  }
+  function homeStudioHtml(rel) {
+    if (!ruleOn('S273')) return '';
+    const hs = homeStudios(rel);
+    if (!hs.length) return '';
+    const dateText = (d) => (d ? formatDateValue(d) : '');
+    const lines = uniq(hs.map((h) => tr('hint.homeStudio', { name: h.text, where: [h.area, dateText(h.date)].filter(Boolean).length ? ` (${[h.area, dateText(h.date)].filter(Boolean).join(' · ')})` : '' })));
+    const pl = S.hsTaken ? [] : S.hsPlaces || [];
+    const why = (p) => tr(p.why === 'owner' ? 'hint.hsOwner' : 'hint.hsName', { by: p.by });
+    const offer = !pl.length ? '' : pl.length === 1
+      ? `<p data-el="hs-offer">${esc(tr('hint.homeStudioPlace', { why: why(pl[0]) }))} <button type="button" class="dci-small" data-act="hs-take" data-mbid="${esc(pl[0].mbid)}">${esc(tr('hint.hsTake', { name: pl[0].name }))}</button></p>`
+      : `<p data-el="hs-offer">${esc(tr('hint.homeStudioPlaces', { n: pl.length }))} <select data-f="hs-pick">${pl.map((p) => `<option value="${esc(p.mbid)}">${esc(`${p.name} – ${why(p)}`)}</option>`).join('')}</select>
+        <button type="button" class="dci-small" data-act="hs-take">${esc(tr('hint.hsTakeOne'))}</button></p>`;
+    return `<div data-el="home-studio">${lines.map((t) => `<p>${esc(t)}</p>`).join('')}${offer}</div>`;
+  }
+
   /**
    * [Z-LABELLINE] [Z-CATNOLINE] (3.146.0, S250, S249) The labels and the catalogue number a text names, when MusicBrainz has others for
    * the release (or none): a hint to check them in the release editor – no relationship comes of them.
@@ -41009,7 +41253,8 @@
     if (ruleOn('S250') && labs.length && labs.some((n) => !mb.some((m) => same(m, n)))) out.push(tr('hint.labels', { list: labs.join(', '), mb: mb.join(', ') || tr('hint.none') }));
     const cats = uniq(ign.filter((x) => x && x.why === 'catnoNew').map((x) => x.catno));
     if (ruleOn('S249') && cats.length) out.push(tr('hint.catno', { list: cats.join(', '), mb: (S.releaseCatnos || []).join(', ') || tr('hint.none') }));
-    return out.length ? `<div class="dci-note dci-label-hint" data-el="label-hint">${out.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` : '';
+    const hs = homeStudioHtml(rel);
+    return out.length || hs ? `<div class="dci-note dci-label-hint" data-el="label-hint">${out.map((t) => `<p>${esc(t)}</p>`).join('')}${hs}</div>` : '';
   }
 
   // --- [Z-LINEUPHEAD] (3.146.0, S257) "Recording Line-Up:" and names below it: performers; a member of the release's group in
@@ -47657,6 +47902,24 @@
           refresh();
         }
         break;
+      // [Z-HOMESTUDIO] (3.153.0, S273) MusicBrainz's place of a studio without a name: taken (recorded at, all tracks)
+      case 'hs-take': {
+        const pick = S.overlay.querySelector('[data-f="hs-pick"]');
+        const mbid = btn.dataset.mbid || (pick && pick.value) || '';
+        const p = (S.hsPlaces || []).find((x) => x.mbid === mbid);
+        if (!p) break;
+        S.hsTaken = mbid;
+        addEntryByMbid(mbid, 'recorded at').then(() => {
+          log('info', 'hsTaken', { name: p.name });
+          renderGroups();
+          renderSource();
+          refresh();
+        }, (e) => {
+          S.hsTaken = '';
+          showError(e);
+        });
+        break;
+      }
       // [Z-LIVEEVENT] (3.147.0, S264) the head of a live video: taken, or not
       case 'live-take':
       case 'live-no': {
@@ -51619,6 +51882,8 @@
     const main = S.source === WIKIPEDIA && S.release ? (S.release.wikiRead || []).map((x) => x.lang) : [];
     return uniq([...main, ...(wikiUsed() ? ((S.suppSources && S.suppSources.get('WP')) || {}).langs || [] : [])]);
   }
+  /** [Z-HOMESTUDIO] (3.153.0) The studios without a name of this import (their town, else what the text calls them) – none once MusicBrainz's place is taken. */
+  const statHomeStudios = () => (ruleOn('S273') && !S.hsTaken ? uniq(homeStudios().map((h) => String(h.area || '').split(/\s*,\s*/)[0] || h.text)) : []);
   /** [Z-WIKISTATS] (3.149.0, review) Something of Wikipedia added as a source is used: a row taken over, changed or confirmed by it. */
   const wikiUsed = () => S.rows.some((r) => r.supp === 'WP' || (r.suppTook && r.suppTook.short === 'WP') || (r.confirmedBy && r.confirmedBy.has('WP')))
     || [...S.artists.values()].some((a) => a.suppNameTook && a.suppNameTook.short === 'WP');
@@ -51784,7 +52049,7 @@
     const hadOf = new Map([...(S.mbHad || new Map())]);
     (had.ent || new Map()).forEach((n, gid) => hadOf.set(gid, Math.max(hadOf.get(gid) || 0, n)));
     const lvl = suppLevels(hadOf, suppTouched(touched));
-    return { v: 3, mbid: releaseMbid, lvl, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ...(statWikiLangs().length ? { wl: statWikiLangs() } : {}), ocr, own: userRules().length,
+    return { v: 3, mbid: releaseMbid, lvl, start: S.statStart || null, idle: S.statIdle || 0, cr: Math.round(S.statCreate || 0), rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ...(statWikiLangs().length ? { wl: statWikiLangs() } : {}), ...(statHomeStudios().length ? { hs: statHomeStudios() } : {}), ocr, own: userRules().length,
       dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
   }
 
@@ -52070,7 +52335,7 @@
   // [stored, exported, kind of value] – a name not listed is kept as it is (both ways)
   const STAT_V2_REC = [['id', 'id'], ['mbid', 'release_mbid'], ['v', 'record_version'], ['at', 'submitted_at', 'time'], ['start', 'started_at', 'time'],
     ['ms', 'duration_s', 'sec'], ['work', 'work_s', 'sec'], ['idle', 'idle_s', 'sec'], ['cr', 'creating_s', 'sec'], ['lvl', 'levels', 'lvl'], ['rel', 'release', 'rel'],
-    ['src', 'source'], ['supp', 'added_sources'], ['wl', 'wikipedia_languages'], ['ocr', 'text_from_cover_art'], ['own', 'own_rules'], ['dev', 'developer'], ['x', 'extras'], ['rels', 'relationships', 'rels']];
+    ['src', 'source'], ['supp', 'added_sources'], ['wl', 'wikipedia_languages'], ['hs', 'home_studios'], ['ocr', 'text_from_cover_art'], ['own', 'own_rules'], ['dev', 'developer'], ['x', 'extras'], ['rels', 'relationships', 'rels']];
   const STAT_V2_REL = [['media', 'media_count'], ['rgp', 'release_group_primary_type'], ['rgs', 'release_group_secondary_types'], ['lang', 'language'],
     ['lens', 'recording_lengths_ms'], ['whole', 'length_ms'], ['before', 'relationships_before'], ['recs', 'recording_count']];
   const STAT_V2_IT = [['k', 'status', 'status'], ['lt', 'type'], ['lv', 'level'], ['et', 'target_entity_type'], ['tg', 'target_mbid'], ['tn', 'target_name'],
@@ -52757,7 +53022,7 @@
       own: 0, ownRels: new Map(), srcTime: new Map(), srcRel: new Map(), suppRel: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
-      genres: new Map(), bcTags: new Map(), genresAll: new Map(), wikiLangs: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map(),
+      genres: new Map(), bcTags: new Map(), genresAll: new Map(), wikiLangs: new Map(), homeStudios: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map(),
       // [Z-STK, Z-WKD] (3.53.0) days, weeks (from Monday), months with something submitted; the submissions by weekday
       dayIdx: new Set(), weekIdx: new Set(), monthIdx: new Set(), weekdaySubs: new Array(7).fill(0),
       // [Z-ALI] (3.53.0) role credits (of relationships with instruments or vocals), credited as, the role credits used, entries found through an alias
@@ -52782,6 +53047,7 @@
       const rels = r.rels || [];
       inc(m.src, r.src || 'other');
       (r.wl || []).forEach((l) => inc(m.wikiLangs, l)); // [Z-WIKISTATS] (3.149.0)
+      (r.hs || []).forEach((h) => inc(m.homeStudios, h)); // [Z-HOMESTUDIO] (3.153.0)
       // (3.45.0, review) the releases per source (a release submitted twice is one), and the releases with a supplement
       const sk = r.src || 'other';
       if (!m.srcRel.has(sk)) m.srcRel.set(sk, new Set());
@@ -53137,7 +53403,7 @@
       ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
         ${kv(['day', 'month', 'year'].map((k) => [k, m.prec.get(k) || 0]), (k) => tr(`stats.prec.${k}`))}
         ${kv(['notes', 'hand'].map((k) => [k, m.dsrc.get(k) || 0]), (k) => tr(`stats.dsrc.${k}`))}
-        <h5>${esc(tr('stats.places'))}</h5>${kv(top(m.places, 3))}`)}
+        <h5>${esc(tr('stats.places'))}</h5>${kv(top(m.places, 3))}${m.homeStudios.size ? `<p class="dci-sub" data-el="stats-home-studios" title="${esc(tr('stats.homeStudiosTitle'))}">${esc(tr('stats.homeStudios', { n: statNum([...m.homeStudios.values()].reduce((t, n) => t + n, 0)), list: top(m.homeStudios, 3).map(([k]) => k).join(', ') }))}</p>` : ''}`)}
       ${card('levels', `${kv(['recording', 'release', 'work', 'release_group'].map((k) => [k, m.lv.get(k) || 0]).filter(([, n]) => n), (k) => tr(`level.${k}`))}
         <p class="dci-sub">${esc(tr('stats.works', { n: statNum(m.works) }))}</p>`)}
       ${ruleOn('S143') ? card('perrelease', statPerReleaseHtml(statPerRelease(recs), '3.91.0')) : ''}

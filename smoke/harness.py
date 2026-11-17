@@ -484,6 +484,8 @@ WORK_QUERIES = []
 # browse "recording?artist=" → artist gid → [{'title', 'work': {'id', 'title'}}] (a work may be missing) or a number
 # (that many recordings without works – a large catalogue). BROWSES records the browse requests (kind, artist, offset).
 ARTIST_WORKS = {}
+# [3.153.0] (Z-HOMESTUDIO) the places of an artist in MusicBrainz: mbid → [(place gid, name, relationship type)]
+ARTIST_PLACES = {}
 # [3.54.0] /ws/2/artist/<gid>: what MusicBrainz has of an artist (gid → fields of the answer) and the lookups made (gid, query)
 ARTIST_INFO = {}
 ARTIST_LOOKUPS = []
@@ -935,7 +937,9 @@ def install_routes(ctx):
             return json_route(route, {'id': a, **ARTIST_INFO.get(a, {}), 'relations': [
                 {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
                 for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band
-                + [{'target-type': 'url', 'type': 'official homepage', 'url': {'resource': x}} for x in ENTITY_URLS.get(a, [])]})
+                + [{'target-type': 'url', 'type': 'official homepage', 'url': {'resource': x}} for x in ENTITY_URLS.get(a, [])]
+                # [3.153.0] (Z-HOMESTUDIO) places of the artist (ARTIST_PLACES: mbid → [(place gid, name, type)])
+                + [{'target-type': 'place', 'type': ty, 'direction': 'forward', 'place': {'id': g, 'name': n}} for g, n, ty in ARTIST_PLACES.get(a, [])]})
         m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
         if m:
             return json_route(route, ws_work(m.group(1)))

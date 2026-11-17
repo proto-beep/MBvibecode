@@ -253,6 +253,10 @@
      "$ref": "#/$defs/strings",
      "description": "The languages of Wikipedia read for the release (3.149.0)"
     },
+    "home_studios": {
+     "$ref": "#/$defs/strings",
+     "description": "Studios without a name the source gave (their town, else what the source calls them) – not submitted to MusicBrainz (3.153.0)"
+    },
     "text_from_cover_art": {
      "type": [
       "object",
