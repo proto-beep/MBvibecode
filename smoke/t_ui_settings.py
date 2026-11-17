@@ -57,7 +57,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('beta', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen ([Z-QUICKFILL] 3.150.0: Beta again)
+                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen ([Z-QUICKFILL] 3.150.0: Beta again; [Z-QFBETA] 3.156.0: greyed again)
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -3029,6 +3029,9 @@ def case_profiles():
         # I) (review) a quick switch under "Standard" (the window "Mapping rules"): a new profile with it
         pg.locator('.dci-head [data-act=rules]').first.evaluate('b => b.click()')
         H.wait_for(pg, "!!document.querySelector('[data-qs-toggle=S078]')", 15)
+        # ([Z-QSSCOPE] 3.156.0) stored – and so in a profile – only with its box "permanent" ticked
+        pg.locator('[data-qs-perm=S078]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
         pg.locator('[data-qs-toggle=S078]').first.evaluate('b => b.click()')
         pg.wait_for_timeout(600)
         i1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE) != 'std', pg.evaluate("JSON.parse(localStorage.getItem('dci-profiles'))[0].quick.S078")]
