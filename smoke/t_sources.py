@@ -20,7 +20,8 @@ def case_adapter():
        from the format, the US date order, the Discogs tab; choosing among two linked releases, a typed URL, a
        release Discogs does not have, a typed text without a release.
     D) Update from 2.19.1 (generation 3): no reset in 3.0.0; since 3.5.0 the fresh start (generation 4) resets once, the
-       notice shows the milestones from 3.0.0 on and says so. An update within generation 4 resets nothing.
+       notice shows the milestones from 3.0.0 on and says so – from 3.158.0 (Z-MILESTONES) the newest five and
+       "and n more milestones". An update within generation 4 resets nothing.
     PARTS=C runs only C (C passes on Import 2.19.1 too: nothing visible changed)."""
     import json
     import os
@@ -284,7 +285,8 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             print('D) Update von 2.19.1 – Speicher vorher:', before, '| nachher:', after)
             print('   Nachricht:', n[:220])
             # ([Z-QSP] 3.75.0) the profiles (made at the first start above) are kept too
-            ok_d = after == ['dci-notice-version', 'dci-profile', 'dci-profiles', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and 'Import 3.0.0' in n and 'Credits Importer 3.5.0' in n \
+            ok_d = after == ['dci-notice-version', 'dci-profile', 'dci-profiles', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and pg.locator('#dci-notice li').count() == 5 and 'Credits Importer 3.157.0' in n and 'Credits Importer 3.148.0' in n \
+                and 'Credits Importer 3.137.0' not in n and re.search(r'and \d+ more milestones', n) \
                 and 'Import 2.19.0' not in n and 'reset once' in n and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
             # within generation 4 (as if 3.5.0 ran before): nothing is reset
             pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v)); localStorage.removeItem('dci-updated-from');
