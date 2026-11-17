@@ -486,7 +486,7 @@ def case_facets():
     B) After "Apply" of the date matrix: Goldsmiths one row with 1981-05-22; Heiman two – 1979-10-04 on C1–D, 1980-05-02 on E1–F2
        (until 3.36.6 Goldsmiths got all three dates).
     C) "in live concert": the new work of A2 has "li" preselected (S021), the existing link of A1 offers it; with ⚙ Settings → Staging
-       "live comments" on, A2's comment is "live, 1981‐05‐22: Goldsmiths College".
+       "live comments" on, A2's comment is "live, 1981‐05‐22: Goldsmith’s College" (since 3.153.0 the notes' spelling, S267).
     D) Pasted as a text: "1.1 to 1.2 recorded 3rd June 2001 at Abbey Road Studios, London" – the place on these two tracks."""
     import re
     POS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D', 'E1', 'E2', 'E3', 'E4', 'F1', 'F2']
@@ -563,7 +563,8 @@ E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
         pills = pg.evaluate("""[0, 1].map(i => [...document.querySelectorAll('.dci-matrix tbody tr[data-work="' + i + '"] .dci-wpill-on, .dci-matrix tbody tr[data-work="' + i + '"] .dci-wpill-hint')].map(b => b.textContent.trim()))""")
         com = pg.evaluate("[...document.querySelectorAll('.dci-livecom-table [data-f=livecom-text]')].map(x => x.value)")
         print('C) li an A1, A2:', pills, '| Kommentar:', com)
-        results.append(pills[0] == ['li?'] and pills[1] == ['li'] and com == ['live, 1981‐05‐22: Goldsmiths College'])
+        # [3.153.0] S267: the notes' spelling is the "credited as" of the place, and the comment takes it
+        results.append(pills[0] == ['li?'] and pills[1] == ['li'] and com == ['live, 1981‐05‐22: Goldsmith’s College'])
         # D) pasted as a text
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', '1.1 to 1.2 recorded 3rd June 2001 at Abbey Road Studios, London')

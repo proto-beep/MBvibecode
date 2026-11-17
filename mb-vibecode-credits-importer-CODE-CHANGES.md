@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.152.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.153.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.153.0 · 2026-11-17
+
+- **Z-ALLMUSIC / Z-ARRWORK (S265), Z-BRACKETROLE (S266):** `parseRoleNotation` – `allRepeat(base, mod)` (`roleStems`), `bracketRole(base, mods)` (`BRACKET_HEADS`; the part gets `corrected`); `corrHtml(row)` beside `typoHtml` (`[data-el=role-corrected]`, text `role.corrected`).
+- **Z-STUDIONAME (S267):** `addNotesCompanies` – `spelt(d)`: a place of the same name written otherwise gets the notes' spelling as its credit (`anv`), also for a role of its own.
+- **Z-INSTRNEW / Z-SHAREDHEAD:** mapping – `INSTRUMENT_ALIASES` (T001) + project electronic rhythm computer, electronic rhythm computer, rhythm computer, fender e piano, fender e-piano, e piano, e-piano, mouth organ, loop mellotron, moog synthesizer, moog, grand piano, six string guitar, six-string guitar, 6-string guitar, twelve string guitar; `INSTRUMENT_MODIFIER` + the number words and numbers of strings. `lowerWord` – one capital letter (with ♭/♯) as written.
+- **Z-SURNAMES (S268):** `TEXT.parse` (end) – a credit of one word gets the one full name of the text ending with it (`credited`, `who.surnameOf`). Mapping `R098` + "all tracks written by", "tracks written by", "all tracks by", "all titles written by", "all compositions written by".
+- **Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN (S269):** `tidyLines` – the heading word before a list, the parts of a line with semicolons (each a credit of its own), a "Name: roles" line ending in a joining word with the line below.
+- **Z-CAPSTITLE (S270):** `readClause` – the release's title (`releaseTitle`) before "was / were … recorded" as "The album".
+- **Z-PROMOPROSE (S271):** `TEXT.parse` (end) – ignored `promo` (text `ignored.why.promo`).
+- **Z-DASHASIDE (S272):** `tidyLines` – asides between dashes in sentences of ten words or more (`asideLines`); ignored `aside`.
+- **Z-HOMESTUDIO / Z-RECINAREA (S273):** `HOME_STUDIO`, `homeStudio(x)`; `placeOf` – a private place (`PRIVATE_PLACE`) kept with `home` (only "recorded" / "tracked" at it; others as before); `tidyLines` – "recorded in their own studio" → "recorded at"; `TEXT.parse` (end) – the studio an ignored `homeStudio` (`area`, `line`, `date`), its town a company "Recorded In". Dashboard: `homeStudios(rel)`, `homeStudioFind(seq)` (after "Import complete": `artist/<mbid>?inc=place-rels` – type "owner" –, `place?query=place:"<artist>" AND area:"<town>"`), `homeStudioHtml(rel)` in `labelHintHtml` (`[data-el=home-studio]`, `[data-f=hs-pick]`, act `hs-take` → `addEntryByMbid(…, 'recorded at')`, log `hsTaken`), `S.hsPlaces`, `S.hsTaken`. Statistics: `statHomeStudios()`, the record's `hs` (exported `home_studios`, schema), `m.homeStudios`, `stats.homeStudios` with `stats.homeStudiosTitle`. Texts `hint.homeStudio*`, `hint.hs*`, `ignored.why.homeStudio`, `ignored.why.aside`.
+- **Z-RECSENTDATE (S274):** `studiosInText` – an area is no studio of a date.
+- **Tests:** `t_text_basics.py freetext3153`, `dgroles3153` – new, fail on 3.152.0. `harness.py`: `ARTIST_PLACES`. `register_golden.json` anew (R098, the rules S265 – S274, T001).
 
 ## Import 3.152.0 · 2026-11-17
 

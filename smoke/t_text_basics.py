@@ -2447,4 +2447,197 @@ def case_video3147ui():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_freetext3153():
+    """Credits Importer 3.153.0 (collected items of the block "Discogs roles and the lines of free texts").
+    A) A booklet's credits pasted (the release's artist Tangerine Dream): "Personnel:" a heading; "Twelve and Six String Guitar" two guitars
+       (Z-SHAREDHEAD); Moog Synthesizer, Project Electronic Rhythm Computer (drum machine), Fender E Piano (Rhodes piano, credited "Fender E piano"),
+       Loop Mellotron, Grand Piano, Mouth Organ (harmonica) (Z-INSTRNEW); "Peter Baumann: Bass /" above "Guitar, Mouth Organ" one line
+       (Z-OCRLINEJOIN); "All tracks written by Franke / Froese / Baumann" – the full names of the text, writers of the works (Z-SURNAMES);
+       "Personnel: Edgar Froese (guitar); …; recording engineer: otto" read part by part (Z-PERSONNELHEAD, Z-SEMICOLON). Nothing "not recognized".
+    B) The text of Skyjoggers (the release's title "Frag nicht nach Sonnenschein" in capitals as the subject, Z-CAPSTITLE): the credits; the aside
+       between dashes left out (Z-DASHASIDE), the first sentence a description of the music (Z-PROMOPROSE), the home studio said above the entries
+       (Tampere, Finland · 2026-02) and Tampere "recorded in" (Z-HOMESTUDIO, Z-RECINAREA); the date of the sentence a performance date for all
+       tracks, not only Tampere's (Z-RECSENTDATE). Staged and "Enter edit": the statistics' job names the home studio (Tampere).
+    C) The band owns two places in MusicBrainz: a list; the second taken – an entry "recorded at" (Z-HOMESTUDIO).
+    D) Discogs: "Composed By [All Music Composed By], Arranged By [All Music Arranged By], Conductor [All Music Conducted By]" – composer and
+       arranger on the works (not "instrument arranger"), the conductor without a credit (Z-ALLMUSIC, Z-ARRWORK); "Executive-Producer [Associate
+       Producer]" read as "Associate Producer", said at the row (Z-BRACKETROLE); the notes' "EastSide Sound" credited on Discogs's "East Side
+       Sound" (Z-STUDIONAME)."""
+    import json
+    BOOKLET = """Personnel:
+Edgar Froese: Mellotron, Moog Synthesizer, Twelve and Six String Guitar, Bass
+Chris Franke: Moog Synthesizer, Project Electronic Rhythm Computer, Fender E Piano
+Peter Baumann: Bass /
+Guitar, Mouth Organ, Loop Mellotron, Grand Piano
+Produced by
+Tangerine Dream
+All tracks written by Franke / Froese / Baumann
+Personnel: Klaus Kruger (drums); recording engineer: otto"""
+    SKY = ("Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction. FRAG NICHT NACH SONNENSCHEIN was recorded at the bands home "
+           "studio in - the capital of Finnish psychedelic rock - Tampere, Finland in February 2026. The album was recorded and produced by Skyjoggers, mixed by "
+           "Anssi Vättö and mastered by Janne Hakanen.")
+    for i, n, al in [(9301, 'mellotron', []), (9302, 'harmonica', []), (9303, 'drum machine', []), (9304, 'rhodes piano', []), (9305, 'electric piano', []),
+                     (9306, 'grand piano', []), (9307, '12 string guitar', [])]:
+        H.attr(i, n, 14, 14, aliases=al)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    DUMP = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const pr = tr.querySelector('[data-f=primary]'); const cr = tr.querySelector('[data-f=role-credit]');
+        const t = tr.querySelector('[data-f=type]'); return [(t && t.selectedOptions[0] || {}).text || '', pr ? pr.value : '', cr ? cr.value : '']; })])"""
+    MATRIX = "((document.querySelector('.dci-matrix') || {}).innerText || '').replace(/\\s+/g, ' ')"
+    results = []
+
+    def load(pg, text):
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', text)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+
+    orig_ac, orig_title = list(H.RELEASE_AC), H.REL_TITLE
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            # A) the booklet
+            H.RELEASE_AC[:] = [(H.uid('dddddddd', 76), 'Tangerine Dream', 'Tangerine Dream', '')]
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            load(pg, BOOKLET)
+            g = dict((n, rows) for n, rows in pg.evaluate(DUMP))
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            mx = pg.evaluate(MATRIX)
+            print('A)', json.dumps(g, ensure_ascii=False)[:900], '| nicht erkannt:', unrec)
+            inst = lambda n: sorted((r[1], r[2]) for r in g.get(n, []) if r[0] == 'instrument')
+            results.append(inst('Edgar Froese') == sorted([('mellotron', ''), ('synthesizer', 'Moog synthesizer'), ('12 string guitar', 'twelve string guitar'), ('guitar', 'six string guitar'), ('bass', '')])
+                           and ('drum machine', 'project electronic rhythm computer') in inst('Chris Franke') and ('rhodes piano', 'Fender E piano') in inst('Chris Franke')
+                           and sorted(x[0] for x in inst('Peter Baumann')) == ['bass', 'grand piano', 'guitar', 'harmonica', 'mellotron']
+                           and [x[0] for x in inst('Klaus Kruger')] == ['drums (drum set)'] and any(r[0] == 'recording' for r in g.get('otto', []))
+                           and not any(n in g for n in ('Franke', 'Froese', 'Baumann')) and all(x in mx for x in ('Edgar Froese', 'Chris Franke', 'Peter Baumann'))
+                           and unrec == [])
+            print('   Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+            # B) Skyjoggers
+            SKYJ = H.uid('dddddddd', 77)
+            H.RELEASE_AC[:] = [(SKYJ, 'Skyjoggers', 'Skyjoggers', '')]
+            H.REL_TITLE = 'Frag nicht nach Sonnenschein'
+            H.JS_ARTISTS[SKYJ] = (3977, 'Skyjoggers')
+            H.ARTIST_PLACES[SKYJ] = [(H.uid('eeeeeeee', 101), 'Skyjoggers HQ', 'owner'), (H.uid('eeeeeeee', 102), 'Skyjoggers Rehearsal Room', 'owner')]
+            H.COMPANIES[1101] = ('place', H.uid('eeeeeeee', 101), 'Skyjoggers HQ')
+            H.COMPANIES[1102] = ('place', H.uid('eeeeeeee', 102), 'Skyjoggers Rehearsal Room')
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            load(pg, SKY)
+            H.wait_ok(pg, "!!document.querySelector('[data-f=hs-pick]')", 20)
+            g = dict((n, rows) for n, rows in pg.evaluate(DUMP))
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' '))")
+            hint = pg.evaluate("((document.querySelector('[data-el=home-studio]') || {}).innerText || '').replace(/\\s+/g, ' ')")
+            dmt = pg.evaluate("((document.querySelector('[data-el=dm]') || {}).innerText || '').replace(/\\s+/g, ' ')")
+            perf = dmt[dmt.find('Performance'):dmt.find('Mix')]
+            print('B)', g, '\n   ausgelassen:', ign, '\n   Hinweis:', hint, '\n   Performance:', perf)
+            results.append(sorted(g) == ['Anssi Vättö', 'Janne Hakanen', 'Skyjoggers', 'Tampere'] and g['Tampere'][0][0] == 'recorded in'
+                           and any(x.startswith('the capital of Finnish psychedelic rock – an aside') for x in ign) and any(x.startswith('Expect a heavy dose') and 'description of the music' in x for x in ign)
+                           and any(x.startswith('the bands home studio – a studio without a name') for x in ign)
+                           and 'Recorded at the bands home studio (Tampere, Finland · 2026-02)' in hint and '2026-02' in perf and 'Tampere' not in perf)
+            # (staged, "Enter edit": the job of the statistics names the home studio)
+            pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(500)
+            pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.evaluate("""(() => { const ta = document.getElementById('edit-note-text'); const f = document.createElement('form'); f.addEventListener('submit', (e) => e.preventDefault());
+              ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button'); btn.type = 'submit'; btn.id = 'test-enter-edit'; btn.textContent = 'Enter edit';
+              f.appendChild(btn); })()""")
+            pg.evaluate("document.getElementById('test-enter-edit').click()")
+            pg.wait_for_timeout(500)
+            job = json.loads(pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')") or 'null')
+            note = pg.evaluate("document.getElementById('edit-note-text').value")
+            print('   Auftrag:', (job or {}).get('rec', {}).get('hs'), '| Notiz nennt das Studio:', 'home studio' in note)
+            results.append(job is not None and job['rec'].get('hs') == ['Tampere'] and 'home studio' not in note)
+            # C) the band's places: a list, the second taken
+            opts = pg.evaluate("[...document.querySelectorAll('[data-f=hs-pick] option')].map(o => o.textContent)")
+            pg.select_option('[data-f=hs-pick]', H.uid('eeeeeeee', 102))
+            pg.click('[data-act=hs-take]')
+            H.wait_ok(pg, "[...document.querySelectorAll('section.dci-group .dci-gname strong')].some(s => /Rehearsal Room/.test(s.textContent))", 20)
+            pg.wait_for_timeout(300)
+            g2 = dict((n, rows) for n, rows in pg.evaluate(DUMP))
+            print('C) Liste:', opts, '| Eintrag:', g2.get('Skyjoggers Rehearsal Room'), '| Angebot noch da:', pg.evaluate("!!document.querySelector('[data-el=hs-offer]')"))
+            results.append(opts == ['Skyjoggers HQ – owned by Skyjoggers', 'Skyjoggers Rehearsal Room – owned by Skyjoggers'] and g2.get('Skyjoggers Rehearsal Room')
+                           and g2['Skyjoggers Rehearsal Room'][0][0] == 'recorded at' and not pg.evaluate("!!document.querySelector('[data-el=hs-offer]')"))
+            print('   Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+            b.close()
+    finally:
+        H.RELEASE_AC[:] = orig_ac
+        H.REL_TITLE = orig_title
+        H.ARTIST_PLACES.clear()
+        H.JS_ARTISTS.clear()
+        for k in (1101, 1102):
+            H.COMPANIES.pop(k, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dgroles3153():
+    """Credits Importer 3.153.0 (Z-ALLMUSIC, Z-ARRWORK, Z-BRACKETROLE, Z-STUDIONAME): see case_freetext3153 D)."""
+    import subprocess
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [ex('Bass Man', 'Composed By [All Music Composed By], Arranged By [All Music Arranged By], Conductor [All Music Conducted By]', 3001),
+                             ex('Bob Producer', 'Executive-Producer [Associate Producer]', 3005)]
+        d['companies'] = [{'name': 'East Side Sound', 'entity_type_name': 'Recorded At', 'id': 1006, 'catno': ''}]
+        d['notes'] = 'Recorded and mixed December 1-3, 1997 at EastSide Sound, NYC.'
+        return d
+    H.discogs_release = rel
+    H.COMPANIES[1006] = ('place', H.uid('eeeeeeee', 6), 'East Side Sound')
+    H.lt(150, '3b6616c5-88ba-4341-b4ee-81ce1e6d7ba4', 'conductor', 'artist', 'recording', (1,))
+    H.lt(1186, '4820daa1-98d6-4f8b-aa4b-6895c5b79b27', 'instrument arranger', 'artist', 'recording', (14, 1))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    DUMP = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const cr = tr.querySelector('[data-f=role-credit]');
+        const ac = tr.querySelector('[data-f=credit]'); return [(t && t.selectedOptions[0] || {}).text || '', cr ? cr.value : '', ac ? ac.value : '',
+        (tr.querySelector('[data-el=role-corrected]') || {}).textContent || '']; })])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = dict((n, rows) for n, rows in pg.evaluate(DUMP))
+            mx = pg.evaluate("((document.querySelector('.dci-matrix') || {}).innerText || '').split('\\n').map(x => x.trim()).filter(Boolean)")
+            i = next((k for k, x in enumerate(mx) if x.endswith('Bass Man')), -1)
+            print('D)', {k: g[k] for k in ('Bass Man', 'Bob Producer', 'East Side Sound') if k in g}, '| Matrix:', mx[i:i + 12] if i >= 0 else None)
+            results.append(i >= 0 and 'composer' in mx[i:i + 12] and 'arranger' in mx[i:i + 12] and 'instrument arranger' not in ' '.join(mx)
+                           and g.get('Bass Man') == [['conductor', '', '', '']]
+                           and g.get('Bob Producer') and g['Bob Producer'][0][0] == 'producer' and g['Bob Producer'][0][3].startswith('Read as “Associate Producer”')
+                           and g.get('East Side Sound') and all(r[2] == 'EastSide Sound' for r in g['East Side Sound']) and len(g['East Side Sound']) == 2)
+            print('   Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.COMPANIES.pop(1006, None)
+    # Node: the notation
+    js = """global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+console.log(JSON.stringify(['Composed By [All Music Composed By]', 'Lyrics By [All Lyrics By]', 'Executive-Producer [Associate Producer]', 'Guitar [Rhythm Guitar]',
+  'Producer [Co-producer]', 'Arranged By [Strings]'].map((x) => { const p = m.parseRoleNotation(x)[0]; return [p.base, p.mods, p.corrected || '']; })));"""
+    out = subprocess.run(['node', '-e', js, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    print('E)', out.stdout.strip(), out.stderr[-300:])
+    results.append(json.loads(out.stdout or 'null') == [['Composed By', [], ''], ['Lyrics By', [], ''], ['Associate Producer', [], 'Executive-Producer'],
+                                                        ['Guitar', ['Rhythm Guitar'], ''], ['Producer', ['Co-producer'], ''], ['Arranged By', ['Strings'], '']])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
