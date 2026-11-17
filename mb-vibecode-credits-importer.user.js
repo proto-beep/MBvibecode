@@ -4994,7 +4994,7 @@
     { id: 'S268', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-SURNAMES): a surname alone ("All tracks written by Franke / Froese / Baumann") is the one full name of the same text ending with it (Chris Franke), credited as written; "All tracks written by" a writer on the works (R098)' },
     { id: 'S269', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected items Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN): "Personnel:" (line-up, musicians, Besetzung) before a list is no part of it; a paragraph of credits with semicolons is a line per part ("recording engineer: otto" in the middle); a line of roles broken after "/", "&", "and" – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" – is one line' },
     { id: 'S270', where: 'TEXT.parse (readClause)', note: 'Texts (3.153.0; collected item Z-CAPSTITLE): the release\'s title as the subject – "FRAG NICHT NACH SONNENSCHEIN was recorded at …", in capitals or not – is the album (no person), as "The album was …"' },
-    { id: 'S271', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-PROMOPROSE): a sentence that describes the music – "Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction" – is left out ("a description of the music"), not "not recognized": no name, no role, no instrument, no title of the release or its tracks' },
+    { id: 'S271', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-PROMOPROSE): a sentence that describes the music – "Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction" – is left out ("a description of the music"), not "not recognized": it speaks of the music (riffs, grooves, sound, album, songs …); no name, no role, no instrument, no title of the release or its tracks, nothing about how it was made, no guests, no quote (S244)' },
     { id: 'S272', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected item Z-DASHASIDE): an aside between two dashes in a sentence – "recorded at the bands home studio in - the capital of Finnish psychedelic rock - Tampere, Finland" – is read apart: the sentence around it, the aside as a line of its own (a name in it is read); one that gives nothing is left out ("an aside")' },
     { id: 'S273', where: 'HOME_STUDIO, placeOf, TEXT.parse (end), homeStudioHtml, homeStudioFind', note: 'Places (3.153.0; collected items Z-HOMESTUDIO, Z-RECINAREA): a studio without a name ("the band\'s home studio", "their own studio", "im eigenen Studio", "at home") is no place – said above the entries (where, when), counted in the statistics (not submitted); its town is "recorded in" (found in MusicBrainz, else nothing). MusicBrainz\'s place of it is offered only when the release\'s artist owns it ("owner") or it has the artist\'s name in that town (several: a list)' },
     { id: 'S274', where: 'studiosInText', note: 'Dates (3.153.0; collected item Z-RECSENTDATE): a date in the sentence of the recordings ("recorded … in Tampere, Finland in February 2026", "tracked in March 2025") is the time of the recordings – the performance (instruments, voices, "recorded by", "recorded in") of all tracks, not only of the town; mix and mastering keep no date' },
@@ -8748,7 +8748,8 @@
           out = out.flatMap((l) => {
             if (l.split(/\s+/).length < 10) return [l];
             const asides = [];
-            const t = l.replace(/(\p{Ll}[\p{L}'’]*)\s+[-–—]\s+([^-–—]{3,120}?)\s+[-–—]\s+(?=\S)/gu, (w, before, inner) => {
+            // ((the word before it a whole word in small letters – not "Bob Roe – drums, Cid Doe – guitar")
+            const t = l.replace(/(?<!\p{L})(\p{Ll}[\p{L}'’]*)\s+[-–—]\s+([^-–—]{3,120}?)\s+[-–—]\s+(?=\S)/gu, (w, before, inner) => {
               if (inner.split(/\s+/).length < 3) return w;
               asides.push(inner.trim());
               return `${before} `;
@@ -12442,7 +12443,11 @@
           const tn = (titleNames || []).filter((x) => x && x.length >= 3).reduce((acc, x) => acc.replace(new RegExp(escRe(x), 'giu'), ' '), t.replace(/\([^)]*\)/g, ' '));
           const ws = t.split(/\s+/);
           const lower = ws.filter((w) => /^\p{Ll}/u.test(w)).length;
-          if (ws.length < 6 || lower < ws.length * 0.6 || !/^[\p{Lu}"“‘]/u.test(t) || /[:–—]/.test(t) || /\d/.test(t)
+          // ((about the music – "riffs", "grooves", "album", "songs" …; not a sentence about how it was made, nor guests, nor a quote: S244's)
+          if (!/\b(?:music|musical|sound|sonic|album|records?|songs?|tracks?|tunes?|riffs?|grooves?|melod\w*|rhythm\w*|beats?|vibes?|psychedel\w*|ambient|jazz\w*|rock|pop|noise|drones?|listen\w*|dose|journey)\b/i.test(t)
+            || /\b(?:distribut\w*|mix(?:ed|ing)|master(?:ed|ing)|produc\w*|engineer\w*|compos\w*|arrang\w*|written|design\w*|photograph\w*|guests?|featuring)\b/i.test(t)
+            || /^["“‘]/u.test(t)) continue;
+          if (ws.length < 6 || lower < ws.length * 0.6 || !/^[\p{Lu}]/u.test(t) || /[:–—]/.test(t) || /\d/.test(t)
             || /\b(?:by|with|feat\.?|featuring|von|par|por)\s+\p{Lu}/u.test(tn) || /(?:^|\s)\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+/u.test(tn)
             || ws.some((w) => { const x = w.replace(/[^\p{L}]/gu, ''); return x.length > 2 && (playable(x.toLowerCase()) || isRole(cap(x))); })) continue;
           ignored.push({ text: t, why: 'promo' });

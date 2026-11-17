@@ -2255,7 +2255,9 @@ def case_review3144():
             print('S244 aus' if off else 'S244 an', got)
             whys = [w for f, w in got['ign'] if 'review' in w]
             if off:
-                results.append(not whys and 'Bass Man' in got['names'] and 'There are records that feel assembled, and there are records that feel found.' in got['unrec'])
+                # ([3.153.0] S271: the sentence about records is a description of the music – left out as such, no longer "not recognized")
+                results.append(not whys and 'Bass Man' in got['names'] and ('There are records that feel assembled, and there are records that feel found.' in got['unrec']
+                                                                             or '– a description of the music (no credit)' in [w for f, w in got['ign']]))
             else:
                 results.append(whys == ['– review (press quote): SOUND MAGAZINE / October 2026 · 4.5 / 5.0', '– review (press quote): STATIC RADIO / October 2026',
                                         '– review (press quote): The Daily Echo']
