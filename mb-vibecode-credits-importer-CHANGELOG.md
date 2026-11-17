@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.154.0 | – |
+| 2026-11-17 | 3.152.0 – 3.156.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.156.0
+
+- **Quick switches for this import** (Z-QSSCOPE): a click on a quick switch changes it for this import only (marked, with a note in the head); the box **permanent** at each switch stores its changes as before – several switches each on their own.
+- **Instruments: all tracks | ⑃ on the release + group** (Z-INSTSCLEAR): in the colours of their levels, the one not chosen greyed, ⑃ in the second; beside them in italics what the second would enter (release – the instruments · recordings – their group). Back and forth as often as you like without new rows. Suggested **from two** instruments without tracks (Z-INSTS2; before four).
+- **Dates from the dates matrix** (Z-EMDATEDROP): a date dragged from a column of the dates matrix can be dropped onto an entry's matrix (a line, an event, a block) as a date of the pool.
+- **Number words before instruments** (Z-NUMSTRING; S285): "25-String Gayageum" → "25-string gayageum", "Twelve-String Guitar", "Double-Neck Guitar"; a model name keeps its capitals ("Rickenbacker 12-String").
+- **What goes to MusicBrainz underlined** (Z-CREDITUL; S286): the matched name, or – when the entry has one – its "credited as", underlined in MusicBrainz purple.
+- **The head of an entry's matrix** (Z-STICKYOVERLAP) stays in its box while scrolling (it painted over the bar on top of the dashboard); with its dates open it sticks below that bar.
+- **Fill empty recordings** (Z-QFBETA): "Credit fill" without "Beta" – under ⚙ Settings → Staging, the button in the look of "Import credits …", set apart by a line; the edit note and the statistics say "Fill empty recordings".
+
+### Import 3.155.0
+
+- **✨ Answer all** (Z-WORKMAGIC; S284): a button in the head of the works matrix answers its open questions – nothing is entered in MusicBrainz, each answer is what a click in the matrix would do and can be changed as before.
+  - **Levels** at ▾ (remembered): Careful (default) – only what is as good as certain; Balanced – what is clear in the sources and MusicBrainz; Bold – also the most likely answer where there are several. **ⓘ** shows a table of what each level answers, question by question.
+  - **The questions**: suites (from a heading · an index track · the release's title), works (one work of the title with all writers · one found, none: a new work · several: the one of the title with the most writers – MusicBrainz's numbers of recordings are not loaded), medleys (split when each part · one part is a work of the track's writers; looked up first), live (the track itself · the release group, a concert, a credit for all · the format, the notes), cover (the cover set by itself kept · the offers "co?"), publishers (the only one suggested for a track · all suggested), column dates (writers of improvisations: the one session of all tracks), dedications (one entry of the name · also on the release group).
+  - **A preview first** ("Answer these (n)"), then each answer marked ✨ at its track (its tooltip says what) and in the log; **↺ Undo magic** takes all of them back.
+  - **⚙ Settings → Works**: the level and a switch for each kind of question.
 
 ### Import 3.154.0
 

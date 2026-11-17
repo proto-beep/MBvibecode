@@ -967,15 +967,16 @@ def case_quickfill3150():
         a0 = pg.evaluate("document.getElementById('dci-quickfill').hidden")
         H.open_dashboard(pg)
         H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
-        H.open_settings(pg, 'beta')
+        H.open_settings(pg, 'staging')
+        # ([Z-QFBETA] 3.156.0) under "Staging" now, "Beta" greyed (none at the moment)
         a1 = pg.evaluate("[document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]').getAttribute('aria-disabled'), (document.querySelector('[data-set=qf-on]') || {}).checked]")
         print('A) Knopf versteckt:', a0, '| Beta:', a1)
-        results.append(a0 is True and a1 == [None, False])
+        results.append(a0 is True and a1 == ['true', False])
         pg.click('[data-set=qf-on]')
         pg.wait_for_timeout(200)
         b1 = [pg.evaluate("document.getElementById('dci-quickfill').hidden"), pg.evaluate("document.getElementById('dci-quickfill').textContent"), pg.evaluate("localStorage.getItem('dci-beta-qf')")]
         print('B) an:', b1)
-        results.append(b1 == [False, 'Credit fill', 'true'])
+        results.append(b1 == [False, 'Fill empty recordings', 'true'])
         pg.evaluate("document.getElementById('dci-quickfill').click()")
         H.wait_for(pg, "!!document.querySelector('#dci-qf [data-qf=fill]')", 30)
         c0 = pg.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')")
@@ -989,7 +990,7 @@ def case_quickfill3150():
         recs = sorted(x[2] for x in added)
         results.append('3 relationships for 3 tracks without any: as tracks 1 have them.' in c0 and 'Track 2: Song Two' in c0 and 'drums (drum set) · Drum Guy' in c0
                        and len(added) == 3 and all(x[0] == 148 and x[1] == H.ARTISTS[3004][0] for x in added) and recs == sorted(H.REC[1:4])
-                       and f'Credit fill (beta): relationships copied from the MusicBrainz recording https://musicbrainz.org/recording/{H.REC[0]} to tracks 2, 3, 4.' in note
+                       and f'Fill empty recordings: relationships copied from the MusicBrainz recording https://musicbrainz.org/recording/{H.REC[0]} to tracks 2, 3, 4.' in note
                        and stats == [])  # ([F-QFSTATS] 3.152.0) counted once MusicBrainz has them after "Enter edit" (fable3152 C)
         # C2) (review) again: what is staged in the editor counts – nothing to fill, nothing staged twice
         pg.evaluate("document.querySelector('#dci-qf [data-qf=close]').click()")
@@ -1193,7 +1194,7 @@ def case_fable3152():
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-        H.open_settings(pg, 'beta')
+        H.open_settings(pg, 'staging')
         if not pg.evaluate("document.querySelector('[data-set=qf-on]').checked"):
             pg.click('[data-set=qf-on]')
         pg.wait_for_timeout(200)
@@ -1218,7 +1219,7 @@ def case_fable3152():
         pg.evaluate(ENTER_EDIT)
         pg.evaluate("document.getElementById('test-enter-edit').click()")
         H.wait_ok(pg, "JSON.parse(localStorage.getItem('dci-qf-stats') || '[]').length > 0", 15)
-        note = [l for l in pg.evaluate("document.getElementById('edit-note-text').value").splitlines() if l.startswith('Credit fill')]
+        note = [l for l in pg.evaluate("document.getElementById('edit-note-text').value").splitlines() if l.startswith('Fill empty recordings')]
         c1 = pg.evaluate("JSON.parse(localStorage.getItem('dci-qf-stats') || '[]')")
         job = pg.evaluate(f"localStorage.getItem('dci-qf-job:{H.REL}')")
         print('C) gleich nach dem Füllen:', c0, '| Notiz:', note, '| Statistik:', c1, '| Auftrag:', job)
