@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.154.0
+// @version      3.155.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.154.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.154.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.155.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.155.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.154.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.155.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2162,6 +2162,79 @@
       "settings.h.lookups": "Lookups of works",
       "settings.h.matrix": "Works matrix",
       "settings.h.suites": "Suites",
+      "magic.btn": "Answer all",
+      "magic.btnTitle": "Answers the open questions of the works matrix by the level “{level}” – a preview first; nothing is entered in MusicBrainz, each answer can be changed",
+      "magic.levelTitle": "Level of “✨ Answer all”",
+      "magic.level.careful": "Careful",
+      "magic.level.balanced": "Balanced",
+      "magic.level.bold": "Bold",
+      "magic.levelHint.careful": "Only what is as good as certain",
+      "magic.levelHint.balanced": "What is clear in the sources and MusicBrainz",
+      "magic.levelHint.bold": "Also the most likely answer where there are several",
+      "magic.infoTitle": "What each level answers",
+      "magic.infoNote": "Each answer is marked ✨ at its track and in the log; “↺ Undo magic” takes all of them back. The questions can be switched off in ⚙ Settings → Works.",
+      "magic.kind.suite": "Suites",
+      "magic.kind.work": "Works",
+      "magic.kind.medley": "Medleys",
+      "magic.kind.live": "Live",
+      "magic.kind.cover": "Cover",
+      "magic.kind.pub": "Publishers",
+      "magic.kind.coldate": "Column dates",
+      "magic.kind.ded": "Dedications",
+      "magic.rule.suite.careful": "a suite from a heading of the track list",
+      "magic.rule.suite.balanced": "also from an index track",
+      "magic.rule.suite.bold": "also from the title of the release",
+      "magic.rule.work.careful": "one work of exactly the title with all of the track’s writers",
+      "magic.rule.work.balanced": "one work found; none: a new work; several: open",
+      "magic.rule.work.bold": "several: the one of exactly the title with the most of the track’s writers",
+      "magic.rule.medley.careful": "stays one work",
+      "magic.rule.medley.balanced": "split when each part is a work of the track’s writers",
+      "magic.rule.medley.bold": "split when one part is such a work",
+      "magic.rule.live.careful": "the track itself is live (its title, its credit, the notes name it)",
+      "magic.rule.live.balanced": "also: the release group is Live, a concert, a credit for the whole release",
+      "magic.rule.live.bold": "also: the format, the notes of the release",
+      "magic.rule.cover.careful": "no cover",
+      "magic.rule.cover.balanced": "the cover set by itself is kept",
+      "magic.rule.cover.bold": "also the offers “co?”",
+      "magic.rule.pub.careful": "none",
+      "magic.rule.pub.balanced": "a suggested publisher kept when it is the only one of the track",
+      "magic.rule.pub.bold": "every suggested publisher kept",
+      "magic.rule.coldate.careful": "none",
+      "magic.rule.coldate.balanced": "writers of improvisations: the date of the one session of all tracks",
+      "magic.rule.coldate.bold": "as balanced",
+      "magic.rule.ded.careful": "none",
+      "magic.rule.ded.balanced": "MusicBrainz has one entry of the name, the level is known",
+      "magic.rule.ded.bold": "also without a track named: on the release group",
+      "magic.what.suite": "suite “{name}” ({from})",
+      "magic.what.medley": "split into {n} works ({found} found in MusicBrainz)",
+      "magic.what.pick": "work “{title}” linked ({why})",
+      "magic.what.new": "new work “{title}”",
+      "magic.what.part": "part linked to “{title}”",
+      "magic.what.live": "“live” on the link of “{title}” ({why})",
+      "magic.what.coverAuto": "“cover” on “{title}” kept",
+      "magic.what.cover": "“cover” on “{title}” (written by {names})",
+      "magic.what.pub": "{name} publishes “{title}”",
+      "magic.what.coldate": "{name}: the date of the column {date}",
+      "magic.what.ded": "{phrase}: {name}",
+      "magic.why.exact": "the title and all writers",
+      "magic.why.one": "the one found",
+      "magic.why.most": "the title and most writers",
+      "magic.previewTitle": "What “✨ Answer all” would answer",
+      "magic.none": "Nothing to answer at this level.",
+      "magic.previewHead.one": "Level “{level}”: {n} answer",
+      "magic.previewHead.other": "Level “{level}”: {n} answers",
+      "log.magicDone.one": "✨ Answer all ({level}): {n} answer",
+      "log.magicDone.other": "✨ Answer all ({level}): {n} answers",
+      "log.magicUndone.one": "✨ Undo magic: {n} answer taken back",
+      "log.magicUndone.other": "✨ Undo magic: {n} answers taken back",
+      "magic.kindsOff": "Switched off: {list}",
+      "magic.apply": "Answer these ({n})",
+      "magic.undo": "Undo magic",
+      "magic.undoTitle": "Takes back every answer of “✨ Answer all” of this import",
+      "magic.markTitle": "Answered by ✨: {list}",
+      "magic.looking": "Looking up the parts of the medleys …",
+      "settings.h.magic": "✨ Answer all",
+      "log.magicAnswer": "✨ {kind}: {track} – {what}",
       "settings.h.limits": "Staging and its limits",
       "settings.h.liveCom": "Live comments",
       "settings.h.yell": "Open items",
@@ -5025,6 +5098,7 @@
     { id: 'S281', where: 'tidyLines, TEXT.parse (end), labelHintHtml', note: 'Texts (3.154.0; collected item Z-OCRTRACKCHECK): a track list with lengths ("1. Stratosfear 10:00") is no credit – compared with MusicBrainz\'s tracks (titles as words, lengths 5 s apart at most): "fits" or what differs, above the entries; its lines left out. Only a list of its own (no lines between its tracks) and titles without brackets – the composers of a track stay its credits (S180)' },
     { id: 'S282', where: 'ocrBoxes', note: 'Text from cover art (3.154.0; collected item Z-SCANSPLIT): a double page – an image at least 1.6 times as wide as high, read whole – is read as its left and its right page apart; not when "the whole image" was chosen, the image was turned by hand or it is a frame drawn on the source page' },
     { id: 'S283', where: 'fnEligible, fnFind, suggestStackHtml', note: 'Entries (3.154.0; collected item Z-FIRSTNAME): a first name alone ("otto", "monique") – "Assign first name …", only on a click, only suggestions: the release\'s artists and the members of its groups of that first name; the people in the relationships of the artist\'s releases around this one (± 3 years, wider in steps of three up to ⚙ Settings → Sources); those related to the members (Monique Froese through Edgar Froese) – by how often, with where from' },
+    { id: 'S284', where: 'magicPlan, magicApply, magicUndoAll, magicHeadHtml, magicPopHtml', note: 'Works (3.155.0; collected item Z-WORKMAGIC): "✨ Answer all" at the works matrix answers its open questions by a level – careful, balanced, bold (▾; ⓘ shows what each answers) –: suites, works, medleys, live, cover, publishers, column dates, dedications; a preview first, each answer marked ✨ and in the log, "↺ Undo magic" takes them back; the questions switched in ⚙ Settings → Works' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -16850,6 +16924,16 @@
     wattrOpenAll: false,
     // "Spell out": the attributes with their names instead of the short forms (remembered)
     wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
+    // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the kinds switched off (remembered); its answers of this import
+    magicLevel: readJson('localStorage', 'dci-magic-level', 'careful'),
+    magicOff: readJson('localStorage', 'dci-magic-off', []) || [],
+    magicMarks: new Map(),
+    magicUndo: [],
+    magicMedley: new Map(),
+    magicPreview: false,
+    magicMenu: false,
+    magicInfo: false,
+    magicBusy: false,
     workDates: readJson('localStorage', 'dci-work-dates', true) !== false, // [Z-WORKDATE] (3.130.0)
     workDateOff: new Set(),
     workDateOwn: new Map(),
@@ -30673,6 +30757,11 @@
     S.oneWork = null;
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
+    // [Z-WORKMAGIC] (3.155.0) the answers of "✨ Answer all" belong to the import before
+    S.magicMarks.clear();
+    S.magicMedley.clear();
+    S.magicUndo = [];
+    S.magicPreview = false;
     S.suiteWorks.clear();
     S.suiteManual.clear(); // [Z-SUM] (3.41.11)
     // ([Z-WORKDATE-REM] 3.135.0, review) the dates of linked works' links: remembered choices too
@@ -44577,6 +44666,322 @@
       S.medleyMark.delete(i);
     } else planPendingWork(i);
   }
+  // --- [Z-WORKMAGIC] (3.155.0, S284) "✨ Answer all": the open questions of the works matrix answered by a level -----------------
+  /** The levels of "✨ Answer all" and the kinds of questions it answers (each one a switch in ⚙ Settings → Works). */
+  const MAGIC_LEVELS = ['careful', 'balanced', 'bold'];
+  const MAGIC_KINDS = ['suite', 'work', 'medley', 'live', 'cover', 'pub', 'coldate', 'ded'];
+  const MAGIC_LEVEL_KEY = 'dci-magic-level';
+  const MAGIC_OFF_KEY = 'dci-magic-off';
+  const magicLevel = () => (MAGIC_LEVELS.includes(S.magicLevel) ? S.magicLevel : 'careful');
+  const magicKindOn = (k) => !(S.magicOff || []).includes(k);
+  const magicAt = (lv) => MAGIC_LEVELS.indexOf(magicLevel()) >= MAGIC_LEVELS.indexOf(lv);
+  /** The live reasons answered at each level: the track itself says so – then the release group, a concert, a credit for all – then all. */
+  const MAGIC_LIVE = { careful: ['title', 'credit', 'notesTracks'], balanced: ['rg', 'concert', 'creditAll'], bold: ['format', 'notes'] };
+  /**
+   * The medleys asked before the preview: the works of the track's writers of each part's title (one lookup a part, in the queue of
+   * MusicBrainz's requests) – i → { parts, hits: [{ gid, title } | null] }. Read once per track and import.
+   */
+  async function magicMedleyLookups() {
+    if (!magicKindOn('medley') || !magicAt('balanced')) return;
+    for (const t of S.mbTracks) {
+      const i = t.idx;
+      if (!matrixTrack(t) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i) || S.magicMedley.has(i)) continue;
+      const parts = medleyParts(i);
+      const writers = writerMbidsOfTrack(i);
+      if (parts.length < 2 || !writers.length) continue;
+      const hits = [];
+      for (const title of parts) {
+        let found = [];
+        try {
+          found = await searchWorks(title, writers);
+        } catch {
+          found = [];
+        }
+        const same = found.filter((w) => norm(w.title) === norm(title) || (w.aliases || []).some((x) => norm(x) === norm(title)));
+        hits.push(same.length === 1 ? { gid: same[0].gid, title: same[0].title } : null);
+      }
+      S.magicMedley.set(i, { parts, hits });
+    }
+  }
+  /**
+   * The answers "✨ Answer all" would give now: [{ kind, i, label, what, apply() → undo() (or a promise of it) }]. Nothing is entered
+   * in MusicBrainz – each answer is what a click in the matrix (or the box of dedications) does; a track gets one answer of each kind.
+   */
+  function magicPlan() {
+    if (!S.release || S.worksSkip) return [];
+    const out = [];
+    const lv = magicLevel();
+    const tl = (i) => trackLabel(S.mbTracks[i]);
+    // suites: from a heading (careful), an index track (balanced), the release's title (bold); never one added by hand
+    const taken = new Set();
+    if (magicKindOn('suite')) {
+      const from = ['heading', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release'] : [])];
+      for (const o of suiteAsks()) {
+        if (S.suiteAnswers.has(o.key) || !from.includes(o.from) || !o.tracks.length) continue;
+        o.tracks.forEach((i) => taken.add(i));
+        out.push({ kind: 'suite', i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
+          what: tr('magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`) }),
+          apply: () => {
+            acceptSuite(o, o.name);
+            return () => { const o2 = suiteAsks().find((x) => x.key === o.key); if (o2) undoSuite(o2); S.suiteAnswers.delete(o.key); };
+          } });
+      }
+    }
+    // medleys: split when each part is a work of the track's writers (balanced) – or one of them (bold); careful: one work
+    if (magicKindOn('medley') && magicAt('balanced')) {
+      for (const [i, m] of S.magicMedley) {
+        if (taken.has(i) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i)) continue;
+        const n = m.hits.filter(Boolean).length;
+        if (!(n === m.parts.length || (n > 0 && magicAt('bold')))) continue;
+        taken.add(i);
+        out.push({ kind: 'medley', i, label: tl(i), what: tr('magic.what.medley', { n: m.parts.length, found: n }),
+          apply: () => {
+            planPendingWork(i);
+            splitMedley(i);
+            (S.workParts.get(i) || []).forEach((p, k) => {
+              const h = m.hits[k];
+              if (h && p.origin === 'pending') Object.assign(p, { gid: h.gid, title: h.title, origin: 'search' });
+            });
+            return () => {
+              joinMedley(i);
+              if ((S.workPlan.get(i) || {}).origin === 'pending') S.workPlan.delete(i);
+            };
+          } });
+      }
+    }
+    if (magicKindOn('work')) {
+      for (const t of S.mbTracks) {
+        const i = t.idx;
+        if (!matrixTrack(t) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i) || taken.has(i)) continue;
+        const search = S.workSearch.get(i);
+        if (!search || !['done', 'noWriters'].includes(search.state)) continue;
+        const cands = sameNamed(i);
+        const title = normTitle(workTitleOf(t.title));
+        const people = [...creditedWritersOf(i).keys()];
+        // the writers of the track all credited on the work (a work of the search knows their MusicBrainz ids)
+        const sameWriters = (w) => Array.isArray(w.writerIds) && people.length > 0 && people.every((id) => w.writerIds.includes(id));
+        const exact = cands.filter((w) => normTitle(w.title) === title);
+        let pick = null;
+        let why = '';
+        if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
+        else if (cands.length === 1 && magicAt('balanced')) [pick, why] = [cands[0], 'magic.why.one'];
+        else if (cands.length > 1 && magicAt('bold')) {
+          // (several: the one of exactly this title with the most of the track's writers – MusicBrainz's numbers of recordings are not loaded)
+          const score = (w) => (Array.isArray(w.writerIds) ? people.filter((id) => w.writerIds.includes(id)).length : 0);
+          const best = Math.max(0, ...exact.map(score));
+          const top = exact.filter((w) => score(w) === best);
+          if (best > 0 && top.length === 1) [pick, why] = [top[0], 'magic.why.most'];
+        }
+        if (pick) {
+          const w = pick;
+          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why) }),
+            apply: () => {
+              S.workPlan.set(i, { gid: w.gid, title: w.title, origin: 'search', flags: new Set(), composer: w.composer || '', composerName: w.composerName || '', magic: true });
+              addFoundWorkRels(w.gid);
+              return () => { if ((S.workPlan.get(i) || {}).gid === w.gid) S.workPlan.delete(i); };
+            } });
+        } else if (!cands.length && magicAt('balanced')) {
+          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.new', { title: workTitleOf(t.title) }),
+            apply: () => {
+              planNewWork(i);
+              return () => {
+                if (S.workParts.has(i) && (S.workParts.get(i) || []).every((p) => p.origin === 'pending')) S.workParts.delete(i);
+                if ((S.workPlan.get(i) || {}).origin === 'pending') S.workPlan.delete(i);
+              };
+            } });
+        }
+      }
+      // the parts of a suite or a medley with one work of MusicBrainz found ("Link …" at the part)
+      if (magicAt('balanced')) {
+        for (const [i, ps] of S.workParts) {
+          for (const p of ps) {
+            if (p.origin !== 'pending' || !p.offer) continue;
+            const offer = { ...p.offer };
+            out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.part', { title: offer.title }),
+              apply: () => {
+                const before = { gid: p.gid, title: p.title, offer: p.offer, entity: p.entity };
+                Object.assign(p, { gid: offer.gid, title: offer.title, origin: 'search' });
+                delete p.offer;
+                delete p.entity;
+                return () => { Object.assign(p, { gid: before.gid, title: before.title, origin: 'pending', offer: before.offer }); if (before.entity) p.entity = before.entity; };
+              } });
+          }
+        }
+      }
+    }
+    // the attributes of a link: one step of setLinkAttr, its sets and the plan's flags as before
+    const attrStep = (i, work, name) => () => {
+      const key = linkKey(i, work.gid);
+      const on0 = new Set(S.linkAttrOn.get(key) || []);
+      const off0 = new Set(S.linkAttrOff.get(key) || []);
+      const plan = work.planned ? planOf(i, work.gid) : null;
+      const flags0 = plan ? new Set(plan.flags) : null;
+      setLinkAttr(i, work, name, true);
+      return () => {
+        S.linkAttrOn.set(key, on0);
+        S.linkAttrOff.set(key, off0);
+        if (plan && flags0) plan.flags = flags0;
+      };
+    };
+    const mrows = (magicKindOn('live') || magicKindOn('cover') || magicKindOn('pub')) ? matrixRows() : [];
+    if (magicKindOn('live')) {
+      const reasons = MAGIC_LEVELS.slice(0, MAGIC_LEVELS.indexOf(lv) + 1).flatMap((x) => MAGIC_LIVE[x]);
+      for (const m of mrows) {
+        if (!m.work || workLocked(m.work) || !liveHint(m.i, m.work) || !reasons.includes(liveReason(m.i))) continue;
+        out.push({ kind: 'live', i: m.i, label: tl(m.i), what: tr('magic.what.live', { title: m.work.title, why: liveWhyText(m.i) }), apply: attrStep(m.i, m.work, 'live') });
+      }
+    }
+    if (magicKindOn('cover') && magicAt('balanced')) {
+      for (const m of mrows) {
+        if (!m.work || !m.work.planned || workLocked(m.work)) continue;
+        const on = S.linkAttrOn.get(linkKey(m.i, m.work.gid)) || new Set();
+        // the "cover" set by itself kept for good (balanced); the offer "co?" taken (bold)
+        if (coverAuto(m.i, m.work) && !on.has('cover') && linkAttrsOf(m.i, m.work).has('cover')) {
+          out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.coverAuto', { title: m.work.title }), apply: attrStep(m.i, m.work, 'cover') });
+        } else if (magicAt('bold') && coverComposers(m.i, m.work).length) {
+          out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.cover', { title: m.work.title, names: coverComposers(m.i, m.work).join(', ') }), apply: attrStep(m.i, m.work, 'cover') });
+        }
+      }
+    }
+    // the publishers suggested for a track (evidence, the notes): kept – balanced only when one publisher is suggested for it
+    if (magicKindOn('pub') && magicAt('balanced')) {
+      const cols = matrixColumns().filter((c) => !c.removed && c.rows.some(isPublishingRow));
+      for (const m of mrows) {
+        if (!m.work || workLocked(m.work)) continue;
+        const hits = cols.map((c) => [c, cellState(c, m).active.filter((r) => isPublishingRow(r) && isSuggestedCell(r, m.i))]).filter(([, rs]) => rs.length);
+        if (!hits.length || (hits.length > 1 && !magicAt('bold'))) continue;
+        for (const [c, rs] of hits) {
+          out.push({ kind: 'pub', i: m.i, label: tl(m.i), what: tr('magic.what.pub', { name: c.name, title: m.work.title }),
+            apply: () => {
+              const was = rs.map((r) => [r, r.pubTouched]);
+              rs.forEach((r) => { r.confirmed = (r.confirmed || new Set()).add(m.i); r.pubTouched = true; });
+              ppsHandSet(c, m);
+              return () => was.forEach(([r, t]) => { if (r.confirmed) r.confirmed.delete(m.i); r.pubTouched = t; });
+            } });
+        }
+      }
+    }
+    // the date of a column (writers of improvisations): the one session of all tracks – the music was made then (balanced)
+    if (magicKindOn('coldate') && magicAt('balanced')) {
+      const perf = (dm().cells || []).filter((c) => c.col === 'performance');
+      const entry = perf.length === 1 ? cellEntry(perf[0]) : null;
+      const all = perf.length === 1 && !(perf[0].tgs || []).length;
+      if (entry && all) {
+        for (const c of matrixColumns()) {
+          if (c.removed || !c.rows.some((r) => r.improv) || hasDateInput(S.mxColDate.get(c.key) || emptyDate())) continue;
+          out.push({ kind: 'coldate', i: 0, label: c.name, what: tr('magic.what.coldate', { name: c.name, date: poolLabel(entry) }),
+            apply: () => {
+              const was = S.mxColDate.get(c.key) || null;
+              S.mxColDate.set(c.key, { ...fieldsFromDate(entry), poolId: entry.id });
+              applyColumnDate(c.key);
+              return () => {
+                if (was) S.mxColDate.set(c.key, was);
+                else S.mxColDate.delete(c.key);
+                applyColumnDate(c.key);
+              };
+            } });
+        }
+      }
+    }
+    // dedications of the box: one entry of the name in MusicBrainz – on the level it names (balanced), on the release group when it names
+    // no track (bold)
+    if (magicKindOn('ded') && magicAt('balanced')) {
+      for (const x of S.dedSugg || []) {
+        if ((x.hits || []).length !== 1 || (x.needTrack && !magicAt('bold'))) continue;
+        const h = x.hits[0];
+        out.push({ kind: 'ded', i: x.track != null ? x.track : 0, label: x.phrase, what: tr('magic.what.ded', { phrase: x.phrase, name: h.name || x.name }),
+          apply: async () => {
+            const n0 = S.rows.length;
+            await dedTake(x.key, h.gid);
+            const added = S.rows.slice(n0).filter((r) => r.dedication && r.dedication.key === x.key);
+            return () => {
+              if (!added.length) return;
+              S.rows = S.rows.filter((r) => !added.includes(r));
+              if (!(S.dedSugg || []).includes(x)) S.dedSugg = [...(S.dedSugg || []), x];
+              dedUnchoose(x.key);
+            };
+          } });
+      }
+    }
+    return out;
+  }
+  /** [Z-WORKMAGIC] (3.155.0) What was chosen for a dedication of this release forgotten again ("↺ Undo magic"). */
+  function dedUnchoose(key) {
+    if (!releaseMbid || !key) return;
+    const all = readJson('localStorage', DED_KEY, null) || {};
+    const rel = String(releaseMbid).toLowerCase();
+    if (!all[rel] || !all[rel][key]) return;
+    delete all[rel][key];
+    writeJson('localStorage', DED_KEY, all);
+  }
+  /** "✨ Answer all": the answers of the preview given; each marked ✨ at its track, in the log; "↺ Undo magic" takes them all back. */
+  async function magicApply() {
+    const plan = magicPlan();
+    S.magicPreview = false;
+    if (!plan.length) return;
+    const undos = [];
+    let n = 0;
+    for (const x of plan) {
+      try {
+        const u = await x.apply();
+        if (typeof u === 'function') undos.push(u);
+      } catch (e) {
+        log('warn', 'error', { text: e.message });
+        continue;
+      }
+      n += 1;
+      const text = `${tr(`magic.kind.${x.kind}`)}: ${x.what}`;
+      (x.tracks || [x.i]).forEach((i) => { if (!S.magicMarks.has(i)) S.magicMarks.set(i, []); S.magicMarks.get(i).push(text); });
+      log('info', 'magicAnswer', { kind: tr(`magic.kind.${x.kind}`), track: x.label, what: x.what });
+    }
+    S.magicUndo = [...(S.magicUndo || []), ...undos];
+    log('info', 'magicDone', { n, level: tr(`magic.level.${magicLevel()}`) });
+  }
+  /** "↺ Undo magic": the state before every "✨ Answer all" since the import (the last answers first). */
+  function magicUndoAll() {
+    const undos = S.magicUndo || [];
+    for (const u of [...undos].reverse()) {
+      try { u(); } catch (e) { log('warn', 'error', { text: e.message }); }
+    }
+    S.magicUndo = [];
+    S.magicMarks.clear();
+    log('info', 'magicUndone', { n: undos.length });
+  }
+  /** The ✨ button with its ▾ (the level), ⓘ (what each level answers) and, once it answered, "↺ Undo magic" – in the head of the works matrix. */
+  function magicHeadHtml() {
+    if (!ruleOn('S284')) return '';
+    const lv = magicLevel();
+    return `<span class="dci-mx-magic"><button type="button" class="dci-small dci-mx-magicbtn" data-act="magic-open" aria-expanded="${!!S.magicPreview}" title="${esc(tr('magic.btnTitle', { level: tr(`magic.level.${lv}`) }))}">✨ ${esc(tr('magic.btn'))}</button><button type="button" class="dci-small dci-mx-magiclv" data-act="magic-menu" aria-expanded="${!!S.magicMenu}" aria-label="${esc(tr('magic.levelTitle'))}" title="${esc(tr('magic.levelTitle'))}: ${esc(tr(`magic.level.${lv}`))}">▾</button><button type="button" class="dci-wh-help" data-act="magic-info" aria-expanded="${!!S.magicInfo}" aria-label="${esc(tr('magic.infoTitle'))}" title="${esc(tr('magic.infoTitle'))}">i</button>${(S.magicUndo || []).length ? ` <button type="button" class="dci-textbtn" data-act="magic-undo" title="${esc(tr('magic.undoTitle'))}">↺ ${esc(tr('magic.undo'))}</button>` : ''}</span>`;
+  }
+  /** ⓘ: what each level answers, question by question (the kinds switched off named). */
+  function magicInfoHtml() {
+    const rows = MAGIC_KINDS.map((k) => `<tr${magicKindOn(k) ? '' : ' class="dci-mx-magicoff"'}><th scope="row">${esc(tr(`magic.kind.${k}`))}${magicKindOn(k) ? '' : ` <span class="dci-sub">(${esc(tr('common.off'))})</span>`}</th>${MAGIC_LEVELS.map((lv) => `<td>${esc(tr(`magic.rule.${k}.${lv}`))}</td>`).join('')}</tr>`).join('');
+    return `<div class="dci-wh-pop dci-mx-magicinfo" data-el="magic-info"><table class="dci-mx-magictable"><thead><tr><th></th>${MAGIC_LEVELS.map((lv) => `<th scope="col"${lv === magicLevel() ? ' class="dci-mx-magiccur"' : ''}>${esc(tr(`magic.level.${lv}`))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+      <p class="dci-sub">${esc(tr('magic.infoNote'))}</p></div>`;
+  }
+  /** The level chosen at ▾, ⓘ, and the preview of what ✨ would answer (nothing given until "Answer these"). */
+  function magicPopHtml() {
+    if (!ruleOn('S284')) return '';
+    const lv = magicLevel();
+    const menu = S.magicMenu ? `<div class="dci-wh-pop dci-mx-magicmenu" data-el="magic-menu" role="group" aria-label="${esc(tr('magic.levelTitle'))}">
+        ${MAGIC_LEVELS.map((x) => `<button type="button" class="dci-textbtn" data-act="magic-level" data-level="${x}" aria-pressed="${x === lv}" title="${esc(tr(`magic.levelHint.${x}`))}">${x === lv ? '✓ ' : ''}${esc(tr(`magic.level.${x}`))}</button>`).join('')}
+        <span class="dci-sub">${esc(tr(`magic.levelHint.${lv}`))}</span></div>` : '';
+    const info = S.magicInfo ? magicInfoHtml() : '';
+    if (!S.magicPreview) return menu + info;
+    if (S.magicBusy) return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview"><p class="dci-sub">${esc(tr('magic.looking'))}</p></div>`;
+    const plan = magicPlan();
+    const kinds = MAGIC_KINDS.filter((k) => plan.some((x) => x.kind === k));
+    const off = MAGIC_KINDS.filter((k) => !magicKindOn(k));
+    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, 40).map((x) => `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`).join('')}</ul></li>`).join('');
+    return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview" role="group" aria-label="${esc(tr('magic.previewTitle'))}">
+      <p><strong>${esc(tr('magic.previewHead', { level: tr(`magic.level.${lv}`), n: plan.length }))}</strong></p>
+      ${plan.length ? `<ul class="dci-mx-magiclist">${list}</ul>` : `<p class="dci-sub" data-el="magic-none">${esc(tr('magic.none'))}</p>`}
+      ${off.length ? `<p class="dci-sub">${esc(tr('magic.kindsOff', { list: off.map((k) => tr(`magic.kind.${k}`)).join(', ') }))}</p>` : ''}
+      <div>${plan.length ? `<button type="button" class="dci-primary dci-small" data-act="magic-apply">✨ ${esc(tr('magic.apply', { n: plan.length }))}</button> ` : ''}<button type="button" class="dci-small" data-act="magic-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+  }
+  /** ✨ at the track of an answer given by "✨ Answer all" (its tooltip: what). */
+  const magicMarkHtml = (i) => (S.magicMarks && S.magicMarks.has(i) ? `<span class="dci-mx-magicmark" data-el="magic-mark" title="${esc(tr('magic.markTitle', { list: S.magicMarks.get(i).join(' · ') }))}">✨</span>` : '');
+
   /** [Z-MDLY] (3.98.0) The tracks without a work whose title has parts (not split yet). */
   const medleyTracks = () => S.mbTracks.filter((t) => matrixTrack(t) && !S.workParts.has(t.idx) && !S.workPlan.has(t.idx) && medleyParts(t.idx).length > 1).map((t) => t.idx);
   /**
@@ -44950,6 +45355,10 @@
     ['mxNewMenu', '.dci-mx-newmenu, [data-act="mx-newmenu"]', (v) => `[data-el="works"] tr[data-work="${v}"] [data-act="mx-newmenu"]`],
     // [Z-SNW] (3.83.0, review) the question about works of the same title: Esc or a click elsewhere cancels it
     ['mxDupAsk', '[data-el="works-dupask"], [data-act="works-pending-all"], [data-act="works-create-all"]', (v) => dupAskFrom(v)],
+    // [Z-WORKMAGIC] (3.155.0) the level of "✨ Answer all", what the levels answer, its preview
+    ['magicMenu', '[data-el="magic-menu"], [data-act="magic-menu"]', () => '[data-el="works"] [data-act="magic-menu"]'],
+    ['magicInfo', '[data-el="magic-info"], [data-act="magic-info"]', () => '[data-el="works"] [data-act="magic-info"]'],
+    ['magicPreview', '[data-el="magic-preview"], [data-act="magic-open"]', () => '[data-el="works"] [data-act="magic-open"]'],
   ];
   const dupAskFrom = (v) => `[data-el="works"] [data-act="works-${v && v.act === 'create' ? 'create' : 'pending'}-all"]`;
   const mxPopoverOpen = (k) => S[k] !== false && S[k] != null;
@@ -45224,7 +45633,7 @@
           ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
         <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
           ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
-          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}
+          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}${magicHeadHtml()}
           <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
       ${!skipped && !folded && S.mxOneOpen && ruleOn('S225') ? oneWorkListHtml() : ''}
@@ -45234,6 +45643,7 @@
         ${allWorkGids().length ? `<button type="button" class="dci-textbtn" data-act="works-open-all" title="${esc(tr('works.openAllTitle'))}">${esc(tr('works.openAll', { n: allWorkGids().length }))}</button>` : ''}
         <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
         <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button></div>` : ''}
+      ${!skipped && !folded ? magicPopHtml() : ''}
       ${!skipped && !folded && S.mxDefaultsOpen ? `<div class="dci-wh-pop dci-works-bar" data-el="works-defaults">
         ${codesSelect}
         <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
@@ -45288,7 +45698,7 @@
       if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
     });
     return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -48332,6 +48742,72 @@
         refresh();
         const again = o && !S.suiteAdd ? S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
         if (again) again.focus({ preventScroll: true });
+        break;
+      }
+      // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": the preview (the medleys looked up first), its answers, the level at ▾, ⓘ, "↺ Undo magic"
+      case 'magic-open': {
+        S.magicMenu = false;
+        S.magicInfo = false;
+        S.magicPreview = !S.magicPreview;
+        const focus = (sel) => { const b = S.overlay.querySelector(sel); if (b) b.focus({ preventScroll: true }); };
+        if (S.magicPreview && !S.magicBusy) {
+          S.magicBusy = true;
+          renderWorks();
+          magicMedleyLookups().catch(() => {}).finally(() => {
+            S.magicBusy = false;
+            renderWorks();
+            focus('[data-act="magic-apply"], [data-act="magic-cancel"]');
+          });
+          break;
+        }
+        renderWorks();
+        focus('[data-act="magic-open"]');
+        break;
+      }
+      case 'magic-cancel':
+        S.magicPreview = false;
+        renderWorks();
+        { const b = S.overlay.querySelector('[data-act="magic-open"]'); if (b) b.focus({ preventScroll: true }); }
+        break;
+      case 'magic-apply':
+        magicApply().catch(showError).finally(() => {
+          renderGroups();
+          renderDedBox();
+          renderWorks();
+          refresh();
+          const b = S.overlay.querySelector('[data-act="magic-undo"], [data-act="magic-open"]');
+          if (b) b.focus({ preventScroll: true });
+        });
+        break;
+      case 'magic-undo':
+        magicUndoAll();
+        renderGroups();
+        renderDedBox();
+        renderWorks();
+        refresh();
+        { const b = S.overlay.querySelector('[data-act="magic-open"]'); if (b) b.focus({ preventScroll: true }); }
+        break;
+      case 'magic-menu':
+        S.magicPreview = false;
+        S.magicInfo = false;
+        S.magicMenu = !S.magicMenu;
+        renderWorks();
+        break;
+      case 'magic-info':
+        S.magicPreview = false;
+        S.magicMenu = false;
+        S.magicInfo = !S.magicInfo;
+        renderWorks();
+        break;
+      case 'magic-level': {
+        const v = MAGIC_LEVELS.includes(btn.dataset.level) ? btn.dataset.level : 'careful';
+        S.magicLevel = v;
+        writeJson('localStorage', MAGIC_LEVEL_KEY, v === 'careful' ? null : v);
+        log('info', 'settingValue', { what: tr('magic.levelTitle'), value: tr(`magic.level.${v}`) });
+        S.magicMenu = false;
+        if (S.settingsOpen) renderSettings();
+        renderWorks();
+        { const b = S.overlay.querySelector(`[data-act="magic-level"][data-level="${v}"]`) || S.overlay.querySelector('[data-act="magic-menu"]'); if (b) b.focus({ preventScroll: true }); }
         break;
       }
       // [Z-SU] (3.41.1) the question of a suite at the top of the works matrix
@@ -51901,7 +52377,7 @@
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-jump', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
-    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates'],
+    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates', 'dci-magic-level', 'dci-magic-off'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
@@ -54272,6 +54748,10 @@
         sh('suites'),
         segField(tr('settings.suiteNaming'), 'suite-naming', 'naming', ['colon', 'comma'], S.suiteNaming === 'comma' ? 'comma' : 'colon', 'colon', (v) => tr(`settings.suiteNaming.${v}`),
           { title: tr('settings.suiteNamingTitle') }),
+        // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the questions it answers
+        ...(ruleOn('S284') ? [sh('magic'),
+          segField(tr('magic.levelTitle'), 'magic-level', 'level', MAGIC_LEVELS, magicLevel(), 'careful', (v) => tr(`magic.level.${v}`), { title: tr('magic.infoTitle') }),
+          ...MAGIC_KINDS.map((k) => cb(`data-set="magic-kind" data-kind="${k}"`, magicKindOn(k), tr(`magic.kind.${k}`), tr(`magic.rule.${k}.${magicLevel()}`), { def: true }))] : []),
       ],
       staging: () => [
         sh('limits'),
@@ -54724,6 +55204,16 @@
   function settingsChange(el) {
     const k = el.dataset.set;
     if (k === 'log-open') setLogVisible(el.checked);
+    else if (k === 'magic-kind') {
+      // [Z-WORKMAGIC] (3.155.0) a kind of question answered by "✨ Answer all" or not
+      const kind = el.dataset.kind;
+      if (MAGIC_KINDS.includes(kind)) {
+        S.magicOff = el.checked ? (S.magicOff || []).filter((x) => x !== kind) : uniq([...(S.magicOff || []), kind]);
+        writeJson('localStorage', MAGIC_OFF_KEY, S.magicOff.length ? S.magicOff : null);
+        log('info', 'settingValue', { what: `✨ ${tr(`magic.kind.${kind}`)}`, value: tr(el.checked ? 'common.on' : 'common.off') });
+        renderWorks();
+      }
+    }
     else if (k === 'level-colors') {
       S.levelColors = el.checked;
       writeJson('localStorage', LEVEL_COLORS_KEY, el.checked ? null : false);
@@ -55192,7 +55682,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -55331,6 +55821,8 @@
     S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
     S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
     S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
+    S.magicLevel = readJson('localStorage', 'dci-magic-level', 'careful'); // [Z-WORKMAGIC] (3.155.0)
+    S.magicOff = readJson('localStorage', 'dci-magic-off', []) || [];
     S.workDates = readJson('localStorage', 'dci-work-dates', true) !== false; // [Z-WORKDATE] (3.130.0)
     S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
     S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
@@ -57723,6 +58215,18 @@
       .dci-mx-split-on { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
       .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
+      /* [Z-WORKMAGIC] (3.155.0) "✨ Answer all": the button with ▾ and ⓘ, the preview, the table of the levels, the mark at a track */
+      .dci-mx-magic { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); }
+      .dci-mx-magicbtn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      .dci-mx-magiclv { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; padding-left: calc(var(--u, 1px) * 5); padding-right: calc(var(--u, 1px) * 5); }
+      .dci-mx-magicpop, .dci-mx-magicinfo { display: block; }
+      .dci-mx-magiclist { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
+      .dci-mx-magiclist ul { margin: 0 0 calc(var(--u, 1px) * 4); padding-left: calc(var(--u, 1px) * 16); }
+      .dci-mx-magictable { border-collapse: collapse; }
+      .dci-mx-magictable th, .dci-mx-magictable td { padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+      .dci-mx-magictable .dci-mx-magiccur { color: var(--purple-d); text-decoration: underline; }
+      .dci-mx-magicoff { opacity: 0.5; }
+      .dci-mx-magicmark { margin-left: calc(var(--u, 1px) * 4); cursor: help; }
       .dci-mx-wnew:hover, .dci-mx-wnew:focus-visible { opacity: 1; }
       .dci-mx-wrepl { text-decoration: none; }
       /* [Z-ARRUI] (3.99.0) a flat box in one line, wrapping as a whole (not word by word) */
@@ -57900,6 +58404,8 @@
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
       /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */
       .dci-works-head.dci-wh { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      /* ((3.155.0) with "✨ Answer all" the right part may take a second line: the left and the middle stay on its first one) */
+      .dci-works-head.dci-wh { align-items: start; }
       .dci-wh-l, .dci-wh-c, .dci-wh-r { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); min-width: 0; }
       .dci-wh-r { justify-content: flex-end; }
       .dci-wh-chip { padding: calc(var(--u, 1px) * 1) calc(var(--u, 1px) * 8); border-radius: 999px; background: var(--soft); color: #4a4558; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }

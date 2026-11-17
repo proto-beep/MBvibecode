@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.154.0 | – |
+| 2026-11-17 | 3.152.0 – 3.155.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.155.0
+
+- **✨ Answer all** (Z-WORKMAGIC; S284): a button in the head of the works matrix answers its open questions – nothing is entered in MusicBrainz, each answer is what a click in the matrix would do and can be changed as before.
+  - **Levels** at ▾ (remembered): Careful (default) – only what is as good as certain; Balanced – what is clear in the sources and MusicBrainz; Bold – also the most likely answer where there are several. **ⓘ** shows a table of what each level answers, question by question.
+  - **The questions**: suites (from a heading · an index track · the release's title), works (one work of the title with all writers · one found, none: a new work · several: the one of the title with the most writers – MusicBrainz's numbers of recordings are not loaded), medleys (split when each part · one part is a work of the track's writers; looked up first), live (the track itself · the release group, a concert, a credit for all · the format, the notes), cover (the cover set by itself kept · the offers "co?"), publishers (the only one suggested for a track · all suggested), column dates (writers of improvisations: the one session of all tracks), dedications (one entry of the name · also on the release group).
+  - **A preview first** ("Answer these (n)"), then each answer marked ✨ at its track (its tooltip says what) and in the log; **↺ Undo magic** takes all of them back.
+  - **⚙ Settings → Works**: the level and a switch for each kind of question.
 
 ### Import 3.154.0
 

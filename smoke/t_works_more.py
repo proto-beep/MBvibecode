@@ -1671,4 +1671,80 @@ def case_bwv3138r():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_magic3155():
+    """Credits Importer 3.155.0 (collected item Z-WORKMAGIC, rule S284): "✨ Answer all" at the works matrix. MusicBrainz's search finds
+    "Song Two" by Writer W (the writer of track 2); track 3 (Writer Z) none; track 4 no writers.
+    A) Careful (the default): the preview names one answer – track 2 linked to "Song Two" (the title and all writers) –; nothing set yet.
+    B) "Answer these": track 2's work planned, ✨ at its track (its tooltip the answer), a line in the log; "↺ Undo magic" there.
+    C) "↺ Undo magic": the plan gone, no ✨, the log says so.
+    D) ▾ Balanced (stored): the preview adds new works for tracks 3 and 4; ⓘ shows the table of the eight kinds of questions by level.
+    E) ⚙ Settings → Works: "Works" switched off – the preview names nothing of works, says it is off."""
+    FOUND = H.uid('cccccccc', 3155)
+    WW = H.ARTISTS[3007][0]
+    H.JS_WORKS[FOUND] = (7155, 'Song Two')
+    H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
+    PREVIEW = """(() => { const p = document.querySelector('[data-el=magic-preview]'); return p ? { items: [...p.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.trim()]),
+      text: p.textContent.replace(/\\s+/g, ' ').trim() } : null; })()"""
+    PLAN = f"""(() => [...document.querySelectorAll('.dci-matrix tr[data-work="1"]')].map(tr => tr.textContent.includes('Song Two') && !!tr.querySelector('[data-act=work-unplan]')).some(Boolean))()"""
+    MARK = "(() => { const m = document.querySelector('.dci-matrix tr[data-work=\"1\"] [data-el=magic-mark]'); return m ? m.title : null; })()"
+    LOG = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => t.startsWith('✨'))"
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, f"!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick][data-gid=\"{FOUND}\"]')", 30)
+            open_preview = lambda: (pg.locator('[data-act=magic-open]').evaluate('b => b.click()'), H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30))
+            open_preview()
+            a = pg.evaluate(PREVIEW)
+            print('A)', a)
+            results.append(bool(a) and a['items'] == [['work', '1.2 – work “Song Two” linked (the title and all writers)']] and 'Careful' in a['text'] and not pg.evaluate(PLAN))
+            pg.locator('[data-act=magic-apply]').evaluate('b => b.click()')
+            H.wait_for(pg, "!!document.querySelector('[data-act=magic-undo]')", 20)
+            pg.wait_for_timeout(400)
+            b1 = [pg.evaluate(PLAN), pg.evaluate(MARK), pg.evaluate(LOG)]
+            print('B)', b1)
+            results.append(b1[0] and b1[1] and 'Song Two' in b1[1] and any('Works: 1.2' in x for x in b1[2]) and any('Answer all (Careful): 1 answer' in x for x in b1[2]))
+            pg.locator('[data-act=magic-undo]').evaluate('b => b.click()')
+            pg.wait_for_timeout(500)
+            c1 = [pg.evaluate(PLAN), pg.evaluate(MARK), pg.evaluate(LOG)[-1:], pg.evaluate("!!document.querySelector('[data-act=magic-undo]')")]
+            print('C)', c1)
+            results.append(not c1[0] and c1[1] is None and c1[2] == ['✨ Undo magic: 1 answer taken back'] and not c1[3])
+            # D) Balanced at ▾; ⓘ
+            pg.locator('[data-act=magic-menu]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            pg.locator('[data-act=magic-level][data-level=balanced]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            stored = pg.evaluate("localStorage.getItem('dci-magic-level')")
+            open_preview()
+            d1 = pg.evaluate(PREVIEW)
+            pg.locator('[data-act=magic-info]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            info = pg.evaluate("[...document.querySelectorAll('[data-el=magic-info] tbody tr')].map(tr => tr.querySelector('th').textContent.trim())")
+            cur = pg.evaluate("(document.querySelector('[data-el=magic-info] .dci-mx-magiccur') || {}).textContent || ''")
+            print('D)', stored, d1, '| ⓘ:', info, cur)
+            kinds = [k for k, _ in (d1 or {'items': []})['items']]
+            results.append(stored == '"balanced"' and bool(d1) and kinds.count('work') == 3 and any('1.3 – new work' in t for _, t in d1['items']) and any('1.4 – new work' in t for _, t in d1['items'])
+                           and info == ['Suites', 'Works', 'Medleys', 'Live', 'Cover', 'Publishers', 'Column dates', 'Dedications'] and cur == 'Balanced')
+            # E) the kind "Works" switched off
+            H.open_settings(pg, 'works')
+            pg.locator('[data-el=settings] [data-set=magic-kind][data-kind=work]').uncheck(); pg.wait_for_timeout(300)
+            off = pg.evaluate("localStorage.getItem('dci-magic-off')")
+            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            open_preview()
+            e1 = pg.evaluate(PREVIEW)
+            print('E)', off, e1)
+            results.append(off == '["work"]' and bool(e1) and not any(k == 'work' for k, _ in e1['items']) and 'Switched off: Works' in e1['text'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.WORK_SEARCH[:] = []
+        H.JS_WORKS.pop(FOUND, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
