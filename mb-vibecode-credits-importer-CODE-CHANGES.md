@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.153.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.154.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.154.0 · 2026-11-17
+
+- **Z-LOWERCASE (S275):** `TEXT.parse` (end) – a map of spellings from `artistNames` and the capitalised names of the credits; a name written small takes it (`who.caseFrom`).
+- **Z-COVERCO (S276):** `TEXT.parse` – "Cover By" with a company word (associates, design, studio, graphics, Ltd …) → "Cover Design"; the one word after it `who.area`.
+- **Z-INSIDECOVER (S277):** `tidyLines` – "inside / back cover photography by X" → "Photography [Inside Cover] by X".
+- **Z-PUBLINE (S278):** `tidyLines` – a line split before ℗ / © / (p) / (c) with a year; "℗ &", "P +" before © stay joined.
+- **Z-LINERSIG (S279):** `TEXT.parse` (end) – after prose left out, a line "Name, Town, Month Year" → "Liner Notes" with the date in the fields of `emptyDateFields` (`by`/`bm`/`bd`, `ey`/`em`/`ed`).
+- **Z-OCRESSAY (S280):** `tidyLines` – a line of six words of letters or more, without colon, bullet or end of a sentence, joined with the next one in small letters; never a credit ("by" in the first six words, a verb of what was done at the start, a dash between spaces), a line "With …", a line of a track (its number at the start, digits at the end). The joined line has no `rawOf`.
+- **Z-OCRTRACKCHECK (S281):** `tidyLines` – `scanTracks` (regex `TL`, two lines at least, `isTl`: no brackets or colon in the title; no other line between the first and the last track); `TEXT.parse` (end) compares them with `ctx0.tracks` (`nameKey` containment, length within 5 s) → ignored `scantrack` (text `ignored.why.scantrack`; `tracklist` keeps its text), the first with `check {n, mb, diffs}`; `labelHintHtml` – `hint.scanFits` / `hint.scanDiffers` (`[data-el=scan-check]`); `mbTracks` and `mbTracksAsSource` pass `length`.
+- **Z-SCANSPLIT (S282):** `ocrBoxes` – an image with w/h ≥ 1.6 without frames is two boxes (not a PDF read directly, not `mode` 'whole', not `turn`, not `cocr`).
+- **Z-REMASTERAT:** mapping `TEXT_COMPANY_RE` + "remastered" (at / in); `mediumOfRow`, `companyLeftOutForMedium` – "digital" of a remaster role is no medium.
+- **Z-FIRSTNAME (S283):** `FN_YEARS_KEY` ('dci-fn-years', 9; 3 – 30 in steps of 3) in `TOPIC_KEYS.sources` and `SETTINGS_KEYS`, ⚙ Sources number field `data-set="fn-years"`; `fnEligible`, `fnFind(a)` – release artists, members (`member of band` backward), `/ws/2/release?query=arid:… AND date:[y-k TO y+k]` for k = 3, 6, … ≤ `fnYears()`, up to 6 releases with `artist-rels+recordings+recording-level-rels`, then the members' artist relations; hits in front of `a.nameHits` with `fnWhy` (`[data-el=fn-why]`); `[data-act=fn-find]`, `[data-el=fn-busy]`, `[data-el=fn-none]`; log `fnFound`.
+- **Tests:** `t_text_basics.py booklet3154` – new, fails on 3.153.0. `harness.py`: `ARTIST_RELS`, `RELEASE_SEARCH` (the route `/ws/2/release?query`). `register_golden.json` anew (rules S275 – S283, `TEXT_COMPANY_RE`).
 
 ## Import 3.153.0 · 2026-11-17
 
@@ -30,7 +44,8 @@ The comparisons were made with a small script: functions and constants of the ma
 - **Z-SURNAMES (S268):** `TEXT.parse` (end) – a credit of one word gets the one full name of the text ending with it (`credited`, `who.surnameOf`). Mapping `R098` + "all tracks written by", "tracks written by", "all tracks by", "all titles written by", "all compositions written by".
 - **Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN (S269):** `tidyLines` – the heading word before a list, the parts of a line with semicolons (each a credit of its own), a "Name: roles" line ending in a joining word with the line below.
 - **Z-CAPSTITLE (S270):** `readClause` – the release's title (`releaseTitle`) before "was / were … recorded" as "The album".
-- **Z-PROMOPROSE (S271):** `TEXT.parse` (end) – ignored `promo` (text `ignored.why.promo`).
+- **Z-PROMOPROSE (S271):** `TEXT.parse` (end) – ignored `promo` (text `ignored.why.promo`): a word about the music needed; none of how it was made (distributed, mixed, produced …), guests, a quote at the start.
+- **Z-DASHASIDE (S272), review:** the word before the first dash a whole word in small letters (`(?<!\p{L})`) – "Bob Roe – drums, Cid Doe – guitar" is no aside.
 - **Z-DASHASIDE (S272):** `tidyLines` – asides between dashes in sentences of ten words or more (`asideLines`); ignored `aside`.
 - **Z-HOMESTUDIO / Z-RECINAREA (S273):** `HOME_STUDIO`, `homeStudio(x)`; `placeOf` – a private place (`PRIVATE_PLACE`) kept with `home` (only "recorded" / "tracked" at it; others as before); `tidyLines` – "recorded in their own studio" → "recorded at"; `TEXT.parse` (end) – the studio an ignored `homeStudio` (`area`, `line`, `date`), its town a company "Recorded In". Dashboard: `homeStudios(rel)`, `homeStudioFind(seq)` (after "Import complete": `artist/<mbid>?inc=place-rels` – type "owner" –, `place?query=place:"<artist>" AND area:"<town>"`), `homeStudioHtml(rel)` in `labelHintHtml` (`[data-el=home-studio]`, `[data-f=hs-pick]`, act `hs-take` → `addEntryByMbid(…, 'recorded at')`, log `hsTaken`), `S.hsPlaces`, `S.hsTaken`. Statistics: `statHomeStudios()`, the record's `hs` (exported `home_studios`, schema), `m.homeStudios`, `stats.homeStudios` with `stats.homeStudiosTitle`. Texts `hint.homeStudio*`, `hint.hs*`, `ignored.why.homeStudio`, `ignored.why.aside`.
 - **Z-RECSENTDATE (S274):** `studiosInText` – an area is no studio of a date.

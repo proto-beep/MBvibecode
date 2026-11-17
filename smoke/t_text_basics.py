@@ -2255,7 +2255,9 @@ def case_review3144():
             print('S244 aus' if off else 'S244 an', got)
             whys = [w for f, w in got['ign'] if 'review' in w]
             if off:
-                results.append(not whys and 'Bass Man' in got['names'] and 'There are records that feel assembled, and there are records that feel found.' in got['unrec'])
+                # ([3.153.0] S271: the sentence about records is a description of the music – left out as such, no longer "not recognized")
+                results.append(not whys and 'Bass Man' in got['names'] and ('There are records that feel assembled, and there are records that feel found.' in got['unrec']
+                                                                             or '– a description of the music (no credit)' in [w for f, w in got['ign']]))
             else:
                 results.append(whys == ['– review (press quote): SOUND MAGAZINE / October 2026 · 4.5 / 5.0', '– review (press quote): STATIC RADIO / October 2026',
                                         '– review (press quote): The Daily Echo']
@@ -2637,6 +2639,129 @@ console.log(JSON.stringify(['Composed By [All Music Composed By]', 'Lyrics By [A
     print('E)', out.stdout.strip(), out.stderr[-300:])
     results.append(json.loads(out.stdout or 'null') == [['Composed By', [], ''], ['Lyrics By', [], ''], ['Associate Producer', [], 'Executive-Producer'],
                                                         ['Guitar', ['Rhythm Guitar'], ''], ['Producer', ['Co-producer'], ''], ['Arranged By', ['Strings'], '']])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_booklet3154():
+    """Credits Importer 3.154.0 (collected items of the block "Booklets, scans and names").
+    A) The back of a booklet pasted as a scan reads it: an essay broken into short lines left out as prose (Z-OCRESSAY), its signature
+       "Mark Prendergast, London, November 1993" liner notes with that date (Z-LINERSIG); "digital remastering by Simon Heyworth at Chop 'Em Out,
+       London" the engineer and the place (Z-REMASTERAT); "cover by cooke-key associates, london" the design of a company, London no person
+       (Z-COVERCO); "inside cover photography by monique" photography credited "inside cover" (Z-INSIDECOVER); "Published by … ℗ 1976 … © 1995 …"
+       the publisher and both labels (Z-PUBLINE); "mixed by tangerine dream" the release's artist Tangerine Dream (Z-LOWERCASE); the track list
+       with lengths compared with MusicBrainz – track 4 differs in length (Z-OCRTRACKCHECK). Nothing "not recognized".
+    B) (Z-FIRSTNAME) "recording engineer: otto": "Assign first name …" – Otto Ziegler, in the relationships of a release of Tangerine Dream from
+       1999; "monique": Monique Froese, related to Edgar Froese (a member of the group); taken: the entry is hers. The setting of the years.
+    C) (Z-SCANSPLIT, Node) a double page (1600 × 1000) is read as two pages, a page (1000 × 1400) whole, frames as drawn."""
+    import json
+    import subprocess
+    TEXT = """When Testalbum appeared in the autumn of 2001 it marked
+a turning point for the group. The record moved away from
+the long improvised pieces of the earlier albums and towards
+shorter, more melodic structures. Phaedra and Rubycon had
+shown the way, but here the guitars and the mellotron came
+to the front.
+Mark Prendergast, London, November 1993
+digital remastering by Simon Heyworth at Chop 'Em Out, London
+cover by cooke-key associates, london
+inside cover photography by monique
+recording engineer: otto
+mixed by tangerine dream
+Published by Virgin Music (Publishers) Ltd. ℗ 1976 Virgin Records Ltd. © 1995 Virgin Records Ltd.
+1. Song One 3:00
+2. Song Two 3:01
+3. Song Three 2:59
+4. Song Four 4:10"""
+    TD, EF, OZ, MF = H.uid('dddddddd', 76), H.uid('dddddddd', 81), H.uid('dddddddd', 82), H.uid('dddddddd', 83)
+    R2 = H.uid('abababab', 2)
+    DUMP = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const cr = tr.querySelector('[data-f=role-credit]');
+        const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const dc = tr.querySelector('.dci-c-date');
+        const dt = dc ? [...dc.querySelectorAll('input')].map(x => x.value).filter(Boolean).join('-') + ' ' + dc.innerText.replace(/\s+/g, ' ') : '';
+        return [(t && t.selectedOptions[0] || {}).text || '', cr ? cr.value : '', lv ? lv.dataset.level : '', dt]; })])"""
+    orig_ac, orig_ws = list(H.RELEASE_AC), H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m['tracks']:
+                t['length'] = 180000
+        return d
+    results = []
+    H.lt(1206, '1d4c0b5b-0000-4000-8000-000000001206', 'mastered at', 'place', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    try:
+        H.ws_release = ws
+        H.RELEASE_AC[:] = [(TD, 'Tangerine Dream', 'Tangerine Dream', '')]
+        H.ARTIST_RELS[TD] = [('member of band', 'backward', EF, 'Edgar Froese')]
+        H.ARTIST_RELS[EF] = [('married', 'forward', MF, 'Monique Froese')]
+        H.RELEASE_SEARCH[:] = [(R2, 1999, TD)]
+        H.GROUP_RELEASES[R2] = {'id': R2, 'title': 'Other Album', 'relations': [{'target-type': 'artist', 'type': 'engineer', 'artist': {'id': OZ, 'name': 'Otto Ziegler'}}], 'media': []}
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = dict((n, rows) for n, rows in pg.evaluate(DUMP))
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 170))")
+            chk = pg.evaluate("((document.querySelector('[data-el=scan-check]') || {}).textContent || '')")
+            print('A)', json.dumps(g, ensure_ascii=False)[:1500], '\n   nicht erkannt:', unrec, '\n   ausgelassen:', ign, '\n   Titelliste:', chk)
+            results.append(unrec == [] and g.get('Mark Prendergast') and g['Mark Prendergast'][0][0] == 'liner notes' and '1993-11' in g['Mark Prendergast'][0][3]
+                           and g.get('Simon Heyworth') and g['Simon Heyworth'][0][0] == 'mastering' and (g.get("Chop 'Em Out") or [['']])[0][0] == 'mastered at' and g.get('Cooke-Key Associates') and g['Cooke-Key Associates'][0][0] == 'design'
+                           and not any(n.lower() == 'london' for n in g) and g.get('monique') and g['monique'][0][0] == 'photography' and g['monique'][0][1] == 'inside cover'
+                           and 'Virgin Music (Publishers) Ltd' in g and 'Virgin Records Ltd' in g and 'Tangerine Dream' in g and 'tangerine dream' not in g
+                           and any(x.startswith('When Testalbum appeared') for x in ign) and sum(1 for x in ign if x.startswith(('1. Song', '2. Song', '3. Song', '4. Song'))) == 4
+                           and chk.startswith('The track list of the text differs') and '4 “Song Four” 4:10 – MusicBrainz: 3:00' in chk)
+            # B) first names
+            sec = lambda n: f"section.dci-group[data-group='{pg.evaluate(f'''[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === {n!r}).dataset.group''')}']"
+            fn0 = pg.evaluate(f"!!document.querySelector(\"{sec('otto')} [data-act=fn-find]\")")
+            pg.click(f"{sec('otto')} [data-act=fn-find]")
+            H.wait_ok(pg, f"!document.querySelector(\"{sec('otto')} [data-el=fn-busy]\") && !document.querySelector(\"{sec('otto')} [data-act=fn-find]\")", 30)
+            otto = pg.evaluate(f"[...document.querySelectorAll(\"{sec('otto')} [data-act=name-use]\")].map(b => b.textContent.replace(/\\s+/g, ' ').trim())")
+            pg.click(f"{sec('monique')} [data-act=fn-find]")
+            H.wait_ok(pg, f"!document.querySelector(\"{sec('monique')} [data-el=fn-busy]\") && !document.querySelector(\"{sec('monique')} [data-act=fn-find]\")", 30)
+            mon = pg.evaluate(f"[...document.querySelectorAll(\"{sec('monique')} [data-act=name-use]\")].map(b => b.textContent.replace(/\\s+/g, ' ').trim())")
+            pg.click(f"{sec('monique')} [data-act=name-use][data-mbid='{MF}']")
+            pg.wait_for_timeout(300)
+            linked = pg.evaluate(f"(document.querySelector(\"{sec('monique')}\") || {{}}).innerText || ''")
+            print('B) Knopf:', fn0, '| otto:', otto, '| monique:', mon, '| verknüpft:', 'Monique Froese' in linked)
+            results.append(fn0 and otto and otto[0].startswith('Otto Ziegler') and 'on 1 releases of Tangerine Dream, 1998 – 2004' in otto[0]
+                           and mon and mon[0].startswith('Monique Froese') and 'related to Edgar Froese (married)' in mon[0] and 'Monique Froese' in linked)
+            H.open_settings(pg, 'sources')
+            pg.fill('[data-el=settings] [data-set=fn-years]', '13')
+            pg.press('[data-el=settings] [data-set=fn-years]', 'Tab')
+            pg.wait_for_timeout(200)
+            yv = [pg.evaluate("document.querySelector('[data-el=settings] [data-set=fn-years]').value"), pg.evaluate("localStorage.getItem('dci-fn-years')")]
+            print('   Jahre:', yv)
+            results.append(yv == ['12', '12'])
+            print('   Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+        H.RELEASE_AC[:] = orig_ac
+        H.ARTIST_RELS.clear()
+        H.RELEASE_SEARCH.clear()
+        H.GROUP_RELEASES.pop(R2, None)
+    # C) Node: the pages of a double page
+    src = H.MAIN
+    a = src.index('  const ocrBoxes = (img) => {')
+    fn = src[a:src.index('\n  };\n', a) + 5]
+    js = "const ruleOn = () => true; const ocrDirect = () => false;\n" + fn + """
+const c = (w, h) => ({ canvas: { width: w, height: h }, mode: '', frames: [] });
+console.log(JSON.stringify([ocrBoxes(c(1600, 1000)).map((b) => [b.x, b.w, b.page]), ocrBoxes(c(1000, 1400)).length,
+  ocrBoxes({ canvas: { width: 1600, height: 1000 }, mode: 'frames', frames: [{ x: 1, y: 2, w: 3, h: 4 }] }).length]));"""
+    out = subprocess.run(['node', '-e', js], capture_output=True, text=True)
+    print('C)', out.stdout.strip(), out.stderr[-300:])
+    results.append(json.loads(out.stdout or 'null') == [[[0, 800, 'left'], [800, 800, 'right']], 1, 1])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

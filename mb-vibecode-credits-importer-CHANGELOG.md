@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.153.0 | – |
+| 2026-11-17 | 3.152.0 – 3.154.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -110,6 +110,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-11-08
 
+### Import 3.154.0
+
+A scanned booklet (every free text: pasted, Bandcamp, YouTube, the Discogs notes, text from cover art):
+
+- **Names written small** (Z-LOWERCASE; S275): "mixed by tangerine dream", "edgar froese" – the name as the text or the release's artist writes it with capitals.
+- **A company for the cover** (Z-COVERCO; S276): "cover by cooke-key associates, london" is the cover design of that company, London its town – no person.
+- **Parts of the cover** (Z-INSIDECOVER; S277): "inside cover photography by monique" – photography credited "inside cover".
+- **℗ and © in one line** (Z-PUBLINE; S278): "Published by … ℗ 1976 … © 1995 …" – the publisher and each ℗ / © with its own year; "℗ & © 2023" stays one.
+- **The signature below an essay** (Z-LINERSIG; S279): "Mark Prendergast, London, November 1993" – the liner notes of that person, dated (no date of the recordings).
+- **An essay in short lines** (Z-OCRESSAY; S280): the lines of a scanned essay are one paragraph, left out as prose; credits, lines "With …" and lines of tracks are never joined.
+- **A track list in the scan** (Z-OCRTRACKCHECK; S281): "1. Stratosfear 10:00" is no credit – compared with MusicBrainz's tracks above the entries: "fits", or what differs (titles, lengths more than 5 s apart). A list with the composers of each track (in brackets or on the line below) is read as before.
+- **Double pages** (Z-SCANSPLIT; S282): an image at least 1.6 times as wide as high, read whole, is read as its left and right page – not when "the whole image" was chosen, it was turned by hand or it is a frame drawn on Discogs or Bandcamp.
+- **"Remastered at"** (Z-REMASTERAT): a studio of the remaster; "digital" in "digital remastering" is no medium.
+- **A first name alone** (Z-FIRSTNAME; S283): "Assign first name …" at its entry (only on a click, only suggestions) – the release's artists and the members of its groups of that first name, then the people in the relationships of the band's releases around the release's date (± 3 years, wider in steps of three up to ⚙ Settings → Sources "First names: years around the release", 9 by default), each with why ("related to … (…)").
+
 ### Import 3.153.0
 
 Discogs roles and the lines of free texts (every free text: pasted, Bandcamp, YouTube, the Discogs notes, text from cover art):
@@ -122,8 +137,8 @@ Discogs roles and the lines of free texts (every free text: pasted, Bandcamp, Yo
 - **Surnames** (Z-SURNAMES; S268): "All tracks written by Franke / Froese / Baumann" – the full names of the same text, writers of the works, credited as written.
 - **Lines** (Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN; S269): "Personnel:" before a list is a heading; a paragraph of credits with semicolons a line per part ("recording engineer: otto"); a line broken after "/", "&", "and" one line.
 - **The album's title as the subject** (Z-CAPSTITLE; S270): "FRAG NICHT NACH SONNENSCHEIN was recorded at …" is the album, also in capitals.
-- **Descriptions of the music** (Z-PROMOPROSE; S271): "Expect a heavy dose of psychedelic riffs …" is left out, not "not recognized" – never a sentence with a name, a role, an instrument or a title of the release or its tracks.
-- **Asides between dashes** (Z-DASHASIDE; S272): read apart – the sentence around them, the aside as a line of its own; one that gives nothing is left out.
+- **Descriptions of the music** (Z-PROMOPROSE; S271): "Expect a heavy dose of psychedelic riffs …" is left out, not "not recognized" – never a sentence with a name, a role, an instrument or a title of the release or its tracks. Only a sentence about the music (riffs, grooves, sound, songs …) – "We had a great time together" or "Distribution of the songs was slow." stay "not recognized"; a quote is a press quote's (S244).
+- **Asides between dashes** (Z-DASHASIDE; S272): read apart – the sentence around them, the aside as a line of its own; one that gives nothing is left out. "Bob Roe – drums, Cid Doe – guitar" is two credits, no aside.
 - **Studios without a name** (Z-HOMESTUDIO, Z-RECINAREA; S273): "the band's home studio in Tampere, Finland" is said above the entries (where, when) and counted in the statistics (not submitted); Tampere is "recorded in". A place of MusicBrainz is offered only when the release's artist owns it or it has the artist's name in that town (several: a list).
 - **The date of the recordings** (Z-RECSENTDATE; S274): a date in the sentence of the recordings is the performance date of all tracks (instruments, voices, "recorded by", "recorded in") – not only of the town; mix and mastering keep none.
 
