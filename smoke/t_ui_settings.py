@@ -3337,7 +3337,7 @@ def case_settabs3136():
         # ([Z-SETTABS2] 3.137.0) General with "Developer" (its switch), Sources with "Discogs & Bandcamp"
         results.append(heads['general'] == ['Language', 'Log', 'Developer'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
                        and heads['sources'][:5] == ['Order of the sources', 'Trust of the sources', 'Release editor and release page', 'Discogs & Bandcamp', 'MusicBrainz search']  # ([3.148.0] Z-SRCTRUST)
-                       and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites'] and heads['staging'][0] == 'Staging and its limits'
+                       and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites', '✨ Answer all']  # ([Z-WORKMAGIC] 3.155.0) and heads['staging'][0] == 'Staging and its limits'
                        and 'Live comments' in heads['staging'] and heads['cache'] == ['Remember', 'Statistics'] and not pg.evaluate("!!document.querySelector('.dci-set-pane details')"))
         moved = ['ev-shared', 'em-show', 'em-by-default', 'em-attr']
         print('B) Appearance:', [x for x in sets['appearance'] if x in moved], '| Staging:', [x for x in sets['staging'] if x in moved],
