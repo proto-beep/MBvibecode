@@ -277,7 +277,9 @@ def case_quickswitch():
        of their own (head, frame with round corners of 4 px), each switch a button (pressed = on; collected item 116).
     B) A click on an id shows that rule in the list below (highlighted).
     C) A quick switch and the rule's own switch are the same: S007 off at the top (a click on its button) → off in the list and
-       stored; on again.
+       stored; on again. ([Z-QSSCOPE] 3.156.0: with its box "permanent" ticked.)
+    C2) ([Z-QSSCOPE] 3.156.0) S031 without "permanent": off for this import only – off in the list, not stored, "this import only" at the
+       switch and "1 switch changed for this import only" in the head; "permanent" ticked then: stored off, the marks gone; on again.
     D) D022: "Recorded March 1–3, 2001" in the notes → under Performance the month 2001-03 at once (the period stays in the
        pool); D022 off → the period again (the suggestions not applied yet are placed anew); on → the month.
     E) S045: a pasted text "Composed by Tomas Fujiwara (BMI)" and "Lyrics by Ann Poe / GEMA" → Tomas Fujiwara and Ann Poe
@@ -319,12 +321,27 @@ def case_quickswitch():
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)
         results.append(hit == ['S031'])
+        pg.click('#dci-rules [data-rf=quick] [data-qs-perm=S007]'); pg.wait_for_timeout(300)
         pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(500)
         c1 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
         pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(500)
         c2 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
         print('C) S007 aus:', c1, '| wieder an:', c2)
         results.append(c1[0] is False and 'S007' in (c1[1] or '') and c2[0] is True and 'S007' not in (c2[1] or ''))
+        ONCE = """(() => { const w = document.querySelector('#dci-rules [data-qs-toggle=S031]').closest('.dci-qbtn-wrap');
+          return [w.querySelector('[data-qs-toggle]').getAttribute('aria-pressed'), (w.querySelector('.dci-qonce-tag') || { textContent: '' }).textContent,
+            (document.querySelector('#dci-rules [data-el=qs-once]') || { textContent: '' }).textContent, document.querySelector('#dci-rules [data-rf=tables] [data-rule-on=S031]').checked,
+            localStorage.getItem('dci-rules-off') || '', JSON.parse(localStorage.getItem('dci-qs-perm') || '[]')]; })()"""
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S031]'); pg.wait_for_timeout(500)
+        o1 = pg.evaluate(ONCE)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-perm=S031]'); pg.wait_for_timeout(500)
+        o2 = pg.evaluate(ONCE)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S031]'); pg.wait_for_timeout(500)
+        o3 = pg.evaluate(ONCE)
+        print('C2) nur dieser Import:', o1, '| dauerhaft:', o2, '| wieder an:', o3)
+        results.append(o1[:4] == ['false', 'this import only', '1 switch changed for this import only', False] and 'S031' not in o1[4]
+                       and o2[:4] == ['false', '', '', False] and 'S031' in o2[4] and 'S031' in o2[5]
+                       and o3[:4] == ['true', '', '', True] and 'S031' not in o3[4])
         pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=D022]'); pg.wait_for_timeout(600)
         perf1 = [c[0] for c in cells(pg).get('performance', [])]
         pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=D022]'); pg.wait_for_timeout(600)

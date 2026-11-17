@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.155.0 | – |
+| 2026-11-17 | 3.152.0 – 3.156.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.156.0
+
+- **Quick switches for this import** (Z-QSSCOPE): a click on a quick switch changes it for this import only (marked, with a note in the head); the box **permanent** at each switch stores its changes as before – several switches each on their own.
+- **Instruments: all tracks | ⑃ on the release + group** (Z-INSTSCLEAR): in the colours of their levels, the one not chosen greyed, ⑃ in the second; beside them in italics what the second would enter (release – the instruments · recordings – their group). Back and forth as often as you like without new rows. Suggested **from two** instruments without tracks (Z-INSTS2; before four).
+- **Dates from the dates matrix** (Z-EMDATEDROP): a date dragged from a column of the dates matrix can be dropped onto an entry's matrix (a line, an event, a block) as a date of the pool.
+- **Number words before instruments** (Z-NUMSTRING; S285): "25-String Gayageum" → "25-string gayageum", "Twelve-String Guitar", "Double-Neck Guitar"; a model name keeps its capitals ("Rickenbacker 12-String").
+- **What goes to MusicBrainz underlined** (Z-CREDITUL; S286): the matched name, or – when the entry has one – its "credited as", underlined in MusicBrainz purple.
+- **The head of an entry's matrix** (Z-STICKYOVERLAP) stays in its box while scrolling (it painted over the bar on top of the dashboard); with its dates open it sticks below that bar.
+- **Fill empty recordings** (Z-QFBETA): "Credit fill" without "Beta" – under ⚙ Settings → Staging, the button in the look of "Import credits …", set apart by a line; the edit note and the statistics say "Fill empty recordings".
 
 ### Import 3.155.0
 

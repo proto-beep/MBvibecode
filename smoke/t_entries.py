@@ -2956,8 +2956,9 @@ def case_detail3102():
 def case_insts3103():
     """Credits Importer 3.103.0 (collected item Z-INSTS, rules S169, S170): Discogs names Jane Roe with five instruments without tracks
     (soprano and tenor saxophone, flute, bass clarinet, little instruments), Sax Two with soprano saxophone and flute, both as guest.
-    A) Jane Roe: "💡 5 instruments without tracks …" with "Put them on the release"; Sax Two (two): no suggestion, the switch
-       "Instruments: per track | on the release" ("per track" pressed).
+    A) Jane Roe: "💡 5 instruments without tracks …" with "Put them on the release"; Sax Two (two): ([Z-INSTS2] 3.156.0) the suggestion
+       too (from two, before from four); the switch "Instruments: all tracks | ⑃ on the release + group" ("all tracks" pressed, the other
+       greyed; [Z-INSTSCLEAR] 3.156.0 the hint in italics: what "on the release + group" would enter – Sax Two: "woodwind").
     B) "Put them on the release": Jane Roe's five rows on the release (no release-level date in the matrix: the date they had); one automatic
        row on the recordings – instrument without an instrument (a little instrument has no group with the others: "instruments"),
        all 4 tracks, its note; the suggestion gone, "on the release" pressed.
@@ -2997,6 +2998,8 @@ def case_insts3103():
       if (!g) return null; const bar = g.querySelector('[data-el=insts]');
       return { sugg: !!(bar && bar.querySelector('.dci-insts-sugg')), seg: [...g.querySelectorAll('[data-act=insts-set][aria-pressed=true]')].map(b => b.dataset.insts),
         notes: [...g.querySelectorAll('.dci-insts-note')].map(n => n.textContent.trim()),
+        hint: (g.querySelector('[data-el=insts-hint]') || { textContent: '' }).textContent.trim(), off: [...g.querySelectorAll('[data-act=insts-set].dci-insts-off')].map(b => b.dataset.insts),
+        relText: (g.querySelector('.dci-insts-seg [data-insts=release]') || { textContent: '' }).textContent.trim(),
         rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
           const pr = tr.querySelector('[data-f=primary]'); return [t ? (t.options[t.selectedIndex] || {}).text : '', lv ? lv.dataset.level : '', pr ? pr.value : '',
           (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), [...tr.querySelectorAll('[data-f=flag]:checked, [data-f=flags]:checked')].map(c => c.value)]; }) }; }"""
@@ -3016,7 +3019,9 @@ def case_insts3103():
             H.wait_still(pg, "document.body.innerHTML", 10, 300)
             jr, st = pg.evaluate(ENT, 'Jane Roe'), pg.evaluate(ENT, 'Sax Two')
             print('A)', jr, st)
-            results.append(bool(jr) and jr['sugg'] and jr['seg'] == ['track'] and len(jr['rows']) == 5 and bool(st) and not st['sugg'] and st['seg'] == ['track'])
+            results.append(bool(jr) and jr['sugg'] and jr['seg'] == ['track'] and len(jr['rows']) == 5 and bool(st) and st['sugg'] and st['seg'] == ['track'])
+            results.append(st['off'] == ['release'] and st['relText'].startswith('⑃ ') and 'on the release + group' in st['relText']
+                           and st['hint'].startswith('would be: release') and 'woodwind' in st['hint'])
             pg.click(f"{sec_sel(pg, 'Jane Roe')} .dci-insts-sugg [data-act=insts-set][data-insts=release]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             jr2 = pg.evaluate(ENT, 'Jane Roe')
@@ -4893,6 +4898,71 @@ def case_createdstat3145():
         results.append(bool(opened) and '/create' in opened and before is None and len(made) == 1 and made[0]['et'] == 'label' and made[0]['tg'] == NEW
                        and isinstance(made[0]['at'], (int, float)) and not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_v3156():
+    """Credits Importer 3.156.0.
+    A) (Z-EMDATEDROP) A date taken from the dates matrix (a cell of a column, not only a chip of the pool) dropped onto the head of
+       Multi Man's ①: all three instruments get it – the head shows its event ("Performance 1 (month)").
+    B) (Z-CREDITUL, S286) What goes to MusicBrainz underlined in purple: the matched name of an entry without "credited as"; with one, the
+       "credited as" chip (the name not). S286 off: nothing underlined.
+    C) (Z-STICKYOVERLAP) The box of an entry's matrix keeps its sticky head inside (isolation); the height of the bar on top of the
+       dashboard is known (--dci-stick-h).
+    D) (Z-QFBETA) "Fill empty recordings" under ⚙ Settings → Staging; switched on: beside "Import credits …", set apart by a line."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            multi = sec_sel(pg, 'Multi Man')
+            cells = pg.evaluate("[...document.querySelectorAll('.dci-dm-cell[data-id]')].filter(c => /\\d{4}/.test(c.textContent)).map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
+            a0 = pg.evaluate(BLOCKS, 'Multi Man')
+            ok = bool(cells) and pg.evaluate(DROP, [f'.dci-dm-cell[data-id="{cells[0][0]}"]', f'{multi} th.dci-em-ev', False])
+            pg.wait_for_timeout(600)
+            a1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('A) Zellen:', cells[:3], '| vorher:', a0[0]['ev'], '| nachher:', a1[0]['ev'])
+            results.append(ok and a1[0]['ev'] != a0[0]['ev'] and any(cells[0][1].split(' · ')[0] in e for e in a1[0]['ev']))
+            UL = """(() => { const dec = (el) => { if (!el) return 'none'; const st = getComputedStyle(el);
+                return st.textDecorationLine === 'underline' && st.textDecorationThickness === '2px' ? 'underline' : 'none'; };
+              return [...document.querySelectorAll('section.dci-group')].map(g => { const c = g.querySelector('.dci-gcredit:not([hidden])'); const a = g.querySelector('.dci-gmatch a.dci-mblink');
+                return a ? [!!c, dec(a), c ? dec(c) : ''] : null; }).filter(Boolean); })()"""
+            b1 = pg.evaluate(UL)
+            col = pg.evaluate("(() => { const a = document.querySelector('section.dci-group .dci-gmatch a.dci-mblink'); return a ? getComputedStyle(a).textDecorationColor : ''; })()")
+            pg.evaluate("document.querySelector('.dci-head [data-act=rules]').click()"); pg.wait_for_timeout(400)
+            pg.evaluate("(() => { const c = document.querySelector('#dci-rules [data-rf=tables] [data-rule-on=S286]'); c.click(); })()"); pg.wait_for_timeout(500)
+            b2 = pg.evaluate(UL)
+            pg.evaluate("(() => { const c = document.querySelector('#dci-rules [data-rf=tables] [data-rule-on=S286]'); c.click(); })()"); pg.wait_for_timeout(300)
+            pg.evaluate("(() => { const x = document.querySelector('#dci-rules [data-rules-close]'); if (x) x.click(); })()"); pg.wait_for_timeout(200)
+            print('B) unterstrichen:', b1[:6], col, '| S286 aus:', b2[:3])
+            results.append(len(b1) > 0 and all((x[1] == 'none' and x[2] == 'underline') if x[0] else x[1] == 'underline' for x in b1)
+                           and col == 'rgb(115, 109, 171)' and all(x[1] == 'none' and x[2] in ('', 'none') for x in b2))  # (off: the page's own look)
+            c1 = pg.evaluate("""(() => { const w = document.querySelector('.dci-em-onewrap'); const o = document.getElementById('dci-overlay');
+              return [w ? getComputedStyle(w).isolation : '', o ? o.style.getPropertyValue('--dci-stick-h') : '']; })()""")
+            print('C)', c1)
+            results.append(c1[0] == 'isolate' and c1[1].endswith('px'))
+            H.open_settings(pg, 'staging')
+            pg.click('[data-set=qf-on]'); pg.wait_for_timeout(300)
+            d1 = pg.evaluate("""(() => { const q = document.getElementById('dci-quickfill'); return [q.hidden, q.textContent, q.previousElementSibling.id,
+              getComputedStyle(q).marginLeft, getComputedStyle(q, '::before').width, document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]').getAttribute('aria-disabled')]; })()""")
+            print('D)', d1)
+            results.append(d1 == [False, 'Fill empty recordings', 'dci-open-ocr', '14px', '1px', 'true'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
