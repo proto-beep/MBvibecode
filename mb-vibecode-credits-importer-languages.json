@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.153.0",
+  "version": "3.154.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -3033,6 +3033,7 @@
     "ignored.why.series": "eine Serie, zu der das Release gehört",
     "ignored.why.catno": "die Katalognummer des Releases",
     "ignored.why.tracklist": "eine Zeile der Trackliste",
+    "ignored.why.scantrack": "eine Zeile der Trackliste (oben mit MusicBrainz verglichen)",
     "ignored.why.edition": "die Auflage (keine Beziehung)",
     "ignored.why.translation": "Übersetzung der Zeile daneben",
     "ignored.why.prose": "Fließtext (kein Credit)",
@@ -6078,6 +6079,7 @@
     "log.siteHint": "{name}: el sitio web {host} del texto aún no está en MusicBrainz – nota en la entrada",
     "ignored.why.catno": "el número de catálogo de la publicación",
     "ignored.why.tracklist": "una línea de la lista de pistas",
+    "ignored.why.scantrack": "una línea de la lista de pistas (comparada con MusicBrainz arriba)",
     "ignored.why.edition": "la tirada (ninguna relación)",
     "ignored.why.translation": "una traducción de la línea de al lado",
     "ignored.why.prose": "prosa (ningún crédito)",
@@ -9064,6 +9066,7 @@
     "log.siteHint": "{name} : le site web {host} du texte n’est pas encore dans MusicBrainz – une note à l’entrée",
     "ignored.why.catno": "le numéro de catalogue de la parution",
     "ignored.why.tracklist": "une ligne de la liste des pistes",
+    "ignored.why.scantrack": "une ligne de la liste des pistes (comparée à MusicBrainz plus haut)",
     "ignored.why.edition": "le tirage (aucune relation)",
     "ignored.why.translation": "une traduction de la ligne voisine",
     "ignored.why.prose": "de la prose (aucun crédit)",

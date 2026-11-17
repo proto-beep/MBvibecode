@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.153.0
+// @version      3.154.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.153.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.153.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.154.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.154.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.153.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.154.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -484,6 +484,17 @@
       "match.markRegion": "region (T059)",
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
+      "fn.find": "Assign first name …",
+      "fn.findTitle": "Look for people with the first name “{name}” around this release in MusicBrainz – only suggestions: the release's artists and the members of its groups, the relationships of the artist's releases from {from} to {to} (wider in steps of three years up to ± {years}), the relationships of the members. One request a second.",
+      "fn.busy": "Looking for people called “{name}” …",
+      "fn.none": "No one with the first name “{name}” found around this release.",
+      "fn.whyRelease": "artist of the release",
+      "fn.whyMember": "member of {band}",
+      "fn.whyAlbum": "on {n} releases of {artist}, {from} – {to}",
+      "fn.whyRelated": "related to {name} ({type})",
+      "log.fnFound": "First name “{name}”: {n} people found ({list})",
+      "settings.fnYears": "First names: years around the release",
+      "settings.fnYearsTitle": "“Assign first name …” at an entry of a first name alone looks in the relationships of the releases of the release's artist around its date: ± 3 years first, then wider in steps of three years up to this number.",
       "match.markLinked": "in this release: {where}",
       "match.linkedTitle": "In this release in MusicBrainz already: {where} – most likely the one meant. Only a suggestion: check before assigning.",
       "match.inRelease.ac": "release artist",
@@ -879,6 +890,7 @@
       "ignored.why.series": "a series the release is part of",
       "ignored.why.catno": "the release’s catalogue number",
       "ignored.why.tracklist": "a line of the track list",
+      "ignored.why.scantrack": "a line of the track list (compared with MusicBrainz above the entries)",
       "ignored.why.edition": "the edition (no relationship)",
       "ignored.why.translation": "a translation of the line beside it",
       "ignored.why.prose": "prose (no credit)",
@@ -923,6 +935,12 @@
       "ignored.why.labels": "the release’s labels: {list} – check them in the release editor",
       "ignored.why.labelName": "the name of a label: {name}",
       "hint.labels": "The text names the labels {list}; MusicBrainz has {mb} for this release – check the labels in the release editor.",
+      "hint.scanFits": "The track list of the text fits the release in MusicBrainz ({n} tracks: titles and lengths).",
+      "hint.scanDiffers": "The track list of the text differs from the release in MusicBrainz: {list}. Check that it is the right release.",
+      "hint.scanTitle": "{pos} “{title}” – MusicBrainz: “{mb}”",
+      "hint.scanLength": "{pos} “{title}” {len} – MusicBrainz: {mb}",
+      "hint.scanExtra": "{pos} “{title}” – not in MusicBrainz",
+      "hint.scanFewer": "{n} tracks in the text, {mb} in MusicBrainz",
       "hint.homeStudio": "Recorded at {name}{where}: a studio without a name – MusicBrainz has no place for it, nothing of it is submitted (only the town, as “recorded in”).",
       "hint.homeStudioPlace": "MusicBrainz has a place that may be this studio ({why}):",
       "hint.homeStudioPlaces": "MusicBrainz has {n} places that may be this studio:",
@@ -4994,10 +5012,19 @@
     { id: 'S268', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-SURNAMES): a surname alone ("All tracks written by Franke / Froese / Baumann") is the one full name of the same text ending with it (Chris Franke), credited as written; "All tracks written by" a writer on the works (R098)' },
     { id: 'S269', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected items Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN): "Personnel:" (line-up, musicians, Besetzung) before a list is no part of it; a paragraph of credits with semicolons is a line per part ("recording engineer: otto" in the middle); a line of roles broken after "/", "&", "and" – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" – is one line' },
     { id: 'S270', where: 'TEXT.parse (readClause)', note: 'Texts (3.153.0; collected item Z-CAPSTITLE): the release\'s title as the subject – "FRAG NICHT NACH SONNENSCHEIN was recorded at …", in capitals or not – is the album (no person), as "The album was …"' },
-    { id: 'S271', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-PROMOPROSE): a sentence that describes the music – "Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction" – is left out ("a description of the music"), not "not recognized": no name, no role, no instrument, no title of the release or its tracks' },
+    { id: 'S271', where: 'TEXT.parse (end)', note: 'Texts (3.153.0; collected item Z-PROMOPROSE): a sentence that describes the music – "Expect a heavy dose of psychedelic riffs, deep-space grooves and pure sonic destruction" – is left out ("a description of the music"), not "not recognized": it speaks of the music (riffs, grooves, sound, album, songs …); no name, no role, no instrument, no title of the release or its tracks, nothing about how it was made, no guests, no quote (S244)' },
     { id: 'S272', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.153.0; collected item Z-DASHASIDE): an aside between two dashes in a sentence – "recorded at the bands home studio in - the capital of Finnish psychedelic rock - Tampere, Finland" – is read apart: the sentence around it, the aside as a line of its own (a name in it is read); one that gives nothing is left out ("an aside")' },
     { id: 'S273', where: 'HOME_STUDIO, placeOf, TEXT.parse (end), homeStudioHtml, homeStudioFind', note: 'Places (3.153.0; collected items Z-HOMESTUDIO, Z-RECINAREA): a studio without a name ("the band\'s home studio", "their own studio", "im eigenen Studio", "at home") is no place – said above the entries (where, when), counted in the statistics (not submitted); its town is "recorded in" (found in MusicBrainz, else nothing). MusicBrainz\'s place of it is offered only when the release\'s artist owns it ("owner") or it has the artist\'s name in that town (several: a list)' },
     { id: 'S274', where: 'studiosInText', note: 'Dates (3.153.0; collected item Z-RECSENTDATE): a date in the sentence of the recordings ("recorded … in Tampere, Finland in February 2026", "tracked in March 2025") is the time of the recordings – the performance (instruments, voices, "recorded by", "recorded in") of all tracks, not only of the town; mix and mastering keep no date' },
+    { id: 'S275', where: 'TEXT.parse (end)', note: 'Texts (3.154.0; collected item Z-LOWERCASE): a name written small ("mixed by tangerine dream", "edgar froese") is the name of the text or of the release\'s artist written with capitals, whatever its case – the band when it is called so' },
+    { id: 'S276', where: 'TEXT.parse (end)', note: 'Texts (3.154.0; collected item Z-COVERCO): "cover by cooke-key associates, london" – a company (associates, design, studio, graphics, Ltd …) for the cover is its design ("cover design"); the one word after it its town, no person' },
+    { id: 'S277', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.154.0; collected item Z-INSIDECOVER): "inside cover photography by monique", "Back cover photo: X" – the role with the part of the cover as its detail: photography credited "inside cover"' },
+    { id: 'S278', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.154.0; collected item Z-PUBLINE): "Published by … ℗ 1976 … © 1995 …" in one line – the publisher (the works) and each ℗ / © a line of its own with its year (the © year no date of the recordings)' },
+    { id: 'S279', where: 'TEXT.parse (end)', note: 'Texts (3.154.0; collected item Z-LINERSIG): the signature below an essay – "Mark Prendergast, London, November 1993" – is the liner notes of that person; the date that of the liner notes (no date of the recordings)' },
+    { id: 'S280', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.154.0; collected item Z-OCRESSAY): an essay broken into short lines (a scan) is one paragraph – a line of six words or more without a colon, not ended by a sentence, the next one going on in small letters –, read as prose and left out (S203); titles of albums in it are no credits. Never joined: credits ("by", "recorded at …", "Name – role"), lines "With …", lines of tracks' },
+    { id: 'S281', where: 'tidyLines, TEXT.parse (end), labelHintHtml', note: 'Texts (3.154.0; collected item Z-OCRTRACKCHECK): a track list with lengths ("1. Stratosfear 10:00") is no credit – compared with MusicBrainz\'s tracks (titles as words, lengths 5 s apart at most): "fits" or what differs, above the entries; its lines left out. Only a list of its own (no lines between its tracks) and titles without brackets – the composers of a track stay its credits (S180)' },
+    { id: 'S282', where: 'ocrBoxes', note: 'Text from cover art (3.154.0; collected item Z-SCANSPLIT): a double page – an image at least 1.6 times as wide as high, read whole – is read as its left and its right page apart; not when "the whole image" was chosen, the image was turned by hand or it is a frame drawn on the source page' },
+    { id: 'S283', where: 'fnEligible, fnFind, suggestStackHtml', note: 'Entries (3.154.0; collected item Z-FIRSTNAME): a first name alone ("otto", "monique") – "Assign first name …", only on a click, only suggestions: the release\'s artists and the members of its groups of that first name; the people in the relationships of the artist\'s releases around this one (± 3 years, wider in steps of three up to ⚙ Settings → Sources); those related to the members (Monique Froese through Edgar Froese) – by how often, with where from' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -8645,6 +8672,7 @@
       // the companion (rawOf)
       const rawOf = new Map();
       const asideLines = new Set(); // [Z-DASHASIDE] (3.153.0) the asides read as lines of their own (norm)
+      const scanTracks = []; // [Z-OCRTRACKCHECK] (3.154.0) the lines of a track list with lengths: { line, pos, title, len }
       const textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
       const guessedSet = new Set(); // ([Z-SEI2] 3.96.0, review) the words asked in blocks of tracks
       // [Z-ARRL] (3.94.0, S150) a line about songs, tracks, compositions …: its arrangement is that of the works ("All songs was written &
@@ -8748,7 +8776,8 @@
           out = out.flatMap((l) => {
             if (l.split(/\s+/).length < 10) return [l];
             const asides = [];
-            const t = l.replace(/(\p{Ll}[\p{L}'’]*)\s+[-–—]\s+([^-–—]{3,120}?)\s+[-–—]\s+(?=\S)/gu, (w, before, inner) => {
+            // ((the word before it a whole word in small letters – not "Bob Roe – drums, Cid Doe – guitar")
+            const t = l.replace(/(?<!\p{L})(\p{Ll}[\p{L}'’]*)\s+[-–—]\s+([^-–—]{3,120}?)\s+[-–—]\s+(?=\S)/gu, (w, before, inner) => {
               if (inner.split(/\s+/).length < 3) return w;
               asides.push(inner.trim());
               return `${before} `;
@@ -8765,6 +8794,72 @@
             const t = l.replace(/\b(recorded|tracked|mixed)\s+in\s+((?:the\s+)?(?:band(?:'s|s'|’s|s)?|their|his|her|our|my)\s+(?:own\s+)?(?:home\s+)?studio)\b/gi, '$1 at $2');
             return t === l ? l : keep(t, rawOf.get(l) || l);
           });
+        }
+        // [Z-INSIDECOVER] (3.154.0, S277) "inside cover photography by monique", "Back cover photo: X": the role with the part of the cover as its
+        // detail ("Photography [Inside Cover] by monique": photography credited "inside cover")
+        if (ruleOn('S277')) {
+          const titled = (x) => x.replace(/(^|\s)(\p{L})/gu, (w, sp, c) => sp + c.toUpperCase());
+          out = out.map((l) => {
+            const t = l.replace(/^(\s*)(inside|back|front|inner|outer|rear)\s+(cover|sleeve|inlay|booklet|insert)\s+(photography|photos?|design|artwork|illustrations?|paintings?|drawings?)(\s+by\b|\s*:)/i,
+              (w, sp, a, b, r, tail) => `${sp}${titled(r)} [${titled(`${a} ${b}`)}] by${/:/.test(tail) ? ' ' : ''}`);
+            return t === l ? l : keep(t.replace(/\s{2,}/g, ' '), rawOf.get(l) || l);
+          });
+        }
+        // [Z-PUBLINE] (3.154.0, S278) "Published by … ℗ 1976 … © 1995 …" in one line: the publisher and each ℗ / © a line of its own (each with its year)
+        if (ruleOn('S278')) {
+          out = out.flatMap((l) => {
+            const parts = l.split(/\s+(?=(?:℗|©|\(p\)|\(c\))\s*\d{4}\b)/i).map((x) => x.trim()).filter(Boolean)
+              // ("℗ & © 2023 …", "P + © 2023 …": one line – the ℗ shares the year of the ©)
+              .reduce((acc, x) => {
+                if (acc.length && /(?:℗|\(p\)|(?:^|\s)P)\s*(?:&|\+|\/|and|und)$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
+                else acc.push(x);
+                return acc;
+              }, []);
+            if (parts.length < 2) return [l];
+            const raw = rawOf.get(l) || l;
+            return parts.map((x) => keep(x, raw));
+          });
+        }
+        // [Z-OCRTRACKCHECK] (3.154.0, S281) a track list with lengths ("1. Stratosfear 10:00", "B2 The Big Sleep … (4:50)"): no credits – compared with
+        // the tracks in MusicBrainz below (two such lines at least)
+        if (ruleOn('S281')) {
+          const TL = /^\s*((?:[A-Z]{1,2}\d{0,2}|\d{1,2}))[.):]?\s+(.+?)\s*(?:[-–—.…]+\s*)?\(?(\d{1,2})[:.′'](\d{2})\)?\s*$/u;
+          // ((a title with brackets – "1. Disco man (Scott - Carter) 5'54" – keeps its credits: read as before, S180)
+          const isTl = (m) => m && /\p{L}/u.test(m[2]) && !/[:()]/.test(m[2]);
+          const hits = out.map((l) => l.match(TL)).filter(isTl);
+          // ((only a list of its own: other lines between its tracks – the composers of each track below it – keep the list as it is)
+          const at = out.map((l, k) => (isTl(l.match(TL)) ? k : -1)).filter((k) => k >= 0);
+          const between = at.length ? out.slice(at[0], at[at.length - 1] + 1).filter((l) => l.trim() && !isTl(l.match(TL))).length : 0;
+          if (hits.length >= 2 && !between) {
+            out = out.map((l) => {
+              const m = l.match(TL);
+              if (!isTl(m)) return l;
+              scanTracks.push({ line: l.trim(), pos: m[1], title: m[2].replace(/[\s.…-]+$/, '').trim(), len: Number(m[3]) * 60 + Number(m[4]) });
+              return '';
+            });
+          }
+        }
+        // [Z-OCRESSAY] (3.154.0, S280) an essay broken into short lines (a scan of a booklet): its lines one paragraph – a line of six words or more without
+        // a colon, not ended by a sentence, and the next one going on in small letters – so that it is read as prose (left out, S203)
+        if (ruleOn('S280')) {
+          for (let i = 0; i < out.length - 1; i++) {
+            const a = out[i].trim();
+            const b = out[i + 1].trim();
+            // ((not a credit: "… by …" in the first words of either line – "digital remastering by …" above "cover by …")
+            // (nor a line that starts with what was done – "recorded at …", "mixed at home …" – or names a role with a dash: "Drums – Dee Four")
+            const credit = (x) => /(?:^|\s)(?:by|von|par|por)\s/i.test(x.split(/\s+/).slice(0, 6).join(' '))
+              || /^(?:re-?)?(?:recorded|mixed|mastered|remastered|produced|engineered|overdubbed|tracked|edited|arranged|written|composed|cut|pressed)\b/i.test(x)
+              || /\s[–—-]\s/.test(x)
+              // ("With Apple Logic, …" above "with Oliver Lake": lines of who played with whom, S061)
+              || /^(?:with|feat\.?|featuring)\s/i.test(x)
+              // (nor a line of a track – "2. Tell me, where did we go 506" above "wrong ? (Idris Muhammad)": S181's)
+              || /^\s*(?:[A-Z]{1,2}\d{0,2}|\d{1,2})[.)]\s/.test(x) || /\d\s*$/.test(x);
+            // (six words of letters – "synthesizers • 1, 3, 4, 6" is a list of tracks, no prose)
+            if (!a || !b || a.split(/\s+/).filter((w) => /\p{L}{2}/u.test(w)).length < 6 || /•/.test(a + b) || /:/.test(a) || NAME_ROLES.test(a) || /[.!?:;]["”’)]?$/.test(a) || !/^\p{Ll}/u.test(b) || credit(a) || credit(b)) continue;
+            // (the paragraph as it is now – the lines of a scan have no place of their own to mark)
+            out[i + 1] = `${a} ${b}`;
+            out[i] = '';
+          }
         }
         // [Z-OCRLINEJOIN] (3.153.0, S269) a line of roles broken after "/", "&", "and" … – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" –: one line
         if (ruleOn('S269')) {
@@ -12442,7 +12537,11 @@
           const tn = (titleNames || []).filter((x) => x && x.length >= 3).reduce((acc, x) => acc.replace(new RegExp(escRe(x), 'giu'), ' '), t.replace(/\([^)]*\)/g, ' '));
           const ws = t.split(/\s+/);
           const lower = ws.filter((w) => /^\p{Ll}/u.test(w)).length;
-          if (ws.length < 6 || lower < ws.length * 0.6 || !/^[\p{Lu}"“‘]/u.test(t) || /[:–—]/.test(t) || /\d/.test(t)
+          // ((about the music – "riffs", "grooves", "album", "songs" …; not a sentence about how it was made, nor guests, nor a quote: S244's)
+          if (!/\b(?:music|musical|sound|sonic|album|records?|songs?|tracks?|tunes?|riffs?|grooves?|melod\w*|rhythm\w*|beats?|vibes?|psychedel\w*|ambient|jazz\w*|rock|pop|noise|drones?|listen\w*|dose|journey)\b/i.test(t)
+            || /\b(?:distribut\w*|mix(?:ed|ing)|master(?:ed|ing)|produc\w*|engineer\w*|compos\w*|arrang\w*|written|design\w*|photograph\w*|guests?|featuring)\b/i.test(t)
+            || /^["“‘]/u.test(t)) continue;
+          if (ws.length < 6 || lower < ws.length * 0.6 || !/^[\p{Lu}]/u.test(t) || /[:–—]/.test(t) || /\d/.test(t)
             || /\b(?:by|with|feat\.?|featuring|von|par|por)\s+\p{Lu}/u.test(tn) || /(?:^|\s)\p{Lu}\p{Ll}+\s+\p{Lu}\p{Ll}+/u.test(tn)
             || ws.some((w) => { const x = w.replace(/[^\p{L}]/gu, ''); return x.length > 2 && (playable(x.toLowerCase()) || isRole(cap(x))); })) continue;
           ignored.push({ text: t, why: 'promo' });
@@ -12489,6 +12588,68 @@
             companies.push({ ...c, who: { id: 0, name: town, rawName: town, links: [], ...(wider.length ? { area: wider.join(', ') } : {}) }, role: 'Recorded In', entity: 'area' });
           }
         }
+      }
+      // [Z-OCRTRACKCHECK] (3.154.0, S281) the scan's track list against MusicBrainz's tracks: titles (as words) and lengths (5 s apart at most)
+      if (scanTracks.length) {
+        const mb = Array.isArray(ctx0.tracks) ? ctx0.tracks : [];
+        const diffs = [];
+        scanTracks.forEach((x, i) => {
+          const t = mb[i];
+          if (!t) {
+            diffs.push({ pos: x.pos, title: x.title, why: 'extra' });
+            return;
+          }
+          const a = nameKey(x.title);
+          const b = nameKey(t.title);
+          if (!(a === b || (a.length > 3 && b.includes(a)) || (b.length > 3 && a.includes(b)))) diffs.push({ pos: x.pos, title: x.title, mbTitle: t.title, why: 'title' });
+          else if (t.length && Math.abs(Math.round(t.length / 1000) - x.len) > 5) diffs.push({ pos: x.pos, title: x.title, len: x.len, mbLen: Math.round(t.length / 1000), why: 'length' });
+        });
+        if (mb.length > scanTracks.length) diffs.push({ why: 'fewer', n: scanTracks.length, mb: mb.length });
+        scanTracks.forEach((x, i) => ignored.push({ text: x.line, why: 'scantrack', ...(i === 0 ? { check: { n: scanTracks.length, mb: mb.length, diffs } } : {}) }));
+      }
+      // [Z-COVERCO] (3.154.0, S276) "cover by cooke-key associates, london": a company for the cover is its design; the one word after it its town (no person)
+      if (ruleOn('S276')) {
+        const ORG = /\b(?:associates|design|designs|studio|studios|graphics|ltd|limited|inc|agency|company|partners|group|art\s+department)\b\.?$/i;
+        for (let k = 0; k < credits.length; k++) {
+          const c = credits[k];
+          if (!/^cover(?:\s+by)?$/i.test(String(c.base || '').trim()) || (c.details || []).length || !ORG.test(String((c.who && c.who.name) || '').trim())) continue;
+          const p = parseRoleNotation('Cover Design')[0];
+          Object.assign(c, { role: p.raw, base: p.base, details: p.mods });
+          const next = credits[k + 1];
+          if (next && next.line === c.line && next.base === 'Cover By' && String(next.who.name || '').trim().split(/\s+/).length === 1) {
+            const town = String(next.who.name).trim();
+            c.who = { ...c.who, area: town.charAt(0).toUpperCase() + town.slice(1) };
+            credits.splice(k + 1, 1);
+          }
+        }
+      }
+      // [Z-LINERSIG] (3.154.0, S279) the signature below an essay – "Mark Prendergast, London, November 1993" –: the liner notes of that person, with that
+      // date (of the liner notes, not of the recordings)
+      if (ruleOn('S279') && ignored.some((x) => x && x.why === 'prose')) {
+        for (let i = unrecognized.length - 1; i >= 0; i--) {
+          const t = String(unrecognized[i]).trim();
+          const m = t.match(/^(\p{Lu}[\p{L}.'’-]+(?:\s+\p{Lu}[\p{L}.'’-]+){1,3})\s*,\s*(?:(\p{Lu}[\p{L}.'’ -]+?)\s*,\s*)?(.+?)\.?$/u);
+          const d = m && findDates(m[3])[0];
+          if (!m || !d || !d.value || norm(d.text || '') !== norm(m[3]) || isRole(cap(m[1]))) continue;
+          const p = parseRoleNotation('Liner Notes')[0];
+          credits.push({ who: { id: 0, name: m[1], rawName: m[1], links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '', tracks: { all: true },
+            line: t, part: t, pi: 0, n: 0, linerSig: true, date: (({ begin: b = {}, end: e = {} }) => ({ ...emptyDateFields(), by: String(b.year || ''), bm: String(b.month || ''),
+              bd: String(b.day || ''), ey: String(e.year || ''), em: String(e.month || ''), ed: String(e.day || '') }))(d.value) });
+          unrecognized.splice(i, 1);
+        }
+      }
+      // [Z-LOWERCASE] (3.154.0, S275) a name written small ("mixed by tangerine dream", "edgar froese") is the name of the text or of the release's artist
+      // written with capitals, whatever its case (the band, when it is called so)
+      if (ruleOn('S275')) {
+        const spelt = new Map();
+        [...artistNames, ...credits.map((c) => String((c.who && c.who.name) || '').trim())].forEach((n) => {
+          if (n && /\p{Lu}/u.test(n) && !spelt.has(norm(n))) spelt.set(norm(n), n);
+        });
+        credits.forEach((c) => {
+          const n = String((c.who && c.who.name) || '').trim();
+          if (!n || /\p{Lu}/u.test(n) || !spelt.has(norm(n)) || (c.who && (c.who.id || c.who.placeholder))) return;
+          c.who = { ...c.who, name: spelt.get(norm(n)), rawName: spelt.get(norm(n)), caseFrom: n };
+        });
       }
       // [Z-SURNAMES] (3.153.0, S268) a surname alone ("All tracks written by Franke / Froese / Baumann") the one full name of the same text
       // ending with it (Chris Franke) – credited as written
@@ -14371,6 +14532,10 @@
   const MB_HITS_KEY = 'dci-mb-hits';
   const MB_HITS_DEFAULT = 3;
   const mbHits = () => clampInt(readJson('localStorage', MB_HITS_KEY, MB_HITS_DEFAULT), 1, 25, MB_HITS_DEFAULT);
+  // [Z-FIRSTNAME] (3.154.0, S283) "Assign first name …": the years around the release searched at most (± 3 first, then wider in steps of three)
+  const FN_YEARS_KEY = 'dci-fn-years';
+  const FN_YEARS_DEFAULT = 9;
+  const fnYears = () => clampInt(readJson('localStorage', FN_YEARS_KEY, FN_YEARS_DEFAULT), 3, 30, FN_YEARS_DEFAULT);
   const GAP_COUNT_HASH = 'dci-count';
   const GAP_COUNT_MAX_MS = 5 * 60 * 1000;
   const GAP_KEEP_MS = 7 * 24 * 3600 * 1000;
@@ -21888,7 +22053,18 @@
   }
 
   /** [3.34.11] What is read of an image, box by box (on its canvas): its frames, else the whole image. */
-  const ocrBoxes = (img) => (img.mode === 'frames' && img.frames.length ? img.frames.map((b) => ({ ...b })) : [{ x: 0, y: 0, w: img.canvas.width, h: img.canvas.height }]);
+  // [Z-SCANSPLIT] (3.154.0, S282) a double page (an image a third wider than high, read whole): its left and its right page apart – one column of text
+  // each, not lines across both
+  const ocrBoxes = (img) => {
+    if (img.mode === 'frames' && img.frames.length) return img.frames.map((b) => ({ ...b }));
+    const { width: w, height: h } = img.canvas;
+    // ((not when "the whole image" was chosen for it, nor turned by hand, nor a frame drawn on the source page (Companion): read as it is)
+    if (ruleOn('S282') && !ocrDirect(img) && img.mode !== 'whole' && !img.turn && !img.cocr && h > 0 && w / h >= 1.6) {
+      const half = Math.floor(w / 2);
+      return [{ x: 0, y: 0, w: half, h, page: 'left' }, { x: half, y: 0, w: w - half, h, page: 'right' }];
+    }
+    return [{ x: 0, y: 0, w, h }];
+  };
   /** How much larger a piece is read: a small image ×3. */
   const ocrPieceScale = (img) => (img.w < OCR_SMALL ? 3 : 1);
 
@@ -24820,6 +24996,7 @@
           medium: m.position,
           number: track.number || String(track.position),
           title: track.title,
+          length: track.length || (track.recording && track.recording.length) || null, // [Z-OCRTRACKCHECK] (3.154.0)
           recordingGid: track.recording && track.recording.id,
           // [3.32.9] its disambiguation comment (live comments, item 113)
           recordingComment: (track.recording && track.recording.disambiguation) || '',
@@ -25875,6 +26052,8 @@
   function mediumOfRow(row) {
     for (const m of row.mods || []) {
       const kind = mediumKindOf(m);
+      // [Z-REMASTERAT] (3.154.0) "digital remastering" is how it was remastered, not a remaster for digital media only
+      if (kind === 'digital' && /remaster/i.test(String(row.base || row.raw || '')) && /^digital(?:ly)?$/i.test(String(m).trim())) continue;
       if (kind) return { kind, word: m };
     }
     if ((row.types || []).some((t) => norm(t) === 'lacquer cut') || /\blacquer\b/i.test(row.base || '')) return { kind: 'vinyl', word: 'lacquer cut' };
@@ -25904,7 +26083,9 @@
   function companyLeftOutForMedium(row, r, rel, text) {
     // [Z-PLT] (3.89.0) "Plated By" too
     const plated = /^plated\b/i.test(r.role || '');
-    const kind = r.medium ? mediumKindOf(r.medium) : plated || /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
+    // ([Z-REMASTERAT] 3.154.0) "digital remastering … at X": the place of a remaster made digitally, not of digital media
+    const digiRemaster = r.medium && /^digital(?:ly)?$/i.test(String(r.medium).trim()) && /remaster/i.test(String(r.role || ''));
+    const kind = r.medium && !digiRemaster ? mediumKindOf(r.medium) : plated || /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
     if (!kind || !mediumMissing(kind)) return false;
     noteLeftOut(rel, text, r.medium || (plated ? 'vinyl plating' : 'lacquer cut'), r.role);
     return true;
@@ -26480,7 +26661,7 @@
   // --- What a source adapter may use from the core ---------------------------------------------------------
 
   /** MusicBrainz's tracks as source tracks (for sources without a track list of their own, e.g. a text). */
-  const mbTracksAsSource = () => S.mbTracks.map((t) => ({ position: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, aliases: [] }));
+  const mbTracksAsSource = () => S.mbTracks.map((t) => ({ position: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, aliases: [], length: t.length || null }));
 
   /** [E1] A phrase the register knows as a role ("Mixed By", "Artwork"), or an instrument MusicBrainz has ("trumpet"). */
   function isKnownRole(phrase) {
@@ -30656,6 +30837,84 @@
     if (works && S.overlay) renderWorks();
   }
 
+  // --- [Z-FIRSTNAME] (3.154.0, S283) A first name alone ("otto", "monique") – only on a click, only suggestions ---------------------------------
+  // First the release's artists and the members of its groups of that first name; then the people of that first name in the relationships of the
+  // artist's releases around the date of this one (± 3 years, wider in steps of three up to the years of ⚙ Settings → Sources); then those related
+  // to the members (Monique Froese through Edgar Froese). By how often they are there, each with where from; one request a second (mbWs).
+
+  /** An entry of one word, a person, not in MusicBrainz yet: its first name can be looked for. */
+  const fnEligible = (a) => ruleOn('S283') && !!a && !a.company && !a.other && !a.mbid && /^\p{L}[\p{L}'’-]+$/u.test(String(a.name || '').trim());
+  async function fnFind(a) {
+    if (!fnEligible(a) || a.fnBusy) return;
+    Object.assign(a, { fnBusy: true, fnDone: false, fnHits: [] });
+    rerenderGroup(a);
+    const first = nameKey(a.name);
+    const found = new Map();
+    const add = (p, why, step, count = true) => {
+      if (!p || !p.id || !p.name || nameKey(String(p.name).trim().split(/\s+/)[0]) !== first) return;
+      const h = found.get(p.id) || { mbid: p.id, name: p.name, disambiguation: p.disambiguation || '', n: 0, why: [], step };
+      if (count) h.n++;
+      if (!h.why.includes(why)) h.why.push(why);
+      h.step = Math.min(h.step, step);
+      found.set(p.id, h);
+    };
+    try {
+      const artists = (S.releaseCredit || []).filter((p) => p.mbid);
+      artists.forEach((p) => add({ id: p.mbid, name: p.name }, tr('fn.whyRelease'), 1));
+      const members = [];
+      for (const p of artists) {
+        const d = await mbWs(`artist/${p.mbid}?inc=artist-rels`);
+        ((d && d.relations) || []).filter((r) => r['target-type'] === 'artist' && r.artist && norm(r.type) === 'member of band' && r.direction === 'backward').forEach((r) => {
+          if (!members.some((m) => m.id === r.artist.id)) members.push({ ...r.artist, band: p.name });
+          add(r.artist, tr('fn.whyMember', { band: p.name }), 2);
+        });
+      }
+      // the releases of the artist around this one's date: ± 3 years, then wider (in steps of three) while no one is found
+      const y = (S.releaseDateMb && S.releaseDateMb.year) || null;
+      if (y) {
+        for (const p of artists) {
+          const seen = new Set([String(releaseMbid || '').toLowerCase()]);
+          let any = false;
+          for (let k = 3; k <= fnYears() && !any; k += 3) {
+            const d = await mbWs(`release?query=${encodeURIComponent(`arid:${p.mbid} AND date:[${y - k} TO ${y + k}]`)}&limit=25`);
+            const groups = new Set();
+            const rels = ((d && d.releases) || []).filter((r) => {
+              const g = (r['release-group'] && r['release-group'].id) || r.id;
+              if (seen.has(r.id) || groups.has(g)) return false;
+              groups.add(g);
+              return true;
+            }).slice(0, 6);
+            for (const r of rels) {
+              seen.add(r.id);
+              const full = await mbWs(`release/${r.id}?inc=artist-rels+recordings+recording-level-rels`);
+              const all = [...((full && full.relations) || []), ...((full && full.media) || []).flatMap((m) => (m.tracks || []).flatMap((t) => (t.recording && t.recording.relations) || []))];
+              const here = new Set();
+              all.filter((x) => x['target-type'] === 'artist' && x.artist).forEach((x) => {
+                if (here.has(x.artist.id)) return;
+                here.add(x.artist.id);
+                add(x.artist, tr('fn.whyAlbum', { n: '{n}', artist: p.name, from: y - k, to: y + k }), 3);
+                if (found.has(x.artist.id)) any = true;
+              });
+            }
+          }
+        }
+      }
+      // those related to the members
+      for (const m of members.slice(0, 8)) {
+        const d = await mbWs(`artist/${m.id}?inc=artist-rels`);
+        ((d && d.relations) || []).filter((r) => r['target-type'] === 'artist' && r.artist && r.artist.id !== m.id)
+          .forEach((r) => add(r.artist, tr('fn.whyRelated', { type: r.type || '', name: m.name }), 4, false));
+      }
+    } finally {
+      a.fnBusy = false;
+    }
+    const hits = [...found.values()].sort((x, y) => x.step - y.step || y.n - x.n || x.name.localeCompare(y.name))
+      .map((h) => ({ mbid: h.mbid, name: h.name, disambiguation: h.disambiguation, fnWhy: h.why.map((w) => w.replace('{n}', String(h.n))).join(' · ') }));
+    Object.assign(a, { fnDone: true, fnHits: hits, nameHits: [...hits, ...(a.nameHits || []).filter((x) => !hits.some((h) => h.mbid === x.mbid))] });
+    log('info', 'fnFound', { name: a.name, n: hits.length, list: hits.map((h) => h.name).join(', ') || '–' });
+    rerenderGroup(a);
+  }
+
   /** Suggestions from Discogs aliases for an entry that is not assigned yet. */
   /** [3.15.2] Suggestions shown before the rest are folded behind "+ n more". */
   const SUGG_VISIBLE = 5;
@@ -30675,6 +30934,14 @@
       title="${esc(tr('match.openNew'))}" aria-label="${esc(tr('match.openNew'))}">↗</a></span>`;
     const items = [];
     const heads = [];
+    // [Z-FIRSTNAME] (3.154.0, S283) a first name alone: looked for around the release on a click (only suggestions)
+    if (fnEligible(a)) {
+      const y = (S.releaseDateMb && S.releaseDateMb.year) || null;
+      if (a.fnBusy) items.push(`<span class="dci-sub" data-el="fn-busy">${esc(tr('fn.busy', { name: a.name }))}</span>`);
+      else if (!a.fnDone) {
+        items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="fn-find" title="${esc(tr('fn.findTitle', { name: a.name, from: y ? y - 3 : '–', to: y ? y + 3 : '–', years: fnYears() }))}">${esc(tr('fn.find'))}</button>`);
+      } else if (!(a.fnHits || []).length) items.push(`<span class="dci-sub" data-el="fn-none">${esc(tr('fn.none', { name: a.name }))}</span>`);
+    }
     // [Z-ALC] (3.44.1) not looked up by its Discogs aliases (over the number per import): a button does it for this entry
     if (a.aliasLater && a.dId && !a.company) {
       items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="aliases-fetch" title="${esc(tr('match.aliasFetchTitle'))}">${esc(tr('match.aliasFetch'))}</button>`);
@@ -30694,7 +30961,7 @@
         : h.region ? `${head} ${tr('area.regionHit', { region: h.region })}` : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       // [E5a] (3.37.1) linked in this release: highlighted, with where (the mark "release artist" is part of it then)
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn${h.linked ? ' dci-sugg-linked' : ''}" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.order ? mark('match.markOrder') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.fnWhy ? ` <span class="dci-similar" data-el="fn-why">${esc(h.fnWhy)}</span>` : h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.order ? mark('match.markOrder') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -41254,7 +41521,15 @@
     const cats = uniq(ign.filter((x) => x && x.why === 'catnoNew').map((x) => x.catno));
     if (ruleOn('S249') && cats.length) out.push(tr('hint.catno', { list: cats.join(', '), mb: (S.releaseCatnos || []).join(', ') || tr('hint.none') }));
     const hs = homeStudioHtml(rel);
-    return out.length || hs ? `<div class="dci-note dci-label-hint" data-el="label-hint">${out.map((t) => `<p>${esc(t)}</p>`).join('')}${hs}</div>` : '';
+    // [Z-OCRTRACKCHECK] (3.154.0, S281) a track list of the text (a scan) against MusicBrainz's tracks
+    const chk = ruleOn('S281') ? (ign.find((x) => x && x.why === 'scantrack' && x.check) || {}).check : null;
+    if (chk) {
+      const mmss = (n) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
+      const d = chk.diffs.map((x) => (x.why === 'title' ? tr('hint.scanTitle', { pos: x.pos, title: x.title, mb: x.mbTitle }) : x.why === 'length' ? tr('hint.scanLength', { pos: x.pos, title: x.title, len: mmss(x.len), mb: mmss(x.mbLen) })
+        : x.why === 'extra' ? tr('hint.scanExtra', { pos: x.pos, title: x.title }) : tr('hint.scanFewer', { n: x.n, mb: x.mb })));
+      out.push(d.length ? tr('hint.scanDiffers', { list: d.join('; ') }) : tr('hint.scanFits', { n: chk.n }));
+    }
+    return out.length || hs ? `<div class="dci-note dci-label-hint" data-el="label-hint">${out.map((t) => `<p${t === out[out.length - 1] && chk ? ` data-el="scan-check" class="${chk.diffs.length ? 'dci-warn' : ''}"` : ''}>${esc(t)}</p>`).join('')}${hs}</div>` : '';
   }
 
   // --- [Z-LINEUPHEAD] (3.146.0, S257) "Recording Line-Up:" and names below it: performers; a member of the release's group in
@@ -48754,6 +49029,10 @@
         else fallback();
         break;
       }
+      // [Z-FIRSTNAME] (3.154.0, S283) people of that first name around the release
+      case 'fn-find':
+        if (artist) fnFind(artist).catch((e) => showError(e));
+        break;
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
@@ -51613,7 +51892,7 @@
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
-    sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', WIKI_BG_KEY, AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY,
+    sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', WIKI_BG_KEY, AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY, FN_YEARS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
     // [Z-CONN2, Z-DEVTAB] (3.108.0)
@@ -53918,6 +54197,8 @@
         sh('mbSearch'),
         // [Z-MBSEARCH] (3.123.0, S193) the hits of a search in an entry's field
         numField(tr('settings.mbHits'), 'data-set="mb-hits" min="1" max="25" step="1"', mbHits(), MB_HITS_DEFAULT, { title: tr('settings.mbHitsTitle') }),
+        // [Z-FIRSTNAME] (3.154.0, S283) the years around the release of "Assign first name …"
+        numField(tr('settings.fnYears'), 'data-set="fn-years" min="3" max="30" step="3"', fnYears(), FN_YEARS_DEFAULT, { title: tr('settings.fnYearsTitle') }),
         // [Z-BETAOFF] (3.115.0) the text from cover art, out of the beta: on at first
         `<h4 class="dci-set-h" data-el="set-ocr">${esc(tr('settings.ocrHead'))}</h4>`,
         cb('data-set="ocr-on"', S.ocrOn, tr('settings.ocrOn'), tr('settings.ocrOnTitle'), { def: true, hint: tr('settings.ocrOnWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }) }),
@@ -54642,6 +54923,13 @@
       writeJson('localStorage', MB_HITS_KEY, v === MB_HITS_DEFAULT ? null : v);
       el.value = String(v);
       log('info', 'settingValue', { what: tr('settings.mbHits'), value: String(v) });
+    } else if (k === 'fn-years') {
+      // [Z-FIRSTNAME] (3.154.0) 3 – 30 in steps of three; an emptied field is the default
+      const v0 = String(el.value).trim() === '' ? FN_YEARS_DEFAULT : clampInt(el.value, 3, 30, FN_YEARS_DEFAULT);
+      const v = Math.max(3, Math.round(v0 / 3) * 3);
+      writeJson('localStorage', FN_YEARS_KEY, v === FN_YEARS_DEFAULT ? null : v);
+      el.value = String(v);
+      log('info', 'settingValue', { what: tr('settings.fnYears'), value: String(v) });
     } else if (k === 'alias-max') {
       // (3.44.1, review) an emptied field is the default, not 0
       const v = String(el.value).trim() === '' ? ALIAS_MAX_DEFAULT : clampInt(el.value, 0, 200, ALIAS_MAX_DEFAULT);
@@ -54940,7 +55228,7 @@
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups; [Z-MBSEARCH] (3.123.0) of the hits of a search
-    ALIAS_MAX_KEY, MB_HITS_KEY];
+    ALIAS_MAX_KEY, MB_HITS_KEY, FN_YEARS_KEY];
 
   // --- [Z-QSP] (3.75.0, S110) profiles: the settings and the quick switches, "Standard" (the defaults) and your own ----------------
   // (not in a profile: the switches of the companion's pages, remembering releases, the statistics and how they are shown, what is
