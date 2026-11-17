@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.156.0",
+  "version": "3.157.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -97,6 +97,10 @@
     "group.skippedN.one": "{n} übersprungener Eintrag",
     "group.skippedN.other": "{n} übersprungene Einträge",
     "group.skippedTitle": "Mit „Überspringen ⤼“ übersprungene Einträge werden nicht gezeigt (⚙ Einstellungen → Darstellung → „Übersprungene Einträge aus dem Dashboard entfernen“): ▸ listet sie auf, „↺ Wieder nehmen“ holt einen zurück",
+    "misslinks.summary": "Fehlende Verknüpfungen der Einträge zeigen ({n})",
+    "misslinks.title": "Web-Adressen der in MusicBrainz zugeordneten Einträge (Künstler, Labels, Orte, Serien), die MusicBrainz noch nicht hat – ihre Seiten bei der Quelle, Adressen neben ihren Namen im Text. Regel S291 schaltet das ab",
+    "misslinks.add": "in MusicBrainz ergänzen ↗",
+    "misslinks.addTitle": "Öffnet die Bearbeitungsseite von {name} mit dieser Adresse ausgefüllt – dort prüfen, dann die Bearbeitung abschicken",
     "log.entrySkipped.one": "{name} übersprungen: {n} Zeile auf „Überspringen“",
     "log.entrySkipped.other": "{name} übersprungen: {n} Zeilen auf „Überspringen“",
     "log.entryTaken.one": "{name} wieder genommen: {n} Zeile zurück auf ihrer Ebene",
@@ -1275,6 +1279,8 @@
     "sync.off": "Script Companion: aus",
     "sync.offTitle": "Das Zusatzscript „MB x Vibecode: Credits Importer Companion“ ist nicht installiert oder nicht aktiv.",
     "sync.noTab": "Script Companion: kein Discogs-Tab",
+    "sync.or": "{a} oder {b}",
+    "sync.noTabTitle": "Der Tab, den der Import erwartet: die Quelle dieses Imports oder – vor einem Import – die mit dem Release verknüpften Quellen (beide, solange keine verknüpft ist)",
     "sync.openTab": "im Hintergrund öffnen",
     "sync.connected": "Script Companion: verbunden ({where})",
     "sync.visible": "sichtbarer Tab",
@@ -3079,6 +3085,7 @@
     "log.liveNo": "Kein Live-Mitschnitt: {event}",
     "ignored.why.liveHead": "die Kopfzeile eines Live-Mitschnitts – über den Einträgen angeboten",
     "ignored.why.promo": "andere Veröffentlichungen und Links (kein Credit)",
+    "ignored.why.shop": "Shop (Versand, Lieferumfang, Formate)",
     "ignored.why.genres": "Genres (kein Credit)",
     "ignored.why.catnoNew": "eine Katalognummer: {catno} – MusicBrainz hat: {mb}",
     "ignored.why.labels": "die Labels des Release: {list} – im Release-Editor prüfen",
@@ -3489,7 +3496,8 @@
     "statio.dpTitle": "datapackage.json (Frictionless Data): beschreibt Spalten und Typen der beiden CSV-Dateien von heute – neben sie legen",
     "statio.import": "⇩ Statistik importieren (JSON) …",
     "statio.purpose": "JSON: um dieselbe Statistik in mehreren Browsern zu haben (hier exportieren, dort importieren) – Format 2 und die Dateien von früher. CSV, JSON Lines, Data Package: zum Auswerten in anderen Programmen.",
-    "ignored.why.heading": "eine Überschrift"
+    "ignored.why.heading": "eine Überschrift",
+    "hint.bcPkg": "Mitgelesen: der Text der Bandcamp-Ausgabe „{name}“ – {added} neu · {same} wie in den Credits (ein Eintrag) · {better} dort genauer (übernommen)"
   },
   "es": {
     "title": "Credits Importer",
@@ -3583,6 +3591,10 @@
     "group.skippedN.one": "{n} entrada omitida",
     "group.skippedN.other": "{n} entradas omitidas",
     "group.skippedTitle": "Las entradas omitidas con «Omitir ⤼» no se muestran (⚙ Ajustes → Apariencia → «Quitar del panel las entradas omitidas»): ▸ las lista, «↺ Volver a tomar» recupera una",
+    "misslinks.summary": "Mostrar los enlaces que faltan de las entradas ({n})",
+    "misslinks.title": "Direcciones web de las entradas asignadas en MusicBrainz (artistas, sellos, lugares, series) que MusicBrainz aún no tiene – sus páginas en la fuente, direcciones junto a sus nombres en el texto. La regla S291 lo desactiva",
+    "misslinks.add": "añadir en MusicBrainz ↗",
+    "misslinks.addTitle": "Abre la página de edición de {name} con esta dirección rellenada – compruébala allí y envía la edición",
     "log.entrySkipped.one": "{name} omitido: {n} fila en «Omitir»",
     "log.entrySkipped.other": "{name} omitido: {n} filas en «Omitir»",
     "log.entryTaken.one": "{name} vuelto a tomar: {n} fila de vuelta en su nivel",
@@ -4552,6 +4564,8 @@
     "sync.off": "Script Companion: desactivado",
     "sync.offTitle": "El script complementario «MB x Vibecode: Credits Importer Companion» no está instalado o no está activo.",
     "sync.noTab": "Script Companion: ninguna pestaña de Discogs",
+    "sync.or": "{a} o {b}",
+    "sync.noTabTitle": "La pestaña que espera la importación: la fuente de esta importación o – antes de una importación – las fuentes enlazadas al lanzamiento (ambas, mientras no haya ninguna enlazada)",
     "sync.openTab": "abrir en segundo plano",
     "sync.connected": "Script Companion: conectado ({where})",
     "sync.visible": "pestaña visible",
@@ -6507,6 +6521,7 @@
     "statio.import": "⇩ Importar estadísticas (JSON)…",
     "statio.purpose": "JSON: para tener las mismas estadísticas en varios navegadores (exportar aquí, importar allí) – formato 2 y los archivos de antes. CSV, JSON Lines, Data Package: para analizarlas en otros programas.",
     "ignored.why.promo": "otros lanzamientos y enlaces (sin crédito)",
+    "ignored.why.shop": "tienda (envío, lo que incluye la compra, formatos)",
     "ignored.why.genres": "géneros (sin crédito)",
     "ignored.why.catnoNew": "un número de catálogo: {catno} – MusicBrainz tiene: {mb}",
     "ignored.why.labels": "los sellos del lanzamiento: {list} – compruébalos en el editor de la publicación",
@@ -6560,7 +6575,8 @@
     "insts.trackTitle": "Cada instrumento en todas las grabaciones (como la fuente los nombra sin pistas)",
     "insts.releaseTitle": "Cada instrumento en el lanzamiento (con la fecha del lanzamiento); en las grabaciones una fila del grupo que comparten los instrumentos (árbol de instrumentos de MusicBrainz), con la fecha de las grabaciones – se puede cambiar cuantas veces se quiera",
     "insts.hint": "sería: lanzamiento – {list} · grabaciones – {group}",
-    "insts.hintTitle": "Lo que introduciría «en el lanzamiento + grupo» – solo una vista previa, nada puesto"
+    "insts.hintTitle": "Lo que introduciría «en el lanzamiento + grupo» – solo una vista previa, nada puesto",
+    "hint.bcPkg": "Leído también: el texto de la edición de Bandcamp «{name}» – {added} nuevos · {same} iguales que en los créditos (una entrada) · {better} más precisos allí (tomados)"
   },
   "fr": {
     "title": "Credits Importer",
@@ -6654,6 +6670,10 @@
     "group.skippedN.one": "{n} entrée ignorée",
     "group.skippedN.other": "{n} entrées ignorées",
     "group.skippedTitle": "Les entrées ignorées avec « Ignorer ⤼ » ne sont pas affichées (⚙ Réglages → Apparence → « Retirer du tableau de bord les entrées ignorées ») : ▸ les liste, « ↺ Reprendre » en ramène une",
+    "misslinks.summary": "Afficher les liens manquants des entrées ({n})",
+    "misslinks.title": "Adresses web des entrées attribuées dans MusicBrainz (artistes, labels, lieux, séries) que MusicBrainz n’a pas encore – leurs pages à la source, les adresses à côté de leurs noms dans le texte. La règle S291 désactive cela",
+    "misslinks.add": "ajouter dans MusicBrainz ↗",
+    "misslinks.addTitle": "Ouvre la page de modification de {name} avec cette adresse remplie – vérifiez-la là, puis soumettez la modification",
     "log.entrySkipped.one": "{name} ignoré : {n} ligne sur « Ignorer »",
     "log.entrySkipped.other": "{name} ignoré : {n} lignes sur « Ignorer »",
     "log.entryTaken.one": "{name} repris : {n} ligne remise à son niveau",
@@ -7623,6 +7643,8 @@
     "sync.off": "Script Companion : désactivé",
     "sync.offTitle": "Le script complémentaire « MB x Vibecode: Credits Importer Companion » n’est pas installé ou pas actif.",
     "sync.noTab": "Script Companion : aucun onglet Discogs",
+    "sync.or": "{a} ou {b}",
+    "sync.noTabTitle": "L’onglet qu’attend l’importation : la source de cette importation ou – avant une importation – les sources liées à la parution (les deux, tant qu’aucune n’est liée)",
     "sync.openTab": "ouvrir en arrière-plan",
     "sync.connected": "Script Companion : connecté ({where})",
     "sync.visible": "onglet visible",
@@ -9578,6 +9600,7 @@
     "statio.import": "⇩ Importer des statistiques (JSON)…",
     "statio.purpose": "JSON : pour garder les mêmes statistiques dans plusieurs navigateurs (exporter ici, importer là-bas) – format 2 et les fichiers d’avant. CSV, JSON Lines, Data Package : pour les analyser dans d’autres programmes.",
     "ignored.why.promo": "autres sorties et liens (aucun crédit)",
+    "ignored.why.shop": "boutique (expédition, contenu de l’achat, formats)",
     "ignored.why.genres": "genres (aucun crédit)",
     "ignored.why.catnoNew": "un numéro de catalogue : {catno} – MusicBrainz a : {mb}",
     "ignored.why.labels": "les labels de la parution : {list} – à vérifier dans l’éditeur de la parution",
@@ -9631,6 +9654,7 @@
     "insts.trackTitle": "Chaque instrument sur tous les enregistrements (comme la source les nomme sans pistes)",
     "insts.releaseTitle": "Chaque instrument sur la parution (avec la date de la parution) ; sur les enregistrements une ligne du groupe commun aux instruments (arbre des instruments de MusicBrainz), avec la date des enregistrements – à basculer autant de fois que voulu",
     "insts.hint": "serait : parution – {list} · enregistrements – {group}",
-    "insts.hintTitle": "Ce que « sur la parution + groupe » saisirait – un aperçu seulement, rien n’est mis"
+    "insts.hintTitle": "Ce que « sur la parution + groupe » saisirait – un aperçu seulement, rien n’est mis",
+    "hint.bcPkg": "Lu aussi : le texte de l’édition Bandcamp « {name} » – {added} nouveaux · {same} identiques aux crédits (une entrée) · {better} plus précis là (repris)"
   }
 }

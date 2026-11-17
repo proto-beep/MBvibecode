@@ -4966,4 +4966,46 @@ def case_v3156():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_misslinks3157():
+    """Credits Importer 3.157.0 (collected item Z-MISSINGLINKS, rule S291): below the entries "Show missing links of the entries (n)", folded.
+    A) The Discogs pages of the entries assigned in MusicBrainz that MusicBrainz does not have: listed with "add in MusicBrainz ↗" – the edit
+       page of the entity with the address filled in (no link type for Discogs: MusicBrainz knows it); an artist that has its page already
+       (Drum Guy) not listed.
+    B) S291 off: the list is gone."""
+    dg = 'https://www.discogs.com/artist/3004'
+    H.ENTITY_URLS[H.ARTISTS[3004][0]] = [dg]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_ok(pg, "!document.querySelector('[data-el=misslinks]').hidden", 20)
+        LIST = """(() => { const el = document.querySelector('[data-el=misslinks]'); return { hidden: el.hidden, sum: (el.querySelector('summary') || { textContent: '' }).textContent,
+          open: !!(el.querySelector('details') || {}).open, items: [...el.querySelectorAll('li')].map(li => [li.querySelector('strong').textContent, [...li.querySelectorAll('.dci-misslink')].map(x => [x.querySelector('a').href, x.querySelector('[data-el=misslink-add]').getAttribute('href')])]) }; })()"""
+        a = pg.evaluate(LIST)
+        print('A)', a['hidden'], a['sum'], a['open'], [(n, [u for u, _ in l]) for n, l in a['items']])
+        import urllib.parse as up
+        ok = not a['hidden'] and a['sum'].startswith('Show missing links of the entries (') and not a['open'] and len(a['items']) >= 1
+        for name, links in a['items']:
+            for url, edit in links:
+                q = dict(up.parse_qsl(edit.split('?', 1)[1]))
+                kind = edit.split('/')[1]
+                ok = ok and kind in ('artist', 'label', 'place', 'series') and q.get(f'edit-{kind}.url.0.text') == url and (f'edit-{kind}.url.0.link_type_id' not in q if 'discogs.com' in url else True)
+        ok = ok and not any(url.rstrip('/') == dg for _, links in a['items'] for url, _ in links) and not any(n == 'Drum Guy' for n, _ in a['items'])
+        results.append(ok)
+        pg.evaluate("document.querySelector('.dci-head [data-act=rules]').click()"); pg.wait_for_timeout(400)
+        pg.evaluate("document.querySelector('#dci-rules [data-rf=tables] [data-rule-on=S291]').click()"); pg.wait_for_timeout(600)
+        b1 = pg.evaluate(LIST)
+        print('B)', b1['hidden'], b1['items'])
+        results.append(b1['hidden'] and not b1['items'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

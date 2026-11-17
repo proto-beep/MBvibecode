@@ -2201,4 +2201,70 @@ def case_memberinst3141():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_pkg3157():
+    """Credits Importer 3.157.0 (collected items Z-BCPKGDESC, Z-SHOPPROSE, Z-TRACKNONUM, Z-NOTABSRC): a Bandcamp album with the text of its CD edition.
+    A) The edition's text is read with the credits: "Bass Man – electric bass" there, "bass" in the credits – one row, electric bass (the more
+       precise); "Drum Guy – drums" in both – one row; "Keys Guy – piano" only there – a row; "All songs by Test Band, all rights reserved" –
+       no entry "All Rights Reserved". Above the entries: "Read too: the text of the Bandcamp edition “Compact Disc (CD)” – 1 new · 1 the same …
+       · 1 more precise …".
+    B) Its shop lines ("Ships within …", "Includes unlimited streaming …", "Compact Disc (CD) + Digital Album") left out as "shop", named with
+       the edition; nothing "not recognized".
+    C) Its track list without numbers below "A" and "B" ("Song One 3:00") compared with MusicBrainz: it fits.
+    D) (Z-NOTABSRC) Without a tab of the companion: "Script Companion: no Bandcamp tab"."""
+    ALBUM = 'https://testband.bandcamp.com/album/pkg'
+    PKG = ('A\nSong One 3:00\nSong Two 3:00\nB\nSong Three 3:00\nSong Four 3:00\n\nBass Man – electric bass\nDrum Guy – drums\nKeys Guy – piano\n\n'
+           'Ships within Germany and the UK only.\nIncludes unlimited streaming via the free Bandcamp app, plus high-quality download in MP3, FLAC and more.\n'
+           'Compact Disc (CD) + Digital Album')
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {
+        'title': 'Pkg', 'credits': 'Bass Man – bass\nDrum Guy – drums\nAll songs by Test Band, all rights reserved', 'about': ''},
+        'packages': [{'type_name': 'Compact Disc (CD)', 'title': 'Limited Edition Compact Disc', 'description': PKG}],
+        'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'CD'
+            for t in m['tracks']:
+                t['length'] = 180000
+        return d
+    H.ws_release = ws
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw)])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            pg.click('#dci-open')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = pg.evaluate(GROUPS)
+            hint = pg.evaluate("((document.querySelector('[data-el=label-hint]') || {}).textContent || '').replace(/\\s+/g, ' ')")
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 140))")
+            chk = pg.evaluate("((document.querySelector('[data-el=scan-check]') || {}).textContent || '')")
+            print('A)', g, '\n   Hinweis:', hint)
+            results.append(g.get('Bass Man') == ['electric bass'] and g.get('Drum Guy') == ['drums'] and g.get('Keys Guy') == ['piano']
+                           and not any('rights reserved' in k.lower() for k in g)
+                           and 'the text of the Bandcamp edition “Compact Disc (CD)” – 1 new · 1 the same as in the credits (one entry) · 1 more precise there (taken)' in hint)
+            print('B) ausgelassen:', ign, '| nicht erkannt:', unrec)
+            results.append(unrec == [] and sum(1 for x in ign if x.startswith('Compact Disc (CD): ') and 'shop' in x) >= 3)
+            print('C)', chk)
+            results.append(chk.startswith('The track list of the text fits'))
+            st = pg.evaluate("[...document.querySelectorAll('[data-el=sync-notab]')].map(x => x.textContent).join(' | ')")
+            print('D)', st)
+            results.append(bool(st) and all(x == 'Script Companion: no Bandcamp tab' for x in st.split(' | ')))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

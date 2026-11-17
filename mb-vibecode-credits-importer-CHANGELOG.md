@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.156.0 | – |
+| 2026-11-17 | 3.152.0 – 3.157.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.157.0
+
+Every free text, Bandcamp in particular:
+
+- **The texts of Bandcamp's editions** (Z-BCPKGDESC; S289): "Limited Edition Compact Disc …" read with the credits – what they say again is one entry, of two that differ the more precise is kept ("electric bass" over "bass", tracks named over all tracks); they hold for the digital edition too. Above the entries: which edition's text was read and what it gave; its lines left out and not recognized with the others, its name before them.
+- **What a shop writes** (Z-SHOPPROSE; S287): shipping, what a purchase includes, the formats of the download, "Compact Disc (CD) + Digital Album", "Plus Bonus Track (only on CD)", "All rights reserved" – left out as "shop"; ", all rights reserved" after a credit is no name.
+- **A track list without numbers** (Z-TRACKNONUM; S288): "Temporary Fault 9:10", also below "A", "Side B", "CD 2" – compared with MusicBrainz's tracks like a numbered one; bonus tracks missing at the end are no difference.
+- **Bonus tracks** (Z-BONUSONLY; S290): the credits of the release hold for a bonus track too – not for the last tracks whose titles name another session ("live", "demo", "rehearsal"; "outtake" is none): players, studios and engineers on the other tracks; writers and the release's own credits (cover, notes …) on all.
+- **Show missing links of the entries** (Z-MISSINGLINKS; S291): below the entries, folded, only when there are any – the web addresses of the artists, labels, places and series assigned in MusicBrainz that MusicBrainz does not have (their pages at the source, addresses next to their names in the text), each with "add in MusicBrainz ↗" (the edit page with it filled in). Switched off with S291.
+- **"no … tab" names the source** (Z-NOTABSRC): "Script Companion: no Bandcamp tab" for a Bandcamp import; before an import the linked sources ("no Discogs or Bandcamp tab" when none is linked).
 
 ### Import 3.156.0
 
