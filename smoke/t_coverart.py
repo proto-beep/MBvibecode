@@ -92,8 +92,9 @@ def case_ocrsetting():
         H.open_settings(pg, 'connections')
         conn = pg.evaluate("[...document.querySelectorAll('[data-conn=X013], [data-conn=X014]')].map(r => r.innerText.replace(/\\s+/g, ' ').slice(0, 60))")
         print('A) an:', a, '| aus:', b1, '| zurückgesetzt:', c1, '| Verbindungen:', conn)
-        # ([Z-QUICKFILL] 3.150.0) the tab "Beta" can be chosen again (Credit fill)
-        results.append(a == [True, 'Text from cover art …', True, None, 3, [None, '', 'pointer'], 'beta', 'cache']
+        # ([Z-QUICKFILL] 3.150.0) the tab "Beta" can be chosen again (Credit fill); ([Z-QFBETA] 3.156.0) greyed again – "Fill empty recordings"
+        # is under "Staging" now
+        results.append(a == [True, 'Text from cover art …', True, None, 3, ['true', 'No beta functions at the moment', 'default'], 'sources', 'cache']
                        and b1 == ['false', None, False] and c1 == [None, True, 'Text from cover art …', True]
                        and len(conn) == 2 and conn[0].startswith('Cover Art Archive') and conn[1].startswith('Tesseract.js'))
         print('Fehler:', errs)

@@ -2765,4 +2765,73 @@ console.log(JSON.stringify([ocrBoxes(c(1600, 1000)).map((b) => [b.x, b.w, b.page
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_freetext3157():
+    """Credits Importer 3.157.0 (collected items Z-BONUSONLY, Z-SHOPPROSE, Z-TRACKNONUM), a pasted text; MusicBrainz's track 4 is "Song Four (Live)".
+    A) (Z-BONUSONLY) "Bob Drum – drums" and "Mixed by Max Mix" hold for tracks 1–3 (track 4 names another session); "All songs by Ann Writer"
+       and "Cover by Cid Art" for all.
+    B) (Z-SHOPPROSE) "Ships worldwide within 5 days.", "Download available in 24-bit/44.1kHz." left out as "shop"; ", all rights reserved" after
+       a credit no entry.
+    C) (Z-TRACKNONUM) "Side A" / "Side B" and the titles with lengths without numbers: compared with MusicBrainz – it fits; nothing "not
+       recognized"."""
+    TEXT = """Side A
+Song One 3:00
+Song Two 3:00
+Side B
+Song Three 3:00
+Song Four (Live) 3:00
+
+Bob Drum - drums
+Mixed by Max Mix
+All songs by Ann Writer, all rights reserved
+Cover by Cid Art
+
+Ships worldwide within 5 days.
+Download available in 24-bit/44.1kHz."""
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m['tracks']:
+                t['length'] = 180000
+                if t['title'] == 'Song Four':
+                    t['title'] = 'Song Four (Live)'
+                    t['recording']['title'] = 'Song Four (Live)'
+        return d
+    DUMP = """Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim())]))"""
+    results = []
+    try:
+        H.ws_release = ws
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = pg.evaluate(DUMP)
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 120))")
+            chk = pg.evaluate("((document.querySelector('[data-el=scan-check]') || {}).textContent || '')")
+            print('A)', g)
+            results.append(g.get('Bob Drum') == ['3 of 4 tracks'] and g.get('Max Mix') == ['3 of 4 tracks'] and 'Ann Writer' in g and '3 of 4' not in ' '.join(g['Ann Writer'])
+                           and 'Cid Art' in g)
+            print('B)', ign, '| nicht erkannt:', unrec)
+            results.append(sum(1 for x in ign if 'shop' in x) == 2 and not any('rights reserved' in k.lower() for k in g) and unrec == [])
+            print('C)', chk)
+            results.append(chk.startswith('The track list of the text fits'))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
