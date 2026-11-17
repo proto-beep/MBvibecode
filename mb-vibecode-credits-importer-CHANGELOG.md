@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-18 | 3.159.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -131,6 +132,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.159.0
+
+- **Review run 2** (collected item Z-REVIEW-FABLE; 2026-11-18, the areas "architecture" and "contradicting mappings" of the review checklist, done by Claude Fable 5.2). Corrected:
+  - **One question id for two questions:** Q013 was both the question of "Horns" (horn, brass or wind instruments) and that of a group's members (performer or no relationship) – one switch for both. The members' question is Q016 now; "Horns" stays Q013.
+  - **Dates:** "Remastered 2015" belongs to the remastering – it went to the mastering, because "master" was found inside "remastered"; "Premastered" stays with the mastering, "Grandmaster Flash, 1982" names none. "Piano Concerto No. 2 (1901)" and "Konzertmeister" name no performance any more ("concert" inside them did).
+  - **Switches that changed nothing:** nine rules of the list "Mapping rules" (S013, S015, S016, S023, S027 – S030, S125) describe what the dashboard always does; nothing asked their switch. It is ticked and greyed now ("always on").
+  - **Instruments:** "bug shaker" and "nut shell shaker" are MusicBrainz's shakers, "tenor horn" and "alto horn" its tenor horn / alto horn (the names MusicBrainz has now).
+  - **The register:** six rules named functions in "where" that were renamed or gone (S113, S125, S139, S171, S220, S222).
+- Checked, nothing to correct: no relationship type the mapping uses is deprecated or missing for its level; the source adapters and the text recognition use neither the dashboard's state nor the page; the text recognition has no branch per source; no two company rules match the same role.
+- Noted, not changed (the owner decides): what of a free text the Discogs notes do not take over (series, ensembles, live heads, covers and quotes); camera work is always entered while the other video credits follow their quick switch; the level of video credits differs (recording or release); "Text By" is liner notes while "Text" asks; "Mixed By [DJ Mix]" is the mix engineer; "Tenor", "Baritone", "Soprano" alone are not asked like "Alto"; "bugle" (French: flugelhorn) and "laúd" (Spanish: lute) against MusicBrainz's own bugle and laúd; "Tape:" as a format against tapes as an instrument; the text recognition as one function of 4,100 lines.
 
 ### Import 3.158.0
 
