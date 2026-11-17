@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.150.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.151.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.151.0 · 2026-11-16
+
+- **Z-REVIEW-FABLE, run 1 (data integrity, code):** `nameKey` and `escRe` moved up beside `norm` – `wkey` (WIKIPEDIA), `qfKey` and seven inline escapes replaced; `mbWs` – `AbortSignal.timeout(30000)`, one retry on a network error, then `err.mbNet`; `WIKIPEDIA.getJson` – header `Api-User-Agent`, `langLinks` only for codes matching `[a-z]{2,3}(-…)*`; `suppNoteLines` – `took`, `differ` only rows that can be staged, `renamed` only with an entry, the kept name by `rowPrevName`; `SETTINGS_KEYS` and `PROFILE_NOT` + `STATS_FOLD_KEY`, `STATS_DUR_KEY`, `STATS_LEN_OF_KEY`; `runStatJob` – a failed `statPut` keeps the job (log `statsFailed`).
+- **Lint:** `/* global */` names only `GM_getResourceText`; unused eslint directives and four useless escapes removed – 0 problems.
+- **Texts:** new `err.mbNet`; removed `th.role`, `group.creditAllAria`, `group.creditAllOtherAria`, `toolbar.onlyWorks`, `toolbar.onlyWorksTitle`, `msg.groupNotFound`, `settings.editNote`, `matrix.suggestRowTitle`, `stats.beforeN`.
+- **stats/global_stats.py:** `source_kind` – wikipedia.org and wikidata.org; `kind_from_done` – 'wikipedia'.
+- **Tests:** `t_sources.py fable3151` (the edit note without rows that are not staged; reset all and the statistics' display keys) – new, fails on 3.150.0. No test for the time limit of `mbWs`.
 
 ## Import 3.150.0 · 2026-11-16
 
