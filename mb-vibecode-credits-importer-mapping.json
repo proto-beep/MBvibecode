@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.152.0",
+  "version": "3.153.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -113,7 +113,7 @@
   "ROLE_RULE_DATA": [
     {"id":"R001","kind":"special","note":"","re":null,"types":[],"level":"recording"},
     {"id":"R002","kind":"simple","note":"","re":{"$re":"^(written-by|written by|writer|songwriter|songwriters)$","$flags":""},"types":["writer","composer"],"level":"work","work":true},
-    {"id":"R098","kind":"simple","note":"Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)","re":{"$re":"^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$","$flags":""},"types":["writer"],"level":"work","work":true,"notes":["musicLyrics"]},
+    {"id":"R098","kind":"simple","note":"Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)","re":{"$re":"^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by|all tracks written by|tracks written by|all tracks by|all titles written by|all compositions written by)$","$flags":""},"types":["writer"],"level":"work","work":true,"notes":["musicLyrics"]},
     {"id":"R003","kind":"simple","note":"","re":{"$re":"^(composed by|composer|composition by|composition|compositions|music by|music|all music by|all music|score|score by|soundtrack)$","$flags":""},"types":["composer","writer"],"level":"work","work":true},
     {"id":"R004","kind":"simple","note":"Z-ENGTR (3.109.0): also with a language (\"English Translation\", \"Translation (French)\", \"Translated into German by\") and in other languages (\"Übersetzung\", \"Traducción\", \"Traduction\" …); every source asks Q007","re":{"$re":"^(((english|german|french|spanish|italian|portuguese|dutch|swedish|norwegian|danish|finnish|icelandic|polish|czech|slovak|hungarian|romanian|greek|turkish|russian|ukrainian|japanese|chinese|korean|arabic|hebrew|catalan|basque|galician|irish|welsh|estonian|latvian|lithuanian|slovenian|croatian|serbian|bulgarian) )?(translated by|translated|translation|translation by|translations|translations by|translator)|translated (into|to) (english|german|french|spanish|italian|portuguese|dutch|swedish|norwegian|danish|finnish|icelandic|polish|czech|slovak|hungarian|romanian|greek|turkish|russian|ukrainian|japanese|chinese|korean|arabic|hebrew|catalan|basque|galician|irish|welsh|estonian|latvian|lithuanian|slovenian|croatian|serbian|bulgarian)( by)?|übersetzung|übersetzungen|übersetzt von|übersetzer|übersetzerin|traducción|traducciones|traducido por|traductor|traductora|traduction|traductions|traduit par|traducteur|traductrice|traduzione|traduzioni|tradotto da|traduttore|traduttrice|tradução|traduções|traduzido por|tradutor|tradutora|vertaling|vertaald door|vertaler|översättning|översatt av|översättare|oversettelse|oversatt av|oversetter|oversættelse|oversat af|oversætter|käännös|suomennos|tłumaczenie|przekład|překlad)( \\((english|german|french|spanish|italian|portuguese|dutch|swedish|norwegian|danish|finnish|icelandic|polish|czech|slovak|hungarian|romanian|greek|turkish|russian|ukrainian|japanese|chinese|korean|arabic|hebrew|catalan|basque|galician|irish|welsh|estonian|latvian|lithuanian|slovenian|croatian|serbian|bulgarian)\\))?$","$flags":""},"types":["translator"],"level":"work","work":true},
     {"id":"R005","kind":"simple","note":"The poet's words (\"Poems By\", \"Poetry By\", \"Poem By\") are R105 since 3.31.4","re":{"$re":"^(author|story by|screenwriter|script by|created by)$","$flags":""},"types":["writer"],"level":"work","work":true,"credit":true},
@@ -310,7 +310,23 @@
     "electronics": ["electronic instruments","electronics"],
     "fiddle": ["fiddle","violin"],
     "12-string guitar": ["12 string guitar","12-string guitar"],
-    "twelve-string guitar": ["12 string guitar","12-string guitar"]
+    "twelve-string guitar": ["12 string guitar","12-string guitar"],
+    "project electronic rhythm computer": ["drum machine"],
+    "electronic rhythm computer": ["drum machine"],
+    "rhythm computer": ["drum machine"],
+    "fender e piano": ["rhodes piano","fender rhodes","electric piano"],
+    "fender e-piano": ["rhodes piano","fender rhodes","electric piano"],
+    "e piano": ["electric piano"],
+    "e-piano": ["electric piano"],
+    "mouth organ": ["harmonica"],
+    "loop mellotron": ["mellotron"],
+    "moog synthesizer": ["moog synthesizer","moog","synthesizer"],
+    "moog": ["moog synthesizer","moog","synthesizer"],
+    "grand piano": ["grand piano","piano"],
+    "six string guitar": ["6 string guitar","guitar"],
+    "six-string guitar": ["6 string guitar","guitar"],
+    "6-string guitar": ["6 string guitar","guitar"],
+    "twelve string guitar": ["12 string guitar","12-string guitar"]
   },
   "INSTRUMENT_ASK": {
     "objects": ["percussion"],
@@ -626,7 +642,7 @@
     ["Illustration","illustration@en,sv,da; illustrations@en; illustrasjon@no; illustrasjoner@no; illustrationer@sv,da"],
     ["Layout","layout@en,no,sv,da"]
   ],
-  "INSTRUMENT_MODIFIER": {"$re":"^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string)$","$flags":"i"},
+  "INSTRUMENT_MODIFIER": {"$re":"^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string|four|five|six|seven|eight|nine|ten|twelve|4|5|6|7|8|9|10|12)$","$flags":"i"},
   "INSTRUMENT_MODIFIER_AFTER": {"$re":"^(sopranino|soprano|alto|tenor|ténor|barítono|baritono|baryton|bajo|basse|eléctrica|electrica|eléctrico|electrico|électrique|electrique|acústica|acustica|acústico|acustico|acoustique|clásica|clasica|classique)$","$flags":"i"},
   "PRIVATE_PLACE": {"$re":"^(?:home\\b|(?:my|his|her|their|our)\\s+(?:own\\s+)?(?:home|house|flat|apartment|bedroom|living\\s?room|kitchen|garage|basement|attic|cellar|place|studio)\\b)","$flags":"i"},
   "NOT_A_PLACE": {"$re":"^(?:(?:the\\s+)?same\\s+time\\b|the\\s+time\\b|(?:that|this|the)\\s+(?:point|stage|moment)\\b|(?:the\\s+)?(?:end|beginning|start)(?:$|\\s+of\\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\\b)","$flags":"i"},
