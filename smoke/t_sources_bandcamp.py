@@ -1839,7 +1839,7 @@ def case_maya396():
     """Credits Importer 3.96.0 (Z-SEI2, Z-AMP, Z-NORD; rules S149, S151, S152): maya ongaku on Bandcamp, as on the real pages.
     A) "Nothing Space Music" with the pages of its tracks, which have credits of their own (track 1: "… Ryota Takano：Sei water Whale D …",
        track 8: "… Ryota Takano：Sei"): nothing not recognized (until 3.95.0 "1: Ryota Takano: Sei water Whale D", "8: Ryota Takano: Sei") –
-       "Sei water Whale D" asked: other instruments credited "sei water whale d" · miscellaneous support.
+       "Sei water Whale D" asked: other instruments credited "sei water whale D" (single capitals kept since 3.153.0) · miscellaneous support.
     B) "Approach to Anima": "All Guitar Amplifier : Fender Twin Reverb '78" – effects of the one guitarist, Tsutomu Sonoda, credited "Fender
        Twin Reverb '78" (until 3.95.0 left out as equipment)."""
     return case_maya392(only396=True)
@@ -1935,7 +1935,7 @@ def case_maya392(only396=False):
         g, unrec, ign, errs = run(MAYA1, T1, 'nothing-space-music', pages={1: PAGE1, 8: PAGE8})
         whale = row(g, 'Ryota Takano', 'Sei water Whale D')
         print('A)', unrec, whale)
-        results.append(unrec == [] and whale is not None and whale[:3] == ['instrument', 'other instruments', 'sei water whale d'] and not errs)
+        results.append(unrec == [] and whale is not None and whale[:3] == ['instrument', 'other instruments', 'sei water whale D'] and not errs)
         g, unrec, ign, errs = run(MAYA2, T2, 'approach-to-anima')
         amp = row(g, 'Tsutomu Sonoda', "Fender Twin Reverb '78")
         print('B)', unrec, amp, [x for x in ign if 'Fender' in x])

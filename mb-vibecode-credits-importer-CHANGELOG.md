@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 | – |
+| 2026-11-17 | 3.152.0 – 3.153.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,23 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.153.0
+
+Discogs roles and the lines of free texts (every free text: pasted, Bandcamp, YouTube, the Discogs notes, text from cover art):
+
+- **"[All Music Composed By]"** (Z-ALLMUSIC, Z-ARRWORK; S265): a detail that only says the role again for all of it is no detail – no credit of it; "Arranged By [All Music Arranged By]" goes to the works as the bare "Arranged By" (until now an "instrument arranger" of an instrument "all music arranged by" in MusicBrainz's editor).
+- **"Executive-Producer [Associate Producer]"** (Z-BRACKETROLE; S266): a detail that is another kind of the same role is the role – read as associate producer, said at the row.
+- **A studio written otherwise** (Z-STUDIONAME; S267): the notes' "EastSide Sound" on Discogs's "East Side Sound" – Discogs's linked entry, credited as the notes write it.
+- **New instrument words** (Z-INSTRNEW): Project Electronic Rhythm Computer (drum machine), Fender E Piano (Rhodes piano), Mouth Organ (harmonica), Loop Mellotron, Moog Synthesizer, Grand Piano, six- and twelve-string guitar – each credited as written; one capital letter stays ("Fender E piano").
+- **"Twelve and Six String Guitar"** (Z-SHAREDHEAD): two guitars – number words share the instrument as "alto and tenor saxophone" do.
+- **Surnames** (Z-SURNAMES; S268): "All tracks written by Franke / Froese / Baumann" – the full names of the same text, writers of the works, credited as written.
+- **Lines** (Z-PERSONNELHEAD, Z-SEMICOLON, Z-OCRLINEJOIN; S269): "Personnel:" before a list is a heading; a paragraph of credits with semicolons a line per part ("recording engineer: otto"); a line broken after "/", "&", "and" one line.
+- **The album's title as the subject** (Z-CAPSTITLE; S270): "FRAG NICHT NACH SONNENSCHEIN was recorded at …" is the album, also in capitals.
+- **Descriptions of the music** (Z-PROMOPROSE; S271): "Expect a heavy dose of psychedelic riffs …" is left out, not "not recognized" – never a sentence with a name, a role, an instrument or a title of the release or its tracks.
+- **Asides between dashes** (Z-DASHASIDE; S272): read apart – the sentence around them, the aside as a line of its own; one that gives nothing is left out.
+- **Studios without a name** (Z-HOMESTUDIO, Z-RECINAREA; S273): "the band's home studio in Tampere, Finland" is said above the entries (where, when) and counted in the statistics (not submitted); Tampere is "recorded in". A place of MusicBrainz is offered only when the release's artist owns it or it has the artist's name in that town (several: a list).
+- **The date of the recordings** (Z-RECSENTDATE; S274): a date in the sentence of the recordings is the performance date of all tracks (instruments, voices, "recorded by", "recorded in") – not only of the town; mix and mastering keep none.
 
 ### Import 3.152.0
 
