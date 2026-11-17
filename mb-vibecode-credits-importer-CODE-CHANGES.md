@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.154.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.155.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.155.0 · 2026-11-17
+
+- **Z-WORKMAGIC (S284):** `MAGIC_LEVELS` (careful, balanced, bold), `MAGIC_KINDS` (suite, work, medley, live, cover, pub, coldate, ded), `MAGIC_LEVEL_KEY` ('dci-magic-level'), `MAGIC_OFF_KEY` ('dci-magic-off') – in `TOPIC_KEYS.works` and `SETTINGS_KEYS`; `S.magicLevel`, `S.magicOff`, `S.magicMarks` (track → texts), `S.magicUndo` (undo functions), `S.magicMedley` (the parts' lookups), `S.magicPreview`, `S.magicMenu`, `S.magicInfo`, `S.magicBusy` (cleared with each import).
+  - `magicPlan()` → `[{ kind, i, label, what, apply() → undo }]`, made of what the matrix's own clicks do: `acceptSuite`/`undoSuite`; `planPendingWork` + `splitMedley` (parts with the hits of `magicMedleyLookups()` – `searchWorks` per part and `writerMbidsOfTrack`) / `joinMedley`; `S.workPlan.set(… origin: 'search')` + `addFoundWorkRels`, `planNewWork`, a part's `offer` taken; `setLinkAttr` for live (`MAGIC_LIVE` reasons by level, `liveHint`) and cover (`coverAuto`, `coverComposers`) with the sets before; `r.confirmed` of `isSuggestedCell` publishing rows + `ppsHandSet`; `S.mxColDate` + `applyColumnDate` (one Performance cell of `dm()` without track groups, columns with `r.improv`); `dedTake` (one hit of `S.dedSugg`) and `dedUnchoose(key)`.
+  - `magicApply()` (async: a dedication waits for its entity), `magicUndoAll()`, `magicHeadHtml()` (✨, ▾, ⓘ, ↺), `magicPopHtml()` (menu, `magicInfoHtml()` table, preview), `magicMarkHtml(i)` in the front cell of the matrix's rows; `MX_POPOVERS` + magicMenu, magicInfo, magicPreview; actions `magic-open`, `magic-cancel`, `magic-apply`, `magic-undo`, `magic-menu`, `magic-info`, `magic-level`; `settingsChange` `magic-kind`; ⚙ Works `sh('magic')`.
+  - Texts `magic.*`, `settings.h.magic`, `log.magicAnswer`, `log.magicDone`, `log.magicUndone` (German, Spanish, French too).
+- **Head of the works matrix:** `.dci-works-head.dci-wh { align-items: start }` – the right part may take a second line (✨), the left and the middle stay on its first.
+- **Tests:** `t_works_more.py magic3155` – new, fails on 3.154.0; `t_ui_settings.py settabs3136` (the heading "✨ Answer all" under Works) adjusted. `register_golden.json` anew (S284).
 
 ## Import 3.154.0 · 2026-11-17
 
