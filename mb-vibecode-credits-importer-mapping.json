@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.158.0",
+  "version": "3.159.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
   "CHECKBOX_DETAILS": [
@@ -36,7 +36,7 @@
     {"id":"Q011","base":"voice","rule":"R015","flag":"askVoice","keep":true,"ask":"typeAsk.askVoice","pending":"typeAsk.pendingVoice","note":"\"Voice\" alone (3.34.20; 3.34.25 every source, also Discogs): plain vocals (MusicBrainz has no role credit for them), other vocals, lead vocals or spoken vocals credited \"voice\"? Until answered it stays vocals without role credit; with another voice chosen by hand \"voice\" is offered as its role credit. \"Vocals\" stays vocals without a question (R018)","options":[{"type":"vocal","level":"recording","label":"vocals","plain":true},{"type":"vocal","level":"recording","instrument":"other vocals","credit":"voice","label":"other vocals “voice”"},{"type":"vocal","level":"recording","instrument":"lead vocals","credit":"voice","label":"lead vocals “voice”"},{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":"voice","label":"spoken vocals “voice”"}]},
     {"id":"Q005","base":"text","rule":"R100","ask":"typeAsk.askText","note":"\"Text\" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German \"Text\" is the lyrics)? Nothing is assumed","options":[{"type":"liner notes","level":"release"},{"type":"lyricist","level":"work"}]},
     {"id":"Q012","base":"host / hosted by","rule":"R108","ask":"typeAsk.askHost","note":"\"Host\", \"Hosted By\" (3.41.8, Q-cn): spoken vocals credited \"host\", miscellaneous support (task \"host\") or skipped? Nothing is assumed","options":[{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":"host","label":"spoken vocals (credited “host”)"},{"type":"misc","level":"recording","task":"host","label":"miscellaneous support (task “host”)"},{"type":"","level":"skip","label":"skip the role"}]},
-    {"id":"Q013","base":"member of … / performing group","rule":"R111","ask":"typeAsk.askMember","note":"A member below the heading of a group (3.79.0; collected item Z-MEM): performer on the recordings (suggested; the level can be changed) or no relationship? Nothing is added before it is answered","options":[{"type":"performer","level":"recording","label":"performer (on the recordings)","suggested":true},{"type":"","level":"skip","label":"no relationship"}]},
+    {"id":"Q016","base":"member of … / performing group","rule":"R111","ask":"typeAsk.askMember","note":"A member below the heading of a group (3.79.0; collected item Z-MEM): performer on the recordings (suggested; the level can be changed) or no relationship? Nothing is added before it is answered","options":[{"type":"performer","level":"recording","label":"performer (on the recordings)","suggested":true},{"type":"","level":"skip","label":"no relationship"}]},
     {"id":"Q015","base":"soundscapes","rule":"R118","ask":"typeAsk.askSoundscapes","note":"\"Soundscapes\" (3.124.0; collected item Z-QPBAND): the instrument effects credited \"soundscapes\" (taken at once, a suggestion), sound effects, or miscellaneous support credited \"soundscapes\"? The attribute guest of the credit stays","options":[{"type":"instrument","level":"recording","instrument":"effects","credit":"soundscapes","label":"effects (credited “soundscapes”)","suggested":true},{"type":"sound effects","level":"recording","label":"sound effects"},{"type":"misc","level":"recording","credit":"soundscapes","label":"miscellaneous support (credited “soundscapes”)"}],"presetAnswer":0}
   ],
   "COMPANY_ROLES": [
@@ -222,7 +222,7 @@
     {"id":"R110","kind":"simple","note":"Camera work (3.79.0; collected item Z-CAM2): miscellaneous support on the recordings, the word as written (in lower case) as task – \"Cameras\" → cameras; the level can be switched to the release","re":{"$re":"^(cameras?|camera ?(?:operators?|crew|work|man|men|person|people)|camerawork|cinematograph(?:y|er)|director of photography|filmed by|filming|footage by)$","$flags":""},"types":["misc"],"level":"recording","credit":true},
     {"id":"R112","kind":"simple","note":"Portraits (3.81.0; collected item Z-POR): \"Album portraits by\", \"Portraits by\" – photography on the release, the word as written (in lower case) as role credit (\"album portraits\")","re":{"$re":"^((?:album |cover |band )?portraits?(?: photography)?(?: by)?|portrait photos? by)$","$flags":""},"types":["photography"],"level":"release","credit":true},
     {"id":"R113","kind":"special","note":"Instruments by their model (3.81.0; collected item Z-SYN): a model of a synthesizer, drum machine or sampler (T065: \"Juno 101\", \"Korg Minilogue\", \"TR-808\", \"MPC\") – MusicBrainz's instrument of that name if it has one, else synthesizer, drum machine or sampler; the model as written as role credit","re":{"$re":"^$","$flags":""},"types":["instrument"],"level":"recording"},
-    {"id":"R111","kind":"special","note":"A member of a group – a name below its heading (3.79.0; collected item Z-MEM, S113) – or the group itself (S114): performer on the recordings? No type is assumed, the dashboard asks (Q013)","re":{"$re":"^(member of .+|performing group)$","$flags":""},"types":[],"level":"recording"},
+    {"id":"R111","kind":"special","note":"A member of a group – a name below its heading (3.79.0; collected item Z-MEM, S113) – or the group itself (S114): performer on the recordings? No type is assumed, the dashboard asks (Q016; until 3.158.0 it shared the id Q013 with the question of \"Horns\")","re":{"$re":"^(member of .+|performing group)$","$flags":""},"types":[],"level":"recording"},
     {"id":"R114","kind":"special","note":"Plated By: miscellaneous support with the task “vinyl plating” on the release – only for vinyl (S026)","re":{"$re":"^(plated by|plating|plated)$","$flags":""},"types":["misc"],"level":"release"},
     {"id":"R115","kind":"simple","note":"Typesetting (3.101.0; collected item Z-CIMP): design credited \"typesetting\" on the release","re":{"$re":"^(typesetting|typeset by|typesetter)$","$flags":""},"types":["design"],"level":"release","credit":"typesetting"},
     {"id":"R116","kind":"simple","note":"Hospitality (3.101.0; collected item Z-CIMP): miscellaneous support with the task \"hospitality\" on the release","re":{"$re":"^(hospitality)$","$flags":""},"types":["misc","miscellaneous support"],"level":"release","credit":"hospitality"},
@@ -243,8 +243,10 @@
     "saxophone trio": ["saxophone"],
     "rhodes piano mk2": ["Rhodes piano","electric piano"],
     "rhodes piano": ["Rhodes piano","electric piano"],
-    "bug shaker": ["shaker"],
-    "nut shell shaker": ["shaker"],
+    "bug shaker": ["shakers","shaker"],
+    "nut shell shaker": ["shakers","shaker"],
+    "tenor horn": ["tenor horn / alto horn","tenor horn"],
+    "alto horn": ["tenor horn / alto horn","alto horn"],
     "rhythm maschine": ["drum machine"],
     "rhythm machine": ["drum machine"],
     "sequential px": ["Sequential Prophet X","Prophet X","synthesizer"],
@@ -1074,11 +1076,11 @@
     {"re":{"$re":"^layout$","$flags":""},"type":"design","credit":"layout"}
   ],
   "DATE_HINTS": [
-    ["remastering",{"$re":"remaster","$flags":"i"}],
-    ["mastering",{"$re":"master(ed|ing)?\\b|gemastert","$flags":"i"}],
+    ["remastering",{"$re":"(?<![a-z])re-?master(?:ed|ing|s)?","$flags":"i"}],
+    ["mastering",{"$re":"(?<![a-z])(?<!re-)(?:pre-?)?master(ed|ing)?\\b|gemastert","$flags":"i"}],
     ["mix",{"$re":"\\bmix(ed|ing)?\\b|abgemischt|mezcl|mixag","$flags":"i"}],
     ["copyright",{"$re":"℗|©|\\(p\\)|\\(c\\)|copyright|phonographic","$flags":"i"}],
-    ["performance",{"$re":"\\brecord(ed|ing|ings)?\\b|\\brec\\.|(?<!\\bfirst |\\bpublic )\\bperform(?:ed|ance|ances)\\b(?!\\s+rights)|\\blive at\\b|\\b(?:recorded|performed) live in\\b|\\blive in concert\\b|(?<!ur)aufgeführt|\\bsessions?\\b|aufgenommen|aufnahme|grabad|enregistr|\\bconcert|\\bkonzert","$flags":"i"}],
+    ["performance",{"$re":"\\brecord(ed|ing|ings)?\\b|\\brec\\.|(?<!\\bfirst |\\bpublic )\\bperform(?:ed|ance|ances)\\b(?!\\s+rights)|\\blive at\\b|\\b(?:recorded|performed) live in\\b|\\blive in concert\\b|(?<!ur)aufgeführt|\\bsessions?\\b|aufgenommen|aufnahme|grabad|enregistr|\\bconcerts?\\b|\\bkonzert(?:e|en|s)?\\b","$flags":"i"}],
     ["artwork",{"$re":"\\bcover\\s+(?:painting|art(?:work)?|illustration|drawing|design|photo(?:graph)?)s?\\b|\\bphoto(?:graph)?s?\\b|\\bpaint(?:ing|ings|ed)\\b|\\billustrat(?:ion|ions|ed)\\b|\\bdrawings?\\b|\\bartwork\\b|\\bgemälde\\b|\\bzeichnung(?:en)?\\b|\\bpeinture\\b|\\bpintura\\b","$flags":"i"}],
     ["composition",{"$re":"\\bcompos(?:ed|ing|ition)\\b|komponiert|\\bcompuest[oa]s?\\b|\\bcompos[ée]e?s?\\b","$flags":"i"}],
     ["production",{"$re":"\\bproduc(?:ed|tion|ing)\\b|produziert|\\bproducid[oa]s?\\b|\\bproduite?s?\\b","$flags":"i"}],

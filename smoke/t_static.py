@@ -328,4 +328,79 @@ def case_gapbtn3112():
     print('Ergebnis:', 'OK' if ok else 'FEHLER')
 
 
+def case_review3159():
+    """Credits Importer 3.159.0 (Z-REVIEW-FABLE, review run 2: architecture, contradicting mappings) – what the run corrected, kept so:
+    A) No rule id twice in the mapping file (until 3.158.0 Q013 was the question of "Horns" and that of a group's members: one switch
+       for both; the members' question is Q016 now).
+    B) Every S rule of the register is asked somewhere – ruleOn('S…') or a role rule's `special` – or is one of FIXED_RULES, whose
+       switch the list of the mapping rules shows ticked and greyed (nine rules had a switch that changed nothing).
+    C) What a rule's "where" names exists in the code (six rules named functions that were renamed or gone).
+    D) Dates: "Remastered 2015" belongs to the remastering (not the mastering – "master" was found inside "remastered"), "Premastered"
+       to the mastering; "Piano Concerto No. 2 (1901)" and "Konzertmeister" name no performance ("concert" was found inside them).
+    E) Instruments under MusicBrainz's present names: shakers, tenor horn / alto horn."""
+    import json
+    import re
+    import subprocess
+    root = H.ROOT
+    src = (root / 'mb-vibecode-credits-importer.user.js').read_text(encoding='utf-8')
+    mapping = json.loads((root / 'mb-vibecode-credits-importer-mapping.json').read_text(encoding='utf-8'))
+    ids = []
+
+    def walk(o):
+        if isinstance(o, dict):
+            if isinstance(o.get('id'), str) and re.match(r'^[A-Z]\d{3}$', o['id']):
+                ids.append(o['id'])
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(mapping)
+    twice = sorted({i for i in ids if ids.count(i) > 1})
+    print('A) ids twice in the mapping file:', twice)
+    reg = dict(re.findall(r"\{ id: '(S\d{3})', where: '((?:[^'\\]|\\.)*)'", src))
+    lines = src.split('\n')
+    code = '\n'.join(l for l in lines if not re.match(r"\s*\{ id: '[A-Z]\d{3}', where:", l))
+    asked = set(re.findall(r"ruleOn(?:Stored)?\('(S\d{3})'\)", code)) | {r['special'] for r in mapping['ROLE_RULE_DATA'] if r.get('special')}
+    fixed = set(re.findall(r"'(S\d{3})'", re.search(r'const FIXED_RULES = new Set\(\[([^\]]*)\]\)', src).group(1)))
+    never = sorted(i for i in reg if i not in asked and i not in fixed)
+    both = sorted(fixed & asked)
+    print('B) S rules:', len(reg), '| never asked and not fixed:', never, '| fixed but asked:', both, '| fixed:', sorted(fixed))
+    stop = {'with', 'from', 'also', 'review', 'rules', 'data', 'their', 'text', 'code', 'list', 'lists', 'table', 'tables', 'dashboard', 'register',
+            'mapping', 'case', 'json', 'part', 'parts', 'companion', 'bcArt'}
+    gone = {}
+    for i, w in reg.items():
+        for t in re.findall(r'[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*', w):
+            base = t.split('.')[-1]
+            if len(base) < 4 or base in stop or base.lower() in stop or re.match(r'^[A-Z]\d{3}$', base):
+                continue
+            if not re.search(r'\b' + re.escape(base) + r'\b', code) and base not in mapping:
+                gone.setdefault(i, []).append(t)
+    print('C) "where" names not in the code:', gone)
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const out = JSON.parse(process.argv[2]).map((t) => [t, m.findDates(t, {}).map((d) => [d.text, d.hint, d.hints])]);
+console.log(JSON.stringify(out));
+"""
+    texts = ['Remastered 2015.', 'Re-mastered 2015', 'Premastered 2001', 'Mastered 1985, remastered 2015', 'Remastered and mixed 2020', 'Grandmaster Flash, 1982',
+             'Piano Concerto No. 2 (1901)', 'Konzertmeister: X, 1999', 'Recorded at the concert, 1970', 'Konzerte 1999']
+    js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(texts)], capture_output=True, text=True)
+    got = dict(json.loads(js.stdout)) if not js.returncode else {}
+    for t in texts:
+        print('D)', t, '→', got.get(t), js.stderr[-200:] if js.returncode else '')
+    hint = lambda t, k=0: (got.get(t) or [[None, None, []]] * (k + 1))[k][1]  # noqa: E731
+    ok_d = (hint('Remastered 2015.') == 'remastering' and hint('Re-mastered 2015') == 'remastering' and hint('Premastered 2001') == 'mastering'
+            and [hint('Mastered 1985, remastered 2015'), hint('Mastered 1985, remastered 2015', 1)] == ['mastering', 'remastering']
+            and got.get('Remastered and mixed 2020', [[0, 0, []]])[0][2] == ['remastering', 'mix'] and hint('Grandmaster Flash, 1982') == ''
+            and hint('Piano Concerto No. 2 (1901)') == '' and hint('Konzertmeister: X, 1999') == ''
+            and hint('Recorded at the concert, 1970') == 'performance' and hint('Konzerte 1999') == 'performance')
+    al = mapping['INSTRUMENT_ALIASES']
+    ok_e = al.get('bug shaker', [''])[0] == 'shakers' and al.get('tenor horn', [''])[0] == 'tenor horn / alto horn' and al.get('alto horn', [''])[0] == 'tenor horn / alto horn'
+    print('E)', al.get('bug shaker'), al.get('tenor horn'), al.get('alto horn'))
+    results = [not twice, not never and not both and len(fixed) == 9, not gone, ok_d, ok_e,
+               'data-rule-fixed=' in src and '"rules.fixedTitle"' in src]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

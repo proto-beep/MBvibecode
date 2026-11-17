@@ -1050,7 +1050,7 @@ Paul Foreman - guitar"""
         g = load(pg, MEM)
         asked = {n: (g.get(n) or {'rows': [{}]})['rows'] for n in ['Sean Burke', 'Paul Foreman', 'Kevin Pulaski', 'Travis Salisbury', 'Salisman Communal Orchestration']}
         print('D) Mitglieder:', {n: [(r.get('q'), r.get('level'), r.get('type')) for r in rows] for n, rows in asked.items()})
-        ok_d = all(len(asked[n]) == 1 and asked[n][0].get('q') == 'Q013' and 'performer on the recordings' in asked[n][0].get('ask', '') for n in ['Sean Burke', 'Kevin Pulaski', 'Travis Salisbury']) \
+        ok_d = all(len(asked[n]) == 1 and asked[n][0].get('q') == 'Q016' and 'performer on the recordings' in asked[n][0].get('ask', '') for n in ['Sean Burke', 'Kevin Pulaski', 'Travis Salisbury']) \
             and [r.get('q') for r in asked['Paul Foreman']] == [''] and not g.get('Salisman Communal Orchestration')
         row = pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text='Sean Burke')).first.locator('tr.dci-row').first
         row.locator('.dci-type-ask [data-act=type-pick][data-opt="0"]').click()
@@ -1081,7 +1081,7 @@ Paul Foreman - guitar"""
         g = load(pg, MEM)
         grp = (g.get('Salisman Communal Orchestration') or {'rows': [{}]})['rows']
         print('E) S114 – die Gruppe:', [(r.get('q'), r.get('ask')) for r in grp])
-        results.append(len(grp) == 1 and grp[0].get('q') == 'Q013')
+        results.append(len(grp) == 1 and grp[0].get('q') == 'Q016')
         g = load(pg, "Recorded live at Café Oto, London, 12 May 2019\nPhotography [Live]: Jane Photo")
         ph = pg.locator('.dci-group').filter(has=pg.locator('.dci-gname', has_text='Jane Photo')).first.locator('tr.dci-row').first
         from common_rows import date_field
