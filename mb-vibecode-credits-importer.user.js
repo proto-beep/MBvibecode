@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.151.0
+// @version      3.152.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.151.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.151.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.152.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.152.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.151.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.152.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -56,6 +56,38 @@
   const nameKey = (x) => norm(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   /** A text as a literal part of a regular expression. ((Fable review, 3.151.0) one for all – was eight copies) */
   const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /**
+   * [F-WSJS] (3.152.0) A request to MusicBrainz outside the queue of /ws/2 (its /ws/js, the line of the release page): it ends after 30 s
+   * and is made once more after a network error or that time, then said in words (until 3.151.0 it could wait for ever). With `pace` the
+   * requests wait in a queue of their own, that many ms apart – no burst of lookups when relationships are staged.
+   */
+  const MB_FETCH_MS = 30000;
+  let mbJsAt = 0;
+  let mbJsQueue = Promise.resolve();
+  function mbFetch(url, init = {}, { pace = 0 } = {}) {
+    const run = async () => {
+      for (let attempt = 0; ; attempt++) {
+        if (pace) {
+          const wait = mbJsAt + pace - Date.now();
+          if (wait > 0) await sleep(wait);
+          mbJsAt = Date.now();
+        }
+        try {
+          const AS = typeof window !== 'undefined' && window.AbortSignal;
+          return await fetch(url, AS && AS.timeout ? { ...init, signal: AS.timeout(MB_FETCH_MS) } : init);
+        } catch (e) {
+          if (attempt >= 1) throw new Error(tr('err.mbNet'));
+          await sleep(1500);
+        }
+      }
+    };
+    if (!pace) return run();
+    const p = mbJsQueue.then(run, run);
+    mbJsQueue = p.catch(() => {});
+    return p;
+  }
+  /** [F-WSJS] (3.152.0) The pause between two lookups of /ws/js (ms). */
+  const MB_JS_PACE = 200;
   // ((3.99.0, review) the keys stored in the browser (entries remembered per release, sources switched off) as until 3.98.0 – without
   // the apostrophes made one: what was remembered before is found again)
   const normKey = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
@@ -4040,6 +4072,7 @@
       "trackpool.allMedia": "all media (one group each, {n})",
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
+      "reset.askProfile": "Reset all settings of the profile “{name}” to their defaults?",
       "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically” and “Fold bar after Apply”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
       "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
@@ -13595,31 +13628,51 @@
     return e ? `– ${e}` : '';
   }
 
-  /** Finds relationship states by id anywhere in MB's editor state (its structure is internal). */
-  function findRelationshipStates(root, ids, maxSteps = 400000, out = null) {
-    const found = new Map();
+  /**
+   * [F-WALK] (3.152.0) The relationships of MB's editor state (its structure is internal), walked once per state: MusicBrainz makes a new
+   * state object with every change, so a walk is kept while the state is the same object. byId: id → the first state with it; all: every
+   * relationship state (with its entities, not its _original – an older copy of the same relationship). Until 3.151.0 every lookup walked
+   * anew and stopped after 400,000 steps – some 600 tracks of 40 relationships each –, so that a relationship not reached counted as taken
+   * out; now up to 5,000,000 steps (some 60 ms for 600 × 40 in a test), what lies beyond is "cut" (unknown, not gone).
+   */
+  const EDITOR_WALK_MAX = 5000000;
+  let editorIndexCache = null;
+  function editorRelIndex(root) {
+    if (editorIndexCache && editorIndexCache.root === root) return editorIndexCache;
+    const byId = new Map();
+    const all = [];
     const seen = new Set();
     const stack = [root];
     let steps = 0;
-    while (stack.length && steps < maxSteps && found.size < ids.size) {
+    while (stack.length && steps < EDITOR_WALK_MAX) {
       const v = stack.pop();
       steps++;
       if (!v || typeof v !== 'object' || seen.has(v)) continue;
       seen.add(v);
-      if (typeof v.id === 'number' && ids.has(v.id) && 'linkTypeID' in v) {
-        found.set(v.id, v);
+      if ('linkTypeID' in v) {
+        if (typeof v.id === 'number' && !byId.has(v.id)) byId.set(v.id, v);
+        all.push(v);
+        if (v.entity0) stack.push(v.entity0);
+        if (v.entity1) stack.push(v.entity1);
         continue;
       }
-      if (v instanceof Map || v instanceof Set) {
-        v.forEach((x) => stack.push(x));
-      } else if (Array.isArray(v)) {
-        v.forEach((x) => stack.push(x));
-      } else {
-        Object.keys(v).forEach((k) => stack.push(v[k]));
-      }
+      if (v instanceof Map || v instanceof Set || Array.isArray(v)) v.forEach((x) => stack.push(x));
+      else Object.keys(v).forEach((k) => stack.push(v[k]));
     }
+    editorIndexCache = { root, byId, all, cut: stack.length > 0, steps };
+    return editorIndexCache;
+  }
+
+  /** Finds relationship states by id anywhere in MB's editor state. ([F-WALK] 3.152.0: from its index; `out.cut`: not all of it was walked) */
+  function findRelationshipStates(root, ids, out = null) {
+    const found = new Map();
+    if (!root) return found;
+    const ix = editorRelIndex(root);
+    ids.forEach((id) => {
+      if (ix.byId.has(id)) found.set(id, ix.byId.get(id));
+    });
     // ((3.135.0, review) the walk stopped before it had seen everything: what it did not reach is unknown, not gone)
-    if (out) out.cut = stack.length > 0 && found.size < ids.size;
+    if (out) out.cut = ix.cut && found.size < ids.size;
     return found;
   }
 
@@ -14069,6 +14122,7 @@
     if (mbid) runArrComJob(mbid, { tries: 5 }); // [Z-ARRDIS2] (3.99.0) the disambiguations of new arrangement works, after "Enter edit"
     // [E8] (3.38.0) the statistics of a submission waiting for MusicBrainz's confirmation
     if (mbid) runStatJob(mbid, { tries: 5, final: true });
+    if (mbid) runQfJob(mbid, { tries: 5 }); // [F-QFSTATS] (3.152.0) Credit fill, after "Enter edit"
     const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
     if (!go || !mbid) {
       gap();
@@ -14399,8 +14453,13 @@
     // ([Z-GAPL] 3.105.0) MusicBrainz's "too many requests" (503, 429 – the page and other scripts ask too): asked again, twice
     let res = null;
     for (let k = 0; k < 3; k++) {
-      res = await fetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
-        + '+release-groups+release-group-level-rels+artist-credits&fmt=json', { credentials: 'same-origin' });
+      // ([F-WSJS] 3.152.0) with a time limit: no answer (or no connection) ends the line's work, said in its reason
+      try {
+        res = await mbFetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
+          + '+release-groups+release-group-level-rels+artist-credits&fmt=json', { credentials: 'same-origin' });
+      } catch (e) {
+        return gapWhy('ws', { status: e.message || 'network' });
+      }
       if (res.ok || (res.status !== 503 && res.status !== 429)) break;
       await new Promise((r) => setTimeout(r, 1500 * (k + 1)));
     }
@@ -14918,7 +14977,7 @@
       if (t) await new Promise((r) => setTimeout(r, 3000));
       let data = null;
       try {
-        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        const res = await mbFetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
         data = res.ok ? await res.json() : null;
       } catch {
         data = null;
@@ -15092,7 +15151,7 @@
       if (t) await new Promise((r) => setTimeout(r, 3000));
       let data = null;
       try {
-        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        const res = await mbFetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
         data = res.ok ? await res.json() : null;
       } catch (e) {
         data = null;
@@ -15457,12 +15516,12 @@
     if (n && S.statsOpen && S.statsScope !== 'global') renderStats();
   }
 
-  /** [E8] Jobs older than 30 minutes go (also those of other releases: a submission given up or failed). */
+  /** [E8] Jobs older than 30 minutes go (also those of other releases: a submission given up or failed). ([F-QFSTATS] 3.152.0: of Credit fill too) */
   function statJobsSweep() {
     try {
       for (let i = window.localStorage.length - 1; i >= 0; i--) {
         const k = window.localStorage.key(i);
-        if (!k || !k.startsWith(STAT_JOB_PREFIX)) continue;
+        if (!k || !(k.startsWith(STAT_JOB_PREFIX) || k.startsWith(QF_JOB_PREFIX))) continue;
         const j = readJson('localStorage', k, null);
         if (!j || !j.armedAt || Date.now() - j.armedAt > STAT_JOB_MAX_MS) window.localStorage.removeItem(k);
       }
@@ -15484,7 +15543,7 @@
       if (t) await sleep(3000);
       let data = null;
       try {
-        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        const res = await mbFetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
         data = res.ok ? await res.json() : null;
       } catch (e) {
         data = null;
@@ -15533,6 +15592,52 @@
     }
     return false;
   }
+  /** [Z-QUICKFILL] (3.150.0) Credit fill in the statistics (this browser). ([F-QFSTATS] 3.152.0: defined here – the release page counts it too) */
+  const QF_STATS_KEY = 'dci-qf-stats';
+  const QF_JOB_PREFIX = 'dci-qf-job:';
+  /** [F-QFSTATS] (3.152.0) A job of Credit fill: what MusicBrainz has of its relationships is counted (QF_STATS_KEY); then it goes. */
+  async function runQfJob(mbid, { tries = 1 } = {}) {
+    const key = `${QF_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const job = readJson('localStorage', key, null);
+    if (!job || !job.armedAt || !Array.isArray(job.runs)) return false;
+    if (Date.now() - job.armedAt > LIVE_JOB_MAX_MS) {
+      writeJson('localStorage', key, null);
+      return false;
+    }
+    for (let t = 0; t < tries; t++) {
+      if (t) await sleep(3000);
+      let data = null;
+      try {
+        const res = await mbFetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        data = res.ok ? await res.json() : null;
+      } catch (e) {
+        data = null;
+      }
+      if (!data) continue;
+      const recs = new Map();
+      (data.mediums || []).forEach((m) => (m.tracks || []).forEach((t0) => {
+        if (t0.recording && t0.recording.gid) recs.set(t0.recording.gid, t0.recording);
+      }));
+      const seen = job.runs.map((r) => statSeenAll(r.rels, data, recs));
+      const all = seen.flat();
+      const found = all.filter((x) => x === true).length;
+      if (found < all.length && t < tries - 1) continue;
+      const again = readJson('localStorage', key, null);
+      if (!again || again.armedAt !== job.armedAt) return false;
+      writeJson('localStorage', key, null);
+      if (!found) return false;
+      const list = readJson('localStorage', QF_STATS_KEY, []);
+      job.runs.forEach((r, i) => {
+        const n = seen[i].filter((x) => x === true).length;
+        if (n) list.push({ at: Date.now(), mbid, rels: n, tracks: r.tracks, from: r.from });
+      });
+      writeJson('localStorage', QF_STATS_KEY, list.slice(-500));
+      return true;
+    }
+    return false;
+  }
+
+
 
   /**
    * [E8] "Enter edit" in the relationship editor (the submission of its form with the edit note, or a click on its submit
@@ -15580,6 +15685,14 @@
       const form = t && (t.tagName === 'FORM' ? t : t.closest && t.closest('form'));
       if (!form || !form.querySelector('#edit-note-text, textarea[name$="edit_note"]')) return;
       if (e.type === 'click' && !(t.closest('button[type=submit], input[type=submit]'))) return;
+      // [F-NOTESTAGED] (3.152.0) the edit note as the editor is now – what was taken out there by hand is no longer named –, before
+      // MusicBrainz reads it (also without the dashboard: Credit fill)
+      try {
+        qfAfterEdit();
+        if (S.lastNoteBlock) writeEditNote();
+      } catch (err) {
+        console.warn('[Credits-Importer] edit note at "Enter edit"', err);
+      }
       if (Date.now() - at < 5000 || !S.initialized || !S.release) return;
       at = Date.now();
       try {
@@ -15835,7 +15948,7 @@
   const entityCache = new Map();
   function fetchJsEntity(mbid) {
     if (!entityCache.has(mbid)) {
-      const p = fetch(`/ws/js/entity/${mbid}`).then((res) => {
+      const p = mbFetch(`/ws/js/entity/${mbid}`, {}, { pace: MB_JS_PACE }).then((res) => {
         if (!res.ok) throw new Error(tr('err.entity', { mbid, status: res.status }));
         return res.json();
       });
@@ -17423,24 +17536,10 @@
 
   /** Relationship states in the editor between an entity (by MBID) and an artist/label (by MBID), of one type. */
   function statesBetween(root, gidA, gidB, ltId) {
-    const out = [];
-    const seen = new WeakSet();
-    let steps = 0;
-    const visit = (v, depth) => {
-      if (!v || typeof v !== 'object' || seen.has(v) || depth > 40 || steps++ > 400000) return;
-      seen.add(v);
-      if (Number(v.linkTypeID) === Number(ltId) && v.entity0 && v.entity1) {
-        const g = [v.entity0.gid, v.entity1.gid];
-        if (g.includes(gidA) && g.includes(gidB)) out.push(v);
-      }
-      if (v instanceof Map) {
-        v.forEach((x) => visit(x, depth + 1));
-        return;
-      }
-      Object.keys(v).forEach((k) => visit(v[k], depth + 1));
-    };
-    visit(root, 0);
-    return out;
+    // ([F-WALK] 3.152.0) from the index of the state – once for all items of a pass, not one whole walk each; never an _original
+    if (!root) return [];
+    return editorRelIndex(root).all.filter((v) => Number(v.linkTypeID) === Number(ltId) && v.entity0 && v.entity1
+      && [v.entity0.gid, v.entity1.gid].includes(gidA) && [v.entity0.gid, v.entity1.gid].includes(gidB));
   }
 
   /**
@@ -23986,30 +24085,93 @@
     return [sup.length ? `Supplemented: ${sup.join(', ')}.` : '', nw.length ? `New: ${nw.join(', ')}.` : ''].filter(Boolean).join(' ');
   }
 
+  /**
+   * [F-NOTESTAGED, F-NOTECOUNT] (3.152.0) What of the dashboard's relationships is in the editor now (taken out there by hand: not):
+   * the rows with a relationship there, the credit relationships by level per source ('' the loaded one, else the short name of an added
+   * one – a relationship all of whose rows came only from it), and the links of works. null: the editor cannot be read (or not all of it) –
+   * then the note says what was staged, as until 3.151.0.
+   */
+  function noteStaged() {
+    const mb = getMB();
+    const re = mb && mb.relationshipEditor;
+    if (!re || !re.state) return null;
+    const list = [...S.staged.values()].filter((x) => x && x.state && typeof x.state.id === 'number');
+    const walk = {};
+    const cur = findRelationshipStates(re.state, new Set(list.map((x) => x.state.id)), walk);
+    if (walk.cut) return null;
+    const here = (x) => { const y = cur.get(x.state.id); return !!y && y._status !== 3; };
+    const rows = new Set();
+    const rels = new Map();
+    for (const x of list) {
+      if (!here(x)) continue;
+      if (x.rowId) rows.add(x.rowId);
+      if (!x.noteKind) continue;
+      const e = rels.get(x.state.id) || { kind: x.noteKind, origin: x.noteOrigin || '', rows: [] };
+      if (x.rowId) e.rows.push(x.rowId);
+      rels.set(x.state.id, e);
+    }
+    const counts = new Map();
+    const links = { workLinks: 0, newWorkLinks: 0, pendingWorks: 0, workRels: 0 };
+    rels.forEach((e) => {
+      if (e.kind === 'workLinks') {
+        links.workLinks++;
+        if (e.origin === 'created') links.newWorkLinks++;
+        if (e.origin === 'pending') links.pendingWorks++;
+        return;
+      }
+      if (e.kind === 'workRels') {
+        links.workRels++;
+        return;
+      }
+      const rs = e.rows.map((id) => S.rows.find((r) => r.id === id)).filter(Boolean);
+      const short = rs.length && rs.every((r) => r.supp && r.supp === rs[0].supp) ? rs[0].supp : '';
+      if (!counts.has(short)) counts.set(short, { recording: 0, release: 0, release_group: 0, work: 0 });
+      const c = counts.get(short);
+      if (e.kind in c) c[e.kind]++;
+    });
+    return { rows, counts, links };
+  }
+
+  /** "added 3 credit relationships from Discogs (2 recording, 1 release)" – '' for none. */
+  function noteAddedText(c, name) {
+    const n = c.recording + c.release + c.release_group + c.work;
+    if (!n) return '';
+    const parts = [['recording', c.recording], ['release', c.release], ['release group', c.release_group], ['work', c.work]]
+      .filter(([, k]) => k).map(([level, k]) => `${k} ${level}`);
+    return `added ${n} credit relationship${n === 1 ? '' : 's'} from ${name} (${parts.join(', ')})`;
+  }
+
   function editNoteBlock() {
     const st = S.noteStats;
     const lines = [];
     const sourceUrl = noteSourceUrl();
     if (sourceUrl) lines.push(`Source: ${sourceUrl}`);
+    // [F-NOTESTAGED] (3.152.0) what is in the editor now
+    const ns = noteStaged();
     // [stage 2] The sources that supplemented it, and what came from them
-    const supp = suppNoteLines();
+    const supp = suppNoteLines(ns);
     supp.filter((l) => l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     lines.push(`Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})`);
     // [Z-EN] (3.41.9) "simple": only the sources and the script
     if (S.editNoteMode === 'simple') return lines.join('\n');
     const done = [];
-    const credits = st.recording + st.release + st.release_group + st.work;
-    if (credits) {
-      const parts = [['recording', st.recording], ['release', st.release], ['release group', st.release_group], ['work', st.work]]
-        .filter(([, n]) => n).map(([level, n]) => `${n} ${level}`);
-      done.push(`added ${credits} credit relationship${credits === 1 ? '' : 's'} from ${S.source.noteName} (${parts.join(', ')})`);
+    // [F-NOTECOUNT] (3.152.0) per source: the loaded one, then each added one (a relationship whose rows all came only from it)
+    const zero = { recording: 0, release: 0, release_group: 0, work: 0 };
+    const main = noteAddedText(ns ? ns.counts.get('') || zero : { ...zero, ...st }, S.source.noteName);
+    if (main) done.push(main);
+    if (ns) {
+      for (const [short, src] of S.suppSources) {
+        const t = ns.counts.has(short) ? noteAddedText(ns.counts.get(short), src.name) : '';
+        if (t) done.push(t);
+      }
     }
-    if (st.workLinks) {
-      done.push(`linked ${st.workLinks} work${st.workLinks === 1 ? '' : 's'} to recordings${st.newWorkLinks ? ` (${st.newWorkLinks} newly created)` : ''}`);
-      if (st.pendingWorks) done.push(`created ${st.pendingWorks} new work${st.pendingWorks === 1 ? '' : 's'} in the relationship editor, together with their relationships`);
+    const wl = ns ? ns.links : st;
+    if (wl.workLinks) {
+      done.push(`linked ${wl.workLinks} work${wl.workLinks === 1 ? '' : 's'} to recordings${wl.newWorkLinks ? ` (${wl.newWorkLinks} newly created)` : ''}`);
+      if (wl.pendingWorks) done.push(`created ${wl.pendingWorks} new work${wl.pendingWorks === 1 ? '' : 's'} in the relationship editor, together with their relationships`);
     }
     // [Z-EXC] (3.49.0, review) a work with the work it arranges or quotes
-    if (st.workRels) done.push(`linked ${st.workRels} work${st.workRels === 1 ? '' : 's'} with the work${st.workRels === 1 ? '' : 's'} ${st.workRels === 1 ? 'it arranges or quotes' : 'they arrange or quote'}`);
+    if (wl.workRels) done.push(`linked ${wl.workRels} work${wl.workRels === 1 ? '' : 's'} with the work${wl.workRels === 1 ? '' : 's'} ${wl.workRels === 1 ? 'it arranges or quotes' : 'they arrange or quote'}`);
     if (st.suiteParts) done.push(`linked ${st.suiteParts} part${st.suiteParts === 1 ? '' : 's'} with ${st.suiteParts === 1 ? 'its suite' : 'their suites'}`);
     if (st.filled) done.push(`added role credits to ${st.filled} existing relationship${st.filled === 1 ? '' : 's'}`);
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
@@ -24031,7 +24193,7 @@
       if (t) lines.push(`${r.kind === 'quote' ? 'Quotes lyrics from' : 'Arrangement of'} “${r.title}”${(r.by || []).length ? ` (${r.by.join(', ')})` : ''} – not found in MusicBrainz (“${t.title}”).`);
     }));
     // [S078] (3.50.0, review) tracks the source does not name, taken from the artist credits of the tracks in MusicBrainz
-    const stagedRows = new Set([...S.staged.values()].map((x) => x.rowId).filter(Boolean));
+    const stagedRows = ns ? ns.rows : new Set([...S.staged.values()].map((x) => x.rowId).filter(Boolean));
     const tar = S.rows.filter((r) => r.tarPositions && r.level === 'recording' && stagedRows.has(r.id))
       .map((r) => `${(S.artists.get(r.artistKey) || {}).name || ''} (${r.raw || rowRelText(r)}): ${r.tarPositions.join(', ')}`);
     if (tar.length) lines.push(`Tracks from the artist credits of the tracks in MusicBrainz: ${uniq(tar).join('; ')}.`);
@@ -24191,7 +24353,6 @@
   S.wikiBgDone = new Set();
   /** [Z-QUICKFILL] (3.150.0) Credit fill (Beta; off at first) and its statistics (this browser). */
   const QF_KEY = 'dci-beta-qf';
-  const QF_STATS_KEY = 'dci-qf-stats';
   S.qfOn = readJson('localStorage', QF_KEY, false) === true;
   const sourceOrder = () => (S.digital ? S.sourceOrder.digital : S.sourceOrder.physical);
   /** A source chosen by hand for this release is remembered and wins over the list. */
@@ -24348,7 +24509,7 @@
     const linked = { link_type: {}, link_attribute_type: {} };
     let page = 1;
     for (let n = 0; page && n < 100; n++) {
-      const res = await fetch(`/ws/js/tracks/${id}?page=${page}`, { headers: { Accept: 'application/json' } });
+      const res = await mbFetch(`/ws/js/tracks/${id}?page=${page}`, { headers: { Accept: 'application/json' } }, { pace: MB_JS_PACE });
       if (!res.ok) throw new Error(tr('err.mbHttp', { status: res.status }));
       const data = await res.json();
       tracks.push(...(data.tracks || []));
@@ -25871,17 +26032,19 @@
   const sourceByShort = (sh) => Object.values(SOURCES).find((x) => x.short === sh) || { name: sh };
 
   /** Edit note lines of the supplements: where from, what they confirmed, added, and where the sources differ. */
-  function suppNoteLines() {
+  function suppNoteLines(ns = null) {
     const lines = [];
     for (const [short, src] of S.suppSources) {
-      // Only rows that can be staged (an MB entry, not skipped)
-      const can = (r) => r.level !== 'skip' && !!(S.artists.get(r.artistKey) || {}).mbid;
+      // Only rows that can be staged (an MB entry, not skipped); [F-NOTESTAGED] (3.152.0) with the editor read: only rows with a relationship
+      // in it now (not those left for the next round, not those taken out there by hand)
+      const can = (r) => r.level !== 'skip' && !!(S.artists.get(r.artistKey) || {}).mbid && (!ns || ns.rows.has(r.id));
       const confirmed = S.rows.filter((r) => r.confirmedBy && r.confirmedBy.has(short) && can(r)).length;
       const added = S.rows.filter((r) => r.supp === short && can(r));
       // ((Fable review, 3.151.0) those too only when they can be staged: a row skipped or without a MusicBrainz entry is not in the note)
       const took = S.rows.filter((r) => r.suppTook && r.suppTook.short === short && can(r));
       const differ = S.rows.filter((r) => r.differ && r.differ.short === short && can(r));
-      const renamed = [...S.artists.values()].filter((a) => a.suppNameTook && a.suppNameTook.short === short && a.mbid); // [Z-SUPPTABLE] (3.148.0)
+      const renamed = [...S.artists.entries()].filter(([key, a]) => a.suppNameTook && a.suppNameTook.short === short && a.mbid
+        && (!ns || S.rows.some((r) => r.artistKey === key && ns.rows.has(r.id)))).map(([, a]) => a); // [Z-SUPPTABLE] (3.148.0)
       if (!confirmed && !added.length && !took.length && !differ.length && !renamed.length) continue;
       if (src.url) lines.push(`Also from: ${src.url}`);
       const nameOf = (r) => (S.artists.get(r.artistKey) || {}).name || '';
@@ -43353,25 +43516,12 @@
     return n;
   }
   /** [Z-WNEW] (3.98.0) The editor's relationship recording → work ("performance") of the given gids, or null. */
-  function findLinkState(root, recGid, workGid, maxSteps = 400000) {
+  function findLinkState(root, recGid, workGid) {
     const perf = idx().performanceLt;
-    const seen = new Set();
-    const stack = [root];
-    let steps = 0;
-    while (stack.length && steps < maxSteps) {
-      const v = stack.pop();
-      steps++;
-      if (!v || typeof v !== 'object' || seen.has(v)) continue;
-      seen.add(v);
-      if ('linkTypeID' in v && v.entity0 && v.entity1) {
-        const gids = [v.entity0.gid, v.entity1.gid];
-        if (gids.includes(recGid) && gids.includes(workGid) && (!perf || v.linkTypeID === perf.id)) return v;
-        continue;
-      }
-      if (v instanceof Map || v instanceof Set || Array.isArray(v)) v.forEach((x) => stack.push(x));
-      else Object.keys(v).forEach((k) => stack.push(v[k]));
-    }
-    return null;
+    if (!root) return null;
+    // ([F-WALK] 3.152.0) from the index of the state
+    return editorRelIndex(root).all.find((v) => v.entity0 && v.entity1 && [v.entity0.gid, v.entity1.gid].includes(recGid)
+      && [v.entity0.gid, v.entity1.gid].includes(workGid) && (!perf || v.linkTypeID === perf.id)) || null;
   }
 
   /**
@@ -45345,9 +45495,9 @@
       byRow.get(st.rowId).push({ id, track: Number.isInteger(st.track) ? st.track : null });
     }
     if (!byRow.size) return out;
-    // ((review) the editor's state walked with a larger limit (once, at "Enter edit")
+    // ((review) the whole state (once, at "Enter edit"); [F-WALK] (3.152.0) from its index
     const walk = {};
-    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat().map((x) => x.id)), 2000000, walk);
+    const cur = findRelationshipStates(re.state, new Set([...byRow.values()].flat().map((x) => x.id)), walk);
     if (walk.cut) return out;
     const gone = (x) => { const y = cur.get(x.id); return !y || y._status === 3; };
     const goneIds = new Set();
@@ -51701,34 +51851,22 @@
    * [E8] The relationships MusicBrainz had, as the editor shows them (not new ones: their ids are positive): how many per
    * "<source gid>|<type>|<target gid>", in both directions – so that a relationship it had is not taken for a new one.
    */
-  function statExisting(root, maxSteps = 400000) {
+  function statExisting(root) {
     const out = new Map();
     const ent = new Map();
     out.ent = ent;
     const counted = new Set();
-    const seen = new Set();
-    const stack = [root];
-    let steps = 0;
-    while (stack.length && steps < maxSteps) {
-      const v = stack.pop();
-      steps++;
-      if (!v || typeof v !== 'object' || seen.has(v)) continue;
-      seen.add(v);
-      if ('linkTypeID' in v && v.entity0 && v.entity1 && typeof v.id === 'number') {
-        if (v.id > 0 && !counted.has(v.id)) {
-          counted.add(v.id);
-          [[v.entity0, v.entity1], [v.entity1, v.entity0]].forEach(([a, b]) => {
-            const k = `${a.gid}|${v.linkTypeID}|${b.gid}`;
-            out.set(k, (out.get(k) || 0) + 1);
-            // [Z-SUPPREL] (3.145.0) the relationships of each entity (URLs aside)
-            if (a.gid && b.entityType !== 'url') ent.set(a.gid, (ent.get(a.gid) || 0) + 1);
-          });
-        }
-        continue;
-      }
-      if (v instanceof Map || v instanceof Set) v.forEach((x) => stack.push(x));
-      else if (Array.isArray(v)) v.forEach((x) => stack.push(x));
-      else Object.keys(v).forEach((k) => stack.push(v[k]));
+    if (!root) return out;
+    // ([F-WALK] 3.152.0) from the index of the state
+    for (const v of editorRelIndex(root).all) {
+      if (!v.entity0 || !v.entity1 || typeof v.id !== 'number' || v.id <= 0 || counted.has(v.id)) continue;
+      counted.add(v.id);
+      [[v.entity0, v.entity1], [v.entity1, v.entity0]].forEach(([a, b]) => {
+        const k = `${a.gid}|${v.linkTypeID}|${b.gid}`;
+        out.set(k, (out.get(k) || 0) + 1);
+        // [Z-SUPPREL] (3.145.0) the relationships of each entity (URLs aside)
+        if (a.gid && b.entityType !== 'url') ent.set(a.gid, (ent.get(a.gid) || 0) + 1);
+      });
     }
     return out;
   }
@@ -53691,7 +53829,9 @@
 
   /** [3.25.0] The question "Reset all settings" in the settings (item 41; before 3.25.0 a box of its own from "↺ Defaults" in the head). */
   function resetHtml() {
-    return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
+    // [F-RESETPROFILE] (3.152.0) a profile of your own in use: its name in the question – its settings are the ones reset
+    const profAsk = ruleOn('S110') && activeProfileId() !== 'std' && profilesRead().some((p) => p.id === activeProfileId());
+    return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong data-el="reset-ask">${esc(profAsk ? tr('reset.askProfile', { name: profileNameOf(activeProfileId()) }) : tr('reset.ask'))}</strong>
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
       <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, c: Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
@@ -55607,21 +55747,9 @@
     const mb = getMB();
     const root = mb && mb.relationshipEditor && mb.relationshipEditor.state;
     if (!root) return out;
-    const seen = new Set();
-    const stack = [root];
-    let steps = 0;
-    while (stack.length && steps < 400000) {
-      const v = stack.pop();
-      steps++;
-      if (!v || typeof v !== 'object' || seen.has(v)) continue;
-      seen.add(v);
-      if ('linkTypeID' in v && v.entity0 && v.entity1) {
-        if (v._status !== 3) [v.entity0, v.entity1].forEach((e) => { if (e && e.entityType === 'recording' && e.gid) out.add(e.gid); });
-        continue;
-      }
-      if (v instanceof Map || v instanceof Set) v.forEach((x) => stack.push(x));
-      else if (Array.isArray(v)) v.forEach((x) => stack.push(x));
-      else Object.keys(v).forEach((k) => stack.push(v[k]));
+    // ([F-WALK] 3.152.0) from the index of the state
+    for (const v of editorRelIndex(root).all) {
+      if (v.entity0 && v.entity1 && v._status !== 3) [v.entity0, v.entity1].forEach((e) => { if (e && e.entityType === 'recording' && e.gid) out.add(e.gid); });
     }
     return out;
   }
@@ -55793,7 +55921,8 @@
         for (const { r, extra } of list) {
           const lt = qfLinkType(r);
           if (!lt) throw new Error(tr('qf.noType', { type: r.type || '' }));
-          jobs.push({ rec: recordings.get(x.track.rec), lt, attrs: qfAttrs(r, lt, extra), target: await fetchJsEntity((qfTarget(r) || {}).id), r });
+          jobs.push({ rec: recordings.get(x.track.rec), lt, attrs: qfAttrs(r, lt, extra), target: await fetchJsEntity((qfTarget(r) || {}).id), r,
+            recGid: x.track.rec, pos: x.track.pos, tgt: (qfTarget(r) || {}).id });
         }
       }
     } catch (e) {
@@ -55802,29 +55931,72 @@
       return;
     }
     let added = 0;
+    const rels = [];
     for (const j of jobs) {
-      dispatchAddRelationship(j.rec, j.target, j.lt.id, j.attrs, j.r['target-credit'] || '', qfDate(j.r));
+      const st = dispatchAddRelationship(j.rec, j.target, j.lt.id, j.attrs, j.r['target-credit'] || '', qfDate(j.r));
+      rels.push({ id: st && typeof st.id === 'number' ? st.id : null, rec: j.recGid, pos: j.pos, lt: j.lt.id, tgt: j.tgt });
       added++;
     }
     const errors = [];
     // the edit note: the recordings copied from
     const srcs = uniq(plan.sources.map((t) => t.rec)).map((g) => `https://musicbrainz.org/recording/${g}`);
-    const line = `Credit fill (beta): relationships copied from ${srcs.length === 1 ? 'the MusicBrainz recording' : 'the MusicBrainz recordings'} ${srcs.join(', ')}${plan.from === 'group' ? ' (other releases of the release group)' : ''} to tracks ${plan.targets.map((x) => x.track.pos).join(', ')}.`;
+    const run = { at: Date.now(), srcs, from: plan.from, rels, line: '' };
+    run.line = qfNoteLine(run, plan.targets.map((x) => x.track.pos));
     const el = editNoteEl();
-    if (el && added && !el.value.includes(line)) {
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
-      setter.call(el, (el.value.trim() ? `${el.value.replace(/\s+$/, '')}\n\n` : '') + line);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    // the statistics: a kind of its own (this browser)
-    if (added && statsOn()) {
-      const list = readJson('localStorage', QF_STATS_KEY, []);
-      list.push({ at: Date.now(), mbid: releaseMbid, rels: added, tracks: plan.targets.length, from: plan.from });
-      writeJson('localStorage', QF_STATS_KEY, list.slice(-500));
-    }
+    if (el && added && !el.value.includes(run.line)) qfSetNote((el.value.trim() ? `${el.value.replace(/\s+$/, '')}\n\n` : '') + run.line);
+    // [F-QFSTATS] (3.152.0) the statistics: counted once MusicBrainz has them after "Enter edit" (until 3.151.0 here, when staged)
+    if (added) (S.qfRuns || (S.qfRuns = [])).push(run);
     log(errors.length ? 'warn' : 'ok', 'qfDone', { n: added, tracks: plan.targets.length, errors: errors.join('; ') || '–' });
     qfShow(`<p class="dci-qf-sub">${esc(tr('qf.done', { n: added, tracks: plan.targets.length }))}</p>${errors.length ? `<p class="dci-qf-sub dci-qf-warn">${esc(errors.join('; '))}</p>` : ''}
       <p><button type="button" data-qf="close">${esc(tr('common.close'))}</button></p>`);
+  }
+
+  /** [Z-QUICKFILL] The line of the edit note of one run of Credit fill (the tracks named). */
+  function qfNoteLine(run, positions) {
+    return `Credit fill (beta): relationships copied from ${run.srcs.length === 1 ? 'the MusicBrainz recording' : 'the MusicBrainz recordings'} ${run.srcs.join(', ')}${run.from === 'group' ? ' (other releases of the release group)' : ''} to tracks ${positions.join(', ')}.`;
+  }
+  function qfSetNote(text) {
+    const el = editNoteEl();
+    if (!el || el.value === text) return;
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, text);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  /**
+   * [F-NOTESTAGED, F-QFSTATS] (3.152.0) "Enter edit" after Credit fill: the line of each run names only the tracks whose relationships are
+   * still in the editor (none left: the line goes); what is left becomes a job of the release – counted in the statistics once MusicBrainz
+   * has the relationships (runQfJob), as the import's are.
+   */
+  function qfAfterEdit() {
+    if (!S.qfRuns || !S.qfRuns.length) return;
+    const mb = getMB();
+    const re = mb && mb.relationshipEditor;
+    const ids = new Set(S.qfRuns.flatMap((r) => r.rels.map((x) => x.id)).filter((id) => typeof id === 'number'));
+    const walk = {};
+    const cur = re && re.state ? findRelationshipStates(re.state, ids, walk) : null;
+    // (the editor not read, or not all of it: as staged)
+    const here = (x) => !cur || walk.cut || (typeof x.id === 'number' && cur.has(x.id) && cur.get(x.id)._status !== 3);
+    const el = editNoteEl();
+    let note = el ? el.value : '';
+    const runs = [];
+    for (const run of S.qfRuns) {
+      const kept = run.rels.filter(here);
+      const line = kept.length ? qfNoteLine(run, uniq(kept.map((x) => x.pos))) : '';
+      if (run.line && line !== run.line && note.includes(run.line)) {
+        note = line ? note.replace(run.line, () => line) : note.replace(run.line, '').replace(/\n{3,}/g, '\n\n').replace(/^\s+|\s+$/g, '');
+      }
+      run.line = line;
+      if (kept.length) {
+        runs.push({ at: run.at, tracks: uniq(kept.map((x) => x.pos)).length, from: run.from,
+          rels: kept.map((x) => ({ c: { on: 'recording', src: x.rec, lt: x.lt, tgt: x.tgt, n0: 0 } })) });
+      }
+    }
+    if (el) qfSetNote(note);
+    S.qfRuns = S.qfRuns.filter((r) => r.line);
+    if (!runs.length || !statsOn() || !releaseMbid) return;
+    const key = `${QF_JOB_PREFIX}${String(releaseMbid).toLowerCase()}`;
+    writeJson('localStorage', key, { armedAt: Date.now(), runs });
+    runQfJob(releaseMbid, { tries: 30 });
   }
 
   function insertLauncher() {
