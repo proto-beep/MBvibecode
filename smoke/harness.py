@@ -486,6 +486,10 @@ WORK_QUERIES = []
 ARTIST_WORKS = {}
 # [3.153.0] (Z-HOMESTUDIO) the places of an artist in MusicBrainz: mbid → [(place gid, name, relationship type)]
 ARTIST_PLACES = {}
+# [3.154.0] (Z-FIRSTNAME) relationships between artists (mbid → [(type, direction, gid, name)]) and the releases a search finds: [(mbid, year,
+# artist mbid)] – read as GROUP_RELEASES
+ARTIST_RELS = {}
+RELEASE_SEARCH = []
 # [3.54.0] /ws/2/artist/<gid>: what MusicBrainz has of an artist (gid → fields of the answer) and the lookups made (gid, query)
 ARTIST_INFO = {}
 ARTIST_LOOKUPS = []
@@ -912,6 +916,13 @@ def install_routes(ctx):
                 return route.fulfill(status=503, body='{}', content_type='application/json')
             return json_route(route, ws_release())
         # [3.150.0] (Z-QUICKFILL2) the other releases of the release group: browsed by it, each read as the web service gives it
+        # [3.154.0] (Z-FIRSTNAME) a search of releases: "arid:<mbid> AND date:[from TO to]"
+        if p == '/ws/2/release' and 'query=' in u.query:
+            q = urllib.parse.parse_qs(u.query).get('query', [''])[0]
+            ar = (re.search(r'arid:([0-9a-f-]{36})', q) or [None, ''])[1]
+            yr = re.search(r'date:\[(\d{4}) TO (\d{4})\]', q)
+            hits = [r for r in RELEASE_SEARCH if r[2] == ar and (not yr or int(yr.group(1)) <= r[1] <= int(yr.group(2)))]
+            return json_route(route, {'releases': [{'id': g, 'date': str(y), 'release-group': {'id': g}} for g, y, _ in hits], 'count': len(hits)})
         if p == '/ws/2/release' and 'release-group=' in u.query:
             return json_route(route, {'releases': [{'id': REL}] + [{'id': k} for k in GROUP_RELEASES]})
         if p.startswith('/ws/2/release/') and p[len('/ws/2/release/'):] in GROUP_RELEASES:
@@ -939,7 +950,9 @@ def install_routes(ctx):
                 for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band
                 + [{'target-type': 'url', 'type': 'official homepage', 'url': {'resource': x}} for x in ENTITY_URLS.get(a, [])]
                 # [3.153.0] (Z-HOMESTUDIO) places of the artist (ARTIST_PLACES: mbid → [(place gid, name, type)])
-                + [{'target-type': 'place', 'type': ty, 'direction': 'forward', 'place': {'id': g, 'name': n}} for g, n, ty in ARTIST_PLACES.get(a, [])]})
+                + [{'target-type': 'place', 'type': ty, 'direction': 'forward', 'place': {'id': g, 'name': n}} for g, n, ty in ARTIST_PLACES.get(a, [])]
+                # [3.154.0] (Z-FIRSTNAME) other relationships between artists (ARTIST_RELS: mbid → [(type, direction, gid, name)])
+                + [{'target-type': 'artist', 'type': ty, 'direction': d, 'artist': {'id': g, 'name': n}} for ty, d, g, n in ARTIST_RELS.get(a, [])]})
         m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
         if m:
             return json_route(route, ws_work(m.group(1)))

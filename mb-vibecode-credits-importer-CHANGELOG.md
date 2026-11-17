@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.153.0 | – |
+| 2026-11-17 | 3.152.0 – 3.154.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -109,6 +109,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.154.0
+
+A scanned booklet (every free text: pasted, Bandcamp, YouTube, the Discogs notes, text from cover art):
+
+- **Names written small** (Z-LOWERCASE; S275): "mixed by tangerine dream", "edgar froese" – the name as the text or the release's artist writes it with capitals.
+- **A company for the cover** (Z-COVERCO; S276): "cover by cooke-key associates, london" is the cover design of that company, London its town – no person.
+- **Parts of the cover** (Z-INSIDECOVER; S277): "inside cover photography by monique" – photography credited "inside cover".
+- **℗ and © in one line** (Z-PUBLINE; S278): "Published by … ℗ 1976 … © 1995 …" – the publisher and each ℗ / © with its own year; "℗ & © 2023" stays one.
+- **The signature below an essay** (Z-LINERSIG; S279): "Mark Prendergast, London, November 1993" – the liner notes of that person, dated (no date of the recordings).
+- **An essay in short lines** (Z-OCRESSAY; S280): the lines of a scanned essay are one paragraph, left out as prose; credits, lines "With …" and lines of tracks are never joined.
+- **A track list in the scan** (Z-OCRTRACKCHECK; S281): "1. Stratosfear 10:00" is no credit – compared with MusicBrainz's tracks above the entries: "fits", or what differs (titles, lengths more than 5 s apart). A list with the composers of each track (in brackets or on the line below) is read as before.
+- **Double pages** (Z-SCANSPLIT; S282): an image at least 1.6 times as wide as high, read whole, is read as its left and right page – not when "the whole image" was chosen, it was turned by hand or it is a frame drawn on Discogs or Bandcamp.
+- **"Remastered at"** (Z-REMASTERAT): a studio of the remaster; "digital" in "digital remastering" is no medium.
+- **A first name alone** (Z-FIRSTNAME; S283): "Assign first name …" at its entry (only on a click, only suggestions) – the release's artists and the members of its groups of that first name, then the people in the relationships of the band's releases around the release's date (± 3 years, wider in steps of three up to ⚙ Settings → Sources "First names: years around the release", 9 by default), each with why ("related to … (…)").
 
 ### Import 3.153.0
 
