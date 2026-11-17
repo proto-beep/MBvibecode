@@ -13,18 +13,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-17 | 3.152.0 – 3.157.0 | – |
+| 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
-| 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-08 | 3.88.0 – 3.131.0 | 1.17.0 – 1.21.0 |
 | 2026-11-07 | 3.73.0 – 3.87.0 | – |
 | 2026-11-06 | 3.56.0 – 3.72.0 | – |
 | 2026-11-05 | 3.51.0 – 3.55.0 | – |
+| 2026-11-04 | 3.43.0 – 3.50.0 | 1.11.1 – 1.13.0 |
 | 2026-11-03 | 3.40.4 – 3.42.8 | 1.10.1 – 1.11.0 |
+| 2026-11-02 | 3.38.13 – 3.40.3 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -56,59 +56,90 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## Milestones
 
+A milestone is a new ability you notice without reading the docs – a new source, view or workflow, a new file, a changed default. Rules of the text recognition, fixes, renamings and tests are not milestones; they are in the versions below. One line each; the notice after an update shows the newest five of them.
+
 | Date | Version | Milestone |
 |---|---|---|
-| 2026-10-31 | Import 3.38.0 | Statistics, in ⚙ Settings → Statistics (collecting on, switchable): what MusicBrainz confirmed after “Enter edit” – releases, relationships, new / supplemented, releases with relationships before / empty, artists newly created, the time per release and per relationship, over days, weeks, months and years, and the artists, instruments and types used most; kept only in this browser, “keep statistics” in “Reset all settings …”. |
-| 2026-10-30 | Import 3.37.0 | The Discogs notes read in full (⚙ Settings → Texts, on): every credit line of them – people and companies, with or without tracks – becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line); nothing twice – what Discogs lists already is left out, and gets the tracks of the notes when Discogs gives it for the whole release; “Leave out the credits of the notes” in the menu Source ▾ for one release. Since 3.36.5 also: the symbols of the head pressed while open (the log too; no bridge, no ⓘ – the connections are in ⚙ Settings), every switch shows its choice, add. / guest / solo over their checkboxes, a place of the notes only on its tracks (“A1 to B2 recorded … at …”). |
-| 2026-10-29 | Import 3.36.0 | Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups. |
-| 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
-| 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
-| 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
-| 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
-| 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
-| 2026-10-24 | Import 3.29.0 | Text recognition, part 3: credits in prose ("… by K.M. (sounds, words) & E. (voice)", "Cover artwork channeled by …", "Logo carved by the guided hand of …"), every place of joined verbs ("Mixed and mastered at …") and lists of kinds ("Tenor, alto, soprano saxophones"); dates go to every group of joined words and take their group only from their own sentence, release years are left out, "19 & 20. 01. 2009" and "1973 October 19" are read; "C1 to D" with a side of one track, "in live concert" for the tracks named. Since 3.27.0 also Bandcamp track pages, Norwegian, Swedish and Danish roles, "cover design", "credited as" from texts and none for a case-only spelling, and the companion's underlines of the dates and track groups used. |
-| 2026-10-24 | Import 3.27.0 | A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; "Compact \| Full" is remembered. The head in one line with symbols of its own, "Source ▾" for everything about the source, "+ Supplement" only on request; the settings as tabs (also "Texts" and "ⓘ Connections" – every site, tool and script the script works with), "Reset all settings" in them; after the installation the language is asked once |
-| 2026-10-23 | Import 3.22.0 | Text recognition, part 2: instruments and voices in German, Spanish and French ("Schlagzeug", "batería", "contrebasse") become MusicBrainz's own names without a role credit, words with several meanings ("bajo", "Alto") are asked; tracks named by their titles in quotation marks ("Piano in ‘A' and 'B' is a contribution by X") are found on the release; "Recorded by X in Xixon, Asturies, Spain" gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have ("Vinyl LP mastering") are left out, and each line left out on purpose says why; "Translated by" on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by "Create …", the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls |
-| 2026-10-19 | Import 3.21.0 | Text recognition, part 1: several sentences in one line are read one by one ("Graphic design: X. Text: Y. Produced by Z."); "℗ & ©", "P + ©" and "(P) & (C)" give both, without codes like "DDD" or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by "Create artist", Linktree and other addresses are left out; "Logo by" is design with the credit "logo"; a title in quotation marks with its year before "by" and "courtesy of …" are no part of a credit; "Text: X" asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose |
-| 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
-| 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
-| 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
-| 2026-10-17 | Import 3.15.0 | Works matrix: the tracks without a work are compared with all works of the release's artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences ("Music played and recorded by … in September and October 2026"), "Role Name" lines and "… of this release were created by a human" (the release's artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard |
-| 2026-10-17 | Import 3.12.0 | Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data; what the script makes of a source stays the same (checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts). "Mapping rules" lists the tables and word lists (read only) and shows the right level for 27 rules |
-| 2026-10-16 | Import 3.10.0 | The rows of an entry rearrange with the width of the dashboard (relationship above attributes, level above date above tracks), with captions instead of the table head; a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked "Release level"; a row switched to the release level takes that date. Texts: "tenor & soprano sax", recording place and dates in Bandcamp's "about" text, places with their area, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL |
-| 2026-10-13 | Import 3.5.0 · COMPANION 1.7.0 | Supplement with a second source, on request only: another linked source or a pasted text is compared with the rows; what it adds (new roles, new entries) and where it differs is listed to take over by choice, rows it confirms get its mark (variant B). "Delete stored import …" starts the import of a release afresh. The Bandcamp spelling next to the release's artist credit and MusicBrainz. A fresh start: all stored data reset once |
-| 2026-10-13 | Import 3.3.0 · COMPANION 1.6.0 | New names: Credits Importer and Credits Importer Companion. Besides Discogs the main script reads Bandcamp albums (credits of the album, optionally of each track page) and pasted texts (booklet, liner notes, a list of musicians); names from there are only suggested. A preference list for physical and digital media decides which linked source is loaded, for digital releases Bandcamp first; a source chosen for a release is remembered |
-| 2026-10-12 | Import 3.0.0 | Rebuilt inside: Discogs is read by a source adapter that delivers a neutral list of credits (person with links, role as written, details, tracks, source); the rest of the script works only with that list. Nothing changes for you; it prepares other sources |
-| 2026-10-12 | Import 2.19.0 | Suggestions look the same everywhere: dashed and yellow (date matrix, works matrix, “li?”, entries from the Discogs notes not used yet in the pools); “Commissioned By” → commissioned on the works; “Live Recording By” → recording engineer and a hint for “live” |
-| 2026-10-12 | Import 2.18.0 | Works matrix in the look of the date matrix and more compact: column heads as cards, roles as chips, attributes (live, cover …) as short forms below each work; track groups can be dropped onto column heads, roles and attributes; track lists from the Discogs notes (“XYZ Publishing (1, 4, 6)”) as suggestions; “live” preselected only on new links |
-| 2026-10-12 | Import 2.17.0 | Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note |
-| 2026-10-11 | Import 2.16.0 · COMPANION 1.5.0 | Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date |
-| 2026-10-11 | Import 2.14.0 · COMPANION 1.4.4 | Works matrix: a date dropped onto a relationship already in MusicBrainz without a date is added to it (an edit); status marks also for credits of works that were new in the editor |
-| 2026-10-11 | Import 2.13.0 · COMPANION 1.4.3 | Track groups by drag & drop onto the tracks of rows; dates and track groups stay in the folded bar; status marks of work credits (composer, publisher) are checked on the works too |
+| 2026-11-17 | Import 3.157.0 | Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits |
+| 2026-11-17 | Import 3.155.0 | “✨ Answer all” at the works matrix: its open questions answered by a level, with a preview and undo |
+| 2026-11-16 | Import 3.150.0 | “Fill empty recordings”: the tracks without relationships get the credits the other tracks share |
+| 2026-11-16 | Import 3.149.0 · Companion 1.22.0 | Wikipedia’s infobox as a source: recorded, studio, venue, producer – also in the background |
+| 2026-11-16 | Import 3.148.0 | “＋ Source”: an added source in one table, contradictions preselected by the trust of the sources |
+| 2026-11-13 | Import 3.137.0 | Settings in two columns, search in the dashboard (🔍 or /) |
+| 2026-11-12 | Import 3.133.0 | Improvisations as works: “All music was improvised by …” gives a work per track |
+| 2026-11-08 | Import 3.127.0 | Where an entry comes from: a badge per source after its name; symbols as emojis or text |
+| 2026-11-08 | Import 3.115.0 | Text from cover art, out of the beta: booklets and scans read and added to the import |
+| 2026-11-08 | Import 3.110.0 | What is open, at a glance: “must” and “may” counted in the footer and marked where they are |
+| 2026-11-08 | Import 3.106.0 | Compared with MusicBrainz: dates supplemented, conflicting instruments shown |
+| 2026-11-08 | Import 3.103.0 | Instruments without tracks: per track or on the release, with their common group (⑃ from 3.113) |
+| 2026-11-08 | Import 3.100.0 | The roles of an entry as one matrix, its head staying on top |
+| 2026-11-07 | Import 3.86.0 | “＋ Another role” with a search over the relationship types; “all works” per column of the works matrix |
+| 2026-11-07 | Import 3.78.0 | Drag & drop the same everywhere: a drop adds, ⇧ replaces, ↶ undoes; also without a mouse |
+| 2026-11-07 | Import 3.75.0 | Profiles: the quick switches and settings kept per profile; a log of imports and exports |
+| 2026-11-06 | Import 3.67.0 | Dedications and tributes from the texts and titles, in a box of their own (from 3.74) |
+| 2026-11-04 | Import 3.47.0 | Global statistics: all edits made with the script, from MusicBrainz’s dumps |
+| 2026-11-04 | Import 3.46.0 · Companion 1.12.0 | A dark theme, automatic or chosen, for the dashboard and its windows |
+| 2026-11-03 | Import 3.42.0 | YouTube video descriptions as a source, with the companion’s view |
+| 2026-11-03 | Import 3.41.0 | Suites and medleys: headings and sub-tracks read to suggest suites |
+| 2026-11-02 | Import 3.40.0 | The release page says what is missing, and counts it exactly on request |
+| 2026-10-31 | Import 3.38.0 | Statistics of your work in this browser |
+| 2026-10-30 | Import 3.37.0 | The Discogs notes read in full: every credit line an entry or a row |
+| 2026-10-29 | Import 3.36.0 | Remember per release: a release imported again comes back as you left it |
+| 2026-10-29 | Import 3.35.0 | Entries as a matrix: each role a line, the events the columns (“Legacy” shows the view before) |
+| 2026-10-28 | Import 3.34.0 | The languages file: German, Spanish and French in a file of their own |
+| 2026-10-27 | Import 3.33.0 | The mapping file: the mapping rules in a file of their own, changeable by a pull request |
+| 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules” |
+| 2026-10-25 | Import 3.31.0 | Text recognition 4: publishers and rights societies below headings |
+| 2026-10-24 | Import 3.29.0 | Text recognition 3: credits in prose |
+| 2026-10-24 | Import 3.27.0 | A compact dashboard: one line per role, the head in one line, settings as tabs |
+| 2026-10-23 | Import 3.22.0 | Text recognition 2: instruments and voices in German, Spanish and French |
+| 2026-10-19 | Import 3.21.0 | Text recognition 1: several sentences in one line, ℗ and © together |
+| 2026-10-18 | Import 3.18.0 | “Skip works matrix”: nothing of it staged, kept for the release |
+| 2026-10-17 | Import 3.17.0 · Companion 1.8.0 | Bandcamp view in the companion, like the Discogs view |
+| 2026-10-17 | Import 3.16.0 | A menu “⚙ Settings” with all settings by topic |
+| 2026-10-17 | Import 3.15.0 | Works matrix: tracks without a work compared with all works of the release’s artists |
+| 2026-10-16 | Import 3.10.0 | Rows rearrange with the width of the dashboard; dates as chips |
+| 2026-10-13 | Import 3.5.0 · Companion 1.7.0 | Supplement with a second source: what it adds or contradicts, taken over by choice |
+| 2026-10-13 | Import 3.3.0 · Companion 1.6.0 | New name Credits Importer; Bandcamp albums and pasted texts as sources |
+| 2026-10-12 | Import 2.19.0 | Suggestions look the same everywhere: dashed and yellow |
+| 2026-10-12 | Import 2.18.0 | Works matrix in the look of the date matrix, roles as chips |
+| 2026-10-12 | Import 2.17.0 | Choose the media of a release with several; attributes (live, cover …) of the work links |
+| 2026-10-11 | Import 2.16.0 · Companion 1.5.0 | Status marks on every Discogs track line |
+| 2026-10-11 | Import 2.14.0 · Companion 1.4.4 | Works matrix: a dropped date added to a relationship MusicBrainz has without one |
+| 2026-10-11 | Import 2.13.0 · Companion 1.4.3 | Track groups by drag & drop onto rows |
 | 2026-10-11 | Import 2.11.0 | After an update, a message shows the milestones of the new version |
 | 2026-10-11 | Import 2.10.0 | Pool dates by drag & drop onto rows and onto each other (periods); pools load again from the Discogs notes |
 | 2026-10-11 | Import 2.9.0 | The dashboard in the page as an alternative to the window |
-| 2026-10-11 | Import 2.8.0 | Date matrix: dates in columns per date group, track groups on dates, applied with one button; "Dates & tracks" folds; all settings back to defaults |
+| 2026-10-11 | Import 2.8.0 | Date matrix: dates in columns per date group, track groups on dates |
 | 2026-10-10 | Import 2.5.0 | Track pool: dates for some tracks, rows split by tracks and dates |
 | 2026-10-07 | Import 2.4.0 | Dates found in free text and the Discogs notes, with date rules in the register |
-| 2026-10-07 | Import 2.3.0 | Own mapping rules: create, switch any rule on or off, “★ always” from a row, export and import |
-| 2026-10-06 | Import 2.0.0 | Central mapping register for all Discogs → MusicBrainz rules, with the "Mapping rules" overview and test field |
+| 2026-10-07 | Import 2.3.0 | Own mapping rules: create, switch any rule on or off, export and import |
+| 2026-10-06 | Import 2.0.0 | Central mapping register for all Discogs → MusicBrainz rules, with the “Mapping rules” overview and test field |
 | 2026-10-05 | Import 1.9.0 | Role credits added to relationships that already exist in MusicBrainz |
-| 2026-10-05 | Import 1.7.0 · COMPANION 1.0.0 | Discogs status marks on the Discogs page and navigation back to the dashboard |
+| 2026-10-05 | Import 1.7.0 · Companion 1.0.0 | Discogs status marks on the Discogs page and navigation back to the dashboard |
 | 2026-10-04 | Import 1.5.0 | Large releases: one medium at a time, loading media in the editor, staging in rounds |
-| 2026-10-04 | Import 1.2.0 | Updating what was staged: coming back to the dashboard after "Stage" |
-| 2026-10-03 | Import 1.1.0 | New works created in the relationship editor, like "Batch-add new works", together with their writers and publishers |
+| 2026-10-04 | Import 1.2.0 | Updating what was staged: coming back to the dashboard after “Stage” |
+| 2026-10-03 | Import 1.1.0 | New works created in the relationship editor, like “Batch-add new works”, together with their writers and publishers |
 | 2026-10-02 | Import 1.0.0 | Works matrix, date groups, publisher evidence and Discogs series |
 | 2026-10-01 | Import 0.9.0 | Any MusicBrainz entry can be added by hand (artists, labels, places, series, events …) |
 | 2026-09-30 | Import 0.7.0 | Relationships already in MusicBrainz are recognised and skipped |
 | 2026-09-30 | Import 0.6.0 | Dates in MusicBrainz format with a date pool |
-| 2026-09-30 | Import 0.5.0 | "Companies, etc.": labels, studios and other places from Discogs |
-| 2026-09-29 | COMPANION 0.1.0 | Discogs view: the Discogs tab shows where each credit comes from |
+| 2026-09-30 | Import 0.5.0 | “Companies, etc.”: labels, studios and other places from Discogs |
+| 2026-09-29 | Companion 0.1.0 | Discogs view: the Discogs tab shows where each credit comes from |
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.158.0
+
+The documentation and the milestones (Z-MILESTONES):
+
+- **A short README** (`README.md`, new): what the script does, how to install and use it, what is new – a page to read. The long README is now the **full reference** (and the context for AI assistants), without the 85 paragraphs "From 3.48.0 …" of the text recognition – what came in which version is in this changelog.
+- **Milestones** only for a new ability you notice without the docs – a source, a view, a workflow, a file, a changed default; one line each. 22 added for 3.40 – 3.157, the older ones shortened; 3.0.0 and 3.12.0 (rebuilt inside) are none any more.
+- **The update notice** shows the newest five milestones and "and n more milestones" with the link to the changelog.
+- The overview at the top of this changelog sorted by date.
 
 ### Import 3.157.0
 
