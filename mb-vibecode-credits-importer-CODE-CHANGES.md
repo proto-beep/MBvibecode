@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.156.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.157.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.157.0 · 2026-11-17
+
+- **Z-SHOPPROSE (S287):** `SHOP_FORMAT`, `SHOP_LINES`, `SHOP_RIGHTS_TAIL`; `TEXT.parse` – `shopLines(lines)` before `freeTextPre` (ignored `shop`, text `ignored.why.shop`; the cut line keeps its raw text in `rawOf`).
+- **Z-TRACKNONUM (S288):** `tidyLines` – after the numbered list of S281, when it found none: `TN` (title with a length, brackets only of a version – `VERSION_BR`), `HEAD` (A–H, "Side B", "CD 2"; ignored `heading`), two lines at least, nothing else between them, one title one of `ctx0.tracks` (none: nothing compared), not with `ctx0.songs` (start times of a video's songs); `scanTracks` with `pos` from the heading. The comparison: no `fewer` when MusicBrainz's tracks beyond the list are all bonus tracks.
+- **Z-BCPKGDESC (S289):** `BANDCAMP.mergeMoreCredits(into, extra)` (one person: the same role – singular or plural – one entry, tracks named over all; a role within the other's words: the longer kept) and `mergeMoreCompanies`; `toRelease` – `albumCtx`, `data.packages[].description` (not one equal to the credits or the about text) parsed with it, `fromPkg`; their unrecognized and ignored lines with "<type_name>: " before them; `notes` + the texts; `bcPackages` [{ name, added, same, better }] → `labelHintHtml` (`hint.bcPkg`).
+- **Z-BONUSONLY (S290):** `OTHER_SESSION`, `WRITER_ROLE_RE`, `RELEASE_ROLE_RE`; `TEXT.parse` (end, not `oneTrack`) – the last tracks of `ctx0.trackTitles` / `ctx0.tracks` naming another session, fewer than half: credits of all tracks without a writer's or the release's role get `{ indexes, spec, otherSession }` of the others.
+- **Z-MISSINGLINKS (S291):** `MISS_KINDS`, `missKey`, `missCandidates(a)` (`a.links` without release pages, `siteOf(a)`), `missLinksRun()` (from `renderGroupsNow`; `mbWs <entity>/<mbid>?inc=url-rels` in the background, `S.missLinks` mbid → { state, have }; reset with `S.siteHints`), `missLinksList()`, `renderMissLinks()` → `[data-el=misslinks]` below the skipped entries (`details`, its open state kept; `[data-el=misslink-add]` → `/<entity>/<mbid>/edit?edit-<entity>.url.0.text=…` + `link_type_id` of `SITE_LINK_TYPE` for an unknown site). Texts `misslinks.*`.
+- **Z-NOTABSRC:** `expectedSites()` (the import's source once a release is read – `S.source` is Discogs before –, else the linked sources of `S.sourceLinks`, else Discogs and Bandcamp), `sitesOr` (`sync.or`), `noTabText`, `syncLastText`; `syncStatusHtml` – `[data-el=sync-notab]` with `sync.noTabTitle`; `renderSync()` after "Import complete".
+- **Tests:** `t_sources_bandcamp.py pkg3157`, `t_text_basics.py freetext3157`, `t_entries.py misslinks3157` – new, fail on 3.156.0. `register_golden.json` anew (S287 – S291).
 
 ## Import 3.156.0 · 2026-11-17
 

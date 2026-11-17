@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.156.0
+// @version      3.157.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.156.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.156.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.157.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.157.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.156.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.157.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -512,6 +512,8 @@
       "sync.off": "Script Companion: off",
       "sync.offTitle": "The companion script “MB x Vibecode: Credits Importer Companion” is not installed or not active.",
       "sync.noTab": "Script Companion: no Discogs tab",
+      "sync.or": "{a} or {b}",
+      "sync.noTabTitle": "The tab the import expects: the source of this import, or – before an import – the sources linked to the release (both, when none is linked yet)",
       "sync.openTab": "open in background",
       "sync.connected": "Script Companion: connected ({where})",
       "sync.visible": "visible tab",
@@ -570,6 +572,10 @@
       "group.skippedN.one": "{n} skipped entry",
       "group.skippedN.other": "{n} skipped entries",
       "group.skippedTitle": "Entries skipped with “Skip ⤼” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "misslinks.summary": "Show missing links of the entries ({n})",
+      "misslinks.title": "Web addresses of the entries assigned in MusicBrainz (artists, labels, places, series) that MusicBrainz does not have yet – their pages at the source, addresses next to their names in the text. Rule S291 switches this off",
+      "misslinks.add": "add in MusicBrainz ↗",
+      "misslinks.addTitle": "Opens the edit page of {name} with this address filled in – check it there, then enter the edit",
       "log.entrySkipped.one": "{name} skipped: {n} row on “Skip”",
       "log.entrySkipped.other": "{name} skipped: {n} rows on “Skip”",
       "log.entryTaken.one": "{name} taken again: {n} row back on its level",
@@ -930,12 +936,14 @@
       "log.liveNo": "Not a live recording: {event}",
       "ignored.why.liveHead": "the head of a live recording – offered above the entries",
       "ignored.why.promo": "a description of the music (no credit)",
+      "ignored.why.shop": "shop (shipping, what a purchase includes, formats)",
       "ignored.why.genres": "genres (no credit)",
       "ignored.why.catnoNew": "a catalogue number: {catno} – MusicBrainz has: {mb}",
       "ignored.why.labels": "the release’s labels: {list} – check them in the release editor",
       "ignored.why.labelName": "the name of a label: {name}",
       "hint.labels": "The text names the labels {list}; MusicBrainz has {mb} for this release – check the labels in the release editor.",
       "hint.scanFits": "The track list of the text fits the release in MusicBrainz ({n} tracks: titles and lengths).",
+      "hint.bcPkg": "Read too: the text of the Bandcamp edition “{name}” – {added} new · {same} the same as in the credits (one entry) · {better} more precise there (taken)",
       "hint.scanDiffers": "The track list of the text differs from the release in MusicBrainz: {list}. Check that it is the right release.",
       "hint.scanTitle": "{pos} “{title}” – MusicBrainz: “{mb}”",
       "hint.scanLength": "{pos} “{title}” {len} – MusicBrainz: {mb}",
@@ -5122,6 +5130,11 @@
     { id: 'S284', where: 'magicPlan, magicApply, magicUndoAll, magicHeadHtml, magicPopHtml', note: 'Works (3.155.0; collected item Z-WORKMAGIC): "✨ Answer all" at the works matrix answers its open questions by a level – careful, balanced, bold (▾; ⓘ shows what each answers) –: suites, works, medleys, live, cover, publishers, column dates, dedications; a preview first, each answer marked ✨ and in the log, "↺ Undo magic" takes them back; the questions switched in ⚙ Settings → Works' },
     { id: 'S285', where: 'numWordSmall, caseCredit', note: 'Texts (3.156.0; collected item Z-NUMSTRING): a number word before an instrument in a credit is written small like the instrument – "25-String Gayageum" → "25-string gayageum", "Twelve-String Guitar", "Double-Neck Guitar" –; a model name keeps its capitals ("Rickenbacker 12-String")' },
     { id: 'S286', where: 'applyLevelColors, .dci-credul', note: 'Groups (3.156.0; collected item Z-CREDITUL): what is entered is underlined in MusicBrainz purple – the matched name, or the "credited as" name when one is set (then the name above loses its underline)' },
+    { id: 'S287', where: 'SHOP_LINES, SHOP_RIGHTS_TAIL, shopLines', note: 'Texts (3.157.0; collected item Z-SHOPPROSE): what a shop writes about an edition – shipping ("Ships within Germany only"), what a purchase includes ("Includes unlimited streaming …"), the formats of the download, "Compact Disc (CD) + Digital Album", "Plus Bonus Track (only on CD)", pre-orders, "All rights reserved" – left out as "shop"; ", all rights reserved" after a credit is no name. Every free text' },
+    { id: 'S288', where: 'tidyLines (TN, HEAD), TEXT.parse (scanTracks)', note: 'Texts (3.157.0; collected item Z-TRACKNONUM): a track list without numbers ("Temporary Fault 9:10"), also below headings of sides ("A", "Side B", "CD 2") – two lines at least, one title one of the release\'s tracks – compared with MusicBrainz\'s tracks like a numbered one (S281); no credits' },
+    { id: 'S289', where: 'BANDCAMP.toRelease, mergeMoreCredits, mergeMoreCompanies, labelHintHtml', note: 'Sources (3.157.0; collected item Z-BCPKGDESC): Bandcamp – the texts of the physical editions ("Limited Edition Compact Disc …") read with the credits: what they say again is one entry, of two that differ the more precise kept ("Electric Guitar" over "Guitar", tracks named over all tracks); they hold for the digital edition too; above the entries which edition\'s text was read and what it gave, its lines left out and not recognized with the others (its name before them)' },
+    { id: 'S290', where: 'TEXT.parse (end), OTHER_SESSION, WRITER_ROLE_RE', note: 'Texts (3.157.0; collected item Z-BONUSONLY): the credits of the whole release hold for a bonus track too ("Plus Bonus Track (only on CD)" – it did not fit on the vinyl); not for the last tracks whose titles name another session – "live", "demo", "rehearsal" ("outtake" is none) – fewer than half of the tracks: their credits on the other tracks; writers and arrangers stay on all. Every free text of the release (not a track\'s own page)' },
+    { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -6471,6 +6484,24 @@
   const REVIEW_RATING = /(?:^|[\s(])\d{1,2}(?:[.,]\d)?\s*\/\s*(?:5|10|100)(?:[.,]0)?(?=[\s).,;]|$)|[★☆✩✭]{3,}/u;
   const REVIEW_MEDIA = /\b(?:magazine|mag|review|reviews|radio|zine|times|journal|weekly|monthly|daily|blog|press|news|gazette|tribune|herald|post|quarterly|fm|tv)\b|\.(?:com|net|org|co\.uk|de|fr|it|nl)\b/i;
   // ((review) no source: a medium, a track, a time, a role ("(CD 2)", "(Track 3)", "(4:35)", "– Jane Doe: vocals")
+  // [Z-SHOPPROSE] (3.157.0, S287) the lines of a shop about an edition (Bandcamp's packages, a label's shop): left out as "shop"
+  const SHOP_FORMAT = '(?:compact\\s+disc|cd|vinyl|lp|(?:\\d+["”″]\\s*)?vinyl|cassette|tape|digital\\s+album|record\\/vinyl|box\\s*set)';
+  const SHOP_LINES = [
+    /^(?:this\s+(?:item\s+)?)?(?:ships?|shipping|shipped|dispatch(?:es|ed)?)\b.*\b(?:within|to|out|only|worldwide|from|days?|weeks?|around|by)\b/i,
+    /^(?:it\s+)?includes?\b.*\b(?:streaming|download|bandcamp\s+app|digital\s+album|mp3|flac)\b/i,
+    /^(?:high[- ]quality\s+)?(?:download|streaming)s?\b.*\b(?:available|mp3|flac|aac|alac|wav|aiff|ogg|\d+[- ]?bit|khz|high[- ]quality)\b/i,
+    /^(?:digital\s+)?pre-?order\b/i,
+    /^all\s+rights\s+reserved\.?$/i,
+    new RegExp(`^${SHOP_FORMAT}(?:\\s*\\([^)]*\\))?\\s*\\+\\s*(?:digital\\s+album|download)$`, 'i'),
+    /^(?:plus\s+)?(?:a\s+)?bonus\s+tracks?\s*\(?\s*(?:only|exclusive)\b[^)]*\)?\.?$/i,
+    /^(?:shipping|release)\s+(?:date\s+)?(?:on\s+or\s+)?(?:around|on)\b/i,
+  ];
+  // [Z-BONUSONLY] (3.157.0, S290) a track of another session (its title) and the roles of writers (they hold for every version)
+  const OTHER_SESSION = /\b(?:live|demo|rehearsals?)\b/i;
+  const WRITER_ROLE_RE = /\b(?:writ\w*|compos\w*|lyric\w*|words|music|songs|tracks|arrang\w*)\b/i;
+  // (and the roles of the release itself: its cover, booklet, notes and people behind it)
+  const RELEASE_ROLE_RE = /\b(?:cover|design\w*|art\w*|photo\w*|liner|notes|layout|illustrat\w*|graphic\w*|paint\w*|sleeve|booklet|a\s*&\s*r|manag\w*|booking|executive|label|thanks?)\b/i;
+  const SHOP_RIGHTS_TAIL = /\s*[,;.]\s*all\s+rights\s+reserved\.?\s*$/i;
   const REVIEW_NOT_SOURCE = /^(?:cd|lp|dvd|sacd|ep|disc|side|track|tracks|vol|bonus|remaster(?:ed)?|recorded|live)\b|\d:\d|\s[–—-]\s|:/i;
   /** ((review) The last closing mark of a text (its index, -1 without one). */
   const reviewCloseAt = (t) => {
@@ -8950,6 +8981,44 @@
               const m = l.match(TL);
               if (!isTl(m)) return l;
               scanTracks.push({ line: l.trim(), pos: m[1], title: m[2].replace(/[\s.…-]+$/, '').trim(), len: Number(m[3]) * 60 + Number(m[4]) });
+              return '';
+            });
+          }
+        }
+        // [Z-TRACKNONUM] (3.157.0, S288) a track list without numbers ("Temporary Fault 9:10"), maybe below headings of sides ("A", "Side B",
+        // "CD 2"): compared the same way – two lines at least, nothing else between them, one title at least one of MusicBrainz's
+        if (ruleOn('S288') && !scanTracks.length) {
+          const TN = /^\s*(\p{L}[^:]*?)\s*(?:[-–—.…]+\s*)?\(?(\d{1,2})[:.′'](\d{2})\)?\s*$/u;
+          // (brackets only of a version – "(Live)", "(Bonus Track)", "(Radio Edit)": others hold credits, read as before)
+          const VERSION_BR = /\((?:[^()]*\b(?:live|demo|rehearsal|bonus|edit|mix|remix|version|remaster(?:ed)?|mono|stereo|instrumental|acoustic|reprise|outtake|take)\b[^()]*)\)/gi;
+          const HEAD = /^\s*(?:(?:side|seite|face|lado)\s+)?([A-H])\s*$|^\s*(?:cd|disc|disk|lp)\s*(\d{1,2})\s*$/i;
+          const mbKeys = (Array.isArray(ctx0.tracks) ? ctx0.tracks : []).map((t) => nameKey(t.title || '')).filter(Boolean);
+          const isTn = (l) => { const m = l.match(TN); return m && !/[()]/.test(m[1].replace(VERSION_BR, '')) && !/\bby\b|\s[–—-]\s.*\p{L}.*\s[–—-]\s/iu.test(m[1]) && m[1].split(/\s+/).length <= 10 && !isRole(roleWord(m[1])) ? m : null; };
+          const at = out.map((l, k) => (isTn(l) ? k : -1)).filter((k) => k >= 0);
+          const between = at.length ? out.slice(at[0], at[at.length - 1] + 1).filter((l) => l.trim() && !isTn(l) && !HEAD.test(l)).length : 0;
+          const known = at.some((k) => { const a = nameKey(isTn(out[k])[1]); return mbKeys.some((b) => a === b || (a.length > 3 && b.includes(a)) || (b.length > 3 && a.includes(b))); });
+          // (a song list of a video's description – start times, ctx.songs – stays one; without MusicBrainz's tracks nothing to compare)
+          if (at.length >= 2 && !between && known && !ctx0.songs) {
+            // a heading just above the first line belongs to the list too
+            let head = '';
+            let n = 0;
+            const first = at[0];
+            let h0 = first - 1;
+            while (h0 >= 0 && !out[h0].trim()) h0--;
+            out = out.map((l, k) => {
+              if (k < first && k !== h0) return l;
+              if (k > at[at.length - 1]) return l;
+              const hm = l.match(HEAD);
+              if (hm && (k === h0 || k > first)) {
+                head = hm[1] ? hm[1].toUpperCase() : `${hm[2]}-`;
+                n = 0;
+                ignored.push({ text: l.trim(), why: 'heading' });
+                return '';
+              }
+              const m = isTn(l);
+              if (!m) return l;
+              n++;
+              scanTracks.push({ line: l.trim(), pos: head ? `${head}${n}` : String(scanTracks.length + 1), title: m[1].replace(/[\s.…-]+$/, '').trim(), len: Number(m[2]) * 60 + Number(m[3]) });
               return '';
             });
           }
@@ -11973,6 +12042,28 @@
        */
       const verbNoun = (v) => ({ mixed: 'mixing', mastered: 'mastering', recorded: 'recording', engineered: 'engineering', produced: 'production', arranged: 'arrangement', edited: 'editing', remixed: 'remixing' }[String(v).toLowerCase()]
         || String(v).toLowerCase().replace(/ed$/, 'ing'));
+      /**
+       * [Z-SHOPPROSE] (3.157.0, S287) What a shop writes about an edition – shipping, what a purchase includes, the formats of the
+       * download, "Compact Disc (CD) + Digital Album", "Plus Bonus Track (only on CD)", "All rights reserved" alone –: left out as "shop";
+       * ", all rights reserved" at the end of a credit taken off (no name). Every free text.
+       */
+      function shopLines(lines) {
+        return lines.map((l0) => {
+          const l = String(l0 == null ? '' : l0);
+          const t = l.trim();
+          if (!t) return l;
+          if (SHOP_LINES.some((re) => re.test(t))) {
+            ignored.push({ text: t, why: 'shop' });
+            return '';
+          }
+          const cut = l.replace(SHOP_RIGHTS_TAIL, '');
+          if (cut !== l && cut.trim()) {
+            rawOf.set(cut, rawOf.get(l) || l);
+            return cut;
+          }
+          return l;
+        });
+      }
       function freeTextPre(lines0) {
         const L = lines0.map((l) => String(l == null ? '' : l));
         const gone = new Set();
@@ -12301,7 +12392,8 @@
       const lines0 = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
       const reviewed = ruleOn('S244') ? reviewQuotes(lines0) : null;
       if (reviewed) ignored.push(...reviewed.out);
-      const pre = freeTextPre(reviewed ? reviewed.lines : lines0);
+      // [Z-SHOPPROSE] (3.157.0, S287) the texts of a shop (shipping, formats, downloads) out first: left out as "shop"
+      const pre = freeTextPre(ruleOn('S287') ? shopLines(reviewed ? reviewed.lines : lines0) : (reviewed ? reviewed.lines : lines0));
       const allLines0 = joinBroken(discTrackLines(tidyLines(pre).map(untilde).map(cpyLine).map(qpLine).map(rdstLine).map(licLine))); // ([Z-DEDPLACE] 3.129.0) words set off with tildes
       // [Z-IMPROV] (3.133.0, S222) the lines of improvisations, after the broken ones are joined ((review) "All the music on this record was / improvised by …")
       const allLines0i = improvSplit(allLines0);
@@ -12719,7 +12811,8 @@
           if (!(a === b || (a.length > 3 && b.includes(a)) || (b.length > 3 && a.includes(b)))) diffs.push({ pos: x.pos, title: x.title, mbTitle: t.title, why: 'title' });
           else if (t.length && Math.abs(Math.round(t.length / 1000) - x.len) > 5) diffs.push({ pos: x.pos, title: x.title, len: x.len, mbLen: Math.round(t.length / 1000), why: 'length' });
         });
-        if (mb.length > scanTracks.length) diffs.push({ why: 'fewer', n: scanTracks.length, mb: mb.length });
+        // ([Z-TRACKNONUM] 3.157.0) MusicBrainz's tracks beyond the list all bonus tracks: as expected (an edition without them)
+        if (mb.length > scanTracks.length && !mb.slice(scanTracks.length).every((t) => /\bbonus\b/i.test(t.title || ''))) diffs.push({ why: 'fewer', n: scanTracks.length, mb: mb.length });
         scanTracks.forEach((x, i) => ignored.push({ text: x.line, why: 'scantrack', ...(i === 0 ? { check: { n: scanTracks.length, mb: mb.length, diffs } } : {}) }));
       }
       // [Z-COVERCO] (3.154.0, S276) "cover by cooke-key associates, london": a company for the cover is its design; the one word after it its town (no person)
@@ -12778,6 +12871,22 @@
           c.credited = c.credited || n;
           c.who = { ...c.who, name: hits[0], rawName: hits[0], surnameOf: n };
         });
+      }
+      // [Z-BONUSONLY] (3.157.0, S290) the credits of the whole release hold for a bonus track too – not for the last tracks whose titles name
+      // another session ("live", "demo", "rehearsal"; not "outtake"): their players, studios and engineers are others (writers stay)
+      if (ruleOn('S290') && !ctx0.oneTrack) {
+        const list = Array.isArray(ctx0.trackTitles) && ctx0.trackTitles.length ? ctx0.trackTitles.map((t) => ({ title: t }))
+          : Array.isArray(ctx0.tracks) ? ctx0.tracks : [];
+        const other = list.map((t, i) => (OTHER_SESSION.test(String(t.title || '')) ? i : -1)).filter((i) => i >= 0);
+        const trailing = other.length && other.length * 2 < list.length && other.every((i, k) => i === list.length - other.length + k);
+        if (trailing) {
+          const keep = list.map((_, i) => i).filter((i) => !other.includes(i));
+          const posOf = (i) => String((list[i] && list[i].position) || i + 1);
+          credits.forEach((c) => {
+            if (!c.tracks || !c.tracks.all || WRITER_ROLE_RE.test(String(c.role || '')) || RELEASE_ROLE_RE.test(String(c.role || ''))) return;
+            c.tracks = { indexes: keep, spec: keep.map(posOf).join(', '), otherSession: other.map(posOf) };
+          });
+        }
       }
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
@@ -13032,6 +13141,57 @@
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
      */
+    /**
+     * [Z-BCPKGDESC] (3.157.0, S289) Credits of another text of the same release added to `into`: the same person with the same role
+     * (singular or plural) is one entry – with tracks named the more precise; a role that says more ("Electric Guitar" for "Guitar")
+     * replaces the other; one that says less goes. → { added, same, better }
+     */
+    function mergeMoreCredits(into, extra) {
+      const who = (c) => nameKey((c.who && c.who.name) || '');
+      const role = (c) => norm(String(c.role || '').replace(/\s+by$/i, '')).split(/\s+/).map((w) => w.replace(/(?<=\w{3})s$/, '')).join(' ');
+      const within = (a, b) => a !== b && ` ${a} `.includes(` ${b} `);
+      let added = 0;
+      let same = 0;
+      let better = 0;
+      for (const e of extra) {
+        const mine = into.filter((c) => who(c) && who(c) === who(e));
+        const eq = mine.find((c) => role(c) === role(e));
+        if (eq) {
+          if (eq.tracks && eq.tracks.all && e.tracks && !e.tracks.all) {
+            eq.tracks = e.tracks;
+            better++;
+          } else same++;
+          continue;
+        }
+        const less = mine.find((c) => within(role(e), role(c)));
+        if (less) {
+          Object.assign(less, { role: e.role, base: e.base, details: e.details });
+          better++;
+          continue;
+        }
+        if (mine.some((c) => within(role(c), role(e)))) {
+          same++;
+          continue;
+        }
+        into.push(e);
+        added++;
+      }
+      return { added, same, better };
+    }
+    function mergeMoreCompanies(into, extra) {
+      const key = (c) => `${nameKey((c.who && c.who.name) || '')}|${norm(c.role || '')}`;
+      let added = 0;
+      let same = 0;
+      for (const e of extra) {
+        if (into.some((c) => key(c) === key(e))) same++;
+        else {
+          into.push(e);
+          added++;
+        }
+      }
+      return { added, same };
+    }
+
     function toRelease(data, url, trackCredits, ctx, { pageName = '', tags = [] } = {}) {
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
@@ -13045,7 +13205,8 @@
       const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
       // ([Z-CATNOLINE] 3.146.0, S249) a label's own page: its name a label of the release
       const labelNames = [...(ctx.labelNames || []), ...(band.own || !pageName ? [] : [pageName])];
-      const album = TEXT.parse(cur.credits || '', { ...ctx, labelNames, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, trackTitles: tracks.map((t) => t.title), artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 });
+      const albumCtx = { ...ctx, labelNames, resolveTracks, resolveTitles, titleNames, trackCount: tracks.length, trackTitles: tracks.map((t) => t.title), artistNames: [...(ctx.artistNames || []), bandName], songsOk: tracks.length <= 1 };
+      const album = TEXT.parse(cur.credits || '', albumCtx);
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -13062,8 +13223,24 @@
       stackAlt.push(...(aboutRes.stackAlt || []).filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
       companies.push(...aboutRes.companies.filter((c) => aboutAll || /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
-      const unrecognized = [...album.unrecognized];
-      const ignored = [...(album.ignored || [])];
+      // [Z-BCPKGDESC] (3.157.0, S289) the texts of the physical editions ("Limited Edition Compact Disc …"), read like the credits: what
+      // they say again is one entry, the more precise of two kept; they hold for the digital edition too
+      const pkgRead = [];
+      if (ruleOn('S289')) {
+        const seen = new Set([norm(cur.credits || ''), norm(cur.about || '')].filter(Boolean));
+        for (const pk of data.packages || []) {
+          const text = String((pk && pk.description) || '').trim();
+          if (!text || seen.has(norm(text))) continue;
+          seen.add(norm(text));
+          const name = String((pk && (pk.type_name || pk.title)) || 'package').trim();
+          const res = TEXT.parse(text, albumCtx);
+          const m = mergeMoreCredits(credits, res.credits.map((c) => ({ ...c, fromPkg: name })));
+          const mc = mergeMoreCompanies(companies, res.companies.map((c) => ({ ...c, fromPkg: name })));
+          pkgRead.push({ name, text, res, added: m.added + mc.added, same: m.same + mc.same, better: m.better });
+        }
+      }
+      const unrecognized = [...album.unrecognized, ...pkgRead.flatMap((x) => x.res.unrecognized.map((l) => `${x.name}: ${l}`))];
+      const ignored = [...(album.ignored || []), ...pkgRead.flatMap((x) => (x.res.ignored || []).map((l) => ({ ...l, text: `${x.name}: ${l.text}` })))];
       // [Z-EXC] (3.49.0) covers and quotes of the credits and of the "about" text
       const covers = [...(album.covers || []), ...(aboutAll ? aboutRes.covers || [] : [])];
       // [Z-TBY] (3.59.0, S087) the headings of groups above their members
@@ -13114,7 +13291,9 @@
         url,
         title: cur.title || '',
         country: '',
-        notes: [cur.credits, cur.about].filter(Boolean).join('\n\n'),
+        notes: [cur.credits, cur.about, ...pkgRead.map((x) => x.text)].filter(Boolean).join('\n\n'),
+        // [Z-BCPKGDESC] (3.157.0, S289) the texts of the editions read: { name, added, same, better } (a hint above the entries)
+        bcPackages: pkgRead.map(({ name, added, same, better }) => ({ name, added, same, better })),
         // [3.16.1] where the "about" text begins in the notes (its dates can be left out), null without one
         aboutAt,
         // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
@@ -25216,6 +25395,7 @@
       S.memberOffers = null; // [Z-MEMBERCREATE] (3.129.0, review)
       S.memberMissed = null; // [Z-MEMBERINST] (3.141.0, review)
       S.siteHints = null; // [Z-WEBDOM] ((3.124.0, review) looked up again: an address added in MusicBrainz meanwhile)
+      S.missLinks = null; // [Z-MISSINGLINKS] (3.157.0) the same
       S.dedForm = null;
       Object.assign(S, { mxHelpOpen: false, mxMoreOpen: false, mxDefaultsOpen: false, mxAddColOpen: false, mxNewMenu: null, mxCornerMore: false, mxOneOpen: false });
       // [Z-SNW] (3.83.0, review) the question about works of the same title and its answers: of the import before
@@ -28465,6 +28645,7 @@
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
         homeStudioFind(seq).catch((e) => console.warn('[Credits-Importer] home studio', e)); // [Z-HOMESTUDIO] (3.153.0)
         // ([Z-OCRSUPP] 3.115.0, review) the window of the text from cover art open at its result: its buttons as the import now is
@@ -31703,6 +31884,79 @@
     const path = entityPath(kind);
     const url = `/${path}/${a.mbid}/edit?${toQuery([[`edit-${path}.url.0.text`, `https://${host}/`], [`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]])}`;
     return ` <span class="dci-sub dci-sitehint" data-el="sitehint">${esc(tr('site.note', { host }))} <a href="${esc(url)}" target="_blank" rel="noopener">${esc(tr('site.edit'))}</a></span>`;
+  }
+
+  /**
+   * [Z-MISSINGLINKS] (3.157.0, S291) The web addresses of the entries – artists, labels, places, series assigned in MusicBrainz – that
+   * MusicBrainz does not have yet: their pages at the source (Discogs, Bandcamp …), the addresses next to their names in the text, the
+   * site of the text named like them (S198). Looked up in the background (each entity's links once); a foldable list below the entries
+   * when there are any, each address with a link to the entity's edit page with it filled in (no works: only the entries).
+   */
+  const MISS_KINDS = new Set(['artist', 'label', 'place', 'series']);
+  const missKey = (u) => String(u || '').toLowerCase().replace(/^https?:\/\/(?:www\.)?/, '').replace(/[?#].*$/, '').replace(/\/+$/, '');
+  function missCandidates(a) {
+    if (!a || !a.mbid || !MISS_KINDS.has(entryKind(a))) return [];
+    const urls = (a.links || []).filter((u) => /^https?:\/\//i.test(u) && !/discogs\.com\/(?:[a-z]{2}\/)?(?:release|master)\/|bandcamp\.com\/(?:album|track)\//i.test(u));
+    const host = siteOf(a);
+    if (host) urls.push(`https://${host}/`);
+    const seen = new Set();
+    return urls.filter((u) => { const k = missKey(u); if (!k || seen.has(k)) return false; seen.add(k); return true; });
+  }
+  function missLinksRun() {
+    if (!ruleOn('S291') || !S.overlay) {
+      renderMissLinks();
+      return;
+    }
+    S.missLinks = S.missLinks || new Map();
+    const seq = importSeq;
+    for (const a of S.artists.values()) {
+      const cands = missCandidates(a);
+      if (!cands.length || S.missLinks.has(a.mbid)) continue;
+      S.missLinks.set(a.mbid, { state: 'checking' });
+      const kind = entryKind(a);
+      mbWs(`${entityPath(kind)}/${a.mbid}?inc=url-rels`, { background: true }).then((ws) => {
+        if (seq !== importSeq || !S.missLinks) return;
+        const have = new Set(((ws && ws.relations) || []).map((r) => missKey(r.url && r.url.resource)).filter(Boolean));
+        S.missLinks.set(a.mbid, { state: 'done', have });
+        renderMissLinks();
+      }).catch(() => S.missLinks && S.missLinks.set(a.mbid, { state: 'failed' }));
+    }
+    renderMissLinks();
+  }
+  function missLinksList() {
+    if (!ruleOn('S291') || !S.missLinks) return [];
+    const out = [];
+    const seen = new Set();
+    for (const a of S.artists.values()) {
+      const got = S.missLinks.get(a.mbid);
+      if (!got || got.state !== 'done' || seen.has(a.mbid) || entrySkipped(a)) continue;
+      const urls = missCandidates(a).filter((u) => !got.have.has(missKey(u)));
+      if (!urls.length) continue;
+      seen.add(a.mbid);
+      out.push({ a, urls });
+    }
+    return out;
+  }
+  function renderMissLinks() {
+    const el = S.overlay && $('misslinks');
+    if (!el) return;
+    const list = missLinksList();
+    el.hidden = !list.length;
+    if (!list.length) {
+      el.innerHTML = '';
+      return;
+    }
+    const open = !!(el.querySelector('details') || {}).open;
+    const n = list.reduce((t, x) => t + x.urls.length, 0);
+    const known = /(?:discogs|bandcamp|soundcloud|spotify|youtube|instagram|facebook|twitter|x|tiktok|wikidata|wikipedia|allmusic|apple|deezer|tidal|last\.fm|songkick|myspace)\.(?:com|org|fm|net|be)\b/i;
+    const editUrl = (a, u) => {
+      const kind = entryKind(a);
+      const path = entityPath(kind);
+      const q = [[`edit-${path}.url.0.text`, u]];
+      if (!known.test(u) && SITE_LINK_TYPE[kind]) q.push([`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]);
+      return `/${path}/${a.mbid}/edit?${toQuery(q)}`;
+    };
+    el.innerHTML = `<details${open ? ' open' : ''}><summary title="${esc(tr('misslinks.title'))}">${esc(tr('misslinks.summary', { n }))}</summary><ul class="dci-misslinks-list">${list.map(({ a, urls }) => `<li data-mbid="${esc(a.mbid)}">${kindTagHtml(a)}<a href="/${esc(entityPath(entryKind(a)))}/${esc(a.mbid)}" target="_blank" rel="noopener"><strong>${esc(a.mbName || a.name || '')}</strong></a>${urls.map((u) => ` <span class="dci-misslink"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(webShort(u))}</a> <a class="dci-misslink-add" data-el="misslink-add" href="${esc(editUrl(a, u))}" target="_blank" rel="noopener" title="${esc(tr('misslinks.addTitle', { name: a.mbName || a.name || '' }))}">${esc(tr('misslinks.add'))}</a></span>`).join(' ·')}</li>`).join('')}</ul></details>`;
   }
 
   function membersNoteHtml(a) {
@@ -36985,6 +37239,7 @@
     const skipped = S.skipHide ? all.filter(entrySkipped) : [];
     const withRows = all.filter((a) => !skipped.includes(a));
     renderSkippedList(skipped);
+    missLinksRun(); // [Z-MISSINGLINKS] (3.157.0)
     // [Z-ARRL] (3.94.0) entries with relationships of works only: together above the works matrix, the last of the entries
     const wonly = withRows.filter((a) => !a.company && !a.other && workOnlyEntry(a));
     $('groups').innerHTML = sortedGroupsHtml(withRows.filter((a) => !a.company && !a.other && !wonly.includes(a)));
@@ -41699,6 +41954,8 @@
     if (ruleOn('S250') && labs.length && labs.some((n) => !mb.some((m) => same(m, n)))) out.push(tr('hint.labels', { list: labs.join(', '), mb: mb.join(', ') || tr('hint.none') }));
     const cats = uniq(ign.filter((x) => x && x.why === 'catnoNew').map((x) => x.catno));
     if (ruleOn('S249') && cats.length) out.push(tr('hint.catno', { list: cats.join(', '), mb: (S.releaseCatnos || []).join(', ') || tr('hint.none') }));
+    // [Z-BCPKGDESC] (3.157.0, S289) the texts of Bandcamp's editions read too
+    if (ruleOn('S289')) (rel && rel.bcPackages || []).forEach((x) => out.push(tr('hint.bcPkg', { name: x.name, added: x.added, same: x.same, better: x.better })));
     const hs = homeStudioHtml(rel);
     // [Z-OCRTRACKCHECK] (3.154.0, S281) a track list of the text (a scan) against MusicBrainz's tracks
     const chk = ruleOn('S281') ? (ign.find((x) => x && x.why === 'scantrack' && x.check) || {}).check : null;
@@ -46741,6 +46998,25 @@
     return ` <a class="dci-srclink" href="${esc(S.release.url)}" target="_blank" rel="noopener" title="${esc(tr('sync.srcLinkTitle', { site }))}">↗ ${esc(site)}</a>`;
   }
 
+  /**
+   * [Z-NOTABSRC] (3.157.0) "no … tab" names the tab the import expects: the site of this import's source; before an import (or for a
+   * source without a tab of the companion) the sites of the release's linked sources – Discogs or Bandcamp when none is linked.
+   */
+  function expectedSites() {
+    // (S.source is Discogs until an import chose one: not before a release is read)
+    if (S.release && S.source && VIEW_NAMES[S.source.companion]) return [S.source.companion];
+    const linked = [...new Set((S.sourceLinks || []).map((l) => l.source).filter((k) => VIEW_NAMES[k]))];
+    return linked.length ? linked : ['discogs', 'bandcamp'];
+  }
+  function sitesOr(sites) {
+    const names = sites.map((k) => VIEW_NAMES[k]);
+    return names.length < 2 ? names[0] || '' : tr('sync.or', { a: names.slice(0, -1).join(', '), b: names[names.length - 1] });
+  }
+  function noTabText(key = 'sync.noTabSite') {
+    return tr(key, { site: sitesOr(expectedSites()) });
+  }
+  const syncLastText = (last) => (last === 'found.no-tab' ? noTabText('sync.found.no-tabSite') : trView(`sync.${last}`));
+
   // [3.17.4] withDetails: the dashboard's head (with the last jump's result); the buttons and the link to the source are
   // in the navigation bar too
   function syncStatusHtml(withDetails) {
@@ -46749,14 +47025,14 @@
     const st = syncSite();
     if (st.old) return `<span class="dci-muted">${esc(st.need ? tr('sync.oldSiteV', { site: VIEW_NAMES[viewSite()], version: st.need }) : tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
-    if (!st.tabs) return `${esc(trView('sync.noTab'))}${srcLinkHtml()}${companionReleaseId() ? ` ${openBtn}` : ''}`;
+    if (!st.tabs) return `<span data-el="sync-notab" title="${esc(tr('sync.noTabTitle'))}">${esc(noTabText())}</span>${srcLinkHtml()}${companionReleaseId() ? ` ${openBtn}` : ''}`;
     const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
     // A Discogs (Bandcamp) tab is open, but none of them shows this release
     if (companionReleaseId() && !(st.releases || []).includes(String(companionReleaseId()))) {
       return `${esc(trView('sync.otherPage'))}${srcLinkHtml()} <button type="button" data-act="sync-load" title="${esc(trView('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}`;
     }
     const last = S.sync.last;
-    return `${esc(trView('sync.connected', { where }))}${srcLinkHtml()} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>${withDetails && last ? ` <span class="dci-sub">${esc(trView(`sync.${last}`))}</span>` : ''}`;
+    return `${esc(trView('sync.connected', { where }))}${srcLinkHtml()} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>${withDetails && last ? ` <span class="dci-sub">${esc(syncLastText(last))}</span>` : ''}`;
   }
 
   /** Switch: the Discogs tab follows the dashboard on mouse-over or on click. */
@@ -46920,7 +47196,7 @@
       S.sync.installed = true;
       const known = ['credit', 'track', 'artist', 'loading', 'none', 'no-tab'];
       S.sync.last = known.includes(msg.found) ? `found.${msg.found}` : '';
-      if (S.sync.last && msg.found !== 'loading') logView(msg.found === 'none' || msg.found === 'no-tab' ? 'warn' : 'info', 'discogsJump', { result: trView(`sync.${S.sync.last}`) });
+      if (S.sync.last && msg.found !== 'loading') logView(msg.found === 'none' || msg.found === 'no-tab' ? 'warn' : 'info', 'discogsJump', { result: syncLastText(S.sync.last) });
     }
     renderSync();
   }
@@ -52088,6 +52364,7 @@
             <section class="dci-companies dci-others" data-el="others" hidden></section>
             <section class="dci-companies dci-workonly" data-el="workonly" hidden></section>
             <div class="dci-skipped" data-el="skipped" hidden></div>
+            <div class="dci-misslinks" data-el="misslinks" hidden></div>
           </div>
           <section class="dci-frame dci-dedbox" data-el="dedbox" aria-labelledby="dci-dedbox-h" hidden></section>
           <section class="dci-works dci-frame" data-el="works" hidden></section>
@@ -58686,6 +58963,12 @@
         text-decoration: underline; text-decoration-color: var(--purple); text-decoration-thickness: 2px; text-underline-offset: 3px; }
       .dci-credul section.dci-group:has(.dci-gcredit:not([hidden])) .dci-gmatch a.dci-mblink { text-decoration: none; }
       .dci-disamb { color: var(--muted); }
+      /* [Z-MISSINGLINKS] (3.157.0, S291) the missing links of the entries, folded below them */
+      .dci-misslinks { margin: calc(var(--u, 1px) * 8) 0 0; font-size: 0.95em; }
+      .dci-misslinks > details > summary { cursor: pointer; color: var(--purple); }
+      .dci-misslinks-list { margin: calc(var(--u, 1px) * 4) 0 0; padding-left: calc(var(--u, 1px) * 18); }
+      .dci-misslinks-list li { margin: calc(var(--u, 1px) * 2) 0; overflow-wrap: anywhere; }
+      .dci-misslink-add { font-size: 0.9em; }
       .dci-pv-update { color: #4b4585; font-weight: 700; }
       .dci-datefind { margin: calc(var(--u, 1px) * 8) 0 0; font-size: calc(var(--u, 1px) * 12); }
       .dci-datefind summary { cursor: pointer; font-weight: 600; color: var(--date-d); }
