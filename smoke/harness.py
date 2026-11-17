@@ -618,10 +618,14 @@ def js_entity(gid):
     # [3.49.0] works of MusicBrainz a test adds (gid → (id, title))
     if gid in JS_WORKS:
         return {'entityType': 'work', 'id': JS_WORKS[gid][0], 'gid': gid, 'name': JS_WORKS[gid][1], 'comment': ''}
+    # [3.152.0] artists of MusicBrainz only /ws/js/entity knows (not the searches): gid → (id, name)
+    if gid in JS_ARTISTS:
+        return {'entityType': 'artist', 'id': JS_ARTISTS[gid][0], 'gid': gid, 'name': JS_ARTISTS[gid][1], 'comment': '', 'sort_name': JS_ARTISTS[gid][1]}
     return None
 
 
 JS_WORKS = {}
+JS_ARTISTS = {}
 
 
 WORK_FORM = """<html><body><form>

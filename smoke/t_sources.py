@@ -452,6 +452,9 @@ def case_supp():
     H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
     H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
     H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 42), 'name': 'Anna Viola', 'disambiguation': 'violist', 'score': 100}]
+    # ((3.152.0) her entry in MusicBrainz's /ws/js/entity, so that her relationships are staged: the edit note names only what is in the editor
+    # – until 3.151.0 it named her although staging her failed)
+    H.JS_ARTISTS[H.uid('dddddddd', 42)] = (3942, 'Anna Viola')
     CREDITS = 'Bass Man – bass\nTrumpet: Guitar Guy (track 2)\nKeys Guy – synth (tracks 1–2)\nViola: Anna Viola\nTest Band – guitar\nSee you on tour.'
     OTHER = 'https://otherband.bandcamp.com/album/live'
     H.BC_PAGES[OTHER] = H.bc_page({'artist': 'Other Band', 'current': {'title': 'Live', 'credits': 'Bass Man – bass\nTrumpet: Drum Guy (track 3)', 'about': ''},
@@ -561,7 +564,9 @@ def case_supp():
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value").splitlines()
         print('D) Notiz:', [l for l in note if not l.startswith('Script')][:6])
+        # ([F-NOTECOUNT] 3.152.0) the relationships of the added source counted apart
         d_ok = note[0] == 'Source: https://www.discogs.com/release/1234' and note[1] == f'Also from: {ALBUM}' \
+            and any('; added 5 credit relationships from Bandcamp (5 recording)' in l for l in note) \
             and any(l.startswith('1 credit also in Bandcamp; added from Bandcamp only: Guitar Guy, trumpet (tracks 2); Anna Viola, viola (all tracks).') for l in note) \
             and any(l.startswith('Sources differ: Keys Guy, synthesizer – Discogs: 2, Bandcamp: 1, 2; kept Discogs') for l in note)
         results.append(d_ok)
@@ -651,6 +656,7 @@ def case_supptable3148():
     H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
     H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
     H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 43), 'name': 'James Olski', 'disambiguation': 'painter', 'score': 100}]
+    H.JS_ARTISTS[H.uid('dddddddd', 43)] = (3943, 'James Olski')  # (3.152.0) staged: named in the edit note
     dg = H.discogs_release()
     dg['extraartists'].append({'name': 'J. Olski', 'anv': '', 'role': 'Artwork', 'tracks': '', 'id': 3098, 'join': ''})
     H.DG_API[f'/releases/{H.DISCOGS_ID}'] = dg
@@ -748,6 +754,9 @@ def case_supptable3148():
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski' && s.querySelector('[data-act=name-use]'))", 30)
         pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski').querySelector('[data-act=name-use]').click()")
         pg.wait_for_timeout(800)
+        # ((3.152.0) the artwork's type chosen, so that it is staged – the edit note names only what is in the editor)
+        pg.select_option("section.dci-group:has(.dci-gname strong:text-is('James Olski')) tr.dci-row [data-f=type]", label='design')
+        pg.wait_for_timeout(300)
         names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
         gg = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Guitar Guy').querySelector('[data-f=primary]').value")
         left = pg.evaluate("document.querySelectorAll('.dci-supp-row').length")
@@ -935,8 +944,8 @@ def case_quickfill3150():
     A) Off at first: no button; ⚙ Settings → Beta is no longer greyed and has its switch (off).
     B) Switched on: "Credit fill" beside "Import credits …", stored.
     C) Track 1 has Drum Guy (drums) and its work, tracks 2–4 nothing: the window offers drums for tracks 2, 3, 4 ("as tracks 1 have
-       them"); "Fill all" adds the three relationships to the editor, the edit note names the recording copied from, the statistics
-       count it (this browser) and show it.
+       them"); "Fill all" adds the three relationships to the editor, the edit note names the recording copied from; the statistics
+       count it only once MusicBrainz has them after "Enter edit" (3.152.0, F-QFSTATS – fable3152 C).
     D) Track 2 has another credit than track 1: nothing is filled ("do not all have the same (1, 2)").
     E) (Z-QUICKFILL2) No track of the release has a relationship: the recordings of another release of the group with the same title
        give theirs (Bob Producer for "Song One" and "Song Two"); the others stay empty (said).
@@ -981,7 +990,7 @@ def case_quickfill3150():
         results.append('3 relationships for 3 tracks without any: as tracks 1 have them.' in c0 and 'Track 2: Song Two' in c0 and 'drums (drum set) · Drum Guy' in c0
                        and len(added) == 3 and all(x[0] == 148 and x[1] == H.ARTISTS[3004][0] for x in added) and recs == sorted(H.REC[1:4])
                        and f'Credit fill (beta): relationships copied from the MusicBrainz recording https://musicbrainz.org/recording/{H.REC[0]} to tracks 2, 3, 4.' in note
-                       and len(stats) == 1 and stats[0]['rels'] == 3)
+                       and stats == [])  # ([F-QFSTATS] 3.152.0) counted once MusicBrainz has them after "Enter edit" (fable3152 C)
         # C2) (review) again: what is staged in the editor counts – nothing to fill, nothing staged twice
         pg.evaluate("document.querySelector('#dci-qf [data-qf=close]').click()")
         pg.evaluate("document.getElementById('dci-quickfill').click()")
@@ -1110,6 +1119,144 @@ def case_fable3151():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_fable3152():
+    """Credits Importer 3.152.0 (the proposals of the Fable review, F-…).
+    A) (F-RESETPROFILE) A profile of your own in use: "Reset all settings of the profile “<name>” to their defaults?"; "Standard" in use:
+       "Reset all settings to their defaults?".
+    B) (F-NOTESTAGED) Staged, then Bass Man's relationships taken out in the editor by hand: at "Enter edit" the edit note counts them no
+       more ("Done: added N … from Discogs" one per relationship fewer, the recordings too).
+    C) (F-NOTESTAGED, F-QFSTATS) Credit fill on tracks 2–4, then track 3's relationship taken out by hand: nothing counted when staged; at
+       "Enter edit" its line names tracks 2, 4; once MusicBrainz has them, the statistics count 2 relationships on 2 tracks and the job goes.
+    D) (F-WALK, Node) The index of the editor's state: a relationship beyond 400,000 steps is found (not "cut"); one edited is found as it
+       is now, not as its _original; a new state object is walked anew.
+    E) (F-WSJS, Node) mbFetch: a network error – once more, then found; twice – "MusicBrainz did not answer …"; with a pace the second
+       request waits."""
+    import json
+    import re
+    import subprocess
+    ENTER_EDIT = """(() => { if (document.getElementById('test-enter-edit')) return; const ta = document.getElementById('edit-note-text'); const f = document.createElement('form');
+  f.addEventListener('submit', (e) => e.preventDefault()); ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'submit positive'; btn.textContent = 'Enter edit'; btn.id = 'test-enter-edit'; f.appendChild(btn); })()"""
+    DONE = "(document.getElementById('edit-note-text').value.split('\\n').find(l => l.startsWith('Done: ')) || '')"
+    BASS = H.ARTISTS[3001][0]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        # A) the profile named in the question
+        H.open_settings(pg, 'profiles')
+        pg.click('[data-el=settings] [data-act=profile-new]')
+        pg.wait_for_timeout(500)
+        name = pg.evaluate("(() => { const id = JSON.parse(localStorage.getItem('dci-profile')); return (JSON.parse(localStorage.getItem('dci-profiles')).find(p => p.id === id) || {}).name; })()")
+        H.open_reset(pg)
+        a1 = pg.evaluate("document.querySelector('[data-el=reset-ask]').textContent")
+        pg.click('[data-act=reset-cancel]')
+        pg.select_option('#dci-profile', 'std')
+        pg.wait_for_timeout(800)
+        H.open_reset(pg)
+        a2 = pg.evaluate("document.querySelector('[data-el=reset-ask]').textContent")
+        pg.click('[data-act=reset-cancel]')
+        print('A)', name, '|', a1, '|', a2)
+        results.append(bool(name) and a1 == f'Reset all settings of the profile “{name}” to their defaults?' and a2 == 'Reset all settings to their defaults?')
+        # B) staged, Bass Man's relationships taken out by hand, "Enter edit"
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        d0 = pg.evaluate(DONE)
+        gone = pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state; const out = st.added.filter(r => [(r.entity0 || {{}}).gid, (r.entity1 || {{}}).gid].includes('{BASS}'));
+          MB.relationshipEditor.state = {{ ...st, added: st.added.filter(r => !out.includes(r)) }};
+          return out.map(r => [(r.entity0 || {{}}).entityType, (r.entity1 || {{}}).entityType]); }})()""")
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(800)
+        d1 = pg.evaluate(DONE)
+        num = lambda s, what: int((re.search(rf'(\d+) {what}', s) or [0, 0])[1])
+        print('B) vorher:', d0, '| von Hand heraus:', gone, '| nachher:', d1)
+        n_rec = sum(1 for g in gone if 'recording' in g)
+        results.append(len(gone) > 0 and num(d1, 'credit relationships? from Discogs') == num(d0, 'credit relationships? from Discogs') - len(gone)
+                       and num(d1, 'recording') == num(d0, 'recording') - n_rec)
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # C) Credit fill: counted once MusicBrainz has it
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'beta')
+        if not pg.evaluate("document.querySelector('[data-set=qf-on]').checked"):
+            pg.click('[data-set=qf-on]')
+        pg.wait_for_timeout(200)
+        pg.evaluate("document.getElementById('dci-quickfill').click()")
+        H.wait_for(pg, "!!document.querySelector('#dci-qf [data-qf=fill]')", 30)
+        pg.evaluate("document.querySelector('#dci-qf [data-qf=fill]').click()")
+        H.wait_for(pg, "/relationships added/.test(document.getElementById('dci-qf').textContent)", 30)
+        c0 = pg.evaluate("JSON.parse(localStorage.getItem('dci-qf-stats') || '[]')")
+        rec3 = H.REC[2]
+        pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state;
+          MB.relationshipEditor.state = {{ ...st, added: st.added.filter(r => ![(r.entity0 || {{}}).gid, (r.entity1 || {{}}).gid].includes('{rec3}')) }}; }})()""")
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        recs = {g: [] for g in H.REC}
+        for r in added:
+            for x, y in ((r['e0'], r['e1']), (r['e1'], r['e0'])):
+                if x in recs:
+                    recs[x].append({'linkTypeID': r['lt'], 'target': {'gid': y}})
+                    break
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update({'gid': H.REL, 'relationships': [], 'releaseGroup': {'secondaryTypeIDs': []},
+                                'mediums': [{'position': 1, 'tracks': [{'number': str(i + 1), 'recording': {'gid': g, 'comment': '', 'relationships': recs[g]}} for i, g in enumerate(H.REC)]}]})
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        H.wait_ok(pg, "JSON.parse(localStorage.getItem('dci-qf-stats') || '[]').length > 0", 15)
+        note = [l for l in pg.evaluate("document.getElementById('edit-note-text').value").splitlines() if l.startswith('Credit fill')]
+        c1 = pg.evaluate("JSON.parse(localStorage.getItem('dci-qf-stats') || '[]')")
+        job = pg.evaluate(f"localStorage.getItem('dci-qf-job:{H.REL}')")
+        print('C) gleich nach dem Füllen:', c0, '| Notiz:', note, '| Statistik:', c1, '| Auftrag:', job)
+        results.append(c0 == [] and len(note) == 1 and note[0].endswith('to tracks 2, 4.') and len(c1) == 1 and c1[0]['rels'] == 2 and c1[0]['tracks'] == 2 and job is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # D) the index of the editor's state (Node)
+    src = H.MAIN
+    walk = src[src.index('  const EDITOR_WALK_MAX'):src.index('  /** True if a relationship state in the editor carries the expected date. */')]
+    between = re.search(r"\n  function statesBetween\(root, gidA, gidB, ltId\) \{.*?\n  \}\n", src, re.S).group(0)
+    js = walk + between + """
+const big = { filler: Array.from({ length: 300000 }, (_, i) => ({ a: i, b: [i] })), rel: { id: -7, linkTypeID: 148, entity0: { gid: 'a' }, entity1: { gid: 'r' } } };
+const o1 = {}; const f1 = findRelationshipStates(big, new Set([-7]), o1);
+const orig = { id: 5, linkTypeID: 148, entity0: { gid: 'a' }, entity1: { gid: 'r' }, attributes: 'old' };
+const st = { list: [{ id: 5, linkTypeID: 148, entity0: { gid: 'a' }, entity1: { gid: 'r' }, attributes: 'new', _original: orig }] };
+const sb = statesBetween(st, 'a', 'r', 148).map((x) => x.attributes);
+const st2 = { list: [] };
+const gone = findRelationshipStates(st2, new Set([5])).size;
+console.log(JSON.stringify([f1.has(-7), !!o1.cut, editorRelIndex(big).steps > 400000, sb, gone, findRelationshipStates(st, new Set([5])).get(5).attributes]));"""
+    out = subprocess.run(['node', '-e', js], capture_output=True, text=True)
+    print('D)', out.stdout.strip(), out.stderr[-300:])
+    results.append(json.loads(out.stdout or 'null') == [True, False, True, ['new'], 0, 'new'])
+    # E) mbFetch (Node)
+    fetch_src = src[src.index('  const MB_FETCH_MS'):src.index('  /** [F-WSJS] (3.152.0) The pause between two lookups')]
+    js = """const sleep = (ms) => new Promise((r) => setTimeout(r, ms)); const tr = (k) => (k === 'err.mbNet' ? 'MusicBrainz did not answer' : k);
+let n = 0; let fail = 1; const starts = [];
+global.fetch = async (url) => { n++; starts.push(Date.now()); if (fail-- > 0) throw new TypeError('network'); return { ok: true, url }; };
+""" + fetch_src + """
+(async () => {
+  const r1 = await mbFetch('/a'); const n1 = n;
+  fail = 2; n = 0; let err = ''; try { await mbFetch('/b'); } catch (e) { err = e.message; } const n2 = n;
+  fail = 0; starts.length = 0; await Promise.all([mbFetch('/c', {}, { pace: 200 }), mbFetch('/d', {}, { pace: 200 })]);
+  console.log(JSON.stringify([r1.ok, n1, err, n2, starts[1] - starts[0] >= 190]));
+})();"""
+    out = subprocess.run(['node', '-e', js], capture_output=True, text=True, timeout=60)
+    print('E)', out.stdout.strip(), out.stderr[-300:])
+    results.append(json.loads(out.stdout or 'null') == [True, 2, 'MusicBrainz did not answer', 2, True])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

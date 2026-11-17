@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-17 | 3.152.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
@@ -108,6 +109,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.152.0
+
+The proposals of the first review run (F-…), brought forward (2026-11-17):
+
+- **Edit note per source** (F-NOTECOUNT): "Done: added 27 credit relationships from Discogs (…); added 5 credit relationships from Bandcamp (…)" – the relationships of an added source are counted apart (until 3.151.0 all under the loaded one).
+- **Only what is in the editor** (F-NOTESTAGED): at "Enter edit" the edit note is written once more – a relationship taken out in the editor by hand is no longer counted or named, nor a row whose staging failed or that waits for the next round; the line of Credit fill names only the tracks still filled (none: it goes).
+- **Credit fill in the statistics** (F-QFSTATS): counted once MusicBrainz has the relationships after "Enter edit", as the import's – not when they are staged.
+- **Reset all settings** (F-RESETPROFILE): with a profile of your own in use, the question names it ("Reset all settings of the profile “…” to their defaults?").
+- **MusicBrainz's own lookups** (F-WSJS): the requests of the relationship editor's kind (`/ws/js`: entries when staging, a medium's tracks, the checks after "Enter edit") and the request of the release page's line end after 30 seconds and are made once more after a network error; lookups of entries when staging wait 0.2 seconds for each other.
+- **Very large releases** (F-WALK): the editor's state is read once per change instead of once per lookup, and all of it (until 3.151.0 at most 400,000 steps – some 600 tracks with 40 relationships each –, so that a relationship beyond counted as taken out).
 
 ### Import 3.151.0
 
