@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-16 | 3.146.0 – 3.150.0 | 1.22.0 |
+| 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
 | 2026-11-13 | 3.137.0 – 3.142.0 | – |
 | 2026-11-12 | 3.132.0 – 3.136.0 | – |
@@ -108,6 +108,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.151.0
+
+- **Review run 1** (collected item Z-REVIEW-FABLE; 2026-11-16, the areas "data integrity" and "code" of the review checklist, done by Claude Fable 5.2). Corrected:
+  - **Edit note:** the lines about added sources name only rows that can be staged – a name without a MusicBrainz entry or a skipped row is no longer listed as taken, differing or renamed.
+  - **Reset all settings** also resets three display choices of the statistics (folded cards, the duration and length views).
+  - **Statistics:** a finished import whose record cannot be stored is kept and tried again instead of being dropped; the script for the global statistics knows Wikipedia as a source.
+  - **MusicBrainz requests** end after 30 seconds and are tried once more after a network error; then a message says so instead of the import waiting forever.
+  - **Wikipedia:** requests name the script (Api-User-Agent, as Wikimedia asks); language codes of an article's other languages are checked before they become links.
+  - **Code:** two helpers for comparing names and for escaping patterns replace nine copies; nine texts nothing used are gone; the linter reports nothing any more (14 before).
+- Noted, not changed (the owner decides): what "Reset all settings" does while a profile is active; the edit note's count per source when sources were added; requests to the editor's own lookups have no time limit and no pause.
 
 ### Import 3.150.0
 

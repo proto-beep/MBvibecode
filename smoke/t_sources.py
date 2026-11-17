@@ -1037,7 +1037,7 @@ def case_quickfill3150():
         b.close()
     # F) Node
     src = H.MAIN
-    fn = ''.join(re.search(rf"\n  const {n} = .*?;\n", src).group(0) for n in ('norm', 'uniq')) + src[src.index('\n  const QF_WORDS'):src.index('\n  const QF_KINDS')] \
+    fn = ''.join(re.search(rf"\n  const {n} = .*?;\n", src).group(0) for n in ('norm', 'nameKey', 'uniq')) + src[src.index('\n  const QF_WORDS'):src.index('\n  const QF_KINDS')] \
         + re.search(r"\n  function qfWorksFor\(track, sources, siblings = \[\]\) \{.*?\n  \}\n", src, re.S).group(0)
     js = fn + """
 const sib = ['Song A', 'Song B', 'Movement I', 'Movement II'];
@@ -1051,6 +1051,65 @@ console.log(JSON.stringify([st, w, w2, w3]));"""
     print('F)', out.stdout.strip(), out.stderr[-300:])
     results.append(json.loads(out.stdout or 'null') == [['Suite#2', 'Suite#3', 'Suite#2', 'Suite#2', 'Song#b', 'Song#b', 'Movement#2', 'Movement#3', '-', '-', '-', '-', '-'],
                                                         [['w1', True]], [['a', False]], 0])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_fable3151():
+    """Credits Importer 3.151.0 (Fable review: integrity of the data).
+    A) The edit note names only what can be staged: Keys Guy has no MusicBrainz entry, his tracks are taken from Bandcamp – he is not
+       in "Sources differ" (until 3.150.0: "Keys Guy … took Bandcamp").
+    B) "Reset all settings" also forgets how the statistics are shown (folded cards, with or without creating, lengths of)."""
+    ALBUM = 'https://testband.bandcamp.com/album/testalbum'
+    BAND = 'https://testband.bandcamp.com/'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    H.ARTISTS.pop(3003)
+    H.MB_SEARCH['artist'] = []
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Bass Man – bass\nKeys Guy – synth (tracks 1, 3)', 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+
+    H.ws_release = ws
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (!sessionStorage.getItem('t-once')) { sessionStorage.setItem('t-once', '1'); localStorage.setItem('dci-stats-dur', '\"with\"'); "
+                            "localStorage.setItem('dci-stats-len-of', '\"release\"'); localStorage.setItem('dci-stats-fold', '{\"cards\":[\"sources\"],\"groups\":[]}'); }")
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(500)
+        H.open_supp(pg)
+        pg.click('[data-act=supp-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Bandcamp/.test(li.textContent))", 60)
+        H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
+        rows = pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(), tr.children[2].textContent.trim().slice(0, 8), tr.querySelector('input').checked])")
+        pg.click('[data-act=supp-apply]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp/.test(li.textContent))", 30)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        note = pg.evaluate("document.getElementById('edit-note-text').value")
+        print('A) Tabelle:', rows, '| Notiz:', [l for l in note.splitlines() if 'Bandcamp' in l or 'differ' in l])
+        results.append(any(r[0] == 'differs' and r[1].startswith('Keys Guy') and r[2] for r in rows) and 'Keys Guy' not in note and '1 credit also in Bandcamp' in note)
+        # B) reset all settings
+        before = pg.evaluate("['dci-stats-dur', 'dci-stats-len-of', 'dci-stats-fold'].map(k => localStorage.getItem(k) !== null)")
+        H.open_reset(pg)
+        pg.click('[data-act=reset-do]'); pg.wait_for_timeout(2500)
+        after = pg.evaluate("['dci-stats-dur', 'dci-stats-len-of', 'dci-stats-fold'].map(k => localStorage.getItem(k))")
+        print('B) vorher:', before, '| nachher:', after)
+        results.append(before == [True, True, True] and after == [None, None, None])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
