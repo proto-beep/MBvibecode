@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.154.0
+// @version      3.156.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.154.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.154.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.156.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.156.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.154.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.156.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1993,10 +1993,12 @@
       "log.instsCommonOff": "{name}: the row of the common level taken out",
       "settings.instsCommon": "Offer ⑃",
       "settings.instsCommonTitle": "Beside “Instruments: per track | on the release”: a row of the level all of them share (saxophones and a flute: woodwind)",
-      "insts.track": "per track",
-      "insts.release": "on the release",
+      "insts.track": "all tracks",
+      "insts.release": "on the release + group",
       "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
-      "insts.releaseTitle": "Each instrument on the release (with the release's date); on the recordings one row without a specific instrument (the instruments' group), with the date of the recordings",
+      "insts.releaseTitle": "Each instrument on the release (with the release's date); on the recordings one row of the group the instruments share (MusicBrainz's instrument tree), with the date of the recordings – switch back and forth as often as you like",
+      "insts.hint": "would be: release – {list} · recordings – {group}",
+      "insts.hintTitle": "What “on the release + group” would enter – only a preview, nothing set",
       "insts.sugg": "{n} instruments without tracks – not necessarily each on every track.",
       "insts.toRelease": "Put them on the release",
       "insts.keep": "Keep them per track",
@@ -2162,6 +2164,79 @@
       "settings.h.lookups": "Lookups of works",
       "settings.h.matrix": "Works matrix",
       "settings.h.suites": "Suites",
+      "magic.btn": "Answer all",
+      "magic.btnTitle": "Answers the open questions of the works matrix by the level “{level}” – a preview first; nothing is entered in MusicBrainz, each answer can be changed",
+      "magic.levelTitle": "Level of “✨ Answer all”",
+      "magic.level.careful": "Careful",
+      "magic.level.balanced": "Balanced",
+      "magic.level.bold": "Bold",
+      "magic.levelHint.careful": "Only what is as good as certain",
+      "magic.levelHint.balanced": "What is clear in the sources and MusicBrainz",
+      "magic.levelHint.bold": "Also the most likely answer where there are several",
+      "magic.infoTitle": "What each level answers",
+      "magic.infoNote": "Each answer is marked ✨ at its track and in the log; “↺ Undo magic” takes all of them back. The questions can be switched off in ⚙ Settings → Works.",
+      "magic.kind.suite": "Suites",
+      "magic.kind.work": "Works",
+      "magic.kind.medley": "Medleys",
+      "magic.kind.live": "Live",
+      "magic.kind.cover": "Cover",
+      "magic.kind.pub": "Publishers",
+      "magic.kind.coldate": "Column dates",
+      "magic.kind.ded": "Dedications",
+      "magic.rule.suite.careful": "a suite from a heading of the track list",
+      "magic.rule.suite.balanced": "also from an index track",
+      "magic.rule.suite.bold": "also from the title of the release",
+      "magic.rule.work.careful": "one work of exactly the title with all of the track’s writers",
+      "magic.rule.work.balanced": "one work found; none: a new work; several: open",
+      "magic.rule.work.bold": "several: the one of exactly the title with the most of the track’s writers",
+      "magic.rule.medley.careful": "stays one work",
+      "magic.rule.medley.balanced": "split when each part is a work of the track’s writers",
+      "magic.rule.medley.bold": "split when one part is such a work",
+      "magic.rule.live.careful": "the track itself is live (its title, its credit, the notes name it)",
+      "magic.rule.live.balanced": "also: the release group is Live, a concert, a credit for the whole release",
+      "magic.rule.live.bold": "also: the format, the notes of the release",
+      "magic.rule.cover.careful": "no cover",
+      "magic.rule.cover.balanced": "the cover set by itself is kept",
+      "magic.rule.cover.bold": "also the offers “co?”",
+      "magic.rule.pub.careful": "none",
+      "magic.rule.pub.balanced": "a suggested publisher kept when it is the only one of the track",
+      "magic.rule.pub.bold": "every suggested publisher kept",
+      "magic.rule.coldate.careful": "none",
+      "magic.rule.coldate.balanced": "writers of improvisations: the date of the one session of all tracks",
+      "magic.rule.coldate.bold": "as balanced",
+      "magic.rule.ded.careful": "none",
+      "magic.rule.ded.balanced": "MusicBrainz has one entry of the name, the level is known",
+      "magic.rule.ded.bold": "also without a track named: on the release group",
+      "magic.what.suite": "suite “{name}” ({from})",
+      "magic.what.medley": "split into {n} works ({found} found in MusicBrainz)",
+      "magic.what.pick": "work “{title}” linked ({why})",
+      "magic.what.new": "new work “{title}”",
+      "magic.what.part": "part linked to “{title}”",
+      "magic.what.live": "“live” on the link of “{title}” ({why})",
+      "magic.what.coverAuto": "“cover” on “{title}” kept",
+      "magic.what.cover": "“cover” on “{title}” (written by {names})",
+      "magic.what.pub": "{name} publishes “{title}”",
+      "magic.what.coldate": "{name}: the date of the column {date}",
+      "magic.what.ded": "{phrase}: {name}",
+      "magic.why.exact": "the title and all writers",
+      "magic.why.one": "the one found",
+      "magic.why.most": "the title and most writers",
+      "magic.previewTitle": "What “✨ Answer all” would answer",
+      "magic.none": "Nothing to answer at this level.",
+      "magic.previewHead.one": "Level “{level}”: {n} answer",
+      "magic.previewHead.other": "Level “{level}”: {n} answers",
+      "log.magicDone.one": "✨ Answer all ({level}): {n} answer",
+      "log.magicDone.other": "✨ Answer all ({level}): {n} answers",
+      "log.magicUndone.one": "✨ Undo magic: {n} answer taken back",
+      "log.magicUndone.other": "✨ Undo magic: {n} answers taken back",
+      "magic.kindsOff": "Switched off: {list}",
+      "magic.apply": "Answer these ({n})",
+      "magic.undo": "Undo magic",
+      "magic.undoTitle": "Takes back every answer of “✨ Answer all” of this import",
+      "magic.markTitle": "Answered by ✨: {list}",
+      "magic.looking": "Looking up the parts of the medleys …",
+      "settings.h.magic": "✨ Answer all",
+      "log.magicAnswer": "✨ {kind}: {track} – {what}",
       "settings.h.limits": "Staging and its limits",
       "settings.h.liveCom": "Live comments",
       "settings.h.yell": "Open items",
@@ -2793,6 +2868,11 @@
       "rules.quick": "Quick switches",
       "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
       "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
+      "quick.perm": "permanent",
+      "quick.permTitle": "Ticked: a change of this switch is stored (also for the next imports, in the active profile). Not ticked: it holds for this import only",
+      "quick.onceTag": "this import only",
+      "quick.onceNote.one": "{n} switch changed for this import only",
+      "quick.onceNote.other": "{n} switches changed for this import only",
       "mapping.missing": "MB x Vibecode: Credits Importer – mapping file missing",
       "mapping.missingText": "The script needs its mapping file ({file}) to read credits. The userscript manager did not load it, and fetching it from GitHub did not work either ({why}). “Update script” opens the script's address: install it again, the manager then loads the file with it.",
       "mapping.update": "Update script",
@@ -2811,12 +2891,12 @@
       "settings.ocrHead": "Text from cover art",
       "settings.betaNone": "No beta functions at the moment",
       "settings.h.beta": "Beta functions",
-      "qf.setting": "Credit fill",
-      "qf.settingTitle": "A button “Credit fill” beside “Import credits …” in the relationship editor",
+      "qf.setting": "Fill empty recordings",
+      "qf.settingTitle": "A switch “Fill empty recordings” beside “Import credits …” in the relationship editor",
       "qf.settingHint": "The tracks without any relationship get the credits the other tracks have – only when they all have the same (with dates and places); a work whose title is the track’s without its part (“Part 2”, “B”, “II”) is linked too. With no track to copy from: the recordings of the other releases of the release group with the same title and length. Nothing shows while it is off.",
-      "qf.button": "Credit fill",
-      "qf.buttonTitle": "Beta: the tracks without relationships get the credits of the other tracks (all or nothing)",
-      "qf.title": "Credit fill",
+      "qf.button": "Fill empty recordings",
+      "qf.buttonTitle": "The tracks without relationships get the credits of the other tracks (all or nothing)",
+      "qf.title": "Fill empty recordings",
       "qf.beta": "Beta",
       "qf.reading": "Reading the relationships of the release …",
       "qf.readingGroup": "Reading the other releases of the release group ({k} of {n}) …",
@@ -2837,9 +2917,9 @@
       "qf.notLoaded": "Tracks {list}: their medium is not loaded in the editor – open it there first. Nothing was filled.",
       "qf.noType": "no relationship type “{type}” in the editor",
       "qf.done": "{n} relationships added to {tracks} tracks – check them in the editor, then “Enter edit”.",
-      "log.qfNothing": "Credit fill: {why}",
-      "log.qfDone": "Credit fill: {n} relationships for {tracks} tracks (errors: {errors})",
-      "stats.qf": "Credit fill (beta): {n} times, {rels} relationships",
+      "log.qfNothing": "Fill empty recordings: {why}",
+      "log.qfDone": "Fill empty recordings: {n} relationships for {tracks} tracks (errors: {errors})",
+      "stats.qf": "Fill empty recordings: {n} times, {rels} relationships",
       "settings.t.cache": "Cache",
       "settings.t.statistics": "Statistics",
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
@@ -4801,7 +4881,19 @@
 
   /** [Z-MSYN] (3.97.0) Rules that cannot be switched on (S155: MusicBrainz does not allow it yet) – off, their switch greyed. */
   const LOCKED_RULES = new Set(['S155']);
+  /**
+   * [Z-QSSCOPE] (3.156.0) Quick switches changed for this import only: id → on. Not stored – a new import (or a reload) forgets them;
+   * a quick switch whose "permanent" box is ticked is stored as before (QS_PERM_KEY: the ids with the box ticked).
+   */
+  const QS_ONCE = new Map();
+  const QS_PERM_KEY = 'dci-qs-perm';
   function ruleOn(id) {
+    if (LOCKED_RULES.has(id)) return false;
+    if (QS_ONCE.has(id)) return QS_ONCE.get(id);
+    return ruleOnStored(id);
+  }
+  /** [Z-QSSCOPE] (3.156.0) A rule's stored switch, without the quick switches changed for this import only. */
+  function ruleOnStored(id) {
     if (LOCKED_RULES.has(id)) return false;
     return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
   }
@@ -4817,6 +4909,7 @@
   /** [3.31.7] Switches a built-in rule on or off (stored with the other switched rules). */
   function setRuleOn(id, on) {
     if (LOCKED_RULES.has(id)) return;
+    QS_ONCE.delete(id); // [Z-QSSCOPE] (3.156.0) a stored switch ends the one for this import
     if (DEFAULT_OFF_RULES.has(id)) {
       if (on) rulesOff().add(`+${id}`);
       else rulesOff().delete(`+${id}`);
@@ -4824,6 +4917,7 @@
     else rulesOff().add(id);
     // [Z-QSP] (3.75.0, S110) a quick switch is part of the profile
     if (writeJson.hook) writeJson.hook(`rule:${id}`);
+    if (id === 'S286') applyLevelColors(); // [Z-CREDITUL] (3.156.0) the underline follows at once
   }
 
   /** Instrument spellings: own ones first, then the built-in table (T001). */
@@ -5025,6 +5119,9 @@
     { id: 'S281', where: 'tidyLines, TEXT.parse (end), labelHintHtml', note: 'Texts (3.154.0; collected item Z-OCRTRACKCHECK): a track list with lengths ("1. Stratosfear 10:00") is no credit – compared with MusicBrainz\'s tracks (titles as words, lengths 5 s apart at most): "fits" or what differs, above the entries; its lines left out. Only a list of its own (no lines between its tracks) and titles without brackets – the composers of a track stay its credits (S180)' },
     { id: 'S282', where: 'ocrBoxes', note: 'Text from cover art (3.154.0; collected item Z-SCANSPLIT): a double page – an image at least 1.6 times as wide as high, read whole – is read as its left and its right page apart; not when "the whole image" was chosen, the image was turned by hand or it is a frame drawn on the source page' },
     { id: 'S283', where: 'fnEligible, fnFind, suggestStackHtml', note: 'Entries (3.154.0; collected item Z-FIRSTNAME): a first name alone ("otto", "monique") – "Assign first name …", only on a click, only suggestions: the release\'s artists and the members of its groups of that first name; the people in the relationships of the artist\'s releases around this one (± 3 years, wider in steps of three up to ⚙ Settings → Sources); those related to the members (Monique Froese through Edgar Froese) – by how often, with where from' },
+    { id: 'S284', where: 'magicPlan, magicApply, magicUndoAll, magicHeadHtml, magicPopHtml', note: 'Works (3.155.0; collected item Z-WORKMAGIC): "✨ Answer all" at the works matrix answers its open questions by a level – careful, balanced, bold (▾; ⓘ shows what each answers) –: suites, works, medleys, live, cover, publishers, column dates, dedications; a preview first, each answer marked ✨ and in the log, "↺ Undo magic" takes them back; the questions switched in ⚙ Settings → Works' },
+    { id: 'S285', where: 'numWordSmall, caseCredit', note: 'Texts (3.156.0; collected item Z-NUMSTRING): a number word before an instrument in a credit is written small like the instrument – "25-String Gayageum" → "25-string gayageum", "Twelve-String Guitar", "Double-Neck Guitar" –; a model name keeps its capitals ("Rickenbacker 12-String")' },
+    { id: 'S286', where: 'applyLevelColors, .dci-credul', note: 'Groups (3.156.0; collected item Z-CREDITUL): what is entered is underlined in MusicBrainz purple – the matched name, or the "credited as" name when one is set (then the name above loses its underline)' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -7048,6 +7145,21 @@
    */
   let caseCtx = null;
 
+  /**
+   * [Z-NUMSTRING] (3.156.0, S285) The part of an instrument after a number or a number word written small: "25-String" → "25-string",
+   * "Double-Neck" → "double-neck", "4-Hole" → "4-hole". A model keeps its spelling – the word before it begins with a capital
+   * ("Rickenbacker 12-String", "Gibson Double-Neck").
+   */
+  const NUM_PARTS = /^(?:strings?|necks?|courses?|keys?|holes?|rows?|valves?|pieces?|pedals?|bars?|voices?|octaves?|manuals?|channels?|stops?|tracks?|frets?|drones?|chords?)$/i;
+  const NUM_HEADS = /^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|double|triple|single)$/i;
+  function numWordSmall(word, before) {
+    const m = String(word).match(/^([^-]+)-([^-]+)$/u);
+    if (!m || !NUM_HEADS.test(m[1]) || !NUM_PARTS.test(m[2]) || !/\p{Lu}/u.test(word)) return word;
+    const prev = String(before || '').trim().split(/\s+/).pop() || '';
+    if (/^\p{Lu}/u.test(prev) && !/^\d/.test(prev)) return word;
+    return `${/^\d+$/.test(m[1]) ? m[1] : m[1].toLowerCase()}-${m[2].toLowerCase()}`;
+  }
+
   /** Applies the word rule to a credit text, keeping separators and brackets. */
   // [S011] which words stay capitalised (instrument models) and which are written in lower case
   function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }, { lowerUnknown = false, quiet = false } = {}) {
@@ -7077,7 +7189,10 @@
       if (runs && run && run.length > 1) runs.push(run.join(' '));
       run = null;
     };
-    const words = (part, base) => part.replace(/[^\s,[\]()/]+/g, (w, off) => {
+    const words = (part, base) => part.replace(/[^\s,[\]()/]+/g, (w0, off) => {
+      // [Z-NUMSTRING] (3.156.0, S285) a number with its word – "25-String gayageum", "Double-Neck", "4-Hole": the word small; a model keeps it
+      // ("Rickenbacker 12-String": the word before it a name)
+      const w = ruleOn('S285') ? numWordSmall(w0, part.slice(0, off)) : w0;
       if (!lowerUnknown) return caseWord(w, vocab, keep);
       const out = lowerWord(w, vocab, keep);
       const small = out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab));
@@ -16850,6 +16965,16 @@
     wattrOpenAll: false,
     // "Spell out": the attributes with their names instead of the short forms (remembered)
     wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
+    // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the kinds switched off (remembered); its answers of this import
+    magicLevel: readJson('localStorage', 'dci-magic-level', 'careful'),
+    magicOff: readJson('localStorage', 'dci-magic-off', []) || [],
+    magicMarks: new Map(),
+    magicUndo: [],
+    magicMedley: new Map(),
+    magicPreview: false,
+    magicMenu: false,
+    magicInfo: false,
+    magicBusy: false,
     workDates: readJson('localStorage', 'dci-work-dates', true) !== false, // [Z-WORKDATE] (3.130.0)
     workDateOff: new Set(),
     workDateOwn: new Map(),
@@ -20346,18 +20471,25 @@
     return `<details class="dci-video-map" data-el="video-map"><summary title="${esc(tr('video.mapTitle'))}">${esc(tr('video.map'))}</summary>
       <table class="dci-video-table"><thead><tr><th>${esc(tr('video.thWords'))}</th><th>${esc(tr('video.thType'))}</th></tr></thead><tbody>${rows}</tbody></table></details>`;
   }
+  /** [Z-QSSCOPE] (3.156.0) The quick switches whose changes are stored (their "permanent" box ticked). */
+  function qsPerm() {
+    if (!qsPerm.set) qsPerm.set = new Set(loadStore(QS_PERM_KEY, []));
+    return qsPerm.set;
+  }
   function quickSwitchesHtml() {
     const notes = ruleNotes();
+    const perm = qsPerm();
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
     const one = (id) => {
       const on = ruleOn(id);
       // [Z-MSYN] (3.97.0) a switch that cannot be switched on yet: greyed, with why
       const locked = LOCKED_RULES.has(id);
-      return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
-        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
+      const once = QS_ONCE.has(id);
+      return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}${once ? ' dci-qonce' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span>${once ? `<span class="dci-qonce-tag">${esc(tr('quick.onceTag'))}</span>` : ''}</button><label class="dci-qperm" title="${esc(tr('quick.permTitle'))}"><input type="checkbox" data-qs-perm="${esc(id)}"${perm.has(id) ? ' checked' : ''}${locked ? ' disabled' : ''}><span>${esc(tr('quick.perm'))}</span></label><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
-      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
+      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span>${QS_ONCE.size ? `<span class="dci-qonce-note" data-el="qs-once">${esc(tr(QS_ONCE.size === 1 ? 'quick.onceNote.one' : 'quick.onceNote.other', { n: QS_ONCE.size }))}</span>` : ''}</div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
       ['other', QUICK_SWITCHES.filter((id) => !QUICK_GROUPS.some(([, ids]) => ids.includes(id)))]].filter(([, ids]) => ids.length)
       .map(([g, ids]) => `<div class="dci-quick-group" data-qgroup="${g}"><div class="dci-quick-gh">${esc(tr(`quick.group.${g}`))}</div><div class="dci-quick-grid">${ids.map(one).join('')}</div></div>`).join('')}${QUICK_SWITCHES.filter((id) => LOCKED_RULES.has(id))
         .map((id) => `<p class="dci-sub dci-qlocked-note" data-qs-note="${esc(id)}">${esc(`${id}: ${tr(`quick.${id}.locked`)}`)}</p>`).join('')}</div>`;
@@ -20696,7 +20828,13 @@
         const qt = t.closest('[data-qs-toggle]');
         if (qt) {
           const id = qt.dataset.qsToggle;
-          setRuleOn(id, !ruleOn(id));
+          // [Z-QSSCOPE] (3.156.0) for this import only, unless its "permanent" box is ticked
+          if (qsPerm().has(id)) setRuleOn(id, !ruleOn(id));
+          else {
+            const on = !ruleOn(id);
+            if (on === ruleOnStored(id)) QS_ONCE.delete(id);
+            else QS_ONCE.set(id, on);
+          }
           applyRulesChange(id);
           const again = el.querySelector(`[data-qs-toggle="${id}"]`);
           if (again) again.focus({ preventScroll: true });
@@ -20707,6 +20845,21 @@
         if (t.dataset.ruleOn) {
           setRuleOn(t.dataset.ruleOn, t.checked);
           applyRulesChange(t.dataset.ruleOn);
+        } else if (t.dataset.qsPerm) {
+          // [Z-QSSCOPE] (3.156.0) ticked: the switch as it is now is stored (a change for this import only becomes permanent)
+          const id = t.dataset.qsPerm;
+          const set = qsPerm();
+          if (t.checked) {
+            set.add(id);
+            if (QS_ONCE.has(id)) {
+              setRuleOn(id, QS_ONCE.get(id));
+              applyRulesChange(id);
+            }
+          } else set.delete(id);
+          writeJson('localStorage', QS_PERM_KEY, [...set]);
+          renderRulesBody();
+          const again = el.querySelector(`[data-qs-perm="${id}"]`);
+          if (again) again.focus({ preventScroll: true });
         } else if (t.dataset.uruleOn) {
           const u = userRules().find((x) => x.id === t.dataset.uruleOn);
           if (u) u.on = t.checked;
@@ -30673,6 +30826,12 @@
     S.oneWork = null;
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
+    QS_ONCE.clear(); // [Z-QSSCOPE] (3.156.0) the quick switches for the last import only: back to the stored ones
+    // [Z-WORKMAGIC] (3.155.0) the answers of "✨ Answer all" belong to the import before
+    S.magicMarks.clear();
+    S.magicMedley.clear();
+    S.magicUndo = [];
+    S.magicPreview = false;
     S.suiteWorks.clear();
     S.suiteManual.clear(); // [Z-SUM] (3.41.11)
     // ([Z-WORKDATE-REM] 3.135.0, review) the dates of linked works' links: remembered choices too
@@ -36794,7 +36953,20 @@
     if (sel && sel.value !== sortMode()) sel.value = sortMode();
   }
 
+  /**
+   * [Z-STICKYOVERLAP] (3.156.0) The height of the bar that stays on top of the dashboard (the manual entry, the pools' bar …) as
+   * --dci-stick-h: the head of an entry's matrix with its dates open sticks below it, not under or over it.
+   */
+  function watchStick() {
+    const st = S.overlay && S.overlay.querySelector('[data-el="stick"]');
+    if (!st || watchStick.el === st || typeof ResizeObserver !== 'function') return;
+    if (watchStick.ro) watchStick.ro.disconnect();
+    watchStick.el = st;
+    watchStick.ro = new ResizeObserver(() => S.overlay.style.setProperty('--dci-stick-h', `${st.offsetHeight}px`));
+    watchStick.ro.observe(st);
+  }
   function renderGroups() {
+    watchStick();
     // [Z-SRCTAG] ((3.127.0, review) S201) the sources of rows and entries worked out once for this drawing
     S.originMemo = ruleOn('S201') ? new Map() : null;
     if (S.overlay) S.overlay.classList.toggle('dci-s201', ruleOn('S201'));
@@ -40797,7 +40969,8 @@
   }
 
   // --- [Z-INSTS] (3.103.0, S169, S170) many instruments of a person without tracks: per track, or on the release --------------------
-  const INSTS_SUGGEST = 4;
+  // ([Z-INSTS2] 3.156.0) from two instruments without tracks (until 3.155.0 four)
+  const INSTS_SUGGEST = 2;
   const instsKind = (r) => {
     const lt = ltOf(r);
     const n = lt ? norm(lt.name) : '';
@@ -41010,8 +41183,14 @@
   function instsSegHtml(a) {
     if (!instsAvail(a)) return instsCommonBtnHtml(a).trim() ? ` <span class="dci-insts-seg">${instsCommonBtnHtml(a)}</span>` : '';
     const on = a.insts === 'release';
-    return ` <span class="dci-insts-seg"><span class="dci-sub">${esc(tr('insts.label'))}</span> <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('insts.label'))}">${['track', 'release'].map((v) => `<button type="button"
-      data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${esc(tr(`insts.${v}`))}</button>`).join('')}</span>${instsCommonBtnHtml(a)}</span>`;
+    // [Z-INSTSCLEAR] (3.156.0) two buttons in the colours of their levels – "all tracks" and "⑃ on the release + group" (the common level
+    // in it: no ⑃ of its own here) –, the one not chosen greyed; beside them, in italics, what the other one would enter
+    const rows = on ? S.rows.filter((r) => r.artistKey === a.key && r.instsPrev) : instsRows(a);
+    const names = uniq(rows.map((r) => r.primaryText || r.raw).filter(Boolean));
+    const group = instsGroup(rows) || tr(rows.some((r) => instsKind(r) === 'vocal') ? 'insts.commonPerformer' : 'insts.commonAll');
+    const hint = !on && names.length ? ` <span class="dci-insts-hint" data-el="insts-hint" title="${esc(tr('insts.hintTitle'))}">${esc(tr('insts.hint', { list: names.join(', '), group }))}</span>` : '';
+    return ` <span class="dci-insts-seg"><span class="dci-sub">${esc(tr('insts.label'))}</span> <span class="dci-seg dci-seg-small dci-insts-btns" role="group" aria-label="${esc(tr('insts.label'))}">${['track', 'release'].map((v) => `<button type="button"
+      class="dci-insts-${v}${on === (v === 'release') ? '' : ' dci-insts-off'}" data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${v === 'release' ? '⑃ ' : ''}${esc(tr(`insts.${v}`))}</button>`).join('')}</span>${hint}</span>`;
   }
   /** At the top of the entry: the suggestion (from four instruments without tracks), and the switch where no matrix shows it. */
   function instsBarHtml(a) {
@@ -44577,6 +44756,322 @@
       S.medleyMark.delete(i);
     } else planPendingWork(i);
   }
+  // --- [Z-WORKMAGIC] (3.155.0, S284) "✨ Answer all": the open questions of the works matrix answered by a level -----------------
+  /** The levels of "✨ Answer all" and the kinds of questions it answers (each one a switch in ⚙ Settings → Works). */
+  const MAGIC_LEVELS = ['careful', 'balanced', 'bold'];
+  const MAGIC_KINDS = ['suite', 'work', 'medley', 'live', 'cover', 'pub', 'coldate', 'ded'];
+  const MAGIC_LEVEL_KEY = 'dci-magic-level';
+  const MAGIC_OFF_KEY = 'dci-magic-off';
+  const magicLevel = () => (MAGIC_LEVELS.includes(S.magicLevel) ? S.magicLevel : 'careful');
+  const magicKindOn = (k) => !(S.magicOff || []).includes(k);
+  const magicAt = (lv) => MAGIC_LEVELS.indexOf(magicLevel()) >= MAGIC_LEVELS.indexOf(lv);
+  /** The live reasons answered at each level: the track itself says so – then the release group, a concert, a credit for all – then all. */
+  const MAGIC_LIVE = { careful: ['title', 'credit', 'notesTracks'], balanced: ['rg', 'concert', 'creditAll'], bold: ['format', 'notes'] };
+  /**
+   * The medleys asked before the preview: the works of the track's writers of each part's title (one lookup a part, in the queue of
+   * MusicBrainz's requests) – i → { parts, hits: [{ gid, title } | null] }. Read once per track and import.
+   */
+  async function magicMedleyLookups() {
+    if (!magicKindOn('medley') || !magicAt('balanced')) return;
+    for (const t of S.mbTracks) {
+      const i = t.idx;
+      if (!matrixTrack(t) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i) || S.magicMedley.has(i)) continue;
+      const parts = medleyParts(i);
+      const writers = writerMbidsOfTrack(i);
+      if (parts.length < 2 || !writers.length) continue;
+      const hits = [];
+      for (const title of parts) {
+        let found = [];
+        try {
+          found = await searchWorks(title, writers);
+        } catch {
+          found = [];
+        }
+        const same = found.filter((w) => norm(w.title) === norm(title) || (w.aliases || []).some((x) => norm(x) === norm(title)));
+        hits.push(same.length === 1 ? { gid: same[0].gid, title: same[0].title } : null);
+      }
+      S.magicMedley.set(i, { parts, hits });
+    }
+  }
+  /**
+   * The answers "✨ Answer all" would give now: [{ kind, i, label, what, apply() → undo() (or a promise of it) }]. Nothing is entered
+   * in MusicBrainz – each answer is what a click in the matrix (or the box of dedications) does; a track gets one answer of each kind.
+   */
+  function magicPlan() {
+    if (!S.release || S.worksSkip) return [];
+    const out = [];
+    const lv = magicLevel();
+    const tl = (i) => trackLabel(S.mbTracks[i]);
+    // suites: from a heading (careful), an index track (balanced), the release's title (bold); never one added by hand
+    const taken = new Set();
+    if (magicKindOn('suite')) {
+      const from = ['heading', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release'] : [])];
+      for (const o of suiteAsks()) {
+        if (S.suiteAnswers.has(o.key) || !from.includes(o.from) || !o.tracks.length) continue;
+        o.tracks.forEach((i) => taken.add(i));
+        out.push({ kind: 'suite', i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
+          what: tr('magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`) }),
+          apply: () => {
+            acceptSuite(o, o.name);
+            return () => { const o2 = suiteAsks().find((x) => x.key === o.key); if (o2) undoSuite(o2); S.suiteAnswers.delete(o.key); };
+          } });
+      }
+    }
+    // medleys: split when each part is a work of the track's writers (balanced) – or one of them (bold); careful: one work
+    if (magicKindOn('medley') && magicAt('balanced')) {
+      for (const [i, m] of S.magicMedley) {
+        if (taken.has(i) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i)) continue;
+        const n = m.hits.filter(Boolean).length;
+        if (!(n === m.parts.length || (n > 0 && magicAt('bold')))) continue;
+        taken.add(i);
+        out.push({ kind: 'medley', i, label: tl(i), what: tr('magic.what.medley', { n: m.parts.length, found: n }),
+          apply: () => {
+            planPendingWork(i);
+            splitMedley(i);
+            (S.workParts.get(i) || []).forEach((p, k) => {
+              const h = m.hits[k];
+              if (h && p.origin === 'pending') Object.assign(p, { gid: h.gid, title: h.title, origin: 'search' });
+            });
+            return () => {
+              joinMedley(i);
+              if ((S.workPlan.get(i) || {}).origin === 'pending') S.workPlan.delete(i);
+            };
+          } });
+      }
+    }
+    if (magicKindOn('work')) {
+      for (const t of S.mbTracks) {
+        const i = t.idx;
+        if (!matrixTrack(t) || worksForTrack(i).length || S.workPlan.has(i) || S.workParts.has(i) || taken.has(i)) continue;
+        const search = S.workSearch.get(i);
+        if (!search || !['done', 'noWriters'].includes(search.state)) continue;
+        const cands = sameNamed(i);
+        const title = normTitle(workTitleOf(t.title));
+        const people = [...creditedWritersOf(i).keys()];
+        // the writers of the track all credited on the work (a work of the search knows their MusicBrainz ids)
+        const sameWriters = (w) => Array.isArray(w.writerIds) && people.length > 0 && people.every((id) => w.writerIds.includes(id));
+        const exact = cands.filter((w) => normTitle(w.title) === title);
+        let pick = null;
+        let why = '';
+        if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
+        else if (cands.length === 1 && magicAt('balanced')) [pick, why] = [cands[0], 'magic.why.one'];
+        else if (cands.length > 1 && magicAt('bold')) {
+          // (several: the one of exactly this title with the most of the track's writers – MusicBrainz's numbers of recordings are not loaded)
+          const score = (w) => (Array.isArray(w.writerIds) ? people.filter((id) => w.writerIds.includes(id)).length : 0);
+          const best = Math.max(0, ...exact.map(score));
+          const top = exact.filter((w) => score(w) === best);
+          if (best > 0 && top.length === 1) [pick, why] = [top[0], 'magic.why.most'];
+        }
+        if (pick) {
+          const w = pick;
+          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why) }),
+            apply: () => {
+              S.workPlan.set(i, { gid: w.gid, title: w.title, origin: 'search', flags: new Set(), composer: w.composer || '', composerName: w.composerName || '', magic: true });
+              addFoundWorkRels(w.gid);
+              return () => { if ((S.workPlan.get(i) || {}).gid === w.gid) S.workPlan.delete(i); };
+            } });
+        } else if (!cands.length && magicAt('balanced')) {
+          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.new', { title: workTitleOf(t.title) }),
+            apply: () => {
+              planNewWork(i);
+              return () => {
+                if (S.workParts.has(i) && (S.workParts.get(i) || []).every((p) => p.origin === 'pending')) S.workParts.delete(i);
+                if ((S.workPlan.get(i) || {}).origin === 'pending') S.workPlan.delete(i);
+              };
+            } });
+        }
+      }
+      // the parts of a suite or a medley with one work of MusicBrainz found ("Link …" at the part)
+      if (magicAt('balanced')) {
+        for (const [i, ps] of S.workParts) {
+          for (const p of ps) {
+            if (p.origin !== 'pending' || !p.offer) continue;
+            const offer = { ...p.offer };
+            out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.part', { title: offer.title }),
+              apply: () => {
+                const before = { gid: p.gid, title: p.title, offer: p.offer, entity: p.entity };
+                Object.assign(p, { gid: offer.gid, title: offer.title, origin: 'search' });
+                delete p.offer;
+                delete p.entity;
+                return () => { Object.assign(p, { gid: before.gid, title: before.title, origin: 'pending', offer: before.offer }); if (before.entity) p.entity = before.entity; };
+              } });
+          }
+        }
+      }
+    }
+    // the attributes of a link: one step of setLinkAttr, its sets and the plan's flags as before
+    const attrStep = (i, work, name) => () => {
+      const key = linkKey(i, work.gid);
+      const on0 = new Set(S.linkAttrOn.get(key) || []);
+      const off0 = new Set(S.linkAttrOff.get(key) || []);
+      const plan = work.planned ? planOf(i, work.gid) : null;
+      const flags0 = plan ? new Set(plan.flags) : null;
+      setLinkAttr(i, work, name, true);
+      return () => {
+        S.linkAttrOn.set(key, on0);
+        S.linkAttrOff.set(key, off0);
+        if (plan && flags0) plan.flags = flags0;
+      };
+    };
+    const mrows = (magicKindOn('live') || magicKindOn('cover') || magicKindOn('pub')) ? matrixRows() : [];
+    if (magicKindOn('live')) {
+      const reasons = MAGIC_LEVELS.slice(0, MAGIC_LEVELS.indexOf(lv) + 1).flatMap((x) => MAGIC_LIVE[x]);
+      for (const m of mrows) {
+        if (!m.work || workLocked(m.work) || !liveHint(m.i, m.work) || !reasons.includes(liveReason(m.i))) continue;
+        out.push({ kind: 'live', i: m.i, label: tl(m.i), what: tr('magic.what.live', { title: m.work.title, why: liveWhyText(m.i) }), apply: attrStep(m.i, m.work, 'live') });
+      }
+    }
+    if (magicKindOn('cover') && magicAt('balanced')) {
+      for (const m of mrows) {
+        if (!m.work || !m.work.planned || workLocked(m.work)) continue;
+        const on = S.linkAttrOn.get(linkKey(m.i, m.work.gid)) || new Set();
+        // the "cover" set by itself kept for good (balanced); the offer "co?" taken (bold)
+        if (coverAuto(m.i, m.work) && !on.has('cover') && linkAttrsOf(m.i, m.work).has('cover')) {
+          out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.coverAuto', { title: m.work.title }), apply: attrStep(m.i, m.work, 'cover') });
+        } else if (magicAt('bold') && coverComposers(m.i, m.work).length) {
+          out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.cover', { title: m.work.title, names: coverComposers(m.i, m.work).join(', ') }), apply: attrStep(m.i, m.work, 'cover') });
+        }
+      }
+    }
+    // the publishers suggested for a track (evidence, the notes): kept – balanced only when one publisher is suggested for it
+    if (magicKindOn('pub') && magicAt('balanced')) {
+      const cols = matrixColumns().filter((c) => !c.removed && c.rows.some(isPublishingRow));
+      for (const m of mrows) {
+        if (!m.work || workLocked(m.work)) continue;
+        const hits = cols.map((c) => [c, cellState(c, m).active.filter((r) => isPublishingRow(r) && isSuggestedCell(r, m.i))]).filter(([, rs]) => rs.length);
+        if (!hits.length || (hits.length > 1 && !magicAt('bold'))) continue;
+        for (const [c, rs] of hits) {
+          out.push({ kind: 'pub', i: m.i, label: tl(m.i), what: tr('magic.what.pub', { name: c.name, title: m.work.title }),
+            apply: () => {
+              const was = rs.map((r) => [r, r.pubTouched]);
+              rs.forEach((r) => { r.confirmed = (r.confirmed || new Set()).add(m.i); r.pubTouched = true; });
+              ppsHandSet(c, m);
+              return () => was.forEach(([r, t]) => { if (r.confirmed) r.confirmed.delete(m.i); r.pubTouched = t; });
+            } });
+        }
+      }
+    }
+    // the date of a column (writers of improvisations): the one session of all tracks – the music was made then (balanced)
+    if (magicKindOn('coldate') && magicAt('balanced')) {
+      const perf = (dm().cells || []).filter((c) => c.col === 'performance');
+      const entry = perf.length === 1 ? cellEntry(perf[0]) : null;
+      const all = perf.length === 1 && !(perf[0].tgs || []).length;
+      if (entry && all) {
+        for (const c of matrixColumns()) {
+          if (c.removed || !c.rows.some((r) => r.improv) || hasDateInput(S.mxColDate.get(c.key) || emptyDate())) continue;
+          out.push({ kind: 'coldate', i: 0, label: c.name, what: tr('magic.what.coldate', { name: c.name, date: poolLabel(entry) }),
+            apply: () => {
+              const was = S.mxColDate.get(c.key) || null;
+              S.mxColDate.set(c.key, { ...fieldsFromDate(entry), poolId: entry.id });
+              applyColumnDate(c.key);
+              return () => {
+                if (was) S.mxColDate.set(c.key, was);
+                else S.mxColDate.delete(c.key);
+                applyColumnDate(c.key);
+              };
+            } });
+        }
+      }
+    }
+    // dedications of the box: one entry of the name in MusicBrainz – on the level it names (balanced), on the release group when it names
+    // no track (bold)
+    if (magicKindOn('ded') && magicAt('balanced')) {
+      for (const x of S.dedSugg || []) {
+        if ((x.hits || []).length !== 1 || (x.needTrack && !magicAt('bold'))) continue;
+        const h = x.hits[0];
+        out.push({ kind: 'ded', i: x.track != null ? x.track : 0, label: x.phrase, what: tr('magic.what.ded', { phrase: x.phrase, name: h.name || x.name }),
+          apply: async () => {
+            const n0 = S.rows.length;
+            await dedTake(x.key, h.gid);
+            const added = S.rows.slice(n0).filter((r) => r.dedication && r.dedication.key === x.key);
+            return () => {
+              if (!added.length) return;
+              S.rows = S.rows.filter((r) => !added.includes(r));
+              if (!(S.dedSugg || []).includes(x)) S.dedSugg = [...(S.dedSugg || []), x];
+              dedUnchoose(x.key);
+            };
+          } });
+      }
+    }
+    return out;
+  }
+  /** [Z-WORKMAGIC] (3.155.0) What was chosen for a dedication of this release forgotten again ("↺ Undo magic"). */
+  function dedUnchoose(key) {
+    if (!releaseMbid || !key) return;
+    const all = readJson('localStorage', DED_KEY, null) || {};
+    const rel = String(releaseMbid).toLowerCase();
+    if (!all[rel] || !all[rel][key]) return;
+    delete all[rel][key];
+    writeJson('localStorage', DED_KEY, all);
+  }
+  /** "✨ Answer all": the answers of the preview given; each marked ✨ at its track, in the log; "↺ Undo magic" takes them all back. */
+  async function magicApply() {
+    const plan = magicPlan();
+    S.magicPreview = false;
+    if (!plan.length) return;
+    const undos = [];
+    let n = 0;
+    for (const x of plan) {
+      try {
+        const u = await x.apply();
+        if (typeof u === 'function') undos.push(u);
+      } catch (e) {
+        log('warn', 'error', { text: e.message });
+        continue;
+      }
+      n += 1;
+      const text = `${tr(`magic.kind.${x.kind}`)}: ${x.what}`;
+      (x.tracks || [x.i]).forEach((i) => { if (!S.magicMarks.has(i)) S.magicMarks.set(i, []); S.magicMarks.get(i).push(text); });
+      log('info', 'magicAnswer', { kind: tr(`magic.kind.${x.kind}`), track: x.label, what: x.what });
+    }
+    S.magicUndo = [...(S.magicUndo || []), ...undos];
+    log('info', 'magicDone', { n, level: tr(`magic.level.${magicLevel()}`) });
+  }
+  /** "↺ Undo magic": the state before every "✨ Answer all" since the import (the last answers first). */
+  function magicUndoAll() {
+    const undos = S.magicUndo || [];
+    for (const u of [...undos].reverse()) {
+      try { u(); } catch (e) { log('warn', 'error', { text: e.message }); }
+    }
+    S.magicUndo = [];
+    S.magicMarks.clear();
+    log('info', 'magicUndone', { n: undos.length });
+  }
+  /** The ✨ button with its ▾ (the level), ⓘ (what each level answers) and, once it answered, "↺ Undo magic" – in the head of the works matrix. */
+  function magicHeadHtml() {
+    if (!ruleOn('S284')) return '';
+    const lv = magicLevel();
+    return `<span class="dci-mx-magic"><button type="button" class="dci-small dci-mx-magicbtn" data-act="magic-open" aria-expanded="${!!S.magicPreview}" title="${esc(tr('magic.btnTitle', { level: tr(`magic.level.${lv}`) }))}">✨ ${esc(tr('magic.btn'))}</button><button type="button" class="dci-small dci-mx-magiclv" data-act="magic-menu" aria-expanded="${!!S.magicMenu}" aria-label="${esc(tr('magic.levelTitle'))}" title="${esc(tr('magic.levelTitle'))}: ${esc(tr(`magic.level.${lv}`))}">▾</button><button type="button" class="dci-wh-help" data-act="magic-info" aria-expanded="${!!S.magicInfo}" aria-label="${esc(tr('magic.infoTitle'))}" title="${esc(tr('magic.infoTitle'))}">i</button>${(S.magicUndo || []).length ? ` <button type="button" class="dci-textbtn" data-act="magic-undo" title="${esc(tr('magic.undoTitle'))}">↺ ${esc(tr('magic.undo'))}</button>` : ''}</span>`;
+  }
+  /** ⓘ: what each level answers, question by question (the kinds switched off named). */
+  function magicInfoHtml() {
+    const rows = MAGIC_KINDS.map((k) => `<tr${magicKindOn(k) ? '' : ' class="dci-mx-magicoff"'}><th scope="row">${esc(tr(`magic.kind.${k}`))}${magicKindOn(k) ? '' : ` <span class="dci-sub">(${esc(tr('common.off'))})</span>`}</th>${MAGIC_LEVELS.map((lv) => `<td>${esc(tr(`magic.rule.${k}.${lv}`))}</td>`).join('')}</tr>`).join('');
+    return `<div class="dci-wh-pop dci-mx-magicinfo" data-el="magic-info"><table class="dci-mx-magictable"><thead><tr><th></th>${MAGIC_LEVELS.map((lv) => `<th scope="col"${lv === magicLevel() ? ' class="dci-mx-magiccur"' : ''}>${esc(tr(`magic.level.${lv}`))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+      <p class="dci-sub">${esc(tr('magic.infoNote'))}</p></div>`;
+  }
+  /** The level chosen at ▾, ⓘ, and the preview of what ✨ would answer (nothing given until "Answer these"). */
+  function magicPopHtml() {
+    if (!ruleOn('S284')) return '';
+    const lv = magicLevel();
+    const menu = S.magicMenu ? `<div class="dci-wh-pop dci-mx-magicmenu" data-el="magic-menu" role="group" aria-label="${esc(tr('magic.levelTitle'))}">
+        ${MAGIC_LEVELS.map((x) => `<button type="button" class="dci-textbtn" data-act="magic-level" data-level="${x}" aria-pressed="${x === lv}" title="${esc(tr(`magic.levelHint.${x}`))}">${x === lv ? '✓ ' : ''}${esc(tr(`magic.level.${x}`))}</button>`).join('')}
+        <span class="dci-sub">${esc(tr(`magic.levelHint.${lv}`))}</span></div>` : '';
+    const info = S.magicInfo ? magicInfoHtml() : '';
+    if (!S.magicPreview) return menu + info;
+    if (S.magicBusy) return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview"><p class="dci-sub">${esc(tr('magic.looking'))}</p></div>`;
+    const plan = magicPlan();
+    const kinds = MAGIC_KINDS.filter((k) => plan.some((x) => x.kind === k));
+    const off = MAGIC_KINDS.filter((k) => !magicKindOn(k));
+    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, 40).map((x) => `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`).join('')}</ul></li>`).join('');
+    return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview" role="group" aria-label="${esc(tr('magic.previewTitle'))}">
+      <p><strong>${esc(tr('magic.previewHead', { level: tr(`magic.level.${lv}`), n: plan.length }))}</strong></p>
+      ${plan.length ? `<ul class="dci-mx-magiclist">${list}</ul>` : `<p class="dci-sub" data-el="magic-none">${esc(tr('magic.none'))}</p>`}
+      ${off.length ? `<p class="dci-sub">${esc(tr('magic.kindsOff', { list: off.map((k) => tr(`magic.kind.${k}`)).join(', ') }))}</p>` : ''}
+      <div>${plan.length ? `<button type="button" class="dci-primary dci-small" data-act="magic-apply">✨ ${esc(tr('magic.apply', { n: plan.length }))}</button> ` : ''}<button type="button" class="dci-small" data-act="magic-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+  }
+  /** ✨ at the track of an answer given by "✨ Answer all" (its tooltip: what). */
+  const magicMarkHtml = (i) => (S.magicMarks && S.magicMarks.has(i) ? `<span class="dci-mx-magicmark" data-el="magic-mark" title="${esc(tr('magic.markTitle', { list: S.magicMarks.get(i).join(' · ') }))}">✨</span>` : '');
+
   /** [Z-MDLY] (3.98.0) The tracks without a work whose title has parts (not split yet). */
   const medleyTracks = () => S.mbTracks.filter((t) => matrixTrack(t) && !S.workParts.has(t.idx) && !S.workPlan.has(t.idx) && medleyParts(t.idx).length > 1).map((t) => t.idx);
   /**
@@ -44950,6 +45445,10 @@
     ['mxNewMenu', '.dci-mx-newmenu, [data-act="mx-newmenu"]', (v) => `[data-el="works"] tr[data-work="${v}"] [data-act="mx-newmenu"]`],
     // [Z-SNW] (3.83.0, review) the question about works of the same title: Esc or a click elsewhere cancels it
     ['mxDupAsk', '[data-el="works-dupask"], [data-act="works-pending-all"], [data-act="works-create-all"]', (v) => dupAskFrom(v)],
+    // [Z-WORKMAGIC] (3.155.0) the level of "✨ Answer all", what the levels answer, its preview
+    ['magicMenu', '[data-el="magic-menu"], [data-act="magic-menu"]', () => '[data-el="works"] [data-act="magic-menu"]'],
+    ['magicInfo', '[data-el="magic-info"], [data-act="magic-info"]', () => '[data-el="works"] [data-act="magic-info"]'],
+    ['magicPreview', '[data-el="magic-preview"], [data-act="magic-open"]', () => '[data-el="works"] [data-act="magic-open"]'],
   ];
   const dupAskFrom = (v) => `[data-el="works"] [data-act="works-${v && v.act === 'create' ? 'create' : 'pending'}-all"]`;
   const mxPopoverOpen = (k) => S[k] !== false && S[k] != null;
@@ -45224,7 +45723,7 @@
           ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
         <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
           ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
-          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}
+          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}${magicHeadHtml()}
           <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
       ${!skipped && !folded && S.mxOneOpen && ruleOn('S225') ? oneWorkListHtml() : ''}
@@ -45234,6 +45733,7 @@
         ${allWorkGids().length ? `<button type="button" class="dci-textbtn" data-act="works-open-all" title="${esc(tr('works.openAllTitle'))}">${esc(tr('works.openAll', { n: allWorkGids().length }))}</button>` : ''}
         <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
         <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button></div>` : ''}
+      ${!skipped && !folded ? magicPopHtml() : ''}
       ${!skipped && !folded && S.mxDefaultsOpen ? `<div class="dci-wh-pop dci-works-bar" data-el="works-defaults">
         ${codesSelect}
         <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
@@ -45288,7 +45788,7 @@
       if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
     });
     return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -47289,13 +47789,15 @@
     if (chip && d.kind === 'date') return chip.dataset.id === d.id ? null : { el: chip, kind: 'merge-pool' };
     const col = t.closest('[data-dmdrop]');
     if (col) return { el: col, kind: 'place' };
-    if (d.kind !== 'date') return null;
+    // ([Z-EMDATEDROP] 3.156.0) a date of the date matrix (its chip in a column) too – its date, as one of the pool
+    if (d.kind !== 'date' && d.kind !== 'cell') return null;
     // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
     // (3.44.1, review) not the head of an event on "Skip"
     // ([Z-DND] 3.78.0) also the short line of an event and its date ("① Release · no date"), in both compact views
     const em = t.closest('#dci-overlay .dci-cl-date[data-evdrop], #dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip):not(.dci-em-evghost), #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-bhrow, #dci-overlay tr.dci-em-line');
     if (em) return { el: em, kind: em.matches('th, [data-evdrop], [data-emev]') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
+    if (d.kind !== 'date') return null;
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
     if (!field || field.closest('[data-el="dates"]')) return null;
     return { el: field, kind: 'row' };
@@ -48332,6 +48834,72 @@
         refresh();
         const again = o && !S.suiteAdd ? S.overlay.querySelector(`[data-el="works"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
         if (again) again.focus({ preventScroll: true });
+        break;
+      }
+      // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": the preview (the medleys looked up first), its answers, the level at ▾, ⓘ, "↺ Undo magic"
+      case 'magic-open': {
+        S.magicMenu = false;
+        S.magicInfo = false;
+        S.magicPreview = !S.magicPreview;
+        const focus = (sel) => { const b = S.overlay.querySelector(sel); if (b) b.focus({ preventScroll: true }); };
+        if (S.magicPreview && !S.magicBusy) {
+          S.magicBusy = true;
+          renderWorks();
+          magicMedleyLookups().catch(() => {}).finally(() => {
+            S.magicBusy = false;
+            renderWorks();
+            focus('[data-act="magic-apply"], [data-act="magic-cancel"]');
+          });
+          break;
+        }
+        renderWorks();
+        focus('[data-act="magic-open"]');
+        break;
+      }
+      case 'magic-cancel':
+        S.magicPreview = false;
+        renderWorks();
+        { const b = S.overlay.querySelector('[data-act="magic-open"]'); if (b) b.focus({ preventScroll: true }); }
+        break;
+      case 'magic-apply':
+        magicApply().catch(showError).finally(() => {
+          renderGroups();
+          renderDedBox();
+          renderWorks();
+          refresh();
+          const b = S.overlay.querySelector('[data-act="magic-undo"], [data-act="magic-open"]');
+          if (b) b.focus({ preventScroll: true });
+        });
+        break;
+      case 'magic-undo':
+        magicUndoAll();
+        renderGroups();
+        renderDedBox();
+        renderWorks();
+        refresh();
+        { const b = S.overlay.querySelector('[data-act="magic-open"]'); if (b) b.focus({ preventScroll: true }); }
+        break;
+      case 'magic-menu':
+        S.magicPreview = false;
+        S.magicInfo = false;
+        S.magicMenu = !S.magicMenu;
+        renderWorks();
+        break;
+      case 'magic-info':
+        S.magicPreview = false;
+        S.magicMenu = false;
+        S.magicInfo = !S.magicInfo;
+        renderWorks();
+        break;
+      case 'magic-level': {
+        const v = MAGIC_LEVELS.includes(btn.dataset.level) ? btn.dataset.level : 'careful';
+        S.magicLevel = v;
+        writeJson('localStorage', MAGIC_LEVEL_KEY, v === 'careful' ? null : v);
+        log('info', 'settingValue', { what: tr('magic.levelTitle'), value: tr(`magic.level.${v}`) });
+        S.magicMenu = false;
+        if (S.settingsOpen) renderSettings();
+        renderWorks();
+        { const b = S.overlay.querySelector(`[data-act="magic-level"][data-level="${v}"]`) || S.overlay.querySelector('[data-act="magic-menu"]'); if (b) b.focus({ preventScroll: true }); }
         break;
       }
       // [Z-SU] (3.41.1) the question of a suite at the top of the works matrix
@@ -51901,11 +52469,11 @@
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-jump', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
-    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
+    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates', 'dci-magic-level', 'dci-magic-off'],
+    staging: [QF_KEY, 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
     // [Z-BETAOFF] (3.115.0) no beta function at the moment: the tab greyed out
-    beta: [QF_KEY], // [Z-QUICKFILL] (3.150.0)
+    beta: [], // [Z-QFBETA] (3.156.0) QF_KEY under "staging"
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_IDLE_KEY, STATS_DAILY_KEY, STATS_GLOBAL_ON_KEY],
@@ -52001,6 +52569,7 @@
   function applyLevelColors() {
     if (!S.overlay) return;
     S.overlay.classList.toggle('dci-lvlc', !!S.levelColors);
+    S.overlay.classList.toggle('dci-credul', ruleOn('S286')); // [Z-CREDITUL] (3.156.0)
     // [Z-DM] (3.46.0) dark: the colours of the dark theme
     const dark = overlayDark();
     const pal = dark ? { ...Object.fromEntries(Object.keys(S.levelPalette).map((k) => [k, darkPaletteColor('level', k)])), skip: darkTone(LEVEL_SKIP_COLOR) }
@@ -54272,10 +54841,16 @@
         sh('suites'),
         segField(tr('settings.suiteNaming'), 'suite-naming', 'naming', ['colon', 'comma'], S.suiteNaming === 'comma' ? 'comma' : 'colon', 'colon', (v) => tr(`settings.suiteNaming.${v}`),
           { title: tr('settings.suiteNamingTitle') }),
+        // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the questions it answers
+        ...(ruleOn('S284') ? [sh('magic'),
+          segField(tr('magic.levelTitle'), 'magic-level', 'level', MAGIC_LEVELS, magicLevel(), 'careful', (v) => tr(`magic.level.${v}`), { title: tr('magic.infoTitle') }),
+          ...MAGIC_KINDS.map((k) => cb(`data-set="magic-kind" data-kind="${k}"`, magicKindOn(k), tr(`magic.kind.${k}`), tr(`magic.rule.${k}.${magicLevel()}`), { def: true }))] : []),
       ],
       staging: () => [
         sh('limits'),
         cb('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'), { def: false }),
+        // [Z-QFBETA] (3.156.0) "Fill empty recordings" (was "Credit fill" under Beta)
+        cb('data-set="qf-on"', S.qfOn, tr('qf.setting'), tr('qf.settingTitle'), { def: false, hint: tr('qf.settingHint') }),
         cb('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'), { def: true }),
         numField(tr('settings.capLimit'), 'data-set="cap-limit" min="50" max="2000" step="50"', S.capLimit, 500, { off: !S.capOn }),
         // [E4] (3.34.29) the instruments and voices of an entry in one relationship (not in the legacy view)
@@ -54310,7 +54885,7 @@
       ],
       // [3.34.1] functions to try out ([Z-BETAOFF] 3.115.0: none at the moment – the tab is greyed out)
       // [Z-QUICKFILL] (3.150.0) Credit fill
-      beta: () => [sh('beta'), cb('data-set="qf-on"', S.qfOn, tr('qf.setting'), tr('qf.settingTitle'), { def: false, hint: tr('qf.settingHint') })],
+      beta: () => [sh('beta'), `<p class="dci-sub">${esc(tr('settings.betaNone'))}</p>`], // [Z-QFBETA] (3.156.0) none at the moment
       // [146] (3.36.0) remembered per release
       cache: () => {
         const z = storageSizes();
@@ -54356,7 +54931,7 @@
     const tabs = settingTopics().map((key) => {
       const sel = !S.resetOpen && key === tab;
       // [Z-BETAOFF] (3.115.0) a topic without settings at the moment: greyed out, its tooltip says why ([Z-QUICKFILL] 3.150.0: none now)
-      const off = false;
+      const off = key === 'beta'; // [Z-QFBETA] (3.156.0) none again
       return `<button type="button" role="tab" class="dci-set-tab" id="dci-set-tab-${key}" data-act="settings-topic" data-topic="${key}" aria-selected="${sel}"
         aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}"${off ? ` aria-disabled="true" title="${esc(tr('settings.betaNone'))}"` : ''}>${esc(tr(`settings.t.${key}`))}</button>`;
     }).join('');
@@ -54724,6 +55299,16 @@
   function settingsChange(el) {
     const k = el.dataset.set;
     if (k === 'log-open') setLogVisible(el.checked);
+    else if (k === 'magic-kind') {
+      // [Z-WORKMAGIC] (3.155.0) a kind of question answered by "✨ Answer all" or not
+      const kind = el.dataset.kind;
+      if (MAGIC_KINDS.includes(kind)) {
+        S.magicOff = el.checked ? (S.magicOff || []).filter((x) => x !== kind) : uniq([...(S.magicOff || []), kind]);
+        writeJson('localStorage', MAGIC_OFF_KEY, S.magicOff.length ? S.magicOff : null);
+        log('info', 'settingValue', { what: `✨ ${tr(`magic.kind.${kind}`)}`, value: tr(el.checked ? 'common.on' : 'common.off') });
+        renderWorks();
+      }
+    }
     else if (k === 'level-colors') {
       S.levelColors = el.checked;
       writeJson('localStorage', LEVEL_COLORS_KEY, el.checked ? null : false);
@@ -55125,8 +55710,7 @@
         renderGroups();
       }
     } else if (t === 'beta') {
-      S.qfOn = false; // [Z-QUICKFILL] (3.150.0)
-      renderLauncher();
+      // [Z-QFBETA] (3.156.0) nothing at the moment
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true, wikiBg: true });
       S.sourceTrust = SOURCE_TRUST_DEFAULT.slice(); // [Z-SRCTRUST] (3.148.0)
@@ -55167,6 +55751,8 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
+      S.qfOn = false; // [Z-QFBETA] (3.156.0) from "Beta"
+      renderLauncher();
       Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, editNoteMode: 'full', noteDupWorks: true, yellOne: false });
       // ([Z-SNW] 3.83.0, review) the edit note as the defaults write it (Full, works of the same title named)
       if (S.staged.size) writeEditNote();
@@ -55192,7 +55778,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -55309,6 +55895,7 @@
   })();
   /** The settings read anew from the storage (a profile applied): what the dashboard keeps in its state. */
   function reloadSettingsState() {
+    qsPerm.set = null; // [Z-QSSCOPE] (3.156.0)
     S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
     S.dmFold = readJson('localStorage', DM_FOLD_KEY, true) !== false;
     S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
@@ -55331,6 +55918,8 @@
     S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
     S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
     S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
+    S.magicLevel = readJson('localStorage', 'dci-magic-level', 'careful'); // [Z-WORKMAGIC] (3.155.0)
+    S.magicOff = readJson('localStorage', 'dci-magic-off', []) || [];
     S.workDates = readJson('localStorage', 'dci-work-dates', true) !== false; // [Z-WORKDATE] (3.130.0)
     S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
     S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
@@ -56389,7 +56978,7 @@
       });
       box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
     }
-    box.innerHTML = `<div class="dci-qf-head"><strong>${esc(tr('qf.title'))}</strong> <span class="dci-qf-beta">${esc(tr('qf.beta'))}</span>
+    box.innerHTML = `<div class="dci-qf-head"><strong>${esc(tr('qf.title'))}</strong>
       <button type="button" class="dci-qf-x" data-qf="close" aria-label="${esc(tr('common.close'))}">×</button></div><div aria-live="polite">${html}</div>`;
     // ((review) the keyboard in the window: its first button of the content (fill, else close)
     const first = box.querySelector('[data-qf=fill]') || box.querySelector('div [data-qf=close]');
@@ -56507,7 +57096,7 @@
 
   /** [Z-QUICKFILL] The line of the edit note of one run of Credit fill (the tracks named). */
   function qfNoteLine(run, positions) {
-    return `Credit fill (beta): relationships copied from ${run.srcs.length === 1 ? 'the MusicBrainz recording' : 'the MusicBrainz recordings'} ${run.srcs.join(', ')}${run.from === 'group' ? ' (other releases of the release group)' : ''} to tracks ${positions.join(', ')}.`;
+    return `Fill empty recordings: relationships copied from ${run.srcs.length === 1 ? 'the MusicBrainz recording' : 'the MusicBrainz recordings'} ${run.srcs.join(', ')}${run.from === 'group' ? ' (other releases of the release group)' : ''} to tracks ${positions.join(', ')}.`;
   }
   function qfSetNote(text) {
     const el = editNoteEl();
@@ -57031,6 +57620,10 @@
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
       #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
       #dci-open-ocr:hover { background: #ecebf6; }
+      /* [Z-QFBETA] (3.156.0) "Fill empty recordings" like "Import credits …", set apart from it by a line */
+      #dci-quickfill { position: relative; font: inherit; margin-left: 14px; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
+      #dci-quickfill::before { content: ''; position: absolute; left: -9px; top: 2px; bottom: 2px; width: 1px; background: #b9b5d6; }
+      #dci-quickfill:hover { background: #f1f0f8; }
       #dci-open:has(+ #dci-open-ocr:not([hidden])) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
       #dci-launch-status { color: #4b4585; }
       #dci-launcher .dci-textbtn { border: 0; background: none; color: #4b4585; text-decoration: underline; cursor: pointer; font: inherit; }
@@ -57282,7 +57875,14 @@
       #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled::after { left: calc(var(--u, 1px) * 16); }
       #dci-rules .dci-qid { flex: 0 0 auto; display: flex; align-items: center; margin: 0; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 0 4px 4px 0; background: #faf9fd;
         font-size: calc(var(--u, 1px) * 11.5); }
-      #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qid { border-color: #8e88c2; }
+      #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qperm, #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qperm + .dci-qid { border-color: #8e88c2; }
+      /* [Z-QSSCOPE] (3.156.0) the "permanent" box between a switch and its id; a switch changed for this import only marked */
+      #dci-rules .dci-qperm { flex: 0 0 auto; display: flex; align-items: center; gap: calc(var(--u, 1px) * 3); margin: 0; padding: 0 calc(var(--u, 1px) * 6);
+        border: 1px solid #c8c5d6; border-right: 0; background: #faf9fd; font-size: calc(var(--u, 1px) * 10.5); color: var(--muted, #6d6a7c); cursor: pointer; }
+      #dci-rules .dci-qperm input { margin: 0; }
+      #dci-rules .dci-qonce .dci-qbtn { border-style: dashed; }
+      #dci-rules .dci-qonce-tag { flex: 0 0 auto; padding: 0 calc(var(--u, 1px) * 5); border-radius: 999px; background: #fff3cd; color: #6b5200; font-size: calc(var(--u, 1px) * 10.5); }
+      #dci-rules .dci-qonce-note { padding: 0 calc(var(--u, 1px) * 6); border-radius: 4px; background: #fff3cd; color: #6b5200; font-size: 0.92em; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
       /* [3.33.1] ✎ at built-in rules and lists, your changes, export and import (item E7) */
       #dci-rules .dci-redit-cell { white-space: nowrap; text-align: right; }
@@ -57723,6 +58323,18 @@
       .dci-mx-split-on { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
       .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
+      /* [Z-WORKMAGIC] (3.155.0) "✨ Answer all": the button with ▾ and ⓘ, the preview, the table of the levels, the mark at a track */
+      .dci-mx-magic { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); }
+      .dci-mx-magicbtn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      .dci-mx-magiclv { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; padding-left: calc(var(--u, 1px) * 5); padding-right: calc(var(--u, 1px) * 5); }
+      .dci-mx-magicpop, .dci-mx-magicinfo { display: block; }
+      .dci-mx-magiclist { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
+      .dci-mx-magiclist ul { margin: 0 0 calc(var(--u, 1px) * 4); padding-left: calc(var(--u, 1px) * 16); }
+      .dci-mx-magictable { border-collapse: collapse; }
+      .dci-mx-magictable th, .dci-mx-magictable td { padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+      .dci-mx-magictable .dci-mx-magiccur { color: var(--purple-d); text-decoration: underline; }
+      .dci-mx-magicoff { opacity: 0.5; }
+      .dci-mx-magicmark { margin-left: calc(var(--u, 1px) * 4); cursor: help; }
       .dci-mx-wnew:hover, .dci-mx-wnew:focus-visible { opacity: 1; }
       .dci-mx-wrepl { text-decoration: none; }
       /* [Z-ARRUI] (3.99.0) a flat box in one line, wrapping as a whole (not word by word) */
@@ -57900,6 +58512,8 @@
       .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
       /* [Z-WMX] (3.52.0) the head in one line: counts and ⓘ | "Skip works", "＋ Suite …" | the defaults, the search, "＋ New works", ⋯ */
       .dci-works-head.dci-wh { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      /* ((3.155.0) with "✨ Answer all" the right part may take a second line: the left and the middle stay on its first one) */
+      .dci-works-head.dci-wh { align-items: start; }
       .dci-wh-l, .dci-wh-c, .dci-wh-r { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); min-width: 0; }
       .dci-wh-r { justify-content: flex-end; }
       .dci-wh-chip { padding: calc(var(--u, 1px) * 1) calc(var(--u, 1px) * 8); border-radius: 999px; background: var(--soft); color: #4a4558; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
@@ -58066,6 +58680,11 @@
         font-size: calc(var(--u, 1px) * 12); font-weight: 400; }
       .dci-cl-as { color: #3f5170; font-size: calc(var(--u, 1px) * 12); }
       a.dci-mblink { color: var(--purple); font-weight: 600; }
+      /* [Z-CREDITUL] (3.156.0, S286) in the head of an entry the spelling that goes to MusicBrainz underlined: MusicBrainz's name – or the
+         "credited as" of the entry when it has one */
+      .dci-credul section.dci-group .dci-gmatch a.dci-mblink, .dci-credul section.dci-group .dci-gcredit:not([hidden]) {
+        text-decoration: underline; text-decoration-color: var(--purple); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+      .dci-credul section.dci-group:has(.dci-gcredit:not([hidden])) .dci-gmatch a.dci-mblink { text-decoration: none; }
       .dci-disamb { color: var(--muted); }
       .dci-pv-update { color: #4b4585; font-weight: 700; }
       .dci-datefind { margin: calc(var(--u, 1px) * 8) 0 0; font-size: calc(var(--u, 1px) * 12); }
@@ -58571,6 +59190,12 @@
       .dci-insts-sugg { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); align-items: center; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8);
         background: #fff8db; border: 1px dashed #d8bd52; border-radius: 3px; color: #6b4e00; }
       .dci-insts-seg { margin-left: calc(var(--u, 1px) * 8); font-weight: normal; }
+      /* [Z-INSTSCLEAR] (3.156.0) the buttons in the colours of their levels, the one not chosen greyed; the hint of the other one in italics */
+      .dci-insts-btns .dci-insts-track[aria-pressed="true"] { background: var(--dci-lvl-recording, #3a6fb0); color: var(--dci-lvl-recording-ink, #fff); border-color: var(--dci-lvl-recording, #3a6fb0); }
+      .dci-insts-btns .dci-insts-release[aria-pressed="true"] { background: linear-gradient(90deg, var(--dci-lvl-release, #7a5cb8) 0 50%, var(--dci-lvl-recording, #3a6fb0) 50% 100%); color: var(--dci-lvl-release-ink, #fff); border-color: var(--dci-lvl-release, #7a5cb8); }
+      .dci-insts-btns .dci-insts-off { opacity: 0.55; filter: grayscale(0.6); }
+      .dci-insts-btns .dci-insts-off:hover, .dci-insts-btns .dci-insts-off:focus-visible { opacity: 1; filter: none; }
+      .dci-insts-hint { font-style: italic; font-size: 0.92em; color: var(--muted, #666); border: 1px dashed var(--line, #ccc); border-radius: 4px; padding: 0 calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 6); }
       .dci-insts-tag { font-size: calc(var(--u, 1px) * 11); color: #5b4fa8; border: 1px solid #c9c2ee; border-radius: 8px; padding: 0 calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 4); }
       /* [Z-DSUPWHY] (3.107.0) developer mode: why an entry has no box */
       .dci-dsupwhy { margin: calc(var(--u, 1px) * 4) 0; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border: 1px dashed #b9b6c6; border-radius: 4px; background: #f4f3f7; color: #555; font-size: 0.92em; line-height: 1.5; }
@@ -58590,6 +59215,10 @@
       /* [Z-ALIGN] (3.100.0) one table per entry: its head stays on top while its lines scroll, each block a thin heading row */
       .dci-em-onewrap { max-height: 75vh; overflow: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
       .dci-em-onewrap.dci-em-dateopen { max-height: none; overflow: visible; }
+      /* [Z-STICKYOVERLAP] (3.156.0) the sticky head of the matrix kept inside its box (it painted over the bar on top of the dashboard while
+         scrolling); with its dates open it sticks below that bar */
+      .dci-em-onewrap { isolation: isolate; }
+      .dci-em-onewrap.dci-em-dateopen .dci-em-one thead th { top: max(0px, calc(var(--dci-stick-h, 0px) - var(--u, 1px) * 14)); }
       .dci-em-one thead th { position: sticky; top: 0; z-index: 3; background: #fff; }
       .dci-em-one thead th.dci-em-ev { background: var(--soft); }
       .dci-em-one thead th.dci-em-c-role { left: 0; z-index: 4; }

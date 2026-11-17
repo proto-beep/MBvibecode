@@ -57,7 +57,7 @@ def case_settabs():
         k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
         print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
         results.append(k1 == [('profiles', True)] and  # ([Z-QSP] 3.75.0) Profiles after General
-                       k2 == [('beta', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen ([Z-QUICKFILL] 3.150.0: Beta again)
+                       k2 == [('musicbrainz', True)] and k3 == [('general', True)])  # ([Z-SETTABS2] 3.137.0) the last that can be chosen ([Z-QUICKFILL] 3.150.0: Beta again; [Z-QFBETA] 3.156.0: greyed again)
         # C) remembered
         pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
         pg.wait_for_timeout(200)
@@ -3029,6 +3029,9 @@ def case_profiles():
         # I) (review) a quick switch under "Standard" (the window "Mapping rules"): a new profile with it
         pg.locator('.dci-head [data-act=rules]').first.evaluate('b => b.click()')
         H.wait_for(pg, "!!document.querySelector('[data-qs-toggle=S078]')", 15)
+        # ([Z-QSSCOPE] 3.156.0) stored – and so in a profile – only with its box "permanent" ticked
+        pg.locator('[data-qs-perm=S078]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
         pg.locator('[data-qs-toggle=S078]').first.evaluate('b => b.click()')
         pg.wait_for_timeout(600)
         i1 = [pg.evaluate(PROFS), pg.evaluate(ACTIVE) != 'std', pg.evaluate("JSON.parse(localStorage.getItem('dci-profiles'))[0].quick.S078")]
@@ -3337,7 +3340,7 @@ def case_settabs3136():
         # ([Z-SETTABS2] 3.137.0) General with "Developer" (its switch), Sources with "Discogs & Bandcamp"
         results.append(heads['general'] == ['Language', 'Log', 'Developer'] and heads['appearance'] == ['Window', 'Colours', 'Entries', 'Symbols and boxes', 'Mapping rules']
                        and heads['sources'][:5] == ['Order of the sources', 'Trust of the sources', 'Release editor and release page', 'Discogs & Bandcamp', 'MusicBrainz search']  # ([3.148.0] Z-SRCTRUST)
-                       and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites'] and heads['staging'][0] == 'Staging and its limits'
+                       and heads['works'] == ['Lookups of works', 'Works matrix', 'Suites', '✨ Answer all']  # ([Z-WORKMAGIC] 3.155.0) and heads['staging'][0] == 'Staging and its limits'
                        and 'Live comments' in heads['staging'] and heads['cache'] == ['Remember', 'Statistics'] and not pg.evaluate("!!document.querySelector('.dci-set-pane details')"))
         moved = ['ev-shared', 'em-show', 'em-by-default', 'em-attr']
         print('B) Appearance:', [x for x in sets['appearance'] if x in moved], '| Staging:', [x for x in sets['staging'] if x in moved],
