@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.165.0 | – |
+| 2026-11-18 | 3.159.0 – 3.166.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.166.0
+
+The works matrix, part II (proposals W-ROWSTATE, W-STICKY with W-SCROLL, W-KEYS, W-MODEL of the review of 2026-11-18):
+
+- **What waits, once in the row** (W-ROWSTATE): a track without a work says in its row how many credits wait for one ("2 credits wait for a work") – no need to read it off each cell.
+- **The matrix is read once per drawing** (W-MODEL, a first step): while the matrix is drawn, its rows, its columns and the state of each cell are worked out once. Until now a column's head alone asked for all rows twice and for every cell again – a drawing read the matrix some (columns × rows) times. Nothing looks different; large releases draw faster.
+- **Checked, no change needed:** in a window narrower than the matrix it scrolls to the right inside its frame while the first column – track and work – stays (W-STICKY, W-SCROLL; a test holds it now); the arrow keys already move through the cells (W-KEYS; rule S106 of 3.70.0 – the review had missed it).
+- **Still open of W-MODEL:** the state of the matrix in one object instead of 76 fields, and the works' part of the plan as a function of its own that Node can test. Both are larger rebuilds; this version does not start them.
 
 ### Import 3.165.0
 

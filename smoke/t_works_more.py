@@ -1860,4 +1860,52 @@ def case_compact3165():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_rowstate3166():
+    """Credits Importer 3.166.0 (proposals W-ROWSTATE, W-STICKY with W-SCROLL, W-MODEL step one).
+    A) A track without a work says once in its row what waits for the work ("2 credits wait for a work", "1 credit waits …"); the linked
+       track says nothing of the kind.
+    B) A window narrower than the matrix: the matrix scrolls to the right inside its frame (the page does not), and the first column
+       – track and work – stays where it is while the columns move under it.
+    C) The drawing reads the matrix once: what the matrix shows is the same as before (the roles of every cell), and "＋ New works"
+       still plans a work for each of the three tracks."""
+    H.MX_HEADS = None
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = b.new_context(viewport={'width': 900, 'height': 1400})
+        H.install_routes(ctx)
+        H.add_mapping(ctx)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_selector('[data-el=works] th[data-colhead]', timeout=20000)
+        pg.wait_for_timeout(600)
+        a = pg.evaluate("""[...document.querySelectorAll('[data-el=works] tbody tr')].map(tr => [(tr.querySelector('.dci-mx-title strong') || {}).textContent,
+          ((tr.querySelector('[data-el=row-wait]') || {}).textContent || '').trim()]).filter(x => x[0])""")
+        print('A)', a)
+        results.append(a == [['Song One', ''], ['Song Two', '2 credits wait for a work'], ['Song Three', '1 credit waits for a work'], ['Song Four', '']])
+        B = """(() => { const w = document.querySelector('[data-el=works] .dci-mx-wrap'); const first = w.querySelector('tbody tr td, tbody tr th');
+          const col = w.querySelector('th[data-colhead]');
+          return { wide: w.scrollWidth > w.clientWidth + 20, page: document.querySelector('#dci-overlay .dci-body, #dci-overlay .dci-panel').scrollWidth,
+            left: Math.round(first.getBoundingClientRect().left), col: Math.round(col.getBoundingClientRect().left), sl: Math.round(w.scrollLeft) }; })()"""
+        b0 = pg.evaluate(B)
+        pg.evaluate("document.querySelector('[data-el=works] .dci-mx-wrap').scrollLeft = 260")
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(B)
+        print('B)', b0, '→', b1)
+        results.append(b0['wide'] and b1['sl'] >= 200 and b1['left'] == b0['left'] and b1['col'] <= b0['col'] - 200)
+        cells = pg.evaluate("""[...document.querySelectorAll('[data-el=works] tbody tr')].map(tr => [...tr.querySelectorAll('td.dci-mx-cell')].map(td => [...td.querySelectorAll('.dci-mxchip')].map(c => c.textContent.trim().replace(/\\s+/g, ' ')).join('+')))""")
+        pg.click('[data-el=works] [data-act=works-pending-all]')
+        pg.wait_for_timeout(600)
+        planned = pg.evaluate("[...document.querySelectorAll('[data-el=works] tbody tr')].filter(tr => /new work|New work/.test(tr.textContent)).length")
+        waits = pg.evaluate("document.querySelectorAll('[data-el=works] [data-el=row-wait]').length")
+        print('C)', cells[:3], planned, waits)
+        results.append(cells[0][0].startswith('composer') and 'writer' in cells[1][0] and 'composer' in cells[2][1] and planned == 3 and waits == 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.MX_HEADS = 'full'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
