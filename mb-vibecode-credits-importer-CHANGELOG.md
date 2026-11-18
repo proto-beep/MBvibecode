@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 | – |
+| 2026-11-18 | 3.159.0 – 3.160.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.160.0
+
+- **Review run 3** (collected item Z-REVIEW-FABLE; 2026-11-18, the areas "practicability of the UI", "tests and documentation", "rules of MusicBrainz" and "privacy" of the review checklist, done by Claude Fable 5.2). Corrected:
+  - **The suite was not as green as it said.** The script that ran it took the last "Ergebnis" line of a log as the file's result; `t_entries.py` and `t_ui_settings.py` were cut off by its time limit of 600 seconds and counted as passed. Ten of their cases failed unseen, the oldest since 3.131.0. A new runner, `smoke/runall.py`, is part of the repository: a file passes only when it ended by itself, printed its summary and no case failed; a file cut off is named.
+  - **Those cases:** seven tests were out of date and are corrected – the settings as rows (3.137.0), the instrument as written first in its question (3.142.0), waiting for "Staging complete" instead of 1.5 seconds (the editor's lookups pause from 3.152.0), overlay scroll bars in the browser of today, the update notice of 3.158.0; one case is removed (the ⑃ of its own, part of "⑃ on the release + group" from 3.156.0).
+  - **One fault of the script** two of those cases had found: "Show missing links of the entries" (3.157.0) was hard to read in the dark theme (contrast 2.8 : 1) – the darker purple of the other links now.
+  - **Tools for the next review:** `tools/review_checks.py` (relationship types and instruments against MusicBrainz, overlapping rules, the purity of the source adapters, sizes, the documents, privacy, rules the tests switch off) and `tools/a11y_audit.py` (names of controls, keyboard, contrast).
+- Checked, nothing to correct: every control of the dashboard has a name and can be reached by keyboard; every attribute a rule sets (co, executive, guest …) exists at its relationship type in MusicBrainz; no personal data in the files and the commit messages; French texts with their non-breaking spaces; every text has its English.
+- Noted, not changed (the owner decides): the contrast of "Stage in the relationship editor" (white on orange, 3 : 1) and of some marks; 602 texts not yet German, 1,020 not yet Spanish and French; 41 stored keys the README does not name; S083 switched off in 19 tests; fixed waiting times after "Stage" in other test files; the setting "Offer ⑃" that hardly does anything from 3.156.0; the e-mail address of the GitHub account in the merge commits.
 
 ### Import 3.159.0
 

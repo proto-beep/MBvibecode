@@ -40,8 +40,7 @@ def staged_by(pg, view):
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
     pg.wait_for_timeout(1500)
     label = pg.evaluate("(document.querySelector('[data-act=apply]') || {}).textContent || ''")
-    pg.click('[data-act=apply]')
-    pg.wait_for_timeout(1500)
+    H.stage(pg)
     return ctx, pg, errs, pg.evaluate(ADDED), label
 
 
@@ -92,8 +91,7 @@ def case_join():
                 pg.fill(f'tr.dci-em-line[data-line="{row}"] [data-f=em-credit]', 'steel-string')
                 pg.press(f'tr.dci-em-line[data-line="{row}"] [data-f=em-credit]', 'Tab')
                 pg.wait_for_timeout(500)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             after = pg.evaluate(ADDED)
             removed = pg.evaluate("window.__removed.map(r => r.id)")
             multi2 = [r for r in after if artist_of(r) == 'Multi Man']
@@ -106,8 +104,7 @@ def case_join():
             if drums:
                 pg.click(f'tr.dci-em-line[data-line="{drums}"] [data-f=em-tick]')
                 pg.wait_for_timeout(500)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             after2 = pg.evaluate(ADDED)
             multi3 = [r for r in after2 if artist_of(r) == 'Multi Man']
             print('C2) ohne drums:', sorted(set(tuple(sorted(r['attrs'])) for r in multi3)), len(multi3), '| insgesamt:', len(after2))
@@ -269,8 +266,7 @@ def case_matrix():
             print('F) einzeln:', [x['head'] for x in f0], '| Knopf:', fj)
             results.append(len(f0) == 3 and fj)
             # G) staged
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate(ADDED)
             names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
             of = lambda n: [sorted(r['attrs']) for r in added if names.get(r['a']) == n or names.get(r['b']) == n]
@@ -402,8 +398,7 @@ def case_dates():
             print('E2) Kopf des Blocks, 1 Zeile gezeigt:', hidden, '| danach:', ev2, [(l['role'], l['ticks']) for l in e2[0]['lines']])
             results.append(hidden == 1 and sorted(ev2) == ['2001-03-02', '2001-05'] and all(l['ticks'] == [True, True] for l in e2[0]['lines']) and len(e2[0]['lines']) == 3)
             # F) staged
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate(ADDED_D)
             names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
             vm = sorted((r['date'], tuple(r['attrs'])) for r in added if names.get(r['a']) == 'Voc Man' or names.get(r['b']) == 'Voc Man')
@@ -542,24 +537,21 @@ def case_restage():
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1500)
             multi_of = lambda: [r for r in pg.evaluate(ADDED) if names.get(r['a']) == 'Multi Man' or names.get(r['b']) == 'Multi Man']
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             a = multi_of()
             print('A)', len(a), sorted(set(tuple(sorted(r['attrs'])) for r in a)))
             results.append(len(a) == 4 and all(len(r['attrs']) == 3 for r in a))
             multi = sec_sel(pg, 'Multi Man')
             pg.click(f'{multi} [data-act=em-split]')
             pg.wait_for_timeout(400)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             bb = multi_of()
             print('B) einzeln:', len(bb), sorted(set(tuple(sorted(r['attrs'])) for r in bb)))
             results.append(len(bb) == 12 and all(len(r['attrs']) == 1 for r in bb))
             # (the foot of the entry may lie below the footer of the dashboard: a click by script)
             pg.evaluate("(sel) => document.querySelector(sel + ' [data-act=em-join]').click()", multi)
             pg.wait_for_timeout(400)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             c = multi_of()
             print('C) zusammen:', len(c), sorted(set(tuple(sorted(r['attrs'])) for r in c)))
             results.append(len(c) == 4 and all(len(r['attrs']) == 3 for r in c))
@@ -572,8 +564,7 @@ def case_restage():
             pg.fill(f'{multi} tr.dci-em-line[data-line="{line}"] [data-f=em-credit]', 'lead')
             pg.press(f'{multi} tr.dci-em-line[data-line="{line}"] [data-f=em-credit]', 'Tab')
             pg.wait_for_timeout(400)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             d = multi_of()
             kept = [r for r in d if r['id'] == edited]
             fresh = [r for r in d if r['id'] != edited]
@@ -674,8 +665,7 @@ def case_order():
             pg.wait_for_timeout(500)
             print('E) kompakt:', [l['chips'] for l in e1['lines']])
             results.append([l['chips'] for l in e1['lines']] == [['drums (drum set) “drums”', 'electric guitar', 'acoustic guitar']])
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate(ADDED)
             names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
             of = lambda n: [sorted(r['attrs']) for r in added if names.get(r['a']) == n or names.get(r['b']) == n]
@@ -812,8 +802,7 @@ def case_evhead():
             f1 = pg.evaluate(EVEDIT, 'Level Man')
             print('F) zu:', f1)
             results.append(f1 is None)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate(ADDED_D)
             pm = H.uid('dddddddd', 3074 - 2990)
             mine = sorted((r['date'], tuple(r['attrs'])) for r in added if pm in (r['a'], r['b']))
@@ -979,8 +968,7 @@ def case_companies():
             results.append(bool(c_abbey) and c_abbey['compact'] and [(l['head'], l['chips']) for l in c_abbey['lines']] == [('① Recording no date all 4 tracks', ['recorded at'])])
             ids = {v[1] for v in H.COMPANIES.values()}
             comp = lambda rels: sorted((r['lt'], r['a'], r['b'], tuple(r['attrs'])) for r in rels if r['a'] in ids or r['b'] in ids)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             mx = pg.evaluate(ADDED)
             print('D) Firmen:', len(comp(mx)), '| legacy:', len(comp(leg)), '| gleich:', comp(mx) == comp(leg))
             results.append(len(comp(leg)) > 0 and comp(mx) == comp(leg))
@@ -996,8 +984,7 @@ def case_companies():
             sec = sec_sel(pg, 'Abbey Road Studios')
             H.ev_date(pg, sec, '2001-03')
             pg.wait_for_timeout(600)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             dd = pg.evaluate(ADDED_D)
             place = H.uid('eeeeeeee', 2)
             mine = sorted(r['date'] for r in dd if place in (r['a'], r['b']))
@@ -1054,8 +1041,7 @@ def case_remember():
             print('vorher:', before)
             print('nachher:', after)
             results.append(before == after and before[0][0][2][0] == 'drums (drum set)' and before[1][0][1][1] == '② Recording tracks 2, 3' and len(before[2]) == 2)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             n = len(pg.evaluate(ADDED))
             print('gestaged:', n)
             results.append(n == 20)
@@ -1181,8 +1167,8 @@ def case_chipask():
             a2 = pg.evaluate(CHIPS, 'Low Man')
             bass2 = next((c for c in a2 or [] if 'double bass' in c['name']), None)
             print('A) vorher:', a0, '| ▾:', a1, focus, vis, '| double bass:', a2)
-            results.append(bool(bass) and bass['q'] and [c['menu'] for c in a1 if c['line'] == bass['line']][0] == ['electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar']
-                           and focus == 'electric bass guitar' and vis is True
+            results.append(bool(bass) and bass['q'] and [c['menu'] for c in a1 if c['line'] == bass['line']][0] == ['bass', 'electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar']
+                           and focus == 'bass' and vis is True
                            and bool(bass2) and bass2['name'] == 'double bass “bass”' and not bass2['q'] and not bass2['menu'] and not any(c['menu'] for c in a2))
             # B) Taischigoto, Esc
             tai = next((c for c in a2 or [] if c['name'].startswith('? Taischigoto')), None)
@@ -1339,7 +1325,9 @@ def case_barroom():
     try:
         H.ENTRIES_VIEW = 'matrix'
         for mode in ('overlay', 'classic'):
-            args = list(H.LAUNCH_ARGS) + (['--enable-features=FluentOverlayScrollbar'] if mode == 'overlay' else [])
+            # ((3.160.0, review run 3) OverlayScrollbar: FluentOverlayScrollbar alone draws a classic bar on Linux in the browser of today – the
+            # case failed unseen for it)
+            args = list(H.LAUNCH_ARGS) + (['--enable-features=OverlayScrollbar,FluentOverlayScrollbar'] if mode == 'overlay' else [])
             b = launch_own(args=args, ignore_default_args=['--hide-scrollbars'])
             try:
                 ctx = H.new_context(b)
@@ -1362,7 +1350,7 @@ def case_barroom():
                 print(f'{mode}: breit:', wide, '\n   schmal:', narrow, '| mit Platz:', scrolls, '\n   wieder breit:', again, '| Fehler:', errs)
                 if mode == 'overlay':
                     results.append(not wide['over'] and not wide['room'] and wide['pad'] == '0px')
-                    results.append(narrow['over'] and narrow['own'] == 0 and narrow['room'] and narrow['pad'] == '16px' and narrow['raw'] == 'written “Drums”' and narrow['free'] >= 16
+                    results.append(narrow['over'] and narrow['own'] == wide['own'] and narrow['room'] and narrow['pad'] == '16px' and narrow['raw'] == 'written “Drums”' and narrow['free'] >= 16
                                    and bool(scrolls) and all(x in ('auto', 'scroll') for x in scrolls))
                     results.append(not again['room'] and again['pad'] == '0px')
                 else:
@@ -1514,7 +1502,8 @@ def case_compactlines():
             H.open_settings(pg, 'appearance')
             a = [pg.evaluate(SEG), pg.evaluate("(r => r ? r.textContent.replace(/\\s+/g, ' ').trim() : '')(document.querySelector('[data-el=settings] [data-act=em-side]').closest('.dci-set-row, label, div'))")]
             print('A) Einstellung:', a)
-            results.append(a[0] == [['beside', 'notes beside the lines', 'true'], ['lines', 'in the lines', 'false']] and a[1].startswith('Compact entries'))
+            # ([Z-SETTABS2] 3.137.0) the setting is a row: its name "Notes of compact entries", the choices "beside the lines | in the lines"
+            results.append(a[0] == [['beside', 'beside the lines', 'true'], ['lines', 'in the lines', 'false']] and a[1].startswith('Notes of compact entries'))
             pg.click('[data-el=settings] [data-act=em-side][data-side=lines]')
             pg.wait_for_timeout(600)
             pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
@@ -2442,7 +2431,8 @@ def case_qgtr397():
             g, mg = menu_of('guitar')
             ba, mb = menu_of('bass')
             print('A)', a0, '| Guitar:', mg, '| Bass:', mb)
-            results.append(mg == ['electric guitar', 'acoustic guitar', 'guitar'] and mb == ['electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar'])
+            # ((3.142.0) the instrument as written comes first in its question – "guitar", "bass"; the case was not corrected then and failed unseen)
+            results.append(mg == ['guitar', 'electric guitar', 'acoustic guitar'] and mb == ['bass', 'electric bass guitar', 'double bass', 'acoustic bass guitar', 'bass guitar'])
             pg.click(f'{low} .dci-em-chip[data-line="{g["line"]}"] [data-act=em-chipask]'); pg.wait_for_timeout(400)
             pg.click(f'{low} .dci-em-chipmenu [data-act=instr-pick][data-instr="guitar"]'); pg.wait_for_timeout(500)
             b0 = pg.evaluate(CHIPS, 'Low Man')
@@ -2714,7 +2704,9 @@ def case_rwrt3100():
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             rows = pg.evaluate(ROWTYPES, 'Bob Producer')[n0:]
             pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            # ((3.160.0, review run 3) until the relationship is there – from 3.152.0 the editor's lookups pause between requests, a fixed
+            # 1.5 s was too short and the case failed unseen)
+            H.wait_ok(pg, "MB.relationshipEditor.state.added.some(r => r.linkTypeID === 55)", 30)
             added = pg.evaluate("MB.relationshipEditor.state.added.map(r => r.linkTypeID)")
             print('B)', rows, added)
             results.append(rows == [['composer', 'release']] and 55 in added)
@@ -2799,8 +2791,7 @@ def case_artl3100():
             print('B)', b1, b2)
             results.append(bool(b1) and b1['kind'] == 'dci-kind-artist' and b1['note'].startswith('Credited as an artist') and 'As the label' in b1['note'] and b1['types'] == ['artwork']
                            and b2 == a[0])
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate("MB.relationshipEditor.state.added.map(r => [r.linkTypeID, (r.entity0 || {}).gid, (r.entity1 || {}).gid])")
             print('C)', [x for x in added if x[0] in (993, 1170)])
             results.append(any(x[0] == 1170 and LAB in (x[1], x[2]) for x in added))
@@ -2814,8 +2805,7 @@ def case_artl3100():
             pg.click(f'{sec} [data-act=artl-toggle]')
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             d2 = pg.evaluate(ENT, 'Cyclical Dreams')
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             kinds = pg.evaluate("MB.relationshipEditor.state.added.map(r => [r.linkTypeID, (r.entity0 || {}).entityType])")
             e0 = pg.evaluate(ENT, 'Linked Label')
             print('D)', d1, d2, [x for x in kinds if x[0] in (993, 1170, 1171, 928)], 'E)', e0)
@@ -2931,8 +2921,7 @@ def case_detail3102():
             print('   ', fg, gone)
             results.append(len(asks) == 1 and 'bass clarinet' in asks[0][0] and 'soprano' not in asks[0][0].split('–')[-1] and asks[0][1] == 'Frode Gjerstad'
                            and bool(fg) and any(r[2] == 'bass clarinet' for r in fg['rows']) and gone)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [r.linkTypeID, ((r.entity0 || {}).name || ''), ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName + (x.credited_as ? ' [' + x.credited_as + ']' : ''))])""")
             print('E)', [x for x in added if x[1] in ('Sebastian Scotney', 'Pat Person')])
             results.append(any(x[0] == 24 and x[1] == 'Sebastian Scotney' and 'translator' in x[2] for x in added)
@@ -3052,8 +3041,7 @@ def case_insts3103():
                 states.append((len(t1['rows']), sorted(set(r[1] for r in t1['rows'])), len(t2['rows']), [r[4] for r in t2['rows'] if r[1] == 'recording']))
             print('D)', auto_row, states)
             results.append(auto_row and all(x == (5, ['recording'], 6, [['solo']]) for x in states))
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate(ADDED)
             mine = [x for x in added if x[1] in ('Jane Roe', 'Sax Two')]
             print('E)', mine)
@@ -3194,8 +3182,7 @@ def case_evcol3103():
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
             pg.locator(f'{sec} tr.dci-row:has([data-f=primary]) [data-act=level][data-level=release]').last.click()
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage(pg)
             added = pg.evaluate("""MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Pia Note' && (r.entity1 || {}).entityType === 'release')
               .map((r) => [r.linkTypeID, r.begin_date ? [r.begin_date.year, r.begin_date.month, r.begin_date.day].join('-') : ''])""")
             print('F)', added)
@@ -4342,104 +4329,9 @@ def case_sort3112():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
-def case_instlca3113():
-    """Credits Importer 3.113.0 (collected item Z-INSTLCA, S177): ⑃ the common level of an entry's instruments. Discogs: Sax Two
-    "Soprano Saxophone, Flute" (both woodwind), Voc Two "Lead Vocals, Backing Vocals", Track Guy "Piano" on track 1 and "Organ" on 2.
-    A) Sax Two: ⑃ beside "Instruments:", its tooltip "… woodwind …"; a click: a row woodwind on the recordings, all tracks, the two
-       instruments stay; ⑃ pressed; again: the row gone (until 3.112.0 no ⑃).
-    B) Voc Two: ⑃ "… vocals …": a row vocal without a voice.
-    C) Track Guy (tracks of their own): no ⑃. (review) The import repeated: the row of Voc Two there again, once, ⑃ pressed.
-    D) ⚙ Settings → Appearance "Offer ⑃" off: none."""
-    import copy
-    orig = H.discogs_release
-    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
-    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
-    H.attr(9300, 'woodwind', 14, 14)
-    for i, n in ((9131, 'soprano saxophone'), (9142, 'flute')):
-        H.attr(i, n, 14, 9300)
-    for i, n in ((9401, 'piano'), (9402, 'organ')):
-        if i not in H.ATTRS:
-            H.attr(i, n, 14, 14)
-    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
-    CR = [('Sax Two', 'Soprano Saxophone, Flute', '', 3411), ('Voc Two', 'Lead Vocals, Backing Vocals', '', 3412), ('Track Guy', 'Piano', '1', 3413), ('Track Guy', 'Organ', '2', 3413)]
-    for n, _r, _t, i in CR:
-        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
-
-    def rel():
-        d = orig()
-        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, t, i in CR]
-        d['companies'] = []
-        for t in d['tracklist']:
-            t['extraartists'] = []
-        return d
-    H.discogs_release = rel
-    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name)"
-    BTN = "(name) => { const b = (%s)(name)?.querySelector('[data-act=insts-common]'); return b ? [b.title, b.getAttribute('aria-pressed')] : null; }" % SEC
-    ROWS = """(name) => [...(%s)(name).querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '',
-      (r.querySelector('[data-f=primary]') || {}).value || '', ([...r.querySelectorAll('[data-act=level][aria-pressed=true]')][0] || { dataset: {} }).dataset.level || '',
-      r.querySelectorAll('.dci-trk input:checked, [data-f=track]:checked').length])""" % SEC
-    results = []
-    try:
-        with sync_playwright() as p:
-            H.ENTRIES_VIEW = 'legacy'
-            b = p.chromium.launch(args=H.LAUNCH_ARGS)
-            ctx = H.new_context(b)
-            pg, errs = H.open_mb_edit(ctx, companion=False)
-            pg.wait_for_selector('#dci-open', timeout=20000)
-            H.open_dashboard(pg)
-            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            H.wait_still(pg, "document.body.innerHTML", 10, 300)
-            a0 = pg.evaluate(BTN, 'Sax Two')
-            r0 = pg.evaluate(ROWS, 'Sax Two')
-            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Sax Two')
-            H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            r1 = pg.evaluate(ROWS, 'Sax Two')
-            a1 = pg.evaluate(BTN, 'Sax Two')
-            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Sax Two')
-            H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            r2 = pg.evaluate(ROWS, 'Sax Two')
-            print('A)', a0, r0, '\n  ', r1, a1, '\n  ', r2)
-            results.append(bool(a0) and 'woodwind' in a0[0] and a0[1] == 'false' and len(r1) == len(r0) + 1 and r1[-1][:3] == ['instrument', 'woodwind', 'recording']
-                           and r1[:len(r0)] == r0 and a1 and a1[1] == 'true' and r2 == r0)
-            v0 = pg.evaluate(BTN, 'Voc Two')
-            pg.evaluate("(name) => (%s)(name).querySelector('[data-act=insts-common]').click()" % SEC, 'Voc Two')
-            H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            v1 = pg.evaluate(ROWS, 'Voc Two')
-            print('B)', v0, v1)
-            results.append(bool(v0) and 'vocals' in v0[0] and v1[-1][0] == 'vocal' and v1[-1][1] == '' and len(v1) == 3)
-            t0 = pg.evaluate(BTN, 'Track Guy')
-            print('C)', t0)
-            results.append(t0 is None)
-            # (review) the import repeated (keeping what was changed): the row of Voc Two there again, once
-            pg.click('[data-el=source] [data-act=repeat-open]')
-            pg.wait_for_timeout(200)
-            pg.click('[data-el=repeat] [data-act=repeat-do]')
-            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
-            H.wait_still(pg, "document.body.innerHTML", 10, 300)
-            v2 = pg.evaluate(ROWS, 'Voc Two')
-            vb = pg.evaluate(BTN, 'Voc Two')
-            print('   wiederholt:', v2, vb)
-            results.append(len(v2) == 3 and v2[-1][:2] == ['vocal', ''] and bool(vb) and vb[1] == 'true')
-            H.open_settings(pg, 'appearance')
-            pg.uncheck('[data-f=insts-common-on]')
-            pg.wait_for_timeout(300)
-            pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
-            pg.wait_for_timeout(300)
-            d0 = pg.evaluate(BTN, 'Sax Two')
-            print('D)', d0)
-            results.append(d0 is None)
-            print('Fehler:', errs)
-            results.append(not errs)
-            b.close()
-    finally:
-        H.discogs_release = orig
-        H.LTS.clear()
-        H.LTS.update(lts0)
-        H.ATTRS.clear()
-        H.ATTRS.update(attrs0)
-        H.LINKED.update(linked0)
-    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
-
+# ((3.160.0, review run 3) case_instlca3113 – the ⑃ of its own beside "Instruments:" (3.113.0) – is gone: from 3.156.0 the common level is
+# part of "⑃ on the release + group" (case v3156), the button of its own can no longer be reached in the legacy view and only without
+# rule S169 in the matrix. The case was not run when that changed (the file was cut off by the time limit) and failed unseen.)
 
 
 def case_outwhy3130():

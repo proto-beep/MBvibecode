@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.159.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.160.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.160.0 · 2026-11-18
+
+- **Z-REVIEW-FABLE, run 3 (UI, tests and documents, MusicBrainz's rules, privacy):** the script itself: `.dci-misslinks > details > summary` in `--purple-d` (was `--purple`: 2.8 : 1 in the dark theme). Nothing else in the script.
+- **`smoke/runall.py` (new):** the whole suite – each file a process (five at a time, `--timeout` 2700 s, logs in `smoke/out/`); passed = ended by itself with exit code 0, last "Ergebnis" OK, no case "FEHLER", the summary "Fälle: …" printed; failed cases once more alone at the end ("WACKELIG"); exit code 0 / 1. It replaces a script of the working sessions that read the last "Ergebnis" line of a log and cut files off after 600 s.
+- **`smoke/harness.py`:** `stage(pg)` – clicks "Stage …" and waits for one more "Staging complete" in the log.
+- **Tests corrected (they failed unseen):** `t_entries.py` – `barroom` (`OverlayScrollbar`; the bar's room compared with the wide one), `compactlines` ("Notes of compact entries"), `chipask`, `qgtr397` (the instrument as written first), `companies`, `rwrt3100` and 17 more places (`H.stage`), `instlca3113` removed; `t_ui_settings.py` – `notice` (the milestones of 3.158.0).
+- **`tools/review_checks.py`, `tools/a11y_audit.py` (new):** the checks of the review runs that a program can do.
+- **Tests:** the suite with `runall.py`: 27 of 27 files (cases of timing that failed with five browsers at a time and passed alone are named).
 
 ## Import 3.159.0 · 2026-11-18
 
