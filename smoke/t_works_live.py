@@ -283,7 +283,7 @@ def case_liveoffer():
         a_offer, a_list = pg.evaluate(OFFER), pg.evaluate(LIST)
         print('A) Angebot:', a_offer, '| Liste:', a_list)
         ok_a = bool(a_offer) and a_offer[0] == f'Tracks 2–4 are live recordings. Propose disambiguation comments for them (“{base}”)?' \
-            and '⚙ Settings → Staging → “Live recordings: add a disambiguation comment”' in a_offer[1] and a_offer[2] == ['✓ Propose comments', '✕ Not for this release'] \
+            and a_offer[1] == 'Asked for each release while the setting is off' and a_offer[2] == ['✓ Propose comments', '✕ Not for this release'] \
             and a_list == []
         # B) ✓
         pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)

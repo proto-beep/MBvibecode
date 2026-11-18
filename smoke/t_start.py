@@ -1633,7 +1633,7 @@ def case_gaprefresh3135():
         H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
         line = pr.evaluate("document.querySelector('.dci-gapline span').textContent")
         print('A2)', line)
-        results.append(f'still missing. {n} of them were taken out by you in the editor.' in line)
+        results.append(f'still missing. {n} of them were removed by you in the editor.' in line)
         pg2, errs3 = H.open_mb_edit(ctx, companion=False)
         pg2.on('dialog', lambda d: d.accept())
         pg2.wait_for_selector('#dci-open', timeout=20000)
@@ -1649,7 +1649,7 @@ def case_gaprefresh3135():
           return g ? [...g.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(x => x.dataset.level) : null; })()""")
         done = pg2.evaluate("!!document.querySelector('[data-el=rmdask].dci-dgl-done')")
         print('B) Frage:', box, '| Guitar Guy vorher:', lv0, '| nach ✓:', lv1, '| erledigt:', done)
-        results.append(bool(box) and box[0].startswith('Taken out in the editor last time: 1 credit') and any('Guitar Guy' in x for x in box[1])
+        results.append(bool(box) and box[0].startswith('Removed in the editor last time: 1 credit') and any('Guitar Guy' in x for x in box[1])
                        and lv0 and 'skip' not in lv0 and lv1 and all(x == 'skip' for x in lv1) and done)
         # ((review) answered: the next import does not ask again
         pg3, errs4 = H.open_mb_edit(ctx, companion=False)

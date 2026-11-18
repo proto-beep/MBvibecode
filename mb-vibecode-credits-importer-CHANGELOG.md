@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-19 | 3.170.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -132,6 +133,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.170.0
+
+The surface tidied (F-HEADCOUNT, F-TERMS, F-TOOLTIPLEN):
+
+- **The head with words** (F-HEADCOUNT): **Search**, **Rules**, **Statistics**, **Settings**, **More** and **Close** stand in the open, each with its word. The view (Compact), the text size (A− A+), "Reset position and size", the log, the keyboard shortcuts and the new **Help** are a list under **More**. Before: sixteen controls, ten of them symbols without a word.
+- **The footer** (F-HEADCOUNT): each kind of open point is one button that goes to the next one – "1 row incomplete", "1 question", "5 suggestions", "2 tracks without a work"; Shift+click goes to the one before. The arrows ‹ › and ▲ ▼ are gone; a kind with nothing open is not shown. "fill role credits" and "≤ 500 per staging" are under **Options** at every width.
+- **Words or symbols:** ⚙ Settings → Appearance → **Head and footer: Words · Symbols** (words by default). With symbols the head shows no words and the footer counts "● 1", "● 5" as before. The setting "Symbols: Emojis · Text" is as it was.
+- **One word for one thing** (F-TERMS; English and German): *stage* (eintragen) puts relationships into MusicBrainz's editor; *apply* (anwenden) confirms a value in the dashboard; *use* (verwenden) takes a suggestion or a name – no longer "take over"; *skip* (überspringen) is the action; *left out* (ausgelassen) is the result in lists – no longer "taken out"; what leaves the editor or the dashboard is *removed* (entfernt). 68 English and about 150 German texts; in German "übernehmen" and "vormerken" for staging are "eintragen" now ("In den Beziehungseditor eintragen").
+- **Tooltips are one sentence** (F-TOOLTIPLEN; English and German): 125 tooltips of the dashboard longer than 120 characters are one sentence now (those shown on MusicBrainz's own pages, where there is no "Help", are as they were). Nothing is lost: **Help** (head → More) shows, while it is on, the full text of what the pointer or the focus is on in a line above the footer; the switches and choices of ⚙ Settings whose tooltips had more to say have an **ⓘ** with it (what the edit note holds, say). Spanish and French keep their long tooltips until the next translation round. The notes of the rules ("R096: …") are as long as they were.
+- The window "Mapping rules" opens below the head also where the head takes two lines.
+- Gone: ▲ ▼ in the footer.
 
 ### Import 3.169.0
 

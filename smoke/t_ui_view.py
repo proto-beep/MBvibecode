@@ -707,7 +707,7 @@ def case_foot():
         print('A) 1500:', a, '\n   Meldung:', a_open, a_shut)
         spread = max(a['tops']) - min(a['tops'])
         # ([Z-YELL] 3.110.0) the counters of what is open ("● 1 must", "● 3 can") take the place left: the actions on a second line
-        ok_a = a['h'] <= 90 and spread <= 40 and a['sum'] == '24 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
+        ok_a = a['h'] <= 90 and spread <= 40 and a['sum'] == '24 new relationships · 1 row incomplete · 1 already on MB' and 'on recordings' in a['levels'] \
             and a['chips'] == [['2 tracks without a work', '2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.']] \
             and a_open == ['2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.'] and a_shut == [] \
             and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['fill role credits', True], ['≤ 500 per staging', True]] \

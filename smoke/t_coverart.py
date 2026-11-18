@@ -2323,7 +2323,7 @@ def case_ocrpipe3144():
                 results.append(res[0] == ['Spirit Room Series Vol.247 |\n¦ |\n| Marc D. Rusch – double bass\nA | B – drums'] and not any('stroke' in x for x in res[1]))
             else:
                 results.append(res[0] == ['Spirit Room Series Vol.247\nMarc D. Rusch – double bass\nA | B – drums']
-                               and res[1] == ['Corrected after reading: dash between a name and a role (2) · stroke of the artwork at the edge of a line taken out (3)'])
+                               and res[1] == ['Corrected after reading: dash between a name and a role (2) · stroke of the artwork at the edge of a line removed (3)'])
                 pg.click('#dci-ocr [data-ocr=import]')
                 H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
                 pg.wait_for_timeout(1000)

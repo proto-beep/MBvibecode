@@ -188,12 +188,12 @@ def case_v217():
         seen = []
         for _ in range(3):
             pg.evaluate("document.querySelectorAll('.dci-flash').forEach(e => e.classList.remove('dci-flash'))")
-            pg.click('[data-el=sum] [data-act=inc-next] >> nth=-1'); pg.wait_for_timeout(300)
+            pg.click('[data-el=sum] [data-act=inc-next]'); pg.wait_for_timeout(300)
             fl = pg.evaluate("""[...document.querySelectorAll('.dci-flash')].map(e => e.matches('tr.dci-row') ? 'row:' + e.querySelector('.dci-drole').dataset.raw.trim()
           : e.matches('[data-match]') ? 'artist' : e.className.split(' ').find(c => c.startsWith('dci-c-')) || e.tagName)""")
             seen.append((re.search(r'\d/\d', s()).group(0) if re.search(r'\d/\d', s()) else '', sorted(fl)))
         print('   ›, ›, ›:', seen)
-        pg.click('[data-el=sum] [data-act=inc-prev]'); pg.wait_for_timeout(300)
+        pg.click('[data-el=sum] [data-act=inc-next]', modifiers=['Shift']); pg.wait_for_timeout(300)  # [3.170.0] Shift+click: the one before
         back = re.search(r'\d/\d', s()).group(0)
         print('   ‹:', back)
         # [3.30.9] "©© Fuzzoramarecords 2005" gives the label (℗ and ©, S042) – not in MusicBrainz: two rows more; [3.31.5] the
