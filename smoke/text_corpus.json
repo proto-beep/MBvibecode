@@ -1196,14 +1196,19 @@
         "credits": [
           [
             "Frank Trompeter",
-            "alto",
-            "= ? (asked, R102)"
+            "Tenor saxophone"
+          ],
+          [
+            "Frank Trompeter",
+            "alto saxophone"
+          ],
+          [
+            "Frank Trompeter",
+            "soprano saxophone"
           ]
         ],
         "companies": [],
-        "unrecognized": [
-          "Frank Trompeter: Tenor, alto, soprano saxophones → ? “Tenor”, “soprano saxophones”"
-        ],
+        "unrecognized": [],
         "ignored": []
       }
     },

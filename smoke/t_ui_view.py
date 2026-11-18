@@ -294,7 +294,7 @@ def case_levels():
         # A) full view
         a1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-lvlc')"), pg.evaluate(PRESSED, 'Bass Man'), pg.evaluate(PRESSED, 'Guitar Guy')]
         print('A) Farben an, Bass Man, Guitar Guy:', a1)
-        results.append(a1[0] and a1[1][:2] == ['recording', 'rgb(47, 109, 181)'] and a1[2][:2] == ['release', 'rgb(46, 139, 87)'] and 'inset' in a1[1][2])
+        results.append(a1[0] and a1[1][:2] == ['recording', 'rgb(47, 109, 181)'] and a1[2][:2] == ['release', 'rgb(39, 121, 75)'] and 'inset' in a1[1][2])
         # B) compact: the level by a click
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(400)
@@ -312,7 +312,7 @@ def case_levels():
         results.append(levels[:2] == ['recording', 'release'] and levels[-2:] == ['skip', 'recording'] and len(set(levels)) == len(levels) - 1
                        and seq[0][2] == 'Level – a click switches to “Release”' and seq[0][3] == 'rgb(47, 109, 181)' and seq[0][6] == 'BUTTON'
                        # [3.32.0] the March days as their common month (D022)
-                       and seq[0][5].endswith('· 2001-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
+                       and seq[0][5].endswith('· 2001-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(39, 121, 75)'
                        and seq[-1][5].endswith('· 2001-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
         # C) the tab "Appearance"
         H.open_settings(pg, 'general')
@@ -324,7 +324,7 @@ def case_levels():
       document.querySelector('[data-el=settings] .dci-set-tab[aria-selected=true]').textContent.trim()]""")
         print('C) Allgemein (Zoom, Ansicht, Sprache):', gen, '| Darstellung:', app)
         results.append(gen == [False, False, True] and app[:4] == [True, True, True, True] and app[5] == 'Appearance'
-                       and app[4] == [['recording', '#2f6db5'], ['release', '#2e8b57'], ['release_group', '#b0700c'], ['work', '#8a4f9e']])
+                       and app[4] == [['recording', '#2f6db5'], ['release', '#27794b'], ['release_group', '#96600a'], ['work', '#8a4f9e']])
         pg.evaluate("""(() => { const x = document.querySelector('.dci-set-pane [data-set=level-color][data-level=release]'); x.value = '#aa0000';
       x.dispatchEvent(new Event('input', { bubbles: true })); x.dispatchEvent(new Event('change', { bubbles: true })); })()""")
         pg.wait_for_timeout(300)
@@ -349,7 +349,7 @@ def case_levels():
         print('C) eigene Farbe:', c1, '| aus:', c2, '| ↺:', c3, '| Matrix wieder:', matrix_back)
         results.append(c1 == ['{"release":"#aa0000"}', ['release', 'rgb(170, 0, 0)', 'rgb(255, 255, 255)']]
                        and c2 == ['false', False, ['release', 'rgb(61, 58, 79)'], True]
-                       and c3 == [[None, None], True, ['release', 'rgb(46, 139, 87)']] and matrix_back == [None, True])
+                       and c3 == [[None, None], True, ['release', 'rgb(39, 121, 75)']] and matrix_back == [None, True])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -639,7 +639,7 @@ def case_kindcolors():
         pg.wait_for_timeout(1500)
         a = [pg.evaluate(HEAD, 'Writer W'), pg.evaluate(HEAD, 'Pub Co')]
         print('A) Köpfe:', a)
-        results.append(a[0][:3] == ['dci-kind-artist', 'Artist', 'rgb(91, 111, 140)'] and a[1][:3] == ['dci-kind-label', 'Label', 'rgb(42, 138, 138)']
+        results.append(a[0][:3] == ['dci-kind-artist', 'Artist', 'rgb(91, 111, 140)'] and a[1][:3] == ['dci-kind-label', 'Label', 'rgb(35, 118, 118)']
                        and a[0][3] in ('rgba(0, 0, 0, 0)', 'rgb(255, 255, 255)'))
         H.open_settings(pg, 'appearance')
         app = pg.evaluate("""[document.querySelector('.dci-set-pane [data-set=kind-colors]').checked,
@@ -655,7 +655,7 @@ def case_kindcolors():
         pg.wait_for_timeout(500)
         b3 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate("[localStorage.getItem('dci-kind-colors'), localStorage.getItem('dci-kind-palette')]")]
         print('B) Einstellung:', app, '| eigene Farbe:', b1, '| aus:', b2, '| ↺:', b3)
-        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#2a8a8a'], ['place', '#4e8a3e'], ['area', '#8a6a3e'], ['event', '#8a4f7d'], ['other', '#8a8799']]]
+        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#237676'], ['place', '#447836'], ['area', '#8a6a3e'], ['event', '#8a4f7d'], ['other', '#8a8799']]]
                        and b1 == ['rgb(170, 0, 0)', 'rgb(170, 0, 0)', '{"artist":"#aa0000"}']
                        and b2 == ['rgb(138, 135, 153)', 'rgb(138, 135, 153)', 'false'] and b3 == ['rgb(91, 111, 140)', [None, None]])
         print('Fehler:', errs)
@@ -1524,6 +1524,42 @@ def case_mbsearch3123r():
         results.append(a['kind'] == 'label' and LAB in a['link'] and bool(b2) and b2['kind'] == 'label' and LAB in b2['link'] and b2['rows'] == [['design', 'release']])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_contrast3162():
+    """Credits Importer 3.162.0 (proposal F-STAGECONTRAST): every text of the dashboard reads at 4.5 : 1 (3 : 1 from 24 px) – in the light
+    and in the dark design. Measured by the audit of tools/a11y_audit.py (its AUDIT script) on the test page.
+    A) light, B) dark: no text below the limit ("Stage in the relationship editor" was white on orange at 2.96 : 1; the tags of the kinds,
+       the dots of the open points and the levels' buttons were below 4.5 too).
+    C) The tag of the kind in "Show missing links of the entries" has a ground (it was white on nothing – not readable)."""
+    import re
+    audit = re.search(r'AUDIT = r"""(.*?)"""', (H.ROOT / 'tools' / 'a11y_audit.py').read_text(encoding='utf-8'), re.S).group(1)
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for dark in (False, True):
+            ctx = b.new_context(viewport={'width': 1400, 'height': 3000}, color_scheme='dark' if dark else 'light')
+            H.install_routes(ctx)
+            H.add_mapping(ctx)
+            if dark:
+                ctx.add_init_script("if (location.host === 'musicbrainz.org') { localStorage.setItem('dci-theme-window', JSON.stringify('dark')); localStorage.setItem('dci-theme-page', JSON.stringify('dark')); }")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(1200)
+            res = pg.evaluate(audit)
+            low = sorted((v['ratio'], k) for k, v in res['low'].items())
+            print('B)' if dark else 'A)', res['texts'], 'texts | below the limit:', low[:6])
+            results.append(res['texts'] > 200 and not low)
+            if not dark:
+                tags = pg.evaluate("[...document.querySelectorAll('#dci-overlay .dci-misslinks-list .dci-kind-tag')].map(e => getComputedStyle(e).backgroundColor)")
+                print('C)', tags[:4])
+                results.append(bool(tags) and all(t != 'rgba(0, 0, 0, 0)' for t in tags))
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

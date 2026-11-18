@@ -7,7 +7,7 @@ PROPOSAL = """
   box-shadow: 0 1px 4px rgba(38, 36, 48, .10); padding: 0 12px 8px 14px; margin: 0 0 28px; }
 #dci-overlay .dci-group .dci-ghead { background: var(--kind-bg); margin: 0 -12px 8px -14px; padding: 8px 12px 8px 14px; border-radius: 0 6px 0 0; }
 #dci-overlay .dci-kind-artist { --kind: #736dab; --kind-bg: #f0eff9; }
-#dci-overlay .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
+#dci-overlay .dci-kind-label { --kind: #237676; --kind-bg: #e8f4f4; }
 #dci-overlay .dci-kind-place { --kind: #d9822b; --kind-bg: #fcf0e4; }
 #dci-overlay .dci-kind-tag { display: inline-block; margin-right: 8px; padding: 0 7px; border-radius: 10px; background: var(--kind); color: #fff;
   font-size: 11px; font-weight: 600; letter-spacing: .02em; vertical-align: 1px; }

@@ -1679,7 +1679,7 @@ def case_wnew398():
     H.lt(350, H.uid('1aaa0000', 350), 'arrangement', 'work', 'work')
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     ROW = """(() => { const tr = [...document.querySelectorAll('.dci-matrix tr[data-work="0"]')]; return tr.map(t => ({
-      wnew: !!t.querySelector('[data-act=wnew-on]'), op: (b => b ? getComputedStyle(b).opacity : null)(t.querySelector('[data-act=wnew-on]')),
+      wnew: !!t.querySelector('[data-act=wnew-on]'), op: (b => b ? getComputedStyle(b).borderTopStyle : null)(t.querySelector('[data-act=wnew-on]')),
       newWork: !!t.querySelector('.dci-badge-plan'), repl: (t.querySelector('.dci-mx-wrepl') || {}).textContent || '',
       off: !!t.querySelector('[data-act=wnew-off]'), sugg: (t.querySelector('[data-wnote=arrsugg]') || {}).textContent || '',
       ok: !!t.querySelector('[data-act=arr-ok]') })); })()"""
@@ -1695,7 +1695,7 @@ def case_wnew398():
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(ROW)
         print('A)', a0)
-        results.append(len(a0) == 1 and a0[0]['wnew'] and a0[0]['op'] == '0.5' and not a0[0]['newWork'])
+        results.append(len(a0) == 1 and a0[0]['wnew'] and a0[0]['op'] == 'dashed' and not a0[0]['newWork'])
         pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-on]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
         b0 = pg.evaluate(ROW)
         pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-off]').evaluate('b => b.click()'); pg.wait_for_timeout(400)

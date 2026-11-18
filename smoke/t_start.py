@@ -74,7 +74,7 @@ def case_afteredit():
         print('A) Reiter Release-Info:', a1)
         print('   Reiter Edit note:', a2, '| alter Haken gespeichert:', old)
         results.append(a1 is not None and not a1['shown'] and a2['shown'] and a2['prev'] == 'enter-edit' and a2['text'] == 'Enter edit & import credits'
-                       and a2['bg'] == 'rgb(235, 116, 59)' and a2['cls'] == 'positive' and not a2['tick'] and 'Discogs 1234' in a2['title']
+                       and a2['bg'] == 'rgb(184, 79, 28)' and a2['cls'] == 'positive' and not a2['tick'] and 'Discogs 1234' in a2['title']
                        and 'Ctrl+Alt+Enter' in a2['title'] and old is None)
         # B) "Enter edit"
         pg.click('#enter-edit')
