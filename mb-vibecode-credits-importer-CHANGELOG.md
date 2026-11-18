@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.166.0 | – |
+| 2026-11-18 | 3.159.0 – 3.167.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.167.0
+
+The works matrix, part III (proposals W-DIFFONLY, W-DATES; W-SAMEFORALL not yet):
+
+- **What MusicBrainz has complete is one line** (W-DIFFONLY; compact): the tracks whose work is linked and for which nothing would be entered – no role in any column, no attribute or date of the link to add or offered – are folded into "3 works complete in MusicBrainz" with "Show". What is to do stays in view. With "Everything in the open" every track is a row as before.
+- **The date of a role in its chip** (W-DATES): a role with a date of its own shows it ("writer ⌚ 1974") – until now only the sign said there was one.
+- **Already there of W-DATES, unchanged:** a cell's own date and its roles in the cell's menu ▾; a date for a whole column in the column's menu; the recording date onto the link of a linked work below the track; dates and track groups dragged from the pools onto a cell, a column, a row – a date already there stays, ⇧ Shift replaces it.
+- **Not in this version: W-SAMEFORALL** (one line per person when the writers are the same for every track). It needs the state of a row in one place – the part of W-MODEL that is still open – to know safely that nothing in a row is left to decide.
 
 ### Import 3.166.0
 

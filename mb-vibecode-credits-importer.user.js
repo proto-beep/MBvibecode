@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.166.0
+// @version      3.167.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.166.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.166.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.167.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.167.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.166.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.167.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1896,6 +1896,11 @@
       "matrix.optsTitle": "Work type and lyrics languages of this work (click to change)",
       "matrix.newWork": "new work",
       "matrix.waiting": "waits for a work",
+      "matrix.doneN.one": "{n} work complete in MusicBrainz",
+      "matrix.doneN.other": "{n} works complete in MusicBrainz",
+      "matrix.doneHint": "linked, nothing to enter for them",
+      "matrix.doneShow": "Show",
+      "matrix.doneHide": "Hide",
       "matrix.rowWaits.one": "{n} credit waits for a work",
       "matrix.rowWaits.other": "{n} credits wait for a work",
       "matrix.notesReason": "from the notes: “{text}”",
@@ -44404,7 +44409,7 @@
         if (locked) return chip('nwa', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, `${label} – ${tr(cskip ? 'matrix.creditSkipped' : 'matrix.workLocked')}`);
         if (exactHere && norm(rowTypeName(r)) === 'writer') return chip('cwr', `<s>${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}</s>`, tr('matrix.writerExact'));
         // ([Z-WMX] 3.52.0: waiting – an hourglass, the words in the tooltip)
-        return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? `<sup>${esc(emo('date'))}</sup>` : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
+        return chip(kind, `${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? `<sup>${esc(emo('date'))}</sup>${ownDateText(r)}` : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${label}${date}${why}${kind === 'wait' ? ` – ${tr('matrix.waiting')}` : ''}`);
       }),
     ].join('');
@@ -46391,8 +46396,31 @@
       if (at >= 0) firstOf.get(at).push(o);
       if (!(S.suiteAnswers.get(o.key) && !S.suiteAnswers.get(o.key).yes)) o.tracks.forEach((i) => inSuite.add(i));
     });
-    return mrows.map((m, k) => `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`).join('');
+    // [W-DIFFONLY] (3.167.0; compact) the tracks MusicBrainz has complete – a work linked, nothing to enter in any column, no attribute or date
+    // of the link to add or offered – are one line ("3 works complete in MusicBrainz"), opened by a click; what is to do stays in view
+    const done = !skipped && wmxCompact() ? mrows.filter((m) => mxRowComplete(m, cols) && !inSuite.has(m.i)) : [];
+    const fold = done.length >= 2 && !S.mxDoneOpen ? new Set(done.map((m) => m.key)) : new Set();
+    const doneRow = done.length >= 2 ? `<tr class="dci-mx-donerow" data-el="works-done"><td colspan="${span}"><span class="dci-badge dci-badge-ok">${esc(tr('matrix.doneN', { n: done.length }))}</span>
+      <span class="dci-sub">${esc(tr('matrix.doneHint'))}</span> <button type="button" class="dci-textbtn" data-act="mx-done" aria-expanded="${!!S.mxDoneOpen}">${esc(tr(S.mxDoneOpen ? 'matrix.doneHide' : 'matrix.doneShow'))}</button></td></tr>` : '';
+    const firstDone = done.length >= 2 ? done[0].key : '';
+    return mrows.map((m, k) => `${m.key === firstDone ? doneRow : ''}${fold.has(m.key) ? '' : `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`}`).join('');
+  }
+  /** [W-DATES] (3.167.0) The own date of a role in a cell, small in its chip ("writer ⌚ 1974") – until now only the sign said there was one. */
+  function ownDateText(r) {
+    const v = r && r.date ? validateDateFields(r.date).value : null;
+    const text = v ? formatDateValue(v) : '';
+    return text ? `<span class="dci-mxchip-date">${esc(text)}</span>` : '';
+  }
+  /** [W-DIFFONLY] (3.167.0) A row of the works matrix with nothing to do: its work is linked in MusicBrainz and nothing would be entered for it. */
+  function mxRowComplete(m, cols) {
+    const w = m.work;
+    if (!w || w.planned || creditsSkipped(m.i)) return false;
+    if (cols.some((c) => { const st = cellState(c, m); return st.active.length || st.unclear; })) return false;
+    const inMb = mbLinkAttrs(w);
+    if ([...linkAttrsOf(m.i, w)].some((n) => !inMb.has(n)) || liveHint(m.i, w) || coverHint(m.i, w)) return false;
+    const o = ruleOn('S215') ? workDateOffer(m.i, w) : null;
+    return !(o && o.sug && !o.staged);
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -46631,6 +46659,9 @@
       case 'mx-defaults':
         S.mxDefaultsOpen = !S.mxDefaultsOpen;
         if (wmxCompact()) S.mxMoreOpen = false; // (3.165.0) its button is under ⋯: that closes as the defaults open
+        break;
+      case 'mx-done':
+        S.mxDoneOpen = !S.mxDoneOpen; // [W-DIFFONLY] (3.167.0)
         break;
       case 'mx-heads':
         // [W-COLHEAD] (3.165.0) compact ↔ everything in the open; stored
@@ -59345,6 +59376,8 @@
       .dci-wh-morepop .dci-mx-cardline { margin: 0; }
       /* [W-CELL] (3.165.0) what the look of a role says */
       .dci-mx-legend { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      .dci-mxchip-date { font-weight: 400; margin-left: calc(var(--u, 1px) * 2); }
+      .dci-mx-donerow td { padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); background: var(--soft); text-align: left; }
       .dci-mx-rowwait { display: inline-flex; align-items: center; margin-left: calc(var(--u, 1px) * 6); white-space: nowrap; }
       .dci-mx-legenditem { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
       /* [W-COLHEAD] (3.165.0) compact heads: narrower, the options in the menu */
