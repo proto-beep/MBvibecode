@@ -598,7 +598,8 @@ def case_notice():
         ok2 = [k for k in keys() if k not in ('dci-profile', 'dci-profiles')] == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] or set(keys()) - {'dci-profile', 'dci-profiles'} == {'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'}  # ([Z-CPV] 3.73.0)
         # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0;
         # [3.37.0] 3.37.0, 3.36.0, 3.35.0
-        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.37.0' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' not in n and 'reset once' in n
+        # ([Z-MILESTONES] 3.158.0) the milestones anew: the latest three are 3.157.0, 3.155.0 and 3.150.0
+        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.157.0' in n and 'Credits Importer 3.155.0' in n and 'Credits Importer 3.150.0' in n and 'Credits Importer 3.149.0' not in n and 'reset once' in n
         # 3) closing is remembered
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
         reload()
@@ -609,7 +610,8 @@ def case_notice():
         reload()
         print('4) Update von 2.9.0 (Deutsch):', notice())
         n = notice() or ''
-        ok4 = 'das ist neu' in n and 'Import 2.13.0' in n and 'Import 2.11.0' in n and 'Import 2.10.0' in n and 'Import 2.9.0' not in n and 'Daten des Skripts einmal zurückgesetzt' not in n
+        # ([Z-MILESTONES] 3.158.0) the newest five of those since 2.9.0, the others counted ("und n weitere Meilensteine")
+        ok4 = 'das ist neu' in n and 'Credits Importer 3.157.0' in n and 'Credits Importer 3.148.0' in n and 'Credits Importer 3.137.0' not in n and 'weitere Meilensteine' in n and 'Daten des Skripts einmal zurückgesetzt' not in n
         # 4b) update from 2.12.0 (generation 2): reset once more, the milestone of 2.13.0 and the note about the reset
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(100)
         pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -617,7 +619,7 @@ def case_notice():
         reload()
         n = notice() or ''
         print('4b) Update von 2.12.0:', keys(), '|', n[:160])
-        ok4 = ok4 and 'Import 2.13.0' in n and 'Import 2.11.0' not in n and 'reset once' in n and 'dci-pools-keep' not in keys() \
+        ok4 = ok4 and 'Credits Importer 3.157.0' in n and 'more milestones' in n and 'Import 2.11.0' not in n and 'reset once' in n and 'dci-pools-keep' not in keys() \
             and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
         # 5) the companion: shared storage and the cover box settings on Discogs are cleared once
         dg, dg_errs = H.open_discogs(ctx)
