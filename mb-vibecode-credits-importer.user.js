@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.163.0
+// @version      3.164.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.163.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.163.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.164.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.164.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.163.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.164.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4268,6 +4268,9 @@
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
+      "typeAsk.askDjMix": "“{role}” on a DJ mix: the engineer who mixed the recordings, or the DJ who mixed the tracks into one another? – please choose:",
+      "quick.name.S297": "℗ on the release",
+      "quick.S297": "Phonographic copyright (℗) on the release instead of the recordings",
       "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
       "typeAsk.askBugle": "“{role}”: the bugle or, as in French, the flugelhorn? – please choose:",
       "typeAsk.askLaud": "“{role}”: the Spanish laúd or the lute? – please choose:",
@@ -5187,6 +5190,8 @@
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
     { id: 'S294', where: 'TEXT.parse (shopLines; FORMAT_LABEL_LINE, FORMAT_LABEL_NAME)', note: 'Texts (3.162.0; proposal F-TAPEFORMAT of review run 2): the format of an edition before its label – "Tape: No Problema Tapes / Vinyl: Hiraeth Records", "CD: Sub Pop" – is no credit ("Tape" was read as the instrument, the label as its player): left out as "the label of an edition". Only when the name ends like a label\'s (Records, Recordings, Tapes, Label, Music, Editions, Disques, Schallplatten), or the text names a second format that way and one of the names does; "Tape: John Doe" stays the instrument. Every free text' },
     { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
+    { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when all its tracks are videos and on the release otherwise, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
+    { id: 'S297', where: 'mapCompanyRole (C001)', note: 'Companies (3.164.0; proposal F-PRECLEVEL of review run 3; a quick switch, off): ℗ – phonographic copyright – on the release instead of the recordings. MusicBrainz has the relationship on both levels; where to put it is debated in the community (the recordings: the copyright of the sound recording itself; the release: what the cover says, and one relationship instead of one per track). Off: on the recordings as before; the level of each row can be changed at the row' },
     { id: 'S295', where: 'textExtras, addNotesCompanies, BANDCAMP.toRelease', note: 'Every free text alike (3.163.0; proposals F-NOTESRESULTS and F-BCABOUT of review run 2): what a text names besides credits and companies – a series (S164), ensembles (S162), live heads (S264), covers and quotes of tracks, headings of groups – is taken from the Discogs notes too (only people, companies and "I played …" were), and on Bandcamp also from "about" (covers, quotes, ensembles and groups with S049 on; a series always) and the texts of the editions. A series Discogs lists itself is not taken twice' },
     { id: 'S293', where: 'TEXT.parse (tidyLines; DIST_LINE, SHOP_LINES), BANDCAMP.toRelease (pkgMediumWord, PKG_MEDIUM_ROLE, PKG_ASK_TYPES), companyLeftOutForMedium, leftOutForMedium, pkgAskSkip, uncrHtml', note: 'Editions (3.161.0; collected item Z-VINYLONLY): "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Vinyl distribution: X", "Digital distribution by X" are the distributor – a medium named before "distribution" binds it to that medium; "Orange / Black Splatter Vinyl LP" and "Estimated shipping: February 2027" are what a shop writes (no date). What the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, duplicated, lacquer cut, glass mastered – holds for that medium only: left out, and listed so, when the MusicBrainz release has no such medium (the same company in the album\'s credits holds for all). Photographs and liner notes named only in an edition\'s text: taken for a release of that medium; for another one (the digital release) a suggestion – "named only in the text of the edition “…”" with "Take" –, unless the page names a digital booklet or the images as part of the download' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
@@ -5459,6 +5464,12 @@
       return out(['recording', 'engineer'], { flags: engFlags() });
     } },
       R033: { test: () => is(/^(mixed by|mixing|mix engineer|mixing engineer|mix)$/) || (engineer && has('mix', 'mixing')), run: () => {
+      // [F-DJMIX] (3.164.0, S296) "Mixed By [DJ Mix]": the DJ who mixed the tracks into one another – DJ-mix on the release, not the mix engineer
+      const dj = ruleOn('S296') ? ms.find((x) => /^dj(?:[- ]?mix)?$/.test(x)) : '';
+      if (dj) {
+        consumed.add(dj);
+        return out(['mix-dj'], { level: 'release' });
+      }
       return out(['mix'], { flags: engFlags() });
     } },
       R034: { test: () => is(/^(mastered by|mastering|mastering engineer)$/) || (engineer && has('mastering')), run: () => {
@@ -5577,6 +5588,11 @@
       R095: { run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
+      // [F-CAMSWITCH] (3.164.0) camera work follows the quick switch of the video credits (S263) like the others MusicBrainz has no type for
+      R110: { run: () => {
+        const r = ROLE_RULE_DATA.find((x) => x.id === 'R110');
+        return ruleOn('S263') ? out(r.types, extraOf(r)) : out([], { level: 'skip', notes: ['videoNoType'] });
+      } },
       // [Z-VIDEOCREW] (3.147.0, R119, S263) the credits of a video (VIDEO_CREDITS)
       // ((review) with S263 off a word R095 had before (Lighting, Hair, Stage Manager …) stays miscellaneous support there: only the new words
       // are left out)
@@ -7429,7 +7445,8 @@
     typeOptions.artist = spec.artist || [];
     const companyFlags = spec.flags || [];
     const prefer = spec.prefer || (spec.area ? 'area' : spec.place && (!spec.label || / at$/.test(r)) ? 'place' : spec.label ? 'label' : 'artist');
-    return { typeOptions, level: spec.level, prefer, notes: [], flags: companyFlags, rule: ruleId };
+    // [F-PRECLEVEL] (3.164.0, S297; a quick switch, off) ℗ on the release instead of the recordings
+    return { typeOptions, level: ruleId === 'C001' && ruleOn('S297') ? 'release' : spec.level, prefer, notes: [], flags: companyFlags, rule: ruleId };
   }
 
 
@@ -18104,7 +18121,8 @@
     if (!row.levelTouched) {
       // (3.43.5, counter-review) the import's choice counts only while the rule still gives the level it was derived from (an own
       // rule "producer → skip/release" wins); rows skipped by "Skip works" (mxSkipped) or S046 stay skipped too
-      const lv = row.levelImport && m.level === row.levelImportFrom ? row.levelImport : m.level;
+      // ([F-VIDEOLEVEL] 3.164.0, S296: a credit of a video on the level its tracks give)
+      const lv = (m.level !== 'skip' && videoLevelWant(row)) || (row.levelImport && m.level === row.levelImportFrom ? row.levelImport : m.level);
       // ([Z-RSOC] 3.101.0, review) a rights society: on Skip while the quick switch "Take rights societies" is off, back with it on
       if (row.company && /^rights societ/i.test(String(row.raw || ''))) {
         if (!ruleOn('S160')) {
@@ -20802,7 +20820,7 @@
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
   const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263']],
-    ['works', ['S160', 'S045', 'S222']], ['companies', ['S007']]];
+    ['works', ['S160', 'S045', 'S222']], ['companies', ['S007', 'S297']]];
   /**
    * [Z-VIDEOCREW] (3.147.0, S263) "mappings" at its quick switch: a small window to fold out – every video credit of VIDEO_CREDITS and where
    * it goes; what the switch leaves out marked.
@@ -28181,6 +28199,28 @@
    * adds the credits of the other reading without reading the source again): left out for a medium the release does not have
    * (the entry's key into leftOutKeys), for media not chosen, for a level not chosen.
    */
+  /**
+   * [F-VIDEOLEVEL] (3.164.0, S296) Every credit of a video on one level: on the recordings when all its tracks are videos (MusicBrainz's flag,
+   * or the title says so – S132), on the release otherwise – where MusicBrainz has the type there. Until 3.163.0 the cinematographer and the
+   * camera work were on the recordings, the video director, colorist, editor and lighting on the release, whatever the tracks were.
+   */
+  const VIDEO_RULES = new Set(['R076', 'R110', 'R119']);
+  function videoLevelWant(row) {
+    if (!ruleOn('S296') || !row || row.company || !VIDEO_RULES.has(row.ruleId) || row.levelTouched || !(row.types || []).length) return '';
+    const idx = [...(row.tracks || [])];
+    const want = idx.length && idx.every((i) => trackIsVideo(S.mbTracks[i])) ? 'recording' : 'release';
+    return findRowType(row, want) ? want : '';
+  }
+  function videoLevelFor(row) {
+    const want = row.level === 'skip' ? '' : videoLevelWant(row);
+    if (!want || row.level === want) return;
+    row.level = want;
+    resolveRowType(row);
+    if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);
+  }
+  /** [F-DJMIX] (3.164.0) The release group is a DJ mix (its secondary type). */
+  const rgIsDjMix = () => ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm).some((t) => /^dj[- ]?mix$/.test(t));
+
   function addCreditRows(artist, g, rel, source, leftOutKeys) {
     for (const c of g.roles.values()) {
       const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
@@ -28254,6 +28294,9 @@
         row.level = 'recording';
         resolveRowType(row);
       }
+      videoLevelFor(row); // [F-VIDEOLEVEL] (3.164.0, S296)
+      // [F-DJMIX] (3.164.0, S296) "Mixed By" on a DJ mix (the release group's type): the engineer of the mix or the DJ? – asked (Q022)
+      if (ruleOn('S296') && row.ruleId === 'R033' && rgIsDjMix()) row.djMixRg = true;
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
       suggestCommissioned(row);
       uncrSkip(row); // [Z-UNCR] (3.102.0, S167; review: once its level is settled)

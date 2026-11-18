@@ -464,4 +464,31 @@ console.log(JSON.stringify({ roles: Object.fromEntries(inp.roles.map((w) => [w, 
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_video3164():
+    """Credits Importer 3.164.0 (proposals F-CAMSWITCH, F-DJMIX) in Node.
+    A) "Mixed By [DJ Mix]" is the DJ-mix on the release; "Mixed By" alone the mix on the recordings.
+    B) Camera work ("Cameras", "Filmed By") follows the quick switch S263: on – miscellaneous support; off – left out (Skip) like the
+       other video credits MusicBrainz has no type for.
+    C) ℗ (C001): on the recordings; with S297 on, on the release."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[2]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const role = (w, mods = []) => { const r = m.mapRole(w, mods); return [r.rule || '', r.types, r.level]; };
+console.log(JSON.stringify({ mixed: role('Mixed By'), dj: role('Mixed By', ['DJ Mix']), cam: role('Cameras'), filmed: role('Filmed By'), pc: m.mapCompanyRole('Phonographic Copyright (p)').level }));
+"""
+    run = lambda off: json.loads(subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(off)], capture_output=True, text=True).stdout or '{}')  # noqa: E731
+    on, off = run([]), run(['S263', '+S297'])
+    print('A)', on.get('mixed'), on.get('dj'))
+    print('B)', on.get('cam'), on.get('filmed'), '| S263 off:', off.get('cam'), off.get('filmed'))
+    print('C)', on.get('pc'), '| S297 on:', off.get('pc'))
+    results = [on.get('mixed') == ['R033', ['mix'], 'recording'] and on.get('dj') == ['R033', ['mix-dj'], 'release'],
+               on.get('cam') == ['R110', ['misc'], 'recording'] and off.get('cam') == ['R110', [], 'skip'] and off.get('filmed') == ['R110', [], 'skip'],
+               on.get('pc') == 'recording' and off.get('pc') == 'release']
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
