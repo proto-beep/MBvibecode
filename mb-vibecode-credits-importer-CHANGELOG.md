@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.162.0 | – |
+| 2026-11-18 | 3.159.0 – 3.163.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.163.0
+
+Every free text alike (rule S295; proposals F-NOTESRESULTS and F-BCABOUT of review run 2):
+
+- **The Discogs notes give what every free text gives.** Until now they gave people, companies and "I played …" only. A series ("Jazz Masters Series No. 12"), ensembles ("track 3 SOLO: …"), a live recording named with its place and day ("“Song” live at Café Oto, 12 May 2019"), the original performers and quotes of single tracks and the headings of groups are taken from them now – the same as from a pasted text. A series Discogs lists itself is not taken twice. The log names what was taken.
+- **Bandcamp reads "about" and the texts of its editions for these too.** They were taken from the credits field only (covers, quotes and live recordings also from "about"). A series named in "about" counts also when the credits of "about" are switched off (S049) – it is no credit.
+- One function, `textExtras`, joins them for every source that reads more than one text. S295 off: as before.
+- Not changed: the pages of single tracks on Bandcamp – what they name is about that track, not the release.
 
 ### Import 3.162.0
 

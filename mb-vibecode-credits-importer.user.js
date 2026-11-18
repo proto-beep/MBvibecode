@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.162.0
+// @version      3.163.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.162.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.162.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.163.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.163.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.162.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.163.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -205,6 +205,12 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
+      "log.notesExtras": "From the Discogs notes, besides the credits: {list}",
+      "notesExtras.ensembles": "ensembles",
+      "notesExtras.liveHeads": "live recordings named",
+      "notesExtras.covers": "covers",
+      "notesExtras.quotes": "quotes",
+      "notesExtras.groups": "groups",
       "log.textTwice": "The same credit in two lines of the texts ({n}): joined in one row, both lines kept",
       "log.notesCredits": "From the Discogs notes, credits not listed by Discogs ({n}): {list}",
       "log.notesCreditTracks": "From the Discogs notes: the tracks of credits Discogs lists for the whole release – {list} (set; ⓘ shows the line)",
@@ -5181,6 +5187,7 @@
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
     { id: 'S294', where: 'TEXT.parse (shopLines; FORMAT_LABEL_LINE, FORMAT_LABEL_NAME)', note: 'Texts (3.162.0; proposal F-TAPEFORMAT of review run 2): the format of an edition before its label – "Tape: No Problema Tapes / Vinyl: Hiraeth Records", "CD: Sub Pop" – is no credit ("Tape" was read as the instrument, the label as its player): left out as "the label of an edition". Only when the name ends like a label\'s (Records, Recordings, Tapes, Label, Music, Editions, Disques, Schallplatten), or the text names a second format that way and one of the names does; "Tape: John Doe" stays the instrument. Every free text' },
     { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
+    { id: 'S295', where: 'textExtras, addNotesCompanies, BANDCAMP.toRelease', note: 'Every free text alike (3.163.0; proposals F-NOTESRESULTS and F-BCABOUT of review run 2): what a text names besides credits and companies – a series (S164), ensembles (S162), live heads (S264), covers and quotes of tracks, headings of groups – is taken from the Discogs notes too (only people, companies and "I played …" were), and on Bandcamp also from "about" (covers, quotes, ensembles and groups with S049 on; a series always) and the texts of the editions. A series Discogs lists itself is not taken twice' },
     { id: 'S293', where: 'TEXT.parse (tidyLines; DIST_LINE, SHOP_LINES), BANDCAMP.toRelease (pkgMediumWord, PKG_MEDIUM_ROLE, PKG_ASK_TYPES), companyLeftOutForMedium, leftOutForMedium, pkgAskSkip, uncrHtml', note: 'Editions (3.161.0; collected item Z-VINYLONLY): "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Vinyl distribution: X", "Digital distribution by X" are the distributor – a medium named before "distribution" binds it to that medium; "Orange / Black Splatter Vinyl LP" and "Estimated shipping: February 2027" are what a shop writes (no date). What the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, duplicated, lacquer cut, glass mastered – holds for that medium only: left out, and listed so, when the MusicBrainz release has no such medium (the same company in the album\'s credits holds for all). Photographs and liner notes named only in an edition\'s text: taken for a release of that medium; for another one (the digital release) a suggestion – "named only in the text of the edition “…”" with "Take" –, unless the page names a digital booklet or the images as part of the download' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
@@ -8557,6 +8564,29 @@
 
   /** [Z-CIMP] (3.101.0, S164) A series a text names, as the sources give series (no link: searched by its name). */
   const textSeriesOf = (x) => ({ id: 0, links: [], name: x.name, number: x.number, fromText: true });
+  /**
+   * [S295] (3.163.0; proposals F-NOTESRESULTS, F-BCABOUT of review run 2) What a free text gives besides credits and companies – series,
+   * ensembles, live heads, covers and quotes of tracks, headings of groups – joined from several readings (TEXT.parse results) without
+   * anything twice. One function for every source that reads more than one text: Bandcamp (credits, "about", the texts of its editions)
+   * and the Discogs notes (which took only people, companies and "I played …" until 3.162.0).
+   */
+  const TEXT_EXTRA_KEYS = ['series', 'ensembles', 'liveHeads', 'covers', 'quotes', 'groups'];
+  function textExtras(results) {
+    const out = Object.fromEntries(TEXT_EXTRA_KEYS.map((k) => [k, []]));
+    const keyOf = (k, x) => (k === 'series' ? `${String(x.name || '').toLowerCase().trim()}|${x.number || ''}` : String(x.line || JSON.stringify(x)).toLowerCase().replace(/\s+/g, ' ').trim());
+    for (const k of TEXT_EXTRA_KEYS) {
+      const seen = new Set();
+      for (const res of results) {
+        for (const x of (res && res[k]) || []) {
+          const id = keyOf(k, x);
+          if (seen.has(id)) continue;
+          seen.add(id);
+          out[k].push(x);
+        }
+      }
+    }
+    return out;
+  }
 
   const TEXT = (() => {
     // A track list in front of a line or after it: "Tracks 3–5:", "(tracks 1, 4)", "on track 2", "(1, 3)"
@@ -13366,10 +13396,12 @@
       const unrecognized = [...album.unrecognized, ...pkgRead.flatMap((x) => x.res.unrecognized.map((l) => `${x.name}: ${l}`))];
       const ignored = [...(album.ignored || []), ...pkgRead.flatMap((x) => (x.res.ignored || []).map((l) => ({ ...l, text: `${x.name}: ${l.text}` })))];
       // [Z-EXC] (3.49.0) covers and quotes of the credits and of the "about" text
-      const covers = [...(album.covers || []), ...(aboutAll ? aboutRes.covers || [] : [])];
+      // [S295] (3.163.0) also what the texts of the editions name; series and ensembles of "about" and of the editions too
+      const extras = ruleOn('S295') ? textExtras([album, ...(aboutAll ? [aboutRes] : []), ...pkgRead.map((x) => x.res)]) : null;
+      const covers = extras ? extras.covers : [...(album.covers || []), ...(aboutAll ? aboutRes.covers || [] : [])];
       // [Z-TBY] (3.59.0, S087) the headings of groups above their members
-      const groups = [...(album.groups || [])];
-      const quotes = [...(album.quotes || []), ...(aboutAll ? aboutRes.quotes || [] : [])];
+      const groups = extras ? extras.groups : [...(album.groups || [])];
+      const quotes = extras ? extras.quotes : [...(album.quotes || []), ...(aboutAll ? aboutRes.quotes || [] : [])];
       // [S058] (3.38.12) the lines not recognized of each track page, in both readings
       const trackUnrec = new Map();
       const trackAltUnrec = new Map();
@@ -13437,10 +13469,11 @@
         // (the album's lines and those of each track page, in the other reading where it has one)
         stackAltUnrec: album.stackAltUnrec || trackAltUnrec.size ? [...(album.stackAltUnrec || album.unrecognized),
           ...[...trackUnrec.keys()].flatMap((i) => trackAltUnrec.get(i) || trackUnrec.get(i))] : null,
-        series: (album.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
-        ensembles: album.ensembles || [], // [Z-CIMP] (3.101.0, S162)
+        // ([S295] 3.163.0: a series named in "about" counts with S049 off too – it is no credit)
+        series: (extras ? textExtras([extras, aboutRes]).series : album.series || []).map(textSeriesOf), // [Z-CIMP] (3.101.0, S164)
+        ensembles: extras ? extras.ensembles : album.ensembles || [], // [Z-CIMP] (3.101.0, S162)
         firstPerson: [...(album.firstPerson || []), ...((aboutRes && aboutRes.firstPerson) || []).map((x) => ({ ...x, from: 'about' }))], // [Z-PLAYS] (3.102.0, S168)
-        liveHeads: [...(album.liveHeads || []), ...((aboutRes && aboutRes.liveHeads) || [])], // [Z-LIVEEVENT] (3.147.0, S264)
+        liveHeads: extras ? textExtras([extras, aboutRes]).liveHeads : [...(album.liveHeads || []), ...((aboutRes && aboutRes.liveHeads) || [])], // [Z-LIVEEVENT] (3.147.0, S264)
         unrecognized,
         ignored,
         covers,
@@ -27451,6 +27484,17 @@
       const relAlt = { ...rel, credits: (rel.credits || []).filter((c) => !(c.fromNotes && c.stackAmbig)).map(copy) };
       addNotesPersons(relAlt, { credits: res.stackAlt }, { quiet: true });
       rel.stackAlt = [...(rel.stackAlt || []), ...relAlt.credits.filter((c) => c.fromNotes && c.stackAmbig)];
+    }
+    // [S295] (3.163.0; F-NOTESRESULTS) what the notes name besides credits: series, ensembles, live heads, covers and quotes of tracks,
+    // headings of groups – as from every other free text. A series Discogs lists already is not taken twice.
+    if (ruleOn('S295')) {
+      const ex = textExtras([res]);
+      const had = (rel.series || []).map((x) => norm(x.name));
+      const series = ex.series.map(textSeriesOf).filter((x) => !had.includes(norm(x.name)));
+      rel.series = [...(rel.series || []), ...series];
+      for (const k of ['ensembles', 'liveHeads', 'covers', 'quotes', 'groups']) rel[k] = textExtras([{ [k]: rel[k] || [] }, ex])[k];
+      const what = [series.length && `${tr('entity.series')}: ${series.map((x) => x.name).join(', ')}`, ...['ensembles', 'liveHeads', 'covers', 'quotes', 'groups'].map((k) => ex[k].length && `${tr(`notesExtras.${k}`)}: ${ex[k].length}`)].filter(Boolean);
+      if (what.length) log('info', 'notesExtras', { list: what.join(' · ') });
     }
     if (joined.length) log('info', 'notesPubTracks', { list: joined.join(', ') });
     if (joinedOther.length) log('info', 'notesCompanyTracks', { list: joinedOther.join(', ') });
