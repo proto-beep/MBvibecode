@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.163.0 | – |
+| 2026-11-18 | 3.159.0 – 3.164.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.164.0
+
+Video credits, DJ mixes and ℗ (rules S296, S297; question Q022; proposals F-CAMSWITCH, F-VIDEOLEVEL, F-DJMIX of review run 2, F-PRECLEVEL of run 3):
+
+- **Every credit of a video on one level** (F-VIDEOLEVEL; S296): video director, camera work, cinematographer and the other video credits are on the recordings when all their tracks are videos (MusicBrainz's flag, or the title says so), on the release otherwise – where MusicBrainz has the type there. Until now the cinematographer and the camera work were always on the recordings, the video director, colorist and lighting always on the release. A level chosen at the row stays.
+- **Camera work follows the quick switch "Video credits"** (F-CAMSWITCH; S263): off – left out like the other video credits MusicBrainz has no type for. It was always taken.
+- **"Mixed By [DJ Mix]"** (F-DJMIX) is the DJ-mix of the release, not the mix engineer. On a release group of the type DJ-mix "Mixed By" asks: the engineer who mixed the recordings, or the DJ who mixed the tracks into one another (Q022).
+- **℗ on the release** (F-PRECLEVEL; S297 – a quick switch under "Companies and places", off): phonographic copyright on the release instead of the recordings. MusicBrainz has the relationship on both levels and the community is not agreed on where it belongs; off, it stays on the recordings as before, and each row's level can be changed.
 
 ### Import 3.163.0
 

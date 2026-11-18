@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "3.163.0",
+  "version": "3.164.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
-  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160"]},
+  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297"]},
   "CHECKBOX_DETAILS": [
     "additional",
     "guest",
@@ -34,6 +34,7 @@
     {"id":"Q019","base":"soprano","rule":"R123","ask":"typeAsk.askVoiceSax","note":"\"Soprano\" alone (3.162.0): a soprano saxophone or a soprano voice? Nothing is assumed, no role credit","options":[{"type":"instrument","level":"recording","instrument":"soprano saxophone","label":"soprano saxophone"},{"type":"vocal","level":"recording","instrument":"soprano vocals","label":"soprano vocals"}]},
     {"id":"Q020","base":"bugle","rule":"R124","ask":"typeAsk.askBugle","note":"\"Bugle\" (3.162.0): the bugle or, as in French, the flugelhorn? Nothing is assumed, no role credit","options":[{"type":"instrument","level":"recording","instrument":"bugle","label":"bugle"},{"type":"instrument","level":"recording","instrument":"flugelhorn","label":"flugelhorn"}]},
     {"id":"Q021","base":"laúd","rule":"R125","ask":"typeAsk.askLaud","note":"\"Laúd\" (3.162.0): the Spanish laúd or the lute? Nothing is assumed, no role credit","options":[{"type":"instrument","level":"recording","instrument":"laúd","label":"laúd"},{"type":"instrument","level":"recording","instrument":"lute","label":"lute"}]},
+    {"id":"Q022","base":"mixed by","rule":"R033","flag":"djMixRg","ask":"typeAsk.askDjMix","note":"\"Mixed By\" on a release group of the type DJ-mix (3.164.0; F-DJMIX): the engineer who mixed the recordings, or the DJ who mixed the tracks into one another? Nothing is assumed","options":[{"type":"mix","level":"recording","label":"mix engineer"},{"type":"mix-dj","level":"release","label":"DJ-mix"}]},
     {"id":"Q007","base":"translated by","rule":"R004","flag":"askTranslation","ask":"typeAsk.askTranslation","note":"\"Translated By\", \"Translation\", \"English Translation\", \"Translation (French)\", \"Übersetzung\", \"Traducción\" … from every source (3.21.4 Bandcamp; Z-ENGTR 3.109.0 every source): mostly the liner notes – taken so at once, liner notes with the attribute translator (a suggestion) – or the lyrics: translator on the works of the tracks the source names, without tracks a suggestion on every work (as S024). No role credit; the language is kept nowhere (MusicBrainz has it only on the work itself)","options":[{"type":"liner notes","level":"release","label":"liner notes (translator)","suggested":true,"flags":["translator"]},{"type":"translator","level":"work","label":"translator (lyrics)","suggestAll":"translation"}],"presetAnswer":0},
     {"id":"Q008","base":"sounds","rule":"R104","ask":"typeAsk.askSounds","pending":"typeAsk.pendingSounds","note":"\"Sounds\" (3.30.6): performer (without role credit) or the instrument effects credited \"sounds\"? Until answered it stays performer","options":[{"type":"performer","level":"recording","label":"performer"},{"type":"instrument","level":"recording","instrument":"effects","label":"effects (credited “sounds”)"}]},
     {"id":"Q009","base":"poems / poetry / poem","rule":"R107","unless":"poemLevels","ask":"typeAsk.askPoems","note":"\"Poems\", \"Poetry\", \"Poem\" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit (\"poems\", \"poetry\", \"poem\")","options":[{"type":"lyricist","level":"work","credit":true,"label":"lyricist (the words of the works)"},{"type":"liner notes","level":"release","credit":true,"label":"liner notes (poems in the booklet)"},{"type":"vocal","level":"recording","instrument":"spoken vocals","credit":true,"label":"spoken vocals (read out)"}]},
@@ -234,7 +235,7 @@
     {"id":"R093","kind":"simple","note":"","re":{"$re":"^(licensed from|licensor)$","$flags":""},"types":["licensor"],"level":"release"},
     {"id":"R094","kind":"simple","note":"","re":{"$re":"^audio director$","$flags":""},"types":["audio director"],"level":"release"},
     {"id":"R099","kind":"simple","note":"\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)","re":{"$re":"^(commissioned by|commissioned)$","$flags":""},"types":["commissioned"],"level":"work","work":true},
-    {"id":"R110","kind":"simple","note":"Camera work (3.79.0; collected item Z-CAM2): miscellaneous support on the recordings, the word as written (in lower case) as task – \"Cameras\" → cameras; the level can be switched to the release","re":{"$re":"^(cameras?|camera ?(?:operators?|crew|work|man|men|person|people)|camerawork|cinematograph(?:y|er)|director of photography|filmed by|filming|footage by)$","$flags":""},"types":["misc"],"level":"recording","credit":true},
+    {"id":"R110","kind":"simple","note":"Camera work (3.79.0; collected item Z-CAM2): miscellaneous support on the recordings, the word as written (in lower case) as task – \"Cameras\" → cameras; the level can be switched to the release; from 3.164.0 it follows the quick switch S263 like the other video credits (off: left out) and is on the release unless all its tracks are videos (S296)","re":{"$re":"^(cameras?|camera ?(?:operators?|crew|work|man|men|person|people)|camerawork|cinematograph(?:y|er)|director of photography|filmed by|filming|footage by)$","$flags":""},"types":["misc"],"level":"recording","credit":true},
     {"id":"R112","kind":"simple","note":"Portraits (3.81.0; collected item Z-POR): \"Album portraits by\", \"Portraits by\" – photography on the release, the word as written (in lower case) as role credit (\"album portraits\")","re":{"$re":"^((?:album |cover |band )?portraits?(?: photography)?(?: by)?|portrait photos? by)$","$flags":""},"types":["photography"],"level":"release","credit":true},
     {"id":"R113","kind":"special","note":"Instruments by their model (3.81.0; collected item Z-SYN): a model of a synthesizer, drum machine or sampler (T065: \"Juno 101\", \"Korg Minilogue\", \"TR-808\", \"MPC\") – MusicBrainz's instrument of that name if it has one, else synthesizer, drum machine or sampler; the model as written as role credit","re":{"$re":"^$","$flags":""},"types":["instrument"],"level":"recording"},
     {"id":"R111","kind":"special","note":"A member of a group – a name below its heading (3.79.0; collected item Z-MEM, S113) – or the group itself (S114): performer on the recordings? No type is assumed, the dashboard asks (Q016; until 3.158.0 it shared the id Q013 with the question of \"Horns\")","re":{"$re":"^(member of .+|performing group)$","$flags":""},"types":[],"level":"recording"},
@@ -1150,6 +1151,7 @@
     "S045",
     "S222",
     "S007",
+    "S297",
     "S245",
     "S263"
   ],

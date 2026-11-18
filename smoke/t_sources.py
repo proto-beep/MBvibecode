@@ -1819,4 +1819,77 @@ def case_artdates3141r():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_video3164():
+    """Credits Importer 3.164.0 (proposals F-VIDEOLEVEL, F-DJMIX, F-PRECLEVEL; rules S296, S297). Discogs with "Video Director – Vid Dir",
+    "Cameras – Cam Op" and "Mixed By – Mix Guy" for the whole release.
+    A) No track is a video: the video director and the camera work are on the release (the camera work was on the recordings).
+    B) Every track is a video: both on the recordings (the video director was on the release).
+    C) The release group is a DJ mix: "Mixed By" asks – the engineer of the mix or the DJ-mix. Without that type it is the mix, not asked.
+    D) ℗: on the recordings; with the quick switch S297 on, on the release."""
+    for i, (name, t1) in enumerate([('video director', 'release'), ('video director', 'recording'), ('mix-DJ', 'release')]):
+        H.lt(1310 + i, f'1d4c0b5b-0000-4000-8000-00000000131{i}', name, 'artist', t1, ())
+    H.lt(1313, '1d4c0b5b-0000-4000-8000-000000001313', 'phonographic copyright', 'label', 'recording', ())
+    # (MusicBrainz's own name of "miscellaneous support" – the fixture names it in full)
+    H.lt(1314, '1d4c0b5b-0000-4000-8000-000000001314', 'misc', 'artist', 'release', (1150,))
+    H.lt(1315, '1d4c0b5b-0000-4000-8000-000000001315', 'misc', 'artist', 'recording', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig, orig_ws = H.discogs_release, H.ws_release
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}  # noqa: E731
+    rg = {'types': []}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('Vid Dir', 'Video Director', 3101), ex('Cam Op', 'Cameras', 3102), ex('Mix Guy', 'Mixed By', 3103)]
+        return d
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['release-group'] = dict(d['release-group'], **{'secondary-types': rg['types']})
+        return d
+    H.discogs_release, H.ws_release = rel, ws
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: {} }).dataset.raw || '',
+        (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '', /on a DJ mix/.test(r.textContent)])])))()"""
+    results = []
+
+    def run(b, rules=None):
+        ctx = H.new_context(b)
+        if rules:
+            ctx.add_init_script(f"if (location.host === 'musicbrainz.org') localStorage.setItem('dci-rules-off', JSON.stringify({rules}));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        got = pg.evaluate(ROWS)
+        ctx.close()
+        return got, errs
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            a, errs = run(b)
+            print('A)', a.get('Vid Dir'), a.get('Cam Op'), a.get('Mix Guy'), '| ℗', [r for r in a.get('Sony', []) if 'Phonographic' in r[0]], errs)
+            results.append(a.get('Vid Dir') == [['Video Director', 'release', False]] and a.get('Cam Op') == [['Cameras', 'release', False]]
+                           and a.get('Mix Guy') == [['Mixed By', 'recording', False]] and not errs)
+            results.append([r[1] for r in a.get('Sony', []) if 'Phonographic' in r[0]] == ['recording'])
+            H.VIDEO_TRACKS.update(range(len(H.TITLES)))
+            bv, errs = run(b)
+            print('B)', bv.get('Vid Dir'), bv.get('Cam Op'), errs)
+            results.append(bv.get('Vid Dir') == [['Video Director', 'recording', False]] and bv.get('Cam Op') == [['Cameras', 'recording', False]] and not errs)
+            H.VIDEO_TRACKS.clear()
+            rg['types'] = ['DJ-mix']
+            c, errs = run(b)
+            print('C)', c.get('Mix Guy'), errs)
+            results.append(len(c.get('Mix Guy') or []) == 1 and c['Mix Guy'][0][0] == 'Mixed By' and c['Mix Guy'][0][2] is True and not errs)
+            rg['types'] = []
+            d, errs = run(b, "['+S297']")
+            print('D)', [r for r in d.get('Sony', []) if 'Phonographic' in r[0]], errs)
+            results.append([r[1] for r in d.get('Sony', []) if 'Phonographic' in r[0]] == ['release'] and not errs)
+            b.close()
+    finally:
+        H.discogs_release, H.ws_release = orig, orig_ws
+        H.VIDEO_TRACKS.clear()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

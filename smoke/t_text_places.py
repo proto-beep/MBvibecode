@@ -971,7 +971,8 @@ def case_z379():
     A) In Node (D027): "9/17/26" → 2026-09-17 (the 17 decides: month first), "17/9/26" → 2026-09-17, "9/17/99" → 1999-09-17.
     B) The description of a KEXP video: "… performing live in the KEXP studio. Recorded April 8, 2025." gives the place KEXP Studio
        (recorded at, S112 – before: not recognized); "Cameras: Jim Beckmann, Carlos Cruz & Scott Holpainen with Luke Knecht": four
-       names (S116), each miscellaneous support on the recordings with the task "cameras" (R110); its levels Recording | Release only.
+       names (S116), each miscellaneous support with the task "cameras" (R110) – on the release from 3.164.0 (S296: the tracks of this
+       release are no videos; on the recordings before); its levels Recording | Release only.
     C) "venue: industry city" / "brooklyn, NY" / "9/17/26" (S115): the place Industry City "(Brooklyn)", recorded at; the pool has
        2026-09-17 (and the city as the area of the place); the lines are not listed as not recognized.
     D) "Salisman Communal Orchestration:" with four names below it (S113): three of them asked "performer on the recordings, or no
@@ -1040,7 +1041,7 @@ Paul Foreman - guitar"""
         unrec = pg.evaluate(UNREC)
         print('B) KEXP Studio:', ks, '| Kameras:', cams, '| nicht erkannt:', unrec)
         results.append(ks['kind'] == 'place' and [r['type'] for r in ks['rows']] == ['recorded at'] and not any('KEXP' in x for x in unrec)
-                       and all(c.get('type') in ('misc', 'miscellaneous support') and c.get('level') == 'recording' and c.get('credit') == 'cameras' and c.get('levels') == ['recording', 'release', 'skip'] for c in cams.values()))
+                       and all(c.get('type') in ('misc', 'miscellaneous support') and c.get('level') == 'release' and c.get('credit') == 'cameras' and c.get('levels') == ['recording', 'release', 'skip'] for c in cams.values()))
         g = load(pg, VENUE)
         ic = g.get('Industry City') or {'kind': '', 'rows': [], 'head': ''}
         pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.begin.year, d.begin.month, d.begin.day].join('-'))")
