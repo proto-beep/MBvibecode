@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.168.0 | – |
+| 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.169.0
+
+Three smaller things (rules S298, S299; Z-VIDEOTRACKS, Z-HYPHENTRACKS, Z-BCSHOPBLOCK):
+
+- **Video credits only on the video tracks** (Z-VIDEOTRACKS; corrects 3.164.0): when just some of a credit's tracks are videos, the credit is on the recordings of those tracks – 3.164.0 put it on the release. All tracks videos: the recordings, all of them. No track a video: the release.
+- **A lineup written "Name-Role On Tracks 1,2,3"** (Z-HYPHENTRACKS; S298): "Pete Callard-Acoustic Guitar On Tracks 1,2,3,18,19,20, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10,14,15 …" – as shops like Beatport write it, often the whole lineup in one paragraph. The paragraph is cut before each name; the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om); each role has its tracks; "and Vocals on Tracks …" and a role after a list of tracks are roles of their own; "on all tracks" says nothing new; "Musicians In The Studio" before the first name is a heading. The example gives thirteen credits; it gave none. Every free text. (Beatport itself is no source; the text is pasted.)
+- **"Live Drums", "Live Bass", "Live Guitar", "Live Percussion"** are the instrument, with the words of the source as the credit.
+- **What a shop writes below an edition is left out** (Z-BCSHOPBLOCK; S299): the edition's name with "(Limited Edition …)", what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "UK: 2-3 days") and the page's own details ("modified October 10, 2025", "license"). They stood under "not recognized" – twenty lines of the vinyl edition of the example; none now. Every free text.
 
 ### Import 3.168.0
 
