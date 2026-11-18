@@ -1995,4 +1995,90 @@ def case_done3167():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_same3168():
+    """Credits Importer 3.168.0 (W-SAMEFORALL; W-MODEL: the row model). The source names "Written-By – Writer W" for the whole release, no
+    track has a work in MusicBrainz, the titles are found nowhere.
+    A) Compact: one row – "All 4 tracks", "no work yet", the column "Writer W" with "writer" once – and "Show per track".
+    B) "Show per track": four rows and a line that offers "One row for all"; that brings the one row back.
+    C) "＋ New works (4)" in the row plans a work for each track: one row still, "4 new works", the role no longer waiting.
+    D) A track that differs (a second writer on track 2 only): the matrix stays a matrix (four rows, no such row).
+    E) Everything in the open: four rows."""
+    orig, orig_ws = H.discogs_release, H.ws_release
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}  # noqa: E731
+
+    def rel(extra=False):
+        d = orig()
+        d['notes'] = ''
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Published By']
+        for k, t in enumerate(d['tracklist']):
+            t['extraartists'] = [ex('Writer Z', 'Composed By', 3008)] if extra and k == 1 else []
+        d['extraartists'] = [x for x in d['extraartists'] if 'Writ' not in x['role'] and 'Compos' not in x['role']] + [ex('Writer W', 'Written-By', 3007)]
+        return d
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m.get('tracks', []):
+                t['recording']['relations'] = [r for r in t['recording'].get('relations', []) if r.get('target-type') != 'work']
+        return d
+    ROWS = """(() => { const w = document.querySelector('[data-el=works]'); const same = w.querySelector('tr.dci-mx-samerow');
+      return { rows: w.querySelectorAll('tbody tr[data-work]').length, same: same ? same.querySelector('th').textContent.replace(/\\s+/g, ' ').trim() : '',
+        cells: same ? [...same.querySelectorAll('td.dci-mx-cell')].map(td => [...td.querySelectorAll('.dci-mxchip')].map(c => [c.textContent.trim(), c.className.replace('dci-mxchip ', '')])) : [],
+        bar: ((w.querySelector('tr.dci-mx-samebar') || {}).textContent || '').replace(/\\s+/g, ' ').trim() }; })()"""
+    results = []
+
+    def open_pg(b):
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_selector('[data-el=works] tbody tr', timeout=20000)
+        pg.wait_for_timeout(1500)
+        return ctx, pg, errs
+    try:
+        H.ws_release = ws
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.MX_HEADS = None
+            H.discogs_release = lambda: rel(False)
+            ctx, pg, errs = open_pg(b)
+            a = pg.evaluate(ROWS)
+            print('A)', a)
+            results.append(a['rows'] == 0 and a['same'].startswith('All 4 tracks') and 'no work yet' in a['same'] and 'Show per track' in a['same']
+                           and [c for c in a['cells'] if c] == [[['writer', 'dci-mxchip-wait']]])
+            pg.evaluate("document.querySelector('[data-el=works] tr.dci-mx-samerow [data-act=mx-same]').click()")  # (the log window of the test page lies over the row)
+            pg.wait_for_timeout(300)
+            b1 = pg.evaluate(ROWS)
+            pg.evaluate("document.querySelector('[data-el=works] tr.dci-mx-samebar [data-act=mx-same]').click()")  # (the log window of the test page lies over the row)
+            pg.wait_for_timeout(300)
+            b2 = pg.evaluate(ROWS)
+            print('B)', b1['rows'], b1['bar'], '→', b2['rows'], b2['same'][:14])
+            results.append(b1['rows'] == 4 and b1['bar'].endswith('One row for all') and b2['rows'] == 0 and b2['same'].startswith('All 4 tracks'))
+            pg.evaluate("document.querySelector('[data-el=works] tr.dci-mx-samerow [data-act=works-pending-all]').click()")  # (the log window of the test page lies over the row)
+            pg.wait_for_timeout(800)
+            c = pg.evaluate(ROWS)
+            print('C)', c)
+            results.append(c['rows'] == 0 and '4 new works' in c['same'] and [x for x in c['cells'] if x] == [[['writer', 'dci-mxchip-on']]])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+            H.discogs_release = lambda: rel(True)
+            ctx, pg, errs = open_pg(b)
+            d = pg.evaluate(ROWS)
+            print('D)', d['rows'], d['same'], errs)
+            results.append(d['rows'] == 4 and d['same'] == '' and not errs)
+            ctx.close()
+            H.MX_HEADS = 'full'
+            H.discogs_release = lambda: rel(False)
+            ctx, pg, errs = open_pg(b)
+            e = pg.evaluate(ROWS)
+            print('E)', e['rows'], e['same'], errs)
+            results.append(e['rows'] == 4 and e['same'] == '' and not errs)
+            b.close()
+    finally:
+        H.discogs_release, H.ws_release = orig, orig_ws
+        H.MX_HEADS = 'full'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

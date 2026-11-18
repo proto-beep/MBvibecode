@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.167.0
+// @version      3.168.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.167.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.167.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.168.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.168.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.167.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.168.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1901,6 +1901,12 @@
       "matrix.doneHint": "linked, nothing to enter for them",
       "matrix.doneShow": "Show",
       "matrix.doneHide": "Hide",
+      "matrix.sameAll": "All {n} tracks",
+      "matrix.sameHint": "the same roles for each",
+      "matrix.sameShow": "Show per track",
+      "matrix.sameHide": "One row for all",
+      "matrix.sameOpenHint": "These {n} tracks have the same roles in every column.",
+      "matrix.sameNew": "{n} new works",
       "matrix.rowWaits.one": "{n} credit waits for a work",
       "matrix.rowWaits.other": "{n} credits wait for a work",
       "matrix.notesReason": "from the notes: “{text}”",
@@ -17434,6 +17440,29 @@
     lastFocus: null,
   };
 
+  /**
+   * [W-MODEL] (3.168.0) The state of the works matrix in one object, S.works: what it plans (workPlan, workParts, suiteWorks …), what the user chose
+   * in it (mxColDate, mxCreditSkip, oneWork …) and what is open in it (mxMenu, mxMoreOpen …). Until 3.167.0 these were 68 fields among the 450 of S.
+   * The old names stay – S.workPlan reads and writes S.works.workPlan – so nothing that uses them changes; new code reads S.works, and the whole
+   * state of the matrix can be listed, copied or compared in one place (worksStateKeys()).
+   */
+  const WORKS_STATE_KEYS = [
+    'magicBusy', 'magicInfo', 'magicLevel', 'magicMarks', 'magicMedley', 'magicMenu', 'magicOff', 'magicPreview', 'magicUndo', 'medleyMark',
+    'medleySeps', 'medleySepsOpen', 'mxAddCol', 'mxAddColOpen', 'mxAddColShow', 'mxColDate', 'mxColMenu', 'mxCollapsed', 'mxCornerMore',
+    'mxCreditSkip', 'mxDefaultsOpen', 'mxDoneOpen', 'mxDupAsk', 'mxHeads', 'mxHelpOpen', 'mxMenu', 'mxMoreOpen', 'mxNewMenu', 'mxOneOpen',
+    'mxOptsOpen', 'mxRemoved', 'mxSameOpen', 'mxScrollObs', 'mxSkipRows', 'mxWorksOpen', 'oneWork', 'oneWorkUndo', 'suiteAdd', 'suiteAnswers', 'suiteManual',
+    'suiteNaming', 'suiteSeq', 'suiteWorks', 'workDateOff', 'workDateOwn', 'workDates', 'workDefaults', 'workGroupsOff', 'workGroupsOn',
+    'workGroupsStash', 'workNotesRel', 'workOptions', 'workParts', 'workPlan', 'workQueue', 'workRels', 'workReplace', 'workRowOpts', 'workRun',
+    'workSearch', 'workSuggest', 'workSuggestDone', 'workSuggestRaw', 'workSuggestShown', 'worksFolded', 'worksLookups', 'worksRenderAfterDrag',
+    'worksRenderOnBlur', 'worksSkip',
+  ];
+  S.works = {};
+  for (const k of WORKS_STATE_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(S, k)) S.works[k] = S[k];
+    Object.defineProperty(S, k, { get: () => S.works[k], set: (v) => { S.works[k] = v; }, enumerable: true, configurable: true });
+  }
+  const worksStateKeys = () => WORKS_STATE_KEYS.filter((k) => S.works[k] !== undefined);
+
   const $ = (name) => S.overlay.querySelector(`[data-el="${name}"]`);
 
   /**
@@ -18480,17 +18509,13 @@
     return rec ? rec.value : null;
   }
 
-  function computePlan() {
-    const items = [];
-    const rowInfo = new Map();
-    const seen = new Set();
-    const planned = new Set();
-    // Staged relationships: unchanged if any row still matches what was staged (duplicate rows are common)
-    const unchanged = new Set();
-    const pendingUpdates = [];
-    // [E4] (3.34.29) the items of relationships staged and unchanged: a joined one is staged anew with them when it changes
-    const stagedItems = new Map();
-
+  /**
+   * [W-MODEL] (3.168.0) The works' part of the plan, first half – what must be planned before the rows: the links recording → work the matrix
+   * plans, the parts of the suites accepted, the works a track quotes or arranges, the remixes. Until 3.167.0 a stretch of computePlan; the
+   * steps and their order are unchanged. P: the plan being built – { items, seen, planned } (computePlan owns them).
+   */
+  function planWorkLinks(P) {
+    const { items, seen, planned } = P;
     // Planned recording→work links come first: work credits below depend on them.
     const perf = idx().performanceLt;
     // [3.18.0] works matrix skipped: no links to works (those staged before are taken out of the editor)
@@ -18622,6 +18647,82 @@
       items.push(item);
     }
 
+  }
+
+  /**
+   * [W-MODEL] (3.168.0) The works' part of the plan, second half – the edits of what MusicBrainz has already: attributes added to links
+   * recording → work, dates for relationships of works, the performance date onto linked works. After the rows, as before.
+   */
+  function planWorkEdits(P) {
+    const { items, seen, planned } = P;
+    const perf = idx().performanceLt;
+    // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
+    if (perf && S.scope !== 'nonwork' && !S.worksSkip) {
+      const types = linkAttrTypes();
+      for (const t of S.mbTracks) {
+        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const key = linkKey(t.idx, w.gid);
+          const inMb = mbLinkAttrs(w);
+          const add = [...linkAttrsOf(t.idx, w)].filter((n) => !inMb.has(n));
+          const sig = add.sort().join(',');
+          if (!add.length || S.linkAttrStaged.get(key) === sig) continue;
+          items.push({
+            kind: 'work-link', attrFill: key, attrSig: sig, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '', date: null, key: `la|${key}`,
+            attrs: types.filter((a) => add.includes(norm(a.name))).map((a) => ({ type: a })),
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
+      }
+    }
+    // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
+    for (const [key, f] of S.worksSkip ? [] : S.dateFills) {
+      const t = S.mbTracks[f.track];
+      const work = t && t.works.find((w) => w.gid === f.workGid);
+      const lt = idx().ltById.get(f.ltId);
+      const dateInfo = validateDateFields(f.date);
+      // ([Z-WSK] 3.64.0, review) nor those of a track whose work credits are left out
+      if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value || creditsSkipped(f.track)) continue;
+      // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
+      if (workLocked({ ...work, planned: false })) continue;
+      items.push({
+        kind: 'credit', fillDate: key, lt, attrs: [], noteText: '', credit: '', date: dateInfo.value, key: `fd|${key}`,
+        artist: { mbid: f.mbid, mbName: f.name, name: f.name },
+        target: { kind: 'work', gid: f.workGid, label: tr('preview.work', { title: work.title }), order: 10000 + f.track, track: t, work },
+      });
+    }
+    // [Z-WORKDATE] (3.130.0, S215) the performance date onto the links with works MusicBrainz has: added or made more precise
+    if (ruleOn('S215') && perf && !S.worksSkip && S.scope !== 'nonwork') {
+      for (const t of S.mbTracks) {
+        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const o = workDateOffer(t.idx, w);
+          if (!o || !o.sug || o.off || o.staged || seen.has(`wd|${o.key}`)) continue;
+          seen.add(`wd|${o.key}`);
+          items.push({
+            kind: 'work-link', workDate: { key: o.dkey, to: o.sug.to, kind: o.sug.kind }, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '',
+            date: o.value, attrs: [], key: `wd|${o.key}`,
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
+      }
+    }
+  }
+
+  function computePlan() {
+    const items = [];
+    const rowInfo = new Map();
+    const seen = new Set();
+    const planned = new Set();
+    // Staged relationships: unchanged if any row still matches what was staged (duplicate rows are common)
+    const unchanged = new Set();
+    const pendingUpdates = [];
+    // [E4] (3.34.29) the items of relationships staged and unchanged: a joined one is staged anew with them when it changes
+    const stagedItems = new Map();
+
+    // [W-MODEL] (3.168.0) the works' part of the plan in functions of their own: planWorkLinks first (work credits below depend on the links)
+    const P = { items, seen, planned };
+    planWorkLinks(P);
     // [Z-CWR] (3.56.0, S082) works with a more exact type than writer for a person: work gid|artist MBID
     const exactOnWork = ruleOn('S082') ? writerExactPairs() : new Set();
     S.writerExact = exactOnWork;
@@ -18834,57 +18935,7 @@
         markTrack(target, info.ready > before[0] ? 'open' : info.applied > before[1] ? 'staged' : info.existing > before[2] ? 'mb' : null);
       }
     }
-    // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
-    if (perf && S.scope !== 'nonwork' && !S.worksSkip) {
-      const types = linkAttrTypes();
-      for (const t of S.mbTracks) {
-        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
-        for (const w of t.works) {
-          const key = linkKey(t.idx, w.gid);
-          const inMb = mbLinkAttrs(w);
-          const add = [...linkAttrsOf(t.idx, w)].filter((n) => !inMb.has(n));
-          const sig = add.sort().join(',');
-          if (!add.length || S.linkAttrStaged.get(key) === sig) continue;
-          items.push({
-            kind: 'work-link', attrFill: key, attrSig: sig, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '', date: null, key: `la|${key}`,
-            attrs: types.filter((a) => add.includes(norm(a.name))).map((a) => ({ type: a })),
-            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-          });
-        }
-      }
-    }
-    // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
-    for (const [key, f] of S.worksSkip ? [] : S.dateFills) {
-      const t = S.mbTracks[f.track];
-      const work = t && t.works.find((w) => w.gid === f.workGid);
-      const lt = idx().ltById.get(f.ltId);
-      const dateInfo = validateDateFields(f.date);
-      // ([Z-WSK] 3.64.0, review) nor those of a track whose work credits are left out
-      if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value || creditsSkipped(f.track)) continue;
-      // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
-      if (workLocked({ ...work, planned: false })) continue;
-      items.push({
-        kind: 'credit', fillDate: key, lt, attrs: [], noteText: '', credit: '', date: dateInfo.value, key: `fd|${key}`,
-        artist: { mbid: f.mbid, mbName: f.name, name: f.name },
-        target: { kind: 'work', gid: f.workGid, label: tr('preview.work', { title: work.title }), order: 10000 + f.track, track: t, work },
-      });
-    }
-    // [Z-WORKDATE] (3.130.0, S215) the performance date onto the links with works MusicBrainz has: added or made more precise
-    if (ruleOn('S215') && perf && !S.worksSkip && S.scope !== 'nonwork') {
-      for (const t of S.mbTracks) {
-        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
-        for (const w of t.works) {
-          const o = workDateOffer(t.idx, w);
-          if (!o || !o.sug || o.off || o.staged || seen.has(`wd|${o.key}`)) continue;
-          seen.add(`wd|${o.key}`);
-          items.push({
-            kind: 'work-link', workDate: { key: o.dkey, to: o.sug.to, kind: o.sug.kind }, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '',
-            date: o.value, attrs: [], key: `wd|${o.key}`,
-            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-          });
-        }
-      }
-    }
+    planWorkEdits(P);
     for (const { item, info, markTrack } of pendingUpdates) {
       if (unchanged.has(item.key) || seen.has(item.key)) {
         info.applied++;
@@ -46403,7 +46454,14 @@
     const doneRow = done.length >= 2 ? `<tr class="dci-mx-donerow" data-el="works-done"><td colspan="${span}"><span class="dci-badge dci-badge-ok">${esc(tr('matrix.doneN', { n: done.length }))}</span>
       <span class="dci-sub">${esc(tr('matrix.doneHint'))}</span> <button type="button" class="dci-textbtn" data-act="mx-done" aria-expanded="${!!S.mxDoneOpen}">${esc(tr(S.mxDoneOpen ? 'matrix.doneHide' : 'matrix.doneShow'))}</button></td></tr>` : '';
     const firstDone = done.length >= 2 ? done[0].key : '';
-    return mrows.map((m, k) => `${m.key === firstDone ? doneRow : ''}${fold.has(m.key) ? '' : `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
+    // [W-SAMEFORALL] (3.168.0; compact) the rows left that are all alike: one row
+    const left = mrows.filter((m) => !fold.has(m.key));
+    const models = !skipped && wmxCompact() && !suites.length && left.length >= 3 ? left.map((m) => worksRowModel(m, cols, inSuite.has(m.i))) : [];
+    const same = models.length && models.every((x) => x.plain && x.sig === models[0].sig) && models[0].cells.some((c) => c.on.length || c.sugg.length);
+    const sameBar = same && S.mxSameOpen ? `<tr class="dci-mx-samebar" data-el="works-same"><td colspan="${span}"><span class="dci-sub">${esc(tr('matrix.sameOpenHint', { n: left.length }))}</span>
+      <button type="button" class="dci-textbtn" data-act="mx-same" aria-expanded="true">${esc(tr('matrix.sameHide'))}</button></td></tr>` : '';
+    if (same && !S.mxSameOpen) return `${fold.size ? doneRow : ''}${mxSameRowHtml(models, cols, span)}`;
+    return sameBar + mrows.map((m, k) => `${m.key === firstDone ? doneRow : ''}${fold.has(m.key) ? '' : `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
       <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`}`).join('');
   }
   /** [W-DATES] (3.167.0) The own date of a role in a cell, small in its chip ("writer ⌚ 1974") – until now only the sign said there was one. */
@@ -46412,6 +46470,58 @@
     const text = v ? formatDateValue(v) : '';
     return text ? `<span class="dci-mxchip-date">${esc(text)}</span>` : '';
   }
+  /**
+   * [W-MODEL] (3.168.0) One row of the works matrix as data – everything that decides what the row shows and what is left to do in it, in one
+   * place (until now each of these was asked where it was drawn): the state of its work, what was found for it, whether its title has parts, is
+   * part of a suite, has notes or marks, and each cell's roles. `sig` is equal for two rows that show the same roles in every column and are in
+   * the same state; `plain` says that nothing in the row is left to decide but its work – such rows can stand as one (W-SAMEFORALL).
+   */
+  function worksRowModel(m, cols, inSuite = false) {
+    const { i, work } = m;
+    const search = S.works.workSearch.get(i);
+    const roleSig = (r) => `${norm(rowTypeName(r))}|${r.flags && r.flags.has('sub') ? 'sub' : ''}|${norm(r.credit || '')}|${r.date && hasDateInput(r.date) ? JSON.stringify(r.date) : ''}`;
+    const cells = cols.map((c) => {
+      const st = cellState(c, m);
+      const sugg = st.active.filter((r) => isSuggestedCell(r, i));
+      return { key: c.key, on: st.active.filter((r) => !sugg.includes(r)), sugg, mb: st.existing, unclear: !!st.unclear, hint: st.hint || '' };
+    });
+    const state = !work ? 'none' : work.planned ? 'planned' : 'linked';
+    const candidates = work ? 0 : sameNamed(i).length;
+    const model = {
+      i, key: m.key, state, origin: work ? work.origin || '' : '', candidates, loading: !!(search && search.state === 'loading'),
+      medley: medleyParts(i).length > 1 || songParts(i).length > 0, parts: S.works.workParts.has(i) || (m.k || 0) > 1, inSuite,
+      creditsSkipped: creditsSkipped(i), improv: !!improvOf(i), notes: !!workNotesHtml(i), marks: !!(S.works.magicMarks && S.works.magicMarks.has(i)),
+      menus: S.works.mxNewMenu === i || S.works.mxWorksOpen === i || !!(S.works.mxMenu && S.works.mxMenu.i === i),
+      cells,
+    };
+    model.sig = JSON.stringify([state, cells.map((c) => [c.on.map(roleSig).sort(), c.sugg.map(roleSig).sort(), c.mb.length, c.unclear, c.hint])]);
+    model.plain = (state === 'none' || (state === 'planned' && model.origin === 'pending')) && !candidates && !model.loading && !model.medley && !model.parts
+      && !inSuite && !model.creditsSkipped && !model.improv && !model.notes && !model.marks && !model.menus && !cells.some((c) => c.unclear || c.hint || c.mb.length)
+      && !Object.keys(rowOptsOf(i)).length;
+    return model;
+  }
+  /** [W-MODEL] (3.168.0) The options chosen for a new work of one track (type, languages …), {} without. */
+  const rowOptsOf = (i) => (S.works.workRowOpts && S.works.workRowOpts.get ? S.works.workRowOpts.get(i) || {} : {});
+
+  /**
+   * [W-SAMEFORALL] (3.168.0; compact) The tracks that show the same roles in every column, are in the same state and have nothing else to decide
+   * stand as one row – "All 9 tracks: no work yet", each column's roles once – with "Show per track". Three or more, and only when they are
+   * all the rows left after the complete ones (a matrix where some tracks differ stays a matrix).
+   */
+  function mxSameRowHtml(models, cols, span) {
+    const first = models[0];
+    const n = models.length;
+    const chip = (kind, r) => `<span class="dci-mxchip dci-mxchip-${kind}">${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowTypeName(r)))}</span>`;
+    const cells = first.cells.map((c) => `<td class="dci-mx-cell dci-mx-samecell${c.on.length ? ' dci-mx-on' : ''}${c.sugg.length ? ' dci-mx-sugg' : ''}">${[
+      ...c.on.map((r) => chip(first.state === 'none' ? 'wait' : 'on', r)), ...c.sugg.map((r) => chip(first.state === 'none' ? 'wait' : 'sugg', r))].join(' ')}</td>`).join('');
+    const stateHtml = first.state === 'none'
+      ? `<span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span> <button type="button" class="dci-primary dci-small" data-act="works-pending-all">＋ ${esc(tr('matrix.newWorksN', { n }))}</button>`
+      : `<span class="dci-badge dci-badge-new">${esc(tr('matrix.sameNew', { n }))}</span>`;
+    return `<tr class="dci-mx-samerow" data-el="works-same"><th scope="row" class="dci-mx-front"><div class="dci-mx-fw"><div class="dci-mx-title"><strong>${esc(tr('matrix.sameAll', { n }))}</strong>
+      <span class="dci-sub">${esc(tr('matrix.sameHint'))}</span></div><div class="dci-mx-line">${stateHtml}
+      <button type="button" class="dci-textbtn" data-act="mx-same" aria-expanded="false">${esc(tr('matrix.sameShow'))}</button></div></div></th>${cells}${span > cols.length + 1 ? '<td class="dci-mx-addcell" aria-hidden="true"></td>' : ''}</tr>`;
+  }
+
   /** [W-DIFFONLY] (3.167.0) A row of the works matrix with nothing to do: its work is linked in MusicBrainz and nothing would be entered for it. */
   function mxRowComplete(m, cols) {
     const w = m.work;
@@ -46659,6 +46769,9 @@
       case 'mx-defaults':
         S.mxDefaultsOpen = !S.mxDefaultsOpen;
         if (wmxCompact()) S.mxMoreOpen = false; // (3.165.0) its button is under ⋯: that closes as the defaults open
+        break;
+      case 'mx-same':
+        S.mxSameOpen = !S.mxSameOpen; // [W-SAMEFORALL] (3.168.0)
         break;
       case 'mx-done':
         S.mxDoneOpen = !S.mxDoneOpen; // [W-DIFFONLY] (3.167.0)
@@ -59377,6 +59490,8 @@
       /* [W-CELL] (3.165.0) what the look of a role says */
       .dci-mx-legend { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
       .dci-mxchip-date { font-weight: 400; margin-left: calc(var(--u, 1px) * 2); }
+      .dci-mx-samebar td { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); background: var(--soft); text-align: left; }
+      .dci-mx-samecell { text-align: center; }
       .dci-mx-donerow td { padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); background: var(--soft); text-align: left; }
       .dci-mx-rowwait { display: inline-flex; align-items: center; margin-left: calc(var(--u, 1px) * 6); white-space: nowrap; }
       .dci-mx-legenditem { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }

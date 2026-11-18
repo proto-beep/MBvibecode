@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.167.0 | – |
+| 2026-11-18 | 3.159.0 – 3.168.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.168.0
+
+The works matrix, part IV – the rest of W-MODEL, and W-SAMEFORALL on top of it:
+
+- **One row for tracks that are all alike** (W-SAMEFORALL; compact): when every track left to do shows the same roles in every column, is in the same state and has nothing else to decide, the matrix is one row – "All 9 tracks", "no work yet", each column's roles once – with "＋ New works (9)" and "Show per track". Three tracks or more; a matrix where one track differs stays a matrix. What MusicBrainz has complete is folded above it as before. With "Everything in the open" every track is a row.
+- **The state of the works matrix in one place** (W-MODEL): what the matrix plans, what was chosen in it and what is open in it – 69 values – is one object now instead of 69 fields among some 450. The old names still work, so nothing that used them changed.
+- **A row as data** (W-MODEL): the state of a track's work, what was found for it, whether its title has parts or belongs to a suite, its notes and marks and each cell's roles are worked out in one function. "One row for all" asks it whether anything in a row is left to decide.
+- **The works' part of the plan in functions of its own** (W-MODEL): the links recording → work, the parts of suites, quotes and remixes, and the edits of what MusicBrainz has were two stretches of the 444 lines of the plan; they are two functions now, the steps and their order unchanged.
+- Not done of W-MODEL: a plan of the works that runs without the page (in Node). The plan reads the editor's state at some forty places; taking that apart is the architecture work of F-PARSESTAGES' kind and stays on the list.
 
 ### Import 3.167.0
 
