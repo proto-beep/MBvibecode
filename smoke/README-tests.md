@@ -90,6 +90,15 @@ cases with their own checks now (annrep, artworkbox, marksrelease, focusfields �
 are step 0 of marksrelease).
 
 ```
+python3 runall.py               # [3.160.0] the whole suite: every t_*.py as a process of its own (five at a time, logs in smoke/out/),
+                                #   then one line per file and "Suite: OK" or "Suite: FEHLER" (exit code 0 / 1). A file passes only
+                                #   when it ended by itself with exit code 0, its last "Ergebnis" says OK, none of its cases ended
+                                #   "FEHLER" and – a file of cases – it printed its summary "Fälle: n in … s"; a file cut off by the time
+                                #   limit (--timeout, 2700 s) is named so. Until 3.159.0 the suite was run by a script that took the
+                                #   last "Ergebnis" line of a log as the file's result: t_entries.py and t_ui_settings.py were cut off
+                                #   after 600 s and counted as passed with ten failing cases. `python3 runall.py t_entries.py` runs one.
+                                #   Cases that failed run once more at the end with nothing else running: green then, they are
+                                #   "WACKELIG" and the file passes (the last line names them).
 python3 quick.py                # [3.72.0] the quick tier (Z-TST): t_static.py, t_register.py and every case that only runs Node (in its
                                 #   body or through a helper of its file) –
                                 #   a few minutes for a first look; `--list` names them. The whole suite still decides
@@ -942,8 +951,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     "Paste the URL of an MB label page", "Looking up MB entries via their Discogs links …"
                                 #   headas3142: 3.142.0 (Z-MBAS, Z-INSTTOP; S240): "as MB Drum Guy", "place as MB Abbey Road Studios"; "bass" the first answer of
                                 #     "Bass" (picked: bass); S240 off: as before
-                                #   instlca3113: 3.113.0 (Z-INSTLCA): ⑃ – woodwind of saxophone and flute (added, taken out), vocals of voices, none with tracks of
-                                #     their own, switched off
+                                #   (instlca3113 removed in 3.160.0: the ⑃ of its own is part of "⑃ on the release + group" from 3.156.0, case v3156)
                                 #   sort3112: 3.112.0 (Z-SORT, Z-SCOPE): "Order:" – by kind (headings, instruments first), by name, by level ("Skipped" last), kept,
                                 #     switched off; "Works: with | only | without", "with" again at a new import
                                 #   yell3110: 3.110.0 (Z-YELL): "● n must" and "● n can" (from 3.115.0 "may" in tooltip and label, Z-MAY) in the footer, the dots at the heads, the marks; the jump; ✓ of a

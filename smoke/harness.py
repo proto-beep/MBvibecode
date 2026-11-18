@@ -1364,6 +1364,18 @@ def wait_for(pg, js, timeout=30):
     pg.wait_for_function(js, timeout=timeout * 1000)
 
 
+def stage(pg, timeout=25, settle=300):
+    """[3.160.0, review run 3] Clicks "Stage in the relationship editor" and waits until the log says "Staging complete" once more
+    (not a fixed time: from 3.152.0 the editor's lookups pause between requests, and cases that waited 1.5 s read the editor
+    too early). Returns whether it came; the case goes on either way and prints what it finds."""
+    count = "[...document.querySelectorAll('#dci-log li')].filter(li => /Staging complete|Übernehmen abgeschlossen/.test(li.textContent)).length"
+    n = pg.evaluate(count)
+    pg.click('[data-act=apply]')
+    ok = wait_ok(pg, f"{count} > {n}", timeout)
+    pg.wait_for_timeout(settle)
+    return ok
+
+
 def wait_ok(pg, js, timeout=30):
     """[3.77.0] (Z-FLK, review) As wait_for, but True / False instead of an exception: the case goes on and prints what it measured."""
     try:
