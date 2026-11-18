@@ -1908,4 +1908,91 @@ def case_rowstate3166():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_done3167():
+    """Credits Importer 3.167.0 (proposals W-DIFFONLY, W-DATES). MusicBrainz has the works of tracks 1–3 linked, the source names no writers.
+    A) Compact: the three tracks are one line – "3 works complete in MusicBrainz" –, only "Song Four" (no work yet) is a row.
+    B) "Show": all four rows, the line says "Hide"; "Hide": one row again.
+    C) Everything in the open (the heads full): no such line, four rows.
+    D) A role with a date of its own shows the date in its chip ("writer ⌚ 1974")."""
+    orig, orig_ws = H.discogs_release, H.ws_release
+    W = [H.WORK1, H.uid('cccccccc', 2), H.uid('cccccccc', 3)]
+
+    def rel(writers=False):
+        d = orig()
+        d['notes'] = ''
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Published By']
+        for k, t in enumerate(d['tracklist']):
+            t['extraartists'] = [x for x in t['extraartists'] if writers and k == 3] + ([{'name': 'Writer W', 'anv': '', 'role': 'Written-By', 'tracks': '', 'id': 3007, 'join': ''}] if writers and k == 3 else [])
+        return d
+
+    def ws(full=False):
+        d = orig_ws(full)
+        for m in d['media']:
+            for t in m.get('tracks', []):
+                i = t['position'] - 1
+                if i in (1, 2) and 'relations' in t['recording']:
+                    t['recording']['relations'].append({'target-type': 'work', 'type': 'performance', 'type-id': H.LTS[278]['gid'], 'attributes': [],
+                                                        'work': {'id': W[i], 'title': H.TITLES[i], 'relations': []}})
+        return d
+    ROWS = """(() => { const w = document.querySelector('[data-el=works]');
+      return { rows: [...w.querySelectorAll('tbody tr[data-work]')].map(tr => (tr.querySelector('.dci-mx-title strong') || {}).textContent),
+        done: ((w.querySelector('[data-el=works-done]') || {}).textContent || '').replace(/\\s+/g, ' ').trim() }; })()"""
+    results = []
+    try:
+        H.ws_release = ws
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for heads in (None, 'full'):
+                H.MX_HEADS = heads
+                H.discogs_release = lambda: rel(False)
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                pg.wait_for_selector('[data-el=works] tbody tr[data-work]', timeout=20000)
+                pg.wait_for_timeout(800)
+                a = pg.evaluate(ROWS)
+                if heads is None:
+                    print('A)', a)
+                    results.append(a['rows'] == ['Song Four'] and a['done'].startswith('3 works complete in MusicBrainz') and a['done'].endswith('Show'))
+                    pg.click('[data-el=works] [data-act=mx-done]')
+                    pg.wait_for_timeout(300)
+                    b1 = pg.evaluate(ROWS)
+                    pg.click('[data-el=works] [data-act=mx-done]')
+                    pg.wait_for_timeout(300)
+                    b2 = pg.evaluate(ROWS)
+                    print('B)', b1, '→', b2['rows'])
+                    results.append(len(b1['rows']) == 4 and b1['done'].endswith('Hide') and b2['rows'] == ['Song Four'])
+                else:
+                    print('C)', a)
+                    results.append(len(a['rows']) == 4 and a['done'] == '')
+                print('Fehler:', errs)
+                results.append(not errs)
+                ctx.close()
+            # D) a date of its own in the chip
+            H.MX_HEADS = None
+            H.discogs_release = lambda: rel(True)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_selector('[data-el=works] tbody tr[data-work] td.dci-mx-cell.dci-mx-on', timeout=20000)
+            cell = pg.locator('[data-el=works] tbody tr[data-work] td.dci-mx-cell.dci-mx-on').first
+            cell.hover()
+            cell.locator('[data-act=mx-menu]').click()
+            pg.wait_for_selector('[data-el=works] .dci-mx-menu', timeout=5000)
+            fields = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-mx-menu .dci-mx-date input')].map(i => i.dataset.f || i.name || i.className)")
+            pg.locator('[data-el=works] .dci-mx-menu .dci-mx-date input').first.fill('1974')
+            pg.click('[data-el=works] .dci-mx-menu [data-act=mx-celldate-apply]')
+            pg.wait_for_timeout(500)
+            chips = pg.evaluate("[...document.querySelectorAll('[data-el=works] td.dci-mx-cell .dci-mxchip')].map(c => [c.textContent.replace(/\\s+/g, ' ').trim(), (c.querySelector('.dci-mxchip-date') || {}).textContent || ''])")
+            print('D)', fields[:4], chips, errs)
+            results.append(any(c[1].startswith('1974') for c in chips) and not errs)
+            b.close()
+    finally:
+        H.discogs_release, H.ws_release = orig, orig_ws
+        H.MX_HEADS = 'full'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
