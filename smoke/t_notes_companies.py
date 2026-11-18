@@ -2093,4 +2093,66 @@ Lizenz: Creative Commons BY-NC-SA"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_notesextras3163():
+    """Credits Importer 3.163.0 (proposal F-NOTESRESULTS, rule S295): the Discogs notes give what every free text gives besides credits.
+    Notes: "Jazz Masters Series No. 12" and "“Song Two” live at Café Oto, 12 May 2019".
+    A) The log names what was taken besides the credits: the series and one live recording.
+    B) The series of the notes is on the dashboard (Discogs lists none), the live recording is offered above the entries.
+    C) The same notes pasted as a text give the same series and the same live recording (one function for all free texts).
+    D) With S295 off the notes give neither (as until 3.162.0)."""
+    NOTES = "Jazz Masters Series No. 12\n\n“Song Two” live at Café Oto, 12 May 2019"
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d.pop('series', None)
+        return d
+    H.discogs_release = rel
+    SEEN = """(() => { const t = document.querySelector('#dci-overlay').textContent;
+      return { series: /Jazz Masters Series/.test(t), live: !!document.querySelector('#dci-overlay [data-act=live-take]'),
+        log: [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(x => /besides the credits/.test(x)) }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        a = pg.evaluate(SEEN)
+        print('A)', a['log'])
+        results.append(len(a['log']) == 1 and 'series: Jazz Masters Series' in a['log'][0] and 'live recordings named: 1' in a['log'][0])
+        print('B)', a['series'], a['live'])
+        results.append(a['series'] and a['live'])
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', NOTES + '\n\nProduced by Jane Roe')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        c = pg.evaluate(SEEN)
+        print('C)', c['series'], c['live'])
+        results.append(c['series'] and c['live'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (location.host === 'musicbrainz.org') localStorage.setItem('dci-rules-off', JSON.stringify(['S295']));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        d = pg.evaluate(SEEN)
+        print('D)', d)
+        results.append(not d['series'] and not d['live'] and not d['log'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

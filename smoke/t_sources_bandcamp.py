@@ -2381,4 +2381,49 @@ def case_pkg3161():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_about3163():
+    """Credits Importer 3.163.0 (proposal F-BCABOUT, rule S295): Bandcamp takes a series and a live recording named in "about" or in the text
+    of an edition like those of the credits field (they were taken from the credits field only).
+    A) "about": "Jazz Masters Series No. 12" – the series is on the dashboard.
+    B) The cassette's text: "“Song Two” live at Café Oto, 12 May 2019" – the live recording is offered above the entries.
+    C) S295 off: neither."""
+    ALBUM = 'https://testband.bandcamp.com/album/about63'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'About63', 'credits': 'Produced by Jane Roe', 'about': 'Jazz Masters Series No. 12'},
+        'packages': [{'type_name': 'Cassette', 'title': 'Cassette', 'description': '“Song Two” live at Café Oto, 12 May 2019'}],
+        'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        return d
+    H.ws_release = ws
+    SEEN = """(() => ({ series: /Jazz Masters Series/.test(document.querySelector('#dci-overlay').textContent), live: !!document.querySelector('#dci-overlay [data-act=live-take]') }))()"""
+    results = []
+
+    def run(pg):
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return pg.evaluate(SEEN)
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for off in (False, True):
+                ctx = H.new_context(b)
+                if off:
+                    ctx.add_init_script("if (location.host === 'musicbrainz.org') localStorage.setItem('dci-rules-off', JSON.stringify(['S295']));")
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                got = run(pg)
+                print('C)' if off else 'A) B)', got, '| Fehler:', errs)
+                results.append((not got['series'] and not got['live']) if off else (got['series'] and got['live']))
+                results.append(not errs)
+                ctx.close()
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
