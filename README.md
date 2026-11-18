@@ -50,7 +50,7 @@ All milestones and every version: [changelog](mb-vibecode-credits-importer-CHANG
 
 ## More
 
-- [Full reference](mb-vibecode-credits-importer-v3.158.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
+- [Full reference](mb-vibecode-credits-importer-v3.159.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
 - [Companion](mb-vibecode-credits-importer-companion-v1.22.0-README.md)
 - [Changelog](mb-vibecode-credits-importer-CHANGELOG.md) · [Code changes](mb-vibecode-credits-importer-CODE-CHANGES.md)
 - Problems and ideas: [issues](https://github.com/proto-beep/MBvibecode/issues)
