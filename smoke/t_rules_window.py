@@ -1141,4 +1141,38 @@ def case_filter3161():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_needs3162():
+    """Credits Importer 3.162.0 (proposal F-S045DEP): a quick switch that acts only while another rule is on.
+    A) S160 off (the default): the switch S045 carries the tag "needs S160" and its tooltip says why.
+    B) S045 off, then on again: S160 is switched on with it; the tag is gone."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.locator('[data-act=rules]').first.click()
+        pg.wait_for_selector('#dci-rules [data-rf=quick] [data-qs-toggle=S045]', timeout=20000)
+        INFO = """(() => { const q = (id) => document.querySelector(`#dci-rules [data-qs-toggle=${id}]`);
+          return { s045: q('S045').getAttribute('aria-pressed'), s160: q('S160').getAttribute('aria-pressed'),
+            tag: (q('S045').querySelector('.dci-qneeds-tag') || {}).textContent || '', title: q('S045').title.split('\\n').pop() }; })()"""
+        a = pg.evaluate(INFO)
+        print('A)', a)
+        results.append(a['s160'] == 'false' and a['tag'] == 'needs S160' and 'S160' in a['title'] and 'switches S160 on too' in a['title'])
+        if a['s045'] == 'true':
+            pg.click('#dci-rules [data-qs-toggle=S045]')
+            pg.wait_for_timeout(300)
+        off = pg.evaluate(INFO)
+        pg.click('#dci-rules [data-qs-toggle=S045]')
+        pg.wait_for_timeout(300)
+        on = pg.evaluate(INFO)
+        print('B)', off, '→', on)
+        results.append(off['s045'] == 'false' and off['s160'] == 'false' and on['s045'] == 'true' and on['s160'] == 'true' and on['tag'] == '')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

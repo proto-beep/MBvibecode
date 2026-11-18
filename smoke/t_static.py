@@ -403,4 +403,65 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_small3162():
+    """Credits Importer 3.162.0 (the small corrections proposed by review runs 2 and 3).
+    A) Roles: "Tenor", "Baritone", "Soprano" alone are asked (R121–R123, Q017–Q019) like "Alto"; "Bugle" and "Laúd" too (R124, R125;
+       no translation to flugelhorn / lute any more); "Text By" asks like "Text" (R100); "Libretto" is the librettist, "Second Engineer"
+       the engineer with "assistant", "Video By" the video director, "Arranged At" for a person the arranger.
+    B) Companies: "Filmed At" → video shot at, "Arranged At" → arranged at (places); "Licensed To" has no type for an artist.
+    C) Dates: "master" and "mix" alone are no hint ("original master tapes in 1998", "Mix Master Mike, 1998", "DJ Mix series, 2004");
+       "Mastered 1985", "Mixed in 2004", "Final mix, March 1998" still are.
+    D) "Tape: No Problema Tapes / Vinyl: Hiraeth Records" is left out as the label of an edition (S294); "Tape: John Doe" stays a credit.
+    E) The setting "Offer ⑃" is gone; a quick switch that needs another rule says so (QS_NEEDS)."""
+    import json
+    import subprocess
+    root = H.ROOT
+    src = (root / 'mb-vibecode-credits-importer.user.js').read_text(encoding='utf-8')
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const inp = JSON.parse(process.argv[2]);
+const role = (w) => { const r = m.mapRole(w, []); return [r.rule || '', r.types, r.level, (r.flags || []).join(',')]; };
+const comp = (w) => { const r = m.mapCompanyRole(w); const o = r.typeOptions || {}; return [r.rule || '', o.place || [], o.area || [], o.artist || [], o.label || []]; };
+const isRole = (p) => /^(tapes?|guitar)$/i.test(String(p).trim());
+const parse = (t) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: () => null, resolveTitles: () => null, artistNames: ['The Band'], trackCount: 8 });
+  return [r.credits.map((c) => [c.who && c.who.name, c.role]), r.ignored.map((u) => u.why)]; };
+console.log(JSON.stringify({ roles: Object.fromEntries(inp.roles.map((w) => [w, role(w)])), comps: Object.fromEntries(inp.comps.map((w) => [w, comp(w)])),
+  dates: Object.fromEntries(inp.dates.map((t) => [t, m.findDates(t, {}).map((d) => d.hint)])), texts: Object.fromEntries(inp.texts.map((t) => [t, parse(t)])) }));
+"""
+    inp = {'roles': ['Alto', 'Tenor', 'Baritone', 'Soprano', 'Bugle', 'Laúd', 'Text', 'Text By', 'Libretto', 'Second Engineer', 'Video By', 'Arranged At',
+                     'Tenor Saxophone', 'Notes'],
+           'comps': ['Filmed At', 'Arranged At', 'Licensed To'],
+           'dates': ['Mastered 1985', 'original master tapes in 1998', 'Mix Master Mike, 1998', 'DJ Mix series, 2004', 'Mixed in 2004', 'Final mix, March 1998'],
+           'texts': ['Tape: No Problema Tapes / Vinyl: Hiraeth Records', 'Tape: No Problema Tapes\nVinyl: Hiraeth', 'Tape: John Doe', 'Tape: John Doe\nVinyl: Jane Roe']}
+    js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(inp)], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'roles': {}, 'comps': {}, 'dates': {}, 'texts': {}}
+    if js.returncode:
+        print(js.stderr[-400:])
+    r = got['roles']
+    for k, v in r.items():
+        print('A)', k, '→', v)
+    rule = lambda w: (r.get(w) or [''])[0]  # noqa: E731
+    ok_a = ([rule(w) for w in ['Alto', 'Tenor', 'Baritone', 'Soprano', 'Bugle', 'Laúd', 'Text', 'Text By']] == ['R102', 'R121', 'R122', 'R123', 'R124', 'R125', 'R100', 'R100']
+            and r.get('Libretto', ['', []])[1][:1] == ['librettist'] and r.get('Second Engineer') == ['R120', ['engineer'], 'recording', 'assistant']
+            and r.get('Video By', ['', []])[1] == ['video director'] and r.get('Arranged At', ['', []])[1][:1] == ['arranger']
+            and rule('Tenor Saxophone') == 'R096' and rule('Notes') == 'R082')
+    c = got['comps']
+    print('B)', c)
+    ok_b = (c.get('Filmed At', ['', []])[1] == ['video shot at'] and c.get('Arranged At', ['', []])[1] == ['arranged at']
+            and c.get('Licensed To', ['', [], [], ['x'], []])[3] == [] and c.get('Licensed To')[4] == ['licensee'])
+    d = got['dates']
+    print('C)', d)
+    ok_c = (d.get('Mastered 1985') == ['mastering'] and d.get('original master tapes in 1998') == [''] and d.get('Mix Master Mike, 1998') == ['']
+            and d.get('DJ Mix series, 2004') == [''] and d.get('Mixed in 2004') == ['mix'] and d.get('Final mix, March 1998') == ['mix'])
+    t = got['texts']
+    print('D)', t)
+    ok_d = (t.get('Tape: No Problema Tapes / Vinyl: Hiraeth Records') == [[], ['formatLabel']] and t.get('Tape: No Problema Tapes\nVinyl: Hiraeth') == [[], ['formatLabel', 'formatLabel']]
+            and t.get('Tape: John Doe') == [[['John Doe', 'Tape']], []] and (t.get('Tape: John Doe\nVinyl: Jane Roe') or [[]])[0] == [['John Doe', 'Tape']])
+    ok_e = 'insts-common-on' not in src and '"settings.instsCommon"' not in src and "const QS_NEEDS = { S045: 'S160' };" in src
+    print('E)', ok_e)
+    results = [ok_a, ok_b, ok_c, ok_d, ok_e]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

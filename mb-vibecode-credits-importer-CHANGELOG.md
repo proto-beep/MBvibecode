@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.161.0 | – |
+| 2026-11-18 | 3.159.0 – 3.162.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,23 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.162.0
+
+The small corrections proposed by review runs 2 and 3 (rule S294; role rules R120–R125, questions Q017–Q021, company rules C054–C057):
+
+- **Readable everywhere** (F-STAGECONTRAST): "Stage in the relationship editor" and "Apply" were white on orange at 3 : 1 – a darker orange now (5.3 : 1); the tags of the kinds (Label, Place), the dots of the open points, the default colours of the levels Release and Release group and "＋ New" in the works matrix are above 4.5 : 1 too, in the light and in the dark design. The tag of a kind picks white or dark text by its colour (own colours too). A test measures it from now on.
+- **A fault found on the way:** in "Show missing links of the entries" and in the list of skipped entries the tag of the kind was white on nothing – not readable.
+- **"Tenor", "Baritone", "Soprano" alone are asked** like "Alto" (F-VOICEWORDS): a saxophone or a voice. **"Bugle" and "Laúd" are asked** (F-BUGLE): MusicBrainz has both instruments; they were read as French and Spanish for flugelhorn and lute.
+- **"Text By" asks like "Text"** (F-TEXTBY): liner notes or lyrics – it was liner notes without a question.
+- **Small gaps** (F-SMALLMAP): "Libretto" → librettist; "Second Engineer", "2nd Engineer" → engineer with "assistant"; "Video By", "Film By" → video director; "Filmed At" → video shot at, "Filmed In" → video shot in; "Arranged At" → arranged at, "Arranged In" → arranged in ("Arranged At" given to a person: the arranger).
+- **"Licensed To" for an artist** (F-LICENSEE): MusicBrainz has "licensee" only for labels – the type is no longer offered for an artist.
+- **Dates** (F-MASTERWORD): "master" and "mix" alone are no hint any more – "original master tapes in 1998", "Mix Master Mike, 1998", "DJ Mix series, 2004" gave a mastering or a mix date. "Mastered 1985", "Mixed in 2004", "Final mix, March 1998", "Mix by X, 1999" still do.
+- **"Tape: No Problema Tapes / Vinyl: Hiraeth Records"** (F-TAPEFORMAT; S294): the format of an edition before its label is no credit – "Tape" was the instrument and the label its player. Left out as "the label of an edition". "Tape: John Doe" stays the instrument. Every free text.
+- **A quick switch that needs another** (F-S045DEP): "Writer's society" (S045) acts only while "Rights societies" (S160) is on – it says "needs S160" now, and switching it on switches S160 on too.
+- **The setting "Offer ⑃" is gone** (F-INSTLCADEAD): since 3.156.0 the two buttons "all tracks" and "⑃ Release + group" do its work; the rule S177 still switches ⑃.
+- **The button "℗/©"** of the date finder has a name for screen readers (F-SYMBOLBTN).
+- Not changed: "mouth organ" stays the harmonica (decided in 3.153.0); "EVI" keeps its alias.
 
 ### Import 3.161.0
 

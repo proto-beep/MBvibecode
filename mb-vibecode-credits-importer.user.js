@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.161.0
+// @version      3.162.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.161.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.161.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.162.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.162.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.161.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.162.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -937,6 +937,7 @@
       "ignored.why.liveHead": "the head of a live recording – offered above the entries",
       "ignored.why.promo": "a description of the music (no credit)",
       "ignored.why.shop": "shop (shipping, what a purchase includes, formats)",
+      "ignored.why.formatLabel": "the label of an edition (format: label) – no credit",
       "ignored.why.genres": "genres (no credit)",
       "ignored.why.catnoNew": "a catalogue number: {catno} – MusicBrainz has: {mb}",
       "ignored.why.labels": "the release’s labels: {list} – check them in the release editor",
@@ -2003,8 +2004,6 @@
       "insts.commonAll": "instruments",
       "log.instsCommon": "{name}: the common level of the instruments added – {what}",
       "log.instsCommonOff": "{name}: the row of the common level taken out",
-      "settings.instsCommon": "Offer ⑃",
-      "settings.instsCommonTitle": "Beside “Instruments: per track | on the release”: a row of the level all of them share (saxophones and a flute: woodwind)",
       "insts.track": "all tracks",
       "insts.release": "on the release + group",
       "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
@@ -2305,7 +2304,6 @@
       "settings.h.dev": "Developer",
       "settings.devHint": "Shows the tab “{tab}”: tools for reporting issues and improving the script",
       "settings.sortOnHint": "“{order}:” in the line “{line}”",
-      "settings.instsCommonHint": "The common level of an entry's instruments as a row",
       "settings.afterEditHint": "Next to “Enter edit” (Ctrl+Alt+Enter): submits, then opens the relationship editor with the import",
       "settings.afterEditBgHint": "Bandcamp, Discogs – Harmony’s page stays in front",
       "settings.gapLineHint": "With a Discogs or Bandcamp link: how many of its relationships are missing",
@@ -2908,6 +2906,8 @@
       "quick.perm": "permanent",
       "quick.permTitle": "Ticked: a change of this switch is stored (also for the next imports, in the active profile). Not ticked: it holds for this import only",
       "quick.onceTag": "this import only",
+      "quick.needsTag": "needs {id}",
+      "quick.needsTitle": "Acts only while {id} (“{name}”) is on – switching this on switches {id} on too.",
       "quick.onceNote.one": "{n} switch changed for this import only",
       "quick.onceNote.other": "{n} switches changed for this import only",
       "mapping.missing": "MB x Vibecode: Credits Importer – mapping file missing",
@@ -4262,6 +4262,9 @@
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
+      "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
+      "typeAsk.askBugle": "“{role}”: the bugle or, as in French, the flugelhorn? – please choose:",
+      "typeAsk.askLaud": "“{role}”: the Spanish laúd or the lute? – please choose:",
       "typeAsk.askTranslation": "“{role}”: mostly the translation of the liner notes – taken so (liner notes, translator) –, sometimes of the lyrics:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "ignored.why.members": "the members of {band}: {names} – each with the roles of the line; MusicBrainz keeps the members on the band (its own page)",
@@ -5176,6 +5179,7 @@
     { id: 'S289', where: 'BANDCAMP.toRelease, mergeMoreCredits, mergeMoreCompanies, labelHintHtml', note: 'Sources (3.157.0; collected item Z-BCPKGDESC): Bandcamp – the texts of the physical editions ("Limited Edition Compact Disc …") read with the credits: what they say again is one entry, of two that differ the more precise kept ("Electric Guitar" over "Guitar", tracks named over all tracks); they hold for the digital edition too; above the entries which edition\'s text was read and what it gave, its lines left out and not recognized with the others (its name before them)' },
     { id: 'S290', where: 'TEXT.parse (end), OTHER_SESSION, WRITER_ROLE_RE', note: 'Texts (3.157.0; collected item Z-BONUSONLY): the credits of the whole release hold for a bonus track too ("Plus Bonus Track (only on CD)" – it did not fit on the vinyl); not for the last tracks whose titles name another session – "live", "demo", "rehearsal" ("outtake" is none) – fewer than half of the tracks: their credits on the other tracks; writers and arrangers stay on all. Every free text of the release (not a track\'s own page)' },
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
+    { id: 'S294', where: 'TEXT.parse (shopLines; FORMAT_LABEL_LINE, FORMAT_LABEL_NAME)', note: 'Texts (3.162.0; proposal F-TAPEFORMAT of review run 2): the format of an edition before its label – "Tape: No Problema Tapes / Vinyl: Hiraeth Records", "CD: Sub Pop" – is no credit ("Tape" was read as the instrument, the label as its player): left out as "the label of an edition". Only when the name ends like a label\'s (Records, Recordings, Tapes, Label, Music, Editions, Disques, Schallplatten), or the text names a second format that way and one of the names does; "Tape: John Doe" stays the instrument. Every free text' },
     { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
     { id: 'S293', where: 'TEXT.parse (tidyLines; DIST_LINE, SHOP_LINES), BANDCAMP.toRelease (pkgMediumWord, PKG_MEDIUM_ROLE, PKG_ASK_TYPES), companyLeftOutForMedium, leftOutForMedium, pkgAskSkip, uncrHtml', note: 'Editions (3.161.0; collected item Z-VINYLONLY): "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Vinyl distribution: X", "Digital distribution by X" are the distributor – a medium named before "distribution" binds it to that medium; "Orange / Black Splatter Vinyl LP" and "Estimated shipping: February 2027" are what a shop writes (no date). What the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, duplicated, lacquer cut, glass mastered – holds for that medium only: left out, and listed so, when the MusicBrainz release has no such medium (the same company in the album\'s credits holds for all). Photographs and liner notes named only in an edition\'s text: taken for a release of that medium; for another one (the digital release) a suggestion – "named only in the text of the edition “…”" with "Take" –, unless the page names a digital booklet or the images as part of the download' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
@@ -6542,6 +6546,9 @@
   // [Z-SHOPPROSE] (3.157.0, S287) the lines of a shop about an edition (Bandcamp's packages, a label's shop): left out as "shop"
   // [Z-LEADMARK] (3.161.0, S292) signs before a line: bullets and ornaments (not a dash before a name, not "#3", not "℗" / "©")
   // © ® ™ ℗ are pictographic too, and they begin a copyright line: never taken off
+  // [S294] (3.162.0; F-TAPEFORMAT) "<format>: <label>" – the format of an edition before its label; and what ends the name of a label
+  const FORMAT_LABEL_LINE = /^(tapes?|cassettes?|mc|vinyl|lp|2lp|cd|compact disc|digital|download)\s*(?::|\s[–—-])\s+(\S.*)$/i;
+  const FORMAT_LABEL_NAME = /\b(?:records?|recordings|tapes|label|music|editions?|éditions|disques|schallplatten|bandcamp)\.?$/i;
   const LEAD_MARK = /^\s*(?:[⊛⊙⊚◉◎⦿●○◌◍◆◇◈■□▪▫▣▶►▸▹▷➤➔➜➝➞→⇒»›‣⁃∙·•◦★☆✦✧✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺❂❃❇❈❉❊❋❖✓✔☑✗✘♪♫♬♩☛☞❥❧❦❯❱*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?)(?:\s*(?:[⊛⊙●○◆■▪▶►➤→»•★✦✓✔*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?))*\s+(?=\S)/u;
   // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:", "Vinyl distribution: X", "Digital distribution by X": region and medium before the word
   const DIST_LINE = /^\s*(?:exclusive(?:ly)?\s+)?(?:(?:EU|US|USA|UK|European|Europe|North\s+American?|American|Asian|Japanese|German|worldwide|world-?wide|international|global|rest\s+of\s+(?:the\s+)?world)\s+)?(?:(digital|vinyl|lp|cd|cassette|tape|physical)\s+)?(distribution|distributed|distributor|vertrieb)\b\s*(?:(?:exclusively\s+)?(via|by|through|durch|:|[-–—]))?\s*(.+?)\s*[:.]?\s*$/i;
@@ -6716,7 +6723,7 @@
     { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at', 'mastered in'], onlyNote: 'mastering with "re", or a role "Remastered …"',
       only: (n, row) => (n === 'mastering' && row.flags.has('re')) || ((n === 'mastered at' || n === 'mastered in') && /^remastered/i.test(row.raw || '')), releaseOnly: true },
     { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at', 'mastered in'], releaseOnly: true },
-    { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
+    { key: 'copyright', label: '℗/©', name: 'Phonographic copyright (℗) and copyright (©)', types: ['phonographic copyright', 'copyright'] }, // [F-SYMBOLBTN] (3.162.0) name: what a screen reader says
     // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159);
     // photographs are not in it (their date is the concert's, see rowDateSugg)
     // [Z-CPI] (3.73.0, D025) photographs too: a date the text gives a photograph ("Cover Photo … (1985)") is theirs – a date of
@@ -12135,10 +12142,25 @@
        * ", all rights reserved" at the end of a credit taken off (no name). Every free text.
        */
       function shopLines(lines) {
+        // [S294] (3.162.0; F-TAPEFORMAT) "Tape: No Problema Tapes / Vinyl: Hiraeth Records": the format of an edition and its label – no
+        // credit ("Tape" was the instrument and the label its player). Only with a name that is a label's ("… Records", "… Tapes"), or with a second format in the text
+        // and one such name: "Tape: John Doe" stays the instrument.
+        const fmtParts = (t) => {
+          const parts = String(t).replace(LEAD_MARK, '').split(/\s+[\/|·•]\s+/).map((x) => x.match(FORMAT_LABEL_LINE));
+          return parts.every(Boolean) ? parts : null;
+        };
+        const fmtAll = ruleOn('S294') ? lines.map((l0) => fmtParts(String(l0 == null ? '' : l0).trim())).filter(Boolean).flat() : [];
+        const fmtLabelish = fmtAll.some((x) => FORMAT_LABEL_NAME.test(x[2]));
+        const fmtKinds = new Set(fmtAll.map((x) => x[1].toLowerCase().replace(/s$/, '')));
         return lines.map((l0) => {
           const l = String(l0 == null ? '' : l0);
           const t = l.trim();
           if (!t) return l;
+          const fmt = fmtAll.length ? fmtParts(t) : null;
+          if (fmt && (fmt.every((x) => FORMAT_LABEL_NAME.test(x[2])) || (fmtKinds.size > 1 && fmtLabelish && fmtAll.every((x) => /^\p{Lu}[^\s]*(?:\s+(?:\p{Lu}|\d|&)[^\s]*){0,5}$/u.test(x[2].trim()))))) {
+            ignored.push({ text: t, why: 'formatLabel' });
+            return '';
+          }
           // ((3.161.0, S292) without a sign before the line: "⊛ Estimated shipping: February 2027")
           if (SHOP_LINES.some((re) => re.test(ruleOn('S292') ? t.replace(LEAD_MARK, '') : t))) {
             ignored.push({ text: t, why: 'shop' });
@@ -14640,7 +14662,7 @@
   const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick of 3.19.0 – 3.22.x (removed in 3.23.0: the button instead)
   // [3.23.0] the button "Enter edit & import credits" next to "Enter edit" (setting, on; collected item 50)
   const AFTER_EDIT_BTN_KEY = 'dci-after-edit-btn';
-  const AFTER_EDIT_BTN_COLOR = { bg: '#eb743b', line: '#c55a24', hover: '#c55a24', ink: '#fff' };
+  const AFTER_EDIT_BTN_COLOR = { bg: '#b84f1c', line: '#9c3f12', hover: '#9c3f12', ink: '#fff' }; // [F-STAGECONTRAST] (3.162.0) white on it 5.3 : 1 (was 2.96)
   const AFTER_EDIT_GO_KEY = 'dci-after-edit-go';  // { release: MBID or 'new', links, at } once "Enter edit" runs (sessionStorage of the tab)
   const AUTOSTART_KEY = 'dci-autostart';          // { release, links, at } for the relationship editor (sessionStorage of the tab)
   const AFTER_EDIT_MAX_MS = 10 * 60 * 1000;
@@ -20767,6 +20789,9 @@
     if (!qsPerm.set) qsPerm.set = new Set(loadStore(QS_PERM_KEY, []));
     return qsPerm.set;
   }
+  // [F-S045DEP] (3.162.0) quick switches that act only while another rule is on: a rights society after a writer's name goes to the
+  // release's rights societies, which are taken only with S160
+  const QS_NEEDS = { S045: 'S160' };
   function quickSwitchesHtml() {
     const notes = ruleNotes();
     const perm = qsPerm();
@@ -20776,8 +20801,10 @@
       // [Z-MSYN] (3.97.0) a switch that cannot be switched on yet: greyed, with why
       const locked = LOCKED_RULES.has(id);
       const once = QS_ONCE.has(id);
-      return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}${once ? ' dci-qonce' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}`)}">
-        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span>${once ? `<span class="dci-qonce-tag">${esc(tr('quick.onceTag'))}</span>` : ''}</button><label class="dci-qperm" title="${esc(tr('quick.permTitle'))}"><input type="checkbox" data-qs-perm="${esc(id)}"${perm.has(id) ? ' checked' : ''}${locked ? ' disabled' : ''}><span>${esc(tr('quick.perm'))}</span></label><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
+      // [F-S045DEP] (3.162.0) a switch that acts only with another one on: says so; switching it on switches the other on too
+      const needs = QS_NEEDS[id] && !ruleOn(QS_NEEDS[id]) ? QS_NEEDS[id] : '';
+      return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}${once ? ' dci-qonce' : ''}${needs ? ' dci-qneeds' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}${needs ? `\n${tr('quick.needsTitle', { id: needs, name: tr(`quick.name.${needs}`) })}` : ''}`)}">
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span>${once ? `<span class="dci-qonce-tag">${esc(tr('quick.onceTag'))}</span>` : ''}${needs ? `<span class="dci-qneeds-tag">${esc(tr('quick.needsTag', { id: needs }))}</span>` : ''}</button><label class="dci-qperm" title="${esc(tr('quick.permTitle'))}"><input type="checkbox" data-qs-perm="${esc(id)}"${perm.has(id) ? ' checked' : ''}${locked ? ' disabled' : ''}><span>${esc(tr('quick.perm'))}</span></label><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
       <span class="dci-sub">${esc(tr('rules.quickHint'))}</span>${QS_ONCE.size ? `<span class="dci-qonce-note" data-el="qs-once">${esc(tr(QS_ONCE.size === 1 ? 'quick.onceNote.one' : 'quick.onceNote.other', { n: QS_ONCE.size }))}</span>` : ''}</div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
@@ -21153,11 +21180,18 @@
         if (qt) {
           const id = qt.dataset.qsToggle;
           // [Z-QSSCOPE] (3.156.0) for this import only, unless its "permanent" box is ticked
-          if (qsPerm().has(id)) setRuleOn(id, !ruleOn(id));
-          else {
-            const on = !ruleOn(id);
-            if (on === ruleOnStored(id)) QS_ONCE.delete(id);
-            else QS_ONCE.set(id, on);
+          const flip = (rid, on) => {
+            if (qsPerm().has(rid)) setRuleOn(rid, on);
+            else if (on === ruleOnStored(rid)) QS_ONCE.delete(rid);
+            else QS_ONCE.set(rid, on);
+          };
+          const turnOn = !ruleOn(id);
+          // [F-S045DEP] (3.162.0) switched on while the rule it needs is off: that one on too (the same way – stored or for this import)
+          const need = turnOn && QS_NEEDS[id] && !ruleOn(QS_NEEDS[id]) && !LOCKED_RULES.has(QS_NEEDS[id]) ? QS_NEEDS[id] : '';
+          flip(id, turnOn);
+          if (need) {
+            flip(need, true);
+            applyRulesChange(need);
           }
           applyRulesChange(id);
           const again = el.querySelector(`[data-qs-toggle="${id}"]`);
@@ -32112,7 +32146,7 @@
       if (!known.test(u) && SITE_LINK_TYPE[kind]) q.push([`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]);
       return `/${path}/${a.mbid}/edit?${toQuery(q)}`;
     };
-    el.innerHTML = `<details${open ? ' open' : ''}><summary title="${esc(tr('misslinks.title'))}">${esc(tr('misslinks.summary', { n }))}</summary><ul class="dci-misslinks-list">${list.map(({ a, urls }) => `<li data-mbid="${esc(a.mbid)}">${kindTagHtml(a)}<a href="/${esc(entityPath(entryKind(a)))}/${esc(a.mbid)}" target="_blank" rel="noopener"><strong>${esc(a.mbName || a.name || '')}</strong></a>${urls.map((u) => ` <span class="dci-misslink"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(webShort(u))}</a> <a class="dci-misslink-add" data-el="misslink-add" href="${esc(editUrl(a, u))}" target="_blank" rel="noopener" title="${esc(tr('misslinks.addTitle', { name: a.mbName || a.name || '' }))}">${esc(tr('misslinks.add'))}</a></span>`).join(' ·')}</li>`).join('')}</ul></details>`;
+    el.innerHTML = `<details${open ? ' open' : ''}><summary title="${esc(tr('misslinks.title'))}">${esc(tr('misslinks.summary', { n }))}</summary><ul class="dci-misslinks-list">${list.map(({ a, urls }) => `<li class="dci-kind-${groupKindOf(a).kind}" data-mbid="${esc(a.mbid)}">${kindTagHtml(a)}<a href="/${esc(entityPath(entryKind(a)))}/${esc(a.mbid)}" target="_blank" rel="noopener"><strong>${esc(a.mbName || a.name || '')}</strong></a>${urls.map((u) => ` <span class="dci-misslink"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(webShort(u))}</a> <a class="dci-misslink-add" data-el="misslink-add" href="${esc(editUrl(a, u))}" target="_blank" rel="noopener" title="${esc(tr('misslinks.addTitle', { name: a.mbName || a.name || '' }))}">${esc(tr('misslinks.add'))}</a></span>`).join(' ·')}</li>`).join('')}</ul></details>`;
   }
 
   function membersNoteHtml(a) {
@@ -33742,7 +33776,7 @@
     }
     const open = !!S.skippedOpen;
     el.innerHTML = `<button type="button" class="dci-textbtn dci-skipped-toggle" data-act="skipped-toggle" aria-expanded="${open}" title="${esc(tr('group.skippedTitle'))}">${esc(tr('group.skippedN', { n: list.length }))} ${open ? '▾' : '▸'}</button>${open
-      ? `<ul class="dci-skipped-list">${list.map((a) => `<li>${kindTagHtml(a)}<strong>${esc(a.name || a.rawName || '')}</strong> <button type="button" class="dci-textbtn dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button></li>`).join('')}</ul>` : ''}`;
+      ? `<ul class="dci-skipped-list">${list.map((a) => `<li class="dci-kind-${groupKindOf(a).kind}">${kindTagHtml(a)}<strong>${esc(a.name || a.rawName || '')}</strong> <button type="button" class="dci-textbtn dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button></li>`).join('')}</ul>` : ''}`;
   }
 
 
@@ -35282,7 +35316,7 @@
         x.studios && x.studios.length ? `<span class="dci-tg-tag">${esc(studioTagText(x.studios.map((k) => S.artists.get(k)).filter(Boolean)))}</span>` : '',
         placed.length ? `<span class="dci-tg-tag dci-tag-date">${esc(tr('datefind.inMatrix', { list: placed.join(', ') }))}</span>` : '',
       ].join(' ');
-      const groups = DATE_GROUPS.map((g) => `<button type="button" class="${x.hint === g.key ? 'dci-primary' : ''}" data-act="datefind-use" data-src="${src}" data-i="${i}" data-group="${g.key}">${esc(g.label)}</button>`).join('');
+      const groups = DATE_GROUPS.map((g) => `<button type="button" class="${x.hint === g.key ? 'dci-primary' : ''}" data-act="datefind-use" data-src="${src}" data-i="${i}" data-group="${g.key}"${g.name ? ` aria-label="${esc(g.name)}" title="${esc(g.name)}"` : ''}>${esc(g.label)}</button>`).join('');
       const order = x.alt ? `<span class="dci-warn">${esc(tr(useAlt ? 'datefind.otherUsed' : x.order === 'us' ? 'datefind.orderUs' : 'datefind.orderDay', { country: (S.release && S.release.country) || '–' }))}</span>
         <button type="button" class="dci-textbtn" data-act="datefind-alt" data-key="${key}">${esc(tr('datefind.useOther', { date: formatDateValue(useAlt ? x.value : x.alt) }))}</button>` : '';
       return `<li><code>${esc(shown)}</code> ${extra} <span class="dci-sub" title="${esc(x.rule)}">${esc(tr(src === 'notes' ? 'datefind.fromNotes' : 'datefind.fromText'))}: „…${esc(x.snippet)}…“ (${esc(x.rule)})</span> ${order}
@@ -51481,14 +51515,6 @@
       return;
     }
     // [Z-SNW] (3.83.0) works of the same title in the edit note
-    if (f === 'insts-common-on') {
-      S.instsCommonOn = el.checked;
-      writeJson('localStorage', 'dci-insts-common', el.checked ? null : false);
-      log('info', 'settingValue', { what: `${tr('settings.instsCommon')} (${tr('settings.instsCommonHint')})`, value: tr(el.checked ? 'common.on' : 'common.off') });
-      renderGroups();
-      refresh();
-      return;
-    }
     if (f === 'sort-on') {
       S.sortOn = el.checked;
       writeJson('localStorage', 'dci-sort-on', el.checked ? null : false);
@@ -52873,13 +52899,13 @@
   // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
   const LEVEL_COLORS_KEY = 'dci-level-colors';
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
-  const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#2e8b57', release_group: '#b0700c', work: '#8a4f9e' };
+  const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#27794b', release_group: '#96600a', work: '#8a4f9e' };
   const LEVEL_SKIP_COLOR = '#8b8898';
   // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
   const KIND_COLORS_KEY = 'dci-kind-colors';
   const KIND_PALETTE_KEY = 'dci-kind-palette';
   // [3.37.8] events their own colour, plum (collected item 158)
-  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
+  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#237676', place: '#447836', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   // [Z-DNDS] (3.86.0) what a drop does at each place – "add" (⇧ Shift: replace) or "replace" (⇧ Shift: add)
   const DROP_KEY = 'dci-drop-modes';
@@ -52950,7 +52976,7 @@
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
   S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
   S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false; // [Z-SORT] (3.112.0)
-  S.instsCommonOn = readJson('localStorage', 'dci-insts-common', true) !== false; // [Z-INSTLCA] (3.113.0)
+  S.instsCommonOn = true; // [Z-INSTLCA] (3.113.0); [F-INSTLCADEAD] (3.162.0) its setting "Offer ⑃" is gone – the rule S177 switches it
   S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
   S.yellDone = new Set();
   S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
@@ -52983,6 +53009,8 @@
     Object.keys(S.kindPalette).forEach((kind) => {
       const c = !S.kindColors ? (dark ? darkToneOf('kind', KIND_PALETTE_DEFAULT.other) : KIND_PALETTE_DEFAULT.other) : dark ? darkPaletteColor('kind', kind) : S.kindPalette[kind];
       S.overlay.style.setProperty(`--dci-kind-${kind}`, c);
+      // [F-STAGECONTRAST] (3.162.0) the text of the tag: white or dark, whichever reads better on the colour (dark theme, own colours)
+      S.overlay.style.setProperty(`--dci-kind-${kind}-ink`, bestInkOn(c));
       S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, dark ? mixHex(c, DARK_GROUND, 0.2) : tintOf(c, 0.11));
     });
   }
@@ -53005,6 +53033,14 @@
   function inkOn(hex, dark = false) {
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     return 0.2126 * r + 0.7152 * g + 0.0722 * b > (dark ? 0.21 : 0.36) ? '#1f1d29' : '#ffffff';
+  }
+
+  /** [F-STAGECONTRAST] (3.162.0) White or the dark ink – the one with the higher contrast on a "#rrggbb" ground. */
+  function bestInkOn(hex) {
+    const lum = (h) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    if (!/^#[0-9a-f]{6}$/i.test(String(hex))) return '#ffffff';
+    const l = lum(hex);
+    return 1.05 / (l + 0.05) >= (l + 0.05) / (lum('#1f1d29') + 0.05) ? '#ffffff' : '#1f1d29';
   }
 
   /** [3.29.2] The colours of the levels on the dashboard (CSS variables; the class "dci-lvlc" while they are on). */
@@ -55176,8 +55212,6 @@
         numField(tr('settings.emShow'), 'data-set="em-show" min="1" max="50"', S.emShow, 8),
         // [Z-SORT] (3.112.0) the choice of the order of the entries offered (off: the source's order)
         cb('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'), { def: true, hint: tr('settings.sortOnHint', { order: plain(tr('sort.label')), line: plain(tr('toolbar.levelAll')) }) }),
-        // [Z-INSTLCA] (3.113.0) the button ⑃ (the common level of an entry's instruments)
-        cb('data-f="insts-common-on"', S.instsCommonOn !== false, tr('settings.instsCommon'), tr('settings.instsCommonTitle'), { def: true, hint: tr('settings.instsCommonHint') }),
         // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
         cb('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'), { def: false }),
         sh('symbols'),
@@ -56506,7 +56540,7 @@
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
     S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true;
     S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false;
-    S.instsCommonOn = readJson('localStorage', 'dci-insts-common', true) !== false;
+    S.instsCommonOn = true;
     S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
@@ -58048,7 +58082,7 @@
     const [h, s, l] = dkHsl(p);
     return dkOut([...dkRgb([h, Math.min(s, 0.75), Math.max(l, minL)]), 1]);
   }
-  const darkToneOf = (what, hex) => darkTone(hex, what === 'kind' ? 0.38 : 0.62);
+  const darkToneOf = (what, hex) => darkTone(hex, what === 'kind' ? 0.33 : 0.62); // kind: 0.33 from 3.162.0 (0.38 left white on the place tag at 4.4 : 1)
   /** [Z-DM] Two "#rrggbb" mixed (share 0 … 1 of the first). */
   function mixHex(a, b, share) {
     return `#${[1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * share + parseInt(b.slice(i, i + 2), 16) * (1 - share)).toString(16).padStart(2, '0')).join('')}`;
@@ -58363,7 +58397,7 @@
       #dci-ocr button { font: inherit; cursor: pointer; }
       #dci-ocr .dci-textbtn { border: 0; background: none; color: #4b4585; padding: 2px 0; text-decoration: underline; }
       #dci-ocr .dci-small { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; color: #262430; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 12); font-weight: 600; }
-      #dci-ocr .dci-apply { border: 0; border-radius: 4px; background: #eb743b; color: #fff; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); font-weight: 600; }
+      #dci-ocr .dci-apply { border: 0; border-radius: 4px; background: #b84f1c; color: #fff; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); font-weight: 600; }
       #dci-ocr .dci-apply:disabled { background: #c9c6d3; cursor: default; }
       #dci-ocr .dci-ocr-err { padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #b3261e; background: #fdecea; color: #7f1d17; }
       #dci-ocr .dci-ocr-warn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: 4px; background: #fff3dc; color: #6b4100; }
@@ -58478,6 +58512,8 @@
         border: 1px solid #c8c5d6; border-right: 0; background: #faf9fd; font-size: calc(var(--u, 1px) * 10.5); color: var(--muted, #6d6a7c); cursor: pointer; }
       #dci-rules .dci-qperm input { margin: 0; }
       #dci-rules .dci-qonce .dci-qbtn { border-style: dashed; }
+      #dci-rules .dci-qneeds-tag { flex: 0 0 auto; padding: 0 calc(var(--u, 1px) * 5); border-radius: 999px; background: #ecebf6; color: #2f2a5c; font-size: calc(var(--u, 1px) * 10.5); }
+      #dci-rules .dci-qneeds .dci-qbtn[aria-pressed="true"] .dci-qled { opacity: 0.45; }
       #dci-rules .dci-qonce-tag { flex: 0 0 auto; padding: 0 calc(var(--u, 1px) * 5); border-radius: 999px; background: #fff3cd; color: #6b5200; font-size: calc(var(--u, 1px) * 10.5); }
       #dci-rules .dci-qonce-note { padding: 0 calc(var(--u, 1px) * 6); border-radius: 4px; background: #fff3cd; color: #6b5200; font-size: 0.92em; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
@@ -58786,19 +58822,19 @@
       .dci-group { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
         border-left: 5px solid var(--kind); background: #fff; border-radius: 0 6px 6px 0; box-shadow: 0 1px 4px rgba(38, 36, 48, 0.10); }
       /* [3.32.4] the colours of the kinds come from ⚙ Settings → Appearance (item 108; these are the defaults) */
-      .dci-kind-artist { --kind: var(--dci-kind-artist, #5b6f8c); --kind-bg: var(--dci-kind-artist-bg, #eef1f6); }
-      .dci-kind-label { --kind: var(--dci-kind-label, #2a8a8a); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
-      .dci-kind-place { --kind: var(--dci-kind-place, #4e8a3e); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
-      .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
-      .dci-kind-event { --kind: var(--dci-kind-event, #8a4f7d); --kind-bg: var(--dci-kind-event-bg, #f5edf3); }
-      .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
+      .dci-kind-artist { --kind: var(--dci-kind-artist, #5b6f8c); --kind-ink: var(--dci-kind-artist-ink, #fff); --kind-bg: var(--dci-kind-artist-bg, #eef1f6); }
+      .dci-kind-label { --kind: var(--dci-kind-label, #237676); --kind-ink: var(--dci-kind-label-ink, #fff); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
+      .dci-kind-place { --kind: var(--dci-kind-place, #447836); --kind-ink: var(--dci-kind-place-ink, #fff); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
+      .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-ink: var(--dci-kind-area-ink, #fff); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
+      .dci-kind-event { --kind: var(--dci-kind-event, #8a4f7d); --kind-ink: var(--dci-kind-event-ink, #fff); --kind-bg: var(--dci-kind-event-bg, #f5edf3); }
+      .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-ink: var(--dci-kind-other-ink, #fff); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
       /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
       .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }
       .dci-matrix th.dci-mx-col.dci-mx-locked[class*="dci-kind-"] .dci-mx-card { border-top-color: color-mix(in srgb, var(--kind) 40%, #fff); background: color-mix(in srgb, var(--kind-bg) 45%, #fff); }
       .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 10); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
       .dci-matrix th.dci-mx-locked .dci-mx-kind { opacity: 0.6; }
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
-      .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
+      .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind, #6d6a7c); color: var(--kind-ink, #fff);
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
       /* [Z-ETC] (3.42.5) the kind of an entry not linked: a button that tries the next one */
       button.dci-kind-tag.dci-kind-cycle { border: 0; cursor: pointer; font-family: inherit; line-height: inherit; }
@@ -58916,7 +58952,7 @@
       .dci-mx-optsbtn { color: var(--purple-d); }
       .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 11.5); text-decoration: none; white-space: nowrap; }
       .dci-mx-wlabel-ro { color: var(--muted, #6b6880); }
-      .dci-mx-wnew { opacity: 0.5; }
+      .dci-mx-wnew { border-style: dashed; }
       .dci-mx-split-on { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
       .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
@@ -60182,8 +60218,8 @@
       .dci-lc-add { margin-left: calc(var(--u, 1px) * 4); font-weight: 700; text-decoration: none; }
       .dci-yell-dots { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-self: center; }
       .dci-yell-dot { margin-left: calc(var(--u, 1px) * 6); font-size: 0.85em; font-weight: 600; white-space: nowrap; }
-      .dci-yell-dot-must { color: #c4571f; }
-      .dci-yell-dot-can { color: #a17400; }
+      .dci-yell-dot-must { color: #a8471a; }
+      .dci-yell-dot-can { color: #7a5800; }
       .dci-yell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); font-size: 0.92em; }
       .dci-yell:empty { display: none; }
       .dci-yell-c { display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; padding: 0 calc(var(--u, 1px) * 2); white-space: nowrap; }
@@ -60216,8 +60252,8 @@
           gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
         .dci-foot-opts.dci-open .dci-foot-optlist { display: flex; }
       }
-      .dci-apply { border: 0; border-radius: 3px; padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 16); background: var(--orange); color: #fff; font-weight: 600; }
-      .dci-apply:hover:not(:disabled) { background: var(--orange-d); }
+      .dci-apply { border: 0; border-radius: 3px; padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 16); background: #b84f1c; color: #fff; font-weight: 600; }
+      .dci-apply:hover:not(:disabled) { background: #9c3f12; }
       .dci-apply:disabled { background: #d9d6e3; color: #fff; cursor: not-allowed; }
 
       /* The dashboard in the page (below the import button) instead of a window */

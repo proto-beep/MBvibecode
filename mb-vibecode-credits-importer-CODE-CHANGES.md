@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.161.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.162.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.162.0 · 2026-11-18
+
+- **F-STAGECONTRAST:** `.dci-apply`, `#dci-ocr .dci-apply`, `AFTER_EDIT_BTN_COLOR` (#b84f1c / #9c3f12); `.dci-yell-dot-must / -can`; `LEVEL_PALETTE_DEFAULT` (release #27794b, release group #96600a), `KIND_PALETTE_DEFAULT` (label #237676, place #447836) and the CSS fallbacks; `bestInkOn(hex)` (new) – `applyKindColors` sets `--dci-kind-<kind>-ink`, `.dci-kind-<kind>` passes it on as `--kind-ink`, `.dci-kind-tag` uses it; `darkToneOf('kind')` 0.33 (was 0.38); `.dci-mx-wnew` dashed instead of half transparent. The lists of `renderMissingLinks` and of the skipped entries give their `<li>` the class of the kind (the tag had no `--kind`).
+- **Mapping file:** `ROLE_RULE_DATA` – R120 (second engineer), R121–R125 (tenor, baritone, soprano, bugle, laúd: `special`, asked), R007 (+ libretto), R076 (+ video by, film by), R100 (`^text( by)?$`), R082 (− text by); `TYPE_QUESTIONS` Q017–Q021; `FOREIGN_TERMS` without bugle@fr, laúd@es; `PERSON_AT_ROLE` (+ arranged); `COMPANY_ROLES` C054–C057, C004 without `artist`; `DATE_HINTS` mastering (`master(?:ed|ing)`), mix (`mix(?:ed|ing)`, "final / stereo / mono / surround / new mix", "mix by / at / in / :").
+- **F-TAPEFORMAT (S294):** `FORMAT_LABEL_LINE`, `FORMAT_LABEL_NAME`; `TEXT.parse` – `shopLines` leaves such lines out (`why: 'formatLabel'`).
+- **F-S045DEP:** `QS_NEEDS`; `quickSwitchesHtml` (class `dci-qneeds`, tag `dci-qneeds-tag`, tooltip), the click on a quick switch (`flip`) switches the needed rule on too.
+- **F-INSTLCADEAD:** the row `insts-common-on` of `settingsHtml` and its branch in `onSettingsChange` gone; `S.instsCommonOn` is always true (the key `dci-insts-common` is only cleared by the resets).
+- **F-SYMBOLBTN:** `DATE_GROUPS` – `name` of the group `copyright`, used as `aria-label` and `title` by the buttons of the date finder.
+- **Texts:** `typeAsk.askVoiceSax / askBugle / askLaud`, `ignored.why.formatLabel`, `quick.needsTag / needsTitle`; removed `settings.instsCommon / instsCommonTitle / instsCommonHint`.
+- **Tests:** `t_static.py small3162`, `t_rules_window.py needs3162`, `t_ui_view.py contrast3162` – new, fail on 3.161.0. `t_ui_view.py` (default colours), `register_golden.json` anew.
 
 ## Import 3.161.0 · 2026-11-18
 
