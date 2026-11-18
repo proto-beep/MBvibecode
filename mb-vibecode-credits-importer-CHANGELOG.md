@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.164.0 | – |
+| 2026-11-18 | 3.159.0 – 3.165.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,19 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.165.0
+
+The works matrix, part I – how it looks (proposals W-HEADSLIM, W-COLHEAD, W-CELL, W-TYPE, W-SMALLFIX of the review of 2026-11-18):
+
+- **A head that shows what is used most.** On the right "＋ New works", "✨ Answer all" and ⋯. The defaults of new works, "Search works", the separators of medleys, "MusicBrainz names for all" and "Performance dates onto linked works" are under ⋯.
+- **"Skip works" is a quiet link.** It was the loudest button of the head – and it is the way out, not the thing to do.
+- **"Keep": All · Credits · In MB · One** – the three "works to keep" as one labelled choice, each with its word beside the emoji; "All" brings back what they dropped (it was ↺).
+- **A column's head is its name and its roles.** "credited as", "all works" and "Work | Release" are in the column's menu ▾. A track group dropped on the name still sets exactly its works.
+- **A legend** below the head: what the look of a role in a cell says – will be entered, already in MusicBrainz, a suggestion, waits for a work.
+- **Calmer cells:** the ▾ of a cell shows only under the pointer or with the focus (the ✓ × of a suggestion stay).
+- **Everything in the open** (⋯): the heads as until 3.164.0 – for those who want every control visible. Remembered.
+- Smaller things: two font sizes fewer in the matrix; the scroll bar above the matrix has no frame of its own (with scroll bars that hide themselves it was an empty strip); "＋ New" beside a linked work with a fine dashed border.
 
 ### Import 3.164.0
 

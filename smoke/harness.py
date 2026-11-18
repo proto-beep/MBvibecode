@@ -236,6 +236,12 @@ ENTITY_URLS = {}
 RELEASE_LABELS = []
 
 
+# [3.165.0] (W-HEADSLIM, W-COLHEAD) the works matrix "everything in the open" for the tests written before the compact heads (a test of the
+# compact default sets MX_HEADS = None)
+MX_HEADS = 'full'
+MX_HEADS_PRESET = "(v) => { if (localStorage.getItem('dci-mx-heads') === null) localStorage.setItem('dci-mx-heads', JSON.stringify(v)); }"
+
+
 def ws_release(full=False):
     tracks = []
     for i, gid in enumerate(REC):
@@ -774,7 +780,8 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD))
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); %s }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD),
+                                                                                                               '(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '')
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1281,6 +1288,8 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg.evaluate(ENTRIES_PRESET, ENTRIES_VIEW)
     pg.evaluate(REMEMBER_PRESET, REMEMBER)
     pg.evaluate(DM_FOLD_PRESET, DM_FOLD)
+    if MX_HEADS:
+        pg.evaluate(MX_HEADS_PRESET, MX_HEADS)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:

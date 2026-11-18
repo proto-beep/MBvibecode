@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.164.0
+// @version      3.165.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.164.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.164.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.165.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.165.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.164.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.165.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4305,6 +4305,17 @@
       "log.typePicked": "“{role}” chosen as {type}",
       "roleCredit.fromTag": "from Discogs",
       "matrix.top": "top",
+      "wone.keep": "Keep",
+      "wone.all": "All",
+      "matrix.headsFull": "Everything in the open",
+      "matrix.headsCompact": "Compact heads",
+      "matrix.headsTitle": "Compact: the head shows what is used most, the rest is here under ⋯; a column’s “credited as”, “all works” and “Work | Release” are in its menu ▾. Everything in the open: as until 3.164.0. Remembered.",
+      "matrix.legendTitle": "A role in a cell:",
+      "matrix.legendRole": "role",
+      "matrix.legend.on": "will be entered",
+      "matrix.legend.mb": "already in MusicBrainz",
+      "matrix.legend.sugg": "a suggestion",
+      "matrix.legend.wait": "waits for a work",
       "matrix.topTitle": "Scroll the works matrix back to its first row",
       "sync.dgRelease": "Status on the release page",
       "sync.dgReleaseTitle": "Keep the Discogs status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
@@ -44518,20 +44529,26 @@
     // [S050] (3.32.5) a role of the column read with a typo corrected (its rows are not in the entry)
     const typoText = uniq(col.rows.flatMap((r) => (r.typos || []).map((t) => tr('role.typoRead', { read: t.read, written: t.written })))).join(' · ');
     const s050 = typoText ? `<button type="button" class="dci-textbtn dci-ruleid dci-typo" data-act="rule-goto" data-rule="S050" title="${esc(typoText)}">S050</button>` : '';
-    return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      <div class="dci-mx-colname">${columnKindTag(col)}${name}${improvMarkHtml(col.rows || [])}</div>
-      <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
-        ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
-      ${pubLevels}${typeAsk}
-      <span class="dci-mx-creditw"><input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">${col.artist && !col.mbOnly ? ncyBtnHtml(col.artist, 'mx-ncy', ` data-col="${esc(col.key)}"`) : ''}</span>
-      ${ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
+    // [W-COLHEAD] (3.165.0) compact: the head is the name and the roles – "credited as", "all works" and "Work | Release" are in the menu ▾
+    // (the name's line takes a track group dropped on the column, as "all works" does)
+    const compact = wmxCompact();
+    const creditBox = `<span class="dci-mx-creditw"><input type="text" class="dci-mx-credit" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10" placeholder="${esc(tr('matrix.colCredit'))}" aria-label="${esc(tr('matrix.colCredit'))}" title="${esc(tr('matrix.colCredit'))}">${col.artist && !col.mbOnly ? ncyBtnHtml(col.artist, 'mx-ncy', ` data-col="${esc(col.key)}"`) : ''}</span>`;
+    const allWorksBtn = ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? (() => {
         // [Z-AWB] (3.86.0, S133) the column's role(s) for every work at once – and off again; a track group dropped on it: exactly its works
         // ([Z-AWB2] 3.87.0) the only one: "all works" of the column's ▾ menu only with S133 off
         const on = allWorksOn(col);
         return `<button type="button" class="dci-textbtn dci-mx-allworks" data-act="mx-col-allworks" data-col="${esc(col.key)}" data-allworks="${esc(col.key)}" aria-pressed="${on}"
           title="${esc(tr(on ? 'matrix.allWorksOffTitle' : 'matrix.allWorksOnTitle'))}">${esc(tr(on ? 'matrix.allWorksOn' : 'matrix.allWorks'))}</button>`;
-      })() : ''}
-      ${menu(`${dateBox}
+      })() : '';
+    const awDrop = compact && ruleOn('S133') && defaultRowsOf(col).length && awRows().length ? ` data-allworks="${esc(col.key)}"` : '';
+    return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}${compact ? ' dci-mx-colcompact' : ''}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname"${awDrop}>${columnKindTag(col)}${name}${improvMarkHtml(col.rows || [])}</div>
+      <div class="dci-mx-roles">${status}${roles}<span class="dci-sub" title="${esc(tr('matrix.colWorks', { n: nWorks }))}">${esc(String(nWorks))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
+        ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}${btns}</div>
+      ${compact ? '' : pubLevels}${typeAsk}
+      ${compact ? '' : creditBox}
+      ${compact ? '' : allWorksBtn}
+      ${menu(`${compact ? `<div class="dci-mx-colmenu-more">${creditBox}${allWorksBtn}${pubLevels}</div>` : ''}${dateBox}
         ${ruleOn('S133') ? '' : `<button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>`}
         ${ruleOn('S100') ? (() => {
           // [Z-MRC] (3.68.0, S100) another role of the same person (composer and publisher …) on the tracks of its cells
@@ -45639,6 +45656,12 @@
       ${n ? `<span class="dci-sub" title="${esc(tr('matrix.workDatesN', { n }))}">${esc(tr('matrix.workDatesN', { n }))}</span>` : ''}</div>`;
   }
 
+  /** [W-CELL] (3.165.0) What the look of a role in a cell says – one line below the head of the works matrix. */
+  function mxLegendHtml() {
+    const one = (kind, key) => `<span class="dci-mx-legenditem"><span class="dci-mxchip dci-mxchip-${kind}" aria-hidden="true">${kind === 'wait' ? HOURGLASS_SVG : ''}${esc(tr('matrix.legendRole'))}</span> ${esc(tr(`matrix.legend.${key}`))}</span>`;
+    return `<div class="dci-mx-legend" data-el="works-legend"><span class="dci-sub">${esc(tr('matrix.legendTitle'))}</span>${one('on', 'on')}${one('mb', 'mb')}${one('sugg', 'sugg')}${one('wait', 'wait')}</div>`;
+  }
+
   /** [Z-WMX] (3.52.0) In the corner of the matrix: "All artists credited as: ↺ MusicBrainz names for all" (before: in the tools above). */
   function creditsHeadHtml() {
     return `<div class="dci-mx-cardline dci-mx-creditsall"><span class="dci-sub">${esc(tr('matrix.creditsAll'))}</span>
@@ -45975,7 +45998,7 @@
     ['mxOneOpen', '[data-el="works-one"], [data-act="wone-open"]', () => '[data-el="works"] [data-act="wone-open"]'],
     ['mxHelpOpen', '[data-el="works-help"], [data-act="mx-help"]', () => '[data-el="works"] [data-act="mx-help"]'],
     ['mxMoreOpen', '[data-el="works-more"], [data-act="mx-more"]', () => '[data-el="works"] [data-act="mx-more"]'],
-    ['mxDefaultsOpen', '[data-el="works-defaults"], [data-act="mx-defaults"], [data-el="works-suggest"]', () => '[data-el="works"] .dci-wh-r [data-act="mx-defaults"]'],
+    ['mxDefaultsOpen', '[data-el="works-defaults"], [data-act="mx-defaults"], [data-el="works-suggest"]', () => (wmxCompact() ? '[data-el="works"] [data-act="mx-more"]' : '[data-el="works"] .dci-wh-r [data-act="mx-defaults"]')],
     ['mxAddColOpen', '.dci-mx-addcol-pop, [data-act="mx-addcol-open"]', () => '[data-el="works"] [data-act="mx-addcol-open"]'],
     ['mxCornerMore', '[data-el="corner-more"], [data-act="mx-cornermore"]', () => '[data-el="works"] [data-act="mx-cornermore"]'],
     ['mxNewMenu', '.dci-mx-newmenu, [data-act="mx-newmenu"]', (v) => `[data-el="works"] tr[data-work="${v}"] [data-act="mx-newmenu"]`],
@@ -46201,7 +46224,14 @@
     S.oneWork = null;
     log('info', 'oneWorkUndo');
   }
-  /** [Z-ONEWORK] (3.138.0) The buttons in the head of the works matrix: symbols, or words with "Symbols: Text". */
+  /**
+   * [W-HEADSLIM] [W-COLHEAD] (3.165.0) The works matrix compact (the default) or full: compact – the head shows what is used most ("＋ New works",
+   * "Answer all", the works to keep), the rest is under ⋯; a column's head is its name and its roles, "credited as", "all works" and
+   * "Work | Release" are in its menu ▾. Full: everything in the open as until 3.164.0 (⋯ → "Everything in the open").
+   */
+  const MX_HEADS_KEY = 'dci-mx-heads';
+  const wmxCompact = () => S.mxHeads !== 'full';
+  /** [Z-ONEWORK] (3.138.0) The buttons in the head of the works matrix; [W-HEADSLIM] (3.165.0) one labelled choice "Keep": All · Credits · In MB · One. */
   function oneWorkHtml() {
     if (!ruleOn('S225')) return '';
     const b = (act, sym, key, extra = '') => {
@@ -46209,8 +46239,10 @@
       const on = S.oneWork === key || (key === 'one' && String(S.oneWork || '').startsWith('one:'));
       return `<button type="button" class="dci-small dci-wone-btn" data-act="${act}" title="${esc(tr(`wone.${key}Title`))}" aria-label="${esc(label)}"${act === 'wone-undo' ? '' : ` aria-pressed="${on}"`}${extra}>${sym}</button>`;
     };
-    return `<span class="dci-wone" role="group" aria-label="${esc(tr('wone.group'))}">${b('wone-credits', esc(emo('wcredits')), 'credits')}${b('wone-existing', esc(emo('wexisting')), 'existing')}${b('wone-open', esc(emo('wone')), 'one', ` aria-expanded="${!!S.mxOneOpen}"`)}${
-      S.oneWorkUndo ? b('wone-undo', S.emojiText ? esc(tr('wone.undo')) : '↺', 'undo') : ''}</span>`;
+    const word = (k) => (S.emojiText ? esc(tr(EMOJI[k][1])) : `${esc(EMOJI[k][0])} ${esc(tr(EMOJI[k][1]))}`);
+    // "All": nothing dropped (pressed) – or back to it (what the three buttons dropped comes back)
+    const all = `<button type="button" class="dci-small dci-wone-btn" data-act="wone-undo" title="${esc(tr('wone.undoTitle'))}" aria-label="${esc(tr('wone.undo'))}" aria-pressed="${!S.oneWorkUndo}"${S.oneWorkUndo ? '' : ' disabled'}>${esc(tr('wone.all'))}</button>`;
+    return `<span class="dci-wone" role="group" aria-label="${esc(tr('wone.group'))}"><span class="dci-wone-label" aria-hidden="true">${esc(tr('wone.keep'))}</span><span class="dci-wone-seg">${all}${b('wone-credits', word('wcredits'), 'credits')}${b('wone-existing', word('wexisting'), 'existing')}${b('wone-open', word('wone'), 'one', ` aria-expanded="${!!S.mxOneOpen}"`)}</span></span>`;
   }
   /** [Z-ONEWORK] (3.138.0) The list of "☝": a track each, with its work (or "no work"). */
   function oneWorkListHtml() {
@@ -46248,7 +46280,11 @@
     const suites = suiteAsks();
     const nSuites = suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).length;
     const chip = (text, cls = '', title = '') => `<span class="dci-wh-chip${cls ? ` ${cls}` : ''}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</span>`;
-    const head = `<div class="dci-works-head dci-wh">
+    // [W-HEADSLIM] (3.165.0) compact: the defaults of new works, the search and the separators of medleys under ⋯
+    const compact = wmxCompact();
+    const defaultsBtn = `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>`;
+    const searchBtn = `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>`;
+    const head = `<div class="dci-works-head dci-wh${compact ? ' dci-wh-compact' : ''}">
         <div class="dci-wh-l"><h3><button type="button" class="dci-textbtn dci-works-fold" data-act="mx-fold" aria-expanded="${!folded}" title="${esc(tr(folded ? 'matrix.unfold' : 'matrix.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('matrix.title'))}</button></h3>
           ${chip(tr('matrix.countTracks', { n: nTracks }))}${chip(tr('matrix.colWorks', { n: nWorks }))}${!skipped && missing ? chip(tr('matrix.withoutWork', { n: missing }), 'dci-wh-warn', tr('works.missing', { n: missing })) : ''}
           ${folded ? `<span class="dci-sub" data-el="works-folded">${esc(skipped ? tr('matrix.skippedRows', { n: S.rows.filter((r) => r.mxSkipped).length }) : tr('matrix.cols', { n: cols.length }))}</span>` : ''}
@@ -46257,18 +46293,21 @@
         <div class="dci-wh-c">${skipped ? `<span class="dci-works-skipped">${esc(tr('matrix.skipped'))}</span> <button type="button" class="dci-small dci-wh-skip" data-act="mx-skip" data-on="0">${esc(tr('matrix.unskip'))}</button>`
     : `<button type="button" class="dci-wh-skip" data-act="mx-skip" data-on="1" title="${esc(tr('matrix.skipTitle'))}">${esc(tr('matrix.skip'))}</button>`}
           ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
-        <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
-          ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
-          <button type="button" class="dci-primary dci-small dci-wh-new" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}${magicHeadHtml()}
+        <div class="dci-wh-r">${skipped || folded ? '' : `${compact ? '' : defaultsBtn}
+          ${missing ? `${compact ? '' : searchBtn}
+          <button type="button" class="dci-primary dci-small dci-wh-new" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${compact && !medleyTracks().length && !S.medleySepsOpen ? '' : medleyHeadHtml()}${magicHeadHtml()}
           <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
       ${!skipped && !folded && S.mxOneOpen && ruleOn('S225') ? oneWorkListHtml() : ''}
       ${!skipped && !folded && S.mxHelpOpen ? `<div class="dci-wh-pop dci-wh-helppop" data-el="works-help"><p>${esc(tr('matrix.explain'))}</p></div>` : ''}
       ${!skipped && !folded && S.mxMoreOpen ? `<div class="dci-wh-pop dci-wh-morepop" data-el="works-more" role="group" aria-label="${esc(tr('matrix.moreTitle'))}">
+        ${compact ? `<div class="dci-wh-moreline">${defaultsBtn}${missing ? searchBtn : ''}${!medleyTracks().length && !S.medleySepsOpen ? medleyHeadHtml() : ''}</div>${creditsHeadHtml()}${workDatesHeadHtml()}` : ''}
         ${missing ? `<button type="button" class="dci-textbtn" data-act="works-create-all">${esc(tr('works.createAllForm'))}</button>` : ''}
         ${allWorkGids().length ? `<button type="button" class="dci-textbtn" data-act="works-open-all" title="${esc(tr('works.openAllTitle'))}">${esc(tr('works.openAll', { n: allWorkGids().length }))}</button>` : ''}
         <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
-        <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button></div>` : ''}
+        <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button>
+        <button type="button" class="dci-textbtn" data-act="mx-heads" aria-pressed="${!compact}" title="${esc(tr('matrix.headsTitle'))}">${esc(tr(compact ? 'matrix.headsFull' : 'matrix.headsCompact'))}</button></div>` : ''}
+      ${!skipped && !folded && cols.length ? mxLegendHtml() : ''}
       ${!skipped && !folded ? magicPopHtml() : ''}
       ${!skipped && !folded && S.mxDefaultsOpen ? `<div class="dci-wh-pop dci-works-bar" data-el="works-defaults">
         ${codesSelect}
@@ -46300,7 +46339,7 @@
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
-            <span class="dci-sub" title="${esc(`${tr('matrix.countTracks', { n: nTracks })} · ${tr('matrix.colWorks', { n: nWorks })}`)}">${esc(`${nTracks} · ${nWorks}`)}</span></div>${linkAttrsHeadHtml()}${creditsHeadHtml()}${workDatesHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}${skipped ? '' : addColumnHeadHtml()}</tr></thead>
+            <span class="dci-sub" title="${esc(`${tr('matrix.countTracks', { n: nTracks })} · ${tr('matrix.colWorks', { n: nWorks })}`)}">${esc(`${nTracks} · ${nWorks}`)}</span></div>${linkAttrsHeadHtml()}${wmxCompact() ? '' : `${creditsHeadHtml()}${workDatesHeadHtml()}`}</div></th>${cols.map(columnHeadHtml).join('')}${skipped ? '' : addColumnHeadHtml()}</tr></thead>
           <tbody>${matrixBodyHtml(mrows, cols, skipped)}</tbody>
         </table>
       </div>
@@ -46562,6 +46601,13 @@
         break;
       case 'mx-defaults':
         S.mxDefaultsOpen = !S.mxDefaultsOpen;
+        if (wmxCompact()) S.mxMoreOpen = false; // (3.165.0) its button is under ⋯: that closes as the defaults open
+        break;
+      case 'mx-heads':
+        // [W-COLHEAD] (3.165.0) compact ↔ everything in the open; stored
+        S.mxHeads = wmxCompact() ? 'full' : 'compact';
+        writeJson('localStorage', MX_HEADS_KEY, S.mxHeads === 'full' ? 'full' : null);
+        S.mxMoreOpen = false;
         break;
       case 'mx-addcol-open':
         S.mxAddColOpen = !S.mxAddColOpen;
@@ -53011,7 +53057,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-insts-common', 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
+    appearance: ['dci-insts-common', MX_HEADS_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
@@ -53063,6 +53109,7 @@
   S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
   S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
   S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false; // [Z-SORT] (3.112.0)
+  S.mxHeads = readJson('localStorage', MX_HEADS_KEY, 'compact') === 'full' ? 'full' : 'compact'; // [W-COLHEAD] (3.165.0)
   S.instsCommonOn = true; // [Z-INSTLCA] (3.113.0); [F-INSTLCADEAD] (3.162.0) its setting "Offer ⑃" is gone – the rule S177 switches it
   S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
   S.yellDone = new Set();
@@ -56497,6 +56544,7 @@
     'dci-sort-on', 'dci-sort',
     // [Z-INSTLCA] (3.113.0) the button ⑃ offered
     'dci-insts-common',
+    MX_HEADS_KEY,
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups; [Z-MBSEARCH] (3.123.0) of the hits of a search
@@ -56628,6 +56676,7 @@
     S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true;
     S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false;
     S.instsCommonOn = true;
+    S.mxHeads = readJson('localStorage', MX_HEADS_KEY, 'compact') === 'full' ? 'full' : 'compact';
     S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
@@ -58918,7 +58967,7 @@
       /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
       .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }
       .dci-matrix th.dci-mx-col.dci-mx-locked[class*="dci-kind-"] .dci-mx-card { border-top-color: color-mix(in srgb, var(--kind) 40%, #fff); background: color-mix(in srgb, var(--kind-bg) 45%, #fff); }
-      .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 10); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
+      .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 11); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
       .dci-matrix th.dci-mx-locked .dci-mx-kind { opacity: 0.6; }
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind, #6d6a7c); color: var(--kind-ink, #fff);
@@ -58952,7 +59001,8 @@
       .dci-mx-hs { overflow-x: scroll; overflow-y: hidden; min-height: calc(var(--u, 1px) * 14); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); box-sizing: border-box; }
       .dci-mx-hs[hidden] { display: none; }
       .dci-mx-hs > div { height: 1px; }
-      .dci-mx-hs-top { margin-bottom: calc(var(--u, 1px) * 3); }
+      /* (3.165.0, W-SMALLFIX) the scroll bar above the matrix without a frame of its own: with scroll bars that hide themselves it was an empty strip */
+      .dci-mx-hs-top { margin-bottom: calc(var(--u, 1px) * 3); border: 0; background: none; }
       .dci-mx-hs-bottom { position: sticky; bottom: 0; z-index: 3; margin-top: calc(var(--u, 1px) * 3); box-shadow: 0 -2px 4px rgba(38, 36, 48, 0.08); }
       /* [3.30.5] in the window at the very lower edge of the body (its 28 u padding below counts for sticky boxes) */
       #dci-overlay:not(.dci-inline) .dci-mx-hs-bottom { bottom: calc(var(--u, 1px) * -28); }
@@ -58999,7 +59049,7 @@
       .dci-mx-title strong { font-weight: 700; }
       .dci-mx-dpos { margin: calc(var(--u, 1px) * 2) 0 calc(var(--u, 1px) * 4); color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
       /* [Z-EXC] (3.49.0) a cover, an arrangement, a quote of the track (below its title) */
-      .dci-mx-wnote { margin: calc(var(--u, 1px) * 2) 0; font-size: calc(var(--u, 1px) * 11.5); color: var(--sugg-ink); }
+      .dci-mx-wnote { margin: calc(var(--u, 1px) * 2) 0; font-size: calc(var(--u, 1px) * 12); color: var(--sugg-ink); }
       .dci-mx-wnote .dci-mblink { margin: 0 calc(var(--u, 1px) * 3); }
       .dci-mx-addcol { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; }
       .dci-mx-addcol { background: var(--soft); border: 1px solid var(--line); }
@@ -59037,9 +59087,9 @@
       .dci-mx-line .dci-small { padding: 0 calc(var(--u, 1px) * 6); }
       .dci-mx-line .dci-badge { font-size: calc(var(--u, 1px) * 11); }
       .dci-mx-optsbtn { color: var(--purple-d); }
-      .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 11.5); text-decoration: none; white-space: nowrap; }
+      .dci-mx-wlabel { margin-left: calc(var(--u, 1px) * 4); color: var(--purple-d); font-size: calc(var(--u, 1px) * 12); text-decoration: none; white-space: nowrap; }
       .dci-mx-wlabel-ro { color: var(--muted, #6b6880); }
-      .dci-mx-wnew { border-style: dashed; }
+      .dci-mx-wnew { border: 1px dashed var(--muted); background: none; color: inherit; }
       .dci-mx-split-on { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); font-weight: 600; }
       .dci-mx-medleys, .dci-mx-seps { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); flex-wrap: wrap; }
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
@@ -59142,7 +59192,7 @@
       .dci-arq { container-type: inline-size; }
       @container (max-width: 640px) { .dci-arq-cols { grid-template-columns: 1fr; } }
       /* [Z-AWB] (3.86.0) "all works" below "credited as": a place for track groups too (exactly their works by default) */
-      .dci-mx-rolelevel { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 10); }
+      .dci-mx-rolelevel { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 11); }
       .dci-mx-allworks { display: block; margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11); }
       /* [Z-WORKDATE] (3.130.0) the date of a linked work's link; its drop place only while a date is dragged or picked */
       #dci-overlay .dci-wd-linked { margin-top: calc(var(--u, 1px) * 2); }
@@ -59249,11 +59299,27 @@
       .dci-wh-chip { padding: calc(var(--u, 1px) * 1) calc(var(--u, 1px) * 8); border-radius: 999px; background: var(--soft); color: #4a4558; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
       .dci-wh-chip.dci-wh-warn { background: var(--sugg-bg); border: 1px solid var(--sugg-line); color: var(--sugg-ink, #6b4e00); }
       .dci-wh-help { width: calc(var(--u, 1px) * 22); height: calc(var(--u, 1px) * 22); padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--purple-d); font: inherit; font-weight: 700; cursor: pointer; }
-      .dci-wh-skip { font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); border: 0; border-radius: 5px; background: #c2410c; color: #fff; cursor: pointer; box-shadow: 0 0 0 3px #fbd5c2; }
-      .dci-wh-skip:hover { background: #9a3412; }
-      .dci-works-off .dci-wh-skip { background: #fff; color: #9a3412; border: 1px solid #c2410c; box-shadow: none; }
+      /* [W-HEADSLIM] (3.165.0) "Skip works" is the way out, not the thing to do: a quiet link (it was the loudest button of the head) */
+      .dci-wh-skip { font: inherit; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; }
+      .dci-wh-skip:hover { color: #9a3412; }
+      .dci-works-off .dci-wh-skip { background: #fff; color: #9a3412; border: 1px solid #c2410c; border-radius: 5px; text-decoration: none; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); }
       /* [Z-ONEWORK] (3.138.0) ✍ 🔗 ☝ ↺ in the head of the works matrix; the list of ☝ */
-      .dci-wone { display: inline-flex; gap: calc(var(--u, 1px) * 3); margin-left: calc(var(--u, 1px) * 8); }
+      .dci-wone { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 8); }
+      .dci-wone-label { color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
+      .dci-wone-seg { display: inline-flex; }
+      .dci-wone-seg .dci-wone-btn { border: 1px solid var(--date-line, #bdb9dc); background: #fff; color: inherit; border-radius: 0; margin: 0 0 0 -1px; white-space: nowrap; }
+      .dci-wone-seg .dci-wone-btn[aria-pressed="true"] { background: #ecebf6; color: var(--purple-d); font-weight: 600; position: relative; }
+      .dci-wone-seg .dci-wone-btn:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+      .dci-wone-seg .dci-wone-btn:last-child { border-radius: 0 6px 6px 0; }
+      .dci-wone-seg .dci-wone-btn:disabled { opacity: 1; cursor: default; }
+      .dci-wh-moreline { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      .dci-wh-morepop .dci-mx-cardline { margin: 0; }
+      /* [W-CELL] (3.165.0) what the look of a role says */
+      .dci-mx-legend { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      .dci-mx-legenditem { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
+      /* [W-COLHEAD] (3.165.0) compact heads: narrower, the options in the menu */
+      .dci-mx-colmenu-more { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--line); width: 100%; }
+      .dci-mx-colmenu-more .dci-mx-credit { width: calc(var(--u, 1px) * 200); }
       .dci-wone-btn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); }
       .dci-wone-list { flex-direction: column; align-items: flex-start; }
       .dci-wone-list ul { margin: 0; padding: 0; list-style: none; max-height: calc(var(--u, 1px) * 300); overflow: auto; }
@@ -59262,7 +59328,7 @@
       .dci-wh-pop p { margin: 0; max-width: 90ch; }
       .dci-mx-wts { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid var(--sugg-line); border-radius: 6px; background: var(--sugg-bg); color: var(--sugg-ink, #4f3a00); }
       .dci-mx-wts .dci-wts-ok { font-weight: 700; }
-      .dci-mx-wtsrow { padding: 0 calc(var(--u, 1px) * 5); border: 1px solid var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 11.5); }
+      .dci-mx-wtsrow { padding: 0 calc(var(--u, 1px) * 5); border: 1px solid var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 12); }
       .dci-mx-name { white-space: nowrap; }
       .dci-mx-name-s { font-size: calc(var(--u, 1px) * 12); }
       .dci-mx-name-xs { font-size: calc(var(--u, 1px) * 11); }
@@ -59276,14 +59342,14 @@
       .dci-mx-newmenu { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 4) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line); border-radius: 5px; background: #fff; }
       .dci-wattr-add { border-style: dashed; color: var(--purple-d); background: #fff; }
       .dci-mx-marks { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 3) 0; }
-      .dci-mx-mark { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 7); border-radius: 999px; border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 11.5); margin: 0; }
+      .dci-mx-mark { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 7); border-radius: 999px; border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink, #6b4e00); font-size: calc(var(--u, 1px) * 12); margin: 0; }
       .dci-mx-mark-quote, .dci-mx-mark-arrangement { border-color: #8fa8d6; background: #e8eef9; color: #1f3f78; }
       .dci-mx-mark .dci-mblink { margin: 0; }
       .dci-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
       .dci-mxwait { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
       .dci-hourglass { width: calc(var(--u, 1px) * 9); height: calc(var(--u, 1px) * 12); margin-right: calc(var(--u, 1px) * 3); vertical-align: -1px; }
       /* empty cells: their + and ▾ only under the pointer or with the focus */
-      .dci-mx-cell:not(:hover):not(:focus-within) .dci-mx-toggle.dci-mx-empty, .dci-mx-cell:not(.dci-mx-on):not(.dci-mx-mb):not(:hover):not(:focus-within) .dci-mx-more { opacity: 0; }
+      .dci-mx-cell:not(:hover):not(:focus-within) .dci-mx-toggle.dci-mx-empty, .dci-mx-cell:not(:hover):not(:focus-within) .dci-mx-more { opacity: 0; }
       .dci-mx-col.dci-mx-locked { min-width: calc(var(--u, 1px) * 96); max-width: calc(var(--u, 1px) * 130); color: var(--muted); }
       .dci-mx-col.dci-mx-locked .dci-lock { width: calc(var(--u, 1px) * 11); height: calc(var(--u, 1px) * 11); flex: none; }
       .dci-mx-addcol-head { min-width: calc(var(--u, 1px) * 150); vertical-align: top; }

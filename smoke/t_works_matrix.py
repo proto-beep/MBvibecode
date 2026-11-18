@@ -824,7 +824,7 @@ def case_wmx():
         a2 = pg.evaluate("[...document.querySelectorAll('[data-el=works] [data-el=works-more] button')].map(x => x.dataset.act)")
         print('A)', a0, '| ⓘ:', a1[:80], '| ⋯:', a2)
         results.append(a0['chips'] == ['4 tracks', '1 work', '3 without work'] and a0['oneLine'] and a0['skip'] and a0['skip'][0] == 'Skip works'
-                       and a0['skip'][1] not in ('rgba(0, 0, 0, 0)', 'rgb(255, 255, 255)') and a0['skip'][2] and a0['suite']
+                       and a0['skip'][1] == 'rgba(0, 0, 0, 0)' and a0['skip'][2] and a0['suite']  # (3.165.0, W-HEADSLIM: a quiet link – it had a ground of its own)
                        and a0['right'][:1] == ['mx-defaults'] and 'works-search-all' in a0['right'] and 'works-pending-all' in a0['right'] and 'mx-more' in a0['right']
                        and not a0['text'] and not a0['para'] and 'One row per work' in a1
                        and {'works-create-all', 'works-open-all', 'mx-clear-dates', 'mx-top'} <= set(a2))
