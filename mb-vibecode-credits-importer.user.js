@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.165.0
+// @version      3.166.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.165.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.165.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.166.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.166.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.165.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.166.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1896,6 +1896,8 @@
       "matrix.optsTitle": "Work type and lyrics languages of this work (click to change)",
       "matrix.newWork": "new work",
       "matrix.waiting": "waits for a work",
+      "matrix.rowWaits.one": "{n} credit waits for a work",
+      "matrix.rowWaits.other": "{n} credits wait for a work",
       "matrix.notesReason": "from the notes: “{text}”",
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
@@ -40619,7 +40621,15 @@
     S.liveAuto = reasons;
   }
 
-  function matrixRows() {
+  /**
+   * [W-MODEL] (3.166.0, a first step) The works matrix read once per drawing: while renderWorks builds its HTML, the rows, the columns and the
+   * state of each cell are worked out once and kept (WM) – a column's head alone asked for the rows twice and for every cell's state again,
+   * so a drawing read the matrix some (columns × rows) times. Outside a drawing every call reads the state anew, as before.
+   */
+  let WM = null;
+  const matrixRows = () => (WM ? (WM.rows || (WM.rows = matrixRowsNow())) : matrixRowsNow());
+  const matrixColumns = () => (WM ? (WM.cols || (WM.cols = matrixColumnsNow())) : matrixColumnsNow());
+  function matrixRowsNow() {
     const rows = [];
     for (const t of S.mbTracks) {
       if (!matrixTrack(t)) continue;
@@ -40631,7 +40641,7 @@
   }
 
   /** Columns: everyone with credits on work level (Discogs or by hand), plus writers known only in MB. */
-  function matrixColumns() {
+  function matrixColumnsNow() {
     const cols = new Map();
     for (const row of S.rows) {
       if (row.level !== 'work') continue;
@@ -42531,6 +42541,12 @@
 
   /** What a cell holds: relationships already in MB, planned ones, and publisher evidence. */
   function cellState(col, mrow) {
+    if (!WM) return cellStateNow(col, mrow);
+    const key = `${col.key}|${mrow.key}`;
+    if (!WM.cells.has(key)) WM.cells.set(key, cellStateNow(col, mrow));
+    return WM.cells.get(key);
+  }
+  function cellStateNow(col, mrow) {
     // ([Z-NWA] 3.57.0, review) a work found and chosen: its relationships as the search or the lookup brought them
     const rels = !mrow.work ? [] : !mrow.work.planned ? mrow.work.rels || [] : mrow.work.origin === 'search' ? foundRelsOf(mrow.work.gid) : [];
     const existing = rels.filter((r) => r.mbid === col.mbid && matrixRel(r, col));
@@ -44292,7 +44308,10 @@
     const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split${marked ? ' dci-mx-split-on' : ''}" data-act="medley-mark" aria-pressed="${marked}" title="${esc(tr('medley.markTitle', { list: mParts.join(' · ') }))}">${marked ? '✓ ' : ''}${esc(tr(`${sk}.split`, { n: mParts.length }))}</button>` : '';
     // [Z-WMX] (3.52.0) "＋ New ▾": a new work, and in its menu the search, the form, its type and languages (before: four buttons and links)
     const menuOpen = S.mxNewMenu === i;
-    return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${pick}
+    // [W-ROWSTATE] (3.166.0) what waits for this track's work, once in the row (each cell says it only to a screen reader)
+    const nWait = matrixColumns().filter((c) => !c.mbOnly && cellState(c, mrow).active.length).length;
+    const waits = nWait ? `<span class="dci-sub dci-mx-rowwait" data-el="row-wait">${HOURGLASS_SVG}${esc(tr('matrix.rowWaits', { n: nWait }))}</span>` : '';
+    return `${head}<div class="dci-mx-line"><span class="dci-badge">○ ${esc(tr('matrix.noWork'))}</span>${waits}${pick}
         <span class="dci-split"><button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pendingShort'))}</button><button type="button"
           class="dci-primary dci-small dci-split-more" data-act="mx-newmenu" aria-expanded="${menuOpen}" aria-label="${esc(tr('matrix.newMenu'))}" title="${esc(tr('matrix.newMenu'))}">▾</button></span>${o.btn}${split}${state}${cskip}</div>
       ${menuOpen ? `<div class="dci-mx-newmenu" role="group" aria-label="${esc(tr('matrix.newMenu'))}">
@@ -45881,6 +45900,16 @@
   }
 
   function renderWorks() {
+    // [W-MODEL] (3.166.0) one reading of the matrix for this drawing (a drawing inside a drawing shares it)
+    const own = !WM;
+    if (own) WM = { rows: null, cols: null, cells: new Map() };
+    try {
+      return renderWorksNow();
+    } finally {
+      if (own) WM = null;
+    }
+  }
+  function renderWorksNow() {
     yellSoon(); // [Z-YELL] (3.110.0)
     S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) "cover" set by itself worked out anew
     // [3.36.4] the choices of the works matrix remembered too (soon after a change)
@@ -59316,6 +59345,7 @@
       .dci-wh-morepop .dci-mx-cardline { margin: 0; }
       /* [W-CELL] (3.165.0) what the look of a role says */
       .dci-mx-legend { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: calc(var(--u, 1px) * 4) 0; font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      .dci-mx-rowwait { display: inline-flex; align-items: center; margin-left: calc(var(--u, 1px) * 6); white-space: nowrap; }
       .dci-mx-legenditem { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
       /* [W-COLHEAD] (3.165.0) compact heads: narrower, the options in the menu */
       .dci-mx-colmenu-more { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--line); width: 100%; }
