@@ -1543,7 +1543,7 @@ def case_onework3138():
        "no work"; the log says so; ↺ appears and brings the three back.
     B) 🔗 Existing works only: the new works gone (track 1, linked, stays); ↺ back.
     C) ✍ Writing credits only: the new works of the tracks with writing credits stay, the others gone.
-    D) "Symbols: Text": words instead of the symbols – short ones from 3.161.0 ("Credits", "In MB", "One", "All back"; the full names
+    D) "Symbols: Text": words instead of the symbols – short ones from 3.161.0, "All" first from 3.165.0 ("All", "Credits", "In MB", "One"; the full names
        stay the buttons' accessible names)."""
     PENDING = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-badge-plan')).map(tr => Number(tr.dataset.work))"
     CREDITS = "[...new Set([...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-mxchip')).map(tr => Number(tr.dataset.work)))]"
@@ -1593,7 +1593,7 @@ def case_onework3138():
         pg.wait_for_timeout(400)
         d = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-wone-btn')].map(b => b.textContent.trim())")
         print('D)', d)
-        results.append(d == ['Credits', 'In MB', 'One', 'All back'])
+        results.append(d == ['All', 'Credits', 'In MB', 'One'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1752,7 +1752,8 @@ def case_head3161():
     """Credits Importer 3.161.0 (collected items Z-WHBTNROUND, Z-MAGICBTN, Z-WONEEMO): the head of the works matrix.
     A) "＋ New works" and "✨ Answer all" have round corners; "Answer all" is the larger one, white on a gradient from purple to orange
        (its text at least 4.5 : 1 on both ends), its ▾ the round end beside it.
-    B) The three "works to keep" are emojis – ✍️ 🔗 👆 –, each with its tooltip and its name for screen readers.
+    B) The three "works to keep" are emojis – ✍️ 🔗 👆 – (from 3.165.0 with their word, after "All"), each with its tooltip and its name for
+       screen readers.
     C) ⚙ Settings → Appearance → Symbols: Text – the words "Credits", "In MB", "One", the tooltips the same."""
     results = []
     with sync_playwright() as p:
@@ -1770,13 +1771,13 @@ def case_head3161():
           return { nwRadius: parseFloat(cs(nw).borderTopLeftRadius), mgRadius: [parseFloat(cs(mg).borderTopLeftRadius), parseFloat(cs(mg).borderTopRightRadius)], lvRadius: [parseFloat(cs(lv).borderTopLeftRadius), parseFloat(cs(lv).borderTopRightRadius)],
             sizes: [parseFloat(cs(nw).fontSize), parseFloat(cs(mg).fontSize)], heights: [nw.offsetHeight, mg.offsetHeight], color: cs(mg).color, stops,
             contrast: stops.map(s => ratio('rgb(255, 255, 255)', s)),
-            wone: [...w.querySelectorAll('.dci-wone-btn')].slice(0, 3).map(x => [x.textContent.trim(), !!x.title, x.getAttribute('aria-label')]) }; })()"""
+            wone: [...w.querySelectorAll('.dci-wone-btn')].slice(1, 4).map(x => [x.textContent.trim(), !!x.title, x.getAttribute('aria-label')]) }; })()"""
         a = pg.evaluate(INFO)
         print('A)', {k: v for k, v in a.items() if k != 'wone'})
         results.append(a['nwRadius'] >= 10 and a['mgRadius'][0] >= 10 and a['mgRadius'][1] == 0 and a['lvRadius'] == [0, a['lvRadius'][1]] and a['lvRadius'][1] >= 10
                        and a['sizes'][1] > a['sizes'][0] and a['heights'][1] >= a['heights'][0] and a['color'] == 'rgb(255, 255, 255)' and len(a['stops']) >= 2 and min(a['contrast']) >= 4.5)
         print('B)', a['wone'])
-        results.append([x[0] for x in a['wone']] == ['✍️', '🔗', '👆'] and all(x[1] for x in a['wone'])
+        results.append([x[0] for x in a['wone']] == ['✍️ Credits', '🔗 In MB', '👆 One'] and all(x[1] for x in a['wone'])
                        and [x[2] for x in a['wone']] == ['Writing credits only', 'Existing works only', 'Only one …'])
         pg.evaluate("localStorage.setItem('dci-emoji-text', JSON.stringify(true))")
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
@@ -1788,6 +1789,74 @@ def case_head3161():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_compact3165():
+    """Credits Importer 3.165.0 (proposals W-HEADSLIM, W-COLHEAD, W-CELL): the works matrix compact by default.
+    A) The head: "＋ New works", "Answer all" and ⋯ on the right – the defaults of new works and "Search works" are under ⋯; "Skip works" is a
+       quiet link (no orange ground); the choice "Keep" – All (pressed) · Credits · In MB · One; a legend of four looks below the head.
+    B) A column's head: its name and its roles – "credited as" and "all works" are in its menu ▾, not in the head; the corner has no
+       "MusicBrainz names for all" (it is under ⋯).
+    C) ⋯ → "Everything in the open": all of it back in the heads, stored; ⋯ → "Compact heads": compact again, the storage empty.
+    D) The ▾ of a filled cell shows only under the pointer or with the focus."""
+    H.MX_HEADS = None
+    results = []
+    INFO = """(() => { const w = document.querySelector('[data-el=works]'); const vis = (e) => !!e && e.getBoundingClientRect().width > 0;
+      const r = w.querySelector('.dci-wh-r'); const head = w.querySelector('th[data-colhead]:not(.dci-mx-locked) .dci-mx-card');
+      const skip = w.querySelector('.dci-wh-skip'); const keep = [...w.querySelectorAll('.dci-wone-btn')];
+      return { right: [...r.querySelectorAll('button')].map(b => b.dataset.act), skipBg: getComputedStyle(skip).backgroundColor,
+        keep: [(w.querySelector('.dci-wone-label') || {}).textContent, keep.map(b => [b.textContent.trim(), b.getAttribute('aria-pressed'), b.disabled])],
+        legend: [...w.querySelectorAll('[data-el=works-legend] .dci-mx-legenditem')].map(x => x.textContent.trim().replace(/\\s+/g, ' ')),
+        headCredit: vis(head.querySelector('[data-f=mx-credit]')), headAll: vis(head.querySelector('[data-act=mx-col-allworks]')),
+        corner: vis(w.querySelector('thead [data-act=mx-clear-credits]')), stored: localStorage.getItem('dci-mx-heads') }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_selector('[data-el=works] th[data-colhead]', timeout=20000)
+        pg.wait_for_timeout(600)
+        a = pg.evaluate(INFO)
+        print('A)', a['right'], a['skipBg'], a['keep'], a['legend'])
+        results.append('mx-defaults' not in a['right'] and 'works-search-all' not in a['right'] and 'works-pending-all' in a['right'] and 'magic-open' in a['right']
+                       and a['right'][-1] == 'mx-more' and a['skipBg'] == 'rgba(0, 0, 0, 0)'
+                       and a['keep'][0] == 'Keep' and a['keep'][1][0] == ['All', 'true', True] and [x[0] for x in a['keep'][1][1:]] == ['✍️ Credits', '🔗 In MB', '👆 One']
+                       and a['legend'] == ['role will be entered', 'role already in MusicBrainz', 'role a suggestion', 'role waits for a work'])
+        pg.click('[data-el=works] [data-act=mx-more]')
+        pg.wait_for_selector('[data-el=works-more] [data-act=mx-defaults]', timeout=5000)
+        more = pg.evaluate("[...document.querySelectorAll('[data-el=works-more] button')].map(b => b.dataset.act)")
+        print('A) ⋯:', more)
+        results.append(all(x in more for x in ['mx-defaults', 'works-search-all', 'mx-clear-credits', 'mx-heads']))
+        print('B)', a['headCredit'], a['headAll'], a['corner'])
+        pg.keyboard.press('Escape')
+        pg.locator('[data-el=works] th[data-colhead]:not(.dci-mx-locked) [data-act=mx-colmenu]').first.click()
+        pg.wait_for_selector('[data-el=works] .dci-mx-colmenu [data-f=mx-credit]', timeout=5000)
+        menu = pg.evaluate("[!!document.querySelector('[data-el=works] .dci-mx-colmenu [data-f=mx-credit]'), !!document.querySelector('[data-el=works] .dci-mx-colmenu [data-act=mx-col-allworks]')]")
+        print('B) ▾:', menu)
+        results.append(not a['headCredit'] and not a['headAll'] and not a['corner'] and menu == [True, True])
+        pg.locator('[data-el=works] .dci-mx-colmenu [data-act=mx-colmenu]').first.click()
+        pg.click('[data-el=works] [data-act=mx-more]')
+        pg.click('[data-el=works-more] [data-act=mx-heads]')
+        pg.wait_for_timeout(400)
+        full = pg.evaluate(INFO)
+        pg.click('[data-el=works] [data-act=mx-more]')
+        pg.click('[data-el=works-more] [data-act=mx-heads]')
+        pg.wait_for_timeout(400)
+        back = pg.evaluate(INFO)
+        print('C)', full['right'], full['headCredit'], full['headAll'], full['corner'], full['stored'], '→', back['headCredit'], back['stored'])
+        results.append('mx-defaults' in full['right'] and full['headCredit'] and full['headAll'] and full['corner'] and full['stored'] == '"full"'
+                       and not back['headCredit'] and back['stored'] is None)
+        d = pg.evaluate("""(() => { const c = document.querySelector('[data-el=works] td.dci-mx-cell.dci-mx-on:not(.dci-mx-locked) .dci-mx-more'); return c ? getComputedStyle(c).opacity : null; })()""")
+        pg.locator('[data-el=works] td.dci-mx-cell.dci-mx-on:not(.dci-mx-locked)').first.hover()
+        d2 = pg.evaluate("""(() => { const c = document.querySelector('[data-el=works] td.dci-mx-cell.dci-mx-on:not(.dci-mx-locked) .dci-mx-more'); return c ? getComputedStyle(c).opacity : null; })()""")
+        print('D)', d, d2)
+        results.append(d == '0' and d2 == '1')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.MX_HEADS = 'full'
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
