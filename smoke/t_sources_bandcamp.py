@@ -2267,4 +2267,118 @@ def case_pkg3157():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_pkg3161():
+    """Credits Importer 3.161.0 (collected items Z-LEADMARK, Z-VINYLONLY; rules S292, S293): a Bandcamp album with a vinyl and a cassette edition
+    (as noproblematapes.bandcamp.com/album/inner-harassment). The vinyl's text: "⊛ Orange / Black Splatter Vinyl LP", "⊛ Design by Gendema",
+    "⊛ Mastered for vinyl by Reversed Reference", "⊛ Estimated shipping: February 2027", "⊛ Exclusive EU distribution via Hiraeth Records:",
+    "⊛ Photos by Photo Guy"; the cassette's: "Orange cassette with full-color J-card", "Design by Gendema", "In stock and shipping now."
+    A) The release Digital Media: Gendema – design, no role credit "⊛"; Reversed Reference (mastering for vinyl) and Hiraeth Records (the vinyl's
+       distributor) left out and listed so ("medium"); the shop lines left out as "shop"; nothing "not recognized"; no date "2027-02" offered;
+       Photo Guy held on Skip – "Named only in the text of the edition “Vinyl LP” …" with "Take", a suggestion (may), not a question (must);
+       "Take" puts the photographs on the release.
+    B) The release 12" Vinyl: Reversed Reference mastering, Hiraeth Records distributed, Photo Guy's photographs at once (nothing held).
+    C) The credits of the album name the distributor too ("Distributed by Hiraeth Records"): for the digital release as well.
+    D) S292 off: the sign is back in the role ("⊛ Design By")."""
+    ALBUM = 'https://testband.bandcamp.com/album/pkg61'
+    VINYL = ('⊛ Orange / Black Splatter Vinyl LP\n⊛ Design by Gendema\n⊛ Mastered for vinyl by Reversed Reference\n⊛ Estimated shipping: February 2027\n'
+             '⊛ Exclusive EU distribution via Hiraeth Records:\n⊛ Photos by Photo Guy')
+    TAPE = 'Orange cassette with full-color J-card\nDesign by Gendema\nIn stock and shipping now.'
+
+    def page(credits):
+        H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Pkg61', 'credits': credits, 'about': ''},
+            'packages': [{'type_name': 'Vinyl LP', 'title': 'Orange / Black Splatter Vinyl LP', 'description': VINYL},
+                         {'type_name': 'Cassette', 'title': 'Cassette', 'description': TAPE}],
+            'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+    fmt = {'v': 'Digital Media'}
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = fmt['v']
+        return d
+    H.ws_release = ws
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: {} }).dataset.raw || (r.querySelector('.dci-drole') || {}).textContent || '',
+        (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || ''])])))()"""
+    results = []
+
+    def run(pg):
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        return (pg.evaluate(GROUPS), pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)"),
+                pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 160))"))
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            H.ENTRIES_VIEW = 'legacy'
+            # A) digital
+            page('Bass Man – bass')
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            g, unrec, ign = run(pg)
+            dates = pg.evaluate("[...document.querySelectorAll('#dci-overlay .dci-date-chip, #dci-overlay .dci-datechip-text')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+            note = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy');
+              const n = g && g.querySelector('[data-el=uncr]'); return n ? [n.textContent.replace(/\\s+/g, ' ').trim(), n.dataset.pkg || ''] : null; })()""")
+            foot = pg.evaluate("[...document.querySelectorAll('#dci-overlay [data-yell]')].map(x => [x.dataset.yell, x.textContent.replace(/\\s+/g, ' ').trim()])")
+            yell = pg.evaluate("(() => { const d = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy'); const y = d && d.querySelector('.dci-yell-dot'); return y ? y.className : ''; })()")
+            print('A)', g, '\n   nicht erkannt:', unrec, '\n   ausgelassen:', ign, '\n   Daten:', dates, '\n   Photo Guy:', note, yell, foot[:4])
+            ok_a = (g.get('Gendema') == [['Design By', 'release']] and 'Reversed Reference' not in g and 'Hiraeth Records' not in g and unrec == []
+                    and sum(1 for x in ign if 'shop' in x) >= 4 and sum(1 for x in ign if 'Reversed Reference' in x or 'Hiraeth' in x) >= 2
+                    and not any('2027' in d for d in dates)
+                    and g.get('Photo Guy') and g['Photo Guy'][0][1] == 'skip' and bool(note) and 'Named only in the text of the edition “Vinyl LP”' in note[0] and note[1] == '1'
+                    and 'dci-yell-dot-can' in yell and 'dci-yell-dot-must' not in yell)
+            results.append(bool(ok_a))
+            pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy');
+              g.querySelector('[data-act=uncr-take]').click(); })()""")
+            H.wait_still(pg, "document.body.innerHTML", 10, 200)
+            g2 = pg.evaluate(GROUPS)
+            print('   Take:', g2.get('Photo Guy'))
+            results.append(bool(g2.get('Photo Guy')) and g2['Photo Guy'][0][1] == 'release')
+            errs_a = list(errs)
+            ctx.close()
+            # B) vinyl
+            fmt['v'] = '12" Vinyl'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            g, unrec, ign = run(pg)
+            print('B)', g, '| nicht erkannt:', unrec)
+            results.append(bool(g.get('Reversed Reference')) and g['Reversed Reference'][0][1] != 'skip' and bool(g.get('Hiraeth Records'))
+                           and bool(g.get('Photo Guy')) and g['Photo Guy'][0][1] == 'release' and unrec == [])
+            errs_b = list(errs)
+            ctx.close()
+            # C) digital, the distributor in the album's credits too
+            fmt['v'] = 'Digital Media'
+            page('Bass Man – bass\nDistributed by Hiraeth Records')
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            g, unrec, ign = run(pg)
+            print('C)', g.get('Hiraeth Records'), '| Reversed Reference:', g.get('Reversed Reference'))
+            results.append(bool(g.get('Hiraeth Records')) and 'Reversed Reference' not in g)
+            errs_c = list(errs)
+            ctx.close()
+            # D) S292 off
+            page('Bass Man – bass')
+            ctx = H.new_context(b)
+            ctx.add_init_script("if (location.host === 'musicbrainz.org') localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S292']))")
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            g, unrec, ign = run(pg)
+            print('D)', g.get('Gendema'), unrec[:3])
+            results.append(any('⊛' in r[0] for r in (g.get('Gendema') or [])) or any('⊛' in u for u in unrec))
+            print('Fehler:', errs_a, errs_b, errs_c, errs)
+            results.append(not (errs_a or errs_b or errs_c or errs))
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+        H.BC_PAGES.pop(ALBUM, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

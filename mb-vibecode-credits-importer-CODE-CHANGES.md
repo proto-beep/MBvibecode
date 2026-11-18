@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.160.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.161.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.161.0 · 2026-11-18
+
+- **Z-LEADMARK (S292):** `LEAD_MARK`; `TEXT.parse` – `tidyLines` takes the sign off first (also with S144 off; the line as written stays in `rawOf`), `shopLines` tests without it.
+- **Z-VINYLONLY (S293):** `DIST_LINE` – `tidyLines` rewrites a distribution line to "Distributed by …", a medium before the word in `distMedium` → `company.medium` at the end of `parse`; `SHOP_DESC`, three more `SHOP_LINES`. `pkgMediumWord(name)`, `PKG_MEDIUM_ROLE`, `PKG_ASK_TYPES`, `PKG_DIGITAL_EXTRAS`; `BANDCAMP.toRelease` – companies of an edition's text with a role of its making get `medium` (`pkgBound`; two editions: `media`), credits `pkgMedium`, the release `bcDigitalExtras`, `notes` without shop lines; `mergeMoreCompanies` joins `media`; `groupCredits` / `groupCompanies` carry `pkgMedium`, `fromPkg`, `media`; `companyLeftOutForMedium` (`media`); `pkgAskSkip(row, c, rel)` – a row of photography or liner notes held like an uncredited one (`uncrOff`, `pkgAsk`); `uncrHtml` (text `pkg.ask`), the open points count it as "can".
+- **Z-SETSEARCH:** `settingsHtml({ index: true })` – every row of every tab (tab, place, name, heading, words); `setSearchIndex` (the language and English), `setSearchHits`, `setSearchHitsHtml`, `setFindOpen`, `setSearchGo`; `renderSettings` binds the field; actions `set-search-open`, `set-search-go`; "/" with the settings open. State `S.setSearchOpen`, `S.setSearchQ`, `S.setSearchIdx`. `rulesFilter(el)` – the field of "Mapping rules" at the top (`dci-rules-filter`), rows, sections, own rules and quick switches; `focusRule` clears it.
+- **Works matrix head:** `EMOJI.wcredits / wexisting / wone` (`oneWorkHtml` through `emo()`); `.dci-wh-new`, `.dci-mx-magicbtn`, `.dci-mx-magiclv`.
+- **Texts:** `pkg.ask`, `setsearch.title / ph / hint / tab`, `rules.searchPh`, `rules.searchCount`, `emoji.wcredits / wexisting / wone`; changed `rules.search`, `wone.undoTitle`.
+- **Tests:** `t_sources_bandcamp.py pkg3161`, `t_text_basics.py freetext3161`, `t_ui_settings.py setsearch3161`, `t_rules_window.py filter3161`, `t_works_more.py head3161` – new, fail on 3.160.0. `register_golden.json` anew (S292, S293).
 
 ## Import 3.160.0 · 2026-11-18
 

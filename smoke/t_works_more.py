@@ -1543,7 +1543,8 @@ def case_onework3138():
        "no work"; the log says so; ↺ appears and brings the three back.
     B) 🔗 Existing works only: the new works gone (track 1, linked, stays); ↺ back.
     C) ✍ Writing credits only: the new works of the tracks with writing credits stay, the others gone.
-    D) "Symbols: Text": words instead of the symbols ("Writing credits only", "Existing works only", "Only one …", "All back")."""
+    D) "Symbols: Text": words instead of the symbols – short ones from 3.161.0 ("Credits", "In MB", "One", "All back"; the full names
+       stay the buttons' accessible names)."""
     PENDING = "[...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-badge-plan')).map(tr => Number(tr.dataset.work))"
     CREDITS = "[...new Set([...document.querySelectorAll('[data-el=works] tr[data-work]')].filter(tr => tr.querySelector('.dci-mxchip')).map(tr => Number(tr.dataset.work)))]"
     results = []
@@ -1592,7 +1593,7 @@ def case_onework3138():
         pg.wait_for_timeout(400)
         d = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-wone-btn')].map(b => b.textContent.trim())")
         print('D)', d)
-        results.append(d == ['Writing credits only', 'Existing works only', 'Only one …', 'All back'])
+        results.append(d == ['Credits', 'In MB', 'One', 'All back'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1744,6 +1745,49 @@ def case_magic3155():
     finally:
         H.WORK_SEARCH[:] = []
         H.JS_WORKS.pop(FOUND, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_head3161():
+    """Credits Importer 3.161.0 (collected items Z-WHBTNROUND, Z-MAGICBTN, Z-WONEEMO): the head of the works matrix.
+    A) "＋ New works" and "✨ Answer all" have round corners; "Answer all" is the larger one, white on a gradient from purple to orange
+       (its text at least 4.5 : 1 on both ends), its ▾ the round end beside it.
+    B) The three "works to keep" are emojis – ✍️ 🔗 👆 –, each with its tooltip and its name for screen readers.
+    C) ⚙ Settings → Appearance → Symbols: Text – the words "Credits", "In MB", "One", the tooltips the same."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        INFO = """(() => { const w = document.querySelector('#dci-overlay [data-el=works]'); const cs = (e) => getComputedStyle(e);
+          const lum = (c) => { const [r, g, b] = c.match(/\\d+/g).map(Number).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+          const ratio = (a, b) => { const x = lum(a), y = lum(b); return Math.round((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05) * 100) / 100; };
+          const nw = w.querySelector('[data-act=works-pending-all]'); const mg = w.querySelector('[data-act=magic-open]'); const lv = w.querySelector('[data-act=magic-menu]');
+          const stops = (cs(mg).backgroundImage.match(/rgb\\([^)]*\\)/g) || []);
+          return { nwRadius: parseFloat(cs(nw).borderTopLeftRadius), mgRadius: [parseFloat(cs(mg).borderTopLeftRadius), parseFloat(cs(mg).borderTopRightRadius)], lvRadius: [parseFloat(cs(lv).borderTopLeftRadius), parseFloat(cs(lv).borderTopRightRadius)],
+            sizes: [parseFloat(cs(nw).fontSize), parseFloat(cs(mg).fontSize)], heights: [nw.offsetHeight, mg.offsetHeight], color: cs(mg).color, stops,
+            contrast: stops.map(s => ratio('rgb(255, 255, 255)', s)),
+            wone: [...w.querySelectorAll('.dci-wone-btn')].slice(0, 3).map(x => [x.textContent.trim(), !!x.title, x.getAttribute('aria-label')]) }; })()"""
+        a = pg.evaluate(INFO)
+        print('A)', {k: v for k, v in a.items() if k != 'wone'})
+        results.append(a['nwRadius'] >= 10 and a['mgRadius'][0] >= 10 and a['mgRadius'][1] == 0 and a['lvRadius'] == [0, a['lvRadius'][1]] and a['lvRadius'][1] >= 10
+                       and a['sizes'][1] > a['sizes'][0] and a['heights'][1] >= a['heights'][0] and a['color'] == 'rgb(255, 255, 255)' and len(a['stops']) >= 2 and min(a['contrast']) >= 4.5)
+        print('B)', a['wone'])
+        results.append([x[0] for x in a['wone']] == ['✍️', '🔗', '👆'] and all(x[1] for x in a['wone'])
+                       and [x[2] for x in a['wone']] == ['Writing credits only', 'Existing works only', 'Only one …'])
+        pg.evaluate("localStorage.setItem('dci-emoji-text', JSON.stringify(true))")
+        pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        c = pg.evaluate(INFO)
+        print('C)', c['wone'])
+        results.append([x[0] for x in c['wone']] == ['Credits', 'In MB', 'One'] and all(x[1] for x in c['wone']))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.160.0
+// @version      3.161.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.160.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.160.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.161.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.161.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.160.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.161.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1386,6 +1386,9 @@
       "emoji.tip": "Tip:",
       "emoji.label": "Label:",
       "emoji.date": "date",
+      "emoji.wcredits": "Credits",
+      "emoji.wexisting": "In MB",
+      "emoji.wone": "One",
       "srcbadge.dg": "DG",
       "srcbadge.bc": "BC",
       "srcbadge.yt": "YT",
@@ -1977,6 +1980,7 @@
       "uncr.all": "Not named on the release ({src}: uncredited) – on Skip:",
       "uncr.some": "Not named on the release ({src}: uncredited) – on Skip:",
       "uncr.take": "Take anyway",
+      "pkg.ask": "Named only in the text of the edition “{name}” – on Skip for this release:",
       "rmx.ask": "Remixer only from the title {titles} (MusicBrainz) – take it?",
       "rmx.take": "Take as remixer",
       "rmx.takeTitle": "The title names this artist as the remixer: the role is staged (with “remix of” the original track, when it is on this release)",
@@ -2128,7 +2132,7 @@
       "wone.oneTitle": "Keep the work of one track only – pick it from the list",
       "wone.pick": "Keep only the work of:",
       "wone.undo": "All back",
-      "wone.undoTitle": "The works and credits as before ✍ 🔗 ☝",
+      "wone.undoTitle": "The works and credits as before the three buttons “works to keep”",
       "log.oneWork": "Works matrix – {what}: tracks with a work {kept} of {n} · works dropped: {dropped} · credits skipped: {skipped}",
       "log.oneWorkUndo": "Works matrix: the works and credits as before",
       "log.workByCatalogue": "Track {track}: found by {cat} – {list}",
@@ -2895,7 +2899,9 @@
       "rules.toDockTitle": "Show the mapping rules in the dashboard, below its head, instead of ⚙ Settings (remembered; ⚙ Settings → Appearance)",
       "rules.test": "Try a Discogs role:",
       "rules.testHint": "Type a Discogs role as on Discogs, e.g. “Bass [Upright]”; several separated by commas.",
-      "rules.search": "Search the rules:",
+      "rules.search": "Filter the rules:",
+      "rules.searchPh": "id, word, type, note …",
+      "rules.searchCount": "{n} of {all} rules",
       "rules.quick": "Quick switches",
       "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
       "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
@@ -3013,6 +3019,10 @@
       "search.prev": "Previous hit (↑, Shift+Enter)",
       "search.next": "Next hit (↓, Enter)",
       "search.close": "Close the search (Esc)",
+      "setsearch.title": "Search the settings (/)",
+      "setsearch.ph": "Search the settings …",
+      "setsearch.hint": "Two letters or more: the names of the settings and their explanations, in every tab",
+      "setsearch.tab": "Tab",
       "search.none": "No hits",
       "search.count": "{i} / {n}",
       "search.hidden": "hidden",
@@ -5166,6 +5176,8 @@
     { id: 'S289', where: 'BANDCAMP.toRelease, mergeMoreCredits, mergeMoreCompanies, labelHintHtml', note: 'Sources (3.157.0; collected item Z-BCPKGDESC): Bandcamp – the texts of the physical editions ("Limited Edition Compact Disc …") read with the credits: what they say again is one entry, of two that differ the more precise kept ("Electric Guitar" over "Guitar", tracks named over all tracks); they hold for the digital edition too; above the entries which edition\'s text was read and what it gave, its lines left out and not recognized with the others (its name before them)' },
     { id: 'S290', where: 'TEXT.parse (end), OTHER_SESSION, WRITER_ROLE_RE', note: 'Texts (3.157.0; collected item Z-BONUSONLY): the credits of the whole release hold for a bonus track too ("Plus Bonus Track (only on CD)" – it did not fit on the vinyl); not for the last tracks whose titles name another session – "live", "demo", "rehearsal" ("outtake" is none) – fewer than half of the tracks: their credits on the other tracks; writers and arrangers stay on all. Every free text of the release (not a track\'s own page)' },
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
+    { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
+    { id: 'S293', where: 'TEXT.parse (tidyLines; DIST_LINE, SHOP_LINES), BANDCAMP.toRelease (pkgMediumWord, PKG_MEDIUM_ROLE, PKG_ASK_TYPES), companyLeftOutForMedium, leftOutForMedium, pkgAskSkip, uncrHtml', note: 'Editions (3.161.0; collected item Z-VINYLONLY): "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Vinyl distribution: X", "Digital distribution by X" are the distributor – a medium named before "distribution" binds it to that medium; "Orange / Black Splatter Vinyl LP" and "Estimated shipping: February 2027" are what a shop writes (no date). What the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, duplicated, lacquer cut, glass mastered – holds for that medium only: left out, and listed so, when the MusicBrainz release has no such medium (the same company in the album\'s credits holds for all). Photographs and liner notes named only in an edition\'s text: taken for a release of that medium; for another one (the digital release) a suggestion – "named only in the text of the edition “…”" with "Take" –, unless the page names a digital booklet or the images as part of the download' },
     { id: 'S263', where: 'R119, VIDEO_CREDITS (T067), videoCreditsHtml', note: 'Roles (3.147.0; collected item Z-VIDEOCREW; a quick switch, on): the credits of a video MusicBrainz has no type for (colorist, stage, lighting, hair and make-up, set design, video editor …) are miscellaneous support credited as written; off: left out (Skip) – then only what MusicBrainz has a type for is taken (cinematographer, animation, choreographer, VJ, video appearance, sound for "PA", producer for "Live Production", design for "Title Logo"). "mappings" at the switch shows them all' },
     { id: 'S262', where: 'TEXT.parse (namesScoped, addCredit), AFFIL_ORG, the entry\'s head', note: 'Texts (3.146.0; collected item Z-AFFIL): a company in brackets after a person – "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "Akitsune Hirayama (Bayon Production)" (words of a company, a short word in capitals, "&", a name written together) – is no part of the name and no artist name (S127): a note at the entry names it; after a role of a studio (mastering, mix, recording, engineering) it is the place of that role too ("mastered at StudioMASS")' },
     { id: 'S261', where: 'TEXT.parse (freeTextPre)', note: 'Texts (3.146.0; collected item Z-ARTDETAIL): what is in brackets after a name of the artwork names its kind – "artwork by florence giroud (watercolors, drawings) and pierre bujeau (infographic)": watercolours, drawings, paintings, ink … illustration, an infographic design, layout or lettering graphic design, photos photography – with the words in brackets as the role credit' },
@@ -6155,6 +6167,18 @@
     const kinds = words.map((w) => Object.keys(MEDIUM_WORDS).find((k) => MEDIUM_WORDS[k].test(w.replace(/[.,;:]+$/, ''))) || '');
     return words.length && kinds.every(Boolean) ? kinds[0] : '';
   };
+  /**
+   * [Z-VINYLONLY] (3.161.0, S293) The medium of an edition by its name on Bandcamp ("Orange / Black Splatter Vinyl LP" → 'vinyl', "Cassette",
+   * "Compact Disc (CD)"); '' when it names none or several kinds (a bundle).
+   */
+  const pkgMediumWord = (name) => {
+    const kinds = uniq(String(name || '').split(/[\s/()+,&-]+/).map((w) => mediumKindOf(w)).filter((k) => k && k !== 'digital'));
+    return kinds.length === 1 ? kinds[0] : '';
+  };
+  // (what is said of the making of an edition: for that medium only; what is asked when only an edition's text names it)
+  const PKG_MEDIUM_ROLE = /^(?:distributed|manufactured|pressed|printed|duplicated|replicated|made|glass\s+mastered|lacquer\s+cut|plated)\b/i;
+  const PKG_ASK_TYPES = ['photography', 'liner notes'];
+  const PKG_DIGITAL_EXTRAS = /\bdigital\s+booklet\b|\bpdf\b|\bbooklet\s+(?:is\s+)?included\b|\bincludes?\s+(?:an?\s+|the\s+)?(?:\d+[- ]page\s+)?(?:digital\s+|full\s+)?booklet\b|\b(?:artwork|photos|photographs|liner\s+notes)\s+(?:are\s+|is\s+)?included\b|\bbonus\s+(?:items?|booklet)\b/i;
   /** [T035] The kind of a medium format of MusicBrainz ("Digital Media", "12\" Vinyl", "CD", "Cassette" …), 'other' else. */
   const formatKind = (f) => (/digital media/i.test(f) ? 'digital' : /vinyl|"|\blp\b|shellac|acetate|flexi/i.test(f) ? 'vinyl'
     : /\bcd\b|sacd|hdcd|compact disc|dualdisc|blu-spec|shm/i.test(f) ? 'cd' : /cassette|tape|dcc/i.test(f) ? 'cassette' : 'other');
@@ -6516,6 +6540,16 @@
   const REVIEW_MEDIA = /\b(?:magazine|mag|review|reviews|radio|zine|times|journal|weekly|monthly|daily|blog|press|news|gazette|tribune|herald|post|quarterly|fm|tv)\b|\.(?:com|net|org|co\.uk|de|fr|it|nl)\b/i;
   // ((review) no source: a medium, a track, a time, a role ("(CD 2)", "(Track 3)", "(4:35)", "– Jane Doe: vocals")
   // [Z-SHOPPROSE] (3.157.0, S287) the lines of a shop about an edition (Bandcamp's packages, a label's shop): left out as "shop"
+  // [Z-LEADMARK] (3.161.0, S292) signs before a line: bullets and ornaments (not a dash before a name, not "#3", not "℗" / "©")
+  // © ® ™ ℗ are pictographic too, and they begin a copyright line: never taken off
+  const LEAD_MARK = /^\s*(?:[⊛⊙⊚◉◎⦿●○◌◍◆◇◈■□▪▫▣▶►▸▹▷➤➔➜➝➞→⇒»›‣⁃∙·•◦★☆✦✧✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺❂❃❇❈❉❊❋❖✓✔☑✗✘♪♫♬♩☛☞❥❧❦❯❱*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?)(?:\s*(?:[⊛⊙●○◆■▪▶►➤→»•★✦✓✔*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?))*\s+(?=\S)/u;
+  // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:", "Vinyl distribution: X", "Digital distribution by X": region and medium before the word
+  const DIST_LINE = /^\s*(?:exclusive(?:ly)?\s+)?(?:(?:EU|US|USA|UK|European|Europe|North\s+American?|American|Asian|Japanese|German|worldwide|world-?wide|international|global|rest\s+of\s+(?:the\s+)?world)\s+)?(?:(digital|vinyl|lp|cd|cassette|tape|physical)\s+)?(distribution|distributed|distributor|vertrieb)\b\s*(?:(?:exclusively\s+)?(via|by|through|durch|:|[-–—]))?\s*(.+?)\s*[:.]?\s*$/i;
+  // (the words that describe an edition before its format: colours, weights, how many, how it is made)
+  const SHOP_DESC = '(?:limited|ltd\\.?|edition|deluxe|special|standard|classic|collector\'?s?|exclusive|coloured|colored|colou?r|splatter|splattered|marbled?|swirl|smoke|smoky|galaxy|'
+    + 'transparent|clear|translucent|opaque|solid|black|white|red|blue|green|yellow|orange|purple|violet|pink|gold|golden|silver|grey|gray|brown|cream|bone|neon|glow|'
+    + 'heavyweight|\\d+\\s?g(?:ram)?s?|double|triple|\\d+\\s?x|\\d+|eco|recycled|random|mixed|hand-?numbered|numbered|signed|test|pressing|first|second|third|repress|reissue|'
+    + 'picture|disc|gatefold|pro-?dubbed|chrome|type\\s+ii|c\\d{2,3}|on|and|&|/|\\+|-|–)';
   const SHOP_FORMAT = '(?:compact\\s+disc|cd|vinyl|lp|(?:\\d+["”″]\\s*)?vinyl|cassette|tape|digital\\s+album|record\\/vinyl|box\\s*set)';
   const SHOP_LINES = [
     /^(?:this\s+(?:item\s+)?)?(?:ships?|shipping|shipped|dispatch(?:es|ed)?)\b.*\b(?:within|to|out|only|worldwide|from|days?|weeks?|around|by)\b/i,
@@ -6526,6 +6560,12 @@
     new RegExp(`^${SHOP_FORMAT}(?:\\s*\\([^)]*\\))?\\s*\\+\\s*(?:digital\\s+album|download)$`, 'i'),
     /^(?:plus\s+)?(?:a\s+)?bonus\s+tracks?\s*\(?\s*(?:only|exclusive)\b[^)]*\)?\.?$/i,
     /^(?:shipping|release)\s+(?:date\s+)?(?:on\s+or\s+)?(?:around|on)\b/i,
+    // [Z-VINYLONLY] (3.161.0, S293) "Estimated shipping: February 2027", "Ships: March"; a line that only names the format, with its colours
+    // ("Orange / Black Splatter Vinyl LP", "Limited Edition Cassette", "180g Black Vinyl 2LP")
+    /^(?:estimated\s+|expected\s+)?(?:shipping|ship\s+date|shipment|delivery|dispatch)(?:\s+date)?\s*:/i,
+    /^(?:ships|shipping)\s*:/i,
+    new RegExp(`^(?:(?:${SHOP_DESC})\\s+){0,8}(?:vinyl|vinyls|\\d?x?lps?|\\d?x?cds?|cassettes?|tapes?|compact\\s+disc|7["”″]|10["”″]|12["”″]|box\\s*set|digipa[ck]k?)(?:\\s+(?:\\d?x?lps?|ep|single|edition|version|album|record|\\([^)]*\\)))*(?:\\s+(?:with|in|incl\\.?|including|housed)\\b.*)?\\.?$`, 'iu'),
+    /^(?:now\s+)?in\s+stock\b/i,
   ];
   // [Z-BONUSONLY] (3.157.0, S290) a track of another session (its title) and the roles of writers (they hold for every version)
   const OTHER_SESSION = /\b(?:live|demo|rehearsals?)\b/i;
@@ -8849,6 +8889,7 @@
       // the companion (rawOf)
       const rawOf = new Map();
       const asideLines = new Set(); // [Z-DASHASIDE] (3.153.0) the asides read as lines of their own (norm)
+      const distMedium = new Map(); // [Z-VINYLONLY] (3.161.0, S293) the medium named before "distribution": name (norm) → word
       const scanTracks = []; // [Z-OCRTRACKCHECK] (3.154.0) the lines of a track list with lengths: { line, pos, title, len }
       const textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
       const guessedSet = new Set(); // ([Z-SEI2] 3.96.0, review) the words asked in blocks of tracks
@@ -8926,12 +8967,27 @@
         }
         return out;
       }
-      function tidyLines(lines) {
-        if (!ruleOn('S144')) return lines;
+      function tidyLines(lines0) {
         const keep = (t, raw) => {
           if (t !== raw && !rawOf.has(t)) rawOf.set(t, raw);
           return t;
         };
+        let lines = lines0;
+        // [Z-LEADMARK] (3.161.0, S292) a bullet or an ornament before a line is no part of its role ("⊛ Design by Gendema")
+        if (ruleOn('S292')) lines = lines.map((l) => keep(String(l).replace(LEAD_MARK, ''), l));
+        // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:" → "Distributed by X"; a medium before the word kept for the company
+        if (ruleOn('S293')) {
+          lines = lines.map((l) => {
+            const m = String(l).match(DIST_LINE);
+            // (a sentence about the distribution – "Distribution of the songs was slow." – is none: a separator, or a short name)
+            if (!m || !(m[3] || m[4].split(/\s+/).length <= 5) || /^(?:of|is|was|will|and|to|in)\b/i.test(m[4])) return l;
+            if (/^distributed$/i.test(m[2]) && !m[1] && /^by$/i.test(m[3] || '') && !/^\s*exclusive/i.test(l) && l.trim().toLowerCase().startsWith('distributed by')) return l;
+            const t = `Distributed by ${m[4]}`;
+            if (m[1]) distMedium.set(norm(m[4]), /^(?:lp)$/i.test(m[1]) ? 'vinyl' : /^tape$/i.test(m[1]) ? 'cassette' : m[1].toLowerCase());
+            return keep(t, rawOf.get(l) || l);
+          });
+        }
+        if (!ruleOn('S144')) return lines;
         // [Z-FWC] the colon and brackets of Japanese and Chinese texts ("Tsutomu Sonoda：Vocal") as ASCII
         let out = lines.map((l) => keep(l.replace(/\s*：\s*/g, ': ').replace(/（/g, ' (').replace(/）/g, ')'), l));
         // [Z-PERSONNELHEAD] (3.153.0, S269) "Personnel: Edgar Froese (guitar); …": the heading before the list is no part of it
@@ -12083,7 +12139,8 @@
           const l = String(l0 == null ? '' : l0);
           const t = l.trim();
           if (!t) return l;
-          if (SHOP_LINES.some((re) => re.test(t))) {
+          // ((3.161.0, S292) without a sign before the line: "⊛ Estimated shipping: February 2027")
+          if (SHOP_LINES.some((re) => re.test(ruleOn('S292') ? t.replace(LEAD_MARK, '') : t))) {
             ignored.push({ text: t, why: 'shop' });
             return '';
           }
@@ -12923,6 +12980,13 @@
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson, liveHeads };
       }
+      // [Z-VINYLONLY] (3.161.0, S293) "Vinyl distribution: X", "Digital distribution by X": the distributor of that medium only
+      if (distMedium.size) {
+        for (const c of companies) {
+          const med = /^distributed by$/i.test(String(c.role || '').trim()) && !c.medium ? distMedium.get(norm((c.who && c.who.name) || '')) : '';
+          if (med && med !== 'physical') c.medium = med;
+        }
+      }
       return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null, covers, quotes, groups: groupsOut(), songs: songRead.songs, players: playersOut(), guessedWords: [...guessedSet], series, ensembles: ensOut, firstPerson, liveHeads };
     }
 
@@ -13214,8 +13278,12 @@
       let added = 0;
       let same = 0;
       for (const e of extra) {
-        if (into.some((c) => key(c) === key(e))) same++;
-        else {
+        const had = into.find((c) => key(c) === key(e));
+        if (had) {
+          same++;
+          // ([Z-VINYLONLY] 3.161.0) the same company in the texts of two editions: for both media
+          if (had.pkgBound && e.pkgBound && e.medium !== had.medium) had.media = uniq([...(had.media || [had.medium]), e.medium]);
+        } else {
           into.push(e);
           added++;
         }
@@ -13265,8 +13333,11 @@
           seen.add(norm(text));
           const name = String((pk && (pk.type_name || pk.title)) || 'package').trim();
           const res = TEXT.parse(text, albumCtx);
-          const m = mergeMoreCredits(credits, res.credits.map((c) => ({ ...c, fromPkg: name })));
-          const mc = mergeMoreCompanies(companies, res.companies.map((c) => ({ ...c, fromPkg: name })));
+          // [Z-VINYLONLY] (3.161.0, S293) the medium of the edition: what its text says of its making holds for that medium only
+          const pkgWord = ruleOn('S293') ? pkgMediumWord(name) : '';
+          const m = mergeMoreCredits(credits, res.credits.map((c) => ({ ...c, fromPkg: name, ...(pkgWord ? { pkgMedium: pkgWord } : {}) })));
+          const mc = mergeMoreCompanies(companies, res.companies.map((c) => ({ ...c, fromPkg: name,
+            ...(pkgWord && !c.medium && PKG_MEDIUM_ROLE.test(String(c.role || '').trim()) ? { medium: pkgWord, pkgBound: true } : {}) })));
           pkgRead.push({ name, text, res, added: m.added + mc.added, same: m.same + mc.same, better: m.better });
         }
       }
@@ -13322,9 +13393,12 @@
         url,
         title: cur.title || '',
         country: '',
-        notes: [cur.credits, cur.about, ...pkgRead.map((x) => x.text)].filter(Boolean).join('\n\n'),
+        // ([Z-VINYLONLY] 3.161.0, S293) without what a shop writes: "Estimated shipping: February 2027" is no date of the release
+        notes: [cur.credits, cur.about, ...pkgRead.map((x) => (ruleOn('S293') ? x.text.split('\n').filter((l) => !SHOP_LINES.some((re) => re.test(l.trim().replace(LEAD_MARK, '')))).join('\n') : x.text))].filter(Boolean).join('\n\n'),
         // [Z-BCPKGDESC] (3.157.0, S289) the texts of the editions read: { name, added, same, better } (a hint above the entries)
         bcPackages: pkgRead.map(({ name, added, same, better }) => ({ name, added, same, better })),
+        // [Z-VINYLONLY] (3.161.0, S293) the page names a digital booklet or the images as part of the download
+        bcDigitalExtras: PKG_DIGITAL_EXTRAS.test([cur.credits, cur.about, ...pkgRead.map((x) => x.text)].filter(Boolean).join('\n')),
         // [3.16.1] where the "about" text begins in the notes (its dates can be left out), null without one
         aboutAt,
         // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
@@ -14089,7 +14163,8 @@
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
             fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle,
             ...(c.thanksFor ? { thanksFor: true } : {}), ...(c.lineup ? { lineup: true } : {}), // [Z-THANKSFOR] [Z-LINEUPHEAD] (3.146.0)
-            ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}) }); // ([Z-ABBR] 3.101.0, review)
+            ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}), // ([Z-ABBR] 3.101.0, review)
+            ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}) }); // [Z-VINYLONLY] (3.161.0, S293)
         }
         const entry = group.roles.get(rKey);
         // [Z-TCP] (3.60.0) a name in brackets after a title only while every credit of the role is one
@@ -14114,6 +14189,8 @@
         if (c.roleCredit && !entry.roleCredit) entry.roleCredit = c.roleCredit;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
+        // ([Z-VINYLONLY] 3.161.0) named in another text too – not only an edition's
+        if (!c.pkgMedium) { delete entry.pkgMedium; delete entry.fromPkg; }
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
         addSrcRef(entry.refs, c);
         // [Z-DGEXCL] (3.134.0) the same credit in another line of the texts ((review) its line too – the marks on the images)
@@ -14145,7 +14222,7 @@
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
-      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}), ...(c.media ? { media: c.media } : {}),
         ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}),
         ...(c.date ? { date: c.date } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), ...(c.concert ? { concert: c.concert } : {}), refs: [] }); // ([Z-EXCEPTC] 3.125.0: the year of a commission)
       // ([Z-PHOTOS] 3.128.0) a role credit of the text ("photo of X"): two of one role joined
@@ -17981,7 +18058,7 @@
         } else row.rsocOff = false;
       }
       // [Z-UNCR] (3.102.0, S167; review) switched off: taken; on: on Skip again (unless taken)
-      if (row.uncrOff && !ruleOn('S167')) row.uncrOff = false;
+      if (row.uncrOff && !row.pkgAsk && !ruleOn('S167')) row.uncrOff = false;
       else if (!row.uncrOff && ruleOn('S167') && !row.uncrTaken && (row.notes || []).includes('uncredited')) row.uncrOff = true;
       if (row.uncrOff) row.uncrLevel = lv;
       // [Z-DSUP] (3.106.0) held: its level kept; ((review) its rule switched off: released
@@ -20649,7 +20726,9 @@
     mb: 'data:image/png;base64,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',
   };
   // [Z-SRCTAG] (3.127.0) the emojis of the dashboard, or a word each (⚙ Settings → Appearance; ⚠ and ⚙ stay)
-  const EMOJI = { ocr: ['🖼️', 'emoji.ocr'], text: ['📄', 'emoji.text'], tip: ['💡', 'emoji.tip'], label: ['🏷', 'emoji.label'], date: ['⌚', 'emoji.date'] };
+  const EMOJI = { ocr: ['🖼️', 'emoji.ocr'], text: ['📄', 'emoji.text'], tip: ['💡', 'emoji.tip'], label: ['🏷', 'emoji.label'], date: ['⌚', 'emoji.date'],
+    // [Z-WONEEMO] (3.161.0) the three "works to keep" in the head of the works matrix
+    wcredits: ['✍️', 'emoji.wcredits'], wexisting: ['🔗', 'emoji.wexisting'], wone: ['👆', 'emoji.wone'] };
   const emo = (k) => (S.emojiText ? tr(EMOJI[k][1]) : EMOJI[k][0]);
 
   /** [3.13.2] Another source was loaded: the open rules window follows. */
@@ -20707,6 +20786,39 @@
         .map((id) => `<p class="dci-sub dci-qlocked-note" data-qs-note="${esc(id)}">${esc(`${id}: ${tr(`quick.${id}.locked`)}`)}</p>`).join('')}</div>`;
   }
 
+  /**
+   * [Z-SETSEARCH] (3.161.0) The filter of the window "Mapping rules": what is typed (each word, without regard to case and accents) is looked
+   * for in a rule's id, its pattern, what it gives and its note – the rows that have none of it go, a section left without rows too, the
+   * quick switches likewise (their id, name and sentence); the count says how many rules are left. Empty: everything is there again.
+   */
+  function rulesFilter(el) {
+    const input = el.querySelector('[data-rf="search"]');
+    const parts = searchNorm(input ? input.value : '').split(' ').filter(Boolean);
+    const hit = (node) => { const t = searchNorm(node.textContent); return parts.every((w) => t.includes(w)); };
+    let shown = 0;
+    let all = 0;
+    el.querySelectorAll('[data-rf="tables"] section[data-rsect]').forEach((sec) => {
+      let n = 0;
+      sec.querySelectorAll('tbody tr:not(.dci-redit-row)').forEach((tr1) => {
+        all++;
+        tr1.hidden = !!parts.length && !hit(tr1);
+        if (!tr1.hidden) n++;
+      });
+      const rows = sec.querySelectorAll('tbody tr:not(.dci-redit-row)').length;
+      // (a section without a table – a list of words – by its own text)
+      sec.hidden = !!parts.length && (rows ? !n : !hit(sec));
+      shown += n;
+    });
+    el.querySelectorAll('[data-rf="own"] tbody tr').forEach((tr1) => { tr1.hidden = !!parts.length && !hit(tr1); });
+    el.querySelectorAll('[data-rf="quick"] .dci-qbtn-wrap').forEach((w) => {
+      const id = (w.querySelector('[data-qs-toggle]') || { dataset: {} }).dataset.qsToggle || '';
+      w.hidden = !!parts.length && !(hit(w) || parts.every((x) => searchNorm(id).includes(x)));
+    });
+    el.querySelectorAll('[data-rf="quick"] .dci-quick-group').forEach((g) => { g.hidden = !!parts.length && !g.querySelector('.dci-qbtn-wrap:not([hidden])'); });
+    const count = el.querySelector('[data-rf="search-count"]');
+    if (count) count.textContent = parts.length ? tr('rules.searchCount', { n: shown, all }) : '';
+  }
+
   /** Redraws the parts of the rules window that depend on the rules. */
   function renderRulesBody() {
     const el = document.getElementById('dci-rules');
@@ -20718,8 +20830,7 @@
     el.querySelector('[data-rf="tables"]').innerHTML = rulesTables();
     el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(el.querySelector('[data-rf="test"]').value);
     el.querySelector('[data-rf="mapping-src"]').textContent = mappingSourceText();
-    const q = norm(el.querySelector('[data-rf="search"]').value);
-    if (q) el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !norm(tr1.textContent).includes(q); });
+    rulesFilter(el);
   }
 
   /** [3.33.0] The mapping file, its version and where it came from; [3.33.1] with the number of your changes. */
@@ -20923,13 +21034,14 @@
           <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
           <p class="dci-sub dci-mapping-src" data-rf="mapping-src">${esc(mappingSourceText())}</p>
+          <div class="dci-rules-filter" role="search"><label class="dci-rules-search">${esc(tr('rules.search'))} <input type="search" data-rf="search" placeholder="${esc(tr('rules.searchPh'))}" autocomplete="off" spellcheck="false"></label>
+            <span class="dci-sub" data-rf="search-count" aria-live="polite"></span></div>
           <div data-rf="quick"></div>
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
           <div data-rf="changes"></div>
           <div data-rf="io"></div>
-          <label class="dci-rules-search">${esc(tr('rules.search'))} <input type="search" data-rf="search"></label>
           <div data-rf="tables"></div>
         </div>`;
       document.body.appendChild(el);
@@ -21128,10 +21240,7 @@
         if (e.target.dataset.leditText != null && S.listEdit) S.listEdit.text = e.target.value;
         if (e.target.dataset.mio === 'paste') S.mPaste = e.target.value;
         if (f === 'test') el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(e.target.value);
-        if (f === 'search') {
-          const q = norm(e.target.value);
-          el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !!q && !norm(tr1.textContent).includes(q); });
-        }
+        if (f === 'search') rulesFilter(el);
       });
     }
     el.hidden = false;
@@ -21210,7 +21319,8 @@
       const ak = yellEntryKey(a);
       const rows = S.rows.filter((r) => r.artistKey === a.key);
       if (!a.mbid && rows.some((r) => r.level !== 'skip')) add('must', 'link', `link:${a.key}`, { a });
-      if (rows.some(uncrPending)) add('must', 'uncr', `uncr:${a.key}`, { a });
+      // ([Z-VINYLONLY] 3.161.0, S293) held only because an edition's text names it: a suggestion (may), not a question (must)
+      if (rows.some(uncrPending)) add(rows.filter(uncrPending).every((r) => r.pkgAsk) ? 'can' : 'must', 'uncr', `uncr:${a.key}`, { a });
       // [Z-RMXTITLE] (3.126.0, S200) a remixer of a title, a "remix of" not taken: may be answered
       if (ruleOn('S200') && (rows.some(rmxAsk) || remixOfFor(a).some((x) => !x.taken))) add('can', 'rmx', `rmx:${a.key}`, { a });
       if (rows.some((r) => r.dsupHold && r.level === 'skip' && ['conflict', 'update'].includes(r.dsupHold.kind))) add('must', 'dsup', `dsup:${a.key}`, { a });
@@ -21576,7 +21686,7 @@
     if (!r) return;
     if (r.hidden && search) {
       search.value = '';
-      el.querySelectorAll('[data-rf="tables"] tbody tr').forEach((tr1) => { tr1.hidden = false; });
+      rulesFilter(el);
     }
     el.querySelectorAll('tr.dci-rule-hit').forEach((x) => x.classList.remove('dci-rule-hit'));
     r.classList.add('dci-rule-hit', 'dci-flash');
@@ -26453,7 +26563,9 @@
     const digiRemaster = r.medium && /^digital(?:ly)?$/i.test(String(r.medium).trim()) && /remaster/i.test(String(r.role || ''));
     const kind = r.medium && !digiRemaster ? mediumKindOf(r.medium) : plated || /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
     if (!kind || !mediumMissing(kind)) return false;
-    noteLeftOut(rel, text, r.medium || (plated ? 'vinyl plating' : 'lacquer cut'), r.role);
+    // ([Z-VINYLONLY] 3.161.0, S293) named in the texts of several editions: left out only when the release has none of their media
+    if ((r.media || []).some((w) => !mediumMissing(mediumKindOf(w)))) return false;
+    noteLeftOut(rel, text, (r.media || []).join(', ') || r.medium || (plated ? 'vinyl plating' : 'lacquer cut'), r.role);
     return true;
   }
 
@@ -28008,6 +28120,7 @@
         leftOutKeys.add(artist.key);
         continue;
       }
+      pkgAskSkip(row, c, rel); // [Z-VINYLONLY] (3.161.0, S293)
       if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
       if (c.thanksFor && ruleOn('S256')) row.thanksFor = true; // [Z-THANKSFOR] (3.146.0) additional or guest, chosen at the row
       if (c.lineup && ruleOn('S257')) row.lineup = true; // [Z-LINEUPHEAD] (3.146.0) a name of a lineup (the instruments of MusicBrainz offered)
@@ -28213,6 +28326,16 @@
     Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip' });
   }
   const uncrPending = (r) => !!r.uncrOff && r.level === 'skip';
+  /**
+   * [Z-VINYLONLY] (3.161.0, S293) Photographs and liner notes named only in the text of an edition (Bandcamp: "Limited Edition Vinyl LP"), the
+   * release of another medium (the digital one): a suggestion – held on Skip like an uncredited role, with "Take" –, unless the page names
+   * a digital booklet or the images as part of the download. A release of that medium takes them as they are.
+   */
+  function pkgAskSkip(row, c, rel) {
+    if (!ruleOn('S293') || !c.pkgMedium || !c.fromPkg || row.level === 'skip' || row.uncrTaken) return;
+    if (!(row.types || []).some((t) => PKG_ASK_TYPES.includes(norm(t))) || !mediumMissing(c.pkgMedium) || (rel && rel.bcDigitalExtras)) return;
+    Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip', pkgAsk: c.fromPkg });
+  }
   /** [Z-RMXONLY] (3.128.0, S210) The tracks that are remixes by their title ("(X Remix)", "[Dub]") – not all of the release's (one remix alone stays). */
   function remixTrackIdx() {
     // ((review) a remix by someone named in the title: "(Dub)", "(Version Dub)", "(Remix)" of the band itself keep the band's credits; not all
@@ -41503,7 +41626,9 @@
     const per = all ? '' : ` ${uniq(off.map(name)).map((n) => `<button type="button" class="dci-small" data-act="uncr-take" data-rows="${esc(off.filter((r) => name(r) === n).map((r) => r.id).join(','))}"
       title="${esc(tr('uncr.takeOneTitle', { role: n }))}">${esc(tr('uncr.takeOne', { role: n }))}</button>`).join(' ')}`;
     const many = S.rows.filter((r) => uncrPending(r) && !r.entrySkip).length > off.length;
-    return `<div class="dci-note dci-uncr" data-el="uncr"><span>${esc(tr(all ? 'uncr.all' : 'uncr.some', { src: sourceLabel(entrySource(a)) }))}</span>${all
+    // ([Z-VINYLONLY] 3.161.0, S293) held because only an edition's text names it
+    const pkg = off.every((r) => r.pkgAsk) ? off[0].pkgAsk : '';
+    return `<div class="dci-note dci-uncr${pkg ? ' dci-uncr-pkg' : ''}" data-el="uncr"${pkg ? ' data-pkg="1"' : ''}><span>${esc(pkg ? tr('pkg.ask', { name: pkg }) : tr(all ? 'uncr.all' : 'uncr.some', { src: sourceLabel(entrySource(a)) }))}</span>${all
       ? ` <button type="button" class="dci-small" data-act="uncr-take" data-rows="${esc(off.map((r) => r.id).join(','))}">${esc(tr('uncr.take'))}</button>` : per}${many
       ? ` <button type="button" class="dci-textbtn" data-act="uncr-all" title="${esc(tr('uncr.allTitle'))}">${esc(tr('uncr.takeAll'))}</button>` : ''}</div>`;
   }
@@ -45961,10 +46086,10 @@
     const b = (act, sym, key, extra = '') => {
       const label = tr(`wone.${key}`);
       const on = S.oneWork === key || (key === 'one' && String(S.oneWork || '').startsWith('one:'));
-      return `<button type="button" class="dci-small dci-wone-btn" data-act="${act}" title="${esc(tr(`wone.${key}Title`))}" aria-label="${esc(label)}"${act === 'wone-undo' ? '' : ` aria-pressed="${on}"`}${extra}>${S.emojiText ? esc(label) : sym}</button>`;
+      return `<button type="button" class="dci-small dci-wone-btn" data-act="${act}" title="${esc(tr(`wone.${key}Title`))}" aria-label="${esc(label)}"${act === 'wone-undo' ? '' : ` aria-pressed="${on}"`}${extra}>${sym}</button>`;
     };
-    return `<span class="dci-wone" role="group" aria-label="${esc(tr('wone.group'))}">${b('wone-credits', '✍', 'credits')}${b('wone-existing', '🔗', 'existing')}${b('wone-open', '☝', 'one', ` aria-expanded="${!!S.mxOneOpen}"`)}${
-      S.oneWorkUndo ? b('wone-undo', '↺', 'undo') : ''}</span>`;
+    return `<span class="dci-wone" role="group" aria-label="${esc(tr('wone.group'))}">${b('wone-credits', esc(emo('wcredits')), 'credits')}${b('wone-existing', esc(emo('wexisting')), 'existing')}${b('wone-open', esc(emo('wone')), 'one', ` aria-expanded="${!!S.mxOneOpen}"`)}${
+      S.oneWorkUndo ? b('wone-undo', S.emojiText ? esc(tr('wone.undo')) : '↺', 'undo') : ''}</span>`;
   }
   /** [Z-ONEWORK] (3.138.0) The list of "☝": a track each, with its work (or "no work"). */
   function oneWorkListHtml() {
@@ -46013,7 +46138,7 @@
           ${skipped || folded ? '' : `${suiteAddBtnHtml()}${nSuites ? chip(tr('matrix.suitesCount', { n: nSuites, parts: suites.filter((o) => (S.suiteAnswers.get(o.key) || {}).yes).reduce((k, o) => k + o.tracks.length, 0) })) : ''}`}</div>
         <div class="dci-wh-r">${skipped || folded ? '' : `<button type="button" class="dci-small dci-wh-defaults" data-act="mx-defaults" aria-expanded="${!!S.mxDefaultsOpen}" title="${esc(tr('matrix.defaultsTitle'))}">⚙ ${esc(tr('matrix.defaults'))}: <strong>${esc(defaultsSummary())}</strong></button>
           ${missing ? `<button type="button" class="dci-small" data-act="works-search-all">${esc(tr('matrix.searchWorks'))}</button>
-          <button type="button" class="dci-primary dci-small" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}${magicHeadHtml()}
+          <button type="button" class="dci-primary dci-small dci-wh-new" data-act="works-pending-all" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('matrix.newWorksHow'))}">＋ ${esc(tr('matrix.newWorksN', { n: missing }))}</button>` : ''}${medleyHeadHtml()}${magicHeadHtml()}
           <button type="button" class="dci-small dci-wh-more" data-act="mx-more" aria-expanded="${!!S.mxMoreOpen}" aria-label="${esc(tr('matrix.moreTitle'))}" title="${esc(tr('matrix.moreTitle'))}">⋯</button>`}</div>
       </div>
       ${!skipped && !folded && S.mxOneOpen && ruleOn('S225') ? oneWorkListHtml() : ''}
@@ -50419,6 +50544,13 @@
       case 'keys-open':
         // [3.36.3] the keyboard shortcuts below the head
         setKeysOpen(!S.keysOpen);
+        break;
+      // [Z-SETSEARCH] (3.161.0) the search of the settings: 🔍 in their head (or / while they are open), a hit
+      case 'set-search-open':
+        setFindOpen(!S.setSearchOpen);
+        break;
+      case 'set-search-go':
+        setSearchGo(btn.dataset.topic, btn.dataset.n);
         break;
       // [Z-SEARCH] (3.137.0) the search: 🔍 in the head (or /), its arrows and ✕
       case 'search-open':
@@ -54929,7 +55061,7 @@
     'pools-keep': () => S.poolsKeep,
   };
 
-  function settingsHtml() {
+  function settingsHtml(opt = {}) {
     const num = (name, dis = false) => {
       const d = AW_SETTINGS[name];
       return `<input type="number" data-lb data-set="${name}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[name]}" aria-label="${esc(tr(`settings.aria.${name}`))}"${dis ? ' disabled' : ''}>`;
@@ -55231,6 +55363,31 @@
         ];
       },
     };
+    // [Z-SETSEARCH] (3.161.0) every setting of every tab for the search: its tab, its place among the rows of the tab, its name, its words
+    if (opt.index) {
+      return settingTopics().filter((key) => key !== 'beta').flatMap((key) => {
+        const box = document.createElement('div');
+        box.innerHTML = bodies[key]().join('');
+        let head = '';
+        let n = -1;
+        // (the tab itself: "Profiles", "Connections" have no rows of settings)
+        const out = [{ tab: key, n: -1, name: tr(`settings.t.${key}`), head: '', words: `${tr(`settings.t.${key}`)} ${box.textContent.slice(0, 4000)}`, isTab: true }];
+        box.querySelectorAll('h4.dci-set-h, .dci-set-row').forEach((row) => {
+          if (row.matches('h4')) {
+            head = row.textContent.trim();
+            return;
+          }
+          n++;
+          const lbl = row.querySelector('.dci-set-lbl');
+          const name = ((lbl && lbl.textContent.trim()) || ((row.querySelector('label.dci-check') || {}).textContent || '').trim()
+            || ((row.querySelector('button, strong') || {}).textContent || '').trim()).replace(/\s+/g, ' ');
+          if (!name) return;
+          const words = [...row.querySelectorAll('.dci-set-hint, button, option, label')].map((x) => x.textContent).concat([...row.querySelectorAll('[title]')].map((x) => x.title)).join(' ');
+          out.push({ tab: key, n, name, head, words: `${name} ${head} ${words}` });
+        });
+        return out;
+      });
+    }
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
     // ([Z-SETTABS2] 3.137.0, review) "Developer" remembered with developer mode off: General, and forgotten
     if (S.settingsTab === 'developer' && !S.devMode) {
@@ -55249,7 +55406,12 @@
       : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
     // [3.27.2] the heading folds the settings in (item 57): a button that looks like the heading, with a tooltip
     return `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="settings-fold" title="${esc(tr('settings.foldTitle'))}" aria-label="${esc(tr('settings.foldTitle'))}">${esc(tr('settings.title'))}</button> <span class="dci-sub">${esc(tr('settings.hint'))}</span>
+      <button type="button" class="dci-iconbtn dci-set-searchbtn" data-act="set-search-open" aria-expanded="${!!S.setSearchOpen}" title="${esc(tr('setsearch.title'))}" aria-label="${esc(tr('setsearch.title'))}">${ico('search')}</button>
       ${versionsHtml()}</div>
+      ${S.setSearchOpen ? `<div class="dci-set-search" data-el="set-search" role="search" aria-label="${esc(tr('setsearch.title'))}">
+        ${ico('search')}<input type="search" data-f="set-search" value="${esc(S.setSearchQ || '')}" placeholder="${esc(tr('setsearch.ph'))}" aria-label="${esc(tr('setsearch.title'))}" autocomplete="off" spellcheck="false">
+        <button type="button" class="dci-iconbtn" data-act="set-search-open" title="${esc(tr('search.close'))}" aria-label="${esc(tr('search.close'))}">${ico('close')}</button>
+        <div class="dci-set-hits" data-el="set-search-hits" aria-live="polite">${setSearchHitsHtml()}</div></div>` : ''}
       <div class="dci-set-wrap">
         <div class="dci-set-side">
           <div class="dci-set-tabs" role="tablist" aria-orientation="vertical" aria-label="${esc(tr('settings.title'))}">${tabs}</div>
@@ -55509,6 +55671,79 @@
     searchCount(hits, S.searchI);
   }
 
+  /**
+   * [Z-SETSEARCH] (3.161.0) The search of ⚙ Settings: 🔍 in their head – or "/" while they are open – opens a field; it searches as you type
+   * (from two letters, without regard to case and accents) the names of the settings, their explanations and choices, in every tab – in the
+   * dashboard's language and in English. The hits are listed with their tab ("Staging → Fill empty recordings"); a click – or Enter for
+   * the first – goes to the tab, scrolls to the setting and lights it up. ↓ ↑ go through the hits, Esc closes.
+   */
+  function setSearchIndex() {
+    if (S.setSearchIdx && S.setSearchIdx.lang === LANG) return S.setSearchIdx.rows;
+    const rows = settingsHtml({ index: true });
+    if (LANG !== 'en') {
+      // the same rows in English (a text not translated yet, a word remembered from the README)
+      const lang = LANG;
+      let en = [];
+      try {
+        LANG = 'en';
+        en = settingsHtml({ index: true });
+      } finally {
+        LANG = lang;
+      }
+      const byKey = new Map(en.map((r) => [`${r.tab}|${r.n}`, r.words]));
+      rows.forEach((r) => { r.words += ` ${byKey.get(`${r.tab}|${r.n}`) || ''}`; });
+    }
+    rows.forEach((r) => { r.norm = searchNorm(r.words); r.nameNorm = searchNorm(r.name); });
+    S.setSearchIdx = { lang: LANG, rows };
+    return rows;
+  }
+  function setSearchHits() {
+    const q = searchNorm(S.setSearchQ);
+    if (q.length < 2) return [];
+    const parts = q.split(' ');
+    // a hit in the name first, then in the explanation
+    const all = setSearchIndex().filter((r) => parts.every((w) => r.norm.includes(w)));
+    const idx = setSearchIndex();
+    return all.filter((r) => !r.isTab || parts.every((w) => r.nameNorm.includes(w)) || !idx.some((x) => !x.isTab && x.tab === r.tab))
+      .sort((a, b) => Number(parts.every((w) => b.nameNorm.includes(w))) - Number(parts.every((w) => a.nameNorm.includes(w)))).slice(0, 12);
+  }
+  function setSearchHitsHtml() {
+    const q = searchNorm(S.setSearchQ);
+    if (q.length < 2) return `<span class="dci-sub">${esc(tr('setsearch.hint'))}</span>`;
+    const hits = setSearchHits();
+    if (!hits.length) return `<span class="dci-sub dci-search-nohit">${esc(tr('search.none'))}</span>`;
+    return `<ul>${hits.map((h) => `<li><button type="button" class="dci-textbtn" data-act="set-search-go" data-topic="${esc(h.tab)}" data-n="${h.n}">${h.isTab
+      ? `${esc(tr('setsearch.tab'))} <strong>${esc(h.name)}</strong>` : `<span class="dci-set-hit-tab">${esc(tr(`settings.t.${h.tab}`))}${h.head ? ` · ${esc(h.head)}` : ''} →</span> ${esc(h.name)}`}</button></li>`).join('')}</ul>`;
+  }
+  function setFindOpen(open) {
+    S.setSearchOpen = !!open;
+    if (open) S.setSearchIdx = null;
+    renderSettings();
+    const el = $('settings');
+    const input = el && el.querySelector(open ? '[data-f="set-search"]' : '[data-act="set-search-open"]');
+    if (input) {
+      input.focus({ preventScroll: true });
+      if (open && input.select) input.select();
+    }
+  }
+  /** A hit: its tab, the setting scrolled into view and lit up (the search stays open with its hits). */
+  function setSearchGo(topic, n) {
+    S.settingsTab = topic;
+    S.resetOpen = false;
+    writeJson('localStorage', SETTINGS_TAB_KEY, S.settingsTab === 'general' ? null : S.settingsTab);
+    renderSettings();
+    const row = Number(n) < 0 ? $('settings').querySelector('#dci-set-pane') : $('settings').querySelectorAll('#dci-set-pane .dci-set-row')[Number(n)];
+    if (!row) return;
+    row.scrollIntoView({ block: 'center', inline: 'nearest' });
+    const ctl = Number(n) < 0 ? null : row.querySelector('input, select, button, textarea');
+    if (ctl) ctl.focus({ preventScroll: true });
+    // (lit after the focus has settled: the settings may be drawn once more for it)
+    setTimeout(() => {
+      const again = Number(n) < 0 ? null : $('settings') && $('settings').querySelectorAll('#dci-set-pane .dci-set-row')[Number(n)];
+      if (again) searchMark(again);
+    }, 80);
+  }
+
   function renderSettings() {
     if (!S.overlay) return;
     const el = $('settings');
@@ -55537,6 +55772,26 @@
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
+    // [Z-SETSEARCH] (3.161.0) the field of the search: its hits as you type (only the list is drawn anew), its keys
+    const si = el.querySelector('[data-f="set-search"]');
+    if (si) {
+      si.addEventListener('input', () => {
+        S.setSearchQ = si.value;
+        const box = el.querySelector('[data-el="set-search-hits"]');
+        if (box) box.innerHTML = setSearchHitsHtml();
+      });
+      el.querySelector('[data-el="set-search"]').addEventListener('keydown', (e) => {
+        const btns = [...el.querySelectorAll('[data-el="set-search-hits"] [data-act="set-search-go"]')];
+        const at = btns.indexOf(document.activeElement);
+        if (e.key === 'Escape') setFindOpen(false);
+        else if (e.key === 'Enter' && e.target === si && btns.length) setSearchGo(btns[0].dataset.topic, btns[0].dataset.n);
+        else if (e.key === 'ArrowDown' && btns.length) btns[Math.min(at + 1, btns.length - 1)].focus();
+        else if (e.key === 'ArrowUp' && btns.length) (at <= 0 ? si : btns[at - 1]).focus();
+        else return;
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
     alignPanes();
   }
 
@@ -57627,7 +57882,9 @@
     if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && S.overlay && !S.overlay.hidden && !typingIn(e.target)
       && (S.overlay.contains(document.activeElement) || !document.activeElement || document.activeElement === document.body)) {
       e.preventDefault();
-      setSearchOpen(true);
+      // ([Z-SETSEARCH] 3.161.0) with the settings open: their search
+      if (S.settingsOpen) setFindOpen(true);
+      else setSearchOpen(true);
       return;
     }
     if (e.key !== 'Escape') return;
@@ -58665,8 +58922,18 @@
       .dci-mx-seps input { width: calc(var(--u, 1px) * 44); }
       /* [Z-WORKMAGIC] (3.155.0) "✨ Answer all": the button with ▾ and ⓘ, the preview, the table of the levels, the mark at a track */
       .dci-mx-magic { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); }
-      .dci-mx-magicbtn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-      .dci-mx-magiclv { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; padding-left: calc(var(--u, 1px) * 5); padding-right: calc(var(--u, 1px) * 5); }
+      /* [Z-WHBTNROUND] [Z-MAGICBTN] (3.161.0) "＋ New works" and "✨ Answer all" with round corners; "Answer all" the one that stands out – a little
+         larger, a quiet gradient from MusicBrainz's purple to its orange, white text (4.5 : 1 at its lightest place) */
+      #dci-overlay .dci-wh-new { border-radius: 999px; padding-left: calc(var(--u, 1px) * 12); padding-right: calc(var(--u, 1px) * 12); }
+      #dci-overlay .dci-mx-magicbtn { border-radius: 999px 0 0 999px; border: 1px solid #4b4585; border-right: 0; color: #fff; font-weight: 600;
+        font-size: calc(var(--u, 1px) * 14); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 13);
+        background: linear-gradient(100deg, #5b5599 0%, #6f5a96 55%, #a8501f 100%); }
+      #dci-overlay .dci-mx-magicbtn:hover, #dci-overlay .dci-mx-magicbtn[aria-expanded="true"] { background: linear-gradient(100deg, #4b4585 0%, #5f4a86 55%, #96441a 100%); }
+      #dci-overlay .dci-mx-magiclv { border-radius: 0 999px 999px 0; margin-left: 0; border: 1px solid #7a3a16; border-left: 1px solid rgba(255, 255, 255, 0.45); color: #fff; background: #a8501f;
+        font-size: calc(var(--u, 1px) * 14); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 7); }
+      #dci-overlay .dci-mx-magiclv:hover, #dci-overlay .dci-mx-magiclv[aria-expanded="true"] { background: #96441a; }
+      .dci-mx-magic { gap: 0; }
+      .dci-mx-magic .dci-wh-help { margin-left: calc(var(--u, 1px) * 4); }
       .dci-mx-magicpop, .dci-mx-magicinfo { display: block; }
       .dci-mx-magiclist { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
       .dci-mx-magiclist ul { margin: 0 0 calc(var(--u, 1px) * 4); padding-left: calc(var(--u, 1px) * 16); }
@@ -59311,6 +59578,18 @@
         .dci-set-field > .dci-set-lbl:empty { display: none; }
         .dci-set-pane .dci-lvl-pick, .dci-set-pane .dci-kind-pick, .dci-set-pane .dci-dark-pick { grid-template-columns: repeat(2, max-content); }
       }
+      /* [Z-SETSEARCH] (3.161.0) the filter at the top of "Mapping rules" */
+      .dci-rules-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 8px; }
+      .dci-rules-filter input { width: 260px; max-width: 60vw; }
+      /* [Z-SETSEARCH] (3.161.0) the search of the settings: a field below their head, its hits a list with the tab before each */
+      .dci-set-searchbtn { margin-left: calc(var(--u, 1px) * 6); }
+      .dci-set-search { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); margin: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 9);
+        background: #fff; border: 1px solid var(--purple); border-radius: 6px; }
+      .dci-set-search input { flex: 0 1 calc(var(--u, 1px) * 300); min-width: calc(var(--u, 1px) * 140); }
+      .dci-set-hits { flex: 1 1 100%; min-width: 0; }
+      .dci-set-hits ul { list-style: none; margin: 0; padding: 0; display: grid; gap: calc(var(--u, 1px) * 2); }
+      .dci-set-hits .dci-textbtn { text-align: left; }
+      .dci-set-hit-tab { color: var(--muted); }
       /* [Z-SEARCH] (3.137.0) the search at the top right of the dashboard, staying there while it scrolls; a hit lit up briefly */
       .dci-searchbar { position: sticky; top: calc(var(--u, 1px) * -14); z-index: 40; height: 0; }
       .dci-search-box { position: absolute; right: calc(var(--u, 1px) * -12); top: calc(var(--u, 1px) * -6); display: flex; align-items: center; gap: calc(var(--u, 1px) * 4);

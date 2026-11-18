@@ -2834,4 +2834,57 @@ Download available in 24-bit/44.1kHz."""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_freetext3161():
+    """Credits Importer 3.161.0 (collected items Z-LEADMARK, Z-VINYLONLY; rules S292, S293), the text recognition alone (Node):
+    A) a sign before a line is no part of the role: "⊛ Design by Gendema", "★ Mixed by Jane Roe", "→ Photos: John Doe", "🎸 Guitar: Jane Roe";
+       "- Jane Roe: bass" and "* Drums: Bob" as before. "© 2019 Label Records", "℗ 2019 Label Records" keep their sign (© ® ™ ℗ are
+       pictographic too – the golden register found the copyright line lost).
+    B) distributors: "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Distribution - !K7", "Vertrieb: Indigo" –
+       "Distributed By"; "Vinyl distribution: Cargo Records" bound to vinyl, "Digital distribution by The Orchard" to digital;
+       "Distribution of the songs was slow." is none.
+    C) what a shop writes: "Orange / Black Splatter Vinyl LP", "Estimated shipping: February 2027", "In stock and shipping now.",
+       "180g Black Vinyl 2LP", "Limited Edition Cassette" – left out as "shop"; not "Cover by Red Vinyl", "Music by The LP",
+       "Jane Roe – tape", "John Smith Vinyl"."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const known = /^(design by|mixed by|photos|guitar|bass|drums|cover by|music by|tape)$/i;
+const isRole = (r) => known.test(String(r).trim());
+const isCompanyRole = (r) => /^(distributed by|copyright \(c\)|phonographic copyright \(p\))$/i.test(String(r).trim());
+const out = JSON.parse(process.argv[2]).map((t) => {
+  const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole, resolveTracks: () => null, resolveTitles: () => null, trackCount: 4 });
+  return [t, r.credits.map((c) => [c.who.name, c.role.raw || c.role]), r.companies.map((c) => [c.who.name, c.role, c.medium || '']), (r.ignored || []).map((x) => x.why), r.unrecognized.length];
+});
+console.log(JSON.stringify(out));
+"""
+    lines = ['⊛ Design by Gendema', '★ Mixed by Jane Roe', '→ Photos: John Doe', '🎸 Guitar: Jane Roe', '- Jane Roe: bass', '* Drums: Bob', '© 2019 Label Records', '℗ 2019 Label Records',
+             'Exclusive EU distribution via Hiraeth Records:', 'EU distribution: Hiraeth Records', 'Distribution - !K7', 'Vertrieb: Indigo',
+             'Vinyl distribution: Cargo Records', 'Digital distribution by The Orchard', 'Distribution of the songs was slow.',
+             'Orange / Black Splatter Vinyl LP', '⊛ Estimated shipping: February 2027', 'In stock and shipping now.', '180g Black Vinyl 2LP', 'Limited Edition Cassette',
+             'Cover by Red Vinyl', 'Music by The LP', 'Jane Roe – tape', 'John Smith Vinyl']
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(lines)], capture_output=True, text=True)
+    got = {t: rest for t, *rest in json.loads(js.stdout)} if not js.returncode else {}
+    if js.returncode:
+        print(js.stderr[-600:])
+    for t in lines:
+        print(' ', t, '→', got.get(t))
+    cr = lambda t: [tuple(x) for x in (got.get(t) or [[]])[0]]  # noqa: E731
+    co = lambda t: [tuple(x) for x in (got.get(t) or [[], []])[1]]  # noqa: E731
+    why = lambda t: (got.get(t) or [[], [], []])[2]  # noqa: E731
+    ok_a = (cr('⊛ Design by Gendema') == [('Gendema', 'Design By')] and cr('★ Mixed by Jane Roe') == [('Jane Roe', 'Mixed By')] and cr('→ Photos: John Doe') == [('John Doe', 'Photos')]
+            and cr('🎸 Guitar: Jane Roe') == [('Jane Roe', 'Guitar')] and cr('- Jane Roe: bass') == [('Jane Roe', 'bass')] and cr('* Drums: Bob') == [('Bob', 'Drums')]
+            and [x[:2] for x in co('© 2019 Label Records')] == [('Label Records', 'Copyright (c)')] and [x[:2] for x in co('℗ 2019 Label Records')] == [('Label Records', 'Phonographic Copyright (p)')])
+    ok_b = (co('Exclusive EU distribution via Hiraeth Records:') == [('Hiraeth Records', 'Distributed By', '')] and co('EU distribution: Hiraeth Records') == [('Hiraeth Records', 'Distributed By', '')]
+            and co('Distribution - !K7') == [('!K7', 'Distributed By', '')] and co('Vertrieb: Indigo') == [('Indigo', 'Distributed By', '')]
+            and co('Vinyl distribution: Cargo Records') == [('Cargo Records', 'Distributed By', 'vinyl')] and co('Digital distribution by The Orchard') == [('The Orchard', 'Distributed By', 'digital')]
+            and not co('Distribution of the songs was slow.'))
+    ok_c = (all(why(t) == ['shop'] for t in ('Orange / Black Splatter Vinyl LP', '⊛ Estimated shipping: February 2027', 'In stock and shipping now.', '180g Black Vinyl 2LP', 'Limited Edition Cassette'))
+            and cr('Cover by Red Vinyl') == [('Red Vinyl', 'Cover By')] and cr('Music by The LP') == [('The LP', 'Music By')] and cr('Jane Roe – tape') == [('Jane Roe', 'tape')]
+            and 'shop' not in why('John Smith Vinyl'))
+    results = [bool(got), ok_a, ok_b, ok_c]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

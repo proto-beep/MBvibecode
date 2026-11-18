@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-18 | 3.159.0 – 3.160.0 | – |
+| 2026-11-18 | 3.159.0 – 3.161.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
 | 2026-11-14 | 3.143.0 – 3.145.0 | – |
@@ -132,6 +132,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.161.0
+
+Editions on Bandcamp, searching the settings, the head of the works matrix:
+
+- **A sign before a line** (Z-LEADMARK; S292): "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y" – the bullet or ornament is no part of the role (it was its role credit "⊛"). Every free text.
+- **The medium of an edition** (Z-VINYLONLY; S293): what the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, lacquer cut – holds for that medium only; with a release of another medium it is left out and listed so. The same company in the album's credits holds for all. "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X" are read; "Vinyl distribution: X", "Digital distribution by X" bind the distributor to that medium in every free text. "Orange / Black Splatter Vinyl LP", "Estimated shipping: February 2027", "In stock and shipping now." are left out as "shop" – no date of them is offered.
+- **Photographs and liner notes named only in an edition's text:** taken for a release of that medium; for another (the digital release) a suggestion with "Take anyway", counted as "may" – unless the page names a digital booklet or the images as part of the download.
+- **Search in ⚙ Settings** (Z-SETSEARCH): 🔍 in their head, or / while they are open – the names and explanations of all settings in every tab, in the dashboard's language and in English; a hit goes to its tab and lights the setting up.
+- **Filter in "Mapping rules":** the field is at the top and filters ids, patterns, results and notes; sections left empty and the quick switches that do not fit go; "n of m rules".
+- **The head of the works matrix** (Z-WHBTNROUND, Z-MAGICBTN, Z-WONEEMO): "＋ New works" and "✨ Answer all" with round corners; "Answer all" a little larger, white on a quiet gradient from purple to orange; the three "works to keep" as emojis ✍️ 🔗 👆 – with "Symbols: Text" the words "Credits", "In MB", "One" –, each with its tooltip.
 
 ### Import 3.160.0
 
