@@ -3755,4 +3755,73 @@ def case_glevels3145():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_setsearch3161():
+    """Credits Importer 3.161.0 (collected item Z-SETSEARCH): the search of ⚙ Settings.
+    A) 🔍 in the head of the settings opens a field; "fill empty" lists "Staging · … → Fill empty recordings"; Enter goes to the tab Staging,
+       the setting is lit and its switch has the focus; the search stays open.
+    B) "dark" finds the theme settings of Appearance; "profil" the tab Profiles ("Tab Profiles"); "xyzzy" nothing ("No hits").
+    C) "/" with the settings open opens their search (not the dashboard's); Esc closes it, the magnifier has the focus.
+    D) German: "sprache" finds the language setting, and so does the English "language" (a text not translated yet is found by its English)."""
+    HITS = "[...document.querySelectorAll('[data-el=set-search-hits] button, [data-el=set-search-hits] .dci-sub')].map(b => b.textContent.replace(/\\s+/g, ' ').trim())"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.open_settings(pg, 'general')
+        pg.click('[data-el=settings] [data-act=set-search-open]')
+        pg.wait_for_timeout(200)
+        pg.fill('[data-f=set-search]', 'fill empty')
+        pg.wait_for_timeout(250)
+        a0 = pg.evaluate(HITS)
+        pg.keyboard.press('Enter')
+        pg.wait_for_timeout(400)
+        a1 = pg.evaluate("""(() => { const s = document.querySelector('[data-el=settings]'); const lit = s.querySelector('.dci-search-hit');
+          return [(s.querySelector('[role=tab][aria-selected=true]') || {}).textContent, lit ? lit.textContent.replace(/\\s+/g, ' ').trim().slice(0, 21) : null,
+            document.activeElement.dataset.set || '', !!s.querySelector('[data-f=set-search]')]; })()""")
+        print('A)', a0, a1)
+        results.append(len(a0) == 1 and a0[0].startswith('Staging') and a0[0].endswith('→ Fill empty recordings') and a1 == ['Staging', 'Fill empty recordings', 'qf-on', True])
+        got = {}
+        for q in ('dark', 'profil', 'xyzzy'):
+            pg.fill('[data-f=set-search]', q)
+            pg.wait_for_timeout(250)
+            got[q] = pg.evaluate(HITS)
+        print('B)', got)
+        results.append(len(got['dark']) >= 2 and all(x.startswith('Appearance') for x in got['dark'][:2]) and 'Tab Profiles' in got['profil'] and got['xyzzy'] == ['No hits'])
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(200)
+        c0 = pg.evaluate("[!!document.querySelector('[data-f=set-search]'), document.activeElement.dataset.act || '']")
+        pg.evaluate("document.activeElement.blur()")
+        pg.locator('.dci-set-title').focus()
+        pg.keyboard.press('/')
+        pg.wait_for_timeout(250)
+        c1 = pg.evaluate("[!!document.querySelector('[data-el=settings] [data-f=set-search]'), document.activeElement.dataset.f || '', !!document.querySelector('[data-el=search] input')]")
+        print('C)', c0, c1)
+        results.append(c0 == [False, 'set-search-open'] and c1 == [True, 'set-search', False])
+        pg.keyboard.press('Escape')
+        H.open_settings(pg, 'general')
+        pg.select_option('[data-el=settings] [data-set=lang], [data-el=settings] select[data-f=lang]', 'de') if pg.locator('[data-el=settings] [data-set=lang], [data-el=settings] select[data-f=lang]').count() else pg.evaluate("localStorage.setItem('dci-lang', JSON.stringify('de'))")
+        pg.wait_for_timeout(400)
+        if pg.evaluate("localStorage.getItem('dci-lang')") != '"de"':
+            pg.evaluate("localStorage.setItem('dci-lang', JSON.stringify('de'))")
+        pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(400)
+        pg.click('[data-el=settings] [data-act=set-search-open]')
+        d = {}
+        for q in ('sprache', 'language'):
+            pg.fill('[data-f=set-search]', q)
+            pg.wait_for_timeout(250)
+            d[q] = pg.evaluate(HITS)
+        print('D)', d)
+        results.append(len(d['sprache']) >= 1 and len(d['language']) >= 1 and d['sprache'][0] == d['language'][0] and d['sprache'][0].endswith('Sprache'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

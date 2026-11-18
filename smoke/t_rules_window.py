@@ -1085,4 +1085,60 @@ def case_review43():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_filter3161():
+    """Credits Importer 3.161.0 (collected item Z-SETSEARCH): the filter at the top of "Mapping rules".
+    A) The field stands above the quick switches. "S287": one rule left ("1 of n rules"), the sections without a hit gone, no quick switch.
+    B) "drums": of the quick switches only S245 ("Drums credited “drums”"), its group the only one; rules that name drums stay.
+    C) Two words ("vinyl mastering"): only rules with both. Emptied: every row, section and quick switch is there again, the count gone.
+    D) A click on the id of a quick switch while a filter hides its rule: the filter is cleared and the rule shown."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.locator('[data-act=rules]').first.click()
+        pg.wait_for_selector('#dci-rules [data-rf=tables] tbody tr', timeout=20000)
+        INFO = """(() => { const r = document.getElementById('dci-rules'); const vis = (e) => !e.hidden && !e.closest('[hidden]');
+          return { rows: [...r.querySelectorAll('[data-rf=tables] tbody tr:not(.dci-redit-row)')].filter(vis).map(t => t.dataset.rid || ''),
+            sects: [...r.querySelectorAll('[data-rf=tables] section[data-rsect]')].filter(vis).length,
+            quick: [...r.querySelectorAll('[data-rf=quick] .dci-qbtn-wrap')].filter(vis).map(w => w.querySelector('[data-qs-toggle]').dataset.qsToggle),
+            groups: [...r.querySelectorAll('[data-rf=quick] .dci-quick-group')].filter(vis).length,
+            count: r.querySelector('[data-rf=search-count]').textContent,
+            above: !!(r.querySelector('[data-rf=search]').compareDocumentPosition(r.querySelector('[data-rf=quick]')) & Node.DOCUMENT_POSITION_FOLLOWING) }; })()"""
+        all0 = pg.evaluate(INFO)
+
+        def filt(q):
+            pg.fill('#dci-rules [data-rf=search]', q)
+            pg.wait_for_timeout(200)
+            return pg.evaluate(INFO)
+        a = filt('S287')
+        print('A)', len(all0['rows']), all0['sects'], len(all0['quick']), '→', a)
+        results.append(all0['above'] and len(all0['rows']) > 300 and a['rows'] == ['S287'] and a['sects'] == 1 and a['quick'] == [] and a['groups'] == 0
+                       and a['count'] == f"1 of {len(all0['rows'])} rules")
+        bq = filt('drums')
+        print('B)', bq['quick'], bq['groups'], len(bq['rows']))
+        results.append(bq['quick'] == ['S245'] and bq['groups'] == 1 and 'S245' in bq['rows'] and 0 < len(bq['rows']) < len(all0['rows']))
+        c = filt('vinyl mastering')
+        c0 = filt('')
+        print('C)', c['rows'][:8], '| leer:', len(c0['rows']), c0['sects'], len(c0['quick']), repr(c0['count']))
+        results.append(0 < len(c['rows']) < 30 and c0['rows'] == all0['rows'] and c0['sects'] == all0['sects'] and c0['quick'] == all0['quick'] and c0['count'] == '')
+        filt('S287')
+        pg.fill('#dci-rules [data-rf=search]', 'xyzzy-nothing')
+        pg.wait_for_timeout(150)
+        pg.evaluate("document.querySelectorAll('#dci-rules [data-rf=quick] .dci-qbtn-wrap').forEach(w => { w.hidden = false; w.closest('.dci-quick-group').hidden = false; })")
+        idbtn = pg.locator('#dci-rules [data-rf=quick] [data-qs-id=S245], #dci-rules [data-rf=quick] [data-rule-go=S245], #dci-rules [data-rf=quick] .dci-qid').first
+        if idbtn.count():
+            idbtn.click()
+            pg.wait_for_timeout(300)
+        d = pg.evaluate("[document.querySelector('#dci-rules [data-rf=search]').value, !!document.querySelector('#dci-rules tr.dci-rule-hit')]")
+        print('D)', d)
+        results.append(d == ['', True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
