@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 | – |
+| 2026-11-19 | 3.170.0 – 3.171.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.171.0
+
+Tests and documentation (F-TESTSWITCH, F-TESTWAITS, F-STORAGEDOC) – the script itself is as in 3.170.0:
+
+- **The tests run with the rules as a new installation has them** (F-TESTSWITCH): until now every test case ran with rule S083 ("an existing work is not supplemented") switched off – so the suite never saw the default. Now only the 19 cases that test what is staged on an existing work run with it off; they are named in `smoke/rules_off_cases.json`. All other cases – about 535 of 556 – run with the defaults, and passed so at once. Still as they were: the places where a case sets its own list of rules (19 of them name S083, 7 name S242 – the latter on purpose: they test the suggestions without the lookup by name).
+- **Waiting for the staging instead of a fixed time** (F-TESTWAITS): the 73 places where a case clicked "Stage …" and then waited a fixed time now wait until the dashboard is no longer busy and its log stands still – at least as long as before, longer on a busy computer. The case `theme` waits until the colours stand still. The cases named as unsteady: `theme` – corrected; `cache2`, `marksrelease`, `dedbox` – not: they still fail now and then when five test files run at a time and pass alone.
+- **The storage keys in the README are written from the code** (F-STORAGEDOC): a table of all 154 keys (where each is kept, which tab of ⚙ Settings resets it, its constant in the code), written by `tools/storage_keys.py --write`; the test `t_static.py storagedoc3171` fails when the table is not the one of the code. 41 keys were not in the README before.
 
 ### Import 3.170.0
 

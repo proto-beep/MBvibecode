@@ -511,7 +511,7 @@ def case_tracksdrop():
     # ([3.57.0] rule S083 off: the credits staged on WORK1, a work MusicBrainz has, are what the release page checks here)
     b, pg, dg, errs = open_mb(companion=True, rules_off=['S083'])
     H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
-    pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+    H.stage_click(pg, least=3000)
     H.submit_staged(pg)
     pg.goto(f'https://musicbrainz.org/release/{H.REL}')
     H.with_companion(pg)

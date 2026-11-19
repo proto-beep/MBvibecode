@@ -216,7 +216,7 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             ok6 = 'Discogs calls the release live (format)' in hint and '2022-01-11' in res
             # C7) source, edit note, Discogs tab
             src = pg.evaluate("(() => { const a = document.querySelector('[data-el=source] a'); return [a.href, a.textContent.trim()]; })()")
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            H.stage_click(pg, least=3500)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             note = pg.evaluate("document.getElementById('edit-note-text').value")
             opened_before = pg.evaluate("(window.__opened || []).length")
@@ -562,7 +562,7 @@ def case_supp():
         # D) staged: the edit note
         pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Anna Viola').querySelector('[data-act=name-use]').click()")
         pg.wait_for_timeout(300)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value").splitlines()
         print('D) Notiz:', [l for l in note if not l.startswith('Script')][:6])
@@ -762,7 +762,7 @@ def case_supptable3148():
         names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
         gg = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Guitar Guy').querySelector('[data-f=primary]').value")
         left = pg.evaluate("document.querySelectorAll('.dci-supp-row').length")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")
         print('D) Namen:', names, '| Guitar Guy:', gg, '| übrig:', left, '| Notiz:', [l for l in note.splitlines() if 'differ' in l or 'precise' in l])
@@ -1107,7 +1107,7 @@ def case_fable3151():
         rows = pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(), tr.children[2].textContent.trim().slice(0, 8), tr.querySelector('input').checked])")
         pg.click('[data-act=supp-apply]')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Used from Bandcamp/.test(li.textContent))", 30)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")
         print('A) Tabelle:', rows, '| Notiz:', [l for l in note.splitlines() if 'Bandcamp' in l or 'differ' in l])
@@ -1172,7 +1172,7 @@ def case_fable3152():
         # B) staged, Bass Man's relationships taken out by hand, "Enter edit"
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
         pg.wait_for_timeout(200)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         d0 = pg.evaluate(DONE)
         gone = pg.evaluate(f"""(() => {{ const st = MB.relationshipEditor.state; const out = st.added.filter(r => [(r.entity0 || {{}}).gid, (r.entity1 || {{}}).gid].includes('{BASS}'));

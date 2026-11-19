@@ -684,7 +684,7 @@ def case_marksrelease():
         print('0) vor Übernehmen:', groups, 'Einträge |', done_log, '|', m0)
         results.append(groups == 14 and len(done_log) == 1 and done_log[0].startswith('Import complete: 14 roles of 14 entries in the dashboard')
                        and m0 == ['✓'] + ['○'] * 11)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         m1 = marks(dg)
         print('1) nach Übernehmen:', m1)
         results.append(m1 == ['✓ Writer W', '○ Writer W', '● ●Bass Man', '● ●Guitar Guy'] + [f'● {n}' for n in NAMES] + ['● Pub Co'])

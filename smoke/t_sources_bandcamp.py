@@ -120,7 +120,7 @@ def case_bandcamp():
             and g['Test Band'][0] == 'linked' and g['Test Band'][1] == ['guitar · 4 of 4 tracks'] \
             and g['Jane Roe'][1] == ['Mixed By · 4 of 4 tracks'] and g['Peter Evans'][1] == ['Trumpet · 4 of 4 tracks'] \
             and g['Anna Viola'][1] == ['Viola · 1 of 4 tracks'] and unrec == ['ignored: Thanks Mom.']
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")
         print('   Notiz:', [l for l in note.splitlines() if l.startswith('Source') or 'from Bandcamp' in l])
@@ -1198,7 +1198,7 @@ Editor: Jim Beckmann"""
         key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === 'Julian Martlew').dataset.group")
         pg.locator(f'section.dci-group[data-group="{key}"] [data-act=name-use][data-mbid="{JM}"]').first.click()
         pg.wait_for_timeout(800)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value").splitlines()
         print('B)', note[:3])
@@ -1801,7 +1801,7 @@ Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
         results.append(c0 == ['Split into 3 works (songs)', 'Switch: when “＋ New” or “＋ New works” plans this track, each part becomes a work of its own: Approach to Anywhere · Nuska · Melting Fish']
                        and c1 == [['song 1 of 3', 'Approach to Anywhere', []], ['song 2 of 3', 'Nuska', ['Link “Nuska”']], ['song 3 of 3', 'Melting Fish', []]]
                        and c2 == ['Track 1.1: split into the 3 songs of the description'])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         d0 = pg.evaluate(STAGED)
         d1 = pg.evaluate("""MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 740).map(r => [r.entity0.gid, r.entity1.gid, JSON.stringify(r.attributes || {}).includes('2025-04-08')])""")

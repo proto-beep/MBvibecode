@@ -541,7 +541,7 @@ def case_suiteask():
           : tr.classList.contains('dci-mx-inpart') ? 'part' : 'row')""")
         print('   Zeilen:', rows0)
         results.append(rows0[0] == 'suite' and rows0.count('suite') == 1 and rows0[1:] and set(rows0[1:]) == {'part'})
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         c0 = sorted(pg.evaluate(STAGED))
         print('C)', c0)
@@ -611,7 +611,7 @@ def case_suiteparts():
     PREVIEW = "[...document.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /of the suite/.test(t))"
 
     def stage():
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(300)
     results = []
@@ -730,7 +730,7 @@ def case_medley():
         results.append(b0[0] == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'Beta', []]] and b0[2] == ['Link “Beta”']
                        and b0[1] == ['Track 1.3: split into 2 works (medley)', 'Track 1.3: MusicBrainz has works for 1 of its parts – offered at them']
                        and b1 == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'MBBeta', []]])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         c0 = pg.evaluate(STAGED)
         print('C)', c0)
@@ -899,7 +899,7 @@ def case_arrdis398():
             b1 = pg.evaluate(BOX)
             print('B)', b0, b1)
             results.append(bool(b0) and b0[1] == ['The Band arrangement'] and bool(b1) and b1[1] == ['The Band arr.'])
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            H.stage_click(pg, least=3500)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(300)
             c0 = [pg.evaluate(STAGED), pg.evaluate("(document.getElementById('dci-arrcom-notice') || {}).textContent || ''"),
@@ -959,7 +959,7 @@ def case_colw399():
         results.append(a0 <= 460)
         pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
         b0 = pg.evaluate("(tr => (tr.querySelector('.dci-mx-line strong') || {}).textContent)(document.querySelector('.dci-matrix tr[data-work=\"2\"]'))")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         b1 = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && !r.entity1.gid).map(r => r.entity1.name).filter(n => /Geary/.test(n))")
         print('B)', b0, b1)
@@ -1158,7 +1158,7 @@ def case_suiterestage():
         orphans: parts.filter(r => !r.entity1.gid && !linked.has(r.entity1.id)).map(r => r.entity1.name), suites: [...new Set(parts.map(r => r.entity0.gid))] }; })()"""
 
     def stage():
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now|^yes$|^ja$/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(500)
     results = []
@@ -1246,7 +1246,7 @@ def case_wts():
 
     def stage(pg):
         pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(300)
         return pg.evaluate(STAGED)
@@ -1373,7 +1373,7 @@ def case_wts397():
         print('C)', c0, '\n  ', c1)
         results.append([x[1] for x in c0 if x[0] == '1'] == [['[Song]'], ['[Song]']] and [x[1] for x in c1] == [['[Song]'], ['[– · English]']])
         pg.locator('[data-el=works] [data-act=works-pending-all]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(300)
         d0 = pg.evaluate(STAGED)

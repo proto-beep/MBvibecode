@@ -168,7 +168,7 @@ def case_livecomrun():
         if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
             pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
         pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(1500)
         job = pg.evaluate(JOB)
@@ -267,7 +267,7 @@ def case_liveoffer():
     base = 'live: Abbey Road Studios, New York, NY, USA'
 
     def stage(pg):
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(1500)
 
@@ -557,7 +557,7 @@ def case_live3108():
     SAVED = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /saved for .Enter edit.|after .Enter edit./i.test(t)).length"
 
     def stage(pg):
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(1500)
 

@@ -702,8 +702,7 @@ def case_gaprefresh3131():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(1000)
         before = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null')")
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         # "Enter edit": the edit note in a form with its submit button (as in MusicBrainz's editor), the submission stopped here
         pg.evaluate("""() => { const t = document.getElementById('edit-note-text'); const f = document.createElement('form'); t.parentNode.insertBefore(f, t); f.appendChild(t);
           const btn = document.createElement('button'); btn.type = 'submit'; btn.textContent = 'Enter edit'; f.appendChild(btn); f.addEventListener('submit', (e) => e.preventDefault()); }""")
@@ -1614,8 +1613,7 @@ def case_gaprefresh3135():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(1000)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         gg = H.ARTISTS[3002][0]
         n = pg.evaluate(f"""(() => {{ const re = MB.relationshipEditor; const own = re.state.added.filter(r => r.entity0 && r.entity0.gid === '{gg}');
           own.forEach((r) => re.dispatch({{ type: 'remove-relationship', relationship: r }})); return own.length; }})()""")
@@ -1687,8 +1685,7 @@ def case_gaprefresh3139():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(1000)
         t0 = pg.evaluate(TRACKS)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         bm = H.ARTISTS[3001][0]
         recs = [H.REC[1], H.REC[2]]
         n = pg.evaluate(f"""(() => {{ const re = MB.relationshipEditor; const own = re.state.added.filter(r => r.entity0 && r.entity0.gid === '{bm}' && r.entity1 && {recs}.includes(r.entity1.gid));

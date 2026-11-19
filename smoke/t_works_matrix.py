@@ -262,7 +262,7 @@ def case_matrixcols():
       re.state = {{ ...re.state, existingRels: [{{ id: 9001, linkTypeID: 168, entity0: {{ gid: '{H.ARTISTS[3007][0]}', entityType: 'artist', id: 3007, name: 'Writer W' }},
         entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'x' }}, begin_date: null, end_date: null, ended: false,
         attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         st = pg.evaluate("(() => { const r = MB.relationshipEditor.state.added.find(x => x.id === 9001); return r && [r.begin_date, r._status]; })()")
         print('C2) im Editor:', st)
         ok_c = ok_c and st and st[0] == {'year': 2001, 'month': 3, 'day': 1} and st[1] == 2
@@ -319,7 +319,7 @@ def case_fill():
     print('    × nimmt es zurück:', gone)
     ok_e1 = ok_e1 and gone
     # staging: the existing relationship is changed (date, status "edited"), the edit note says so
-    pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+    H.stage_click(pg, least=3500)
     pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
     st = pg.evaluate("(() => { const r = MB.relationshipEditor.state.added.find(x => x.id === 9001); return r && [r.begin_date, r.end_date, r._status]; })()")
     note = pg.locator('#edit-note-text').input_value()
@@ -368,7 +368,7 @@ def case_fill():
     b, pg, dg, errs = open_mb(companion=True)
     H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
     pg.locator('tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(400)   # track 3: a new work in the editor
-    pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+    H.stage_click(pg, least=3000)
     pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
     pg.wait_for_timeout(1500)
     # (the Discogs page of the test has no line for Writer Z, so the status the companion keeps is looked at)
@@ -515,7 +515,7 @@ def case_wattrs():
       re.state = {{ ...re.state, existingRels: [{{ id: 9101, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'Song One' }},
         entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
         attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         st = pg.evaluate("""(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
       const added = MB.relationshipEditor.state.added;
@@ -582,7 +582,7 @@ def case_pub():
         t = ticks(pg)
         print('Nach Handauswahl + „Belege prüfen“:', {k.replace('MB', '').split(' not')[0]: v for k, v in t.items()})
         ok = t.get('MBOther Pub') == [1] and t.get('MBPub Co') == [1, 2]
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pub = pg.evaluate("window.__dispatched.filter(a => a.newRelationshipState && a.newRelationshipState.linkTypeID === 208).map(a => a.newRelationshipState.entity0.name + ' → ' + a.newRelationshipState.entity1.name)")
         print('Im Editor vorgemerkte Verlagsbeziehungen:', pub)
         print('Ergebnis:', 'OK' if ok and pub == ['Pub Co → Song One', 'Other Pub → Song One'] or ok and sorted(pub) == sorted(['Pub Co → Song One', 'Other Pub → Song One']) else 'PRÜFEN', '| Fehler:', errs)
@@ -711,7 +711,7 @@ def case_statgaps():
       re.state = {{ ...re.state, existingRels: [{{ id: 9101, linkTypeID: 278, entity0: {{ gid: '{H.REC[0]}', entityType: 'recording', id: 5001, name: 'Song One' }},
         entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
         attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(500)
         # MusicBrainz's /ws/js/release after "Enter edit": the relationships staged (as t_ui_settings.py does)
@@ -981,8 +981,7 @@ def case_cwr():
                 pg.wait_for_timeout(300)
             chips = pg.evaluate(CHIPS)
             status = pg.evaluate("[...document.querySelectorAll('.dci-status')].some(x => /writer left out/.test(x.textContent))")
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(500)
             staged = pg.evaluate(STAGED)
@@ -1026,8 +1025,7 @@ def case_cwr():
         pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
         info = pg.evaluate("document.querySelector('[data-el=sub-info]').textContent")
         pg.click('[data-act=sub-close]'); pg.wait_for_timeout(300)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(500)
         staged3 = pg.evaluate(STAGED)
@@ -1100,8 +1098,7 @@ def case_nwa():
             # a click on a locked cell changes nothing (it has no button)
             buttons = pg.evaluate("[...document.querySelectorAll('.dci-matrix td.dci-mx-wlocked [data-act=mx-cell], .dci-matrix td.dci-mx-wlocked [data-act=mx-menu]')].length")
             status = pg.evaluate("[...document.querySelectorAll('.dci-status')].some(x => /the work exists in MusicBrainz/.test(x.textContent))")
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(500)
             staged = pg.evaluate(STAGED)
@@ -1172,8 +1169,7 @@ def case_creditskip():
             st = pg.evaluate("""(() => { const tr = document.querySelector('.dci-matrix tr[data-work="0"]'); const b = tr.querySelector('[data-act=mx-creditskip]');
               return { btn: b ? [b.textContent.trim(), b.getAttribute('aria-pressed')] : null, skipped: tr.querySelectorAll('td.dci-mx-cskipped').length,
                        toggles: tr.querySelectorAll('td.dci-mx-cskipped [data-act=mx-cell]').length, struck: [...tr.querySelectorAll('.dci-mxchip-nwa')].map(c => c.textContent.trim()) }; })()""")
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(500)
             staged = pg.evaluate(STAGED)
@@ -1252,8 +1248,7 @@ def case_publevel():
                 out[lv] = pg.evaluate(COL)
             out['type'] = pg.evaluate("""(() => { const tr = [...document.querySelectorAll('[data-group] tr.dci-row')].find(t => t.closest('[data-group]').querySelector('.dci-gname').textContent.includes('Pub Co'));
               const sel = tr && tr.querySelector('[data-f=type]'); return sel ? sel.options[sel.selectedIndex].text : null; })()""")
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(500)
             out['staged'] = [x for x in pg.evaluate(STAGED) if x[0] == PUB]
@@ -1709,7 +1704,7 @@ def case_wnew398():
         entity1: {{ gid: '{H.WORK1}', entityType: 'work', id: 7001, name: 'Song One' }}, begin_date: null, end_date: null, ended: false,
         attributes: null, entity0_credit: '', entity1_credit: '', _status: 0 }}] }}; }}""")
         STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 || r.linkTypeID === 350).map(r => [r.linkTypeID, r.entity0.gid || r.entity0.name, r.entity1.gid || ('new:' + r.entity1.name)]))()"""
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(300)
         c0 = [pg.evaluate(STAGED), pg.evaluate("window.__removed.map(r => r.id)"), ' | '.join(x for x in pg.locator('#dci-log li').all_inner_texts() if 'arrangement of' in x)]
@@ -1717,7 +1712,7 @@ def case_wnew398():
         results.append([x for x in c0[0] if x[0] == 278 and x[1] == H.REC[0]] == [[278, H.REC[0], 'new:Song One']] and not [x for x in c0[0] if x[0] == 350]
                        and c0[1] == [9101] and '1 “arrangement of” is not confirmed yet' in c0[2])
         pg.locator('.dci-matrix tr[data-work="0"] [data-act=arr-ok]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         d0 = [x for x in pg.evaluate(STAGED) if x[0] == 350]
         print('D)', d0)
         # (MusicBrainz's direction: the work arranged first, its arrangement second)
@@ -1779,8 +1774,7 @@ def case_workdate3130():
             b, pg, errs = open_page(p)
             a, h = pg.evaluate(LINE), pg.evaluate(HEAD)
             pg.evaluate(EXISTING)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             st = pg.evaluate(STAGED)
             print('A)', a, '|', h, '| im Editor:', st)
             results.append(a == [False, '⌚ 2001-03 onto the link (MusicBrainz has none) ×'] and h == '✓ ⌚ Performance dates onto linked works 1 link gets a date'
@@ -1799,8 +1793,7 @@ def case_workdate3130():
             pg.wait_for_timeout(300)
             b4, h4 = pg.evaluate(LINE), pg.evaluate(HEAD)
             pg.evaluate(EXISTING)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             st4 = pg.evaluate(STAGED)
             print('B)', b1, '|', b2, h2, '|', b3, '| aus:', b4, h4, '| im Editor:', st4)
             results.append(b1 == [False, '⌚ 2001-03 onto the link (MusicBrainz: 2001 – more precise) ×'] and b2 == [False, '⌚ 2001-03 not onto the link ↺ take']
@@ -1884,8 +1877,7 @@ def case_workdate3130r():
             pg.wait_for_timeout(500)
             b1, h1 = pg.evaluate(LINE), pg.evaluate(HEAD)
             pg.evaluate(EXISTING)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             st = pg.evaluate("(() => { const r = MB.relationshipEditor.state.added.find(x => x.id === 9302); return r ? [r.begin_date, r.end_date] : null; })()")
             b2, h2 = pg.evaluate(LINE), pg.evaluate(HEAD)
             print('A)', a, '\nB)', b1, '|', h1, '| im Editor:', st, '| danach:', b2, '|', h2)

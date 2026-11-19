@@ -532,11 +532,11 @@ def case_rows():
         back = 'Bob Producer' in names(pg)
         print('1) Entfernt:', gone, msg[-1:] if msg else '', '| zurückgeholt:', back)
         # 2) remove a staged row: it is taken out of the editor at the next "Stage"
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         n_before = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Bob Producer').length")
         grp('Bob Producer').locator('[data-act=remove-row]').click(); pg.wait_for_timeout(300)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         removed = pg.evaluate("window.__removed.map(r => r.entity0.name)")
         n_after = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0.name === 'Bob Producer').length")
         print('2) Bob Producer im Editor vorher/nachher:', n_before, n_after, '| herausgenommen:', removed)
@@ -550,7 +550,7 @@ def case_rows():
         print('   Matrix-Spalten:', [c.split('\n')[0] for c in cols])
         plan = pg.evaluate("[...document.querySelectorAll('[data-el=sum]')].map(e => e.textContent).join(' ')")
         print('   Plan:', plan[:120])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         kinds = pg.evaluate("[...new Set(MB.relationshipEditor.state.added.map(r => r.linkTypeID))].sort((a, b) => a - b)")
         print('   Nach erneutem Übernehmen im Editor (Typ-IDs):', kinds, '(165 lyricist, 167 writer, 168 composer, 208 publishing, 278 performance, 297 arranger)')
         ok_kinds = all(k in (165, 167, 168, 208, 278, 297) for k in kinds) and 167 in kinds
@@ -566,7 +566,7 @@ def case_rows():
         H.open_dashboard(pg)
         pg.click('[data-act=scope][data-scope=work]'); pg.wait_for_timeout(500)
         print('4) Ohne vorheriges Übernehmen, Plan:', pg.inner_text('[data-el=sum]').replace('\n', ' ')[:120])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         kinds = pg.evaluate("[...new Set(MB.relationshipEditor.state.added.map(r => r.linkTypeID))].sort((a, b) => a - b)")
         print('   Im Editor (Typ-IDs):', kinds, '| Ergebnis:', 'OK' if kinds and all(k in (165, 167, 168, 208, 278, 297) for k in kinds) else 'FEHLER', '| Fehler:', errs)
         b.close()
@@ -743,7 +743,7 @@ def case_foot():
         pg.evaluate("""(() => { window.__flash = []; new MutationObserver(() => document.querySelectorAll('.dci-foot-chip-flash').forEach(c => {
           if (!c.__seen) { c.__seen = 1; window.__flash.push(getComputedStyle(c).animationName); } })).observe(document.querySelector('.dci-foot'), { childList: true, subtree: true });
           window.__anim = 0; document.addEventListener('animationstart', (e) => { if (e.animationName === 'dci-chip-flash') window.__anim++; }, true); })()""")
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(1500)
         d = pg.evaluate(M)

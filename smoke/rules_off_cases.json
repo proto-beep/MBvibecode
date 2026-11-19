@@ -1,0 +1,9 @@
+{
+  "t_companion_discogs.py": ["marksrelease", "trackmarks"],
+  "t_entries.py": ["compactlines"],
+  "t_mapping.py": ["engtr3109", "mbnames", "v219"],
+  "t_text_lists.py": ["exceptworks2"],
+  "t_ui_view.py": ["foot", "kindcolors", "rows"],
+  "t_works_matrix.py": ["awb386", "creditskip", "fill", "matrixcols", "mxarrows", "mxdrop", "pps390", "pub"],
+  "t_works_more.py": ["suiterestage"]
+}

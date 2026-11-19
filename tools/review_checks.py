@@ -190,11 +190,11 @@ def check_docs():
             found.append(f'version of the {k}: {x}, the script: {v}')
     if readme:
         rd = read(readme[0])
-        keys = set(re.findall(r"(?:readJson|writeJson|getItem|setItem|removeItem)\([^)]*?'(dci-[a-z0-9-]+)", src)) | set(re.findall(r"const [A-Z_]+_KEY = '(dci-[a-z0-9-]+)'", src))
-        named = set(re.findall(r'`(dci-[a-z0-9-]+)', rd))
-        missing = sorted(keys - named)
-        if missing:
-            found.append(f'{len(missing)} storage keys of the code the README does not name: {", ".join(missing[:12])}{" …" if len(missing) > 12 else ""}')
+        # [F-STORAGEDOC] (3.171.0) the table of the storage keys is written from the code (tools/storage_keys.py)
+        import storage_keys
+        diff = storage_keys.check()
+        if diff:
+            found.append(diff)
         mp = read(MAPPING)
         unknown = sorted(i for i in set(re.findall(r'\b([SDRWQCT]\d{3})\b', rd)) if not re.search(r"['\"]" + i + r"['\"]", src) and f'"{i}"' not in mp and not i.endswith('901'))
         if unknown:

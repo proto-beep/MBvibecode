@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.170.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.171.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,13 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.171.0 · 2026-11-19
+
+- **F-TESTSWITCH:** `harness.py` – `RULES_OFF = []` (was `['S083']`), `RULES_OFF_CASES` from `smoke/rules_off_cases.json` (`{file: [cases]}`; `DCI_RULES_SURVEY=1` ignores it); `caserun.py` sets `H.RULES_OFF = ['S083']` for a case of the list.
+- **F-TESTWAITS:** `harness.py` – `stage_click(pg, timeout, settle, least)` (clicks, waits until `[data-el=busy]` is hidden and the log stands still, at least `least` ms); 73 × `pg.click('[data-act=apply]')` + `wait_for_timeout(n)` are `H.stage_click(pg, least=n)`; `t_ui_settings.py theme` – `H.wait_still` on the colours.
+- **F-STORAGEDOC:** `tools/storage_keys.py` (`read_keys`, `table`, `block`, `check`; `--write`, `--check`); the README's section "Storage keys" between `<!-- storage-keys:begin … -->` and `<!-- storage-keys:end -->`; `tools/review_checks.py docs` uses `storage_keys.check()`; `t_static.py storagedoc3171` new.
+- The main script: only its version.
 
 ## Import 3.170.0 · 2026-11-19
 
