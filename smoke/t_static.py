@@ -5,6 +5,9 @@ import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 
+QUOTA = 95   # per cent of the English texts each language has at least (3.182.0)
+
+
 def case_i18n():
     """Credits Importer 3.27.1: the texts of the script (collected items 68, 69).
     English is the base: every text the code asks for must be there in English. German, Spanish and French are translated
@@ -78,6 +81,7 @@ def case_i18n():
               + (f' – {", ".join(miss[:8])}{" …" if len(miss) > 8 else ""}' if miss else ''))
         if os.environ.get('LIST') and miss:
             print('   ' + '\n   '.join(miss))
+        results.append(share >= QUOTA)   # 3.182.0: a translation round is due before a language falls below the quota
     # E) the English fallback
     NODE = """const m = require(process.argv[1]); delete m.I18N.de['source.load']; delete m.I18N.de['tracks.count.one']; delete m.I18N.de['tracks.count.other'];
 m.setLang('de'); console.log(JSON.stringify([m.tr('source.load'), m.tr('tracks.count', { sel: 2, n: 4 }), m.tr('source.other')]));"""

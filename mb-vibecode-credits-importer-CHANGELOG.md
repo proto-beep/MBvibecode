@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.181.0 | – |
+| 2026-11-19 | 3.170.0 – 3.182.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.182.0
+
+**Translation round E9, second part: Spanish and French are complete.**
+
+- **Spanish and French:** the 1,163 texts each that were shown in English until now are translated – every text of the dashboard is in all four languages again (4,322 of 4,322 in German, Spanish and French). Among them: the dedications box, the profiles, the global statistics, drag & drop of dates and tracks, the suites, "Compared with MusicBrainz", the entry "for the words chosen", the works matrix's columns, the long tooltips (`….more`).
+- **Words as before:** the new texts use the words the two languages already had – *publicación* / *parution* for a release, *pool de fechas* / *pool de dates*, *interruptor rápido* / *interrupteur rapide*, *medley*, *«Omitir»* / *« Ignorer »* for the level "Skip", *Texto del arte de portada* / *Texte des illustrations*. Names of MusicBrainz relationship types and of its buttons ("recorded at", "Enter edit") stay English, as before. French with a no-break space before ":", "?", ";", "!" and inside « ».
+- **One older text** in Spanish and French names the box "Dedications & tributes" by its translated name now.
+- **A quota:** the test of the languages file fails when a language shows less than 95 % of the texts translated – a translation round is due before that.
+- No code of the script changed. The existing lines of the languages file keep their order; the new ones stand where they stand in English.
+- Not done: shortening the long Spanish and French tooltips (they are 15 – 25 % longer than the English ones) – they wrap in their boxes; checked by reading, not text by text in the dashboard.
 
 ### Import 3.181.0
 
