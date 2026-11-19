@@ -4149,7 +4149,7 @@ def case_yell3110():
             # ([Z-MAY] 3.115.0) the yellow ones are "may" (were "can")
             t0 = pg.evaluate("(() => { const c = document.querySelector('[data-el=yell] .dci-yell-c-can'); return [c.title.split(':')[0], c.querySelector('.dci-yell-n').getAttribute('aria-label')]; })()")
             print('A)', f0, d0, m0, t0)
-            results.append(f0 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 4']] and t0 == ['Suggestions that may be confirmed', '4 suggestions to confirm (may) – to the next one']
+            results.append(f0 == [['dci-yell-c-must', '● 2'], ['dci-yell-c-can', '● 4']] and t0 == ['Suggestions, staged as suggested unless changed. Click', '4 suggestions to confirm (may) – to the next one']
                            and dict(d0).get('Dir Ed') == ['dci-yell-dot-must:● 1'] and dict(d0).get('Tr Eng') == ['dci-yell-dot-can:● 1']
                            and dict(d0).get('Bass Guy') == ['dci-yell-dot-can:● 1'] and dict(d0).get('No Link') == ['dci-yell-dot-must:● 1']
                            and any('dci-yell-must' in x for x in m0['Dir Ed']) and any('dci-type-ask' in x and 'dci-yell-can' in x and x.endswith('+ctl') for x in m0['Tr Eng']))

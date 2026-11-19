@@ -548,7 +548,7 @@ def case_supp():
         pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].find(tr => tr.textContent.includes('Keys Guy')).querySelector('input').click()")
         pg.wait_for_timeout(200)
         pg.click('[data-act=supp-apply]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp: 2/.test(li.textContent))", 30)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Used from Bandcamp: 2/.test(li.textContent))", 30)
         # the name search of the new entry runs after MusicBrainz's rate limit (slower when many tests run at once)
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Anna Viola' && s.querySelector('[data-act=name-use]'))", 30)
         pg.wait_for_timeout(500)
@@ -704,7 +704,7 @@ def case_supptable3148():
         k = by.get(('differs', 'Keys Guy'), (None, '', ''))
         o = by.get(('full name', 'J. Olski'), (None, '', ''))
         # ((review) the fretless bass on one of Bass Man's tracks: a new role there, not his bass on every track made more precise)
-        results.append(heads == ['Take over', 'Kind', 'Name', 'MB relationship', 'Discogs', 'Bandcamp', 'MusicBrainz has'] and len(rows) == 4
+        results.append(heads == ['Use', 'Kind', 'Name', 'MB relationship', 'Discogs', 'Bandcamp', 'MusicBrainz has'] and len(rows) == 4
                        and by.get(('new role', 'Bass Man'), (None,))[0] is True and ('more precise', 'Bass Man') not in by
                        and g[0] is True and 'guitar (all tracks)' in g[1] and 'Twelve-String Guitar: Guitar Guy' in g[2] and 'twelve-string guitar' in g[2]
                        and k[0] is True and '(tracks 2)' in k[1] and '(tracks 1, 3)' in k[2] and o[0] is True and o[1] == 'J. Olski' and o[2] == 'James Olski'
@@ -751,7 +751,7 @@ def case_supptable3148():
         pg.wait_for_timeout(200)
         # D) taken over and staged
         pg.click('[data-act=supp-apply]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp: 4/.test(li.textContent))", 30)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Used from Bandcamp: 4/.test(li.textContent))", 30)
         # the full name looked up again: its suggestion chosen (the edit note names only what has a MusicBrainz entry)
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski' && s.querySelector('[data-act=name-use]'))", 30)
         pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'James Olski').querySelector('[data-act=name-use]').click()")
@@ -1106,7 +1106,7 @@ def case_fable3151():
         H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
         rows = pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(), tr.children[2].textContent.trim().slice(0, 8), tr.querySelector('input').checked])")
         pg.click('[data-act=supp-apply]')
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Taken over from Bandcamp/.test(li.textContent))", 30)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Used from Bandcamp/.test(li.textContent))", 30)
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")

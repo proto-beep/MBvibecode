@@ -235,7 +235,7 @@ def case_cpremoved3131():
             return out
     n, gg, marks, errs = run(False)
     print('A) herausgenommen:', n, '| Guitar Guy:', gg, '| Marken:', marks, errs)
-    results.append(n >= 1 and gg and 'dci-dg-removed' in gg[0] and gg[1] == '✗' and 'taken out in the relationship editor' in gg[2] and not errs)
+    results.append(n >= 1 and gg and 'dci-dg-removed' in gg[0] and gg[1] == '✗' and 'removed in the relationship editor' in gg[2] and not errs)
     n2, gg2, _, _ = run(True)
     print('B) aus:', gg2)
     results.append(gg2 and 'dci-dg-pending' in gg2[0])

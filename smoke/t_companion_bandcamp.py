@@ -990,7 +990,7 @@ def case_wpsupp3149():
         H.wait_for(pg, f"{LOGS}.some(x => /Added source: Wikipedia/.test(x))", 90)
         pg.wait_for_timeout(500)
         pg.click('[data-act=supp-apply]')
-        H.wait_for(pg, f"{LOGS}.some(x => /Taken over from Wikipedia/.test(x))", 30)
+        H.wait_for(pg, f"{LOGS}.some(x => /Used from Wikipedia/.test(x))", 30)
         wp, wperr = H.open_wikipedia(ctx, 'https://en.wikipedia.org/wiki/Testalbum_(album)')
         poll(wp, "document.querySelectorAll('.dci-wp-mark').length >= 1")
         marks = wp.evaluate("[...document.querySelectorAll('.dci-wp-mark')].map(m => m.closest('tr').querySelector('th').textContent)")

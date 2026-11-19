@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.169.0
+// @version      3.170.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.169.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.169.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.170.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.170.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.169.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.170.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -189,18 +189,18 @@
       "repeat.ask": "Repeat the import?",
       "repeat.what": "The source is read again and every entry is looked up in MusicBrainz anew, so changed mapping rules apply.",
       "repeat.keep": "Keep my changes",
-      "repeat.keepTitle": "What you changed in this import – levels, roles, credits, rows added or taken out, the entries chosen, the works – is put onto the new one, as “Remember per release” does",
+      "repeat.keepTitle": "What you changed in this import is put onto the new one",
       "repeat.fresh": "Start afresh",
       "repeat.freshTitle": "The rows as the source and the mapping rules give them now: the changes of this import are dropped",
       "repeat.do": "↻ Repeat import",
       "log.repeatKeep": "Import repeated – your changes are kept",
       "log.repeatFresh": "Import repeated afresh – your changes are dropped",
       "about.off": "Leave out the “about” text",
-      "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "about.offTitle": "Only for this release: places, liner notes and dates from Bandcamp's “about” text are left out",
       "notes.credit": "From the Discogs notes",
       "notes.creditLine": "From the Discogs notes: “{text}”",
       "notes.off": "Leave out the credits of the notes",
-      "notes.offTitle": "Only for this release: the credits read from the Discogs notes (people and companies) are left out – their rows hidden – at once, without a new import. Ticked off again, they are back, with what you changed in them. The tracks the notes gave to credits Discogs lists, and the dates of the notes, stay.",
+      "notes.offTitle": "Only for this release: the credits read from the Discogs notes (people and companies) are left out",
       "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
@@ -223,17 +223,17 @@
       "supp.withAria": "Add a source",
       "supp.text": "Text …",
       "supp.images": "Images …",
-      "supp.imagesTitle": "Text from images as an added source: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
+      "supp.imagesTitle": "Text from images as an added source: the artwork, the back cover, a booklet, a Discogs release's images",
       "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL, YouTube video URL or Wikipedia article",
       "supp.urlLoad": "Add",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Paste a text (booklet, liner notes …) and add it as a second source",
-      "supp.hint": "The loaded source stays decisive. What only the second one has is a suggestion; nothing is taken over by itself.",
+      "supp.hint": "The loaded source stays decisive. What only the second one has is a suggestion; nothing is used by itself.",
       "supp.on": "added",
       "supp.remove": "remove",
       "supp.title": "From the added source: {name}",
       "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
-      "supp.msgSome": "Added source: {name} – {list}. What to take over is in the list “From the added source: …” of the dashboard.",
+      "supp.msgSome": "Added source: {name} – {list}. What to use is in the list “From the added source: …” of the dashboard.",
       "supp.written": "written “{name}”",
       "supp.kind.more": "more tracks",
       "supp.fromCover": "the cover art",
@@ -248,14 +248,12 @@
       "ocrnav.markNew": "From the cover art (read as an added source)",
       "ocrnav.markSeen": "The cover art says this too (read as an added source)",
       "ocrnav.entry": "Lines from the cover art in this entry",
-      "ocrnav.title": "Rows the cover art brought as an added source. A click goes to the next one",
+      "ocrnav.title": "Rows the cover art brought. Click: next one, Shift+click: the one before",
       "ocrnav.label": "{n} rows from the cover art – to the next one",
-      "ocrnav.prev": "Row from the cover art before",
-      "ocrnav.next": "Next row from the cover art",
       "ocrnav.only": "Only from images",
       "ocrnav.onlyTitle": "Only the entries with lines from the cover art (read as an added source: new or said again)",
       "supp.selectAll": "select all",
-      "supp.th.select": "Take over",
+      "supp.th.select": "Use",
       "supp.th.kind": "Kind",
       "supp.th.name": "Name",
       "supp.th.rel": "MB relationship",
@@ -266,19 +264,19 @@
       "supp.onlyHere": "only in {name}",
       "supp.noMbYet": "the entry has no MusicBrainz match yet",
       "supp.suggest": "suggestion:",
-      "supp.searchLater": "looked up when taken over (suggestions only)",
+      "supp.searchLater": "looked up when used (suggestions only)",
       "supp.byLink": "via the {name} link:",
       "supp.byHand": "by hand (“Add entry manually”)",
       "supp.nSelected": "{n} selected",
-      "supp.apply": "Take over selected",
+      "supp.apply": "Use selected",
       "supp.discard": "Discard all",
-      "supp.applyHint": "What is taken over goes into the entries, marked {short}.",
-      "supp.empty": "Nothing left to take over. Rows {name} confirms are marked {short}.",
+      "supp.applyHint": "What is used goes into the entries, marked {short}.",
+      "supp.empty": "Nothing left to use. Rows {name} confirms are marked {short}.",
       "supp.mismatch": "{name} has {n} tracks, MusicBrainz {m}: check the track numbers.",
       "supp.allTracks": "all",
       "supp.textLoad": "Read text and add",
       "supp.badgeConfirm": "{name} says the same",
-      "supp.badgeAdded": "taken over from {name}",
+      "supp.badgeAdded": "added from {name}",
       "supp.badgeDiffer": "{name} gives other tracks: {tracks}",
       "settings.h.srcTrust": "Trust of the sources",
       "trust.title": "Trust of the sources",
@@ -304,13 +302,13 @@
       "trust.byHand": "Chosen by hand (against the trust of the sources)",
       "log.suppLoadedMore": "Added source: {name} – {confirmed} confirmed, {added} new, {differ} differing, {precise} more precise, {spell} to check, {unrec} not recognized",
       "supp.spellCheck": "read from an image – check the spelling",
-      "supp.nameLookup": "looked up again with the full name when taken over",
+      "supp.nameLookup": "looked up again with the full name when used",
       "supp.mbNone": "nothing of this kind on the release",
       "supp.th.mbHas": "MusicBrainz has",
       "supp.nothingNew": "Nothing new from the added source.",
       "busy.supp": "Reading {source} as an added source …",
       "log.suppLoaded": "Added source: {name} – {confirmed} confirmed, {added} new, {differ} differing, {unrec} not recognized",
-      "log.suppApplied": "Taken over from {name}: {n}",
+      "log.suppApplied": "Used from {name}: {n}",
       "log.suppDiscarded": "Added source: {name} – discarded: {n}",
       "forget.title": "Deletes what the script stored for the import of this release and imports it anew",
       "forget.ask": "Delete the stored import of this release?",
@@ -443,11 +441,11 @@
       "gap.exact.other": "The dashboard counted {n} new ones on {date}.",
       "gap.exactAfter.one": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
       "gap.exactAfter.other": "After “Enter edit” on {date} the dashboard counted {n} still missing.",
-      "gap.exactRemoved.one": "{n} of them was taken out by you in the editor.",
-      "gap.exactRemoved.other": "{n} of them were taken out by you in the editor.",
+      "gap.exactRemoved.one": "{n} of them was removed by you in the editor.",
+      "gap.exactRemoved.other": "{n} of them were removed by you in the editor.",
       "gapWhy.afterEdit": "after “Enter edit” of the dashboard {n} of about {all} relationships of the credits are still missing – less than a fifth.",
       "log.gapAfterEdit": "“Enter edit”: for the line of the release page {n} relationships still missing, {open} rows open",
-      "dgStatus.removed": "taken out in the relationship editor by you – not entered",
+      "dgStatus.removed": "removed in the relationship editor by you – not entered",
       "gap.partsLabel": "Show the parts",
       "gap.recordings": "recordings: about {n}",
       "gap.release": "release: about {n}",
@@ -491,7 +489,7 @@
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
       "fn.find": "Assign first name …",
-      "fn.findTitle": "Look for people with the first name “{name}” around this release in MusicBrainz – only suggestions: the release's artists and the members of its groups, the relationships of the artist's releases from {from} to {to} (wider in steps of three years up to ± {years}), the relationships of the members. One request a second.",
+      "fn.findTitle": "Look for people with the first name “{name}” around this release in MusicBrainz (suggestions only)",
       "fn.busy": "Looking for people called “{name}” …",
       "fn.none": "No one with the first name “{name}” found around this release.",
       "fn.whyRelease": "artist of the release",
@@ -500,7 +498,7 @@
       "fn.whyRelated": "related to {name} ({type})",
       "log.fnFound": "First name “{name}”: {n} people found ({list})",
       "settings.fnYears": "First names: years around the release",
-      "settings.fnYearsTitle": "“Assign first name …” at an entry of a first name alone looks in the relationships of the releases of the release's artist around its date: ± 3 years first, then wider in steps of three years up to this number.",
+      "settings.fnYearsTitle": "How many years around the release date “Assign first name …” looks at most",
       "match.markLinked": "in this release: {where}",
       "match.linkedTitle": "In this release in MusicBrainz already: {where} – most likely the one meant. Only a suggestion: check before assigning.",
       "match.inRelease.ac": "release artist",
@@ -512,14 +510,14 @@
       "match.suggMore": "+ {n} more",
       "match.suggLess": "− fewer",
       "match.similarTitle": "A similar name in MusicBrainz (a middle name or an initial more or less) – check before assigning",
-      "match.webUseTitle": "MusicBrainz has an artist with this link ({url}), found next to the name in the text – only a suggestion: check before assigning",
+      "match.webUseTitle": "MusicBrainz has an artist with this link ({url}), found next to the name in the text",
       "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
       "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
       "sync.off": "Script Companion: off",
       "sync.offTitle": "The companion script “MB x Vibecode: Credits Importer Companion” is not installed or not active.",
       "sync.noTab": "Script Companion: no Discogs tab",
       "sync.or": "{a} or {b}",
-      "sync.noTabTitle": "The tab the import expects: the source of this import, or – before an import – the sources linked to the release (both, when none is linked yet)",
+      "sync.noTabTitle": "The tab the import expects: the source of this import or the sources linked to the release",
       "sync.openTab": "open in background",
       "sync.connected": "Script Companion: connected ({where})",
       "sync.visible": "visible tab",
@@ -566,7 +564,7 @@
       "group.initialsUseTitle": "{said} stands for {name}: the rows go to {name}, credited “{said}” on this release",
       "log.initialsUsed": "Initials {said}: {name} chosen – credited “{said}”",
       "group.setAll": "Set for all",
-      "ncy.allTitle": "Click: the next spelling as “credited as” on all relationships of {name} ({list}) – the name in MusicBrainz is an empty field",
+      "ncy.allTitle": "Click: the next spelling as “credited as” on all relationships of {name}",
       "ncy.oneTitle": "⇄ The next spelling as “credited as” here only ({list})",
       "log.ncyAll": "{name}: credited as “{value}” on all its relationships",
       "group.addRole": "+ Another role for {name}",
@@ -577,9 +575,9 @@
       "group.unskipTitle": "All rows of this entry back on the levels they had before “Skip ⤼”",
       "group.skippedN.one": "{n} skipped entry",
       "group.skippedN.other": "{n} skipped entries",
-      "group.skippedTitle": "Entries skipped with “Skip ⤼” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "group.skippedTitle": "Entries skipped with “Skip ⤼” are not shown: ▸ lists them, “↺ Take again” brings one back",
       "misslinks.summary": "Show missing links of the entries ({n})",
-      "misslinks.title": "Web addresses of the entries assigned in MusicBrainz (artists, labels, places, series) that MusicBrainz does not have yet – their pages at the source, addresses next to their names in the text. Rule S291 switches this off",
+      "misslinks.title": "Web addresses of the entries assigned in MusicBrainz",
       "misslinks.add": "add in MusicBrainz ↗",
       "misslinks.addTitle": "Opens the edit page of {name} with this address filled in – check it there, then enter the edit",
       "log.entrySkipped.one": "{name} skipped: {n} row on “Skip”",
@@ -625,7 +623,7 @@
       "role.placeholder": "e.g. Keyboards",
       "role.aria": "Role",
       "role.remove": "Remove row",
-      "role.removeTitle": "Take this row out of the dashboard; relationships already staged for it are taken out of the editor at the next “Stage”",
+      "role.removeTitle": "Remove this row from the dashboard; relationships already staged for it are removed from the editor at the next “Stage”",
       "msg.rowRemoved": "Row removed: {text}",
       "msg.rowRestore": "undo",
       "log.rowRemoved": "Row removed: {text}",
@@ -695,7 +693,7 @@
       "status.workLocked.other": "{n}× not added: the work exists in MusicBrainz – only its link is staged",
       "matrix.workLocked": "not added: an existing work is not supplemented – only the link of the recording with it is staged",
       "matrix.creditSkip": "Skip credits",
-      "matrix.creditSkipTitle": "Leave out the work credits of this track (composer, lyricist, publisher … on its work); the recording credits and the link of the recording with its work stay",
+      "matrix.creditSkipTitle": "Leave out the work credits of this track (composer, lyricist, publisher … on its work)",
       "matrix.creditTake": "Take credits",
       "matrix.creditTakeTitle": "The work credits of this track were left out – take them again",
       "matrix.creditSkipped": "not added: the work credits of this track are left out (“Skip credits”)",
@@ -706,7 +704,7 @@
       "log.pubLevel": "{name}: publishing on the level “{level}”",
       "log.creditSkip": "Track {track}: its work credits are left out",
       "log.creditTake": "Track {track}: its work credits are taken again",
-      "matrix.workLockedRow": "An existing work: none of the relationships of this row are added to it – only the link of the recording with it (and its attributes) is staged.",
+      "matrix.workLockedRow": "An existing work: none of the relationships of this row are added to it",
       "matrix.tcp.label": "Names in brackets after the titles ({n}) as",
       "matrix.tcp.composer": "Composer",
       "matrix.tcp.writer": "Writer",
@@ -738,20 +736,15 @@
       "kind.workLink.other": "{n} work links",
       "sum.incomplete.one": "{n} row incomplete",
       "sum.incomplete.other": "{n} rows incomplete",
-      "sum.incPrev": "Previous incomplete row",
-      "sum.incNext": "Next incomplete row",
-      "sum.incTitle": "Go to the incomplete rows one by one; what is missing is highlighted",
+      "sum.incTitle": "Rows that cannot be staged yet. Click: next one, Shift+click: the one before",
       "sum.existing.one": "{n} already on MB",
       "sum.existing.other": "{n} already on MB",
       "footer.preview": "Preview all relationships",
-      "footer.jump": "Move in the dashboard",
-      "footer.top": "To the top of the dashboard",
-      "footer.bottom": "To the bottom of the dashboard",
       "footer.apply": "Stage in the relationship editor",
       "footer.previewShort": "Preview",
       "footer.fillShort": "fill role credits",
       "footer.capShort": "≤ {n} per staging",
-      "footer.options": "⚙ Options",
+      "footer.options": "Options",
       "footer.optionsTitle": "Role credits of existing relationships, rounds of staging",
       "footer.chipRounds": "round {k} of {x}",
       "footer.chipWaiting.one": "{n} track without a work",
@@ -784,7 +777,7 @@
       "livecom.offer.other": "Tracks {list} are live recordings. Propose disambiguation comments for them (“{example}”)?",
       "livecom.offerYes": "✓ Propose comments",
       "livecom.offerNo": "✕ Not for this release",
-      "livecom.offerTitle": "Asked for each release while the setting is off. To have them always proposed: ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.",
+      "livecom.offerTitle": "Asked for each release while the setting is off",
       "log.liveOfferYes": "Comments of live recordings: proposed for this release (always: ⚙ Settings → Staging)",
       "log.liveOfferNo": "Comments of live recordings: not for this release",
       "log.liveSaved": "Comments of {n} live recordings will be entered after “Enter edit”, once the relationships are saved",
@@ -838,7 +831,7 @@
       "log.dedDismissed": "“{phrase} {name}”: suggestion left out",
       "log.dedBack": "“{phrase} {name}”: suggestion offered again",
       "settings.dedBox": "Show the box “Dedications & tributes”",
-      "settings.dedBoxTitle": "Above the works matrix: the dedications and tributes found in the texts, suggestions to choose from, and adding one by hand",
+      "settings.dedBoxTitle": "Above the works matrix: the dedications and tributes found in the texts",
       "ded.toggleTitle": "Switch between “dedicated to” and “tribute to” – they are easily mixed up",
       "ded.kind.dedicated": "dedicated to",
       "ded.kind.tribute": "tribute to",
@@ -935,7 +928,7 @@
       "live.take": "＋ Take event and place",
       "live.takePlace": "＋ Take the place",
       "live.takePlaceTitle": "The venue as a place, “recorded at” on all tracks, looked up by its name; the date is in the pool",
-      "live.takeTitle": "The venue as a place and the event as an entry, each “recorded at” on all tracks, looked up by their names; the date is in the pool",
+      "live.takeTitle": "The venue as a place and the event as an entry, each “recorded at” on all tracks",
       "live.no": "Not a live recording",
       "log.liveHeadFound": "Live recording in the text: {event} · {venue} · {date} – {n} events of MusicBrainz on that day",
       "log.liveTaken": "Live recording taken: {event} · {venue}",
@@ -979,7 +972,7 @@
       "lineup.use": "Use these instruments",
       "match.markOrder": "name the other way round",
       "case.backLower": "↺ as written",
-      "case.backLowerTitle": "The source writes “{name}” in small letters; the dashboard in the usual spelling (rule S254). A click takes the source’s spelling – also as the “credited as” of its roles.",
+      "case.backLowerTitle": "The source writes “{name}” in small letters; the dashboard in the usual spelling (rule S254)",
       "log.thanksFlag": "Thanks for playing ({name}): {flag}",
       "log.lineupInst": "Instruments of the lineup from MusicBrainz for {name}: {list}",
       "log.evAsked": "Event {name}: {type} (on the recordings; the level changes with a click)",
@@ -1045,7 +1038,7 @@
       "match.aliasFetch": "Discogs aliases …",
       "match.aliasFetchTitle": "Look up this artist’s other names at Discogs (aliases) and MusicBrainz artists with them",
       "settings.aliasMax": "Discogs aliases looked up per import",
-      "settings.aliasMaxTitle": "Artists Discogs has and MusicBrainz does not find by their link are looked up by their Discogs aliases – one request every 2.5 s; those with the most rows first, the others on demand at their entries (0: none)",
+      "settings.aliasMaxTitle": "Artists Discogs has and MusicBrainz does not find by their link are looked up by their Discogs aliases",
       "busy.discogsArtist": "Loading {src} data for {name} …",
       "busy.apply.one": "Staging {n} relationship in the editor …",
       "busy.apply.other": "Staging {n} relationships in the editor …",
@@ -1154,7 +1147,7 @@
       "syncMode.label": "jump to source",
       "syncMode.hover": "on mouse-over",
       "syncMode.click": "on click",
-      "syncMode.hoverTitle": "When the pointer rests on a row, an entry or a work for a moment, the source page (the Discogs or Bandcamp tab) jumps to its credit",
+      "syncMode.hoverTitle": "When the pointer rests on a row, an entry or a work, the source page jumps to its credit",
       "syncMode.clickTitle": "Only a click on a row, an entry or a work makes the source page (the Discogs or Bandcamp tab) jump to its credit",
       "log.syncMode": "Discogs view follows the dashboard {mode}",
       "companies.title": "Companies, etc.",
@@ -1214,8 +1207,8 @@
       "date.namePlaceholder": "optional, e.g. Session 2",
       "date.copyTitle": "Copy begin date to end date",
       "date.addRow": "+ Date",
-      "date.suggLiner": "Suggested from the “about” text (the date by the name of the liner notes) – ✓ takes it, ✕ leaves it out",
-      "date.suggConcert": "The date of the concert (Performance: {date}) – the photos were taken there (“{text}”). ✓ takes it, ✕ leaves it out",
+      "date.suggLiner": "Suggested from the “about” text (the date by the name of the liner notes) – ✓ uses it, ✕ leaves it out",
+      "date.suggConcert": "The date of the concert (Performance: {date}) – the photos were taken there (“{text}”). ✓ uses it, ✕ leaves it out",
       "date.take": "Take this date",
       "date.dropSugg": "Not this date",
       "date.fromPool": "from pool …",
@@ -1304,10 +1297,10 @@
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
       "settings.kindColors": "Colours for the kinds of entries",
-      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, event, other); off: all grey",
+      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind",
       "settings.kindColor": "Colour for {kind}",
       "settings.themeWindow": "Theme as a window",
-      "settings.themeWindowTitle": "The dashboard as a window, the log and the rules as windows, the windows of cover art and the small previews. Auto: as the system is set.",
+      "settings.themeWindowTitle": "The dashboard as a window, the log and the rules as windows, the windows of cover art and the small previews",
       "settings.themePage": "Theme in the page",
       "settings.themePageTitle": "The dashboard in the page, the bar above it with its boxes and the log beside the edit note. Auto: as the system is set.",
       "settings.theme.auto": "Auto",
@@ -1385,9 +1378,155 @@
       "settings.emSide.lines": "in the lines",
       "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
       "settings.emoji": "Symbols:",
-      "settings.emojiTitle": "Emojis, or a word in their place: the badges of the sources (Discogs, Bandcamp, YouTube, MusicBrainz, a pasted text, text from images) and 🖼️, 📄, 💡, 🏷, ⌚. ⚠ and ⚙ stay.",
+      "settings.emojiTitle": "Emojis, or a word in their place: the badges of the sources and marks such as 🖼️, 📄, 💡",
       "settings.emoji.emoji": "Emojis",
       "settings.emoji.text": "Text",
+      "search.word": "Search",
+      "head.more": "More",
+      "rules.word": "Rules",
+      "head.moreTitle": "View, text size, window, log, keyboard shortcuts",
+      "help.word": "Help",
+      "help.title": "While on, a line above the footer explains in full what the pointer is on",
+      "help.start": "Help is on: point at a button, a field or a mark – its full explanation appears here. Escape ends it.",
+      "help.off": "End help",
+      "repeat.keepTitle.more": "What you changed in this import – levels, roles, credits, rows added or left out, the entries chosen, the works – is put onto the new one, as “Remember per release” does",
+      "about.offTitle.more": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "notes.offTitle.more": "Only for this release: the credits read from the Discogs notes (people and companies) are left out – their rows hidden – at once, without a new import. Ticked off again, they are back, with what you changed in them. The tracks the notes gave to credits Discogs lists, and the dates of the notes, stay.",
+      "supp.imagesTitle.more": "Text from images as an added source: the artwork, the back cover, a booklet, a Discogs release's images – the window of the text from cover art",
+      "fn.findTitle.more": "Look for people with the first name “{name}” around this release in MusicBrainz – only suggestions: the release's artists and the members of its groups, the relationships of the artist's releases from {from} to {to} (wider in steps of three years up to ± {years}), the relationships of the members. One request a second.",
+      "settings.fnYearsTitle.more": "“Assign first name …” at an entry of a first name alone looks in the relationships of the releases of the release's artist around its date: ± 3 years first, then wider in steps of three years up to this number.",
+      "match.webUseTitle.more": "MusicBrainz has an artist with this link ({url}), found next to the name in the text – only a suggestion: check before assigning",
+      "sync.noTabTitle.more": "The tab the import expects: the source of this import, or – before an import – the sources linked to the release (both, when none is linked yet)",
+      "ncy.allTitle.more": "Click: the next spelling as “credited as” on all relationships of {name} ({list}) – the name in MusicBrainz is an empty field",
+      "group.skippedTitle.more": "Entries skipped with “Skip ⤼” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "misslinks.title.more": "Web addresses of the entries assigned in MusicBrainz (artists, labels, places, series) that MusicBrainz does not have yet – their pages at the source, addresses next to their names in the text. Rule S291 switches this off",
+      "matrix.creditSkipTitle.more": "Leave out the work credits of this track (composer, lyricist, publisher … on its work); the recording credits and the link of the recording with its work stay",
+      "matrix.workLockedRow.more": "An existing work: none of the relationships of this row are added to it – only the link of the recording with it (and its attributes) is staged.",
+      "livecom.offerTitle.more": "Asked for each release while the setting is off. To have them always proposed: ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.",
+      "settings.dedBoxTitle.more": "Above the works matrix: the dedications and tributes found in the texts, suggestions to choose from, and adding one by hand",
+      "live.takeTitle.more": "The venue as a place and the event as an entry, each “recorded at” on all tracks, looked up by their names; the date is in the pool",
+      "case.backLowerTitle.more": "The source writes “{name}” in small letters; the dashboard in the usual spelling (rule S254). A click takes the source’s spelling – also as the “credited as” of its roles.",
+      "settings.aliasMaxTitle.more": "Artists Discogs has and MusicBrainz does not find by their link are looked up by their Discogs aliases – one request every 2.5 s; those with the most rows first, the others on demand at their entries (0: none)",
+      "syncMode.hoverTitle.more": "When the pointer rests on a row, an entry or a work for a moment, the source page (the Discogs or Bandcamp tab) jumps to its credit",
+      "settings.kindColorsTitle.more": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, event, other); off: all grey",
+      "settings.themeWindowTitle.more": "The dashboard as a window, the log and the rules as windows, the windows of cover art and the small previews. Auto: as the system is set.",
+      "settings.emojiTitle.more": "Emojis, or a word in their place: the badges of the sources (Discogs, Bandcamp, YouTube, MusicBrainz, a pasted text, text from images) and 🖼️, 📄, 💡, 🏷, ⌚. ⚠ and ⚙ stay.",
+      "wiki.bgTitle.more": "When the import is done, once per release: the infoboxes of Wikipedia ({langs}) are read as an added source – no other requests later",
+      "settings.skipHideTitle.more": "Entries skipped with “Skip ⤼” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
+      "settings.entries.matrixTitle.more": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
+      "settings.entries.legacyTitle.more": "As before 3.34.29: a row per role, each relationship of its own – nothing stored changes, you can switch back at any time",
+      "supp.openTitle.more": "Add a second source to the rows – another linked source, a URL or a pasted text; compared with the rows, nothing is used by itself",
+      "group.creditedAsTitle.more": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
+      "group.creditedSpellingTitle.more": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
+      "settings.devTitle.more": "For reporting issues and improving the script: “Start diagnosis” in the log (records what MusicBrainz’s relationship editor does while you use its own tools, e.g. “Batch-create new works” – only observes, changes nothing) and the developer statistics in ⚙ Settings → Statistics (used as suggested or changed by hand, what was not recognized, the answers to the script’s questions, duplicates avoided – collected with the other statistics, in this browser only).",
+      "settings.liveCommentsTitle.more": "Proposes a comment for each live recording, as “MB: QoL: Seed the batch recording comments script” does (“live, 2004‐03‐23: Iridium, New York, NY, USA”: the date and the place – its “credited as” or its name, with its area – of the rows “recorded at” or “recorded in”). The list is shown above “Stage …”: tick, change. The comments are entered after “Enter edit” in the relationship editor, once the relationships are saved. Only live recordings; another comment in MusicBrainz is not overwritten.",
+      "settings.joinTitle.more": "Per recording (or release) and event – the same date, artist credit and additional / guest / solo – one relationship with all its instruments, each with its own role credit (E4). Off: a relationship per instrument. Not in the legacy view.",
+      "settings.emAttrTitle.more": "Together: one column, each attribute with its word. Separate: a column per attribute (wider). Also switchable above each matrix.",
+      "manual.hint.more": "Add any MusicBrainz entry that can be related to this release, its recordings or works: artist, label, place, area, event, series, recording, release, work and more. The kind of entry is recognized from the URL or MBID. The role list shows all MB relationship types for that kind; for artists, a role as Discogs writes it (e.g. Guitar [Electric]) works too.",
+      "settings.mbHitsTitle.more": "A name typed into the field of an entry's MusicBrainz link is searched: this many hits are shown at first and with each “+ more” (1 – 25)",
+      "link.webTitle.more": "Found next to the name in the text: MusicBrainz is asked for artists with this link (only a suggestion), and “Create artist …” fills it in",
+      "matrix.colDateMbTitle.more": "This date is added to the relationships of this column that MusicBrainz has without a date (an edit of each); dates MusicBrainz has stay",
+      "matrix.coverOffer.more": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
+      "matrix.coverAuto.more": "Cover – set by itself: the composer ({names}) is none of the performers of this track and has only writing credits on this release (not classical music). A click takes it off.",
+      "suite.createBtnTitle.more": "Opens MusicBrainz's form for a new work in the dashboard, prefilled with the name, the type “Suite” and the writers credited for all of its tracks. Its “parts” are staged only once it exists: MusicBrainz does not create a new work that is linked by “parts” only.",
+      "suite.pickTitle.more": "MusicBrainz has a work of this name by the writers of all its tracks – a click takes it as the suite instead of creating a new one",
+      "settings.suiteNamingTitle.more": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
+      "settings.editNote.fullTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
+      "settings.editNote.simpleTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
+      "matrix.attrAllTitle.more": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
+      "stack.flipTitle.more": "Reads the lines whose order was not clear the other way round – in the dashboard: what was changed in the other rows stays",
+      "case.backTitle.more": "The source writes “{name}”; the dashboard in normal case (rule S060). A click takes the capitals – also as the “credited as” of its roles.",
+      "matrix.songAuto.more": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
+      "rmx.takeTitle.more": "The title names this artist as the remixer: the role is staged (with “remix of” the original track, when it is on this release)",
+      "insts.releaseTitle.more": "Each instrument on the release (with the release's date); on the recordings one row of the group the instruments share (MusicBrainz's instrument tree), with the date of the recordings – switch back and forth as often as you like",
+      "dgl.preciseTitle.more": "Each one of the lineup on all tracks except those the track credits give to others only; the more precise instrument of the two on all of them; the track credits joined into it (no second row, no abbreviated spelling)",
+      "dgl.trackTitle.more": "The lineup's rows on the tracks without track credits; the tracks with credits as Discogs gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
+      "magic.btnTitle.more": "Answers the open questions of the works matrix by the level “{level}” – a preview first; nothing is entered in MusicBrainz, each answer can be changed",
+      "settings.noteDupTitle.more": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
+      "sort.title.more": "The order of the entries: as in the source, by kind (instruments first), by name, by kind of entry, by level – within a block as in the source",
+      "settings.yellOneTitle.more": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (may, yellow) – apart, or in one counter",
+      "matrix.askCountTitle.more": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
+      "log.diagTitle.more": "Records what the relationship editor does while you use its own tools (e.g. “Batch-create new works”), for improving the script. Only observes, changes nothing.",
+      "works.pendingTitle.more": "Marks a new work in the relationship editor, like MusicBrainz’s “Batch-add new works”. It is created together with its writers, publishers and the link to the recording when you click “Enter edit”.",
+      "settings.gapLineTitle.more": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
+      "settings.gapNoneTitle.more": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
+      "settings.gapWhyTitle.more": "Developer mode: where the line would be, a grey note says why there is none (the setting off, no link recognized, MusicBrainz or the source not answering, nothing missing, hidden with ✕, an error); in the console too.",
+      "settings.dsupWhyTitle.more": "Developer mode: at an entry without the box “Compared with MusicBrainz”, a grey note says why (rules off, not linked, no relationships of the person on MusicBrainz, none of the same type, level, tracks and instrument, no dates, nothing to change).",
+      "settings.webLinksShowTitle.more": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
+      "settings.aboutCreditsTitle.more": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field (“Music and cover art by X”), marked “from the about text” – prose gives nothing. “Leave out the about text” (menu Source ▾) still leaves out all of it for one release. Takes effect at the next import.",
+      "settings.notesCreditsTitle.more": "Rule S054: every credit line of the Discogs notes is read like a pasted text – people and companies – and becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line). Nothing twice: what Discogs lists already is left out – when Discogs gives it for the whole release and the notes name tracks, it gets those; what MusicBrainz has is skipped as always. “Leave out the credits of the notes” (menu Source ▾) leaves them out for one release. Takes effect at the next import.",
+      "settings.typosTitle.more": "Rule S050: a part of a text (pasted, Bandcamp, Discogs notes) that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word read as that word – only role words, never names; the row says what was written. Takes effect at the next import.",
+      "scope.title.more": "A filter of the works: all relationships (with), only those of works (only) or all but those (without) – the rest is on Skip until “with” brings it back; each import starts with “with”.",
+      "media.loadTitle.more": "MusicBrainz's relationship editor shows the tracks of large releases only when a medium is opened, and relationships can be staged only on loaded media. The chosen media are opened one after another while the import runs.",
+      "matrix.skipTitle.more": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
+      "roleCredit.dbrTitle.more": "From Discogs: the detail “{short}” put before the instrument – “{long}” (rule S084). Click to use Discogs's short form “{short}”.",
+      "matrix.suggestRowTitle2.more": "Suggested from the works of the artists: {what} – not filled in until “Accept” in the head of the matrix; the label says what is filled in",
+      "matrix.workDatesTitle.more": "The recording date of a track (Performance) also onto its links with works MusicBrainz has, with “Apply”: added where the link has no date, made more precise where it has less – nothing else. A date dropped onto a link goes there either way.",
+      "wnew.onTitle.more": "A new work of the same title instead of “{title}” (an arrangement is a work of its own): it gets the attributes of this link, “arrangement of” “{title}” is suggested, and this link is removed when the new one is staged",
+      "wnew.replacesTitle.more": "Replaces the work “{title}” of MusicBrainz: its link to this recording is removed in the relationship editor when the new work is staged",
+      "medley.splitAllTitle2.more": "Switch for every title with a separator: when “＋ New works” plans them, each part becomes a work of its own, linked as a medley: {list}",
+      "medley.sepsTitle.more": "The separators of medley titles for this release: {list} – “/” also without spaces; words like “AC/DC” or “24/7” stay whole (mapping MEDLEY_EXCEPTIONS)",
+      "arrsugg.existsWorkTitle.more": "MusicBrainz has a work of this title among the works of the people of this release: “{title}” (check {stage}) – if it is this arrangement, link it instead of a new work",
+      "arrcom.offerTitle.more": "New works of traditional tunes with arrangers: an arrangement is a work of its own – its disambiguation names the arrangers (rule S158)",
+      "sync.dgStatusTitle.more": "Shows on the Discogs page which credits are already in MusicBrainz, staged, open, skipped or not mapped; a click on a mark shows its row in the dashboard",
+      "sync.dgArtworkTitle.more": "Keeps a small picture of the cover at the top of the connected Discogs tab, while it is connected; a click opens Discogs' image view",
+      "sync.dgJumpTitle.more": "When the pointer rests on a track or a mark of the Discogs page, the dashboard scrolls to its row too. Off: the row is only highlighted where it is, the dashboard does not move",
+      "sync.trackHoverTitle.more": "When the pointer rests on a track on the Discogs page, its row in the works matrix is highlighted (the dashboard jumps there only with “Jump along in the dashboard”)",
+      "footer.fillTitle.more": "Relationships that already exist in MusicBrainz exactly like a row (same type and attributes) but lack its role credit or “credited as” get them added; MusicBrainz shows them as changed (yellow). Recording and release level.",
+      "rules.quickTitle.more": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "quick.permTitle.more": "Ticked: a change of this switch is stored (also for the next imports, in the active profile). Not ticked: it holds for this import only",
+      "stats.onTitle.more": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
+      "stats.localTitle.more": "These statistics are kept only in this browser (its storage for musicbrainz.org): another browser or computer has statistics of its own, and nothing is sent anywhere.",
+      "stats.durTitle.more": "Without new entries: the time of creating artists, labels, places and works (also works via the form) is left out of the time per release and per relationship – from the click on “Create …” until the new entry is linked. With new entries: all of it counts. Imports before 3.65.0 hold no such time.",
+      "statio.jsonTitle.more": "Every submission whole, in readable names (format 2, described by a JSON Schema; times in RFC 3339) – to import it in another browser (⇩ Import there) or to read it in another program",
+      "statio.dpTitle.more": "datapackage.json (Frictionless Data): describes the columns and types of the two CSV files of today – put it next to them",
+      "statio.csvTitle.more": "Two files after RFC 4180 (commas, a header): the submissions and the relationships – for pandas, R, DuckDB, LibreOffice (two downloads at once: the browser may ask; a name beginning with “=” stays as written – for Excel take “CSV (Excel)”); their columns are described by “Data Package”",
+      "settings.statsIdleTitle.more": "The time of an import counts from its start until “Enter edit”; a gap without a click, a key or scrolling of at least this many seconds is a pause and is not counted (a hidden tab: from the moment it is hidden). 0: everything counts. For imports from 3.45.0 on.",
+      "settings.statsDailyTitle.more": "Hours, weekdays, days / weeks / months in a row, the most active weekday and the most in a day (the time per release and the months stay)",
+      "settings.rememberTitle.more": "On: a release imported again from the same source comes back as you left it – its rows (types, levels, role credits, answers, rows left out or added, their order), its entries (join or split, the MusicBrainz entity chosen by hand), the date pool, track pool and date matrix, the source and media chosen, “Skip works”, “Leave out the about text”, the credits switched off on the source pages, the frames of its images. Off: none of it is stored or read (what is stored stays until it is forgotten).",
+      "settings.ocrPreloadTitle.more": "Text from cover art: the first 24 images ticked are loaded in the background while you choose, two at a time – the frames and the reading then start at once. An image unticked leaves the queue. Off: they are loaded after “Next”.",
+      "ocr.cleanTitle.more": "Removes the words read uncertainly (yellow) that are no word – signs among the letters, no vowel, a letter alone, three same letters in a row, digits among letters – and groups of signs without letters (“~ |”, “=-”). : – , ; / & » « ( ) ℗ © stay, and • · | between words. Clicked again, they come back where they were; what you changed by hand stays.",
+      "ocr.restartTitle.more": "Starts again with the images of the release: the images chosen, the texts read and your own images are discarded – also what is remembered of them for this release. The frames drawn on the images stay.",
+      "ocr.autoTitle.more": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Sources); off, its ticks go again.",
+      "settings.ocrAutoTitle.more": "Text from cover art: back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
+      "settings.ocrFrontTitle.more": "Text from cover art: while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
+      "caseNote.alwaysTitle.more": "Adds “{word}” to the proper names of the register (T052, ⚙ Mapping rules): it keeps its capitals in every role credit from now on.",
+      "em.blockAcTitle.more": "For all roles of this block at once (also those left out), when the field is left or with Enter – ↶ Undo in the message; a role changed afterwards keeps its own. Empty: the MusicBrainz name ({name}).",
+      "em.evDateOpenTitle.more": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended) – a date of the pool can be dropped here too",
+      "sync.clickToggleTitle.more": "A click on a status mark on Discogs or Bandcamp skips that credit (its row goes to “Skip”) or takes it again; resting the pointer on a mark shows its row in the dashboard. Off: a click shows the row",
+      "sync.keepMarksTitle.more": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
+      "trackpool.worksTitle.more": "The works of the source (their parts are tracks of their own) as track groups – unticked, they leave the pool and the date matrix (until the next import); ticked again, they come back as they were",
+      "drop.dateHintTitle.more": "Drag a date into a column of the matrix, onto a row, an event or a block of an entry, the works matrix, or onto another date (makes a period of both). A date already there stays – ⇧ Shift replaces it",
+      "drop.tracksHintTitle.more": "Drag a track group onto a date in the matrix (that date then applies only to these tracks), onto the tracks of a row or onto the works matrix: adds them – ⇧ Shift replaces them",
+      "matrix.allWorksOnTitle.more": "This column's role(s) for every work at once – or drop a track group here: the works of its tracks (⚙ Settings → Dates & tracks → Drag & drop)",
+      "matrix.allWorksOffTitle.more": "Every work has this column's role(s) – a click takes them off every work; a track group dropped here: the works of its tracks",
+      "drop.evTitle.more": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head: a new event with it; ⇧ Shift: replaces its date) and its tracks",
+      "drop.evDateTitle.more": "Drop a date of the pool here: without a date the event gets it; with one, a new event gets the new date (⇧ Shift: replaces it)",
+      "drop.chipTitle.more": "Opens the full matrix of this entry at this role – drag the chip onto another event's line: the role is in both (⇧ Shift: moves it there)",
+      "dm.applyTitle.more": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
+      "dm.foldTitle.more": "When on (default), “Dates & tracks” folds after “Apply” – with “apply automatically” once the pointer or the focus leaves the bar after a change.",
+      "dm.relTitle.more": "This date only for rows on the release level (release, release group); rows on recordings and works take the other dates of the column. A row switched to the release level takes this date.",
+      "datefind.alsoRangeTitle.more": "The pool gets the days as Discogs gives them and also the period from the first to the last day; in the matrix you choose which to use",
+      "pools.keepTitle.more": "Folded, the dates and track groups stay in the bar at the top, so they can be dragged onto rows while you scroll through the dashboard",
+      "settings.workGroupsTitle.more": "A work whose parts are tracks of their own (index tracks of Discogs: “First Encounter” on A1, A2, B1, B2) comes into the track pool as a track group with its name – as a suggestion. In the track pool you can leave them out for this import.",
+      "date.chipTitle.more": "Click to edit or delete; drag into the matrix, onto the date field of a row, or onto another date (makes a period of both)",
+      "memberOf.editTitle.more": "The text names this artist a member of {group}, MusicBrainz does not: the artist's edit page with “member of band” (and the instruments) filled in",
+      "memberOf.createTitle.more": "The text names this artist a member of {group}: the form for a new artist gets “member of band” (and the instruments) filled in",
+      "matrix.headsTitle.more": "Compact: the head shows what is used most, the rest is here under ⋯; a column’s “credited as”, “all works” and “Work | Release” are in its menu ▾. Everything in the open: as until 3.164.0. Remembered.",
+      "sync.dgReleaseTitle.more": "Keep the Discogs status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
+      "window.resetWord": "Reset position and size",
+      "yell.mustWord.one": "{n} question",
+      "yell.mustWord.other": "{n} questions",
+      "yell.canWord.one": "{n} suggestion",
+      "yell.canWord.other": "{n} suggestions",
+      "yell.allWord.one": "{n} open point",
+      "yell.allWord.other": "{n} open points",
+      "ocrnav.word.one": "{n} row from images",
+      "ocrnav.word.other": "{n} rows from images",
+      "settings.chrome": "Head and footer:",
+      "settings.chrome.words": "Words",
+      "settings.chrome.symbols": "Symbols",
+      "settings.chromeTitle": "The buttons of the head and the counters of the footer with their words, or as symbols only",
       "emoji.ocr": "OCR",
       "emoji.text": "Text",
       "emoji.tip": "Tip:",
@@ -1414,7 +1553,7 @@
       "wiki.allLangs": "Wikipedia (all languages)",
       "wiki.allLangsTitle": "The infoboxes of the articles the release group’s Wikidata item has in {langs}: the more precise value of each field",
       "wiki.bg": "Wikipedia in the background",
-      "wiki.bgTitle": "When the import is done, once per release: the infoboxes of Wikipedia ({langs}) are read as an added source – no other requests later",
+      "wiki.bgTitle": "When the import is done, once per release: the infoboxes of Wikipedia ({langs}) are read as an added source",
       "wiki.conflict": "Wikipedia’s languages say different things – both are offered: {list}",
       "wiki.read": "Read from Wikipedia:",
       "wiki.mainOnly": "for the {n} tracks of the main track list (not the bonus tracks)",
@@ -1432,11 +1571,11 @@
       "srcbadge.identity": "{src} artist",
       "srcbadge.identityCo": "{src} entry",
       "settings.skipHide": "Remove skipped entries from the dashboard",
-      "settings.skipHideTitle": "Entries skipped with “Skip ⤼” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
+      "settings.skipHideTitle": "Entries skipped with “Skip ⤼” are not shown; a line at the bottom lists them",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
-      "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
-      "settings.entries.legacyTitle": "As before 3.34.29: a row per role, each relationship of its own – nothing stored changes, you can switch back at any time",
+      "settings.entries.matrixTitle": "The roles of an entry as a matrix: instruments and voices together, the events as columns",
+      "settings.entries.legacyTitle": "As before 3.34.29: a row per role, each relationship of its own",
       "settings.rulesPlace.dashboard": "in the dashboard",
       "settings.rulesPlace.window": "as a window",
       "settings.rulesRowPlace": "Rule ids and ⓘ at rows open them",
@@ -1571,7 +1710,7 @@
       "srcmenu.button": "Source",
       "srcmenu.title": "Another source, a pasted text, the order of the sources, Bandcamp, delete the stored import",
       "supp.open": "Source",
-      "supp.openTitle": "Add a second source to the rows – another linked source, a URL or a pasted text; compared with the rows, nothing is taken over by itself",
+      "supp.openTitle": "Add a second source to the rows",
       "langAsk.hint": "Choose the language of the Credits Importer – you can change it any time in ⚙ Settings → General.",
       "langAsk.ok": "OK",
       "view.label": "Entries:",
@@ -1595,9 +1734,9 @@
       "group.copiedName": "Copied: “{name}”",
       "group.copyFailed": "The browser did not allow copying “{name}”",
       "area.regionHit": "the area the region “{region}” lies in (T059) – a suggestion; credited as “{region}”",
-      "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
+      "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list}",
       "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
-      "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
+      "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs)",
       "group.anvStar": "* – credited so on Discogs (a name variation); MusicBrainz gets it as the artist credit",
       "log.anvCredits": "Artist credits from the Discogs spellings (*): {list}",
       "nav.settings": "⚙",
@@ -1619,7 +1758,7 @@
       "cl.typeAsk": "type to choose",
       "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
-      "cl.removeTitle": "Take this row out of the dashboard (the next import brings it back)",
+      "cl.removeTitle": "Remove this row from the dashboard (the next import brings it back)",
       "cl.noTracks": "no tracks",
       "cl.allTracks": "all {n} tracks",
       "cl.track": "track {list}",
@@ -1632,7 +1771,7 @@
       "settings.place.page": "in the page",
       "settings.logOpen": "Show the log",
       "settings.dev": "Developer mode",
-      "settings.devTitle": "For reporting issues and improving the script: “Start diagnosis” in the log (records what MusicBrainz’s relationship editor does while you use its own tools, e.g. “Batch-create new works” – only observes, changes nothing) and the developer statistics in ⚙ Settings → Statistics (taken over as suggested or changed by hand, what was not recognized, the answers to the script’s questions, duplicates avoided – collected with the other statistics, in this browser only).",
+      "settings.devTitle": "For reporting issues and improving the script",
       "settings.logPlace": "Place of the log",
       "settings.logLines": "Each line not recognized or left out in the log",
       "settings.logLinesTitle": "Off: the log gives their number after an import. On: each line with its reason.",
@@ -1655,14 +1794,14 @@
       "settings.capOn": "Stage in rounds",
       "settings.capLimit": "Relationships per round",
       "settings.liveComments": "Live recordings: add a disambiguation comment",
-      "settings.liveCommentsTitle": "Proposes a comment for each live recording, as “MB: QoL: Seed the batch recording comments script” does (“live, 2004‐03‐23: Iridium, New York, NY, USA”: the date and the place – its “credited as” or its name, with its area – of the rows “recorded at” or “recorded in”). The list is shown above “Stage …”: tick, change. The comments are entered after “Enter edit” in the relationship editor, once the relationships are saved. Only live recordings; another comment in MusicBrainz is not overwritten.",
+      "settings.liveCommentsTitle": "Proposes a comment for each live recording (“live, 2004‐03‐23: Iridium, New York, NY, USA”)",
       "settings.join": "Join the instruments and voices of an entry in one relationship",
-      "settings.joinTitle": "Per recording (or release) and event – the same date, artist credit and additional / guest / solo – one relationship with all its instruments, each with its own role credit (E4). Off: a relationship per instrument. Not in the legacy view.",
+      "settings.joinTitle": "One relationship per recording and event with all its instruments; off: one per instrument",
       "settings.evShared": "Events shared by all roles of an entry up to",
       "settings.evSharedAfter": "events",
       "settings.evSharedTitle": "More events than this: each block of an entry shows only its own (“＋ Event ▾” adds another one, blocks fold)",
       "settings.emAttr": "Attributes in the full matrix of an entry",
-      "settings.emAttrTitle": "Together: one column, each attribute with its word. Separate: a column per attribute (wider). Also switchable above each matrix.",
+      "settings.emAttrTitle": "Attributes in one column with their words, or a column per attribute",
       "settings.emShow": "Lines of a block shown before “▸ n more”",
       "settings.emBy": "Compact entries at first",
       "settings.aria.awMax": "At most works and recordings per artist",
@@ -1686,7 +1825,7 @@
       "legend.existsSome": "partly on MusicBrainz",
       "log.existingSkipped.one": "{n} row is already on MusicBrainz and was set to Skip: {list}",
       "log.existingSkipped.other": "{n} rows are already on MusicBrainz and were set to Skip: {list}",
-      "manual.hint": "Add any MusicBrainz entry that can be related to this release, its recordings or works: artist, label, place, area, event, series, recording, release, work and more. The kind of entry is recognized from the URL or MBID. The role list shows all MB relationship types for that kind; for artists, a role as Discogs writes it (e.g. Guitar [Electric]) works too.",
+      "manual.hint": "Add any MusicBrainz entry that can be related to this release, its recordings or works",
       "manual.entityPlaceholder": "URL or MBID of any MusicBrainz entry",
       "manual.search": "Search MB:",
       "manual.searchTitle": "Search MusicBrainz for an entry (links in a new tab)",
@@ -1745,7 +1884,7 @@
       "mbs.failed": "The search failed: {error}",
       "mbs.kindAsk": "“{name}” is linked. Let the link go and change its kind to “{kind}”? Its roles are re-mapped.",
       "settings.mbHits": "Hits of a search in an entry's field",
-      "settings.mbHitsTitle": "A name typed into the field of an entry's MusicBrainz link is searched: this many hits are shown at first and with each “+ more” (1 – 25)",
+      "settings.mbHitsTitle": "How many hits a search in the field of an entry's MusicBrainz link shows at first (1 – 25)",
       "log.mbsSearch": "{name}: searched MusicBrainz for the {kind} “{q}” – {n} hits",
       "log.mbsKind": "{name}: now a {to} (was a {from}) – its roles re-mapped",
       "dir.label": "Direction",
@@ -1754,7 +1893,7 @@
       "dir.work": "each work of the selected tracks",
       "link.mbTitle": "Open on MusicBrainz",
       "link.discogsTitle": "Open on {src}",
-      "link.webTitle": "Found next to the name in the text: MusicBrainz is asked for artists with this link (only a suggestion), and “Create artist …” fills it in",
+      "link.webTitle": "Found next to the name in the text: MusicBrainz is asked for artists with this link",
       "works.openAll.one": "Open {n} work in a background tab",
       "works.openAll.other": "Open {n} works in background tabs",
       "works.openAllTitle": "Opens every work that is linked or will be linked, without leaving this page",
@@ -1802,14 +1941,14 @@
       "matrix.notMatched": "not matched – see artist list",
       "matrix.colCredit": "credited as",
       "matrix.colDate": "date",
-      "matrix.colDateMbTitle": "This date is added to the relationships of this column that MusicBrainz has without a date (an edit of each); dates MusicBrainz has stay",
+      "matrix.colDateMbTitle": "This date is added to the relationships of this column that MusicBrainz has without a date (an edit of each)",
       "note.musicLyrics": "Music and lyrics in one credit: MusicBrainz “writer”",
       "matrix.attrs": "Attributes of the link between recording and work",
       "matrix.attrsAll": "Attributes for all:",
       "matrix.attrsShort": "Attributes",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
-      "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
-      "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers of this track and has only writing credits on this release (not classical music). A click takes it off.",
+      "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link",
+      "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers. A click takes it off",
       "suite.ask": "{tracks}: parts of the suite “{name}”?",
       "suite.yes": "✓ Yes",
       "suite.noBtn": "✕ No",
@@ -1848,9 +1987,9 @@
       "suite.partPick": "Link “{title}”",
       "suite.partPickTitle": "MusicBrainz has a work of this title by the track's writers – a click links it instead of a new work",
       "suite.createBtn": "Create the suite in MusicBrainz …",
-      "suite.createBtnTitle": "Opens MusicBrainz's form for a new work in the dashboard, prefilled with the name, the type “Suite” and the writers credited for all of its tracks. Its “parts” are staged only once it exists: MusicBrainz does not create a new work that is linked by “parts” only.",
+      "suite.createBtnTitle": "Opens MusicBrainz's form for a new work, prefilled with the name, the type “Suite” and the writers",
       "suite.wait": "Its “parts” wait until the suite exists in MusicBrainz – the parts can be staged with their recordings already.",
-      "suite.pickTitle": "MusicBrainz has a work of this name by the writers of all its tracks – a click takes it as the suite instead of creating a new one",
+      "suite.pickTitle": "MusicBrainz has a work of this name by the writers of all its tracks",
       "suite.inMb": "Suite in MusicBrainz: {name}",
       "suite.createTitle": "Create suite: {name}",
       "suite.createNoWriters": "No writer is credited for all of its tracks in the dashboard. You can add them in the form.",
@@ -1882,12 +2021,12 @@
       "settings.suiteNaming": "Parts of a suite",
       "settings.suiteNaming.colon": "Suite: Part",
       "settings.suiteNaming.comma": "Suite, Part",
-      "settings.suiteNamingTitle": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
+      "settings.suiteNamingTitle": "How the new works of the parts of a suite are named: “Trisect: Transition” or “Trisect, Transition”",
       "settings.editNote.full": "Full",
       "settings.editNote.simple": "Simple",
-      "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
-      "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
-      "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
+      "settings.editNote.fullTitle": "The edit note names the source, the script and everything that was added",
+      "settings.editNote.simpleTitle": "The edit note names only the source, the other sources and the script",
+      "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it)",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
       "matrix.attrOpenAll": "open all rows",
@@ -1919,17 +2058,17 @@
       "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
       "stack.flipUp": "⇅ Instruments above the names",
       "stack.flipDown": "⇅ Names above the instruments",
-      "stack.flipTitle": "Reads the lines whose order was not clear the other way round – in the dashboard: what was changed in the other rows stays",
+      "stack.flipTitle": "Reads the lines whose order was not clear the other way round",
       "case.back": "↺ in capitals",
-      "case.backTitle": "The source writes “{name}”; the dashboard in normal case (rule S060). A click takes the capitals – also as the “credited as” of its roles.",
+      "case.backTitle": "The source writes “{name}”; the dashboard in normal case (rule S060)",
       "case.normal": "↺ normal case",
       "case.normalTitle": "Back to normal case: “{name}”",
       "cover.from": "From the cover art · {what}",
       "cover.cropTitle": "Where this line is in the image (read from the cover art)",
-      "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
-      "matrix.translationReason": "the translation named without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
+      "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × leaves it out)",
+      "matrix.translationReason": "the translation named without tracks: a suggestion for every work (✓ keeps it, × leaves it out)",
       "matrix.suggOk": "Keep the suggestion",
-      "matrix.suggNo": "Take the suggestion out",
+      "matrix.suggNo": "Leave the suggestion out",
       "matrix.colMenu": "Column: date, all works, publishers",
       "matrix.colDateTitle": "Date of the column (▾ changes it; a pool date can be dropped onto the head)",
       "matrix.roleDropTitle": "{role} – drop a track group here: this role only for the works of its tracks",
@@ -1942,7 +2081,7 @@
       "matrix.countTracks.other": "{n} tracks",
       "matrix.similar": "(similar name)",
       "log.matrixSuggOk": "Suggestion kept: {name}, track {track}",
-      "log.matrixSuggNo": "Suggestion taken out: {name}, track {track}",
+      "log.matrixSuggNo": "Suggestion left out: {name}, track {track}",
       "log.matrixAttrApplied": "Track group {name} → {attr}: {n} links",
       "log.matrixAttrAdded": "Track group {name} added → {attr}: {n} links",
       "log.matrixTracksApplied": "Track group {name} → {col} ({roles})",
@@ -1961,18 +2100,18 @@
       "matrix.liveWhy.notesTracks": "the notes say these tracks were recorded live (“in live concert” …)",
       "matrix.liveWhy.concert": "the text names a concert at {place}",
       "matrix.liveOfferRec": "Live recording – {reason}. This link exists in MusicBrainz without “live”: a click adds it (an edit). It is not set by itself.",
-      "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
+      "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit; a type you choose stays",
       "preview.attrFillTitle": "Link exists in MusicBrainz; the attributes are added",
       "log.linkAttrsAdded": "Attributes added to an existing link ({list}): {text}",
       "msg.linkAttrsAdded.one": "Attributes added to {n} existing link between recording and work – MusicBrainz shows it as changed (yellow).",
       "msg.linkAttrsAdded.other": "Attributes added to {n} existing links between recording and work – MusicBrainz shows them as changed (yellow).",
       "matrix.collapse": "Collapse column",
       "matrix.expand": "Expand column",
-      "matrix.removeCol": "Take this column out of the matrix: its rows are set to “Skip” (they stay in the list); the column stays folded, a click brings it back",
+      "matrix.removeCol": "Remove this column from the matrix: its rows are set to “Skip” (they stay in the list); the column stays folded, a click brings it back",
       "matrix.removeColMb": "Fold this column (the relationships stay in MusicBrainz)",
-      "matrix.restoreCol": "{name}: taken out (rows on “Skip”) – click to bring it back",
-      "log.matrixColRemoved.one": "{name} taken out of the works matrix: {n} row on “Skip”",
-      "log.matrixColRemoved.other": "{name} taken out of the works matrix: {n} rows on “Skip”",
+      "matrix.restoreCol": "{name}: left out (rows on “Skip”) – click to bring it back",
+      "log.matrixColRemoved.one": "{name} left out of the works matrix: {n} row on “Skip”",
+      "log.matrixColRemoved.other": "{name} left out of the works matrix: {n} rows on “Skip”",
       "log.matrixColRestored": "{name} back in the works matrix",
       "matrix.pubAll": "for all works",
       "matrix.pubCheck": "check evidence",
@@ -2003,7 +2142,7 @@
       "pkg.ask": "Named only in the text of the edition “{name}” – on Skip for this release:",
       "rmx.ask": "Remixer only from the title {titles} (MusicBrainz) – take it?",
       "rmx.take": "Take as remixer",
-      "rmx.takeTitle": "The title names this artist as the remixer: the role is staged (with “remix of” the original track, when it is on this release)",
+      "rmx.takeTitle": "The title names this artist as the remixer",
       "rmx.of": "{remix} is a remix of {orig}",
       "rmx.ofTake": "Add “remix of”",
       "rmx.ofTaken": "✓ “remix of” added",
@@ -2017,16 +2156,16 @@
       "em.ghostEmpty": "empty",
       "insts.label": "Instruments:",
       "insts.commonTitle": "Add the common level: {what} – a row on the recordings beside the instruments (they stay)",
-      "insts.commonRemove": "Take the row of the common level ({what}) out again",
+      "insts.commonRemove": "Remove the row of the common level ({what}) again",
       "insts.commonVocals": "vocals",
       "insts.commonPerformer": "performer",
       "insts.commonAll": "instruments",
       "log.instsCommon": "{name}: the common level of the instruments added – {what}",
-      "log.instsCommonOff": "{name}: the row of the common level taken out",
+      "log.instsCommonOff": "{name}: the row of the common level removed",
       "insts.track": "all tracks",
       "insts.release": "on the release + group",
       "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
-      "insts.releaseTitle": "Each instrument on the release (with the release's date); on the recordings one row of the group the instruments share (MusicBrainz's instrument tree), with the date of the recordings – switch back and forth as often as you like",
+      "insts.releaseTitle": "Each instrument on the release (with the release's date)",
       "insts.hint": "would be: release – {list} · recordings – {group}",
       "insts.hintTitle": "What “on the release + group” would enter – only a preview, nothing set",
       "insts.sugg": "{n} instruments without tracks – not necessarily each on every track.",
@@ -2073,25 +2212,25 @@
       "dgl.exceptShort": "not {list}",
       "dgl.mismatch": "“{lineup}” in the lineup, “{track}” on tracks {list}",
       "dgl.precise": "More precise everywhere",
-      "dgl.preciseTitle": "Each one of the lineup on all tracks except those the track credits give to others only; the more precise instrument of the two on all of them; the track credits joined into it (no second row, no abbreviated spelling)",
+      "dgl.preciseTitle": "Each one of the lineup on all tracks except those the track credits give to others only",
       "dgl.track": "Per track",
-      "dgl.trackTitle": "The lineup's rows on the tracks without track credits; the tracks with credits as Discogs gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
+      "dgl.trackTitle": "The lineup's rows on the tracks without track credits",
       "dgl.lineup": "The lineup's",
       "dgl.lineupTitle": "As the lineup says: everyone on all tracks with the lineup's instrument – the track credits left out",
       "log.dglFound": "Lineup and the credits of single tracks differ – proposed: {list}",
       "log.dglAnswer": "Lineup: {choice}",
-      "rmd.title.one": "Taken out in the editor last time: {n} credit",
-      "rmd.title.other": "Taken out in the editor last time: {n} credits",
+      "rmd.title.one": "Removed in the editor last time: {n} credit",
+      "rmd.title.other": "Removed in the editor last time: {n} credits",
       "rmd.part.one": "(on track {list} only)",
       "rmd.part.other": "(on tracks {list} only)",
       "rmd.hint": "– imported again as the source gives it. Skip them again?",
       "rmd.done": "– on Skip again.",
       "rmd.keepTitle": "Keep this one (import it as the source gives it)",
       "rmd.skip": "Skip them again",
-      "rmd.skipTitle": "All of them on Skip again, as at “Enter edit” last time (a credit taken out on some tracks: those tracks only)",
-      "log.rmdFound": "Taken out in the editor last time: {n} – asked whether to skip them again",
-      "log.rmdSkipped": "Taken out in the editor last time: {n} on Skip again",
-      "yell.kind.rmd": "credits taken out in the editor last time",
+      "rmd.skipTitle": "All of them on Skip again, as at “Enter edit” last time (a credit removed on some tracks: those tracks only)",
+      "log.rmdFound": "Removed in the editor last time: {n} – asked whether to skip them again",
+      "log.rmdSkipped": "Removed in the editor last time: {n} on Skip again",
+      "yell.kind.rmd": "credits removed in the editor last time",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
       "plays.take": "Take (all tracks)",
@@ -2195,7 +2334,7 @@
       "settings.h.matrix": "Works matrix",
       "settings.h.suites": "Suites",
       "magic.btn": "Answer all",
-      "magic.btnTitle": "Answers the open questions of the works matrix by the level “{level}” – a preview first; nothing is entered in MusicBrainz, each answer can be changed",
+      "magic.btnTitle": "Answers the open questions of the works matrix by the level “{level}” – a preview first",
       "magic.levelTitle": "Level of “✨ Answer all”",
       "magic.level.careful": "Careful",
       "magic.level.balanced": "Balanced",
@@ -2274,14 +2413,14 @@
       "settings.h.stats": "Statistics",
       "settings.h.devTools": "Tools",
       "settings.noteDup": "Name works of the same title in MusicBrainz when new works are created anyway",
-      "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works (so they can be told apart)",
+      "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works",
       "yell.must": "● {n}",
       "lc.missing": "Label code: Discogs gives LC {code} – {name} has no label code on MusicBrainz",
       "lc.other": "Label code: Discogs gives LC {code} – {name} has LC {other} on MusicBrainz",
       "lc.none": "Label code: Discogs gives LC {code} – no label of this release on MusicBrainz has it (which label it belongs to is not clear)",
       "lc.addTitle": "Edit {name} on MusicBrainz with the label code {code} filled in (you check and save it)",
       "sort.label": "Order:",
-      "sort.title": "The order of the entries: as in the source, by kind (instruments first), by name, by kind of entry, by level – within a block as in the source",
+      "sort.title": "The order of the entries: as in the source, by kind, by name, by kind of entry or by level",
       "sort.mode.source": "as in the source",
       "sort.mode.kind": "by kind",
       "sort.mode.alpha": "by name",
@@ -2333,15 +2472,13 @@
       "settings.sortOnTitle": "Off: the entries always in the source's order, no choice",
       "yell.can": "● {n}",
       "yell.all": "● {n}",
-      "yell.mustTitle": "Questions that must be answered: until then these roles are not staged (orange). A click goes to the next one",
-      "yell.canTitle": "Suggestions that may be confirmed: they are staged as suggested (yellow) – ✓ confirms one, ✕ takes it back. A click goes to the next one",
-      "yell.allTitle": "Open: questions to answer (orange, not staged until answered) and suggestions to confirm (yellow, staged as suggested). A click goes to the next one",
+      "yell.mustTitle": "Questions to answer before staging. Click: next one, Shift+click: the one before",
+      "yell.canTitle": "Suggestions, staged as suggested unless changed. Click: next one, Shift+click: the one before",
+      "yell.allTitle": "Questions to answer and suggestions to confirm. Click: next one, Shift+click: the one before",
       "yell.mustLabel": "{n} questions to answer (must) – to the next one",
       "yell.canLabel": "{n} suggestions to confirm (may) – to the next one",
       "yell.allLabel": "{n} open points – to the next one",
       "yell.kind.date": "date of the notes",
-      "yell.next": "Next open point",
-      "yell.prev": "Open point before",
       "yell.dot.must": "{n} questions to answer in this entry – or skip the whole entry: “Skip ⤼”",
       "yell.dot.can": "{n} suggestions to confirm in this entry – or skip the whole entry: “Skip ⤼”",
       "yell.doneTitle": "Confirmed",
@@ -2354,7 +2491,7 @@
       "yell.ok.concert": "Confirm: recorded (live) at this place",
       "yell.no.concert": "Leave the place of the concert out",
       "yell.ok.auto": "Confirm: the automatic row stays in this event",
-      "yell.no.auto": "Take the automatic row out of this event",
+      "yell.no.auto": "Remove the automatic row from this event",
       "yell.kind.preset": "translation as liner notes",
       "yell.kind.case": "words written small",
       "yell.kind.auto": "automatic row of “on the release”",
@@ -2362,7 +2499,7 @@
       "log.yellNo": "Taken back: {what}",
       "log.yellUndo": "Opened again: {what}",
       "settings.yellOne": "One counter of open points",
-      "settings.yellOneTitle": "The footer counts what is open: questions to answer (must, orange) and suggestions to confirm (may, yellow) – apart, or in one counter",
+      "settings.yellOneTitle": "One counter in the footer for questions and suggestions together, not two",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
       "matrix.langAdd": "add a language …",
@@ -2375,7 +2512,7 @@
       "group.arrLevelTitle": "Level – a click puts this arrangement on “{level}” (out of the works matrix)",
       "log.arrLevel": "{name}: {type} back on “{level}” (out of the works matrix)",
       "group.worksGoto": "✎ works ↓",
-      "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
+      "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up",
       "settings.mxSkipRows": "Show the rows skipped with the works matrix with their entries",
       "group.mxHidden.one": "{n} row skipped with the works matrix is not shown (setting)",
       "group.mxHidden.other": "{n} rows skipped with the works matrix are not shown (setting)",
@@ -2406,11 +2543,11 @@
       "matrix.applyDate": "Apply date",
       "log.diagStartBtn": "Start diagnosis",
       "log.diagStopBtn": "Stop diagnosis",
-      "log.diagTitle": "Records what the relationship editor does while you use its own tools (e.g. “Batch-create new works”), for improving the script. Only observes, changes nothing.",
+      "log.diagTitle": "Records what the relationship editor does while you use its own tools. Only observes, changes nothing",
       "log.diagStep": "Diagnosis: {text}",
       "log.diagStop.one": "Diagnosis stopped after {n} step",
       "log.diagStop.other": "Diagnosis stopped after {n} steps",
-      "works.pendingTitle": "Marks a new work in the relationship editor, like MusicBrainz’s “Batch-add new works”. It is created together with its writers, publishers and the link to the recording when you click “Enter edit”.",
+      "works.pendingTitle": "Marks a new work in the relationship editor, like MusicBrainz’s “Batch-add new works”",
       "works.plannedPending": "new – created with “Enter edit”",
       "works.viaForm": "via form …",
       "works.createAllForm": "Create missing works one by one via form …",
@@ -2430,10 +2567,10 @@
       "msg.editedReplaced.one": "{n} relationship was changed in the relationship editor itself; it was replaced by what the dashboard has now: {list}",
       "msg.editedReplaced.other": "{n} relationships were changed in the relationship editor itself; they were replaced by what the dashboard has now: {list}",
       "log.stagedEditedReplaced": "Changed in the editor itself, replaced all the same: {text}",
-      "msg.editedRemoved.one": "{n} relationship was changed in the relationship editor itself; it was taken out all the same – the dashboard no longer has it: {list}",
-      "msg.editedRemoved.other": "{n} relationships were changed in the relationship editor itself; they were taken out all the same – the dashboard no longer has them: {list}",
-      "log.stagedEditedRemoved": "Changed in the editor itself, taken out all the same: {text}",
-      "log.stageSummaryEdited": "Staging complete: {added} added, {updated} updated, {removed} taken out, {replaced} changed in the editor itself and replaced or taken out all the same, {changed} changed in the editor itself and left alone, {remove} to remove by hand",
+      "msg.editedRemoved.one": "{n} relationship was changed in the relationship editor itself; it was removed all the same – the dashboard no longer has it: {list}",
+      "msg.editedRemoved.other": "{n} relationships were changed in the relationship editor itself; they were removed all the same – the dashboard no longer has them: {list}",
+      "log.stagedEditedRemoved": "Changed in the editor itself, removed all the same: {text}",
+      "log.stageSummaryEdited": "Staging complete: {added} added, {updated} updated, {removed} removed, {replaced} changed in the editor itself and replaced or removed all the same, {changed} changed in the editor itself and left alone, {remove} to remove by hand",
       "msg.removeByHand.one": "{n} relationship staged before is no longer wanted, but it was changed in the relationship editor itself; please remove it there by hand: {list}",
       "msg.removeByHand.other": "{n} relationships staged before are no longer wanted, but they were changed in the relationship editor itself; please remove them there by hand: {list}",
       "preview.updateTitle": "Staged before; will be updated in the editor if it was not changed there",
@@ -2487,9 +2624,9 @@
       "settings.afterEdit": "Button “Enter edit & import credits” in the release editor",
       "settings.afterEditBg": "Imported with Harmony: open in a background tab",
       "settings.gapLine": "Say on the release page what is missing",
-      "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
+      "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet",
       "settings.gapNone": "Also when nothing seems to be missing",
-      "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
+      "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits",
       "gapWhy.head": "{script} – line of the release page (developer mode):",
       "gapWhy.start": "started – waiting for MusicBrainz and the source …",
       "gapWhy.off": "switched off in ⚙ Settings → Sources.",
@@ -2505,9 +2642,9 @@
       "gapWhy.dismissed": "hidden with ✕ (until the number changes from {n}).",
       "gapWhy.error": "stopped by an error: {msg}",
       "settings.gapWhy": "Line of the release page: show why it is missing",
-      "settings.gapWhyTitle": "Developer mode: where the line would be, a grey note says why there is none (the setting off, no link recognized, MusicBrainz or the source not answering, nothing missing, hidden with ✕, an error); in the console too.",
+      "settings.gapWhyTitle": "Developer mode: where the line would be, a grey note says why there is none",
       "settings.dsupWhy": "Compared with MusicBrainz: show why an entry has no box",
-      "settings.dsupWhyTitle": "Developer mode: at an entry without the box “Compared with MusicBrainz”, a grey note says why (rules off, not linked, no relationships of the person on MusicBrainz, none of the same type, level, tracks and instrument, no dates, nothing to change).",
+      "settings.dsupWhyTitle": "Developer mode: an entry without the box “Compared with MusicBrainz” says why",
       "dsupWhy.head": "{script} – compared with MusicBrainz (developer mode):",
       "dsupWhy.off": "the rules S172, S173 and S174 are switched off.",
       "dsupWhy.company": "only people are compared (no label, place or other entry).",
@@ -2524,13 +2661,13 @@
       "dsupWhy.lv.recording": "recordings",
       "dsupWhy.lv.work": "works",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
-      "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
+      "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
-      "settings.aboutCreditsTitle": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field (“Music and cover art by X”), marked “from the about text” – prose gives nothing. “Leave out the about text” (menu Source ▾) still leaves out all of it for one release. Takes effect at the next import.",
+      "settings.aboutCreditsTitle": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field",
       "settings.notesCredits": "Discogs: read the credits in the notes",
-      "settings.notesCreditsTitle": "Rule S054: every credit line of the Discogs notes is read like a pasted text – people and companies – and becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line). Nothing twice: what Discogs lists already is left out – when Discogs gives it for the whole release and the notes name tracks, it gets those; what MusicBrainz has is skipped as always. “Leave out the credits of the notes” (menu Source ▾) leaves them out for one release. Takes effect at the next import.",
+      "settings.notesCreditsTitle": "Rule S054: every credit line of the Discogs notes is read like a pasted text",
       "settings.typos": "Typos in role words (“Muisc” → “Music”)",
-      "settings.typosTitle": "Rule S050: a part of a text (pasted, Bandcamp, Discogs notes) that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word read as that word – only role words, never names; the row says what was written. Takes effect at the next import.",
+      "settings.typosTitle": "Rule S050: a word one letter off a role word is read as that role word (never names)",
       "harmony.opened": "– opened in a background tab",
       "harmony.link": "Edit relationships with Credits Importer",
       "harmony.title": "Opens “Edit relationships” of this release on MusicBrainz in a new tab; the import dashboard starts by itself and loads {links}",
@@ -2568,7 +2705,7 @@
       "scope.all": "with",
       "scope.work": "only",
       "scope.nonwork": "without",
-      "scope.title": "A filter of the works: all relationships (with), only those of works (only) or all but those (without) – the rest is on Skip until “with” brings it back; each import starts with “with”.",
+      "scope.title": "A filter of the works: all relationships (with), only those of works (only) or all but those (without)",
       "log.scope": "Stage: {mode}",
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
       "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
@@ -2623,7 +2760,7 @@
       "media.rememberTabOnly": "Remember this choice for this release (in this tab)",
       "media.rememberTab": "The release is not remembered (⚙ Settings → Cache): the choice holds until the page is loaded again",
       "media.load": "Load the chosen media in the relationship editor in the background",
-      "media.loadTitle": "MusicBrainz's relationship editor shows the tracks of large releases only when a medium is opened, and relationships can be staged only on loaded media. The chosen media are opened one after another while the import runs.",
+      "media.loadTitle": "The chosen media are opened one after another: relationships can be staged only on loaded media",
       "media.loadState.one": "({n} of them not loaded yet: {list})",
       "media.loadState.other": "({n} of them not loaded yet: {list})",
       "media.loadDone": "(all of them loaded)",
@@ -2664,10 +2801,10 @@
       "matrix.fold": "Fold the works matrix",
       "matrix.unfold": "Unfold the works matrix",
       "matrix.skip": "Skip works",
-      "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
+      "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships",
       "matrix.skipped": "skipped",
       "matrix.unskip": "Take works again",
-      "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is taken out of the editor. The work lookups rest.",
+      "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is removed from the editor. The work lookups rest.",
       "matrix.skippedRows.one": "{n} row on “Skip”",
       "matrix.skippedRows.other": "{n} rows on “Skip”",
       "matrix.cols.one": "{n} column",
@@ -2708,7 +2845,7 @@
       "date.recordingDefault": "recording date {date}{pool}",
       "date.ownDate": "own date",
       "roleCredit.fromDiscogs": "Taken from Discogs",
-      "roleCredit.dbrTitle": "From Discogs: the detail “{short}” put before the instrument – “{long}” (rule S084). Click to use Discogs's short form “{short}”.",
+      "roleCredit.dbrTitle": "From Discogs: the detail “{short}” put before the instrument – “{long}” (rule S084)",
       "matrix.clearDates": "clear all dates",
       "matrix.clearDatesAsk": "Remove every date in the works matrix (column dates, cell dates and the dates of the links to works)?",
       "matrix.newWorksHow": "created with “Enter edit”, like “Batch-add new works”",
@@ -2748,12 +2885,12 @@
       "matrix.suggestPartType": "type {n} of {of}",
       "matrix.suggestPartLang": "language {n} of {of}",
       "matrix.suggestIfNotOwn": "if not accepted: the defaults stay ({what})",
-      "matrix.suggestRowTitle2": "Suggested from the works of the artists: {what} – not filled in until “Accept” in the head of the matrix; the label says what is filled in",
+      "matrix.suggestRowTitle2": "Suggested from the works of the artists: {what}",
       "matrix.labelRoTitle": "Work type and lyrics languages of this work in MusicBrainz",
       "matrix.instrumentalAuto": "[No lyrics] because the title says “instrumental” (rule S153); a language you choose replaces it",
       "matrix.creditsAll": "All artists credited as:",
       "matrix.workDates": "⌚ Performance dates onto linked works",
-      "matrix.workDatesTitle": "The recording date of a track (Performance) also onto its links with works MusicBrainz has, with “Apply”: added where the link has no date, made more precise where it has less – nothing else. A date dropped onto a link goes there either way.",
+      "matrix.workDatesTitle": "With “Apply”, the recording date of a track also goes onto its links with works MusicBrainz has",
       "matrix.workDatesN.one": "{n} link gets a date",
       "matrix.workDatesN.other": "{n} links get a date",
       "wd.target": "⌚ drop a date here (the link in MusicBrainz)",
@@ -2785,9 +2922,9 @@
       "matrix.attrAdd": "attribute",
       "matrix.newMenu": "More for a new work: search, form, work type and languages",
       "works.pendingShort": "New",
-      "wnew.onTitle": "A new work of the same title instead of “{title}” (an arrangement is a work of its own): it gets the attributes of this link, “arrangement of” “{title}” is suggested, and this link is removed when the new one is staged",
+      "wnew.onTitle": "A new work of the same title instead of “{title}” (an arrangement is a work of its own)",
       "wnew.replaces": "instead of “{title}”",
-      "wnew.replacesTitle": "Replaces the work “{title}” of MusicBrainz: its link to this recording is removed in the relationship editor when the new work is staged",
+      "wnew.replacesTitle": "Replaces the work “{title}” of MusicBrainz: its link to this recording is removed at staging",
       "wnew.off": "keep linked work",
       "wnew.offTitle": "Keep the link to “{title}” – no new work",
       "arrsugg.of": "arrangement of",
@@ -2802,22 +2939,22 @@
       "medley.splitAll.one": "Medleys: split {n} title",
       "medley.splitAll.other": "Medleys: split {n} titles",
       "medley.markTitle": "Switch: when “＋ New” or “＋ New works” plans this track, each part becomes a work of its own: {list}",
-      "medley.splitAllTitle2": "Switch for every title with a separator: when “＋ New works” plans them, each part becomes a work of its own, linked as a medley: {list}",
-      "medley.sepsTitle": "The separators of medley titles for this release: {list} – “/” also without spaces; words like “AC/DC” or “24/7” stay whole (mapping MEDLEY_EXCEPTIONS)",
+      "medley.splitAllTitle2": "For every title with a separator: each part becomes a work of its own, linked as a medley",
+      "medley.sepsTitle": "The separators of medley titles for this release: {list}",
       "medley.sepAdd": "Add a separator (Enter)",
       "arrsugg.exists": "· an arrangement exists:",
       "arrsugg.existsTitle": "MusicBrainz has an arrangement of this title already: “{title}” (check {stage}) – link it instead of a new work",
       "msg.wnewRemovedAlready": "The link to “{title}” is removed in the relationship editor already – to keep it, undo the removal there.",
       "log.wnewRemovedAlready": "Track {track}: the link to “{title}” is removed in the relationship editor already – not taken back here",
       "arrsugg.existsWork": "· a work of this title exists:",
-      "arrsugg.existsWorkTitle": "MusicBrainz has a work of this title among the works of the people of this release: “{title}” (check {stage}) – if it is this arrangement, link it instead of a new work",
+      "arrsugg.existsWorkTitle": "MusicBrainz has a work of this title among the works of the people of this release",
       "arrsugg.useExisting": "link it instead",
       "arrcom.text": "{names} arrangement",
       "arrcom.what.one": "{n} new work · track {tracks}",
       "arrcom.what.other": "{n} new works · tracks {tracks}",
       "arrcom.offer": "Disambiguation “{text}” for the new arrangement works ({what})?",
       "arrcom.yes": "✓ Set it",
-      "arrcom.offerTitle": "New works of traditional tunes with arrangers: an arrangement is a work of its own – its disambiguation names the arrangers (rule S158)",
+      "arrcom.offerTitle": "New works of traditional tunes with arrangers: an arrangement is a work of its own",
       "arrcom.on": "Disambiguation of the new arrangement works:",
       "arrcom.onTitle": "Set on the new works when they are staged; change the text if needed",
       "arrcom.noTitle": "No disambiguation for the new arrangement works",
@@ -2851,7 +2988,7 @@
       "log.matrixColumn": "Matrix column added: {name} ({role})",
       "log.matrixDatesCleared": "All dates in the works matrix cleared",
       "sync.dgStatus": "Discogs status",
-      "sync.dgStatusTitle": "Shows on the Discogs page which credits are already in MusicBrainz, staged, open, skipped or not mapped; a click on a mark shows its row in the dashboard",
+      "sync.dgStatusTitle": "Shows on the Discogs page which credits are already in MusicBrainz, staged, open, skipped or not mapped",
       "dgStatus.mb": "already in MusicBrainz",
       "dgStatus.staged": "staged in the relationship editor",
       "dgStatus.open": "not staged yet",
@@ -2861,7 +2998,7 @@
       "dgStatus.pending": "staged, but not (yet) in MusicBrainz – the edit may still be open",
       "dgStatus.checked": "checked on the MusicBrainz release page",
       "sync.dgArtwork": "Artwork",
-      "sync.dgArtworkTitle": "Keeps a small picture of the cover at the top of the connected Discogs tab, while it is connected; a click opens Discogs' image view",
+      "sync.dgArtworkTitle": "Keeps a small picture of the cover at the top of the connected Discogs tab, while it is connected",
       "log.dgArtwork": "Cover miniature on Discogs: {state}",
       "dgStatus.artwork": "Cover art from Discogs – click: large in the page, drag to move",
       "dgStatus.artworkHide": "Hide the cover",
@@ -2878,18 +3015,18 @@
       "nav.label": "Navigation:",
       "sync.trackHover": "Track highlight",
       "sync.dgJump": "Jump along in the dashboard",
-      "sync.dgJumpTitle": "When the pointer rests on a track or a mark of the Discogs page, the dashboard scrolls to its row too. Off: the row is only highlighted where it is, the dashboard does not move",
+      "sync.dgJumpTitle": "When the pointer rests on a track or a mark of the Discogs page, the dashboard scrolls to its row too",
       "log.dgJump": "Jump along in the dashboard: {state}",
       "settings.h.navTo": "On the source page",
       "settings.h.navFrom": "In the dashboard",
-      "sync.trackHoverTitle": "When the pointer rests on a track on the Discogs page, its row in the works matrix is highlighted (the dashboard jumps there only with “Jump along in the dashboard”)",
+      "sync.trackHoverTitle": "When the pointer rests on a track on the Discogs page, its row in the works matrix is highlighted",
       "log.dgHover": "Track highlight: {state}",
-      "log.festivalSkipped": "Not taken over (festival; in MusicBrainz an event, not a place): {name}",
+      "log.festivalSkipped": "Not used (festival; in MusicBrainz an event, not a place): {name}",
       "matrix.clearCreditsTitle": "Clears every “credited as” in the works matrix, so MusicBrainz shows the names of the artists and labels",
       "log.matrixCreditsCleared": "Works matrix: “credited as” cleared in {n} rows",
       "picker.mediumTitle": "Click: all tracks of this medium on or off",
       "footer.fill": "add role credits to existing relationships",
-      "footer.fillTitle": "Relationships that already exist in MusicBrainz exactly like a row (same type and attributes) but lack its role credit or “credited as” get them added; MusicBrainz shows them as changed (yellow). Recording and release level.",
+      "footer.fillTitle": "Existing relationships that lack a row's role credit or “credited as” get them added",
       "msg.creditsFilled.one": "Role credits added to {n} existing relationship – MusicBrainz shows it as changed (yellow).",
       "msg.creditsFilled.other": "Role credits added to {n} existing relationships – MusicBrainz shows them as changed (yellow).",
       "msg.fillUnverified.one": "Role credits were added to {n} existing relationship, but MusicBrainz does not show {bad} of them as changed. Please check in the editor before “Enter edit”.",
@@ -2920,10 +3057,10 @@
       "rules.searchPh": "id, word, type, note …",
       "rules.searchCount": "{n} of {all} rules",
       "rules.quick": "Quick switches",
-      "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "rules.quickTitle": "Rules switched on and off often – the same as in the lists below",
       "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
       "quick.perm": "permanent",
-      "quick.permTitle": "Ticked: a change of this switch is stored (also for the next imports, in the active profile). Not ticked: it holds for this import only",
+      "quick.permTitle": "Ticked: a change of this switch is stored (also for the next imports, in the active profile)",
       "quick.onceTag": "this import only",
       "quick.needsTag": "needs {id}",
       "quick.needsTitle": "Acts only while {id} (“{name}”) is on – switching this on switches {id} on too.",
@@ -2980,7 +3117,7 @@
       "settings.t.statistics": "Statistics",
       "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
       "stats.on": "Collect statistics",
-      "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
+      "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there",
       "stats.whereOn": "Statistics are being collected – switched on and off in",
       "stats.whereOff": "Collecting statistics is off – nothing new is counted. Switched on and off in",
       "stats.whereBtn": "⚙ Settings → Cache",
@@ -2988,7 +3125,7 @@
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
       "stats.title": "Statistics",
       "stats.local": "this browser only",
-      "stats.localTitle": "These statistics are kept only in this browser (its storage for musicbrainz.org): another browser or computer has statistics of its own, and nothing is sent anywhere.",
+      "stats.localTitle": "These statistics are kept only in this browser (its storage for musicbrainz.org)",
       "stats.scope": "Whose statistics",
       "stats.scope.local": "This browser",
       "stats.scope.localTitle": "What was counted in this browser",
@@ -2998,7 +3135,7 @@
       "stats.dur": "The times with or without creating new entries",
       "stats.dur.without": "Without new entries",
       "stats.dur.with": "With new entries",
-      "stats.durTitle": "Without new entries: the time of creating artists, labels, places and works (also works via the form) is left out of the time per release and per relationship – from the click on “Create …” until the new entry is linked. With new entries: all of it counts. Imports before 3.65.0 hold no such time.",
+      "stats.durTitle": "The time of an import without the time of creating artists, labels, places and works",
       "stats.global.headShort": "Dump of {date}",
       "stats.global.privacy": "Only numbers: no names, edits or releases; “editors” is how many different ones. Counted are the edits with the script's edit note (“No note” cannot be found).",
       "stats.global.old": "Could not be loaded just now – these are the numbers of the last time.",
@@ -3076,7 +3213,7 @@
       "stats.top.types": "Most frequent relationship types",
       "stats.delete": "Delete statistics …",
       "statio.json": "⇧ JSON",
-      "statio.jsonTitle": "Every submission whole, in readable names (format 2, described by a JSON Schema; times in RFC 3339) – to import it in another browser (⇩ Import there) or to read it in another program",
+      "statio.jsonTitle": "Every submission whole, in readable names (format 2, described by a JSON Schema; times in RFC 3339)",
       "statio.csv": "⇧ CSV",
       "statio.exportedDp": "The columns of the CSV files of today described in {file} – put it next to them",
       "statio.csvx": "⇧ CSV (Excel)",
@@ -3084,8 +3221,8 @@
       "statio.jsonl": "⇧ JSON Lines",
       "statio.jsonlTitle": "One relationship a line as JSON (.jsonl) – for jq, DuckDB, Spark and other tools of data",
       "statio.dp": "⇧ Data Package",
-      "statio.dpTitle": "datapackage.json (Frictionless Data): describes the columns and types of the two CSV files of today – put it next to them",
-      "statio.csvTitle": "Two files after RFC 4180 (commas, a header): the submissions and the relationships – for pandas, R, DuckDB, LibreOffice (two downloads at once: the browser may ask; a name beginning with “=” stays as written – for Excel take “CSV (Excel)”); their columns are described by “Data Package”",
+      "statio.dpTitle": "datapackage.json (Frictionless Data): describes the columns and types of the two CSV files of today",
+      "statio.csvTitle": "Two files after RFC 4180 (commas, a header): the submissions and the relationships",
       "statio.import": "⇩ Import statistics (JSON) …",
       "statio.importTitle": "Adds the records of a file exported before (JSON, format 1 or 2); a record that is here already (the same id) is skipped",
       "statio.purpose": "JSON: to keep the same statistics in several browsers (export here, import there) – format 2 and the files of before. CSV, JSON Lines, Data Package: to evaluate them in other programs.",
@@ -3153,7 +3290,7 @@
       "stats.srcT.perRel": "per relationship",
       "stats.srcT.supp": "with added source",
       "settings.statsIdle": "Pauses not counted from (seconds)",
-      "settings.statsIdleTitle": "The time of an import counts from its start until “Enter edit”; a gap without a click, a key or scrolling of at least this many seconds is a pause and is not counted (a hidden tab: from the moment it is hidden). 0: everything counts. For imports from 3.45.0 on.",
+      "settings.statsIdleTitle": "A gap of at least this many seconds without a click, a key or scrolling is not counted (0: all counts)",
       "stats.genres.combined": "Combined",
       "stats.genres.separate": "Separate",
       "stats.more.decisions": "Decisions",
@@ -3302,7 +3439,7 @@
       "stats.global.lenRelMean": "A release (its whole length) – average: {time}",
       "stats.global.noRelLen": "The whole lengths of the releases come with the next weekly pass of the core dump.",
       "settings.statsDaily": "Show when you work",
-      "settings.statsDailyTitle": "Hours, weekdays, days / weeks / months in a row, the most active weekday and the most in a day (the time per release and the months stay)",
+      "settings.statsDailyTitle": "Hours, weekdays, days / weeks / months in a row, the most active weekday and the most in a day",
       "settings.statsGlobal": "Show “Global” (all users of the script)",
       "settings.statsGlobalTitle": "Off: the statistics show only this browser, and nothing is loaded from GitHub",
       "stats.rec.day": "Most in a day: {n} relationships ({day})",
@@ -3314,11 +3451,11 @@
       "stats.instrOnce": "Used only once ({n}):",
       "stats.ocr.subs": "submissions with text from cover art: {n}",
       "stats.ocr.images": "images read: {n}",
-      "stats.ocr.lines": "lines taken over: {n}",
+      "stats.ocr.lines": "lines used: {n}",
       "stats.ocr.corrected": "words changed by hand: {n}",
       "stats.own": "Own rules now: {n} – relationships from them:",
       "stats.dev.title": "Developer statistics",
-      "stats.dev.auto": "Taken over or changed by hand",
+      "stats.dev.auto": "Used or changed by hand",
       "stats.dev.rules": "Rules whose suggestion was changed most",
       "stats.dev.unrec": "Not recognized most often",
       "stats.dev.answers": "Answers to the questions",
@@ -3343,7 +3480,7 @@
       "stats.dev.dupesN": "Relationships MusicBrainz had already, not staged again: {n}",
       "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
       "settings.remember": "Remember changes and import settings per release",
-      "settings.rememberTitle": "On: a release imported again from the same source comes back as you left it – its rows (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, the MusicBrainz entity chosen by hand), the date pool, track pool and date matrix, the source and media chosen, “Skip works”, “Leave out the about text”, the credits switched off on the source pages, the frames of its images. Off: none of it is stored or read (what is stored stays until it is forgotten).",
+      "settings.rememberTitle": "On: a release imported again from the same source comes back as you left it",
       "settings.rememberMax": "Releases to remember:",
       "settings.rememberMaxTitle": "0 – 100; 0 switches remembering off. Beyond it, the release used longest ago is forgotten first.",
       "settings.rememberMaxHint": "0 – 100, 0 = off",
@@ -3357,7 +3494,7 @@
       "settings.ocrOnTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
       "settings.ocrOnWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
       "settings.ocrPreload": "Load the images ticked ahead",
-      "settings.ocrPreloadTitle": "Text from cover art: the first 24 images ticked are loaded in the background while you choose, two at a time – the frames and the reading then start at once. An image unticked leaves the queue. Off: they are loaded after “Next”.",
+      "settings.ocrPreloadTitle": "Text from cover art: the first 24 images ticked are loaded in the background while you choose, two at a time",
       "ocr.menu": "Text from cover art …",
       "ocr.menuTitle": "Read the credits printed on the back cover or in the booklet (the images of this release on the Cover Art Archive)",
       "ocr.title": "Text from cover art",
@@ -3416,21 +3553,21 @@
       "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text. A line clicked in the text is marked in the image beside it.",
       "ocr.cocrName": "Discogs, image {img}: frame {n}",
       "ocr.cocrNameBc": "Bandcamp, image {img}: frame {n}",
-      "ocr.cocrDel": "Take out this frame (here and in the companion’s large image)",
+      "ocr.cocrDel": "Remove this frame (here and in the companion’s large image)",
       "log.cocrIn": "Text from cover art: frame {n} from {site} added",
       "log.cocrChanged": "Text from cover art: frame {n} from {site} changed – read again",
-      "log.cocrOut": "Text from cover art: a frame from {site} taken out",
+      "log.cocrOut": "Text from cover art: a frame from {site} removed",
       "ocr.small": "Only {w} × {h} px – read enlarged; names can come out wrong.",
       "ocr.textOf": "Text of {what}",
       "ocr.unsure": "Read with little certainty (a click selects it and shows it in the image):",
       "ocr.fixed": "Corrected after reading:",
       "ocr.fixPc": "℗ read as © ({n})",
       "ocr.fixDash": "dash between a name and a role ({n})",
-      "ocr.fixPipe": "stroke of the artwork at the edge of a line taken out ({n})",
+      "ocr.fixPipe": "stroke of the artwork at the edge of a line removed ({n})",
       "ocr.back": "← Images",
       "ocr.copy": "Copy text",
       "ocr.clean": "Remove nonsensical words and signs",
-      "ocr.cleanTitle": "Takes out the words read uncertainly (yellow) that are no word – signs among the letters, no vowel, a letter alone, three same letters in a row, digits among letters – and groups of signs without letters (“~ |”, “=-”). : – , ; / & » « ( ) ℗ © stay, and • · | between words. Clicked again, they come back where they were; what you changed by hand stays.",
+      "ocr.cleanTitle": "Removes what was read uncertainly and is no word; clicked again, it comes back",
       "ocr.cleanAll": "Remove nonsensical words and signs in all images",
       "ocr.cleanN.one": "{n} removed",
       "ocr.cleanN.other": "{n} removed",
@@ -3444,7 +3581,7 @@
       "ocr.errImage": "The image could not be read.",
       "log.ocrOpen": "Text from cover art: the images of release {mbid}",
       "ocr.restart": "↺ Start over",
-      "ocr.restartTitle": "Starts again with the images of the release: the images chosen, the texts read and your own images are discarded – also what is remembered of them for this release. The frames drawn on the images stay.",
+      "ocr.restartTitle": "Starts again with the images of the release: the images chosen, the texts read and your own images are discarded",
       "ocr.restartAsk": "Start over?\n\nThe images chosen, the texts read and your own images are discarded. The frames drawn on the images stay.",
       "ocr.missing.one": "An own file was used: {names} – add it again (choose it or drop it here): its frames, tick and text come back.",
       "ocr.missing.other": "{n} own files were used: {names} – add them again (choose them or drop them here): their frames, ticks and texts come back.",
@@ -3463,13 +3600,13 @@
       "ocr.allShown": "All shown ({n})",
       "ocr.more": "Load {n} more ({left} not shown yet)",
       "ocr.auto": "Auto-select",
-      "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Sources); off, its ticks go again.",
+      "ocr.autoTitle": "Ticks the images that mostly have credits",
       "settings.ocrAuto": "Auto-select the images with credits",
-      "settings.ocrAutoTitle": "Text from cover art: back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
+      "settings.ocrAutoTitle": "Back covers, booklets, liners, trays and PDF pages with credits are ticked when the window opens",
       "hint.full": "Try the full view: every role with all its fields at once – this symbol switches",
       "hint.close": "Hide this hint",
       "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
-      "settings.ocrFrontTitle": "Text from cover art: while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
+      "settings.ocrFrontTitle": "Text from cover art: while its window is open it stays in front of the dashboard, the log and “Mapping rules”",
       "ocr.own": "Your own images",
       "ocr.chooseFiles": "Choose images or PDFs …",
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
@@ -3622,7 +3759,7 @@
       "mapping.copyFailed": "The browser did not allow copying – save it as a file instead",
       "mapping.clipboard": "clipboard",
       "mapping.importFile": "Import file",
-      "mapping.importHint": "or drop a file onto this window – a preview shows what changes before anything is taken over.",
+      "mapping.importHint": "or drop a file onto this window – a preview shows what changes before anything is applied.",
       "mapping.paste": "Paste text",
       "mapping.read": "Read",
       "mapping.pasted": "pasted text",
@@ -3647,7 +3784,7 @@
       "mapping.prev.skipped": "skipped",
       "mapping.prevConflict": "The built-in rule changed since the export: {fields}",
       "mapping.prevNothing": "Nothing would change.",
-      "mapping.apply": "Take over",
+      "mapping.apply": "Apply",
       "mapping.imported.one": "{n} change imported ({name})",
       "mapping.imported.other": "{n} changes imported ({name})",
       "mapping.importWhat": "import {name}",
@@ -3736,7 +3873,7 @@
       "caseNote.word": "{word} → {small}",
       "caseNote.keep": "keep “{word}”",
       "caseNote.always": "always write “{word}”",
-      "caseNote.alwaysTitle": "Adds “{word}” to the proper names of the register (T052, ⚙ Mapping rules): it keeps its capitals in every role credit from now on.",
+      "caseNote.alwaysTitle": "Adds “{word}” to the proper names (T052): it keeps its capitals in every role credit",
       "caseNote.kept": "Kept as written:",
       "caseNote.smallAgain": "write small again",
       "caseNote.clTitle": "The role credit writes words small that MusicBrainz does not know – keep a proper name as written",
@@ -3765,7 +3902,7 @@
       "em.attr.splitTitle": "A column for each attribute of the entry – they stand exactly below each other (for all entries)",
       "em.acLabel": "Credited as – {name}",
       "em.blockAcLabel": "Credited as – all roles of “{block}” of {name}",
-      "em.blockAcTitle": "For all roles of this block at once (also those taken out), when the field is left or with Enter – ↶ Undo in the message; a role changed afterwards keeps its own. Empty: the MusicBrainz name ({name}).",
+      "em.blockAcTitle": "For all roles of this block at once (also those left out), when the field is left or with Enter",
       "em.blockAcSeveral": "several",
       "em.blockAcSeveralTitle": "Several spellings in this block: {list}",
       "em.blockAcSet.one": "Credited as “{text}” for {n} role of {name}",
@@ -3782,7 +3919,7 @@
       "em.detailTitle": "The rows of this line with all their fields (type, level, date, tracks …)",
       "em.gripTitle": "Drag to another place in the block – or Alt+↑ / Alt+↓ (the order holds until the next import)",
       "em.gripLabel": "Move {name} in the block (Alt+↑ / Alt+↓)",
-      "em.remove": "Take this role out (Skip)",
+      "em.remove": "Skip this role",
       "em.more": "▸ {n} more: {list}",
       "em.less": "▴ fewer",
       "em.addEv": "＋ Event ▾",
@@ -3791,7 +3928,7 @@
       "em.count": "{n} relationships to stage",
       "em.countShort": "{n} to stage",
       "em.evDateLabel": "Date of event {n}",
-      "em.evDateOpenTitle": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended) – a date of the pool can be dropped here too",
+      "em.evDateOpenTitle": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended)",
       "em.evDateApply": "Apply",
       "remember.full": "The browser’s storage for musicbrainz.org is full: releases used longest ago were forgotten, and this one could not be stored completely.",
       "remember.hold": "This release was remembered before, but this tab did not read it (it was opened while nothing was remembered). Load the page again to get it back – until then nothing of this release is stored, so it is not written over.",
@@ -3813,7 +3950,7 @@
       "em.evPool": "from the pool:",
       "em.evTracks": "Tracks:",
       "em.evGroups": "track groups:",
-      "em.evNoTracks": "An event on recordings needs at least one track – take its rows out with their ticks instead",
+      "em.evNoTracks": "An event on recordings needs at least one track – skip its rows with their ticks instead",
       "em.levelKept": "{name} stays on the level {level}: MusicBrainz has no “{type}” on the level {to}",
       "em.keptOk": "ok",
       "em.undo": "↶ Undo",
@@ -3825,12 +3962,12 @@
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
       "em.chipAsk": "Answer the question of {name} here",
       "em.chipNoteType": "“{role}” – chosen: {type}",
-      "em.chipOut": "Take {name} out of this event",
+      "em.chipOut": "Remove {name} from this event",
       "em.by.event": "by event",
       "em.by.role": "by role",
       "em.noEvent": "in no event",
       "em.moreChips": "+ {n} more",
-      "em.out": "Taken out:",
+      "em.out": "Left out:",
       "out.mbHas": "MusicBrainz has it",
       "out.mbSame": "MusicBrainz has it with this date: {date}",
       "out.mbPrecise": "MusicBrainz has the date more precisely: {mb} (here {date})",
@@ -3863,19 +4000,19 @@
       "log.statsDeleted": "Statistics deleted",
       "log.statsJobFailed": "Statistics: this submission ({n} relationships) is not counted – the browser could not store it until MusicBrainz confirms it",
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
-      "log.emOut": "{name}: {role} taken out of an event",
+      "log.emOut": "{name}: {role} left out of an event",
       "log.emIn": "{name}: {role} into an event",
       "log.emOrder": "{name}: {role} moved to place {n} in its block",
       "log.emJoin": "{name}: instruments and voices joined in one block",
       "log.emSplit": "{name}: each instrument a block of its own",
       "log.emEvDate": "Date of an event ({n} rows): {date}",
       "log.rememberFull": "The browser’s storage is full: not all of this release could be remembered",
-      "log.rememberError": "What was remembered for this release could not be taken over ({text}) – the import is as the source gives it",
+      "log.rememberError": "What was remembered for this release could not be applied ({text}) – the import is as the source gives it",
       "log.rememberDropped": "The release used longest ago was forgotten (the browser’s storage is full)",
       "log.rememberForgot.one": "Forgotten: everything remembered for {n} release",
       "log.rememberForgot.other": "Forgotten: everything remembered for {n} releases",
-      "log.rememberRestored.one": "{n} remembered change of {date} taken over",
-      "log.rememberRestored.other": "{n} remembered changes of {date} taken over",
+      "log.rememberRestored.one": "{n} remembered change of {date} applied",
+      "log.rememberRestored.other": "{n} remembered changes of {date} applied",
       "log.rememberLost.one": "{n} remembered change left out: its line of the source is gone or changed",
       "log.rememberLost.other": "{n} remembered changes left out: their lines of the source are gone or changed",
       "log.emEvLevel": "{name}: event {n} on the level {level} ({moved} rows moved, {kept} stay)",
@@ -3889,9 +4026,9 @@
       "sync.loadTitle": "Opens this release in the connected Discogs tab",
       "sync.loaded": "release loaded",
       "sync.clickToggle": "Click switches",
-      "sync.clickToggleTitle": "A click on a status mark on Discogs or Bandcamp skips that credit (its row goes to “Skip”) or takes it again; resting the pointer on a mark shows its row in the dashboard. Off: a click shows the row",
+      "sync.clickToggleTitle": "A click on a status mark on Discogs or Bandcamp skips that credit",
       "sync.keepMarks": "Keep marks",
-      "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
+      "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed",
       "dgStatus.hover": "rest the pointer on it: its row in the dashboard",
       "dgStatus.multi": "{n} imports of this release are open – the marks are those of the one used last",
       "textMark.dateMatrix": "Credits Importer: “{date}” is in the date matrix",
@@ -3949,10 +4086,10 @@
       "ms.3.35.0": "Entries as a matrix: each role a line, the events the columns (“Legacy” shows the view before)",
       "ms.3.36.0": "Remember per release: a release imported again comes back as you left it",
       "ms.3.37.0": "The Discogs notes read in full: every credit line an entry or a row",
-      "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
-      "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
-      "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
-      "preview.removeAuto": "Staged before, no longer wanted – will be taken out of the editor",
+      "log.stagedRemoved": "Removed from the editor (no longer wanted): {text}",
+      "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was removed from the editor.",
+      "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were removed from the editor.",
+      "preview.removeAuto": "Staged before, no longer wanted – will be removed from the editor",
       "rules.on": "On",
       "rules.onAria": "Rule {id} on",
       "rules.fixedTitle": "Always on: this rule describes what the dashboard always does – there is nothing to switch",
@@ -4017,7 +4154,7 @@
       "trackpool.explain": "Groups of tracks (e.g. “Tracks 1–5”), from dates in the text or made by hand; drag them onto a date in the matrix, or let a row take their tracks.",
       "trackpool.works.one": "{n} work as track group",
       "trackpool.works.other": "{n} works as track groups",
-      "trackpool.worksTitle": "The works of the source (their parts are tracks of their own) as track groups – unticked, they leave the pool and the date matrix (until the next import); ticked again, they come back as they were",
+      "trackpool.worksTitle": "The works of the source (their parts are tracks of their own) as track groups",
       "trackpool.errEmpty": "Please choose at least one track.",
       "trackpool.useInRow": "Tracks of a group:",
       "trackpool.applied": "{group} {date} on tracks {tracks}: {n} rows.",
@@ -4042,8 +4179,8 @@
       "dm.dropDates": "drag dates here",
       "drop.pickDate": "Move “{name}”: drag it, or click here and then on the place (a column, a row, an event …)",
       "drop.pickTracks": "Move “{name}”: drag it, or click here and then on the place (a date of the matrix, the tracks of a row, the works matrix)",
-      "drop.dateHintTitle": "Drag a date into a column of the matrix, onto a row, an event or a block of an entry, the works matrix, or onto another date (makes a period of both). A date already there stays – ⇧ Shift replaces it",
-      "drop.tracksHintTitle": "Drag a track group onto a date in the matrix (that date then applies only to these tracks), onto the tracks of a row or onto the works matrix: adds them – ⇧ Shift replaces them",
+      "drop.dateHintTitle": "Drag a date into the matrix, onto a row, an event, a block or another date; ⇧ Shift replaces",
+      "drop.tracksHintTitle": "Drag a track group onto a date in the matrix",
       "drop.tracksHint": "drop: add · ⇧ Shift: replace",
       "drop.tracksReplace": "↧ replaces the tracks of this row",
       "drop.tracksAdd": "＋ adds to the tracks of this row (⇧ Shift: replace)",
@@ -4080,8 +4217,8 @@
       "log.arqAdded": "Another role for {name}: {type} ({n} row(s))",
       "matrix.allWorks": "all works",
       "matrix.allWorksOn": "✓ all works",
-      "matrix.allWorksOnTitle": "This column's role(s) for every work at once – or drop a track group here: the works of its tracks (⚙ Settings → Dates & tracks → Drag & drop)",
-      "matrix.allWorksOffTitle": "Every work has this column's role(s) – a click takes them off every work; a track group dropped here: the works of its tracks",
+      "matrix.allWorksOnTitle": "This column's role(s) for every work at once",
+      "matrix.allWorksOffTitle": "Every work has this column's role(s)",
       "log.matrixAllWorksOn": "Works matrix: {col} for all works",
       "log.matrixAllWorksOff": "Works matrix: {col} off for all works",
       "log.matrixRoleLevel": "Works matrix: {role} of {col} onto {level}",
@@ -4098,9 +4235,9 @@
       "drop.tracksAddAlt": "＋ adds to the tracks of this row",
       "drop.mxReplaceAlt": "↧ only the works of these tracks (⇧ Shift: add)",
       "drop.mxAddAlt": "＋ adds the works of these tracks",
-      "drop.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head: a new event with it; ⇧ Shift: replaces its date) and its tracks",
-      "drop.evDateTitle": "Drop a date of the pool here: without a date the event gets it; with one, a new event gets the new date (⇧ Shift: replaces it)",
-      "drop.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line: the role is in both (⇧ Shift: moves it there)",
+      "drop.evTitle": "An event: its level, its date and its tracks. Drop a date onto this head for a new event",
+      "drop.evDateTitle": "Drop a date of the pool here; ⇧ Shift replaces the date the event has",
+      "drop.chipTitle": "Opens the full matrix of this entry at this role",
       "drop.emDate": "{date}: rows into its event {moved}, rows of their own (their date stays) {added}",
       "drop.emNothing": "{date}: nothing in {name} could take it (the same date, no dates for the type, or none of the tracks)",
       "drop.dateSet": "{date} → {name}",
@@ -4122,14 +4259,14 @@
       "log.dropDone": "Dropped: {text}",
       "log.dropUndone": "Drop undone",
       "dm.apply": "Apply",
-      "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
+      "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks",
       "dm.auto": "apply automatically",
       "dm.autoTitle": "When on, every change in the matrix goes onto the rows at once; when off (default), only with “Apply”.",
       "dm.fold": "Fold bar after Apply",
-      "dm.foldTitle": "When on (default), “Dates & tracks” folds after “Apply” – with “apply automatically” once the pointer or the focus leaves the bar after a change.",
+      "dm.foldTitle": "When on (default), “Dates & tracks” folds after “Apply”",
       "dm.autoCell": "Found automatically – not applied yet. Click the date to check, change or confirm it.",
       "dm.editTitle": "Change this date in the matrix: column, track groups, studios",
-      "dm.removeTitle": "Take this date out of this column",
+      "dm.removeTitle": "Remove this date from this column",
       "dm.tgRemove": "Take “{name}” off this date",
       "dm.column": "Column",
       "dm.tracks": "Track groups (together):",
@@ -4147,12 +4284,12 @@
       "dm.art.illustration": "illustration",
       "dm.art.photo": "photography",
       "dm.art.design": "design",
-      "dm.relTitle": "This date only for rows on the release level (release, release group); rows on recordings and works take the other dates of the column. A row switched to the release level takes this date.",
+      "dm.relTitle": "This date only for rows on the release level (release, release group)",
       "log.dmRelDate": "{name}: new level – date from the matrix column {col}: {date}",
       "dm.twin": "{date} is already in “{group}”.",
       "dm.stampNoTracks": "This row has none of the tracks this date has in the matrix ({name}), so the date was not put on it.",
       "datefind.alsoRange": "also as a period: {date}",
-      "datefind.alsoRangeTitle": "The pool gets the days as Discogs gives them and also the period from the first to the last day; in the matrix you choose which to use",
+      "datefind.alsoRangeTitle": "The pool gets the days as Discogs gives them and also the period from the first to the last day",
       "dm.choose": "Choose",
       "dm.chooseSingle": "{n} dates as on Discogs: {list}",
       "dm.chooseSingleTitle": "Use the days as Discogs gives them: one relationship per day",
@@ -4204,9 +4341,9 @@
       "pools.fold": "fold",
       "pools.show": "show",
       "pools.keep": "keep the pools in the bar when folded",
-      "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, so they can be dragged onto rows while you scroll through the dashboard",
+      "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, to be dragged onto rows",
       "settings.workGroups": "Offer the works of the source as track groups",
-      "settings.workGroupsTitle": "A work whose parts are tracks of their own (index tracks of Discogs: “First Encounter” on A1, A2, B1, B2) comes into the track pool as a track group with its name – as a suggestion. In the track pool you can leave them out for this import.",
+      "settings.workGroupsTitle": "A work whose parts are tracks of their own comes into the track pool as a track group",
       "date.dragHint": "drag",
       "trackpool.dragHint": "drag",
       "log.tracksApplied.one": "Track group {name} put on a row: {n} track",
@@ -4234,7 +4371,7 @@
       "pools.reloaded": "Loaded again from the notes: {n} dates in the pool, {placed} in the matrix.",
       "dm.autoPooled.one": "{n} date from the notes has no word naming its group; it is in the date pool – drag it into the matrix or onto a row if needed.",
       "dm.autoPooled.other": "{n} dates from the notes have no word naming their group; they are in the date pool – drag them into the matrix or onto a row if needed.",
-      "date.chipTitle": "Click to edit or delete; drag into the matrix, onto the date field of a row, or onto another date (makes a period of both)",
+      "date.chipTitle": "Click to edit or delete; drag into the matrix, onto a row or onto another date",
       "log.poolsReloaded": "Pools loaded again from the notes: {n} new dates, {placed} in the matrix (own ones removed: {all})",
       "log.workGroupsIn.one": "{n} work of the source in the track pool",
       "log.workGroupsIn.other": "{n} works of the source in the track pool",
@@ -4294,9 +4431,9 @@
       "members.note": "Members per the text: {names}",
       "members.edit": "edit the band in MusicBrainz ↗",
       "memberOf.add": "member of {group}",
-      "memberOf.editTitle": "The text names this artist a member of {group}, MusicBrainz does not: the artist's edit page with “member of band” (and the instruments) filled in",
+      "memberOf.editTitle": "The text names this artist a member of {group}, MusicBrainz does not",
       "memberOf.onCreate": "“Create artist” adds “member of {group}”",
-      "memberOf.createTitle": "The text names this artist a member of {group}: the form for a new artist gets “member of band” (and the instruments) filled in",
+      "memberOf.createTitle": "The text names this artist a member of {group}",
       "site.note": "Website per the text: {host} – not in MusicBrainz yet.",
       "site.edit": "add it in MusicBrainz ↗",
       "log.siteHint": "{name}: the website {host} of the text is not in MusicBrainz yet – a note at the entry",
@@ -4322,7 +4459,7 @@
       "wone.all": "All",
       "matrix.headsFull": "Everything in the open",
       "matrix.headsCompact": "Compact heads",
-      "matrix.headsTitle": "Compact: the head shows what is used most, the rest is here under ⋯; a column’s “credited as”, “all works” and “Work | Release” are in its menu ▾. Everything in the open: as until 3.164.0. Remembered.",
+      "matrix.headsTitle": "Compact: the head shows what is used most, the rest is here under ⋯",
       "matrix.legendTitle": "A role in a cell:",
       "matrix.legendRole": "role",
       "matrix.legend.on": "will be entered",
@@ -4331,7 +4468,7 @@
       "matrix.legend.wait": "waits for a work",
       "matrix.topTitle": "Scroll the works matrix back to its first row",
       "sync.dgRelease": "Status on the release page",
-      "sync.dgReleaseTitle": "Keep the Discogs status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
+      "sync.dgReleaseTitle": "Keep the Discogs status marks while the MusicBrainz release page is open",
       "log.dgRelease": "Discogs status on the release page: {state}",
     },
   };
@@ -21726,8 +21863,10 @@
     const cnt = (cls) => open.filter((x) => cls === 'all' || x.cls === cls).length;
     const one = (cls) => {
       const n = cnt(cls);
-      const nav = (act, sym) => `<button type="button" class="dci-iconbtn" data-act="${act}" data-cls="${cls}" title="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}" aria-label="${esc(tr(`yell.${act === 'yell-prev' ? 'prev' : 'next'}`))}"${n ? '' : ' disabled'}>${sym}</button>`;
-      return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}">${nav('yell-prev', '‹')}<button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}" aria-label="${esc(tr(`yell.${cls}Label`, { n }))}"${n ? '' : ' disabled'}>${esc(tr(`yell.${cls}`, { n }))}</button>${nav('yell-next', '›')}</span>`;
+      // [F-HEADCOUNT] (3.170.0) one button each, with its word ("1 question", "5 suggestions") or as "● n"; a click goes to the
+      // next one, Shift+click to the one before
+      const text = S.chrome === 'words' ? tr(`yell.${cls}Word`, { n }) : tr(`yell.${cls}`, { n });
+      return `<span class="dci-yell-c dci-yell-c-${cls}${n ? '' : ' dci-yell-zero'}" title="${esc(tr(`yell.${cls}Title`))}"><button type="button" class="dci-textbtn dci-yell-n" data-act="yell-next" data-cls="${cls}" aria-label="${esc(tr(`yell.${cls}Label`, { n }))}"${n ? '' : ' disabled'}>${esc(text)}</button></span>`;
     };
     const html = (S.yellOne ? one('all') : `${one('must')}${one('can')}`) + ocrNavHtml();
     if (box.dataset.html !== html) {
@@ -21744,9 +21883,8 @@
   function ocrNavHtml() {
     const n = ocrNavRows(true).length;
     if (!n) return '';
-    const nav = (act, sym, key) => `<button type="button" class="dci-iconbtn" data-act="${act}" title="${esc(tr(key))}" aria-label="${esc(tr(key))}">${sym}</button>`;
-    return `<span class="dci-yell-c dci-ocrnav-c" title="${esc(tr('ocrnav.title'))}">${nav('ocr-prev', '‹', 'ocrnav.prev')}<button type="button" class="dci-textbtn dci-yell-n" data-act="ocr-next"
-      aria-label="${esc(tr('ocrnav.label', { n }))}">${esc(emo('ocr'))} ${n}</button>${nav('ocr-next', '›', 'ocrnav.next')}</span>`;
+    return `<span class="dci-yell-c dci-ocrnav-c" title="${esc(tr('ocrnav.title'))}"><button type="button" class="dci-textbtn dci-yell-n" data-act="ocr-next"
+      aria-label="${esc(tr('ocrnav.label', { n }))}">${esc(emo('ocr'))} ${S.chrome === 'words' ? esc(tr('ocrnav.word', { n })) : n}</button></span>`;
   }
   /** [Z-SUPPNAV] (3.116.0) "🖼️ Only from images" beside the filter of the missing entries – while there are rows from the cover art. */
   function renderOcrFilter(n) {
@@ -34139,6 +34277,80 @@
     const start = words.slice(0, 9).join(' ');
     return `<details class="dci-ign-prose"><summary class="dci-ign-text">${esc(start)}${words.length > 9 ? ' …' : ''}</summary><span class="dci-sub">${esc(text)}</span></details>`;
   }
+  /** [F-HEADCOUNT] (3.170.0) Head and footer with words or as symbols: stored (`keep`: only taken over), the overlay's class, the counters drawn anew. */
+  function setChrome(mode, keep) {
+    S.chrome = mode === 'symbols' || mode === 'full' ? mode : 'words';
+    if (!keep) writeJson('localStorage', CHROME_KEY, S.chrome === 'words' ? null : S.chrome);
+    if (!S.overlay) return;
+    for (const m of ['words', 'symbols', 'full']) S.overlay.classList.toggle(`dci-chrome-${m}`, m === S.chrome);
+    setHeadMore(false);
+    const y = $('yell');
+    if (y) delete y.dataset.html;
+    refresh();
+    if (S.settingsOpen) renderSettings();
+  }
+  /**
+   * [F-TOOLTIPLEN] (3.170.0) The full explanation of a tooltip: a tooltip is one sentence (its text `key`), what else there is to say is the
+   * text `key.more` – found here by the tooltip as it is shown (also with its values filled in, and behind "label – " or before " – more"). '' without one
+   * (also a language that still has its long tooltip and no ".more").
+   */
+  let tipMoreMap = null;
+  function tipMore(text) {
+    if (!tipMoreMap || tipMoreMap.lang !== LANG) {
+      const dict = I18N[LANG] || I18N.en;
+      const plain = new Map();
+      const pats = [];
+      for (const k of Object.keys(dict)) {
+        if (!k.endsWith('.more')) continue;
+        const base = dict[k.slice(0, -5)] ?? I18N.en[k.slice(0, -5)];
+        if (base == null) continue;
+        if (/\{\w+\}/.test(base)) pats.push([new RegExp(`^${base.split(/\{\w+\}/).map(escRe).join('([\\s\\S]*?)')}$`), (base.match(/\{\w+\}/g) || []).map((x) => x.slice(1, -1)), dict[k]]);
+        else plain.set(base, dict[k]);
+      }
+      tipMoreMap = { lang: LANG, plain, pats };
+    }
+    const one = (t) => {
+      if (tipMoreMap.plain.has(t)) return tipMoreMap.plain.get(t);
+      for (const [re, names, more] of tipMoreMap.pats) {
+        const m = t.match(re);
+        if (!m) continue;
+        const vals = {};
+        names.forEach((n, i) => { if (vals[n] == null) vals[n] = m[i + 1]; });
+        return more.replace(/\{(\w+)\}/g, (x, n) => (vals[n] != null ? vals[n] : n === 'src' ? SOURCE_NAME : x));
+      }
+      return '';
+    };
+    const t = String(text || '').trim();
+    const cut = t.indexOf(' – ');
+    return one(t) || (cut > 0 ? one(t.slice(cut + 3)) || one(t.slice(0, cut)) : '');
+  }
+  /** [F-TOOLTIPLEN] (3.170.0) "Help" (head → More): while on, a line above the footer says in full what the pointer or the focus is on. */
+  function setHelpMode(on) {
+    S.helpMode = !!on;
+    if (!S.overlay) return;
+    S.overlay.querySelectorAll('[data-act="help-mode"]').forEach((b) => b.setAttribute('aria-pressed', String(S.helpMode)));
+    const strip = $('help-strip');
+    if (!strip) return;
+    strip.hidden = !S.helpMode;
+    strip.querySelector('[data-el="help-text"]').textContent = S.helpMode ? tr('help.start') : '';
+  }
+  function onHelpOver(e) {
+    if (!S.helpMode || !e.target.closest) return;
+    const el = e.target.closest('[title]');
+    if (!el || !el.title || el.closest('[data-el="help-strip"]') || !el.closest('[id^="dci-"]')) return;
+    const out = $('help-strip') && $('help-strip').querySelector('[data-el="help-text"]');
+    const text = tipMore(el.title) || el.title;
+    if (out && out.textContent !== text) out.textContent = text;
+  }
+  /** [F-HEADCOUNT] (3.170.0) "More" of the head: its list shown or not. */
+  function setHeadMore(open) {
+    S.headMoreOpen = !!open;
+    const box = S.overlay && $('head-more');
+    if (!box) return;
+    box.classList.toggle('dci-open', S.headMoreOpen);
+    const b = box.querySelector('[data-act="head-more"]');
+    if (b) b.setAttribute('aria-expanded', String(S.headMoreOpen));
+  }
   /** [Z-SRCTAG] (3.127.0) Emojis or words: stored, the overlay's class (its CSS marks), everything drawn anew. */
   function setEmojiText(on) {
     S.emojiText = !!on;
@@ -38154,9 +38366,8 @@
     if (S.incIdx >= incompleteIds.length) S.incIdx = incompleteIds.length - 1;
     if (incomplete) {
       const pos = S.incIdx >= 0 ? `${S.incIdx + 1}/${incomplete}` : '';
-      sum.push(`<span class="dci-incomplete"><button type="button" class="dci-iconbtn" data-act="inc-prev" title="${esc(tr('sum.incPrev'))}" aria-label="${esc(tr('sum.incPrev'))}">‹</button>
-        <button type="button" class="dci-textbtn dci-bad" data-act="inc-next" title="${esc(tr('sum.incTitle'))}">${esc(tr('sum.incomplete', { n: incomplete }))}</button>${pos ? ` <span class="dci-sub">${esc(pos)}</span>` : ''}
-        <button type="button" class="dci-iconbtn" data-act="inc-next" title="${esc(tr('sum.incNext'))}" aria-label="${esc(tr('sum.incNext'))}">›</button></span>`);
+      // [F-HEADCOUNT] (3.170.0) one button: a click goes to the next one, Shift+click to the one before
+      sum.push(`<span class="dci-incomplete"><button type="button" class="dci-textbtn dci-bad" data-act="inc-next" title="${esc(tr('sum.incTitle'))}">${esc(tr('sum.incomplete', { n: incomplete }))}</button>${pos ? ` <span class="dci-sub">${esc(pos)}</span>` : ''}</span>`);
     }
     if (existing) sum.push(`<span class="dci-muted">${esc(tr('sum.existing', { n: existing }))}</span>`);
     $('sum').innerHTML = sum.join('<span class="dci-sum-sep" aria-hidden="true"> · </span>');
@@ -46403,6 +46614,10 @@
    * "Work | Release" are in its menu ▾. Full: everything in the open as until 3.164.0 (⋯ → "Everything in the open").
    */
   const MX_HEADS_KEY = 'dci-mx-heads';
+  // [F-HEADCOUNT] (3.170.0) head and footer with words (default) or as symbols; 'full' – everything of "More" and "Options" in the
+  // open, as until 3.169.0 – is not offered: the tests written before use it
+  const CHROME_KEY = 'dci-chrome';
+  const chromeRead = () => { const v = readJson('localStorage', CHROME_KEY, 'words'); return v === 'symbols' || v === 'full' ? v : 'words'; };
   const wmxCompact = () => S.mxHeads !== 'full';
   /** [Z-ONEWORK] (3.138.0) The buttons in the head of the works matrix; [W-HEADSLIM] (3.165.0) one labelled choice "Keep": All · Credits · In MB · One. */
   function oneWorkHtml() {
@@ -49056,6 +49271,8 @@
     }
     // [169] (3.38.4) "⚙ Options ▾" of the footer closes with a click anywhere else
     if (S.footOptsOpen && e.target.closest && !e.target.closest('.dci-foot-opts')) setFootOpts(false);
+    // [F-HEADCOUNT] (3.170.0) "More" of the head likewise (the text size stays open: A− A+ are pressed several times)
+    if (S.headMoreOpen && e.target.closest && !e.target.closest('.dci-head-more .dci-zoom, [data-act="head-more"]')) setHeadMore(false);
     // An open ▾ menu of a column head closes with a click anywhere else
     if (S.mxColMenu && e.target.closest && !e.target.closest('.dci-mx-colmenu, [data-act="mx-colmenu"]')) {
       S.mxColMenu = null;
@@ -49629,11 +49846,6 @@
       case 'scope':
         setScope(btn.dataset.scope);
         break;
-      // [3.14.1] to the top or the bottom of the dashboard (its own scrolling in the window, the page in the page)
-      case 'jump-top':
-      case 'jump-bottom':
-        jumpDashboard(act === 'jump-top' ? 'top' : 'bottom');
-        break;
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
@@ -49875,6 +50087,20 @@
           if (again) again.focus({ preventScroll: true });
         }
         break;
+      case 'head-more':
+        setHeadMore(!S.headMoreOpen);
+        break;
+      case 'help-mode':
+        setHelpMode(!S.helpMode); // [F-TOOLTIPLEN] (3.170.0)
+        break;
+      case 'chrome-mode': {
+        // [F-HEADCOUNT] (3.170.0) head and footer with words or as symbols
+        const mode = btn.dataset.mode === 'symbols' ? 'symbols' : 'words';
+        if (mode === S.chrome) break;
+        setChrome(mode);
+        log('info', 'settingValue', { what: tr('settings.chrome'), value: tr(`settings.chrome.${mode}`) });
+        break;
+      }
       case 'emoji-mode': {
         // [Z-SRCTAG] (3.127.0) emojis or words
         const text = btn.dataset.mode === 'text';
@@ -50178,18 +50404,15 @@
         else openRules();
         break;
       case 'inc-next':
-      case 'inc-prev':
-        gotoIncomplete(act === 'inc-next' ? 1 : -1);
+        gotoIncomplete(e.shiftKey ? -1 : 1);
         break;
       // [Z-YELL] (3.110.0) the open items: to the next one, ✓ / ✕ / ↺ of a suggestion
       // [Z-SUPPNAV] (3.116.0)
       case 'ocr-next':
-      case 'ocr-prev':
-        gotoOcr(act === 'ocr-next' ? 1 : -1);
+        gotoOcr(e.shiftKey ? -1 : 1);
         break;
       case 'yell-next':
-      case 'yell-prev':
-        gotoYell(btn.dataset.cls || 'all', act === 'yell-next' ? 1 : -1);
+        gotoYell(btn.dataset.cls || 'all', e.shiftKey ? -1 : 1);
         break;
       case 'yell-ok':
       case 'yell-no':
@@ -52623,18 +52846,6 @@
   S.place = readJson('localStorage', 'dci-place', 'window') === 'page' ? 'page' : 'window';
   const inPage = () => S.place === 'page';
 
-  /** [3.14.1] Scrolls the dashboard to its top or bottom: its body in the window, the page in the page. */
-  function jumpDashboard(where) {
-    const body = $('body');
-    if (!inPage() && body) {
-      body.scrollTo({ top: where === 'top' ? 0 : body.scrollHeight, behavior: 'smooth' });
-      return;
-    }
-    const r = S.overlay.querySelector('.dci-panel').getBoundingClientRect();
-    const top = window.scrollY + r.top - 8;
-    window.scrollTo({ top: where === 'top' ? top : Math.max(top, top + r.height - window.innerHeight + 16), behavior: 'smooth' });
-  }
-
   /** The browser's default font size ("medium"), independent of the page's own CSS. */
   function browserFontPx() {
     const probe = document.createElement('div');
@@ -52689,7 +52900,12 @@
     if (kind === 'rules') {
       const w = Math.min(W - 32, Math.round(820 * unit));
       const h = Math.min(H - 80, Math.round(640 * unit));
-      return { x: W - w - 24, y: 64, w, h };
+      // [F-HEADCOUNT] (3.170.0) below the head of the dashboard also where the head takes two lines (its words): the window does not lie
+      // over the buttons of the head
+      const head = S.overlay && !S.overlay.hidden && S.overlay.querySelector('.dci-head');
+      const below = head && head.getClientRects().length ? Math.round(head.getBoundingClientRect().bottom) + 2 : 64;
+      const y = Math.max(64, Math.min(below, Math.round(H * 0.3)));
+      return { x: W - w - 24, y, w, h: Math.min(h, H - y - 16) };
     }
     const w = Math.min(W - 32, Math.round(420 * unit));
     const h = Math.min(H - 32, Math.round(240 * unit));
@@ -52844,6 +53060,8 @@
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
     close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
     down: '<path d="M4 6l4 4 4-4"/>',
+    more: '<path d="M3 8h.01M8 8h.01M13 8h.01" stroke-width="2.6"/>',
+    help: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.3v4M8 4.8h.01"/>',
     compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
     plus: '<path d="M8 3v10M3 8h10"/>',
     // [189] (3.39.3) the statistics: a small bar chart
@@ -52856,6 +53074,7 @@
   const headBtn = (act, icon, label, title, extra = '', cls = 'dci-headbtn') => `<button type="button" class="${cls} dci-ibtn" data-act="${act}" title="${esc(title)}" aria-label="${esc(label || title)}" ${extra}>${ico(icon)}${label ? `<span class="dci-hlabel">${esc(label)}</span>` : ''}</button>`;
 
   let docDropOn = false;
+  let docHelpOn = false;
 
   function buildOverlay() {
     const overlay = document.createElement('div');
@@ -52871,22 +53090,27 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
-            ${'' /* [Z-HB] (3.40.6) in groups (Q-ay): the view (☰, A− A+, ⤢) | the work (Mapping rules, Log) | help and settings (Statistics, ⌨, ⚙) | ✕ */}
-            ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
-            <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
-              <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
-              <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
-              <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
-            </span>
-            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
-            <span class="dci-head-sep" aria-hidden="true"></span>
-            ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
-            ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
-            <span class="dci-head-sep" aria-hidden="true"></span>
-            ${headBtn('search-open', 'search', '', tr('search.open'), 'aria-expanded="false" aria-controls="dci-search"')}
+            ${'' /* [F-HEADCOUNT] (3.170.0) what is used all the time in the open, each with its word (or as a symbol: ⚙ Settings →
+                      Appearance); the view, the text size, the window, the log and the keyboard shortcuts under "More" */}
+            ${headBtn('search-open', 'search', tr('search.word'), tr('search.open'), 'aria-expanded="false" aria-controls="dci-search"')}
+            ${headBtn('rules', 'rules', tr('rules.word'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
-            ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
+            <span class="dci-head-more" data-el="head-more">
+              ${headBtn('head-more', 'more', tr('head.more'), tr('head.moreTitle'), 'aria-expanded="false" aria-controls="dci-head-morelist"')}
+              <span class="dci-head-morelist" id="dci-head-morelist">
+                ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
+                <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
+                  <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
+                  <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
+                  <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
+                </span>
+                ${headBtn('window-reset', 'fit', tr('window.resetWord'), tr('window.reset'))}
+                ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
+                ${headBtn('keys-open', 'keys', tr('keys.open'), tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
+                ${headBtn('help-mode', 'help', tr('help.word'), tr('help.title'), 'aria-pressed="false"')}
+              </span>
+            </span>
             <span class="dci-head-sep" aria-hidden="true"></span>
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
           </div>
@@ -52959,11 +53183,9 @@
         <footer class="dci-foot">
           <div class="dci-foot-line" data-el="foot-line" aria-hidden="true" hidden></div>
           <div class="dci-comrow"><div class="dci-arrcom" data-el="arrcom" hidden></div><div class="dci-livecom" data-el="livecom" hidden></div></div>
+          <div class="dci-helpstrip" data-el="help-strip" role="status" aria-live="polite" hidden><span class="dci-helpstrip-t" data-el="help-text"></span>
+            <button type="button" class="dci-iconbtn" data-act="help-mode" title="${esc(tr('help.off'))}" aria-label="${esc(tr('help.off'))}">${ico('close')}</button></div>
           <div class="dci-foot-bar">
-            <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
-              <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
-              <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
-            </span>
             <span class="dci-foot-run" data-el="foot-run" role="status" hidden><span class="dci-foot-run-t"></span></span>
             <div class="dci-sum" data-el="sum"></div>
             <span class="dci-yell" data-el="yell" role="status"></span>
@@ -53036,7 +53258,10 @@
     }
     S.overlay = overlay;
     overlay.classList.toggle('dci-emtext', !!S.emojiText); // [Z-SRCTAG] (3.127.0)
+    overlay.classList.add(`dci-chrome-${S.chrome}`); // [F-HEADCOUNT] (3.170.0)
     S.footOptsOpen = false;
+    S.headMoreOpen = false;
+    S.helpMode = false;
     applyView();
     applyScale();
     renderCompactHint(); // [143] (3.34.23)
@@ -53070,6 +53295,12 @@
     overlay.addEventListener('focusin', onFocusSource);
     overlay.addEventListener('click', onFocusSource);
     overlay.addEventListener('mouseover', onHover);
+    // [F-TOOLTIPLEN] (3.170.0) "Help": in the dashboard and in the windows of the script (rules, log, text from cover art)
+    if (!docHelpOn) {
+      docHelpOn = true;
+      document.addEventListener('mouseover', onHelpOver, true);
+      document.addEventListener('focusin', onHelpOver, true);
+    }
     overlay.addEventListener('mouseleave', onHoverEnd);
     // [3.37.4] the line peek of the lines not recognized or left out (item 154)
     overlay.addEventListener('mouseover', linePeekOver);
@@ -53318,7 +53549,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-insts-common', MX_HEADS_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
+    appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
@@ -53371,6 +53602,7 @@
   S.yellOne = readJson('localStorage', 'dci-yell-one', false) === true; // [Z-YELL] (3.110.0)
   S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false; // [Z-SORT] (3.112.0)
   S.mxHeads = readJson('localStorage', MX_HEADS_KEY, 'compact') === 'full' ? 'full' : 'compact'; // [W-COLHEAD] (3.165.0)
+  S.chrome = chromeRead(); // [F-HEADCOUNT] (3.170.0)
   S.instsCommonOn = true; // [Z-INSTLCA] (3.113.0); [F-INSTLCADEAD] (3.162.0) its setting "Offer ⑃" is gone – the rule S177 switches it
   S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
   S.yellDone = new Set();
@@ -55524,12 +55756,20 @@
     // a switch: in the right column (indented below the switch it depends on: `sub`; greyed out and not to be used while that is off: `off`)
     const cb = (attr, on, label, title = '', o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}>
       <span class="dci-set-lbl"></span>${dotSlot(o.def === undefined ? '' : dotHtml(!!on !== !!o.def, onOff(o.def)))}<span class="dci-set-ctl"><label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}${o.off ? ' disabled' : ''}> ${esc(cap(label))}</label>${
+      tipMore(title) ? ` <span class="dci-info dci-set-more" tabindex="0" role="note" title="${esc(tipMore(title))}" aria-label="${esc(tipMore(title))}">ⓘ</span>` : ''}${
       hintHtml(o.hint)}</span></div>`;
     // anything else in the right column (the colour pickers below their switch, a button)
     const right = (html, o = {}) => `<div class="dci-set-row dci-set-field dci-set-cb${o.sub ? ' dci-set-sub' : ''}${o.off ? ' dci-set-off' : ''}"${o.el ? ` data-el="${o.el}"` : ''}><span class="dci-set-lbl"></span>${dotSlot('')}<span class="dci-set-ctl">${html}</span></div>`;
+    // [F-TOOLTIPLEN] (3.170.0) a choice whose buttons' tooltips have more to say: one ⓘ after it with the full texts
+    const segMore = (values, text, o) => {
+      const more = o.titles ? values.map((v) => [text(v), tipMore(o.titles(v))]).filter((x) => x[1]) : [];
+      if (!more.length) return '';
+      const all = more.map(([t, m]) => `${t}: ${m}`).join('\n\n');
+      return ` <span class="dci-info dci-set-more" tabindex="0" role="note" title="${esc(all)}" aria-label="${esc(all)}">ⓘ</span>`;
+    };
     // a choice of a few: its buttons (pressed: the value); the default named by its text
     const seg = (act, attr, values, cur, text, o = {}) => `<span class="dci-seg dci-seg-small" role="group" data-lbg${o.segEl ? ` data-el="${o.segEl}"` : ''}>${values.map((v) => `<button type="button"
-      data-act="${act}"${o.btn || ''} data-${attr}="${v}" aria-pressed="${cur === v}"${o.titles ? ` title="${esc(o.titles(v))}"` : ''}>${esc(text(v))}</button>`).join('')}</span>`;
+      data-act="${act}"${o.btn || ''} data-${attr}="${v}" aria-pressed="${cur === v}"${o.titles ? ` title="${esc(o.titles(v))}"` : ''}>${esc(text(v))}</button>`).join('')}</span>${segMore(values, text, o)}`;
     const segField = (label, act, attr, values, cur, def, text, o = {}) => field(label, seg(act, attr, values, cur, text, o), { ...o, dflt: [cur !== def, text(def)] });
     const numField = (label, attr, val, def, o = {}) => field(label, `<input type="number" data-lb ${attr} value="${val}"${o.off ? ' disabled' : ''}>${o.after ? ` ${esc(o.after)}` : ''}`,
       { ...o, dflt: [Number(val) !== Number(def), String(def)] });
@@ -55611,7 +55851,8 @@
         cb('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'), { def: false }),
         sh('symbols'),
         // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
-        segField(tr('settings.emoji'), 'emoji-mode', 'mode', ['emoji', 'text'], S.emojiText ? 'text' : 'emoji', 'emoji', (v) => tr(`settings.emoji.${v}`), { title: tr('settings.emojiTitle'), segEl: 'emoji-mode' }),
+segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.chrome, 'words', (v) => tr(`settings.chrome.${v}`), { title: tr('settings.chromeTitle'), segEl: 'chrome-mode' }),
+                segField(tr('settings.emoji'), 'emoji-mode', 'mode', ['emoji', 'text'], S.emojiText ? 'text' : 'emoji', 'emoji', (v) => tr(`settings.emoji.${v}`), { title: tr('settings.emojiTitle'), segEl: 'emoji-mode' }),
         // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
         cb('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'), { def: true }),
         sh('rules'),
@@ -56694,6 +56935,7 @@
         refresh();
       }
       if (S.emojiText) setEmojiText(false); // [Z-SRCTAG] (3.127.0)
+      if (S.chrome !== 'words') setChrome('words'); // [F-HEADCOUNT] (3.170.0)
       // ([Z-SETTABS] 3.136.0) the matrix of an entry (from "Staging") – the entries drawn again
       Object.assign(S, { evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint' });
       renderGroups();
@@ -56805,7 +57047,7 @@
     'dci-sort-on', 'dci-sort',
     // [Z-INSTLCA] (3.113.0) the button ⑃ offered
     'dci-insts-common',
-    MX_HEADS_KEY,
+    MX_HEADS_KEY, CHROME_KEY,
     // [Z-DNDS] (3.86.0) what a drop does at each place
     DROP_KEY,
     // [Z-ALC] (3.44.1) the number of alias lookups; [Z-MBSEARCH] (3.123.0) of the hits of a search
@@ -56938,6 +57180,7 @@
     S.sortOn = readJson('localStorage', 'dci-sort-on', true) !== false;
     S.instsCommonOn = true;
     S.mxHeads = readJson('localStorage', MX_HEADS_KEY, 'compact') === 'full' ? 'full' : 'compact';
+    setChrome(chromeRead(), true);
     S.sortMode = readJson('localStorage', 'dci-sort', 'source') || 'source';
     S.dropModes = dropModesRead(); // [Z-DNDS] (3.86.0)
     S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
@@ -58343,6 +58586,20 @@
       if (b) b.focus({ preventScroll: true });
       return;
     }
+    // [F-TOOLTIPLEN] (3.170.0) "Help" of the head ends
+    if (S.helpMode && !S.headMoreOpen) {
+      e.preventDefault();
+      setHelpMode(false);
+      return;
+    }
+    // [F-HEADCOUNT] (3.170.0) "More" of the head
+    if (S.headMoreOpen) {
+      e.preventDefault();
+      setHeadMore(false);
+      const b = S.overlay.querySelector('[data-act="head-more"]');
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     // [169] (3.38.4) "⚙ Options ▾" of the footer
     if (S.footOptsOpen) {
       e.preventDefault();
@@ -59057,7 +59314,24 @@
       #dci-overlay .dci-settings, #dci-overlay .dci-rules-dock { position: relative; }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
-      @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
+      @container (min-width: 1600px) { #dci-overlay.dci-chrome-full .dci-head .dci-hlabel { display: inline; } }
+      /* [F-HEADCOUNT] (3.170.0) the head with words (default) or as symbols; "More": a list below its button – its entries always with
+         their words. 'full' (the tests written before): the list in the open, no "More" */
+      #dci-overlay.dci-chrome-words .dci-head .dci-hlabel, #dci-overlay:not(.dci-chrome-full) .dci-head-morelist .dci-hlabel { display: inline; }
+      /* [F-TOOLTIPLEN] (3.170.0) "Help": the line above the footer */
+      .dci-helpstrip { display: flex; align-items: flex-start; gap: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 16); background: #f0eff9; border-top: 1px solid var(--line);
+        color: var(--purple-d); max-height: 9em; overflow: auto; white-space: pre-line; }
+      .dci-helpstrip-t { flex: 1 1 auto; min-width: 0; }
+      .dci-head-more { position: relative; display: inline-flex; align-items: center; }
+      .dci-head-morelist { display: none; position: absolute; right: 0; top: calc(100% + calc(var(--u, 1px) * 6)); z-index: 45; flex-direction: column; align-items: stretch; gap: calc(var(--u, 1px) * 6);
+        padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); min-width: max-content; background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
+      .dci-head-more.dci-open .dci-head-morelist { display: flex; }
+      .dci-head-morelist .dci-zoom { justify-content: space-between; }
+      #dci-overlay.dci-chrome-full .dci-head-more, #dci-overlay.dci-chrome-full .dci-head-morelist { display: contents; }
+      #dci-overlay.dci-chrome-full [data-act="head-more"] { display: none; }
+      /* the footer: a counter without anything open is not shown with words (as a symbol: green, "● 0") */
+      #dci-overlay.dci-chrome-words .dci-yell-c.dci-yell-zero { display: none; }
+      #dci-overlay.dci-chrome-words .dci-yell-c { padding: 0 calc(var(--u, 1px) * 8); }
       .dci-srcwrap { position: relative; display: inline-flex; }
       .dci-srcmenu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; display: grid; gap: 2px; width: max-content; min-width: calc(var(--u, 1px) * 300);
         max-width: min(92vw, calc(var(--u, 1px) * 520)); padding: calc(var(--u, 1px) * 8); background: #fff; color: var(--ink); border: 1px solid #c8c5d6; border-radius: 6px;
@@ -60671,6 +60945,11 @@
           gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
         .dci-foot-opts.dci-open .dci-foot-optlist { display: flex; }
       }
+      /* [F-HEADCOUNT] (3.170.0) "Options" is a list at every width */
+      #dci-overlay:not(.dci-chrome-full) .dci-foot-optbtn { display: inline; }
+      #dci-overlay:not(.dci-chrome-full) .dci-foot-optlist { display: none; position: absolute; right: 0; bottom: calc(100% + calc(var(--u, 1px) * 6)); z-index: 8; flex-direction: column; align-items: flex-start;
+          gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
+      #dci-overlay:not(.dci-chrome-full) .dci-foot-opts.dci-open .dci-foot-optlist { display: flex; }
       .dci-apply { border: 0; border-radius: 3px; padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 16); background: #b84f1c; color: #fff; font-weight: 600; }
       .dci-apply:hover:not(:disabled) { background: #9c3f12; }
       .dci-apply:disabled { background: #d9d6e3; color: #fff; cursor: not-allowed; }
@@ -60684,8 +60963,6 @@
       #dci-overlay.dci-inline .dci-head { cursor: default; }
       #dci-overlay.dci-inline .dci-body { overflow: visible; }
       #dci-overlay.dci-inline .dci-stick { top: 0; }
-      .dci-jump { display: inline-flex; gap: calc(var(--u, 1px) * 2); }
-      .dci-jump .dci-iconbtn { border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; padding: 1px calc(var(--u, 1px) * 7); line-height: 1.2; }
       #dci-overlay.dci-inline .dci-foot { position: sticky; bottom: 0; z-index: 4; background: #fff; box-shadow: 0 -2px 6px rgba(38, 36, 48, 0.08); border-radius: 0 0 4px 4px; }
       #dci-overlay.dci-inline .dci-preview { max-height: 60vh; overflow: auto; }
       /* Both stay in view while the page scrolls, so they take less room there */

@@ -1123,9 +1123,9 @@ def case_statsbutton():
         H.open_settings(pg)
         a1 = pg.evaluate(STATE)
         print('A) Kopf:', head, '| zu:', {k: a0[k] for k in ('stats', 'pressed', 'title', 'label', 'svg')}, '| Reiter:', a1['tabs'], a1['tab'])
-        # (3.40.6, Z-HB) with ⌨ and ⚙ in the group of help and settings: Statistics · ⌨ · ⚙
+        # (3.40.6, Z-HB) with ⌨ and ⚙ in the group of help and settings: Statistics · ⌨ · ⚙; [3.170.0] (F-HEADCOUNT) Rules · Statistics · Settings
         i = head.index('settings-open') if 'settings-open' in head else -9
-        results.append(head[i - 2:i] == ['stats-open', 'keys-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
+        results.append(head[i - 2:i] == ['rules', 'stats-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
                        and a0['title'].startswith('Statistics:') and 'statistics' not in a1['tabs'] and a1['tab'] == 'general')
         # B) and C) – ⚙ is open now: the statistics close it
         pg.click('.dci-head [data-act=stats-open]')
@@ -1287,7 +1287,7 @@ def case_statsmore():
         results.append(cols == [7, 24] and ok('when', f'In a row (now / longest): days 2 / 2 · weeks {nw} / {nw} · months {nm} / {nm}', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
                                              'Fastest: 24 s per relationship (A, 5 relationships)'))
         results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
-                       and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')
+                       and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines used: 10', 'words changed by hand: 3')
                        and ok('own', 'Own rules now: 2 – relationships from them:', 'U001 1'))
         print('Fehler:', errs)
         results.append(not errs)
@@ -2024,11 +2024,15 @@ def case_editnote():
         foot = pg.evaluate("[...document.querySelectorAll('.dci-foot-optlist label')].map(l => l.textContent.trim())")
         H.open_settings(pg, 'staging')
         seg = pg.evaluate("""[...document.querySelectorAll('[data-el=settings] [data-act=edit-note-mode]')].map(b => [b.dataset.mode, b.textContent.trim(), b.getAttribute('aria-pressed'), b.title])""")
+        # ([3.170.0] F-TOOLTIPLEN) the tooltips are one sentence; what the edit note holds is behind the ⓘ after the choice
+        seg_more = pg.evaluate("""(() => { const b = document.querySelector('[data-el=settings] [data-act=edit-note-mode]'); const i = b && b.closest('.dci-set-ctl, .dci-set-row').querySelector('.dci-set-more'); return i ? i.title : ''; })()""")
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
         print('A) Fuß:', foot, '| Einstellung:', [x[:3] for x in seg])
         print('   Tooltips:', [x[3].split('\n') for x in seg])
         results.append(foot == ['fill role credits', '≤ 500 per staging'] and [x[:3] for x in seg] == [['full', 'Full', 'true'], ['simple', 'Simple', 'false']]
-                       and '– Done: ' in seg[0][3] and '– Not stored in MB: ' in seg[0][3] and '– Script: its name and version' in seg[1][3] and '– Done' not in seg[1][3])
+                       and all(0 < len(x[3]) <= 130 for x in seg) and seg_more.startswith('Full: ') and '\n\nSimple: ' in seg_more
+                       and '– Done: ' in seg_more.split('\n\nSimple: ')[0] and '– Not stored in MB: ' in seg_more.split('\n\nSimple: ')[0]
+                       and '– Script: its name and version' in seg_more.split('\n\nSimple: ')[1] and '– Done' not in seg_more.split('\n\nSimple: ')[1])
         stage(pg)
         b0 = pg.evaluate(NOTE).splitlines()
         print('B)', b0[:4])

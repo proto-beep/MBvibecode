@@ -1,6 +1,8 @@
-"""Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
+"""Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools, [3.72.0] focusfields (the former t_focus.py), [3.73.0] evask; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname, [3.40.8] headnarrow, [3.40.14] launchtools, [3.72.0] focusfields (the former t_focus.py), [3.73.0] evask, [3.170.0] chrome3170 (in the place of jump: ▲ ▼ are gone); `python3 t_ui_head.py <case> …` runs only those."""
+import re
+
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -74,11 +76,14 @@ def case_head():
         # the view | the work | help and settings | ✕ (Q-ay)
         print('   Gruppen:', a1['groups'])
         # ([Z-SEARCH] 3.137.0) 🔍 before the statistics
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'window-reset', 'rules', 'log', 'search-open', 'stats-open', 'keys-open', 'settings-open', 'close']
-                       and a1['groups'] == [['view-toggle', 'dci-zoom', 'window-reset'], ['rules', 'log'], ['search-open', 'stats-open', 'keys-open', 'settings-open'], ['close']]
-                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][7][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
+        # [F-HEADCOUNT] (3.170.0) what is used all the time first, the list of "More" after it (in the open for this test: H.CHROME), ✕ last;
+        # the case chrome3170 has the default (words, the list folded)
+        # (the head with words takes a second line where the source and its buttons are wide: no longer "one line")
+        results.append([x[0] for x in a1['btns']] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'view-toggle', 'window-reset', 'log', 'keys-open', 'help-mode', 'close']
+                       and a1['groups'] == [['search-open', 'rules', 'stats-open', 'settings-open', 'dci-head-more'], ['close']]
+                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][3][2] == 'Settings' and a1['btns'][5][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
-                       and a2['spread'] <= 6 and a2['label'] != 'none')
+                       and a2['label'] != 'none')
         pg.set_viewport_size({'width': 1500, 'height': 1000})
         pg.click('.dci-head [data-act=window-reset]')
         pg.wait_for_timeout(300)
@@ -627,49 +632,86 @@ def case_bar():
         b.close()
 
 
-def case_jump():
-    """Import 3.14.1: ▲ ▼ in the footer jump to the top and the bottom of the dashboard – in the window (its own scrolling)
-    and in the page (the page scrolls)."""
+def case_chrome3170():
+    """Credits Importer 3.170.0 (F-HEADCOUNT): head and footer.
+    A) Default (words): Search, Mapping rules, Statistics, Settings, More and Close in the open, each with a visible word; the view, the
+       text size, the window, the log and the keyboard shortcuts are not shown until "More" is open; no ▲ ▼, no ‹ › in the footer.
+    B) "More" opens its list (five entries with words), Escape closes it and the focus is on "More" again; "Compact" in it switches the view.
+    C) The footer: the counters with words ("… question", "… suggestion"), a counter at 0 is not shown; "Options" is a list at full width.
+    D) The incomplete rows: a click goes to the next one, Shift+click to the one before.
+    E) ⚙ Settings → Appearance → "Head and footer: Symbols": no words in the head, the counters as "● n"; stored; "Words" brings them back.
+    F) (F-TOOLTIPLEN) Tooltips are one sentence: no tooltip of the dashboard and the open settings (each part of one joined with " – ") is longer than 130 characters
+       except those of ⓘ and the notes of the rules ("R096: …"); a switch whose tooltip has more to say has an ⓘ with the full text; "Help" (More) shows the full text of what the pointer is on in a
+       line above the footer, Escape ends it."""
     results = []
+    VIS = "(e) => !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden'"
+    HEAD = f"""(() => {{ const vis = {VIS}; const h = document.querySelector('.dci-head-tools');
+      return [...h.querySelectorAll('[data-act]')].filter(vis).map(b => [b.dataset.act, (() => {{ const l = b.querySelector('.dci-hlabel'); return l && vis(l) ? l.textContent.trim() : ''; }})()]); }})()"""
+    FOOT = f"""(() => {{ const vis = {VIS}; const f = document.querySelector('.dci-foot-bar');
+      return {{ acts: [...new Set([...f.querySelectorAll('[data-act]')].filter(vis).map(b => b.dataset.act))], yell: [...f.querySelectorAll('.dci-yell-c')].filter(vis).map(c => c.textContent.trim()),
+        zero: f.querySelectorAll('.dci-yell-zero').length, arrows: [...f.querySelectorAll('button')].filter(b => /^[‹›▲▼]$/.test(b.textContent.trim())).length,
+        checks: [...f.querySelectorAll('.dci-foot-optlist input')].filter(vis).length }}; }})()"""
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.CHROME = None
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
-        pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(500)
-        body = "document.querySelector('[data-el=body]')"
-        # ([3.77.0] Z-FLK) waits for the state, not for a time: at the end, at the top (a busy computer scrolls later)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-        # ((review) what is drawn after the import has its height first; ▼ again if the end grew meanwhile)
-        H.wait_still(pg, f"{body}.scrollHeight", 15, 300)
-        at_end = f"(() => {{ const b = {body}; return b.scrollHeight - b.clientHeight > 100 && Math.abs(b.scrollTop - (b.scrollHeight - b.clientHeight)) <= 2; }})()"
-        for _ in range(3):
-            pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()')
-            if H.wait_ok(pg, at_end, 5) and H.wait_still(pg, f"{body}.scrollTop") and pg.evaluate(at_end):
-                break
-        down = pg.evaluate(f"(() => {{ const b = {body}; return [Math.round(b.scrollTop), b.scrollHeight - b.clientHeight]; }})()")
-        pg.locator('[data-act=jump-top]').evaluate('b => b.click()')
-        H.wait_ok(pg, f"{body}.scrollTop === 0", 15)
-        up = pg.evaluate(f"{body}.scrollTop")
-        print('Fenster: ▼', down, '| ▲', up)
-        results.append(down[1] > 100 and abs(down[0] - down[1]) <= 2 and up == 0)
-        # in the page
-        H.toggle_place(pg); pg.wait_for_timeout(300)
-        inline = pg.evaluate("!!document.querySelector('.dci-inline')")
-        pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()')
-        # ((review) in range, and the smooth scroll ended: a jump past the end would show)
-        H.wait_ok(pg, "(() => { const r = document.querySelector('.dci-panel').getBoundingClientRect().bottom - innerHeight; return scrollY > 200 && r >= -40 && r <= 20; })()", 15)
-        H.wait_still(pg, "scrollY")
-        y1 = pg.evaluate("[Math.round(scrollY), Math.round(document.documentElement.scrollHeight - innerHeight)]")
-        foot = pg.evaluate("Math.round(document.querySelector('.dci-panel').getBoundingClientRect().bottom - innerHeight)")
-        pg.locator('[data-act=jump-top]').evaluate('b => b.click()')
-        H.wait_ok(pg, "(() => { const t = document.querySelector('.dci-panel').getBoundingClientRect().top; return t >= 0 && t <= 20; })()", 15)
-        H.wait_still(pg, "scrollY")
-        top = pg.evaluate("Math.round(document.querySelector('.dci-panel').getBoundingClientRect().top)")
-        print('Seite:', inline, '| ▼ scrollY', y1, 'Ende des Dashboards zum Fensterrand:', foot, '| ▲ Anfang des Dashboards:', top)
-        results.append(inline and y1[0] > 200 and -40 <= foot <= 20 and 0 <= top <= 20)
+        pg.wait_for_timeout(500)
+        a = pg.evaluate(HEAD)
+        fa = pg.evaluate(FOOT)
+        print('A)', a, '|', fa)
+        results.append([x[0] for x in a] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'close'] and all(x[1] for x in a) and fa['arrows'] == 0
+                       and not any(x in fa['acts'] for x in ('jump-top', 'jump-bottom', 'inc-prev', 'yell-prev')))
+        pg.click('.dci-head [data-act=head-more]'); pg.wait_for_timeout(200)
+        b1 = pg.evaluate(HEAD)
+        more = [x for x in b1 if x[0] in ('view-toggle', 'zoom-out', 'zoom-in', 'window-reset', 'log', 'keys-open', 'help-mode')]
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        b2 = [pg.evaluate(HEAD), pg.evaluate("(document.activeElement || {}).dataset && document.activeElement.dataset.act")]
+        v0 = pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')")
+        pg.click('.dci-head [data-act=head-more]'); pg.click('.dci-head-morelist [data-act=view-toggle]'); pg.wait_for_timeout(400)
+        v1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), pg.evaluate("document.querySelector('[data-el=head-more]').classList.contains('dci-open')")]
+        print('B)', more, '| nach Escape:', len(b2[0]), b2[1], '| Ansicht:', v0, v1)
+        results.append([x[0] for x in more] == ['view-toggle', 'zoom-out', 'zoom-in', 'window-reset', 'log', 'keys-open', 'help-mode'] and all(x[1] for x in more if not x[0].startswith('zoom'))
+                       and len(b2[0]) == 6 and b2[1] == 'head-more' and v1 == [not v0, False])
+        c = pg.evaluate(FOOT)
+        pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
+        c2 = pg.evaluate(FOOT)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        print('C)', c, '| Options offen:', c2['checks'])
+        results.append(all(re.search(r'^\d+ (question|suggestion|open point)s?$', y) for y in c['yell'] if not y.startswith(('🖼', 'Image'))) and len(c['yell']) >= 1
+                       and c['checks'] == 0 and c2['checks'] == 2 and 'foot-opts' in c['acts'])
+        pos = lambda: (re.search(r'(\d+)/(\d+)', pg.evaluate("document.querySelector('[data-el=sum]').textContent")) or [None, '0', '0'])  # noqa: E731
+        inc = pg.locator('[data-el=sum] [data-act=inc-next]')
+        d = []
+        if inc.count():
+            inc.click(); pg.wait_for_timeout(300); d.append(pos()[1])
+            inc.click(); pg.wait_for_timeout(300); d.append(pos()[1])
+            inc.click(modifiers=['Shift']); pg.wait_for_timeout(300); d.append(pos()[1])
+        print('D)', d, 'von', pos()[2] if inc.count() else '-')
+        results.append(inc.count() == 1 and (d == ['1', '2', '1'] or (pos()[2] == '1' and d == ['1', '1', '1'])))
+        H.open_settings(pg, 'appearance')
+        pg.click('[data-act=chrome-mode][data-mode=symbols]'); pg.wait_for_timeout(400)
+        e1 = [pg.evaluate(HEAD), pg.evaluate(FOOT), pg.evaluate("localStorage.getItem('dci-chrome')")]
+        pg.click('[data-act=chrome-mode][data-mode=words]'); pg.wait_for_timeout(400)
+        e2 = [pg.evaluate(HEAD), pg.evaluate(FOOT), pg.evaluate("localStorage.getItem('dci-chrome')")]
+        print('E)', e1, '|', e2[1]['yell'], e2[2])
+        results.append(not any(x[1] for x in e1[0]) and len(e1[0]) == 6 and all(re.search(r'^● \d+$', y) for y in e1[1]['yell'] if not y.startswith('🖼')) and e1[2] == '"symbols"'
+                       and all(x[1] for x in e2[0]) and e2[1]['yell'] == c['yell'] and e2[2] is None)
+        H.open_settings(pg, 'staging')
+        long = pg.evaluate("[...document.querySelectorAll('#dci-overlay [title]')].filter(e => !e.matches('.dci-info') && !/^[A-Z]\\d{3}: /.test(e.title) && e.title.split(' – ').some(x => x.length > 130)).map(e => e.title.slice(0, 60))")
+        info = pg.evaluate("""(() => { const cbx = document.querySelector('[data-el=settings] [data-f=fill-credits]'); const row = cbx && cbx.closest('.dci-set-row');
+          const i = row && row.querySelector('.dci-set-more'); return [cbx ? cbx.closest('label').title : '', i ? i.title.length : 0]; })()""")
+        pg.click('.dci-head [data-act=head-more]'); pg.click('.dci-head-morelist [data-act=help-mode]'); pg.wait_for_timeout(200)
+        strip0 = pg.evaluate("(() => { const s = document.querySelector('[data-el=help-strip]'); return [!s.hidden, s.textContent.trim().slice(0, 40)]; })()")
+        pg.hover('[data-el=settings] [data-f=fill-credits]'); pg.wait_for_timeout(200)
+        strip1 = pg.evaluate("document.querySelector('[data-el=help-text]').textContent")
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        strip2 = pg.evaluate("document.querySelector('[data-el=help-strip]').hidden")
+        print('F) lange Tooltips:', long, '| ⓘ:', info, '| Hilfe:', strip0, len(strip1), strip1[:70], strip2)
+        results.append(not long and 0 < len(info[0]) <= 130 and info[1] > 130 and strip0[0] and strip0[1].startswith('Help is on') and len(strip1) == info[1] and strip2)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

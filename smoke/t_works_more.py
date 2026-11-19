@@ -1259,7 +1259,7 @@ def case_wts():
         print('A)', a0, '\n  ', a1)
         results.append(a0 is not None and a0[0] == 'Song · English' and 'from the works of Test Band in MusicBrainz: type 3 of 4 · language 3 of 4' in a0[1] and 'mx-wts-accept' in a0[2]
                        and a0[1].endswith('if not accepted: neither type nor language is filled in') and a0[3] == 'rgb(255, 248, 219)'
-                       and [x[1] for x in a1] == ['?'] * 3 and all('Song · English – not filled in until “Accept”' in x[2] for x in a1))
+                       and [x[1] for x in a1] == ['?'] * 3 and all(x[2] == 'Suggested from the works of the artists: Song · English' for x in a1))  # ([3.170.0] F-TOOLTIPLEN: one sentence)
         b0 = stage(pg)
         print('B) nicht angenommen:', b0)
         results.append(len(b0) == 3 and all(x[1] is None and x[2] == [] for x in b0))

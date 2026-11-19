@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.169.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.170.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.170.0 · 2026-11-19
+
+- **F-HEADCOUNT, head:** `buildOverlay` – `.dci-head-tools`: search-open, rules, stats-open, settings-open, `.dci-head-more` (`head-more` and `.dci-head-morelist` with view-toggle, the zoom group, window-reset, log, keys-open, help-mode), close; `ICONS.more`, `ICONS.help`; `setHeadMore(open)`, `S.headMoreOpen`; closed by a click elsewhere (`onClick`) and Escape.
+- **F-HEADCOUNT, footer:** `.dci-jump`, `jump-top`, `jump-bottom`, `jumpDashboard` removed; `inc-prev`, `yell-prev`, `ocr-prev` removed – `inc-next`, `yell-next`, `ocr-next` go back with `e.shiftKey`; `renderYell`, `ocrNavHtml`: one button each, with words (`yell.mustWord / canWord / allWord`, `ocrnav.word`) or "● n".
+- **F-HEADCOUNT, setting:** `CHROME_KEY` (`dci-chrome`: absent = words, "symbols", and "full" – everything of "More" and "Options" in the open as until 3.169.0, not offered, used by the tests written before), `chromeRead()`, `setChrome(mode, keep)`, `S.chrome`, the overlay's class `dci-chrome-words / -symbols / -full`; action `chrome-mode`; in the lists of the stored settings and of the reset.
+- **F-TOOLTIPLEN:** a long tooltip is two texts – `key` (one sentence) and `key.more` (the full text); `tipMore(text)` finds the full text by the tooltip as shown (values filled in; behind "label – " or before " – more"); `cb()` of the settings adds `span.dci-set-more` (ⓘ), `segMore()` one after a choice whose buttons have more to say (the edit note: Full | Simple); `setHelpMode(on)`, `onHelpOver` (mouseover, focusin on the document – the dashboard and the script's windows), `S.helpMode`, `[data-el="help-strip"]` in the footer; action `help-mode`.
+- **Rules window:** `defaultGeom('rules')` – its top is the bottom of the dashboard's head (at least 64 px, at most 30 % of the height).
+- **F-TERMS:** texts only (68 English, 157 German keys).
+- **Texts:** new `search.word`, `rules.word`, `head.more`, `head.moreTitle`, `window.resetWord`, `help.word / title / start / off`, `settings.chrome…`, `yell.*Word`, `ocrnav.word`, 125 × `….more`; removed `sum.incPrev`, `sum.incNext`, `footer.jump / top / bottom`, `yell.prev / next`, `ocrnav.prev / next`.
+- **Tests:** `harness.py` – `CHROME = 'full'` preset (`CHROME_PRESET`) for the tests written before; `t_ui_head.py chrome3170` new (in the place of `jump`), `t_mapping.py` Shift+click.
 
 ## Import 3.169.0 · 2026-11-19
 

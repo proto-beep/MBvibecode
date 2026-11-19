@@ -240,6 +240,10 @@ RELEASE_LABELS = []
 # compact default sets MX_HEADS = None)
 MX_HEADS = 'full'
 MX_HEADS_PRESET = "(v) => { if (localStorage.getItem('dci-mx-heads') === null) localStorage.setItem('dci-mx-heads', JSON.stringify(v)); }"
+# [3.170.0] (F-HEADCOUNT) head and footer with everything in the open ("More" and "Options" unfolded, the counters as "● n") for the tests
+# written before; a test of the default (words) sets CHROME = None
+CHROME = 'full'
+CHROME_PRESET = "(v) => { if (localStorage.getItem('dci-chrome') === null) localStorage.setItem('dci-chrome', JSON.stringify(v)); }"
 
 
 def ws_release(full=False):
@@ -781,7 +785,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
     view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); %s }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD),
-                                                                                                               '(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '')
+                                                                                                               ('(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '') + ('(%s)(%s);' % (CHROME_PRESET, json.dumps(CHROME)) if CHROME else ''))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1290,6 +1294,8 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg.evaluate(DM_FOLD_PRESET, DM_FOLD)
     if MX_HEADS:
         pg.evaluate(MX_HEADS_PRESET, MX_HEADS)
+    if CHROME:
+        pg.evaluate(CHROME_PRESET, CHROME)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:
@@ -1377,7 +1383,7 @@ def stage(pg, timeout=25, settle=300):
     """[3.160.0, review run 3] Clicks "Stage in the relationship editor" and waits until the log says "Staging complete" once more
     (not a fixed time: from 3.152.0 the editor's lookups pause between requests, and cases that waited 1.5 s read the editor
     too early). Returns whether it came; the case goes on either way and prints what it finds."""
-    count = "[...document.querySelectorAll('#dci-log li')].filter(li => /Staging complete|Übernehmen abgeschlossen/.test(li.textContent)).length"
+    count = "[...document.querySelectorAll('#dci-log li')].filter(li => /Staging complete|Eintragen abgeschlossen|Übernehmen abgeschlossen/.test(li.textContent)).length"
     n = pg.evaluate(count)
     pg.click('[data-act=apply]')
     ok = wait_ok(pg, f"{count} > {n}", timeout)

@@ -1597,7 +1597,7 @@ Written for Jane Roe."""
         pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin.year])")
         print('A) Matrix:', mx, '| nicht erkannt:', unrec, '| Pool:', pool)
         ok_a = (mx.get('Roadburn Festival') == [['commissioned'], ['2025'], [1, 2]] and unrec == ['Written for Jane Roe.']
-                and not any(y == 2025 for _, y in pool) and not any(re.search('festival', l, re.I) and re.search('Not taken over|Festival recording', l) for l in log))
+                and not any(y == 2025 for _, y in pool) and not any(re.search('festival', l, re.I) and re.search('Not used|Festival recording', l) for l in log))
         results.append(ok_a)
         print('B) Roadburn Festival:', rb)
         results.append(bool(rb) and rb['kind'] == 'label' and RR in rb['sugg'] and rb['create'])
