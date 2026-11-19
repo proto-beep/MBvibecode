@@ -1,0 +1,116 @@
+{
+ "note": "Whole texts read by TEXT.parse, each as a credits text, with the release's data and with stackUp, with everything the reader returns (t_parsegolden.py; UPDATE=1 writes the readings anew after a change that is meant). From 3.175.0, before the helpers of the reader were taken out of parse: the readings are those of 3.174.0 – also where they are wrong (the booklets of 2026-11-19 are mostly not read yet).",
+ "texts": [
+  {
+   "name": "booklet: Mönkemeyer / Kammerakademie Potsdam (German credits)",
+   "text": "NILS MÖNKEMEYER Viola\nKAMMERAKADEMIE POTSDAM\nYUKI KASAI Konzertmeisterin\nANNA CAREWE Continuo-Cello\n\nEXECUTIVE PRODUCERS\nDaniela Majer & Stefan Lang (Deutschlandradio)\nTONMEISTER : Phillip Schulz\nTONINGENIEUR : Henri Thaon\nTONTECHNIK : Johanna Vollus\nAUFNAHME : Siemensvilla, Berlin, 21.–24.8.2010\nFOTOS : Irène Zandel\nGESTALTUNG : Le_Palmier\nEINE KOPRODUKTION MIT\nDeutschlandradio Kultur\nKAMMERAKADEMIE POTSDAM\n",
+   "artists": [
+    "Nils Mönkemeyer",
+    "Kammerakademie Potsdam"
+   ],
+   "trackCount": 20
+  },
+  {
+   "name": "booklet: Salaputia Brass, lineup",
+   "text": "SALAPUTIA BRASS\nAnton Borderieux (Trompete) • Markus Czieharz (Trompete) • Peter Dörpinghaus\nJonathan Müller (Trompete) • Lukas Reiss (Trompete)\nFelix Bauer (Horn)\nAaron Aussenhofer Stilz (Posaune) • Jonas Burow (Posaune) • Felix Eckert (Posaune) • Philip Pineda Resch (Posaune)\nJoel Zimmermann (Tuba) • Severin Stitzenberger (Schlagzeug)\nGäste: Lukas Gassner (Euphonium und Posaune) • Felix Birnbaum (Pauke und Percussion)\n",
+   "artists": [
+    "Salaputia Brass"
+   ],
+   "trackCount": 14
+  },
+  {
+   "name": "booklet: Salaputia Brass, track lists",
+   "text": "ANTHONY HOLBORNE (1545–1602)\nSUITE \"THE FAIRIE ROUND\"\nArr. Roger Harvey & Salaputia Brass\n\n[01] I. THE FAIRIE ROUND . . . . . . . . . . . . . . . 01:34\n[02] II. THE HONIE SUCKLE . . . . . . . . . . . . . . 01:40\n[03] III. THE CHOISE . . . . . . . . . . . . . . . . . 00:55\n[04] IV. MUY LINDA . . . . . . . . . . . . . . . . . . 01:04\n[05] V. LAST WILL AND TESTAMENT . . . . . . . . . 03:39\n[06] VI. GALLIARD . . . . . . . . . . . . . . . . . . 00:49\n[07] VII. THE NIGHT WATCH . . . . . . . . . . . . . . 01:18\n\nGUSTAV HOLST (1874–1934)\nA MOORSIDE SUITE (H. 173)\nTrans. Peter Dörpinghaus\n\n[08] I. SCHERZO . . . . . . . . . . . . . . . . . . . . 03:08\n[09] II. NOCTURNE . . . . . . . . . . . . . . . . . . 06:43\n[10] III. MARCH . . . . . . . . . . . . . . . . . . . . 03:52\n\nARTHUR BUTTERWORTH (1923–2014)\nA TRITON SUITE OP. 46\n\n[11] I. MAESTOSO . . . . . . . . . . . . . . . . . . 01:36\n[12] II. VIVACE . . . . . . . . . . . . . . . . . . . . 02:31\n[13] III. LAMENT . . . . . . . . . . . . . . . . . . . 03:04\n[14] IV. SCHERZO . . . . . . . . . . . . . . . . . . . 03:31\n",
+   "artists": [
+    "Salaputia Brass"
+   ],
+   "trackCount": 14
+  },
+  {
+   "name": "booklet: Berlioz, L’enfance du Christ (Linn)",
+   "text": "HECTOR BERLIOZ\nL'enfance du Christ\nRobin Ticciati conductor\nSwedish Radio Symphony Orchestra & Choir\nYann Beuron Le Récitant\nVéronique Gens Marie\nStephan Loges Joseph\nAlastair Miles Le Père de la Famille\n\nRecorded at\nBerwaldhallen, Östermalm,\nStockholm, Sweden from\n11 – 14 December 2012\n\nProduced and engineered for Linn by\nPhilip Hobbs\n\nProduced for Swedish Radio by\nCynthia Zetterqvist\n\nEngineered for Swedish Radio by\nJohan Hyttnäs\n\nPost-production by\nJulia Thomas\n\nSleeve image by\nPer Kirkeby\n\nCover image\nFlugten til Ægypten\nby Per Kirkeby, 1996.\nOil on canvas. Courtesy\nMichael Werner Gallery,\nNew York and London\n\nDesign by\ngmtoucari.com\n",
+   "artists": [
+    "Hector Berlioz",
+    "Robin Ticciati"
+   ],
+   "trackCount": 30
+  },
+  {
+   "name": "booklet: Musica Gloria, lineup",
+   "text": "MUSICA GLORIA\nMaria Ladurner & Ella Marshall Smith soprano\nSophia Faltas & Pieter De Praetere alto\nAdriaan De Koster & André Pérez Muíño tenor\nVincent Berger & Thomas Vandenabeele bass\n\nNele Vertommen oboe, recorder & direction\nJosé Rodrigues Gomes bassoon & recorder\nTomoe Badiarova & Marieke Vos violin\nMarrie Mooij violin in concerto\nLena Rademann violin [1-15] & viola [16-21]\nAnne-Linde Visser cello\nBeniamino Paganini claviorganum & direction\n\nClaviorganum Markus Harder-Völlkmann (2002)\nTuned by Markus Harder-Völlkmann in 415 Hz, 1/6 comma meantone\n\nDavid Crystel original pronunciation consultant\nElla Marshall Smith & Pieter De Praetere coaches original pronunciation during project\n",
+   "artists": [
+    "Musica Gloria"
+   ],
+   "trackCount": 21
+  },
+  {
+   "name": "booklet: Musica Gloria, Handel track list",
+   "text": "GEORG FRIEDRICH HÄNDEL [1685-1759]\nChandos Anthem No. 10 The Lord is my light, HWV 255\n1] Symphony 02:53\n2] Air - The Lord is my light (Maria)* 02:31\n3] Chorus - Though an host of men 02:24\n4] Air - One thing have I desired (André) 04:02\n5] Chorus - I will offer in his dwelling 02:46\n6] Chorus - For who is God 01:33\n7] Chorus - They are brought down 01:35\n8] Chorus - O praise the Lord with me 01:06\n9] Air - The Lord is my strenght (Adriaan) 02:04\n10] Air - It is the Lord (Ella) 01:40\n11] Chorus - Sing praises 04:17\nConcerto for oboe, strings & continuo in B-flat major, HWV 302a\n12] Vivace 01:59\n13] Fuga 02:10\n14] Andante 02:14\n15] Allegro 01:50\nChandos Anthem No. 6 As pants the hart, HWV 251b\n16] Symphony 03:20\n17] Chorus - As pants the hart 03:25\n18] Air - Tears are my daily food (Sophia) 02:31\n19] Recit & Chorus - Now, when I think (Thomas) 02:41\n20] Duetto - Why so full of grief (Pieter & Adriaan) 03:58\n21] Chorus - Put thy trust in God (Vincent) 03:46 TT: 54:47\n\n* This aria is originally for tenor solo, but in aiming for a balanced programme, we decided\nto perform it as a soprano solo in the tradition of Händel himself, who often changed voice\ntypes between different versions of the same piece.\n",
+   "artists": [
+    "Musica Gloria"
+   ],
+   "trackCount": 21
+  },
+  {
+   "name": "booklet: Red Priest",
+   "text": "RED PRIEST\nPiers Adams - recorders\nJulia Bishop - violin\nAngela East - cello\nDavid Wright - harpsichord\n\nTHE INSTRUMENTS:\nRecorders:\nEagle Alto and Soprano by Adriana Breukink and\nGeri Bollinger • Dream Tenor by Adriana Breukink\n• Sopranino, Sixth Flute, Alto in A and Voice Flute by\nMichael Dawson • Soprano by Ralf Ehlert • Modern\nAlto by Tarasov/Mollenhauer • Bass by Andreas Kung\n• Gemshorn by Petr Cip\nViolin:\nEkkard Seidl 2012, after Maggini c.1620\nCello:\nPeter Walmsley, England, 1725\nHarpsichord:\nRobert Goble 1993, after Christian Zell,\nHamburg 1728\n\nCREDITS:\nProduced by Gary Cole and Piers Adams\nEngineered and edited by Gary Cole\nPhotography by Graham Flack\nCover and booklet design by\nDoubletake Design and Andy Thomas\nSleeve notes by Piers Adams\nAll tracks arranged and published by Red Priest - Piers\nAdams, Julia Bishop, Angela East and David Wright.\nBonus track 'Aria Amorosa' from CD Priest on the\nRun (RP001)\nRecorded at the Birley Centre, Eastbourne College,\nEngland, in May 2014, with grateful thanks to\nEastbourne College Music Department for the use of\ntheir state-of the-art facilities.\n\n© 2014 Red Priest\nWARNING: All Rights\nReserved. Unauthorised\nreproduction is\nprohibited and may result\nin criminal prosecution.\nPrinted in the UK\n\nWarning: All Rights Reserved\nUnauthorised reproduction is\nprohibited and may result in\nprosecution. Printed in the UK\n℗ 2014 Red Priest Recordings\n© 2014 Red Priest Recordings\nwww.redpriest.com\nRPR LC 07967 DDD RP012\n5 060179 090115\n",
+   "artists": [
+    "Red Priest"
+   ],
+   "trackCount": 15
+  },
+  {
+   "name": "MusicBrainz track list with artists",
+   "text": "1. Part One - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (7:20)\n2. Part Two - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (6:56)\n3. Part Three - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (4:43)\n4. Part Four - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (9:28)\n5. Part Five - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (3:53)\n6. Part Six - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (15:48)\n7. Part Seven - Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez (2:54)\n",
+   "artists": [
+    "Izumi Kimura",
+    "Artur Majewski",
+    "Barry Guy",
+    "Ramon Lopez"
+   ],
+   "trackCount": 7
+  },
+  {
+   "name": "Beatport: Name-Role On Tracks (S298)",
+   "artists": [
+    "Shpongle"
+   ],
+   "trackCount": 20,
+   "text": "Musicians In The Studio Pete Callard-Acoustic Guitar On Tracks 1,2,3,18,19,20, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10,14,15 Chris Barker-Bass on Tracks 3,7,16 Raja Ram- Flute On Tracks 7,13,15,17,19 and Vocals on Tracks 2,7,8,11,12,13,19 Simon Posford-Live Drums on Tracks 1,2,7,8,18,19, Bass Guitar on Tracks 4 & 9 Drum Programming,Computers,Synths,Keyboards,Sonic Trickery & Production on all tracks."
+  },
+  {
+   "name": "S058: names above instruments",
+   "artists": [],
+   "trackCount": 6,
+   "text": "Torben SNEKKESTAD\nSAXOPHONES & TRUMPET\nAgusti FERNANDEZ\nPIANO\nBarry GUY\nDOUBLE BASS"
+  },
+  {
+   "name": "S058: instruments above names",
+   "artists": [],
+   "trackCount": 6,
+   "text": "PIANO\nAgusti Fernandez\nDOUBLE BASS\nBarry Guy"
+  },
+  {
+   "name": "S058: order not clear (read twice)",
+   "artists": [],
+   "trackCount": 6,
+   "text": "Jane Roe\nPIANO\nJohn Doe\n\nMixed by Max Mix"
+  },
+  {
+   "name": "improvisation (S222)",
+   "artists": [
+    "Izumi Kimura"
+   ],
+   "trackCount": 7,
+   "text": "All music was improvised by Izumi Kimura, Artur Majewski, Barry Guy, and Ramon Lopez\nRecorded live at Vortex, London, on 3 May 2024 by Alex Bonney\nMixed and mastered by Ferran Conangla\nCover art: Albert Irvin “Madison” 1988\nProduced by Maya Homburger and Barry Guy\nThanks to everyone at the Vortex."
+  },
+  {
+   "name": "prose, places, dates",
+   "artists": [
+    "Skyjoggers"
+   ],
+   "trackCount": 5,
+   "text": "FRAG NICHT NACH SONNENSCHEIN was recorded at the band's home studio in - the capital of sauna - Tampere, Finland in February 2026.\nExpect a heavy dose of fuzz.\nPersonnel:\nMatti: guitar, vocals\nPekka: bass\nrecording engineer: otto\nAll tracks written by Franke / Froese / Baumann\nPublished by Virgin Music ℗ 1976 Virgin Records Ltd © 1995 Virgin Records Ltd"
+  }
+ ]
+}
