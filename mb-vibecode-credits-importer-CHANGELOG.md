@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.172.0 | – |
+| 2026-11-19 | 3.170.0 – 3.173.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,19 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.173.0
+
+The tests made steady (the rest of F-TESTWAITS and F-TESTSWITCH) – the script itself is as in 3.172.0:
+
+- **Seven cases that failed now and then when several test files ran at a time** wait for what they check instead of a fixed time: `cache2` (what was remembered is drawn after "Import complete" – until the rows stand still; until the change is stored), `dedbox` (until the box has its lines), `theme` (the colours are compared once the checks of the footer are done – a chip of the footer changed its colour in between), `marksrelease` (until the marks on Discogs are the expected ones), `remember` of the works matrix (until the change is stored and the matrix stands still), `workgroups` (until the pool is drawn anew). The first four failed in at least half of the runs with six to eight of them at a time, and passed in all of them afterwards.
+- **As many test files at a time as the computer has cores** (`runall.py`, at least 2, at most 5; `-j` sets it): five files at a time on two cores was the main reason for cases failing now and then – the computer was too busy for the short waits of the tests. A full run takes longer (about 70 instead of 45 minutes on two cores).
+- **A case that stands still is ended** (`caserun.py`): twice a whole test file stood still for half an hour in a call to the page that never came back (both times `t_companion_bandcamp.py`; why is not known). After 600 seconds the case's browser is closed, the case counts as failed and is run again like any other.
+- **A navigation that never ends** (`tracksdrop`, `marksrelease`, `bcoff`; once a whole file stood still for half an hour) – going to a page or loading it again – is tried a second and a third time.
+- **An error of the test page is no longer counted as an error of the script:** the test page keeps the companion's values through a local server; a request to it while the page goes is refused by the browser ("Synchronous XHR in page dismissal").
+- **S083 in the cases' own lists of rules:** 37 places switched it off, mostly along with the rule they test. Without it 29 of them pass and no longer name it; four need it (in `tracksdrop`, `cwr`, `mxarrows`) and keep it; four of another form (in `dragdates`, `choose`, `trackpool`, `reldate`) were not tried. The two places that test S083 itself are as they were.
+- The suite before this version, on main (3.172.0): 27 of 27 files in one run, none unsteady.
+- The suite on this version: two runs in a row, each 27 of 27 files, no case run a second time, none stood still.
 
 ### Import 3.172.0
 

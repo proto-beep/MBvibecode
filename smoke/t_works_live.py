@@ -480,7 +480,7 @@ def case_livedate():
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
-            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S089'] if off else ['S083']}))")
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S089'] if off else []}))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             pg.wait_for_timeout(2500)

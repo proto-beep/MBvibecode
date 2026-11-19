@@ -1314,7 +1314,7 @@ def case_improv3133():
     COLS = "[...document.querySelectorAll('[data-el=works] th[data-colhead]')].map(th => [th.querySelector('.dci-mx-colname').textContent.replace(/\\s+/g, ' ').trim(), !!th.querySelector('.dci-improv-mark')])"
     results = []
     for off in (False, True):
-        H.RULES_OFF[:] = ['S083'] + (['S222'] if off else [])
+        H.RULES_OFF[:] = (['S222'] if off else [])
         with sync_playwright() as p:
             b = p.chromium.launch(args=H.LAUNCH_ARGS)
             ctx = H.new_context(b)
@@ -1341,7 +1341,7 @@ def case_improv3133():
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
-    H.RULES_OFF[:] = ['S083']
+    H.RULES_OFF[:] = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

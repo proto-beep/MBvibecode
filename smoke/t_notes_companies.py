@@ -939,7 +939,7 @@ def case_dedications():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S097']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S097']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -965,7 +965,7 @@ def case_dedications():
                 pg.wait_for_timeout(2500)
                 out['again'] = pg.evaluate(ROWS)
                 out['lost'] = pg.evaluate("[...document.querySelectorAll('#dci-log li, [data-el=msgs] *')].some(e => /left out/.test(e.textContent) && /remembered/.test(e.textContent))")
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S007']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S007']))")
                 pg.evaluate("window.dispatchEvent(new StorageEvent('storage', { key: 'dci-rules-off' }))")
                 pg.wait_for_timeout(800)
                 out['rules'] = pg.evaluate(ROWS)
@@ -1041,7 +1041,7 @@ def case_dedfor():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S107']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S107']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1207,13 +1207,15 @@ def case_dedbox():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
-            pg.wait_for_timeout(2500)
+            # ([3.173.0] F-TESTWAITS) until the box has its four lines (the lookups take longer on a busy computer), not a fixed 2.5 s
+            H.wait_ok(pg, f"(() => {{ const b = ({BOX}); return !!b && b.list.length >= 4; }})()", 20)
+            pg.wait_for_timeout(500)
             f1 = pg.evaluate(BOX)
             print('F) wieder geladen:', f1)
             results.append(f1 and len(f1['list']) == 4 and any(x.startswith('dedicated to Peter Kowald') for x in f1['list']) and any(x.startswith('dedicated to Ireland on the work of track 2') for x in f1['list'])
                            and any(x.startswith('tribute to Bass Man') for x in f1['list']) and f1['sugg'] == [])
         with sync_playwright() as p:
-            pg, errs = open_page(p, off=['S083', 'S109'])
+            pg, errs = open_page(p, off=['S109'])
             e2 = [pg.evaluate(BOX), pg.evaluate("document.querySelector('[data-el=dedbox]').hidden")]
             print('E) S109 aus:', e2)
             results.append(e2 == [None, True])

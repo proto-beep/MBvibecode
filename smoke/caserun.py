@@ -19,6 +19,7 @@ import copy
 import os
 import io
 import sys
+import threading
 import time
 import traceback
 import types
@@ -30,8 +31,12 @@ _STATE = {'pw': None, 'browser': None}
 
 
 def _browser():
-    if not _STATE['browser']:
+    # ([3.173.0] a browser the watchdog closed is started again)
+    if _STATE['browser'] and not _STATE['browser'].is_connected():
+        _STATE['browser'] = None
+    if not _STATE['pw']:
         _STATE['pw'] = _real_sync_playwright().start()
+    if not _STATE['browser']:
         _STATE['browser'] = _STATE['pw'].chromium.launch(args=H.LAUNCH_ARGS)
     return _STATE['browser']
 
@@ -193,9 +198,49 @@ def run_cases(ns):
     flaky = []
     t0 = time.time()
 
+    def _descendants(pid):
+        kids = {}
+        for d in os.listdir('/proc'):
+            if not d.isdigit():
+                continue
+            try:
+                with open(f'/proc/{d}/stat') as f:
+                    rest = f.read().rsplit(')', 1)[1].split()
+                kids.setdefault(int(rest[1]), []).append(int(d))
+            except OSError:
+                pass
+        out, todo = [], [pid]
+        while todo:
+            for k in kids.get(todo.pop(), []):
+                out.append(k)
+                todo.append(k)
+        return out
+
+    def _watchdog(name):
+        """[3.173.0] (F-TESTWAITS) A case that stands still (a call to the page that never returns: twice a whole file stood still for
+        half an hour) is ended after DCI_CASE_LIMIT seconds (600): its browser is closed, the call fails, the case counts as failed
+        and is run again like any other."""
+        limit = int(os.environ.get('DCI_CASE_LIMIT', '600'))
+
+        def stop():
+            print(f'== {name}: stood still for {limit} s – its browser is closed', flush=True)
+            for pid in _descendants(os.getpid()):
+                try:
+                    with open(f'/proc/{pid}/comm') as f:
+                        if not any(w in f.read() for w in ('chrom', 'headless')):
+                            continue  # (not the driver of the browser: it reports the closed browser)
+                    os.kill(pid, 9)
+                except OSError:
+                    pass
+        t = threading.Timer(limit, stop)
+        t.daemon = True
+        t.start()
+        return t
+
     def once(name, fn):
         """One run of a case: (OK, page errors in it)."""
         snap = _snapshot()
+        watch = _watchdog(name)
         # [3.171.0] (F-TESTSWITCH) the rules as a new installation has them; S083 off only for the cases of rules_off_cases.json
         if name in H.RULES_OFF_CASES.get(os.path.basename(sys.argv[0]), []):
             H.RULES_OFF = ['S083']
@@ -216,8 +261,12 @@ def run_cases(ns):
             traceback.print_exc(file=old)
         finally:
             sys.stdout = old
+            watch.cancel()
             for proxy in sync_playwright.opened:
-                proxy.close()
+                try:
+                    proxy.close()
+                except Exception:  # noqa: BLE001 – the browser is gone (the watchdog)
+                    pass
             sync_playwright.opened.clear()
             perr = len(H.PAGE_ERRORS) - n0
             _restore(snap)

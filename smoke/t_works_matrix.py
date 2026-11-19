@@ -615,6 +615,8 @@ def case_remember():
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1500)
+            # ([3.173.0] F-TESTWAITS) what was remembered is drawn after "Import complete": until the works matrix stands still
+            H.wait_still(pg, "(document.querySelector('#dci-overlay [data-el=works]') || document.body).innerHTML.length", 20, 1500)
 
         w1 = 'tr[data-work="0"][data-mrow^="w:0"]'
         p2 = 'tr[data-work="1"][data-mrow^="p:1"]'
@@ -636,6 +638,7 @@ def case_remember():
                     'raus': stub.get_attribute('title') if stub.count() else '', 'zeilen': writer_rows(), 'datum': cd, 'typ': wtype}
 
         load()
+        mark0 = H.remember_mark(pg)
         # (a row without an attribute is closed: ▸ opens it)
         if not pg.locator(f'{w1} .dci-wpill[data-attr=cover]').count():
             pg.click(f'{w1} [data-act=mx-wattr-open]'); pg.wait_for_timeout(200)
@@ -654,7 +657,9 @@ def case_remember():
         sel = pg.locator('[data-f=work-type]')
         label = 'Aria'
         sel.select_option(label=label); pg.wait_for_timeout(200)
+        # ([3.173.0] F-TESTWAITS) until what was changed is stored (the snapshot is newer than the start of the case), not a fixed 1.6 s
         pg.wait_for_timeout(1600)
+        H.wait_remembered(pg, mark0)
         before = state()
         pg.reload()
         pg.add_script_tag(content=H.MAIN)
@@ -1156,7 +1161,7 @@ def case_creditskip():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S093']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S093']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1236,7 +1241,7 @@ def case_publevel():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S094']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S094']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1297,7 +1302,7 @@ def case_addcolumn():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S098', 'S099', 'S100']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S098', 'S099', 'S100']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -1492,7 +1497,7 @@ def case_awb386():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
         if off:
-            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S133']))")
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S133']))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)
@@ -1580,7 +1585,7 @@ def case_arl387():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S135']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S135']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)

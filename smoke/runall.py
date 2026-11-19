@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Runs the whole suite and says truthfully how it went (Credits Importer 3.160.0, review run 3).
 
-    python3 runall.py [-j 5] [--timeout 2700] [--out DIR] [t_file.py …]
+    python3 runall.py [-j N] [--timeout 2700] [--out DIR] [t_file.py …]
 
 Each t_*.py runs as a process of its own (five at a time, the longest first), its output goes to <out>/<file>.log.
 A file counts as passed only when all of this holds:
@@ -61,7 +61,9 @@ def run_one(name, out, limit):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-j', type=int, default=5)
+    # [3.173.0] (F-TESTWAITS) as many files at a time as the computer has cores (at least 2, at most 5): five at a time on two
+    # cores made cases fail that pass alone – the suite was not steady, the computer was too busy
+    ap.add_argument('-j', type=int, default=max(2, min(5, os.cpu_count() or 2)))
     ap.add_argument('--timeout', type=int, default=2700)
     ap.add_argument('--out', default=os.path.join(HERE, 'out'))
     ap.add_argument('files', nargs='*')

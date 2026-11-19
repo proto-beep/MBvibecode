@@ -1787,7 +1787,7 @@ def case_viewbits():
             pg, errs = H.open_mb_edit(ctx, companion=True, view='compact')
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S101', 'S102', 'S103', 'S104']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S101', 'S102', 'S103', 'S104']))")
             pg.evaluate("window.__shows = []; document.addEventListener('dci:to-discogs', (e) => { try { const m = JSON.parse(e.detail); if (m.type === 'show') window.__shows.push(m); } catch (x) {} })")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
@@ -2076,7 +2076,7 @@ def case_arq386():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
         if off:
-            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S134']))")
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S134']))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)

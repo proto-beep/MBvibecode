@@ -352,7 +352,7 @@ def case_evask():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
         # ([Z-EVL] 3.88.0) the question only with rule S136 off (on: at once, case evl388 of t_notes_companies.py)
-        pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S108', 'S136'] if off else ['S136']}))")
+        pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S108', 'S136'] if off else ['S136']}))")
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)

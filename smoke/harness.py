@@ -1213,9 +1213,37 @@ def add_mapping(ctx):
                             % json.dumps(files))
 
 
+def _goto_again(page):
+    first = page.goto
+
+    def goto(url, **kw):
+        for attempt in (1, 2, 3):
+            try:
+                return first(url, **kw)
+            except Exception as e:  # noqa: BLE001 – only the timeout is tried again
+                if 'Timeout' not in str(e) or attempt == 3:
+                    raise
+                print(f'   (navigation to {url} did not end – attempt {attempt + 1})')
+    page.goto = goto
+    first_reload = page.reload
+
+    def reload(**kw):
+        for attempt in (1, 2, 3):
+            try:
+                return first_reload(**kw)
+            except Exception as e:  # noqa: BLE001
+                if 'Timeout' not in str(e) or attempt == 3:
+                    raise
+                print(f'   (loading the page again did not end – attempt {attempt + 1})')
+    page.reload = reload
+
+
 def new_context(browser):
     extra = {'reduced_motion': 'reduce'} if NO_ANIM else {}
     ctx = browser.new_context(viewport={'width': 1500, 'height': 1000}, accept_downloads=True, **extra)
+    # [3.173.0] (F-TESTWAITS) on a busy computer a navigation now and then never ends ("load" does not come: tracksdrop,
+    # marksrelease, once a whole file stood still) – a page of this context tries a second and a third time
+    ctx.on('page', _goto_again)
     if NO_ANIM:
         ctx.add_init_script(script=f'({NO_ANIM_INIT})({json.dumps(NO_ANIM_CSS)})')
     install_routes(ctx)
@@ -1231,6 +1259,10 @@ def errors_of(pg):
     errs = []
 
     def on_error(e):
+        # [3.173.0] (F-TESTWAITS) the storage of the test page (GM values through a local server, synchronously) cannot answer while
+        # the page goes – an error of the test page, not of the script (a userscript manager stores without a request)
+        if 'Synchronous XHR in page dismissal' in str(e) and '127.0.0.1' in str(e):
+            return
         errs.append(str(e))
         PAGE_ERRORS.append(str(e))
     pg.on('pageerror', on_error)
@@ -1411,6 +1443,23 @@ def stage_click(pg, timeout=25, settle=400, least=1000):
     rest = least - (time.time() - start) * 1000
     if rest > 0:
         pg.wait_for_timeout(rest)
+    return ok
+
+
+REMEMBER_AT = """(() => { let at = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!/^dci-remember:/.test(k)) continue;
+  try { const v = JSON.parse(localStorage.getItem(k)); for (const s of Object.values((v && v.by) || {})) at = Math.max(at, (s && s.at) || 0); } catch (e) { /* not JSON */ } } return at; })()"""
+
+
+def remember_mark(pg):
+    """[3.173.0] (F-TESTWAITS) The time of the page before a change that is to be remembered – for wait_remembered()."""
+    return pg.evaluate('Date.now()')
+
+
+def wait_remembered(pg, mark, timeout=20, settle=200):
+    """[3.173.0] (F-TESTWAITS) Waits until what was changed after `mark` is stored for this release (the snapshot of "remember" is
+    newer than the mark) – the script stores a second after the last change, later on a busy computer: a fixed 1.6 s was too short."""
+    ok = wait_ok(pg, f"{REMEMBER_AT} >= {int(mark)}", timeout)
+    pg.wait_for_timeout(settle)
     return ok
 
 

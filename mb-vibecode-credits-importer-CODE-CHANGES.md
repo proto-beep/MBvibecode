@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.172.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.173.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.173.0 · 2026-11-19
+
+- **Tests only.** `harness.py` – `remember_mark(pg)`, `wait_remembered(pg, mark)` (`REMEMBER_AT`: the newest snapshot of `dci-remember:<release>`); `errors_of` leaves out "Synchronous XHR in page dismissal" of the local storage server; `_goto_again(page)` (set for every page of `new_context`): `page.goto` and `page.reload` are tried up to three times after a timeout. `runall.py` – `-j` defaults to the number of cores (2 … 5). `t_works_matrix.py remember` – `wait_remembered`, `wait_still` on the works. `t_dates_matrix.py workgroups` – waits for the pool. `caserun.py` – `_watchdog(name)` (a timer of `DCI_CASE_LIMIT` seconds, 600, that closes the browser's processes), `_descendants(pid)`; `_browser()` starts a closed browser again.
+- `t_ui_settings.py` – `cache2` (`load()` waits until rows and role credits stand still; `wait_remembered`), `theme` (waits for `.dci-foot-run-done` / `.dci-foot-chip-ok` and for the colours to stand still; prints where two readings differ).
+- `t_notes_companies.py dedbox` – waits for four lines of the box; `t_companion_discogs.py marksrelease` – `marks_when(dg, want, least)`.
+- 29 × `'S083'` removed from the cases' own lists of rules (`dci-rules-off`, `H.RULES_OFF`).
+- The main script: only its version.
 
 ## Import 3.172.0 · 2026-11-19
 
