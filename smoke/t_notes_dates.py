@@ -1209,6 +1209,49 @@ def case_datelevel3178():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_areas3179():
+    """Credits Importer 3.179.0 (collected items Z-AREARELS, Z-PRINTEDIN; S313): the notes "Printed in the UK" / "Made in Germany" /
+    "Mixed in Berlin" / "Mixed at Studio X".
+    A) Entries for the areas UK and Germany, with the roles "Printed In" and "Made In". B) No entry Berlin: "Mixed at Studio X" is more
+       precise. C) S313 off (the quick switch): no entry of an area."""
+    orig = H.discogs_release
+    state = {'off': []}
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Printed in the UK\nMade in Germany\nMixed in Berlin\nMixed at Studio X'
+        return d
+
+    H.discogs_release = rel
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        groups = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw.trim())])")
+        left = pg.evaluate("(() => { const r = [...document.querySelectorAll('.dci-ignored li, #dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim().slice(0, 220)).filter(t => /more precise/.test(t)); return r; })()")
+        b.close()
+        return dict((n, r) for n, r in groups), left, errs
+
+    results = []
+    with sync_playwright() as p:
+        g, left, errs = run(p)
+        print('A)', {k: v for k, v in g.items() if k in ('UK', 'Germany', 'Berlin', 'Studio X')})
+        results.append(g.get('UK') == ['Printed In'] and g.get('Germany') == ['Made In'] and 'Studio X' in g)
+        print('B) Berlin als Eintrag:', 'Berlin' in g)
+        results.append('Berlin' not in g and not errs)
+        g2, _, errs2 = run(p, off=['S313'])
+        print('C) ohne S313:', {k: v for k, v in g2.items() if k in ('UK', 'Germany', 'Berlin', 'Studio X')})
+        results.append('UK' not in g2 and 'Germany' not in g2 and 'Berlin' not in g2 and 'Studio X' in g2 and not errs2)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_rel3132():
     """Credits Importer 3.132.0 (collected items Z-RELDATE, Z-FESTALL; D034, S220): relative dates and what the notes only mention.
     A) In Node: "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September",

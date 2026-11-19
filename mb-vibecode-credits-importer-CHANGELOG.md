@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.178.0 | – |
+| 2026-11-19 | 3.170.0 – 3.179.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.179.0
+
+**Relationships to an area** (collected items Z-AREARELS, Z-PRINTEDIN; rule S313, company rules C058–C068).
+
+- **Every area relationship MusicBrainz has is read from a text:** besides "Recorded in", "Mixed in", "Mastered in", "Produced in", "Remixed in", "Engineered in", "Composed in", "Arranged in" now also **"Printed in the UK"**, **"Made in Germany"** / "Manufactured in the EU" / "Pressed in" (manufactured in), "Lacquer cut in", "Programmed in", "Edited in", "Transferred in", and the writing: "Written in", "Lyrics written in", "Libretto written in", "Revised in", "Translated in". "in the UK": the area is the UK.
+- **Levels:** printing, manufacturing, lacquer cut and transfer on the release; programming and editing on the recordings; the writing on the works first. The level of an entry is switched as for every entry (Recording · Release · Work – what MusicBrainz has for the type).
+- **A place or a company is more precise:** for what is made once for the release – printing, manufacturing, the lacquer cut, the transfer – a company or place of the same activity ("Printed by Druckerei Fischer", "Manufactured by …") covers the area: it is left out, with this reason. For recording, mixing and the like, which can happen in several places, the area is left out only when it is the named place's own area ("Recorded at Studio X, Berlin" / "Recorded in Berlin") or the line right next to it ("Recorded in Kraków" / "Recorded at Alchemia Club"). "Made in Germany by Sonopress" is manufactured by Sonopress.
+- **One switch for all of it:** the quick switch **Area relationships** (S313, on). Off: no relationship to an area is read – not "Recorded in" either.
+- **Tests:** `t_static.py areas3179` (Node: every type with its level, the more precise place, the switch); `t_notes_dates.py areas3179` (the dashboard: the areas as entries, none beside a place of the same activity, none with the switch off).
 
 ### Import 3.178.0
 

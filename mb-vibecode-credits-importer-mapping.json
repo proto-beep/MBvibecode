@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.178.0",
+  "version": "3.179.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297"]},
   "CHECKBOX_DETAILS": [
@@ -104,7 +104,18 @@
     [{"$re":"^produced in","$flags":""},{"id":"C041","area":["produced in"],"level":"recording"}],
     [{"$re":"^remixed in","$flags":""},{"id":"C042","area":["remixed in"],"level":"recording"}],
     [{"$re":"^engineered in","$flags":""},{"id":"C043","area":["engineered in"],"level":"recording"}],
-    [{"$re":"^composed in","$flags":""},{"id":"C045","area":["composed in"],"level":"work"}]
+    [{"$re":"^composed in","$flags":""},{"id":"C045","area":["composed in"],"level":"work"}],
+    [{"$re":"^printed in","$flags":""},{"id":"C058","area":["printed in"],"level":"release"}],
+    [{"$re":"^(manufactured|made|pressed) in","$flags":""},{"id":"C059","area":["manufactured in"],"level":"release"}],
+    [{"$re":"^(lacquer cut|lacquers cut|cut) in","$flags":""},{"id":"C060","area":["lacquer cut in"],"level":"release"}],
+    [{"$re":"^programmed in","$flags":""},{"id":"C061","area":["programmed in"],"level":"recording"}],
+    [{"$re":"^edited in","$flags":""},{"id":"C062","area":["edited in"],"level":"recording"}],
+    [{"$re":"^transferred in","$flags":""},{"id":"C063","area":["transferred in"],"level":"release"}],
+    [{"$re":"^written in","$flags":""},{"id":"C064","area":["written in"],"level":"work"}],
+    [{"$re":"^lyrics written in","$flags":""},{"id":"C065","area":["lyrics written in"],"level":"work"}],
+    [{"$re":"^libretto written in","$flags":""},{"id":"C066","area":["libretto written in"],"level":"work"}],
+    [{"$re":"^revised in","$flags":""},{"id":"C067","area":["revised in"],"level":"work"}],
+    [{"$re":"^translated in","$flags":""},{"id":"C068","area":["translated in"],"level":"work"}]
   ],
   "DESIGN_PARTS": [
     "cover",
@@ -1077,7 +1088,7 @@
     ["7e84f845-ac16-41fe-9ff8-df12eb32af55","MusicBrainz Test Artist"]
   ],
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
-  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|remastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|remastered|produced|remixed|engineered|composed) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
+  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|remastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|remastered|produced|remixed|engineered|composed|arranged|printed|manufactured|made|pressed|lacquer cut|lacquers cut|programmed|edited|transferred|written|lyrics written|libretto written|revised|translated) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
     "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv","gennaio","styczeń","stycznia","styczen"],
     "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév","febbraio","luty","lutego"],
@@ -1162,7 +1173,8 @@
     "S007",
     "S297",
     "S245",
-    "S263"
+    "S263",
+    "S313"
   ],
   "WIKI_INFOBOX": {
     "templates": ["infobox album","infobox musikalbum","infobox musique (œuvre)","infobox musique (oeuvre)","ficha de álbum","album","album infobox","infobox single","infobox song"],
