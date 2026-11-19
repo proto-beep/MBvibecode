@@ -1892,4 +1892,54 @@ def case_video3164():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_videotracks3169():
+    """Credits Importer 3.169.0 (Z-VIDEOTRACKS; corrects F-VIDEOLEVEL of 3.164.0). Discogs with "Video Director – Vid Dir" and "Cameras –
+    Cam Op" for the whole release of four tracks.
+    A) Tracks 1 and 2 are videos, 3 and 4 are not: both credits on the recordings – of tracks 1 and 2 only (3.164.0 put them on the release).
+    B) No track is a video: on the release. C) All four are videos: on the recordings, all four tracks."""
+    for i, (name, t1) in enumerate([('video director', 'release'), ('video director', 'recording')]):
+        H.lt(1320 + i, f'1d4c0b5b-0000-4000-8000-00000000132{i}', name, 'artist', t1, ())
+    H.lt(1324, '1d4c0b5b-0000-4000-8000-000000001324', 'misc', 'artist', 'release', (1150,))
+    H.lt(1325, '1d4c0b5b-0000-4000-8000-000000001325', 'misc', 'artist', 'recording', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}  # noqa: E731
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('Vid Dir', 'Video Director', 3101), ex('Cam Op', 'Cameras', 3102)]
+        return d
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '', 0,
+        (r.querySelector('.dci-c-tracks') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim().slice(0, 60)])])))()"""
+    results = []
+
+    def run(b, videos):
+        H.VIDEO_TRACKS.clear()
+        H.VIDEO_TRACKS.update(videos)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        got = pg.evaluate(ROWS)
+        ctx.close()
+        return got, errs
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for tag, videos in (('A)', [0, 1]), ('B)', []), ('C)', [0, 1, 2, 3])):
+                got, errs = run(b, videos)
+                print(tag, got.get('Vid Dir'), got.get('Cam Op'), errs)
+                want = {'A)': ('recording', '2 of 4 tracks'), 'B)': ('release', ''), 'C)': ('recording', '4 of 4 tracks')}[tag]
+                ok = lambda rows: len(rows or []) == 1 and rows[0][0] == want[0] and (want[1] in rows[0][2] if want[1] else 'tracks' not in rows[0][2].replace('Tracks and status', ''))  # noqa: E731
+                results.append(ok(got.get('Vid Dir')) and ok(got.get('Cam Op')) and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.VIDEO_TRACKS.clear()
+    print('Ergebnis:', 'OK' if results and all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

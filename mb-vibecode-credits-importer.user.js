@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.168.0
+// @version      3.169.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.168.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.168.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.169.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.169.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.168.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.169.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5214,7 +5214,9 @@
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
     { id: 'S294', where: 'TEXT.parse (shopLines; FORMAT_LABEL_LINE, FORMAT_LABEL_NAME)', note: 'Texts (3.162.0; proposal F-TAPEFORMAT of review run 2): the format of an edition before its label – "Tape: No Problema Tapes / Vinyl: Hiraeth Records", "CD: Sub Pop" – is no credit ("Tape" was read as the instrument, the label as its player): left out as "the label of an edition". Only when the name ends like a label\'s (Records, Recordings, Tapes, Label, Music, Editions, Disques, Schallplatten), or the text names a second format that way and one of the names does; "Tape: John Doe" stays the instrument. Every free text' },
     { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
-    { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when all its tracks are videos and on the release otherwise, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
+    { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
+    { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
+    { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
     { id: 'S297', where: 'mapCompanyRole (C001)', note: 'Companies (3.164.0; proposal F-PRECLEVEL of review run 3; a quick switch, off): ℗ – phonographic copyright – on the release instead of the recordings. MusicBrainz has the relationship on both levels; where to put it is debated in the community (the recordings: the copyright of the sound recording itself; the release: what the cover says, and one relationship instead of one per track). Off: on the recordings as before; the level of each row can be changed at the row' },
     { id: 'S295', where: 'textExtras, addNotesCompanies, BANDCAMP.toRelease', note: 'Every free text alike (3.163.0; proposals F-NOTESRESULTS and F-BCABOUT of review run 2): what a text names besides credits and companies – a series (S164), ensembles (S162), live heads (S264), covers and quotes of tracks, headings of groups – is taken from the Discogs notes too (only people, companies and "I played …" were), and on Bandcamp also from "about" (covers, quotes, ensembles and groups with S049 on; a series always) and the texts of the editions. A series Discogs lists itself is not taken twice' },
     { id: 'S293', where: 'TEXT.parse (tidyLines; DIST_LINE, SHOP_LINES), BANDCAMP.toRelease (pkgMediumWord, PKG_MEDIUM_ROLE, PKG_ASK_TYPES), companyLeftOutForMedium, leftOutForMedium, pkgAskSkip, uncrHtml', note: 'Editions (3.161.0; collected item Z-VINYLONLY): "Exclusive EU distribution via Hiraeth Records:", "EU distribution: X", "Vinyl distribution: X", "Digital distribution by X" are the distributor – a medium named before "distribution" binds it to that medium; "Orange / Black Splatter Vinyl LP" and "Estimated shipping: February 2027" are what a shop writes (no date). What the text of an edition on Bandcamp says of its making – distributed, manufactured, pressed, printed, duplicated, lacquer cut, glass mastered – holds for that medium only: left out, and listed so, when the MusicBrainz release has no such medium (the same company in the album\'s credits holds for all). Photographs and liner notes named only in an edition\'s text: taken for a release of that medium; for another one (the digital release) a suggestion – "named only in the text of the edition “…”" with "Take" –, unless the page names a digital booklet or the images as part of the download' },
@@ -6596,6 +6598,12 @@
   // [S294] (3.162.0; F-TAPEFORMAT) "<format>: <label>" – the format of an edition before its label; and what ends the name of a label
   const FORMAT_LABEL_LINE = /^(tapes?|cassettes?|mc|vinyl|lp|2lp|cd|compact disc|digital|download)\s*(?::|\s[–—-])\s+(\S.*)$/i;
   const FORMAT_LABEL_NAME = /\b(?:records?|recordings|tapes|label|music|editions?|éditions|disques|schallplatten|bandcamp)\.?$/i;
+  // [Z-HYPHENTRACKS] (3.169.0, S298) a line that names tracks per role; a hyphen without a space before it; a heading before the first name;
+  // where the next name begins (after a list of tracks, or a full stop: a capitalised name, a hyphen, a capitalised role)
+  const HT_TRACKS = /\bon\s+(?:all\s+)?tracks?\b/i;
+  const HT_HYPHEN = /\p{L}[-–]\s?\p{Lu}/u;
+  const HT_HEAD = /^((?:musicians|personnel|performers|line[- ]?up|band)(?:\s+in\s+the\s+studio)?)\s*:?\s+(?=\p{Lu}[\p{L}.'’]*(?:[ -]\p{Lu}[\p{L}.'’]*){0,3}\s?[-–]\s?\p{Lu})/iu;
+  const HT_SPLIT = /(?<=\d|\.)\s+(?=\p{Lu}[\p{L}.'’]*(?:[ -]\p{Lu}[\p{L}.'’]*){0,3}\s?[-–]\s?\p{Lu}\p{L})/u;
   const LEAD_MARK = /^\s*(?:[⊛⊙⊚◉◎⦿●○◌◍◆◇◈■□▪▫▣▶►▸▹▷➤➔➜➝➞→⇒»›‣⁃∙·•◦★☆✦✧✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺❂❃❇❈❉❊❋❖✓✔☑✗✘♪♫♬♩☛☞❥❧❦❯❱*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?)(?:\s*(?:[⊛⊙●○◆■▪▶►➤→»•★✦✓✔*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?))*\s+(?=\S)/u;
   // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:", "Vinyl distribution: X", "Digital distribution by X": region and medium before the word
   const DIST_LINE = /^\s*(?:exclusive(?:ly)?\s+)?(?:(?:EU|US|USA|UK|European|Europe|North\s+American?|American|Asian|Japanese|German|worldwide|world-?wide|international|global|rest\s+of\s+(?:the\s+)?world)\s+)?(?:(digital|vinyl|lp|cd|cassette|tape|physical)\s+)?(distribution|distributed|distributor|vertrieb)\b\s*(?:(?:exclusively\s+)?(via|by|through|durch|:|[-–—]))?\s*(.+?)\s*[:.]?\s*$/i;
@@ -6620,6 +6628,20 @@
     /^(?:ships|shipping)\s*:/i,
     new RegExp(`^(?:(?:${SHOP_DESC})\\s+){0,8}(?:vinyl|vinyls|\\d?x?lps?|\\d?x?cds?|cassettes?|tapes?|compact\\s+disc|7["”″]|10["”″]|12["”″]|box\\s*set|digipa[ck]k?)(?:\\s+(?:\\d?x?lps?|ep|single|edition|version|album|record|\\([^)]*\\)))*(?:\\s+(?:with|in|incl\\.?|including|housed)\\b.*)?\\.?$`, 'iu'),
     /^(?:now\s+)?in\s+stock\b/i,
+  ];
+  // [Z-BCSHOPBLOCK] (3.169.0, S299) what a shop writes below an edition: its name with "(Limited Edition …)", what the records look like,
+  // the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "UK: 2-3 days"), page details
+  const SHOP_BLOCK_LINES = [
+    /\((?:[^()]*\s)?(?:limited|deluxe|special|collector'?s?|exclusive)\s+edition\b[^()]*\)[^()]*\b(?:\d?x?lps?|\d?x?cds?|vinyl|cassettes?|tapes?|sets?|box)\b\.?$/i,
+    /^(?:this\s+is\s+an?\s+)?\d+\s*x\s*\d+\s*g(?:sm|rams?)?\b/i,
+    new RegExp(`^discs?\\s*[a-h1-9](?:\\s*\\/\\s*[a-h1-9])?\\s*[-–:]\\s*${SHOP_DESC}\\b`, 'i'),
+    /^(?:packaged|housed|comes|presented)\s+in\b/i,
+    /^[\W_]*(?:international\s+|worldwide\s+|uk\s+|eu\s+)?(?:shipping|postage|delivery)(?:\s+(?:times?|info(?:rmation)?|notes?|costs?|rates?))?[\W_]*$/i,
+    /^[\W_]*please\s+(?:read|note)\b.*\b(?:order(?:ing|s)?|shipping|customs|address)\b/i,
+    /\b(?:we\s+(?:do\s+not|don['’]?t|cannot|can['’]?t)\s+ship|orders?\s+(?:are|is|will\s+be)\s+(?:sent|shipped|dispatched|posted)|shipped\s+with\s+full\s+value|tracked\s+(?:courier|mail|delivery)|customs\s+(?:clearance|fees|charges|duties)|full\s+refund|po\s+box(?:es)?|phone\s+number\s+with\s+you|your\s+address\s+is\s+correct|your\s+order\s+is)\b/i,
+    /^[\p{Lu}][\p{L} ]{1,24}:\s*\d+\s*(?:[-–]|to)\s*\d+\s+(?:working\s+|business\s+)?(?:days|weeks)\b/u,
+    /^(?:modified|updated)\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},\s+\d{4}$/i,
+    /^licen[cs]e$/i,
   ];
   // [Z-BONUSONLY] (3.157.0, S290) a track of another session (its title) and the roles of writers (they hold for every version)
   const OTHER_SESSION = /\b(?:live|demo|rehearsals?)\b/i;
@@ -9045,12 +9067,62 @@
         }
         return out;
       }
+      /**
+       * [Z-HYPHENTRACKS] (3.169.0, S298) A lineup written "Name-Role On Tracks 1,2,3, Role on Tracks 18,19 Name-Role …" (Beatport and
+       * shop texts): the paragraph is cut before each name, the hyphen becomes " - ", "on Tracks" is read per role ("and Vocals on Tracks …",
+       * a role after a list of tracks without a comma), "on all tracks" says nothing new. Only for a line that names tracks that way; the
+       * name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": the name is "Hari-Om").
+       */
+      function hyphenTrackLines(line) {
+        if (!HT_TRACKS.test(line) || !HT_HYPHEN.test(line)) return [line];
+        let rest = line.trim();
+        const out = [];
+        // a heading before the first name ("Musicians In The Studio Pete Callard-Acoustic Guitar …")
+        const head = rest.match(HT_HEAD);
+        if (head) {
+          out.push(`${head[1].replace(/\s+in\s+the\s+studio$/i, '').trim()}:`);
+          rest = rest.slice(head[0].length);
+        }
+        const parts = rest.split(HT_SPLIT).map((x) => x.trim()).filter(Boolean);
+        for (const part of parts) {
+          // the hyphen between name and role: the first one whose right side begins with a role
+          let done = null;
+          const re = /\s?[-–]\s?/g;
+          let m;
+          while ((m = re.exec(part))) {
+            const left = part.slice(0, m.index).trim();
+            const right = part.slice(m.index + m[0].length).trim();
+            const firstRole = right.split(/\s+on\s+(?:all\s+)?tracks?\b|,|\s+(?:and|&)\s+/i)[0].trim();
+            if (left && /^\p{Lu}/u.test(left) && left.split(/\s+/).length <= 5 && firstRole && (isRole(firstRole) || isRole(firstRole.replace(/^live\s+/i, '')))) {
+              const roles = right
+                .replace(/\s+on\s+all\s+tracks?\b\.?/gi, '')
+                .replace(/\s+on\s+tracks?\s+/gi, ' on tracks ')
+                .replace(/(on tracks? [\d\s,&–-]*\d)\s+(?:and|&)\s+(?=\p{L})/giu, '$1, ')
+                .replace(/(on tracks [\d\s,&–-]*\d)\s+(?=\p{Lu})/gu, '$1, ')
+                .replace(/,(?=\p{L})/gu, ', ')
+                .replace(/\s+&\s+(?=\p{Lu}[\p{L} ]*\.?$)/u, ', ')
+                .replace(/\.$/, '');
+              // roles with tracks and roles for all tracks in one line: two lines (the line's reader takes one kind per line)
+              const list = roles.split(/,\s+(?![\d\s,&–-]*(?:,|$))/).map((x) => x.trim()).filter(Boolean);
+              const withTracks = list.filter((x) => /\son tracks?\s/i.test(x));
+              const plain = list.filter((x) => !/\son tracks?\s/i.test(x));
+              done = withTracks.length && plain.length ? [`${left} - ${withTracks.join(', ')}`, `${left} - ${plain.join(', ')}`] : [`${left} - ${roles}`];
+              break;
+            }
+          }
+          out.push(...(done || [part]));
+        }
+        return out;
+      }
       function tidyLines(lines0) {
         const keep = (t, raw) => {
           if (t !== raw && !rawOf.has(t)) rawOf.set(t, raw);
           return t;
         };
         let lines = lines0;
+        // [Z-HYPHENTRACKS] (3.169.0, S298) "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19": a hyphen without
+        // spaces between name and role, each role with its tracks – and a whole lineup in one paragraph
+        if (ruleOn('S298')) lines = lines.flatMap((l) => hyphenTrackLines(String(l)).map((t) => keep(t, l)));
         // [Z-LEADMARK] (3.161.0, S292) a bullet or an ornament before a line is no part of its role ("⊛ Design by Gendema")
         if (ruleOn('S292')) lines = lines.map((l) => keep(String(l).replace(LEAD_MARK, ''), l));
         // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:" → "Distributed by X"; a medium before the word kept for the company
@@ -12228,6 +12300,11 @@
           const t = l.trim();
           if (!t) return l;
           const fmt = fmtAll.length ? fmtParts(t) : null;
+          // [Z-BCSHOPBLOCK] (3.169.0, S299) the shop's own lines below an edition
+          if (ruleOn('S299') && SHOP_BLOCK_LINES.some((re) => re.test(t.replace(LEAD_MARK, '').replace(/^[-–•*]\s+/, '').trim()))) {
+            ignored.push({ text: t, why: 'shop' });
+            return '';
+          }
           if (fmt && (fmt.every((x) => FORMAT_LABEL_NAME.test(x[2])) || (fmtKinds.size > 1 && fmtLabelish && fmtAll.every((x) => /^\p{Lu}[^\s]*(?:\s+(?:\p{Lu}|\d|&)[^\s]*){0,5}$/u.test(x[2].trim()))))) {
             ignored.push({ text: t, why: 'formatLabel' });
             return '';
@@ -28277,12 +28354,23 @@
   function videoLevelWant(row) {
     if (!ruleOn('S296') || !row || row.company || !VIDEO_RULES.has(row.ruleId) || row.levelTouched || !(row.types || []).length) return '';
     const idx = [...(row.tracks || [])];
-    const want = idx.length && idx.every((i) => trackIsVideo(S.mbTracks[i])) ? 'recording' : 'release';
+    // [Z-VIDEOTRACKS] (3.169.0) a video among its tracks: the recordings (only the videos – videoLevelFor); none: the release
+    const want = idx.some((i) => trackIsVideo(S.mbTracks[i])) ? 'recording' : 'release';
     return findRowType(row, want) ? want : '';
   }
   function videoLevelFor(row) {
     const want = row.level === 'skip' ? '' : videoLevelWant(row);
-    if (!want || row.level === want) return;
+    if (!want) return;
+    // [Z-VIDEOTRACKS] (3.169.0) not all of its tracks are videos: only the videos (the credit of a video is no credit of the audio tracks)
+    if (want === 'recording') {
+      const idx = [...(row.tracks || [])];
+      const videos = idx.filter((i) => trackIsVideo(S.mbTracks[i]));
+      if (videos.length && videos.length < idx.length) {
+        row.tracks = new Set(videos);
+        row.videoOnly = idx.length - videos.length;
+      }
+    }
+    if (row.level === want) return;
     row.level = want;
     resolveRowType(row);
     if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);

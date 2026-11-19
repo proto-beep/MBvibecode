@@ -491,4 +491,64 @@ console.log(JSON.stringify({ mixed: role('Mixed By'), dj: role('Mixed By', ['DJ 
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_block3169():
+    """Credits Importer 3.169.0 (Z-HYPHENTRACKS – S298, Z-BCSHOPBLOCK – S299), the text reader in Node.
+    A) A lineup in one paragraph, "Name-Role On Tracks …" (Beatport; Shpongle – Nothing Lasts… But Nothing Is Lost): thirteen credits, each
+       role with its tracks – Pete Callard acoustic guitar 1–3, 18–20 and electric guitar 18, 19; Hari-Om (the name has a hyphen) vocals;
+       Chris Barker bass; Raja Ram flute and vocals; Simon Posford live drums, bass guitar 4 and 9, and five roles for all tracks. The heading
+       "Musicians In The Studio" is a heading, "Sonic Trickery" no role.
+    B) Lines that are no such lineup stay: "Jean-Luc Ponty - violin", "The mix-down was done on tracks 1 to 4 by A-B" (no credit).
+    C) The text of a vinyl edition on Bandcamp (the same album): nothing "not recognized", no credit, no company – the name of the edition,
+       what the records look like and the block about shipping are "shop". "Disc A: recorded live at Café Oto" is not a shop line.
+    D) S298 and S299 off: as until 3.168.0 (the paragraph no credit; the shop's lines not recognized)."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[3]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback)
+  // ("live drums": an alias of the drum set from 3.169.0 – INSTRUMENT_ALIASES)
+  || /^(acoustic guitar|electric guitar|bass guitar|guitar|vocals|bass|flute|drums|live drums|computers|synths|keyboards|violin)$/i.test(p.base); };
+const trackSet = (spec) => { const out = new Set(); for (const part of String(spec).replace(/\b(?:and|tracks?)\b/gi, ',').split(/[,&]/)) { const t = part.trim(); if (!t) continue;
+  const mm = t.match(/^(\d+)(?:\s*[–-]\s*(\d+))?$/); if (!mm) return null; for (let i = +mm[1]; i <= +(mm[2] || mm[1]); i++) if (i >= 1 && i <= 20) out.add(i - 1); } return out.size ? out : null; };
+const run = (t) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: trackSet, resolveTitles: () => null, artistNames: ['Shpongle'], trackCount: 20 });
+  return { credits: r.credits.map((c) => [c.who.name, c.role, c.tracks && c.tracks.indexes ? c.tracks.indexes.map((x) => x + 1).join(',') : 'all']), companies: r.companies.length,
+    ignored: r.ignored.map((x) => x.why), unrecognized: r.unrecognized.map((u) => String(u.text || u)) }; };
+console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
+"""
+    BEAT = ('Musicians In The Studio Pete Callard-Acoustic Guitar On Tracks 1,2,3,18,19,20, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10,14,15 '
+            'Chris Barker-Bass on Tracks 3,7,16 Raja Ram- Flute On Tracks 7,13,15,17,19 and Vocals on Tracks 2,7,8,11,12,13,19 Simon Posford-Live Drums on Tracks 1,2,7,8,18,19, '
+            'Bass Guitar on Tracks 4 & 9 Drum Programming,Computers,Synths,Keyboards,Sonic Trickery & Production on all tracks.')
+    PKG = "Nothing Lasts...But nothing is Lost (Limited Edition 400 'The Blob' Coloured Variant) 2xLP set.\nRecord/Vinyl + Digital Album\nNothing Lasts (Limited Edition 400 Coloured Variant) 2xLP set.\n\n- This is a 2 x 180gsm heavyweight coloured variant vinyl LP set.\n- DiscA/B - Transparent green with gold blob\n- Disc C/D - transparent gold with green blob\n- Packaged in a standard Sleeve.\n- Edition of 400 only.\n\n+++++INTERNATIONAL SHIPPING +++++\n\n++PLEASE READ BEFORE ORDERING++\n\n- WE DO NOT SHIP TO PO BOXES or SHIP STATIONS.\n\n- ALL ORDERS ARE SENT BY TRACKED COURIER SERVICE ONLY, PLEASE DO NOT ASK US TO SHIP REGULAR MAIL.\n\n- PLEASE INCLUDE YOUR PHONE NUMBER WITH YOU ORDER\n- All orders are shipped with full value of items declared.\n- Please note we are not responsible for any delays caused by destination customs clearance processes or customs clearance fees in destination countries.\n- If your order is returned to us for any reason, we will ship it once more free or charge, if it's returned to us again undelivered then we will issue a full refund.\n- PLEASE MAKE SURE YOUR ADDRESS IS CORRECT-\n\n- Shipping Times -\n\nUK: 2-3 days\nEUROPE: 4-5 days\nJAPAN: 4-6 days\nAUSTRALIA: 5-8 days\nREST OF WORLD: 5-8 days\n\nIncludes unlimited streaming of Nothing Lasts...But Nothing Is Lost (Remastered) via the free Bandcamp app, plus high-quality download in MP3, FLAC and more.\nDownload available in 24-bit/44.1kHz."
+    texts = [BEAT, 'Jean-Luc Ponty - violin', 'The mix-down was done on tracks 1 to 4 by A-B', PKG, 'Disc A: recorded live at Café Oto']
+
+    def run(off):
+        js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(texts), json.dumps(off)], capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-400:])
+        return json.loads(js.stdout) if not js.returncode else [{'credits': [], 'companies': 0, 'ignored': [], 'unrecognized': []}] * len(texts)
+    on, off = run([]), run(['S298', 'S299'])
+    a = on[0]
+    for c in a['credits']:
+        print('A)', c)
+    print('A) ignored:', a['ignored'], '| not recognized:', a['unrecognized'])
+    want = [['Pete Callard', 'Acoustic Guitar', '1,2,3,18,19,20'], ['Pete Callard', 'Electric Guitar', '18,19'], ['Hari-Om', 'Vocals', '9,10,14,15'], ['Chris Barker', 'Bass', '3,7,16'],
+            ['Raja Ram', 'Flute', '7,13,15,17,19'], ['Raja Ram', 'Vocals', '2,7,8,11,12,13,19'], ['Simon Posford', 'Live Drums', '1,2,7,8,18,19'], ['Simon Posford', 'Bass Guitar', '4,9'],
+            ['Simon Posford', 'Drum Programming', 'all'], ['Simon Posford', 'Computers', 'all'], ['Simon Posford', 'Synths', 'all'], ['Simon Posford', 'Keyboards', 'all'],
+            ['Simon Posford', 'Production', 'all']]
+    ok_a = a['credits'] == want and not a['unrecognized'] and 'heading' in a['ignored']
+    print('B)', on[1]['credits'], on[2])
+    ok_b = on[1]['credits'] == [['Jean-Luc Ponty', 'violin', 'all']] and not on[2]['credits']
+    c = on[3]
+    print('C)', len(c['credits']), c['companies'], c['unrecognized'], sorted(set(c['ignored'])), len(c['ignored']), '|', on[4])
+    ok_c = not c['credits'] and not c['companies'] and not c['unrecognized'] and c['ignored'].count('shop') >= 20 and 'shop' not in on[4]['ignored']
+    print('D)', len(off[0]['credits']), off[0]['ignored'], len(off[3]['unrecognized']))
+    ok_d = not off[0]['credits'] and len(off[3]['unrecognized']) >= 15
+    results = [ok_a, ok_b, ok_c, ok_d]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
