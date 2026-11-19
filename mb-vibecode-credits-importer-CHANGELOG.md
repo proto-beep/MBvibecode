@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.177.0 | – |
+| 2026-11-19 | 3.170.0 – 3.178.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.178.0
+
+**Dates for groups of tracks** (collected items Z-MEDIAHEAD, Z-DATELEVEL, Z-DAYLIST; rules D035–D037, S312).
+
+- **Media as a heading** (Z-MEDIAHEAD; D037, S312): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – above "Recorded: November 27-29, 2016 at Alchemia Club, Kraków": the date and the place are those of the tracks of these media (a track group "Media 1–4 · CD" in the date matrix; the place "recorded at" on these tracks). The lines below the heading hold for it until an empty line or the next such heading; a line with tracks of its own keeps them. Credits without tracks that belong to the recording (instruments, voices, "Recorded By") get the date of each track group on its tracks, as the date matrix always does; a credit with tracks of its own keeps them; mix and mastering get no recording date.
+- **Date levels** (Z-DATELEVEL; D035, a new quick switch "Days → release level", on): several days for a group of tracks say nothing about the day of each track. The recordings get what the days have in common – the month, across months the year, across years nothing (as D022 did) – and the days themselves are now **suggested in the column Performance with "Release level" ticked**: rows on the release take them, also when an entry is switched "on the release". A single day of a group of tracks ("CD 5 – recorded November 30, 2016") is the date of its recordings and, where the release has such suggestions, one of them too. Switch off: as until 3.177.0.
+- **Days in a row, each named** (Z-DAYLIST; D036): up to three – "27., 28. & 29.11.2016", "June 16/17 2018" – are single dates, one relationship a day; four or more are one period. A period written with a dash ("27-29") stays one. Several short lists ("23., 24.05. & 29., 30.06.") are single days each. In the date finder every such find can be had the other way with one click ("as one period" / "as single dates"), as before.
+- **Tests:** `t_static.py daylist3178` (Node), `t_notes_dates.py datelevel3178` (the date matrix and the places of a release of two media; the days named; D035 off). Twelve older cases that test how dates were placed until now run with D035 (two of them also D036) off – named in `rules_off_cases.json`; the expectations of three cases follow the new rule for days in a row; the quick switches' test knows the new switch.
 
 ### Import 3.177.0
 

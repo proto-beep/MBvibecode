@@ -21,7 +21,7 @@ def case_datewords():
     import subprocess
 
     NODE = r"""
-global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? '["D036"]' : null), setItem() {}, removeItem() {}, key: () => null, length: 0 }; // [3.178.0] D013 as until 3.177.0 (without D036)
 const m = require(process.argv[1]);
 const T = ['Recorded 19 & 20. 01. 2009.', 'Recorded 20. 01. 2009.', 'Recorded: London - 1973 October 19', 'Tracks 1-4 originally issued on LP in 1974.', 'Released 2003',
   'Mixed May 2001. Released 2003. Dedicated to Jim, 1999.', 'Mixed and mastered by Brandon Carnes in March 2026.', 'Recorded, mixed and mastered 2001', 'Recorded at X:\n12 June 2001'];
@@ -567,7 +567,8 @@ def case_trackpool():
     matrix as suggestions with their track groups and studios; "Apply" splits the rows; applying again gives the
     same rows; removing a date and applying again brings the rows back together. [3.32.0] Without D022 (periods and
     "choose" as before)."""
-    H.RULES_OFF = ['D022', 'S083']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
+    H.RULES_OFF = ['D022', 'D036', 'S083']  # [3.178.0] and without D036: two days in a row as one period, to be split here
+    # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     import zooid
     from common_rows import lib, cells, stage
@@ -924,10 +925,11 @@ console.log(JSON.stringify(['Recorded: November 18 & 19 & 20, 2014 at the Alchem
     js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
     out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
     print('A)', out)
-    ok = out == [['November 18 & 19 & 20, 2014', '2014-11-18', '2014-11-20', 0], ['18 and 19 and 21 June 2015', '2015-6-18', '2015-6-18', 3],
-                 ['November 18 & 19, 2014', '2014-11-18', '2014-11-19', 0], ['November 7, 8, 2016', '2016-11-7', '2016-11-8', 0],
+    # [3.178.0] (D036) up to three days in a row that are each named are single dates (until 3.177.0 one period)
+    ok = out == [['November 18 & 19 & 20, 2014', '2014-11-18', '2014-11-18', 3], ['18 and 19 and 21 June 2015', '2015-6-18', '2015-6-18', 3],
+                 ['November 18 & 19, 2014', '2014-11-18', '2014-11-18', 2], ['November 7, 8, 2016', '2016-11-7', '2016-11-7', 2],
                  # ((review) a day of a list ends where its number ends: no 1–2 December; the dotted form as before)
-                 ['12.2014', '2014-12-', '2014-12-', 0], ['19 & 20 & 21.01.2009', '2009-1-19', '2009-1-21', 0]]
+                 ['12.2014', '2014-12-', '2014-12-', 0], ['19 & 20 & 21.01.2009', '2009-1-19', '2009-1-19', 3]]
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
 
 
@@ -975,9 +977,10 @@ console.log(JSON.stringify(['Recorded May, 6. 7, 2007 Studio des deutschen Filmo
     js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
     out = json.loads(js.stdout) if not js.returncode else js.stderr[-300:]
     print('A)', out)
-    ok = out == [['May, 6. 7, 2007', '2007-5-6', '2007-5-7', 0, 'performance'], ['May 6. 7. 2007', '2007-5-6', '2007-5-7', 0, 'performance'],
-                 ['6. 7. Mai 2007', '2007-5-6', '2007-5-7', 0, 'performance'], ['8. May 2007', '2007-5-8', '2007-5-8', 0, 'performance'],
-                 ['6. 7. 2007', '2007-7-6', '2007-7-6', 0, 'performance'], ['May 6, 7, 2007', '2007-5-6', '2007-5-7', 0, 'performance'],
+    # [3.178.0] (D036) two days in a row that are each named are two single dates (until 3.177.0 one period)
+    ok = out == [['May, 6. 7, 2007', '2007-5-6', '2007-5-6', 2, 'performance'], ['May 6. 7. 2007', '2007-5-6', '2007-5-6', 2, 'performance'],
+                 ['6. 7. Mai 2007', '2007-5-6', '2007-5-6', 2, 'performance'], ['8. May 2007', '2007-5-8', '2007-5-8', 0, 'performance'],
+                 ['6. 7. 2007', '2007-7-6', '2007-7-6', 0, 'performance'], ['May 6, 7, 2007', '2007-5-6', '2007-5-6', 2, 'performance'],
                  ['2. May 2007', '2007-5-2', '2007-5-2', 0, ''], ['4 May 2001', '2001-5-4', '2001-5-4', 0, ''], ['1. 2. 2007', '2007-2-1', '2007-2-1', 0, ''],
                  ['2007', '2007--', '2007--', 0, '']]
     print('Ergebnis:', 'OK' if ok else 'FEHLER', [ok])
@@ -1140,6 +1143,69 @@ Arr. Roger Harvey
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_datelevel3178():
+    """Credits Importer 3.178.0 (collected items Z-MEDIAHEAD, Z-DATELEVEL, Z-DAYLIST; D035, D036, D037, S312): the notes of a release of
+    two media (3 + 1 tracks) – "CD 1" / "Recorded: November 27-29, 2016 at Alchemia Club, Kraków" / "CD 2" / "Recorded November 30, 2016
+    at Radio Kraków".
+    A) The column Performance of the date matrix: November 2016 for the tracks of medium 1 (what the days have in common – on the
+       recordings); the period 27–29 with "Release level"; November 30 for the track of medium 2; November 30 with "Release level" too.
+    B) Alchemia Club: recorded at on the tracks of medium 1; Radio Kraków on the track of medium 2.
+    C) The same with the days named – "November 27, 28 & 29, 2016": three single days with "Release level" instead of the period.
+    D) D035 off (the quick switch): no date with "Release level" – as until 3.177.0."""
+    H.MEDIA = [3, 1]
+    orig = H.discogs_release
+    state = {'notes': '', 'off': []}
+
+    def rel():
+        d = orig()
+        d['notes'] = state['notes']
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    PLACES = """[...document.querySelectorAll('section.dci-group')].filter(g => /Alchemia|Radio Krak/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim())])"""
+
+    def run(p, notes, off=()):
+        state['notes'] = notes
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        tgs = {g['id']: g for g in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-track-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        day = lambda d: '-'.join(str(d[k]) for k in ('year', 'month', 'day') if d.get(k))
+        cells = sorted(((day(pool[c['date']]['begin']) + ('..' + day(pool[c['date']]['end']) if day(pool[c['date']]['end']) != day(pool[c['date']]['begin']) else ''),
+                        bool(c.get('rel')), [tgs[t]['tracks'] for t in c['tgs']]) for c in mx.get('cells', []) if c['col'] == 'performance'), key=str)
+        places = pg.evaluate(PLACES)
+        b.close()
+        return cells, places, errs
+
+    results = []
+    with sync_playwright() as p:
+        cells, places, errs = run(p, 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków')
+        print('A) Performance:', cells)
+        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27..2016-11-29', True, []), ('2016-11-30', False, [[3]]), ('2016-11-30', True, [])], key=str))
+        print('B) Orte:', places)
+        pl = dict((n, r) for n, r in places)
+        results.append(len(pl) == 2 and 'Tracks 1–3' in ' '.join(pl.get('Alchemia Club', [])) and 'Tracks 4' in ' '.join(pl.get('Radio Kraków', [])))
+        print('Fehler:', errs)
+        results.append(not errs)
+        cells, places, errs = run(p, 'CD 1\nRecorded: November 27, 28 & 29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków')
+        print('C) Performance:', cells)
+        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27', True, []), ('2016-11-28', True, []), ('2016-11-29', True, []), ('2016-11-30', False, [[3]]), ('2016-11-30', True, [])], key=str) and not errs)
+        cells, places, errs = run(p, 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków', off=['D035'])
+        print('D) ohne D035:', cells)
+        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-30', False, [[3]])], key=str) and not errs)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

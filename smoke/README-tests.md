@@ -96,6 +96,10 @@ python3 t_parsegolden.py        # [3.175.0] the text reader: everything it retur
                                 #   [3.177.0] t_static.py classical3177, t_notes_dates.py classical3177 (a classical track list: composer, soloist,
                                 #   the question for a name beside a title, the arranger on the recording, the suite), t_works_cover.py
                                 #   classiccredit3177 (a track credited to its composer: his works compared)
+                                #   [3.178.0] t_static.py daylist3178, t_notes_dates.py datelevel3178 (media as a heading above a date,
+                                #   the days on the release level, days in a row as single dates)
+                                #   [3.178.0] rules_off_cases.json "_more": the cases written for how dates were placed until 3.177.0 run with
+                                #   D035 (and D036) off – file → case → rules; DCI_RULES_EXTRA=D035,D036 switches rules off for every case
 python3 runall.py               # [3.160.0] the whole suite: every t_*.py as a process of its own (as many at a time as the computer has cores, 2 … 5 – from 3.173.0; `-j N` sets it; logs in smoke/out/),
                                 #   then one line per file and "Suite: OK" or "Suite: FEHLER" (exit code 0 / 1). A file passes only
                                 #   when it ended by itself with exit code 0, its last "Ergebnis" says OK, none of its cases ended

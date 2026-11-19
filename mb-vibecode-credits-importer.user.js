@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.177.0
+// @version      3.178.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.177.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.177.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.178.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.178.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.177.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.178.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -677,6 +677,7 @@
       "picker.discogs": "{src} suggestion",
       "picker.legend": "Numbers marked with {dot} come from {src}.",
       "picker.medium": "Medium {n}",
+      "picker.media": "Media {n}",
       "picker.dpos": "{src} position {pos}",
       "picker.noDpos": "no {src} counterpart",
       "status.new.one": "{n} new",
@@ -3800,6 +3801,8 @@
       "log.mappingConflicts": "Built-in rules that changed since your change ({n}): {ids} – see Mapping rules → your changes",
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
+      "quick.D035": "Several days for a group of tracks → the days on the release level, the common month on the recordings",
+      "quick.name.D035": "Days → release level",
       "quick.S021": "“live” preselected for live releases",
       "quick.S031": "Only the case differs → no “credited as”",
       "quick.S245": "Drums, Drum, dr, ds … → drums (drum set), credited “drums”",
@@ -5368,6 +5371,7 @@
     { id: 'S309', where: 'TEXT.parse (tidyLines: S281)', note: 'Texts (3.177.0; Z-MBTRACKLIST): a track list as MusicBrainz shows it – "1. Part One - Izumi Kimura / Artur Majewski / Barry Guy (7:20)": the artists of the track behind its title (two names at least, or the release\'s artists) are no part of the title when the list is compared with MusicBrainz\'s tracks, and no credits. Every free text' },
     { id: 'S310', where: 'suiteOffers (PART_TITLE)', note: 'Works (3.177.0; Z-PARTTITLES): tracks named only as parts – "Part One" … "Part Seven", "Part 2", "Teil 3", "II" (two such tracks at least, half of the tracks) – are offered as the parts of a suite named as the release; the works matrix asks, as for every suite (Z-SU). With the composers of an improvisation (S222) each part gets its work with them' },
     { id: 'S311', where: 'init (classicalComposers), artistWorkTargets', note: 'Works (3.177.0; Z-CLASSICCREDIT): a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays ("Maya Homburger") – : the track\'s artist that is none of the recording\'s artists is taken as the composer of the track for the comparison of works: his works in MusicBrainz are searched for the track without a work, as those of a writer of the source. He is no performer for the entries of the source' },
+    { id: 'S312', where: 'TEXT.parse (bookletLines), mediaOfHeading (MEDIA_HEAD_LINE)', note: 'Texts (3.178.0; Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – on a release that has them: the lines below it, up to an empty line or the next such heading, hold for the tracks of those media ("Recorded: November 27-29, 2016 at Alchemia Club, Kraków" – the place on the tracks of CD 1–4), unless a line names tracks of its own. The dates of these lines get the same tracks (D037). Every free text' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6773,7 +6777,19 @@
   const CL_BY = /^(?:[\p{L}\s,'’-]{0,40}\s)?by\s+(\p{Lu}[\p{L}.'’-]*(?:\s+[\p{L}.'’-]+){0,4}?)(?:,?\s+(?:after|nach|d['’]après)\s+.+)?$/u;
   const CL_NAME_TAIL = /\s+(?:père|fils|jr\.?|sr\.?|junior|senior|the\s+elder|the\s+younger|d\.\s?[äj]\.)$/i;
   const CL_NOT_NAME = /\b(?:op|no|nr|bwv|hwv|kv|k|d|h|rv|version|live|edit|mix|remix|remaster(?:ed)?|bonus|reprise|instrumental|excerpt|fragment)\b\.?/i;
-  const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306'];
+  // [Z-MEDIAHEAD] (3.178.0, S312, D037) a line only of media ("CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:") → their numbers, or null
+  const MEDIA_HEAD_LINE = /^(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*\d{1,2}(?:\s*(?:-|–|—|to|bis)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2})?)(?:\s*(?:,|&|\+|and|und)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2}(?:\s*(?:-|–|—|to|bis)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2})?)*$/i;
+  function mediaOfHeading(line) {
+    const t = String(line || '').trim().replace(/:$/, '');
+    if (!MEDIA_HEAD_LINE.test(t)) return null;
+    const out = [];
+    const re = /(\d{1,2})(?:\s*(?:-|–|—|to|bis)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?(\d{1,2}))?/gi;
+    let m;
+    while ((m = re.exec(t))) for (let n = Number(m[1]); n <= Number(m[2] || m[1]); n++) out.push(n);
+    return out.length ? uniq(out) : null;
+  }
+
+  const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S312'];
   const BK_PARTICLE = /^(?:von|van|vom|de|del|della|der|den|di|da|du|le|la|ten|ter|zu|af|dos|das|do|bin|ibn|al|el|st\.?|d['’]\p{L}+)$/iu;
   const BK_ENSEMBLE_WORD = /^(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players)\b/i;
   const BK_ENSEMBLE_ANY = /\b(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players|akademie|academy|radio)\b/i;
@@ -7715,7 +7731,7 @@
     { id: 'D010', note: 'A year alone: 1998' },
     { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016"); (3.99.0) "and"/"&" between more than two days ("November 18 & 19 & 20, 2014")' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates; from 3.178.0 only four days or more – up to three are single dates, D036), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016"); (3.99.0) "and"/"&" between more than two days ("November 18 & 19 & 20, 2014")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     // [3.32.0] collected item 97d
     { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
@@ -7738,6 +7754,9 @@
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
     { id: 'D035', note: 'The year first with dots or slashes – "2024.12.15", "2024/12/15" – and in Japanese – "2024年12月15日", "2024年12月" (3.147.0; collected item Z-YMDDOT)' },
+    { id: 'D035', note: 'Date levels (3.178.0; collected item Z-DATELEVEL; a quick switch, on): a date of several days for a group of tracks – "CD 1–4: recorded November 27-29, 2016", "June 16 & 17, 2018" – says nothing about the day of each track: the recordings get what the days have in common (the month, across months the year – D022), and the period or its single days are suggested in the column Performance of the date matrix with "Release level" ticked: the rows on the release take them. A period across years has nothing in common: only the release level. A single day of a group of tracks ("CD 5: recorded November 30, 2016") is the date of its recordings, and one more suggestion of the release level where there are others. Needs D022' },
+    { id: 'D036', note: 'Days in a row, each named (3.178.0; collected item Z-DAYLIST): up to three – "27., 28. & 29.11.2016", "June 16/17 2018" – are single days, one date each; four or more are one period (D013 until 3.177.0: always one period). A period written with a dash ("27-29") stays one. In the date finder each such find can be had the other way: "as one period" / "as single dates"' },
+    { id: 'D037', note: 'Media as a heading (3.178.0; collected item Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – right above a date\'s line: the date is that of the tracks of those media (a track group "Media 1–4"), on a release with several media. The text reader gives the lines below such a heading its tracks as well (S312)' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -7777,7 +7796,12 @@
     const days = uniq((String(text).match(/\d{1,2}/g) || []).map(Number)).sort((a, b) => a - b);
     const values = days.map((d) => ymd(y, mo, d));
     if (days.length < 2 || values.some((v) => !v)) return null;
-    if (days.every((d, i) => i === 0 || d === days[i - 1] + 1)) return { ...span(values[0], values[values.length - 1]), days: values, consecutive: true };
+    if (days.every((d, i) => i === 0 || d === days[i - 1] + 1)) {
+      // [Z-DAYLIST] (3.178.0, D036) up to three days in a row, each named ("27., 28. & 29.11."): single days – one relationship a day;
+      // four or more: the period. Either can be had the other way (the date finder: "as one period" / "as single dates")
+      if (ruleOn('D036') && days.length <= 3) return { ...single(values[0]), multi: values.map(single), days: values, consecutive: true };
+      return { ...span(values[0], values[values.length - 1]), days: values, consecutive: true };
+    }
     return { ...single(values[0]), multi: values.map(single), days: values };
   }
 
@@ -10093,6 +10117,29 @@
           continue;
         }
         out.push(l);
+      }
+      // --- [Z-MEDIAHEAD] (3.178.0, S312) a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5" – above lines without tracks of their
+      // own: they hold for the tracks of those media (until an empty line or the next such heading)
+      if (ruleOn('S312') && P.resolveTracks) {
+        const sizeOf = (n) => { const set = P.resolveTracks(`cd ${n}`); return set && set.size ? set.size : 0; };
+        const next = [];
+        let scope = '';
+        for (const l of out) {
+          const t = l.trim();
+          const media = t ? mediaOfHeading(t) : null;
+          const sizes = media ? media.map(sizeOf) : [];
+          if (media && sizes.every(Boolean)) {
+            // (media in a row as one range: "1-1 to 4-6"; else each)
+            const runs = [];
+            media.forEach((n, k) => { const r = runs[runs.length - 1]; if (r && n === r.to + 1) Object.assign(r, { to: n, size: sizes[k] }); else runs.push({ from: n, to: n, size: sizes[k] }); });
+            scope = runs.map((r) => `${r.from}-1 to ${r.to}-${r.size}`).join(', ');
+            P.ignored.push({ text: l, why: 'heading' });
+            continue;
+          }
+          if (!t) scope = '';
+          next.push(scope && t && !lineTracks(t, P.resolveTracks) && !BK_CD_TRACKS.test(t) ? keep(`${t.replace(/[.\s]+$/, '')} (tracks ${scope})`, l) : l);
+        }
+        out = next;
       }
       // --- [Z-PARENBULLET] (S301) "Name (Instrument) • Name (Instrument)": one line a name; "Gäste:" before them: guests
       if (ruleOn('S301') && out.some((l) => /\S\s*•\s*\S/.test(l) && /\([^()]+\)/.test(l))) {
@@ -15906,7 +15953,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle, mediaOfHeading,
       titleParts, medleySplit, typoQuotes, headingKind, suiteOffers, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
       remixParts, // [Z-RMXTITLE] (3.126.0, review)
@@ -21884,7 +21931,7 @@
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
-  const QUICK_GROUPS = [['dates', ['D022', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263']],
+  const QUICK_GROUPS = [['dates', ['D022', 'D035', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263']],
     ['works', ['S160', 'S045', 'S222']], ['companies', ['S007', 'S297']]];
   /**
    * [Z-VIDEOCREW] (3.147.0, S263) "mappings" at its quick switch: a small window to fold out – every video credit of VIDEO_CREDITS and where
@@ -36119,11 +36166,41 @@
   // [D021] (3.30.8) a medium in brackets right after a date: "May 26, 2016 (Disc 2)", "(CD 2)", "(LP 1)"
   const MEDIUM_AFTER_DATE = /^\s*\(\s*(?:disc|disk|cd|lp|dvd|sacd|vinyl|record|platte)\s*(\d{1,2})\s*\)/i;
 
+  /**
+   * [Z-MEDIAHEAD] (3.178.0, D037) The media named as a heading above a place of a text: a line only of media – "CD#1, CD#2, CD#3, CD#4",
+   * "CD 5", "Disc 1–3:" – right above the line (up to three lines of the same block between them) → their numbers, or null.
+   */
+  function mediaHeadAbove(src, index) {
+    const text = String(src || '');
+    let start = text.lastIndexOf('\n', Math.max(0, index - 1)) + 1;
+    for (let k = 0; k < 4 && start > 0; k++) {
+      const end = start - 1;
+      const from = text.lastIndexOf('\n', Math.max(0, end - 1)) + 1;
+      const line = text.slice(from, end).trim();
+      if (!line) return null;
+      const media = mediaOfHeading(line);
+      if (media) return media;
+      start = from;
+    }
+    return null;
+  }
+
   function datesWithContext(src, mentioned = null) {
     const list = findDates(src, { usOrder: usDateOrder() }).map((x, i, all) => {
       const sentence = sentenceAround(src, x.index, x.index + x.text.length);
       let tracks = tracksInText(sentence);
       let medium = null;
+      // [Z-MEDIAHEAD] (3.178.0, D037) the media as a heading above the date's line ("CD#1, CD#2, CD#3, CD#4" / "Recorded: November 27-29,
+      // 2016 at …"): their tracks – a group of tracks with its date
+      let media = null;
+      if (ruleOn('D037') && multiMedium() && !(tracks && tracks.size)) {
+        media = mediaHeadAbove(src, x.index);
+        const of = media ? S.mbTracks.filter((t) => media.includes(Number(t.medium))).map((t) => t.idx) : [];
+        if (of.length && of.length < S.mbTracks.length) {
+          tracks = new Set(of);
+          if (media.length === 1) medium = media[0];
+        } else media = null;
+      }
       // [D021] the medium right after the date, on a release with several media: its tracks; another date of the sentence
       // has its own medium, this one none: the tracks are not known (all)
       if (ruleOn('D021') && multiMedium()) {
@@ -36137,7 +36214,7 @@
           tracks = null;
         }
       }
-      return { ...x, sentence, tracks, medium, studios: studiosInText(sentence).map((a) => a.key) };
+      return { ...x, sentence, tracks, medium, ...(media && media.length > 1 ? { media } : {}), studios: studiosInText(sentence).map((a) => a.key) };
     // [Z-EXCEPTC] (3.125.0, S199) the year of a commission ("composed and commissioned for the 2025 Roadburn Festival") is the date of
     // the commission (its row), not of the composition
     }).filter((x) => !(ruleOn('S199') && COMMISSION_BEFORE_DATE.test(src.slice(Math.max(0, x.index - 60), x.index))));
@@ -36198,7 +36275,7 @@
   }
   function dateFinds() {
     const notes = foundDateText();
-    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}`;
+    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}|${ruleOn('D036')}|${ruleOn('D037')}`;
     if (S.notesDatesFor !== sig) {
       // [Z-RELDATE] (3.132.0, S220) what the notes only mention: S.notesMentioned
       const mentioned = [];
@@ -36580,15 +36657,29 @@
     refresh();
   }
 
+  /**
+   * [Z-DAYLIST] (3.178.0, D036) A find of several days as it is to be used: days in a row are a period or single days – as found, or
+   * the other way when switched in the date finder (S.dateFindSplit). → the find, with `multi` (single days) or without.
+   */
+  function dayFindAs(x, key) {
+    if (!x || !x.consecutive || !(S.dateFindSplit && S.dateFindSplit.has(key))) return x;
+    if (x.multi) return { ...x, multi: null, value: span(x.multi[0].begin, x.multi[x.multi.length - 1].end) };
+    return { ...x, multi: x.days.map(single) };
+  }
+
   function dateFindListHtml() {
     const { notes, text } = dateFinds();
-    const item = (x, src, i) => {
+    const item = (xFound, src, i) => {
+      let x = xFound;
       const key = `${src}:${i}`;
       const useAlt = S.dateFindAlt && S.dateFindAlt.has(key);
       const v = useAlt && x.alt ? x.alt : x.value;
-      const asDays = x.consecutive && S.dateFindSplit && S.dateFindSplit.has(key);
-      const shown = x.multi ? x.multi.map(formatDateValue).join(' + ') : asDays ? x.days.map((d) => formatDateValue(single(d))).join(' + ') : formatDateValue(v);
-      const n = x.multi ? x.multi.length : asDays ? x.days.length : 1;
+      // ([Z-DAYLIST] 3.178.0: days in a row found as single days can be one period, and the other way round)
+      const x0 = x;
+      x = dayFindAs(x0, key);
+      const asDays = !!x.multi && x.consecutive;
+      const shown = x.multi ? x.multi.map(formatDateValue).join(' + ') : formatDateValue(x0.multi ? x.value : v);
+      const n = x.multi ? x.multi.length : 1;
       // Where this date already is: its pool entries and their columns in the matrix
       const placed = uniq(S.datePool.filter((d) => d.found === key || d.found === `${key}:range`)
         .flatMap((d) => dm().cells.filter((c) => c.date === d.id).map((c) => (DATE_GROUPS.find((g) => g.key === c.col) || {}).label)).filter(Boolean));
@@ -36738,6 +36829,19 @@
   }
 
   /**
+   * [Z-DATELEVEL] (3.178.0, D035; a quick switch) Whether the dates of the notes are placed by what is known of each track: several days
+   * for a group of tracks – what they have in common on the recordings, the days on the release level.
+   */
+  const dateLevelOn = () => ruleOn('D035') && ruleOn('D022');
+  const isPeriod = (e) => !!(e && e.begin && e.end && formatDate(e.begin) !== formatDate(e.end));
+  /** [Z-DATELEVEL] A suggestion of the release level in a column of the date matrix (once per date). */
+  function relCell(m, col, dateId, studios = []) {
+    if (m.cells.some((c) => c.col === col && c.date === dateId && c.rel)) return false;
+    m.cells.push({ id: newCellId(), col, date: dateId, tgs: [], studios: [...studios], auto: true, rel: true });
+    return true;
+  }
+
+  /**
    * [D013] Separate days ("June 16 & 19, 1980"): the pool keeps the days as Discogs gives them and gets the
    * period from the first to the last day as well ("Performance 1–2"). In a column of the matrix they stand
    * as one entry that asks which to use ("choose"); it is not applied until then. Returns 1 if it was placed.
@@ -36767,6 +36871,8 @@
     // [D022] (3.32.0) Performance on several days found by the script: what they have in common at once (the days and the period
     // stay in the pool)
     if (auto && lcd && group.key === 'performance' && ruleOn('D022')) {
+      // [Z-DATELEVEL] (3.178.0, D035) the single days are suggested for the release level, each a date of its own
+      if (dateLevelOn()) singles.forEach((d) => relCell(m, group.key, d.id, studios));
       if (m.cells.some((c) => c.col === group.key && c.date === lcd.id)) return 0;
       m.cells.push({ id: newCellId(), col: group.key, date: lcd.id, tgs, studios, auto, lcdOf: range.id, ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
       return 1;
@@ -36783,16 +36889,18 @@
    */
   function useFoundDate(src, i, groupKey) {
     const list = dateFinds()[src] || [];
-    const x = list[Number(i)];
-    if (!x) return;
+    const found = list[Number(i)];
+    if (!found) return;
     const key = `${src}:${i}`;
+    // ([Z-DAYLIST] 3.178.0: as switched in the date finder – a period or its single days)
+    const x = dayFindAs(found, key);
     const v = S.dateFindAlt && S.dateFindAlt.has(key) && x.alt ? x.alt : x.value;
     // Several single dates: one pool entry (and one row) per date
-    const values = x.multi || (x.consecutive && S.dateFindSplit && S.dateFindSplit.has(key) ? x.days.map(single) : [v]);
+    const values = x.multi && x.consecutive && !found.multi ? x.multi : x.multi || [v];
     const group = DATE_GROUPS.find((g) => g.key === groupKey) || null;
     const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: src === 'notes' }) : null;
     const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
-    if (x.multi) {
+    if (x.multi && !(x.consecutive && !found.multi)) {
       placeSeparateDays(x, key, group, { tg, studios });
       savePool();
       if (group) dmChanged();
@@ -37149,7 +37257,7 @@
       const key = `notes:${i}`;
       if (S.aboutOff && fromAboutText(x0)) return; // [3.16.1]
       // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
-      let x = x0;
+      let x = dayFindAs(x0, key); // ([Z-DAYLIST] 3.178.0: as switched in the date finder)
       if (S.mediaSel && x.tracks && x.tracks.size) {
         const kept = new Set([...x.tracks].filter(inSelection));
         if (!kept.size) return;
@@ -37170,7 +37278,7 @@
         // the first group keeps the key of the find; the others get their own (their own pool entry, named for the group)
         const gkey = gi ? `${key}~${group.key}` : key;
         // [D021] (3.30.8) a whole medium named after the date: the group is named for it ("Medium 2 · CD")
-        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, x.medium ? mediumGroupName(x.medium) : '', { found: true }) : null;
+        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, x.medium ? mediumGroupName(x.medium) : x.media ? mediaGroupName(x.media) : '', { found: true }) : null;
         const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
         if (x.multi) {
           placed += placeSeparateDays(x, gkey, group, { auto: true, tg, studios });
@@ -37197,12 +37305,25 @@
           return;
         }
         if (!shared && m.cells.some((c) => c.date === cellDate.id)) return;
-        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}),
+        // [Z-DATELEVEL] (3.178.0, D035) a period of Performance: which track was recorded on which day nobody knows – the recordings get
+        // what the days have in common (the cell below), the period itself is suggested for the release level; a period across years
+        // has nothing in common: only the release level
+        const relOnly = dateLevelOn() && group.key === 'performance' && !common && isPeriod(e);
+        if (dateLevelOn() && group.key === 'performance' && cellDate !== e) relCell(m, group.key, e.id, studios);
+        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: relOnly ? [] : tg ? [tg.id] : [], studios, auto: true, ...(relOnly ? { rel: true } : {}), ...(cellDate !== e ? { lcdOf: e.id } : {}),
           ...(group.key === 'performance' && !keys0.includes('performance') ? { viaProd: true } : {}), // ((review) D029: no concert
           ...(group.key === 'artwork' && x.art ? { art: x.art } : {}) });
         placed++;
       });
     });
+    // [Z-DATELEVEL] (3.178.0, D035) where days are suggested for the release level, a single day of a group of tracks ("CD 5: recorded
+    // November 30, 2016") is one of the release's days too: on its recordings as placed, and suggested for the release level
+    if (dateLevelOn() && m.cells.some((c) => c.col === 'performance' && c.rel && c.auto)) {
+      m.cells.filter((c) => c.col === 'performance' && c.auto && !c.rel && !c.lcdOf && (c.tgs || []).length).forEach((c) => {
+        const d = S.datePool.find((y) => y.id === c.date);
+        if (d && d.begin && d.begin.day && String(d.found || '').startsWith('notes:')) relCell(m, 'performance', d.id, c.studios || []);
+      });
+    }
     const pooled = S.datePool.length - before;
     savePool();
     if (placed) {
@@ -37566,6 +37687,14 @@
   }
 
   /** "Medium 2 · CD": name of a track group with a whole medium. */
+  /** [Z-MEDIAHEAD] (3.178.0) The name of a track group of several media: "Media 1–4 · CD". */
+  function mediaGroupName(list) {
+    const a = [...list].sort((x, y) => x - y);
+    const runs = [];
+    a.forEach((n) => { const r = runs[runs.length - 1]; if (r && n === r[1] + 1) r[1] = n; else runs.push([n, n]); });
+    const formats = uniq(a.map((md) => ((S.mediaInfo && S.mediaInfo.get(md)) || {}).format).filter(Boolean));
+    return tr('picker.media', { n: [runs.map(([x, y]) => (x === y ? x : `${x}–${y}`)).join(', '), formats.length === 1 ? formats[0] : ''].filter(Boolean).join(' · ') });
+  }
   function mediumGroupName(md) {
     const info = (S.mediaInfo && S.mediaInfo.get(md)) || {};
     return tr('picker.medium', { n: [md, info.format].filter(Boolean).join(' · ') });

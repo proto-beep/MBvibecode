@@ -701,6 +701,63 @@ console.log(JSON.stringify({ texts: JSON.parse(process.argv[2]).map(run), offers
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_daylist3178():
+    """Credits Importer 3.178.0 (Z-DAYLIST – D036, Z-MEDIAHEAD – S312), the date finder and the text reader in Node.
+    A) D036: "November 27, 28 & 29, 2016" and "June 16/17 2018" are single days (three and two dates); "November 26, 27, 28 & 29, 2016"
+       (four days in a row) is one period; "November 27-29, 2016" (written as a period) stays one; "June 16 & 19, 1980" two single days as
+       before. D036 off: the three days in a row are one period again.
+    B) S312: "CD#1, CD#2, CD#3, CD#4" / "Recorded: … at Alchemia Club, Kraków" / "CD#5" / "Recorded … at Radio Kraków": the first place on
+       the 29 tracks of the media 1–4, the second on the 8 tracks of medium 5; the headings left out; a line after an empty line ("Mixed by
+       X") holds for all tracks. A release without these media: the lines as before (all tracks). S312 off: as before.
+    C) mediaOfHeading: "CD 1–3:", "Disc 2 & Disc 4", "LP1, LP2" are media; "CD 5 is the best", "Recorded 1999" are none."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[3]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const fmt = (v) => (v ? [v.begin, v.end].map((d) => [d.year, d.month, d.day].filter(Boolean).join('-')).join('..') : null);
+const dates = JSON.parse(process.argv[2]).dates.map((t) => m.findDates(t).map((x) => (x.multi ? x.multi.map(fmt) : [fmt(x.value)])));
+const sizes = { 1: 8, 2: 7, 3: 8, 4: 6, 5: 8 };
+const base = (n) => { let b = 0; for (let k = 1; k < n; k++) b += sizes[k] || 0; return b; };
+const rt = (has) => (s0) => { const s = String(s0).trim(); const o = new Set(); const d = s.match(/^cd (\d+)$/i);
+  if (d) { if (!has || !sizes[d[1]]) return null; for (let i = 0; i < sizes[d[1]]; i++) o.add(base(+d[1]) + i); return o; }
+  for (const p of s.split(/,|&/)) { const x = p.trim().match(/^(\d+)-(\d+)(?:\s*to\s*(\d+)-(\d+))?$/); if (!x) return null;
+    const a = base(+x[1]) + +x[2] - 1; const b = x[3] ? base(+x[3]) + +x[4] - 1 : a; for (let i = a; i <= b; i++) o.add(i); } return o; };
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const read = (t, has) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: (x) => /^recorded at$/i.test(x), resolveTracks: rt(has), resolveTitles: () => null, artistNames: ['The Band'], trackCount: 37 });
+  return { companies: r.companies.map((c) => [c.who.name, c.tracks && !c.tracks.all ? (c.tracks.indexes || []).length : 'all']), credits: r.credits.map((c) => [c.who.name, c.role, c.tracks && !c.tracks.all ? (c.tracks.indexes || []).length : 'all']),
+    ignored: r.ignored.map((x) => x.why), unrecognized: r.unrecognized.length }; };
+const text = JSON.parse(process.argv[2]).text;
+let heads = null;
+try { heads = JSON.parse(process.argv[2]).heads.map((h) => (m.mediaOfHeading ? m.mediaOfHeading(h) : 'no export')); } catch (e) { heads = String(e); }
+console.log(JSON.stringify({ dates, with: read(text, true), without: read(text, false), heads }));
+"""
+    data = {'dates': ['November 27, 28 & 29, 2016', 'June 16/17 2018', 'November 26, 27, 28 & 29, 2016', 'November 27-29, 2016', 'June 16 & 19, 1980'],
+            'text': 'CD#1, CD#2, CD#3, CD#4\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD#5\nRecorded November 30, 2016 at Radio Kraków\n\nMixed by Ferran Conangla',
+            'heads': ['CD 1–3:', 'Disc 2 & Disc 4', 'LP1, LP2', 'CD 5 is the best', 'Recorded 1999']}
+
+    def run(off):
+        js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(data), json.dumps(off)], capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-600:])
+        return json.loads(js.stdout) if not js.returncode else {'dates': [], 'with': {}, 'without': {}, 'heads': None}
+    on, off = run([]), run(['D036', 'S312'])
+    print('A)', on['dates'], '| D036 aus:', off['dates'][:1])
+    ok_a = (on['dates'] == [[['2016-11-27..2016-11-27', '2016-11-28..2016-11-28', '2016-11-29..2016-11-29']], [['2018-6-16..2018-6-16', '2018-6-17..2018-6-17']],
+                            [['2016-11-26..2016-11-29']], [['2016-11-27..2016-11-29']], [['1980-6-16..1980-6-16', '1980-6-19..1980-6-19']]]
+            and off['dates'][0] == [['2016-11-27..2016-11-29']])
+    print('B)', on['with'], '|', on['without'], '|', off['with'])
+    ok_b = (on['with'].get('companies') == [['Alchemia Club', 29], ['Radio Kraków', 8]] and on['with'].get('credits') == [['Ferran Conangla', 'Mixed By', 'all']]
+            and on['with'].get('ignored', []).count('heading') == 2 and not on['with'].get('unrecognized')
+            and [c[1] for c in on['without'].get('companies', [])] == ['all', 'all'] and [c[1] for c in off['with'].get('companies', [])] == ['all', 'all'])
+    print('C)', on['heads'])
+    ok_c = on['heads'] == [[1, 2, 3], [2, 4], [1, 2], None, None]
+    results = [ok_a, ok_b, ok_c]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_storagedoc3171():
     """Credits Importer 3.171.0 (F-STORAGEDOC): the README's table of the storage keys is the one written from the code.
     A) `tools/storage_keys.py --check` finds no difference.
