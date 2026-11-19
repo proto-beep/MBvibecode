@@ -312,10 +312,10 @@ def case_quickswitch():
         groups = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-group')].map(g => [g.querySelector('.dci-quick-gh').textContent.trim(), [...g.querySelectorAll('[data-qs-goto]')].map(x => x.textContent.trim())])")
         print('   Gruppen:', groups)
         # ([3.147.0] S264 among the dates, S263 among the credits – both on)
-        results.append(a == [['D022', True], ['S264', True], ['D026', False], ['D023', False], ['D034', True], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
+        results.append(a == [['D022', True], ['D035', True], ['S264', True], ['D026', False], ['D023', False], ['D034', True], ['S046', False], ['S078', True], ['S170', True], ['S155', False], ['S114', False],
                              ['S021', True], ['S031', True], ['S245', True], ['S263', True], ['S160', False], ['S045', True], ['S222', True], ['S007', True], ['S297', False]]
-                       and box[:4] == [True, 19, 'solid', '4px']  # ([3.144.0] S245, on) and box[4].startswith('Writer’s societyRights society after a writer’s name')
-                       and groups == [['Dates', ['D022', 'S264', 'D026', 'D023', 'D034']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
+                       and box[:4] == [True, 20, 'solid', '4px']  # ([3.144.0] S245, on) and box[4].startswith('Writer’s societyRights society after a writer’s name')
+                       and groups == [['Dates', ['D022', 'D035', 'S264', 'D026', 'D023', 'D034']], ['Instruments and performers', ['S046', 'S078', 'S170', 'S155', 'S114']],
                                       ['Attributes and credits', ['S021', 'S031', 'S245', 'S263']], ['Writers, rights and works', ['S160', 'S045', 'S222']], ['Companies and places', ['S007', 'S297']]])
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
@@ -347,7 +347,8 @@ def case_quickswitch():
         pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=D022]'); pg.wait_for_timeout(600)
         perf2 = [c[0] for c in cells(pg).get('performance', [])]
         print('D) Performance:', perf0, '| Pool:', pool0, '| D022 aus:', perf1, '| an:', perf2)
-        results.append(perf0 == ['Performance 1 (month) · 2001-03'] and any('2001-03-01 – 2001-03-03' in x for x in pool0)
+        # ([3.178.0] D035: the period itself is suggested too, for the release level)
+        results.append(perf0 == ['Performance 1 · 2001-03-01 – 2001-03-03', 'Performance 1 (month) · 2001-03'] and any('2001-03-01 – 2001-03-03' in x for x in pool0)
                        and perf1 == ['Performance 1 · 2001-03-01 – 2001-03-03'] and perf2 == perf0)
         # E) a pasted text
         H.src_menu(pg, 'text-open')

@@ -244,6 +244,12 @@ def run_cases(ns):
         # [3.171.0] (F-TESTSWITCH) the rules as a new installation has them; S083 off only for the cases of rules_off_cases.json
         if name in H.RULES_OFF_CASES.get(os.path.basename(sys.argv[0]), []):
             H.RULES_OFF = ['S083']
+        # [3.178.0] cases written for how dates were placed until 3.177.0 run with the rules that changed it off ("_more" of
+        # rules_off_cases.json: file → case → rules); DCI_RULES_EXTRA=D035,D036 switches rules off for every case (to find such cases)
+        more = (H.RULES_OFF_CASES.get('_more', {}).get(os.path.basename(sys.argv[0]), {}).get(name, [])
+                + [x for x in os.environ.get('DCI_RULES_EXTRA', '').split(',') if x])
+        if more:
+            H.RULES_OFF = list(dict.fromkeys(list(H.RULES_OFF) + more))
         tee = _Tee(sys.stdout)
         old = sys.stdout
         sys.stdout = tee
