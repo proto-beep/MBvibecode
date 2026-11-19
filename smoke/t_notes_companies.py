@@ -1700,7 +1700,8 @@ def case_lcnote3111():
     try:
         sony, other = (H.uid('eeeeeeee', 1), 'Sony'), (H.uid('eeeeeeee', 9), 'Other Label')
         a, ea = run('A)', [sony], {})
-        results.append(len(a) == 1 and 'LC 12345' in a[0][0] and 'Sony has no label code' in a[0][0] and a[0][1] == f'/label/{sony[0]}/edit?dci-lc=12345' and not ea)
+        results.append(len(a) == 1 and 'LC 12345' in a[0][0] and 'Sony has no label code' in a[0][0] and a[0][1].startswith(f'/label/{sony[0]}/edit?dci-lc=12345')
+                       and 'edit-label.edit_note=' in a[0][1] and 'Source' in a[0][1] and not ea)   # (3.184.0, Z-EDITNOTESRC: with the edit note)
         bb, eb = run('B)', [sony], {'Sony': 999})
         results.append(len(bb) == 1 and 'Sony has LC 999' in bb[0][0] and not eb)
         c, ec = run('C)', [sony], {'Sony': 12345})

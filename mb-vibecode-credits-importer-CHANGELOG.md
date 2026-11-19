@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.183.0 | – |
+| 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.184.0
+
+**The interface: "Apply & fold", the source in a background tab, live comments as a suggestion, the source in every edit note.**
+
+- **"✓ Apply & fold"** in the middle of the head of "Dates & tracks", beside "▲ fold": it applies the date matrix and folds the bar. "fold" alone folds without applying. The button shows while the bar is open and something can be applied (not with "apply automatically"). The "Apply" at the left below the matrix stays.
+- **"↗ Source"** next to "Import credits …" and "… from cover art": opens the source of the import in a background tab – the one loaded, else the first source linked to the release (Discogs before Bandcamp). The Script Companion opens it in the background; without it (or before the dashboard has heard of it) it opens as a new tab. The bar says what was opened, or that the release has no such link.
+- **Live comments are a suggestion:** "Propose comments | Not for this release" is yellow and counts among the open suggestions of the footer (a click on the counter goes there), until it is answered.
+- **The source in every edit note:** the edit pages the dashboard opens filled in – the label code of a label, a missing link of an entry, the page of the source at an entry, "＋ member of" – carry an edit note with the source of the import and the line of the script now, as the "Create …" forms do. (Until 3.183.0 these four had none.)
+- Not checked on musicbrainz.org itself: that its edit pages take the edit note from the address as they take the other fields.
 
 ### Import 3.183.0
 

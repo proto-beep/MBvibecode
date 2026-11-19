@@ -742,6 +742,30 @@ def case_loopsart3183():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_srcbtn3184():
+    """Credits Importer 3.184.0 (collected item Z-SRCTABBTN): "↗ Source" next to "Import credits …" in the page bar opens the source of
+    the import (without the companion: a new tab), and says so in the bar."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        txt = pg.locator('#dci-open-src').inner_text()
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.evaluate("window.__o = []; window.open = (u) => { window.__o.push(u); return null; }")
+        pg.evaluate("document.getElementById('dci-open-src').click()")
+        pg.wait_for_timeout(500)
+        opened = [u for u in pg.evaluate("window.__o") if u]
+        status = pg.locator('#dci-launch-status').inner_text()
+        print('A)', txt, '|', opened, '|', status, '|', errs)
+        results.append('Source' in txt and len(opened) == 1 and 'discogs.com' in opened[0] and 'discogs.com' in status and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_trackartists2():
     """Review of 3.50.0 (collected item Z-TAR, S078).
     A) Not for other roles: Ayako Koichi's recording (an engineer) stays on all tracks, her jaw harp on track 3.

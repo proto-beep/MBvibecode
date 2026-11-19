@@ -59,6 +59,9 @@ def case_livecom():
         pg.wait_for_timeout(1000)
         a0 = pg.evaluate(LIST)
         offer0 = pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')")
+        # (3.184.0, Z-LIVEMAY) the offer is a suggestion: yellow, and one of the open points of the footer
+        may0 = pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer.dci-livecom-may.dci-yell-can')")
+        print('   may:', may0)
         H.open_settings(pg, 'staging')
         sw = pg.locator('[data-el=settings] [data-set=live-comments]')
         off0 = sw.is_checked()
@@ -70,7 +73,7 @@ def case_livecom():
         b1 = pg.evaluate(LIST)
         print('A) vorher:', a0, '| Angebot:', offer0, '| Schalter an?', off0, '| gespeichert:', stored)
         print('B) Gruppen:', b0, '\n  ', b1)
-        ok_a = a0 == [] and offer0 and off0 is False and stored == 'true'
+        ok_a = a0 == [] and offer0 and off0 is False and stored == 'true' and may0
         base = 'live: Abbey Road Studios, New York, NY, USA'
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
             and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
