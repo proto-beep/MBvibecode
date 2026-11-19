@@ -357,7 +357,7 @@ def case_exceptworks():
             if btn:
                 btn.click()
                 pg.wait_for_timeout(400)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         st = pg.evaluate(f"""(() => {{ const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
@@ -436,7 +436,7 @@ End quote from Space Is the Place by Sun Ra
         # (a new work for a track: something to stage, the edit note written)
         pg.evaluate("(t) => document.querySelectorAll('[data-act=work-pending]').forEach((x) => { if (x.closest('tr').dataset.work === t) x.click(); })", track)
         pg.wait_for_timeout(600)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         return pg.evaluate(ADDED)
@@ -685,7 +685,7 @@ def case_trackartists2():
         pg.wait_for_timeout(300)
         pg.evaluate("""[...document.querySelectorAll('section.dci-group')].filter(g => /Ayako/.test(g.textContent)).forEach(g => { const b = g.querySelector('[data-act=name-use]'); if (b) b.click(); })""")
         pg.wait_for_timeout(2500)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         note = pg.evaluate("(document.getElementById('edit-note-text') || { value: '' }).value")

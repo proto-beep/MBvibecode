@@ -975,8 +975,7 @@ def case_stats():
         print('A) Reiter:', tabs, '| leer, an:', a)
         results.append(tabs[-4:] == ['cache', 'connections', 'musicbrainz', 'beta'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1438,8 +1437,7 @@ def case_statsrec():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(800)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1540,8 +1538,7 @@ def case_statsart():
                              'area': {'name': 'United States', 'iso-3166-1-codes': ['US']}, 'begin-area': {'name': 'Memphis'}}
         H.ARTIST_INFO[ww] = {'type': 'Group', 'life-span': {'begin': '1977', 'ended': False}, 'area': {'name': 'Germany', 'iso-3166-1-codes': ['DE']},
                              'begin-area': {'name': 'Germany', 'iso-3166-1-codes': ['DE']}}
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1646,7 +1643,7 @@ def case_statsmore2():
         # B) a real submission
         H.open_stats(pg)
         pg.evaluate(STAT_SEED, [])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1726,7 +1723,7 @@ def case_stats3131():
                        and ok('remixes', 'remixers 1', '“remix of” 1', 'commissioned 1'))
         H.open_stats(pg)
         pg.evaluate(STAT_SEED, [])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1908,8 +1905,7 @@ def case_statsdev():
         pg.fill(f'tr[data-row="{bid}"] [data-f=role-credit]', 'four-string')
         pg.press(f'tr[data-row="{bid}"] [data-f=role-credit]', 'Tab')
         pg.wait_for_timeout(300)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -1988,7 +1984,7 @@ def case_editnote():
     NOTE = "document.getElementById('edit-note-text').value"
 
     def stage(pg):
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        H.stage_click(pg, least=3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(300)
 
@@ -2137,8 +2133,7 @@ def case_statstime():
         results.append(norm == ['86400', '86400'])
         H.open_settings(pg, 'cache')
         pg.wait_for_timeout(3200)  # a pause (no click, no key, no scrolling)
-        pg.click('[data-act=apply]')
-        pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -2232,8 +2227,7 @@ def case_statsdur():
             pg.wait_for_timeout(1500)
             pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/artist/{NEW}'")
             pg.wait_for_timeout(2600)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(2500)
+            H.stage_click(pg, least=2500)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.wait_for_timeout(800)
             added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
@@ -2418,7 +2412,8 @@ def case_theme():
         # (as a window Auto again – the system light)
         pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=auto]')
         pg.mouse.move(5, 5)
-        pg.wait_for_timeout(300)
+        # ([3.171.0] F-TESTWAITS) not after a fixed 300 ms: until the colours stand still (their transitions end later on a busy computer)
+        H.wait_still(pg, f"({COLORS})()", 10, 300)
         light2 = pg.evaluate(COLORS)
         g1 = [pg.evaluate("document.getElementById('dci-styles-dark').disabled"), pg.evaluate(DK)]
         print('G) Regeln geschrieben/gelesen, aus, Blitz:', sheet, '| wieder hell:', g1, 'gleich:', light1 == light2)

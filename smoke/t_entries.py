@@ -2454,7 +2454,7 @@ def case_qgtr397():
             c0 = pg.evaluate(CHIPS, 'Low Man')
             print('C)', h, mh, c0)
             results.append(mh == ['brass', 'wind instruments'] and any(x['name'] == 'wind instruments “horns”' for x in c0))
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            H.stage_click(pg, least=3500)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             d0 = pg.evaluate(STAGED)
             print('D)', d0)
@@ -2519,7 +2519,7 @@ def case_msyn397():
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.wait_for_timeout(1500)
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(1500)
+            H.stage_click(pg, least=1500)
             b0 = summary(pg.evaluate(ADDED))
             print('B) einzeln:', b0)
             results.append(b0 == want)
@@ -3435,8 +3435,7 @@ def case_dsup3106():
             results.append(taken == 'true')
             pg.click(f"{sec_sel(pg, 'Drum Guy')} [data-el=dsup] [data-act=dsup-take]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(2000)
+            H.stage_click(pg, least=2000)
             added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [((r.entity0 || {}).name || ''), r._status, ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName || x.type.name).sort().join(','),
               r.begin_date ? [r.begin_date.year, r.begin_date.month].join('-') : ''])""")
             print('C)', added)
@@ -3668,8 +3667,7 @@ def case_dsup3107():
                    'entity1': {'gid': rec, 'entityType': 'recording', 'id': 5001 + k, 'name': 'x'}, 'begin_date': None, 'end_date': None, 'ended': False,
                    'attributes': {'__tree': [at(9160)]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0} for k, rec in enumerate(H.REC)]
             pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(2000)
+            H.stage_click(pg, least=2000)
             added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [((r.entity0 || {}).name || ''), r._status, ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName || x.type.name).sort().join(','),
               r.begin_date ? [r.begin_date.year, r.begin_date.month].join('-') : ''])""")
             mine = [x for x in added if x[0] in ('Wood Man', 'Same Man')]

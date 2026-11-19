@@ -87,7 +87,7 @@ Thanks to everyone who came."""
             and look == ['dashed', 'rgb(255, 248, 219)'] and 'dci-st-manual' in after and link.endswith(H.ARTISTS[3001][0]) \
             and any('Sony' in k for k in sugg) and any('Abbey Road' in k for k in sugg)
         # D) staging: the edit note names the text's origin
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")
         added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity0.name === 'Bass Man').length")
@@ -2548,7 +2548,7 @@ Personnel: Klaus Kruger (drums); recording engineer: otto"""
                            and 'Recorded at the bands home studio (Tampere, Finland · 2026-02)' in hint and '2026-02' in perf and 'Tampere' not in perf)
             # (staged, "Enter edit": the job of the statistics names the home studio)
             pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(500)
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+            H.stage_click(pg, least=3000)
             pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
             pg.evaluate("""(() => { const ta = document.getElementById('edit-note-text'); const f = document.createElement('form'); f.addEventListener('submit', (e) => e.preventDefault());
               ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button'); btn.type = 'submit'; btn.id = 'test-enter-edit'; btn.textContent = 'Enter edit';

@@ -196,6 +196,9 @@ def run_cases(ns):
     def once(name, fn):
         """One run of a case: (OK, page errors in it)."""
         snap = _snapshot()
+        # [3.171.0] (F-TESTSWITCH) the rules as a new installation has them; S083 off only for the cases of rules_off_cases.json
+        if name in H.RULES_OFF_CASES.get(os.path.basename(sys.argv[0]), []):
+            H.RULES_OFF = ['S083']
         tee = _Tee(sys.stdout)
         old = sys.stdout
         sys.stdout = tee

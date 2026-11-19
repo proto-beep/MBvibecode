@@ -7,6 +7,7 @@ import json
 import os
 import re
 import threading
+import time
 import unicodedata
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -1266,9 +1267,15 @@ REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') 
 DM_FOLD = False
 DM_FOLD_PRESET = "(on) => { if (on || localStorage.getItem('dci-dm-fold') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-dm-fold', 'false'); }"
 
-# [3.57.0] rule S083 (an existing work is not supplemented) off by default: most cases stage work credits on WORK1, a work
-# MusicBrainz has; t_works_matrix.py nwa and cwr set the rules themselves
-RULES_OFF = ['S083']
+# [3.57.0] rule S083 (an existing work is not supplemented) was off for every case: many cases stage work credits on WORK1, a work
+# MusicBrainz has. [3.171.0] (F-TESTSWITCH) The cases run with the rules as a new installation has them; only the cases named in
+# rules_off_cases.json (per test file) run with S083 off – those that test what is staged on an existing work. caserun.py sets
+# RULES_OFF for them; DCI_RULES_SURVEY=1 runs every case with the defaults (to see which cases need the list).
+RULES_OFF = []
+try:
+    RULES_OFF_CASES = {} if os.environ.get('DCI_RULES_SURVEY') else json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules_off_cases.json'), encoding='utf-8'))
+except OSError:
+    RULES_OFF_CASES = {}
 RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
 
 
@@ -1388,6 +1395,22 @@ def stage(pg, timeout=25, settle=300):
     pg.click('[data-act=apply]')
     ok = wait_ok(pg, f"{count} > {n}", timeout)
     pg.wait_for_timeout(settle)
+    return ok
+
+
+def stage_click(pg, timeout=25, settle=400, least=1000):
+    """[3.171.0] (F-TESTWAITS) Clicks "Stage in the relationship editor" and waits until the dashboard is no longer busy and its log
+    stands still (the staging done, or a question asked before it) – at least `least` ms (the time the case waited before), and longer
+    on a busy computer: a fixed time was too short there. For the cases that clicked and waited a fixed time; a case that needs
+    "Staging complete" uses stage()."""
+    start = time.time()
+    pg.click('[data-act=apply]')
+    pg.wait_for_timeout(250)
+    ok = wait_ok(pg, "(() => { const b = document.querySelector('#dci-overlay [data-el=busy]'); return !b || b.hidden; })()", timeout)
+    wait_still(pg, "document.querySelectorAll('#dci-log li').length", 10, settle)
+    rest = least - (time.time() - start) * 1000
+    if rest > 0:
+        pg.wait_for_timeout(rest)
     return ok
 
 

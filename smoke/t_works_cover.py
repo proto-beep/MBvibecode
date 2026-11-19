@@ -90,7 +90,7 @@ def case_coverworks():
         H.wait_for(pg, f"!!({PILL})(3)", 45)
         b0 = pg.evaluate(f"({PILL})(3)")
         # [Z-CV] (3.40.17) staged with "cover" (567)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         staged = pg.evaluate(f"""(() => {{ const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
           return MB.relationshipEditor.state.added.filter(x => x.linkTypeID === 278 && x.entity1 && x.entity1.gid === '{W6}').map(ids); }})()""")

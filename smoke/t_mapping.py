@@ -360,7 +360,7 @@ def case_v219():
 
         # D) staged: commissioned on the works of tracks 1, 2 (C; 3 taken out, 4 has no work), 2 (D), 1–3 (BBC Proms);
         # "live" only on the new link of track 2
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        H.stage_click(pg, least=3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(800)
         st = pg.evaluate("""(() => { const added = MB.relationshipEditor.state.added;
@@ -967,7 +967,7 @@ def case_mbnames():
                 and ctitle.startswith('additional composer') and 'composer' in menu and 'lyricist' in menu and 'writer' in menu and 'publisher' in menu \
                 and 'sub-publisher' in menu
             # F) the log of what is staged
-            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            H.stage_click(pg, least=3500)
             staged = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => /^Staged: (Eng Man|Comp Man|Remaster Man|Sax Man)/.test(t))")
             print('F) Protokoll:', sorted(set(t.split(' → ')[0] for t in staged)))
             ok_f = any(t.startswith('Staged: Eng Man: recording engineer → ') for t in staged) and any(t.startswith('Staged: Comp Man: additional composer → ') for t in staged) \
@@ -1648,7 +1648,7 @@ def case_annrep():
         lv = [row.locator('[data-act=level][aria-pressed=true]').get_attribute('data-level'), row.locator('[data-f=role-credit]').input_value()]
         print('Ebene, Task-Feld:', lv)
         results.append(lv == ['release_group', 'consultant'])
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        H.stage_click(pg, least=2500)
         ar = pg.evaluate("window.__dispatched.filter(a => a.newRelationshipState && a.newRelationshipState.linkTypeID === 1010).map(a => [a.newRelationshipState.entity0.name, a.newRelationshipState.entity1.entityType, (a.newRelationshipState.attributes ? a.newRelationshipState.attributes.__tree : []).map(x => x.typeName + '=' + (x.text_value || ''))])")
         print('Vorgemerkt:', ar, '| Fehler:', errs)
         results.append(ar == [['Ann Rep', 'release_group', ['task=consultant']]] and not errs)
@@ -1837,8 +1837,7 @@ def case_engtr3109():
             results.append(ok_b and back and ue.get('type') == 'liner notes' and ue.get('level') == 'release' and ue.get('flags') == ['translator']
                            and 'Tr Ue' not in c2)
             # C)
-            pg.click('[data-act=apply]')
-            pg.wait_for_timeout(1500)
+            H.stage_click(pg, least=1500)
             added = pg.evaluate("""MB.relationshipEditor.state.added.map((r) => [r.linkTypeID, ((r.entity0 || {}).name || ''), ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName + (x.credited_as ? ' [' + x.credited_as + ']' : ''))])""")
             mine = [x for x in added if x[1] in ('Tr De', 'Tr Fr')]
             print('C)', mine)

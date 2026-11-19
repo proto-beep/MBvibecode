@@ -551,4 +551,31 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_storagedoc3171():
+    """Credits Importer 3.171.0 (F-STORAGEDOC): the README's table of the storage keys is the one written from the code.
+    A) `tools/storage_keys.py --check` finds no difference.
+    B) The reader finds the keys however they are written: a literal, a constant, a key per release, the store named or not; a key of
+       TOPIC_KEYS has its tab.
+    C) A key the code gets and the README lacks is found (the check on a script with one more key says so)."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools'))
+    import storage_keys as K
+    a = K.check()
+    print('A)', a or 'OK')
+    keys = K.read_keys()
+    b = [keys.get('dci-lang'), keys.get('dci-chrome'), keys.get('dci-log:<release>'), keys.get('dci-autostart')]
+    print('B)', len(keys), b)
+    okb = (len(keys) > 140 and b[0] and b[0]['topic'] == 'general' and b[1] == {'store': {'localStorage'}, 'const': 'CHROME_KEY', 'topic': 'appearance'}
+           and b[2] and b[2]['const'] == 'LOG_KEY' and b[3] and b[3]['store'] == {'sessionStorage'})
+    src = open(K.SCRIPT, encoding='utf-8').read() + "\n  readJson('localStorage', 'dci-not-in-the-readme', 1);\n"
+    more = K.read_keys(src)
+    readme = open(K.readme_path(), encoding='utf-8').read()
+    c = ['dci-not-in-the-readme' in more, '`dci-not-in-the-readme`' in readme, len(more) - len(keys)]
+    print('C)', c)
+    results = [not a, bool(okb), c == [True, False, 1]]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

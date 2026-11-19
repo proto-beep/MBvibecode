@@ -530,7 +530,8 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #   creditskip: 3.64.0 (Z-WSK, S093): "Skip credits" beside a work – its work credits left out, the
                                 #     recording credits stay; "↺ Take credits"; off: no button
                                 #   publevel: 3.64.0 (Z-PUB, S094): "Work | Release" for a label's publishing row in its column; off
-                                #     (the harness switches S083 off by default – RULES_OFF; nwa and cwr set the rules themselves)
+                                #     (until 3.170.0 the harness switched S083 off for every case; from 3.171.0 only for the cases of rules_off_cases.json –
+                                #     F-TESTSWITCH; nwa and cwr set the rules themselves)
                                 #   cwr: 3.56.0 (Z-CWR, S082): no writer beside composer / lyricist / librettist of the same person on a work
                                 #     (MusicBrainz's composer, "Music By", "Lyrics By"); S082 off: as before
                                 #     (review) a picked work of the search with the composer in MusicBrainz; the form of a new work without writer
