@@ -1215,6 +1215,14 @@ def add_mapping(ctx):
 
 def _goto_again(page):
     first = page.goto
+    # (what the page still waits for when a navigation does not end: printed with the note)
+    pending = {}
+    page.on('request', lambda r: pending.__setitem__(id(r), r.url))
+    page.on('requestfinished', lambda r: pending.pop(id(r), None))
+    page.on('requestfailed', lambda r: pending.pop(id(r), None))
+
+    def waiting():
+        return sorted(set(u[:90] for u in pending.values()))[:8]
 
     def goto(url, **kw):
         for attempt in (1, 2, 3):
@@ -1223,7 +1231,7 @@ def _goto_again(page):
             except Exception as e:  # noqa: BLE001 – only the timeout is tried again
                 if 'Timeout' not in str(e) or attempt == 3:
                     raise
-                print(f'   (navigation to {url} did not end – attempt {attempt + 1})')
+                print(f'   (navigation to {url} did not end – attempt {attempt + 1}; from {page.url[:70]}; still waiting for: {waiting()})')
     page.goto = goto
     first_reload = page.reload
 
@@ -1234,7 +1242,7 @@ def _goto_again(page):
             except Exception as e:  # noqa: BLE001
                 if 'Timeout' not in str(e) or attempt == 3:
                     raise
-                print(f'   (loading the page again did not end – attempt {attempt + 1})')
+                print(f'   (loading the page again did not end – attempt {attempt + 1}; {page.url[:70]}; still waiting for: {waiting()})')
     page.reload = reload
 
 

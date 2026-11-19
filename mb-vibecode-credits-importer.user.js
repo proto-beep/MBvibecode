@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.173.0
+// @version      3.174.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.173.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.173.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.174.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.174.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.173.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.174.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -14945,8 +14945,213 @@
     [198, 'Japanese', 'jpn'], [224, 'Korean', 'kor'], [76, 'Chinese', 'zho'], [238, 'Latin', 'lat'],
   ];
 
+  // ===========================================================================
+  // [W-MODEL] (3.174.0) The works' part of the plan, without the page: planWorkLinks and planWorkEdits read the state and call the
+  // helpers of the dashboard only through E (worksPlanEnv() in the dashboard; a test gives its own) – they run in Node, exported below.
+  // ===========================================================================
+  /**
+   * [W-MODEL] (3.168.0) The works' part of the plan, first half – what must be planned before the rows: the links recording → work the matrix
+   * plans, the parts of the suites accepted, the works a track quotes or arranges, the remixes. Until 3.167.0 a stretch of computePlan; the
+   * steps and their order are unchanged. P: the plan being built – { items, seen, planned } (computePlan owns them).
+   */
+  function planWorkLinks(P, E) {
+    const { items, seen, planned } = P;
+    // Planned recording→work links come first: work credits below depend on them.
+    const perf = E.idx().performanceLt;
+    // [3.18.0] works matrix skipped: no links to works (those staged before are taken out of the editor)
+    for (const [i, plan] of E.S.worksSkip ? [] : E.planEntries()) {
+      const t = E.S.mbTracks[i];
+      if (!t || !perf) continue;
+      // Attributes chosen in the matrix, with the preselected "live" (S021)
+      const eff = E.linkAttrsOf(i, { ...plan, planned: true });
+      const attrs = E.allowedRoots(perf)
+        .filter((r) => !r.hasChildren && !r.attr.free_text && eff.has(norm(r.attr.name)))
+        .map((r) => ({ type: r.attr }));
+      const key = `link|${t.recordingGid}|${plan.gid}`;
+      planned.add(key);
+      if (E.S.scope === 'nonwork' || !E.inMedium(i)) continue;
+      const stagedLink = E.S.staged.get(key);
+      if (E.S.existing.workLinks.has(`${t.recordingGid}|${plan.gid}`) || (!stagedLink && E.S.appliedKeys.has(key)) || seen.has(key)) continue;
+      // An invalid date keeps the link back until it is fixed (shown in the works section).
+      // Without a date of its own the link takes the recording date (performance rows of the track)
+      const ownDate = plan.date && E.hasDateInput(plan.date);
+      const rec = !ownDate && !plan.dateCleared && perf.has_dates !== false ? E.recordingDateOf(i) : null;
+      const dateInfo = ownDate && perf.has_dates !== false ? validateDateFields(plan.date) : { value: rec ? rec.value : null, error: '' };
+      if (dateInfo.error) continue;
+      seen.add(key);
+      // [Z-SU] (3.41.1) the parts of a track in their order (MusicBrainz orders the works of a recording)
+      const nParts = (E.S.workParts.get(i) || []).length;
+      const linkItem = {
+        kind: 'work-link', lt: perf, attrs, noteText: '', key, credit: '', workGid: plan.gid, workTitle: plan.title, origin: plan.origin,
+        plan, date: dateInfo.value, update: stagedLink || null, linkOrder: nParts > 1 && plan.k ? plan.k : 0,
+        target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+      };
+      if (stagedLink && stagedLink.sig === E.itemSig(linkItem)) continue;
+      items.push(linkItem);
+    }
+    // [Z-SU] (3.41.2) the suites accepted: "parts" from the suite to each of its parts, with "movement", in the order of the parts
+    // (tracks, within a track its parts; Q-bv) – the suite only holds them together, no recording is linked with it
+    const partsLt = E.idx().partsLt;
+    if (partsLt && !E.S.worksSkip) {
+      const mv = E.allowedRoots(partsLt).filter((r) => !r.hasChildren && !r.attr.free_text && norm(r.attr.name) === 'movement').map((r) => ({ type: r.attr }));
+      for (const sw of E.S.suiteWorks.values()) {
+        // [Z-SUW] (3.41.6) only once the suite is a work of MusicBrainz (created in its form, or one found): the relationship editor
+        // does not create a new work that is linked by "parts" only ("unknown Work id")
+        if (E.isPending(sw.gid)) continue;
+        // its parts: those planned, and the one work in MusicBrainz of a track of the suite that has it (it is a part too)
+        const parts = [...(sw.tracks || [])].sort((a, b) => a - b).flatMap((i) => {
+          const ps = (E.S.workParts.get(i) || []).filter((p) => p.suite === sw.key);
+          if (ps.length) return ps.map((p) => [i, p]);
+          const t = E.S.mbTracks[i];
+          const tw = t ? t.works.filter((w) => !E.replacedWork(i, w.gid)) : []; // ([Z-WNEW] 3.98.0, review)
+          return tw.length === 1 ? [[i, { gid: tw[0].gid, title: tw[0].title, origin: 'mb' }]] : [];
+        });
+        // [Z-NWA] (3.57.0, S083) a suite MusicBrainz has (found and chosen) gets no parts added (a new suite: its parts, also existing ones)
+        if (E.workLocked({ ...sw, planned: true })) continue;
+        parts.forEach(([i, p], n) => {
+          const key = `suite|${sw.gid}|${p.gid}`;
+          planned.add(key);
+          if (E.S.scope === 'nonwork' || !E.inMedium(i)) return;
+          // (3.41.4, review) a new part only with its own link (held back by an invalid date: the suite's link waits too)
+          const t = E.S.mbTracks[i];
+          const own = t && `link|${t.recordingGid}|${p.gid}`;
+          if (p.origin !== 'mb' && own && !seen.has(own) && !E.S.staged.has(own) && !E.S.appliedKeys.has(own) && !E.S.existing.workLinks.has(`${t.recordingGid}|${p.gid}`)) return;
+          const stagedLink = E.S.staged.get(key);
+          if ((!stagedLink && E.S.appliedKeys.has(key)) || seen.has(key)) return;
+          seen.add(key);
+          const item = {
+            kind: 'suite-part', lt: partsLt, attrs: mv, noteText: '', key, credit: '', suiteGid: sw.gid, suiteTitle: sw.title, partGid: p.gid, partTitle: p.title,
+            linkOrder: n + 1, origin: p.origin, plan: p, date: null, update: stagedLink || null,
+            target: { kind: 'work', gid: p.gid, label: p.title, order: 20000 + i, track: E.S.mbTracks[i], work: { gid: p.gid, title: p.title } },
+          };
+          if (stagedLink && stagedLink.sig === E.itemSig(item)) return;
+          items.push(item);
+        });
+      }
+    }
+
+    // [Z-EXC] (3.49.0) the work of a track with the work it quotes ("quotes lyrics from") or arranges ("arrangement of"): once that work
+    // is found in MusicBrainz and the track has a work (new ones too)
+    for (const [i, list] of E.S.worksSkip ? [] : E.S.workRels || []) {
+      for (const r of list) {
+        // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm: only once confirmed (✓)
+        if (r.confirm && !r.confirmed) continue;
+        const lt = r.kind === 'arrangement' ? E.idx().arrangementLt : E.idx().quoteLt;
+        // ([Z-MDLY] 3.98.0) the work of a part of the track (by its key "4.2"), else the track's work
+        const w = r.part ? E.worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) : E.worksForTrack(i)[0];
+        if (!lt || !w || r.state !== 'found' || !r.found) continue;
+        // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
+        // nor what MusicBrainz has already)
+        if (w.gid === r.found.gid || (E.S.existing.loose && E.S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`))) continue;
+        // ([Z-NWA] 3.57.0, S083) nor an existing work: it is not supplemented
+        if (E.workLocked(w)) continue;
+        const key = `wrel|${r.kind}|${w.gid}|${r.found.gid}`;
+        planned.add(key);
+        if (E.S.scope === 'nonwork' || !E.inMedium(i)) continue;
+        // ((3.49.0, review) a new work only with its own link – held back by an invalid date, its relationship waits too, like a suite's)
+        const t = E.S.mbTracks[i];
+        const own = t && `link|${t.recordingGid}|${w.gid}`;
+        if (w.origin !== 'mb' && own && !seen.has(own) && !E.S.staged.has(own) && !E.S.appliedKeys.has(own) && !E.S.existing.workLinks.has(`${t.recordingGid}|${w.gid}`)) continue;
+        const stagedLink = E.S.staged.get(key);
+        if ((!stagedLink && E.S.appliedKeys.has(key)) || seen.has(key)) continue;
+        seen.add(key);
+        const item = {
+          kind: 'work-rel', rel: r.kind, lt, attrs: [], noteText: '', key, credit: '', fromGid: w.gid, fromTitle: w.title, toGid: r.found.gid, toTitle: r.found.title,
+          date: null, update: stagedLink || null, origin: w.origin,
+          target: { kind: 'work', gid: w.gid, label: w.title, order: 30000 + i, track: E.S.mbTracks[i], work: { gid: w.gid, title: w.title } },
+        };
+        if (stagedLink && stagedLink.sig === E.itemSig(item)) continue;
+        items.push(item);
+      }
+    }
+
+    // [Z-RMXTITLE] (3.126.0, S200) a remix "remix of" the track it remixes (both on the release): once taken at its remixer's entry
+    for (const x of E.ruleOn('S200') ? E.S.remixOf || [] : []) {
+      const lt = E.idx().remixLt;
+      const t = E.S.mbTracks[x.i];
+      const o = x.j != null ? E.S.mbTracks[x.j] : null;
+      if (!x.taken || !lt || !t || !o || t.recordingGid === o.recordingGid || !x.key || !E.S.artists.get(x.key)) continue;
+      if (E.S.existing && E.S.existing.loose && (E.S.existing.loose.has(`${t.recordingGid}|${o.recordingGid}|${lt.gid}`) || E.S.existing.loose.has(`${o.recordingGid}|${t.recordingGid}|${lt.gid}`))) continue;
+      const key = `rrel|remix|${t.recordingGid}|${o.recordingGid}`;
+      planned.add(key);
+      if (!E.inMedium(x.i)) continue;
+      const stagedLink = E.S.staged.get(key);
+      if ((!stagedLink && E.S.appliedKeys.has(key)) || seen.has(key)) continue;
+      seen.add(key);
+      const item = {
+        kind: 'rec-rel', lt, attrs: [], noteText: '', key, credit: '', fromGid: t.recordingGid, fromTitle: t.title, toGid: o.recordingGid, toTitle: o.title, toTrack: o,
+        date: null, update: stagedLink || null,
+        target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+      };
+      if (stagedLink && stagedLink.sig === E.itemSig(item)) continue;
+      items.push(item);
+    }
+
+  }
+
+  /**
+   * [W-MODEL] (3.168.0) The works' part of the plan, second half – the edits of what MusicBrainz has already: attributes added to links
+   * recording → work, dates for relationships of works, the performance date onto linked works. After the rows, as before.
+   */
+  function planWorkEdits(P, E) {
+    const { items, seen, planned } = P;
+    const perf = E.idx().performanceLt;
+    // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
+    if (perf && E.S.scope !== 'nonwork' && !E.S.worksSkip) {
+      const types = E.linkAttrTypes();
+      for (const t of E.S.mbTracks) {
+        if (!E.matrixTrack(t) || !E.inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const key = E.linkKey(t.idx, w.gid);
+          const inMb = E.mbLinkAttrs(w);
+          const add = [...E.linkAttrsOf(t.idx, w)].filter((n) => !inMb.has(n));
+          const sig = add.sort().join(',');
+          if (!add.length || E.S.linkAttrStaged.get(key) === sig) continue;
+          items.push({
+            kind: 'work-link', attrFill: key, attrSig: sig, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '', date: null, key: `la|${key}`,
+            attrs: types.filter((a) => add.includes(norm(a.name))).map((a) => ({ type: a })),
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
+      }
+    }
+    // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
+    for (const [key, f] of E.S.worksSkip ? [] : E.S.dateFills) {
+      const t = E.S.mbTracks[f.track];
+      const work = t && t.works.find((w) => w.gid === f.workGid);
+      const lt = E.idx().ltById.get(f.ltId);
+      const dateInfo = validateDateFields(f.date);
+      // ([Z-WSK] 3.64.0, review) nor those of a track whose work credits are left out
+      if (!work || !lt || E.S.filledDates.has(key) || !E.inMedium(f.track) || dateInfo.error || !dateInfo.value || E.creditsSkipped(f.track)) continue;
+      // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
+      if (E.workLocked({ ...work, planned: false })) continue;
+      items.push({
+        kind: 'credit', fillDate: key, lt, attrs: [], noteText: '', credit: '', date: dateInfo.value, key: `fd|${key}`,
+        artist: { mbid: f.mbid, mbName: f.name, name: f.name },
+        target: { kind: 'work', gid: f.workGid, label: E.tr('preview.work', { title: work.title }), order: 10000 + f.track, track: t, work },
+      });
+    }
+    // [Z-WORKDATE] (3.130.0, S215) the performance date onto the links with works MusicBrainz has: added or made more precise
+    if (E.ruleOn('S215') && perf && !E.S.worksSkip && E.S.scope !== 'nonwork') {
+      for (const t of E.S.mbTracks) {
+        if (!E.matrixTrack(t) || !E.inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const o = E.workDateOffer(t.idx, w);
+          if (!o || !o.sug || o.off || o.staged || seen.has(`wd|${o.key}`)) continue;
+          seen.add(`wd|${o.key}`);
+          items.push({
+            kind: 'work-link', workDate: { key: o.dkey, to: o.sug.to, kind: o.sug.kind }, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '',
+            date: o.value, attrs: [], key: `wd|${o.key}`,
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
+      }
+    }
+  }
+
   if (IS_NODE_TEST) {
     module.exports = {
+      planWorkLinks, planWorkEdits, // [W-MODEL] (3.174.0)
       suggestFromWorks, modelSpelling, splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
       instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount, liveScopeText, findDedications,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
@@ -18728,6 +18933,11 @@
   /** [Z-WORKDATE] (3.130.0) The date of a link in MusicBrainz as text ("2007-05", "2007-05-06 – 2007-05-07"). */
   const mbLinkDateText = (mb) => { const b = String(mb.begin || ''); const e = String(mb.end || ''); return !b && !e ? '' : !e || b === e ? b : `${b} – ${e}`; };
 
+  /** [W-MODEL] (3.174.0) What the works' part of the plan reads and calls: the state and the helpers of the dashboard. */
+  function worksPlanEnv() {
+    return { S, allowedRoots, hasDateInput, idx, inMedium, isPending, itemSig, linkAttrsOf, planEntries, recordingDateOf, replacedWork, ruleOn, workLocked, worksForTrack, creditsSkipped, linkAttrTypes, linkKey, matrixTrack, mbLinkAttrs, tr, workDateOffer };
+  }
+
   /** [Z-LVD] (3.62.0, S089) The date a planned link of track i with its work is staged with (as computePlan stages it): its own valid
    *  date, else the recording date of the track (performance rows) unless cleared; null when the link is not staged (works skipped, out
    *  of scope or of the media, already in MusicBrainz) or has no date. */
@@ -18744,205 +18954,7 @@
     return rec ? rec.value : null;
   }
 
-  /**
-   * [W-MODEL] (3.168.0) The works' part of the plan, first half – what must be planned before the rows: the links recording → work the matrix
-   * plans, the parts of the suites accepted, the works a track quotes or arranges, the remixes. Until 3.167.0 a stretch of computePlan; the
-   * steps and their order are unchanged. P: the plan being built – { items, seen, planned } (computePlan owns them).
-   */
-  function planWorkLinks(P) {
-    const { items, seen, planned } = P;
-    // Planned recording→work links come first: work credits below depend on them.
-    const perf = idx().performanceLt;
-    // [3.18.0] works matrix skipped: no links to works (those staged before are taken out of the editor)
-    for (const [i, plan] of S.worksSkip ? [] : planEntries()) {
-      const t = S.mbTracks[i];
-      if (!t || !perf) continue;
-      // Attributes chosen in the matrix, with the preselected "live" (S021)
-      const eff = linkAttrsOf(i, { ...plan, planned: true });
-      const attrs = allowedRoots(perf)
-        .filter((r) => !r.hasChildren && !r.attr.free_text && eff.has(norm(r.attr.name)))
-        .map((r) => ({ type: r.attr }));
-      const key = `link|${t.recordingGid}|${plan.gid}`;
-      planned.add(key);
-      if (S.scope === 'nonwork' || !inMedium(i)) continue;
-      const stagedLink = S.staged.get(key);
-      if (S.existing.workLinks.has(`${t.recordingGid}|${plan.gid}`) || (!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) continue;
-      // An invalid date keeps the link back until it is fixed (shown in the works section).
-      // Without a date of its own the link takes the recording date (performance rows of the track)
-      const ownDate = plan.date && hasDateInput(plan.date);
-      const rec = !ownDate && !plan.dateCleared && perf.has_dates !== false ? recordingDateOf(i) : null;
-      const dateInfo = ownDate && perf.has_dates !== false ? validateDateFields(plan.date) : { value: rec ? rec.value : null, error: '' };
-      if (dateInfo.error) continue;
-      seen.add(key);
-      // [Z-SU] (3.41.1) the parts of a track in their order (MusicBrainz orders the works of a recording)
-      const nParts = (S.workParts.get(i) || []).length;
-      const linkItem = {
-        kind: 'work-link', lt: perf, attrs, noteText: '', key, credit: '', workGid: plan.gid, workTitle: plan.title, origin: plan.origin,
-        plan, date: dateInfo.value, update: stagedLink || null, linkOrder: nParts > 1 && plan.k ? plan.k : 0,
-        target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-      };
-      if (stagedLink && stagedLink.sig === itemSig(linkItem)) continue;
-      items.push(linkItem);
-    }
-    // [Z-SU] (3.41.2) the suites accepted: "parts" from the suite to each of its parts, with "movement", in the order of the parts
-    // (tracks, within a track its parts; Q-bv) – the suite only holds them together, no recording is linked with it
-    const partsLt = idx().partsLt;
-    if (partsLt && !S.worksSkip) {
-      const mv = allowedRoots(partsLt).filter((r) => !r.hasChildren && !r.attr.free_text && norm(r.attr.name) === 'movement').map((r) => ({ type: r.attr }));
-      for (const sw of S.suiteWorks.values()) {
-        // [Z-SUW] (3.41.6) only once the suite is a work of MusicBrainz (created in its form, or one found): the relationship editor
-        // does not create a new work that is linked by "parts" only ("unknown Work id")
-        if (isPending(sw.gid)) continue;
-        // its parts: those planned, and the one work in MusicBrainz of a track of the suite that has it (it is a part too)
-        const parts = [...(sw.tracks || [])].sort((a, b) => a - b).flatMap((i) => {
-          const ps = (S.workParts.get(i) || []).filter((p) => p.suite === sw.key);
-          if (ps.length) return ps.map((p) => [i, p]);
-          const t = S.mbTracks[i];
-          const tw = t ? t.works.filter((w) => !replacedWork(i, w.gid)) : []; // ([Z-WNEW] 3.98.0, review)
-          return tw.length === 1 ? [[i, { gid: tw[0].gid, title: tw[0].title, origin: 'mb' }]] : [];
-        });
-        // [Z-NWA] (3.57.0, S083) a suite MusicBrainz has (found and chosen) gets no parts added (a new suite: its parts, also existing ones)
-        if (workLocked({ ...sw, planned: true })) continue;
-        parts.forEach(([i, p], n) => {
-          const key = `suite|${sw.gid}|${p.gid}`;
-          planned.add(key);
-          if (S.scope === 'nonwork' || !inMedium(i)) return;
-          // (3.41.4, review) a new part only with its own link (held back by an invalid date: the suite's link waits too)
-          const t = S.mbTracks[i];
-          const own = t && `link|${t.recordingGid}|${p.gid}`;
-          if (p.origin !== 'mb' && own && !seen.has(own) && !S.staged.has(own) && !S.appliedKeys.has(own) && !S.existing.workLinks.has(`${t.recordingGid}|${p.gid}`)) return;
-          const stagedLink = S.staged.get(key);
-          if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) return;
-          seen.add(key);
-          const item = {
-            kind: 'suite-part', lt: partsLt, attrs: mv, noteText: '', key, credit: '', suiteGid: sw.gid, suiteTitle: sw.title, partGid: p.gid, partTitle: p.title,
-            linkOrder: n + 1, origin: p.origin, plan: p, date: null, update: stagedLink || null,
-            target: { kind: 'work', gid: p.gid, label: p.title, order: 20000 + i, track: S.mbTracks[i], work: { gid: p.gid, title: p.title } },
-          };
-          if (stagedLink && stagedLink.sig === itemSig(item)) return;
-          items.push(item);
-        });
-      }
-    }
 
-    // [Z-EXC] (3.49.0) the work of a track with the work it quotes ("quotes lyrics from") or arranges ("arrangement of"): once that work
-    // is found in MusicBrainz and the track has a work (new ones too)
-    for (const [i, list] of S.worksSkip ? [] : S.workRels || []) {
-      for (const r of list) {
-        // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm: only once confirmed (✓)
-        if (r.confirm && !r.confirmed) continue;
-        const lt = r.kind === 'arrangement' ? idx().arrangementLt : idx().quoteLt;
-        // ([Z-MDLY] 3.98.0) the work of a part of the track (by its key "4.2"), else the track's work
-        const w = r.part ? worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) : worksForTrack(i)[0];
-        if (!lt || !w || r.state !== 'found' || !r.found) continue;
-        // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
-        // nor what MusicBrainz has already)
-        if (w.gid === r.found.gid || (S.existing.loose && S.existing.loose.has(`${w.gid}|${r.found.gid}|${lt.gid}`))) continue;
-        // ([Z-NWA] 3.57.0, S083) nor an existing work: it is not supplemented
-        if (workLocked(w)) continue;
-        const key = `wrel|${r.kind}|${w.gid}|${r.found.gid}`;
-        planned.add(key);
-        if (S.scope === 'nonwork' || !inMedium(i)) continue;
-        // ((3.49.0, review) a new work only with its own link – held back by an invalid date, its relationship waits too, like a suite's)
-        const t = S.mbTracks[i];
-        const own = t && `link|${t.recordingGid}|${w.gid}`;
-        if (w.origin !== 'mb' && own && !seen.has(own) && !S.staged.has(own) && !S.appliedKeys.has(own) && !S.existing.workLinks.has(`${t.recordingGid}|${w.gid}`)) continue;
-        const stagedLink = S.staged.get(key);
-        if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) continue;
-        seen.add(key);
-        const item = {
-          kind: 'work-rel', rel: r.kind, lt, attrs: [], noteText: '', key, credit: '', fromGid: w.gid, fromTitle: w.title, toGid: r.found.gid, toTitle: r.found.title,
-          date: null, update: stagedLink || null, origin: w.origin,
-          target: { kind: 'work', gid: w.gid, label: w.title, order: 30000 + i, track: S.mbTracks[i], work: { gid: w.gid, title: w.title } },
-        };
-        if (stagedLink && stagedLink.sig === itemSig(item)) continue;
-        items.push(item);
-      }
-    }
-
-    // [Z-RMXTITLE] (3.126.0, S200) a remix "remix of" the track it remixes (both on the release): once taken at its remixer's entry
-    for (const x of ruleOn('S200') ? S.remixOf || [] : []) {
-      const lt = idx().remixLt;
-      const t = S.mbTracks[x.i];
-      const o = x.j != null ? S.mbTracks[x.j] : null;
-      if (!x.taken || !lt || !t || !o || t.recordingGid === o.recordingGid || !x.key || !S.artists.get(x.key)) continue;
-      if (S.existing && S.existing.loose && (S.existing.loose.has(`${t.recordingGid}|${o.recordingGid}|${lt.gid}`) || S.existing.loose.has(`${o.recordingGid}|${t.recordingGid}|${lt.gid}`))) continue;
-      const key = `rrel|remix|${t.recordingGid}|${o.recordingGid}`;
-      planned.add(key);
-      if (!inMedium(x.i)) continue;
-      const stagedLink = S.staged.get(key);
-      if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) continue;
-      seen.add(key);
-      const item = {
-        kind: 'rec-rel', lt, attrs: [], noteText: '', key, credit: '', fromGid: t.recordingGid, fromTitle: t.title, toGid: o.recordingGid, toTitle: o.title, toTrack: o,
-        date: null, update: stagedLink || null,
-        target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-      };
-      if (stagedLink && stagedLink.sig === itemSig(item)) continue;
-      items.push(item);
-    }
-
-  }
-
-  /**
-   * [W-MODEL] (3.168.0) The works' part of the plan, second half – the edits of what MusicBrainz has already: attributes added to links
-   * recording → work, dates for relationships of works, the performance date onto linked works. After the rows, as before.
-   */
-  function planWorkEdits(P) {
-    const { items, seen, planned } = P;
-    const perf = idx().performanceLt;
-    // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
-    if (perf && S.scope !== 'nonwork' && !S.worksSkip) {
-      const types = linkAttrTypes();
-      for (const t of S.mbTracks) {
-        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
-        for (const w of t.works) {
-          const key = linkKey(t.idx, w.gid);
-          const inMb = mbLinkAttrs(w);
-          const add = [...linkAttrsOf(t.idx, w)].filter((n) => !inMb.has(n));
-          const sig = add.sort().join(',');
-          if (!add.length || S.linkAttrStaged.get(key) === sig) continue;
-          items.push({
-            kind: 'work-link', attrFill: key, attrSig: sig, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '', date: null, key: `la|${key}`,
-            attrs: types.filter((a) => add.includes(norm(a.name))).map((a) => ({ type: a })),
-            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-          });
-        }
-      }
-    }
-    // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
-    for (const [key, f] of S.worksSkip ? [] : S.dateFills) {
-      const t = S.mbTracks[f.track];
-      const work = t && t.works.find((w) => w.gid === f.workGid);
-      const lt = idx().ltById.get(f.ltId);
-      const dateInfo = validateDateFields(f.date);
-      // ([Z-WSK] 3.64.0, review) nor those of a track whose work credits are left out
-      if (!work || !lt || S.filledDates.has(key) || !inMedium(f.track) || dateInfo.error || !dateInfo.value || creditsSkipped(f.track)) continue;
-      // ([Z-NWA] 3.57.0, S083) the relationships of an existing work get no dates either
-      if (workLocked({ ...work, planned: false })) continue;
-      items.push({
-        kind: 'credit', fillDate: key, lt, attrs: [], noteText: '', credit: '', date: dateInfo.value, key: `fd|${key}`,
-        artist: { mbid: f.mbid, mbName: f.name, name: f.name },
-        target: { kind: 'work', gid: f.workGid, label: tr('preview.work', { title: work.title }), order: 10000 + f.track, track: t, work },
-      });
-    }
-    // [Z-WORKDATE] (3.130.0, S215) the performance date onto the links with works MusicBrainz has: added or made more precise
-    if (ruleOn('S215') && perf && !S.worksSkip && S.scope !== 'nonwork') {
-      for (const t of S.mbTracks) {
-        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
-        for (const w of t.works) {
-          const o = workDateOffer(t.idx, w);
-          if (!o || !o.sug || o.off || o.staged || seen.has(`wd|${o.key}`)) continue;
-          seen.add(`wd|${o.key}`);
-          items.push({
-            kind: 'work-link', workDate: { key: o.dkey, to: o.sug.to, kind: o.sug.kind }, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '',
-            date: o.value, attrs: [], key: `wd|${o.key}`,
-            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
-          });
-        }
-      }
-    }
-  }
 
   function computePlan() {
     const items = [];
@@ -18957,7 +18969,8 @@
 
     // [W-MODEL] (3.168.0) the works' part of the plan in functions of their own: planWorkLinks first (work credits below depend on the links)
     const P = { items, seen, planned };
-    planWorkLinks(P);
+    const E = worksPlanEnv();
+    planWorkLinks(P, E);
     // [Z-CWR] (3.56.0, S082) works with a more exact type than writer for a person: work gid|artist MBID
     const exactOnWork = ruleOn('S082') ? writerExactPairs() : new Set();
     S.writerExact = exactOnWork;
@@ -19170,7 +19183,7 @@
         markTrack(target, info.ready > before[0] ? 'open' : info.applied > before[1] ? 'staged' : info.existing > before[2] ? 'mb' : null);
       }
     }
-    planWorkEdits(P);
+    planWorkEdits(P, E);
     for (const { item, info, markTrack } of pendingUpdates) {
       if (unchanged.has(item.key) || seen.has(item.key)) {
         info.applied++;

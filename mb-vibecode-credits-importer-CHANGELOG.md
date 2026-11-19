@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.173.0 | – |
+| 2026-11-19 | 3.170.0 – 3.174.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.174.0
+
+Inside (the rest of W-MODEL) – nothing looks or stages differently:
+
+- **The works' part of the plan runs without the page:** what decides which links recording → work, parts of suites, relationships between works and edits of existing links are staged (`planWorkLinks`, `planWorkEdits`) no longer reaches into the dashboard itself – it gets the state and the helpers it needs handed in. So it can be run and tested in Node, in a second instead of in a browser.
+- New test `t_static.py planworks3174`: the order of the links, the attribute chosen, the recording date; a link MusicBrainz has is not planned again; an invalid date holds a link back and with it the part of its suite; the works skipped; the scope "non-work"; a link staged before (unchanged: not again; changed: an update); the edits of existing links, and none of a locked work (S083).
+- Tests: when a navigation does not end, the note now says where the page was and what it still waited for; `mxdrop` waits until pool and matrix stand still before the next drag.
+- The suite on this version: two runs, each 27 of 27 files at the end. In the first, two cases with a second tab passed only alone (`cpremoved3131`: going to the release page did not end in three attempts; `ytview`: stood still for 600 s) – the same standing still as before 3.173.0, its cause not found; twelve runs of the two files in a row did not show it. In the second, `mxdrop` passed only at its second run (corrected).
+- Still inside the dashboard: the helpers themselves (which attributes a link gets, when a work is locked …) – they are handed in, not yet free of the page.
 
 ### Import 3.173.0
 

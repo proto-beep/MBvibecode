@@ -120,6 +120,9 @@ def case_mxdrop():
         print('B1) „Side A“ mit Umschalt auf Writer Z:', b1, '| ohne Umschalt Track 4 dazu:', b2, '| Hinweise:', hints)
         ok_b = b1 == ['1+', '2+'] and b2 == ['1+', '2+', '4+'] and hints[0] == 'dashed' and 'adds the works of these tracks (⇧ Shift: only these)' in hints[1] \
             and 'only the works of these tracks' in hints[2] and 'adds' not in hints[2]
+        # ([3.174.0] F-TESTWAITS) the pool and the matrix are drawn anew after the drop before – until both stand still (the group was
+        # looked up while they were still changing now and then, and the drop took the tracks of the column)
+        H.wait_still(pg, "document.querySelector('.dci-pools-body').innerHTML.length + '|' + document.querySelector('.dci-matrix').innerHTML.length", 15, 700)
         # onto one role: lyricist only on the works of track 1 (group "Pub Co · 1, 3" → track 1 has a work, 3 waits)
         g13 = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Pub Co')).dataset.id")
         lyr = pg.evaluate(f"[...document.querySelectorAll('[data-colhead=\"{wz}\"] [data-tgrole]')].find(r => r.textContent.trim() === 'lyricist').dataset.tgrole")

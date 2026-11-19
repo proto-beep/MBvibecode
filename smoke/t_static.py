@@ -578,4 +578,91 @@ def case_storagedoc3171():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_planworks3174():
+    """Credits Importer 3.174.0 (W-MODEL, the rest): the works' part of the plan runs in Node – planWorkLinks and planWorkEdits with a
+    state and helpers given by the test (three tracks; track 1 has work W1 in MusicBrainz, tracks 2 and 3 get new works).
+    A) Two links recording → work for the planned works, in the order of the tracks, with the attribute chosen ("live" on track 2), the
+       recording date of track 3; the link MusicBrainz has (track 1) is not planned again.
+    B) An invalid date keeps a link back; the part of a suite whose own link is held back waits too; the other part is linked with
+       "movement" and its order.
+    C) The works skipped: nothing. Scope "non-work": nothing staged, but the keys count as planned.
+    D) A link staged before with the same content is not planned again; one whose content changed is an update of it.
+    E) The edits: "live" added to the link MusicBrainz has (track 1), a date for a relationship of its work; with S083 (the work locked)
+       no date."""
+    import json
+    import subprocess
+    node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const norm = (s) => String(s || '').toLowerCase().trim();
+const live = { name: 'live' }, cover = { name: 'cover' }, movement = { name: 'movement' };
+const perf = { gid: 'lt-perf', name: 'performance', has_dates: true }, parts = { gid: 'lt-parts', name: 'parts' };
+const track = (i, works) => ({ idx: i, medium: 1, number: i + 1, title: 'Song ' + (i + 1), recordingGid: 'rec' + (i + 1), works });
+const base = (over = {}) => {
+  const S = { worksSkip: false, scope: 'all', mbTracks: [track(0, [{ gid: 'W1', title: 'Song 1', attrs: [] }]), track(1, []), track(2, [])],
+    staged: new Map(), appliedKeys: new Set(), existing: { workLinks: new Set(['rec1|W1']), loose: new Set() }, workParts: new Map(), suiteWorks: new Map(),
+    workRels: new Map(), remixOf: [], artists: new Map(), dateFills: new Map(), filledDates: new Set(), linkAttrStaged: new Map(), ...(over.S || {}) };
+  const plans = over.plans || [[0, { gid: 'W1', title: 'Song 1', origin: 'mb' }], [1, { gid: 'pending:2', title: 'Song 2', origin: 'new', attrs: ['live'] }], [2, { gid: 'pending:3', title: 'Song 3', origin: 'new' }]];
+  const E = { S, idx: () => ({ performanceLt: perf, partsLt: parts, ltById: new Map([[55, { gid: 'lt-writer', name: 'writer' }]]) }), planEntries: () => plans,
+    linkAttrsOf: (i, w) => new Set([...(w.attrs || []), ...(over.liveOn === i ? ['live'] : [])]),
+    allowedRoots: (lt) => (lt === perf ? [live, cover] : [movement]).map((attr) => ({ attr, hasChildren: false })),
+    inMedium: () => true, hasDateInput: (d) => !!(d && (d.by || d.ey)), recordingDateOf: (i) => (i === 2 ? { value: { begin: '2001-03', end: '2001-03' } } : null),
+    itemSig: (it) => JSON.stringify([it.key, (it.attrs || []).map((a) => a.type.name), it.date, it.linkOrder || 0]), isPending: (g) => /^pending:/.test(g) && !!over.suitePending,
+    replacedWork: () => false, workLocked: (w) => !!over.locked && !w.planned, worksForTrack: () => [], ruleOn: () => true, creditsSkipped: () => false,
+    linkAttrTypes: () => [live, cover], linkKey: (i, g) => i + '|' + g, matrixTrack: () => true, mbLinkAttrs: (w) => new Set(w.attrs || []), tr: (k, p) => k + ':' + JSON.stringify(p || {}),
+    workDateOffer: () => null, ...(over.E || {}) };
+  return E;
+};
+const links = (E) => { const P = { items: [], seen: new Set(), planned: new Set() }; m.planWorkLinks(P, E); return P; };
+const show = (P) => ({ items: P.items.map((x) => [x.kind, x.key, (x.attrs || []).map((a) => a.type.name).join('+'), x.date ? x.date.begin : '', x.linkOrder || 0, x.update ? 'update' : '']), planned: [...P.planned].sort() });
+const out = {};
+out.a = show(links(base()));
+// B) an invalid date on track 2; a suite of the two new works
+const sw = new Map([['s1', { key: 's1', gid: 'SUITE', title: 'Suite', tracks: [1, 2] }]]);
+const wp = new Map([[1, [{ gid: 'pending:2', title: 'Song 2', origin: 'new', suite: 's1' }]], [2, [{ gid: 'pending:3', title: 'Song 3', origin: 'new', suite: 's1' }]]]);
+out.b = show(links(base({ S: { suiteWorks: sw, workParts: wp },
+  plans: [[1, { gid: 'pending:2', title: 'Song 2', origin: 'new', date: { by: 'abcd', bm: '', bd: '', ey: '', em: '', ed: '', ended: false } }], [2, { gid: 'pending:3', title: 'Song 3', origin: 'new' }]] })));
+out.c = [show(links(base({ S: { worksSkip: true } }))), show(links(base({ S: { scope: 'nonwork' } })))];
+// D) staged before
+const first = links(base());
+const it2 = first.items.find((x) => x.key === 'link|rec2|pending:2');
+const E0 = base();
+const sigSame = E0.itemSig(it2);
+const same = show(links(base({ S: { staged: new Map([[it2.key, { sig: sigSame }]]) } })));
+const changed = show(links(base({ S: { staged: new Map([[it2.key, { sig: 'other' }]]) } })));
+out.d = [same.items.map((x) => x[1]), changed.items.filter((x) => x[1] === it2.key).map((x) => x[5])];
+// E) the edits
+const edits = (over) => { const E = base(over); const P = { items: [], seen: new Set(), planned: new Set() }; m.planWorkEdits(P, E);
+  return P.items.map((x) => [x.kind, x.key, (x.attrs || []).map((a) => a.type.name).join('+'), x.date ? x.date.begin || JSON.stringify(x.date) : '', x.target.kind]); };
+const fills = new Map([['f1', { track: 0, workGid: 'W1', ltId: 55, date: { by: '1999', bm: '', bd: '', ey: '1999', em: '', ed: '', ended: false }, mbid: 'a1', name: 'Writer W' }]]);
+out.e = [edits({ liveOn: 0, S: { dateFills: fills } }), edits({ liveOn: 0, locked: true, S: { dateFills: fills } })];
+console.log(JSON.stringify(out));
+"""
+    js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    if js.returncode:
+        print(js.stderr[-600:])
+    o = json.loads(js.stdout) if not js.returncode else {}
+    results = []
+    a = o.get('a', {})
+    print('A)', a)
+    results.append([x[:5] for x in a.get('items', [])] == [['work-link', 'link|rec2|pending:2', 'live', '', 0], ['work-link', 'link|rec3|pending:3', '', '2001-03', 0]]
+                   and a.get('planned') == ['link|rec1|W1', 'link|rec2|pending:2', 'link|rec3|pending:3'])
+    b = o.get('b', {})
+    print('B)', b)
+    results.append([x[:5] for x in b.get('items', [])] == [['work-link', 'link|rec3|pending:3', '', '2001-03', 0], ['suite-part', 'suite|SUITE|pending:3', 'movement', '', 2]]
+                   and 'suite|SUITE|pending:2' in b.get('planned', []))
+    c = o.get('c', [{}, {}])
+    print('C)', c)
+    results.append(c[0] == {'items': [], 'planned': []} and c[1].get('items') == [] and len(c[1].get('planned', [])) == 3)
+    d = o.get('d', [[], []])
+    print('D)', d)
+    results.append(d[0] == ['link|rec3|pending:3'] and d[1] == ['update'])
+    e = o.get('e', [[], []])
+    print('E)', e)
+    results.append(len(e[0]) == 2 and e[0][0][:3] == ['work-link', 'la|0|W1', 'live'] and e[0][1][0] == 'credit' and e[0][1][1] == 'fd|f1' and e[0][1][4] == 'work'
+                   and [x[1] for x in e[1]] == ['la|0|W1'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
