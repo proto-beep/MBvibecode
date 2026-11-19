@@ -93,6 +93,9 @@ are step 0 of marksrelease).
 python3 t_parsegolden.py        # [3.175.0] the text reader: everything it returns for 183 texts (parse_golden.json; UPDATE=1 after a change that is meant)
                                 #   [3.176.0] also: t_static.py booklet3176 (the shapes of a booklet, S300–S306, in Node) and
                                 #   t_notes_dates.py cdtracks3176 (tracks by medium – "(CD1 1, 3; CD2 1)" – on a release of two media)
+                                #   [3.177.0] t_static.py classical3177, t_notes_dates.py classical3177 (a classical track list: composer, soloist,
+                                #   the question for a name beside a title, the arranger on the recording, the suite), t_works_cover.py
+                                #   classiccredit3177 (a track credited to its composer: his works compared)
 python3 runall.py               # [3.160.0] the whole suite: every t_*.py as a process of its own (as many at a time as the computer has cores, 2 … 5 – from 3.173.0; `-j N` sets it; logs in smoke/out/),
                                 #   then one line per file and "Suite: OK" or "Suite: FEHLER" (exit code 0 / 1). A file passes only
                                 #   when it ended by itself with exit code 0, its last "Ergebnis" says OK, none of its cases ended

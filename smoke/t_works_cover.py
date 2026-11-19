@@ -230,4 +230,42 @@ console.log(JSON.stringify([t, s]));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_classiccredit3177():
+    """Credits Importer 3.177.0 (collected item Z-CLASSICCREDIT, S311): a release credited the classical way – track 2 to its composer
+    (H. I. F. Biber), its recording to who plays (Maya Homburger); track 3's track and recording have the same artist.
+    A) Biber's works in MusicBrainz are read for the comparison of works (a browse request for his works).
+    B) The artist of track 3, the same on track and recording, is no composer by that: no request for his works.
+    C) Biber's work "Passacaglia in G minor" is offered for track 2."""
+    BIBER, MAYA, OTHER = H.uid('ab1be400', 1), H.uid('ab1be400', 2), H.uid('ab1be400', 3)
+    WP = H.uid('cccccccc', 177)
+    H.TITLES[1] = 'Passacaglia in G minor'
+    H.TRACK_AC.update({1: [(BIBER, 'H. I. F. Biber')], 2: [(OTHER, 'Other Player')]})
+    H.REC_AC.update({1: [(MAYA, 'Maya Homburger')], 2: [(OTHER, 'Other Player')]})
+    H.ARTIST_WORKS.update({BIBER: [{'id': WP, 'title': 'Passacaglia in G minor', 'type': None, 'aliases': []}]})
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.wait_for_timeout(400)
+        browsed = sorted(set(a for k, a, o in H.BROWSES if k == 'work'))
+        print('A) Werke gelesen von:', ['Biber' if a == BIBER else 'Other' if a == OTHER else 'Maya' if a == MAYA else a[:8] for a in browsed])
+        results.append(BIBER in browsed)
+        print('B)', OTHER in browsed)
+        results.append(OTHER not in browsed)
+        same = pg.evaluate("""(() => { const tr = document.querySelector('tr[data-work="1"]'); return tr ? tr.textContent.replace(/\\s+/g, ' ').slice(0, 400) : null; })()""")
+        print('C) Track 2:', same)
+        results.append(bool(same) and 'Passacaglia in G minor' in same)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

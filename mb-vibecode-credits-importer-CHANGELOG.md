@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.176.0 | – |
+| 2026-11-19 | 3.170.0 – 3.177.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,22 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.177.0
+
+**A classical track list is read** (collected items of 2026-11-19; rules S307–S311, role rules R126, R127, questions Q023, Q024). For every free text.
+
+- **Composers as headings** (Z-CLASSICALLIST, S307): "Gabriel Fauré 1845–1924", "GUSTAV HOLST (1874–1934)", "GEORG FRIEDRICH HÄNDEL [1685-1759]" – the composer of every track below, until the next such heading; he goes to the works matrix as any composer. A name printed in capitals is written as a name ("Gustav Holst"; also in a lineup: "NILS MÖNKEMEYER Viola" → Nils Mönkemeyer).
+- **Works and their movements:** a line above tracks – "Pelléas et Mélisande Op.80" above "1 I. Prélude 5.19 … 5 V. …" – is the heading of a work: the works matrix asks whether its tracks are the parts of a suite of that name (as it does for Discogs's headings). "Compact Disc 2 70.42" numbers the tracks below by medium. Lengths with a dot ("5.19"), track numbers as "[08]" or "1]", dots between title and length are read.
+- **Arrangers of a work** (Z-ARRGEN): "Arr. Roger Harvey & Salaputia Brass", "Trans. Peter Dörpinghaus" below a work's heading – arranged by, for its tracks, **on the recordings**: the work stays the composer's (until now an arranger beside a composer went to the works, S006). The release's artist is no arranger. An arrangement as a work of its own, on a click, is the next version.
+- **Soloists in a track's line** (Z-TRACKSOLOIST, S308): "3 III. Sicilienne (Patricia Nagle flute)" – flute on that track; "(Maria)", "(Pieter & Adriaan)" – first names of the lineup read in the same text: their voice on that track, solo.
+- **Other names in brackets** (Z-TRACKPAREN, S308): "(orch. Koechlin)" – orchestrated by, on the track ("Orch." as a part of an ensemble's name is no role). A name alone – "(Paul Verlaine)", "(Victor Hugo)", "Caligula Op.52 (Alexandre Dumas père)" or "Comedy by Edmond Haraucourt, after Shakespeare" at a work's heading (for all its tracks) – is **asked for**: lyricist, composer, librettist or no relationship. Below a composer's heading the lyricist is suggested, else the composer; nothing is added before the answer. A translation in brackets, an opus or a catalogue number is no name.
+- **Only for tracks the release has:** a list that names tracks the release does not have gives no credit (left out as "names tracks this release does not have") – a composer is never set for all tracks by mistake.
+- **The track list as MusicBrainz shows it** (Z-MBTRACKLIST, S309): "1. Part One - Izumi Kimura / Artur Majewski / Barry Guy (7:20)" – the artists behind the title are no part of it when the list is compared with MusicBrainz's tracks.
+- **Parts as a suite** (Z-PARTTITLES, S310): tracks named only "Part One" … "Part Seven" ("Part 2", "Teil 3", "II") are offered as the parts of a suite named as the release.
+- **Classical crediting in MusicBrainz** (Z-CLASSICCREDIT, S311): where a track is credited to the composer and its recording to who plays, the composer's works are compared for that track ("1 work with the same title exists … work of H. I. F. Biber").
+- **Not yet:** "based on" between two works and an arrangement as a work of its own (both need the works matrix: next version); a line that begins with the word for an ensemble with tracks by medium.
+- **Tests:** `t_static.py classical3177` (Node), `t_notes_dates.py classical3177` (the dashboard: composer in the works matrix, soloist, the question, the arranger on the recording, the suite asked), `t_works_cover.py classiccredit3177`.
 
 ### Import 3.176.0
 

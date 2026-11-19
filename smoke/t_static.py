@@ -554,7 +554,7 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
 
 def case_booklet3176():
     """Credits Importer 3.176.0 (the shapes of a booklet, S300–S306), the text reader in Node.
-    A) S300: "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola", "Maria Ladurner & Ella Marshall Smith soprano", "Nele Vertommen oboe,
+    A) S300: "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola" (written Nils Mönkemeyer from 3.177.0), "Maria Ladurner & Ella Marshall Smith soprano", "Nele Vertommen oboe,
        recorder & direction" (→ Directed By), "Frederica von Stade mezzo-soprano (CD1 4)" (track 1-4), "TONMEISTER : Phillip Schulz"
        (→ Engineer, credited as Tonmeister), "Skinny Elephant recording" below a "by" line stays what it was.
     B) S301: "A (Trompete) • B (Trompete) • C" / "D (Trompete)" – four trumpets; "Gäste: E (Euphonium und Posaune)" – two guest roles.
@@ -594,10 +594,10 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
         if js.returncode:
             print(js.stderr[-400:])
         return json.loads(js.stdout) if not js.returncode else [{'credits': [], 'companies': [], 'ignored': [], 'unrecognized': []}] * len(texts)
-    on, off = run([]), run(['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306'])
+    on, off = run([]), run(['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S307'])
     a = on[0]['credits']
     print('A)', a, '|', on[1])
-    ok_a = (['Robin Ticciati', 'conductor', 'all'] in a and ['NILS MÖNKEMEYER', 'Viola', 'all'] in a and ['Maria Ladurner', 'soprano', 'all'] in a and ['Ella Marshall Smith', 'soprano', 'all'] in a
+    ok_a = (['Robin Ticciati', 'conductor', 'all'] in a and ['Nils Mönkemeyer', 'Viola', 'all'] in a and ['Maria Ladurner', 'soprano', 'all'] in a and ['Ella Marshall Smith', 'soprano', 'all'] in a
             and ['Nele Vertommen', 'Directed By', 'all'] in a and ['Nele Vertommen', 'recorder', 'all'] in a and ['Frederica von Stade', 'mezzo-soprano', '1-4'] in a
             and ['Phillip Schulz', 'Engineer [Tonmeister]', 'all'] in a and not on[0]['unrecognized'] and not any(c[0] == 'Skinny Elephant' for c in on[1]['credits']))
     b = on[2]['credits']
@@ -620,6 +620,84 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
     print('G)', off[0]['credits'], [len(x['credits']) for x in off])
     ok_g = not off[0]['credits'] and any(x['credits'] for x in off[6:7])
     results = [ok_a, ok_b, ok_c, ok_d, ok_e, ok_f, ok_g]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_classical3177():
+    """Credits Importer 3.177.0 (a classical track list, S307–S310), the text reader and the suite offers in Node.
+    A) S307: "Gabriel Fauré 1845–1924" / "Compact Disc 1 67.00" / a work with five movements / a second work: the composer on 1-1 … 1-7,
+       two headings of works (at tracks 1 and 6), the medium's heading and the works' headings left out, no line "not recognized".
+    B) S308: "(Patricia Nagle flute)" – flute on 1-3; "(orch. Koechlin)" – orchestrated by on 1-4; "(Paul Verlaine)" – asked (Named Beside
+       Title) on 1-7; "(in one act by René Fauchois)" below the second work – asked, for its tracks 1-6, 1-7; "(The Sweetest Road)": left out.
+    C) "ANTHONY HOLBORNE (1545–1602)" / a suite / "Arr. Roger Harvey & The Band": composed by Anthony Holborne, arranged by Roger Harvey
+       (the release's artist is none) with the mark of the recording's arranger (recArr), on tracks 1–3.
+    D) Lineup and list in one text: "(Maria)" is Maria Ladurner, soprano, solo, on track 2; "(Pieter & Adriaan)" two soloists on track 3.
+    E) Without a composer's heading "(Victor Hugo)" asks with the composer suggested (Named Beside Title Alone).
+    F) A list for tracks the release does not have: no credit, left out as "noTracks".
+    G) S309: "1. Part One - Izumi Kimura / Barry Guy (7:20)" – the title compared is "Part One".
+    H) S310: tracks "Part One", "Part Two", "Part Three" – a suite named as the release offered; "Intro", "Song", "Part Two": none.
+    I) S307 off: no composer from A."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[3]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || /^(flute|soprano|alto|tenor|bass|piano|violin)$/i.test(p.base); };
+const tracks = (n) => (s) => { const o = new Set(); for (const p of String(s).split(/,|&/)) { const x = p.trim().match(/^(?:(\d+)-)?(\d+)(?:\s*(?:to|-|–)\s*(?:(\d+)-)?(\d+))?$/); if (!x) return null;
+  for (let i = +x[2]; i <= +(x[4] || x[2]); i++) { if (i > n || (x[1] && +x[1] > 1)) return null; o.add(i - 1); } } return o; };
+const run = ([t, n]) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: () => false, resolveTracks: tracks(n), resolveTitles: () => null, artistNames: ['The Band'], trackCount: n,
+    tracks: Array.from({ length: n }, (x, i) => ({ title: i ? 'Other' : 'Part One', length: 440000 })) });
+  return { credits: r.credits.map((c) => [c.who.name, c.role, c.tracks && !c.tracks.all ? c.tracks.spec : 'all', !!c.recArr]), ignored: r.ignored.map((x) => [x.why, String(x.text || '').slice(0, 40)]),
+    unrecognized: r.unrecognized.map((u) => String(u.text || u.line || u)), headings: r.headings, check: (r.ignored.find((x) => x.check) || {}).check || null }; };
+const offers = [m.suiteOffers({ title: 'Odes', tracks: ['Part One', 'Part Two', 'Part Three'].map((title) => ({ title })), headings: [] }),
+  m.suiteOffers({ title: 'Odes', tracks: ['Intro', 'Song', 'Part Two'].map((title) => ({ title })), headings: [] })];
+console.log(JSON.stringify({ texts: JSON.parse(process.argv[2]).map(run), offers }));
+"""
+    FAURE = ('Gabriel Fauré 1845–1924\n\nCompact Disc 1 67.00\n\nPelléas et Mélisande Op.80\n1 I. Prélude 5.19\n2 II. The Spinning Girl: Andantino quasi allegretto 3.01\n3 III. Sicilienne (Patricia Nagle flute) 3.27\n'
+             '4 IV. Mélisande\'s Song (orch. Koechlin) 3.11\n5 V. The Death of Mélisande: Molto adagio 4.42\n\nMasques et Bergamasques Op.112\n(in one act by René Fauchois)\n6 I. Overture 3.51\n'
+             '7 VI. Clair de lune Op.46 No.2 (Paul Verlaine) 3.13\n(The Sweetest Road)')
+    HOLB = 'ANTHONY HOLBORNE (1545–1602)\nSUITE "THE FAIRIE ROUND"\nArr. Roger Harvey & The Band\n\n[01] I. THE FAIRIE ROUND . . . . . . . 01:34\n[02] II. THE HONIE SUCKLE . . . . . . 01:40\n[03] III. THE CHOISE . . . . . . . . 00:55'
+    SOLO = ('Maria Ladurner & Ella Marshall Smith soprano\nSophia Faltas & Pieter De Praetere alto\nAdriaan De Koster tenor\n\nGEORG FRIEDRICH HÄNDEL [1685-1759]\nChandos Anthem No. 10, HWV 255\n'
+            '1] Symphony 02:53\n2] Air - The Lord is my light (Maria)* 02:31\n3] Duetto - Why so full of grief (Pieter & Adriaan) 03:58')
+    HUGO = '1 Ballade Op.19 in F sharp 13.52\n2 Élégie Op.24* for cello and orchestra in C minor 7.41\n3 Les Djinns Op.12 (Victor Hugo) for chorus and orchestra 4.03'
+    MBL = '1. Part One - Izumi Kimura / Barry Guy (7:20)\n2. Part Two - Izumi Kimura / Barry Guy (5:01)\n3. Part Three - Izumi Kimura / Barry Guy (6:12)'
+    texts = [[FAURE, 7], [HOLB, 3], [SOLO, 3], [HUGO, 3], [HOLB, 2], [MBL, 3]]
+
+    def run(off):
+        js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(texts), json.dumps(off)], capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-600:])
+        return json.loads(js.stdout) if not js.returncode else {'texts': [{'credits': [], 'ignored': [], 'unrecognized': [], 'headings': [], 'check': None}] * len(texts), 'offers': [[], []]}
+    on, off = run([]), run(['S307'])
+    t = on['texts']
+    a = t[0]
+    print('A)', [c for c in a['credits'] if c[1] == 'Composed By'], a['headings'], a['unrecognized'])
+    ok_a = ([c[:3] for c in a['credits'] if c[1] == 'Composed By'] == [['Gabriel Fauré', 'Composed By', '1-1 to 1-7']]
+            and [(h['title'], h['at']) for h in a['headings']] == [('Pelléas et Mélisande Op.80', 0), ('Masques et Bergamasques Op.112', 5)] and not a['unrecognized']
+            and sum(1 for x in a['ignored'] if x[0] == 'heading') == 5)
+    b = [c[:3] for c in a['credits']]
+    print('B)', b, [x for x in a['ignored'] if x[0] == 'translation'])
+    ok_b = (['Patricia Nagle', 'flute', '1-3'] in b and ['Koechlin', 'Orchestrated By', '1-4'] in b and ['Paul Verlaine', 'Named Beside Title', '1-7'] in b
+            and ['René Fauchois', 'Named Beside Title', '1-6 to 1-7'] in b and any(x[0] == 'translation' for x in a['ignored']))
+    print('C)', t[1]['credits'], t[1]['headings'])
+    ok_c = t[1]['credits'] == [['Anthony Holborne', 'Composed By', '1 to 3', False], ['Roger Harvey', 'Arranged By', '1 to 3', True]] and len(t[1]['headings']) == 1
+    d = [c[:3] for c in t[2]['credits']]
+    print('D)', d)
+    ok_d = ['Maria Ladurner', 'soprano [Solo]', '2'] in d and ['Pieter De Praetere', 'alto [Solo]', '3'] in d and ['Adriaan De Koster', 'tenor [Solo]', '3'] in d and ['Georg Friedrich Händel', 'Composed By', '1 to 3'] in d
+    print('E)', t[3]['credits'], t[3]['unrecognized'])
+    ok_e = [c[:3] for c in t[3]['credits']] == [['Victor Hugo', 'Named Beside Title Alone', '3']] and not t[3]['unrecognized']
+    print('F)', t[4]['credits'], [x for x in t[4]['ignored'] if x[0] == 'noTracks'])
+    ok_f = not t[4]['credits'] and sum(1 for x in t[4]['ignored'] if x[0] == 'noTracks') == 2
+    print('G)', t[5]['check'], t[5]['credits'])
+    ok_g = not t[5]['credits'] and t[5]['check'] and not any(x.get('pos') == '1' for x in t[5]['check']['diffs'])
+    print('H)', on['offers'])
+    ok_h = [(o['name'], o['from'], o['tracks']) for o in on['offers'][0]] == [('Odes', 'release', [0, 1, 2])] and not on['offers'][1]
+    print('I)', [c for c in off['texts'][0]['credits'] if c[1] == 'Composed By'])
+    ok_i = not [c for c in off['texts'][0]['credits'] if c[1] == 'Composed By']
+    results = [ok_a, ok_b, ok_c, ok_d, ok_e, ok_f, ok_g, ok_h, ok_i]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

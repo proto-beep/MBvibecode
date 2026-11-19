@@ -1085,6 +1085,64 @@ Clara Stein conductor"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_classical3177():
+    """Credits Importer 3.177.0 (collected items Z-CLASSICALLIST, Z-TRACKSOLOIST, Z-TRACKPAREN, Z-ARRGEN; S307, S308): a classical track
+    list in the notes of the release (four tracks): "Jean Sibelius 1865–1957" / "Karelia Suite Op.11" / "Arr. Roger Harvey" /
+    "1 I. Intermezzo 3.05" / "2 II. Ballade (Anna Berg piano) 4.10" / "3 III. Alla marcia (Paul Verlaine) 5.00".
+    A) Jean Sibelius: composer of tracks 1–3 in the works matrix (not of track 4). B) Anna Berg: piano on track 2. C) Paul Verlaine: the
+    dashboard asks – lyricist (suggested), composer, librettist or no relationship. D) Roger Harvey: arranger on the recordings of tracks
+    1–3 – a row of his entry, not a writer in the works matrix (until 3.176.0 an arranger beside a composer went to the works, S006).
+    E) The works matrix asks whether tracks 1–3 are parts of the suite "Karelia Suite Op.11"."""
+    NOTES = """Jean Sibelius 1865–1957
+
+Karelia Suite Op.11
+Arr. Roger Harvey
+1 I. Intermezzo 3.05
+2 II. Ballade (Anna Berg piano) 4.10
+3 III. Alla marcia (Paul Verlaine) 5.00"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        tr = pg.evaluate("""(() => { const out = {}; for (const g of document.querySelectorAll('section.dci-group')) { const n = g.querySelector('.dci-gname strong').textContent.trim();
+          if (!/Sibelius|Anna Berg|Verlaine|Roger Harvey/.test(n)) continue; out[n] = [...g.querySelectorAll('tr.dci-row')].map(r => [r.textContent.replace(/\\s+/g, ' ').trim().slice(0, 420),
+            (r.querySelector('[data-f=level]') || {}).value || '']); } return out; })()""")
+        one = lambda n: (tr.get(n) or [['', '']])[0]
+        wm = pg.evaluate("""[0, 1, 2, 3].map(i => { const r = document.querySelector(`tr[data-work="${i}"]`); return r ? /composer waits for a work/.test(r.textContent) && !!r.querySelector('[title*="Jean Sibelius"], [aria-label*="Jean Sibelius"]') : null; })""")
+        print('A) Sibelius in der Werk-Matrix (Tracks 1–4):', wm, '| Zeilen im Eintrag:', len(tr.get('Jean Sibelius') or []))
+        # (track 1 has its work in MusicBrainz already: nothing is added to it)
+        results.append(wm[1:] == [True, True, False] and not tr.get('Jean Sibelius'))
+        print('B) Anna Berg:', one('Anna Berg')[0][:120])
+        results.append('piano' in one('Anna Berg')[0] and '(2)' in one('Anna Berg')[0])
+        print('C) Verlaine:', one('Paul Verlaine')[0][:300])
+        results.append(all(w in one('Paul Verlaine')[0] for w in ('lyricist suggested', 'composer', 'librettist', 'no relationship')))
+        print('D) Harvey:', one('Roger Harvey')[0][:160], '|', one('Roger Harvey')[1])
+        harvey_wm = pg.evaluate("""[0, 1, 2, 3].some(i => { const r = document.querySelector(`tr[data-work="${i}"]`); return r && /Roger Harvey/.test(r.innerHTML); })""")
+        print('D) Harvey in der Werk-Matrix:', harvey_wm)
+        results.append('Arranged By' in one('Roger Harvey')[0] and '(1 to 3)' in one('Roger Harvey')[0] and not harvey_wm)
+        asks = pg.evaluate("[...document.querySelectorAll('*')].filter(e => !e.children.length && /suite/.test(e.textContent) && /Karelia/.test(e.textContent)).map(e => e.textContent.replace(/\\s+/g, ' ').trim().slice(0, 120))")
+        print('E) Suite:', asks[:3])
+        results.append(any('Karelia Suite Op.11' in x for x in asks))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_rel3132():
     """Credits Importer 3.132.0 (collected items Z-RELDATE, Z-FESTALL; D034, S220): relative dates and what the notes only mention.
     A) In Node: "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September",
