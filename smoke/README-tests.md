@@ -101,6 +101,8 @@ python3 t_parsegolden.py        # [3.175.0] the text reader: everything it retur
                                 #   [3.178.0] rules_off_cases.json "_more": the cases written for how dates were placed until 3.177.0 run with
                                 #   D035 (and D036) off – file → case → rules; DCI_RULES_EXTRA=D035,D036 switches rules off for every case
                                 #   [3.179.0] t_static.py areas3179 (every area relationship, the more precise place or company, the switch S313)
+                                #   [3.180.0] t_works_matrix.py based3180 ("based on" suggested with a found work, staged only after ✓; the
+                                #   disambiguation of an arrangement work of its own)
 python3 runall.py               # [3.160.0] the whole suite: every t_*.py as a process of its own (as many at a time as the computer has cores, 2 … 5 – from 3.173.0; `-j N` sets it; logs in smoke/out/),
                                 #   then one line per file and "Suite: OK" or "Suite: FEHLER" (exit code 0 / 1). A file passes only
                                 #   when it ended by itself with exit code 0, its last "Ergebnis" says OK, none of its cases ended

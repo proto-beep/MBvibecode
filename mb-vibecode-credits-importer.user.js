@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.179.0
+// @version      3.180.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.179.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.179.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.180.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.180.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.179.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.180.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2933,6 +2933,12 @@
       "wnew.off": "keep linked work",
       "wnew.offTitle": "Keep the link to “{title}” – no new work",
       "arrsugg.of": "arrangement of",
+      "basedsugg.of": "based on",
+      "basedsugg.askTitle": "Suggested: the work is based on “{title}” – staged only once confirmed with ✓",
+      "basedsugg.okBtnTitle": "Confirm: “based on” is staged",
+      "basedsugg.okTitle": "Confirmed: “based on” “{title}” is staged",
+      "preview.basedOn": "based on “{title}”",
+      "log.basedFound": "Track {track}: a work “{title}” by {by} found in MusicBrainz – “based on” it is suggested in the works matrix (not staged before ✓)",
       "arrsugg.openTitle": "Open “{title}” in MusicBrainz",
       "arrsugg.recordings.one": "{n} recording",
       "arrsugg.recordings.other": "{n} recordings",
@@ -5376,6 +5382,8 @@
     { id: 'S311', where: 'init (classicalComposers), artistWorkTargets', note: 'Works (3.177.0; Z-CLASSICCREDIT): a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays ("Maya Homburger") – : the track\'s artist that is none of the recording\'s artists is taken as the composer of the track for the comparison of works: his works in MusicBrainz are searched for the track without a work, as those of a writer of the source. He is no performer for the entries of the source' },
     { id: 'S312', where: 'TEXT.parse (bookletLines), mediaOfHeading (MEDIA_HEAD_LINE)', note: 'Texts (3.178.0; Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – on a release that has them: the lines below it, up to an empty line or the next such heading, hold for the tracks of those media ("Recorded: November 27-29, 2016 at Alchemia Club, Kraków" – the place on the tracks of CD 1–4), unless a line names tracks of its own. The dates of these lines get the same tracks (D037). Every free text' },
     { id: 'S313', where: 'mapCompanyRole (C038–C045, C055, C057–C068), TEXT.parse (end: areaCovered), addNotesCompanies', note: 'Areas (3.179.0; collected items Z-AREARELS, Z-PRINTEDIN; a quick switch, on): every relationship between a release, a recording or a work and an area that MusicBrainz has is read from a text – "Recorded in Kraków", "Mixed in Berlin", "Printed in the UK", "Made in Germany" / "Manufactured in the EU" (manufactured in), "Lacquer cut in", "Programmed in", "Edited in", "Transferred in", and the writing: "Written in", "Composed in", "Lyrics written in", "Libretto written in", "Revised in", "Translated in", "Arranged in" (on the works first; the level of an entry can be switched as always). An area is not taken where the same text or source names a place or a company of the same activity ("Printed by X", "Recorded at Y", "Manufactured by Z"): that is more precise – the area is left out with this reason. Off: no relationship to an area is read' },
+    { id: 'S314', where: 'ownArrangers, arrComProposals', note: 'Arrangement works (3.180.0; collected item Z-ARRGEN): an arranger named for a work with a known writer stays on the recordings and no work is made for the arrangement (S307; the level of the entry can be switched). An arrangement as a work of its own is made on a click: "＋ New" at a track whose work MusicBrainz has plans a new work with "arrangement of" that work to confirm (✓; S156) – once confirmed, the new work gets the disambiguation "<arrangers> arrangement" from the arrangers credited for the track, offered in the footer as for arrangements of traditional tunes (S158)' },
+    { id: 'S315', where: 'classicalLines (CL_BASED), addWorkNotes, planWorkLinks, arrSuggHtml', note: 'Works (3.180.0; collected item Z-BASEDON): what a text says a work is based on – below the heading of a work in a classical track list a line "Comedy by Edmond Haraucourt, after Shakespeare", "Poem by …", "after …", "nach …", "d\'après …" – is looked up in MusicBrainz: a work of the heading\'s title (without its opus) by that author. Only when it is found, "based on" that work is suggested below the first of the heading\'s tracks in the works matrix, yellow, and staged only once confirmed with ✓ – for the suite of the heading when it is one (once MusicBrainz has the suite), else for the track\'s new work. Nothing is created for the work it is based on; a suggestion not confirmed is no open point' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6779,6 +6787,8 @@
   const CL_ARR = /^(arr|arranged\s+by|arrangement|trans|transcr|transcribed\s+by|transcription|orch|orchestrated\s+by|orchestration|bearb|bearbeitung|bearbeitet\s+von)\.?\s*:?\s+(\p{Lu}.+)$/iu;
   const CL_ARR_ROLE = (w) => (/^orch/i.test(w) ? 'Orchestrated By' : 'Arranged By');
   const CL_BY = /^(?:[\p{L}\s,'’-]{0,40}\s)?by\s+(\p{Lu}[\p{L}.'’-]*(?:\s+[\p{L}.'’-]+){0,4}?)(?:,?\s+(?:after|nach|d['’]après)\s+.+)?$/u;
+  const CL_BASED = /\b(?:comedy|play|drama|tragedy|poem|novel|story|tale|fable|libretto|ballad|after|based\s+on|nach|d['’]après|schauspiel|drama|gedicht|roman|comédie|pièce|poème)\b/i;
+  const CL_OPUS_TAIL = /[,\s]+(?:op(?:us)?\.?\s*\d+[a-z]?(?:\s*(?:no|nr)\.?\s*\d+)?|(?:bwv|hwv|kv|k\.|d\.|h\.|rv|woo)\s*\d+[a-z]?)$/i;
   const CL_NAME_TAIL = /\s+(?:père|fils|jr\.?|sr\.?|junior|senior|the\s+elder|the\s+younger|d\.\s?[äj]\.)$/i;
   const CL_NOT_NAME = /\b(?:op|no|nr|bwv|hwv|kv|k|d|h|rv|version|live|edit|mix|remix|remaster(?:ed)?|bonus|reprise|instrumental|excerpt|fragment)\b\.?/i;
   /**
@@ -10448,8 +10458,9 @@
       const endWork = () => {
         if (work && work.specs.length) {
           work.roles.forEach(([role, name]) => work.specs.forEach((s) => add(`${role}: ${name}`, s, work.raw)));
-          const set = work.specs.length > 1 && P.resolveTracks ? P.resolveTracks(work.specs[0]) : null;
-          if (set && set.size) P.headings.push({ title: work.title, at: Math.min(...set), n: work.specs.length });
+          const set = (work.specs.length > 1 || work.based) && P.resolveTracks ? P.resolveTracks(work.specs[0]) : null;
+          if (set && set.size && work.specs.length > 1) P.headings.push({ title: work.title, at: Math.min(...set), n: work.specs.length });
+          if (set && set.size && work.based) P.based.push({ title: work.title.replace(CL_OPUS_TAIL, '').trim(), by: work.based, at: Math.min(...set) });
         }
         work = null;
       };
@@ -10520,6 +10531,9 @@
         const by = t.replace(/^\(|\)$/g, '').match(CL_BY);
         if (by && work && !work.specs.length && ruleOn('S308')) {
           work.roles.push([beside(), by[1]]);
+          // [Z-BASEDON] (3.180.0, S315) "Comedy by Edmond Haraucourt, after Shakespeare" below "Shylock Op.57": the work may be based on
+          // his – of the same title (looked up in MusicBrainz, offered only when found)
+          if (CL_BASED.test(t)) work.based = by[1];
           P.ignored.push({ text: l, why: 'heading' });
           out[i] = '';
           continue;
@@ -13908,7 +13922,7 @@
       }
       if (!P.ctx0.noAlt && P.credits.some((c) => c.stackAmbig)) {
         const alt = parse(P.text, { ...P.ctx0, stackUp: !P.stackUp, noAlt: true });
-        return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings };
+        return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings, based: P.based };
       }
       // [Z-VINYLONLY] (3.161.0, S293) "Vinyl distribution: X", "Digital distribution by X": the distributor of that medium only
       if (P.distMedium.size) {
@@ -13943,6 +13957,7 @@
       P.distMedium = new Map(); // [Z-VINYLONLY] (3.161.0, S293) the medium named before "distribution": name (norm) → word
       P.recArrNames = new Set(); // [Z-ARRGEN] (3.177.0) the arrangers of the works of a classical track list (norm)
       P.bkLineup = new Map(); // [Z-TRACKSOLOIST] (3.177.0) the names of a booklet's lineup with their roles
+      P.based = []; // [Z-BASEDON] (3.180.0) what a work of the text is based on: { title, by, at }
       P.headings = []; // [Z-CLASSICALLIST] (3.177.0) the works of a classical track list: { title, at, n }
       P.scanTracks = []; // [Z-OCRTRACKCHECK] (3.154.0) the lines of a track list with lengths: { line, pos, title, len }
       P.textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
@@ -14145,7 +14160,7 @@
       // (the last stage returns the result itself when the text is read a second time the other way round, S058)
       const early = stageFinish(P);
       if (early) return early;
-      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings };
+      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings, based: P.based };
     }
 
     /**
@@ -14201,6 +14216,7 @@
         groups: res.groups || [], // [Z-TBY] (3.59.0, S087)
         songs: res.songs || [], // [Z-YTW] (3.80.0, S118)
         headings: res.headings || [], // [Z-CLASSICALLIST] (3.177.0, S307) the works of a classical track list: suites to offer
+        based: res.based || [], // [Z-BASEDON] (3.180.0, S315)
       };
     }
 
@@ -15868,9 +15884,16 @@
       for (const r of list) {
         // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm: only once confirmed (✓)
         if (r.confirm && !r.confirmed) continue;
-        const lt = r.kind === 'arrangement' ? E.idx().arrangementLt : E.idx().quoteLt;
+        const lt = r.kind === 'arrangement' ? E.idx().arrangementLt : r.kind === 'based' ? E.idx().basedLt : E.idx().quoteLt;
         // ([Z-MDLY] 3.98.0) the work of a part of the track (by its key "4.2"), else the track's work
-        const w = r.part ? E.worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) : E.worksForTrack(i)[0];
+        let w = r.part ? E.worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) : E.worksForTrack(i)[0];
+        // [Z-BASEDON] (3.180.0, S315) "based on" for the work of the heading: the suite its track is a part of, once MusicBrainz has it
+        if (r.kind === 'based') {
+          const part = (E.S.workParts.get(i) || []).find((p) => p.suite);
+          const sw = part ? [...E.S.suiteWorks.values()].find((x) => x.key === part.suite) : null;
+          if (sw && E.isPending(sw.gid)) continue;
+          if (sw) w = { gid: sw.gid, title: sw.title, origin: 'mb', planned: true };
+        }
         if (!lt || !w || r.state !== 'found' || !r.found) continue;
         // ((3.49.0, review) never a work with itself – an arranged cover still linked to the original needs a work of its own (Q-ff);
         // nor what MusicBrainz has already)
@@ -17011,7 +17034,8 @@
     const out = [];
     for (const t of S.mbTracks) {
       if (!matrixTrack(t)) continue;
-      const arr = tradArrangers(t.idx);
+      // ([Z-ARRGEN] 3.180.0, S314: also the new work that is confirmed as an arrangement of another work)
+      const arr = tradArrangers(t.idx).length ? tradArrangers(t.idx) : ownArrangers(t.idx);
       if (!arr.length) continue;
       const auto = tr('arrcom.text', { names: arr.join(' & ') });
       // ((review) only works not staged yet: a work in the editor keeps what it was staged with)
@@ -18318,6 +18342,8 @@
       partsLt: findLt('work', 'work', 'parts'),
       // [Z-EXC] (3.49.0) an arrangement of a work; lyrics quoted from another work
       arrangementLt: findLt('work', 'work', 'arrangement'),
+      // [Z-BASEDON] (3.180.0, S315) a work based on another (a play, a poem, a theme)
+      basedLt: findLt('work', 'work', 'based on'),
       quoteLt: findLt('work', 'work', 'lyrical quotation'),
       // [Z-RMXTITLE] (3.126.0) a recording that is a remix of another ("remix of", 230)
       remixLt: findLt('recording', 'recording', 'remix'),
@@ -22569,7 +22595,7 @@
     (S.playsAsk || []).filter((q) => !q.done).forEach((q) => add('must', 'plays', `plays:${q.id}`, { q }));
     if (ruleOn('S217') && S.dgLineup && !S.dgLineup.done) add('must', 'dgl', 'dgl'); // [Z-DGLINEUP] (3.130.0, S217)
     if (ruleOn('S223') && S.rmdAsk && !S.rmdAsk.done && S.rmdAsk.items.length) add('can', 'rmd', 'rmd'); // [Z-GAPREFRESH2] (3.135.0)
-    [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
+    [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && x.kind !== 'based' && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
     // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
     if (ruleOn('S197') && dedBoxShown()) (S.dedSugg || []).forEach((x) => add('can', 'ded', `ded:${x.key}`, { dk: x.key }));
@@ -28670,6 +28696,7 @@
       rel.stackAlt = [...(rel.stackAlt || []), ...relAlt.credits.filter((c) => c.fromNotes && c.stackAmbig)];
     }
     // [Z-CLASSICALLIST] (3.177.0, S307) the works of a classical track list in the notes: headings as Discogs's own (suites to offer)
+    if ((res.based || []).length) rel.based = [...(rel.based || []), ...res.based]; // [Z-BASEDON] (3.180.0, S315)
     if ((res.headings || []).length) rel.headings = [...(rel.headings || []), ...res.headings.filter((h) => !(rel.headings || []).some((x) => x.at === h.at))];
     // [S295] (3.163.0; F-NOTESRESULTS) what the notes name besides credits: series, ensembles, live heads, covers and quotes of tracks,
     // headings of groups – as from every other free text. A series Discogs lists already is not taken twice.
@@ -31704,7 +31731,7 @@
         try {
           const fromEntity = isPending(it.fromGid) ? pendingWorkEntity(it.fromGid) : await fetchJsEntity(it.fromGid);
           const toEntity = await fetchJsEntity(it.toGid);
-          const st = dispatchAddRelationship(fromEntity, toEntity, it.lt.id, [], '', null, it.rel === 'arrangement');
+          const st = dispatchAddRelationship(fromEntity, toEntity, it.lt.id, [], '', null, it.rel === 'arrangement' || it.rel === 'based');
           if (st) {
             S.staged.set(it.key, { state: st, source: fromEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true, noteKind: 'workRels' });
             S.appliedKeys.add(it.key);
@@ -39438,7 +39465,7 @@
         // [Z-SU] (3.41.2) a part of a suite
         : it.kind === 'suite-part' ? [tr('preview.suitePart', { suite: it.suiteTitle, n: it.linkOrder }) + (attrText ? ` (${attrText})` : '')]
         // [Z-EXC] (3.49.0)
-        : it.kind === 'work-rel' ? [tr(it.rel === 'arrangement' ? 'preview.arrangementOf' : 'preview.quotesFrom', { title: it.toTitle })]
+        : it.kind === 'work-rel' ? [tr(it.rel === 'arrangement' ? 'preview.arrangementOf' : it.rel === 'based' ? 'preview.basedOn' : 'preview.quotesFrom', { title: it.toTitle })]
         : it.kind === 'rec-rel' ? [tr('preview.remixOf', { title: it.toTitle })] // [Z-RMXTITLE] (3.126.0)
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
@@ -41296,13 +41323,25 @@
     };
     (rel.covers || []).forEach((c) => onTracks(c.title, c.tracks).forEach((i) => { if (!S.textCovers.has(i)) covers.set(i, { by: c.by, title: c.title, arranged: !!c.arranged }); }));
     (rel.quotes || []).forEach((q) => onTracks(q.title, q.tracks).forEach((i) => { if (!S.textQuotes.has(i)) quotes.set(i, { work: q.work, by: q.by }); }));
-    if (!covers.size && !quotes.size) return;
+    // [Z-BASEDON] (3.180.0, S315) what a text says a work is based on ("Comedy by Edmond Haraucourt" below "Shylock Op.57"): looked up in
+    // MusicBrainz by its title and its author; found: suggested at the first of its tracks, staged only once confirmed (✓)
+    const based = [];
+    if (ruleOn('S315')) {
+      (rel.based || []).forEach((b) => {
+        const i = Number.isInteger(b.at) ? b.at : -1;
+        if (!S.mbTracks[i] || !b.title || !b.by) return;
+        const has = ((S.workRels && S.workRels.get(i)) || []).some((x) => x.kind === 'based' && norm(x.title) === norm(b.title) && norm((x.by || [])[0]) === norm(b.by));
+        if (!has) based.push([i, b]);
+      });
+    }
+    if (!covers.size && !quotes.size && !based.length) return;
     covers.forEach((c, i) => S.textCovers.set(i, c));
     quotes.forEach((q, i) => S.textQuotes.set(i, q));
     const add = (i, r) => S.workRels.set(i, [...(S.workRels.get(i) || []), { ...r, state: 'search', found: null }]);
     quotes.forEach((q, i) => add(i, { kind: 'quote', title: q.work, by: [q.by] }));
     // ((3.49.0, review) the title of the work – without the bracket of the track title: "[live]", "[feat. X]")
     covers.forEach((c, i) => { if (c.arranged) add(i, { kind: 'arrangement', title: workTitleOf(S.mbTracks[i].title), by: writerNamesOf(i) }); });
+    based.forEach(([i, b]) => { S.arrSeq = (S.arrSeq || 0) + 1; add(i, { kind: 'based', title: b.title, by: [b.by], confirm: true, confirmed: false, from: 'text', id: S.arrSeq }); });
     S.coverPass = (S.coverPass || 0) + 1;
     findWorkRels();
   }
@@ -41335,6 +41374,7 @@
             && (w.relations || []).some((x) => x.artist && (ids.includes(x.artist.id) || names.some((n) => norm(n) === norm(x.artist.name)))));
           r.found = hit ? { gid: hit.id, title: hit.title, writers: uniq((hit.relations || []).filter((x) => x.artist).map((x) => x.artist.name)) } : null;
           r.state = hit ? 'found' : 'none';
+          if (hit && r.kind === 'based') log('info', 'basedFound', { track: trackLabel(S.mbTracks[i]), title: hit.title, by: (r.by || []).join(', ') });
         } catch (e) {
           r.state = 'error';
           r.error = String(e.message || e);
@@ -41351,6 +41391,8 @@
    * linked; several candidates a list ("Title – n recordings"); confirmed: marked, "↺" takes it back. A part names its title.
    */
   function arrSuggHtml(i, r, n) {
+    // ([Z-BASEDON] 3.180.0, S315: the same line for "based on")
+    const K = (k) => `${r.kind === 'based' ? 'basedsugg' : 'arrsugg'}.${k}`;
     const part = r.part ? (worksForTrack(i).find((x) => String(x.gid).replace(/^pending:/, '') === r.part) || {}).title : '';
     // ([Z-ARRUI] 3.99.0) one line: "Part → arrangement of [list ▾] ↗ ✓" – the list instead of a second link, ↗ the chosen work
     const who = part ? `${part} → ` : '';
@@ -41359,7 +41401,7 @@
     const count = (c) => (c.recordings != null ? ` – ${tr('arrsugg.recordings', { n: c.recordings })}` : '');
     const pick = !r.confirmed && cands.length > 1 ? ` <select data-f="mx-arr-cand" data-n="${n}" aria-label="${esc(tr('arrsugg.pickAria'))}">${cands.map((c) => `<option value="${esc(c.gid)}" ${c.gid === r.found.gid ? 'selected' : ''}>${esc(`${c.title}${c.disambiguation ? ` (${c.disambiguation})` : ''}${count(c)}`)}</option>`).join('')}</select>` : '';
     if (r.confirmed) {
-      return `<span class="dci-mx-wnote dci-mx-arrok" data-wnote="arrsugg" data-wstate="ok" title="${esc(tr('arrsugg.okTitle', { title: r.found.title }))}">${esc(who)}${esc(tr('arrsugg.of'))} ${link} ✓
+      return `<span class="dci-mx-wnote dci-mx-arrok" data-wnote="arrsugg" data-wstate="ok" title="${esc(tr(K('okTitle'), { title: r.found.title }))}">${esc(who)}${esc(tr(K('of')))} ${link} ✓
         <button type="button" class="dci-textbtn" data-act="arr-undo" data-n="${n}" title="${esc(tr('arrsugg.undoTitle'))}">↺</button></span>`;
     }
     const only = cands.length === 1 ? count(cands[0]) : '';
@@ -41368,14 +41410,14 @@
       <a class="dci-mblink" href="/work/${esc(r.existing.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(r.existing.title)}</a>${r.existing.disambiguation ? ` <span class="dci-disamb">(${esc(r.existing.disambiguation)})</span>` : ''}
       <button type="button" class="dci-small" data-act="arr-existing" data-n="${n}">${esc(tr('arrsugg.useExisting'))}</button></span>` : '';
     const open = `<a class="dci-mx-arropen" href="/work/${esc(r.found.gid)}" target="_blank" rel="noopener" title="${esc(tr('arrsugg.openTitle', { title: r.found.title }))}" aria-label="${esc(tr('arrsugg.openTitle', { title: r.found.title }))}">↗</a>`;
-    return `<span class="dci-mx-wnote dci-mx-arrsugg" data-wnote="arrsugg" data-wstate="ask" title="${esc(tr('arrsugg.askTitle', { title: r.found.title }))}"><span class="dci-mx-arrwho">${esc(who)}${esc(tr('arrsugg.of'))}</span> ${pick ? `${pick.trim()} ${open}` : `${link}${esc(only)}`}?
-      <button type="button" class="dci-small dci-wts-ok" data-act="arr-ok" data-n="${n}" title="${esc(tr('arrsugg.okBtnTitle'))}">✓</button>${ex}</span>`;
+    return `<span class="dci-mx-wnote dci-mx-arrsugg" data-wnote="arrsugg" data-wstate="ask" title="${esc(tr(K('askTitle'), { title: r.found.title }))}"><span class="dci-mx-arrwho">${esc(who)}${esc(tr(K('of')))}</span> ${pick ? `${pick.trim()} ${open}` : `${link}${esc(only)}`}?
+      <button type="button" class="dci-small dci-wts-ok" data-act="arr-ok" data-n="${n}" title="${esc(tr(K('okBtnTitle')))}">✓</button>${ex}</span>`;
   }
   /** [Z-WNEW] [Z-MDLY] (3.98.0, review) A suggestion whose work is still there (a part joined, linked or split anew: gone). */
   const arrLive = (i, r) => !r.confirm || (r.part ? worksForTrack(i).some((x) => x.planned && isPending(x.gid) && String(x.gid).replace(/^pending:/, '') === r.part)
     : worksForTrack(i).some((x) => x.planned && isPending(x.gid)));
   /** [Z-WNEW] [Z-MDLY] (3.98.0) The suggestions of "arrangement of" not confirmed yet (not staged). */
-  const arrUnconfirmed = () => [...(S.workRels || new Map())].flatMap(([i, l]) => l.filter((r) => r.confirm && !r.confirmed && arrLive(i, r))).length;
+  const arrUnconfirmed = () => [...(S.workRels || new Map())].flatMap(([i, l]) => l.filter((r) => r.confirm && !r.confirmed && r.kind !== 'based' && arrLive(i, r))).length;
   /** [Z-WNEW] [Z-MDLY] (3.98.0, review) A suggestion by its id (the list may change meanwhile). */
   const arrById = (i, id) => ((S.workRels && S.workRels.get(i)) || []).find((r) => String(r.id) === String(id)) || null;
 
@@ -41394,7 +41436,8 @@
     for (const r of rels) {
       // [Z-WNEW] [Z-MDLY] (3.98.0) a suggestion to confirm
       if (r.confirm) {
-        if (arrLive(i, r)) out.push(arrSuggHtml(i, r, r.id));
+        // ([Z-BASEDON] 3.180.0: "based on" only once its work is found in MusicBrainz)
+        if (arrLive(i, r) && r.found) out.push(arrSuggHtml(i, r, r.id));
         continue;
       }
       const label = tr(r.kind === 'arrangement' ? 'wnote.arrangementOf' : 'wnote.quotesFrom', { title: r.title, by: (r.by || []).join(', ') || '–' });
@@ -46429,6 +46472,18 @@
   function tradArrangers(i) {
     if (!ruleOn('S157') || !writerEntriesOf(i).some((a) => a.mbid === TRAD_MBID)) return [];
     return uniq(S.rows.filter((r) => r.level !== 'skip' && (!r.tracks || !r.tracks.size || r.tracks.has(i)) && norm(rowTypeName(r)) === 'arranger')
+      .map((r) => S.artists.get(r.artistKey)).filter(Boolean).map((a) => a.mbName || a.name).filter(Boolean));
+  }
+
+  /**
+   * [Z-ARRGEN] (3.180.0, S314) The arrangers of a track whose new work is an arrangement of its own – "arrangement of" another work,
+   * confirmed (✓) or said by the source: their names as in MusicBrainz, for the disambiguation "<arrangers> arrangement"; [] otherwise.
+   */
+  function ownArrangers(i) {
+    if (!ruleOn('S314')) return [];
+    const rels = (S.workRels && S.workRels.get(i)) || [];
+    if (!rels.some((r) => r.kind === 'arrangement' && r.found && (!r.confirm || r.confirmed))) return [];
+    return uniq(S.rows.filter((r) => r.level !== 'skip' && (!r.tracks || !r.tracks.size || r.tracks.has(i)) && ARRANGER_TYPES.includes(norm(rowTypeName(r))))
       .map((r) => S.artists.get(r.artistKey)).filter(Boolean).map((a) => a.mbName || a.name).filter(Boolean));
   }
 
@@ -52926,7 +52981,7 @@
         const r = arrById(i, btn.dataset.n);
         if (!r) break;
         r.confirmed = act === 'arr-ok';
-        log('info', r.confirmed ? 'arrConfirmed' : 'arrUnconfirmed', { track: trackLabel(S.mbTracks[i]), title: r.found.title });
+        log('info', r.confirmed ? 'arrConfirmed' : 'arrUnconfirmed', { track: trackLabel(S.mbTracks[i]), title: (r.found || {}).title || r.title });
         renderWorks();
         refresh();
         break;

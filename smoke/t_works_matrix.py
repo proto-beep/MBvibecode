@@ -1732,6 +1732,81 @@ def case_wnew398():
 
 
 
+def case_based3180():
+    """Credits Importer 3.180.0 (collected items Z-BASEDON – S315, Z-ARRGEN – S314).
+    The notes hold a classical track list: "Gabriel Fauré 1845–1924" / "Shylock Op.57" / "Comedy by Edmond Haraucourt, after
+    Shakespeare" / tracks 2–4. MusicBrainz has a work "Shylock" by Edmond Haraucourt.
+    A) Track 2 has no work yet: nothing about "based on" in its line.
+    B) "＋ New" at track 2: below its title "based on MB Shylock" in yellow with ✓ (the work found by its title and its author).
+    C) Staged without ✓: no "based on" in the relationship editor – and no open point because of it.
+    D) ✓, staged again: "Shylock" (the play) – based on – the new work, the play first.
+    E) (S314) Track 1 is linked to a work of MusicBrainz and has an arranger (Discogs: "Arranged By – Bass Man" on track 1): "＋ New"
+       there and "arrangement of" confirmed – the footer offers the disambiguation "Bass Man arrangement" for the new work."""
+    H.lt(350, H.uid('1aaa0000', 350), 'arrangement', 'work', 'work')
+    H.lt(351, H.uid('1aaa0000', 351), 'based on', 'work', 'work')
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    PLAY, AUTHOR = H.uid('cccccccc', 180), H.uid('ab1be400', 180)
+    H.WORK_SEARCH.append({'id': PLAY, 'title': 'Shylock', 'aliases': [], 'relations': [{'type': 'writer', 'direction': 'backward', 'artist': {'id': AUTHOR, 'name': 'Edmond Haraucourt'}}]})
+    H.COMPANIES[7180] = ('work', PLAY, 'Shylock')
+    NOTES = """Gabriel Fauré 1845–1924
+
+Shylock Op.57
+Comedy by Edmond Haraucourt, after Shakespeare
+2 I. Song 2.44
+3 II. Entracte 3.55
+4 III. Madrigal 1.21"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['tracklist'][0]['extraartists'] = [{'name': 'Bass Man', 'anv': '', 'role': 'Arranged By', 'tracks': '', 'id': 3001, 'join': ''}]
+        return d
+
+    H.discogs_release = rel
+    ROW = """(i) => { const t = document.querySelector(`.dci-matrix tr[data-work="${i}"]`); return t ? { sugg: [...t.querySelectorAll('[data-wnote=arrsugg]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()),
+      ok: !!t.querySelector('[data-act=arr-ok]'), newWork: !!t.querySelector('.dci-badge-plan') } : null; }"""
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 351 || r.linkTypeID === 350).map(r => [r.linkTypeID, r.entity0.gid || ('new:' + r.entity0.name), r.entity1.gid || ('new:' + r.entity1.name)]))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('.dci-matrix tr[data-work=\"1\"] [data-act=work-pending]')", 60)
+        pg.wait_for_timeout(1500)
+        a0 = pg.evaluate(ROW, 1)
+        print('A)', a0, '| Suche:', [q for q in H.WORK_QUERIES if 'Shylock' in q][:1])
+        results.append(a0 is not None and not a0['sugg'] and any('Shylock' in q and 'Edmond Haraucourt' in q for q in H.WORK_QUERIES))
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+        b0 = pg.evaluate(ROW, 1)
+        print('B)', b0)
+        results.append(b0['newWork'] and b0['ok'] and len(b0['sugg']) == 1 and 'based on' in b0['sugg'][0] and 'Shylock' in b0['sugg'][0])
+        H.stage_click(pg, least=3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
+        c0 = pg.evaluate(STAGED)
+        logs = ' | '.join(x for x in pg.locator('#dci-log li').all_inner_texts() if 'not confirmed' in x)
+        print('C)', c0, '|', logs[:160])
+        results.append(not [x for x in c0 if x[0] == 351] and 'arrangement of' not in logs)
+        pg.locator('.dci-matrix tr[data-work="1"] [data-act=arr-ok]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        H.stage_click(pg, least=3500)
+        d0 = [x for x in pg.evaluate(STAGED) if x[0] == 351]
+        print('D)', d0)
+        results.append(d0 == [[351, PLAY, 'new:Song Two']])
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=wnew-on]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+        pg.locator('.dci-matrix tr[data-work="0"] [data-act=arr-ok]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+        e0 = pg.evaluate("(e => e && !e.hidden ? e.textContent.replace(/\\s+/g, ' ').trim() : '')(document.querySelector('[data-el=arrcom]'))")
+        print('E)', e0[:200])
+        results.append('Bass Man arrangement' in e0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_workdate3130():
     """Credits Importer 3.130.0 (collected items Z-WORKDATE, Z-WORKUNDO; rules S215): track 1 is linked to a work in MusicBrainz (its link
     without a date); the dates of the Discogs notes applied in the date matrix (Performance 2001-03).
