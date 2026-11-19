@@ -6786,7 +6786,7 @@
    * a place or a company of the same activity ("Printed By – Druckerei Fischer", "Recorded At – Alchemia Club") for the same tracks –
    * or for all. The town of a studio without a name (S273) is not such an area.
    */
-  function areaCoveredBy(c, list) {
+  function areaCoveredBy(c, list, lineNo = null) {
     const verbOf = (role) => {
       const m = norm(role).match(/^(.*?)\s+(in|at|by)$/);
       return m ? [m[1].replace(/^(?:made|pressed)$/, 'manufactured').replace(/^overdubbed$/, 'recorded').replace(/^(?:lacquers cut|cut)$/, 'lacquer cut'), m[2]] : null;
@@ -6795,7 +6795,13 @@
     if (!v || v[1] !== 'in' || c.entity === 'area') return false;
     const some = (t) => !!(t && !t.all && (t.indexes || []).length);
     const overlap = (a, b) => !some(a) || !some(b) || a.indexes.some((i) => b.indexes.includes(i));
-    return (list || []).some((o) => { const w = o !== c && verbOf(o.role); return !!w && w[1] !== 'in' && w[0] === v[0] && overlap(o.tracks, c.tracks); });
+    // (what is made once for the release – printing, manufacturing, the lacquer cut, the transfer – has one place: the company covers the
+    // country. Recording, mixing … can happen in several places: there the place covers the area only when it is that place's own area
+    // ("Recorded at Studio X, Berlin" / "Recorded in Berlin") or the two stand in lines next to each other)
+    const once = /^(?:printed|manufactured|lacquer cut|transferred|glass mastered|plated)$/.test(v[0]);
+    const near = (o) => once || (o.who && o.who.area && norm(o.who.area).split(/\s*,\s*/).includes(norm(c.who && c.who.name)))
+      || (lineNo && /^\s*\p{L}+(?:\s+\p{L}+)?\s+in\s/iu.test(String(c.line || '')) && lineNo(o) >= 0 && lineNo(c) >= 0 && Math.abs(lineNo(o) - lineNo(c)) === 1);
+    return (list || []).some((o) => { const w = o !== c && verbOf(o.role); return !!w && w[1] !== 'in' && w[0] === v[0] && overlap(o.tracks, c.tracks) && near(o); });
   }
 
   // [Z-MEDIAHEAD] (3.178.0, S312, D037) a line only of media ("CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:") → their numbers, or null
@@ -13803,7 +13809,8 @@
       }
       // [Z-AREARELS] (3.179.0, S313) the area of an activity the text names a place or a company for: left out – that is more precise
       if (ruleOn('S313')) {
-        const covered = P.companies.filter((c) => areaCoveredBy(c, P.companies));
+        const lineNo = (x) => P.allLines.findIndex((l) => !!x.line && (P.rawOf.get(l) || l).trim() === String(x.line).trim());
+        const covered = P.companies.filter((c) => areaCoveredBy(c, P.companies, lineNo));
         covered.forEach((c) => P.ignored.push({ text: c.line || `${c.role} ${c.who.name}`, why: 'areaCovered' }));
         if (covered.length) P.companies = P.companies.filter((c) => !covered.includes(c));
       }
