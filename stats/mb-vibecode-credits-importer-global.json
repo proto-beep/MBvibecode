@@ -7,13 +7,13 @@
   "MB x Vibecode: Credits Importer",
   "MB x Vibecode: Import Discogs credits"
  ],
- "dump": "20261114-002230",
- "generated": "2026-11-17T09:54:50Z",
+ "dump": "20261118-002316",
+ "generated": "2026-11-19T14:58:48Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits, releases or URLs; \"editors\" is how many different ones",
  "totals": {
-  "edits": 7663,
-  "submissions": 93,
+  "edits": 8092,
+  "submissions": 97,
   "editors": 1
  },
  "by_month": {
@@ -23,8 +23,8 @@
    "editors": 1
   },
   "2026-11": {
-   "edits": 2803,
-   "submissions": 33,
+   "edits": 3232,
+   "submissions": 37,
    "editors": 1
   }
  },
@@ -206,105 +206,113 @@
    "submissions": 3
   },
   "3.142.0": {
-   "edits": 201,
+   "edits": 275,
+   "submissions": 3
+  },
+  "3.145.0": {
+   "edits": 192,
+   "submissions": 1
+  },
+  "3.150.0": {
+   "edits": 163,
    "submissions": 2
   }
  },
  "by_edit_type": {
-  "90 Add relationship": 6990,
-  "41 Add work": 416,
+  "90 Add relationship": 7351,
+  "41 Add work": 434,
+  "91 Edit relationship": 105,
   "72 Edit recording": 101,
-  "1 Add artist": 69,
-  "91 Edit relationship": 60,
+  "1 Add artist": 73,
   "92 Remove relationship": 11,
   "10 Add label": 8,
-  "61 Add place": 7,
+  "61 Add place": 8,
   "140 Add series": 1
  },
  "by_status": {
-  "applied": 7659,
-  "open": 4
+  "applied": 8091,
+  "open": 1
  },
  "auto_edits": {
-  "auto-edit": 7652,
+  "auto-edit": 8081,
   "voted": 11
  },
  "by_relationship_type": {
-  "instrument": 2246,
-  "composer": 590,
-  "producer": 497,
-  "performance": 458,
-  "recording": 444,
-  "recorded at": 438,
-  "mix": 384,
-  "phonographic copyright": 288,
-  "performer": 174,
-  "vocal": 165,
-  "mixed at": 141,
+  "instrument": 2375,
+  "composer": 608,
+  "producer": 520,
+  "performance": 489,
+  "recorded at": 471,
+  "recording": 462,
+  "mix": 402,
+  "phonographic copyright": 300,
+  "performer": 186,
+  "vocal": 178,
+  "mixed at": 159,
   "writer": 139,
   "engineer": 132,
-  "editor": 91,
-  "discogs": 84,
-  "photography": 64,
-  "mastering": 57,
-  "arranger": 56,
-  "liner notes": 53,
-  "design": 51,
+  "editor": 97,
+  "discogs": 89,
+  "arranger": 68,
+  "photography": 65,
+  "mastering": 59,
+  "liner notes": 54,
+  "design": 53,
   "publishing": 50,
   "artwork": 49,
-  "copyright": 43,
+  "copyright": 45,
   "lyricist": 40,
   "recorded in": 28,
+  "other databases": 26,
   "mastered at": 24,
-  "member of band": 21,
-  "social network": 19,
+  "member of band": 24,
+  "social network": 21,
+  "manufactured": 16,
   "programming": 15,
   "graphic design": 15,
-  "manufactured": 14,
   "misc": 14,
+  "conductor": 14,
   "official homepage": 13,
   "allmusic": 11,
-  "other databases": 10,
   "composed in": 10,
   "produced in": 10,
   "field recordist": 9,
   "arrangement": 8,
   "edited at": 7,
+  "illustration": 7,
   "remixer": 7,
+  "named after artist": 7,
   "pressed": 6,
   "glass mastered at": 6,
-  "illustration": 6,
   "commissioned": 6,
-  "part of": 4,
+  "part of": 5,
+  "pressed at": 5,
   "distributed": 4,
-  "pressed at": 4,
   "audio": 4,
   "lacquer cut": 3,
   "production coordinator": 3,
+  "wikidata": 3,
+  "VIAF": 3,
   "printed": 2,
   "personal publisher": 2,
   "glass mastered": 2,
   "youtube": 2,
-  "produced for": 2,
-  "is person": 2,
-  "lacquer cut at": 2,
-  "published": 2,
-  "conductor": 2
+  "produced for": 2
  },
  "by_source": {
-  "discogs": 70,
-  "bandcamp": 19,
+  "discogs": 73,
+  "bandcamp": 20,
   "youtube": 3,
   "other": 1
  },
  "supplements": {},
  "supplemented": {
   "n": 0,
-  "of": 93
+  "of": 97
  },
  "source_mix": {
-  "discogs": 70,
-  "bandcamp": 19,
+  "discogs": 73,
+  "bandcamp": 20,
   "youtube": 3,
   "other": 1
  },
@@ -314,13 +322,14 @@
   "commissioned": 6
  },
  "done": {
-  "credit relationships": 6039,
-  "works linked": 453
+  "credit relationships": 6326,
+  "works linked": 471,
+  "dates added": 13
  },
  "done_by_level": {
-  "recording": 4707,
-  "work": 793,
-  "release": 537,
+  "recording": 4948,
+  "work": 817,
+  "release": 559,
   "release group": 2
  },
  "levels": {
@@ -329,62 +338,62 @@
    "supplemented": 0
   },
   "release": {
-   "new": 0,
+   "new": 2,
    "supplemented": 0
   },
   "recording": {
-   "new": 0,
+   "new": 20,
    "supplemented": 0
   }
  },
  "created": {
-  "artist": 69,
+  "artist": 73,
   "label": 8,
-  "place": 7,
+  "place": 8,
   "series": 1,
   "event": 0,
-  "work": 416
+  "work": 434
  },
  "per_release": {
-  "n": 92,
+  "n": 96,
   "rels": {
-   "mean": 65.6413043478261,
+   "mean": 65.89583333333333,
    "median": 49.5
   },
   "by_level": {
    "recording": {
-    "mean": 51.16304347826087,
+    "mean": 51.541666666666664,
     "median": 41.0
    },
    "release": {
-    "mean": 5.836956521739131,
+    "mean": 5.822916666666667,
     "median": 5.0
    },
    "work": {
-    "mean": 8.619565217391305,
+    "mean": 8.510416666666666,
     "median": 3.5
    },
    "release group": {
-    "mean": 0.021739130434782608,
+    "mean": 0.020833333333333332,
     "median": 0.0
    }
   }
  },
  "credits": {
   "credited_as": {
-   "n": 631,
-   "of": 6451
+   "n": 653,
+   "of": 6793
   }
  },
  "linked": {
   "artist": {
-   "n": 524
+   "n": 550
   },
   "label": {
-   "n": 67
+   "n": 69
   },
   "place": {
-   "n": 83
+   "n": 88
   },
   "area": {
    "n": 6
@@ -393,60 +402,62 @@
    "n": 5
   },
   "work": {
-   "n": 447
+   "n": 465
   }
  },
  "rows_read": {
-  "edit": 152071939,
-  "edit_data": 152071938,
-  "edit_note": 107336026,
-  "edit_release": 220111570
+  "edit": 152388955,
+  "edit_data": 152388954,
+  "edit_note": 107607717,
+  "edit_release": 220818665
  },
  "core": {
-  "dump": "20261111-002335",
+  "dump": "20261118-002316",
   "artists": {
-   "n": 466,
-   "of": 467,
+   "n": 549,
+   "of": 550,
    "types": {
-    "Person": 444,
-    "-": 7,
-    "Group": 7,
+    "Person": 516,
+    "Group": 16,
+    "-": 9,
     "Other": 7,
     "Orchestra": 1
    },
    "genders": {
-    "Male": 356,
-    "Female": 48,
+    "Male": 407,
+    "Female": 64,
     "Not applicable": 2
    },
    "decades": {
-    "1940s": 39,
-    "1950s": 37,
-    "1970s": 32,
-    "1960s": 26,
-    "1930s": 17,
+    "1970s": 42,
+    "1940s": 42,
+    "1950s": 42,
+    "1960s": 33,
+    "1930s": 19,
+    "1980s": 12,
     "1920s": 9,
-    "1980s": 7,
+    "2000s": 5,
     "1990s": 4,
-    "2000s": 4,
+    "1900s": 1,
     "1780s": 1,
+    "2010s": 1,
     "1890s": 1,
     "1910s": 1,
     "1880s": 1
    },
    "countries": {
-    "US": 98,
-    "GB": 53,
-    "CH": 19,
-    "FR": 17,
+    "US": 120,
+    "GB": 57,
+    "CH": 21,
+    "DE": 19,
+    "FR": 19,
+    "SE": 14,
+    "JP": 13,
     "NO": 12,
-    "DE": 12,
-    "JP": 12,
-    "IE": 11,
-    "SE": 7,
-    "CA": 7,
+    "IE": 12,
+    "CA": 9,
     "IT": 7,
-    "PL": 5,
+    "PL": 7,
     "PT": 4,
     "NL": 4,
     "LT": 4,
@@ -460,14 +471,17 @@
     "ZA": 1,
     "TR": 1,
     "FI": 1,
+    "CU": 1,
     "LU": 1,
     "TH": 1,
-    "IN": 1
+    "IN": 1,
+    "KR": 1
    },
    "towns": {
     "Chicago": 12,
+    "New York": 7,
     "London": 5,
-    "New York": 4,
+    "Boston": 4,
     "Sogndal": 4,
     "Sheffield": 3,
     "Los Angeles": 3,
@@ -476,21 +490,20 @@
     "Brooklyn": 3,
     "Bristol": 2,
     "Falkirk": 2,
+    "Vancouver": 2,
     "Waukegan": 2,
+    "Birmingham": 2,
+    "Cleveland": 2,
     "Lisboa": 2,
     "Amsterdam": 2,
-    "Boston": 2,
-    "Bern": 2,
-    "Warsaw": 2,
-    "Steigen": 1,
-    "Alicante": 1,
-    "Tempe": 1
+    "Manchester": 2,
+    "Bern": 2
    },
    "centuries": {
     "1700": 1,
     "1800": 3,
-    "1900": 174,
-    "2000": 166
+    "1900": 207,
+    "2000": 201
    },
    "posthumous": {
     "n": 0,
@@ -498,56 +511,57 @@
    }
   },
   "releases": {
-   "n": 84,
+   "n": 96,
    "media": {
-    "single": 78,
-    "multi": 6
+    "single": 89,
+    "multi": 7
    },
    "rg_primary": {
-    "Album": 79,
+    "Album": 91,
     "Broadcast": 3,
     "Single": 1,
     "EP": 1
    },
    "rg_secondary": {
-    "Live": 32,
+    "Live": 35,
     "Soundtrack": 1
    },
    "languages": {
-    "eng": 71,
+    "eng": 82,
     "-": 5,
     "mul": 3,
     "ita": 1,
+    "spa": 1,
     "deu": 1,
     "fra": 1,
     "cat": 1,
     "nor": 1
    },
    "scripts": {
-    "Latn": 83,
+    "Latn": 95,
     "-": 1
    }
   },
   "lengths": {
-   "recordings": 564,
-   "median_ms": 383440.0,
-   "mean_ms": 484079.27482269506,
-   "releases": 81,
-   "release_median_ms": 3122000,
-   "release_mean_ms": 3351314.864197531
+   "recordings": 674,
+   "median_ms": 380000.0,
+   "mean_ms": 481347.4985163205,
+   "releases": 93,
+   "release_median_ms": 3184000,
+   "release_mean_ms": 3478918.1720430106
   },
   "role_credits": {
-   "n": 724,
-   "of": 2044
+   "n": 831,
+   "of": 2357
   },
   "per_release": {
-   "n": 84,
+   "n": 96,
    "recordings": {
-    "mean": 6.869047619047619,
-    "median": 6.0
+    "mean": 7.166666666666667,
+    "median": 6.5
    },
    "rels_per_recording": {
-    "mean": 7.439938387635756,
+    "mean": 7.279764465249663,
     "median": 7.0
    }
   },
