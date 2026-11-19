@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.182.0
+// @version      3.183.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.182.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.182.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.183.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.183.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.182.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.183.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -880,6 +880,7 @@
       "preview.attrCredit": "{name} as “{credit}”",
       "preview.artistCredit": "artist credit “{credit}”",
       "preview.noteOnly": "edit note only: “{text}”",
+      "preview.creditLeftOut": "left out: “{text}” (MusicBrainz has no field for it)",
       "manual.title": "Add entry manually",
       "manual.artistAria": "MusicBrainz entry",
       "manual.rolePlaceholder": "MB relationship type or a role as the source writes it, e.g. artwork or Guitar [Electric]",
@@ -4445,6 +4446,10 @@
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "ignored.why.members": "the members of {band}: {names} – each with the roles of the line; MusicBrainz keeps the members on the band (its own page)",
       "typeAsk.askSoundscapes": "“Soundscapes”: effects credited “soundscapes”, sound effects, or miscellaneous support credited “soundscapes”?",
+      "typeAsk.askLoops": "“Loops”: effects, a sampler, a drum machine or a synthesizer – credited “loops” – or no relationship?",
+      "typeAsk.askDrones": "“Drones”: effects, a synthesizer or a sampler – credited “drones” – or no relationship?",
+      "typeAsk.askOriginalArt": "“Original artwork”: artwork, illustration, or no relationship?",
+      "ignored.why.artworkDetail": "the title, year and technique of the picture on the cover: no credit",
       "members.note": "Members per the text: {names}",
       "members.edit": "edit the band in MusicBrainz ↗",
       "memberOf.add": "member of {group}",
@@ -5384,6 +5389,9 @@
     { id: 'S313', where: 'mapCompanyRole (C038–C045, C055, C057–C068), TEXT.parse (end: areaCovered), addNotesCompanies', note: 'Areas (3.179.0; collected items Z-AREARELS, Z-PRINTEDIN; a quick switch, on): every relationship between a release, a recording or a work and an area that MusicBrainz has is read from a text – "Recorded in Kraków", "Mixed in Berlin", "Printed in the UK", "Made in Germany" / "Manufactured in the EU" (manufactured in), "Lacquer cut in", "Programmed in", "Edited in", "Transferred in", and the writing: "Written in", "Composed in", "Lyrics written in", "Libretto written in", "Revised in", "Translated in", "Arranged in" (on the works first; the level of an entry can be switched as always). An area is not taken where the same text or source names a place or a company of the same activity ("Printed by X", "Recorded at Y", "Manufactured by Z"): that is more precise – the area is left out with this reason. Off: no relationship to an area is read' },
     { id: 'S314', where: 'ownArrangers, arrComProposals', note: 'Arrangement works (3.180.0; collected item Z-ARRGEN): an arranger named for a work with a known writer stays on the recordings and no work is made for the arrangement (S307; the level of the entry can be switched). An arrangement as a work of its own is made on a click: "＋ New" at a track whose work MusicBrainz has plans a new work with "arrangement of" that work to confirm (✓; S156) – once confirmed, the new work gets the disambiguation "<arrangers> arrangement" from the arrangers credited for the track, offered in the footer as for arrangements of traditional tunes (S158)' },
     { id: 'S315', where: 'classicalLines (CL_BASED), addWorkNotes, planWorkLinks, arrSuggHtml', note: 'Works (3.180.0; collected item Z-BASEDON): what a text says a work is based on – below the heading of a work in a classical track list a line "Comedy by Edmond Haraucourt, after Shakespeare", "Poem by …", "after …", "nach …", "d\'après …" – is looked up in MusicBrainz: a work of the heading\'s title (without its opus) by that author. Only when it is found, "based on" that work is suggested below the first of the heading\'s tracks in the works matrix, yellow, and staged only once confirmed with ✓ – for the suite of the heading when it is one (once MusicBrainz has the suite), else for the track\'s new work. Nothing is created for the work it is based on; a suggestion not confirmed is no open point' },
+    { id: 'S316', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.183.0; collected item Z-BYBREAK): a line that ends with "by" (von, par, por) is read as one line with the next line that is not empty – "All music composed and recorded by" above "Stefano Musso in Spring 2023."; not when the line below has a colon or a "by" of its own' },
+    { id: 'S317', where: 'tidyLines (BK_ORIG_ART, BK_ART_TECH), R130, Q027', note: 'Texts (3.183.0; collected item Z-ARTWORKLINE): "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London" – the name after the heading is the artist of the picture ("Original artwork": artwork suggested, illustration to choose – Q027); the title and year of the picture, its technique, edition and printer – in the line or in the lines below – are left out ("the picture on the cover"). Until 3.182.0 the heading became a name and "woodblock" an instrument' },
+    { id: 'S318', where: 'creditHasNoField, roleCreditFor, editNoteBlock', note: 'Role credits (3.183.0; collected item Z-NOCREDITTYPE): a detail of a type that has no field for a role credit in MusicBrainz – "Liner Notes [Spanish]": liner notes take neither "credited as" nor a task – is left out: the relationship is staged without it, its spelling is not asked ("Written small …"), and it is no line "Not stored in MB" of the edit note (the preview of the staging says "left out"). Off: as until 3.182.0' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -5505,7 +5513,7 @@
     { id: 'S080', where: 'sourceCreditFor, withoutAreaTail', note: 'Places and labels (3.51.0): the town or country after a comma in the name at the source – "Sound Development Studio, Zürich" – is no "credited as" when the rest is MusicBrainz\'s name ("Sound Development Studio": none) or the end is the area the source gives (the name without it); kept when it is part of MusicBrainz\'s name ("Studio, Zürich" for "Studio Zürich")' },
     // [3.50.0] collected items Z-PRO, Z-TAR
     { id: 'S079', where: 'TEXT.parse (readUnit, proseCredits)', note: 'Texts (3.50.0): a sentence that describes the music – "Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp, and SHelley Hirsch vocal." – the instruments or voices before a name in brackets are the name\'s (words before them, "Experimental", left out); after "with (special) guest(s)" each name with the instruments or voices after it ("Jane Roe (bass, vocals)", "Oliver Lake on saxophone" too), as a guest; "and" between two names ends the one before; other parts before "with" are read as usual. A make ("Fender Rhodes"), a place or an event ("Solo piano (Tokyo)", "Live At …") is no name. Only when every guest is read so (before: the sentence not recognized)' },
-    { id: 'S078', where: 'applyTrackArtistTracks', note: 'Track artists (3.50.0): the instruments, voices and "performer" of a person credited for the whole release go onto the tracks whose artist credit in MusicBrainz names the person (by the name of the entry, as written or as in MusicBrainz, or by its id) – when those are some of the tracks, not all ("David Watson & Makigami Koichi" on two tracks: Makigami Koichi\'s jaw harp on those two). Not for writers, producers and other roles; switched off the tracks as they came' },
+    { id: 'S078', where: 'applyTrackArtistTracks', note: 'Track artists (3.50.0): the instruments, voices and "performer" of a person credited for the whole release go onto the tracks whose artist credit in MusicBrainz names the person (by the name of the entry, as written or as in MusicBrainz, or by its id) – when those are some of the tracks, not all ("David Watson & Makigami Koichi" on two tracks: Makigami Koichi\'s jaw harp on those two). A track credited to the release\'s artist as a group, on which none of these people is named, excludes nobody (3.183.0, Z-BANDTRACKS: "Blue Shroud Band" on CD 5 – everybody stays on it; with the members of the group listed in the text, only they). Not for writers, producers and other roles; switched off the tracks as they came' },
     // [3.43.0] review of the text adapter (package P1 of the full review)
     { id: 'S077', where: 'TEXT.parse (namesScoped, readClause; bandNames)', note: 'Texts (3.43.0): names before a dash or colon are split like names after "by" – "Jane Roe & John Doe – vocals" gives two credits (before: one artist "Jane Roe & John Doe"); and a name of the release\'s artists is never cut at its "&", "and" or comma, on either side ("Produced by Simon & Garfunkel", "Florence and the Machine" – before: "Simon" and "Garfunkel")' },
     { id: 'S076', where: 'TEXT.parse (readClause, namesWithRoles; S055 items)', note: 'Texts (3.43.0): several names with their roles in brackets in one clause – "Jane Roe (bass, vocals), John Doe (drums)", "Featuring: Jane Roe (vocals), John Doe (guitar)" – each a credit of its own (before: one credit "Jane Roe (bass, vocals), John Doe" – drums)' },
@@ -6852,6 +6860,9 @@
     /^(?:DDD|ADD|AAD|DAD)$/,
     /^(?:TT|total(?:\s+playing)?\s+time|gesamt(?:spiel)?zeit)\s*:?\s*\d{1,3}\s?[:.'’]\s?\d{2}\b.{0,12}$/i,
   ];
+  // [Z-ARTWORKLINE] (3.183.0, S317)
+  const BK_ORIG_ART = /^(original\s+(?:art\s*work|cover\s+art|painting|image)|cover\s+painting|painting)\s*[-–—:]\s*(\p{Lu}.+)$/iu;
+  const BK_ART_TECH = /^(?:screen\s*print|silk\s*screen|wood\s*block|woodcut|linocut|lithograph|etching|aquatint|monotype|oil\s+on|acrylic\s+on|gouache|watercolou?r|tempera|mixed\s+media|collage|pencil\s+on|ink\s+on|charcoal)\b|\bedition\s+of\s+\d+\b|\b\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?\s*(?:cm|mm|in\b)/i;
   const BK_INSTR_HEAD = /^(?:the\s+)?(?:instruments?|instrumentarium|instrumente|instrumentarium)\s*:?$/i;
   const BK_CAPS_HEAD = /^\p{Lu}[\p{Lu} &/-]{3,}:?$/u;
   const BK_CREDIT_START = /^(?:produced|recorded|engineered|mixed|mastered|edited|photo|design|cover|sleeve|artwork|executive|℗|©)/i;
@@ -7793,7 +7804,7 @@
     { id: 'D027', note: 'A date with a year of two digits, "9/17/26", "17/9/26" (3.79.0; collected item Z-VEN): as D003 (month or day first by the country of the release, the one above 12 decides), the year in this century unless that would be after this year (then the last)' },
     { id: 'D026', note: 'Photographs of the concert (3.79.0; collected item Z-PHC; off by default, a quick switch): with D025 the concert\'s date goes into the pool named for them and is only suggested at their row; with this switch their row gets it – unless the text names a date of their own (it has priority)' },
     { id: 'D035', note: 'The year first with dots or slashes – "2024.12.15", "2024/12/15" – and in Japanese – "2024年12月15日", "2024年12月" (3.147.0; collected item Z-YMDDOT)' },
-    { id: 'D035', note: 'Date levels (3.178.0; collected item Z-DATELEVEL; a quick switch, on): a date of several days for a group of tracks – "CD 1–4: recorded November 27-29, 2016", "June 16 & 17, 2018" – says nothing about the day of each track: the recordings get what the days have in common (the month, across months the year – D022), and the period or its single days are suggested in the column Performance of the date matrix with "Release level" ticked: the rows on the release take them. A period across years has nothing in common: only the release level. A single day of a group of tracks ("CD 5: recorded November 30, 2016") is the date of its recordings, and one more suggestion of the release level where there are others. Needs D022' },
+    { id: 'D035', note: 'Date levels (3.178.0; collected item Z-DATELEVEL; a quick switch, on): a date of several days for a group of tracks – "CD 1–4: recorded November 27-29, 2016", "June 16 & 17, 2018" – says nothing about the day of each track: the recordings get what the days have in common (the month, across months the year – D022), and the period or its single days are suggested in the column Performance of the date matrix with "Release level" ticked: the rows on the release take them. A period across years has nothing in common: only the release level. A single day of a group of tracks ("CD 5: recorded November 30, 2016") is the date of its recordings only (3.183.0, Z-DATEDUP: not suggested for the release level a second time, as 3.178.0 – 3.182.0 did). Needs D022' },
     { id: 'D036', note: 'Days in a row, each named (3.178.0; collected item Z-DAYLIST): up to three – "27., 28. & 29.11.2016", "June 16/17 2018" – are single days, one date each; four or more are one period (D013 until 3.177.0: always one period). A period written with a dash ("27-29") stays one. In the date finder each such find can be had the other way: "as one period" / "as single dates"' },
     { id: 'D037', note: 'Media as a heading (3.178.0; collected item Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – right above a date\'s line: the date is that of the tracks of those media (a track group "Media 1–4"), on a release with several media. The text reader gives the lines below such a heading its tracks as well (S312)' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
@@ -10148,6 +10159,23 @@
             continue;
           }
         }
+        // [Z-ARTWORKLINE] (3.183.0, S317) "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75,
+        // Advanced Graphics, London": the artist of the picture; its title, year, technique and printer are no credits (a woodblock is
+        // an instrument elsewhere, not here)
+        if (ruleOn('S317')) {
+          const art = t.match(BK_ORIG_ART);
+          if (art) {
+            const [first, ...more] = art[2].split(/\s+\/\s+/);
+            const [name, ...detail] = first.split(/\s*,\s*/);
+            if (bkNameLike(P, name) && (detail.length || more.length || /^original/i.test(art[1]))) {
+              out.push(keep(`Original artwork by ${name}`, l));
+              const rest = [detail.join(', '), ...more].filter(Boolean).join(' / ');
+              if (rest) P.ignored.push({ text: rest, why: 'artworkDetail' });
+              while (i + 1 < lines.length && BK_ART_TECH.test(lines[i + 1].trim())) P.ignored.push({ text: lines[++i], why: 'artworkDetail' });
+              continue;
+            }
+          }
+        }
         if (ruleOn('S302') && /^bonus\s+tracks?\b.*\bfrom\b/i.test(t)) {
           let j = i;
           while (j + 1 < lines.length && !blank(j + 1) && !/[.)]\s*$/.test(lines[j]) && j < i + 2) j++;
@@ -10784,6 +10812,24 @@
           while (j < out.length && !out[j].trim()) j++;
           const next = j < out.length ? out[j].trim() : '';
           if (!next || next.includes(':') || next.split(/\s+/).length > 10) continue;
+          const raw = P.rawOf.get(out[i]) || out[i];
+          out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
+          for (let k = i + 1; k <= j; k++) out[k] = '';
+        }
+      }
+      // [Z-BYBREAK] (3.183.0, S316) a line that ends with "by" – "All music composed and recorded by" above (an empty line and)
+      // "Stefano Musso in Spring 2023." –: one line with the next line that is not empty
+      if (ruleOn('S316')) {
+        for (let i = 0; i < out.length - 1; i++) {
+          if (!/\p{L}{3,}.*\s(?:by|von|par|por)\s*$/iu.test(out[i]) || out[i].split(/\s+/).length > 12) continue;
+          let j = i + 1;
+          while (j < out.length && j <= i + 3 && !out[j].trim()) j++;
+          const next = j < out.length ? out[j].trim() : '';
+          // (a name below: a capital first, no line with a role of its own)
+          // (a heading right above its names is read as before – S303; here: an empty line between, or "All … by")
+          if (j === i + 1 && !/^\s*all\s/i.test(out[i])) continue;
+          if (out[i] === out[i].toUpperCase()) continue;
+          if (!next || !/^[\p{Lu}\d"“]/u.test(next) || next.includes(':') || /\s(?:by|von|par|por)\s/i.test(next) || next.split(/\s+/).length > 12) continue;
           const raw = P.rawOf.get(out[i]) || out[i];
           out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
           for (let k = i + 1; k <= j; k++) out[k] = '';
@@ -18407,6 +18453,23 @@
     return { kind: 'note' };
   }
 
+  /**
+   * [Z-NOCREDITTYPE] (3.183.0, S318) A type without a field for a role credit ("Liner Notes [Spanish]": MusicBrainz's liner notes
+   * take neither "credited as" nor a task): the detail is left out – no question about its spelling, no line in the edit note.
+   */
+  function creditHasNoField(row) {
+    if (!ruleOn('S318') || !row || row.company) return false;
+    // (a word before the role – "assistant creative director", S065 – is said in the edit note as before)
+    if (row.prefix && row.prefixCredit) return false;
+    try {
+      const lt = currentLinkType(row);
+      const t = lt && roleCreditTarget({ roleCredit: 'x', primaryText: row.primaryText }, lt);
+      return !!t && t.kind === 'note';
+    } catch (e) {
+      return false;
+    }
+  }
+
   function buildAttrs(row, lt) {
     const attrs = [];
     const credit = String(row.roleCredit || '').trim();
@@ -19026,6 +19089,8 @@
       // [144] (3.35.2) words written small one after another ("Les Paul"), offered as a whole too
       const flat = ` ${norm(credit).replace(/[,[\]()/]+/g, ' ').replace(/\s+/g, ' ')} `;
       row.creditPhrases = uniq(caseCtx.runs).filter((p) => flat.includes(` ${p.toLowerCase()} `));
+      // [Z-NOCREDITTYPE] (3.183.0, S318) nothing to ask where the type has no field for the credit
+      if (credit && creditHasNoField(row)) Object.assign(row, { creditLowered: [], creditPhrases: [] });
       return credit;
     } finally {
       caseCtx = outer;
@@ -26781,7 +26846,7 @@
       S.linked = linkedInRelease(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
       S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '',
-        artistName: (p.artist && p.artist.name) || '' }));
+        artistName: (p.artist && p.artist.name) || '', type: (p.artist && p.artist.type) || '' }));
       // (3.39.9, review) the performers MusicBrainz has for the whole release ("co?": no cover of one of them)
       S.mbReleasePerformers = (ws.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id);
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
@@ -27584,7 +27649,8 @@
    */
   function askTranslation(row) {
     // [Z-QPBAND] (3.124.0, Q015) "Soundscapes": its first answer (effects credited "soundscapes") taken at once as a suggestion
-    if (row.ruleId === 'R118' && !row.company) {
+    // (3.183.0: also "loops", "drones" – Q025, Q026 – and "original artwork" – Q027)
+    if (['R118', 'R128', 'R129', 'R130'].includes(row.ruleId) && !row.company) {
       const q = typeQuestionFor(row);
       if (q && q.presetAnswer != null && row.typeAnswer == null && q.options[q.presetAnswer]) {
         const touched = !!row.levelTouched;
@@ -31857,7 +31923,7 @@
           S.noteStats[it.target.kind]++;
         }
         for (const m of it.joinedItems || [it]) {
-          if (m.noteText) S.noteLines.add(`${m.artist.mbName || m.artist.name}, ${m.lt.name}: "${m.noteText}" (${S.source.noteName}: ${m.row.raw})`);
+          if (m.noteText && !creditHasNoField(m.row)) S.noteLines.add(`${m.artist.mbName || m.artist.name}, ${m.lt.name}: "${m.noteText}" (${S.source.noteName}: ${m.row.raw})`);
         }
         added++;
         log('ok', 'staged', { text });
@@ -34476,7 +34542,7 @@
       if (!misc && guessNoteHtml(r)) out.push(tr(guessSpelling(g, r.primaryText) === 'typo' ? 'instrGuess.typo' : 'instrGuess.own', { name: r.primaryText, word: guessCredit(g) }));
     }
     if (caseNoteHtml(r)) {
-      const low = [...(r.creditPhrases || []), ...(r.creditLowered || [])];
+      const low = creditHasNoField(r) ? [] : [...(r.creditPhrases || []), ...(r.creditLowered || [])];
       if (low.length) out.push(`${tr('caseNote.small')} ${low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ')}`);
       const kept = Object.values(r.keepCase || {});
       if (kept.length) out.push(`${tr('caseNote.kept')} ${kept.join(', ')}`);
@@ -37389,14 +37455,8 @@
         placed++;
       });
     });
-    // [Z-DATELEVEL] (3.178.0, D035) where days are suggested for the release level, a single day of a group of tracks ("CD 5: recorded
-    // November 30, 2016") is one of the release's days too: on its recordings as placed, and suggested for the release level
-    if (dateLevelOn() && m.cells.some((c) => c.col === 'performance' && c.rel && c.auto)) {
-      m.cells.filter((c) => c.col === 'performance' && c.auto && !c.rel && !c.lcdOf && (c.tgs || []).length).forEach((c) => {
-        const d = S.datePool.find((y) => y.id === c.date);
-        if (d && d.begin && d.begin.day && String(d.found || '').startsWith('notes:')) relCell(m, 'performance', d.id, c.studios || []);
-      });
-    }
+    // [Z-DATEDUP] (3.183.0) a single day of a group of tracks ("CD 5: recorded November 30, 2016") is exact on its recordings: it is
+    // not suggested for the release level a second time (3.178.0 – 3.182.0 it was; drag it there if wanted)
     const pooled = S.datePool.length - before;
     savePool();
     if (placed) {
@@ -38386,6 +38446,7 @@
    */
   function caseNoteHtml(row) {
     if (!ruleOn('S052') || row.level === 'skip' || (row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest))) return '';
+    if (creditHasNoField(row)) return ''; // [Z-NOCREDITTYPE] (3.183.0, S318)
     const btn = (act, word, text, title = '') => `<button type="button" class="dci-textbtn" data-act="${act}" data-word="${esc(word)}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</button>`;
     const out = [];
     // [144] (3.35.2) words written small one after another first as a whole ("Les Paul → les paul · keep “Les Paul” · …")
@@ -38679,7 +38740,7 @@
           ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])]));
       }
       // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
-      const low = ruleOn('S052') && !(row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest)) ? (row.creditLowered || []) : [];
+      const low = ruleOn('S052') && !(row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest)) && !creditHasNoField(row) ? (row.creditLowered || []) : [];
       if (low.length) {
         // [144] (3.35.2) words one after another kept as a whole first ("keep “Les Paul”")
         const keepOf = [...(row.creditPhrases || []), ...low];
@@ -39473,7 +39534,7 @@
           : `${it.artist.mbName}: ${phrase}${credText ? ` (${credText})` : ''}`];
       if (it.credit) line.push(tr('preview.artistCredit', { credit: it.credit }));
       if (it.date) line.push(tr('preview.date', { date: formatDateValue(it.date) || tr('date.endedOnly') }));
-      if (it.noteText) line.push(tr('preview.noteOnly', { text: it.noteText }));
+      if (it.noteText) line.push(tr(creditHasNoField(it.row) ? 'preview.creditLeftOut' : 'preview.noteOnly', { text: it.noteText }));
       const mark = it.attrFill ? `<span class="dci-pv-update" title="${esc(tr('preview.attrFillTitle'))}">✎</span> `
         : it.fillDate ? `<span class="dci-pv-update" title="${esc(tr('preview.fillDateTitle'))}">✎</span> `
         : it.workDate ? `<span class="dci-pv-update" title="${esc(tr('preview.workDateTitle'))}">✎</span> `
@@ -42182,6 +42243,32 @@
   const TAR_TYPES = ['instrument', 'vocal', 'performer'];
   const TAR_FIELDS = ['tracks', 'suggested', 's078', 'tarPositions', 's046'];
   const sameSet = (a, b) => !!a && !!b && a.size === b.size && [...a].every((x) => b.has(x));
+  const BAND_NAME_WORD = /\b(?:band|orchestr[ae]|orchester|orquesta|orkest|ensemble|quartett?|quintett?|sextett?|septett?|octett?|trio|duo|choir|chor|ch[oœ]ur|coro|chorus|group|collective|kollektiv|project|consort|singers|players|philharmoni[ce]|symphony|all[- ]?stars)\b|\s(?:&|and|und|et|y)\s+(?:the|his|her|die|les|los)\s/i;
+  /**
+   * [Z-BANDTRACKS] (3.183.0, S078) Whether track i is credited to the release's artist as a group and so excludes nobody: every
+   * artist of its credit is one of the release's credit, and none of them is a person who has instruments, voices or "performer"
+   * here. With the members of that group listed in the text (S162: "X: A, B, C" / a heading), only they stay on it.
+   */
+  function bandTrackFor(a, i, keys) {
+    const t = S.mbTracks[i];
+    const ids = (t && t.trackArtists) || [];
+    const names = (t && t.trackArtistNames) || [];
+    if (!t || (!ids.length && !names.length)) return false;
+    const rc = S.releaseCredit || [];
+    const rcIds = new Set(rc.map((p) => p.mbid).filter(Boolean));
+    const rcNames = new Set(rc.map((p) => nameKey(p.name || '')).filter(Boolean));
+    if (ids.length ? !ids.every((id) => rcIds.has(id)) : !names.every((n) => rcNames.has(n))) return false;
+    // (a group: by its type in MusicBrainz; where the type is not known, by a word of a group in its name)
+    const credited = rc.filter((p) => (p.mbid && ids.includes(p.mbid)) || names.includes(nameKey(p.name || '')));
+    if (!credited.length || !credited.every((p) => (p.type ? !['Person', 'Character'].includes(p.type) : BAND_NAME_WORD.test(p.name || p.artistName || '')))) return false;
+    // (a person with instruments here who is named on the track: a track of that person – the rule as before)
+    const players = [...S.artists.values()].filter((x) => !x.company && S.rows.some((r) => r.artistKey === x.key && !r.company && TAR_TYPES.includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))));
+    if (players.some((x) => (x.mbid && ids.includes(x.mbid)) || [x.name, x.mbName].filter(Boolean).map(nameKey).some((k) => names.includes(k)))) return false;
+    // (the members of the group as the text lists them)
+    const groups = ((S.workNotesRel && S.workNotesRel.groups) || []).filter((g) => names.includes(nameKey(g.name)) && (g.members || []).length);
+    if (groups.length && !groups.some((g) => g.members.some((m) => keys.has(nameKey(m))))) return false;
+    return true;
+  }
   function applyTrackArtistTracks() {
     const on = ruleOn('S078');
     let n = 0;
@@ -42210,6 +42297,15 @@
         const t = S.mbTracks[i];
         return t && ((a.mbid && (t.trackArtists || []).includes(a.mbid)) || (t.trackArtistNames || []).some((k) => keys.has(k)));
       });
+      // [Z-BANDTRACKS] (3.183.0) a track that is credited to the release's artist as a group – none of the people with instruments
+      // or voices here is named on it ("Blue Shroud Band" on CD 5, the others by their names on CD 1–4) – excludes nobody: the person
+      // stays on it, unless the text lists the members of that group and the person is not among them
+      if (named.length) {
+        for (const i of sel) {
+          if (!named.includes(i) && r.tracks && r.tracks.has(i) && bandTrackFor(a, i, keys)) named.push(i);
+        }
+        named.sort((x, y) => x - y);
+      }
       if (!named.length || named.length >= sel.length || !r.tracks || named.length >= r.tracks.size || !named.every((i) => r.tracks.has(i))) continue;
       r.s078 = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []), set: new Set(named) };
       const positions = [trackListLabel(named)];

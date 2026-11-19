@@ -1194,7 +1194,7 @@ def case_datelevel3178():
     with sync_playwright() as p:
         cells, places, errs = run(p, 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków')
         print('A) Performance:', cells)
-        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27..2016-11-29', True, []), ('2016-11-30', False, [[3]]), ('2016-11-30', True, [])], key=str))
+        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27..2016-11-29', True, []), ('2016-11-30', False, [[3]])], key=str))   # (3.183.0, Z-DATEDUP: the single day once)
         print('B) Orte:', places)
         pl = dict((n, r) for n, r in places)
         results.append(len(pl) == 2 and 'Tracks 1–3' in ' '.join(pl.get('Alchemia Club', [])) and 'Tracks 4' in ' '.join(pl.get('Radio Kraków', [])))
@@ -1202,7 +1202,7 @@ def case_datelevel3178():
         results.append(not errs)
         cells, places, errs = run(p, 'CD 1\nRecorded: November 27, 28 & 29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków')
         print('C) Performance:', cells)
-        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27', True, []), ('2016-11-28', True, []), ('2016-11-29', True, []), ('2016-11-30', False, [[3]]), ('2016-11-30', True, [])], key=str) and not errs)
+        results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-27', True, []), ('2016-11-28', True, []), ('2016-11-29', True, []), ('2016-11-30', False, [[3]])], key=str) and not errs)
         cells, places, errs = run(p, 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków', off=['D035'])
         print('D) ohne D035:', cells)
         results.append(cells == sorted([('2016-11', False, [[0, 1, 2]]), ('2016-11-30', False, [[3]])], key=str) and not errs)

@@ -596,6 +596,53 @@ def case_trackartists():
 
 
 
+
+def case_bandtracks3183():
+    """Credits Importer 3.183.0 (collected item Z-BANDTRACKS, S078): a release of the "Blue Shroud Collective" whose tracks 1 and 2 name single
+    players (Maya Homburger; Maya Homburger & Barry Guy) and whose tracks 3 and 4 are credited to the band.
+    A) Maya Homburger's piano on tracks 1–4 (named on 1 and 2, the band's tracks exclude nobody): all four – no narrowing; Barry
+       Guy's bass on tracks 2, 3 and 4; Percy Pursglove's saxophone, named on no track, on all four as before.
+    B) With the members of the band listed in the text (a heading "Blue Shroud Collective:" above Maya Homburger and Percy Pursglove), Barry Guy – not among
+       them – stays on track 2 only."""
+    BAND, MAYA, BARRY = H.uid('7b7b7b7b', 1), H.uid('7b7b7b7b', 2), H.uid('7b7b7b7b', 3)
+    H.RELEASE_AC[:] = [(BAND, 'Blue Shroud Collective', 'Blue Shroud Collective', '')]
+    H.TRACK_AC.update({0: [(MAYA, 'Maya Homburger')], 1: [(MAYA, 'Maya Homburger'), (BARRY, 'Barry Guy')], 2: [(BAND, 'Blue Shroud Collective')], 3: [(BAND, 'Blue Shroud Collective')]})
+    TEXT = 'Maya Homburger - piano\nBarry Guy - double bass\nPercy Pursglove - saxophone'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(),
+      (tr.querySelector('.dci-tartracks') || { textContent: '' }).textContent.trim()])))()"""
+    results = []
+
+    def read(p, text):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', text)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        r = pg.evaluate(ROWS)
+
+        b.close()
+        return {(n, role): (t, note) for n, role, t, note in r}, errs
+
+    with sync_playwright() as p:
+        by, errs = read(p, TEXT)
+        print('A)', by, errs)
+        results.append(by.get(('Maya Homburger', 'piano'), ('', ''))[0] == '4 of 4 tracks' and by.get(('Barry Guy', 'double bass'), ('', ''))[0] == '3 of 4 tracks'
+                       and 'artist: 2–4' in by.get(('Barry Guy', 'double bass'), ('', ''))[1] and by.get(('Percy Pursglove', 'saxophone'), ('', ''))[0] == '4 of 4 tracks' and not errs)
+        by, errs = read(p, 'Blue Shroud Collective:\nMaya Homburger - piano\nPercy Pursglove - saxophone\n\nBarry Guy - double bass')
+        print('B)', by, errs)
+        results.append(by.get(('Barry Guy', 'double bass'), ('', ''))[0] == '1 of 4 tracks' and 'artist: 2 (rule S078)' in by.get(('Barry Guy', 'double bass'), ('', ''))[1] and not errs)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_prose2():
     """Review of 3.50.0 (collected item Z-PRO, S079; S059): what the sentence reader must not do.
     A) the words before "with" hold credits – "Highland bagpipes (David Watson), drums (Ann Lee), with guests …" keeps David Watson's
@@ -631,6 +678,68 @@ def case_prose2():
           [g['credits'][0][0] for g in got[12:]] == ['Rob IJzerman', 'IJsbrand Kok', 'TJay Smith', 'Shelley Hirsch']]
     ok = [bool(x) for x in ok]
     print('Ergebnis:', 'OK' if all(ok) else 'FEHLER', ok)
+
+
+def case_loopsart3183():
+    """Credits Importer 3.183.0 (collected items Z-LOOPSDRONES, Z-ARTWORKLINE, Z-BYBREAK, Z-NOCREDITTYPE; R128–R130, Q025–Q027, S316–S318).
+    A) "Jane Roe: Drones and loops, piano": drones and loops are the instrument effects (a suggestion of their questions), not a drum
+       machine and no unknown instrument.
+    B) "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, …": an entry Albert Irvin with the role
+       "Original artwork" (artwork suggested), no entry "Original artwork", no woodblock; the rest is left out.
+    C) "All music composed and recorded by" / empty line / "Stefano Musso in Spring 2023.": Stefano Musso, Composed By and Recorded By.
+    D) "Liner Notes [Spanish] - Lucía Martínez" (as Discogs writes it, pasted): the row asks nothing about "Spanish"."""
+    H.attr(9301, 'effects', 14, 14)
+    H.attr(9302, 'sampler', 14, 14)
+    H.attr(9303, 'drum machine', 14, 14)
+    H.attr(9304, 'wood block', 14, 14, aliases=['woodblock'])
+    H.lt(9401, 'f8bd5f6f-0d4b-4d4b-9f3c-000000009401', 'artwork', 'artist', 'release', (1,))
+    H.lt(9402, 'f8bd5f6f-0d4b-4d4b-9f3c-000000009402', 'illustration', 'artist', 'release', (1,))
+    H.LTS[24]['attributes'] = {'1': {'min': 0, 'max': None}}   # liner notes as on MusicBrainz: "additional" (and "translator"), no task
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = ('Jane Roe: Drones and loops, piano\n'
+            'Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London\n'
+            'All music composed and recorded by\n\nStefano Musso in Spring 2023.\n'
+            'Liner Notes [Spanish] - Lucía Martínez')
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      ((tr.querySelector('[data-f=primary]') || {}).value || ''), ((tr.querySelector('[data-f=roleCredit]') || {}).value || ''),
+      ((tr.querySelector('[data-f=type]') || {}).selectedOptions || [{ textContent: '' }])[0].textContent.trim(),
+      !!tr.querySelector('.dci-case-note'), !!tr.querySelector('.dci-typeask, [data-act=type-pick]')])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        H.legacy_view(pg) if hasattr(H, 'legacy_view') else None
+        r = pg.evaluate(ROWS)
+        for x in r:
+            print('  ', x)
+        by = {(n, role): rest for n, role, *rest in r}
+        names = {n for n, *_ in r}
+        jr = {role.lower(): rest for (n, role), rest in by.items() if n == 'Jane Roe'}
+        print('A)', jr)
+        results.append(jr.get('drones', [''])[0] == 'effects' and jr.get('loops', [''])[0] == 'effects' and 'drum machine' not in [v[0] for v in jr.values()])
+        print('B)', sorted(names))
+        results.append('Albert Irvin' in names and 'Original artwork' not in names and not any('wood' in (v[0] or '') for v in by.values())
+                       and by.get(('Albert Irvin', 'Original artwork By'), ['', '', ''])[2] == 'artwork')
+        sm = sorted(role for (n, role) in by if n == 'Stefano Musso')
+        print('C)', sm)
+        results.append('Recorded By' in sm)   # (Composed By: in the works matrix)
+        ln = [rest for (n, role), rest in by.items() if n == 'Lucía Martínez']
+        print('D)', ln, errs)
+        results.append(len(ln) == 1 and not ln[0][3] and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 def case_trackartists2():

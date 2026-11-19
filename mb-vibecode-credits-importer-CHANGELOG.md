@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.182.0 | – |
+| 2026-11-19 | 3.170.0 – 3.183.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.183.0
+
+**Reading and placing: a line broken after "by", the picture on the cover, loops and drones, tracks of the band, one day once.**
+
+- **A line broken after "by"** (rule S316): "All music composed and recorded by" / an empty line / "Stefano Musso in Spring 2023." is read as one line – Composed By and Recorded By for Stefano Musso. It holds for a line that ends with "by" (von, par, por) when an empty line stands between it and the name, or when it begins with "All"; a heading right above its names is read as before.
+- **The picture on the cover** (rule S317, R130, question Q027): "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London" (Discogs notes, a pasted text) gives Albert Irvin with the role "Original artwork": **artwork** is suggested, **illustration** is the other answer – the line does not say whether it is a painting, a print or a photograph. The title and year of the picture, its technique, edition and printer are left out ("the picture on the cover"). Until 3.182.0 the heading became an artist "Original artwork" with the instrument wood block. A woodblock stays an instrument elsewhere.
+- **Loops and drones** (R128, R129, questions Q025, Q026): "Drones and loops, zither, …" – loops are made with many devices, so they are no drum machine any more: **effects** credited "loops" is suggested (a yellow suggestion), a sampler, a drum machine or a synthesizer are the other answers, or no relationship. "Drones" (until now an unknown instrument): effects credited "drones", or a synthesizer or a sampler. Each word is asked for itself.
+- **Tracks of the band** (rule S078): the instruments of a person go onto the tracks whose artist credit names that person. A track that is credited to the release's artist as a group, on which none of the players is named – "Blue Shroud Band" on CD 5, the players by their names on CD 1–4 –, excludes nobody now: everybody stays on it. Where the text lists the members of that group (a heading with its members), only they stay. A group is known by its type in MusicBrainz, else by a word of a group in its name.
+- **One day once** (rule D035): a single day for a group of tracks ("CD#5 – Recorded November 30, 2016") is the date of its recordings only; it is no longer suggested a second time for the release level (3.178.0 – 3.182.0). Periods of several days keep both.
+- **A detail MusicBrainz has no field for** (rule S318): "Liner Notes [Spanish]" – liner notes take no role credit in MusicBrainz. The relationship is staged without the detail, the dashboard does not ask how to spell it ("Written small …"), and it is no line of the edit note; the preview of the staging says "left out". The same for every type without such a field.
+- Not done: "drones and loops" as one role credit (each word is its own row; with the same instrument they are joined when staged, as other credits of one instrument are); the season "Spring 2023" is no date (MusicBrainz has none). The members of a band are taken from the text only, not asked of MusicBrainz.
 
 ### Import 3.182.0
 
