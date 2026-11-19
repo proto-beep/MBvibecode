@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.176.0
+// @version      3.177.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.176.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.176.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.177.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.177.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.176.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.177.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -405,6 +405,7 @@
       "log.tcpSurnameAsk": "“{word}” after a title: several persons of that name – {list}; asked at the entry",
       "ignored.why.website": "a website – no relationship of MusicBrainz",
       "ignored.why.nowhere": "no place named",
+      "ignored.why.noTracks": "names tracks this release does not have: no credit",
       "ignored.why.heading": "a heading",
       "ignored.why.releaseDate": "the date of the release on the page",
       "ignored.why.definition": "a definition – no credit",
@@ -4427,6 +4428,7 @@
       "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
       "typeAsk.askBugle": "“{role}”: the bugle or, as in French, the flugelhorn? – please choose:",
       "typeAsk.askLaud": "“{role}”: the Spanish laúd or the lute? – please choose:",
+      "typeAsk.askBesideTitle": "A name in brackets beside the title: lyricist, composer or librettist of the work – or no relationship? – please choose:",
       "typeAsk.askTranslation": "“{role}”: mostly the translation of the liner notes – taken so (liner notes, translator) –, sometimes of the lyrics:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "ignored.why.members": "the members of {band}: {names} – each with the roles of the line; MusicBrainz keeps the members on the band (its own page)",
@@ -5361,6 +5363,11 @@
     { id: 'S304', where: 'TEXT.parse (bookletLines; BK_LEGAL_START, BK_LEGAL_END, BK_LEGAL_LINE)', note: 'Texts (3.176.0; Z-LEGALBOILER): "WARNING: All Rights Reserved. Unauthorised reproduction is prohibited and may result in criminal prosecution." (also over several lines), a label code ("LC 07967"), a SPARS code ("DDD"), a total time ("TT: 54:47"): left out as "legal notice or code". What follows the notice in its last line ("Printed in the UK") stays a line of its own. Every free text' },
     { id: 'S305', where: 'TEXT.parse (bookletLines)', note: 'Texts (3.176.0; Z-ROLEPARTS): below a lineup, lines of a singer and the part sung – "Yann Beuron Le Récitant", "Véronique Gens Marie" (two such lines at least, capitalised words only, no ensemble): vocals, the part as the role\'s credit. The name is the first two words (three with a particle: "Frederica von Stade"). Every free text' },
     { id: 'S306', where: 'TEXT.parse (tidyLines; BK_TRACK_LINE)', note: 'Texts (3.176.0; Z-TITLEROLE-FALSE): the lines of a track list that S281 and S288 do not take – headings of works between the tracks, a colon in a title ("7 II. Chorus: L\'hiver s\'enfuit 2.29") – are no credits: a number in front, a length behind, three such lines at least; left out as track list. A title with round brackets keeps its line (they may hold credits, S180). Every free text' },
+    { id: 'S307', where: 'TEXT.parse (classicalLines, clSpecs; CL_TRACK, CL_MEDIUM, CL_COMPOSER, CL_ARR), suiteOffers', note: 'Texts (3.177.0; Z-CLASSICALLIST, Z-ARRGEN): a classical track list – three track lines at least ("3 III. Sicilienne 3.27", "[08] I. SCHERZO . . . 03:08", "1] Symphony 02:53"), with headings between them, movements numbered in Roman numerals or names in brackets. A composer with the years of his life as a heading ("Gabriel Fauré 1845–1924", "GUSTAV HOLST (1874–1934)") is the composer of every track below, until the next such heading; a heading of a medium ("Compact Disc 2 70.42") numbers the tracks below by medium (2-1 …); a line above tracks is the heading of a work – its tracks are offered as a suite in the works matrix –, the lines between it and its tracks describe it; "Arr. Roger Harvey & Salaputia Brass", "Trans. Peter Dörpinghaus" below a work: arranged by, for its tracks (the release\'s artist is no arranger). A list that begins with the release\'s first track is compared with MusicBrainz\'s tracks (S281). A name printed in capitals is written as a name. Every free text' },
+    { id: 'S308', where: 'TEXT.parse (classicalLines: brackets; CL_BY, CL_NOT_NAME), R126, R127, Q023, Q024', note: 'Texts (3.177.0; Z-TRACKSOLOIST, Z-TRACKPAREN): what stands in brackets in a line of a classical track list. "(Patricia Nagle flute)": that credit on the track. "(Maria)", "(Pieter & Adriaan)": first names of the booklet\'s lineup read in the same text – their voice or instrument on that track, solo. "(orch. Koechlin)", "(arr. X)": orchestrated or arranged by, on the track. A name alone – "(Paul Verlaine)", "(Victor Hugo)", and "(Alexandre Dumas père)" or "Comedy by Edmond Haraucourt, after Shakespeare" at the heading of a work, for all its tracks – is asked for: lyricist, composer, librettist or no relationship (Q023: the lyricist suggested below a composer\'s heading; Q024: the composer suggested where none holds). Anything else in brackets – an opus, a catalogue number, a translation – is none. Every free text' },
+    { id: 'S309', where: 'TEXT.parse (tidyLines: S281)', note: 'Texts (3.177.0; Z-MBTRACKLIST): a track list as MusicBrainz shows it – "1. Part One - Izumi Kimura / Artur Majewski / Barry Guy (7:20)": the artists of the track behind its title (two names at least, or the release\'s artists) are no part of the title when the list is compared with MusicBrainz\'s tracks, and no credits. Every free text' },
+    { id: 'S310', where: 'suiteOffers (PART_TITLE)', note: 'Works (3.177.0; Z-PARTTITLES): tracks named only as parts – "Part One" … "Part Seven", "Part 2", "Teil 3", "II" (two such tracks at least, half of the tracks) – are offered as the parts of a suite named as the release; the works matrix asks, as for every suite (Z-SU). With the composers of an improvisation (S222) each part gets its work with them' },
+    { id: 'S311', where: 'init (classicalComposers), artistWorkTargets', note: 'Works (3.177.0; Z-CLASSICCREDIT): a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays ("Maya Homburger") – : the track\'s artist that is none of the recording\'s artists is taken as the composer of the track for the comparison of works: his works in MusicBrainz are searched for the track without a work, as those of a writer of the source. He is no performer for the entries of the source' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6208,6 +6215,7 @@
   const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
   // [Z-SU] (3.41.0) headings that name no suite (T061; ✎), and those of the place or date of a recording (built in)
   const SUITE_SKIP_HEADINGS = MAP.SUITE_SKIP_HEADINGS;
+  const PART_TITLE = /^(?:(?:part|pt\.?|teil|partie|parte|movement|mvt\.?|satz)\s+(?:\d{1,2}|[IVXLC]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)|[IVXLC]{1,5})\.?$/i;
   const HEADING_RECORDING = /\b(?:recorded|live\s+(?:at|in|from)|concert|session|sessions)\b|\b(?:1[89]|20)\d\d\b/i;
   // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
   const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
@@ -6754,6 +6762,17 @@
   // [Z-BOOKLET] (3.176.0, S300–S306) the shapes of a booklet (bookletLines): particles of a name; words for an ensemble; role words the
   // register does not know (German ones, and what stands for a picture) with the role the reader takes instead – a word in brackets is
   // the role as credited; tracks by medium in brackets; legal notices and codes; the makers of the instruments; a line of a track list
+  // [Z-CLASSICALLIST] (3.177.0, S307, S308) a classical track list (classicalLines): a track – number, maybe the number of the movement,
+  // title, length; a medium as a heading ("Compact Disc 1 67.00"); a composer with the years of his life; "Arr. X", "orch. X", "Trans. X";
+  // "… by Name" below the heading of a work ("Comedy by Edmond Haraucourt, after Shakespeare"); what in brackets is no name
+  const CL_TRACK = /^\s*\[?(\d{1,2})[\].)]?\s+(?:([IVXLC]+)\.\s+)?(\S.*?)\s*\(?(\d{1,2})[:.](\d{2})\)?\s*(?:TT\s*:.*)?$/u;
+  const CL_MEDIUM = /^(?:compact\s+dis[ck]|cd|dis[ck]|lp)\s*#?(\d{1,2})(?:\s+\d{1,3}[.:]\d{2})?$/i;
+  const CL_COMPOSER = /^(\p{Lu}[\p{L}.'’ -]+?)\s*[[(]?\s*(?:\*|b\.|geb\.)?\s*(1\d{3})\s*(?:[-–—]\s*(?:1\d{3}|20\d{2})?)?\s*[\])]?$/u;
+  const CL_ARR = /^(arr|arranged\s+by|arrangement|trans|transcr|transcribed\s+by|transcription|orch|orchestrated\s+by|orchestration|bearb|bearbeitung|bearbeitet\s+von)\.?\s*:?\s+(\p{Lu}.+)$/iu;
+  const CL_ARR_ROLE = (w) => (/^orch/i.test(w) ? 'Orchestrated By' : 'Arranged By');
+  const CL_BY = /^(?:[\p{L}\s,'’-]{0,40}\s)?by\s+(\p{Lu}[\p{L}.'’-]*(?:\s+[\p{L}.'’-]+){0,4}?)(?:,?\s+(?:after|nach|d['’]après)\s+.+)?$/u;
+  const CL_NAME_TAIL = /\s+(?:père|fils|jr\.?|sr\.?|junior|senior|the\s+elder|the\s+younger|d\.\s?[äj]\.)$/i;
+  const CL_NOT_NAME = /\b(?:op|no|nr|bwv|hwv|kv|k|d|h|rv|version|live|edit|mix|remix|remaster(?:ed)?|bonus|reprise|instrumental|excerpt|fragment)\b\.?/i;
   const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306'];
   const BK_PARTICLE = /^(?:von|van|vom|de|del|della|der|den|di|da|du|le|la|ten|ter|zu|af|dos|das|do|bin|ibn|al|el|st\.?|d['’]\p{L}+)$/iu;
   const BK_ENSEMBLE_WORD = /^(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players)\b/i;
@@ -9198,9 +9217,12 @@
       if (/^stage$/i.test(String(p.base || '').trim()) && (clean(name).split(/\s+/).length < 2 || /\bstage\b/i.test(name))) return false;
       // [Z-IMD] (3.92.0, S146, review) another instrument played on a model of the text: credited as written ("Wurlitzer (Nord stage2)")
       const mc = P.modelCredits.get(norm(p.raw));
-      const workArr = ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p.base || '') && !(p.mods || []).length && (songsArr || P.WORK_ARR.test(P.curLine));
+      // [Z-ARRGEN] (3.177.0, S307) the arranger of a work of a classical track list ("Arr. Roger Harvey" below Holborne's suite): the
+      // recording's – the work is the composer's
+      const recArr = /^(?:arrang|orchestrat)/i.test(p.base || '') && P.recArrNames.has(norm(name));
+      const workArr = !recArr && ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p.base || '') && !(p.mods || []).length && (songsArr || P.WORK_ARR.test(P.curLine));
       const affil = P.affilOf.get(norm(name)) || '';
-      const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}), ...(workArr ? { workArr: true } : {}),
+      const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}), ...(workArr ? { workArr: true } : {}), ...(recArr ? { recArr: true } : {}),
         ...(affil ? { affil } : {}) };
       // [Z-AFFIL] (3.146.0, S262) the company of a studio's role ("Mastering : Soushi Mizuno (StudioMASS)"): also the place of that role
       // ((review) only a studio ("StudioMASS", "… Studios", "… Sound", "… Mastering"): "Mixed by X (Universal Music)" is no place
@@ -9945,6 +9967,13 @@
     // [Z-BOOKLET] (3.176.0, S300–S306) what a booklet prints, made ready for the reader of lines: every shape below is rewritten to
     // one the reader knows ("Name - role, role", "Role: Name", "Recorded at …") or left out with its reason. The raw line is kept
     // for the lists (P.rawOf).
+    /** A name printed in capitals ("NILS MÖNKEMEYER") as a name is written: "Nils Mönkemeyer"; any other name as it is. */
+    function bkNameCase(name) {
+      const n = String(name);
+      if (n !== n.toUpperCase() || !/\p{Lu}{2}/u.test(n)) return n;
+      return n.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => `${a}${b.toUpperCase()}`);
+    }
+
     function bkNameLike(P, s) {
       const names = String(s).trim().split(/\s+(?:&|and|und|et|y)\s+/);
       return names.length <= 3 && names.every((n) => {
@@ -10008,7 +10037,7 @@
         // the change of type in print: a role in small letters, or a name in capitals before a role that is not
         if (!(/^\p{Ll}/u.test(right) || (caps && right !== right.toUpperCase()))) continue;
         const roles = bkRoles(P, right);
-        if (roles) return `${left} - ${roles.join(', ')}${tracks}`;
+        if (roles) return `${left.split(/(\s+(?:&|and|und|et|y)\s+)/).map((x, i) => (i % 2 ? x : bkNameCase(x))).join('')} - ${roles.join(', ')}${tracks}`;
       }
       return null;
     }
@@ -10206,6 +10235,9 @@
           const nr = nameRoles[i] && !(fewNameRoles && lone(nameRoles[i])) ? nameRoles[i] : null;
           if (nr) {
             done.add(i);
+            // (the lineup, for the first names of a track list: "(Maria)" – classicalLines)
+            const [nm, rl] = nr.replace(/\s*\(tracks [^)]*\)$/, '').split(' - ');
+            nm.split(/\s+(?:&|and|und|et|y)\s+/).forEach((n) => { if (!P.bkLineup.has(n)) P.bkLineup.set(n, rl.split(', ')); });
             return keep(nr, l);
           }
           // [Z-CDTRACKS] tracks by medium behind any other line ("Ensemble Vocal Alix Bourbon (CD1 8; CD2 5–7, 9–10)")
@@ -10264,6 +10296,198 @@
       return out;
     }
 
+    // [Z-CLASSICALLIST] (3.177.0, S307, S308) a classical track list – composers as headings, works with their movements, soloists and
+    // authors in brackets – read as what it says: every find becomes a line the reader knows ("Composed By: Name (tracks 1-1 to 1-19)").
+    /** Track specs in their order → ranges ("1-1 to 1-5, 1-7"; "3 to 5"). */
+    function clSpecs(specs) {
+      const out = [];
+      let run = null;
+      const parts = (s) => { const m = String(s).match(/^(?:(\d+)-)?(\d+)$/); return m ? [m[1] || '', Number(m[2])] : null; };
+      for (const s of uniq(specs)) {
+        const p = parts(s);
+        if (run && p && run.med === p[0] && p[1] === run.last + 1) {
+          run.last = p[1];
+          run.to = s;
+        } else {
+          if (run) out.push(run);
+          run = p ? { med: p[0], last: p[1], from: s, to: s } : { med: null, last: NaN, from: s, to: s };
+        }
+      }
+      if (run) out.push(run);
+      return out.map((r) => (r.from === r.to ? r.from : `${r.from} to ${r.to}`)).join(', ');
+    }
+
+    function classicalLines(P, lines0) {
+      const lines = lines0.map(String);
+      const tm = (l) => { const m = l.match(CL_TRACK); return m && /\p{L}/u.test(m[3]) ? m : null; };
+      const at = lines.map((l, i) => (tm(l) ? i : -1)).filter((i) => i >= 0);
+      if (at.length < 3) return lines0;
+      const first = at[0];
+      let last = at[at.length - 1];
+      const lastTrack = last;
+      // (a line only in brackets right below the last track – the translation of its title – belongs to the list)
+      while (last + 1 < lines.length && /^\([^()]*\)$/.test(lines[last + 1].trim())) last++;
+      // the headings above the first track: up to six lines, none of them a credit
+      let start = first;
+      for (let i = first - 1, n = 0; i >= 0 && n < 6; i--) {
+        const t = lines[i].trim();
+        if (!t) { if (i > 0 && !lines[i - 1].trim()) break; continue; }
+        if (/\s[–—-]\s\p{Ll}|:\s|\bby\s+\p{Lu}/u.test(t) && !CL_COMPOSER.test(t) && !CL_BY.test(t) && !CL_ARR.test(t)) break;
+        if (P.NAME_ROLES.test(t)) break;
+        start = i;
+        n++;
+      }
+      // (lines between the tracks are headings of works only where they are few: a line below every track – its composers and their
+      // publishers – is the block of that track, S181)
+      const mid = lines.slice(first, lastTrack + 1).filter((l) => l.trim() && !tm(l));
+      const others = mid.length;
+      const between = others > 0 && others * 2 <= at.length && !mid.some((l) => /\s\/\s|\b(?:BMI|ASCAP|GEMA|SACEM|SESAC|SOCAN|PRS|SUISA|SIAE|JASRAC)\b/.test(l));
+      const classical = between || lines.slice(start, first).some((l) => CL_COMPOSER.test(l.trim())) || at.some((i) => tm(lines[i])[2] || /\((?!\d{1,2}[.:]\d{2}\))[^)]*\p{L}/u.test(tm(lines[i])[3]));
+      if (!classical) return lines0;
+      const keep = (t, raw) => {
+        if (t !== raw && !P.rawOf.has(t)) P.rawOf.set(t, raw);
+        return t;
+      };
+      const emit = new Map(); // "Role: Name" or "Name - role" → { specs, raw }
+      const add = (left, spec, raw) => {
+        if (!emit.has(left)) emit.set(left, { specs: [], raw });
+        emit.get(left).specs.push(spec);
+      };
+      const lineup = P.bkLineup || new Map();
+      const person = (tok) => {
+        const k = norm(tok);
+        const hits = [...lineup.keys()].filter((n) => norm(n) === k || norm(n).split(' ')[0] === k);
+        return hits.length === 1 ? hits[0] : null;
+      };
+      const artist = (n) => P.artistNames0.some((a) => norm(a) === norm(n));
+      const namesOf = (s) => String(s).split(/\s*,\s*|\s+(?:&|and|und|et|y)\s+/).map((x) => x.trim().replace(/\.$/, '')).filter(Boolean);
+      let medium = null;
+      let composer = null;
+      let work = null; // { title, specs, roles: [[role, name]], raw }
+      let gap = false;
+      const tracksSeen = [];
+      const endWork = () => {
+        if (work && work.specs.length) {
+          work.roles.forEach(([role, name]) => work.specs.forEach((s) => add(`${role}: ${name}`, s, work.raw)));
+          const set = work.specs.length > 1 && P.resolveTracks ? P.resolveTracks(work.specs[0]) : null;
+          if (set && set.size) P.headings.push({ title: work.title, at: Math.min(...set), n: work.specs.length });
+        }
+        work = null;
+      };
+      // a name beside a title: the question's role – below a composer's heading the lyricist is suggested, else the composer
+      const beside = () => (composer ? 'Named Beside Title' : 'Named Beside Title Alone');
+      const brackets = (text, spec, raw, ofWork) => {
+        let rest = text;
+        for (const m of [...text.matchAll(/\(([^()]+)\)/g)]) {
+          const c = m[1].trim();
+          let took = true;
+          // ("Orch." with a capital is the word for an orchestra in a name – "(Orch. Philharmonique)" –, no role)
+          const arr = /^Orch/.test(c) ? null : c.match(CL_ARR);
+          const nr = !arr && ruleOn('S308') ? bkNameRole(P, c) : null;
+          const people = !arr && !nr && ruleOn('S308') ? namesOf(c).map(person) : [];
+          if (!ruleOn('S308')) took = false;
+          else if (arr) namesOf(arr[2]).filter((n) => !artist(n)).forEach((n) => { P.recArrNames.add(norm(n)); add(`${CL_ARR_ROLE(arr[1])}: ${n}`, spec, raw); });
+          else if (nr) add(nr, spec, raw);
+          else if (people.length && people.every(Boolean)) people.forEach((n) => add(`${n} - ${lineup.get(n)[0].replace(/\s*\[[^\]]*\]$/, '')} [Solo]`, spec, raw));
+          else if (CL_BY.test(c)) add(`${beside()}: ${c.match(CL_BY)[1]}`, spec, raw);
+          else if (bkNameLike(P, c.replace(CL_NAME_TAIL, '')) && namesOf(c).length === 1 && !artist(c) && !CL_NOT_NAME.test(c) && !person(c.split(/\s+/)[0])) add(`${beside()}: ${c}`, spec, raw);
+          else took = false;
+          if (took || ofWork) rest = rest.replace(m[0], ' ');
+        }
+        return rest.replace(/\s{2,}/g, ' ').trim();
+      };
+      const out = lines.slice();
+      for (let i = start; i <= last; i++) {
+        const l = lines[i];
+        const t = l.trim();
+        if (!t) { gap = true; continue; }
+        const m = tm(l);
+        if (m) {
+          if (gap && !m[2]) endWork();
+          gap = false;
+          const spec = medium ? `${medium}-${Number(m[1])}` : String(Number(m[1]));
+          if (composer) add(`Composed By: ${composer}`, spec, l);
+          if (work) work.specs.push(spec);
+          const title = brackets(m[3].replace(/(?:\s*[.…]){2,}\s*$/, '').replace(/\*+/g, '').trim(), spec, l, false);
+          tracksSeen.push({ line: t, pos: spec, title: title.replace(/[\s.…-]+$/, '').trim(), len: Number(m[4]) * 60 + Number(m[5]), no: Number(m[1]), medium });
+          out[i] = '';
+          continue;
+        }
+        const med = t.match(CL_MEDIUM);
+        if (med) {
+          endWork();
+          medium = Number(med[1]);
+          P.ignored.push({ text: l, why: 'heading' });
+          out[i] = '';
+          gap = false;
+          continue;
+        }
+        const comp = t.match(CL_COMPOSER);
+        if (comp && bkNameLike(P, comp[1].trim())) {
+          endWork();
+          composer = bkNameCase(comp[1].trim());
+          P.ignored.push({ text: l, why: 'heading' });
+          out[i] = '';
+          gap = false;
+          continue;
+        }
+        const arr = t.match(CL_ARR);
+        if (arr && work && !work.specs.length) {
+          namesOf(arr[2]).filter((n) => !artist(n)).forEach((n) => { P.recArrNames.add(norm(n)); work.roles.push([CL_ARR_ROLE(arr[1]), n]); });
+          P.ignored.push({ text: l, why: 'heading' });
+          out[i] = '';
+          continue;
+        }
+        const by = t.replace(/^\(|\)$/g, '').match(CL_BY);
+        if (by && work && !work.specs.length && ruleOn('S308')) {
+          work.roles.push([beside(), by[1]]);
+          P.ignored.push({ text: l, why: 'heading' });
+          out[i] = '';
+          continue;
+        }
+        // a line only in brackets below a track (a translation of its title), a description below the heading of a work
+        if (/^\([^()]*\)$/.test(t) || (work && !work.specs.length)) {
+          P.ignored.push({ text: l, why: /^\(/.test(t) ? 'translation' : 'heading' });
+          out[i] = '';
+          continue;
+        }
+        // the heading of a work: its tracks follow
+        endWork();
+        gap = false;
+        work = { title: '', specs: [], roles: [], raw: l };
+        work.title = brackets(t, null, l, true);
+        // (a name in brackets beside the work's title holds for all its tracks: kept until they are known)
+        for (const [left, v] of [...emit]) {
+          if (v.specs.includes(null)) {
+            emit.delete(left);
+            const k = left.indexOf(': ');
+            work.roles.push([left.slice(0, k), left.slice(k + 2)]);
+          }
+        }
+        P.ignored.push({ text: l, why: 'heading' });
+        out[i] = '';
+      }
+      endWork();
+      // the list against MusicBrainz's tracks (S281) where it begins with the release's first track; else left out as a track list
+      const whole = tracksSeen.length && tracksSeen[0].no === 1 && (tracksSeen[0].medium == null || tracksSeen[0].medium === 1);
+      tracksSeen.forEach((x) => {
+        if (whole && ruleOn('S281')) P.scanTracks.push({ line: x.line, pos: x.pos, title: x.title, len: x.len });
+        else P.ignored.push({ text: x.line, why: 'tracklist' });
+      });
+      // (only for tracks the release has: a list of another release – or without a release – gives no credits for all tracks)
+      const there = (v) => {
+        const set = P.resolveTracks ? P.resolveTracks(clSpecs(v.specs)) : null;
+        return !!(set && set.size);
+      };
+      const made = [];
+      for (const [left, v] of emit) {
+        if (!v.specs.every(Boolean)) continue;
+        if (there(v)) made.push(keep(`${left} (tracks ${clSpecs(v.specs)})`, v.raw));
+        else P.ignored.push({ text: `${left} (${clSpecs(v.specs)})`, why: 'noTracks' });
+      }
+      return [...out.slice(0, last + 1), '', ...made, '', ...out.slice(last + 1)];
+    }
+
     function tidyLines(P, lines0) {
       const keep = (t, raw) => {
         if (t !== raw && !P.rawOf.has(t)) P.rawOf.set(t, raw);
@@ -10271,6 +10495,8 @@
       };
       // [Z-BOOKLET] (3.176.0, S300–S306) the shapes of a booklet first: its lines made ready for everything below
       let lines = [...BK_RULES].some(ruleOn) ? bookletLines(P, lines0) : lines0;
+      // [Z-CLASSICALLIST] (3.177.0, S307) a classical track list: its composers, works, soloists and authors as lines of their own
+      if (ruleOn('S307')) lines = classicalLines(P, lines);
       // [Z-HYPHENTRACKS] (3.169.0, S298) "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19": a hyphen without
       // spaces between name and role, each role with its tracks – and a whole lineup in one paragraph
       if (ruleOn('S298')) lines = lines.flatMap((l) => hyphenTrackLines(P, String(l)).map((t) => keep(t, l)));
@@ -10368,7 +10594,16 @@
           out = out.map((l) => {
             const m = l.match(TL);
             if (!isTl(m)) return l;
-            P.scanTracks.push({ line: l.trim(), pos: m[1], title: m[2].replace(/[\s.…-]+$/, '').trim(), len: Number(m[3]) * 60 + Number(m[4]) });
+            // [Z-MBTRACKLIST] (3.177.0, S309) a track list as MusicBrainz shows it – "1. Part One - Izumi Kimura / Artur Majewski (7:20)":
+            // the artists of the track behind its title are no part of the title (two names at least, or the release's artists)
+            let title = m[2].replace(/[\s.…-]+$/, '').trim();
+            const cut = ruleOn('S309') ? title.lastIndexOf(' - ') : -1;
+            if (cut > 0) {
+              const names = title.slice(cut + 3).split(/\s+\/\s+|\s+&\s+|,\s+/).map((x) => x.trim()).filter(Boolean);
+              const known = (n) => P.artistNames0.some((a) => norm(a) === norm(n));
+              if (names.length && names.every((n) => known(n) || bkNameLike(P, n)) && (names.length >= 2 || known(names[0]))) title = title.slice(0, cut).trim();
+            }
+            P.scanTracks.push({ line: l.trim(), pos: m[1], title, len: Number(m[3]) * 60 + Number(m[4]) });
             return '';
           });
         }
@@ -13586,7 +13821,7 @@
       }
       if (!P.ctx0.noAlt && P.credits.some((c) => c.stackAmbig)) {
         const alt = parse(P.text, { ...P.ctx0, stackUp: !P.stackUp, noAlt: true });
-        return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads };
+        return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings };
       }
       // [Z-VINYLONLY] (3.161.0, S293) "Vinyl distribution: X", "Digital distribution by X": the distributor of that medium only
       if (P.distMedium.size) {
@@ -13619,6 +13854,9 @@
       P.rawOf = new Map();
       P.asideLines = new Set(); // [Z-DASHASIDE] (3.153.0) the asides read as lines of their own (norm)
       P.distMedium = new Map(); // [Z-VINYLONLY] (3.161.0, S293) the medium named before "distribution": name (norm) → word
+      P.recArrNames = new Set(); // [Z-ARRGEN] (3.177.0) the arrangers of the works of a classical track list (norm)
+      P.bkLineup = new Map(); // [Z-TRACKSOLOIST] (3.177.0) the names of a booklet's lineup with their roles
+      P.headings = []; // [Z-CLASSICALLIST] (3.177.0) the works of a classical track list: { title, at, n }
       P.scanTracks = []; // [Z-OCRTRACKCHECK] (3.154.0) the lines of a track list with lengths: { line, pos, title, len }
       P.textPlayers = new Set(); // [Z-SEI] (3.92.0) the names of the "Name: roles" lines of this text
       P.guessedSet = new Set(); // ([Z-SEI2] 3.96.0, review) the words asked in blocks of tracks
@@ -13820,7 +14058,7 @@
       // (the last stage returns the result itself when the text is read a second time the other way round, S058)
       const early = stageFinish(P);
       if (early) return early;
-      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads };
+      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings };
     }
 
     /**
@@ -13875,6 +14113,7 @@
         quotes: res.quotes || [],
         groups: res.groups || [], // [Z-TBY] (3.59.0, S087)
         songs: res.songs || [], // [Z-YTW] (3.80.0, S118)
+        headings: res.headings || [], // [Z-CLASSICALLIST] (3.177.0, S307) the works of a classical track list: suites to offer
       };
     }
 
@@ -15015,6 +15254,7 @@
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
         if (c.workArr) entry.workArr = true; // [Z-ARRL] (3.94.0, S150)
+        if (c.recArr) entry.recArr = true; // [Z-ARRGEN] (3.177.0)
         if (c.improv) entry.improv = c.improv; // [Z-IMPROV] (3.133.0, S222)
         // [Z-RMXTITLE] (3.126.0, S200; review) only from titles while every credit of the role is one (a credit of the source is taken as it is)
         if (!c.rmxTitle) entry.rmxTitle = false;
@@ -19191,6 +19431,7 @@
     // ((3.134.0) the type of the work level by its name too – a row of a text has none chosen yet when it is read)
     if (!ruleOn('S150') || norm(r.types[0] || '') !== 'arranger' || (r.mods || []).length
       || !(typeOnLevel(r, 'work') || (!ltOf(r) && typesFor('work', r.entityType || 'artist').some((t) => norm(t.name) === 'arranger')))) return false;
+    if (r.recArr) return false; // ([Z-ARRGEN] 3.177.0: the arranger of a composer's work – the recording's)
     if (r.workArr) return true;
     if (!/^arranged by$/i.test(String(r.base || r.raw || '').trim())) return false;
     // ([Z-DGEXCL] 3.134.0) Discogs's credit; [Z-DGEXCL] a line of a text (any source, also the notes) that is the bare "Arranged by X" – not a
@@ -19209,6 +19450,8 @@
     let n = 0;
     for (const r of rows) {
       if (r.manual || r.company || r.level !== 'recording') continue;
+      // ([Z-ARRGEN] 3.177.0, S307) the arranger of a composer's work in a classical track list stays the recording's
+      if (r.recArr) continue;
       const by006 = s006 && ARRANGER_TYPES.includes(norm(r.types[0] || ''));
       if (!by006 && !s150Row(r, source)) continue;
       r.levelImport = 'work'; // (3.43.2) kept through a rules change (remapRow) – while the rule gives what it gave now
@@ -26385,6 +26628,12 @@
           recordingComment: (track.recording && track.recording.disambiguation) || '',
           // [3.39.9] its artists and the performers MusicBrainz has for the recording ("co?" – no cover of one of them; K-9)
           trackArtists: (track['artist-credit'] || []).map((c) => c.artist && c.artist.id).filter(Boolean),
+          // [Z-CLASSICCREDIT] (3.177.0, S311) classical crediting: the track is credited to the composer, the recording to who plays –
+          // the track's artists that are none of the recording's: [{ mbid, name }]
+          classicalComposers: (() => {
+            const rec = ((track.recording && track.recording['artist-credit']) || []).map((c) => c.artist && c.artist.id).filter(Boolean);
+            return rec.length ? (track['artist-credit'] || []).filter((c) => c.artist && c.artist.id && !rec.includes(c.artist.id)).map((c) => ({ mbid: c.artist.id, name: c.artist.name || c.name || '' })) : [];
+          })(),
           // [Z-EVQ] (3.73.0) a video ("video shot at" only then)
           video: !!(track.recording && track.recording.video),
           // [Z-EVR] (3.88.0) the events MusicBrainz has for the recording (recorded at, video shot at …)
@@ -27491,6 +27740,7 @@
     // ((3.92.0, review) a role credit of the text as in the import: S064, S146)
     if (!company && info.c.roleCredit) Object.assign(row, { roleCredit: info.c.roleCredit, roleCreditTouched: true });
     if (!company && info.c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
+    if (!company && info.c.recArr) row.recArr = true; // [Z-ARRGEN] (3.177.0)
     if (!company && info.c.improv) row.improv = info.c.improv; // [Z-IMPROV] (3.133.0, S222)
     row.tracks = new Set(info.tracks);
     row.suggested = new Set(info.tracks);
@@ -28326,6 +28576,8 @@
       addNotesPersons(relAlt, { credits: res.stackAlt }, { quiet: true });
       rel.stackAlt = [...(rel.stackAlt || []), ...relAlt.credits.filter((c) => c.fromNotes && c.stackAmbig)];
     }
+    // [Z-CLASSICALLIST] (3.177.0, S307) the works of a classical track list in the notes: headings as Discogs's own (suites to offer)
+    if ((res.headings || []).length) rel.headings = [...(rel.headings || []), ...res.headings.filter((h) => !(rel.headings || []).some((x) => x.at === h.at))];
     // [S295] (3.163.0; F-NOTESRESULTS) what the notes name besides credits: series, ensembles, live heads, covers and quotes of tracks,
     // headings of groups – as from every other free text. A series Discogs lists already is not taken twice.
     if (ruleOn('S295')) {
@@ -29095,6 +29347,7 @@
       } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       if (c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
+      if (c.recArr) row.recArr = true; // [Z-ARRGEN] (3.177.0)
       if (c.improv) row.improv = c.improv; // [Z-IMPROV] (3.133.0, S222) a composer of improvisations
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
@@ -44318,7 +44571,9 @@
       if (heads.slice(k + 1).some((x) => x.at === h.at && headingKind(x.title) === 'name')) return;
       const next = heads.slice(k + 1).find((x) => x.at > h.at);
       const idx = [];
-      for (let i = h.at; i < (next ? next.at : tracks.length); i++) idx.push(i);
+      // ([Z-CLASSICALLIST] 3.177.0: a heading of a text knows how many tracks it has – `n`)
+      const end = Math.min(next ? next.at : tracks.length, Number.isInteger(h.n) ? h.at + h.n : tracks.length);
+      for (let i = h.at; i < end; i++) idx.push(i);
       if (idx.length > 1 || (idx.length === 1 && trackPartsOf(tracks[idx[0]]).length)) out.push({ name: h.title, from: 'heading', tracks: idx });
     });
     const byWork = new Map();
@@ -44334,6 +44589,16 @@
     // (3.41.4, review) the release's title only when at least half of its tracks have parts (one "A / B" among twelve: a medley)
     const withParts = tracks.filter((t) => trackPartsOf(t).length).length;
     if (!out.length && rel && rel.title && withParts && withParts * 2 >= tracks.length) out.push({ name: String(rel.title).trim(), from: 'release', tracks: tracks.map((t, i) => i) });
+    // [Z-PARTTITLES] (3.177.0, S310) tracks named only as parts – "Part One" … "Part Seven", "Part 2", "Teil 3", "II" –: parts of a suite named
+    // as the release (MusicBrainz's title; the source's where it has none) – two such tracks at least, half of the tracks
+    if (ruleOn('S310') && !out.length) {
+      const named = tracks.map((t, i) => (PART_TITLE.test(String((t && t.title) || '').trim()) ? i : -1)).filter((i) => i >= 0);
+      // ((in Node the state does not exist: the source's title)
+      let mbTitle = '';
+      try { mbTitle = S.releaseTitleMb || ''; } catch { mbTitle = ''; }
+      const name = String(mbTitle || (rel && rel.title) || '').trim();
+      if (name && named.length >= 2 && named.length * 2 >= tracks.length) out.push({ name, from: 'release', tracks: named });
+    }
     return out;
   }
 
@@ -44502,6 +44767,8 @@
     found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info, ...names]) => add(id, info, ...names));
     // [179] (3.38.16) the composers named in the titles of tracks without a work
     for (const t of tracksWithoutWork()) titleComposersOf(t.idx).forEach((c) => add(c.mbid, { name: c.name, why: 'title' }, c.name));
+    // [Z-CLASSICCREDIT] (3.177.0, S311) the composer a track is credited to, where the recording is credited to who plays
+    if (ruleOn('S311')) for (const t of tracksWithoutWork()) (t.classicalComposers || []).forEach((c) => add(c.mbid, { name: c.name, why: 'trackArtist' }, c.name));
     out.special = special;
     return out;
   }

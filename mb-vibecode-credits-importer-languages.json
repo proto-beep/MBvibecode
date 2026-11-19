@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.176.0",
+  "version": "3.177.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -3010,6 +3010,7 @@
     "typeAsk.askVoiceSax": "„{role}“ allein: ein Saxophon oder eine Stimme? – bitte wählen:",
     "typeAsk.askBugle": "„{role}“: das Signalhorn (bugle) oder, wie im Französischen, das Flügelhorn? – bitte wählen:",
     "typeAsk.askLaud": "„{role}“: die spanische Laúd oder die Laute? – bitte wählen:",
+    "typeAsk.askBesideTitle": "Ein Name in Klammern neben dem Titel: Textdichter, Komponist oder Librettist des Werks – oder keine Beziehung? – bitte wählen:",
     "typeAsk.askTranslation": "„{role}“: meist die Übersetzung der Liner Notes – so übernommen (Liner Notes, Übersetzer) –, manchmal die des Liedtexts:",
     "typeAsk.askSounds": "„{role}“: ein Performer oder das Instrument effects mit dem Rollen-Credit „sounds“? – bitte wählen:",
     "ignored.why.members": "die Mitglieder von {band}: {names} – jedes mit den Rollen der Zeile; MusicBrainz führt die Mitglieder an der Band (auf deren Seite)",
@@ -3684,7 +3685,8 @@
     "statio.import": "⇩ Statistik importieren (JSON) …",
     "statio.purpose": "JSON: um dieselbe Statistik in mehreren Browsern zu haben (hier exportieren, dort importieren) – Format 2 und die Dateien von früher. CSV, JSON Lines, Data Package: zum Auswerten in anderen Programmen.",
     "ignored.why.heading": "eine Überschrift",
-    "hint.bcPkg": "Mitgelesen: der Text der Bandcamp-Ausgabe „{name}“ – {added} neu · {same} wie in den Credits (ein Eintrag) · {better} dort genauer (übernommen)"
+    "hint.bcPkg": "Mitgelesen: der Text der Bandcamp-Ausgabe „{name}“ – {added} neu · {same} wie in den Credits (ein Eintrag) · {better} dort genauer (übernommen)",
+    "ignored.why.noTracks": "nennt Tracks, die dieses Release nicht hat: kein Credit"
   },
   "es": {
     "title": "Credits Importer",
@@ -6400,6 +6402,7 @@
     "typeAsk.askVoiceSax": "«{role}» solo: ¿un saxofón o una voz? – elige:",
     "typeAsk.askBugle": "«{role}»: ¿la corneta (bugle) o, como en francés, el fliscorno? – elige:",
     "typeAsk.askLaud": "«{role}»: ¿el laúd español o el laúd (lute)? – elige:",
+    "typeAsk.askBesideTitle": "Un nombre entre paréntesis junto al título: letrista, compositor o libretista de la obra – ¿o ninguna relación? – elige:",
     "typeAsk.askTranslation": "«{role}»: casi siempre la traducción de las notas – tomado así (notas, traductor) –, a veces la de la letra:",
     "typeAsk.askSounds": "«{role}»: ¿un intérprete, o el instrumento effects acreditado como «sounds»? – elige:",
     "ignored.why.members": "los miembros de {band}: {names} – cada uno con los roles de la línea; MusicBrainz guarda los miembros en la banda (su propia página)",
@@ -6831,7 +6834,8 @@
     "afterEdit.buttonTitle": "Credits Importer: «Enter edit» y después se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
     "ignored.why.instruments": "los instrumentos y quién los construyó o afinó: sin crédito",
     "ignored.why.legal": "aviso legal o código (derechos, código de sello, código SPARS, duración total): sin crédito",
-    "ignored.why.noRole": "una tarea para la que MusicBrainz no tiene tipo de relación: sin crédito"
+    "ignored.why.noRole": "una tarea para la que MusicBrainz no tiene tipo de relación: sin crédito",
+    "ignored.why.noTracks": "nombra pistas que este lanzamiento no tiene: sin crédito"
   },
   "fr": {
     "title": "Credits Importer",
@@ -9547,6 +9551,7 @@
     "typeAsk.askVoiceSax": "« {role} » seul : un saxophone ou une voix ? – veuillez choisir :",
     "typeAsk.askBugle": "« {role} » : le clairon (bugle en anglais) ou le bugle (flugelhorn) ? – veuillez choisir :",
     "typeAsk.askLaud": "« {role} » : le laúd espagnol ou le luth ? – veuillez choisir :",
+    "typeAsk.askBesideTitle": "Un nom entre parenthèses à côté du titre : parolier, compositeur ou librettiste de l’œuvre – ou aucune relation ? – veuillez choisir :",
     "typeAsk.askTranslation": "« {role} » : le plus souvent la traduction des notes de pochette – reprise ainsi (notes, traducteur) –, parfois celle des paroles :",
     "typeAsk.askSounds": "« {role} » : un interprète, ou l’instrument « effects » crédité « sounds » ? – veuillez choisir :",
     "ignored.why.members": "les membres de {band} : {names} – chacun avec les rôles de la ligne ; MusicBrainz garde les membres sur le groupe (sa propre page)",
@@ -9978,6 +9983,7 @@
     "afterEdit.buttonTitle": "Credits Importer : « Enter edit », puis « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
     "ignored.why.instruments": "les instruments et qui les a construits ou accordés : pas de crédit",
     "ignored.why.legal": "mention légale ou code (droits, code label, code SPARS, durée totale) : pas de crédit",
-    "ignored.why.noRole": "une tâche pour laquelle MusicBrainz n’a pas de type de relation : pas de crédit"
+    "ignored.why.noRole": "une tâche pour laquelle MusicBrainz n’a pas de type de relation : pas de crédit",
+    "ignored.why.noTracks": "nomme des pistes que cette parution n’a pas : pas de crédit"
   }
 }
