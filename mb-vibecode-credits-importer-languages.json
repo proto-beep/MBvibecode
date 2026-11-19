@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.179.0",
+  "version": "3.180.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -3198,6 +3198,12 @@
     "wnew.off": "verknüpftes Werk behalten",
     "wnew.offTitle": "Die Verknüpfung mit „{title}“ behalten – kein neues Werk",
     "arrsugg.of": "arrangement of",
+    "basedsugg.of": "basiert auf",
+    "basedsugg.askTitle": "Vorschlag: das Werk basiert auf „{title}“ – wird erst nach Bestätigung mit ✓ eingetragen",
+    "basedsugg.okBtnTitle": "Bestätigen: „based on“ wird eingetragen",
+    "basedsugg.okTitle": "Bestätigt: „based on“ „{title}“ wird eingetragen",
+    "preview.basedOn": "basiert auf „{title}“",
+    "log.basedFound": "Track {track}: ein Werk „{title}“ von {by} in MusicBrainz gefunden – „based on“ wird in der Werkmatrix vorgeschlagen (vor ✓ nicht eingetragen)",
     "arrsugg.openTitle": "„{title}“ in MusicBrainz öffnen",
     "arrsugg.recordings.one": "{n} Aufnahme",
     "arrsugg.recordings.other": "{n} Aufnahmen",
@@ -6847,7 +6853,13 @@
     "ignored.why.instruments": "los instrumentos y quién los construyó o afinó: sin crédito",
     "ignored.why.legal": "aviso legal o código (derechos, código de sello, código SPARS, duración total): sin crédito",
     "ignored.why.noRole": "una tarea para la que MusicBrainz no tiene tipo de relación: sin crédito",
-    "ignored.why.noTracks": "nombra pistas que este lanzamiento no tiene: sin crédito"
+    "ignored.why.noTracks": "nombra pistas que este lanzamiento no tiene: sin crédito",
+    "basedsugg.of": "basada en",
+    "basedsugg.askTitle": "Sugerencia: la obra se basa en «{title}» – solo se prepara tras confirmar con ✓",
+    "basedsugg.okBtnTitle": "Confirmar: se prepara «based on»",
+    "basedsugg.okTitle": "Confirmado: se prepara «based on» «{title}»",
+    "preview.basedOn": "basada en «{title}»",
+    "log.basedFound": "Pista {track}: obra «{title}» de {by} encontrada en MusicBrainz – se sugiere «based on» en la matriz de obras (no se prepara antes de ✓)"
   },
   "fr": {
     "title": "Credits Importer",
@@ -10002,6 +10014,12 @@
     "ignored.why.instruments": "les instruments et qui les a construits ou accordés : pas de crédit",
     "ignored.why.legal": "mention légale ou code (droits, code label, code SPARS, durée totale) : pas de crédit",
     "ignored.why.noRole": "une tâche pour laquelle MusicBrainz n’a pas de type de relation : pas de crédit",
-    "ignored.why.noTracks": "nomme des pistes que cette parution n’a pas : pas de crédit"
+    "ignored.why.noTracks": "nomme des pistes que cette parution n’a pas : pas de crédit",
+    "basedsugg.of": "basée sur",
+    "basedsugg.askTitle": "Suggestion : l’œuvre est basée sur « {title} » – préparée seulement après confirmation avec ✓",
+    "basedsugg.okBtnTitle": "Confirmer : « based on » est préparé",
+    "basedsugg.okTitle": "Confirmé : « based on » « {title} » est préparé",
+    "preview.basedOn": "basée sur « {title} »",
+    "log.basedFound": "Piste {track} : œuvre « {title} » de {by} trouvée dans MusicBrainz – « based on » est suggéré dans la matrice des œuvres (non préparé avant ✓)"
   }
 }

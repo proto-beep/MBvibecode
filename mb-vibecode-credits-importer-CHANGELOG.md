@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.179.0 | – |
+| 2026-11-19 | 3.170.0 – 3.180.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.180.0
+
+**Works: "based on", and an arrangement as a work of its own** (collected items Z-BASEDON, Z-ARRGEN; rules S314, S315).
+
+- **"based on" between two works** (Z-BASEDON, S315): where a text says what a work is based on – below the heading of a work in a classical track list "Comedy by Edmond Haraucourt, after Shakespeare", "Poem by …", "after …", "nach …", "d'après …" – the script looks for a work of that title by that author in MusicBrainz. **Only when it is found**, the works matrix suggests "based on" below the first track of the heading, in yellow; it is staged **only after ✓** – for the suite of the heading when it is one, else for the track's new work. Nothing is created for the work it is based on; a suggestion you do not confirm is no open point. Other reasons for "based on" are read the same way where the line says so and names an author; a title the script cannot name ("after Shakespeare" alone) gives no suggestion.
+- **An arrangement as a work of its own, on a click** (Z-ARRGEN, S314): an arranger of a composer's work stays on the recordings (3.177.0) and no work is made for the arrangement. For one of its own: "＋ New" at a track whose work MusicBrainz has plans a new work in its place with "arrangement of" that work to confirm (as since 3.98.0) – and once confirmed, the new work is now offered the disambiguation **"<arrangers> arrangement"** from the arrangers credited for the track (footer, as for arrangements of traditional tunes).
+- **Not in this version:** an arrangement work for a track whose original work MusicBrainz does not have yet (two new works at once).
+- **Tests:** `t_works_matrix.py based3180` (the suggestion appears with the new work, is not staged without ✓, staged in MusicBrainz's direction after ✓; the disambiguation of an own arrangement).
 
 ### Import 3.179.0
 
