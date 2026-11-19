@@ -90,6 +90,7 @@ cases with their own checks now (annrep, artworkbox, marksrelease, focusfields �
 are step 0 of marksrelease).
 
 ```
+python3 t_parsegolden.py        # [3.175.0] the text reader: everything it returns for 181 texts (parse_golden.json; UPDATE=1 after a change that is meant)
 python3 runall.py               # [3.160.0] the whole suite: every t_*.py as a process of its own (as many at a time as the computer has cores, 2 … 5 – from 3.173.0; `-j N` sets it; logs in smoke/out/),
                                 #   then one line per file and "Suite: OK" or "Suite: FEHLER" (exit code 0 / 1). A file passes only
                                 #   when it ended by itself with exit code 0, its last "Ergebnis" says OK, none of its cases ended

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.174.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.175.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,12 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.175.0 · 2026-11-19
+
+- **F-PARSESTAGES (step 2):** every variable of `TEXT.parse` is a field of `P` (`const P = { text, ctx0 }`; 115 fields – the options, `credits`, `companies`, `unrecognized`, `ignored`, the tables and what the stages hand on); the 104 functions that were defined inside `parse` (9 declarations, 95 arrow functions, the four stages among them) stand before it in the module `TEXT`, each with `P` as its first parameter, in sections headed "[F-PARSESTAGES] (3.175.0) TEXT.parse – …": used by several stages, stage 1 – 4 (a function is in the section of the one stage that reaches it, else in the first; each stage's own function last). A call `helper(x)` is `helper(P, x)`; a helper handed on as a value (28 places: `isRole`, `playable`, `maybePlayable`, `addSociety`, `readLine`, …) is `((...a) => helper(P, ...a))`; a shorthand `{ credits }` is `{ credits: P.credits }`. `catKey` (the name of a function outside as well) stays a field. No statement changed otherwise; the order of the statements of `parse` is the same.
+- Done by a program on the syntax tree (espree, eslint-scope: only references that resolve to variables of `parse`), not kept in the repository.
+- **Tests:** `smoke/t_parsegolden.py`, `parse_golden_texts.json` (14 whole texts), `parse_golden.json` (the readings of 3.174.0: 181 texts – those and the 167 lines of `text_corpus.json` – plain, with the release's data, with `stackUp`; rules on, and S058, S222, S281, S298, S299 off). `register_golden.json`, `text_corpus.json` unchanged.
 
 ## Import 3.174.0 · 2026-11-19
 
