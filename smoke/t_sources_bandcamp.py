@@ -1379,7 +1379,7 @@ def case_tarbaby():
             pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S085', 'S086', 'S087']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S085', 'S086', 'S087']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             if off:
                 # (off: nothing read – no entries, so no checks; the line of the log says what was not recognized)
@@ -1570,7 +1570,7 @@ def case_titlecomposers():
             pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D023', 'S046', 'D026', 'S114', 'S155', 'S160', 'S242']))")  # ([3.144.0] S242 off: the suggestions)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S088', 'S242']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S088', 'S242']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             if off:
                 # (off: nothing read – no entries, no checks; the line of the log says what was not recognized)
@@ -1657,7 +1657,7 @@ def case_tcpsingle():
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
             pg.on('dialog', lambda d: d.accept())
-            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S083', 'S092'] if off else ['S083']}))")
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({['S092'] if off else []}))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
@@ -1813,7 +1813,7 @@ Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
         b.close()
     # E) rule S117 off; a title without "Live on KEXP"
     for off, vid in ((['S117'], VID), ([], 'CCCCCCCCCCC'), ([], 'DDDDDDDDDDD')):
-        H.RULES_OFF[:] = ['S083'] + off
+        H.RULES_OFF[:] = list(off)
         with sync_playwright() as p:
             b = p.chromium.launch(args=H.LAUNCH_ARGS)
             ctx = H.new_context(b)
@@ -1827,7 +1827,7 @@ Cameras: Jim Beckmann, Carlos Cruz, Scott Holpainen & Luke Knecht"""
             print('E)', off, vid, e0)
             results.append(e0 == [] and not errs)
             b.close()
-    H.RULES_OFF[:] = ['S083']
+    H.RULES_OFF[:] = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

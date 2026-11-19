@@ -1606,7 +1606,7 @@ def case_photoname():
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False)
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S091']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S091']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             pg.wait_for_timeout(600)

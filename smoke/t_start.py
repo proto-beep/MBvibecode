@@ -725,7 +725,7 @@ def case_gaprefresh3131():
         c = pr.evaluate("document.querySelector('.dci-gapline span').textContent")
         print('C)', c)
         results.append(bool(re.search(r'After “Enter edit” on \S+ the dashboard counted 20 still missing\.$', c)))
-        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ ...JSON.parse(localStorage.getItem('dci-gap-exact:{REL}')), n: 0, open: 1 }})); localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S218']))")
+        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ ...JSON.parse(localStorage.getItem('dci-gap-exact:{REL}')), n: 0, open: 1 }})); localStorage.setItem('dci-rules-off', JSON.stringify(['S218']))")
         pr.reload()
         pr.wait_for_timeout(500)
         H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)

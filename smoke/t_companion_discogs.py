@@ -666,6 +666,16 @@ def case_marksrelease():
     (yet) in MusicBrainz …"), Bass Man's bass "mb"; 3) the release page closed: no marks; 4) opened again later: the same marks."""
     def marks(dg):
         return dg.evaluate("[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent + ' ' + m.closest('li, tr').querySelector('a').textContent)")
+
+    def marks_when(dg, want, least, timeout=40):
+        """([3.173.0] F-TESTWAITS) The marks once they are `want` – at least `least` ms as before, on a busy computer up to `timeout` s
+        (the marks follow the dashboard through the companion's storage, in steps of seconds)."""
+        dg.wait_for_timeout(least)
+        t = 0
+        while marks(dg) != want and t < timeout * 1000:
+            dg.wait_for_timeout(500)
+            t += 500
+        return marks(dg)
     NAMES = ['Keys Guy', 'Drum Guy', 'Bob Producer', 'Photo Guy', 'Ann Rep', 'Sony', 'Abbey Road Studios']
     results = []
     with sync_playwright() as p:
@@ -685,16 +695,16 @@ def case_marksrelease():
         results.append(groups == 14 and len(done_log) == 1 and done_log[0].startswith('Import complete: 14 roles of 14 entries in the dashboard')
                        and m0 == ['✓'] + ['○'] * 11)
         H.stage_click(pg, least=3000)
-        m1 = marks(dg)
+        staged = ['✓ Writer W', '○ Writer W', '● ●Bass Man', '● ●Guitar Guy'] + [f'● {n}' for n in NAMES] + ['● Pub Co']
+        m1 = marks_when(dg, staged, 0)
         print('1) nach Übernehmen:', m1)
-        results.append(m1 == ['✓ Writer W', '○ Writer W', '● ●Bass Man', '● ●Guitar Guy'] + [f'● {n}' for n in NAMES] + ['● Pub Co'])
+        results.append(m1 == staged)
         missing = H.submit_staged(pg, leave_out=1)
         print('   absichtlich nicht angekommen:', missing)
         pg.goto(f'https://musicbrainz.org/release/{H.REL}')   # "Enter edit" leads to the release page
         H.with_companion(pg)
-        dg.wait_for_timeout(5000)
         done = ['✓ Writer W', '○ Writer W', '✓ ✓Bass Man', '✓ ✓Guitar Guy'] + [f'✓ {n}' for n in NAMES] + ['✗ Pub Co']
-        m2 = marks(dg)
+        m2 = marks_when(dg, done, 5000)
         t = dg.evaluate("[...document.querySelectorAll('.dci-dg-pending')].map(m => m.title)")
         items = H.STORE.data[f'statusMap:{H.REL}']['items']  # [companion 1.10.0] per release
         bm = [(i['role'], i['status'], i.get('note')) for i in items if i['artistId'] == 3001]
@@ -702,13 +712,11 @@ def case_marksrelease():
         results.append(m2 == done and len(t) == 1 and t[0].startswith('staged, but not (yet) in MusicBrainz – the edit may still be open 0/1')
                        and bm == [('Bass', 'mb', '')] and len(missing) == 1)
         pg.close()
-        dg.wait_for_timeout(12000)
-        m3 = marks(dg)
+        m3 = marks_when(dg, [], 12000)
         print('3) Release-Seite geschlossen:', m3)
         results.append(m3 == [])
         H.open_mb_release(ctx)
-        dg.wait_for_timeout(5000)
-        m4 = marks(dg)
+        m4 = marks_when(dg, done, 5000)
         print('4) später wieder geöffnet:', m4)
         results.append(m4 == done)
         print('Fehler:', errs, dgerr)

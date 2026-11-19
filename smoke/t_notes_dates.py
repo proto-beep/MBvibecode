@@ -342,7 +342,7 @@ def case_artkinds():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'D025']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['D025']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
@@ -883,7 +883,7 @@ def case_camd385():
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S129']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S129']))")
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.src_menu(pg, 'text-open')

@@ -850,6 +850,11 @@ def case_workgroups():
             if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
                 pg.click('.dci-pools-toggle')
                 pg.wait_for_timeout(200)
+            # ([3.173.0] F-TESTWAITS) the pool is drawn anew after the import – on a busy computer later: until it has no work groups
+            for _ in range(30):
+                if not works(pg.evaluate(TGS)):
+                    break
+                pg.wait_for_timeout(500)
             g_tg = pg.evaluate(TGS)
             g_box = pg.evaluate(BOX)
             stored = pg.evaluate("localStorage.getItem('dci-work-groups')")

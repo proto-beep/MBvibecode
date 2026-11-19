@@ -802,7 +802,10 @@ def case_cache2():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            # ([3.173.0] F-TESTWAITS) what was remembered is drawn after "Import complete" – on a busy computer later than the 1.2 s
+            # this waited: until the rows and their role credits stand still
             pg.wait_for_timeout(1200)
+            H.wait_still(pg, "[...document.querySelectorAll('#dci-overlay [data-f=role-credit]')].map(e => e.value).join('|') + document.querySelectorAll('#dci-overlay tr.dci-row').length", 20, 1500)
 
         def again():
             pg.reload()
@@ -814,10 +817,13 @@ def case_cache2():
             pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', text)
             pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
         load()
+        mark = H.remember_mark(pg)
         credit('fretless')
         photo = pg.evaluate(row_of, 'Photo Guy')
         pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=remove-row]')
-        pg.wait_for_timeout(1600)
+        # ([3.173.0] F-TESTWAITS) until it is stored, not a fixed 1.6 s
+        pg.wait_for_timeout(1200)
+        H.wait_remembered(pg, mark)
         again()
         a1 = (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'))
         print('A) neu geladen:', a1)
@@ -825,8 +831,10 @@ def case_cache2():
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', 'Jane Roe – guitar')
         pg.click('[data-act=text-load]')
+        mark = H.remember_mark(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
-        pg.wait_for_timeout(1600)
+        pg.wait_for_timeout(1200)
+        H.wait_remembered(pg, mark)
         jane = pg.evaluate(ROWS, 'Jane Roe')
         again()
         b1 = pg.evaluate(ROWS, 'Bass Man')
@@ -2280,7 +2288,7 @@ def case_statsdur():
             c1 = pg.locator('[data-act=stats-dur]').count()
             pg.click('[data-el=stats] [data-act=stats-scope][data-scope=local]')
             pg.wait_for_timeout(300)
-            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S083', 'S095']))")
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S095']))")
             pg.reload(); pg.add_script_tag(content=H.MAIN)
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
@@ -2401,6 +2409,11 @@ def case_theme():
         a = [pg.evaluate(f"({PRESSED})('window')"), pg.evaluate(f"({PRESSED})('page')"), pg.evaluate(DK)]
         pg.mouse.move(5, 5)
         pg.wait_for_timeout(200)
+        # ([3.173.0] F-TESTWAITS) the dashboard still fills after "Import complete" (lookups; the footer's chip turns from "checking" to
+        # done) – the colours are compared once the checks are done and it stands still
+        done = H.wait_ok(pg, "!!document.querySelector('#dci-overlay .dci-foot-run-done, #dci-overlay .dci-foot-chip-ok')", 25)
+        H.wait_still(pg, f"({COLORS})()", 20, 1200)
+        print('   Prüfungen fertig (Fuß):', done)
         light1 = pg.evaluate(COLORS)
         g0 = pg.evaluate("!!document.getElementById('dci-styles-dark')")
         print('A) gedrückt:', a, '| dunkles Stylesheet vorher:', g0)
@@ -2413,10 +2426,14 @@ def case_theme():
         pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=auto]')
         pg.mouse.move(5, 5)
         # ([3.171.0] F-TESTWAITS) not after a fixed 300 ms: until the colours stand still (their transitions end later on a busy computer)
-        H.wait_still(pg, f"({COLORS})()", 10, 300)
+        H.wait_still(pg, f"({COLORS})()", 20, 1200)
         light2 = pg.evaluate(COLORS)
         g1 = [pg.evaluate("document.getElementById('dci-styles-dark').disabled"), pg.evaluate(DK)]
         print('G) Regeln geschrieben/gelesen, aus, Blitz:', sheet, '| wieder hell:', g1, 'gleich:', light1 == light2)
+        if light1 != light2:
+            la, lb = str(light1), str(light2)
+            i = next((k for k in range(min(len(la), len(lb))) if la[k] != lb[k]), min(len(la), len(lb)))
+            print('   verschieden ab', i, 'von', len(la), len(lb), '|', la[max(0, i - 120):i + 120], '→', lb[max(0, i - 120):i + 120])
         results.append(g0 is False and sheet[0] == sheet[1] and sheet[0] > 500 and sheet[2] is False and sheet[3] and g1 == [True, []] and light1 == light2)
         # B) as a window: dark
         pg.click('[data-el=settings] [data-act=theme-set][data-where=window][data-theme=dark]')
@@ -2930,7 +2947,7 @@ def case_profiles():
     (review) H) Loaded again, the dashboard opened: still "Standard", no profile made. I) The quick switch S078 switched under
     "Standard" (the window "Mapping rules"): a new profile "Profile 1 · …" with S078 off."""
     import json
-    H.RULES_OFF = ['S083', 'S078']
+    H.RULES_OFF = ['S078']
     PROFS = "JSON.parse(localStorage.getItem('dci-profiles') || '[]').map(p => p.name)"
     ACTIVE = "JSON.parse(localStorage.getItem('dci-profile') || 'null')"
     PICK = """(() => { const s = document.getElementById('dci-profile'); const seg = document.querySelector('#dci-launcher .dci-place-seg');
@@ -3220,7 +3237,7 @@ def case_profnew3108():
        the settings as before (full, S078 off); the log "a copy of “Profile 1”".
     B) "Standard" chosen, "＋ New profile" → "Profile 3 · …" with the defaults (compact, S078 on); a setting changed there stays in it
        ("Standard" unchanged)."""
-    H.RULES_OFF = ['S083', 'S078']
+    H.RULES_OFF = ['S078']
     PROFS = "JSON.parse(localStorage.getItem('dci-profiles') || '[]').map(p => p.name)"
     ACTIVE = "JSON.parse(localStorage.getItem('dci-profile') || 'null')"
     STATE = """[document.getElementById('dci-overlay').classList.contains('dci-compact') ? 'compact' : 'full',
@@ -3259,7 +3276,7 @@ def case_profnew3108():
             results.append(len(b1[0]) == 3 and b1[0][2].startswith('Profile 3 · ') and b1[1] == ['compact', 'S078 on'] and len(b2[0]) == 3 and b2[1] and b2[2] == 'false' and not errs)
             b.close()
     finally:
-        H.RULES_OFF = ['S083']
+        H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

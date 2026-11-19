@@ -1062,7 +1062,7 @@ Paul Foreman - guitar"""
         results.append(not errs)
         b.close()
         # E) S114 on; F) D026 on
-        H.RULES_OFF = ['S083', '+S114', '+D026']
+        H.RULES_OFF = ['+S114', '+D026']
         # (one concert: no dates of the Discogs notes beside it)
         orig = H.discogs_release
 
