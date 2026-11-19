@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.171.0 | – |
+| 2026-11-19 | 3.170.0 – 3.172.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.172.0
+
+Inside (F-PARSESTAGES, F-RENDERFETCH) – nothing looks or reads differently:
+
+- **Reading a text in four stages** (F-PARSESTAGES, first step): what `TEXT.parse` does after its helpers – about 510 lines in one stretch – is four functions now, called one after another: the pre-filter (press quotes, what a shop writes, prose), the lines made ready (tidied, joined, track lists), the reading line by line, and what only the whole text tells (lineups, ensembles, initials, the tracks of scans …). The texts of the golden tests and of the corpus read as before, word for word. The about 200 helpers are still inside `parse`: moving them out stage by stage is the next step.
+- **Drawing starts no lookups** (F-RENDERFETCH): the entries asked MusicBrainz for the links it has of them (S291) while they were drawn, and a lineup's row for the instruments of the group's members (S257). The drawing now only shows what is known and names what it would like to know; the lookups start in the flow, right after the drawing, once however often it was named.
+- Not in this version: a works plan that runs without the page (the rest of W-MODEL).
 
 ### Import 3.171.0
 
