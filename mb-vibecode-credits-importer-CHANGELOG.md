@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.180.0 | – |
+| 2026-11-19 | 3.170.0 – 3.181.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.181.0
+
+**Translation round E9, first part: German is complete.**
+
+- **German:** the 626 texts that were shown in English until now are translated – every text of the dashboard is German again (4,322 of 4,322). Among them: the dedications box, the profiles, the global statistics, drag & drop of dates and tracks, the suites, the entry "for the words chosen", the works matrix's columns, the long tooltips (`….more`). The words follow F-TERMS (eintragen for "stage", anwenden for "apply", auslassen for "left out").
+- **Spanish and French:** unchanged – 1,163 texts each are still shown in English (73 % translated). That is the second part of E9.
+- No code changed. The existing lines of the languages file keep their order; the new ones stand where they stand in English.
 
 ### Import 3.180.0
 
