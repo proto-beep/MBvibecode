@@ -40,17 +40,17 @@ The footer counts what is still open: **must** (orange) before staging, **may** 
 
 | Version | |
 |---|---|
+| 3.176 | Booklets are read: lineups without a sign between name and role, tracks by medium, German role words, parts of an opera |
 | 3.157 | Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits |
 | 3.155 | “✨ Answer all” at the works matrix: its open questions answered by a level, with a preview and undo |
 | 3.150 | “Fill empty recordings”: the tracks without relationships get the credits the other tracks share |
 | 3.149 | Wikipedia’s infobox as a source: recorded, studio, venue, producer – also in the background |
-| 3.148 | “＋ Source”: an added source in one table, contradictions preselected by the trust of the sources |
 
 All milestones and every version: [changelog](mb-vibecode-credits-importer-CHANGELOG.md).
 
 ## More
 
-- [Full reference](mb-vibecode-credits-importer-v3.175.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
+- [Full reference](mb-vibecode-credits-importer-v3.176.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
 - [Companion](mb-vibecode-credits-importer-companion-v1.22.0-README.md)
 - [Changelog](mb-vibecode-credits-importer-CHANGELOG.md) · [Code changes](mb-vibecode-credits-importer-CODE-CHANGES.md)
 - Problems and ideas: [issues](https://github.com/proto-beep/MBvibecode/issues)

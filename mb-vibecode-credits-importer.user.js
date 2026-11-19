@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.175.0
+// @version      3.176.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.175.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.175.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.176.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.176.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.175.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.176.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -907,6 +907,9 @@
       "ignored.why.statement": "the label's statement on how it records",
       "ignored.why.releaseTitle": "the release’s title – a title line, no credit",
       "ignored.why.gear": "equipment (microphones, amplifiers, interfaces, software): no credit",
+      "ignored.why.instruments": "the instruments and who built or tuned them: no credit",
+      "ignored.why.legal": "legal notice or code (rights, label code, SPARS code, total time): no credit",
+      "ignored.why.noRole": "a task MusicBrainz has no relationship type for: no credit",
       "note.videoNoType": "A credit of the video MusicBrainz has no type for – left out (quick switch S263 off)",
       "note.videoNoRel": "The concert’s, not the recording’s – no relationship (left out)",
       "video.map": "mappings",
@@ -5351,6 +5354,13 @@
     { id: 'S291', where: 'missCandidates, missLinksRun, renderMissLinks', note: 'Entries (3.157.0; collected item Z-MISSINGLINKS): "Show missing links of the entries" below them, folded – only when there are any: the web addresses of the entries assigned in MusicBrainz (artists, labels, places, series; no works) that MusicBrainz does not have – their pages at the source (Discogs, Bandcamp …), addresses next to their names in the text, a site of the text named like them –, each with "add in MusicBrainz" (the edit page with the address filled in). Switched off here' },
     { id: 'S294', where: 'TEXT.parse (shopLines; FORMAT_LABEL_LINE, FORMAT_LABEL_NAME)', note: 'Texts (3.162.0; proposal F-TAPEFORMAT of review run 2): the format of an edition before its label – "Tape: No Problema Tapes / Vinyl: Hiraeth Records", "CD: Sub Pop" – is no credit ("Tape" was read as the instrument, the label as its player): left out as "the label of an edition". Only when the name ends like a label\'s (Records, Recordings, Tapes, Label, Music, Editions, Disques, Schallplatten), or the text names a second format that way and one of the names does; "Tape: John Doe" stays the instrument. Every free text' },
     { id: 'S292', where: 'TEXT.parse (tidyLines; LEAD_MARK)', note: 'Texts (3.161.0; collected item Z-LEADMARK): a sign before a line – a bullet or an ornament: "⊛ Design by Gendema", "★ Mixed by X", "→ Photos: Y", "✓ Mastered by Z" – is no part of the role (it was its role credit "⊛")' },
+    { id: 'S300', where: 'TEXT.parse (bookletLines, bkNameRole, bkRole, bkTracks; BK_ROLE_WORDS, BK_CD_TRACKS), tracksInText', note: 'Texts (3.176.0; Z-NAMEROLE-NOSEP, Z-GERMANROLES, Z-CDTRACKS, Z-MISCLINES): a booklet\'s lineup without a sign between name and role – "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola", "Maria Ladurner & Ella Marshall Smith soprano", "Nele Vertommen oboe, recorder & direction" – is read as "Name - roles": the name is two to five capitalised words (particles allowed), everything after it is a list of roles, and print shows the border (a role in small letters, or a name in capitals before a role that is not). A line that goes on the one above is none; one such line alone is none when its role is "recording", "design" … (the end of a studio\'s or a company\'s name). German role words the register does not know ("TONMEISTER : Name" → Engineer credited as Tonmeister, Toningenieur / Tontechnik → Sound Engineer, Fotos, Gestaltung, Konzertmeisterin → Concertmaster, "AUFNAHME : place, date" → Recorded at), "direction" → Directed By, "violin in concerto" → solo violin. Tracks by medium behind a line – "(CD1 4)", "(CD1 8; CD2 5–7, 9–10)" – are the tracks 1-4, 1-8, 2-5 to 2-7 …; the dashboard resolves "2-5" as track 5 of medium 2. A name with a task MusicBrainz has no type for ("original pronunciation consultant") is left out as "no type". Every free text' },
+    { id: 'S301', where: 'TEXT.parse (bookletLines; BK_GUESTS)', note: 'Texts (3.176.0; Z-PARENBULLET): "Name (Instrument) • Name (Instrument)" – several names a line, each with its instruments in brackets ("Euphonium und Posaune": two): one line a name. A name without brackets at the end of a line takes the instrument of the next line\'s first name; "Gäste:" / "Guests:" before the names: guests. Every free text' },
+    { id: 'S302', where: 'TEXT.parse (bookletLines; BK_HEAD_BY, BK_HEAD_AT, BK_THANKS)', note: 'Texts (3.176.0; Z-HEADBELOW, Z-MISCLINES): a role as a line of its own with what a pair of lines (S058) cannot say – "Produced and engineered for Linn by" / "Philip Hobbs" (for whom is no part of the role), "Recorded at" / a place over several lines / the date, "Sleeve image by" / a name (artwork), "Cover image" / the picture\'s title / "by Name, 1996." (the artist; the lines about the picture are left out), "EXECUTIVE PRODUCERS" / names with their company in brackets. In such a text every role above its name is joined with it. Also: "… by Red Priest - Piers Adams, Julia Bishop …" (the group and its members: the members), "Recorded at …, in May 2014, with grateful thanks to …" (the thanks are left out), "Bonus track … from CD …" (left out). Every free text' },
+    { id: 'S303', where: 'TEXT.parse (bookletLines; BK_INSTR_HEAD)', note: 'Texts (3.176.0; Z-INSTRMAKERS): the instruments of a booklet and who built them – the block below "THE INSTRUMENTS:" up to the next heading in capitals, "Claviorganum Markus Harder-Völlkmann (2002)", "Tuned by … in 415 Hz" – are no credits: left out as "instruments". Every free text' },
+    { id: 'S304', where: 'TEXT.parse (bookletLines; BK_LEGAL_START, BK_LEGAL_END, BK_LEGAL_LINE)', note: 'Texts (3.176.0; Z-LEGALBOILER): "WARNING: All Rights Reserved. Unauthorised reproduction is prohibited and may result in criminal prosecution." (also over several lines), a label code ("LC 07967"), a SPARS code ("DDD"), a total time ("TT: 54:47"): left out as "legal notice or code". What follows the notice in its last line ("Printed in the UK") stays a line of its own. Every free text' },
+    { id: 'S305', where: 'TEXT.parse (bookletLines)', note: 'Texts (3.176.0; Z-ROLEPARTS): below a lineup, lines of a singer and the part sung – "Yann Beuron Le Récitant", "Véronique Gens Marie" (two such lines at least, capitalised words only, no ensemble): vocals, the part as the role\'s credit. The name is the first two words (three with a particle: "Frederica von Stade"). Every free text' },
+    { id: 'S306', where: 'TEXT.parse (tidyLines; BK_TRACK_LINE)', note: 'Texts (3.176.0; Z-TITLEROLE-FALSE): the lines of a track list that S281 and S288 do not take – headings of works between the tracks, a colon in a title ("7 II. Chorus: L\'hiver s\'enfuit 2.29") – are no credits: a number in front, a length behind, three such lines at least; left out as track list. A title with round brackets keeps its line (they may hold credits, S180). Every free text' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6741,6 +6751,44 @@
   const HT_HYPHEN = /\p{L}[-–]\s?\p{Lu}/u;
   const HT_HEAD = /^((?:musicians|personnel|performers|line[- ]?up|band)(?:\s+in\s+the\s+studio)?)\s*:?\s+(?=\p{Lu}[\p{L}.'’]*(?:[ -]\p{Lu}[\p{L}.'’]*){0,3}\s?[-–]\s?\p{Lu})/iu;
   const HT_SPLIT = /(?<=\d|\.)\s+(?=\p{Lu}[\p{L}.'’]*(?:[ -]\p{Lu}[\p{L}.'’]*){0,3}\s?[-–]\s?\p{Lu}\p{L})/u;
+  // [Z-BOOKLET] (3.176.0, S300–S306) the shapes of a booklet (bookletLines): particles of a name; words for an ensemble; role words the
+  // register does not know (German ones, and what stands for a picture) with the role the reader takes instead – a word in brackets is
+  // the role as credited; tracks by medium in brackets; legal notices and codes; the makers of the instruments; a line of a track list
+  const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306'];
+  const BK_PARTICLE = /^(?:von|van|vom|de|del|della|der|den|di|da|du|le|la|ten|ter|zu|af|dos|das|do|bin|ibn|al|el|st\.?|d['’]\p{L}+)$/iu;
+  const BK_ENSEMBLE_WORD = /^(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players)\b/i;
+  const BK_ENSEMBLE_ANY = /\b(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players|akademie|academy|radio)\b/i;
+  const BK_ROLE_WORDS = {
+    tonmeister: 'Engineer [Tonmeister]', tonmeisterin: 'Engineer [Tonmeisterin]',
+    toningenieur: 'Sound Engineer [Toningenieur]', toningenieurin: 'Sound Engineer [Toningenieurin]',
+    tontechnik: 'Sound Engineer [Tontechnik]', tontechniker: 'Sound Engineer [Tontechniker]', tontechnikerin: 'Sound Engineer [Tontechnikerin]',
+    fotos: 'Photography', foto: 'Photography', fotografie: 'Photography', fotografien: 'Photography',
+    gestaltung: 'Design', grafik: 'Design', 'grafische gestaltung': 'Design', layout: 'Layout',
+    konzertmeister: 'Concertmaster', konzertmeisterin: 'Concertmaster',
+    'continuo-cello': 'Cello', pauke: 'Timpani', pauken: 'Timpani',
+    produzent: 'Producer', produzentin: 'Producer', 'executive producers': 'Executive Producer',
+    dirigent: 'Conductor', dirigentin: 'Conductor', 'musikalische leitung': 'Conductor', leitung: 'Directed By', direction: 'Directed By',
+    'sleeve image': 'Artwork', 'cover image': 'Artwork', 'cover painting': 'Artwork', 'cover picture': 'Artwork',
+  };
+  const BK_CD_TRACKS = /\s*\(\s*((?:cd|disc|disk|lp)\s*#?\d+\s*[,:]?\s+\d[\d\s,&–—-]*(?:;\s*(?:cd|disc|disk|lp)\s*#?\d+\s*[,:]?\s+\d[\d\s,&–—-]*)*)\)\s*$/i;
+  const BK_LEGAL_START = /^(?:warning\b|all\s+rights\s+(?:of\s+the\s+\p{L}+\s+)?reserved\b|unauthori[sz]ed\b)/iu;
+  const BK_LEGAL_END = /\bprosecution\b|\bprohibited\.\s*$/i;
+  const BK_LEGAL_LINE = [
+    /^(?:warning\s*:\s*)?all\s+rights\s+(?:of\s+the\s+.{3,60}\s+)?reserved\.?$/i,
+    /^unauthori[sz]ed\s+(?:copying|reproduction|duplication|public\s+performance|broadcasting|hiring|lending|rental)\b.*\bprohibited\.?$/i,
+    /^(?:\p{Lu}{2,5}\s+)?LC\s?\d{4,5}(?:\s+[A-Z0-9][A-Z0-9 -]*)?$/u,
+    /^(?:DDD|ADD|AAD|DAD)$/,
+    /^(?:TT|total(?:\s+playing)?\s+time|gesamt(?:spiel)?zeit)\s*:?\s*\d{1,3}\s?[:.'’]\s?\d{2}\b.{0,12}$/i,
+  ];
+  const BK_INSTR_HEAD = /^(?:the\s+)?(?:instruments?|instrumentarium|instrumente|instrumentarium)\s*:?$/i;
+  const BK_CAPS_HEAD = /^\p{Lu}[\p{Lu} &/-]{3,}:?$/u;
+  const BK_CREDIT_START = /^(?:produced|recorded|engineered|mixed|mastered|edited|photo|design|cover|sleeve|artwork|executive|℗|©)/i;
+  const BK_TRACK_LINE = /^\s*\[?\d{1,2}[\].)]?\s+(?:[IVXLC]+\.\s+)?\p{L}.*?[\s.]\(?\d{1,2}[.:]\d{2}\)?\s*$/u;
+  const BK_TASK_NOUN = /\s-\s(?:recordings?|mixing|mastering|productions?|design|artwork|photography|engineering|editing|music|sound|studios?|records)$/i;
+  const BK_GUESTS = /^\s*(?:gäste|gast|guests?|special\s+guests?|invités?|invitados?)\s*:\s*/i;
+  const BK_HEAD_BY = /^\p{Lu}[\p{L}\s,&'’-]{2,70}\s(?:by|von)$/u;
+  const BK_HEAD_AT = /^(?:recorded|mixed|mastered|filmed|aufgenommen)(?:\s+live)?\s+(?:at|in|im)$/i;
+  const BK_THANKS = /,?\s+with\s+(?:grateful\s+|many\s+|special\s+|sincere\s+)?thanks\s+to\b/i;
   const LEAD_MARK = /^\s*(?:[⊛⊙⊚◉◎⦿●○◌◍◆◇◈■□▪▫▣▶►▸▹▷➤➔➜➝➞→⇒»›‣⁃∙·•◦★☆✦✧✩✪✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺❂❃❇❈❉❊❋❖✓✔☑✗✘♪♫♬♩☛☞❥❧❦❯❱*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?)(?:\s*(?:[⊛⊙●○◆■▪▶►➤→»•★✦✓✔*+~]|(?![©®™℗])\p{Extended_Pictographic}\uFE0F?))*\s+(?=\S)/u;
   // [Z-VINYLONLY] (3.161.0, S293) "Exclusive EU distribution via X:", "Vinyl distribution: X", "Digital distribution by X": region and medium before the word
   const DIST_LINE = /^\s*(?:exclusive(?:ly)?\s+)?(?:(?:EU|US|USA|UK|European|Europe|North\s+American?|American|Asian|Japanese|German|worldwide|world-?wide|international|global|rest\s+of\s+(?:the\s+)?world)\s+)?(?:(digital|vinyl|lp|cd|cassette|tape|physical)\s+)?(distribution|distributed|distributor|vertrieb)\b\s*(?:(?:exclusively\s+)?(via|by|through|durch|:|[-–—]))?\s*(.+?)\s*[:.]?\s*$/i;
@@ -9894,12 +9942,335 @@
       return out;
     }
 
+    // [Z-BOOKLET] (3.176.0, S300–S306) what a booklet prints, made ready for the reader of lines: every shape below is rewritten to
+    // one the reader knows ("Name - role, role", "Role: Name", "Recorded at …") or left out with its reason. The raw line is kept
+    // for the lists (P.rawOf).
+    function bkNameLike(P, s) {
+      const names = String(s).trim().split(/\s+(?:&|and|und|et|y)\s+/);
+      return names.length <= 3 && names.every((n) => {
+        const ws = n.split(/\s+/);
+        if (ws.length < 2 || ws.length > 5 || /\d/.test(n)) return false;
+        if (BK_PARTICLE.test(ws[ws.length - 1]) || BK_PARTICLE.test(ws[0]) && ws[0] === ws[0].toLowerCase()) return false;
+        return ws.every((w) => /^\p{Lu}[\p{L}.'’-]*$/u.test(w) || BK_PARTICLE.test(w));
+      });
+    }
+
+    /** One role as a booklet writes it → as the reader knows it, or null: German words (BK_ROLE_WORDS), a plural, "violin in concerto". */
+    function bkRole(P, r0) {
+      let r = clean(String(r0)).replace(/\.$/, '');
+      const tail = (r.match(/\s*\[[^\]]*\]$/) || [''])[0];
+      if (tail) r = r.slice(0, r.length - tail.length);
+      if (!r) return null;
+      const solo = r.match(/^(.+?)\s+in\s+concerto$/i);
+      if (solo) r = isRole(P, `solo ${solo[1]}`) ? `solo ${solo[1]}` : solo[1];
+      const word = BK_ROLE_WORDS[r.toLowerCase()];
+      if (word) return tail && !/\[/.test(word) ? `${word}${tail}` : word;
+      if (BK_ENSEMBLE_WORD.test(r)) return null;
+      if (isRole(P, r) || isRole(P, cap(r))) return `${r}${tail}`;
+      if (/s$/i.test(r) && isRole(P, cap(r.replace(/s$/i, '')))) return `${cap(r.replace(/s$/i, ''))}${tail}`;
+      return null;
+    }
+
+    /** A list of roles ("oboe, recorder & direction", "Euphonium und Posaune") → their texts, or null when one is none. */
+    function bkRoles(P, text) {
+      const parts = String(text).split(/\s*,\s*(?![^[]*\])|\s+(?:&|and|und|et|y)\s+(?![^[]*\])/).map((x) => x.trim()).filter(Boolean);
+      const out = parts.map((x) => bkRole(P, x));
+      return parts.length && out.every(Boolean) ? out : null;
+    }
+
+    /** [Z-CDTRACKS] "(CD1 8; CD2 5–7, 9–10)" at the end of a line → [line without it, " (tracks 1-8, 2-5 to 2-7, 2-9 to 2-10)"]. */
+    function bkTracks(line) {
+      const m = String(line).match(BK_CD_TRACKS);
+      if (!m) return [String(line), ''];
+      const specs = [];
+      for (const seg of m[1].split(/\s*;\s*/)) {
+        const s = seg.match(/^(?:cd|disc|disk|lp)\s*#?(\d+)\s*[,:]?\s+(.+)$/i);
+        if (!s) return [String(line), ''];
+        for (const item of s[2].split(/\s*(?:,|&|\band\b|\bund\b)\s*/i).filter(Boolean)) {
+          const ends = item.split(/\s*[-–—]\s*/);
+          if (!ends.every((e) => /^\d{1,2}$/.test(e)) || ends.length > 2) return [String(line), ''];
+          specs.push(ends.map((e) => `${s[1]}-${e}`).join(' to '));
+        }
+      }
+      return [String(line).slice(0, m.index).trim(), ` (tracks ${specs.join(', ')})`];
+    }
+
+    /** [Z-NAMEROLE-NOSEP] "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola", "A B & C D soprano" → "Name - roles", or null. */
+    function bkNameRole(P, line0) {
+      const [line, tracks] = bkTracks(line0);
+      if (/[:–—•]|\s-\s|\b(?:by|at)\s/i.test(line) || /^\P{Lu}/u.test(line.trim())) return null;
+      const ws = line.trim().split(/\s+/);
+      for (let k = 2; k < ws.length; k++) {
+        const left = ws.slice(0, k).join(' ');
+        const right = ws.slice(k).join(' ');
+        if (/^(?:&|and|und|et|y)$/i.test(ws[k]) || /^(?:&|and|und|et|y)$/i.test(ws[k - 1]) || !bkNameLike(P, left)) continue;
+        const caps = left === left.toUpperCase();
+        // the change of type in print: a role in small letters, or a name in capitals before a role that is not
+        if (!(/^\p{Ll}/u.test(right) || (caps && right !== right.toUpperCase()))) continue;
+        const roles = bkRoles(P, right);
+        if (roles) return `${left} - ${roles.join(', ')}${tracks}`;
+      }
+      return null;
+    }
+
+    function bookletLines(P, lines0) {
+      const keep = (t, raw) => {
+        if (t !== raw && !P.rawOf.has(t)) P.rawOf.set(t, raw);
+        return t;
+      };
+      const lines = lines0.map(String);
+      const blank = (i) => i < 0 || i >= lines.length || !lines[i].trim();
+      // --- what is no credit: legal notices and codes, the makers of the instruments, the lines of a track list
+      let out = [];
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i];
+        const t = l.trim();
+        if (ruleOn('S304')) {
+          if (BK_LEGAL_START.test(t)) {
+            let j = i;
+            while (j < lines.length && j < i + 7 && !blank(j) && !BK_LEGAL_END.test(lines[j])) j++;
+            if (j < lines.length && BK_LEGAL_END.test(lines[j])) {
+              for (let k = i; k <= j; k++) P.ignored.push({ text: lines[k], why: 'legal' });
+              const rest = lines[j].replace(/^.*?\bprosecution\.?\s*/i, '').trim();
+              if (rest && rest !== lines[j].trim()) out.push(keep(rest, lines[j]));
+              i = j;
+              continue;
+            }
+          }
+          if (BK_LEGAL_LINE.some((re) => re.test(t))) {
+            P.ignored.push({ text: l, why: 'legal' });
+            continue;
+          }
+        }
+        if (ruleOn('S303')) {
+          if (BK_INSTR_HEAD.test(t)) {
+            let j = i + 1;
+            while (j < lines.length && !BK_CAPS_HEAD.test(lines[j].trim()) && !(blank(j - 1) && BK_CREDIT_START.test(lines[j].trim()))) j++;
+            for (let k = i; k < j; k++) if (lines[k].trim()) P.ignored.push({ text: lines[k], why: 'instruments' });
+            i = j - 1;
+            continue;
+          }
+          const made = t.match(/^(\p{L}[\p{L}-]*)\s+\p{Lu}.*\(\d{4}\)$/u);
+          if (/^tuned\s+by\b/i.test(t) || (made && bkRole(P, made[1]) && bkNameLike(P, t.replace(/\s*\(\d{4}\)$/, '').replace(/^\S+\s+/, '')))) {
+            P.ignored.push({ text: l, why: 'instruments' });
+            continue;
+          }
+        }
+        if (ruleOn('S302') && /^bonus\s+tracks?\b.*\bfrom\b/i.test(t)) {
+          let j = i;
+          while (j + 1 < lines.length && !blank(j + 1) && !/[.)]\s*$/.test(lines[j]) && j < i + 2) j++;
+          for (let k = i; k <= j; k++) P.ignored.push({ text: lines[k], why: 'aside' });
+          i = j;
+          continue;
+        }
+        out.push(l);
+      }
+      // --- [Z-PARENBULLET] (S301) "Name (Instrument) • Name (Instrument)": one line a name; "Gäste:" before them: guests
+      if (ruleOn('S301') && out.some((l) => /\S\s*•\s*\S/.test(l) && /\([^()]+\)/.test(l))) {
+        const next = [];
+        let dangling = null;
+        for (const l of out) {
+          if (!(/•/.test(l) || dangling) || !/\([^()]+\)/.test(l)) {
+            if (dangling) next.push(dangling.t);
+            dangling = null;
+            next.push(l);
+            continue;
+          }
+          const g = l.match(BK_GUESTS);
+          const segs = (g ? l.slice(g[0].length) : l).split(/\s*•\s*/).map((x) => x.trim()).filter(Boolean);
+          segs.forEach((seg, si) => {
+            const m = seg.match(/^(.+?)\s*\(([^()]+)\)$/);
+            const roles = m && bkNameLike(P, m[1]) ? bkRoles(P, m[2]) : null;
+            if (roles) {
+              const text = roles.map((r) => (g ? `${r} [Guest]` : r)).join(', ');
+              // a name without an instrument at the end of the line above: the instrument of the line's next name
+              if (dangling) next.push(keep(`${dangling.t} - ${text}`, dangling.raw));
+              dangling = null;
+              next.push(keep(`${m[1]} - ${text}`, l));
+            } else if (si === segs.length - 1 && !m && bkNameLike(P, seg)) {
+              if (dangling) next.push(dangling.t);
+              dangling = { t: seg, raw: l };
+            } else {
+              if (dangling) next.push(dangling.t);
+              dangling = null;
+              next.push(keep(seg, l));
+            }
+          });
+        }
+        if (dangling) next.push(dangling.t);
+        out = next;
+      }
+      // --- [Z-HEADBELOW] (S302) a role as a line of its own, the names or the place in the lines below
+      if (ruleOn('S302')) {
+        const next = [];
+        const none = (i) => i >= out.length || !out[i].trim();
+        // a role above its name is read as a pair of lines (S058); the lines are joined here only in a text that has what a pair
+        // cannot say: "… for Linn by", a place over several lines, a role word of BK_ROLE_WORDS
+        const joinHeads = out.some((l, i) => {
+          const t = l.trim();
+          if (none(i + 1)) return false;
+          if (BK_HEAD_BY.test(t)) return /\sfor\s+\p{Lu}[\p{L}.&' ]*?\s+by$/u.test(t) || !!BK_ROLE_WORDS[t.replace(/\s+by$/i, '').toLowerCase()] || /\s(?:and|&)\s/.test(out[i + 1]);
+          return BK_HEAD_AT.test(t) && /,$/.test(out[i + 1].trim());
+        });
+        for (let i = 0; i < out.length; i++) {
+          const l = out[i];
+          const t = l.trim();
+          // "Cover image / <title> / by Name, 1996. / Oil on canvas. Courtesy …": the artist, the rest is about the picture
+          if (BK_ROLE_WORDS[t.toLowerCase()] && /image|painting|picture|photo/i.test(t)) {
+            let j = i + 1;
+            while (j < out.length && j <= i + 2 && !none(j) && !/^by\s+\p{Lu}/u.test(out[j].trim())) j++;
+            const by = j < out.length && j <= i + 2 ? out[j].trim().match(/^by\s+(.+?)(?:,\s*\d{4})?\.?$/i) : null;
+            if (by) {
+              next.push(keep(`${BK_ROLE_WORDS[t.toLowerCase()]}: ${by[1]}`, l));
+              for (let k = i + 1; k < j; k++) P.ignored.push({ text: out[k], why: 'artTitle' });
+              let e = j + 1;
+              while (!none(e)) P.ignored.push({ text: out[e++], why: 'artTitle' });
+              i = e - 1;
+              continue;
+            }
+          }
+          const head = t.match(BK_HEAD_BY) || t.match(BK_HEAD_AT);
+          // (a role with nothing below it – its name was a web address, left out before – says nothing)
+          if (head && joinHeads && none(i + 1) && t.split(/\s+/).length <= 4) {
+            P.ignored.push({ text: l, why: 'heading' });
+            continue;
+          }
+          if (head && joinHeads && !none(i + 1) && !BK_HEAD_BY.test(out[i + 1].trim()) && !BK_HEAD_AT.test(out[i + 1].trim())) {
+            let joined = `${t} ${out[i + 1].trim()}`;
+            let j = i + 1;
+            while (!none(j + 1) && j < i + 4 && (/(?:,|\bfrom|\band|&|\bat|\bin|\bon|\bto)$/i.test(out[j].trim()))) joined += ` ${out[++j].trim()}`;
+            // "Produced and engineered for Linn by Philip Hobbs": for whom is no part of the role
+            joined = joined.replace(/\s+for\s+\p{Lu}[\p{L}.&' ]*?\s+(by)\s/u, ' $1 ');
+            const rw = joined.match(/^(.+?)\s+by\s+(.+)$/i);
+            if (rw && BK_ROLE_WORDS[rw[1].toLowerCase()]) joined = `${BK_ROLE_WORDS[rw[1].toLowerCase()]}: ${rw[2]}`;
+            next.push(keep(joined, l));
+            i = j;
+            continue;
+          }
+          // a role in capitals, the names below ("EXECUTIVE PRODUCERS" / "Daniela Majer & Stefan Lang (Deutschlandradio)")
+          if (t.length > 3 && t === t.toUpperCase() && /\p{Lu}/u.test(t) && !/[:.,]/.test(t) && !none(i + 1)) {
+            const role = bkRole(P, t);
+            const names = out[i + 1].trim().replace(/\s*\([^()]*\)\s*$/, '');
+            // (a role the register knows is the reader's: a name may stand above it as well, S058)
+            if (role && !isRole(P, t) && !isRole(P, cap(t.toLowerCase())) && bkNameLike(P, names) && names !== names.toUpperCase()) {
+              next.push(keep(`${role}: ${names}`, l));
+              i += 1;
+              continue;
+            }
+          }
+          // "… arranged and published by Red Priest - Piers" / "Adams, Julia Bishop, …": a group and its members – the members
+          const grp = t.match(/^(.*\bby\s+)(\p{Lu}[\p{L} ]+?)\s+[-–]\s+(\p{Lu}.*)$/u);
+          if (grp && P.artistNames0.some((a) => norm(a) === norm(grp[2]))) {
+            let joined = `${grp[1]}${grp[3]}`;
+            let j = i;
+            while (!none(j + 1) && j < i + 2 && !/[.]$/.test(out[j].trim())) joined += ` ${out[++j].trim()}`;
+            next.push(keep(joined.replace(/\.$/, ''), l));
+            i = j;
+            continue;
+          }
+          // "Recorded at …, England, in May 2014, with grateful thanks to …": the thanks are no part of the place
+          if (/^recorded\s+(?:at|in)\b/i.test(t) && (/,$/.test(t) || BK_THANKS.test(t))) {
+            let joined = t;
+            let j = i;
+            while (!none(j + 1) && j < i + 4 && !/[.]$/.test(out[j].trim())) joined += ` ${out[++j].trim()}`;
+            const th = joined.match(BK_THANKS);
+            if (th) {
+              next.push(keep(joined.slice(0, th.index).replace(/[,\s]+$/, ''), l));
+              P.ignored.push({ text: joined.slice(th.index).replace(/^[,\s]+/, ''), why: 'thanks' });
+              i = j;
+              continue;
+            }
+          }
+          next.push(l);
+        }
+        out = next;
+      }
+      // --- the lines of names: "ROLLE : Name" in German, "Name role" without a sign between them, the parts of an opera
+      const done = new Set();
+      const nameRoles = ruleOn('S300') ? out.map((l, i) => {
+        // (a line that goes on the one above – "… mixed by Dylan Alledridge," / "Skinny Elephant recording" – is none, S071)
+        const above = i > 0 ? out[i - 1].trim() : '';
+        return /(?:,|\b(?:by|at|von|and|&))$/i.test(above) ? null : bkNameRole(P, l.trim());
+      }) : [];
+      // (one such line alone: only a voice, an instrument, a conductor – not what also ends the name of a studio or a company)
+      const fewNameRoles = nameRoles.filter(Boolean).length < 2;
+      out = out.map((l, i) => {
+        const t = l.trim();
+        if (ruleOn('S300')) {
+          const colon = t.match(/^(\p{L}[\p{L} -]*?)\s*:\s+(\S.*)$/u);
+          const word = colon ? BK_ROLE_WORDS[colon[1].toLowerCase()] : null;
+          if (colon && /^aufnahmen?$/i.test(colon[1])) return keep(`Recorded at ${colon[2]}`, l);
+          if (word && !isRole(P, colon[1])) return keep(`${word}: ${colon[2]}`, l);
+          // (… nor an instrument: "Fender Rhodes organ" is one – a lone line needs a voice, a conductor, a role that is no instrument)
+          const lone = (x) => BK_TASK_NOUN.test(x) || playable(P, x.replace(/\s*\(tracks [^)]*\)$/, '').split(' - ').pop().split(', ')[0].replace(/\s*\[[^\]]*\]$/, '').toLowerCase());
+          const nr = nameRoles[i] && !(fewNameRoles && lone(nameRoles[i])) ? nameRoles[i] : null;
+          if (nr) {
+            done.add(i);
+            return keep(nr, l);
+          }
+          // [Z-CDTRACKS] tracks by medium behind any other line ("Ensemble Vocal Alix Bourbon (CD1 8; CD2 5–7, 9–10)")
+          const [body, cdTracks] = bkTracks(t);
+          if (cdTracks && !BK_ENSEMBLE_WORD.test(body)) return keep(`${body}${cdTracks}`, l);
+        }
+        return l;
+      });
+      // the release's artist as a line just above its lineup ("RED PRIEST" / "Piers Adams - recorders"): no name of a pair of lines (S058)
+      if (ruleOn('S300')) {
+        out = out.map((l, i) => {
+          const t = l.trim();
+          if (!t || !/^\p{Lu}[\p{L}.'’ -]*\s[-–—]\s\p{L}/u.test((out[i + 1] || '').trim()) || !P.artistNames0.some((a) => norm(a) === norm(t))) return l;
+          if (i > 0 && /\b(?:by|von)\s*:?$/i.test(out[i - 1].trim())) return l;
+          P.ignored.push({ text: l, why: 'releaseArtist' });
+          return '';
+        });
+      }
+      if (done.size && (ruleOn('S305') || ruleOn('S300'))) {
+        // the block of a lineup: the lines around one that was read, up to an empty line
+        const inBlock = new Set();
+        for (const i of done) {
+          for (let j = i; j >= 0 && out[j].trim(); j--) inBlock.add(j);
+          for (let j = i; j < out.length && out[j].trim(); j++) inBlock.add(j);
+        }
+        const first = Math.min(...done);
+        const partOf = (t) => {
+          const ws = t.split(/\s+/);
+          if (ws.length < 3 || /[\d:,;()&]/.test(t) || BK_ENSEMBLE_ANY.test(t) || !ws.every((w) => /^\p{Lu}/u.test(w) || BK_PARTICLE.test(w))) return null;
+          const k = BK_PARTICLE.test(ws[1]) && ws[1] === ws[1].toLowerCase() ? 3 : 2;
+          return ws.length > k && /^\p{Lu}/u.test(ws[k - 1]) ? [ws.slice(0, k).join(' '), ws.slice(k).join(' ')] : null;
+        };
+        const parts = [...inBlock].filter((i) => i > first && !done.has(i) && partOf(out[i].trim()));
+        out = out.map((l, i) => {
+          if (done.has(i)) return l;
+          const t = l.trim();
+          // the name of the release's artist between the lines of a lineup ('KAMMERAKADEMIE POTSDAM'): no name of a pair of lines
+          if (P.artistNames0.some((a) => norm(a) === norm(t)) && (done.has(i + 1) || done.has(i - 1)) && !(i > 0 && /\b(?:by|von)\s*:?$/i.test(out[i - 1].trim()))) {
+            P.ignored.push({ text: l, why: 'releaseArtist' });
+            return '';
+          }
+          // [Z-ROLEPARTS] (S305) "Véronique Gens Marie": the singer and the part she sings – at least two such lines
+          if (inBlock.has(i) && ruleOn('S305') && parts.length >= 2 && parts.includes(i)) {
+            const [name, part] = partOf(t);
+            return keep(`${name} - Vocals [${part}]`, l);
+          }
+          // a name and a task MusicBrainz has no type for ("David Crystel original pronunciation consultant")
+          const task = t.match(/^((?:\p{Lu}[\p{L}.'’-]*\s+){1,4}(?:(?:&|and)\s+(?:\p{Lu}[\p{L}.'’-]*\s+){2,4})?)(\p{Ll}[\p{Ll} -]+)$/u);
+          if (ruleOn('S300') && task && task[2].trim().split(/\s+/).length >= 2 && bkNameLike(P, task[1].trim())) {
+            P.ignored.push({ text: l, why: 'noRole' });
+            return '';
+          }
+          return l;
+        });
+      }
+      return out;
+    }
+
     function tidyLines(P, lines0) {
       const keep = (t, raw) => {
         if (t !== raw && !P.rawOf.has(t)) P.rawOf.set(t, raw);
         return t;
       };
-      let lines = lines0;
+      // [Z-BOOKLET] (3.176.0, S300–S306) the shapes of a booklet first: its lines made ready for everything below
+      let lines = [...BK_RULES].some(ruleOn) ? bookletLines(P, lines0) : lines0;
       // [Z-HYPHENTRACKS] (3.169.0, S298) "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19": a hyphen without
       // spaces between name and role, each role with its tracks – and a whole lineup in one paragraph
       if (ruleOn('S298')) lines = lines.flatMap((l) => hyphenTrackLines(P, String(l)).map((t) => keep(t, l)));
@@ -10036,6 +10407,21 @@
             if (!m) return l;
             n++;
             P.scanTracks.push({ line: l.trim(), pos: head ? `${head}${n}` : String(P.scanTracks.length + 1), title: m[1].replace(/[\s.…-]+$/, '').trim(), len: Number(m[2]) * 60 + Number(m[3]) });
+            return '';
+          });
+        }
+      }
+      // [Z-TITLEROLE-FALSE] (3.176.0, S306) the lines of a track list the rules above do not take – headings of works between them, a colon
+      // in a title ("7 II. Chorus: L'hiver s'enfuit 2.29") – are no credits either: number in front, length behind, three lines at least.
+      // (A title with round brackets keeps its line: they may hold credits, S180.)
+      if (ruleOn('S306')) {
+        // ((only where its title would be read as a credit – a colon in it, or the number of a movement before it: a plain list with the
+        // composers of each track below its lines keeps its lines, they open the block of their track)
+        const isLine = (l) => BK_TRACK_LINE.test(l) && !/\((?!\d{1,2}[.:]\d{2}\))/.test(l) && (/^\s*\[?\d{1,2}[\].)]?\s+[IVXLC]+\.\s/.test(l) || /\p{L}:\s/u.test(l));
+        if (out.filter(isLine).length >= 3) {
+          out = out.map((l) => {
+            if (!isLine(l)) return l;
+            P.ignored.push({ text: l.trim(), why: 'tracklist' });
             return '';
           });
         }
@@ -35352,8 +35738,17 @@
     const posMap = positionIndex(srcTracks || []);
     const groups = positionGroups(srcTracks || []); // [Z-SUB] (3.41.15, review) "track 3" of a split index: all its tracks
     const firstMedium = S.mbTracks.length ? S.mbTracks[0].medium : null;
+    // [Z-CDTRACKS] (3.176.0, S300) "2-5": track 5 of medium 2 – where the release has several media and the source has no such position
+    const mediumTrack = (tok) => {
+      const mt = String(tok).trim().match(/^(\d{1,2})[-.](\d{1,3})$/);
+      const hit = mt && !disc && multiMedium() && posMap.get(normPos(String(tok).trim())) === undefined
+        ? S.mbTracks.find((x) => Number(x.medium) === Number(mt[1]) && plainNo(x.number) === plainNo(mt[2])) : null;
+      return hit ? hit.idx : undefined;
+    };
     const resolve = (tok) => {
       const t = plainNo(tok);
+      const viaMedium = mediumTrack(tok);
+      if (viaMedium !== undefined) return viaMedium;
       if (disc) {
         const hit = S.mbTracks.find((x) => x.medium === Number(disc) && plainNo(x.number) === t);
         return hit ? hit.idx : undefined;
@@ -35394,7 +35789,7 @@
         let ends = part.split(/\s*(?:–|—|\bto\b|\bbis\b|\bà\b|\ba\b|\bthru\b|\bthrough\b)\s*/i).filter(Boolean);
         if (ends.length === 1 && /^[A-Za-z]?\d+\s*-\s*[A-Za-z]?\d+$/.test(part)) {
           // "1-5": a Discogs position on releases with several media, otherwise a range
-          ends = multiMedium() && posMap.has(normPos(part)) ? [part] : part.split(/\s*-\s*/);
+          ends = multiMedium() && (posMap.has(normPos(part)) || mediumTrack(part) !== undefined) ? [part] : part.split(/\s*-\s*/);
         }
         addRange(ends);
       }

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.175.0 | – |
+| 2026-11-19 | 3.170.0 – 3.176.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,21 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.176.0
+
+**A booklet's credits are read** (collected items of 2026-11-19; rules S300–S306, each can be switched off in the mapping rules). All of it holds for every free text – a pasted text, text from cover art, the Discogs notes, Bandcamp's texts.
+
+- **A lineup without a sign between name and role** (Z-NAMEROLE-NOSEP, S300): "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola", "Maria Ladurner & Ella Marshall Smith soprano", "Nele Vertommen oboe, recorder & direction". The name is two to five capitalised words; what follows must be roles; print shows the border (a role in small letters, or a name in capitals). "direction" asks like "Directed By"; "violin in concerto" is a solo violin.
+- **Tracks by medium** (Z-CDTRACKS, S300): "Frederica von Stade mezzo-soprano (CD1 4)", "Nicolai Gedda tenor (CD1 9, 11, 14 & 16)", "(CD1 8; CD2 5–7, 9–10)" – the tracks 1-4, 1-9 … of a release with several media. Not yet for a line that begins with the word for an ensemble ("Ensemble Vocal …": stays "not recognized").
+- **German role words** (Z-GERMANROLES, S300): "TONMEISTER : Name" → engineer, credited as Tonmeister; Toningenieur, Tontechnik, Tontechniker → sound engineer, credited with the German word; Fotos → photography; Gestaltung → design; Konzertmeisterin → concertmaster; "AUFNAHME : Siemensvilla, Berlin, 21.–24.8.2010" → recorded at, with its date; Pauke → timpani.
+- **Several names a line with a bullet** (Z-PARENBULLET, S301): "Anton Borderieux (Trompete) • Markus Czieharz (Trompete) • …" – one credit a name; "(Euphonium und Posaune)" two instruments; "Gäste:" before the names makes them guests.
+- **A role above its name** where a pair of lines was not enough (Z-HEADBELOW, S302): "Produced and engineered for Linn by" / "Philip Hobbs" (for whom is no part of the role), "Recorded at" / a place over several lines / its date, "Cover image" / the picture's title / "by Per Kirkeby, 1996." (artwork; the lines about the picture are left out), "EXECUTIVE PRODUCERS" / the names.
+- **The parts of an opera or an oratorio** (Z-ROLEPARTS, S305): "Yann Beuron Le Récitant", "Véronique Gens Marie" below a lineup – vocals, with the part as the role's credit.
+- **Left out with its reason instead of "not recognized" – or a wrong credit:** the instruments and who built or tuned them (Z-INSTRMAKERS, S303: the block below "THE INSTRUMENTS:", "Tuned by … in 415 Hz" – until now credits like "Andreas Kung – bass"); legal notices and codes (Z-LEGALBOILER, S304: "All Rights Reserved. Unauthorised reproduction …", "LC 07967", "DDD", "TT: 54:47"); a name with a task MusicBrainz has no type for ("original pronunciation consultant"); thanks behind a place; "Bonus track … from CD …".
+- **Fixed** (Z-TITLEROLE-FALSE, S306): a line of a track list with a colon in its title – "7 II. Chorus: L'hiver s'enfuit 2.29" – was read as a credit (role "Chorus"). Such lines – a colon in the title, or the number of a movement before it – are left out as a track list now; reading the classical track list itself (composers, soloists, movements) is the next version.
+- **Fixed:** the release's artist as a line just above its lineup ("RED PRIEST" / "Piers Adams - recorders") was read as a name with the next line as its role; "… arranged and published by Red Priest - Piers Adams, Julia Bishop, …" gave a person "Red Priest - Piers" – now the four members.
+- **Tests:** `t_static.py booklet3176` (Node: each shape, and all seven rules off), `t_notes_dates.py cdtracks3176` (the dashboard: tracks by medium on a release of two media), two more booklet pages in `t_parsegolden.py` (183 texts).
 
 ### Import 3.175.0
 

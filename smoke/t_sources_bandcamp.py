@@ -1339,7 +1339,7 @@ def case_tarbaby():
        ("Blessed Ones" the start of "Blessed Ones The Eternal Truth"), Dana Murray percussion on track 4 only; no entry "Tarbaby".
     B) "Tarbaby:" and "+" left out as such (the heading of a group, a separator).
     C) MusicBrainz has Orrin Evans and Eric Revis as members of Tarbaby, not Nasheet Waits: an info names him (not the guests below "+").
-    D) Rules S085, S086, S087 off: the lines are not recognized again."""
+    D) Rules S085, S086, S087 – and S300, which reads a lineup without a dash too (3.176.0) – off: the lines are not recognized again."""
     PAGE = 'https://cleanfeedrecords.bandcamp.com/'
     ALBUM = PAGE + 'album/dance-of-the-evil-toys'
     TITLES = ['Blessed Ones The Eternal Truth', 'Bonu', 'Bumper', 'Dance Of The Evil Toys']
@@ -1379,7 +1379,7 @@ def case_tarbaby():
             pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
             pg.on('dialog', lambda d: d.accept())
             if off:
-                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S085', 'S086', 'S087']))")
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S085', 'S086', 'S087', 'S300']))")  # [3.176.0] S300 reads such lines too
             pg.wait_for_selector('#dci-open', timeout=20000)
             if off:
                 # (off: nothing read – no entries, so no checks; the line of the log says what was not recognized)

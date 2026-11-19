@@ -1,5 +1,5 @@
 {
- "note": "Whole texts read by TEXT.parse, each as a credits text, with the release's data and with stackUp, with everything the reader returns (t_parsegolden.py; UPDATE=1 writes the readings anew after a change that is meant). From 3.175.0, before the helpers of the reader were taken out of parse: the readings are those of 3.174.0 – also where they are wrong (the booklets of 2026-11-19 are mostly not read yet).",
+ "note": "Whole texts read by TEXT.parse, each as a credits text, with the release's data and with stackUp, with everything the reader returns (t_parsegolden.py; UPDATE=1 writes the readings anew after a change that is meant). From 3.175.0, before the helpers of the reader were taken out of parse: the readings were those of 3.174.0 – also where they were wrong. 3.176.0 reads the booklets of 2026-11-19 (S300–S306) and adds two more (Fauré / Plasson); their classical track lists are not read yet.",
  "texts": [
   {
    "name": "booklet: Mönkemeyer / Kammerakademie Potsdam (German credits)",
@@ -58,6 +58,26 @@
     "Red Priest"
    ],
    "trackCount": 15
+  },
+  {
+   "name": "booklet: Fauré / Plasson, disc 1 (classical track list)",
+   "text": "Gabriel Fauré 1845–1924\n\nCompact Disc 1 67.00\n\nPelléas et Mélisande Op.80\n1 I. Prélude 5.19\n2 II. The Spinning Girl: Andantino quasi allegretto 3.01\n3 III. Sicilienne (Patricia Nagle flute) 3.27\n4 IV. Mélisande's Song (orch. Koechlin) 3.11\n5 V. The Death of Mélisande: Molto adagio 4.42\n\nMasques et Bergamasques Op.112\n(in one act by René Fauchois)\n6 I. Overture 3.51\n7 II. Pastorale 3.54\n8 III. Madrigal Op.35 (Armand Sylvestre) 4.56\n9 IV. (Le plus doux chemin), Madrigal Op.87 No.1 (Armand Sylvestre) 1.31\n(The Sweetest Road)\n10 V. Minuet 2.49\n11 VI. Clair de lune Op.46 No.2 (Paul Verlaine) 3.13\n12 VII. Gavotte 3.03\n13 VIII. Pavane Op.50 (Linda Chésis flute) 6.03\n\nShylock Op.57\nComedy by Edmond Haraucourt, after Shakespeare\n14 I. Song 2.44\n15 II. Entracte 3.55\n16 III. Madrigal 1.21\n17 IV. Epithalamium 3.24\n18 V. Nocturne 2.37\n19 VI. Finale 3.54\n",
+   "artists": [
+    "Gabriel Fauré",
+    "Michel Plasson",
+    "Orchestre du Capitole de Toulouse"
+   ],
+   "trackCount": 30
+  },
+  {
+   "name": "booklet: Fauré / Plasson, disc 2 and lineup (tracks by medium)",
+   "text": "Compact Disc 2 70.42\n\n1 Ballade Op.19 in F sharp 13.52\n2 Élégie Op.24* for cello and orchestra in C minor 7.41\n3 Berceuse Op.16* for violin and orchestra in D 4.10\n4 Fantaisie Op.111* for piano and orchestra in G 15.00\n5 Les Djinns Op.12 (Victor Hugo) for chorus and orchestra 4.03\n\nCaligula Op.52 (Alexandre Dumas père)\nIncidental music for female chorus and orchestra\n6 I. Fanfares, March and Chorus: Nous sommes les heures guerrières 7.11\n7 II. Chorus: L'hiver s'enfuit 2.29\n8 III. Dance melody 2.13\n9 IV. Melodrama and Chorus: De roses merveilles 2.27\n10 V. Melodrama and Chorus: César a fermé la paupière 3.17\n\n11 Pénélope – Prélude 8.16\n\nFrederica von Stade mezzo-soprano (CD1 4)\nNicolai Gedda tenor (CD1 9, 11, 14 & 16)\nJean-Philippe Collard piano (CD2 1 & 4)\nPaul Tortelier cello (CD2 2)\nYan-Pascal Tortelier violin (CD2 3)\nEnsemble Vocal Alix Bourbon (CD1 8; CD2 5–7, 9–10)\nOrchestre du Capitole de Toulouse\nconducted by\nMichel Plasson\n",
+   "artists": [
+    "Gabriel Fauré",
+    "Michel Plasson",
+    "Orchestre du Capitole de Toulouse"
+   ],
+   "trackCount": 30
   },
   {
    "name": "MusicBrainz track list with artists",
