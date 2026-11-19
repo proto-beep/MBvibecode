@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.175.0",
+  "version": "3.176.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -3118,6 +3118,9 @@
     "ignored.why.statement": "die Erklärung des Labels, wie es aufnimmt",
     "ignored.why.releaseTitle": "der Titel des Releases – eine Titelzeile, kein Credit",
     "ignored.why.gear": "Ausrüstung (Mikrofone, Verstärker, Interfaces, Software): kein Credit",
+    "ignored.why.instruments": "die Instrumente und wer sie gebaut oder gestimmt hat: kein Credit",
+    "ignored.why.legal": "Rechtshinweis oder Code (Rechte, Labelcode, SPARS-Code, Gesamtzeit): kein Credit",
+    "ignored.why.noRole": "eine Aufgabe, für die MusicBrainz keinen Beziehungstyp hat: kein Credit",
     "note.videoNoType": "Ein Video-Credit ohne Typ in MusicBrainz – ausgelassen (Schnellschalter S263 aus)",
     "note.videoNoRel": "Gehört zum Konzert, nicht zur Aufnahme – keine Beziehung (ausgelassen)",
     "video.map": "Zuordnungen",
@@ -6825,7 +6828,10 @@
     "insts.hintTitle": "Lo que introduciría «en el lanzamiento + grupo» – solo una vista previa, nada puesto",
     "hint.bcPkg": "Leído también: el texto de la edición de Bandcamp «{name}» – {added} nuevos · {same} iguales que en los créditos (una entrada) · {better} más precisos allí (tomados)",
     "pkg.ask": "Solo se nombra en el texto de la edición «{name}» – en Omitir para esta publicación:",
-    "afterEdit.buttonTitle": "Credits Importer: «Enter edit» y después se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links} · {keys}"
+    "afterEdit.buttonTitle": "Credits Importer: «Enter edit» y después se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
+    "ignored.why.instruments": "los instrumentos y quién los construyó o afinó: sin crédito",
+    "ignored.why.legal": "aviso legal o código (derechos, código de sello, código SPARS, duración total): sin crédito",
+    "ignored.why.noRole": "una tarea para la que MusicBrainz no tiene tipo de relación: sin crédito"
   },
   "fr": {
     "title": "Credits Importer",
@@ -9969,6 +9975,9 @@
     "insts.hintTitle": "Ce que « sur la parution + groupe » saisirait – un aperçu seulement, rien n’est mis",
     "hint.bcPkg": "Lu aussi : le texte de l’édition Bandcamp « {name} » – {added} nouveaux · {same} identiques aux crédits (une entrée) · {better} plus précis là (repris)",
     "pkg.ask": "Nommé seulement dans le texte de l’édition « {name} » – sur Ignorer pour cette parution :",
-    "afterEdit.buttonTitle": "Credits Importer : « Enter edit », puis « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}"
+    "afterEdit.buttonTitle": "Credits Importer : « Enter edit », puis « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
+    "ignored.why.instruments": "les instruments et qui les a construits ou accordés : pas de crédit",
+    "ignored.why.legal": "mention légale ou code (droits, code label, code SPARS, durée totale) : pas de crédit",
+    "ignored.why.noRole": "une tâche pour laquelle MusicBrainz n’a pas de type de relation : pas de crédit"
   }
 }

@@ -1034,6 +1034,57 @@ Live at Club Montmartre, Copenhagen, Denmark
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_cdtracks3176():
+    """Credits Importer 3.176.0 (collected items Z-NAMEROLE-NOSEP, Z-CDTRACKS; S300): a booklet's lineup in the notes of a release of
+    two media (3 + 1 tracks; the source numbers its tracks 1 … 4): "Anna Berg piano (CD1 2)", "Ben Holt guitar (CD1 1, 3; CD2 1)",
+    "Clara Stein conductor".
+    A) Anna Berg: piano on track 1-2 only. B) Ben Holt: guitar on 1-1, 1-3, 2-1 (three of four tracks). C) Clara Stein: conductor, all tracks."""
+    H.MEDIA = [3, 1]
+    NOTES = """Anna Berg piano (CD1 2)
+Ben Holt guitar (CD1 1, 3; CD2 1)
+Clara Stein conductor"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    ROWS = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+        (r.querySelector('.dci-tracks, [data-f=tracks]') || r).textContent.replace(/\\s+/g, ' ').trim().slice(0, 80)])])
+      .filter(g => /Anna Berg|Ben Holt|Clara Stein/.test(g[0]))"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1000)
+        rows = dict((g[0], g[1]) for g in pg.evaluate(ROWS))
+        print('Zeilen:', rows)
+        tr = pg.evaluate("""(() => { const out = {}; for (const g of document.querySelectorAll('section.dci-group')) { const n = g.querySelector('.dci-gname strong').textContent.trim();
+          if (!/Anna Berg|Ben Holt|Clara Stein/.test(n)) continue; out[n] = [...g.querySelectorAll('tr.dci-row')].map(r => r.textContent.replace(/\\s+/g, ' ').trim().slice(0, 200)); } return out; })()""")
+        print('Text der Zeilen:', tr)
+        a = ' '.join(tr.get('Anna Berg', []))
+        bh = ' '.join(tr.get('Ben Holt', []))
+        c = ' '.join(tr.get('Clara Stein', []))
+        print('A) Anna Berg:', a[:160])
+        results.append('iano' in a and '1-2' in a and '1-1' not in a and '2-1' not in a)
+        print('B) Ben Holt:', bh[:160])
+        results.append('uitar' in bh and '1-1' in bh and '1-3' in bh and '2-1' in bh and '1-2' not in bh)
+        print('C) Clara Stein:', c[:160])
+        results.append('onduct' in c)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_rel3132():
     """Credits Importer 3.132.0 (collected items Z-RELDATE, Z-FESTALL; D034, S220): relative dates and what the notes only mention.
     A) In Node: "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September",

@@ -552,6 +552,77 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
 
 
 
+def case_booklet3176():
+    """Credits Importer 3.176.0 (the shapes of a booklet, S300–S306), the text reader in Node.
+    A) S300: "Robin Ticciati conductor", "NILS MÖNKEMEYER Viola", "Maria Ladurner & Ella Marshall Smith soprano", "Nele Vertommen oboe,
+       recorder & direction" (→ Directed By), "Frederica von Stade mezzo-soprano (CD1 4)" (track 1-4), "TONMEISTER : Phillip Schulz"
+       (→ Engineer, credited as Tonmeister), "Skinny Elephant recording" below a "by" line stays what it was.
+    B) S301: "A (Trompete) • B (Trompete) • C" / "D (Trompete)" – four trumpets; "Gäste: E (Euphonium und Posaune)" – two guest roles.
+    C) S302: "Produced and engineered for Linn by" / "Philip Hobbs"; "Recorded at" / place over three lines; "Cover image" / title /
+       "by Per Kirkeby, 1996." – artwork, the title left out.
+    D) S303, S304: "THE INSTRUMENTS:" up to "CREDITS:" and a legal notice over several lines are left out – no credit from them.
+    E) S305: "Yann Beuron Le Récitant", "Véronique Gens Marie" below a conductor: vocals with the part as credit.
+    F) S306: "7 II. Chorus: L'hiver s'enfuit 2.29" among track lines is no credit.
+    G) All seven rules off: none of A's credits."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[3]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback)
+  || /^(viola|oboe|recorder|trompete|euphonium|posaune|cello|violin|piano|bass|alto|recorders|harpsichord|gemshorn|soprano)$/i.test(p.base); };
+const run = (t) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole: (x) => /^recorded at$/i.test(x), resolveTracks: (s) => new Set([0]), resolveTitles: () => null, artistNames: ['The Band'], trackCount: 20 });
+  return { credits: r.credits.map((c) => [c.who.name, c.role, c.tracks && !c.tracks.all ? c.tracks.spec : 'all']), companies: r.companies.map((c) => [c.who.name, c.role]),
+    ignored: r.ignored.map((x) => x.why), unrecognized: r.unrecognized.map((u) => String(u.text || u.line || u)) }; };
+console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
+"""
+    texts = [
+        'Robin Ticciati conductor\nNILS MÖNKEMEYER Viola\nMaria Ladurner & Ella Marshall Smith soprano\nNele Vertommen oboe, recorder & direction\nFrederica von Stade mezzo-soprano (CD1 4)\n\nTONMEISTER : Phillip Schulz',
+        'All songs mixed by Dylan Alledridge,\nSkinny Elephant recording',
+        'Anton Borderieux (Trompete) • Markus Czieharz (Trompete) • Peter Dörpinghaus\nJonathan Müller (Trompete)\nGäste: Lukas Gassner (Euphonium und Posaune)',
+        'Produced and engineered for Linn by\nPhilip Hobbs\n\nRecorded at\nBerwaldhallen, Östermalm,\nStockholm, Sweden from\n11 – 14 December 2012\n\nCover image\nFlugten til Ægypten\nby Per Kirkeby, 1996.\nOil on canvas.',
+        'Piers Adams - recorders\n\nTHE INSTRUMENTS:\nRecorders:\nSoprano by Ralf Ehlert • Bass by Andreas Kung\n• Gemshorn by Petr Cip\n\nCREDITS:\nProduced by Gary Cole\nWARNING: All Rights\nReserved. Unauthorised\nreproduction is\nprohibited and may result\nin criminal prosecution.\nRPR LC 07967 DDD RP012',
+        'Robin Ticciati conductor\nYann Beuron Le Récitant\nVéronique Gens Marie',
+        '6 I. Fanfares, March and Chorus: Nous sommes les heures guerrières 7.11\n7 II. Chorus: L\'hiver s\'enfuit 2.29\n8 III. Dance melody 2.13\n9 IV. Melodrama and Chorus: De roses merveilles 2.27',
+    ]
+
+    def run(off):
+        js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(texts), json.dumps(off)], capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-400:])
+        return json.loads(js.stdout) if not js.returncode else [{'credits': [], 'companies': [], 'ignored': [], 'unrecognized': []}] * len(texts)
+    on, off = run([]), run(['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306'])
+    a = on[0]['credits']
+    print('A)', a, '|', on[1])
+    ok_a = (['Robin Ticciati', 'conductor', 'all'] in a and ['NILS MÖNKEMEYER', 'Viola', 'all'] in a and ['Maria Ladurner', 'soprano', 'all'] in a and ['Ella Marshall Smith', 'soprano', 'all'] in a
+            and ['Nele Vertommen', 'Directed By', 'all'] in a and ['Nele Vertommen', 'recorder', 'all'] in a and ['Frederica von Stade', 'mezzo-soprano', '1-4'] in a
+            and ['Phillip Schulz', 'Engineer [Tonmeister]', 'all'] in a and not on[0]['unrecognized'] and not any(c[0] == 'Skinny Elephant' for c in on[1]['credits']))
+    b = on[2]['credits']
+    print('B)', b)
+    ok_b = (sorted(c[0] for c in b if c[1] == 'Trompete') == ['Anton Borderieux', 'Jonathan Müller', 'Markus Czieharz', 'Peter Dörpinghaus']
+            and [c[1] for c in b if c[0] == 'Lukas Gassner'] == ['Euphonium [Guest]', 'Posaune [Guest]'])
+    c = on[3]
+    print('C)', c)
+    ok_c = (['Philip Hobbs', 'Produced By', 'all'] in c['credits'] and ['Philip Hobbs', 'Engineered By', 'all'] in c['credits'] and ['Per Kirkeby', 'Artwork', 'all'] in c['credits']
+            and ['Berwaldhallen', 'Recorded At'] in c['companies'] and c['ignored'].count('artTitle') == 2 and not c['unrecognized'])
+    d = on[4]
+    print('D)', d)
+    ok_d = d['credits'] == [['Piers Adams', 'recorders', 'all'], ['Gary Cole', 'Produced By', 'all']] and d['ignored'].count('instruments') == 4 and d['ignored'].count('legal') == 6 and not d['unrecognized']
+    e = on[5]['credits']
+    print('E)', e)
+    ok_e = e == [['Robin Ticciati', 'conductor', 'all'], ['Yann Beuron', 'Vocals [Le Récitant]', 'all'], ['Véronique Gens', 'Vocals [Marie]', 'all']]
+    f = on[6]
+    print('F)', f)
+    ok_f = not f['credits'] and f['ignored'].count('tracklist') == 4
+    print('G)', off[0]['credits'], [len(x['credits']) for x in off])
+    ok_g = not off[0]['credits'] and any(x['credits'] for x in off[6:7])
+    results = [ok_a, ok_b, ok_c, ok_d, ok_e, ok_f, ok_g]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_storagedoc3171():
     """Credits Importer 3.171.0 (F-STORAGEDOC): the README's table of the storage keys is the one written from the code.
     A) `tools/storage_keys.py --check` finds no difference.
