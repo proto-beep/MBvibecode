@@ -758,6 +758,62 @@ console.log(JSON.stringify({ dates, with: read(text, true), without: read(text, 
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_areas3179():
+    """Credits Importer 3.179.0 (Z-AREARELS, Z-PRINTEDIN; S313, C058–C068), the text reader and the mapping in Node.
+    A) "Printed in the UK", "Made in Germany", "Manufactured in the EU.", "Lacquer cut in London", "Programmed in Berlin", "Edited in
+       Vienna", "Transferred in Tokyo", "Written in Paris", "Lyrics written in Rome", "Translated in Madrid": each an area with its role;
+       their types in the mapping: printed in, manufactured in (twice), lacquer cut in … on the release, the recording or the work.
+    B) A place or a company of the same activity is more precise: "Printed in the UK" / "Printed by Druckerei Fischer" – the printer, the
+       area left out (areaCovered); "Recorded in Kraków" / "Recorded at Alchemia Club" – the place; "Recorded in Kraków" / "Mixed at Studio
+       X" – both (another activity); "Made in Germany by Sonopress" – manufactured by Sonopress.
+    C) "Made in 1999", "Mixed in mono": no area.
+    D) S313 off: no area at all – not "Recorded in Kraków" either; "Recorded at Alchemia Club" stays."""
+    import json
+    import subprocess
+    root = H.ROOT
+    node = r"""
+const off = JSON.parse(process.argv[3]);
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' ? JSON.stringify(off) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const fs = require('fs');
+const MAP = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'));
+const TCR = new RegExp(MAP.TEXT_COMPANY_RE.$re, MAP.TEXT_COMPANY_RE.$flags);
+const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+const isCompanyRole = (r) => TCR.test(norm(r)) && !!m.mapCompanyRole(r).rule;
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const run = (t) => { const r = m.SOURCES.text.parse(t, { isRole, isCompanyRole, resolveTracks: () => null, resolveTitles: () => null, artistNames: ['The Band'], trackCount: 8 });
+  return { companies: r.companies.map((c) => { const x = m.mapCompanyRole(c.role); return [c.who.name, c.role, (x.typeOptions.area || x.typeOptions.place || x.typeOptions.label || [])[0] || '', x.level]; }),
+    ignored: r.ignored.map((x) => x.why), unrecognized: r.unrecognized.length }; };
+console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
+"""
+    texts = ['Printed in the UK\n\nMade in Germany\n\nManufactured in the EU.\n\nLacquer cut in London\n\nProgrammed in Berlin\n\nEdited in Vienna\n\nTransferred in Tokyo\n\nWritten in Paris\n\nLyrics written in Rome\n\nTranslated in Madrid',
+             'Printed in the UK\nPrinted by Druckerei Fischer', 'Recorded in Kraków\nRecorded at Alchemia Club', 'Recorded in Kraków\nMixed at Studio X', 'Made in Germany by Sonopress',
+             'Made in 1999\nMixed in mono']
+
+    def run(off):
+        js = subprocess.run(['node', '-e', node, str(root / 'mb-vibecode-credits-importer.user.js'), json.dumps(texts), json.dumps(off), str(root / 'mb-vibecode-credits-importer-mapping.json')], capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-600:])
+        return json.loads(js.stdout) if not js.returncode else [{'companies': [], 'ignored': [], 'unrecognized': 0}] * len(texts)
+    on, off = run([]), run(['S313'])
+    a = on[0]['companies']
+    for c in a:
+        print('A)', c)
+    ok_a = ([(c[0], c[2], c[3]) for c in a] == [('UK', 'printed in', 'release'), ('Germany', 'manufactured in', 'release'), ('EU', 'manufactured in', 'release'), ('London', 'lacquer cut in', 'release'),
+                                              ('Berlin', 'programmed in', 'recording'), ('Vienna', 'edited in', 'recording'), ('Tokyo', 'transferred in', 'release'), ('Paris', 'written in', 'work'),
+                                              ('Rome', 'lyrics written in', 'work'), ('Madrid', 'translated in', 'work')] and not on[0]['unrecognized'])
+    print('B)', on[1], on[2], on[3]['companies'], on[4]['companies'])
+    ok_b = ([c[:2] for c in on[1]['companies']] == [['Druckerei Fischer', 'Printed By']] and on[1]['ignored'] == ['areaCovered']
+            and [c[:2] for c in on[2]['companies']] == [['Alchemia Club', 'Recorded At']] and on[2]['ignored'] == ['areaCovered']
+            and [c[0] for c in on[3]['companies']] == ['Kraków', 'Studio X'] and [c[:2] for c in on[4]['companies']] == [['Sonopress', 'Manufactured By']])
+    print('C)', on[5])
+    ok_c = not on[5]['companies']
+    print('D)', off[0]['companies'], off[2]['companies'])
+    ok_d = not off[0]['companies'] and [c[0] for c in off[2]['companies']] == ['Alchemia Club']
+    results = [ok_a, ok_b, ok_c, ok_d]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_storagedoc3171():
     """Credits Importer 3.171.0 (F-STORAGEDOC): the README's table of the storage keys is the one written from the code.
     A) `tools/storage_keys.py --check` finds no difference.

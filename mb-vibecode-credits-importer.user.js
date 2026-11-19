@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.178.0
+// @version      3.179.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.178.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.178.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.179.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.179.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.178.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.179.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3802,6 +3802,9 @@
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
       "quick.D035": "Several days for a group of tracks → the days on the release level, the common month on the recordings",
+      "quick.S313": "Relationships to an area (“recorded in”, “printed in”, “made in” …) – not where a place or company of the same activity is named",
+      "quick.name.S313": "Area relationships",
+      "ignored.why.areaCovered": "an area – a place or a company of the same activity is named, which is more precise",
       "quick.name.D035": "Days → release level",
       "quick.S021": "“live” preselected for live releases",
       "quick.S031": "Only the case differs → no “credited as”",
@@ -5372,6 +5375,7 @@
     { id: 'S310', where: 'suiteOffers (PART_TITLE)', note: 'Works (3.177.0; Z-PARTTITLES): tracks named only as parts – "Part One" … "Part Seven", "Part 2", "Teil 3", "II" (two such tracks at least, half of the tracks) – are offered as the parts of a suite named as the release; the works matrix asks, as for every suite (Z-SU). With the composers of an improvisation (S222) each part gets its work with them' },
     { id: 'S311', where: 'init (classicalComposers), artistWorkTargets', note: 'Works (3.177.0; Z-CLASSICCREDIT): a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays ("Maya Homburger") – : the track\'s artist that is none of the recording\'s artists is taken as the composer of the track for the comparison of works: his works in MusicBrainz are searched for the track without a work, as those of a writer of the source. He is no performer for the entries of the source' },
     { id: 'S312', where: 'TEXT.parse (bookletLines), mediaOfHeading (MEDIA_HEAD_LINE)', note: 'Texts (3.178.0; Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – on a release that has them: the lines below it, up to an empty line or the next such heading, hold for the tracks of those media ("Recorded: November 27-29, 2016 at Alchemia Club, Kraków" – the place on the tracks of CD 1–4), unless a line names tracks of its own. The dates of these lines get the same tracks (D037). Every free text' },
+    { id: 'S313', where: 'mapCompanyRole (C038–C045, C055, C057–C068), TEXT.parse (end: areaCovered), addNotesCompanies', note: 'Areas (3.179.0; collected items Z-AREARELS, Z-PRINTEDIN; a quick switch, on): every relationship between a release, a recording or a work and an area that MusicBrainz has is read from a text – "Recorded in Kraków", "Mixed in Berlin", "Printed in the UK", "Made in Germany" / "Manufactured in the EU" (manufactured in), "Lacquer cut in", "Programmed in", "Edited in", "Transferred in", and the writing: "Written in", "Composed in", "Lyrics written in", "Libretto written in", "Revised in", "Translated in", "Arranged in" (on the works first; the level of an entry can be switched as always). An area is not taken where the same text or source names a place or a company of the same activity ("Printed by X", "Recorded at Y", "Manufactured by Z"): that is more precise – the area is left out with this reason. Off: no relationship to an area is read' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6777,6 +6781,23 @@
   const CL_BY = /^(?:[\p{L}\s,'’-]{0,40}\s)?by\s+(\p{Lu}[\p{L}.'’-]*(?:\s+[\p{L}.'’-]+){0,4}?)(?:,?\s+(?:after|nach|d['’]après)\s+.+)?$/u;
   const CL_NAME_TAIL = /\s+(?:père|fils|jr\.?|sr\.?|junior|senior|the\s+elder|the\s+younger|d\.\s?[äj]\.)$/i;
   const CL_NOT_NAME = /\b(?:op|no|nr|bwv|hwv|kv|k|d|h|rv|version|live|edit|mix|remix|remaster(?:ed)?|bonus|reprise|instrumental|excerpt|fragment)\b\.?/i;
+  /**
+   * [Z-AREARELS] (3.179.0, S313) Whether the area of a company credit ("Printed In – UK") is covered by a more precise one of `list`:
+   * a place or a company of the same activity ("Printed By – Druckerei Fischer", "Recorded At – Alchemia Club") for the same tracks –
+   * or for all. The town of a studio without a name (S273) is not such an area.
+   */
+  function areaCoveredBy(c, list) {
+    const verbOf = (role) => {
+      const m = norm(role).match(/^(.*?)\s+(in|at|by)$/);
+      return m ? [m[1].replace(/^(?:made|pressed)$/, 'manufactured').replace(/^overdubbed$/, 'recorded').replace(/^(?:lacquers cut|cut)$/, 'lacquer cut'), m[2]] : null;
+    };
+    const v = verbOf(c && c.role);
+    if (!v || v[1] !== 'in' || c.entity === 'area') return false;
+    const some = (t) => !!(t && !t.all && (t.indexes || []).length);
+    const overlap = (a, b) => !some(a) || !some(b) || a.indexes.some((i) => b.indexes.includes(i));
+    return (list || []).some((o) => { const w = o !== c && verbOf(o.role); return !!w && w[1] !== 'in' && w[0] === v[0] && overlap(o.tracks, c.tracks); });
+  }
+
   // [Z-MEDIAHEAD] (3.178.0, S312, D037) a line only of media ("CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:") → their numbers, or null
   const MEDIA_HEAD_LINE = /^(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*\d{1,2}(?:\s*(?:-|–|—|to|bis)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2})?)(?:\s*(?:,|&|\+|and|und)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2}(?:\s*(?:-|–|—|to|bis)\s*(?:(?:cd|dis[ck]|lp|dvd)\s*#?\s*)?\d{1,2})?)*$/i;
   function mediaOfHeading(line) {
@@ -6789,7 +6810,7 @@
     return out.length ? uniq(out) : null;
   }
 
-  const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S312'];
+  const BK_RULES = ['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S312', 'S313'];
   const BK_PARTICLE = /^(?:von|van|vom|de|del|della|der|den|di|da|du|le|la|ten|ter|zu|af|dos|das|do|bin|ibn|al|el|st\.?|d['’]\p{L}+)$/iu;
   const BK_ENSEMBLE_WORD = /^(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players)\b/i;
   const BK_ENSEMBLE_ANY = /\b(?:orchestr[ae]|orchester|orquesta|choir|chor|ch[oœ]ur|coro|chorus|ensemble|quartett?|quintett?|trio|band|philharmoni[ce]|symphony|consort|singers|players|akademie|academy|radio)\b/i;
@@ -7699,7 +7720,9 @@
   /** Maps a Discogs company role. "prefer" is the MB entity type assumed until the company is matched. */
   function mapCompanyRole(role) {
     const r = norm(role);
-    const hit = COMPANY_ROLES.find(([re, o]) => ruleOn(o.id) && re.test(r));
+    // [Z-AREARELS] (3.179.0, S313; a quick switch, on) one switch for every relationship to an area ("recorded in", "printed in" …)
+    const areasOn = ruleOn('S313');
+    const hit = COMPANY_ROLES.find(([re, o]) => ruleOn(o.id) && (areasOn || !o.area || o.place || o.label) && re.test(r));
     // "artist" is always allowed: persons also appear here, and their type can be chosen by hand.
     if (!hit) return { typeOptions: { label: ['misc'], artist: [] }, level: 'skip', prefer: 'label', notes: ['misc'] };
     const spec = hit[1];
@@ -10287,6 +10310,9 @@
             nm.split(/\s+(?:&|and|und|et|y)\s+/).forEach((n) => { if (!P.bkLineup.has(n)) P.bkLineup.set(n, rl.split(', ')); });
             return keep(nr, l);
           }
+          // [Z-AREARELS] (3.179.0, S313) "Made in Germany by Sonopress": the company – more precise than the country
+          const madeBy = ruleOn('S313') ? t.match(/^(made|manufactured|printed|pressed)\s+in\s+(?:the\s+)?\p{Lu}[\p{L} .]*?\s+by\s+(\p{Lu}.+)$/iu) : null;
+          if (madeBy) return keep(`${/^printed$/i.test(madeBy[1]) ? 'Printed' : /^pressed$/i.test(madeBy[1]) ? 'Pressed' : 'Manufactured'} by ${madeBy[2]}`, l);
           // [Z-CDTRACKS] tracks by medium behind any other line ("Ensemble Vocal Alix Bourbon (CD1 8; CD2 5–7, 9–10)")
           const [body, cdTracks] = bkTracks(t);
           if (cdTracks && !BK_ENSEMBLE_WORD.test(body)) return keep(`${body}${cdTracks}`, l);
@@ -11903,7 +11929,8 @@
           return;
         }
         // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
-        if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
+        // ([Z-AREARELS] 3.179.0, S313: also verbs of two words – "Lacquer cut in", "Lyrics written in" – and "in the UK")
+        if ((m = clause.match(/^(lacquers?\s+cut|lyrics\s+written|libretto\s+written|\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(?:the\s+)?(\p{Lu}.*)$/iu)) && /^\p{Lu}/u.test(m[2])
           && (placeIn(m[1], m[2]) || inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
         // [3.37.7] … with a date between: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
         if ((m = clause.match(/^(\p{L}+)\s+(.*?\d.*?)\s+in\s+(\p{Lu}.*)$/u)) && !noDates(m[2]).replace(/^(?:on|am|le|el)\b\s*/i, '')
@@ -13773,6 +13800,12 @@
             P.companies.push({ ...c, who: { id: 0, name: town, rawName: town, links: [], ...(wider.length ? { area: wider.join(', ') } : {}) }, role: 'Recorded In', entity: 'area' });
           }
         }
+      }
+      // [Z-AREARELS] (3.179.0, S313) the area of an activity the text names a place or a company for: left out – that is more precise
+      if (ruleOn('S313')) {
+        const covered = P.companies.filter((c) => areaCoveredBy(c, P.companies));
+        covered.forEach((c) => P.ignored.push({ text: c.line || `${c.role} ${c.who.name}`, why: 'areaCovered' }));
+        if (covered.length) P.companies = P.companies.filter((c) => !covered.includes(c));
       }
       // [Z-OCRTRACKCHECK] (3.154.0, S281) the scan's track list against MusicBrainz's tracks: titles (as words) and lengths (5 s apart at most)
       if (P.scanTracks.length) {
@@ -21931,7 +21964,7 @@
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
-  const QUICK_GROUPS = [['dates', ['D022', 'D035', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263']],
+  const QUICK_GROUPS = [['dates', ['D022', 'D035', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263', 'S313']],
     ['works', ['S160', 'S045', 'S222']], ['companies', ['S007', 'S297']]];
   /**
    * [Z-VIDEOCREW] (3.147.0, S263) "mappings" at its quick switch: a small window to fold out – every video credit of VIDEO_CREDITS and where
@@ -28552,6 +28585,12 @@
     const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
     for (const c of ruleOn('S042') ? res.companies.filter(wanted) : []) {
       if (!looseName(c.who.name)) continue;
+      // [Z-AREARELS] (3.179.0, S313) an area of the notes for an activity the source lists a place or a company for: left out
+      if (ruleOn('S313') && areaCoveredBy(c, (rel.companies || []).filter((d) => !d.fromNotes))) {
+        rel.ignored = rel.ignored || [];
+        rel.ignored.push({ text: c.line || `${c.role} ${c.who.name}`, why: 'areaCovered' });
+        continue;
+      }
       // [3.31.0] also written together or with a number as a word ("4WordSeaMusic" – Discogs: "Fourwordseamusic"; T046);
       // [Z-PLDUP] (3.111.0) a place of the notes the same as one Discogs lists, more widely ("Tonart Studio" – "Tonart Studio,
       // Kerpen-Horrem", "Tonart"): no second place; the notes' name is its credit (as the notes write it)
