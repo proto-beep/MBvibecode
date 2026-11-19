@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-19 | 3.170.0 – 3.174.0 | – |
+| 2026-11-19 | 3.170.0 – 3.175.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
 | 2026-11-16 | 3.146.0 – 3.151.0 | 1.22.0 |
@@ -133,6 +133,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.175.0
+
+Inside (F-PARSESTAGES, step 2) – no text is read differently:
+
+- **The text reader is no longer one function of 4,200 lines.** `TEXT.parse` is 225 lines now: it sets up what the reading of one text shares (its options, what it collects, its tables – the fields of one object, `P`) and calls the four stages. Its 104 helpers and stages are functions of their own, each given `P`, in five sections: used by several stages (22), stage 1 the pre-filter (4), stage 2 the lines made ready (21), stage 3 reading line by line (54), stage 4 after the reading (3).
+- **How:** by a program that works on the syntax tree and rewrites only what belongs to `parse` (850 uses of shared values, 483 calls of helpers) – not by hand.
+- **The safety net, before anything was changed:** a new test that compares everything the reader returns, for 181 texts read two or three ways, with the rules on and with five of them off (`t_parsegolden.py`) – among them the booklets of 2026-11-19, the track list as MusicBrainz shows it, the "Name-Role On Tracks" paragraph and the lines whose order is not clear (the case that slipped through in 3.172.0: this test finds it). After the change: every reading the same; the reading is as fast as before.
+- **Still large:** `readUnit` (657 lines), `readLine0` (594), `stageFinish` (437), `freeTextPre` (300), `tidyLines` (284) – each one task, but long; the readings of the booklets of 2026-11-19 are stored as they are today (mostly not read yet – that is the next step).
 
 ### Import 3.174.0
 
