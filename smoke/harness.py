@@ -879,7 +879,17 @@ PORT = SERVER.server_address[1]
 
 GM_SHIM = """(function () {
   const BASE = 'http://127.0.0.1:%d';
-  const req = (m, p, body) => { const x = new XMLHttpRequest(); x.open(m, BASE + p, false); x.send(body == null ? null : body); return x.responseText; };
+  // [3.185.0] (Z-HANGNIGHT) a page that is being left asks the store nothing more: a synchronous request sent while the navigation
+  // to the next page waits to be answered by the test (request interception) never came back, nor did the navigation – every call
+  // to that page then waited for ever ("ytview", "cpremoved3131" stood still, about one run in five). The real GM storage is not
+  // a request. A navigation that does not happen after all: asked again after 3 s.
+  let leaving = false;
+  window.addEventListener('beforeunload', () => { leaving = true; setTimeout(() => { leaving = false; }, 3000); });
+  window.addEventListener('pagehide', () => { leaving = true; });
+  const req = (m, p, body) => {
+    if (leaving) return m === 'GET' && /^\/(?:list|changes)/.test(p) ? '[]' : m === 'GET' && p === '/version' ? '0' : 'null';
+    const x = new XMLHttpRequest(); x.open(m, BASE + p, false); x.send(body == null ? null : body); return x.responseText;
+  };
   window.GM_getValue = (k, d) => { const v = JSON.parse(req('GET', '/get?k=' + encodeURIComponent(k))); return v == null ? d : v; };
   window.GM_setValue = (k, v) => { req('POST', '/set?k=' + encodeURIComponent(k), JSON.stringify(v === undefined ? null : v)); };
   window.GM_deleteValue = (k) => { req('POST', '/del?k=' + encodeURIComponent(k), ''); };
