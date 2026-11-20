@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.189.0 | 1.23.0 |
+| 2026-11-20 | 3.185.0 – 3.190.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,20 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.190.0
+
+**Recordings with an event, and the pages of labels.**
+
+- **A place on recordings that have an event is asked first** (rule S334): a place or an area "recorded at" / "recorded in" would be linked to recordings that have an event – linked in MusicBrainz already, or an entry of an event with these tracks in this import. The event has the place, so the row is a question that must be answered and is not staged before:
+  - it names the event with its link and date, and its place – "held at this very place" when it is the same;
+  - an event without a place: "no place in the event" with the link to edit the event, where the place belongs;
+  - "✕ Don't link the place" (the first answer) leaves the row out; "Link it anyway" stages it besides the event. The log names the answer.
+- **The label's page is opened with more than its code** (rule S335): the ＋ of the note on a label code ("Discogs gives LC 12345 – … has no label code on MusicBrainz") now also fills in
+  - the web addresses of Discogs's page of the label ("Links") that MusicBrainz does not have for it yet, as external links;
+  - the label's headquarters: the city of the address in "Contact Info" ("04229 Leipzig"; "Brooklyn, NY 11201"), when MusicBrainz has exactly one city of that name and the label has no headquarters yet – the relationship "headquartered in" to that area.
+  The note says what is filled in ("＋ also fills in: euphorium.de, …, headquarters in Leipzig"). Nothing else of the page is taken – no years, no profile. The editor checks and saves the page.
+- To be checked on MusicBrainz itself: that the label's edit page takes the relationship to the area from its address ("rels.0.…", as the form of a new series does); the external links are taken as the tool fills them elsewhere.
 
 ### Import 3.189.0
 

@@ -1751,6 +1751,175 @@ def case_placedup3188():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_eventplace3190():
+    """Credits Importer 3.190.0 (collected item Z-EVENTPLACE, rule S334): Discogs "Recorded At – Alchemia"; the recording of track 2 is
+    linked to the event "Krakow Jazz Autumn 2016" in MusicBrainz.
+    A) The row stands on the recordings: a question that must be answered – it names the event (its link, its date 2016-11-27), says "no place in the event" with the link to edit the event; the answers "✕ Don't link the place" and
+       "Link it anyway"; the row counts as incomplete.
+    B) "✕ Don't link the place": the row is left out; the log says so.
+    C) The event held at Alchemia: the question says "held at this very place: Alchemia"; "Link it anyway": no question any more,
+       the row stays on the recordings; the log says so.
+    D) Rule S334 off: no question."""
+    import json
+    orig, comp0 = H.discogs_release, dict(H.COMPANIES)
+    PL, EV = H.uid('eeeeeeee', 2691), H.uid('abababab', 2691)
+    H.COMPANIES[2691] = ('place', PL, 'Alchemia')
+    H.MB_EXTRA[H.REC[1]] = [{'target-type': 'event', 'type': 'recorded at', 'direction': 'forward', 'event': {'id': EV, 'name': 'Krakow Jazz Autumn 2016'}}]
+
+    def rel():
+        d = orig()
+        d['notes'] = ''
+        d['companies'] = [{'name': 'Alchemia', 'entity_type_name': 'Recorded At', 'id': 2691, 'catno': ''}]
+        return d
+    H.discogs_release = rel
+    Q = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Alchemia/.test(x.querySelector('.dci-gname strong').textContent)); if (!g) return null;
+      const q = g.querySelector('[data-el=evp-ask]'); const r = g.querySelector('tr.dci-row');
+      return { level: (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '', q: q ? q.textContent.replace(/\\s+/g, ' ').trim() : null,
+        links: q ? [...q.querySelectorAll('a')].map(a => a.getAttribute('href')) : [], btns: q ? [...q.querySelectorAll('button')].map(b => b.textContent.trim()) : [],
+        must: document.querySelectorAll('.dci-yell-must').length }; })()"""
+    LOG = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => /Alchemia: (not )?linked to the recordings/.test(t))"
+    results = []
+
+    def run(places, off=False, answer='evp-skip'):
+        H.EVENT_INFO[EV] = {'name': 'Krakow Jazz Autumn 2016', 'begin': '2016-11-27', 'end': '2016-11-27', 'places': places}
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S334']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            out = {'rel': pg.evaluate(Q)}
+            pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Alchemia/.test(x.querySelector('.dci-gname strong').textContent)); g.querySelector('tr.dci-row [data-act=level][data-level=recording]').click(); })()")
+            pg.wait_for_timeout(1500)
+            out['rec'] = pg.evaluate(Q)
+            out['inc'] = pg.evaluate("(document.querySelector('.dci-foot') || document.body).textContent.replace(/\\s+/g, ' ').match(/\\d+ rows? incomplete/) || []")
+            if out['rec'] and out['rec']['q']:
+                pg.evaluate(f"(() => {{ const g = [...document.querySelectorAll('section.dci-group')].find(x => /Alchemia/.test(x.querySelector('.dci-gname strong').textContent)); g.querySelector('[data-el=evp-ask] [data-act={answer}]').click(); }})()")
+                pg.wait_for_timeout(600)
+                out['after'] = pg.evaluate(Q)
+            out['log'] = pg.evaluate(LOG)
+            out['errs'] = errs
+            b.close()
+            return out
+    try:
+        o = run([])
+        print('A)', json.dumps(o['rel'], ensure_ascii=False), '\n  ', json.dumps(o['rec'], ensure_ascii=False), o['inc'])
+        r = o['rec']
+        results.append(o['rel']['level'] == 'recording' and bool(o['rel']['q']) and r['level'] == 'recording' and bool(r['q']) and 'Krakow Jazz Autumn 2016 (2016-11-27)' in r['q']
+                       and 'no place in the event' in r['q'] and f'/event/{EV}' in r['links'] and f'/event/{EV}/edit' in r['links']
+                       and r['btns'] == ['✕ Don’t link the place', 'Link it anyway'] and r['must'] >= 1 and bool(o['inc']))
+        print('B)', json.dumps(o['after'], ensure_ascii=False), o['log'])
+        results.append(o['after']['level'] == 'skip' and o['after']['q'] is None and any('not linked to the recordings' in x for x in o['log']) and not o['errs'])
+        o2 = run([(PL, 'Alchemia')], answer='evp-keep')
+        print('C)', json.dumps(o2['rec'], ensure_ascii=False), '\n  ', json.dumps(o2['after'], ensure_ascii=False), o2['log'])
+        results.append(bool(o2['rec']['q']) and 'held at this very place: Alchemia' in o2['rec']['q'] and o2['after']['level'] == 'recording' and o2['after']['q'] is None
+                       and any('besides their event' in x for x in o2['log']) and not o2['errs'])
+        o3 = run([], off=True)
+        print('D)', json.dumps(o3['rec'], ensure_ascii=False))
+        results.append(o3['rec']['level'] == 'recording' and o3['rec']['q'] is None)
+    finally:
+        H.discogs_release = orig
+        H.MB_EXTRA.pop(H.REC[1], None)
+        H.EVENT_INFO.pop(EV, None)
+        H.COMPANIES.clear()
+        H.COMPANIES.update(comp0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_lclinks3190():
+    """Credits Importer 3.190.0 (collected item Z-LCLINKS, rule S335): Discogs gives "Label Code: LC 12345"; the release's label Sony has
+    no code in MusicBrainz. Discogs's page of the label: the links euphorium.de (MusicBrainz has it) and sony.bandcamp.com and
+    sonymusic.example (it has not), "Contact Info" with "04229 Leipzig"; MusicBrainz has one city Leipzig.
+    A) The note names what ＋ also fills in – the two addresses and "headquarters in Leipzig"; the ＋ opens the edit page with the code,
+       "edit-label.url.0/1.text" (the own site with its link type), "rels.0.target" Leipzig, the type "headquarters", backward; the
+       log says so.
+    B) Two cities named Leipzig in MusicBrainz: the links only, no headquarters.
+    C) Rule S335 off: the code only.
+    D) In Node: the city of an address – after the postal code, before state and ZIP; two cities: none."""
+    import json, subprocess
+    from urllib.parse import unquote
+    orig, rl0 = H.discogs_release, list(H.RELEASE_LABELS)
+    sony = (H.uid('eeeeeeee', 1), 'Sony')
+    LPZ = H.uid('acacacac', 1)
+    H.lt(931, 'd9d5ecf4-0000-4000-8000-000000000931', 'headquarters', 'area', 'label', dates=True)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+
+    def rel():
+        d = orig()
+        d['identifiers'] = [{'type': 'Label Code', 'value': 'LC 12345'}]
+        return d
+    H.discogs_release = rel
+    NOTE = """[...document.querySelectorAll('[data-el=lcnote] p')].map(p => [p.textContent.replace(/\\s+/g, ' ').trim(), (p.querySelector('.dci-lc-add') || {}).getAttribute?.('href') || '',
+      (p.querySelector('[data-el=lc-extra]') || {textContent: ''}).textContent.trim()])"""
+    results = []
+
+    def run(areas, off=False):
+        H.RELEASE_LABELS[:] = [sony]
+        dg_id = next(k for k, v in H.COMPANIES.items() if v[1] == sony[0])
+        H.DG_API[f'/labels/{dg_id}'] = {'id': dg_id, 'name': 'Sony', 'urls': ['http://www.euphorium.de', 'https://sony.bandcamp.com/', 'https://sonymusic.example/'],
+                                        'contact_info': 'Sony Records\nBlümnerstr. 23\n04229 Leipzig\nGermany'}
+        H.ENTITY_URLS[sony[0]] = ['https://euphorium.de/']
+        H.MB_SEARCH['area'] = areas
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S335']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            n = pg.evaluate(NOTE)
+            log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'page of the label also gives' in x]
+            b.close()
+            return n, log, errs
+    try:
+        city = {'id': LPZ, 'name': 'Leipzig', 'type': 'City', 'score': 100}
+        a, la, ea = run([city])
+        href = unquote(a[0][1]) if a else ''
+        print('A)', a[0][0] if a else a, '|', href, '|', la, ea)
+        results.append(len(a) == 1 and '＋ also fills in: sony.bandcamp.com, sonymusic.example, headquarters in Leipzig' in a[0][2] and 'dci-lc=12345' in href
+                       and 'edit-label.url.0.text=https://sony.bandcamp.com/' in href and 'edit-label.url.1.text=https://sonymusic.example/' in href
+                       and 'edit-label.url.1.link_type_id=219' in href and 'edit-label.url.0.link_type_id' not in href and 'euphorium' not in href
+                       and f'rels.0.target={LPZ}' in href and 'rels.0.type=931' in href and 'rels.0.backward=1' in href and bool(la) and not ea)
+        bb, lb, eb = run([city, {'id': H.uid('acacacac', 2), 'name': 'Leipzig', 'type': 'City', 'score': 90}])
+        hb = unquote(bb[0][1]) if bb else ''
+        print('B)', bb[0][2] if bb else bb, '|', hb)
+        results.append(len(bb) == 1 and 'headquarters' not in bb[0][2] and 'sony.bandcamp.com' in bb[0][2] and 'rels.0' not in hb and 'edit-label.url.0.text' in hb and not eb)
+        c, lc, ec = run([city], off=True)
+        hc = unquote(c[0][1]) if c else ''
+        print('C)', c[0][2] if c else c, '|', hc)
+        results.append(len(c) == 1 and c[0][2] == '' and 'dci-lc=12345' in hc and 'edit-label.url' not in hc and 'rels.0' not in hc and not lc and not ec)
+        node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+console.log(JSON.stringify(['Euphorium Records\nBlümnerstr. 23\n04229 Leipzig\nGermany', 'Label X, D-10115 Berlin, Germany', '123 Main St\nBrooklyn, NY 11201\nUSA',
+  'Office: 10115 Berlin\nStudio: 04229 Leipzig', 'Tel. 0341 12345\ninfo@x.de'].map((x) => m.addressCity(x))));
+"""
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+        res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+        print('D)', res)
+        results.append(res == ['Leipzig', 'Berlin', 'Brooklyn', '', ''])
+    finally:
+        H.discogs_release = orig
+        H.RELEASE_LABELS[:] = rl0
+        H.LTS.pop(931, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.MB_SEARCH.pop('area', None)
+        H.ENTITY_URLS.pop(sony[0], None)
+        for k in [k for k in H.DG_API if k.startswith('/labels/')]:
+            H.DG_API.pop(k)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_dedplace3129():
     """Credits Importer 3.129.0 (collected item Z-DEDPLACE; rule S214): Discogs notes "Recorded live at Namba Bears, Osaka. Dedicated to
     ~Namba~ ~Bears~." – the tildes read as set-off words.
