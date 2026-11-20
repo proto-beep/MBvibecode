@@ -1432,7 +1432,7 @@ def case_launchtools():
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(BAR)
         print('A)', a0)
-        results.append(a0 is not None and a0['kids'] == ['dci-log-open', 'dci-launch-sep', 'dci-stats-open', 'dci-set-open'] and a0['all'][:6] == ['dci-open', 'dci-open-ocr', 'dci-quickfill', 'dci-profile', 'dci-place-seg', 'dci-launch-tools']  # ([3.150.0] Credit fill, hidden)
+        results.append(a0 is not None and a0['kids'] == ['dci-log-open', 'dci-launch-sep', 'dci-stats-open', 'dci-set-open'] and a0['all'][:7] == ['dci-open', 'dci-open-ocr', 'dci-open-src', 'dci-quickfill', 'dci-profile', 'dci-place-seg', 'dci-launch-tools']  # ([3.150.0] Credit fill, hidden)
                        and a0['svg'] == [True, True, True] and a0['text'] == ['', '', ''] and a0['label'] == ['Log', 'Statistics', 'Settings']
                        and a0['title'][1].startswith('Statistics:') and a0['title'][2].startswith('All settings') and a0['controls'] is True)
         PRESSED = "document.getElementById('dci-log-open').getAttribute('aria-pressed')"

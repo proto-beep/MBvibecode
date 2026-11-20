@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.183.0
+// @version      3.184.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.183.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.183.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.184.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.184.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.183.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.184.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2237,6 +2237,7 @@
       "log.rmdFound": "Removed in the editor last time: {n} – asked whether to skip them again",
       "log.rmdSkipped": "Removed in the editor last time: {n} on Skip again",
       "yell.kind.rmd": "credits removed in the editor last time",
+      "yell.kind.livecom": "comments for the live recordings",
       "plays.hint": "“{line}” – no one is credited with: {list}",
       "plays.who": "Person …",
       "plays.take": "Take (all tracks)",
@@ -2584,6 +2585,11 @@
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
       "launcher.ocr": "… from cover art",
+      "launcher.src": "↗ Source",
+      "launcher.srcTitle": "Open the source of the import – the one loaded, else the first linked to the release – in a background tab",
+      "launcher.srcNone": "No Discogs or Bandcamp link at this release.",
+      "launcher.srcOpened": "Opened in the background: {url}",
+      "log.srcTabOpened": "Source opened in a background tab: {url}",
       "launcher.ocrTitle": "Import the credits from the cover art: the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can be added as a source",
       "ocrStart.hint": "The import of this release has not started – the text read from the cover art will be its source.",
       "ms.2.16.0": "Status marks on every Discogs track line",
@@ -4356,6 +4362,8 @@
       "dm.goto": "To the date matrix",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
+      "pools.applyFold": "Apply & fold",
+      "pools.applyFoldTitle": "Apply the date matrix to the rows and fold this bar – “fold” beside it folds without applying",
       "pools.show": "show",
       "pools.keep": "keep the pools in the bar when folded",
       "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, to be dragged onto rows",
@@ -22664,6 +22672,10 @@
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
     // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
     if (ruleOn('S197') && dedBoxShown()) (S.dedSugg || []).forEach((x) => add('can', 'ded', `ded:${x.key}`, { dk: x.key }));
+    // [Z-LIVEMAY] (3.184.0) "Propose comments" for the live recordings, not answered yet: may
+    try {
+      if (!S.liveCom && S.liveComOffer == null && S.rows.length && liveProposals().length) add('can', 'livecom', 'livecom');
+    } catch (e) { /* no proposals */ }
     // [Z-YELLDATE] (3.112.0) the dates of the notes placed in the date matrix as suggestions (they wait for "✓ Apply" there)
     try {
       (dm().cells || []).filter((c) => c.auto).forEach((c) => add('can', 'date', `date:${c.id}`, { cell: c.id }));
@@ -22710,6 +22722,7 @@
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'dgl') el = ov.querySelector('[data-el=dglineup] .dci-festival-offers');
     else if (it.kind === 'rmd') el = ov.querySelector('[data-el=rmdask] .dci-festival-offers');
+    else if (it.kind === 'livecom') el = ov.querySelector('.dci-livecom-may'); // [Z-LIVEMAY] (3.184.0)
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
     else if (it.kind === 'ded') el = [...ov.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find((x) => x.dataset.key === it.dk);
@@ -33432,7 +33445,7 @@
     if (!host || !S.siteHints || S.siteHints.get(`${a.mbid}|${host}`) !== 'missing') return '';
     const kind = entryKind(a) === 'artist' ? 'artist' : entryKind(a);
     const path = entityPath(kind);
-    const url = `/${path}/${a.mbid}/edit?${toQuery([[`edit-${path}.url.0.text`, `https://${host}/`], [`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]])}`;
+    const url = `/${path}/${a.mbid}/edit?${toQuery([[`edit-${path}.url.0.text`, `https://${host}/`], [`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])], ...editPageNote(path)])}`;
     return ` <span class="dci-sub dci-sitehint" data-el="sitehint">${esc(tr('site.note', { host }))} <a href="${esc(url)}" target="_blank" rel="noopener">${esc(tr('site.edit'))}</a></span>`;
   }
 
@@ -33531,6 +33544,7 @@
       const path = entityPath(kind);
       const q = [[`edit-${path}.url.0.text`, u]];
       if (!known.test(u) && SITE_LINK_TYPE[kind]) q.push([`edit-${path}.url.0.link_type_id`, String(SITE_LINK_TYPE[kind])]);
+      q.push(...editPageNote(path)); // [Z-EDITNOTESRC] (3.184.0)
       return `/${path}/${a.mbid}/edit?${toQuery(q)}`;
     };
     el.innerHTML = `<details${open ? ' open' : ''}><summary title="${esc(tr('misslinks.title'))}">${esc(tr('misslinks.summary', { n }))}</summary><ul class="dci-misslinks-list">${list.map(({ a, urls }) => `<li class="dci-kind-${groupKindOf(a).kind}" data-mbid="${esc(a.mbid)}">${kindTagHtml(a)}<a href="/${esc(entityPath(entryKind(a)))}/${esc(a.mbid)}" target="_blank" rel="noopener"><strong>${esc(a.mbName || a.name || '')}</strong></a>${urls.map((u) => ` <span class="dci-misslink"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(webShort(u))}</a> <a class="dci-misslink-add" data-el="misslink-add" href="${esc(editUrl(a, u))}" target="_blank" rel="noopener" title="${esc(tr('misslinks.addTitle', { name: a.mbName || a.name || '' }))}">${esc(tr('misslinks.add'))}</a></span>`).join(' ·')}</li>`).join('')}</ul></details>`;
@@ -37712,7 +37726,7 @@
         <span class="dci-sub">${esc(summary)}</span>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}</span>
-        <span class="dci-pools-c"><button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button></span>
+        <span class="dci-pools-c">${open && !S.dmAuto && (m.cells.length || m.dirty) ? `<button type="button" class="dci-pools-applyfold" data-act="dm-apply-fold" title="${esc(tr('pools.applyFoldTitle'))}">✓ ${esc(tr('pools.applyFold'))}</button> ` : ''}<button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button></span>
         <span class="dci-pools-r">${open ? `<span class="dci-pools-tools">
           ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(trSrc('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
@@ -39707,6 +39721,17 @@
     const src = uniq((sources || []).filter(Boolean)).map((u) => `Source: ${u}`);
     return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
   }
+  /**
+   * [Z-EDITNOTESRC] (3.184.0) The edit note of an edit page the dashboard opens filled in – a label code, a missing link, the page of
+   * the source, "member of": the source of the import and the line of the script, as the "Create …" forms have it.
+   */
+  const editPageNote = (path) => {
+    try {
+      return [[`edit-${path}.edit_note`, formEditNote([noteSourceUrl()], prefilledBy(true))]];
+    } catch (e) {
+      return [];
+    }
+  };
 
   /**
    * [Z-ARTDATES] (3.141.0, S238) The dates of a person (born, died) or a group (formed, disbanded) in the profile of its Discogs page –
@@ -41370,6 +41395,7 @@
     if (!mo) return '';
     if (!a.mbid) return ` <span class="dci-sub dci-memberof" data-el="memberof" title="${esc(tr('memberOf.createTitle', { group: mo.group }))}">${esc(tr('memberOf.onCreate', { group: mo.group }))}</span>`;
     const q = buildArtistSeed({ name: a.mbName || a.name, rels: [{ mbid: mo.gid, linkTypeId: idx().memberLtId, backward: false, attrs: memberAttrIds(a) }] }).filter(([k]) => /^rels\./.test(k));
+    q.push(...editPageNote('artist')); // [Z-EDITNOTESRC] (3.184.0)
     return ` <a class="dci-textbtn dci-memberof" data-el="memberof" href="/artist/${esc(a.mbid)}/edit?${esc(toQuery(q))}" target="_blank" rel="noopener" title="${esc(tr('memberOf.editTitle', { group: mo.group }))}">＋ ${esc(tr('memberOf.add', { group: mo.group }))} ↗</a>`;
   }
 
@@ -41992,7 +42018,7 @@
       const text = w.media
         ? tr('livecom.offerMedia', { list: liveWhatLabel(list.map((p) => p.i)), example: list[0].auto })
         : tr('livecom.offer', { n: list.length, list: w.tracks, example: list[0].auto });
-      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(text)}</span>
+      const offer = `<div class="dci-livecom-offer dci-livecom-may" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(text)}</span>
         <button type="button" class="dci-small" data-act="livecom-yes">${esc(tr('livecom.offerYes'))}</button>
         <button type="button" class="dci-small" data-act="livecom-no">${esc(tr('livecom.offerNo'))}</button></div>`;
       if (el.dataset.html !== offer) {
@@ -43382,7 +43408,7 @@
     const notes = lcNoteOf();
     if (!notes.length) return '';
     return `<div class="dci-lcnote" data-el="lcnote">${notes.map((n) => {
-      const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}" target="_blank" rel="noopener"
+      const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}${esc(editPageNote('label').length ? `&${toQuery(editPageNote('label'))}` : '')}" target="_blank" rel="noopener"
         title="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}" aria-label="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}">＋</a>` : '';
       const text = !n.label ? tr('lc.none', { code: n.code }) : n.other ? tr('lc.other', { name: n.label.name, code: n.code, other: n.other }) : tr('lc.missing', { name: n.label.name, code: n.code });
       return `<p class="dci-sub">${esc(emo('label'))} ${esc(text)}${add}</p>`;
@@ -52209,6 +52235,22 @@
         dmChanged();
         break;
       }
+      // [Z-APPLYFOLD] (3.184.0) "✓ Apply & fold" in the middle of the bar's head: the matrix applied, the bar folded (for this import, as
+      // "Fold bar after Apply" does) – "▲ fold" beside it folds without applying
+      case 'dm-apply-fold':
+        S.dmPick = null;
+        applyMatrix();
+        if (!(S.dmEdit || dm().cells.some((c) => c.alt))) {
+          S.dmFoldWait = false;
+          S.poolsFoldApply = true;
+          S.poolsForce = null;
+          Object.assign(S, { poolForm: null, trackForm: null, poolClear: null });
+          log('info', 'poolsFolded');
+          renderDates();
+          const again = S.overlay && S.overlay.querySelector('.dci-pools-fold');
+          if (again) again.focus({ preventScroll: true });
+        }
+        break;
       case 'dm-apply':
         S.dmPick = null;
         applyMatrix();
@@ -54874,7 +54916,7 @@
   const KIND_PALETTE_DARK_KEY = 'dci-kind-palette-dark';
   // (the page bar and what is in it; (3.46.0, review) the boxes on MusicBrainz's other pages have colours of their own and no
   // stylesheet of the script: as before)
-  const DARK_PAGE_ROOTS = ['dci-pagebar', 'dci-controls', 'dci-launcher', 'dci-open', 'dci-open-ocr', 'dci-notice', 'dci-langask', 'dci-qf'];
+  const DARK_PAGE_ROOTS = ['dci-pagebar', 'dci-controls', 'dci-launcher', 'dci-open', 'dci-open-ocr', 'dci-open-src', 'dci-notice', 'dci-langask', 'dci-qf'];
   const DARK_WIN_ROOTS = ['dci-ocr', 'dci-ocr-peek', 'dci-line-peek'];
   const DARK_ROOTS = ['dci-overlay', 'dci-log', 'dci-rules', ...DARK_WIN_ROOTS, ...DARK_PAGE_ROOTS];
   // (the parts not inside another one: enough for "in a dark part")
@@ -59136,6 +59178,33 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     else bar.prepend(box);
   }
 
+  /**
+   * [Z-SRCTABBTN] (3.184.0) "↗ Source" next to "Import credits …": the source the import takes – the one loaded, else the first
+   * source linked to the release (Discogs before Bandcamp) – opened in a background tab by the companion script; without the
+   * companion in a new tab. Nothing linked: said in the bar.
+   */
+  async function openSourceTab() {
+    const say = (key, params) => { S.launchStatus = { key, params: params || {} }; renderLauncher(); };
+    let url = (S.release && S.release.url) || ((S.sourceLinks || [])[0] || {}).url || '';
+    if (!url && releaseMbid) {
+      try {
+        const ws = await mbWsIdle(`release/${releaseMbid}?inc=url-rels`);
+        const links = sourceLinksOf(((ws && ws.relations) || []).filter((r) => r.url).map((r) => r.url.resource));
+        url = (links[0] || {}).url || (links[0] && links[0].source === 'discogs' && links[0].id ? DISCOGS.releaseUrl(links[0].id) : '');
+      } catch (e) {
+        console.warn('[Discogs-Credits]', e);
+      }
+    }
+    if (!url) {
+      say('launcher.srcNone');
+      return;
+    }
+    if (S.sync && S.sync.installed) toDiscogs({ type: 'open', url });
+    else window.open(url, '_blank', 'noopener');
+    say('launcher.srcOpened', { url: url.replace(/^https?:\/\//, '') });
+    log('info', 'srcTabOpened', { url });
+  }
+
   function renderLauncher() {
     const bar = document.getElementById('dci-launcher');
     if (!bar) return;
@@ -59154,6 +59223,13 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       ocrBtn.hidden = !S.ocrOn;
       ocrBtn.textContent = tr('launcher.ocr');
       ocrBtn.title = tr('launcher.ocrTitle');
+    }
+    // [Z-SRCTABBTN] (3.184.0) the source of the import in a background tab
+    const srcBtn = bar.querySelector('#dci-open-src');
+    if (srcBtn) {
+      srcBtn.textContent = tr('launcher.src');
+      srcBtn.title = tr('launcher.srcTitle');
+      srcBtn.setAttribute('aria-label', tr('launcher.srcTitle'));
     }
     // [Z-LS] (3.40.14) symbols: the words as tooltip and label
     [['#dci-log-open', 'log.title', 'log.title'], ['#dci-stats-open', 'stats.title', 'stats.buttonTitle'], ['#dci-set-open', 'settings.title', 'settings.buttonTitle']].forEach(([sel, label, title]) => {
@@ -59589,7 +59665,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     bar.id = 'dci-launcher';
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
     // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
-    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button><button type="button" id="dci-quickfill" hidden></button>
+    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button><button type="button" id="dci-open-src"></button><button type="button" id="dci-quickfill" hidden></button>
       <select id="dci-profile" class="dci-profile-pick"></select>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
@@ -59605,6 +59681,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
+    bar.querySelector('#dci-open-src').addEventListener('click', () => openSourceTab()); // [Z-SRCTABBTN] (3.184.0)
     bar.querySelector('#dci-quickfill').addEventListener('click', () => quickFill()); // [Z-QUICKFILL] (3.150.0)
     // ((review) MusicBrainz's editor may come after the bar: its button then
     waitForEditor().then(() => renderLauncher(), () => {});
@@ -60075,6 +60152,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
       #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
       #dci-open-ocr:hover { background: #ecebf6; }
+      /* [Z-SRCTABBTN] (3.184.0) "↗ Source" joined to them */
+      #dci-open-src { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
+      #dci-open-src:hover { background: #ecebf6; }
+      #dci-open-ocr:not([hidden]):has(+ #dci-open-src) { border-radius: 0; }
+      #dci-open:has(+ #dci-open-ocr + #dci-open-src) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
       /* [Z-QFBETA] (3.156.0) "Fill empty recordings" like "Import credits …", set apart from it by a line */
       #dci-quickfill { position: relative; font: inherit; margin-left: 14px; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-quickfill::before { content: ''; position: absolute; left: -9px; top: 2px; bottom: 2px; width: 1px; background: #b9b5d6; }
@@ -61214,6 +61296,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-arrcom .dci-livecom-offer input { min-width: calc(var(--u, 1px) * 180); }
       .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
+      .dci-livecom-may { background: var(--sugg-bg); border: 1px dashed var(--sugg-line); } /* [Z-LIVEMAY] (3.184.0) a suggestion (may) */
       .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }
       .dci-livecom-offer button { cursor: pointer; }
       /* [168] (3.38.3) the list above, its heading at the bottom right; at most a third of the dashboard's height */
@@ -61382,6 +61465,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
         margin-top: calc(var(--u, 1px) * 4); padding-top: calc(var(--u, 1px) * 4); border-top: 1px dashed var(--date-line); font-size: calc(var(--u, 1px) * 12); }
       .dci-pools-fold { border: 1px solid var(--date-line); border-radius: 10px; background: var(--date-bg); color: var(--date-d); padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-pools-fold:hover { border-color: var(--date); }
+      /* [Z-APPLYFOLD] (3.184.0) "✓ Apply & fold" beside "fold" (a class of its own: "fold" stays the one .dci-pools-fold of the head) */
+      .dci-pools-applyfold { border: 1px solid var(--date); border-radius: 10px; background: var(--date); color: #fff; padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; font-size: calc(var(--u, 1px) * 12); cursor: pointer;
+        position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: calc(var(--u, 1px) * 6); white-space: nowrap; } /* (left of "fold", which stays where it is – in the middle, folded or open) */
+      .dci-pools-c { position: relative; }
+      .dci-pools-applyfold:hover { background: var(--date-d); }
       /* [166] (3.37.15) in the head, at the same place open and folded; [178] (3.38.13) in its middle */
       .dci-pools-head .dci-pools-fold { min-width: calc(var(--u, 1px) * 70); font-size: calc(var(--u, 1px) * 12); text-align: center; }
       .dci-pools-kept { margin-top: 0; }

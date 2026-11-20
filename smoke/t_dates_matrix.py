@@ -56,9 +56,15 @@ def case_matrix():
         pg.drag_and_drop(f'.dci-pchip-tg[data-id="{tgs[0]}"]', '.dci-dm-col[data-dmcol=performance] .dci-dm-cell'); pg.wait_for_timeout(200)
         print('1) nach Ziehen:', cells(pg)['performance'], '| Hinweis:', pg.locator('.dci-dm-foot .dci-dm-pending').count())
         ok1 = cells(pg)['performance'] == [['Session A · 2025-06-25', ['Tracks 1–5'], False]] and lib(pg)[0][1] == ''
-        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(400)
+        # (3.184.0, Z-APPLYFOLD) "✓ Apply & fold" in the middle of the head, beside "fold": applies and folds the bar
+        af = pg.locator('.dci-pools-c [data-act=dm-apply-fold]').count()
+        pg.click('.dci-pools-c [data-act=dm-apply-fold]'); pg.wait_for_timeout(400)
+        folded = pg.locator('.dci-pools-toggle').get_attribute('aria-expanded')
+        print('   „Apply & fold“:', af, '| danach offen:', folded, '| Knopf weg:', pg.locator('[data-act=dm-apply-fold]').count())
+        ok_af = af == 1 and folded == 'false' and pg.locator('[data-act=dm-apply-fold]').count() == 0
+        pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
         print('   nach „Anwenden“ – Liberty:', lib(pg))
-        ok1 = ok1 and lib(pg) == [([1, 2, 3, 4, 5], '2025-06-25'), ([6, 7, 8, 9, 10], '')]
+        ok1 = ok1 and lib(pg) == [([1, 2, 3, 4, 5], '2025-06-25'), ([6, 7, 8, 9, 10], '')] and ok_af
         # 2) click alternative: grip of "Overdub", then "place here" in Mix; grip of "Overdubs", then "tracks here"
         pg.click(f'.dci-pchip-date[data-id="{ids[1]}"] [data-act=dm-pick]'); pg.wait_for_timeout(150)
         focus = pg.evaluate("document.activeElement.dataset.act + ':' + (document.activeElement.dataset.col || '')")

@@ -4845,7 +4845,7 @@ def case_v3156():
             d1 = pg.evaluate("""(() => { const q = document.getElementById('dci-quickfill'); return [q.hidden, q.textContent, q.previousElementSibling.id,
               getComputedStyle(q).marginLeft, getComputedStyle(q, '::before').width, document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]').getAttribute('aria-disabled')]; })()""")
             print('D)', d1)
-            results.append(d1 == [False, 'Fill empty recordings', 'dci-open-ocr', '14px', '1px', 'true'])
+            results.append(d1 == [False, 'Fill empty recordings', 'dci-open-src', '14px', '1px', 'true'])   # (3.184.0: "↗ Source" before it)
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()
