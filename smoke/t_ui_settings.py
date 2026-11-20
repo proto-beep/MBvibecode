@@ -1094,6 +1094,65 @@ def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
     return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': list(i), 'v': [], 'd': d, 'ds': ds, 'rc': 0, 'ac': 0, 'ru': ru, 'lk': lk, 'nw': nw}
 
 
+
+def case_stats3192():
+    """Credits Importer 3.192.0 (collected items Z-STATBORN, Z-STATNEW): seeded submissions.
+    A) The artists' card: "Born" (people, characters) apart from "Founded" (groups, orchestras, choirs), an artist without a type apart.
+    B) "Dedications and tributes": on the release group 1, on works 2, tribute 1.
+    C) "✨ Answer all": 5 answers, 1 changed by hand (20 %); by kind work 3, suite 2 – one import counted once (its second submission
+       not again).
+    D) "Helpers used": promotional suggestions offered 4 / taken 3; Compared with MusicBrainz the same 2, a typo only 1, taken anyway 1;
+       label pages 2 / links 3 / headquarters 1; "Instruments → release" 5.
+    E) Suites and medleys: parts per suite 2.5."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        ga = ['aaaaaaaa-0000-4000-8000-0000000001%02d' % k for k in range(1, 5)]
+        cache = {ga[0]: ['Person', 'Female', 1930, 1990, 'US', '', now], ga[1]: ['Group', '', 1965, None, 'GB', '', now],
+                 ga[2]: ['Choir', '', 1882, None, 'DE', '', now], ga[3]: ['', '', 1971, None, '', '', now]}
+        pg.evaluate("(c) => { localStorage.setItem('dci-stats-artists', JSON.stringify(c)); localStorage.setItem('dci-stats-on', 'false'); }", cache)
+
+        def r4(lt, lv, et, tg, tn):
+            x = stat_rel('n', lt, lv, et, tg, tn)
+            x.update({'rt': [], 'al': 0, 'dy': None})
+            return x
+        rel = {'title': 'A', 'year': 2001, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0, 'media': 1, 'rgp': 'Album', 'rgs': [], 'lang': 'eng', 'script': 'Latn', 'lens': []}
+        x = {'suites': {'n': 2, 'parts': 5}, 'magic': {'n': 5, 'changed': 1, 'kinds': {'work': 3, 'suite': 2}}, 'promo': {'offered': 4, 'taken': 3},
+             'dsup': {'same': 2, 'typo': 1, 'anyway': 1}, 'lc': {'pages': 2, 'links': 3, 'hq': 1}, 'instsAuto': 5}
+        rels = [r4('instrument', 'recording', 'artist', ga[0], 'Ann'), r4('producer', 'recording', 'artist', ga[1], 'The Group'), r4('vocal', 'recording', 'artist', ga[2], 'The Choir'),
+                r4('producer', 'recording', 'artist', ga[3], 'Who'), r4('dedicated to', 'release_group', 'artist', ga[0], 'Ann'), r4('dedication', 'work', 'artist', ga[0], 'Ann'),
+                r4('dedication', 'work', 'artist', ga[1], 'The Group'), r4('tribute', 'release_group', 'artist', ga[1], 'The Group')]
+        recs = [{'v': 3, 'id': 'm1:1', 'mbid': 'm1', 'at': now - 1000, 'start': now - 5000, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None, 'rels': rels, 'x': x},
+                {'v': 3, 'id': 'm1:2', 'mbid': 'm1', 'at': now, 'start': now - 5000, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None, 'rels': [], 'x': x}]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        if pg.locator('[data-act=stats-scope][data-scope=local]').count():
+            pg.click('[data-act=stats-scope][data-scope=local]')
+        pg.wait_for_timeout(1500)
+        CARD = "(k) => (c => c ? [...c.querySelectorAll('h5, li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null)(document.querySelector(`[data-el=stats-${k}]`))"
+        a, bd, c, d, e = [pg.evaluate(CARD, k) for k in ('artists', 'dedications', 'magic', 'helpers', 'suites')]
+        print('Gesät:', seeded, '\nA)', a, '\nB)', bd, '\nC)', c, '\nD)', d, '\nE)', e)
+        ai = a or []
+        k = lambda s: ai.index(s) if s in ai else -1
+        results.append(k('Born (people, characters)') >= 0 and k('Founded (groups, orchestras, choirs)') > k('Born (people, characters)') and k('Begun, type unknown') > 0
+                       and k('1930s 1') in range(k('Born (people, characters)'), k('Founded (groups, orchestras, choirs)'))
+                       and k('1960s 1') > k('Founded (groups, orchestras, choirs)') and k('1880s 1') > k('Founded (groups, orchestras, choirs)') and k('1970s 1') > k('Begun, type unknown'))
+        results.append(bd == ['dedicated – on the release group 1', 'dedicated – on works 2', 'tribute 1'])
+        results.append(c == ['5 answers – 1 of them (20 %) changed by hand before “Enter edit”', 'Works 3', 'Suites 2'])
+        results.append(d == ['Promotional texts', 'suggestions offered 4', 'taken 3', 'Compared with MusicBrainz', 'the same 2', 'a typo only 1', 'taken anyway 1',
+                             'Label pages prefilled', 'pages 2', 'links 3', 'headquarters 1', 'Instruments → release', 'entries placed by the switch 5'])
+        results.append(bool(e) and 'parts per suite 2.5' in e and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsbutton():
     """Credits Importer 3.39.3 (collected item 189): the statistics with their own button in the head.
     A) The button (a bar chart, "Statistics") right after ⚙ Settings, not pressed; no tab "Statistics" in ⚙ Settings any more – a tab
@@ -1666,7 +1725,7 @@ def case_statsmore2():
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
         # ((3.42.6, Z-STG2) and the tags of Bandcamp)
         # ([3.53.0] version 3: the release's media, types, language, script and lengths; role credits and aliases)
-        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions', 'out', 'may'}
+        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions', 'out', 'may', 'magic', 'promo', 'dsup', 'lc', 'instsAuto'}  # ([Z-STATNEW] 3.192.0 the five last)
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1

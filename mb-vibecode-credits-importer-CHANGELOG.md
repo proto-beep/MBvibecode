@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.191.0 | 1.23.0 |
+| 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,19 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.192.0
+
+**One work for the versions of a song, suites from the notes, more statistics.**
+
+- **One work for the tracks of one title** (rule S342): other mixes, takes, edits, live and demo versions and remixes of a song are recordings of the same work (MusicBrainz, "How to Use Works"; a reprise is not on the list). Tracks such as "Song Two", "Song Two (Alternate Take)", "Song Two - Live" get one yellow question above the first of them: "the same work “Song Two”?" – "✓ One work" or "✕ Separate works", "↺" asks again. The endings that mark a version are a list in the mapping (`SAME_WORK_SUFFIXES`).
+  - One of them has its work in MusicBrainz: it is linked with every track.
+  - None has one: one new work for all. The relationship editor cannot give one new work to several recordings, so "Stage" opens its form first, prefilled (the title without the version, type and languages of the first track, the writers all of them share); once it is created, every track gets it and staging goes on. The form closed: nothing staged, a message says why.
+  - "✨ Answer all": the work one of them has on every level; none found – "careful" a new work for the first of them only (the others stay without a work), "balanced" one new work for all where titles and writers are the same, "bold" also with versions marked.
+- **Suites from the notes** (rules S343, S344): notes such as "Track 2:" with "I. …", "II. …", "III. …" below it name the parts of a track. A quick switch "Suites from notes" (off) offers such a track as a suite of its own – named as the track, the lines its parts, created at "Stage" like every suite; "✨ Answer all" accepts it on "bold" only. Switched off, a grey line at the track asks "might be a suite?" with a button that reads them for this import. A single line below "Track n:" (a subtitle, a dedication) is a quiet hint at the track. "Track 2" without a medium names the second track of every medium when the media have the same tracks. The reader leaves these notes out ("notes of a track") instead of listing them as unrecognised.
+- **Statistics:** "Born or founded" split into born (people, characters), founded (groups, orchestras, choirs) and the artists of unknown type; new cards "Dedications and tributes" (on the release group, on works, tributes), "✨ Answer all" (answers by kind and how many were changed by hand before "Enter edit") and "Helpers used" (promotional suggestions offered and taken, "Compared with MusicBrainz" same / typo / taken anyway, label pages prefilled with links and headquarters, entries placed by "Instruments → release"); suites with their parts per suite.
+- **A bug:** the quick switch "Instruments → release" of 3.191.0 was not shown among the quick switches.
+- Not done: a track of a second medium with the same tracks (an LP beside the CD) does not get the suite from the notes by itself – its works can be linked once the suite exists; a dedication in the notes of a track ("For my Daughter") is shown as a hint, not read as a dedication.
 
 ### Import 3.191.0
 

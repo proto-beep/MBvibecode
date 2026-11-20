@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "3.191.0",
+  "version": "3.192.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
-  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297","S339"]},
+  "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
     "additional",
     "guest",
@@ -762,6 +762,21 @@
     "Logic"
   ],
   "HEADING_DIVIDER_CHARS": "-–—―_*·•.…~=+#/\\|",
+  "SAME_WORK_SUFFIXES": [
+    "alt(?:ernate|\\.)?\\s+(?:take|version|mix|edit)(?:\\s*(?:#|no\\.?)?\\s*\\d+)?",
+    "(?:\\d+(?:st|nd|rd|th)\\s+|first\\s+|second\\s+|third\\s+|false\\s+start\\s*(?:&|and)?\\s*)?take(?:\\s*(?:#|no\\.?)?\\s*\\d+|\\s+[a-z]+)?",
+    "(?:early\\s+|home\\s+|original\\s+|studio\\s+)?demo(?:\\s+(?:version|recording|take))?(?:\\s*\\d+)?",
+    "live(?:\\s+.*)?",
+    "recorded\\s+live\\b.*",
+    "(?:radio|single|album|lp|7\\\"?|12\\\"?|extended|short|long|full[- ]length|clean|explicit|dj|promo)\\s+(?:edit|version|mix|cut)",
+    "edit(?:ed)?(?:\\s+version)?",
+    "(?:mono|stereo|quad(?:raphonic)?|5\\.1|surround)(?:\\s+(?:mix|version|single|edit))?",
+    "(?:[\\w'’.&-]+\\s+){0,4}re-?mix(?:ed)?(?:\\s+(?:edit|version))?",
+    "(?:[\\w'’.&-]+\\s+){0,3}mix",
+    "(?:[\\w'’.&-]+\\s+){0,3}version(?:\\s*\\d+)?",
+    "instrumental|acoustic|unplugged|a\\s*cappella|rehearsal|outtake|early\\s+take|session\\s+take|breakdown|incomplete|fragment",
+    "remaster(?:ed)?(?:\\s+\\d{4})?|\\d{4}\\s+remaster(?:ed)?"
+  ],
   "SUITE_SKIP_HEADINGS": [
     "Side",
     "CD",
@@ -1170,6 +1185,7 @@
     "S046",
     "S078",
     "S170",
+    "S339",
     "S155",
     "S114",
     "S021",
@@ -1177,6 +1193,7 @@
     "S160",
     "S045",
     "S222",
+    "S343",
     "S007",
     "S297",
     "S245",
