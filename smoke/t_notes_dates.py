@@ -1209,6 +1209,59 @@ def case_datelevel3178():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_bybreak3187():
+    """Credits Importer 3.187.0 (collected items Z-BYBREAKDATE, Z-WIKISEMI; S316, D038).
+    A) The notes "All music composed and recorded by" / an empty line / "Stefano Musso in Spring 2023.": the date stands in the column
+       Performance of the date matrix (until 3.186.0 only in the pool, without a group).
+    B) In Node: a period for all tracks whose days are each named for a group of tracks adds nothing – tested in the dashboard with three
+       media: "… on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)" and, below, "Recorded May 26–27,
+       2016": no cell and no pool date for the period."""
+    orig = H.discogs_release
+    media0 = H.MEDIA
+    state = {'notes': ''}
+
+    def rel():
+        d = orig()
+        d['notes'] = state['notes']
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+
+    def run(p, notes, media=None):
+        state['notes'] = notes
+        H.MEDIA = media
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        day = lambda d: '-'.join(str(d[k]) for k in ('year', 'month', 'day') if d and d.get(k))
+        span = lambda e: day(e['begin']) + ('..' + day(e['end']) if day(e['end']) != day(e['begin']) else '')
+        cells = sorted((c['col'], span(pool[c['date']])) for c in mx.get('cells', []))
+        b.close()
+        return cells, sorted(span(e) for e in pool.values()), errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            cells, pool, errs = run(p, 'All music composed and recorded by\n\nStefano Musso in Spring 2023.')
+            print('A)', cells, pool, errs)
+            results.append(('performance', '2023') in cells and not errs)
+            cells, pool, errs = run(p, 'All music recorded on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)\nRecorded May 26–27, 2016', media=[1, 1, 2])
+            print('B)', cells, pool, errs)
+            results.append(('performance', '2016-5-26') in cells and ('performance', '2016-5-27') in cells and '2016-5-26..2016-5-27' not in pool
+                           and not any(d == '2016-5' for _c, d in cells) and not errs)
+    finally:
+        H.discogs_release = orig
+        H.MEDIA = media0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_areas3179():
     """Credits Importer 3.179.0 (collected items Z-AREARELS, Z-PRINTEDIN; S313): the notes "Printed in the UK" / "Made in Germany" /
     "Mixed in Berlin" / "Mixed at Studio X".

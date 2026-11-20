@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.186.0
+// @version      3.187.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.186.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.186.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.187.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.187.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.186.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.187.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -639,6 +639,8 @@
       "role.splitFrom": "on {src}: “{raw}” (one row per task)",
       "role.perfTracks": "On the tracks of the “Performer” credits on Discogs: {list} (rule S046)",
       "role.tarTracks": "On the tracks that name this person as their artist: {list} (rule S078)",
+      "role.tarTitle": "On the tracks whose titles name this person: {list} (rule S322)",
+      "log.tarTitle": "{name} ({role}): on tracks {list} – the tracks whose titles name this person (S322)",
       "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
       "log.tarTracks": "{name} ({role}): on tracks {list} – the tracks whose artist credit names this person (S078)",
       "role.unresolved": "Not matched: {list}",
@@ -942,6 +944,11 @@
       "ignored.why.liveHead": "the head of a live recording – offered above the entries",
       "ignored.why.promo": "a description of the music (no credit)",
       "ignored.why.shop": "shop (shipping, what a purchase includes, formats)",
+      "ignored.why.condition": "the condition of the item on sale (no credit)",
+      "ignored.why.sale": "advertising: a call to buy, prices (no credit)",
+      "promo.ask": "Named only in a description (“{line}”) – a suggestion, on Skip:",
+      "promo.takeAll": "Take all from descriptions",
+      "promo.takeAllTitle": "Takes every credit of this import that only a description names",
       "ignored.why.formatLabel": "the label of an edition (format: label) – no credit",
       "ignored.why.genres": "genres (no credit)",
       "ignored.why.catnoNew": "a catalogue number: {catno} – MusicBrainz has: {mb}",
@@ -5403,6 +5410,10 @@
     { id: 'S317', where: 'tidyLines (BK_ORIG_ART, BK_ART_TECH), R130, Q027', note: 'Texts (3.183.0; collected item Z-ARTWORKLINE): "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London" – the name after the heading is the artist of the picture ("Original artwork": artwork suggested, illustration to choose – Q027); the title and year of the picture, its technique, edition and printer – in the line or in the lines below – are left out ("the picture on the cover"). Until 3.182.0 the heading became a name and "woodblock" an instrument' },
     { id: 'S318', where: 'creditHasNoField, roleCreditFor, editNoteBlock', note: 'Role credits (3.183.0; collected item Z-NOCREDITTYPE): a detail of a type that has no field for a role credit in MusicBrainz – "Liner Notes [Spanish]": liner notes take neither "credited as" nor a task – is left out: the relationship is staged without it, its spelling is not asked ("Written small …"), and it is no line "Not stored in MB" of the edit note (the preview of the staging says "left out"). Off: as until 3.182.0' },
     { id: 'S319', where: 'instsToRelease, instsGroupPlan (a tick in the quick switch D035)', note: 'Instruments on the release (3.186.0; collected item Z-RELGROUPDATES): "Put them on the release" / "⑃ on the release + group" for a person whose instruments stand in several date groups – "CD 1–4: recorded November 27-29, 2016", "CD 5: recorded November 30, 2016" – keeps every group: on the recordings a row for each group with its tracks and its date (the group of the instruments on tracks 1–4 in November 2016, on the tracks of CD 5 on November 30), on the release the dates of all groups – days that follow one another as one period (2016-11-27 – 2016-11-30), groups with a gap between them as a row each. Off (the tick "date groups" in the quick switch "Days → release level"): as until 3.185.0 – one row on the recordings with all tracks and the first date, the release with the first date of the release level' },
+    { id: 'S320', where: 'TEXT.parse (promoLines, promoFacts; SALE_HEAD, CONDITION_LINE, ENDORSE_LINE, EDITION_NAME, MARKETING, PROMO_FACTS), promoAskSkip', note: 'Texts (3.187.0; collected items Z-BCPROMO, Z-BCCONDITION, Z-BCEDITION): what a shop writes to sell an edition is left out with its reason – a call to buy and prices ("Buy all three new piano/bass duos: …, and save the money!!!!!", "Special price!!!!!!": advertising), the condition of the item ("CD, wrapped as new"), what someone plays on ("Barry Guy plays exclusively on Thomastik Springs"), the name of the edition as a line ("Artist - Title - Deluxe 2-LP set with Gatefold sleeve"), a headline all in capitals, a list of selling points ("- Legendary … officially released for the 1st time") and sentences that sell ("… is proud to present the first official release …"). The credits such descriptions name – "new liner notes by Jason Weiss", "unseen concert pictures by Keith Hodkinson", "Remastered from the original Masters by Colorsound Studio" – are suggestions: on Skip with "Take" (and "Take all from descriptions"), never taken by themselves; what a credit line of the text says already is no suggestion' },
+    { id: 'S321', where: 'TEXT.parse (editionLines)', note: 'Texts (3.187.0; collected items Z-BCEDITION, Z-LINERNOTE, Z-FORLABEL, Z-TITLEGUEST): credit lines written another way are read – several people in one line ("Glen Moore: Bass - Paul McCandless: Bass Clarinet, Flute - Ralph Towner: Guitar": each their own); "Mastered by David Hachour Colorsound Studio, Paris" (the engineer, and the studio as the place); "All concert photos courtesy of Keith Hodkinson" (photography); "Mandala (Front cover) by Moki Cherry courtesy of the Moki Cherry Estate" (cover art by Moki Cherry; the title of the picture and "courtesy of the … Estate" left out); "Liner Note: X" (the singular) and "Liner Note translation: X"; "Produced by X for Y" (X the producer, Y a label it was produced for – until 3.186.0 a person "X for Y")' },
+    { id: 'S322', where: 'titleGuestTracks, applyTrackArtistTracks (TITLE_GUEST)', note: 'Tracks (3.187.0; collected item Z-TITLEGUEST): a guest named in the titles of tracks – "Acute ( w Shelley Hirsch)", "Echo ( w Makigami )", "(with X & Y)", "(feat. X)" – plays on those tracks only: the instruments and voices the source gives without tracks are put on them (not on all tracks, as until 3.186.0). The name of a title may be a part of the full name of an entry ("Makigami" – Makigami Koichi) when no other entry has that part; who is in no title stays on all tracks. With S078 (the tracks of the track artists); the row and the edit note say where the tracks come from' },
+    { id: 'S323', where: 'mapRole (prefix)', note: 'Roles (3.187.0; collected item Z-HONORARY): a title of honour – "Producer [Honorary]", "Honorary Producer" – says nothing of single tracks: the role on the release (until 3.186.0 on every recording), credited with the word in full ("honorary producer", as "assistant arranger" – S065: MusicBrainz has no such attribute; where the type takes no role credit, the edit note says it)' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -7323,6 +7334,20 @@
     if (tr0 && foldWord(tr0.term) !== foldWord(baseIn)) {
       return { ...mapRole(tr0.term, modsIn, { noTranslation: true }), base: String(baseIn || '').trim(), translated: tr0.word, translatedBase: tr0.term, langs: tr0.langs };
     }
+    // [Z-HONORARY] (3.187.0, S323) "Producer [Honorary]", "Honorary Producer": a title of honour says nothing of single tracks – the role
+    // on the release, credited with the word ("honorary producer"; MusicBrainz has no such attribute)
+    if (ruleOn('S323')) {
+      const mods = modsIn || [];
+      const k = mods.findIndex((x) => /^honorary$/i.test(String(x).trim()));
+      const hb = String(baseIn || '').match(/^\s*honorary\s+(.+)$/i);
+      if (k >= 0 || hb) {
+        const res = mapRole(hb ? hb[1] : baseIn, mods.filter((x, i) => i !== k), { noTranslation });
+        if ((res.types || []).length && !res.fallback && !res.work && !res.prefix) {
+          return { ...res, base: String(baseIn || '').trim(), level: res.level === 'skip' ? 'skip' : 'release', prefix: { flag: 'honorary', word: 'honorary', rest: res.base || (hb ? hb[1] : baseIn) },
+            consumed: [...(res.consumed || []), ...(k >= 0 ? ['honorary'] : [])] };
+        }
+      }
+    }
     const m = String(baseIn || '').match(/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+(.+)$/i);
     // ([Z-POR] 3.81.0: "Album portraits by" are portraits for the album, credited so – R112)
     if (m && ruleOn('S003') && !/design|portrait/i.test(baseIn)) {
@@ -7818,6 +7843,7 @@
     { id: 'D035', note: 'Date levels (3.178.0; collected item Z-DATELEVEL; a quick switch, on): a date of several days for a group of tracks – "CD 1–4: recorded November 27-29, 2016", "June 16 & 17, 2018" – says nothing about the day of each track: the recordings get what the days have in common (the month, across months the year – D022), and the period or its single days are suggested in the column Performance of the date matrix with "Release level" ticked: the rows on the release take them. A period across years has nothing in common: only the release level. A single day of a group of tracks ("CD 5: recorded November 30, 2016") is the date of its recordings only (3.183.0, Z-DATEDUP: not suggested for the release level a second time, as 3.178.0 – 3.182.0 did). Needs D022' },
     { id: 'D036', note: 'Days in a row, each named (3.178.0; collected item Z-DAYLIST): up to three – "27., 28. & 29.11.2016", "June 16/17 2018" – are single days, one date each; four or more are one period (D013 until 3.177.0: always one period). A period written with a dash ("27-29") stays one. In the date finder each such find can be had the other way: "as one period" / "as single dates"' },
     { id: 'D037', note: 'Media as a heading (3.178.0; collected item Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – right above a date\'s line: the date is that of the tracks of those media (a track group "Media 1–4"), on a release with several media. The text reader gives the lines below such a heading its tracks as well (S312)' },
+    { id: 'D038', note: 'A date that only sums up others (3.187.0; collected item Z-WIKISEMI): a date for all tracks whose days are each named for a group of tracks elsewhere in the texts – "May 26–27, 2016" of Wikipedia\'s infobox beside "May 27, 2016 (Disc 1), May 26, 2016 (Disc 2)" of the notes – says nothing new: it is neither placed in the date matrix nor put into the pool (placed, it would give every track both days)' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -8256,6 +8282,29 @@
    * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
    * [D020] hints: every group of joined words ("mixed and mastered"), when more than one.
    */
+  /**
+   * [Z-BYBREAKDATE] (3.187.0, S316) The text for the dates with a line that ends with "by" joined to the name below it, as the reader of
+   * the credits does (tidyLines): "All music composed and recorded by" / (an empty line) / "Stefano Musso in Spring 2023." is one
+   * sentence – its date is a date of the recording (until 3.186.0 the date stood alone in its line: no group, only in the pool).
+   * The lines keep their number (the joined ones are left empty).
+   */
+  function joinByBreak(text) {
+    const src = String(text || '');
+    if (!ruleOn('S316') || !/\s(?:by|von|par|por)[ \t]*\n/i.test(src)) return src;
+    const out = src.split('\n');
+    for (let i = 0; i < out.length - 1; i++) {
+      if (!/\p{L}{3,}.*\s(?:by|von|par|por)\s*$/iu.test(out[i]) || out[i].split(/\s+/).length > 12) continue;
+      let j = i + 1;
+      while (j < out.length && j <= i + 3 && !out[j].trim()) j++;
+      const next = j < out.length ? out[j].trim() : '';
+      if (j === i + 1 && !/^\s*all\s/i.test(out[i])) continue;
+      if (out[i] === out[i].toUpperCase()) continue;
+      if (!next || !/^[\p{Lu}\d"“]/u.test(next) || next.includes(':') || /\s(?:by|von|par|por)\s/i.test(next) || next.split(/\s+/).length > 12) continue;
+      out[i] = `${out[i].replace(/\s+$/, '')} ${next}`;
+      for (let k = i + 1; k <= j; k++) out[k] = '';
+    }
+    return out.join('\n');
+  }
   function findDates(text, { usOrder = false, noRel = false } = {}) {
     const src = String(text || '');
     const taken = [];
@@ -9626,6 +9675,129 @@
       });
     }
 
+    // [Z-BCPROMO] [Z-BCCONDITION] [Z-BCEDITION] (3.187.0, S320) what a shop writes to sell an edition
+    const SALE_HEAD = /^(?:buy|order|get|grab|save|special\s+(?:price|offer|deal)|discount|bundle\s+(?:offer|deal|price)|sale\b|free\s+shipping|limited\s+(?:time\s+)?offer|only\s+\d+\s+(?:copies\s+)?left)\b/i;
+    const CONDITION_LINE = /^(?:\d\s*x\s*)?(?:cd|lp|vinyl|cassette|tape|record|dvd|book|booklet|sleeve|cover|disc)s?\s*[,:–-]\s*(?:still\s+|factory\s+|shrink-?\s*)?(?:wrapped|sealed|mint|unplayed|new|used|second-?hand|as\s+new|like\s+new)\b[\p{L}\s,-]{0,30}\.?$/iu;
+    const ENDORSE_LINE = /^[^.:–-]*\bplays?\s+exclusively\s+(?:on|with)\b/i; // ("He uses Zildjian cymbals" after a credit: the reader's own rule)
+    const EDITION_NAME = /\s[-–]\s+(?:[\p{L}\d-]+\s+){0,3}(?:\d+\s?-?\s?x?\s?(?:lp|cd)s?|lp|cd|vinyl|cassette|tape)\b(?:\s+(?:set|edition|version|box|bundle))?(?:\s+with\s+[\p{L}\s-]{1,30})?$/iu;
+    const MARKETING = /\b(?:legendary|landmark|deluxe|unseen|rare|officially|official|authori[sz]ed|for\s+the\s+(?:1st|first)\s+time|one-time|featuring|brand\s+new|new\s+liner\s+notes|from\s+the\s+original\s+(?:master|tape)s?|gatefold|booklet|limited|exclusive|proud\s+to\s+present|now\s+available|available\s+as\s+an?|long\s+circulating|must-have|highly\s+recommended|sought-after|cult\s+classic|masterpiece)\b/i;
+    const PROMO_NAME = String.raw`(\p{Lu}[\p{L}.'’-]+(?:\s+(?:(?:de|van|von|la|le|di|du|der)\s+)?\p{Lu}[\p{L}.'’-]+){1,3})`;
+    const PROMO_FACTS = [
+      [new RegExp(String.raw`\bliner\s+notes?\s+by\s+${PROMO_NAME}`, 'u'), 'Liner Notes', 'liner'],
+      [new RegExp(String.raw`\b(?:pictures|photos|photographs|photography)\s+by\s+${PROMO_NAME}`, 'u'), 'Photography By', 'photo'],
+      [new RegExp(String.raw`\b(?:artwork|cover\s+art|painting|illustrations?)\s+by\s+${PROMO_NAME}`, 'u'), 'Artwork', 'art'],
+      [new RegExp(String.raw`\b[Rr]emastered\b[^.]{0,40}?\bby\s+${PROMO_NAME}`, 'u'), 'Remastered By', 'master'],
+      [new RegExp(String.raw`(?<![Rr]e)\b[Mm]astered\s+by\s+${PROMO_NAME}`, 'u'), 'Mastered By', 'master'],
+    ];
+    const promoFamily = (role) => (/liner/i.test(role) ? 'liner' : /photo|picture/i.test(role) ? 'photo' : /art|cover|paint|illustr/i.test(role) ? 'art' : /master/i.test(role) ? 'master' : '');
+    /**
+     * [Z-BCPROMO] [Z-BCCONDITION] [Z-BCEDITION] (3.187.0, S320) What a shop writes to sell an edition, left out with its reason: a call to
+     * buy and prices ("Buy all three …, and save the money!!!!!", "Special price!!!!!!"), the condition of the item ("CD, wrapped as new"),
+     * what someone plays on ("Barry Guy plays exclusively on Thomastik Springs"), the name of the edition as a line ("Artist - Title -
+     * Deluxe 2-LP set with Gatefold sleeve"), a headline all in capitals, a list of selling points ("- Legendary … for the 1st time").
+     * P.promoTexts keeps the descriptions: the credits they name ("liner notes by Jason Weiss") become suggestions (promoFacts).
+     */
+    function promoLines(P, lines) {
+      const out = lines.map((l) => String(l == null ? '' : l));
+      const bare = (l) => l.trim().replace(LEAD_MARK, '').replace(/^[-–•*]\s+/, '').trim();
+      const bullet = (l) => /^\s*[-–•*]\s+\S/.test(l);
+      const drop = (i, why, keep = false) => {
+        const text = out[i].trim();
+        if (!text) return;
+        P.ignored.push({ text, why });
+        if (keep) P.promoTexts.push(text);
+        out[i] = '';
+      };
+      for (let i = 0; i < out.length; i++) {
+        const t = bare(out[i]);
+        if (!t) continue;
+        if (CONDITION_LINE.test(t)) drop(i, 'condition');
+        else if (ENDORSE_LINE.test(t)) drop(i, 'endorsement');
+        else if (SALE_HEAD.test(t) || /!{3,}/.test(t)) drop(i, 'sale');
+        else if (EDITION_NAME.test(t) && (t.match(/\s[-–]\s/g) || []).length >= 2) drop(i, 'shop');
+        // (a headline: eight words at least, all in capitals – no line of a track list, no "ROLE: NAME")
+        else if (t.split(/\s+/).filter((w) => /\p{Lu}{2}/u.test(w)).length >= 8 && t === t.toUpperCase() && !/^[^:]{1,30}:\s/.test(t)
+          && !/\d{1,2}[:.]\d{2}\s*$|^[\[(]?\d|(?:\.\s){2}|\s[-–]\s/.test(t)) drop(i, 'promo');
+      }
+      // a list of selling points: three bullets at least in a row, most of them no credit (no "by", or words that sell)
+      for (let i = 0; i < out.length; i++) {
+        if (!bullet(out[i])) continue;
+        let j = i;
+        while (j < out.length && bullet(out[j])) j++;
+        const block = [];
+        for (let k = i; k < j; k++) block.push(k);
+        const selling = block.filter((k) => { const t = bare(out[k]); return !/\bby\s+\p{Lu}/u.test(t) || MARKETING.test(t); });
+        if (block.length >= 3 && selling.length * 2 > block.length && block.some((k) => MARKETING.test(bare(out[k])))) block.forEach((k) => drop(k, 'promo', true));
+        i = j - 1;
+      }
+      return out;
+    }
+    const ED_NAME = String.raw`\p{Lu}[\p{L}.'’-]+(?:\s+(?:(?:de|van|von|la|le|di|du|der)\s+)?\p{Lu}[\p{L}.'’-]+){1,3}`;
+    /**
+     * [Z-BCEDITION] [Z-LINERNOTE] [Z-FORLABEL] [Z-TITLEGUEST] (3.187.0, S321) Credit lines written another way, as lines the reader knows
+     * (the line as written kept – rawOf):
+     * - several people in one line: "Glen Moore: Bass - Paul McCandless: Bass Clarinet, Flute - Ralph Towner: Guitar" – a line each;
+     * - "Mastered by David Hachour Colorsound Studio, Paris" – "… by David Hachour at Colorsound Studio, Paris";
+     * - "All concert photos courtesy of Keith Hodkinson" – photography; "Mandala (Front cover) by Moki Cherry courtesy of the Moki
+     *   Cherry Estate" – cover art by Moki Cherry (the title of the picture and "courtesy of the … Estate" left out);
+     * - "Liner Note: X" – liner notes; "Liner Note translation: X" – liner notes [translation];
+     * - "Produced by X for Y" – produced by X, and Y a label it was produced for;
+     */
+    function editionLines(P, lines) {
+      const keep = (line, raw) => { if (line !== raw) P.rawOf.set(line, P.rawOf.get(raw) || raw); return line; };
+      const where = (l) => ({ line: l.trim(), part: l.trim(), pi: 0, n: 0 });
+      return lines.flatMap((l0) => {
+        const l = String(l0 == null ? '' : l0);
+        let t = l.trim();
+        if (!t) return [l];
+        // "courtesy of the Moki Cherry Estate" at the end of a credit: thanks, no name of it
+        const ct = t.match(/^(.*\S)\s+courtesy\s+of\s+(?:the\s+)?\p{Lu}[^,.;]*\b(?:Estate|Archives?|Collection|Foundation|Family|Trust|Museum|Library)\.?$/u);
+        if (ct && /\bby\s+\p{Lu}/u.test(ct[1])) t = ct[1];
+        let m = t.match(/^(?:all\s+)?(?:(?!the\b)(\p{L}+)\s+)?(?:photos?|photographs?|photography|pictures?|images?)\s+(?:(?:are|is)\s+)?courtesy\s+of\s+(.+?)\.?$/iu);
+        if (m) return [keep(`Photography${m[1] ? ` [${cap(m[1].toLowerCase())} Photos]` : ''}: ${m[2]}`, l)];
+        m = t.match(new RegExp(String.raw`^(.{2,60}?)\s*\((?:front\s+cover|cover|back\s+cover|cover\s+art|cover\s+painting|cover\s+image|inner\s+sleeve)\)\s+by\s+(${ED_NAME})\.?$`, 'iu'));
+        if (m && !/\bby\b/i.test(m[1])) {
+          P.ignored.push({ text: m[1].trim(), why: 'artworkDetail' });
+          return [keep(`Cover art by ${m[2]}`, l)];
+        }
+        m = t.match(/^liner\s+notes?\s+translat(?:ion|ed)\s*(?:by\b|[:–-])\s*(.+)$/i);
+        if (m) return [keep(`Liner Notes [Translation]: ${m[1].trim()}`, l)];
+        if (/^liner\s+note\b(?!s)/i.test(t)) return [keep(t.replace(/^liner\s+note\b/i, 'Liner Notes'), l)];
+        m = t.match(new RegExp(String.raw`^((?:co-?\s*|executive\s+)?produced)\s+by\s+(${ED_NAME})\s+for\s+(\p{Lu}[^,.;:]{1,60}?)\.?$`, 'iu'));
+        if (m && !/^(?:the|this|his|her|their|our)\b/i.test(m[3])) {
+          const kind = /^co/i.test(m[1]) ? 'Co-produced For' : /^executive/i.test(m[1]) ? 'Executive Produced For' : 'Produced For';
+          P.companies.push({ who: { id: 0, name: m[3].trim(), rawName: m[3].trim(), links: [] }, role: kind, catno: '', tracks: null, ...where(l), entity: 'label' });
+          return [keep(`${m[1]} by ${m[2]}`, l)];
+        }
+        m = t.match(new RegExp(String.raw`^((?:[Rr]e)?[Mm]astered|[Mm]ixed|[Rr]ecorded|[Ee]ngineered)\s+by\s+(\p{Lu}[\p{L}.'’-]+\s+\p{Lu}[\p{L}.'’-]+)\s+((?:\p{Lu}[\p{L}'’&-]*\s+){1,3}(?:Studios?|Mastering|Sound|Audio|Labs?|Recorders|Recordings))(\s*,\s*.+)?$`, 'u'));
+        if (m) return [keep(`${m[1]} by ${m[2]} at ${m[3]}${m[4] || ''}`, l)];
+        const parts = t.split(new RegExp(String.raw`\s+[-–]\s+(?=\p{Lu}[\p{L}.'’-]+(?:\s+\p{Lu}[\p{L}.'’-]+){0,3}:\s)`, 'u'));
+        if (parts.length > 1 && parts.every((x) => new RegExp(String.raw`^\p{Lu}[\p{L}.'’-]+(?:\s+\p{Lu}[\p{L}.'’-]+){0,3}:\s+\S`, 'u').test(x))) return parts.map((x) => keep(x, l));
+        // ("… with guests Makigami Koichi vocal and jaw harp": the sentence reader of S079 reads it – nothing here)
+        return [t === l.trim() ? l : keep(t, l)];
+      });
+    }
+    /**
+     * [Z-BCEDITION] (3.187.0, S320) The credits a description names – "new liner notes by Jason Weiss in conversation with …", "unseen
+     * concert pictures by Keith Hodkinson", "Remastered from the original Masters by Colorsound Studio" – as credits marked `promo`
+     * (the line they stand in): suggestions, not taken by themselves. What a credit line of the text says already is none.
+     */
+    function promoFacts(P) {
+      const seen = new Set([...P.credits, ...P.companies].map((c) => `${nameKey(c.who.name)}|${promoFamily(c.role)}`));
+      for (const text of P.promoTexts) {
+        if (text === text.toUpperCase()) continue; // (a headline in capitals: where a name ends is not known)
+        for (const [re, role, fam] of PROMO_FACTS) {
+          const m = re.exec(text);
+          if (!m) continue;
+          const key = `${nameKey(m[1])}|${fam}`;
+          if (seen.has(key) || [...seen].some((k) => k.endsWith(`|${fam}`) && (k.startsWith(`${nameKey(m[1])} `) || nameKey(m[1]).startsWith(`${k.split('|')[0]} `)))) continue;
+          seen.add(key);
+          Object.assign(P, { line0: text, part0: m[0], pi0: 0, n0: 0 });
+          addCredit(P, m[1], role, null, { promo: text });
+        }
+      }
+    }
+
     function freeTextPre(P, lines0) {
       const L = lines0.map((l) => String(l == null ? '' : l));
       const gone = new Set();
@@ -9936,7 +10108,10 @@
       const reviewed = ruleOn('S244') ? reviewQuotes(P.lines0) : null;
       if (reviewed) P.ignored.push(...reviewed.out);
       // [Z-SHOPPROSE] (3.157.0, S287) the texts of a shop (shipping, formats, downloads) out first: left out as "shop"
-      P.pre = freeTextPre(P, ruleOn('S287') ? shopLines(P, reviewed ? reviewed.lines : P.lines0) : (reviewed ? reviewed.lines : P.lines0));
+      // [Z-BCPROMO] [Z-BCCONDITION] [Z-BCEDITION] (3.187.0, S320) what sells an edition out too
+      const shopped = ruleOn('S287') ? shopLines(P, reviewed ? reviewed.lines : P.lines0) : (reviewed ? reviewed.lines : P.lines0);
+      const sold = ruleOn('S320') ? promoLines(P, shopped) : shopped;
+      P.pre = freeTextPre(P, ruleOn('S321') ? editionLines(P, sold) : sold); // [Z-BCEDITION] … (3.187.0, S321)
     }
 
     // ---------------------------------------------------------------------------
@@ -13837,6 +14012,19 @@
           P.unrecognized.splice(i, 1);
         }
       }
+      // [Z-BCEDITION] (3.187.0, S320) a sentence that sells the release ("Wewantsounds is proud to present the first official release of a
+      // legendary 1977 concert …", "… is now available as a deluxe, remastered 2-LP gatefold set featuring …"): left out – names in it
+      // or not; then the credits such descriptions name, as suggestions
+      if (ruleOn('S320')) {
+        for (let i = P.unrecognized.length - 1; i >= 0; i--) {
+          const t = String(P.unrecognized[i]).trim();
+          if (/\s+→\s+\?/u.test(t) || t.split(/\s+/).length < 12 || !MARKETING.test(t) || /^[^:]{1,30}:\s/.test(t) || P.credits.some((c) => String(c.line || '').trim() === t)) continue;
+          P.ignored.push({ text: t, why: 'promo' });
+          P.promoTexts.push(t);
+          P.unrecognized.splice(i, 1);
+        }
+        promoFacts(P);
+      }
       // [Z-IMPROV] (3.133.0, S222) the credits of a line of improvisations: so marked (the line as written, quoted at the mark); switched off: the
       // line left out
       // ((review) only the composers – "…, recorded by X" of the same line is no improvisation)
@@ -14039,6 +14227,7 @@
       P.modelCredits = new Map();
       // [3.21.0] lines (or sentences of a line) left out on purpose: thanks, endorsements, only web addresses (T030, T032)
       P.ignored = [];
+      P.promoTexts = []; // [Z-BCEDITION] (3.187.0, S320) the descriptions left out: their credits become suggestions
       // The line a credit comes from (shown when the text supplements another source)
       P.line0 = '';
       // [3.17.0] Where on that line (the companion marks each part of a line on Bandcamp): the part ("mixed by B" of
@@ -15136,10 +15325,18 @@
     /** The text of the infobox's values, in the words of the free texts (English): one line a fact. */
     function infoboxText(v, scope) {
       const lines = [];
-      const rec = (v.recorded || []).join(', ');
+      // [Z-WIKISEMI] (3.187.0) several periods in the field ("December 11–12, 2015; May 26–27, 2016"): a line each – until 3.186.0 one
+      // line the reader could not read (the studio was lost, the second period had no word of its group)
+      const periods = (v.recorded || []).flatMap((x) => String(x).split(/\s*;\s*/)).map((x) => x.trim()).filter(Boolean);
+      const rec = periods.length > 1 ? '' : (v.recorded || []).join(', ');
       const studios = v.studio || [];
-      if (studios.length) studios.forEach((s, i) => lines.push(`Recorded ${i ? '' : rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
-      (v.venue || []).forEach((s, i) => lines.push(`Recorded live ${!studios.length && !i && rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
+      if (periods.length > 1) {
+        if (studios.length) studios.forEach((s) => periods.forEach((d) => lines.push(`Recorded ${d} at ${s}${scope}`.replace(/\s+/g, ' '))));
+        else if (!(v.venue || []).length) periods.forEach((d) => lines.push(`Recorded ${d}${scope}`));
+        else (v.venue || []).forEach((s) => periods.forEach((d) => lines.push(`Recorded live ${d} at ${s}${scope}`.replace(/\s+/g, ' '))));
+      }
+      if (periods.length <= 1 && studios.length) studios.forEach((s, i) => lines.push(`Recorded ${i ? '' : rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
+      if (periods.length <= 1) (v.venue || []).forEach((s, i) => lines.push(`Recorded live ${!studios.length && !i && rec ? `${rec} ` : ''}at ${s}${scope}`.replace(/\s+/g, ' ')));
       if (rec && !studios.length && !(v.venue || []).length) lines.push(`Recorded ${rec}${scope}`);
       (v.recordedAlt || []).forEach((x) => lines.push(`Recorded ${x}${scope}`));
       // ((review) one line a producer: a name with a comma stays one)
@@ -15399,7 +15596,8 @@
             fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle,
             ...(c.thanksFor ? { thanksFor: true } : {}), ...(c.lineup ? { lineup: true } : {}), // [Z-THANKSFOR] [Z-LINEUPHEAD] (3.146.0)
             ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}), // ([Z-ABBR] 3.101.0, review)
-            ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}) }); // [Z-VINYLONLY] (3.161.0, S293)
+            ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}), // [Z-VINYLONLY] (3.161.0, S293)
+            ...(c.promo ? { promo: c.promo } : {}) }); // [Z-BCEDITION] (3.187.0, S320)
         }
         const entry = group.roles.get(rKey);
         // [Z-TCP] (3.60.0) a name in brackets after a title only while every credit of the role is one
@@ -16068,7 +16266,7 @@
       instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions, liveTracksText, liveTracksCount, liveScopeText, findDedications,
       lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
-      mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates,
+      mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates, joinByBreak,
       sentenceAround,
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
@@ -19480,7 +19678,7 @@
     if (row.pubFromCompany) ids.push('S044');
     if (row.pcFromCompany) ids.push('S057');
     if (row.perfPositions) ids.push('S046');
-    if (row.tarPositions) ids.push('S078');
+    if (row.tarPositions) ids.push(row.tarTitle ? 'S322' : 'S078');
     if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [S080] (3.51.0, review) the area after a comma left out of its "credited as"
@@ -19674,8 +19872,8 @@
     }
     // [S046] (3.31.8) performers on tracks: at once, both ways
     if (what === 'S046') applyPerformerTracks();
-    // [S078] (3.50.0) the tracks of the track artists: at once, both ways
-    if (what === 'S078') applyTrackArtistTracks();
+    // [S078] (3.50.0) the tracks of the track artists: at once, both ways ([Z-TITLEGUEST] 3.187.0: S322 too)
+    if (what === 'S078' || what === 'S322') applyTrackArtistTracks();
     // ([Z-ARRL] 3.94.0, review) S150: the arrangements it put on the works back on the recordings – or there again
     if (what === 'S150') {
       for (const r of S.rows) {
@@ -26380,9 +26578,13 @@
     }));
     // [S078] (3.50.0, review) tracks the source does not name, taken from the artist credits of the tracks in MusicBrainz
     const stagedRows = ns ? ns.rows : new Set([...S.staged.values()].map((x) => x.rowId).filter(Boolean));
-    const tar = S.rows.filter((r) => r.tarPositions && r.level === 'recording' && stagedRows.has(r.id))
+    const tarOf = (title) => S.rows.filter((r) => r.tarPositions && !!r.tarTitle === title && r.level === 'recording' && stagedRows.has(r.id))
       .map((r) => `${(S.artists.get(r.artistKey) || {}).name || ''} (${r.raw || rowRelText(r)}): ${r.tarPositions.join(', ')}`);
+    const tar = tarOf(false);
     if (tar.length) lines.push(`Tracks from the artist credits of the tracks in MusicBrainz: ${uniq(tar).join('; ')}.`);
+    // [Z-TITLEGUEST] (3.187.0, S322) tracks taken from the titles that name a guest
+    const tarT = tarOf(true);
+    if (tarT.length) lines.push(`Tracks from the titles that name the guest: ${uniq(tarT).join('; ')}.`);
     // [Z-SNW] (3.83.0, S125) a new work although MusicBrainz has one of the same title: named (setting, on)
     if (S.noteDupWorks && S.dupAnyway && S.dupAnyway.size) {
       // ((review) only a work new here – not one of MusicBrainz linked in its place since
@@ -29535,6 +29737,7 @@
         continue;
       }
       pkgAskSkip(row, c, rel); // [Z-VINYLONLY] (3.161.0, S293)
+      promoAskSkip(row, c); // [Z-BCEDITION] (3.187.0, S320)
       if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
       if (c.thanksFor && ruleOn('S256')) row.thanksFor = true; // [Z-THANKSFOR] (3.146.0) additional or guest, chosen at the row
       if (c.lineup && ruleOn('S257')) row.lineup = true; // [Z-LINEUPHEAD] (3.146.0) a name of a lineup (the instruments of MusicBrainz offered)
@@ -29753,6 +29956,14 @@
     if (!ruleOn('S293') || !c.pkgMedium || !c.fromPkg || row.level === 'skip' || row.uncrTaken) return;
     if (!(row.types || []).some((t) => PKG_ASK_TYPES.includes(norm(t))) || !mediumMissing(c.pkgMedium) || (rel && rel.bcDigitalExtras)) return;
     Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip', pkgAsk: c.fromPkg });
+  }
+  /**
+   * [Z-BCEDITION] (3.187.0, S320) A credit only a description names ("- new liner notes by Jason Weiss in conversation with …"): a
+   * suggestion – held on Skip like a credit of an edition's text, with "Take" (and "Take all from descriptions").
+   */
+  function promoAskSkip(row, c) {
+    if (!ruleOn('S320') || !c.promo || row.level === 'skip' || row.uncrTaken) return;
+    Object.assign(row, { uncrOff: true, uncrLevel: row.level, level: 'skip', pkgAsk: c.promo, promoAsk: c.promo });
   }
   /** [Z-RMXONLY] (3.128.0, S210) The tracks that are remixes by their title ("(X Remix)", "[Dub]") – not all of the release's (one remix alone stays). */
   function remixTrackIdx() {
@@ -35668,7 +35879,7 @@
     return `${drole}${srcMarksHtml(row)}${typoHtml(row)}${corrHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
-      ${row.tarPositions ? `<div class="dci-sub dci-tartracks">${esc(tr('role.tarTracks', { list: row.tarPositions.join(', ') }))}</div>` : ''}
+      ${row.tarPositions ? `<div class="dci-sub dci-tartracks">${esc(tr(row.tarTitle ? 'role.tarTitle' : 'role.tarTracks', { list: row.tarPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${row.fromNotes ? `${notesLineInfo(row)} ${esc(tr('notes.credit'))}${where.length ? ` (${esc(where.join('; '))})` : ''}`
     : esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
         ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${prefixNoteHtml(row)}${notesFromHtml(row)}
@@ -36349,7 +36560,8 @@
     return null;
   }
 
-  function datesWithContext(src, mentioned = null) {
+  function datesWithContext(src0, mentioned = null) {
+    const src = joinByBreak(src0); // [Z-BYBREAKDATE] (3.187.0)
     const list = findDates(src, { usOrder: usDateOrder() }).map((x, i, all) => {
       const sentence = sentenceAround(src, x.index, x.index + x.text.length);
       let tracks = tracksInText(sentence);
@@ -36439,7 +36651,7 @@
   }
   function dateFinds() {
     const notes = foundDateText();
-    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}|${ruleOn('D036')}|${ruleOn('D037')}`;
+    const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}|${ruleOn('S209')}|${ruleOn('S220')}|${ruleOn('D034')}|${ruleOn('D036')}|${ruleOn('D037')}|${ruleOn('S316')}`;
     if (S.notesDatesFor !== sig) {
       // [Z-RELDATE] (3.132.0, S220) what the notes only mention: S.notesMentioned
       const mentioned = [];
@@ -36784,6 +36996,7 @@
     if (from.s046) to.s046 = own(from.s046);
     if (from.s078) to.s078 = own(from.s078);
     if (from.tarPositions) to.tarPositions = [...from.tarPositions];
+    if (from.tarTitle) to.tarTitle = true;
   }
   function cloneRow(r, changes) {
     const c = { ...r, id: nextId('r'), flags: new Set(r.flags), suggested: new Set(r.suggested || []), tracks: new Set(r.tracks),
@@ -37417,9 +37630,25 @@
     // ((review) or a date of the column Performance not from the notes – placed by hand, from the titles of the tracks (D023)
     const recDated = finds.some((x) => [x.hint, ...(x.hints || [])].includes('performance'))
       || m.cells.some((c) => c.col === 'performance' && !String((S.datePool.find((d) => d.id === c.date) || {}).found || '').startsWith('notes:'));
+    // [Z-WIKISEMI] (3.187.0, D038) a date for all tracks whose days are each named for a group of tracks elsewhere ("May 26–27, 2016" of
+    // Wikipedia's infobox beside "May 27, 2016 (Disc 1), May 26, 2016 (Disc 2)" of the notes) says nothing new: neither placed nor pooled
+    const dayNum = (p) => (p && p.year && p.month && p.day ? Date.UTC(p.year, p.month - 1, p.day) / 864e5 : null);
+    const daysOf = (x) => {
+      const out = [];
+      for (const v of [x.value, ...(x.multi || []).map((y) => y.value || y)].filter(Boolean)) {
+        const a = dayNum(v.begin);
+        const b = dayNum(v.end && v.end.year ? v.end : v.begin);
+        if (a == null || b == null || b < a || b - a > 31) return null;
+        for (let d = a; d <= b; d++) out.push(d);
+      }
+      return out.length ? out : null;
+    };
+    const grouped = new Set(ruleOn('D038') ? finds.filter((f) => f.tracks && f.tracks.size).flatMap((f) => daysOf(f) || []) : []);
+    const summedUp = (x) => grouped.size > 0 && !(x.tracks && x.tracks.size) && (daysOf(x) || [null]).every((d) => grouped.has(d));
     finds.forEach((x0, i) => {
       const key = `notes:${i}`;
       if (S.aboutOff && fromAboutText(x0)) return; // [3.16.1]
+      if (summedUp(x0)) return; // [Z-WIKISEMI] (3.187.0, D038)
       // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
       let x = dayFindAs(x0, key); // ([Z-DAYLIST] 3.178.0: as switched in the date finder)
       if (S.mediaSel && x.tracks && x.tracks.size) {
@@ -37737,7 +37966,7 @@
         <span class="dci-sub">${esc(summary)}</span>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}</span>
-        <span class="dci-pools-c">${open && !S.dmAuto && (m.cells.length || m.dirty) ? `<button type="button" class="dci-pools-applyfold" data-act="dm-apply-fold" title="${esc(tr('pools.applyFoldTitle'))}">✓ ${esc(tr('pools.applyFold'))}</button> ` : ''}<button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button></span>
+        <span class="dci-pools-c">${open && !S.dmAuto && (m.cells.length || m.dirty) ? `<button type="button" class="dci-pools-applyfold" data-act="dm-apply-fold" title="${esc(tr('pools.applyFoldTitle'))}">✓ ${esc(tr('pools.applyFold'))}</button> ` : ''}<button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button>${open && !S.dmAuto && (m.cells.length || m.dirty) ? ` <button type="button" class="dci-pools-applyfold dci-pools-ghost" aria-hidden="true" tabindex="-1" disabled>✓ ${esc(tr('pools.applyFold'))}</button>` : ''}</span>
         <span class="dci-pools-r">${open ? `<span class="dci-pools-tools">
           ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(trSrc('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
@@ -42306,12 +42535,38 @@
     if (groups.length && !groups.some((g) => g.members.some((m) => keys.has(nameKey(m))))) return false;
     return true;
   }
+  // [Z-TITLEGUEST] (3.187.0, S322) a guest named in a track's title: "Acute ( w Shelley Hirsch)", "Echo (w/ Makigami)", "(with X & Y)", "(feat. X)"
+  const TITLE_GUEST = /[(\[]\s*(?:w\/?|with|feat\.?|featuring|ft\.?)\s+([^)\]]+?)\s*[)\]]/giu;
+  /** [Z-TITLEGUEST] The names a title has after "w", "with", "feat." in brackets (compared loosely). */
+  const titleGuestNames = (title) => [...String(title || '').matchAll(TITLE_GUEST)].flatMap((m) => m[1].split(/\s*(?:,|&|\+|\band\b|\bund\b)\s*/i)).map(nameKey).filter((x) => x.length >= 3);
+  /**
+   * [Z-TITLEGUEST] (3.187.0, S322) The tracks whose titles name each entry as a guest: track index → the keys of the entries. A name of
+   * a title is an entry's name or spelling, or a part of it ("Makigami" – Makigami Koichi) when no other entry has that part.
+   */
+  function titleGuestTracks() {
+    const out = new Map();
+    if (!ruleOn('S322')) return out;
+    const people = [...S.artists.values()].filter((a) => !a.company);
+    const keysOf = (a) => uniq([a.name, a.rawName, a.caseFrom, a.mbName, ...(a.anvs || []).map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv)))].filter(Boolean).map(nameKey));
+    const src = S.release && (S.release.tracks || []).length === S.mbTracks.length ? S.release.tracks : [];
+    S.mbTracks.forEach((t, i) => {
+      for (const g of uniq([...titleGuestNames(t && t.title), ...titleGuestNames((src[i] || {}).title)])) {
+        let hit = people.filter((a) => keysOf(a).includes(g));
+        if (!hit.length) hit = people.filter((a) => keysOf(a).some((k) => ` ${k} `.includes(` ${g} `)));
+        if (hit.length !== 1) continue;
+        if (!out.has(i)) out.set(i, new Set());
+        out.get(i).add(hit[0].key);
+      }
+    });
+    return out;
+  }
   function applyTrackArtistTracks() {
     const on = ruleOn('S078');
     let n = 0;
     const sel = selIdx();
+    const guests = titleGuestTracks(); // [Z-TITLEGUEST] (3.187.0, S322)
     for (const r of S.rows) {
-      if (!on) {
+      if (!on || (r.tarTitle && !ruleOn('S322'))) {
         if (!r.s078) continue;
         // ((3.50.0, review) back only while the row has the tracks the rule gave it – tracks changed by hand stay; a row S046 took
         // over gets the tracks before as those S046 gives back)
@@ -42319,6 +42574,7 @@
         else if (sameSet(r.tracks, r.s078.set)) Object.assign(r, { tracks: new Set(r.s078.tracks), suggested: new Set(r.s078.suggested) });
         delete r.s078;
         delete r.tarPositions;
+        delete r.tarTitle;
         rebaseFields(r, TAR_FIELDS);
         n++;
         continue;
@@ -42328,6 +42584,17 @@
       if (!TAR_TYPES.includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))) continue;
       const a = S.artists.get(r.artistKey);
       if (!a || a.company) continue;
+      // [Z-TITLEGUEST] (3.187.0, S322) named as a guest in titles: on those tracks only (who is in no title stays on all)
+      const inTitles = sel.filter((i) => guests.has(i) && guests.get(i).has(a.key));
+      if (inTitles.length && inTitles.length < sel.length && r.tracks && inTitles.length < r.tracks.size && inTitles.every((i) => r.tracks.has(i))) {
+        r.s078 = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []), set: new Set(inTitles) };
+        const positions = [trackListLabel(inTitles)];
+        Object.assign(r, { tracks: new Set(inTitles), suggested: new Set(inTitles), tarPositions: positions, tarTitle: true });
+        rebaseFields(r, TAR_FIELDS);
+        log('info', 'tarTitle', { name: a.name, list: positions.join(', '), role: r.raw || '' });
+        n++;
+        continue;
+      }
       // ((3.50.0, review) also by its name variations and the row's "credited as")
       const keys = new Set([a.name, a.rawName, a.caseFrom, a.mbName, r.anv, ...(a.anvs || []).map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv)))].filter(Boolean).map(nameKey));
       const named = sel.filter((i) => {
@@ -43378,7 +43645,12 @@
     const many = S.rows.filter((r) => uncrPending(r) && !r.entrySkip).length > off.length;
     // ([Z-VINYLONLY] 3.161.0, S293) held because only an edition's text names it
     const pkg = off.every((r) => r.pkgAsk) ? off[0].pkgAsk : '';
-    return `<div class="dci-note dci-uncr${pkg ? ' dci-uncr-pkg' : ''}" data-el="uncr"${pkg ? ' data-pkg="1"' : ''}><span>${esc(pkg ? tr('pkg.ask', { name: pkg }) : tr(all ? 'uncr.all' : 'uncr.some', { src: sourceLabel(entrySource(a)) }))}</span>${all
+    // [Z-BCEDITION] (3.187.0, S320) held because only a description names it; all such of the import with one click
+    const promo = off.every((r) => r.promoAsk) ? off[0].promoAsk : '';
+    const promoAll = promo && S.rows.filter((r) => uncrPending(r) && r.promoAsk && !r.entrySkip).length > 1;
+    const short = (x) => (x.length > 90 ? `${x.slice(0, 88)}…` : x);
+    return `<div class="dci-note dci-uncr${pkg ? ' dci-uncr-pkg' : ''}" data-el="uncr"${pkg ? ' data-pkg="1"' : ''}${promo ? ' data-promo="1"' : ''}><span${promo ? ` title="${esc(promo)}"` : ''}>${esc(promo ? tr('promo.ask', { line: short(promo.replace(/^[-–•*]\s+/, '')) }) : pkg ? tr('pkg.ask', { name: pkg }) : tr(all ? 'uncr.all' : 'uncr.some', { src: sourceLabel(entrySource(a)) }))}</span>${promoAll
+      ? ` <button type="button" class="dci-textbtn" data-act="promo-all" title="${esc(tr('promo.takeAllTitle'))}">${esc(tr('promo.takeAll'))}</button>` : ''}${all
       ? ` <button type="button" class="dci-small" data-act="uncr-take" data-rows="${esc(off.map((r) => r.id).join(','))}">${esc(tr('uncr.take'))}</button>` : per}${many
       ? ` <button type="button" class="dci-textbtn" data-act="uncr-all" title="${esc(tr('uncr.allTitle'))}">${esc(tr('uncr.takeAll'))}</button>` : ''}</div>`;
   }
@@ -50748,7 +51020,8 @@
         S.suppOpen = !close;
         if (close && S.textForm && S.textForm.supp) S.textForm = null;
         renderSource();
-        const target = S.suppOpen && S.overlay.querySelector('.dci-suppbar button, .dci-suppbar input');
+        // [Z-SRCFOCUS] (3.187.0) the address field first: opened, an address can be pasted at once (until 3.186.0 the first button of the bar)
+        const target = S.suppOpen && (S.overlay.querySelector('.dci-suppbar [data-f="supp-url"]') || S.overlay.querySelector('.dci-suppbar button, .dci-suppbar input'));
         if (target) {
           target.focus({ preventScroll: true });
           target.closest('.dci-suppbar').scrollIntoView({ block: 'nearest' });
@@ -50971,9 +51244,10 @@
         break;
       }
       case 'uncr-take':
+      case 'promo-all': // [Z-BCEDITION] (3.187.0, S320) every credit only a description names
       case 'uncr-all': {
         const ids = new Set(String(btn.dataset.rows || '').split(','));
-        uncrTake(S.rows.filter((r) => uncrPending(r) && (act === 'uncr-all' ? !r.entrySkip : ids.has(String(r.id)))));
+        uncrTake(S.rows.filter((r) => uncrPending(r) && (act === 'promo-all' ? r.promoAsk && !r.entrySkip : act === 'uncr-all' ? !r.entrySkip : ids.has(String(r.id)))));
         renderGroups();
         renderWorks();
         refresh();
@@ -60233,13 +60507,15 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       #dci-qf .dci-qf-go { font-weight: 600; }
       html.dci-dk-qf #dci-qf { background: #1f1f24; color: #eee; border-color: #444; }
       html.dci-dk-qf #dci-qf .dci-qf-sub { color: #ccc; }
+      /* [Z-SRCARROWHEIGHT] (3.187.0) the three joined fields are of one height (the arrow's glyph made "+ ↗" taller) */
+      #dci-open, #dci-open-src, #dci-open-ocr { align-self: stretch; }
       #dci-open { font: inherit; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-open:hover { background: #f1f0f8; }
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
       #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
       #dci-open-ocr:hover { background: #ecebf6; }
       /* [Z-SRCTABBTN] (3.184.0) the source in a background tab; [Z-SRCARROW] (3.186.0) "+ ↗", a small field right beside "Import credits …" */
-      #dci-open-src { font: inherit; margin-left: -13px; padding: 4px 7px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; white-space: nowrap; }
+      #dci-open-src { font: inherit; line-height: 1; margin-left: -13px; padding: 4px 7px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; white-space: nowrap; }
       #dci-open-src:hover { background: #ecebf6; }
       #dci-open-src:has(+ #dci-open-ocr:not([hidden])) { border-radius: 0; }
       #dci-open:has(+ #dci-open-src) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
@@ -61556,9 +61832,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-pools-fold { border: 1px solid var(--date-line); border-radius: 10px; background: var(--date-bg); color: var(--date-d); padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-pools-fold:hover { border-color: var(--date); }
       /* [Z-APPLYFOLD] (3.184.0) "✓ Apply & fold" beside "fold" (a class of its own: "fold" stays the one .dci-pools-fold of the head) */
-      .dci-pools-applyfold { border: 1px solid var(--date); border-radius: 10px; background: var(--date); color: #fff; padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; font-size: calc(var(--u, 1px) * 12); cursor: pointer;
-        position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: calc(var(--u, 1px) * 6); white-space: nowrap; } /* (left of "fold", which stays where it is – in the middle, folded or open) */
-      .dci-pools-c { position: relative; }
+      .dci-pools-applyfold { border: 1px solid var(--date); border-radius: 10px; background: var(--date); color: #fff; padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; font-size: calc(var(--u, 1px) * 12); cursor: pointer; white-space: nowrap; }
+      /* [Z-APPLYFOLDOVER] (3.187.0) in the flow of the middle (until 3.186.0 set absolutely: it lay over "not applied" at the left); its
+         invisible twin at the right of "fold" keeps "fold" in the middle, folded or open – the texts at the left and right give way */
+      .dci-pools-c { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      .dci-pools-ghost { visibility: hidden; pointer-events: none; }
       .dci-pools-applyfold:hover { background: var(--date-d); }
       /* [166] (3.37.15) in the head, at the same place open and folded; [178] (3.38.13) in its middle */
       .dci-pools-head .dci-pools-fold { min-width: calc(var(--u, 1px) * 70); font-size: calc(var(--u, 1px) * 12); text-align: center; }

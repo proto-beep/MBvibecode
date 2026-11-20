@@ -914,6 +914,59 @@ console.log(JSON.stringify([t.name, W.wikiPlain(t.params.recorded), prod, links.
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_wikisemi3187():
+    """Credits Importer 3.187.0 (collected item Z-WIKISEMI): Wikipedia's infobox with two periods in "recorded" ("December 11–12, 2015;
+    May 26–27, 2016") and a studio, on a release of three media whose Discogs notes give each disc its days.
+    A) Wikipedia's studio is read (confirmed by the notes' studio) – until 3.186.0 the line with two periods was not read at all.
+    B) No date "Date 1" without a group in the pool, no message about a date without a word of its group; the days of the notes stay
+       on their discs."""
+    import re
+    media0 = H.MEDIA
+    H.MEDIA = [1, 1, 2]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = ('All music recorded ... at Orange Music Sound Studios in West Orange, New Jersey, on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and '
+                      'December 11 & 12, 2015 (Disc 3)')
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    H.MB_EXTRA[H.RG] = [{'target-type': 'url', 'type': 'wikidata', 'url': {'resource': 'https://www.wikidata.org/wiki/Q901'}}]
+    H.WIKI_PAGES[('en', 'Sacred Ceremonies')] = {'text': """{{Infobox album
+| name = Sacred Ceremonies
+| recorded = December 11–12, 2015; May 26–27, 2016
+| studio = Orange Music Sound Studios, West Orange, New Jersey
+}}""", 'qid': 'Q901', 'langlinks': []}
+    H.WD_ITEMS['Q901'] = {'claims': {}, 'sitelinks': {'enwiki': 'Sacred Ceremonies'}}
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Wikipedia/.test(li.textContent))", 90)
+            H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
+            pg.wait_for_timeout(1500)
+            added = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if re.search('Added source: Wikipedia', x)]
+            print('A)', added)
+            results.append(bool(added) and '1 confirmed' in added[0] and '0 not recognized' in added[0])
+            pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => d.name || '')")
+            msgs = ' '.join(pg.locator('#dci-overlay .dci-msg').all_inner_texts())
+            mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+            print('B) Pool:', pool, '| Zellen Performance:', len([c for c in mx.get('cells', []) if c['col'] == 'performance']), '| Fehler:', errs)
+            results.append(not any(n.startswith('Date ') for n in pool) and 'no word naming its group' not in msgs and len([c for c in mx.get('cells', []) if c['col'] == 'performance']) == 5 and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.MEDIA = media0
+        H.MB_EXTRA.pop(H.RG, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_wikifail3149():
     """Credits Importer 3.149.0 (review of Z-WIKIBG): the release group's Wikidata item has no article with an album's infobox – the
     background reading says so in the log only: no error at the top, the messages of the import stay, no added source."""

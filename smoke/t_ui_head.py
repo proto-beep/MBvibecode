@@ -1404,6 +1404,56 @@ def case_poolbar():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_head3187():
+    """Credits Importer 3.187.0 (collected items Z-APPLYFOLDOVER, Z-SRCARROWHEIGHT, Z-SRCFOCUS).
+    A) The head of "Dates & tracks" with dates not applied, in a narrow window: "✓ Apply & fold" lies over nothing at its left ("not
+       applied", the counts), and "fold" is in the middle of the head.
+    B) "Import credits …", "+ ↗" and "… from cover art" are of one height.
+    C) "＋ Source": the address field has the focus."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Recorded May 3-5, 2016 at Alchemia Club, Kraków. Mixed June 2016.'
+        return d
+    H.discogs_release = rel
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.set_viewport_size({'width': 1000, 'height': 800})
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            hs = pg.evaluate("""(() => { const o = document.getElementById('dci-open-ocr'); o.hidden = false; o.textContent = '… from cover art';
+              return ['dci-open', 'dci-open-src', 'dci-open-ocr'].map(id => Math.round(document.getElementById(id).getBoundingClientRect().height)); })()""")
+            pg.evaluate("document.getElementById('dci-open-ocr').hidden = true")
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            if pg.evaluate("(document.querySelector('.dci-pools-fold') || {}).getAttribute && document.querySelector('.dci-pools-fold').getAttribute('aria-expanded')") != 'true':
+                pg.click('.dci-pools-fold')
+                pg.wait_for_timeout(400)
+            a1 = pg.evaluate("""(() => { const h = document.querySelector('.dci-pools-head'), af = h.querySelector('[data-act=dm-apply-fold]'), f = h.querySelector('.dci-pools-fold');
+              if (!af) return null; const r = af.getBoundingClientRect(), hr = h.getBoundingClientRect(), fr = f.getBoundingClientRect();
+              const over = [...h.querySelectorAll('.dci-pools-l > *, .dci-pools-r > *')].filter(el => { const x = el.getBoundingClientRect(); return x.width && x.left < r.right - 1 && x.right > r.left + 1 && x.top < r.bottom - 1 && x.bottom > r.top + 1; }).map(el => el.textContent.trim().slice(0, 30));
+              return [over, Math.round((fr.left + fr.right) / 2 - (hr.left + hr.right) / 2), !!h.querySelector('.dci-dm-pending')]; })()""")
+            print('A)', a1)
+            results.append(a1 is not None and a1[0] == [] and abs(a1[1]) <= 6 and a1[2])
+            print('B) Höhen:', hs)
+            results.append(len(set(hs)) == 1)
+            pg.click('.dci-head [data-act=supp-open]')
+            pg.wait_for_timeout(300)
+            foc = pg.evaluate("(document.activeElement && document.activeElement.dataset.f) || ''")
+            print('C) Fokus:', foc, '| Fehler:', errs)
+            results.append(foc == 'supp-url' and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_launchtools():
     """Credits Importer 3.40.14 (collected item Z-LS; Q-bz): Log | Statistics · ⚙ as symbols next to "Import credits …".
     A) Without the companion: after "Import credits …", ([Z-QSP] 3.75.0) the profile and "Window | Page" three buttons with a symbol and no word – Log (until 3.40.13
