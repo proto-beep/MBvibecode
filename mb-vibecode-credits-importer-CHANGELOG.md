@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.190.0 | 1.23.0 |
+| 2026-11-20 | 3.185.0 – 3.191.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,24 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.191.0
+
+**Suites that exist in MusicBrainz, dedications on the works they fit, two bugs.**
+
+- **A bug: works named "-: Meditation I".** Discogs's track list had a line "-" above the index track "Odes And Meditations For Cecil Taylor"; the line was taken as the name of the suite. A heading of marks only – "-", "–", "***", "…" (mapping `HEADING_DIVIDER_CHARS`) – is a divider now, no name (rule S336); the index track below it names the suite. Where MusicBrainz's titles carry a name before a colon ("Name: Part"), that name holds: an offer of the source of another name over the same tracks gives way, one of the same name counts as sure as a heading ("✨ Answer all" on every level).
+- **A bug: a dedication asked for an instrument.** A dedication found by "For" ("… For Cecil Taylor") was asked "“For” is no instrument of MusicBrainz …" – a question that must be answered, with answers that would have destroyed the dedication. A dedication is never asked for an instrument, and its word is no role credit at the chip.
+- **A suite accepted must exist in MusicBrainz before its parts are staged** (rule S338) – without it there are no "parts" and no order:
+  - its line in the works matrix is a yellow field that must be answered: "＋ Create the suite in MusicBrainz …", "Link …" (a suite of that name MusicBrainz has), "✕ No suite" (its parts are plain works again);
+  - "Stage" with such a suite open stages nothing: the form of the suite opens by itself, prefilled – name, type "Suite", the writers and the dedications of all its tracks, the edit note with the source; several suites one after the other;
+  - once it is created, staging goes on by itself; the works of the parts are created in the relationship editor as before;
+  - the form closed: nothing is staged, a message says why.
+- **Dedications stand on the works they fit** (rule S337): tracks titled "… For X" and the tracks of a suite named so get one row "dedicated to" on the works of all these tracks (until now only the first dedication of a person was kept – the one of the release group); the entry stays on the release group besides, when the release's title names it. Several dedications stay apart, each with its tracks. An entry chosen for a name in the box "Dedications & tributes" holds for the name's other finds – no second choice. The form of a new suite carries the dedications of all its tracks.
+- **Quick switch "Instruments → release"** (rule S339, off): after every import, each person with two or more instruments or voices the source names without tracks gets "⑃ on the release + group" by itself – such credits are general and need not hold for every track. Not where the source names tracks.
+- **Classical crediting counts for the search of works** (rule S340): the composer a track is credited to (the recording to who plays) is its writer for the search – works of the title, of the catalogue number and of a similar classical title are found also where the source credits no composer.
+- **Headlines in capitals are read** (rule S341): "… WITH NEW LINER NOTES BY JASON WEISS IN CONVERSATION WITH JAMES QUINLAN" – the names the text knows otherwise (a credit, a name in another description or a line left out) are found in it; the credit is a suggestion like those of the other descriptions. A name that stands nowhere else stays unread.
+- **Row colours of the works matrix:** looked at in the dark theme; a test measures both themes (the texts of a coloured row at least 4.5 : 1, its stripe at least 3 : 1).
+- Not done: a dedication on a suite that is linked to one MusicBrainz has already (only a new suite's form carries it); a heading that is a divider is not listed under "left out".
 
 ### Import 3.190.0
 

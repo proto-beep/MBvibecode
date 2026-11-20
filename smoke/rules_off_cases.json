@@ -86,6 +86,14 @@
       "camd385": [
         "D035"
       ]
+    },
+    "t_works_more.py": {
+      "suiteask": [
+        "S338"
+      ],
+      "suiteparts": [
+        "S338"
+      ]
     }
   }
 }

@@ -643,6 +643,35 @@ def case_bandtracks3183():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_capscredit3191():
+    """Credits Importer 3.191.0 (collected item Z-CAPSCREDIT, rule S341), in Node: a headline all in capitals is read for its credits
+    through the names the text knows otherwise.
+    A) "… WITH NEW LINER NOTES BY JASON WEISS IN CONVERSATION WITH JAMES QUINLAN" and, further down, "Thanks to Jason Weiss …": liner
+       notes by Jason Weiss as a suggestion (promo); James Quinlan (a credit of the text) is not swallowed into the name.
+    B) A name that stands nowhere else ("PHOTOS BY NOBODY KNOWN"): nothing read.
+    C) Rule S341 off: nothing read from the headline."""
+    import subprocess
+    node = r"""
+const off = process.argv[2] === 'off';
+global.localStorage = { getItem: (k) => (off && k === 'dci-rules-off' ? JSON.stringify(['S341']) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated; };
+const T = ['DON CHERRY - SUNRISE - LEGENDARY 1977 CONCERT WITH NEW LINER NOTES BY JASON WEISS IN CONVERSATION WITH JAMES QUINLAN\n\nConcert produced by James Quinlan\nPhotography by Keith Hodkinson\nThanks to Jason Weiss for his help.',
+  'SUNRISE WITH LINER NOTES BY JASON WEISS AND PHOTOS BY NOBODY KNOWN\n\nDrums: Bob Drummer'];
+console.log(JSON.stringify(T.map((x) => { const r = m.SOURCES.text.parse(x, { isRole, isCompanyRole: () => false, resolveTracks: () => null, resolveTitles: () => null });
+  return (r.credits || []).map((c) => [c.who.name, c.role, !!c.promo]); })));
+"""
+    def run(arg):
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), arg], capture_output=True, text=True)
+        return json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+    on, off = run('on'), run('off')
+    print('A/B)', on, '\nC)', off)
+    results = [isinstance(on, list) and ['Jason Weiss', 'Liner Notes', True] in on[0] and not any('Quinlan' in c[0] and c[2] for c in on[0]) and len([c for c in on[0] if c[2]]) == 1,
+               isinstance(on, list) and not any(c[2] for c in on[1]),
+               isinstance(off, list) and not any(c[2] for c in off[0])]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_prose2():
     """Review of 3.50.0 (collected item Z-PRO, S079; S059): what the sentence reader must not do.
     A) the words before "with" hold credits – "Highland bagpipes (David Watson), drums (Ann Lee), with guests …" keeps David Watson's
