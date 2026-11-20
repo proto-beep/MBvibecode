@@ -702,10 +702,10 @@ def case_ocrstart():
         reqs = []
         pg.on('request', lambda r: reqs.append(r.url))
         pg.wait_for_selector('#dci-open-ocr', state='visible', timeout=20000)
-        a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-open'), b = document.getElementById('dci-open-ocr'); const r1 = o.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+        a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-open-src'), b = document.getElementById('dci-open-ocr'); const r1 = o.getBoundingClientRect(), r2 = b.getBoundingClientRect();
           return [b.firstChild.textContent.trim(), !!b.querySelector('.dci-beta-tag'), Math.round(r2.left - r1.right), getComputedStyle(o).borderTopRightRadius]; })()""")
         print('A) Beta aus – Knopf:', a0, '| an:', a1)
-        results.append(a0 and a1 == ['… from cover art', False, -1, '0px'])
+        results.append(a0 and a1 == ['… from cover art', False, -1, '0px'])   # (3.186.0, Z-SRCARROW: joined to "+ ↗", which stands right beside "Import credits …")
         pg.click('#dci-open-ocr')
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=15000)
         pg.wait_for_selector('#dci-ocr [data-ocr-discogs]', timeout=15000)

@@ -743,8 +743,9 @@ def case_loopsart3183():
 
 
 def case_srcbtn3184():
-    """Credits Importer 3.184.0 (collected item Z-SRCTABBTN): "↗ Source" next to "Import credits …" in the page bar opens the source of
-    the import (without the companion: a new tab), and says so in the bar."""
+    """Credits Importer 3.184.0 (collected item Z-SRCTABBTN), 3.186.0 (Z-SRCARROW): "+ ↗", a small field right beside "Import credits …"
+    in the page bar (before "… from cover art"), opens the dashboard and with it the source of the import (without the companion: a new
+    tab), and says so in the bar."""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -753,15 +754,25 @@ def case_srcbtn3184():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         txt = pg.locator('#dci-open-src').inner_text()
-        H.open_dashboard(pg)
-        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        order = pg.evaluate("[...document.querySelectorAll('#dci-launcher > button')].slice(0, 3).map(b => b.id)")
+        width = pg.evaluate("[document.getElementById('dci-open-src').getBoundingClientRect().width, document.getElementById('dci-open').getBoundingClientRect().width]")
         pg.evaluate("window.__o = []; window.open = (u) => { window.__o.push(u); return null; }")
         pg.evaluate("document.getElementById('dci-open-src').click()")
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(500)
         opened = [u for u in pg.evaluate("window.__o") if u]
+        shown = pg.evaluate("(() => { const o = document.getElementById('dci-overlay'); return !!o && !o.hidden; })()")
+        print('A)', txt, '|', order, '|', width, '|', opened, '| Dashboard offen:', shown, '|', errs)
+        results.append(txt.strip() == '+ ↗' and order == ['dci-open', 'dci-open-src', 'dci-open-ocr'] and width[0] < width[1] / 2)
+        results.append(len(opened) == 1 and 'discogs.com' in opened[0] and shown and not errs)
+        # with the dashboard open: only the tab
+        pg.evaluate("window.__o = []; document.getElementById('dci-open-src').click()")
+        pg.wait_for_timeout(500)
+        again = [u for u in pg.evaluate("window.__o") if u]
         status = pg.locator('#dci-launch-status').inner_text()
-        print('A)', txt, '|', opened, '|', status, '|', errs)
-        results.append('Source' in txt and len(opened) == 1 and 'discogs.com' in opened[0] and 'discogs.com' in status and not errs)
+        shown2 = pg.evaluate("(() => { const o = document.getElementById('dci-overlay'); return !!o && !o.hidden; })()")
+        print('B)', again, '|', status, '| Dashboard offen:', shown2)
+        results.append(len(again) == 1 and 'discogs.com' in status and shown2)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

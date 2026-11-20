@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.185.0
+// @version      3.186.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.185.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.185.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.186.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.186.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.185.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.186.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2585,8 +2585,8 @@
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
       "launcher.ocr": "… from cover art",
-      "launcher.src": "↗ Source",
-      "launcher.srcTitle": "Open the source of the import – the one loaded, else the first linked to the release – in a background tab",
+      "launcher.src": "+ ↗",
+      "launcher.srcTitle": "Open the dashboard and, with it, the source of the import – the one loaded, else the first linked to the release – in a background tab",
       "launcher.srcNone": "No Discogs or Bandcamp link at this release.",
       "launcher.srcOpened": "Opened in the background: {url}",
       "log.srcTabOpened": "Source opened in a background tab: {url}",
@@ -3819,6 +3819,8 @@
       "quick.name.S313": "Area relationships",
       "ignored.why.areaCovered": "an area – a place or a company of the same activity is named, which is more precise",
       "quick.name.D035": "Days → release level",
+      "quick.sub.S319": "date groups",
+      "quick.sub.S319Title": "Instruments put on the release keep their date groups: a row for each group on the recordings, the days of all groups on the release (days in a row as one period)",
       "quick.S021": "“live” preselected for live releases",
       "quick.S031": "Only the case differs → no “credited as”",
       "quick.S245": "Drums, Drum, dr, ds … → drums (drum set), credited “drums”",
@@ -5400,6 +5402,7 @@
     { id: 'S316', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.183.0; collected item Z-BYBREAK): a line that ends with "by" (von, par, por) is read as one line with the next line that is not empty – "All music composed and recorded by" above "Stefano Musso in Spring 2023."; not when the line below has a colon or a "by" of its own' },
     { id: 'S317', where: 'tidyLines (BK_ORIG_ART, BK_ART_TECH), R130, Q027', note: 'Texts (3.183.0; collected item Z-ARTWORKLINE): "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London" – the name after the heading is the artist of the picture ("Original artwork": artwork suggested, illustration to choose – Q027); the title and year of the picture, its technique, edition and printer – in the line or in the lines below – are left out ("the picture on the cover"). Until 3.182.0 the heading became a name and "woodblock" an instrument' },
     { id: 'S318', where: 'creditHasNoField, roleCreditFor, editNoteBlock', note: 'Role credits (3.183.0; collected item Z-NOCREDITTYPE): a detail of a type that has no field for a role credit in MusicBrainz – "Liner Notes [Spanish]": liner notes take neither "credited as" nor a task – is left out: the relationship is staged without it, its spelling is not asked ("Written small …"), and it is no line "Not stored in MB" of the edit note (the preview of the staging says "left out"). Off: as until 3.182.0' },
+    { id: 'S319', where: 'instsToRelease, instsGroupPlan (a tick in the quick switch D035)', note: 'Instruments on the release (3.186.0; collected item Z-RELGROUPDATES): "Put them on the release" / "⑃ on the release + group" for a person whose instruments stand in several date groups – "CD 1–4: recorded November 27-29, 2016", "CD 5: recorded November 30, 2016" – keeps every group: on the recordings a row for each group with its tracks and its date (the group of the instruments on tracks 1–4 in November 2016, on the tracks of CD 5 on November 30), on the release the dates of all groups – days that follow one another as one period (2016-11-27 – 2016-11-30), groups with a gap between them as a row each. Off (the tick "date groups" in the quick switch "Days → release level"): as until 3.185.0 – one row on the recordings with all tracks and the first date, the release with the first date of the release level' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -19506,7 +19509,7 @@
   function remapRow(row) {
     // ([Z-INSTS] 3.103.0, review) the automatic row of "on the release" follows its rows (S170 switched)
     if (row.instsAuto) {
-      instsAutoFollow(row, S.rows.filter((r) => r.artistKey === row.artistKey && r.instsPrev));
+      instsAutoFollow(row, S.rows.filter((r) => r.artistKey === row.artistKey && r.instsPrev && (row.instsDate == null || instsDateKey(r.instsPrev.date) === row.instsDate))); // ([Z-RELGROUPDATES] 3.186.0: the rows of its date group)
       return;
     }
     // ([Z-DED] 3.67.0, review) a dedication keeps its types (its words are no role of the mapping)
@@ -19661,6 +19664,14 @@
       rebaseFresh(r);
     }
     log('info', 'rulesChanged', { what, n });
+    // [Z-RELGROUPDATES] (3.186.0, S319) the entries with their instruments on the release: placed anew, with or without the date groups
+    if (what === 'S319') {
+      for (const a of S.artists.values()) {
+        if (a.insts !== 'release') continue;
+        instsToTrack(a);
+        instsToRelease(a);
+      }
+    }
     // [S046] (3.31.8) performers on tracks: at once, both ways
     if (what === 'S046') applyPerformerTracks();
     // [S078] (3.50.0) the tracks of the track artists: at once, both ways
@@ -22106,7 +22117,7 @@
       // [F-S045DEP] (3.162.0) a switch that acts only with another one on: says so; switching it on switches the other on too
       const needs = QS_NEEDS[id] && !ruleOn(QS_NEEDS[id]) ? QS_NEEDS[id] : '';
       return `<span class="dci-qbtn-wrap${locked ? ' dci-qlocked' : ''}${once ? ' dci-qonce' : ''}${needs ? ' dci-qneeds' : ''}"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}"${locked ? ' disabled aria-disabled="true"' : ''} title="${esc(`${id}: ${notes.get(id) || ''}${locked ? `\n${tr(`quick.${id}.locked`)}` : ''}${needs ? `\n${tr('quick.needsTitle', { id: needs, name: tr(`quick.name.${needs}`) })}` : ''}`)}">
-        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span>${once ? `<span class="dci-qonce-tag">${esc(tr('quick.onceTag'))}</span>` : ''}${needs ? `<span class="dci-qneeds-tag">${esc(tr('quick.needsTag', { id: needs }))}</span>` : ''}</button><label class="dci-qperm" title="${esc(tr('quick.permTitle'))}"><input type="checkbox" data-qs-perm="${esc(id)}"${perm.has(id) ? ' checked' : ''}${locked ? ' disabled' : ''}><span>${esc(tr('quick.perm'))}</span></label><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel"><span class="dci-qname">${esc(tr(`quick.name.${id}`))}</span><span class="dci-qdesc">${esc(tr(`quick.${id}`))}</span></span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span>${once ? `<span class="dci-qonce-tag">${esc(tr('quick.onceTag'))}</span>` : ''}${needs ? `<span class="dci-qneeds-tag">${esc(tr('quick.needsTag', { id: needs }))}</span>` : ''}</button>${id === 'D035' ? '<span class="dci-qticks">' : ''}<label class="dci-qperm" title="${esc(tr('quick.permTitle'))}"><input type="checkbox" data-qs-perm="${esc(id)}"${perm.has(id) ? ' checked' : ''}${locked ? ' disabled' : ''}><span>${esc(tr('quick.perm'))}</span></label>${id === 'D035' ? `<label class="dci-qperm dci-qsub" title="${esc(`S319: ${tr('quick.sub.S319Title')}`)}"><input type="checkbox" data-rule-on="S319"${ruleOn('S319') ? ' checked' : ''}${on ? '' : ' disabled'}><span>${esc(tr('quick.sub.S319'))}</span></label></span>` : ''}<button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>${id === 'S263' ? videoCreditsHtml() : ''}`;
     };
     return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
       <span class="dci-sub">${esc(tr('rules.quickHint'))}</span>${QS_ONCE.size ? `<span class="dci-qonce-note" data-el="qs-once">${esc(tr(QS_ONCE.size === 1 ? 'quick.onceNote.one' : 'quick.onceNote.other', { n: QS_ONCE.size }))}</span>` : ''}</div>${[...QUICK_GROUPS.map(([g, ids]) => [g, QUICK_SWITCHES.filter((id) => ids.includes(id))]),
@@ -28892,7 +28903,7 @@
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
   // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
   const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
-    'differ', 'confirmedBy', 'suppTook', 'suppOcr', 'ocrSeen', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
+    'differ', 'confirmedBy', 'suppTook', 'suppOcr', 'ocrSeen', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsDate', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -34801,7 +34812,7 @@
     copyRuleTracks(row, c);
     delete c.mxOrigin;
     delete c.splitFrom;
-    ['instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'arhl'].forEach((k) => delete c[k]); // ([Z-INSTS] [Z-ARHL] 3.103.0, review)
+    ['instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsDate', 'arhl'].forEach((k) => delete c[k]); // ([Z-INSTS] [Z-ARHL] 3.103.0, review)
     return c;
   }
 
@@ -37358,7 +37369,7 @@
         let row = r;
         if (k > 0) {
           row = (spare.get(r.id) || []).shift() || { ...r, id: nextId('r'), flags: new Set(r.flags), suggested: new Set(r.suggested || []),
-            excluded: new Set(r.excluded || []), splitFrom: r.splitFrom || r.id, tracksOpen: false, instsPrev: undefined, instsAuto: undefined, instsCopy: undefined };
+            excluded: new Set(r.excluded || []), splitFrom: r.splitFrom || r.id, tracksOpen: false, instsPrev: undefined, instsAuto: undefined, instsCopy: undefined, instsDate: undefined };
           row.mxOrigin = r.id;
           S.rows.splice(++at, 0, row);
         }
@@ -43097,6 +43108,41 @@
     const list = dmClean().cells.filter((c) => c.col === g.key && c.rel && !c.alt).map(cellEntry).filter(Boolean);
     return list.filter((e, k) => list.findIndex((x) => x.id === e.id) === k);
   }
+  /** [Z-RELGROUPDATES] (3.186.0) The date of a row as the key of its date group ('' – none). */
+  const instsDateKey = (d) => (d && hasDateInput(d) ? formatDateValue((validateDateFields(d) || {}).value) : '');
+  /**
+   * [Z-RELGROUPDATES] (3.186.0, S319) The dates of the release level for the rows of one line (an instrument) that stand in several date
+   * groups: for each group the dates marked "release level" that lie within its date ("November 2016" on the recordings, "27–29" on
+   * the release) – without one, the group's own date ("November 30"). Days that follow one another are one period ("27–29" and "30":
+   * "27–30" – one row on the release); groups with a gap between them keep a row each. A Map: the key of the group → its dates (fields).
+   */
+  function instsGroupPlan(rows, rel) {
+    const lo = (p) => Date.UTC(p.year, (p.month || 1) - 1, p.day || 1) / 864e5;
+    const hi = (p) => (p.day ? lo(p) : Date.UTC(p.year, p.month || 12, 0) / 864e5);
+    const range = (v) => (v && v.begin && v.begin.year ? { a: lo(v.begin), b: hi(v.end && v.end.year ? v.end : v.begin), exact: !!(v.begin.day && (!v.end || !v.end.year || v.end.day)) } : null);
+    const spans = new Map();
+    for (const k of uniq(rows.map((r) => instsDateKey(r.date)))) {
+      const row = rows.find((r) => instsDateKey(r.date) === k);
+      const rg = k ? range(validateDateFields(row.date).value) : null;
+      const inside = rg ? rel.filter((e) => { const x = range(e); return x && x.a >= rg.a && x.b <= rg.b; }) : [];
+      spans.set(k, inside.length ? inside.map((e) => ({ ...range(e), fields: { ...fieldsFromDate(e), poolId: e.id } })) : rg ? [{ ...rg, fields: { ...row.date, mx: false } }] : []);
+    }
+    const merged = [];
+    for (const s of [...spans.values()].flat().filter((x) => x.exact).sort((x, y) => x.a - y.a)) {
+      const last = merged[merged.length - 1];
+      if (last && s.a <= last.b + 1) {
+        last.b = Math.max(last.b, s.b);
+        last.parts.push(s);
+      } else merged.push({ a: s.a, b: s.b, parts: [s] });
+    }
+    const day = (n) => { const d = new Date(n * 864e5); return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() }; };
+    for (const m of merged) {
+      if (uniq(m.parts.map((x) => `${x.a}-${x.b}`)).length < 2) continue; // one date: it stays the pool's
+      const fields = fieldsFromDate({ begin: day(m.a), end: day(m.b), ended: true });
+      m.parts.forEach((x) => Object.assign(x, { a: m.a, b: m.b, fields }));
+    }
+    return new Map([...spans].map(([k, list]) => [k, list.filter((s, i) => list.findIndex((x) => x.a === s.a && x.b === s.b) === i).map((s) => s.fields)]));
+  }
   /** "on the release" ('release') or "per track" ('track'): one of the two states, whatever came before. */
   function instsSet(a, mode) {
     if (mode === 'release') instsToRelease(a);
@@ -43113,37 +43159,73 @@
     }
     const rel = instsReleaseDates(rows);
     const recDate = (rows.find((r) => r.date && hasDateInput(r.date)) || {}).date || null;
+    // [Z-RELGROUPDATES] (3.186.0, S319) rows of several date groups ("CD 1–4: November 27-29", "CD 5: November 30"): each group keeps
+    // its dates – on the release and on the recordings (until 3.185.0 all got the first date of the release level, and one row on
+    // the recordings had all tracks with the first group's date)
+    const keysNow = uniq([...rows.map((r) => instsDateKey(r.date)), ...S.rows.filter((r) => r.artistKey === a.key && r.instsPrev).map((r) => instsDateKey(r.instsPrev.date))]);
+    const groups = ruleOn('S319') && keysNow.length > 1;
+    const plans = new Map();
+    if (groups) for (const lk of uniq(rows.map(lineKeyOf))) plans.set(lk, instsGroupPlan(rows.filter((r) => lineKeyOf(r) === lk), rel));
     for (const r of rows) {
+      const mine = groups ? plans.get(lineKeyOf(r)).get(instsDateKey(r.date)) || [] : null;
       r.instsPrev = { level: r.level, date: r.date ? { ...r.date } : r.date, dateOpen: r.dateOpen, tracks: [...r.tracks], levelTouched: r.levelTouched, dateKeyed: r.dateKeyed };
       levelOf(r, 'release');
       r.levelTouched = true;
       r.dateKeyed = true;
-      if (rel.length) Object.assign(r, { date: { ...fieldsFromDate(rel[0]), poolId: rel[0].id }, dateOpen: true });
+      const dates = mine || rel.map((dt) => ({ ...fieldsFromDate(dt), poolId: dt.id }));
+      if (dates.length) Object.assign(r, { date: { ...dates[0] }, dateOpen: true });
       else if (r.date && r.date.mx) r.date = { ...r.date, mx: false }; // ((review) its own now: the date matrix does not split it on the release
       // several dates of the release: a row each
-      rel.slice(1).forEach((dt, k) => {
+      dates.slice(1).forEach((dt, k) => {
         const c = copyRowForEvent(r);
-        Object.assign(c, { date: { ...fieldsFromDate(dt), poolId: dt.id }, dateOpen: true, instsCopy: r.id });
+        Object.assign(c, { date: { ...dt }, dateOpen: true, instsCopy: r.id });
         delete c.instsPrev;
         S.rows.splice(S.rows.indexOf(r) + 1 + k, 0, c);
       });
     }
     // one row on the recordings: the instruments' group (S170), "performer" with voices among them
     const all = S.rows.filter((r) => r.artistKey === a.key && r.instsPrev);
-    let auto = S.rows.find((r) => r.instsAuto === a.key);
-    const placed = !!auto;
-    auto = auto || a.instsAutoRow;
-    if (!auto) {
-      auto = copyRowForEvent(rows.find((r) => instsKind(r) === 'instrument') || rows[0]);
+    const makeAuto = (src, date) => {
+      const auto = copyRowForEvent(src);
       Object.assign(auto, { manual: false, instsAuto: a.key, level: 'recording', levelTouched: true, dateKeyed: true, raw: '', base: '', mods: [], dBase: null,
         primaryTouched: true, roleCredit: '', roleCreditTouched: true, credit: rows[0].credit || '', notes: [], flagMods: new Set(), flags: new Set(),
-        date: recDate ? { ...recDate, mx: false } : null, dateOpen: !!recDate, instsWas: null });
-      ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked'].forEach((k) => delete auto[k]);
-    }
-    instsAutoFollow(auto, all);
-    if (!placed) {
-      const last = S.rows.reduce((k, r, i) => (r.artistKey === a.key && all.includes(r) ? i : k), -1);
+        date: date ? { ...date, mx: false } : null, dateOpen: !!date, instsWas: null });
+      ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked', 'instsDate'].forEach((k) => delete auto[k]);
+      return auto;
+    };
+    const place = (auto) => {
+      const last = S.rows.reduce((k, r, i) => (r.artistKey === a.key && (all.includes(r) || r.instsAuto === a.key) ? i : k), -1);
       S.rows.splice(last + 1, 0, auto);
+    };
+    if (groups) {
+      // [Z-RELGROUPDATES] a row on the recordings for each date group: its tracks, its date
+      const gkeys = uniq(all.map((r) => instsDateKey(r.instsPrev.date)));
+      S.rows = S.rows.filter((r) => !(r.instsAuto === a.key && !gkeys.includes(r.instsDate)));
+      let spare = a.instsAutoRow && !S.rows.includes(a.instsAutoRow) ? a.instsAutoRow : null;
+      for (const k of gkeys) {
+        const mineRows = all.filter((r) => instsDateKey(r.instsPrev.date) === k);
+        let auto = S.rows.find((r) => r.instsAuto === a.key && r.instsDate === k);
+        if (!auto) {
+          const d = mineRows[0].instsPrev.date;
+          if (spare && (spare.instsDate === k || spare.instsDate == null)) {
+            auto = spare;
+            spare = null;
+            if (auto.instsDate == null) Object.assign(auto, { date: d && hasDateInput(d) ? { ...d, mx: false } : null, dateOpen: !!(d && hasDateInput(d)) });
+          } else auto = makeAuto(mineRows.find((r) => instsKind(r) === 'instrument') || mineRows[0], d && hasDateInput(d) ? d : null);
+          auto.instsDate = k;
+          place(auto);
+        }
+        instsAutoFollow(auto, mineRows);
+      }
+    } else {
+      let auto = S.rows.find((r) => r.instsAuto === a.key);
+      const placed = !!auto;
+      auto = auto || a.instsAutoRow;
+      if (!auto) auto = makeAuto(rows.find((r) => instsKind(r) === 'instrument') || rows[0], recDate);
+      S.rows = S.rows.filter((r) => !(r.instsAuto === a.key && r !== auto));
+      delete auto.instsDate;
+      instsAutoFollow(auto, all);
+      if (!placed) place(auto);
     }
     a.insts = 'release';
     log('info', 'instsRelease', { name: a.mbName || a.name, n: rows.length });
@@ -43236,7 +43318,7 @@
       tracks: new Set(rows.flatMap((r) => [...r.tracks])), date: date ? { ...date } : null, dateOpen: !!date });
     c.suggested = new Set(c.tracks);
     // ((review) nothing of the row it was copied from that would act on it: its updates of MusicBrainz, its sources, its words …)
-    ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked', 'instsAuto', 'instsCopy', 'instsPrev',
+    ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked', 'instsAuto', 'instsCopy', 'instsPrev', 'instsDate',
       'dsupUpd', 'dsupTaken', 'dsupSeen', 'dsupHold', 'dsupRel', 'translatedBase', 'confirmedBy', 'differ', 'suppTook', 'supp', 'creditPhrases', 'creditLowered',
       'roleCreditSuggest', 'keepCase', 'primaryCands', 's046', 's078'].forEach((k) => delete c[k]);
     c.srcRefs = [];
@@ -59179,7 +59261,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   }
 
   /**
-   * [Z-SRCTABBTN] (3.184.0) "↗ Source" next to "Import credits …": the source the import takes – the one loaded, else the first
+   * [Z-SRCTABBTN] (3.184.0; [Z-SRCARROW] 3.186.0: "+ ↗", and the dashboard opens with it) Next to "Import credits …": the source the import takes – the one loaded, else the first
    * source linked to the release (Discogs before Bandcamp) – opened in a background tab by the companion script; without the
    * companion in a new tab. Nothing linked: said in the bar.
    */
@@ -59665,7 +59747,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     bar.id = 'dci-launcher';
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
     // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
-    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button><button type="button" id="dci-open-src"></button><button type="button" id="dci-quickfill" hidden></button>
+    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-src"></button><button type="button" id="dci-open-ocr" hidden></button><button type="button" id="dci-quickfill" hidden></button>
       <select id="dci-profile" class="dci-profile-pick"></select>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
@@ -59681,7 +59763,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
     bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
-    bar.querySelector('#dci-open-src').addEventListener('click', () => openSourceTab()); // [Z-SRCTABBTN] (3.184.0)
+    // [Z-SRCTABBTN] (3.184.0) the source in a background tab; [Z-SRCARROW] (3.186.0) and the dashboard with it, as "Import credits …"
+    bar.querySelector('#dci-open-src').addEventListener('click', () => {
+      openSourceTab();
+      if (!S.overlay || S.overlay.hidden) openDashboard();
+    });
     bar.querySelector('#dci-quickfill').addEventListener('click', () => quickFill()); // [Z-QUICKFILL] (3.150.0)
     // ((review) MusicBrainz's editor may come after the bar: its button then
     waitForEditor().then(() => renderLauncher(), () => {});
@@ -60152,11 +60238,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* [3.34.8] "… from cover art" joined to it (collected item 124) */
       #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
       #dci-open-ocr:hover { background: #ecebf6; }
-      /* [Z-SRCTABBTN] (3.184.0) "↗ Source" joined to them */
-      #dci-open-src { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
+      /* [Z-SRCTABBTN] (3.184.0) the source in a background tab; [Z-SRCARROW] (3.186.0) "+ ↗", a small field right beside "Import credits …" */
+      #dci-open-src { font: inherit; margin-left: -13px; padding: 4px 7px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; white-space: nowrap; }
       #dci-open-src:hover { background: #ecebf6; }
-      #dci-open-ocr:not([hidden]):has(+ #dci-open-src) { border-radius: 0; }
-      #dci-open:has(+ #dci-open-ocr + #dci-open-src) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      #dci-open-src:has(+ #dci-open-ocr:not([hidden])) { border-radius: 0; }
+      #dci-open:has(+ #dci-open-src) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
       /* [Z-QFBETA] (3.156.0) "Fill empty recordings" like "Import credits …", set apart from it by a line */
       #dci-quickfill { position: relative; font: inherit; margin-left: 14px; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-quickfill::before { content: ''; position: absolute; left: -9px; top: 2px; bottom: 2px; width: 1px; background: #b9b5d6; }
@@ -60413,7 +60499,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled::after { left: calc(var(--u, 1px) * 16); }
       #dci-rules .dci-qid { flex: 0 0 auto; display: flex; align-items: center; margin: 0; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 0 4px 4px 0; background: #faf9fd;
         font-size: calc(var(--u, 1px) * 11.5); }
-      #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qperm, #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qperm + .dci-qid { border-color: #8e88c2; }
+      #dci-rules .dci-qbtn[aria-pressed=true] ~ .dci-qperm, #dci-rules .dci-qbtn[aria-pressed=true] ~ .dci-qticks .dci-qperm, #dci-rules .dci-qbtn[aria-pressed=true] ~ .dci-qid { border-color: #8e88c2; }
+      /* [Z-RELGROUPDATES] (3.186.0, S319) a tick of its own inside a quick switch: below "permanent", in the same column – no room taken */
+      #dci-rules .dci-qticks { flex: 0 0 auto; display: flex; flex-direction: column; }
+      #dci-rules .dci-qticks .dci-qperm { flex: 1 1 50%; }
+      #dci-rules .dci-qticks .dci-qsub { border-top: 0; }
       /* [Z-QSSCOPE] (3.156.0) the "permanent" box between a switch and its id; a switch changed for this import only marked */
       #dci-rules .dci-qperm { flex: 0 0 auto; display: flex; align-items: center; gap: calc(var(--u, 1px) * 3); margin: 0; padding: 0 calc(var(--u, 1px) * 6);
         border: 1px solid #c8c5d6; border-right: 0; background: #faf9fd; font-size: calc(var(--u, 1px) * 10.5); color: var(--muted, #6d6a7c); cursor: pointer; }

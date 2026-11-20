@@ -2942,6 +2942,120 @@ def case_detail3102():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_relgroups3186():
+    """Credits Importer 3.186.0 (collected item Z-RELGROUPDATES, rule S319): Jane Roe with three saxophones without tracks on a release of
+    two media (3 + 1 tracks); the notes "CD 1 / Recorded: November 27-29, 2016 … / CD 2 / Recorded November 30, 2016 …" (applied: two
+    date groups – November 2016 on tracks 1–3, November 30 on track 4).
+    A) "⑃ on the release + group": two rows on the recordings – tracks 1–3 with November 2016, track 4 with November 30 (until 3.185.0
+       one row, all tracks, November 2016); staged: the three saxophones on the release with 2016-11-27 – 2016-11-30 (days in a row:
+       one period), the recordings with their own dates.
+    B) "all tracks" and "on the release" again: the same rows.
+    C) Groups with a gap ("May 3-5, 2016" and "November 30, 2016"): each saxophone twice on the release, once with each date.
+    D) S319 off: as until 3.185.0 – the release with 2016-11-27 – 2016-11-29, one row on the recordings with all tracks.
+    E) The tick "date groups" stands inside the quick switch D035 (ticked), not as a switch of its own."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    media0 = H.MEDIA
+    H.MEDIA = [3, 1]
+    H.attr(9140, 'woodwind', 14, 14)
+    for i, n in ((9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9134, 'alto saxophone')):
+        H.attr(i, n, 14, 14)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Jane Roe')
+    state = {'notes': ''}
+
+    def rel():
+        d = orig()
+        d['notes'] = state['notes']
+        d['extraartists'] = [{'name': 'Jane Roe', 'anv': '', 'role': 'Soprano Saxophone, Alto Saxophone, Tenor Saxophone', 'tracks': '', 'id': 3301, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const pr = tr.querySelector('[data-f=primary]');
+        return [lv ? lv.dataset.level : '', pr ? pr.value : '', (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()]; }); }"""
+    ADDED = """MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Jane Roe').map((r) => [(r.entity1 || {}).entityType || '', (r.entity1 || {}).name || '',
+      ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName).sort().join(','), [r.begin_date, r.end_date].map(d => d ? [d.year, d.month, d.day].filter(x => x != null).join('-') : '').join('..')]).sort()"""
+    N1 = 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków'
+    N2 = 'CD 1\nRecorded: May 3-5, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków'
+    SAX = ['alto saxophone', 'soprano saxophone', 'tenor saxophone']
+
+    def run(p, notes, off=(), back=False):
+        state['notes'] = notes
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        if pg.locator('[data-act=dm-apply-fold]').count():
+            pg.click('[data-act=dm-apply-fold]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        sec = sec_sel(pg, 'Jane Roe')
+        pg.click(f'{sec} [data-act=insts-set][data-insts=release]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS, 'Jane Roe')
+        again = None
+        if back:
+            pg.click(f'{sec} [data-act=insts-set][data-insts=track]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            pg.click(f'{sec} [data-act=insts-set][data-insts=release]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            again = pg.evaluate(ROWS, 'Jane Roe')
+        tick = None
+        if back:
+            pg.click('[data-act=rules]')
+            pg.wait_for_timeout(400)
+            tick = pg.evaluate("""(() => { const w = [...document.querySelectorAll('#dci-rules .dci-qbtn-wrap')].find(x => x.querySelector('[data-qs-toggle=D035]'));
+              const c = w && w.querySelector('input[data-rule-on=S319]'); return [!!c, !!(c && c.checked), document.querySelectorAll('#dci-rules [data-qs-toggle=S319]').length,
+              c ? c.closest('label').textContent.trim() : '']; })()""")
+        H.stage(pg)
+        added = pg.evaluate(ADDED)
+        b.close()
+        return rows, again, added, tick, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, again, added, tick, errs = run(p, N1, back=True)
+            rec = [r for r in rows if r[0] == 'recording']
+            print('A) Zeilen auf den Aufnahmen:', rec)
+            print('   eingetragen:', added)
+            results.append(sorted(r[2] for r in rec) == ['1 of 4 tracks', '3 of 4 tracks'])
+            results.append([a for a in added if a[0] == 'release'] == [['release', 'Testalbum', s, '2016-11-27..2016-11-30'] for s in SAX]
+                           and sorted(a[3] for a in added if a[0] == 'recording') == ['2016-11-30..2016-11-30'] + ['2016-11..2016-11'] * 3)
+            print('B) nach hin und her gleich:', again == rows)
+            results.append(again == rows)
+            print('E) Haken im Schnellschalter D035:', tick, '| Fehler:', errs)
+            results.append(tick == [True, True, 0, 'date groups'] and not errs)
+            rows, _, added, _, errs = run(p, N2)
+            print('C) mit Lücke:', [a for a in added if a[0] == 'release'])
+            results.append(sorted(a[2:] for a in added if a[0] == 'release') == sorted([s, d] for s in SAX for d in ('2016-11-30..2016-11-30', '2016-5-3..2016-5-5')) and not errs)
+            rows, _, added, _, errs = run(p, N1, off=['S319'])
+            rec = [r for r in rows if r[0] == 'recording']
+            print('D) ohne S319:', rec, [a for a in added if a[0] == 'release'])
+            results.append([r[2] for r in rec] == ['4 of 4 tracks'] and [a[3] for a in added if a[0] == 'release'] == ['2016-11-27..2016-11-29'] * 3 and not errs)
+    finally:
+        H.discogs_release = orig
+        H.MEDIA = media0
+        H.RULES_OFF = []
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_insts3103():
     """Credits Importer 3.103.0 (collected item Z-INSTS, rules S169, S170): Discogs names Jane Roe with five instruments without tracks
     (soprano and tenor saxophone, flute, bass clarinet, little instruments), Sax Two with soprano saxophone and flute, both as guest.
@@ -4845,7 +4959,7 @@ def case_v3156():
             d1 = pg.evaluate("""(() => { const q = document.getElementById('dci-quickfill'); return [q.hidden, q.textContent, q.previousElementSibling.id,
               getComputedStyle(q).marginLeft, getComputedStyle(q, '::before').width, document.querySelector('[data-el=settings] .dci-set-tab[data-topic=beta]').getAttribute('aria-disabled')]; })()""")
             print('D)', d1)
-            results.append(d1 == [False, 'Fill empty recordings', 'dci-open-src', '14px', '1px', 'true'])   # (3.184.0: "↗ Source" before it)
+            results.append(d1 == [False, 'Fill empty recordings', 'dci-open-ocr', '14px', '1px', 'true'])   # (3.186.0: "… from cover art" (hidden) before it, "+ ↗" right beside "Import credits …")
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 | – |
+| 2026-11-20 | 3.185.0 – 3.186.0 | – |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.186.0
+
+**Instruments on the release keep their date groups; "+ ↗" opens the dashboard and the source.**
+
+- **Date groups stay when instruments go on the release** (rule S319): a person with several instruments and no tracks, on a release whose notes give each medium its own recording date ("CD#1, CD#2, CD#3, CD#4 / Recorded: November 27-29, 2016 …", "CD#5 / Recorded November 30, 2016 …"). "Put them on the release" and "⑃ on the release + group" used to throw the groups together: one row on the recordings with all tracks and November 2016, the release with November 27–29 – November 30 was lost. Now:
+  - on the recordings a row for each date group – the group of the instruments on the tracks of CD 1–4 in November 2016, on the tracks of CD 5 on November 30, 2016;
+  - on the release the days of all groups: days that follow one another are one period (2016-11-27 – 2016-11-30); groups with a gap between them (May and November) get a row each.
+- **A tick inside the quick switch:** "date groups" stands inside the quick switch "Days → release level", below its "permanent" – no further switch, no room taken. On by default; off: as until 3.185.0. It can be ticked only while the switch itself is on.
+- **"+ ↗" instead of "↗ Source":** a small field right beside "Import credits …" (before "… from cover art"). It opens the dashboard as "Import credits …" does, and with it the source of the import in a background tab. With the dashboard already open it opens only the tab.
+- Not changed: an instrument that stands twice on the release with the same date in the list "by role" (once for each date group) is staged once, as before.
 
 ### Import 3.185.0
 
