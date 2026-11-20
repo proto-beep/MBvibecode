@@ -742,6 +742,105 @@ def case_loopsart3183():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_edition3187():
+    """Credits Importer 3.187.0 (collected items Z-BCPROMO, Z-BCCONDITION, Z-BCEDITION, Z-LINERNOTE, Z-FORLABEL, Z-TITLEGUEST, Z-HONORARY;
+    rules S320–S323).
+    A) A pasted text of an edition: several people in one line are a person each; "Mastered by David Hachour Colorsound Studio, Paris"
+       is the engineer and the studio; "Mandala (Front cover) by Moki Cherry courtesy of …" is Moki Cherry; "Liner Note translation:
+       Sarah Claman"; "Produced by Lucía Martínez for Fundacja Słuchaj" is the producer and the label – no entry "Glen Moore: Bass",
+       "Paris" or "Lucía Martínez for Fundacja Słuchaj".
+    B) The name of the edition, "CD, wrapped as new", "Special price!!!!!! …" and the selling points are left out, not "not recognized".
+    C) The credits only the selling points name (Keith Hodkinson, Jason Weiss) are suggestions on Skip; "Take all from descriptions"
+       takes both.
+    D) The title "Song Two ( w Makigami )": Makigami Koichi's jaw harp on track 2 only, the row says why (S322).
+    E) Discogs "Producer [Honorary]": producer on the release, credited "honorary producer"."""
+    TEXT = ('Artist - Title - Deluxe 2-LP set with Gatefold sleeve\n'
+            'CD, wrapped as new\n'
+            'Special price!!!!!! Three excellent duos !!!!!!\n'
+            '- Legendary performance officially released for the 1st time\n'
+            '- unseen concert pictures by Keith Hodkinson\n'
+            '- Original artwork featuring new liner notes by Jason Weiss in conversation with James Quinlan\n'
+            'Glen Moore: Bass - Paul McCandless: Piano - Ralph Towner: Guitar\n'
+            'Mastered by David Hachour Colorsound Studio, Paris\n'
+            'Mandala (Front cover) by Moki Cherry courtesy of the Moki Cherry Estate\n'
+            'Liner Note translation: Sarah Claman\n'
+            'Produced by Lucía Martínez for Fundacja Słuchaj\n'
+            'Makigami Koichi: jaw harp')
+    H.attr(9201, 'jaw harp', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    titles0 = list(H.TITLES)
+    H.TITLES[1] = 'Song Two ( w Makigami )'
+    orig = H.discogs_release
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      ((tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || ''), ((tr.querySelector('[data-f=roleCredit]') || {}).value || ''),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), (tr.querySelector('.dci-tartracks') || { textContent: '' }).textContent.trim()])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            r = pg.evaluate(ROWS)
+            names = {x[0] for x in r}
+            print('A)', sorted(names))
+            results.append({'Glen Moore', 'Paul McCandless', 'Ralph Towner', 'David Hachour', 'Moki Cherry', 'Sarah Claman', 'Lucía Martínez', 'Colorsound Studio', 'Fundacja Słuchaj'} <= names
+                           and not ({'Glen Moore: Bass', 'Paris', 'Lucía Martínez for Fundacja Słuchaj', 'David Hachour Colorsound Studio'} & names))
+            page = pg.evaluate("document.getElementById('dci-overlay').textContent")
+            un = pg.evaluate("[...document.querySelectorAll('[data-el=unrec] li, .dci-unrec li')].map(li => li.textContent.trim().slice(0, 60))")
+            left = [w for w in ('wrapped as new', 'Special price', 'Legendary performance', 'Deluxe 2-LP set') if w in page]
+            print('B) ausgelassen genannt:', left, '| nicht erkannt:', un)
+            results.append(len(left) == 4 and not any(w in ' '.join(un) for w in ('wrapped', 'Special price', 'Legendary', 'Deluxe')))
+            by = {x[0]: x for x in r}
+            held = pg.evaluate("[...document.querySelectorAll('[data-el=uncr][data-promo]')].map(n => [n.closest('section').querySelector('.dci-gname strong').textContent.trim(), !!n.querySelector('[data-act=promo-all]')])")
+            print('C) Vorschläge:', held, '| Ebenen:', by.get('Keith Hodkinson', [0, 0, ''])[2], by.get('Jason Weiss', [0, 0, ''])[2])
+            ok_c = sorted(h[0] for h in held) == ['Jason Weiss', 'Keith Hodkinson'] and all(h[1] for h in held) and by['Keith Hodkinson'][2] == 'skip' and by['Jason Weiss'][2] == 'skip'
+            pg.click('[data-act=promo-all]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            by2 = {x[0]: x for x in pg.evaluate(ROWS)}
+            print('   nach „Take all from descriptions“:', by2['Keith Hodkinson'][2], by2['Jason Weiss'][2], '| Hinweise übrig:', pg.locator('[data-el=uncr][data-promo]').count())
+            results.append(ok_c and by2['Keith Hodkinson'][2] != 'skip' and by2['Jason Weiss'][2] != 'skip' and pg.locator('[data-el=uncr][data-promo]').count() == 0)
+            mk = by.get('Makigami Koichi')
+            print('D)', mk, '| Fehler:', errs)
+            results.append(bool(mk) and mk[4] == '1 of 4 tracks' and 'S322' in mk[5] and not errs)
+            b.close()
+
+            def rel():
+                d = orig()
+                d['extraartists'] = [{'name': 'Benne Vischer', 'anv': '', 'role': 'Producer [Honorary]', 'tracks': '', 'id': 3391, 'join': ''}]
+                return d
+            H.ARTISTS[3391] = (H.uid('dddddddd', 3391), 'Benne Vischer')
+            H.discogs_release = rel
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            bv = [x for x in pg.evaluate(ROWS) if x[0] == 'Benne Vischer']
+            note = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Benne Vischer'); return g ? g.textContent.includes('honorary producer') : false; })()")
+            print('E)', bv, '| „honorary producer“ im Eintrag:', note, '| Fehler:', errs)
+            results.append(len(bv) == 1 and bv[0][2] == 'release' and note and not errs)
+            b.close()
+    finally:
+        H.TITLES[:] = titles0
+        H.discogs_release = orig
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_srcbtn3184():
     """Credits Importer 3.184.0 (collected item Z-SRCTABBTN), 3.186.0 (Z-SRCARROW): "+ ↗", a small field right beside "Import credits …"
     in the page bar (before "… from cover art"), opens the dashboard and with it the source of the import (without the companion: a new

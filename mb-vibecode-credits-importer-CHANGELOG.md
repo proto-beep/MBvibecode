@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.186.0 | – |
+| 2026-11-20 | 3.185.0 – 3.187.0 | – |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,25 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.187.0
+
+**Texts of editions and advertising, guests in titles, small corrections of the interface.**
+
+- **Advertising and descriptions are left out, with their reason** (rule S320): a call to buy and prices ("Buy all three new piano/bass duos: …, and save the money!!!!!", "Special price!!!!!!"), the condition of the item ("CD, wrapped as new"), what someone plays on ("Barry Guy plays exclusively on Thomastik Springs"), the name of the edition as a line ("Artist - Title - Deluxe 2-LP set with Gatefold sleeve"), a headline all in capitals, a list of selling points and sentences that sell. Until now they stood under "not recognized".
+- **What a description names is a suggestion:** "new liner notes by Jason Weiss", "unseen concert pictures by Keith Hodkinson", "Remastered from the original Masters by Colorsound Studio" – each on Skip with "Take", and "Take all from descriptions" for all of them at once. Never taken by itself; what a credit line of the text says already is no suggestion.
+- **Credit lines written another way** (rule S321):
+  - several people in one line – "Glen Moore: Bass - Paul McCandless: Bass Clarinet, Flute - Ralph Towner: Guitar" – are a person each (it was a person "Glen Moore: Bass");
+  - "Mastered by David Hachour Colorsound Studio, Paris" is the engineer and the studio (it was a person "David Hachour Colorsound Studio" and a person "Paris");
+  - "All concert photos courtesy of Keith Hodkinson" is photography; "Mandala (Front cover) by Moki Cherry courtesy of the Moki Cherry Estate" is the cover art by Moki Cherry;
+  - "Liner Note: X" (the singular) and "Liner Note translation: X";
+  - "Produced by Lucía Martínez for Fundacja Słuchaj": the producer, and the label it was produced for (it was a person "Lucía Martínez for Fundacja Słuchaj");
+- **Guests in the titles of tracks** (rule S322): "Acute ( w Shelley Hirsch)", "Echo ( w Makigami )" – the person plays on those tracks only, not on all. The name of a title may be a part of the full name ("Makigami" – Makigami Koichi); who is in no title stays on all tracks. The row and the edit note say where the tracks come from.
+- **"Producer [Honorary]"** (rule S323): a producer on the release, credited "honorary producer" – no longer on every recording.
+- **A date after a line broken after "by":** "All music composed and recorded by" / "Stefano Musso in Spring 2023." – the date goes to the column Performance (it was only in the pool).
+- **Wikipedia:** an infobox with several periods ("December 11–12, 2015; May 26–27, 2016") is read period by period – its studio is no longer lost. A date for all tracks whose days the notes name for single discs adds nothing and is not put into the pool (rule D038).
+- **Interface:** "✓ Apply & fold" no longer lies over "not applied" in the head of "Dates & tracks"; "+ ↗" is as high as the fields beside it; "＋ Source" puts the cursor into the address field.
+- Not done: the packaging an edition names ("gatefold", "8-page booklet") – not wanted. A headline all in capitals is left out, the credits in it are not read (where a name ends there is not known).
 
 ### Import 3.186.0
 

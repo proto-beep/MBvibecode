@@ -138,7 +138,7 @@ with sync_playwright() as p:
         and roles('Maya Homburger') == ['Produced By'] and roles('Barry Guy') == ['Produced By'] \
         and sorted(roles('Maya Recordings')) == ['Copyright (c)', 'Phonographic Copyright (p)'] \
         and 'liner notes' in g['Evan Parker']['rows'][0][3] and 'lyricist' in g['Evan Parker']['rows'][0][3] \
-        and unrec == [] and ign_title == '2 lines left out on purpose' and ign[0].startswith('Thanks to Mike Eden') and ign[1].startswith('Barry Guy plays') \
+        and unrec == [] and ign_title == '2 lines left out on purpose' and sorted(x[:10] for x in ign) == ['Barry Guy ', 'Thanks to '] \
         and any('"year":2023' in d for d in pool) and any('"year":1988' in d for d in pool)
     # C) the logo, its profile and the suggestion through it
     cole = g.get('Cole Barrington', {})
